@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.379  2004/11/19 03:59:19  sean
+ * Fix to msSymbolSetImageGD so that pixmap transparency is preserved.  Renamed
+ * the msGDSetImage and GetImage to msSymbolSetImageGD and msSymbolGetImageGD each
+ * with a symbolObj* as the first argument (bug 1074).
+ *
  * Revision 1.378  2004/11/18 16:12:02  sean
  * exposed MS_GD_ALPHA to swig
  *
@@ -1248,8 +1253,8 @@ MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);
 MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename);
 MS_DLL_EXPORT int msLoadImageSymbol(symbolObj *symbol, const char *filename);
 
-MS_DLL_EXPORT imageObj *msGDGetImage(gdImagePtr img, const char *driver);
-MS_DLL_EXPORT gdImagePtr msGDSetImage(imageObj *image);
+MS_DLL_EXPORT imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *format);
+MS_DLL_EXPORT int msSymbolSetImageGD(symbolObj *symbol, imageObj *image);
 
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
 MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);

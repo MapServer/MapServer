@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2004/11/19 03:59:20  sean
+ * Fix to msSymbolSetImageGD so that pixmap transparency is preserved.  Renamed
+ * the msGDSetImage and GetImage to msSymbolSetImageGD and msSymbolGetImageGD each
+ * with a symbolObj* as the first argument (bug 1074).
+ *
  * Revision 1.77  2004/11/11 05:42:07  sean
  * use gd's gdioctx in msLoadImageSymbol (bug 1047)
  *
@@ -948,22 +953,45 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
   return(MS_SUCCESS);
 }
 
-imageObj *msGDGetImage(gdImagePtr img, const char *driver)
+/* ----------------------------------------------------------------------------
+   msSymbolGetImageGD
+   
+   Get a symbolObj as an imageObj with the specified format.
+---------------------------------------------------------------------------- */
+imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *input_format)
 {
     imageObj *image=NULL;
     int width, height;
-    int truecolor;
-    outputFormatObj *format;
-        
-    if (img) {
-        width = gdImageSX(img);
-        height = gdImageSY(img);
-        truecolor = img->trueColor;
-            
-        if (driver) {
-            format = msCreateDefaultOutputFormat(NULL, driver);
+    outputFormatObj *format=NULL;
+
+    if (!symbol || !input_format)
+    {
+        msSetError(MS_SYMERR, "NULL symbol or format", "msSymbolGetImageGD()");
+        return NULL;
+    }
+
+    if (symbol->type != MS_SYMBOL_PIXMAP)
+    {
+        msSetError(MS_SYMERR, "Can't return image from non-pixmap symbol",
+                   "msSymbolGetImageGD()");
+        return NULL;
+    }
+    
+    if (symbol->img) 
+    {
+        if (input_format)
+        {
+            if (MS_DRIVER_GD(input_format))
+                format = input_format;
+            else
+            {
+                msSetError(MS_IMGERR, "Non-GD drivers not allowed",
+                           "msSymbolGetImageGD()");
+                return NULL;
+            }
         }
-        else {
+        else 
+        {
             format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
             if (format == NULL)
                 format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
@@ -972,31 +1000,70 @@ imageObj *msGDGetImage(gdImagePtr img, const char *driver)
             if (format == NULL)
                 format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
         }
-        if (format == NULL) {
-            msSetError(MS_IMGERR, "Could not create output format %s",
-                       "imageObj()", driver);
+        
+        if (format == NULL) 
+        {
+            msSetError(MS_IMGERR, "Could not create output format",
+                       "msSymbolGetImageGD()");
             return NULL;
         }
+      
+        width = gdImageSX(symbol->img);
+        height = gdImageSY(symbol->img);
+        
         image = msImageCreate(width, height, format, NULL, NULL, NULL);
-        if (truecolor) {
-            gdImagePaletteCopy(image->img.gd, img);
+        if (!symbol->img->trueColor)
+        {
+            
+            gdImageColorAllocate(image->img.gd,
+                                 gdImageRed(symbol->img, 0),
+                                 gdImageGreen(symbol->img, 0),
+                                 gdImageBlue(symbol->img, 0));
         }
-        gdImageCopy(image->img.gd, img, 0, 0, 0, 0, width, height);
+        gdImageAlphaBlending(image->img.gd, 1);
+        gdImageCopy(image->img.gd, symbol->img, 0, 0, 0, 0, width, height);
     }
 
     /* returned reference may be NULL */
     return image;
 }
 
-gdImagePtr msGDSetImage(imageObj *image)
+/* ----------------------------------------------------------------------------
+   msSymbolSetImageGD
+
+   Sets the symbolObj's image by copying from a provided imageObj
+   ------------------------------------------------------------------------- */
+int msSymbolSetImageGD(symbolObj *symbol, imageObj *image)
 {
-    gdImagePtr img;
-    img = gdImageCreate(image->width, image->height);
-    if (image->format->imagemode == MS_IMAGEMODE_PC256) {
-        gdImagePaletteCopy(img, image->img.gd);
+    if (!symbol || !image)
+    {
+        msSetError(MS_SYMERR, "NULL symbol or image", "msSymbolSetImageGD()");
+        return MS_FAILURE;
     }
-    gdImageCopy(img, image->img.gd, 0, 0, 0, 0, image->width, image->height);
-    return img;
+    
+    if (symbol->img) {
+        gdImageDestroy(symbol->img);
+        symbol->img = NULL;
+    }
+
+    /* Allocate new GD image */
+    if (image->format->imagemode == MS_IMAGEMODE_RGB
+    || image->format->imagemode == MS_IMAGEMODE_RGBA)
+    {
+        symbol->img = gdImageCreateTrueColor(image->width, image->height);
+    }
+    else 
+    {
+        symbol->img = gdImageCreate(image->width, image->height);
+        gdImageColorTransparent(symbol->img, 
+                                gdImageGetTransparent(image->img.gd));
+    }
+    
+    gdImageAlphaBlending(symbol->img, 1);
+    gdImageCopy(symbol->img, image->img.gd, 0, 0, 0, 0,
+                image->width, image->height);
+
+    return MS_SUCCESS;
 }
 
 

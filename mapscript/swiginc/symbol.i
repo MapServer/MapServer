@@ -97,20 +97,14 @@
     }
 
     %newobject getImage;
-    imageObj *getImage(const char *driver=NULL)
+    imageObj *getImage(outputFormatObj *format)
     {
-        return msGDGetImage(self->img, driver);
+        return msSymbolGetImageGD(self, format);
     }
 
     int setImage(imageObj *image)
     {
-        if (self->img) {
-            gdImageDestroy(self->img);
-            self->img = NULL;
-        }
-        self->img = msGDSetImage(image);
-        if (!self->img) return MS_FAILURE;
-        return MS_SUCCESS;
+        return msSymbolSetImageGD(self, image);
     }
 
 }

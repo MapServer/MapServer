@@ -56,12 +56,14 @@ class SymbolTestCase(unittest.TestCase):
         symbol = mapscript.symbolObj('xmarks', XMARKS_IMAGE)
         assert symbol.name == 'xmarks'
         assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
-        img = symbol.getImage('GD/PNG')
+        format = mapscript.outputFormatObj('GD/PNG')
+        img = symbol.getImage(format)
         img.save('sym-%s.%s' % (symbol.name, img.format.extension))
 
-class DynamicGraphicSymbolTestCase(unittest.TestCase):
+class DynamicGraphicSymbolTestCase(MapTestCase):
 
     def setUp(self):
+        MapTestCase.setUp(self)
         f = open(HOME_IMAGE, 'r')
         s = StringIO.StringIO(f.read())
         f.close()
@@ -74,9 +76,24 @@ class DynamicGraphicSymbolTestCase(unittest.TestCase):
         """set image of new symbolObj"""
         assert self.symbol.name == 'house'
         assert self.symbol.type == mapscript.MS_SYMBOL_PIXMAP
-        img = self.symbol.getImage('GD/PNG')
+        format = mapscript.outputFormatObj('GD/PNG')
+        img = self.symbol.getImage(format)
         img.save('set-%s.%s' % (self.symbol.name, img.format.extension))
 
+    def testDrawSetImage(self):
+        """draw a map using the set image symbol"""
+        symbol_index = self.map.symbolset.appendSymbol(self.symbol)
+        assert symbol_index == 4, symbol_index
+        num = self.map.symbolset.numsymbols
+        assert num == 5, num
+        inline_layer = self.map.getLayerByName('INLINE')
+        s = inline_layer.getClass(0).getStyle(0)
+        s.symbol = symbol_index
+        s.size = 32
+        inline_layer.transparency = mapscript.MS_GD_ALPHA
+        msimg = self.map.draw()
+        msimg.save('testDrawSetImage.png')
+        
 class MapSymbolTestCase(MapTestCase):
         
     def testGetPoints(self):
