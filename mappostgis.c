@@ -39,6 +39,10 @@ char tolower(char c)
 }
 #endif
 
+void postresql_NOTICE_HANDLER(void *arg, const char *message)
+{
+	msDebug(message);
+}
 
 
 msPOSTGISLayerInfo *getPostGISLayerInfo(layerObj *layer)
@@ -219,7 +223,7 @@ if (layer->debug)
 	  return(MS_FAILURE);
     }
 
-//	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layerinfo);
+	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layerinfo);
 
 
 
