@@ -27,7 +27,7 @@ typedef struct {
   char *crs;			// request coordinate reference system
   char *response_crs;	// response coordinate reference system
   rectObj bbox;		    // subset bounding box (3D), although we'll only use 2D
-  char **times;
+  char *time;
   long width, height, depth;	// image dimensions
   double resx, resy, resz;      // resolution
   char *format;
@@ -98,6 +98,7 @@ static void msWCSFreeParams(wcsParamsObj *params)
     if(params->response_crs) free(params->crs);      
     if(params->format) free(params->format);
     if(params->exceptions) free(params->exceptions);
+    if(params->time) free(params->time);
   }
 }
 
@@ -108,7 +109,6 @@ static int msWCSIsLayerSupported(layerObj *layer)
 
     return MS_FALSE;
 }
-
 
 static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapObj *map)
 {
@@ -155,6 +155,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          params->height = atoi(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "COVERAGE") == 0)
          params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
+       else if(strcasecmp(request->ParamNames[i], "TIME") == 0)
+	     params->time = strdup(request->ParamValues[i]);
 
        // and so on...
     }
@@ -598,16 +600,70 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
 {
     imageObj   *image;
-    layerObj   *layer;
+    layerObj   *lp;
     int         status, i;
+    const char *value;
+
+    // Find the layer we are working with. 
+    lp = NULL;
+    for(i=0; i<map->numlayers; i++) {
+      if( EQUAL(map->layers[i].name,params->coverages[0]) ) {
+        lp = map->layers + i;
+        break;
+      }
+    }
+
+    if(lp == NULL) {
+      msSetError( MS_WCSERR, "COVERAGE=%s not found, not in supported layer list.", "msWCSGetCoverage()", params->coverages[0] );
+      return msWCSException(params->version);
+    }
 
     // Did we get a TIME value (support only a single value for now)
+    if(params->time) {
+      int tli;
+      layerObj *tlp=NULL;
     
-    /*
-    ** Time support is ONLY valid with layer-based TILEINDEXes. Basically we end up setting the filter and filteritem
-    ** values in the appropriate layer.
-    */
-    
+      // check format of TIME parameter
+      if(strchr(params->time, ',')) {
+        msSetError( MS_WCSERR, "Temporal lists are not supported, only individual values.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      }
+      if(strchr(params->time, '/')) {
+        msSetError( MS_WCSERR, "Temporal ranges are not supported, only individual values.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      }
+      
+      // make sure layer is tiled appropriately
+      if(!lp->tileindex) {
+        msSetError( MS_WCSERR, "Underlying layer is not tiled, unable to do temporal subsetting.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      }
+      tli = msGetLayerIndex(map, lp->tileindex);
+      if(tli == -1) {
+        msSetError( MS_WCSERR, "Underlying layer does not use appropriate tiling mechanism.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      }
+
+      tlp = &(map->layers[tli]);
+
+      // make sure there is enough information to filter
+      value = msOWSLookupMetadata(lp->metadata, "CO", "timeitem");
+      if(!tlp->filteritem && !value) {
+        msSetError( MS_WCSERR, "Not enough information available to filter.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      }
+      
+      // override filteritem if specified in metadata
+      if(value) {
+        if(tlp->filteritem) free(tlp->filteritem);
+        tlp->filteritem = strdup(value);
+      }
+      
+      // finally set the filter
+      freeExpression(&tlp->filter);
+      loadExpressionString(&tlp->filter, params->time);
+    }
+        
     // Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands)
     
     /*
@@ -621,7 +677,7 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001 
         || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 )
     {
-        msSetError( MS_WMSERR, 
+        msSetError( MS_WCSERR, 
                     "BBOX missing or specifies an empty region.", 
                     "msWCSGetCoverage()" );
         return msWCSException(params->version);
@@ -650,7 +706,7 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     if( params->width == 0 || params->height == 0 
         || params->resx == 0.0 || params->resy == 0.0 )
     {
-        msSetError( MS_WMSERR, 
+        msSetError( MS_WCSERR, 
                     "A nonzero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", 
                     "msWCSGetCoverage()" );
         return msWCSException(params->version);
@@ -667,31 +723,12 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     // Should we compute a new extent, ala WMS?
     if( fabs(params->resx/params->resy - 1.0) > 0.001 )
     {
-        msSetError( MS_WMSERR, 
+        msSetError( MS_WCSERR, 
                     "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", 
                     "msWCSGetCoverage()" );
         return msWCSException(params->version);
     }
                         
-    // Find the layer we are working with. 
-    layer = NULL;
-    for( i = 0; i < map->numlayers; i++ )
-    {
-        if( EQUAL(map->layers[i].name,params->coverages[0]) )
-        {
-            layer = map->layers + i;
-            break;
-        }
-    }
-
-    if( layer == NULL )
-    {
-        msSetError( MS_WMSERR, 
-                    "COVERAGE=%s not found, not in supported layer list.", 
-                    "msWCSGetCoverage()", params->coverages[0] );
-        return msWCSException(params->version);
-    }
-
     // Select format into map object.
 
     /* for now we use the default output format defined in the .map file */
@@ -721,7 +758,7 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     }
 
     // Actually produce the "grid".
-    status = msDrawRasterLayerLow( map, layer, image );
+    status = msDrawRasterLayerLow( map, lp, image );
     if( status != MS_SUCCESS )
     {
         return status;
