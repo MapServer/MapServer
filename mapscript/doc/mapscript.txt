@@ -1718,15 +1718,24 @@ request and notes are archived at
 http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=548.
 
 An instance of styleObj can exist outside of a classObj container and
-needs to be explicitly inserted into the classObj for use in mapping.
+be explicitly inserted into the classObj for use in mapping.
 
 ::
 
-    styleobj = new styleObj()
-    classobj.insertStyle(styleobj)
+    new_style = new styleObj()
+    the_class.insertStyle(new_style)
     
 It is important to understand that insertStyle_ inserts a **copy** of the
 styleObj instance, not a reference to the instance itself.
+
+The more standard use case 
+
+::
+
+    new_style = new styleObj(the_class)
+
+remains supported.  These will be the only ways to access the styles of
+a class.  Programmers should no longer directly access the styles attribute.
 
 Attributes
 ----------
@@ -1767,8 +1776,9 @@ Methods
 
 .. _new styleObj:
 
-new styleObj() : styleObj_
-    Returns new default style Obj instance.
+new styleObj( [ classObj_ parent_class ] ) : styleObj
+    Returns new default style Obj instance.  The *parent_class* is
+    optional.
 
 
 -----------------------------------------------------------------------------

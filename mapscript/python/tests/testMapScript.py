@@ -800,6 +800,23 @@ class NewStylesTestCase(unittest.TestCase):
         fh = open(filename, 'wb')
         fh.write(data)
         fh.close()
+
+    def testAppendNewStyleOldWay(self):
+        p_layer = self.mapobj1.getLayerByName('POINT')
+        class0 = p_layer.getClass(0)
+        assert class0.numstyles == 2, class0.numstyles
+        new_style = mapscript.styleObj(class0)
+        new_style.color.setRGB(0, 0, 0)
+        new_style.symbol = 1
+        new_style.size = 3
+        msimg = self.mapobj1.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'testAppendNewStyleOldWay.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+
     def testInsertNewStyleAtIndex0(self):
         l_layer = self.mapobj1.getLayerByName('LINE')
         class0 = l_layer.getClass(0)

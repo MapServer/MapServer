@@ -1028,18 +1028,30 @@ memory.") const char * {
 // See Bugzilla issue 548 about work on styleObj and classObj
 %extend styleObj {
 
-    styleObj() {
+    styleObj(classObj *parent_class=NULL) {
         styleObj *style;
         int result;
-        style = (styleObj *)calloc(1, sizeof(styleObj));
-        if (!style) return NULL;
-        result = initStyle(style);
-        if (result == MS_SUCCESS) {
-            return style;
+        if (!parent_class) { 
+            style = (styleObj *)calloc(1, sizeof(styleObj));
+            if (!style) return NULL;
+            result = initStyle(style);
+            if (result == MS_SUCCESS) {
+                return style;
+            }
+            else {
+                msSetError(MS_MISCERR, "Failed to initialize styleObj",
+                                       "styleObj()");
+                return NULL;
+            }
         }
         else {
-            msSetError(MS_MISCERR, "Failed to initialize styleObj", "styleObj()");
-            return NULL;
+            if (parent_class->numstyles == MS_MAXSTYLES) { // no room
+                msSetError(MS_CHILDERR, "Exceeded max number of styles: %d",
+                           "styleObj()", MS_MAXSTYLES);
+                return NULL;
+            }
+            parent_class->numstyles++;
+            return &(parent_class->styles[parent_class->numstyles-1]);
         }
     }
     
