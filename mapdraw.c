@@ -492,7 +492,7 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->layerinfo)
     return(MS_FALSE); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
-  if(layer->type == MS_LAYER_QUERY) return(MS_FALSE);
+  if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_FALSE);
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);
   if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_FALSE);
 
@@ -531,7 +531,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (!msLayerIsVisible(map, layer))
       return MS_SUCCESS;  // Nothing to do, layer is either turned off, out of
                           // scale, has no classes, etc.
-
 
   // Inform the rendering device that layer draw is starting.
   msImageStartLayer(map, layer, image);
@@ -786,7 +785,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
    return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
-  if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS); // query only layers simply can't be drawn, not an error
+  if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_SUCCESS); // query and tileindex layers simply can't be drawn, not an error
 
   if(map->querymap.style == MS_HILITE) { // first, draw normally, but don't return
     status = msDrawLayer(map, layer, image);
