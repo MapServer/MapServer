@@ -15,7 +15,7 @@ static void sde_error(long error_code, char *routine, char *sde_routine) {
   SE_error_get_string(error_code, error_string);
 
   msSetError(MS_SDEERR, NULL, routine);
-  sprintf(ms_error.message, "%s: %s", sde_routine, error_string);
+  sprintf(ms_error.message, "%s: %s (%ld)", sde_routine, error_string, error_code);
 
   return;
 }
@@ -29,7 +29,7 @@ static int sdeRectOverlap(SE_ENVELOPE *a, SE_ENVELOPE *b)
   return(MS_TRUE);
 }
 
-static sdeRectContained(SE_ENVELOPE *a, SE_ENVELOPE *b)
+static int sdeRectContained(SE_ENVELOPE *a, SE_ENVELOPE *b)
 {
   if(a->minx >= b->minx && a->maxx <= b->maxx)
     if(a->miny >= b->miny && a->maxy <= b->maxy)
@@ -37,68 +37,86 @@ static sdeRectContained(SE_ENVELOPE *a, SE_ENVELOPE *b)
   return(MS_FALSE);  
 }
 
-static int sdeTransformShape(SE_SHAPE inshp, shapeObj *outshp) {
-  int numparts, numpoints;
+static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, shapeObj *outshp) {
+  long numparts, numpoints;
   long *parts=NULL;
   SE_POINT *points=NULL;
-  long type;
+  long type, status;
+
+  lineObj line={0,NULL};
+
+  int i,j,k,l;
   
-  SE_shape_get_type(shape, &type);
+  SE_shape_get_type(inshp, &type);
 
   if(type == SG_NIL_SHAPE) return(0); // skip null shapes
 
-  SE_shape_get_num_points(shape, 0, 0, &numpoints);
-  SE_shape_get_num_points(shape, &numparts, NULL);
+  SE_shape_get_num_points(inshp, 0, 0, &numpoints);
+  SE_shape_get_num_parts(inshp, &numparts, NULL);
 
   if(numparts > 0) {
     parts = (long *)malloc(numparts*sizeof(long));
     if(!parts) {
-      msSetError(MS_MEMERR, "Unable to allocate parts array.", "sde_2_internal()");
+      msSetError(MS_MEMERR, "Unable to allocate parts array.", "sdeTransformShape()");
       return(-1);
     }
   }
 
   points = (SE_POINT *)malloc(numpoints*sizeof(SE_POINT));
   if(!parts) {
-    msSetError(MS_MEMERR, "Unable to allocate parts array.", "sde_2_internal()");
+    msSetError(MS_MEMERR, "Unable to allocate parts array.", "sdeTransformShape()");
     return(-1);
   }
 
-  status = SE_shape_get_all_points(shape, SE_DEFAULT_ROTATION, parts, NULL, points, NULL, NULL);
+  status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, parts, NULL, points, NULL, NULL);
   if(status != SE_SUCCESS) {
-    sde_error(status, "sde_2_internal()", "SE_shape_get_all_points()");
+    sde_error(status, "sdeTransformShape()", "SE_shape_get_all_points()");
     return(-1);
   }
 
-
-  // here...
-
-
-  for(i=0; i<p->numlines; i++) { /* for each line */
+  l = 0;
+  for(i=0; i<numparts; i++) {
     
-    p->line[i].point[0].x = MS_NINT((p->line[i].point[0].x - extent.minx)/cellsize);
-    p->line[i].point[0].y = MS_NINT((extent.maxy - p->line[i].point[0].y)/cellsize);
+    if( i == numparts-1)
+      line.numpoints = numpoints - parts[i];
+    else
+      line.numpoints = parts[i+1] - parts[i];
+
+    line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
+    if(!line.point) {
+      msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeTransformShape()");
+      return(-1);
+    }
+     
+    line.point[0].x = MS_NINT((points[0].x - extent.minx)/cellsize);
+    line.point[0].y = MS_NINT((extent.maxy - points[0].y)/cellsize);
+ 
+    for(j=1, k=1; j < line.numpoints; j++ ) {
       
-    for(j=1, k=1; j < p->line[i].numpoints; j++ ) {
-      
-      p->line[i].point[k].x = MS_NINT((p->line[i].point[j].x - extent.minx)/cellsize); 
-      p->line[i].point[k].y = MS_NINT((extent.maxy - p->line[i].point[j].y)/cellsize);
+      line.point[k].x = MS_NINT((points[l].x - extent.minx)/cellsize); 
+      line.point[k].y = MS_NINT((extent.maxy - points[l].y)/cellsize);
       
       if(k == 1) {
-	if((p->line[i].point[0].x != p->line[i].point[1].x) || (p->line[i].point[0].y != p->line[i].point[1].y))
+	if((line.point[0].x != line.point[1].x) || (line.point[0].y != line.point[1].y))
 	  k++;
       } else {
-	if((p->line[i].point[k-1].x != p->line[i].point[k].x) || (p->line[i].point[k-1].y != p->line[i].point[k].y)) {
-	  if(((p->line[i].point[k-2].y - p->line[i].point[k-1].y)*(p->line[i].point[k-1].x - p->line[i].point[k].x)) == ((p->line[i].point[k-2].x - p->line[i].point[k-1].x)*(p->line[i].point[k-1].y - p->line[i].point[k].y))) {	    
-	    p->line[i].point[k-1].x = p->line[i].point[k].x;
-	    p->line[i].point[k-1].y = p->line[i].point[k].y;	
+	if((line.point[k-1].x != line.point[k].x) || (line.point[k-1].y != line.point[k].y)) {
+	  if(((line.point[k-2].y - line.point[k-1].y)*(line.point[k-1].x - line.point[k].x)) == ((line.point[k-2].x - line.point[k-1].x)*(line.point[k-1].y - line.point[k].y))) {	    
+	    line.point[k-1].x = line.point[k].x;
+	    line.point[k-1].y = line.point[k].y;	
 	  } else {
 	    k++;
 	  }
 	}
       }
+
+      l++;
     }
-    p->line[i].numpoints = k; /* save actual number kept */
+
+    line.numpoints = k; /* save actual number kept */
+    msAddLine(outshp, &line);
+
+    free(line.point);
   }
 
   return(0);
@@ -117,8 +135,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   SE_COORDREF coordref=NULL;
   SE_LAYERINFO layerinfo;
 
-  SE_ENVELOPE layerrect, cliprect, shaperect;
-  SE_SHAPE filtershape, shape, clipshape;
+  SE_ENVELOPE rect, cliprect, shaperect;
+  SE_SHAPE filtershape=0, shape=0, clipshape=0;
   short shape_is_null;
 
   SE_SQL_CONSTRUCT *sql;
@@ -180,8 +198,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   /*
   ** Get some basic information about the layer (error checking)
   */
+  SE_layerinfo_create(NULL, &layerinfo);
   SE_coordref_create(&coordref);
-  SE_layerinfo_create(coordref, &layerinfo);
 
   params = split(layer->data, ',', &numparams);
   if(!params) {
@@ -200,8 +218,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     return(-1);
   }
 
-  msFreeCharArray(params, numparams);
-
   status = SE_layerinfo_get_envelope(layerinfo, &rect);
   if(status != SE_SUCCESS) {
     sde_error(status, "msDrawSDELayer()", "SE_layerinfo_get_envelope()");
@@ -216,12 +232,13 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   /*
   ** define the spatial filter, used with all classes
   */
+  SE_layerinfo_get_coordref(layerinfo, coordref);
   SE_shape_create(coordref, &filtershape);
 
-  rect.minx = map->extent.maxx;
-  rect.maxx = map->extent.minx;
-  rect.miny = map->extent.maxy;
-  rect.maxy = map->extent.miny;
+  rect.minx = MS_MAX(map->extent.minx, rect.minx);
+  rect.miny = MS_MAX(map->extent.miny, rect.miny);
+  rect.maxx = MS_MIN(map->extent.maxx, rect.maxx);
+  rect.maxy = MS_MIN(map->extent.maxy, rect.maxy);
 
   status = SE_shape_generate_rectangle(&rect, filtershape);
   if(status != SE_SUCCESS) {
@@ -244,16 +261,15 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   /*
   ** define a portion of the SQL construct here, the where clause changes with each class
   */
-  status = SE_sql_contruct_alloc((nparams-1), &sql);
+  status = SE_sql_construct_alloc((numparams-1), &sql);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_sql_contruct_alloc()");
+    sde_error(status, "msDrawSDELayer()", "SE_sql_construct_alloc()");
     return(-1);
   }
 
   strcpy(sql->tables[0], params[0]);
-  for(i=2; i<nparams; i++)
+  for(i=2; i<numparams; i++)
     strcpy(sql->tables[i-1], params[i]); // add any joined tables  
-
   
   /*
   ** set up column list
@@ -265,6 +281,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     numcolumns = 2;
     columns[1] = strdup(layer->labelitem);    
   }  
+
+  msFreeCharArray(params, numparams);
 
   /*
   ** each class is a SQL statement, no expression means all features
@@ -323,10 +341,10 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	SE_shape_get_extent(shape, 0, &shaperect);
 	if(!sdeRectContained(&shaperect, &cliprect)) {
 	  if(!sdeRectOverlap(&shaperect, &cliprect)) continue;
-	  SE_shape_clip(shape, cliprect, clipshape);
+	  SE_shape_clip(shape, &cliprect, clipshape);
 	  if(SE_shape_is_nil(clipshape)) continue;
 	}
-	sdeTransformPolygon(map->extent, map->cellsize, clipshape, &shape2);
+	sdeTransformShape(map->extent, map->cellsize, clipshape, &shape2);
 
 	msDrawShadeSymbol(&map->shadeset, img, &shape2, &(layer->class[i]));
 	
@@ -334,7 +352,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  if(msPolygonLabelPoint(&shape2, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
 
 	    if(!annotation)
-	      annotation = layer->class[i].text;
+	      annotation = layer->class[i].text.string;
 	    
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
