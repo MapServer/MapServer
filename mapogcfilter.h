@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2003/10/07 23:54:24  assefa
+ * Additional Validation for propertyislike.
+ *
  * Revision 1.3  2003/09/26 13:44:40  assefa
  * Add support for gml box with 2 <coord> elements.
  *
@@ -104,9 +107,13 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
 
 int FLTValidFilterNode(FilterEncodingNode *psFilterNode);
 int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode);
-int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
 int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, 
                           const char *szType);
+int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode);
+
+int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
+char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode);
+int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode);
 
 void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                             CPLXMLNode *psXMLNode);

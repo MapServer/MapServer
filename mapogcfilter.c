@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2003/10/07 23:54:24  assefa
+ * Additional Validation for propertyislike.
+ *
  * Revision 1.11  2003/09/30 15:58:16  assefa
  * IsBetween filter can have a <literal> node before value.
  *
@@ -583,7 +586,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /*      PropertyIsLike                                                  */
 /*                                                                      */
 /*      <Filter>                                                        */
-/*      <PropertyIsLike wildCard="*" singleChar="#" escapeChar="!">     */
+/*      <PropertyIsLike wildCard="*" singleChar="#" escape="!">         */
 /*      <PropertyName>LAST_NAME</PropertyName>                          */
 /*      <Literal>JOHN*</Literal>                                        */
 /*      </PropertyIsLike>                                               */
@@ -790,10 +793,70 @@ int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
 
     nCount = FLTNumberOfFilterType(psFilterNode, "PropertyIsLike");
 
-    if (nCount <= 1)
+    if (nCount > 1)
+      return 0;
+    else if (nCount == 0)
+      return 1;
+    
+    //nCount ==1 
+    if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
+      return 1;
+
+    if (strcasecmp(psFilterNode->pszValue, "OR") == 0)
+    {
+        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") ==0 ||
+            strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") ==0)
+          return 1;
+    }
+    return 0;
+}
+
+int FLTIsPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
+{
+    if (!psFilterNode || !psFilterNode->pszValue)
+      return 0;
+    
+    if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
+      return 1;
+
+    if (strcasecmp(psFilterNode->pszValue, "OR") == 0)
+    {
+      if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") ==0 ||
+          strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") ==0)
+        return 1;
+    }
+
+    return 0;
+}       
+ 
+
+int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode)
+{
+    if (psFilterNode && psFilterNode->pszValue && 
+        strcmp(psFilterNode->pszValue, "PropertyIsLike") ==0)
       return 1;
 
     return 0;
+}
+
+char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode)
+{
+    char *pszExpression = NULL;
+
+    if (psFilterNode && psFilterNode->pszValue && 
+         strcmp(psFilterNode->pszValue, "PropertyIsLike") ==0)
+      return FLTGetMapserverExpression(psFilterNode);
+    else
+    {
+        if (psFilterNode->psLeftNode)
+          pszExpression = 
+            FLTGetMapserverIsPropertyExpression(psFilterNode->psLeftNode);
+        if (!pszExpression && psFilterNode->psRightNode)
+          pszExpression = 
+            FLTGetMapserverIsPropertyExpression(psFilterNode->psRightNode);
+    }
+
+    return pszExpression;
 }
 
 
