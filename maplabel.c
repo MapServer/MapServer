@@ -560,8 +560,9 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-	  
-	  p = get_metrics(&(cachePtr->point), MS_UC, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), (label.angle + j*MS_DEG_TO_RAD*180.0), label.buffer, cachePtr->poly);
+
+	  label.angle += j*MS_DEG_TO_RAD*180.0;
+	  p = get_metrics(&(cachePtr->point), MS_UC, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
 	  
 	  if(draw_marker) 
 	    msRect2Polygon(marker_rect, cachePtr->poly); // save marker bounding polygon
