@@ -125,6 +125,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
     {
       char **layers;
       int numlayers, j, k, iLayer;
+      int validlayer = 0;
 
       layers = split(values[i], ',', &numlayers);
       if (layers==NULL || numlayers < 1) {
@@ -133,6 +134,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
         return msWMSException(map, wmtver);
       }
 
+         
       for (iLayer=0; iLayer < map->numlayers; iLayer++)
           map->layerorder[iLayer] = iLayer;   
 
@@ -147,17 +149,29 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       }
        
       for (k=0; k<numlayers; k++)
-         for (j=0; j<map->numlayers; j++)
-         {         
-            // Turn on selected layers only.
-            if ((map->layers[j].name && strcasecmp(map->layers[j].name, layers[k]) == 0) ||
-                (map->name && strcasecmp(map->name, layers[k]) == 0) ||
-                (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
-            {
-               map->layers[j].status = MS_ON;
-               map->layerorder[nLayerOrder++] = j;
-            }
-         }
+      {
+          validlayer = 0;
+          for (j=0; j<map->numlayers; j++)
+          {   
+              // Turn on selected layers only.
+              if ((map->layers[j].name && strcasecmp(map->layers[j].name, layers[k]) == 0) ||
+                  (map->name && strcasecmp(map->name, layers[k]) == 0) ||
+                  (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
+              {
+                  map->layers[j].status = MS_ON;
+                  map->layerorder[nLayerOrder++] = j;
+                  validlayer =1;
+              }
+            
+          }
+          //validate all layers given. If an invalid layer is sent, return an exception. 
+          if (validlayer == 0)
+          {
+              msSetError(MS_WMSERR, "Invalid layer (%s).",
+                         "msWMSLoadGetMapParams()", layers[k]);
+              return msWMSException(map, wmtver);
+          }
+      }
        
       // set all layers with status off at end of array
       for (j=0; j<map->numlayers; j++)
