@@ -18,7 +18,9 @@ imageObj *msDrawMap(mapObj *map)
     layerObj *lp=NULL;
     int status;
     imageObj *image = NULL;
-       
+    httpRequestObj asWMSReqInfo[MS_MAXLAYERS];
+    int numWMSRequests=0;
+
     if(map->width == -1 || map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
         return(NULL);
@@ -64,6 +66,30 @@ imageObj *msDrawMap(mapObj *map)
                               map->resolution, &map->scale);
     if(status != MS_SUCCESS) return(NULL);
 
+
+    // Pre-download all WMS layers in parallel before starting to draw map
+    for(i=0; i<map->numlayers; i++) 
+    {
+        // layerorder doesn't matter at this point
+        if (map->layers[i].connectiontype == MS_WMS)  
+        {
+            if ( msPrepareWMSLayerRequest(i, map, &(map->layers[i]),
+                                          asWMSReqInfo, 
+                                          &numWMSRequests) == MS_FAILURE)
+            {
+                return NULL;
+            }
+        }
+    }
+
+    if (numWMSRequests && 
+        msWMSExecuteRequests(asWMSReqInfo, numWMSRequests) == MS_FAILURE)
+    {
+        return NULL;
+    }
+
+    // OK, now we can start drawing
+
     for(i=0; i<map->numlayers; i++) {
 
         if (map->layerorder[i] != -1) {
@@ -73,7 +99,11 @@ imageObj *msDrawMap(mapObj *map)
             if(lp->postlabelcache) // wait to draw
                 continue;
 
-            status = msDrawLayer(map, lp, image);
+            if (lp->connectiontype == MS_WMS)  
+                status = msDrawWMSLayerLow(i, asWMSReqInfo, numWMSRequests, 
+                                           map, lp, image);
+            else 
+                status = msDrawLayer(map, lp, image);
             if(status != MS_SUCCESS) return(NULL);
         }
     }
@@ -95,7 +125,11 @@ imageObj *msDrawMap(mapObj *map)
     if(!lp->postlabelcache)
       continue;
 
-    status = msDrawLayer(map, lp, image);
+    if (lp->connectiontype == MS_WMS)  
+        status = msDrawWMSLayerLow(i, asWMSReqInfo, numWMSRequests, 
+                                   map, lp, image);
+    else 
+        status = msDrawLayer(map, lp, image);
     if(status != MS_SUCCESS) return(NULL);
   }
 
@@ -104,6 +138,9 @@ imageObj *msDrawMap(mapObj *map)
 
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
       msEmbedLegend(map, image->img.gd); //TODO
+
+  // Cleanup WMS Request stuff
+  msFreeRequestObj(asWMSReqInfo, numWMSRequests);
 
   return(image);
 }
@@ -600,26 +637,59 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
 #endif
     }
 
-    return 0;
+    return MS_FAILURE;
 }
+
+/**
+ * msDrawWMSLayer()
+ *
+ * Draw a single WMS layer.  
+ * Multiple WMS layers in a map are preloaded and then drawn using
+ * msDrawWMSLayerLow()
+ */
 
 int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
+    int nStatus = MS_FAILURE;
+
     if (image && map && layer)
     {
+/* ------------------------------------------------------------------
+ * Start by downloading the layer
+ * ------------------------------------------------------------------ */
+        httpRequestObj asReqInfo[1];
+        int numReq = 0;
+        
+        if ( msPrepareWMSLayerRequest(1, map, layer,
+                                      asReqInfo, &numReq) == MS_FAILURE  ||
+             msWMSExecuteRequests(asReqInfo, numReq) == MS_FAILURE )
+        {
+            return MS_FAILURE;
+        }
+
+/* ------------------------------------------------------------------
+ * Then draw layer based on output format
+ * ------------------------------------------------------------------ */
         if( MS_RENDERER_GD(image->format) )
-            return msDrawWMSLayerLow( map, layer, image) ;
+            nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
+                                        map, layer, image) ;
 
         else if( MS_RENDERER_RAWDATA(image->format) )
-            return msDrawWMSLayerLow( map, layer, image) ;
+            nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
+                                        map, layer, image) ;
 
 #ifdef USE_MING_FLASH                
         else if( MS_RENDERER_SWF(image->format) )
-            return  msDrawWMSLayerSWF(map, layer, image);
+            nStatus = msDrawWMSLayerSWF(1, asReqInfo, numReq,
+                                        map, layer, image);
 #endif
+        else
+            nStatus = MS_SUCCESS; // Should we fail if output doesn't support WMS?
+        // Cleanup
+        msFreeRequestObj(asReqInfo, numReq);
     }
 
-    return 0;
+    return nStatus;
 }
 
 /*

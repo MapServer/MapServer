@@ -1044,11 +1044,6 @@ int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
    
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
 
-int msDrawWMSLayer(mapObj *map, layerObj *lp, imageObj *image); 
-char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
-                             int nClickX, int nClickY, int nFeatureCount,
-                             const char *pszInfoFormat); 
-
 int msGMLWriteQuery(mapObj *map, char *filename); // mapgml.c
 
 
@@ -1064,6 +1059,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image);
 
 int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
+
+int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
 
 int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, 
                 imageObj *image, int overlay);
@@ -1152,12 +1149,35 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p,
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 
-//in mapwmslayer.c
-int msDrawWMSLayerLow(mapObj *map, layerObj *lp, imageObj *image);
-
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */
 /* ==================================================================== */
+
+//in mapwmslayer.c
+
+typedef struct http_request_info
+{
+    int         nLayerId;
+    void      * request;  /* HTRequest * */
+    char      * pszGetUrl;
+    char      * pszOutputFile;
+    int         nStatus;
+    int         nTimeout;
+    rectObj     bbox;
+} httpRequestObj;
+
+void msFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
+                             httpRequestObj *pasReqInfo, int *numRequests);
+int msWMSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests);
+int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
+                      int numRequests, mapObj *map, layerObj *lp, 
+                      imageObj *img);
+
+char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
+                             int nClickX, int nClickY, int nFeatureCount,
+                             const char *pszInfoFormat); 
+
 
 
 /* ==================================================================== */
