@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.66  2003/07/03 15:31:47  assefa
+ * Add the possibility to generate image for function
+ * processquerytemplate (bug 341).
+ *
  * Revision 1.65  2003/06/26 13:54:23  assefa
  * Use calloc instead of malloc in shapefileObj_new (Bug 344).
  *
@@ -503,11 +507,12 @@ char *mapObj_processLegendTemplate(mapObj *self,
 }
   
 
-char *mapObj_processQueryTemplate(mapObj *self,
+char *mapObj_processQueryTemplate(mapObj *self, int bGenerateImages,
                                    char **names, char **values, 
                                    int numentries)
 {
-    return msProcessQueryTemplate(self, names, values, numentries);
+    return msProcessQueryTemplate(self, bGenerateImages, names, values, 
+                                  numentries);
 }
 
 int mapObj_setSymbolSet(mapObj *self,

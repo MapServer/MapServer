@@ -135,6 +135,7 @@ char *msProcessLegendTemplate(mapObj *map,
                               int numentries);
 
 char *msProcessQueryTemplate(mapObj *map,
+                             int bGenerateImages, 
                              char **names, char **values, 
                              int numentries);
 

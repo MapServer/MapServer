@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/07/03 15:31:47  assefa
+ * Add the possibility to generate image for function
+ * processquerytemplate (bug 341).
+ *
  * Revision 1.33  2003/02/24 02:19:44  dan
  * Added map->clone() method
  *
@@ -215,6 +219,7 @@ char            *mapObj_processLegendTemplate(mapObj *self,
                                               char **names, char **values, 
                                               int numentries);
 char            *mapObj_processQueryTemplate(mapObj *self,
+                                             int bGenerateImages,
                                              char **names, char **values, 
                                              int numentries);
 int             mapObj_setSymbolSet(mapObj *self, char *szFileName);

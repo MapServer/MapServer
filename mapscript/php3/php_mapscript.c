@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.173  2003/07/03 15:31:47  assefa
+ * Add the possibility to generate image for function
+ * processquerytemplate (bug 341).
+ *
  * Revision 1.172  2003/07/01 03:08:33  dan
  * Use imageObj instead of gdImagePtr in php3_ms_img_free()
  *
@@ -3090,7 +3094,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
-
+    
 #ifdef PHP4
     pval   **pExtent;
 #else
@@ -4916,7 +4920,7 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
 {
 #ifdef PHP4
     pval        *pThis;
-    pval        *pParamValue;
+    pval        *pParamValue, *pGenerateImage;
     mapObj      *self=NULL;
     char        *pszBuffer = NULL;
     int         i, iIndice = 0;
@@ -4925,7 +4929,9 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
     char        **papszNameValue = NULL;
     char        **papszName = NULL;
     char        **papszValue = NULL;
-
+    int         nGenerateImage = 1;
+    int         nArgs = ARG_COUNT(ht);
+          
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -4946,12 +4952,22 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
     }
 
 
-    if (ZEND_NUM_ARGS() != 1 || 
-        getParameters(ht,1,&pParamValue)==FAILURE) 
+    if (pThis == NULL ||
+        (nArgs != 1 && nArgs != 2))
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (getParameters(ht,nArgs,&pParamValue, &pGenerateImage)==FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
     
+    if (nArgs == 2)
+    {
+        convert_to_long(pGenerateImage);
+        nGenerateImage = pGenerateImage->value.lval;
+    }
 
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     if (self == NULL)
@@ -4994,7 +5010,8 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
                 papszValue[i] = papszNameValue[iIndice+1];
             }
 
-            pszBuffer = mapObj_processQueryTemplate(self, papszName, 
+            pszBuffer = mapObj_processQueryTemplate(self, nGenerateImage,
+                                                    papszName, 
                                                     papszValue, numelems);
             
             if (pszBuffer)

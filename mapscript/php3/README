@@ -407,8 +407,10 @@ and the MapServer Map File documentation at:
               $tmparray["my_tag"] = "value_of_my_tag";
               $map->processtemplate($tmparray, MS_FASLE);
          
-   char *processquerytemplate(array params)     
+   char *processquerytemplate(array params, boolean generateimages)     
        Process query template files and return the resut in a buffer.
+       Second argument generateimages is not manadatory. If not given
+        It will be set to TRUE.
 
        See also : processtemplate function.
    

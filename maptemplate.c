@@ -2827,7 +2827,7 @@ char *msProcessLegendTemplate(mapObj *map,
 /*      Utility function that process a template file(s) used in the    */
 /*      query and retrun the processed template(s) in a bufffer.        */
 /************************************************************************/
-char *msProcessQueryTemplate(mapObj *map,
+char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, 
                              char **names, char **values, 
                              int numentries)
 {
@@ -2851,6 +2851,9 @@ char *msProcessQueryTemplate(mapObj *map,
             msObj->ParamValues = values;
             msObj->NumParams = numentries;    
         }
+        if (bGenerateImages)
+          msGenerateImages(msObj, NULL, MS_FALSE);
+
         msReturnQuery(msObj, NULL, &pszBuffer );
     }
 
