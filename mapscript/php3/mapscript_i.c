@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.34  2002/02/08 19:13:05  dan
+ * Opps... I have deleted mapObj_getSymbolByName() by accident
+ *
  * Revision 1.33  2002/02/08 18:51:11  dan
  * Remove class and layer args to setSymbolByName()
  *
@@ -186,6 +189,16 @@ int *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname,
 
 int mapObj_addColor(mapObj* self, int r, int g, int b) {
     return msAddColor(self, r, g, b);
+  }
+
+int mapObj_getSymbolByName(mapObj* self, char *name) {
+    int symbol;
+
+    if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
+      if((symbol = msAddImageSymbol(&self->symbolset, name)) == -1)
+        return -1;
+
+    return symbol;
   }
 
 void mapObj_prepareQuery(mapObj* self) {
