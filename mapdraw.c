@@ -135,10 +135,11 @@ imageObj *msDrawMap(mapObj *map)
     {
         // layerorder doesn't matter at this point
 #ifdef USE_WMS_LYR
-        if (map->layers[i].connectiontype == MS_WMS)  
+        if (map->layers[map->layerorder[i]].connectiontype == MS_WMS)  
         {
-            if ( msLayerIsVisible(map, &(map->layers[i])) &&
-                 msPrepareWMSLayerRequest(i, map, &(map->layers[i]),
+            if ( msLayerIsVisible(map, &(map->layers[map->layerorder[i]])) &&
+                 msPrepareWMSLayerRequest(map->layerorder[i], map, 
+                                          &(map->layers[map->layerorder[i]]),
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
@@ -147,10 +148,11 @@ imageObj *msDrawMap(mapObj *map)
         }
 #endif
 #ifdef USE_WFS_LYR
-        if (map->layers[i].connectiontype == MS_WFS)  
+        if (map->layers[map->layerorder[i]].connectiontype == MS_WFS)  
         {
-            if ( msLayerIsVisible(map, &(map->layers[i])) &&
-                 msPrepareWFSLayerRequest(i, map, &(map->layers[i]),
+            if ( msLayerIsVisible(map, &(map->layers[map->layerorder[i]])) &&
+                 msPrepareWFSLayerRequest(map->layerorder[i], map, 
+                                          &(map->layers[map->layerorder[i]]),
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
@@ -180,18 +182,21 @@ imageObj *msDrawMap(mapObj *map)
             {
 #ifdef USE_WMS_LYR 
                 if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-                status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
+                status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
+                                           numOWSRequests, 
                                            map, lp, image);
 
 #ifdef USE_MING_FLASH                
                  else if( MS_RENDERER_SWF(image->format) )
-                   status = msDrawWMSLayerSWF(i, asOWSReqInfo, numOWSRequests,
+                   status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, 
+                                              numOWSRequests,
                                               map, lp, image);
 #endif
 #ifdef USE_PDF
                  else if( MS_RENDERER_PDF(image->format) )
                  {
-                  status = msDrawWMSLayerPDF(i, asOWSReqInfo, numOWSRequests,
+                  status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, 
+                                             numOWSRequests,
                                              map, lp, image);
                  }
 #endif
@@ -228,7 +233,7 @@ imageObj *msDrawMap(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
 
-    lp = &(map->layers[i]);
+    lp = &(map->layers[map->layerorder[i]]);
 
     if(!lp->postlabelcache)
       continue;
@@ -237,18 +242,21 @@ imageObj *msDrawMap(mapObj *map)
     { 
 #ifdef USE_WMS_LYR 
       if( MS_RENDERER_GD(image->format) ||  MS_RENDERER_RAWDATA(image->format))
-        status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
+        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
+                                   numOWSRequests, 
                                    map, lp, image);
 
 #ifdef USE_MING_FLASH                
       else if( MS_RENDERER_SWF(image->format) )
-        status = msDrawWMSLayerSWF(i, asOWSReqInfo, numOWSRequests, 
+        status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, numOWSRequests, 
                                    map, lp, image);
 #endif
 #ifdef USE_PDF
       else if( MS_RENDERER_PDF(image->format) )
       {
-          status = MS_FAILURE;
+          status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, 
+                                     numOWSRequests, 
+                                     map, lp, image);
       }
 #endif
 
