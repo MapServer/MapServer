@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.5  2000/08/16 21:14:00  dan
+ * Sync with mapscript.i version 1.12
+ *
  * Revision 1.4  2000/07/12 20:19:30  dan
  * Sync with mapscript.i version 1.10
  *
@@ -51,7 +54,7 @@
 mapObj *mapObj_new(char *filename) {
     mapObj *map=NULL;
 
-    if(filename)
+    if(filename && strlen(filename))
       return msLoadMap(filename);
     else { /* create an empty map, no layers etc... */
         map = (mapObj *)malloc(sizeof(mapObj));
@@ -93,25 +96,9 @@ int mapObj_addColor(mapObj* self, int r, int g, int b) {
 int mapObj_getSymbolByName(mapObj* self, int type, char *name) {
     int symbol;
 
-    switch (type) {
-    case(MS_MARKERSET):
-      if((symbol = msGetSymbolIndex(&self->markerset, name)) == -1)
-	if((symbol = msAddImageSymbol(&self->markerset, name)) == -1)
-	  return -1;
-      break;
-    case(MS_LINESET):
-      if((symbol = msGetSymbolIndex(&self->lineset, name)) == -1)
-	if((symbol = msAddImageSymbol(&self->lineset, name)) == -1)
-	  return -1;
-      break;
-    case(MS_SHADESET):
-      if((symbol = msGetSymbolIndex(&self->shadeset, name)) == -1)
-	if((symbol = msAddImageSymbol(&self->shadeset, name)) == -1)
-	  return -1;
-      break;
-    default:
-      return -1;
-    }
+    if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
+      if((symbol = msAddImageSymbol(&self->symbolset, name)) == -1)
+	return -1;
 
     return symbol;
   }
@@ -380,12 +367,12 @@ int queryObj_setExpression(queryObj *self, char *string) {
  * class extensions for featureObj, always within the context of a layer
  **********************************************************************/
 struct featureObj *featureObj_new(layerObj *layer) {
-    if(!layer->features) { /* new feature list */
-      layer->features = initFeature();
-      return layer->features;
-    } else {
-      return addFeature(layer->features);
-    }
+    if(!layer->features)
+      layer->features = initFeature(); /* new feature list */
+    else
+      layer->features = addFeature(layer->features);	
+
+    return layer->features;
   }
 
 void featureObj_destroy(struct featureObj *self) {
