@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/06/21 18:33:45  frank
+ * added INT16 and FLOAT image mode support
+ *
  * Revision 1.1  2001/03/14 17:39:16  frank
  * New
  *
@@ -47,8 +50,8 @@
 typedef int (*SimpleTransformer)( void *pCBData, int nPoints, 
                                   double *x, double *y, int *panSuccess );
 
-int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
-                             gdImagePtr psDstImage,
+int msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
+                             imageObj *psDstImage,
                              SimpleTransformer pfnTransform, void *pCBData );
 
 void *msInitProjTransformer( projectionObj *psSrc, 
@@ -59,7 +62,8 @@ void msFreeProjTransformer( void * );
 int msProjTransformer( void *pCBData, int nPoints, 
                        double *x, double *y, int *panSuccess );
 #ifdef USE_GDAL
-int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img, 
+int msResampleGDALToMap( mapObj *map, layerObj *layer, 
+                         imageObj *image,
                          GDALDatasetH hDS );
 #endif
 #endif /* ndef RESAMPLE_H */
