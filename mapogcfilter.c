@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39.2.1  2005/01/06 00:44:08  assefa
+ * Bug 1143 : missing call to msInitShape before using a shape object.
+ *
  * Revision 1.39  2004/11/22 14:56:53  dan
  * Added missing argument to msEvalContext()
  *
@@ -564,6 +567,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
 
     for (i=0; i<nSize; i++)
     {
+        msInitShape(&shape);
         status = msLayerGetShape(psLayer, &shape, -1, anValues[i]);
         if (status != MS_SUCCESS)
           nClassIndex = -1;
