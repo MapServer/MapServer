@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.6  2003/02/09 01:40:37  dan
+ * Removed stray strcat() argument in Windows-specific map open code.
+ *
  * Revision 1.104.2.5  2002/10/28 21:47:53  dan
  * Added missing MS_LAYER_CIRCLE and MS_CC constants
  *
@@ -1106,7 +1109,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
         if (virtual_getcwd(szFname, MAXPATHLEN TSRMLS_CC) != NULL)
         {
             strcat(szFname, "\\");
-            strcat(szFname, pFname->value.str.val, pszNewPath);
+            strcat(szFname, pFname->value.str.val);
             pNewObj = mapObj_new(szFname, pszNewPath);
         }
     }
