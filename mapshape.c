@@ -1011,8 +1011,10 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
   rectObj shaperect;
   char *filename;
 
-  // rect and shapefile DON"T overlap...
-  if(msRectContained(&shpfile->bounds, &rect) != MS_TRUE) 
+  shpfile->statusbounds = rect; // save the search extent
+
+  // rect and shapefile DON'T overlap...
+  if(msRectOverlap(&shpfile->bounds, &rect) != MS_TRUE) 
     return(MS_DONE);
 
   if(msRectContained(&shpfile->bounds, &rect) == MS_TRUE) {
@@ -1087,39 +1089,72 @@ int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 #else
       if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) continue; // check again
 #endif
-      
+
+      status = msSHPWhichShapes(&(layer->shpfile), rect);
+      if(status == MS_DONE)
+	continue;
+      else if(status != MS_SUCCESS)
+	return(MS_FAILURE);
+
+      msDebug("first tile is %s (%d shapes)\n", filename, layer->shpfile.numshapes);
       layer->tileshpfile.lastshape = i;
       break;
     }
   }
 
-  status = msSHPWhichShapes(&(layer->shpfile), rect);
-  if(status != MS_SUCCESS) return(status);
-
-  return(MS_SUCCESS);
+  if(i == layer->tileshpfile.numshapes) 
+    return(MS_DONE); // no more tiles
+  else
+    return(MS_SUCCESS);
 }
 
 int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
 {
-  int i;
+  int i, status;
+  char *filename, tilename[MS_PATH_LENGTH];
   char **values=NULL;
-  
+ 
   i = layer->shpfile.lastshape + 1;
   while(i<layer->shpfile.numshapes && !msGetBit(layer->shpfile.status,i)) i++; // next "in" shape
 
   if(i == layer->shpfile.numshapes) { // next tile
-    layer->shpfile.lastshape = -1;    
     msSHPCloseFile(&(layer->shpfile));
 
-    i = layer->tileshpfile.lastshape + 1;    
-    while(i<layer->tileshpfile.numshapes && !msGetBit(layer->tileshpfile.status,i)) i++; // next "in" tile
-    if(i == layer->tileshpfile.numshapes) return(MS_DONE); // no more tiles
+    // position the source to the NEXT shapefile
+    for(i=(layer->tileshpfile.lastshape + 1); i<layer->tileshpfile.numshapes; i++) {
+      if(msGetBit(layer->tileshpfile.status,i)) {
+	if(!layer->data) // assume whole filename is in attribute field
+	  filename = msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex);
+	else {  
+	  sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
+	  filename = tilename;
+	}
+	
+	if(strlen(filename) == 0) continue; // check again
+		
+	// open the shapefile
+#ifndef IGNORE_MISSING_DATA
+	if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) return(MS_FAILURE);
+#else
+	if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) continue; // check again
+#endif
+	
+	status = msSHPWhichShapes(&(layer->shpfile), layer->tileshpfile.statusbounds);
+	if(status == MS_DONE)
+	  continue;
+	else if(status != MS_SUCCESS)
+	  return(MS_FAILURE);
 
-    layer->tileshpfile.lastshape = i;
-    
-    // FIX: more to it here!
-    
-    return(msTiledSHPNextShape(layer, shapepath, shape)); // next shape
+	msDebug("next tile is %s (%d shapes)\n", filename, layer->shpfile.numshapes);
+	layer->tileshpfile.lastshape = i;
+	break;
+      }
+    }
+
+    if(i == layer->tileshpfile.numshapes) 
+      return(MS_DONE); // no more tiles
+    else
+      return(msTiledSHPNextShape(layer, shapepath, shape)); // next shape
   }
 
   layer->shpfile.lastshape = i;

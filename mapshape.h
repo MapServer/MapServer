@@ -84,7 +84,10 @@ typedef struct {
   rectObj bounds; /* shape extent */
   DBFHandle hDBF; /* .DBF file pointer */
   int lastshape;
+
   char *status;
+  rectObj statusbounds; // holds extent associated with the status vector
+
 #ifdef SWIG
 %readwrite
 #endif
