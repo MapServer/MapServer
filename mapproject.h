@@ -8,14 +8,19 @@ extern "C" {
 #endif
 
 #ifdef USE_PROJ
-#include <projects.h>
+#  ifdef USE_PROJ_API_H
+#    include <proj_api.h>
+#  else
+#    include <projects.h>
+     typedef PJ *projPJ;
+#  endif
 #endif
 
 typedef struct {
   char **args; /* variable number of projection args */
   int numargs; /* actual number of projection args */ 
 #ifdef USE_PROJ
-  PJ *proj; /* a projection structure for the PROJ package */
+  projPJ *proj; /* a projection structure for the PROJ package */
 #endif
 } projectionObj;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/04/06 01:17:31  frank
+ * use proj_api.h if available (PROJ.4.4.3)
+ *
  * Revision 1.5  2001/03/30 01:13:53  dan
  * Take cellsize into account when calculating temporary buffer size in
  * msResampleGDALToMap().
@@ -121,10 +124,10 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
 #ifdef USE_PROJ
 typedef struct 
 {
-    PJ *psSrcProj;
+    projPJ psSrcProj;
     int bSrcIsGeographic;
     double adfSrcGeoTransform[6];
-    PJ *psDstProj;
+    projPJ psDstProj;
     int bDstIsGeographic;
     double adfDstGeoTransform[6];
 } msProjTransformInfo;

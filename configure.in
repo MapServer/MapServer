@@ -357,6 +357,7 @@ if test "$with_proj" = "yes" ; then
 
   AC_CHECK_LIB(proj,pj_init,PROJ_ENABLED=-DUSE_PROJ,,,)
   AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,,)
+  AC_CHECK_LIB(proj,pj_latlong_from_proj,PROJ_API=yes,PROJ_API=no,,)
 
   if test -n "$PROJ_ENABLED" -a "$PJ_TRANSFORM" = "no"; then
       AC_MSG_ERROR([This version of PROJ is too old.  PROJ4.4.2 or later is required.])
@@ -387,6 +388,7 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   fi
 
   AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,$PROJ_LIB)
+  AC_CHECK_LIB(proj,pj_latlong_from_proj,PROJ_API=yes,PROJ_API=no,$PROJ_LIB)
   if test "$PJ_TRANSFORM" = "no"; then
       AC_MSG_ERROR([This version of PROJ is too old.  PROJ4.4.2 or later is required.])
   fi
@@ -397,6 +399,10 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
 else
 
   AC_MSG_RESULT([        PROJ.4 support not requested.])
+fi
+
+if test "x$PROJ_API" = "xyes" ; then
+  PROJ_ENABLED="$PROJ_ENABLED -DUSE_PROJ_API_H"
 fi
 
 AC_SUBST(PROJ_ENABLED,$PROJ_ENABLED)
