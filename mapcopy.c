@@ -154,7 +154,7 @@ int msCopyJoin(joinObj *dst, joinObj *src) {
   for (i = 0; i < dst->numitems; i++) {
     copyStringProperty(&(dst->items[i]), src->items[i]);
     for (j = 0; j < dst->numrecords; j++) {
-      copyStringProperty(&(dst->records[i][j]), src->records[i][j]);
+      copyStringProperty(&(dst->values[i][j]), src->values[i][j]);
     }
   }
   copyStringProperty(&(dst->table), src->table);
@@ -167,7 +167,7 @@ int msCopyJoin(joinObj *dst, joinObj *src) {
   copyStringProperty(&(dst->_template), src->_template);
 #endif
   copyStringProperty(&(dst->footer), src->footer);
-  copyStringProperty(&(dst->match), src->match);
+  //copyStringProperty(&(dst->match), src->match);
   copyProperty(&(dst->type), &(src->type), sizeof(enum MS_JOIN_TYPE));
   copyStringProperty(&(dst->connection), src->connection);
   copyProperty(&(dst->connectiontype), &(src->connectiontype), sizeof(enum MS_JOIN_CONNECTION_TYPE));
@@ -544,8 +544,8 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
   copyProperty(&(dst->connectiontype), &(src->connectiontype), sizeof(enum MS_CONNECTION_TYPE));
   copyProperty(&(dst->sameconnection), &(src->sameconnection), sizeof(layerObj *));
   
-  msSHPOpenFile(&(dst->shpfile), "rb", src->map->shapepath, src->data);
-  msSHPOpenFile(&(dst->tileshpfile), "rb", src->map->shapepath, src->tileindex);
+  msSHPOpenFile(&(dst->shpfile), "rb", src->data);
+  msSHPOpenFile(&(dst->tileshpfile), "rb", src->tileindex);
 
   copyProperty(&(dst->ogrlayerinfo), &(src->ogrlayerinfo), sizeof(void)); 
   copyProperty(&(dst->sdelayerinfo), &(src->sdelayerinfo), sizeof(void)); 
