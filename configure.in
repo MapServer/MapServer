@@ -405,6 +405,7 @@ unset ac_cv_lib_gd_gdImageJpeg
 unset ac_cv_lib_gd_gdImageWBMP
 unset ac_cv_lib_gd_gdImageStringFT
 unset ac_cv_lib_gd_gdImageGifPtr
+unset ac_cv_lib_gd_gdFontGetTiny
 unset ac_cv_lib_c_gdImageCreate
 unset ac_cv_lib_c_gdImageString16
 unset ac_cv_lib_c_gdImageGif
@@ -413,6 +414,7 @@ unset ac_cv_lib_c_gdImageJpeg
 unset ac_cv_lib_c_gdImageWBMP
 unset ac_cv_lib_c_gdImageStringFT
 unset ac_cv_lib_c_gdImageGifPtr
+unset ac_cv_lib_c_gdFontGetTiny
 unset ac_cv_lib_gd_gdImageSetAntiAliased
 
 AC_CHECKING(for GD 2.0.12 or higher...)
@@ -534,6 +536,10 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
   dnl gdImageGifPtr is there only in GIF-patched GD versions
   AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
+  dnl GD 2.0.22 and more recent replaced the static font pointers with 
+  dnl getter functions.
+  AC_CHECK_LIB($GD_CHECKLIB, gdFontGetTiny, GD_DEF="$GD_DEF -DGD_HAS_GETBITMAPFONTS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
 else
@@ -559,6 +565,10 @@ else
 
   dnl gdImageGifPtr is there only in GIF-patched GD versions
   AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB $GD_XTRA_LIBS)
+
+  dnl GD 2.0.22 and more recent replaced the static font pointers with 
+  dnl getter functions.
+  AC_CHECK_LIB(gd, gdFontGetTiny, GD_DEF="$GD_DEF -DGD_HAS_GETBITMAPFONTS",, $GD_LIB $GD_XTRA_LIBS)
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"
