@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20.2.1  2004/04/28 15:36:16  assefa
+ * Change metatadata name from wms_request_method to wfs_request_method.
+ *
  * Revision 1.20  2004/03/15 07:43:42  frank
  * avoid warnings about usused variables when building without USE_WFS_LYR
  *
@@ -620,7 +623,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
       return MS_FAILURE;
 
 /* -------------------------------------------------------------------- */
-/*      Depending on the metadata wms_request_method, build a Get or    */
+/*      Depending on the metadata wfs_request_method, build a Get or    */
 /*      a Post URL.                                                     */
 /*    If it is a Get request the URL would contain all the parameters in*/
 /*      the string;                                                     */
@@ -628,7 +631,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 /*      connection string comming from the layer.                       */
 /* -------------------------------------------------------------------- */
     if ((pszTmp = msLookupHashTable(lp->metadata, 
-                                    "wms_request_method")) != NULL)
+                                    "wfs_request_method")) != NULL)
     {
         if (strncmp(pszTmp, "GET", 3) ==0)
         {
