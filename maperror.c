@@ -203,6 +203,31 @@ char *msGetErrorCodeString(int code) {
   return(ms_errorCodes[code]);
 }
 
+char *msGetErrorString(char *delimiter) 
+{
+  int n=0;
+  char *errstr=NULL, errbuf[256];
+  errorObj *error = msGetErrorObj();
+
+  if(!delimiter || !error) return(NULL);
+
+  if((errstr = strdup("")) == NULL) return(NULL); // empty at first
+  while(error && error->code != MS_NOERR) {
+    if(n==0) // no delimiter
+      snprintf(errbuf, 255, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);
+    else
+      snprintf(errbuf, 255, "%s%s: %s %s", delimiter, error->routine, ms_errorCodes[error->code], error->message);    
+
+    if((errstr = (char *) realloc(errstr, sizeof(char)*(strlen(errstr)+strlen(errbuf)+1))) == NULL) return(NULL);
+    strcat(errstr, errbuf);
+
+    error = error->next;
+    n++;
+  }
+
+  return(errstr);
+}
+
 void msSetError(int code, const char *message_fmt, const char *routine, ...)
 {
   char *errfile=NULL;

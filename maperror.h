@@ -62,6 +62,7 @@ typedef struct error_obj {
 errorObj *msGetErrorObj(void);
 void msResetErrorList();
 char *msGetVersion(void);
+char *msGetErrorString(char *delimiter);
 
 #ifndef SWIG
 void msSetError(int code, const char *message, const char *routine, ...);
