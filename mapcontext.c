@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.47  2003/07/15 14:07:07  assefa
+ * replace View_context by ViewContext for 1.0. support.
+ *
  * Revision 1.46  2003/07/11 15:43:20  dan
  * Try to pick a supported format when current format is not supported
  *
@@ -486,7 +489,9 @@ int msLoadMapContext(mapObj *map, char *filename)
  }
 
   if( ( strstr( pszWholeText, "<WMS_Viewer_Context" ) == NULL ) &&
-      ( strstr( pszWholeText, "<View_Context" ) == NULL ) )
+      ( strstr( pszWholeText, "<View_Context" ) == NULL ) &&
+      ( strstr( pszWholeText, "<ViewContext" ) == NULL ) )
+    
   {
       free( pszWholeText );
       msSetError( MS_MAPCONTEXTERR, "Not a Map Context file (%s)", 
@@ -515,7 +520,8 @@ int msLoadMapContext(mapObj *map, char *filename)
   {
       if( psChild->eType == CXT_Element && 
           (EQUAL(psChild->pszValue,"WMS_Viewer_Context") ||
-           EQUAL(psChild->pszValue,"View_Context")) )
+           EQUAL(psChild->pszValue,"View_Context") ||
+           EQUAL(psChild->pszValue,"ViewContext")) )
       {
           psMapContext = psChild;
           break;
@@ -1319,7 +1325,11 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                     "ISO-8859-1");
 
   // set the WMS_Viewer_Context information
-  if(strcasecmp(version, "0.1.7") >= 0)
+  if(strcasecmp(version, "1.0.0") >= 0)
+  {
+      fprintf( stream, "<ViewContext version=\"%s\"", version );
+  }
+  else if(strcasecmp(version, "0.1.7") >= 0)
   {
       fprintf( stream, "<View_Context version=\"%s\"", version );
       
@@ -1807,7 +1817,11 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   fprintf(stream, "  </LayerList>\n");
   // Close Map Context
 
-  if(strcasecmp(version, "0.1.7") >= 0)
+  if(strcasecmp(version, "1.0.0") >= 0)
+  {
+      fprintf(stream, "</ViewContext>\n");
+  }
+  else if(strcasecmp(version, "0.1.7") >= 0)
   {
       fprintf(stream, "</View_Context>\n");
   }
