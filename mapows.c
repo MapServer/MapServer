@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.29  2004/04/21 13:02:42  sdlime
+ * Updated msOWSPrintMetadataList() so that NULL values for startTag/endTag are valid.
+ *
  * Revision 1.28  2004/04/20 05:41:20  sdlime
  * Getting very close to a usable WCS implementation. Still need to add domain and range set to DescribeCoverage, and need to be able to interpret requests based on them. However, we'll keep it simple for now, operating on bands and some temporal subsetting.
  *
@@ -523,11 +526,11 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata,
       keywords = split(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
         int kw;
-	fprintf(stream, "%s", startTag);
-	for(kw=0; kw<numkeywords; kw++) 
+	    if(startTag) fprintf(stream, "%s", startTag);
+	    for(kw=0; kw<numkeywords; kw++) 
             fprintf(stream, itemFormat, keywords[kw]);
-	fprintf(stream, "%s", endTag);
-	msFreeCharArray(keywords, numkeywords);
+	    if(endTag) fprintf(stream, "%s", endTag);
+	    msFreeCharArray(keywords, numkeywords);
       }
       return MS_TRUE;
     }
