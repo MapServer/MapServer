@@ -1664,7 +1664,7 @@ int main(int argc, char *argv[]) {
     sprintf(Id, "%ld%d",(long)time(NULL),(int)getpid());
 
     if(SaveMap) {
-      sprintf(buffer, "%s%s%s.map", Map->web.imagepath, Map->name, Id, MS_QUERY_EXTENSION);
+      sprintf(buffer, "%s%s%s.map", Map->web.imagepath, Map->name, Id);
       if(msSaveMap(Map, buffer) == -1) writeError();
     }
 
