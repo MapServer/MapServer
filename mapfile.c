@@ -1,4 +1,6 @@
 #include <stdarg.h>
+#include <assert.h>
+#include <ctype.h>
 
 #include "map.h"
 #include "mapfile.h"
@@ -478,7 +480,7 @@ static void writeFeature(shapeObj *shape, FILE *stream)
 /*
 ** Initialize, load and free a projectionObj structure
 */
-static int initProjection(projectionObj *p)
+int msInitProjection(projectionObj *p)
 {
 #ifdef USE_PROJ  
   p->numargs = 0;
@@ -492,11 +494,54 @@ static int initProjection(projectionObj *p)
 
 }
 
-static void freeProjection(projectionObj *p) {
+void msFreeProjection(projectionObj *p) {
 #ifdef USE_PROJ
-  if(p->proj) pj_free(p->proj);
+  if(p->proj)
+  {
+      pj_free(p->proj);
+      p->proj = NULL;
+  }
+
   msFreeCharArray(p->projargs, p->numargs);  
+  p->projargs = NULL;
   p->numargs = 0;
+#endif
+}
+
+int msProcessProjection(projectionObj *p)
+
+{
+#ifdef USE_PROJ    
+    int		i;
+
+    assert( p->proj == NULL );
+    
+    if( strcasecmp(p->projargs[0],"GEOGRAPHIC") == 0 ) {
+        msSetError(MS_PROJERR, 
+                   "PROJECTION 'GEOGRAPHIC' no longer supported.\n"
+                   "Provide explicit definition.\n"
+                   "ie. proj=latlong\n"
+                   "    ellps=clrk66\n",
+                   "msProcessProjection()");	  
+        return(-1);
+    }
+
+    if (strcasecmp(p->projargs[0], "AUTO") == 0) {
+	p->proj = NULL;
+        return 0;
+    }
+
+    if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {
+        msSetError(MS_PROJERR, pj_strerrno(pj_errno), 
+                   "msProcessProjection()");	  
+        return(-1);
+    }
+    
+    return(0);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", 
+             "msProcessProjection()");
+  return(-1);
 #endif
 }
 
@@ -509,25 +554,17 @@ static int loadProjection(projectionObj *p)
     switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadProjection()");      
-       return(-1);
+      return(-1);
     case(END):
       p->numargs = i;
-      if(strcasecmp(p->projargs[0], "GEOGRAPHIC") == 0 ||
-         strcasecmp(p->projargs[0], "AUTO") == 0) {
-	p->proj = NULL;
-      } else {
-	if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {
-	  msSetError(MS_PROJERR, pj_strerrno(pj_errno), "loadProjection()");	  
-	  return(-1);
-	}
-      }
-      return(0);
+      return msProcessProjection(p);
       break;    
     case(MS_STRING):
     case(MS_AUTO):
       p->projargs[i] = strdup(msyytext);
       i++;
       break;
+
     default:
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       msSetError(MS_IDENTERR, ms_error.message, "loadProjection()");
@@ -540,24 +577,46 @@ static int loadProjection(projectionObj *p)
 #endif
 }
 
-int loadProjectionString(projectionObj *p, char *value)
+int msLoadProjectionString(projectionObj *p, char *value)
 {
 #ifdef USE_PROJ
-  if(p) freeProjection(p);
-  p->projargs = split(value, ',', &p->numargs);      
-  if(strcasecmp(p->projargs[0], "GEOGRAPHIC") == 0 ||
-     strcasecmp(p->projargs[0], "AUTO") == 0) {
-    p->proj = NULL;
-  } else {
-    if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {
-      msSetError(MS_PROJERR, pj_strerrno(pj_errno), "loadProjectionString()");      
-      return(-1);
-    }
+  if(p) msFreeProjection(p);
+
+  /*
+   * Handle new style definitions, the same as they would be given to
+   * the proj program.  
+   * eg. 
+   *    "+proj=utm +zone=11 +ellps=WGS84"
+   */
+  if( value[0] == '+' )
+  {
+      char 	*trimmed;
+      int	i, i_out=0;
+
+      trimmed = strdup(value);
+      for( i = 0; value[i] != '\0'; i++ )
+      {
+          if( !isspace( value[i] ) )
+              trimmed[i_out++] = value[i];
+      }
+      trimmed[i_out] = '\0';
+      
+      p->projargs = split(trimmed,'+', &p->numargs);
+      free( trimmed );
   }
 
-  return(0);
+  /*
+   * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
+   */
+  else
+  {
+      p->projargs = split(value,',', &p->numargs);
+  }
+
+  return msProcessProjection( p );
 #else
-  msSetError(MS_PROJERR, "Projection support is not available.", "loadProjectionString()");
+  msSetError(MS_PROJERR, "Projection support is not available.", 
+             "msLoadProjectionString()");
   return(-1);
 #endif
 }
@@ -1349,7 +1408,7 @@ int initLayer(layerObj *layer)
   layer->classitemindex = -1;
   layer->numclasses = 0;
 
-  if(initProjection(&(layer->projection)) == -1)
+  if(msInitProjection(&(layer->projection)) == -1)
     return(-1);
 
   layer->offsite = -1;
@@ -1406,7 +1465,7 @@ void freeLayer(layerObj *layer) {
   free(layer->tileitem);
   free(layer->connection);
 
-  freeProjection(&(layer->projection));
+  msFreeProjection(&(layer->projection));
 
   for(i=0;i<layer->numclasses;i++)
     freeClass(&(layer->class[i]));
@@ -1772,7 +1831,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       layer->labelcache = MS_OFF;
     break;
   case(PROJECTION):
-    loadProjectionString(&(layer->projection), value);
+    msLoadProjectionString(&(layer->projection), value);
     break;
   case(REQUIRES):
     free(layer->requires);
@@ -2679,7 +2738,10 @@ int initMap(mapObj *map)
   initReferenceMap(&map->reference);
   initQueryMap(&map->querymap);
 
-  if(initProjection(&map->projection) == -1)
+  if(msInitProjection(&map->projection) == -1)
+    return(-1);
+
+  if(msInitProjection(&map->io_projection) == -1)
     return(-1);
 
   return(0);
@@ -2696,7 +2758,8 @@ void msFreeMap(mapObj *map) {
   msFreeSymbolSet(&map->symbolset); // free symbols
   free(map->symbolset.filename);
 
-  freeProjection(&(map->projection));
+  msFreeProjection(&(map->projection));
+  msFreeProjection(&(map->io_projection));
 
   for(i=0; i<map->labelcache.numlabels; i++) {
     free(map->labelcache.labels[i].string);
@@ -3022,7 +3085,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       loadLegendString(map, &(map->legend), value);
       break;
     case(PROJECTION):
-      loadProjectionString(&(map->projection), value);
+      msLoadProjectionString(&(map->projection), value);
       break;
     case(REFERENCE):
       loadReferenceMapString(map, &(map->reference), value);
