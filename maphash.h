@@ -19,6 +19,7 @@ hashTableObj msCreateHashTable(void);
 struct hashObj *msInsertHashTable(hashTableObj, char *, char *);
 char *msLookupHashTable(hashTableObj, char *);
 void msFreeHashTable(hashTableObj);
+int msRemoveHashTable(hashTableObj table, char *string);
 
 #ifdef __cplusplus
 }

@@ -89,3 +89,47 @@ void msFreeHashTable(hashTableObj table)
   free(table);
   table = NULL;
 }
+
+
+int msRemoveHashTable(hashTableObj table, char *string)
+{ 
+  struct hashObj *tp;
+  struct hashObj *prev_tp=NULL;
+  int success = 0;
+
+  if(!table || !string)
+    return MS_FAILURE;
+
+  tp=table[hash(string)];
+  if (!tp)
+    return MS_FAILURE;
+  
+  prev_tp = NULL;
+  while(tp != NULL)
+  {
+      if (strcasecmp(string, tp->key) == 0)
+      {
+          if (prev_tp)
+          {     
+              prev_tp->next = tp->next;
+              free(tp);
+              break;
+          }
+          else
+          {
+              table[hash(string)] = NULL;
+              free(tp);
+              break;
+          }
+          success =1;
+      }
+      prev_tp = tp;
+      tp = tp->next;
+  }
+
+  if (success)
+    return MS_SUCCESS;
+
+  return  MS_FAILURE;
+}
+      
