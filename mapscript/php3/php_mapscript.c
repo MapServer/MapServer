@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.36  2001/03/13 16:59:41  dan
+ * Removed unused vars with PHP4 + added layer->getvalue() for testing.
+ *
  * Revision 1.35  2001/03/12 19:02:46  dan
  * Added query-related stuff in PHP MapScript
  *
@@ -92,7 +95,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Mar 12, 2001)"
+#define PHP3_MS_VERSION "(Mar 13, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -214,6 +217,7 @@ DLEXPORT void php3_ms_shape_line(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_contains(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS);
@@ -286,7 +290,6 @@ static int le_msshape_ref;
 static int le_msshapefile;
 static int le_msweb;
 static int le_msrefmap;
-static int le_msrescache;
 
 static char tmpId[128]; /* big enough for time + pid */
 static int  tmpCount;
@@ -308,7 +311,6 @@ static zend_class_entry *point_class_entry_ptr;
 static zend_class_entry *line_class_entry_ptr;
 static zend_class_entry *shape_class_entry_ptr;
 static zend_class_entry *shapefile_class_entry_ptr;
-static zend_class_entry *rescache_class_entry_ptr;
 
 #endif
 
@@ -321,10 +323,10 @@ function_entry php3_ms_functions[] = {
     {"ms_newlineobj",   php3_ms_line_new,       NULL},
     {"ms_newshapeobj",  php3_ms_shape_new,      NULL},
     {"ms_newshapefileobj", php3_ms_shapefile_new,  NULL},
-    {"ms_newrectobj",      php3_ms_rect_new,    NULL},
+    {"ms_newrectobj",   php3_ms_rect_new,       NULL},
     {"ms_getcwd",       php3_ms_getcwd,         NULL},
     {"ms_getpid",       php3_ms_getpid,         NULL},
-    {"ms_getscale",       php3_ms_getscale,         NULL},
+    {"ms_getscale",     php3_ms_getscale,       NULL},
     {NULL, NULL, NULL}
 };
 
@@ -464,6 +466,7 @@ function_entry php_shape_class_functions[] = {
     {"draw",            php3_ms_shape_draw,             NULL},    
     {"contains",        php3_ms_shape_contains,         NULL},    
     {"intersects",      php3_ms_shape_intersects,       NULL},    
+    {"getvalue",        php3_ms_shape_getvalue,         NULL},    
     {"free",            php3_ms_shape_free,             NULL},    
     {NULL, NULL, NULL}
 };
@@ -530,8 +533,6 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     PHPMS_GLOBAL(le_msrect_new)= register_list_destructors(php3_ms_free_rect,
                                                            NULL);
     PHPMS_GLOBAL(le_msrect_ref)= register_list_destructors(php3_ms_free_stub,
-                                                           NULL);
-    PHPMS_GLOBAL(le_msrescache)= register_list_destructors(php3_ms_free_stub,
                                                            NULL);
 
     /* boolean constants*/
@@ -5276,6 +5277,7 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     add_property_long(return_value, "index",    pshape->index);
     add_property_long(return_value, "tileindex", pshape->tileindex);
     add_property_long(return_value, "classindex", pshape->classindex);
+    add_property_long(return_value, "numvalues", pshape->numvalues);
     PHPMS_ADD_PROP_STR(return_value,"text",     pshape->text);
 
     _phpms_build_rect_object(&(pshape->bounds), PHPMS_GLOBAL(le_msrect_ref), 
@@ -5575,6 +5577,57 @@ DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS)
       RETURN_FALSE;
 
     RETURN_TRUE;
+}
+/* }}} */
+
+/**********************************************************************
+ *                        shape->getValue()
+ **********************************************************************/
+/* {{{ proto string shape.getValue(layerObj layer, string fieldName)
+   Returns value for specified field name. */
+
+DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pLayer, *pFieldName;
+    shapeObj    *self;
+    layerObj    *poLayer;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pLayer, &pFieldName) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list);
+
+    poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
+                                             list);
+    
+    if (self && poLayer && self->numvalues == poLayer->numitems)
+    {
+        int i;
+        for(i=0; i<poLayer->numitems; i++)
+        {
+            if (strcasecmp(poLayer->items[i], pFieldName->value.str.val)==0)
+            {
+                RETURN_STRING(self->values[i], 1);
+            }
+        }
+    }
+
+    RETURN_STRING("", 1);
 }
 /* }}} */
 
