@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.33  2002/11/29 19:28:17  julien
+ * Replace ' ' by ',' in stylelist and formatlist srs
+ *
  * Revision 1.32  2002/11/27 21:00:44  julien
  * Fatal error if server version is missing in load function
  *
@@ -819,7 +822,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                           // wms_format
                           pszValue1 = (char*)CPLGetXMLValue(psFormat, 
                                                             "current", NULL);
-                          if(pszValue1 != NULL)
+                          if(pszValue1 != NULL && 
+                             (strcasecmp(pszValue1, "1") == 0))
                               msInsertHashTable(layer->metadata, 
                                                 "wms_format", pszValue);
                           // wms_formatlist
@@ -829,7 +833,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                           {
                               pszValue1 = (char*)malloc(strlen(pszHash)+
                                                         strlen(pszValue)+2);
-                              sprintf(pszValue1, "%s %s", pszHash, pszValue);
+                              sprintf(pszValue1, "%s,%s", pszHash, pszValue);
                               msInsertHashTable(layer->metadata, 
                                                 "wms_formatlist", pszValue1);
                               free(pszValue1);
@@ -872,7 +876,8 @@ int msLoadMapContext(mapObj *map, char *filename)
 
                       // wms_style
                       pszValue = (char*)CPLGetXMLValue(psStyle,"current",NULL);
-                      if(pszValue != NULL)
+                      if(pszValue != NULL && 
+                         (strcasecmp(pszValue, "1") == 0))
                           msInsertHashTable(layer->metadata, 
                                             "wms_style", pszStyleName);
                       // wms_stylelist
@@ -882,7 +887,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                       {
                           pszValue1 = (char*)malloc(strlen(pszHash)+
                                                     strlen(pszStyleName)+2);
-                          sprintf(pszValue1, "%s %s", pszHash, pszStyleName);
+                          sprintf(pszValue1, "%s,%s", pszHash, pszStyleName);
                           msInsertHashTable(layer->metadata, 
                                             "wms_stylelist", pszValue1);
                           free(pszValue1);
@@ -1212,7 +1217,7 @@ int msSaveMapContext(mapObj *map, char *filename)
               pszCurrent = msLookupHashTable(map->layers[i].metadata, 
                                              "wms_format");
 
-              papszFormats = split(pszValue, ' ', &numFormats);
+              papszFormats = split(pszValue, ',', &numFormats);
               if(numFormats > 0 && papszFormats)
               {
                   fprintf( stream, "      <FormatList>\n");
@@ -1305,7 +1310,7 @@ int msSaveMapContext(mapObj *map, char *filename)
               while(pszValue != NULL)
               {
                   pszStyle = strdup(pszValue);
-                  pszChar = strchr(pszStyle, ' ');
+                  pszChar = strchr(pszStyle, ',');
                   if(pszChar != NULL)
                       pszStyle[pszChar - pszStyle] = '\0';
                   if( strcasecmp(pszStyle, "") != 0)
@@ -1392,7 +1397,7 @@ int msSaveMapContext(mapObj *map, char *filename)
                       fprintf( stream,"        </Style>\n" );
                   }
                   free(pszStyle);
-                  pszValue = strchr(pszValue, ' ');
+                  pszValue = strchr(pszValue, ',');
                   if(pszValue)  
                       pszValue++;
               }
