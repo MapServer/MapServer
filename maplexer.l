@@ -107,6 +107,7 @@ void lexer_cleanup() {
 
 <INITIAL,OBJECT_STRING>alphacolor		       { return(ALPHACOLOR); }
 <INITIAL,OBJECT_STRING>angle                   { return(ANGLE); }
+<INITIAL,OBJECT_STRING>angleitem               { return(ANGLEITEM); }
 <INITIAL,OBJECT_STRING>antialias               { return(ANTIALIAS); }
 <INITIAL,OBJECT_STRING>backgroundcolor	       { return(BACKGROUNDCOLOR); }
 <INITIAL,OBJECT_STRING>backgroundshadowcolor   { return(BACKGROUNDSHADOWCOLOR); }
@@ -227,6 +228,7 @@ void lexer_cleanup() {
 <INITIAL,OBJECT_STRING>shadowsize              { return(SHADOWSIZE); }
 <INITIAL,OBJECT_STRING>shapepath               { return(SHAPEPATH); }
 <INITIAL,OBJECT_STRING>size		       { return(SIZE); }
+<INITIAL,OBJECT_STRING>sizeitem		       { return(SIZEITEM); }
 <INITIAL,OBJECT_STRING>sizeunits	       { return(SIZEUNITS); }
 <INITIAL,OBJECT_STRING>status		       { return(STATUS); }
 <INITIAL,OBJECT_STRING>style		       { return(STYLE); }

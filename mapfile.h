@@ -192,4 +192,7 @@
 #define CONFIG 1158
 #define BANDSITEM 1159
 
+#define ANGLEITEM 1160
+#define SIZEITEM 1161
+
 #endif /* MAPFILE_H */
