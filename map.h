@@ -168,8 +168,8 @@ enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_M
 
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
-#define MS_FILE_DEFAULT MS_FILE_MAP
-
+#define MS_FILE_DEFAULT MS_FILE_MAP   
+   
 #ifndef SWIG
 // FONTSET OBJECT - used to hold aliases for TRUETYPE fonts
 typedef struct {
@@ -770,6 +770,7 @@ char **split(const char *string, char cd, int *num_tokens);
 int countChars(char *str, char ch);
 char *long2string(long value);
 char *double2string(double value);
+char *msEncodeUrl(char*);
 
 #ifdef NEED_STRDUP
 char *strdup(char *s);
@@ -798,7 +799,9 @@ gdImagePtr msDrawLegend(mapObj *map); // in maplegend.c
 int msEmbedLegend(mapObj *map, gdImagePtr img);
 int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
 gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
-
+int msGetSymbolIdByName(mapObj *map, classObj *myClass, layerObj *lp, char *pszSymbolName);
+   
+   
 int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
 int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset);
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
@@ -896,8 +899,8 @@ int msOracleSpatialLayerGetShape(layerObj *layer, shapeObj *shape, long record);
 int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent);
 int msOracleSpatialLayerInitItemInfo(layerObj *layer);
 void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
-int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
-
+int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);   
+   
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
 const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
                              int bReturnOnlyFirstOne);
