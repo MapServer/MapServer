@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2004/11/19 17:38:41  sean
+ * final fix to bug 1074, image transparency preserved through msSymbolSetImageGD
+ * and symbolObj::setImage.
+ *
  * Revision 1.78  2004/11/19 03:59:20  sean
  * Fix to msSymbolSetImageGD so that pixmap transparency is preserved.  Renamed
  * the msGDSetImage and GetImage to msSymbolSetImageGD and msSymbolGetImageGD each
@@ -1012,16 +1016,20 @@ imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *input_format)
         height = gdImageSY(symbol->img);
         
         image = msImageCreate(width, height, format, NULL, NULL, NULL);
-        if (!symbol->img->trueColor)
+
+        if (symbol->img->trueColor)
         {
-            
-            gdImageColorAllocate(image->img.gd,
+            gdImageAlphaBlending(image->img.gd, 0);
+            gdImageCopy(image->img.gd, symbol->img, 0, 0, 0, 0, width, height);
+        }
+        else
+        {
+            /*gdImageColorAllocate(image->img.gd,
                                  gdImageRed(symbol->img, 0),
                                  gdImageGreen(symbol->img, 0),
-                                 gdImageBlue(symbol->img, 0));
+                                 gdImageBlue(symbol->img, 0));*/
+            gdImageCopy(image->img.gd, symbol->img, 0, 0, 0, 0, width, height);
         }
-        gdImageAlphaBlending(image->img.gd, 1);
-        gdImageCopy(image->img.gd, symbol->img, 0, 0, 0, 0, width, height);
     }
 
     /* returned reference may be NULL */
@@ -1051,15 +1059,16 @@ int msSymbolSetImageGD(symbolObj *symbol, imageObj *image)
     || image->format->imagemode == MS_IMAGEMODE_RGBA)
     {
         symbol->img = gdImageCreateTrueColor(image->width, image->height);
+        gdImageAlphaBlending(symbol->img, 0);
     }
     else 
     {
         symbol->img = gdImageCreate(image->width, image->height);
+        gdImagePaletteCopy(symbol->img, image->img.gd);
         gdImageColorTransparent(symbol->img, 
                                 gdImageGetTransparent(image->img.gd));
     }
     
-    gdImageAlphaBlending(symbol->img, 1);
     gdImageCopy(symbol->img, image->img.gd, 0, 0, 0, 0,
                 image->width, image->height);
 

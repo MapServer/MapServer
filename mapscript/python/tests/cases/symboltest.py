@@ -68,32 +68,60 @@ class DynamicGraphicSymbolTestCase(MapTestCase):
         s = StringIO.StringIO(f.read())
         f.close()
         symb_img = mapscript.imageObj(s)
-        self.symbol = mapscript.symbolObj('house')
-        self.symbol.type = mapscript.MS_SYMBOL_PIXMAP
-        self.symbol.setImage(symb_img)
+        self.h_symbol = mapscript.symbolObj('house')
+        self.h_symbol.type = mapscript.MS_SYMBOL_PIXMAP
+        self.h_symbol.setImage(symb_img)
+        f = open(XMARKS_IMAGE, 'r')
+        s = StringIO.StringIO(f.read())
+        f.close()
+        symb_img = mapscript.imageObj(s)
+        self.x_symbol = mapscript.symbolObj('xmarks')
+        self.x_symbol.type = mapscript.MS_SYMBOL_PIXMAP
+        self.x_symbol.setImage(symb_img)
     
-    def testSetImage(self):
+    def testSetPCTImage(self):
         """set image of new symbolObj"""
-        assert self.symbol.name == 'house'
-        assert self.symbol.type == mapscript.MS_SYMBOL_PIXMAP
+        assert self.h_symbol.name == 'house'
+        assert self.h_symbol.type == mapscript.MS_SYMBOL_PIXMAP
         format = mapscript.outputFormatObj('GD/PNG')
-        img = self.symbol.getImage(format)
-        img.save('set-%s.%s' % (self.symbol.name, img.format.extension))
+        format.transparent = mapscript.MS_ON
+        img = self.h_symbol.getImage(format)
+        img.save('set-%s.%s' % (self.h_symbol.name, img.format.extension))
 
-    def testDrawSetImage(self):
+    def testDrawSetPCTImage(self):
         """draw a map using the set image symbol"""
-        symbol_index = self.map.symbolset.appendSymbol(self.symbol)
+        symbol_index = self.map.symbolset.appendSymbol(self.h_symbol)
         assert symbol_index == 4, symbol_index
         num = self.map.symbolset.numsymbols
         assert num == 5, num
         inline_layer = self.map.getLayerByName('INLINE')
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
-        s.size = 32
+        s.size = -1 # pixmap's own size 
         inline_layer.transparency = mapscript.MS_GD_ALPHA
-        msimg = self.map.draw()
-        msimg.save('testDrawSetImage.png')
-        
+        img = self.map.draw()
+        img.save('testDrawSetPCTImage.%s' % (img.format.extension))
+
+    def testSetRGBAImage(self):
+        """set image of new symbolObj"""
+        assert self.x_symbol.name == 'xmarks'
+        assert self.x_symbol.type == mapscript.MS_SYMBOL_PIXMAP
+        format = mapscript.outputFormatObj('GD/PNG')
+        img = self.x_symbol.getImage(format)
+        img.save('set-%s.%s' % (self.x_symbol.name, img.format.extension))
+
+    def testDrawSetRGBAImage(self):
+        """draw a map using the set image symbol"""
+        symbol_index = self.map.symbolset.appendSymbol(self.x_symbol)
+        inline_layer = self.map.getLayerByName('INLINE')
+        s = inline_layer.getClass(0).getStyle(0)
+        s.symbol = symbol_index
+        s.size = -1 # pixmap's own size
+        inline_layer.transparency = mapscript.MS_GD_ALPHA
+        self.map.selectOutputFormat('PNG24')
+        img = self.map.draw()
+        img.save('testDrawSetRGBAImage.%s' % (img.format.extension))
+
 class MapSymbolTestCase(MapTestCase):
         
     def testGetPoints(self):
