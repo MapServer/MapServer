@@ -22,8 +22,8 @@ Version 4.4.0-beta3 ()
 - Avoid passing FILE* to GD library by utilizing GD's gdIOCtx interface
   (bug 1047).
   
-- Output warning in capabilities document if layer,group,map names have
-  space in them (bug 486).
+- Output warning in wms/wfs capabilities document if layer,group,map names have
+  space in them (bug 486, bug 646).
 
 - maporaclespatial.c: fixed declarations problems (bug 1044).
 
