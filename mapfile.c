@@ -23,7 +23,7 @@ extern int loadSymbol(symbolObj *s); // in mapsymbol.c
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
 */
-static char *msOutputImageType[5]={"GIF", "PNG", "JPEG", "WBMP", "GML"};
+static char *msOutputImageType[6]={"GIF", "PNG", "JPEG", "WBMP", "GML", "SWF"};
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
 static char *msLayerTypes[7]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE"};
 static char *msLabelPositions[10]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO"};
@@ -3293,7 +3293,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       if(getInteger(&(map->imagequality)) == -1) return(NULL);
       break;
     case(IMAGETYPE):
-      if((map->imagetype = getSymbol(5, MS_GIF,MS_PNG,MS_JPEG,MS_WBMP,MS_GML)) == -1) return(NULL);
+      if((map->imagetype = getSymbol(6, MS_GIF,MS_PNG,MS_JPEG,MS_WBMP,MS_GML, MS_SWF)) == -1) return(NULL);
       break;
     case(INTERLACE):
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);

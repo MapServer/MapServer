@@ -258,6 +258,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>single                   { return(MS_SINGLE); }
 <INITIAL,VALUE_STRING>small		       { return(MS_SMALL); }
 <INITIAL,VALUE_STRING>square		       { return(MS_CJC_SQUARE); }
+<INITIAL,VALUE_STRING>swf|swf		       { return(MS_SWF); }
 <INITIAL,VALUE_STRING>tiny		       { return(MS_TINY); }
 <INITIAL,VALUE_STRING>triangle		       { return(MS_CJC_TRIANGLE); }
 <INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }

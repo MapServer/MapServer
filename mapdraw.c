@@ -33,7 +33,14 @@ imageObj *msDrawMap(mapObj *map)
             image = msImageCreateGD(map->width, map->height, map->imagetype,
                                     map->web.imagepath, map->web.imageurl);
             break;
-        
+
+#ifdef USE_MING_FLASH
+        case (MS_SWF):
+            image = msImageCreateSWF(map->width, map->height, 
+                                     map->web.imagepath, map->web.imageurl,
+                                     map);
+            break;
+#endif
         default:
             image = msImageCreateGD(map->width, map->height, map->imagetype,
                                     map->web.imagepath, map->web.imageurl);
@@ -208,6 +215,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
+  msImageStartLayer(map, layer, image);
+
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features)
   return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
@@ -270,13 +279,13 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     // Redirect procesing of some layer types.
     if(layer->connectiontype == MS_WMS) 
     {
-        retcode = msDrawWMSLayer(map, layer, image->img.gd);//TODO
+        retcode = msDrawWMSLayer(map, layer, image);
         break;
     }
   
     if(layer->type == MS_LAYER_RASTER) 
     {
-        retcode = msDrawRasterLayer(map, layer, image->img.gd); //TODO
+        retcode = msDrawRasterLayer(map, layer, image);
       break;
     }
   
@@ -401,7 +410,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   
       for(current=shpcache; current; current=current->next) {
         c = current->shape.classindex;
-        //TODO
+
         msDrawLineSymbol(&map->symbolset, image, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
       }
   
@@ -550,6 +559,56 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   return(MS_SUCCESS);
 }
 
+/**
+ * Generic function to render raster layers.
+ */
+int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image) 
+{
+    if (image && map && layer)
+    {
+        switch (image->imagetype)
+        {
+            case (MS_GIF):
+            case (MS_PNG):
+            case (MS_JPEG):
+            case (MS_WBMP):
+                return msDrawRasterLayerGD(map, layer, image->img.gd) ;
+
+#ifdef USE_MING_FLASH
+            case (MS_SWF):
+                return  msDrawRasterLayerSWF(map, layer, image);
+#endif
+
+          default:
+              break;
+        }
+    }
+    return 0;
+}
+
+int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
+{
+    if (image && map && layer)
+    {
+        switch (image->imagetype)
+        {
+            case (MS_GIF):
+            case (MS_PNG):
+            case (MS_JPEG):
+            case (MS_WBMP):
+                return msDrawWMSLayerGD(map, layer, image->img.gd) ;
+
+#ifdef USE_MING_FLASH                
+            case (MS_SWF):
+                return  msDrawWMSLayerSWF(map, layer, image);
+#endif
+
+          default:
+              break;
+        }
+    }
+    return 0;
+}
 
 /*
 ** Function to render an individual shape, the overlay boolean variable enables/disables drawing of the
@@ -1041,7 +1100,9 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image,
 void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p,  
                         int sy, int fc, int bc, int oc, double sz)
 {
-    
+    /*Note : should we use color obkect instead of id's. Easier to handle for 
+             vector output format as SWF, PDF
+    */
    if (image)
    {
         switch (image->imagetype)
@@ -1053,11 +1114,15 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p,
                 msDrawMarkerSymbolGD(symbolset, image->img.gd, p, sy, 
                                      fc, bc, oc, sz);
               
-              break;
+                break;
 
+#ifdef USE_MING_FLASH              
+            case (MS_SWF):
+                msDrawMarkerSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
+                break;
+#endif
           default:
-             msSetError(MS_MISCERR, "Unknown image type", 
-                        "msCircleDrawShadeSymbol()"); 
+              break;
         }
     }
 }
@@ -1072,6 +1137,19 @@ int msDrawLabel(imageObj *image, pointObj labelPnt, char *string,
 
   if(strlen(string) == 0)
     return(0); /* not an error, just don't want to do anything */
+
+
+/* ==================================================================== */
+/*      TODO : This is a temporary hack to call the drawlableswf directly. */
+/*      Normally the only functions that should be wrapped here is      */
+/*      draw_text. We did this since msGetLabelSize has not yet been    */
+/*      implemented for MING FDB fonts.                                 */
+/* ==================================================================== */
+
+#ifdef USE_MING_FLASH
+  if (image->imagetype == MS_SWF)
+      return msDrawLabelSWF(image, labelPnt, string, label, fontset);
+#endif
 
   if(label->position != MS_XY) {
     pointObj p;
@@ -1106,9 +1184,15 @@ int draw_text(imageObj *image, pointObj labelPnt, char *string,
                                       label, fontset);
                 break;
 
+#ifdef USE_MING_FLASH
+            case (MS_SWF): 
+               nReturnVal = draw_textSWF(image, labelPnt, string, label, 
+                                         fontset); 
+               break;
+#endif
+
           default:
-             msSetError(MS_MISCERR, "Unknown image type", 
-                        "msCircleDrawShadeSymbol()"); 
+              break;
         }
     }
 
@@ -1117,7 +1201,7 @@ int draw_text(imageObj *image, pointObj labelPnt, char *string,
 
 int msDrawLabelCache(imageObj *image, mapObj *map)
 {
-    int nReturnVal = -1;
+    int nReturnVal = MS_SUCCESS;
     if (image)
     {
         switch (image->imagetype)
@@ -1129,9 +1213,14 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                 nReturnVal = msDrawLabelCacheGD(image->img.gd, map);
                 break;
 
-          default:
-             msSetError(MS_MISCERR, "Unknown image type", 
-                        "msDrawLabelCache()"); 
+#ifdef USE_MING_FLASH
+            case (MS_SWF):
+                nReturnVal = msDrawLabelCacheSWF(image, map);
+                break;
+#endif
+
+            default:
+                break;
         }
     }
 
@@ -1153,10 +1242,15 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 msDrawLineSymbolGD(symbolset, image->img.gd, p,
                                    sy, fc, bc, sz);
                 break;
+                
+#ifdef USE_MING_FLASH
+            case (MS_SWF):
+                msDrawLineSymbolSWF(symbolset, image, p, sy, fc, bc, sz);
+                break;
+#endif
 
           default:
-             msSetError(MS_MISCERR, "Unknown image type", 
-                        "msDrawLineSymbol()"); 
+              break;
         }
     }
 }
@@ -1176,10 +1270,39 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                                     sy, fc, bc, oc, sz);
                 break;
 
+#ifdef USE_MING_FLASH
+            case (MS_SWF):
+                msDrawShadeSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
+                break;
+#endif
+
           default:
-             msSetError(MS_MISCERR, "Unknown image type", 
-                        "msDrawShadeSymbol()"); 
+              break;
         }
     }
 }
     
+
+/**
+ * Generic function to tell the underline device that layer 
+ * drawing is stating
+ */
+
+void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
+{
+    if (image)
+    {
+        switch (image->imagetype)
+        {
+
+#ifdef USE_MING_FLASH
+            case (MS_SWF):
+                msImageStartLayerSWF(map, layer, image);
+                break;
+#endif
+               
+            default:
+                break;
+       }
+    }
+}

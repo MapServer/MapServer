@@ -1664,7 +1664,7 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 }
 #endif
 
-int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
+int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   /*
   ** Check for various file types and act appropriately.
@@ -2070,6 +2070,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   chdir(old_path); /* restore old cwd */
   return 0;
+  
 }
 
 //TODO : this will msDrawReferenceMapGD

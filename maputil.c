@@ -246,6 +246,10 @@ int msSaveImage(imageObj *img, char *filename, int transparent,
                                             transparent, interlace, quality);
               break;
               
+#ifdef USE_MING_FLASH
+            case (MS_SWF):
+                nReturnVal = msSaveImageSWF(img, filename);
+#endif
             default:
                 msSetError(MS_MISCERR, "Unknown image type", 
                            "msSaveImage()"); 
@@ -271,6 +275,13 @@ void msFreeImage(imageObj *image)
                 
                 msFreeImageGD(image->img.gd);
                 break;
+
+#ifdef USE_MING_FLASH
+            case (MS_SWF):
+                msFreeImageSWF(image);
+                break;
+#endif
+
            default:
                msSetError(MS_MISCERR, "Unknown image type", 
                           "msFreeImage()"); 

@@ -31,14 +31,23 @@
 
 #include "mapproject.h"
 
+
 #include <gd.h>
 
 #if defined USE_PDF
 #include <pdflib.h>
 #endif
 
+#ifdef USE_MING_FLASH
+#include "ming.h"
+#endif
+
 #include <sys/types.h> /* regular expression support */
 #include <regex.h>
+
+#ifdef USE_MING
+#include "ming.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -162,7 +171,7 @@ enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
 enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL};
-enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP, MS_GML};
+enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP, MS_GML, MS_SWF};
 
 enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
 
@@ -248,27 +257,6 @@ typedef struct {
 } joinObj;
 #endif
 
-// IMAGE OBJECT - a wrapper for GD images
-typedef struct {
-#ifdef SWIG
-%readonly
-#endif
-  int width, height;
-  char *imagepath, *imageurl;
-#ifdef SWIG
-%readwrite
-#endif
-
-  int imagetype;
-#ifndef SWIG
-  union
-  {
-      gdImagePtr gd;
-      //PDF     *pdf;
-  }img;
-
-#endif
-} imageObj;
 
 // QUERY MAP OBJECT - used to visualize query results
 typedef struct {
@@ -732,14 +720,50 @@ typedef struct { /* structure for a map */
    
 } mapObj;
 
+//SWF Object structure
+#ifdef USE_MING_FLASH
+typedef struct 
+{
+    mapObj *map;
+    SWFMovie sMainMovie;
+    int nLayerMovies;
+    SWFMovie *pasMovies;
+    int nCurrentMovie;
+    
+} SWFObj; 
+
+#endif
+
+// IMAGE OBJECT - a wrapper for GD images
+typedef struct {
+#ifdef SWIG
+%readonly
+#endif
+  int width, height;
+  char *imagepath, *imageurl;
+#ifdef SWIG
+%readwrite
+#endif
+
+  int imagetype;
+#ifndef SWIG
+  union
+  {
+      gdImagePtr gd;
+#ifdef USE_MING_FLASH
+      SWFObj     *swf;
+#endif
+      //PDF       *pdf;
+
+  }img;
+
+#endif
+} imageObj;
+
 // Function prototypes, wrapable
 int msSaveImage(imageObj *img, char *filename, int transparent, 
                 int interlace, int quality);
 void msFreeImage(imageObj *img);
-
-int msSaveImageGD(gdImagePtr img, char *filename, int type, int transparent, 
-                  int interlace, int quality);
-void msFreeImageGD(gdImagePtr img);
 
 
 // Function prototypes, not wrapable
@@ -904,7 +928,7 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 int msAddLine(shapeObj *p, lineObj *new_line);
 
-int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img); // in mapraster.c
+int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image); // in mapraster.c
 imageObj *msDrawReferenceMap(mapObj *map);
 
 size_t msGetBitArraySize(int numbits); // in mapbits.c
@@ -979,7 +1003,7 @@ int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
    
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
 
-int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img); // mapwmslayer.c
+int msDrawWMSLayer(mapObj *map, layerObj *lp, imageObj *image); 
 char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              int nClickX, int nClickY, int nFeatureCount,
                              const char *pszInfoFormat); 
@@ -1028,6 +1052,8 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
                        int sy, int fc, int bc, int oc, double sz);
 
+void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image);
+
 /* ==================================================================== */
 /*      End of Prototypes for functions in mapdraw.c                    */
 /* ==================================================================== */
@@ -1038,6 +1064,12 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /* ==================================================================== */
 imageObj *msImageCreateGD(int width, int height, int type,
                           char *imagepath, char *imageurl);
+
+int msSaveImageGD(gdImagePtr img, char *filename, int type, int transparent, 
+                  int interlace, int quality);
+
+void msFreeImageGD(gdImagePtr img);
+
 
 void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
                               pointObj *p, double r, int sy, int fc, int bc, 
@@ -1061,6 +1093,12 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p,
 
 void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, 
                          int sy, int fc, int bc, int oc, double sz);
+
+//in mapraster.c
+int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img);
+
+//in mapwmslayer.c
+int msDrawWMSLayerGD(mapObj *map, layerObj *lp, gdImagePtr img); 
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */
@@ -1102,6 +1140,40 @@ imageObj *msImageCreate(int width, int height, int imagetype, char *imagepath,
 
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
+/* ==================================================================== */
+/* ==================================================================== */
+/*      prototypes for functions in mapswf.c                            */
+/* ==================================================================== */
+#ifdef USE_MING_FLASH
+imageObj *msImageCreateSWF(int width, int height, char *imagepath,
+                           char *imageurl, mapObj *map);
+
+void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
+
+int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, 
+                   labelObj *label, fontSetObj *fontset);
+
+int msDrawLabelCacheSWF(imageObj *image, mapObj *map);
+
+void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
+                         int sy, int fc, int bc, double sz);
+
+void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
+                          shapeObj *p, int sy, int fc, int bc, int oc, 
+                          double sz);
+
+void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
+                           pointObj *p, 
+                           int sy, int fc, int bc, int oc, double sz);
+int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
+
+int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
+
+#endif
+
+
+/* ==================================================================== */
+/*      End of prototypes for functions in mapswf.c                     */
 /* ==================================================================== */
 
 #endif

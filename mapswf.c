@@ -1808,6 +1808,34 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 
 }
 
+int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
+{
+    int         nTmp = 0;
+    gdImagePtr  imgtmp = NULL;
+    SWFShape    oShape;
+     FILE *out;
+    if (!image || image->imagetype != MS_SWF || image->width <= 0 ||
+        image->height <= 0)
+        return -1;
+    
+/* -------------------------------------------------------------------- */
+/*      create a temprary GD image and render in it.                    */
+/* -------------------------------------------------------------------- */
+    imgtmp = gdImageCreate(image->width, image->height);
+    gdImageColorAllocate(imgtmp, map->imagecolor.red, map->imagecolor.green, 
+                         map->imagecolor.blue);
+
+    if (msDrawWMSLayerGD(map, layer, imgtmp) != -1)
+    {
+        oShape = gdImage2Shape(imgtmp);
+        nTmp = image->img.swf->nCurrentMovie;
+        SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+    }
+
+    return 0;
+
+}
+
 
 /************************************************************************/
 /*                         int msDrawRasterLayerSWF                     */

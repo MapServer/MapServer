@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.24  2002/05/14 14:07:32  assefa
+ * Use of ImageObj to be able to output Vector/Raster beside GD.
+ *
  * Revision 1.23  2002/03/13 23:45:22  sdlime
  * Added projection support to the GML output code. Re-shuffled the code to extract the EPSG values for a layer or map into mapproject.c.
  *
@@ -504,7 +507,7 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
  *
  **********************************************************************/
 
-int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img) 
+int msDrawWMSLayerGD(mapObj *map, layerObj *lp, gdImagePtr img) 
 {
 #ifdef USE_WMS_LYR
     char *pszURL = NULL;
@@ -612,7 +615,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     {
         // The simple case... no reprojection needed... render layer directly.
         lp->transform = MS_FALSE;
-        if (msDrawRasterLayer(map, lp, img) != 0)
+        if (msDrawRasterLayerGD(map, lp, img) != 0)
             status = MS_FAILURE;
     }
     else
@@ -638,7 +641,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
             fclose(fp);
 
             // GDAL should be called to reproject automatically.
-            if (msDrawRasterLayer(map, lp, img) != 0)
+            if (msDrawRasterLayerGD(map, lp, img) != 0)
                 status = MS_FAILURE;
 
             unlink(wldfile);
