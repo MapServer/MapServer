@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/11/02 02:08:30  frank
+ * Changed to use "value_list" instead of "values" for a list of all
+ * pixel values.  [values] has a special substitution rule in
+ * maptemplate.c, so we need to avoid it.
+ *
  * Revision 1.12  2004/11/02 01:33:58  frank
  * Added logic to reproject location back to map coordiantes before doing
  * the distance or "in shape" tests.  This also ensures results are returned
@@ -1176,7 +1181,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
             else if( EQUAL(layer->items[i],"y") && rlinfo->qc_y )
                 sprintf( szWork, "%.8g", rlinfo->qc_y[record] );
 
-            else if( EQUAL(layer->items[i],"values") && rlinfo->qc_values )
+            else if( EQUAL(layer->items[i],"value_list") && rlinfo->qc_values )
             {
                 int iValue;
 
@@ -1260,7 +1265,7 @@ int msRASTERLayerGetItems(layerObj *layer)
             sprintf( szName, "value_%d", i );
             layer->items[layer->numitems++] = strdup(szName);
         }
-        layer->items[layer->numitems++] = strdup("values");
+        layer->items[layer->numitems++] = strdup("value_list");
     }
     if( rlinfo->qc_class )
         layer->items[layer->numitems++] = strdup("class");
