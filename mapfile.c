@@ -3744,6 +3744,7 @@ int msFreeLabelCache(labelCacheObj *cache) {
     msFree(cache->markers[i].poly);
   }
   msFree(cache->markers);
+  cache->markers = NULL;
   cache->markercachesize = 0;
   cache->nummarkers = 0;
 
