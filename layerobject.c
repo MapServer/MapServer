@@ -103,7 +103,7 @@ int msLayerSetExtent( layerObj *layer,
     if (minx == -1.0 && miny == -1.0 && maxx == -1.0 && maxy == -1.0)
       return(MS_SUCCESS);
       
-    if (!msRectIsValid(&(layer->extent))) {
+    if (!MS_VALID_EXTENT(layer->extent)) {
       msSetError(MS_MISCERR, "Given layer extent is invalid. minx=%lf, miny=%lf, maxx=%lf, maxy=%lf.", "msLayerSetExtent()", layer->extent.minx, layer->extent.miny, layer->extent.maxx, layer->extent.maxy); 
       return(MS_FAILURE);
       }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/07/29 16:35:31  hobu
+ * drop msRectIsValid and use MS_VALID_EXTENT
+ *
  * Revision 1.12  2004/07/28 15:34:03  hobu
  * add a test after the input of an extent in msMapSetExtent to check for its validity.  Also convert tabs back to spaces.
  *
@@ -244,18 +247,13 @@ void msApplyMapConfigOptions( mapObj *map )
 int msMapSetExtent( mapObj *map, 
                     double minx, double miny, double maxx, double maxy) 
 { 
-    // Check bounds
-    if (!msRectIsValid(&(map->extent))) {
-      msSetError(MS_MISCERR, "Given map extent is invalid.", "setExtent()"); 
-      return(NULL);
-      }
 
     map->extent.minx = minx;
     map->extent.miny = miny;
     map->extent.maxx = maxx;
     map->extent.maxy = maxy;
     
-    if (!msRectIsValid(&(map->extent))) {
+    if (!MS_VALID_EXTENT(map->extent)) {
       msSetError(MS_MISCERR, "Given map extent is invalid.", "setExtent()"); 
       return(NULL);
       }

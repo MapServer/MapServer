@@ -2197,7 +2197,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         if(getDouble(&(layer->extent.miny)) == -1) return(NULL);
         if(getDouble(&(layer->extent.maxx)) == -1) return(NULL);
         if(getDouble(&(layer->extent.maxy)) == -1) return(NULL);
-        if (!msRectIsValid(&(layer->extent))) {
+        if (!MS_VALID_EXTENT(layer->extent)) {
         	msSetError(MS_MISCERR, "Given layer extent is invalid.", "loadLayer()"); 
         	return(NULL);
         }
@@ -2783,7 +2783,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       if(getDouble(&(ref->extent.miny)) == -1) return(-1);
       if(getDouble(&(ref->extent.maxx)) == -1) return(-1);
       if(getDouble(&(ref->extent.maxy)) == -1) return(-1);
-      if (!msRectIsValid(&(ref->extent))) {
+      if (!MS_VALID_EXTENT(ref->extent)) {
       	msSetError(MS_MISCERR, "Given reference extent is invalid.", "loadReferenceMap()"); 
         return(NULL);
       	}
@@ -2855,7 +2855,7 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     if(getDouble(&(ref->extent.miny)) == -1) return;
     if(getDouble(&(ref->extent.maxx)) == -1) return;
     if(getDouble(&(ref->extent.maxy)) == -1) return;
-    if (!msRectIsValid(&(ref->extent))) {
+    if (!MS_VALID_EXTENT(ref->extent)) {
     	msSetError(MS_MISCERR, "Given reference extent is invalid.", "loadReferenceMapString()"); 
       return(NULL);
     	}
@@ -3660,7 +3660,7 @@ int loadWeb(webObj *web, mapObj *map)
       if(getDouble(&(web->extent.miny)) == -1) return(-1);
       if(getDouble(&(web->extent.maxx)) == -1) return(-1);
       if(getDouble(&(web->extent.maxy)) == -1) return(-1);
-	    if (!msRectIsValid(&(web->extent))) {
+	    if (!MS_VALID_EXTENT(web->extent)) {
 	    	msSetError(MS_MISCERR, "Given web extent is invalid.", "loadWeb()"); 
 	      return(NULL);
 	    	}
@@ -3728,7 +3728,7 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     if(getDouble(&(web->extent.miny)) == -1) return;
     if(getDouble(&(web->extent.maxx)) == -1) return;
     if(getDouble(&(web->extent.maxy)) == -1) return;
-    if (!msRectIsValid(&(web->extent))) {
+    if (!MS_VALID_EXTENT(web->extent)) {
     	msSetError(MS_MISCERR, "Given web extent is invalid.", "loadWeb()"); 
       return(NULL);
     	}
@@ -4140,7 +4140,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
         if(getDouble(&(map->extent.miny)) == -1) return(NULL);
         if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
         if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
-        if (!msRectIsValid(&(map->extent))) {
+        if (!MS_VALID_EXTENT(map->extent)) {
     			msSetError(MS_MISCERR, "Given map extent is invalid.", "loadMapInternal()"); 
       		return(NULL);
     			}
@@ -4310,7 +4310,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getDouble(&(map->extent.miny)) == -1) break;
       if(getDouble(&(map->extent.maxx)) == -1) break;
       if(getDouble(&(map->extent.maxy)) == -1) break;
-      if (!msRectIsValid(&(map->extent))) {
+      if (!MS_VALID_EXTENT(map->extent)) {
   			msSetError(MS_MISCERR, "Given map extent is invalid.", "msLoadMapString()"); 
     		return(NULL);
   			}
