@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.49  2004/12/09 22:17:27  assefa
+ * Delete temporary sld file created on disk (Bug 1123)
+ *
  * Revision 1.48  2004/11/25 21:25:20  assefa
  * Make sure that spatial filters are not applied on raster layers (Bug 1987).
  *
@@ -251,7 +254,9 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
                 rewind(fp);
                 pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
                 fread(pszSLDbuf, 1, nBufsize, fp);
+                fclose(fp);
                 pszSLDbuf[nBufsize] = '\0';
+                unlink(pszSLDTmpFile);
             }
         }
 

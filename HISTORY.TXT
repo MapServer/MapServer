@@ -19,6 +19,8 @@ Version 4.5
 - Change the output of the expression when using a wild card for
   PropertyIsLike (Bug 1107).
 
+- Delete temporary sld file created on disk (Bug 1123)
+
 Version 4.4.0 (2004-11-29)
 --------------------------
 
