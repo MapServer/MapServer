@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.24  2004/02/20 00:58:08  assefa
+ * The layer->template was not set in some cases.
+ *
  * Revision 1.23  2004/02/11 00:06:51  assefa
  * Correct Bug in FLTArraysNot when passed array was empty.
  *
@@ -265,21 +268,26 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
             lp->template = NULL;
         }
     }
+    else
+    {
+        //if there are no expression (so no template set in the classes,
+        //make sure that the layer is queryable bu setting the template 
+        //parameter
+        if (!lp->template)
+          lp->template = strdup("ttt.html");
+    }
 /* -------------------------------------------------------------------- */
 /*      Use the epsg code to reproject the values from the QueryRect    */
 /*      to the map projection.                                          */
 /*      The srs should be a string like                                 */
 /*      srsName="http://www.opengis.net/gml/srs/epsg.xml#4326".         */
 /*      We will just extract the value after the # and assume that      */
-/*      It corresponds        projectionObj sProjTmp;
- to the epsg code on the system. This syntax      */
+/*      It corresponds to the epsg code on the system. This syntax      */
 /*      is the one descibed in the GML specification.                   */
 /*                                                                      */
 /*       There is also several servers requesting the box with the      */
 /*      srsName using the following syntax : <Box                       */
 /*      srsName="EPSG:42304">. So we also support this syntax.          */
-/*      (Note that at this point the ESPG ha been stripped and we       */
-/*      should only have 42304 as a value).                             */
 /*                                                                      */
 /* -------------------------------------------------------------------- */
     if(szEPSG && map->projection.numargs > 0)
@@ -297,7 +305,21 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         }
         else if (tokens &&  nTokens == 1)
         {
-            nEpsgTmp = atoi(tokens[0]);
+            if (tokens)
+              msFreeCharArray(tokens, nTokens);
+            nTokens = 0;
+
+            tokens = split(szEPSG,':', &nTokens);
+            nEpsgTmp = -1;
+            if (tokens &&  nTokens == 1)
+            {
+                nEpsgTmp = atoi(tokens[0]);
+                
+            }
+            else if (tokens &&  nTokens == 2)
+            {
+                nEpsgTmp = atoi(tokens[1]);
+            }
             if (nEpsgTmp > 0)
             {
                 char szTmp[32];
@@ -336,7 +358,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     if (szExpression)
       free(szExpression);
 
-    if (lp && lp->resultcache->numresults > 0)
+    if (lp && lp->resultcache && lp->resultcache->numresults > 0)
     {
         panResults = (int *)malloc(sizeof(int)*lp->resultcache->numresults);
         for (i=0; i<lp->resultcache->numresults; i++)
@@ -522,7 +544,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
      free(psLayer->template);
      psLayer->template = NULL;
 
-     if (psLayer->resultcache->numresults <= 0)
+     if (!psLayer->resultcache || psLayer->resultcache->numresults <= 0)
        return NULL;
 
      panResults = (int *)malloc(sizeof(int)*psLayer->resultcache->numresults);
@@ -855,7 +877,7 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
     CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL;
     CPLXMLNode  *psFilterStart = NULL;
     FilterEncodingNode *psFilterNode = NULL;
-
+    
     if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
         (strstr(szXMLString, "Filter") == NULL))
       return NULL;
