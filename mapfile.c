@@ -2464,6 +2464,39 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map)
   }
 }
 
+static void loadQueryMapString(mapObj *map, queryMapObj *querymap, char *value)
+{
+  int red, green, blue;
+
+  for(;;) {
+    switch(msyylex()) {
+    case(COLOR):
+      msyystate = 2; msyystring = value;
+      if(getInteger(&(red)) == -1) return;
+      if(getInteger(&(green)) == -1) return;
+      if(getInteger(&(blue)) == -1) return;
+      querymap->color = msAddColor(map,red,green,blue);
+      if(querymap->color == -1) querymap->color = msAddColor(map,255,255,0); /* default back to yellow */
+      break;
+    case(SIZE):
+      msyystate = 2; msyystring = value;
+      if(getInteger(&(querymap->width)) == -1) return;
+      if(getInteger(&(querymap->height)) == -1) return;
+      break;
+    case(STATUS):
+      msyystate = 2; msyystring = value;
+      if((querymap->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
+      break;
+    case(STYLE):      
+      msyystate = 2; msyystring = value;
+      if((querymap->style = getSymbol(3, MS_NORMAL,MS_HILITE,MS_SELECTED)) == -1) return;
+      break;      
+    }
+  }
+
+  return;
+}
+
 static void writeQueryMap(mapObj *map, queryMapObj *querymap, FILE *stream)
 {
   fprintf(stream, "  QUERYMAP\n");
@@ -3110,6 +3143,9 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       break;
     case(PROJECTION):
       msLoadProjectionString(&(map->projection), value);
+      break;
+    case(QUERYMAP):
+      loadQueryMapString(map, &(map->querymap), value);
       break;
     case(REFERENCE):
       loadReferenceMapString(map, &(map->reference), value);
