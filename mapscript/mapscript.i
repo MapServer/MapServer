@@ -71,7 +71,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for mapObj, need to figure out how to deal with Dan's extension to msLoadMap()...
 //
-%addmethods mapObj {
+%extend mapObj {
   mapObj(char *filename) {
     mapObj *map;
 
@@ -354,7 +354,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for layerObj, always within the context of a map
 //
-%addmethods layerObj {
+%extend layerObj {
   layerObj(mapObj *map) {
     if(map->numlayers == MS_MAXLAYERS) // no room
       return(NULL);
@@ -491,7 +491,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for classObj, always within the context of a layer
 //
-%addmethods classObj {
+%extend classObj {
   classObj(layerObj *layer) {
     if(layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
@@ -554,7 +554,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for pointObj, useful many places
 //
-%addmethods pointObj {
+%extend pointObj {
   pointObj() {
     return (pointObj *)malloc(sizeof(pointObj));
   }
@@ -596,7 +596,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for lineObj (eg. a line or group of points), useful many places
 //
-%addmethods lineObj {
+%extend lineObj {
   lineObj() {
     lineObj *line;
 
@@ -648,7 +648,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for shapeObj
 //
-%addmethods shapeObj {
+%extend shapeObj {
   shapeObj(int type) {
     shapeObj *shape;
 
@@ -749,7 +749,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for rectObj
 //
-%addmethods rectObj {
+%extend rectObj {
   rectObj() {	
     rectObj *rect;
 
@@ -795,7 +795,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for shapefileObj
 //
-%addmethods shapefileObj {
+%extend shapefileObj {
   shapefileObj(char *filename, int type) {    
     shapefileObj *shapefile;
     int status;
@@ -871,7 +871,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 // class extensions for imageObj
 //
 //TODO : should take image type as argument ??
-%addmethods imageObj {
+%extend imageObj {
   imageObj(int width, int height) {
     imageObj *image=NULL;
     outputFormatObj *format;
@@ -1002,7 +1002,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 // 
 // class extensions for outputFormatObj
 //
-%addmethods outputFormatObj {
+%extend outputFormatObj {
   outputFormatObj( const char *driver ) {
     outputFormatObj *format;
 
@@ -1036,7 +1036,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for projectionObj
 //
-%addmethods projectionObj {
+%extend projectionObj {
   projectionObj(char *string) {
     int status;
     projectionObj *proj=NULL;
@@ -1065,7 +1065,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for labelCacheObj - TP mods
 //
-%addmethods labelCacheObj {
+%extend labelCacheObj {
   void freeCache() {
     msFreeLabelCache(self);    
   }
@@ -1074,7 +1074,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for DBFInfo - TP mods
 //
-%addmethods DBFInfo {
+%extend DBFInfo {
     char *getFieldName(int iField) {
         static char pszFieldName[1000];
 	int pnWidth;
