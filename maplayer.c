@@ -427,6 +427,7 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
   int i, j, l;
   char tmpstr1[1024], tmpstr2[1024];
   short in=MS_FALSE;
+  int tmpint;
 
   j = 0;
   l = strlen(expression->string);
@@ -440,12 +441,16 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
     if(expression->string[i] == ']') {
       in = MS_FALSE;
 
+      tmpint = expression->numitems;
+
       tmpstr2[j] = expression->string[i];
       tmpstr2[j+1] = '\0';
       string2list(expression->items, &(expression->numitems), tmpstr2);
 
-      tmpstr1[j-1] = '\0';
-      expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
+      if(tmpint != expression->numitems) { // not a duplicate, so no need to calculate the index
+        tmpstr1[j-1] = '\0';
+        expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
+      }
 
       j = 0; // reset
 

@@ -30,6 +30,36 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.10  2003/06/11 17:55:07  dan
+ * Modified PHP SAPI test to accept 'cli' as well
+ *
+ * Revision 1.104.2.9  2003/04/16 20:31:59  dan
+ * Better looking phpinfo() output for php_mapscript (backported from v3.7)
+ *
+ * Revision 1.104.2.8  2003/03/05 03:36:53  dan
+ * Backport fix for bug 186 from version 3.7 (point->project() etc. problems)
+ *
+ * Revision 1.104.2.7  2003/02/26 20:53:47  assefa
+ * Add test on module name 'cgi-fcgi'. Needed for php 4.3.X.
+ *
+ * Revision 1.104.2.6  2003/02/09 01:40:37  dan
+ * Removed stray strcat() argument in Windows-specific map open code.
+ *
+ * Revision 1.104.2.5  2002/10/28 21:47:53  dan
+ * Added missing MS_LAYER_CIRCLE and MS_CC constants
+ *
+ * Revision 1.104.2.4  2002/07/08 20:04:58  dan
+ * Added symbolsetfilename and fontsetfilename in PHP MapScript's mapObj
+ *
+ * Revision 1.104.2.3  2002/07/08 17:28:16  dan
+ * Added map->setFontSet() to MapScript
+ *
+ * Revision 1.104.2.2  2002/06/27 19:10:39  dan
+ * Added msTokenizeMap() in MapServer and PHP MapScript (3.6 branch)
+ *
+ * Revision 1.104.2.1  2002/06/03 14:19:53  dan
+ * Added $layer->styleitem to 3.6 branch
+ *
  * Revision 1.104  2002/04/24 20:37:32  assefa
  * Correct compiling error on Windows.
  *
@@ -164,6 +194,8 @@
 #include "php.h"
 #include "php_globals.h"
 #include "SAPI.h"
+#include "ext/standard/info.h"
+#include "ext/standard/head.h"
 #else
 #include "phpdl.h"
 #include "php3_list.h"
@@ -216,6 +248,8 @@ DLEXPORT void php3_ms_free_projection(projectionObj *pProj);
 
 DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
@@ -265,6 +299,7 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -478,6 +513,7 @@ function_entry php3_ms_functions[] = {
     {"ms_getpid",       php3_ms_getpid,         NULL},
     {"ms_getscale",     php3_ms_getscale,       NULL},
     {"ms_newprojectionobj",   php3_ms_projection_new,       NULL},
+    {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
     {NULL, NULL, NULL}
 };
 
@@ -552,6 +588,7 @@ function_entry php_map_class_functions[] = {
     {"processquerytemplate",   php3_ms_map_processQueryTemplate,  NULL},
     {"setsymbolset",   php3_ms_map_setSymbolSet,  NULL},
     {"getnumsymbols",   php3_ms_map_getNumSymbols,  NULL},
+    {"setfontset",      php3_ms_map_setFontSet,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -690,14 +727,12 @@ function_entry php_projection_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
-#ifdef ZEND_VERSION 
 PHP_MINFO_FUNCTION(mapscript)
-#else
-DLEXPORT void php3_info_mapscript(void) 
-#endif
 {
-    php3_printf("MapScript Version %s<br>\n", PHP3_MS_VERSION);
-    php3_printf("%s<br>\n", msGetVersion());
+  php_info_print_table_start();
+  php_info_print_table_row(2, "MapServer Version", msGetVersion());
+  php_info_print_table_row(2, "PHP MapScript Version", PHP3_MS_VERSION);
+  php_info_print_table_end();
 }
 
 DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
@@ -783,6 +818,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_LAYER_RASTER",MS_LAYER_RASTER, const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_ANNOTATION",MS_LAYER_ANNOTATION,const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_QUERY",MS_LAYER_QUERY, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_CIRCLE",MS_LAYER_CIRCLE, const_flag);
 
     /* layer status constants (see also MS_ON, MS_OFF) */
     REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
@@ -809,6 +845,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_CL",         MS_CL,          const_flag);
     REGISTER_LONG_CONSTANT("MS_UC",         MS_UC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_LC",         MS_LC,          const_flag);
+    REGISTER_LONG_CONSTANT("MS_CC",         MS_CC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
     REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
 
@@ -1039,7 +1076,9 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * Hopefully we'll be able to get rid of that limitation soon, but for
      * now we'll produce an error of PHP is not running as a CGI.
      */
-    if (sapi_module.name && strcmp(sapi_module.name, "cgi") != 0)
+    if (sapi_module.name && (strcmp(sapi_module.name, "cgi") != 0) &&
+       (strcmp(sapi_module.name, "cgi-fcgi") != 0) &&
+       (strcmp(sapi_module.name, "cli") != 0))
     {
         php3_error(E_ERROR, 
              "Due to thread-safety problems, php_mapscript cannot be used "
@@ -1075,7 +1114,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * should really do is make all of MapServer use the V_* macros and
      * avoid calling setcwd() from anywhere.
      */
-    if (IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
+    if (strlen(pFname->value.str.val) == 0 ||
+        IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
         pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
     else
     {
@@ -1083,7 +1123,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
         if (virtual_getcwd(szFname, MAXPATHLEN TSRMLS_CC) != NULL)
         {
             strcat(szFname, "\\");
-            strcat(szFname, pFname->value.str.val, pszNewPath);
+            strcat(szFname, pFname->value.str.val);
             pNewObj = mapObj_new(szFname, pszNewPath);
         }
     }
@@ -1135,6 +1175,10 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value, "keyspacingx",pNewObj->legend.keyspacingx);
     add_property_long(return_value, "keyspacingy",pNewObj->legend.keyspacingy);
 
+    PHPMS_ADD_PROP_STR(return_value, "symbolsetfilename", 
+                                                  pNewObj->symbolset.filename);
+    PHPMS_ADD_PROP_STR(return_value, "fontsetfilename", 
+                                                  pNewObj->fontset.filename);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
@@ -1228,7 +1272,9 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "keyspacingx", self->legend.keyspacingx)
     else IF_SET_LONG(  "keyspacingy", self->legend.keyspacingy)
     else if (strcmp( "numlayers", pPropertyName->value.str.val) == 0 ||
-             strcmp( "extent", pPropertyName->value.str.val) == 0)
+             strcmp( "extent", pPropertyName->value.str.val) == 0 ||
+             strcmp( "symbolsetfilename", pPropertyName->value.str.val) == 0 ||
+             strcmp( "fontsetfilename", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
                             pPropertyName->value.str.val);
@@ -4474,8 +4520,7 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    if (ZEND_NUM_ARGS() != 1 ||
-        getParameters(ht,1,&pParamFileName)==FAILURE)
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
@@ -4486,9 +4531,11 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
     if (self == NULL)
         RETURN_FALSE;
 
-    if(pParamFileName->value.str.val != NULL && strlen(pParamFileName->value.str.val) > 0)
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
     {
-        if ((retVal = mapObj_setSymbolSet(self, pParamFileName->value.str.val)) != 0)
+        if ((retVal = mapObj_setSymbolSet(self, 
+                                          pParamFileName->value.str.val)) != 0)
         {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed loading symbolset from %s",
@@ -4496,9 +4543,15 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
         }
     }
 
+    if (self->symbolset.filename)
+        _phpms_set_property_string(pThis, "symbolsetfilename", 
+                                   self->symbolset.filename?
+                                       self->symbolset.filename:"", E_ERROR); 
+
     RETURN_LONG(retVal);
 #endif
 }
+
 
 /**********************************************************************
  *                        map->getNumSymbols()
@@ -4536,6 +4589,75 @@ DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /* }}} */
+
+/**********************************************************************
+ *                        map->setFontSet(szFileName)
+ *
+ * Load a new fontset
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_setFontSet(fileName)*/
+
+DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamFileName;
+    mapObj      *self=NULL;
+    int         retVal=0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pParamFileName);
+   
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
+    {
+        if ((retVal = mapObj_setFontSet(self, 
+                                        pParamFileName->value.str.val)) != 0)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed loading fontset from %s",
+                       pParamFileName->value.str.val);
+        }
+    }
+
+    if (self->fontset.filename)
+        _phpms_set_property_string(pThis, "fontsetfilename", 
+                                   self->fontset.filename?
+                                       self->fontset.filename:"", E_ERROR);
+
+    RETURN_LONG(retVal);
+#endif
+}
+/* }}} */
+
 
 /*=====================================================================
  *                 PHP function wrappers - image class
@@ -5016,6 +5138,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
     add_property_long(return_value,   "transparency",player->transparency);
+    PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
 
     return layer_id;
 }
@@ -5134,6 +5257,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "transparency", self->transparency)
+    else IF_SET_STRING("styleitem",  self->styleitem)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
@@ -7035,6 +7159,7 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
     pointObj            *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7066,14 +7191,18 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
                                             list TSRMLS_CC);
 
     if (self && poInProj && poOutProj &&
-        (pointObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+        (status = pointObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
     {
-        RETURN_FALSE;
+        _phpms_report_mapserver_error(E_WARNING);
     }
-    /* Return point object */
-    _phpms_build_point_object(self, PHPMS_GLOBAL(le_mspoint_ref),
-                              list, return_value);
+    else
+    {
+        // Update the members of the PHP wrapper object.
+        _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
+        _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
+    }
 
+    RETURN_LONG(status);
 }
 /* }}} */
 
@@ -7414,6 +7543,7 @@ DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS)
     lineObj             *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7450,9 +7580,13 @@ DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS)
          RETURN_FALSE;
     }
 
-    /* Return line object */
-    _phpms_build_line_object(self, PHPMS_GLOBAL(le_msline_ref),
-                             list, return_value);
+    if (self && poInProj && poOutProj &&
+        (status = lineObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(status);
 }
 /* }}} */
 
@@ -7868,9 +8002,11 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
     shapeObj            *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
+    pval   **pBounds;
 #endif
 
 #ifdef PHP4
@@ -7898,16 +8034,44 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
                                             PHPMS_GLOBAL(le_msprojection_new), 
                                             list TSRMLS_CC);
 
+
     if (self && poInProj && poOutProj &&
-        (shapeObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+        (status = shapeObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
     {
-         RETURN_FALSE;
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+    else
+    {
+#ifdef PHP4
+         if (zend_hash_find(pThis->value.obj.properties, "bounds", 
+                            sizeof("bounds"), (void **)&pBounds) == SUCCESS)
+         {
+             _phpms_set_property_double((*pBounds),"minx", self->bounds.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pBounds),"miny", self->bounds.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pBounds),"maxx", self->bounds.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pBounds),"maxy", self->bounds.maxy, 
+                                        E_ERROR);
+         }
+#else
+         if (_php3_hash_find(pThis->value.ht, "bounds", sizeof("bounds"), 
+                             (void **)&pBounds) == SUCCESS)
+         {
+             _phpms_set_property_double(pBounds,"minx", self->bounds.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pBounds,"miny", self->bounds.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double(pBounds,"maxx", self->bounds.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pBounds,"maxy", self->bounds.maxy, 
+                                        E_ERROR);
+         }
+#endif
     }
 
-    /* Return shape object */
-    _phpms_build_shape_object(self, PHPMS_GLOBAL(le_msshape_ref), NULL,
-                              list, return_value);
-
+    RETURN_LONG(status);
 }
 /* }}} */
 
@@ -8558,6 +8722,7 @@ DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
     rectObj             *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -8587,15 +8752,20 @@ DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
                                             list TSRMLS_CC);
 
     if (self && poInProj && poOutProj &&
-        (rectObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+        (status = rectObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
     {
-        RETURN_FALSE;
+        _phpms_report_mapserver_error(E_WARNING);
     }
-    
-    /* Return rect object */
-    _phpms_build_rect_object(self, PHPMS_GLOBAL(le_msrect_ref),
-                             list, return_value);
+    else
+    {
+        // Update the members of the PHP wrapper object.
+        _phpms_set_property_double(pThis, "minx", self->minx, E_ERROR);
+        _phpms_set_property_double(pThis, "miny", self->miny, E_ERROR);
+        _phpms_set_property_double(pThis, "maxx", self->maxx, E_ERROR);
+        _phpms_set_property_double(pThis, "maxy", self->maxy, E_ERROR);
+    }
 
+    RETURN_LONG(status);
 }
 /* }}} */
 
@@ -10080,3 +10250,51 @@ static double GetDeltaExtentsUsingScale(double dfScale, int nUnits,
     return dfDelta;
 }
 
+/**********************************************************************
+ *                        ms_tokenizeMap()
+ *
+ * Preparse mapfile and return an array containg one item for each 
+ * token in the map.
+ **********************************************************************/
+
+/* {{{ proto array ms_tokenizeMap(string filename)
+   Preparse mapfile and return an array containg one item for each token in the map.*/
+
+DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pFname;
+    char        **tokens;
+    int         i, numtokens=0;
+
+    if (getParameters(ht, 1, &pFname) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFname);
+
+    if ((tokens = msTokenizeMap(pFname->value.str.val, &numtokens)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed tokenizing map file %s", 
+                            pFname->value.str.val);
+        RETURN_FALSE;
+    }
+    else
+    {
+        if (array_init(return_value) == FAILURE) 
+        {
+            RETURN_FALSE;
+        }
+
+        for (i=0; i<numtokens; i++)
+        {
+            add_next_index_string(return_value,  tokens[i], 1);
+        }
+
+        msFreeCharArray(tokens, numtokens);
+    }
+
+
+}
+/* }}} */
