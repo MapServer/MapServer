@@ -143,34 +143,66 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   imageObj *prepareImage() {
     int i, status;
-    double center_lat;
     imageObj *image=NULL;
 
     if(self->width == -1 || self->height == -1) {
-      msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
-      return NULL;
+        msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
+        return(NULL);
     }
 
     msInitLabelCache(&(self->labelcache)); // this clears any previously allocated cache
 
-    image = msImageCreate(self->width, self->height, self->outputformat,
-                          self->web.imagepath, self->web.imageurl);
+    if(!self->outputformat) {
+        msSetError(MS_GDERR, "Map outputformat not set!", "msDrawMap()");
+        return(NULL);
+    }
+    else if( MS_RENDERER_GD(self->outputformat) )
+    {
+        image = msImageCreateGD(self->width, self->height, self->outputformat, 
+				self->web.imagepath, self->web.imageurl);        
+        if( image != NULL ) msImageInitGD( image, &self->imagecolor );
+    }
+    else if( MS_RENDERER_RAWDATA(self->outputformat) )
+    {
+        image = msImageCreate(self->width, self->height, self->outputformat,
+                              self->web.imagepath, self->web.imageurl);
+    }
+#ifdef USE_MING_FLASH
+    else if( MS_RENDERER_SWF(self->outputformat) )
+    {
+        image = msImageCreateSWF(self->width, self->height, self->outputformat,
+                                 self->web.imagepath, self->web.imageurl,
+                                 self);
+    }
+#endif
+#ifdef USE_PDF
+    else if( MS_RENDERER_PDF(self->outputformat) )
+    {
+        image = msImageCreatePDF(self->width, self->height, self->outputformat,
+                                 self->web.imagepath, self->web.imageurl,
+                                 self);
+	}
+#endif
+    else
+    {
+        image = NULL;
+    }
+  
     if(!image) {
-      msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
-      return NULL;
+        msSetError(MS_GDERR, "Unable to initialize image.", "msDrawMap()");
+        return(NULL);
     }
 
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
-    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
-    if(status != MS_SUCCESS) return NULL;
+    status = msCalculateScale(self->extent,self->units,self->width,self->height,
+                              self->resolution, &self->scale);
+    if(status != MS_SUCCESS) return(NULL);
 
     // compute layer scale factors now
     for(i=0;i<self->numlayers; i++) {
       if(self->layers[i].symbolscale > 0 && self->scale > 0) {
-    	if(self->layers[i].sizeunits != MS_PIXELS) {
-          center_lat = (self->extent.maxy + self->extent.miny)/2.0;
-      	  self->layers[i].scalefactor = (msInchesPerUnit(self->layers[i].sizeunits, center_lat)/msInchesPerUnit(self->units, center_lat)) / self->cellsize;
-        }
+    	if(self->layers[i].sizeunits != MS_PIXELS)
+      	  self->layers[i].scalefactor = (msInchesPerUnit(self->layers[i].sizeunits,0)/msInchesPerUnit(self->units,0)) / self->cellsize; 
     	else
       	  self->layers[i].scalefactor = self->layers[i].symbolscale/self->scale;
       }
