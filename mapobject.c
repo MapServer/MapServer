@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/07/07 21:57:57  sean
+ * Completed work on msInsertLayer and msRemoveLayer, added prototypes to map.h.  See bug 759.
+ *
  * Revision 1.7  2004/07/07 04:34:40  sean
  * added msInsertLayer() and msRemoveLayer().  See mapserver bug 759.
  *
@@ -416,6 +419,7 @@ int msMapRestoreRealExtent( mapObj *map )
 int msInsertLayer(mapObj *map, layerObj *layer, int nIndex) 
 {
     int i;
+    int order_index;
 
     // Possible to add another?
     if (map->numlayers == MS_MAXLAYERS) {
@@ -430,17 +434,37 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         return -1;
     }
     else if (nIndex < 0) { // Insert at the end by default
+        initLayer(&(map->layers[map->numlayers]), map);
         msCopyLayer(&(map->layers[map->numlayers]), layer);
+        map->layerorder[map->numlayers] = map->numlayers;
+        map->layers[map->numlayers].index = map->numlayers;
         map->numlayers++;
         return map->numlayers-1;
     }
     else if (nIndex >= 0 && nIndex < MS_MAXLAYERS) {
+    
         // Move layers existing at the specified nIndex or greater
         // to a higher nIndex
         for (i=map->numlayers-1; i>=nIndex; i--) {
             map->layers[i+1] = map->layers[i];
+            map->layers[i+1].index = i+1;
         }
+        initLayer(&(map->layers[nIndex]), map);
         msCopyLayer(&(map->layers[nIndex]), layer);
+        map->layers[map->numlayers].index = nIndex;
+
+        /* adjust layers drawing order */
+        
+        // shift everything above this index one higher
+        for (i=map->numlayers; i>nIndex; i--) {
+            map->layerorder[i] = map->layerorder[i-1];
+            if (map->layerorder[i] >= nIndex) map->layerorder[i]++;
+        }
+        for (i=0; i<nIndex; i++) {
+            if (map->layerorder[i] >= nIndex) map->layerorder[i]++;
+        }
+        map->layerorder[nIndex] = nIndex;
+        
         map->numlayers++;
         return nIndex;
     }
@@ -452,6 +476,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
 
 layerObj *msRemoveLayer(mapObj *map, int nIndex) {
     int i;
+    int order_index;
     layerObj *layer;
     
     if (nIndex < 0 || nIndex >= map->numlayers) {
@@ -467,11 +492,30 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex) {
                        "msRemoveLayer");
             return NULL;
         }
+        initLayer(layer, NULL);
+        //msInitProjection(&(layer->projection));
         msCopyLayer(layer, &(map->layers[nIndex]));
         for (i=nIndex; i<map->numlayers-1; i++) {
-             msCopyLayer(&map->layers[i], &map->layers[i+1]);
+            map->layers[i] = map->layers[i+1];
+            map->layers[i].index = i;
+            //msCopyLayer(&map->layers[i], &map->layers[i+1]);
+        }
+        
+        /* Adjust drawing order */
+        order_index = 0;
+        for (i=0; i<map->numlayers; i++) {
+            if (map->layerorder[i] > nIndex) map->layerorder[i]--;
+            if (map->layerorder[i] == nIndex) {
+                order_index = i;
+                break;
+            }
+        }
+        for (i=order_index; i<map->numlayers; i++) {
+            map->layerorder[i] = map->layerorder[i+1];
+            if (map->layerorder[i] > nIndex) map->layerorder[i]--;
         }
         map->numlayers--;
+            
         return layer;
     }
 }

@@ -1396,6 +1396,8 @@ MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nC
 MS_DLL_EXPORT int msMoveLayerUp(mapObj *map, int nLayerIndex);
 MS_DLL_EXPORT int msMoveLayerDown(mapObj *map, int nLayerIndex);
 MS_DLL_EXPORT int msSetLayersdrawingOrder(mapObj *self, int *panIndexes);
+MS_DLL_EXPORT int msInsertLayer(mapObj *map, layerObj *layer, int nIndex);
+MS_DLL_EXPORT layerObj *msRemoveLayer(mapObj *map, int nIndex);
 
 //Defined in maputil.c
 MS_DLL_EXPORT int msMoveClassUp(layerObj *layer, int nClassIndex);
@@ -1406,6 +1408,7 @@ MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int iStyleIndex);
 MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style,
                                 int nStyleIndex);
+
 MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int index);
 
 MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
