@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2004/09/03 14:23:07  frank
+ * make internal copy of pj_units for easier build on win32
+ *
  * Revision 1.3  2001/12/10 22:31:27  sdlime
  * Added include for string.h to mapprojhack.c to avoid a compiler warning.
  *
@@ -94,6 +97,39 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 }
 
 /************************************************************************/
+/*       pj_units[] copy.  It is safer for win32 builds to include a    */
+/*      copy of pj_units instead of trying to get the variable from     */
+/*      the proj dll.                                                   */
+/************************************************************************/
+#ifdef USE_PROJ 
+struct PJ_UNITS
+pj_units_copy[] = {
+	"km",	"1000.",	"Kilometer",
+	"m",	"1.",		"Meter",
+	"dm",	"1/10",		"Decimeter",
+	"cm",	"1/100",	"Centimeter",
+	"mm",	"1/1000",	"Millimeter",
+	"kmi",	"1852.0",	"International Nautical Mile",
+	"in",	"0.0254",	"International Inch",
+	"ft",	"0.3048",	"International Foot",
+	"yd",	"0.9144",	"International Yard",
+	"mi",	"1609.344",	"International Statute Mile",
+	"fath",	"1.8288",	"International Fathom",
+	"ch",	"20.1168",	"International Chain",
+	"link",	"0.201168",	"International Link",
+	"us-in",	"1./39.37",	"U.S. Surveyor's Inch",
+	"us-ft",	"0.304800609601219",	"U.S. Surveyor's Foot",
+	"us-yd",	"0.914401828803658",	"U.S. Surveyor's Yard",
+	"us-ch",	"20.11684023368047",	"U.S. Surveyor's Chain",
+	"us-mi",	"1609.347218694437",	"U.S. Surveyor's Statute Mile",
+	"ind-yd",	"0.91439523",	"Indian Yard",
+	"ind-ft",	"0.30479841",	"Indian Foot",
+	"ind-ch",	"20.11669506",	"Indian Chain",
+(char *)0, (char *)0, (char *)0
+};
+#endif /* def USE_PROJ */
+
+/************************************************************************/
 /*           int GetMapserverUnitUsingProj(projectionObj *psProj)       */
 /*                                                                      */
 /*      Return a mapserver unit corresponding to the projection         */
@@ -109,7 +145,7 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
             return MS_DD;
 
         //psProj->proj->to_meter;
-        for (lu = pj_units; lu->id ; ++lu)
+        for (lu = pj_units_copy; lu->id ; ++lu)
         {
             if (strtod(lu->to_meter, NULL) == psProj->proj->to_meter)
                 return ConvertProjUnitStringToMS(lu->id);
