@@ -39,7 +39,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj \
 		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttp.obj \
 		mappdf.obj mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
-		mapmygis.obj mapimagemap.obj mapcopy.obj filterencoding.obj md5c.obj $(EPPL_OBJ) $(REGEX_OBJ)
+		mapmygis.obj mapimagemap.obj mapcopy.obj mapogcfilter.obj $(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
 
