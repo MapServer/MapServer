@@ -156,7 +156,7 @@ memory.") const char * {
 %rename(FontSet) fontSetObj;
 #endif
 
-%rename(numprocessing) num_processing;
+//%rename(numprocessing) num_processing;
 
 // grab mapserver declarations to wrap
 %include "../../mapprimitive.h"

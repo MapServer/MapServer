@@ -173,18 +173,18 @@ class LayerRasterProcessingTestCase(MapTestCase):
     def testSetProcessing(self):
         layer = self.mapobj1.getLayer(0)
         layer.setProcessing('directive0=foo')
-        assert layer.numprocessing == 1
+        assert layer.numprocessing == 1, layer.numprocessing
         layer.setProcessing('directive1=bar')
-        assert layer.numprocessing == 2
+        assert layer.numprocessing == 2, layer.numprocessing
         directives = [layer.getProcessing(i) \
                       for i in range(layer.numprocessing)]
         assert directives == ['directive0=foo', 'directive1=bar']
     def testClearProcessing(self):
         layer = self.mapobj1.getLayer(0)
         layer.setProcessing('directive0=foo')
-        assert layer.numprocessing == 1
+        assert layer.numprocessing == 1, layer.numprocessing
         layer.setProcessing('directive1=bar')
-        assert layer.numprocessing == 2
+        assert layer.numprocessing == 2, layer.numprocessing
         assert layer.clearProcessing() == mapscript.MS_SUCCESS
 
 # class removal tests

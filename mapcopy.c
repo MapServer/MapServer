@@ -979,16 +979,16 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   copyProperty(&(dst->transparency), &(src->transparency), sizeof(int)); 
   copyProperty(&(dst->dump), &(src->dump), sizeof(int));
   copyProperty(&(dst->debug), &(src->debug), sizeof(int));
-  copyProperty(&(dst->num_processing), &(src->num_processing),
+  copyProperty(&(dst->numprocessing), &(src->numprocessing),
                sizeof(int));
   
-  for (i = 0; i < dst->num_processing; i++) {
+  for (i = 0; i < dst->numprocessing; i++) {
     copyStringProperty(&(dst->processing[i]), src->processing[i]);
   }
 
   copyProperty(&(dst->numjoins), &(src->numjoins), sizeof(int));
 
-  for (i = 0; i < dst->num_processing; i++) {
+  for (i = 0; i < dst->numprocessing; i++) {
     return_value = msCopyJoin(&(dst->joins[i]), &(src->joins[i]));
     if (return_value != MS_SUCCESS) return(MS_FAILURE);
   }

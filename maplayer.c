@@ -934,19 +934,19 @@ int msLayerGetNumFeatures(layerObj *layer) {
 void msLayerAddProcessing( layerObj *layer, const char *directive )
 
 {
-    layer->num_processing++;
-    if( layer->num_processing == 1 )
+    layer->numprocessing++;
+    if( layer->numprocessing == 1 )
         layer->processing = (char **) malloc(2*sizeof(char *));
     else
         layer->processing = (char **) 
             realloc(layer->processing, 
-                    sizeof(char*) * (layer->num_processing+1) );
-    layer->processing[layer->num_processing-1] = strdup(directive);
-    layer->processing[layer->num_processing] = NULL;
+                    sizeof(char*) * (layer->numprocessing+1) );
+    layer->processing[layer->numprocessing-1] = strdup(directive);
+    layer->processing[layer->numprocessing] = NULL;
 }
 
 char *msLayerGetProcessing( layerObj *layer, int proc_index) {
-    if (proc_index < 0 || proc_index >= layer->num_processing) {
+    if (proc_index < 0 || proc_index >= layer->numprocessing) {
         msSetError(MS_CHILDERR, "Invalid processing index.", "msLayerGetProcessing()");
         return NULL;
     }
@@ -956,11 +956,11 @@ char *msLayerGetProcessing( layerObj *layer, int proc_index) {
 }
 
 int msLayerClearProcessing( layerObj *layer ) {
-    if (layer->num_processing > 0) {
-        msFreeCharArray( layer->processing, layer->num_processing );
+    if (layer->numprocessing > 0) {
+        msFreeCharArray( layer->processing, layer->numprocessing );
         layer->processing = NULL;
-        layer->num_processing = 0;
+        layer->numprocessing = 0;
     }
-    return layer->num_processing;
+    return layer->numprocessing;
 }
 

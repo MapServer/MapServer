@@ -580,6 +580,19 @@ Attributes
 
 **TODO**
 
+numclasses : int immutable
+    Number of layer classes.
+
+numitems : int immutable
+    Number of layer feature attributes (items).
+
+numjoins : int immutable
+    Number of layer joins.
+    
+numprocessing : int immutable
+    Number of raster processing directives.
+
+
 Methods
 -------
 

@@ -717,7 +717,13 @@ typedef struct layer_obj {
 
   // attribute/classification handling components
   char **items;
+#ifdef SWIG
+%immutable;
+#endif
   int numitems;
+#ifdef SWIG
+%mutable;
+#endif
 
 #ifndef SWIG
   void *iteminfo; // connection specific information necessary to retrieve values
@@ -744,12 +750,18 @@ typedef struct layer_obj {
 
   int dump;
   int debug;
-  int  num_processing;
 #ifndef SWIG
   char **processing;
-#endif
   joinObj *joins;
+#endif
+#ifdef SWIG
+%immutable;
+#endif
+  int numprocessing;
   int numjoins;
+#ifdef SWIG
+%mutable;
+#endif
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application

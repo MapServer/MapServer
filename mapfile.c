@@ -2020,7 +2020,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->transparency = 0;
   
-  layer->num_processing = 0;
+  layer->numprocessing = 0;
   layer->processing = NULL;
   layer->numjoins = 0;
   if((layer->joins = (joinObj *)malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
@@ -2072,8 +2072,8 @@ void freeLayer(layerObj *layer) {
 
   if(layer->metadata) msFreeHashTable(layer->metadata);
 
-  if( layer->num_processing > 0 )
-      msFreeCharArray( layer->processing, layer->num_processing );
+  if( layer->numprocessing > 0 )
+      msFreeCharArray( layer->processing, layer->numprocessing );
   msFree(layer->styleitem);
   for(i=0;i<layer->numjoins;i++) // each join
     freeJoin(&(layer->joins[i]));
@@ -2467,7 +2467,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       int len;
 
       len = strcspn(value, "="); // we only want to compare characters up to the equal sign
-      for(i=0; i<layer->num_processing; i++) { // check to see if option is already set
+      for(i=0; i<layer->numprocessing; i++) { // check to see if option is already set
         if(strncasecmp(value, layer->processing[i], len) == 0) {
 	  free(layer->processing[i]);
 	  layer->processing[i] = strdup(value);
@@ -2475,14 +2475,14 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
         }
       }
 
-      if(i == layer->num_processing) { // option didn't already exist, so add it to the end
-        layer->num_processing++;
-        if(layer->num_processing == 1)
+      if(i == layer->numprocessing) { // option didn't already exist, so add it to the end
+        layer->numprocessing++;
+        if(layer->numprocessing == 1)
           layer->processing = (char **) malloc(2*sizeof(char *));
         else
-          layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->num_processing+1));
-        layer->processing[layer->num_processing-1] = strdup(value);
-        layer->processing[layer->num_processing] = NULL;
+          layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->numprocessing+1));
+        layer->processing[layer->numprocessing-1] = strdup(value);
+        layer->processing[layer->numprocessing] = NULL;
       } 
     }
     break;
@@ -2615,7 +2615,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
 
-  for(i=0; i<layer->num_processing; i++)
+  for(i=0; i<layer->numprocessing; i++)
     if(layer->processing[i]) fprintf(stream, "    PROCESSING \"%s\"\n", layer->processing[i]);
 
   writeProjection(&(layer->projection), stream, "    ");
