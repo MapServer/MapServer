@@ -11,23 +11,42 @@
 # $Id$
 #
 
+#To use the PHP4 module uncomment the following line
+#PHP4 = 1
+
 #OPTFLAGS =	/nologo /Zi /W3 /DDEBUG
+
+!ifdef PHP4
+OPTFLAGS =	/nologo /Zi /W3 /DNO_REGEX_EXTRA_H
+BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DPHP4
+!else
 OPTFLAGS =	/nologo /Zi /W3
 BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32
+!endif
 
 LINK_OPT =	/dll /debug
 
 #
 # Set PHP_SOURCE_DIR to point to the root of the PHP source tree
 #
-PHP_SOURCE_DIR = ../../../php-3.0.14
 
+!ifdef PHP4
+PHP_SOURCE_DIR = ../../../php-4.0.1pl2
+PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/main -I$(PHP_SOURCE_DIR)/zend -I$(PHP_SOURCE_DIR)/include
+!else
+PHP_SOURCE_DIR = ../../../php-3.0.14
 PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/dl
+!endif
+
 
 #
 # Where do you want php3_mapscript.dll to be installed?
 #
-PHP_INSTALL_DIR =  C:\Apache\php3
+!ifdef PHP4
+PHP_INSTALL_DIR =  d:\Apache\php4
+!else
+PHP_INSTALL_DIR =  d:\Apache\php3
+!endif
 
 #
 # Set MapServer extensions parameters.  See main MapServer Makefile for 
@@ -38,7 +57,11 @@ PHP_INSTALL_DIR =  C:\Apache\php3
 # MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
 #
 MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF
+!ifdef PHP4
+MS_INC = -I../.. -I../../regex-0.12 -I../../gd-1.2 -I../../../proj/src
+!else
 MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../gd-1.2 -I../../../proj/src
+!endif
 MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
 	../../../tiff-v3.5.4/libtiff/libtiff.lib \
 	../../gdft/gdft.lib \
@@ -50,7 +73,7 @@ MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
 # The rest of the file should not have to be edited...
 #
 
-PHPMS_OBJS =  php_mapscript.obj mapscript_i.obj
+PHPMS_OBJS =  php_mapscript_util.obj php_mapscript.obj mapscript_i.obj
 
 PHPMS_DLL =	php3_mapscript.dll
 
@@ -63,11 +86,17 @@ all:		$(PHPMS_DLL)
 install:	all
 	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)
 
+!ifdef PHP4
+$(PHPMS_DLL):	$(PHPMS_OBJS)
+	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
+		$(PHP_SOURCE_DIR)\lib\php4nts.lib
+!else
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
 		$(PHP_SOURCE_DIR)\win32\cgi_debug\php.lib
+!endif
 
-$(PHPMS_OBJS):	php_mapscript.h $(MS_LIBS)
+$(PHPMS_OBJS):	php_mapscript_util.h php_mapscript.h $(MS_LIBS)
 
 .c.obj:
 	$(CC) $(CFLAGS) /DCOMPILE_DL=1 /c $*.c /Fo$*.obj
