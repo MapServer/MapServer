@@ -481,13 +481,12 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
       }
     }
 
+    if(i == -1) psDBF->pszStringField[0] = '\0'; // whole string is blank (SDL fix)      
+
     /*
     ** Trim/skip leading blanks (SDL/DM Modification - only on numeric types)
     */ 
-    if( psDBF->pachFieldType[iField] == 'N' 
-        || psDBF->pachFieldType[iField] == 'F'
-        || psDBF->pachFieldType[iField] == 'D' )
-    {
+    if( psDBF->pachFieldType[iField] == 'N' || psDBF->pachFieldType[iField] == 'F' || psDBF->pachFieldType[iField] == 'D' ) {
         for(i=0;i<strlen(psDBF->pszStringField);i++) {
             if(psDBF->pszStringField[i] != ' ')
                 break;	
