@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/09/29 17:12:13  frank
+ * fixed casting issues to avoid warnings
+ *
  * Revision 1.30  2004/09/03 14:24:07  frank
  * %p cannot be encoded and decoded properly on win32
  *
@@ -1063,7 +1066,7 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
 
     for( i = 0; i < nPixelCount; i++ )
     {
-        float fScaledValue = (pafRawData[i] - dfScaleMin) * dfScaleRatio;
+        float fScaledValue = (float) ((pafRawData[i]-dfScaleMin)*dfScaleRatio);
 
         if( fScaledValue < 0.0 )
             pabyBuffer[i] = 0;
@@ -1518,7 +1521,7 @@ msDrawRasterLayerGDAL_16BitClassification(
         return -1;
     }
 
-    fNoDataValue = msGetGDALNoDataValue( layer, hBand, &bGotNoData );
+    fNoDataValue = (float) msGetGDALNoDataValue( layer, hBand, &bGotNoData );
 
 /* ==================================================================== */
 /*      Determine scaling.                                              */
@@ -1658,7 +1661,7 @@ msDrawRasterLayerGDAL_16BitClassification(
 
         dfOriginalValue = (i+0.5) / dfScaleRatio + dfScaleMin;
             
-        c = msGetClass_Float(layer, dfOriginalValue);
+        c = msGetClass_Float(layer, (float) dfOriginalValue);
         if( c != -1 )
         {
             RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
