@@ -337,7 +337,9 @@ void writeSymbol(symbolObj *s, FILE *stream)
 }
 
 /*
-** Little helper function to allow us to build symbol files on-the-fly from just a file name.
+** Little helper function to allow us to build symbol files on-the-fly 
+** from just a file name.
+** Returns the symbol index or -1 if it could not be added.
 */
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename) 
 {
@@ -578,7 +580,7 @@ int msAddNewSymbol(mapObj *map, char *name)
     if (!map || !name)
       return -1;
 
-    i = msGetSymbolIndex(&map->symbolset, name);
+    i = msGetSymbolIndex(&map->symbolset, name, MS_TRUE);
     if (i >= 0)
       return i;
 

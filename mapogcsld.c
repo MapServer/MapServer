@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.28  2004/04/16 20:19:38  dan
+ * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
+ *
  * Revision 1.27  2004/04/16 19:12:31  assefa
  * Correct bug on windows when opening xml file (open it in binary mode).
  *
@@ -1348,7 +1351,7 @@ int msSLDGetLineSymbol(mapObj *map)
 /*      If the symbol exists, return it. We will use the same           */
 /*      ellipse symbol for all the line width needs in the SLD.         */
 /* -------------------------------------------------------------------- */
-    nSymbolId = msGetSymbolIndex(&map->symbolset, SLD_LINE_SYMBOL_NAME);
+    nSymbolId = msGetSymbolIndex(&map->symbolset, SLD_LINE_SYMBOL_NAME, MS_FALSE);
     if (nSymbolId >= 0)
       return nSymbolId;
 
@@ -1467,60 +1470,72 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
     {
         if (bFilled)
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_SQUARE_FILLED);
+                                       SLD_MARK_SYMBOL_SQUARE_FILLED, 
+                                       MS_FALSE);
         else
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_SQUARE);
+                                       SLD_MARK_SYMBOL_SQUARE, 
+                                       MS_FALSE);
     }   
     else if (strcasecmp(pszSymbolName, "circle") == 0)
     {
         
         if (bFilled)
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_CIRCLE_FILLED);
+                                       SLD_MARK_SYMBOL_CIRCLE_FILLED, 
+                                       MS_FALSE);
         else
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_CIRCLE);
+                                       SLD_MARK_SYMBOL_CIRCLE, 
+                                       MS_FALSE);
     }
     else if (strcasecmp(pszSymbolName, "triangle") == 0)
     {
         
         if (bFilled)
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_TRIANGLE_FILLED);
+                                       SLD_MARK_SYMBOL_TRIANGLE_FILLED, 
+                                       MS_FALSE);
         else
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_TRIANGLE);
+                                       SLD_MARK_SYMBOL_TRIANGLE, 
+                                       MS_FALSE);
     }
     else if (strcasecmp(pszSymbolName, "star") == 0)
     {
         
         if (bFilled)
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_STAR_FILLED);
+                                       SLD_MARK_SYMBOL_STAR_FILLED, 
+                                       MS_FALSE);
         else
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_STAR);
+                                       SLD_MARK_SYMBOL_STAR, 
+                                       MS_FALSE);
     }
     else if (strcasecmp(pszSymbolName, "cross") == 0)
     {
         
         if (bFilled)
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_CROSS_FILLED);
+                                       SLD_MARK_SYMBOL_CROSS_FILLED, 
+                                       MS_FALSE);
         else
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_CROSS);
+                                       SLD_MARK_SYMBOL_CROSS, 
+                                       MS_FALSE);
     }
     else if (strcasecmp(pszSymbolName, "x") == 0)
     {
         
         if (bFilled)
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_X_FILLED);
+                                       SLD_MARK_SYMBOL_X_FILLED, 
+                                       MS_FALSE);
         else
           nSymbolId = msGetSymbolIndex(&map->symbolset, 
-                                       SLD_MARK_SYMBOL_X);
+                                       SLD_MARK_SYMBOL_X, 
+                                       MS_FALSE);
     }
 
 
@@ -2576,7 +2591,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
           nSymbol = psStyle->symbol;
         else if (psStyle->symbolname)
           nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
-                                     psStyle->symbolname);
+                                     psStyle->symbolname, MS_FALSE);
 
         bGenerateDefaultSymbol = 0;
 
@@ -2920,7 +2935,7 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
       nSymbol = psStyle->symbol;
     else if (psStyle->symbolname)
       nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
-                                 psStyle->symbolname);
+                                 psStyle->symbolname, MS_FALSE);
                             
     //if no symbol or symbol 0 is used, size is set to 1
     //which is the way mapserver works

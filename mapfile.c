@@ -172,7 +172,13 @@ int getCharacter(char *c) {
   return(-1);
 }
 
-int msGetSymbolIndex(symbolSetObj *symbols, char *name)
+/*
+** Returns the index of specified symbol or -1 if not found.
+**
+** If try_addimage_if_notfound==MS_TRUE then msAddImageSymbol() will be called
+** to try to allocate the symbol as an image symbol.
+*/
+int msGetSymbolIndex(symbolSetObj *symbols, char *name, int try_addimage_if_notfound)
 {
   int i;
 
@@ -184,7 +190,10 @@ int msGetSymbolIndex(symbolSetObj *symbols, char *name)
       if(strcasecmp(symbols->symbol[i].name, name) == 0) return(i);
   }
 
-  return(msAddImageSymbol(symbols, name)); /* make sure it's not a filename */
+  if (try_addimage_if_notfound)
+    return(msAddImageSymbol(symbols, name)); /* make sure it's not a filename */
+
+  return(-1);
 }
 
 /*
@@ -1855,7 +1864,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     if(state == MS_NUMBER)
       class->styles[0].symbol = (int) msyynumber;
     else {
-      if((class->styles[0].symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
+      if((class->styles[0].symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
 	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
     }
     break;
@@ -1894,7 +1903,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     if(state == MS_NUMBER)
       class->styles[1].symbol = (int) msyynumber;
     else {
-      if((class->styles[1].symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
+      if((class->styles[1].symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
 	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
     }
     break;
@@ -2821,7 +2830,7 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     if(state == MS_NUMBER)
       ref->marker = (int) msyynumber;
     else {
-      if((ref->marker = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
+      if((ref->marker = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
 	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
     }
     break;
@@ -4127,7 +4136,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
         for(j=0; j<map->layers[i].numclasses; j++){
 	  for(k=0; k<map->layers[i].class[j].numstyles; k++) {
             if(map->layers[i].class[j].styles[k].symbolname) {
-              if((map->layers[i].class[j].styles[k].symbol =  msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].styles[k].symbolname)) == -1) {
+              if((map->layers[i].class[j].styles[k].symbol =  msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].styles[k].symbolname, MS_TRUE)) == -1) {
                 msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", map->layers[i].class[j].styles[k].symbolname, j, k, map->layers[i].name);
                 return(NULL);
               }

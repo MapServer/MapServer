@@ -263,7 +263,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   pointObj point;
   imageObj *image = NULL;
 
-  s = msGetSymbolIndex(&(map->symbolset), "scalebar");
+  s = msGetSymbolIndex(&(map->symbolset), "scalebar", MS_FALSE);
   if(s == -1) {
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;

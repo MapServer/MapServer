@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.69  2004/04/16 20:19:39  dan
+ * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
+ *
  * Revision 1.68  2004/03/09 17:25:23  frank
  * added msOGRCleanup(), expose msCleanup() to swig
  *
@@ -1826,13 +1829,13 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
     {
         for(int j=0; j<numparams && nSymbol == -1; j++)
         {
-            nSymbol = msGetSymbolIndex(symbolset, params[j]);
+            nSymbol = msGetSymbolIndex(symbolset, params[j], MS_FALSE);
         }
         msFreeCharArray(params, numparams);
     }
     if (nSymbol == -1 && pszDefaultSymbol)
     {
-        nSymbol = msGetSymbolIndex(symbolset, (char*)pszDefaultSymbol);
+        nSymbol = msGetSymbolIndex(symbolset,(char*)pszDefaultSymbol,MS_FALSE);
     }
     if (nSymbol == -1)
         nSymbol = 0;

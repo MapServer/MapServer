@@ -312,7 +312,7 @@ memory.") const char * {
   }
 
   int getSymbolByName(char *name) {
-    return msGetSymbolIndex(&self->symbolset, name);
+    return msGetSymbolIndex(&self->symbolset, name, MS_TRUE);
   }
 
   void prepareQuery() {
@@ -730,7 +730,7 @@ memory.") const char * {
 
         if (!symbolname) return NULL;
 
-        i = msGetSymbolIndex(self, symbolname);
+        i = msGetSymbolIndex(self, symbolname, MS_TRUE);
         if (i == -1)
             return NULL; // no such symbol
         else
@@ -738,7 +738,7 @@ memory.") const char * {
     }
 
     int index(char *symbolname) {
-        return msGetSymbolIndex(self, symbolname);
+        return msGetSymbolIndex(self, symbolname, MS_TRUE);
     }
 
     int appendSymbol(symbolObj *symbol) {

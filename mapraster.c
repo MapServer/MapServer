@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114  2004/04/16 20:19:39  dan
+ * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
+ *
  * Revision 1.113  2004/04/06 18:49:37  frank
  * add function comment blocks to split things up a bit
  *
@@ -1784,7 +1787,7 @@ imageObj *msDrawReferenceMap(mapObj *map) {
               point->x = (double)(x1 + x2)/2;
               point->y = (double)(y1 + y2)/2;
 
-	      style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername);
+	      style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername, MS_TRUE);
 
               msDrawMarkerSymbol(&map->symbolset, image, point, &style, 1.0);
               free(point);

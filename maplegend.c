@@ -316,7 +316,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   pointObj point;
   imageObj *image = NULL;
 
-  s = msGetSymbolIndex(&(map->symbolset), "legend");
+  s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
   if(s == -1) {
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;

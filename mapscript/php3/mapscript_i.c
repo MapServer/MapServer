@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.78  2004/04/16 20:19:39  dan
+ * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
+ *
  * Revision 1.77  2004/02/16 19:19:20  dan
  * Free expression in setExpression() if expression is null or empty.
  *
@@ -340,7 +343,7 @@ int *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname,
 
 
 int mapObj_getSymbolByName(mapObj* self, char *name) {
-    return msGetSymbolIndex(&self->symbolset, name);
+    return msGetSymbolIndex(&self->symbolset, name, MS_TRUE);
   }
 
 void mapObj_prepareQuery(mapObj* self) {
@@ -864,7 +867,7 @@ imageObj *classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer
 
 int classObj_setSymbolByName(classObj *self, mapObj *map, char* pszSymbolName) {
   /*
-   self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName);
+   self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName, MS_TRUE);
     return self->symbol;
   */
   return -1;
@@ -872,7 +875,7 @@ int classObj_setSymbolByName(classObj *self, mapObj *map, char* pszSymbolName) {
   
 int classObj_setOverlaySymbolByName(classObj *self, mapObj *map, char* pszOverlaySymbolName) {
   /*
-    self->overlaysymbol = msGetSymbolIndex(&map->symbolset, pszOverlaySymbolName);
+    self->overlaysymbol = msGetSymbolIndex(&map->symbolset, pszOverlaySymbolName, MS_TRUE);
     return self->overlaysymbol;
   */
   return -1;
@@ -1306,7 +1309,7 @@ void  styleObj_destroy(styleObj *self) {
 
 
 int styleObj_setSymbolByName(styleObj *self, mapObj *map, char* pszSymbolName) {
-    self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName);
+    self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName, MS_TRUE);
     return self->symbol;
 }
 
