@@ -2579,7 +2579,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
                        "MULTIPLE") != 0)
         {
             iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename);
-            if (!iSaveResult)
+            if (iSaveResult > 0)
               return(MS_SUCCESS);
             else
               return(MS_FAILURE); 
