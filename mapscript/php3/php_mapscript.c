@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.167  2003/06/03 14:55:34  assefa
+ * Add layer type  MS_LAYER_GRATICULE.
+ *
  * Revision 1.166  2003/05/29 13:31:16  assefa
  * Add access to the transparent parameter in the outputformat object.
  *
@@ -962,6 +965,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_LAYER_ANNOTATION",MS_LAYER_ANNOTATION,const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_QUERY",MS_LAYER_QUERY, const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_CIRCLE",MS_LAYER_CIRCLE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_GRATICULE",MS_LAYER_GRATICULE, const_flag);
 
     /* layer status constants (see also MS_ON, MS_OFF) */
     REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
