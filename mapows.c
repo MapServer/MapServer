@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.33  2004/05/14 05:32:44  sdlime
+ * An assert(FALSE) in mapows.c was failing at build, changed to MS_FALSE...
+ *
  * Revision 1.32  2004/05/12 20:59:48  dan
  * Fixed typo in OWS namespace code in msOWSGetLayerExtent() and added an
  * assert() in msOWSLookupMetadata() to catch that in the future (bug 661)
@@ -395,7 +398,7 @@ const char *msOWSLookupMetadata(hashTableObj metadata,
                 msSetError(MS_WMSERR, 
                            "Unsupported metadata namespace code (%c).",
                            "msOWSLookupMetadata()", *namespaces );
-                assert(FALSE);
+                assert(MS_FALSE);
                 return NULL;
             }
 
