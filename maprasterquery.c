@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/09/28 20:44:52  frank
+ * avoid casting warning
+ *
  * Revision 1.7  2004/05/18 16:52:48  frank
  * ensure things build clean without USE_GDAL
  *
@@ -413,10 +416,10 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 
 {
     double	adfGeoTransform[6], adfInvGeoTransform[6];
-    double      dfXMin, dfYMin, dfXMax, dfYMax, dfX, dfY;
+    double      dfXMin, dfYMin, dfXMax, dfYMax, dfX, dfY, dfAdjustedRange;
     int         nWinXOff, nWinYOff, nWinXSize, nWinYSize;
     int         nRXSize, nRYSize;
-    float       *pafRaster, dfAdjustedRange;
+    float       *pafRaster;
     int         nBandCount, *panBandMap, iPixel, iLine;
     CPLErr      eErr;
     rasterLayerInfo *rlinfo;

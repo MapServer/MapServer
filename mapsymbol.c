@@ -544,8 +544,8 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
                           (char *) font, &rect) != MS_SUCCESS) 
       return(MS_FAILURE);
 
-    *width = MS_MAX(*width, rect.maxx - rect.minx);
-    *height = MS_MAX(*height, rect.maxy - rect.miny);
+    *width = (int) MS_MAX(*width, rect.maxx - rect.minx);
+    *height = (int) MS_MAX(*height, rect.maxy - rect.miny);
 
     break;
 #endif
@@ -564,8 +564,8 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
       *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[style->symbol].sizey) * symbolset->symbol[style->symbol].sizex));
       *height = MS_MAX(*height, size);
     } else { /* use symbol defaults */
-      *width = MS_MAX(*width, symbolset->symbol[style->symbol].sizex);
-      *height = MS_MAX(*height, symbolset->symbol[style->symbol].sizey);
+      *width = (int) MS_MAX(*width, symbolset->symbol[style->symbol].sizex);
+      *height = (int) MS_MAX(*height, symbolset->symbol[style->symbol].sizey);
     }
     break;
   }  
