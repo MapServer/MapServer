@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.4  2000/07/12 20:19:30  dan
+ * Sync with mapscript.i version 1.10
+ *
  * Revision 1.3  2000/06/28 20:22:02  dan
  * Sync with mapscript.i version 1.9
  *
@@ -88,16 +91,29 @@ int mapObj_addColor(mapObj* self, int r, int g, int b) {
   }
 
 int mapObj_getSymbolByName(mapObj* self, int type, char *name) {
+    int symbol;
+
     switch (type) {
     case(MS_MARKERSET):
-      return msGetSymbolIndex(&self->markerset, name);
+      if((symbol = msGetSymbolIndex(&self->markerset, name)) == -1)
+	if((symbol = msAddImageSymbol(&self->markerset, name)) == -1)
+	  return -1;
+      break;
     case(MS_LINESET):
-      return msGetSymbolIndex(&self->lineset, name);
+      if((symbol = msGetSymbolIndex(&self->lineset, name)) == -1)
+	if((symbol = msAddImageSymbol(&self->lineset, name)) == -1)
+	  return -1;
+      break;
     case(MS_SHADESET):
-      return msGetSymbolIndex(&self->shadeset, name);
+      if((symbol = msGetSymbolIndex(&self->shadeset, name)) == -1)
+	if((symbol = msAddImageSymbol(&self->shadeset, name)) == -1)
+	  return -1;
+      break;
     default:
       return -1;
     }
+
+    return symbol;
   }
 
 void mapObj_prepareQuery(mapObj* self) {
