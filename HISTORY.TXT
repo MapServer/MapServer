@@ -13,6 +13,14 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 4.1 (CVS)
+------------------------
+
+- There is a new mapObj parameter called MAXSIZE to control maximum image
+  size to serve via the CGI and WMS interfaces. The default is 2048 as 
+  before but it can be changed in the map file now. (bug 435)
+
+
 Version 4.0 (2003-08-01)
 ------------------------
 
