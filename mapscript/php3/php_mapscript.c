@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.120  2002/10/28 21:43:59  dan
+ * Added missing MS_CC constant
+ *
  * Revision 1.119  2002/10/28 20:31:21  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -895,6 +898,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_CL",         MS_CL,          const_flag);
     REGISTER_LONG_CONSTANT("MS_UC",         MS_UC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_LC",         MS_LC,          const_flag);
+    REGISTER_LONG_CONSTANT("MS_CC",         MS_CC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
     REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
 
