@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.146  2004/11/10 19:00:33  assefa
+ * Output warning in capabilities document if layer,group,map names have
+ * space in them. (Bug 486).
+ *
  * Revision 1.145  2004/11/09 18:31:42  assefa
  * Use msOWSPrintURLType for GetLegendGraphic request in the capabilities.
  * (Bug 1011).
@@ -1120,7 +1124,11 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        msIO_printf("%s    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
               indent, msIsLayerQueryable(lp), opaque, cascaded);
    }
-
+   
+   if (lp->name && (msIsXMLTagValid(lp->name) == MS_FALSE))
+     msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
+                        "invalid characters. This could lead to potential problems. -->\n", 
+                  lp->name);
    msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN,
                          "        <Name>%s</Name>\n", NULL);
 
@@ -1795,6 +1803,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msIO_printf("  <Layer>\n");
 
   // Layer Name is optional but title is mandatory.
+  if (map->name && (msIsXMLTagValid(map->name) == MS_FALSE))
+    msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
+                 "invalid characters. This could lead to potential problems. -->\n", 
+                 map->name);
   msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
                         "    <Name>%s</Name>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wms_title",
@@ -1863,6 +1875,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
              msIO_printf("    <Layer>\n");
 
              // Layer Name is optional but title is mandatory.
+             if (lp->group && (msIsXMLTagValid(lp->group) == MS_FALSE))
+               msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
+                        "invalid characters. This could lead to potential problems. -->\n", 
+                            lp->group);
              msOWSPrintEncodeParam(stdout, "GROUP.NAME", lp->group,
                                    OWS_NOERR, "      <Name>%s</Name>\n", NULL);
              msOWSPrintGroupMetadata(stdout, map, lp->group,
