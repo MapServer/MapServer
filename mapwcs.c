@@ -2,7 +2,7 @@
 #include "maperror.h"
 #include "gdal.h"
 #include "mapthread.h"
-#include "cpl_string.h"
+#include "cpl_string.h" // GDAL string handling
 
 #ifdef USE_WCS_SVR
 
@@ -17,8 +17,8 @@ typedef struct {
   char *section;		// of capabilities document: Service|Capability|ContentMetadata
   char **coverages;		// NULL terminated list of coverages (in the case of a GetCoverage there will only be 1)
   char *crs;			// request coordinate reference system
-  char *response_crs;		// response coordinate reference system
-  double bbox[6];		// subset bounding box (3D), although we'll only use 2D at best
+  char *response_crs;	// response coordinate reference system
+  rectObj bbox;		    // subset bounding box (3D), although we'll only use 2D
   char **times;
   long width, height, depth;	// image dimensions
   double resx, resy, resz;      // resolution
@@ -78,10 +78,20 @@ static void msWCSFreeParams(wcsParamsObj *params)
     if(params->format) free(params->format);
     if(params->exceptions) free(params->exceptions);
   }
+  
+  fprintf(stderr, "done msWCSFreeParams()\n");
 }
 
-static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
-                             mapObj *map )
+static int msWCSIsLayerSupported(layerObj *lp)
+{
+    // only raster layers, with 'DUMP TRUE' explicitly defined, are elligible to be served via WCS, WMS rasters are not ok
+    if(lp->dump && (lp->type == MS_LAYER_RASTER) && lp->connectiontype != MS_WMS) return MS_TRUE;
+
+    return MS_FALSE;
+}
+
+
+static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapObj *map)
 {
   int i;
 
@@ -92,43 +102,40 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
 
   if(request->NumParams > 0) {
     for(i=0; i<request->NumParams; i++) {
+    
        if(strcasecmp(request->ParamNames[i], "VERSION") == 0)
-	 params->version = strdup(request->ParamValues[i]);
+	     params->version = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "REQUEST") == 0)
-	 params->request = strdup(request->ParamValues[i]);
+	     params->request = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
-	 params->service = strdup(request->ParamValues[i]);
+	     params->service = strdup(request->ParamValues[i]);
 
        // GetCoverage parameters.
-       else if(strcasecmp(request->ParamNames[i], "BBOX") == 0)
-       {
-           char **tokens;
-           int n;
-           tokens = split(request->ParamValues[i], ',', &n);
-           if (tokens==NULL || n != 4) {
-               msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.",
-                          "msWMSLoadGetMapParams()");
-               return msWCSException(map, params->version);
-           }
-           params->bbox[0] = atof(tokens[0]);
-           params->bbox[1] = atof(tokens[1]);
-           params->bbox[2] = atof(tokens[2]);
-           params->bbox[3] = atof(tokens[3]);
+       else if(strcasecmp(request->ParamNames[i], "BBOX") == 0) {
+         char **tokens;
+         int n;
+          
+         tokens = split(request->ParamValues[i], ',', &n);
+         if(tokens==NULL || n != 4) {
+           msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.", "msWMSLoadGetMapParams()");
+           return msWCSException(map, params->version);
+         }
+         params->bbox.minx = atof(tokens[0]);
+         params->bbox.miny = atof(tokens[1]);
+         params->bbox.maxx = atof(tokens[2]);
+         params->bbox.maxy = atof(tokens[3]);
            
-           msFreeCharArray(tokens, n);
-       }
-       else if(strcasecmp(request->ParamNames[i], "RESX") == 0)
-           params->resx = atof(request->ParamValues[i]);
+         msFreeCharArray(tokens, n);
+       } else if(strcasecmp(request->ParamNames[i], "RESX") == 0)
+         params->resx = atof(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "RESY") == 0)
-           params->resy = atof(request->ParamValues[i]);
+         params->resy = atof(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "WIDTH") == 0)
-           params->width = atoi(request->ParamValues[i]);
+         params->width = atoi(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "HEIGHT") == 0)
-           params->height = atoi(request->ParamValues[i]);
+         params->height = atoi(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "COVERAGE") == 0)
-           params->coverages = CSLAddString( params->coverages, 
-                                             request->ParamValues[i]);
-
+         params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
 
        // and so on...
     }
@@ -142,29 +149,60 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
 
 static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 {
-  printf("Service section goes here...\n");
+  char *script_url=NULL, *script_url_encoded;
+
+  // we need this server's onlineresource.
+  if((script_url=msOWSGetOnlineResource(map, "wcs_onlineresource")) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
+    return msWCSException(map, params->version);
+
+  // start the services section
+  printf("<Service>\n");
+  printf("  <Name>MapServer WCS</Name>\n");
+
+  printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+
+  // done
+  printf("</Service>\n\n");
+
+  // clean up
+  free(script_url);
+  free(script_url_encoded);
+
   return MS_SUCCESS;
 }
 
 static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params)
 {
-  printf("Capability section(s) go here...\n");
+  // start the capabilties section
+  printf("<Capability>\n");
+
+  // done
+  printf("</Capability>\n");
+
   return MS_SUCCESS;
 }
 
 static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params)
 {
-  printf("ContentMetadata section(s) go here...\n");
   return MS_SUCCESS;
 }
 
 static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
 {
+
   printf("Content-type: text/xml%c%c",10,10);
 
-  // print common capability elements
-  printf("capabilties start here...\n");
+  // print common capability elements 
+ msOWSPrintMetadata(stdout, map->web.metadata, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
 
+  printf("<WCS_Capabilities \n"
+         "   version=\"%s\" \n"
+         "   updateSequence=\"0\" \n"
+         "   xmlns=\"http://www.opengis.net/wcs\" \n"
+         "   xmlns:ogc=\"http://www.opengis.net/ogc\" \n"
+         "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+         "   xsi:schemaLocation=\"http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
+         
   // print the various capability sections
   if(!params->service || strcasecmp(params->service, "Service"))
     msWCSGetCapabilities_Service(map, params);
@@ -175,7 +213,11 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
   if(!params->service || strcasecmp(params->service, "ContentMetadata"))
     msWCSGetCapabilities_ContentMetadata(map, params);
 
-  printf("capabilties end here...\n");
+  // done
+  printf("</WCS_Capabilities>\n");
+
+  // clean up
+  // msWCSFreeParams(params);
 
   return MS_SUCCESS;
 }
@@ -214,8 +256,8 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
 
     // Did we get BBOX values?  
 
-    if( fabs((params->bbox[2] - params->bbox[0])) < 0.000000000001 
-        || fabs(params->bbox[3] - params->bbox[1]) < 0.000000000001 )
+    if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001 
+        || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 )
     {
         msSetError( MS_WMSERR, 
                     "BBOX missing or specifies an empty region.", 
@@ -228,8 +270,8 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     if( (params->resx == 0.0 || params->resy == 0.0)
         && params->width != 0 && params->height != 0 )
     {
-        params->resx = (params->bbox[2] - params->bbox[0]) / params->width;
-        params->resy = (params->bbox[3] - params->bbox[1]) / params->height;
+        params->resx = (params->bbox.maxx - params->bbox.minx) / params->width;
+        params->resy = (params->bbox.maxy - params->bbox.miny) / params->height;
     }
     
     // Compute cellsize/res from bbox and raster size.
@@ -237,10 +279,8 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     if( (params->width == 0 || params->height == 0)
         && params->resx != 0 && params->resy != 0 )
     {
-        params->width = (int) 
-            ((params->bbox[2] - params->bbox[0]) / params->resx + 0.5);
-        params->height = (int) 
-            ((params->bbox[3] - params->bbox[1]) / params->resy + 0.5);
+        params->width = (int) ((params->bbox.maxx - params->bbox.minx) / params->resx + 0.5);
+        params->height = (int) ((params->bbox.maxy - params->bbox.miny) / params->resy + 0.5);
     }
 
     // Are we still underspecified? 
@@ -258,13 +298,11 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
 
     map->width = params->width;
     map->height = params->height;
-    map->extent.minx = params->bbox[0];
-    map->extent.miny = params->bbox[1];
-    map->extent.maxx = params->bbox[2];
-    map->extent.maxy = params->bbox[3];
+    map->extent = params->bbox;
+ 
+    map->cellsize = params->resx; // pick on, MapServer only supports square cells
 
-    map->cellsize = params->resx;
-
+    // Should we compute a new extent, ala WMS?
     if( fabs(params->resx/params->resy - 1.0) > 0.001 )
     {
         msSetError( MS_WMSERR, 
@@ -344,7 +382,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 #ifdef USE_WCS_SVR
   wcsParamsObj *params;
   
-  fprintf(stderr, "in mwWCSDispatch()\n");
+  fprintf(stderr, "in msWCSDispatch()\n");
 
   // populate the service parameters
   params = msWCSCreateParams();
@@ -363,16 +401,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   ** Start dispatching requests
   */
   if(strcasecmp(params->request, "GetCapabilities") == 0)    
-    return msWCSGetCapabilities(map, params); // TODO, how do we free params
+    return msWCSGetCapabilities(map, params);
   else if(strcasecmp(params->request, "GetCoverage") == 0)    
-    return msWCSGetCoverage(map, params); // TODO, how do we free params
+    return msWCSGetCoverage(map, params);
 
-  /*
-  ** Clean-up
-  */
-  msWCSFreeParams(params);
-
-  return MS_SUCCESS;
+  return MS_DONE; // not a WCS request, let MapServer take it
 #else
   msSetError(MS_WCSERR, "WCS server support is not available.", "msWCSDispatch()");
   return MS_FAILURE;

@@ -694,7 +694,6 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   if(annotate && layer->labelsizeitem) nt++;
   if(annotate && layer->labelangleitem) nt++;
   ne = 0;
-
   
   if(classify && layer->filter.type == MS_EXPRESSION) { 
     ne = countChars(layer->filter.string, '[');
