@@ -13,9 +13,13 @@
 
 %extend mapObj {
 
-    // Zoom by the given factor to a pixel position within the width
-    // and height bounds.  If max_extent is not NULL, the zoom is 
-    // constrained to the max_extents
+    /* 
+    -----------------------------------------------------------------------
+    Zoom by the given factor to a pixel position within the width
+     and height bounds.  If max_extent is not NULL, the zoom is 
+    constrained to the max_extents
+    -----------------------------------------------------------------------
+    */
   
     int zoomPoint(int zoomfactor, pointObj *poPixPos, int width, int height,
                   rectObj *poGeorefExt, rectObj *poMaxGeorefExt)
@@ -236,8 +240,6 @@
 
     }
 
-    // Zoom to the pixel coordinate rectangle
-  
     int zoomRectangle(rectObj *poPixRect, int width, int height,
                   rectObj *poGeorefExt, rectObj *poMaxGeorefExt)
     {
@@ -450,9 +452,13 @@
 
     }
 
-    // Zoom by the given factor to a pixel position within the width
-    // and height bounds.  If max_extent is not NULL, the zoom is 
-    // constrained to the max_extents
+    /*
+    -------------------------------------------------------------------
+     Zoom by the given factor to a pixel position within the width
+     and height bounds.  If max_extent is not NULL, the zoom is 
+     constrained to the max_extents
+    -------------------------------------------------------------------
+    */
   
     int zoomScale(double scale, pointObj *poPixPos, int width, int height,
                   rectObj *poGeorefExt, rectObj *poMaxGeorefExt)
@@ -543,9 +549,6 @@
 
         dfDeltaExt=scale*nTmp/(self->resolution*msInchesPerUnit(self->units,0));
 
-        //dfDeltaExt = 
-        //    GetDeltaExtentsUsingScale(scale, self->units, 
-        //                             dfGeoPosY, nTmp, self->resolution);
         if (dfDeltaExt > 0.0)
         {
             oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
@@ -592,11 +595,6 @@
             dfCurrentScale > dfNewScale)
         {
             dfDeltaExt=scale*nTmp/(self->resolution*msInchesPerUnit(self->units,0));
-            //dfDeltaExt = 
-            //    GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
-            //                              dfGeoPosY, self->width, 
-            //                              self->resolution);
-            
             if (dfDeltaExt > 0.0)
             {
                 oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);

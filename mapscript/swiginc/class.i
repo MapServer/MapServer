@@ -138,14 +138,11 @@
     return NULL;
   }
 
-  // Should be deprecated!  Completely bogus layer argument.  SG.
+  /* Should be deprecated!  Completely bogus layer argument.  SG. */
   int setText(layerObj *layer, char *text) {
     return msLoadExpressionString(&self->text, text);
   }
 
-//  char *getMetaData(char *name) {
-//    return(msLookupHashTable(self->metadata, name));
-//  }
   char *getMetaData(char *name) {
     char *value = NULL;
     if (!name) {
@@ -161,8 +158,6 @@
   }
 
   int setMetaData(char *name, char *value) {
-    //if (!self->metadata)
-    //    self->metadata = msCreateHashTable();
     if (msInsertHashTable(&(self->metadata), name, value) == NULL)
         return MS_FAILURE;
     return MS_SUCCESS;
@@ -185,7 +180,7 @@
     return msCreateLegendIcon(map, layer, self, width, height);
   } 
 
-    // See Bugzilla issue 548 for more details about the *Style methods
+    /* See Bugzilla issue 548 for more details about the *Style methods */
 
     styleObj *getStyle(int i) {
         if (i >= 0 && i < self->numstyles)	

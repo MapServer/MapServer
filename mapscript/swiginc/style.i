@@ -33,25 +33,33 @@
 
 %extend styleObj {
 
-    styleObj(classObj *parent_class=NULL) {
+    styleObj(classObj *parent_class=NULL) 
+    {
+    
         styleObj *style;
         int result;
-        if (!parent_class) { 
+        
+        if (!parent_class) 
+        { 
             style = (styleObj *) malloc(sizeof(styleObj));
             if (!style) return NULL;
             result = initStyle(style);
-            if (result == MS_SUCCESS) {
+            if (result == MS_SUCCESS) 
+            {
                 style->isachild = MS_FALSE;
                 return style;
             }
-            else {
+            else 
+            {
                 msSetError(MS_MISCERR, "Failed to initialize styleObj",
                                        "styleObj()");
                 return NULL;
             }
         }
-        else {
-            if (parent_class->numstyles == MS_MAXSTYLES) { // no room
+        else 
+        {
+            if (parent_class->numstyles == MS_MAXSTYLES) 
+            {
                 msSetError(MS_CHILDERR, "Exceeded max number of styles: %d",
                            "styleObj()", MS_MAXSTYLES);
                 return NULL;
@@ -61,10 +69,10 @@
         }
     }
    
-    ~styleObj() {
+    ~styleObj() 
+    {
         if (self->isachild == MS_FALSE) 
             free(self);
-        // else we let the parent class clean up
     }
 
 #ifdef SWIGJAVA

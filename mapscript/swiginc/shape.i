@@ -29,8 +29,6 @@
    ===========================================================================
 */
 
-// extensions for shapeObj
-
 %extend shapeObj 
 {
   
@@ -117,7 +115,7 @@
     }
 
     char *getValue(int i) 
-    { // returns an EXISTING value
+    {
         if (i >= 0 && i < self->numvalues && self->values)
             return (self->values[i]);
         else

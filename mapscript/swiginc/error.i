@@ -30,10 +30,10 @@
 */
 
 
-// wrap the errorObj and a few functions
+/* wrap the errorObj and a few functions */
 %include "../../maperror.h"
 
-// A few things neccessary for automatically wrapped functions
+/* A few things neccessary for automatically wrapped functions */
 %newobject msGetErrorString;
 
 %extend errorObj 

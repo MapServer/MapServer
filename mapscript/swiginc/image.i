@@ -28,7 +28,6 @@
    DEALINGS IN THE SOFTWARE.
    =========================================================================*/
 
-//TODO : should take image type as argument ??
 %extend imageObj {
    
     /* imageObj constructor now takes filename as an optional argument.
@@ -64,7 +63,7 @@
         image = msImageCreate(width, height, format, NULL, NULL, NULL);
         return image;
     }
-#endif // SWIGPYTHON
+#endif
 
     ~imageObj() 
     {
@@ -100,8 +99,6 @@
             }
             else /* create a gdIOCtx interface to stdout */
             {
-                //if ( msIO_needBinaryStdout() == MS_FAILURE )
-                //    return MS_FAILURE;
                 ctx = msNewGDFileCtx(stdout);
             }
             
@@ -190,10 +187,10 @@
             return(MS_FAILURE);
         } 
 
-        // Tcl implementation to create string
+        /* Tcl implementation to create string */
         imgstring = Tcl_NewByteArrayObj(imgbytes, size);    
     
-        gdFree(imgbytes); // The gd docs recommend gdFree()
+        gdFree(imgbytes);
 
         return imgstring;
     }

@@ -126,7 +126,7 @@ void free_PyFileIfaceObj_IOCtx(struct PyFileIfaceObj_gdIOCtx *pctx)
     if (!pctx)
         return;
     assert(pctx->ctx.gd_free != NULL);
-    pctx->ctx.gd_free((gdIOCtxPtr)pctx);  // free its internal resources
+    pctx->ctx.gd_free((gdIOCtxPtr)pctx);
     free(pctx);
 }
 

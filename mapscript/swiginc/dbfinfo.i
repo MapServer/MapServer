@@ -29,9 +29,9 @@
    ===========================================================================
 */
 
-//
-// class extensions for DBFInfo - TP mods
-//
+/*
+ class extensions for DBFInfo - TP mods
+*/
 %extend DBFInfo 
 {
     

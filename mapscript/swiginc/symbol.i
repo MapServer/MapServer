@@ -30,7 +30,6 @@
 */
 
 
-// try wrapping mapsymbol.h
 %include "../../mapsymbol.h"
 
 /* Full support for symbols and addition of them to the map symbolset

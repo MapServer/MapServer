@@ -8,19 +8,20 @@
     {	
         rectObj *rect;
     
-        // Check bounds
-        if (imageunits == MS_FALSE) {  // a normal easting/northing rect
-        
-            if (minx > maxx || miny > maxy) {
+        if (imageunits == MS_FALSE)
+        { 
+            if (minx > maxx || miny > maxy)
+            {
                 msSetError(MS_RECTERR,
                     "{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
                     "rectObj()", minx, miny, maxx, maxy);
                 return NULL;
             }
         }
-        else { // a pixel/line image rect
-        
-            if (minx > maxx || maxy > miny) {
+        else 
+        {
+            if (minx > maxx || maxy > miny) 
+            {
                 msSetError(MS_RECTERR,
                     "image (pixel/line) units { 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
                     "rectObj()", minx, miny, maxx, maxy);

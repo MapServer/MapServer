@@ -55,8 +55,8 @@
                 return NULL;
             }
         }
-        else { // parent map exists
-            if (map->numlayers == MS_MAXLAYERS) { // no room
+        else {
+            if (map->numlayers == MS_MAXLAYERS) {
                 msSetError(MS_CHILDERR, "Max number of layers exceeded",
                                         "layerObj()");
                 return(NULL);
@@ -79,7 +79,6 @@
             freeLayer(self);
             free(self);
         }
-        // else map deconstructor takes care of it
     }
 
 #ifdef SWIGJAVA
@@ -184,7 +183,7 @@
     }
 
     classObj *getClass(int i) 
-    { // returns an EXISTING class
+    {
 
         if (i >= 0 && i < self->numclasses)
             return &(self->class[i]); 
@@ -193,7 +192,7 @@
     }
 
     char *getItem(int i) 
-    { // returns an EXISTING item
+    {
   
         if (i >= 0 && i < self->numitems)
             return (char *) (self->items[i]);
@@ -330,7 +329,7 @@
 
     int addFeature(shapeObj *shape) 
     {    
-        self->connectiontype = MS_INLINE; // set explicitly
+        self->connectiontype = MS_INLINE;
         if (insertFeatureList(&(self->features), shape) == NULL) 
         return MS_FAILURE;
         return MS_SUCCESS;

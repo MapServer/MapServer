@@ -87,7 +87,7 @@
 
     int set(int i, pointObj *p)
     {
-        if (i<0 || i>=self->numpoints) // invalid index
+        if (i<0 || i>=self->numpoints)
             return MS_FAILURE;
 
         self->point[i].x = p->x;

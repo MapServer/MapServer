@@ -36,7 +36,6 @@
    
 %extend rectObj {
 
-// Extensions in Python
 %pythoncode {
 
     def __str__(self):
@@ -64,8 +63,8 @@
 
 %extend mapObj {
   
-    // getLayerOrder() extension returns the map layerorder as a native
-    // sequence
+    /* getLayerOrder() extension returns the map layerorder as a native
+     sequence */
 
     PyObject *getLayerOrder() {
         int i;
@@ -77,8 +76,6 @@
         return order;
     } 
 
-    // setLayerOrder() extension
-    
     int setLayerOrder(PyObject *order) {
         int i, size;
         size = PyTuple_Size(order);
@@ -88,7 +85,6 @@
         return MS_SUCCESS;
     }
     
-    // getSize() extension
     PyObject* getSize()
     {
         PyObject* output ;
@@ -140,10 +136,9 @@
         int height;
         PyObject *pybytes;
       
-        unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
-        unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
+        unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+        unsigned char JPEGsig[3] = {255, 216, 255};
 
-        // Are arg1 and arg2 ints?
         if (PyInt_Check(arg1) && PyInt_Check(arg2)) 
         {
             /* Create from width, height, format/driver */
@@ -183,12 +178,14 @@
             image = msImageCreate(width, height, format, NULL, NULL, NULL);
             return image;
         }
-        // Is arg1 a filename?
+        
+        /* Is arg1 a filename? */
         else if (PyString_Check(arg1)) 
         {
             return (imageObj *) msImageLoadGD((char *) PyString_AsString(arg1));
         }
-        // Is a file-like object
+        
+        /* Is a file-like object */
         else if (arg1 != Py_None)
         {
 
@@ -233,7 +230,7 @@
                 return image;
             
             }
-            else // such as a url handle
+            else /* such as a url handle */
             {
                 /* If there is no seek method, we absolutely must
                    have a driver name */
@@ -280,8 +277,6 @@
 
         if (file == Py_None) /* write to stdout */
         {
-            //if ( msIO_needBinaryStdout() == MS_FAILURE )
-            //    return MS_FAILURE;
             ctx = msNewGDFileCtx(stdout);
             retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
             ctx->gd_free(ctx);

@@ -33,8 +33,6 @@
 #include "../../map.h"
 %}
 
-// extension to colorObj
-
 %extend colorObj 
 {
   
@@ -42,7 +40,7 @@
     {
         colorObj *color;
         
-        // Check colors
+        /* Check colors */
         if (red > 255 || green > 255 || blue > 255) {
             msSetError(MS_MISCERR, "Invalid color index.", "colorObj()");
             return NULL;
@@ -64,7 +62,7 @@
  
     int setRGB(int red, int green, int blue) 
     {
-        // Check colors
+        /* Check colors */
         if (red > 255 || green > 255 || blue > 255) {
             msSetError(MS_MISCERR, "Invalid color index.", "setRGB()");
             return MS_FAILURE;

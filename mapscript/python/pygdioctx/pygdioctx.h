@@ -67,7 +67,7 @@
 struct PyFileIfaceObj_gdIOCtx {
     gdIOCtx ctx;
     PyObject *fileIfaceObj;
-    PyObject *strObj;        // our reference to the data string we're currently
+    PyObject *strObj;
 };
 
 struct PyFileIfaceObj_gdIOCtx * alloc_PyFileIfaceObj_IOCtx(PyObject *fileIfaceObj);

@@ -116,7 +116,7 @@
     int status;
 
     status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
-    if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
+    if(status != MS_SUCCESS) self->scale = -1;
   }
 
   %newobject prepareImage;
@@ -275,8 +275,6 @@
   }
 
   int setMetaData(char *name, char *value) {
-    //if (!&(self->web.metadata))
-    //    self->web.metadata = msCreateHashTable();
     if (msInsertHashTable(&(self->web.metadata), name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
@@ -298,10 +296,9 @@
     msFreeSymbolSet(&self->symbolset);
     msInitSymbolSet(&self->symbolset);
    
-    // Set symbolset filename
     self->symbolset.filename = strdup(szFileName);
 
-    // Symbolset shares same fontset as main mapfile
+    /* Symbolset shares same fontset as main mapfile */
     self->symbolset.fontset = &(self->fontset);
 
     return msLoadSymbolSet(&self->symbolset, self);
@@ -315,16 +312,15 @@
     msFreeFontSet(&(self->fontset));
     msInitFontSet(&(self->fontset));
    
-    // Set fontset filename
     self->fontset.filename = strdup(filename);
 
     return msLoadFontSet(&(self->fontset), self);
   }
 
-  // I removed a method to get the fonset filename. Instead I updated map.h
-  // to allow SWIG access to the fonset, although the numfonts and filename
-  // members are read-only. Use the setFontSet method to actually change the
-  // fontset. To get the filename do $map->{fontset}->{filename};
+  /* I removed a method to get the fonset filename. Instead I updated map.h
+   to allow SWIG access to the fonset, although the numfonts and filename
+   members are read-only. Use the setFontSet method to actually change the
+   fontset. To get the filename do $map->{fontset}->{filename}; -- SG */
   
   int saveMapContext(char *szFileName) {
     return msSaveMapContext(self, szFileName);

@@ -4,7 +4,7 @@
 
 %include "../../cgiutil.h"
 
-// Class for programming OWS services - SG
+/* Class for programming OWS services - SG */
 
 %extend cgiRequestObj {
 
@@ -50,7 +50,6 @@
             msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MAX_PARAMS);
         }
         
-        // Exists already?
         for (i=0; i<self->NumParams; i++) {
             if (strcasecmp(self->ParamNames[i], name) == 0) {
                 free(self->ParamValues[i]);
@@ -58,7 +57,7 @@
                 break;
             }
         }
-        if (i == self->NumParams) {  // Does not exist
+        if (i == self->NumParams) {
             self->ParamNames[self->NumParams] = strdup(name);
             self->ParamValues[self->NumParams] = strdup(value);
             self->NumParams++;

@@ -71,7 +71,7 @@
 
         i = msGetSymbolIndex(self, symbolname, MS_TRUE);
         if (i == -1)
-            return NULL; // no such symbol
+            return NULL;
         else
             return (symbolObj *) &(self->symbol[i]);
     }
