@@ -316,6 +316,10 @@ and the MapServer Map File documentation at:
         the map units and extents based on the new projection. Possible 
         values are MS_TRUE and MS_FALSE. By defualt it is set at MS_FALSE
 
+   int setWKTProjection(string proj_params, boolean bSetUnitsAndExtents)
+        Same as setProjection(), but takes an OGC WKT projection 
+        definition string as input.
+
    int getMetaData(string name)
         Fetch metadata entry by name (stored in the WEB object in the map
         file).  Returns "" if no entry matches the name.  Note that the
@@ -542,6 +546,10 @@ and the MapServer Map File documentation at:
    int setProjection(string proj_params)
         Set layer projection and coordinate system.  Parameters are given as 
         a single string of comma-delimited PROJ.4 parameters.
+
+   int setWKTProjection(string proj_params)
+        Same as setProjection(), but takes an OGC WKT projection 
+        definition string as input.
 
    int getNumResult()
         Returns the number of results from this layer in the last query.

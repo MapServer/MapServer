@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.136  2003/01/11 00:06:40  dan
+ * Added setWKTProjection() to mapObj and layerObj
+ *
  * Revision 1.135  2003/01/10 19:21:26  dan
  * Removed style->sizescaled from PHP wrappers
  *
@@ -321,6 +324,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS);
@@ -390,6 +394,7 @@ DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getProjection(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS);
@@ -634,6 +639,7 @@ function_entry php_map_class_functions[] = {
     {"set",             php3_ms_map_setProperty,        NULL},
     {"setprojection",   php3_ms_map_setProjection,      NULL},
     {"getprojection",   php3_ms_map_getProjection,      NULL},
+    {"setwktprojection",php3_ms_map_setWKTProjection,   NULL},
     {"getsymbolbyname", php3_ms_map_getSymbolByName,    NULL},
     {"draw",            php3_ms_map_draw,               NULL},
     {"drawquery",       php3_ms_map_drawQuery,          NULL},
@@ -735,6 +741,7 @@ function_entry php_layer_class_functions[] = {
     {"querybyshape",    php3_ms_lyr_queryByShape,       NULL},    
     {"setprojection",   php3_ms_lyr_setProjection,      NULL},
     {"getprojection",   php3_ms_lyr_getProjection,      NULL},
+    {"setwktprojection",php3_ms_lyr_setWKTProjection,   NULL},
     {"addfeature",      php3_ms_lyr_addFeature,         NULL},
     {"getnumresults",   php3_ms_lyr_getNumResults,      NULL},
     {"getresult",       php3_ms_lyr_getResult,          NULL},
@@ -1495,18 +1502,14 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 /**********************************************************************
- *                        map->setProjection()
+ *        map->setProjection() and map->setWKTProjection()
  **********************************************************************/
 
-/* {{{ proto int map.setProjection(string projection)
-   Set projection and coord. system for the map. Returns -1 on error. */
-
-DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
+static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
+                                      int nArgs, pval *pProjString, 
+                                      pval *pSetUnitsAndExtents)
 {
 #ifdef USE_PROJ
-    mapObj              *self;
-    pval                *pProjString, *pSetUnitsAndExtents;
-    pval                *pThis;
     int                 nStatus = 0;
     int                 nUnits =   MS_METERS;  
     projectionObj       in;
@@ -1514,13 +1517,102 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     rectObj             sRect;
     int                 bSetNewExtents = 0; 
     int                 bSetUnitsAndExtents = 0;
-    int                 nArgs = ARG_COUNT(ht);
-#ifdef PHP4
-    pval   **pExtent;
-#else
-    pval   *pExtent;
-#endif
+    pval                **pExtent;
     
+
+    convert_to_string(pProjString);
+    if (nArgs == 2)
+    {
+        convert_to_long(pSetUnitsAndExtents);
+        bSetUnitsAndExtents = pSetUnitsAndExtents->value.lval;
+    }
+
+    
+    msInitProjection(&in);
+    in = self->projection;
+    msInitProjection(&out);
+    if (bWKTProj)
+        msLoadWKTProjectionString(pProjString->value.str.val, &(out));
+    else
+        msLoadProjectionString(&(out),  pProjString->value.str.val);
+    sRect = self->extent;
+    
+    if (in.proj!= NULL && out.proj!=NULL)
+    {
+        if (msProjectionsDiffer(&in, &out))
+        {
+            if (msProjectRect(&in, &out, &sRect) == MS_SUCCESS)
+              bSetNewExtents =1;
+        }
+    }
+
+    if (bWKTProj) 
+        nStatus = mapObj_setWKTProjection(self, pProjString->value.str.val);
+    else
+        nStatus = mapObj_setProjection(self, pProjString->value.str.val);
+
+    if (nStatus == -1)
+        _phpms_report_mapserver_error(E_ERROR);
+
+    
+    nUnits = GetMapserverUnitUsingProj(&(self->projection));
+    if (nUnits != -1 && bSetUnitsAndExtents)
+    {
+/* -------------------------------------------------------------------- 
+      set the units and map extents.                                  
+ -------------------------------------------------------------------- */
+        self->units = nUnits;
+
+        if (bSetNewExtents)
+        {
+            self->extent = sRect;
+
+            self->cellsize = msAdjustExtent(&(self->extent), self->width, 
+                                            self->height); 
+            msCalculateScale(self->extent, self->units, self->width, self->height, 
+                             self->resolution, &(self->scale));
+
+            _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
+            _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+            _phpms_set_property_long(pThis,"units", self->units, E_ERROR); 
+
+            if (zend_hash_find(pThis->value.obj.properties, "extent", 
+                               sizeof("extent"),  (void **)&pExtent) == SUCCESS)
+            {
+                _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
+                                           E_ERROR);
+                _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
+                                           E_ERROR);
+                _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
+                                           E_ERROR);
+                _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
+                                           E_ERROR);
+            }
+        }
+    }
+
+    return nStatus;
+#else
+    php3_error(E_ERROR, 
+               "setProjection() available only with PROJ.4 support.");
+    return -1;
+#endif
+}
+
+/**********************************************************************
+ *                        map->setProjection()
+ **********************************************************************/
+/* {{{ proto int map.setProjection(string projection)
+   Set projection and coord. system for the map. Returns -1 on error. */
+
+DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj              *self;
+    pval                *pProjString, *pSetUnitsAndExtents;
+    pval                *pThis;
+    int                 nStatus = 0;
+    int                 nArgs = ARG_COUNT(ht);
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -1543,104 +1635,71 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    convert_to_string(pProjString);
-    if (nArgs == 2)
-    {
-        convert_to_long(pSetUnitsAndExtents);
-        bSetUnitsAndExtents = pSetUnitsAndExtents->value.lval;
-    }
-
-    
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
     }
 
-    msInitProjection(&in);
-    in = self->projection;
-    msInitProjection(&out);
-    msLoadProjectionString(&(out),  pProjString->value.str.val);
-    sRect.minx = self->extent.minx;
-    sRect.miny = self->extent.miny;
-    sRect.maxx = self->extent.maxx;
-    sRect.maxy = self->extent.maxy;
-    
-    if (in.proj!= NULL && out.proj!=NULL)
-    {
-        if (msProjectionsDiffer(&in, &out))
-        {
-            if (msProjectRect(&in, &out, &sRect) == MS_SUCCESS)
-              bSetNewExtents =1;
-        }
-    }
+    nStatus = _php3_ms_map_setProjection(MS_FALSE, self, pThis, 
+                                         nArgs, pProjString, 
+                                         pSetUnitsAndExtents);
 
-    if (self == NULL || 
-        (nStatus = mapObj_setProjection(self, 
-                                        pProjString->value.str.val)) == -1)
-        _phpms_report_mapserver_error(E_ERROR);
+    RETURN_LONG(nStatus);
+}
 
-    
-    nUnits = GetMapserverUnitUsingProj(&(self->projection));
-    if (nUnits != -1 && bSetUnitsAndExtents)
-    {
-/* -------------------------------------------------------------------- 
-      set the units and map extents.                                  
- -------------------------------------------------------------------- */
-        self->units = nUnits;
+/* }}} */
 
-        if (bSetNewExtents)
-        {
-            self->extent.minx =  sRect.minx;
-            self->extent.miny = sRect.miny;
-            self->extent.maxx = sRect.maxx;
-            self->extent.maxy = sRect.maxy;
+/**********************************************************************
+ *                        map->setWKTProjection()
+ **********************************************************************/
+/* {{{ proto int map.setWKTProjection(string projection)
+   Set projection and coord. system for the map. Returns -1 on error. */
 
-            self->cellsize = msAdjustExtent(&(self->extent), self->width, 
-                                            self->height); 
-            msCalculateScale(self->extent, self->units, self->width, self->height, 
-                             self->resolution, &(self->scale));
-
-            _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
-            _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
-            _phpms_set_property_long(pThis,"units", self->units, E_ERROR); 
+DLEXPORT void php3_ms_map_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj              *self;
+    pval                *pProjString, *pSetUnitsAndExtents;
+    pval                *pThis;
+    int                 nStatus = 0;
+    int                 nArgs = ARG_COUNT(ht);
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
 
 #ifdef PHP4
-            if (zend_hash_find(pThis->value.obj.properties, "extent", 
-                               sizeof("extent"),  (void **)&pExtent) == SUCCESS)
-            {
-                _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
-                                           E_ERROR);
-                _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
-                                           E_ERROR);
-                _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
-                                           E_ERROR);
-                _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
-                                           E_ERROR);
-            }
+    pThis = getThis();
 #else
-            if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
-                                (void **)&pExtent) == SUCCESS)
-            {
-                _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
-                                           E_ERROR);
-                _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
-                                           E_ERROR);
-                _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
-                                           E_ERROR);
-                _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
-                                           E_ERROR);
-            }
+    getThis(&pThis);
 #endif
-        }
-    }   
+
+ 
+    if (pThis == NULL ||
+        (nArgs != 1 && nArgs != 2))
+    {
+        WRONG_PARAM_COUNT;
+    }
+        
+    if (getParameters(ht, nArgs, &pProjString, &pSetUnitsAndExtents) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    nStatus = _php3_ms_map_setProjection(MS_TRUE, self, pThis, 
+                                         nArgs, pProjString, 
+                                         pSetUnitsAndExtents);
+
     RETURN_LONG(nStatus);
-#else
-    php3_error(E_ERROR, 
-               "setProjection() available only with PROJ.4 support.");
-#endif
 }
+
 /* }}} */
+
 
 /**********************************************************************
  *                        map->getProjection()
@@ -6069,6 +6128,56 @@ DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(nStatus);
 }
 /* }}} */
+
+
+/**********************************************************************
+ *                        layer->setWKTProjection()
+ **********************************************************************/
+
+/* {{{ proto int layer.setWKTProjection(string projection)
+   Set projection and coord. system for the layer. Returns -1 on error. */
+
+DLEXPORT void php3_ms_lyr_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pProjString;
+    pval   *pThis;
+    int     nStatus = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pProjString) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pProjString);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    if (self == NULL || 
+        (nStatus = layerObj_setWKTProjection(self, 
+                                          pProjString->value.str.val)) == -1)
+        _phpms_report_mapserver_error(E_ERROR);
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
 
 /**********************************************************************
  *                        layer->getProjection()

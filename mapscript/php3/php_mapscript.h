@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/01/11 00:06:40  dan
+ * Added setWKTProjection() to mapObj and layerObj
+ *
  * Revision 1.28  2003/01/08 15:00:16  assefa
  * Add setsymbolbyname in the style class.
  *
@@ -174,6 +177,7 @@ int             mapObj_queryByPoint(mapObj* self, pointObj *point,
 int             mapObj_queryByRect(mapObj* self, rectObj rect);
 int             mapObj_queryByFeatures(mapObj* self, int slayer);
 int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
+int             mapObj_setWKTProjection(mapObj *self, char *string);
 char*           mapObj_getProjection(mapObj* self);
 int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
@@ -223,6 +227,7 @@ int             layerObj_queryByFeatures(layerObj *self, mapObj *map,
 int             layerObj_queryByShape(layerObj *self, mapObj *map, 
                                       shapeObj *shape);
 int             layerObj_setFilter(layerObj *self, char *string);
+int             layerObj_setWKTProjection(layerObj *self, char *string);
 char*           layerObj_getProjection(layerObj *self);
 int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);

@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.56  2003/01/11 00:06:40  dan
+ * Added setWKTProjection() to mapObj and layerObj
+ *
  * Revision 1.55  2003/01/08 15:00:16  assefa
  * Add setsymbolbyname in the style class.
  *
@@ -381,6 +384,10 @@ int mapObj_queryByShape(mapObj *self, shapeObj *shape) {
     return msQueryByShape(self, -1, shape);
   }
 
+int mapObj_setWKTProjection(mapObj *self, char *string) {
+    return msLoadWKTProjectionString(string, &(self->projection));
+  }
+
 char *mapObj_getProjection(mapObj* self) {
     return msGetProjectionString(&self->projection);
  }
@@ -587,6 +594,11 @@ int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
 
 int layerObj_setFilter(layerObj *self, char *string) {    
     return loadExpressionString(&self->filter, string);
+  }
+
+int layerObj_setWKTProjection(layerObj *self, char *string) {
+    self->project = MS_TRUE;
+    return msLoadWKTProjectionString(string, &(self->projection));
   }
 
 char *layerObj_getProjection(layerObj* self) {
