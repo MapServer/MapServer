@@ -2119,6 +2119,23 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   }
 
   if(mode == QUERY) { // return shape and/or values	
+
+    // allow layer metadata access in a query template, within the context of a query no layer name is necessary    
+    if(msObj->ResultLayer->metadata && strstr(outstr, "[metadata_")) {
+      for(i=0; i<MS_HASHSIZE; i++) {
+	if (msObj->ResultLayer->metadata[i] != NULL) {
+	  for(tp=msObj->ResultLayer->metadata[i]; tp!=NULL; tp=tp->next) {
+	    sprintf(substr, "[metadata_%s]", tp->key);
+            outstr = gsub(outstr, substr, tp->data);  
+	     
+	    sprintf(substr, "[metadata_%s_esc]", tp->key);	    
+            encodedstr = msEncodeUrl(tp->data);
+            outstr = gsub(outstr, substr, encodedstr);
+            free(encodedstr);
+	  }
+        }
+      }
+    }
     
     sprintf(repstr, "%f %f", (msObj->ResultShape.bounds.maxx + msObj->ResultShape.bounds.minx)/2, (msObj->ResultShape.bounds.maxy + msObj->ResultShape.bounds.miny)/2); 
     outstr = gsub(outstr, "[shpmid]", repstr);
