@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  MapServer
- * Purpose:  shapeObj to GML output.
+ * Purpose:  shapeObj to GML output via MapServer queries.
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/02/18 19:15:23  sdlime
+ * Added GML item-level transformation support for WFS. Includes inclusion/exclusion, column aliases and simple groups. (bug 950)
+ *
  * Revision 1.48  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -174,7 +177,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "</gml:coordinates>\n");
 
       msIO_fprintf(stream, "%s</gml:LineString>\n", tab);
-    } else { /* write a MultiLineString       */
+    } else { /* write a MultiLineString */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:MultiLineString srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -560,6 +563,292 @@ static int gmlWriteGeometry(FILE *stream, int format, shapeObj *shape, const cha
 
  return(MS_FAILURE);
 }
+
+typedef struct {
+  char *name;     /* name of the item */
+  char *alias;    /* is the item aliased for presentation? (NULL if not) */
+  char *type;     /* raw type for thes item (NULL for a "string") (TODO: should this be a lookup table instead?) */
+  int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
+  int visible;    /* should this item be output, default is MS_FALSE */
+} gmlItemObj;
+
+typedef struct {
+  gmlItemObj *items;
+  int numitems;
+} gmlItemListObj;
+
+typedef struct {
+  char *name;          /* name of the group */
+  char **items;        /* list of items in the group */
+  int numitems;        /* number of items */
+} gmlGroupObj;
+
+typedef struct {
+  gmlGroupObj *groups;
+  int numgroups;
+} gmlGroupListObj;
+
+int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList) {
+  int i, j;
+  gmlGroupObj *group;
+
+  if(!groupList) return MS_FALSE; /* no groups */
+
+  for(i=0; i<groupList->numgroups; i++) {
+    group = &(groupList->groups[i]);
+    for(j=0; j<group->numitems; j++) {
+      if(strcasecmp(item->name, group->items[j]) == 0) return MS_TRUE;
+    }
+  }
+
+  return MS_FALSE;
+}
+
+gmlItemListObj *msGMLGetItems(layerObj *layer) 
+{
+  int i,j;
+
+  char **xmlitems=NULL; 
+  int numxmlitems=0;
+
+  char **incitems=NULL;
+  int numincitems=0;
+
+  char **excitems=NULL;
+  int numexcitems=0;
+
+  const char *value=NULL;
+  char tag[64];
+
+  gmlItemListObj *itemList=NULL; 
+  gmlItemObj *item=NULL;
+
+  /* get a list of items that should be included in output */
+  if((value = msLookupHashTable(&(layer->metadata), "gml_include_items")) != NULL)  
+    incitems = split(value, ',', &numincitems);
+
+  /* get a list of items that should be excluded in output */
+  if((value = msLookupHashTable(&(layer->metadata), "gml_exclude_items")) != NULL)  
+    excitems = split(value, ',', &numexcitems);
+
+  /* get a list of items that need don't get encoded */
+  if((value = msLookupHashTable(&(layer->metadata), "gml_xml_items")) != NULL)  
+    xmlitems = split(value, ',', &numxmlitems);
+
+  /* allocate memory and iinitialize the item collection */
+  itemList = (gmlItemListObj *) malloc(sizeof(gmlItemListObj));
+  itemList->numitems = 0;
+  itemList->items = NULL;
+
+  itemList->numitems = layer->numitems;
+  itemList->items = (gmlItemObj *) malloc(sizeof(gmlItemObj)*itemList->numitems);
+  if(!itemList->items) {
+    msSetError(MS_MEMERR, "Error allocating a collection GML item structures.", "msGMLGetItems()");
+    return NULL;
+  } 
+
+  for(i=0; i<layer->numitems; i++) {
+    item = &(itemList->items[i]);
+
+    item->name = strdup(layer->items[i]);
+ 
+    item->alias = NULL; /* set defaults */
+    item->type = NULL;
+    item->encode = MS_TRUE;
+    item->visible = MS_FALSE;
+
+    /* check visibility, included items first... */
+    if(numincitems == 1 && strcasecmp("all", incitems[0]) == 0) {
+      item->visible = MS_TRUE;
+    } else {
+      for(j=0; j<numincitems; j++) {
+	if(strcasecmp(layer->items[i], incitems[j]) == 0)
+	  item->visible = MS_TRUE;
+      }
+    }
+
+    /* ...and now excluded items */
+    for(j=0; j<numexcitems; j++) {
+      if(strcasecmp(layer->items[i], excitems[j]) == 0)
+	item->visible = MS_FALSE;
+    }
+
+    /* check encoding */
+    for(j=0; j<numxmlitems; j++) {
+      if(strcasecmp(layer->items[i], xmlitems[j]) == 0)
+	item->encode = MS_FALSE;
+    }
+
+    snprintf(tag, 64, "gml_%s_alias", layer->items[i]);
+    if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) 
+      item->alias = strdup(value);
+
+    snprintf(tag, 64, "gml_%s_type", layer->items[i]);
+    if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) 
+      item->type = strdup(value);
+  }
+
+  msFreeCharArray(xmlitems, numxmlitems);
+  msFreeCharArray(incitems, numincitems);
+  msFreeCharArray(excitems, numexcitems);
+
+  return itemList;
+}
+
+void msGMLFreeItems(gmlItemListObj *itemList)
+{
+  int i;
+  gmlItemObj *item;
+
+  if(!itemList) return;
+
+  for(i=0; i<itemList->numitems; i++) {
+    item = &(itemList->items[i]);
+
+    msFree(item->name);
+    msFree(item->alias);
+    msFree(item->type);
+  }
+
+  free(itemList);
+}
+
+void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *namespace, const char *tab) 
+{
+  char *encoded_value, *tag_name;
+  int add_namespace = MS_TRUE;
+
+  if(!stream || !item) return;
+  if(!item->visible) return;
+
+  if(!namespace) add_namespace = MS_FALSE;
+
+  if(item->encode == MS_TRUE)
+    encoded_value = msEncodeHTMLEntities(value);
+  else
+    encoded_value = strdup(value);  
+
+  /* build from pieces - set tag name and need for a namespace */
+  if(item->alias) {
+    tag_name = item->alias;
+    if(strchr(item->alias, ':') != NULL) add_namespace = MS_FALSE;
+  } else {
+    tag_name = item->name;
+    if(strchr(item->name, ':') != NULL) add_namespace = MS_FALSE;
+  }    
+  
+  if(add_namespace == MS_TRUE && msIsXMLTagValid(tag_name) == MS_FALSE)
+    msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", tag_name);
+  
+  if(add_namespace == MS_TRUE)
+    msIO_fprintf(stream, "%s<%s:%s>%s</%s:%s>\n", tab, namespace, tag_name, encoded_value, namespace, tag_name);
+  else
+    msIO_fprintf(stream, "%s<%s>%s</%s>\n", tab, tag_name, encoded_value, tag_name);
+
+  return;
+}
+
+gmlGroupListObj *msGMLGetGroups(layerObj *layer)
+{
+  int i;
+  const char *value=NULL;
+  char tag[64];
+
+  char **names=NULL;
+  int numnames=0;
+
+  gmlGroupListObj *groupList=NULL;
+  gmlGroupObj *group=NULL;
+
+  /* allocate the collection */
+  groupList = (gmlGroupListObj *) malloc(sizeof(gmlGroupListObj)); 
+  groupList->numgroups = 0;
+  groupList->groups = NULL;
+
+  /* list of groups (TODO: make this automatic by parsing metadata) */
+  if((value = msLookupHashTable(&(layer->metadata), "gml_groups")) != NULL) {
+    names = split(value, ',', &numnames);
+
+    /* allocation an array of gmlGroupObj's */
+    groupList->numgroups = numnames;
+    groupList->groups = (gmlGroupObj *) malloc(sizeof(gmlGroupObj)*groupList->numgroups);
+
+    for(i=0; i<groupList->numgroups; i++) {
+      group = &(groupList->groups[i]);
+
+      group->name = strdup(names[i]);
+      
+      snprintf(tag, 64, "gml_%s_group", group->name);
+      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL)
+	group->items = split(value, ',', &group->numitems);
+    }
+
+    msFreeCharArray(names, numnames);
+  } 
+  
+  return groupList;
+}
+
+void msGMLFreeGroups(gmlGroupListObj *groupList)
+{
+  int i;
+  gmlGroupObj *group;
+
+  if(!groupList) return;
+
+  for(i=0; i<groupList->numgroups; i++) {
+    group = &(groupList->groups[i]);
+
+    msFree(group->name);
+    msFreeCharArray(group->items, group->numitems);
+  }
+
+  free(groupList);
+}
+
+void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, gmlItemListObj *itemList, const char *namespace, const char *tab)
+{
+  int i,j;
+  int add_namespace;
+  char *itemtab;
+
+  gmlItemObj *item=NULL;
+
+  if(!stream || !group) return;
+
+  /* setup the item tab */
+  itemtab = (char *) malloc(sizeof(char)*strlen(tab)+3);
+  if(!itemtab) return;
+  sprintf(itemtab, "%s  ", tab);
+    
+  add_namespace = MS_TRUE;
+  if(!namespace || strchr(group->name, ':') != NULL) add_namespace = MS_FALSE;
+
+  /* start the group */
+  if(add_namespace == MS_TRUE)
+    msIO_fprintf(stream, "%s<%s:%s>\n", tab, namespace, group->name);
+  else
+    msIO_fprintf(stream, "%s<%s>\n", tab, group->name);
+  
+  /* now the items in the group */
+  for(i=0; i<group->numitems; i++) {
+    for(j=0; j<shape->numvalues; j++) {
+      item = &(itemList->items[j]);
+      if(strcasecmp(item->name, group->items[i]) == 0) { 
+	msGMLWriteItem(stream, item, shape->values[j], namespace, itemtab);
+	break;
+      }
+    }
+  }
+  
+  /* end the group */
+  if(add_namespace == MS_TRUE)
+    msIO_fprintf(stream, "%s</%s:%s>\n", tab, namespace, group->name);
+  else
+    msIO_fprintf(stream, "%s</%s>\n", tab, group->name);
+
+  return;
+}
 #endif
 
 int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
@@ -730,8 +1019,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
 
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, 
-                       char *wfs_namespace)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_namespace)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -740,29 +1028,24 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
   shapeObj shape;
   rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
   int features = 0;
-  char *name_gml = NULL;
-  char *description_gml = NULL;
+  
+  gmlGroupListObj *groupList=NULL;
+  gmlItemListObj *itemList=NULL;
+  gmlItemObj *item=NULL;
 
   msInitShape(&shape);
 
   /* Need to start with BBOX of the whole resultset */
   if (msGetQueryResultBounds(map, &resultBounds) > 0)
-  {
-      gmlWriteBounds(stream, OWS_GML2, &resultBounds, 
-                     msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), 
-                     "      ");
-  }
+    gmlWriteBounds(stream, OWS_GML2, &resultBounds, msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "      ");
 
   /* step through the layers looking for query results */
-  for(i=0; i<map->numlayers; i++) 
-  {
+  for(i=0; i<map->numlayers; i++) {
+
     lp = &(map->layers[i]);
 
-    if(lp->dump == MS_TRUE && 
-       lp->resultcache && lp->resultcache->numresults > 0) 
-    { /* found results */
-      int   *item_is_xml = NULL;
-      const char *geom_name, *xml_items;
+    if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
+      const char *geom_name;
       char *layer_name;
       geom_name = msWFSGetGeomElementName(map, lp);
 
@@ -770,40 +1053,16 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
       status = msLayerOpen(lp);
       if(status != MS_SUCCESS) return(status);
 
-      /* retrieve all the item names. (Note : there might be no attributs) */
+      /* retrieve all the item names. (Note : there might be no attributes) */
       status = msLayerGetItems(lp);
       /* if(status != MS_SUCCESS) return(status); */
-      
-      /* 
-      ** Determine which items, if any, should be treated as raw XML and not 
-      ** escaped.
-      */
-      item_is_xml = (int *) calloc(sizeof(int),lp->numitems);
-      xml_items = msLookupHashTable(&(lp->metadata), "wfs_gml_xml_items");
-      if( xml_items != NULL )
-      {
-          int xml_items_count = 0;
-          char **xml_item_list = split( xml_items, ',', &xml_items_count );
-          
-          for( k = 0; k < lp->numitems; k++ )
-          {
-              int xi;
 
-              for( xi = 0; xi < xml_items_count; xi++ )
-              {
-                  if( strcmp(lp->items[k],xml_item_list[xi]) == 0 )
-                      item_is_xml[k] = MS_TRUE;
-              }
-          }
-          
-          msFreeCharArray( xml_item_list, xml_items_count );
-      }
+      // populate item and group metadata structures
+      itemList = msGMLGetItems(lp);
+      groupList = msGMLGetGroups(lp);
 
-      for(j=0; j<lp->resultcache->numresults; j++) 
-      {
-	status = msLayerGetShape(lp, &shape, 
-                                 lp->resultcache->results[j].tileindex, 
-                                 lp->resultcache->results[j].shapeindex);
+      for(j=0; j<lp->resultcache->numresults; j++) {
+	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
         if(status != MS_SUCCESS) return(status);
 
 #ifdef USE_PROJ
@@ -813,62 +1072,31 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 #endif
         
 	/* start this feature */
-        if (wfs_namespace)
-        {
-            layer_name = (char*) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
-            sprintf(layer_name, "%s:%s", wfs_namespace, lp->name);
-        }
-        else
-            layer_name = strdup(lp->name);
+        if (wfs_namespace) {
+	  layer_name = (char *) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
+	  sprintf(layer_name, "%s:%s", wfs_namespace, lp->name);
+        } else
+	  layer_name = strdup(lp->name);
+
 
 	msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layer_name) == MS_FALSE)
-            msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
-                    "in a XML tag context. -->\n", layer_name);
+            msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layer_name);
         msIO_fprintf(stream, "      <%s>\n", layer_name);
 
-        /* write name and description attributs if specified in the map file */
-        
-        description_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_description_item");
-        if (description_gml)
-        {
-            for(k=0; k<lp->numitems; k++)	
-            {
-                if (strcasecmp(lp->items[k], description_gml) == 0)
-                {
-                    msIO_fprintf(stream, "      <gml:description>%s</gml:description>\n",  
-                            msEncodeHTMLEntities(shape.values[k]));
-                    break;
-                 }
-             }
-         }
-        name_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_name_item");
-        if (name_gml)
-         {
-             for(k=0; k<lp->numitems; k++)	
-             {
-                 if (strcasecmp(lp->items[k], name_gml) == 0)
-                 {
-                     msIO_fprintf(stream, "      <gml:name>%s</gml:name>\n",  
-                             msEncodeHTMLEntities(shape.values[k]));
-                     break;
-                 }
-             }
-         }
-         
+
 	/* write the bounding box */
-	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first */
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) // use the map projection first
+
 #ifdef USE_PROJ
 	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
 	else /* then use the layer projection and/or metadata */
-	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");	
+	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");
 #else
-	gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "        "); /* no projection information */
+	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "        "); /* no projection information */
 #endif
-
         
         msIO_fprintf(stream, "        <gml:%s>\n", geom_name); 
-
                     
 	/* write the feature geometry */
 #ifdef USE_PROJ
@@ -883,37 +1111,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
         msIO_fprintf(stream, "        </gml:%s>\n", geom_name); 
 
 	/* write the item/values */
-	for(k=0; k<lp->numitems; k++)	
-        {
-          char *encoded_val;
-          
-          if( item_is_xml[k] == MS_TRUE )
-              encoded_val = strdup(shape.values[k]);
-          else
-              encoded_val = msEncodeHTMLEntities(shape.values[k]);
-         
-          if (name_gml && strcmp(name_gml,  lp->items[k]) == 0)
-            continue;
-          if (description_gml && strcmp(description_gml,  lp->items[k]) == 0)
-            continue;
-
-          if(msIsXMLTagValid(lp->items[k]) == MS_FALSE)
-              msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
-                      "in a XML tag context. -->\n", lp->items[k]);
-          
-          if (wfs_namespace)
-          {
-            if(msIsXMLTagValid(wfs_namespace) == MS_FALSE)
-              msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
-                      "in a XML tag context. -->\n", wfs_namespace);
-            msIO_fprintf(stream, "        <%s:%s>%s</%s:%s>\n", 
-                    wfs_namespace, lp->items[k], encoded_val, 
-                    wfs_namespace, lp->items[k]);
-          }
-          else      
-            msIO_fprintf(stream, "        <%s>%s</%s>\n", 
-                    lp->items[k], encoded_val, lp->items[k]);
+	for(k=0; k<lp->numitems; k++) {
+          item = &(itemList->items[k]);  
+          if(msItemInGroups(item, groupList) == MS_FALSE) 
+	    msGMLWriteItem(stream, item, shape.values[k], wfs_namespace, "        ");
         }
+
+	for(k=0; k<groupList->numgroups; k++)
+	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, wfs_namespace, "        ");
 
 	/* end this feature */
         msIO_fprintf(stream, "      </%s>\n", layer_name);
@@ -931,16 +1136,16 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
          /* end this layer */
       }
 
-      free( item_is_xml );
-
       msLayerClose(lp);
     }
 
     if (maxfeatures > 0 && features == maxfeatures)
       break;
 
-  } /* next layer */
+    msGMLFreeGroups(groupList);
+    msGMLFreeItems(itemList);
 
+  } /* next layer */
 
   return(MS_SUCCESS);
 
