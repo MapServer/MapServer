@@ -1927,6 +1927,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
             ** msResampleGDALToMap() we can only resample rotated images
             ** if they also have fully defined projections.
             */
+#ifdef USE_PROJ
             if( ((adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0)
                  && map->projection.proj != NULL 
                  && layer->projection.proj != NULL)
@@ -1936,6 +1937,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
                 status = msResampleGDALToMap( map, layer, img, hDS );
             }
             else
+#endif
             {
                 status = drawGDAL(map, layer, img, hDS );
             }
