@@ -120,6 +120,7 @@ char *msGetVersion() {
 #ifdef USE_GDAL
   strcat(version, " INPUT=GDAL");
 #endif
+  strcat(version, " INPUT=SHAPEFILE");
 
   return(version);
 }
