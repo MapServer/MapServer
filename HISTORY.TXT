@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.1 (???)
 --------------------------
 
+- Fixed MyGIS build error introduced when adding msLayerIsOpen() (bug 1116)
+
 - Fixed segmentation fault when generating PDF output (bug 1105)
 
 
