@@ -475,7 +475,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                             if((labelPtr->mindistance != -1) &&
                                 (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
                                 (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) &&
-                                (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance))
+                                (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance))
                             {
                                 cachePtr->status = MS_FALSE;
                                 break;
@@ -564,7 +564,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                             if((labelPtr->mindistance != -1) &&
                                (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
                                (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) &&
-                               (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance))
+                               (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance))
                             {
                                 cachePtr->status = MS_FALSE;
                                 break;
@@ -666,7 +666,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                         if((labelPtr->mindistance != -1) &&
                            (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
                            (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) &&
-                           (dist(cachePtr->point, map->labelcache.labels[i].point)
+                           (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point))
                                                         <= labelPtr->mindistance))
                         {
                             cachePtr->status = MS_FALSE;

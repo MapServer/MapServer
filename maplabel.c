@@ -441,15 +441,6 @@ int labelInImage(int width, int height, shapeObj *lpoly, int buffer)
   return(MS_TRUE);
 }
 
-//static double dist(pointObj a, pointObj b)
-double dist(pointObj a, pointObj b)
-{
-  double d;
-
-  d = sqrt((pow((a.x-b.x),2) + pow((a.y-b.y),2)));
-  return(d);
-}
-
 /*
 ** Variation on msIntersectPolygons. Label polygons aren't like shapefile polygons. They
 ** have no holes, and often do have overlapping parts (i.e. road symbols).

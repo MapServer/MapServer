@@ -9,6 +9,11 @@ typedef struct {
 typedef struct {
   double x;
   double y;
+} vectorObj;
+
+typedef struct {
+  double x;
+  double y;
   double m;  
 } pointObj;
 

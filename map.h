@@ -883,7 +883,6 @@ int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
 pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
 double dist(pointObj a, pointObj b);
-
    
 /*
 ** Main API Functions
@@ -925,6 +924,8 @@ void msMergeRect(rectObj *a, rectObj *b);
 double msDistancePointToPoint(pointObj *a, pointObj *b);
 double msDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b);
 double msDistancePointToShape(pointObj *p, shapeObj *shape);
+double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, pointObj *pd);
+double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2);
 int msIntersectSegments(pointObj *a, pointObj *b, pointObj *c, pointObj *d);
 int msPointInPolygon(pointObj *p, lineObj *c);
 int msIntersectMultipointPolygon(multipointObj *points, shapeObj *polygon);

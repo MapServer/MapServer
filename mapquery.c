@@ -502,11 +502,15 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   layerObj *lp, *slp;
   char status;
 
+  double distance, tolerance;
+
   rectObj searchrect;
   shapeObj shape, selectshape;
 
   msInitShape(&shape);
   msInitShape(&selectshape);
+
+  fprintf(stderr, "in msQueryByFeatures()\n");
 
   // is the selection layer valid and has it been queried
   if(slayer < 0 || slayer >= map->numlayers) {
@@ -546,7 +550,12 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
-    
+  
+    if(lp->toleranceunits == MS_PIXELS)
+      tolerance = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+    else
+      tolerance = lp->tolerance * (inchesPerUnit[lp->toleranceunits]/inchesPerUnit[map->units]);
+   
     // open this layer
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -582,12 +591,19 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
       // identify target shapes
       searchrect = selectshape.bounds;
+
 #ifdef USE_PROJ
       if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))      
 	msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
       else
 	lp->project = MS_FALSE;
 #endif
+
+      searchrect.minx -= tolerance; // expand the search box to account for layer tolerances (e.g. buffered searches)
+      searchrect.maxx += tolerance;
+      searchrect.miny -= tolerance;
+      searchrect.maxy += tolerance;
+
       status = msLayerWhichShapes(lp, searchrect);
       if(status == MS_DONE) { // no overlap
 	msLayerClose(lp);
@@ -634,12 +650,30 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	  switch(shape.type) { // make sure shape actually intersects the selectshape
 	  case MS_SHAPE_POINT:
 	    status = msIntersectMultipointPolygon(&shape.line[0], &selectshape);
+	    if(status == MS_FALSE && tolerance > 0) { // no intersection, check distance
+	      distance = msDistanceShapeToShape(&selectshape, &shape);
+	      if(distance < tolerance) status = MS_TRUE;
+
+	      fprintf(stderr, "distance %lf, tolerance %lf\n", distance, tolerance);
+            }
 	    break;
 	  case MS_SHAPE_LINE:
 	    status = msIntersectPolylinePolygon(&shape, &selectshape);
+	    if(status == MS_FALSE && tolerance > 0) { // no intersection, check distance
+	      distance = msDistanceShapeToShape(&selectshape, &shape);
+	      if(distance < tolerance) status = MS_TRUE;
+
+	      fprintf(stderr, "distance %lf, tolerance %lf\n", distance, tolerance);
+            }
 	    break;
 	  case MS_SHAPE_POLYGON:
 	    status = msIntersectPolygons(&shape, &selectshape);
+	    if(status == MS_FALSE && tolerance > 0) { // no intersection, check distance
+	      distance = msDistanceShapeToShape(&selectshape, &shape);
+	      if(distance < tolerance) status = MS_TRUE;
+
+	      fprintf(stderr, "distance %lf, tolerance %lf\n", distance, tolerance);
+            }
 	    break;
 	  default:
 	    break;
