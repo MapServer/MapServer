@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2003/09/02 22:59:06  assefa
+ * Add classitem extrcat function for IsLike filter.
+ *
  * Revision 1.2  2003/08/26 02:18:09  assefa
  * Add PropertyIsBetween and PropertyIsLike.
  *
@@ -92,6 +95,7 @@ int IsSpatialFilterType(char *pszValue);
 int IsSupportedFilterType(CPLXMLNode *psXMLNode);
 
 char *GetMapserverExpression(FilterEncodingNode *psFilterNode);
+char *GetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
 char *GetNodeExpression(FilterEncodingNode *psFilterNode);
 char *GetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *GetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
