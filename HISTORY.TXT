@@ -108,6 +108,8 @@ Version 4.1 (CVS)
 - Added ability to set string member variables to NULL in PHP MapScript
   (bug 591)
 
+- New key iterators for map, layer, and class metadata hash tables 
+  (bug 434) and fontset fonts hash table (bug 439).
 
 Version 4.0 (2003-08-01)
 ------------------------
