@@ -1772,6 +1772,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     }
 #endif
 
+#if !defined(USE_GDAL) || defined(USE_GD_GIF)
     if (memcmp(dd,"GIF8",4)==0) {
       if(layer->transform && 
          msProjectionsDiffer(&(map->projection), &(layer->projection))) {
@@ -1828,6 +1829,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         continue;
       }
     }
+#endif /* !defined(USE_GDAL) || defined(USE_GD_GIF) */
 
 #if !defined(USE_GDAL) || defined(USE_GD_PNG)
     if (memcmp(dd,PNGsig,8)==0) {

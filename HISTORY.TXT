@@ -21,6 +21,9 @@ Version 3.6.5-dev
 - Fixed problem with STATUS EMBED being written as STATUS QUERYONLY by
   msSaveMap()
 
+- Fix problem reading WMS layers in GIF format (via GDAL) when GD
+  doesn't support GIF
+ 
 
 Version 3.6.4 (2003-01-08)
 --------------------------
