@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.50  2002/04/04 19:05:41  frank
+ * improve error reporting
+ *
  * Revision 1.49  2002/03/26 21:00:04  frank
  * Set the tileindex value in shapeObjs.  Support fetching based on tile+recordid.
  * Support refetching features for autostyling in tiled layers.
@@ -851,8 +854,10 @@ msOGRFileOpen(layerObj *layer, const char *connection )
      (params = split(connection, ',', &numparams))==NULL || 
      numparams < 1) 
   {
-      msSetError(MS_OGRERR, "Error parsing OGR connection information.", 
-                 "msOGRFileOpen()");
+      msSetError(MS_OGRERR, 
+                 "Error parsing OGR connection information:%s", 
+                 "msOGRFileOpen()",
+                 connection );
       return NULL;
   }
 
