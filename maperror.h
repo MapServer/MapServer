@@ -47,12 +47,14 @@ typedef struct {
 /*
 ** Global variables
 */
-extern errorObj ms_error;
+/* extern errorObj ms_error; */
 
 /*
 ** Function prototypes
 */
-void msSetError(int code, char *message, char *routine);
+
+errorObj *msGetErrorObj();
+void msSetError(int code, char *message, char *routine, ...);
 void msWriteError(FILE *stream);
 char *msGetVersion();
 
