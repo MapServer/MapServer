@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.65.2.1  2004/07/28 17:53:07  dan
+ * Pass FEATURE_COUNT instead of FEATURECOUNT in GetFeatureInfo (bug 790)
+ *
  * Revision 1.65  2004/04/17 06:33:24  dan
  * Increased precision of values written to .wld file for WMS layers (bug 446)
  *
@@ -679,7 +682,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         // and if not passed then the behavior is up to the server
         if (nFeatureCount > 0)
         {
-            msSetWMSParamInt(psWMSParams, "FEATURECOUNT", nFeatureCount);
+            msSetWMSParamInt(psWMSParams, "FEATURE_COUNT", nFeatureCount);
         }
 
     }

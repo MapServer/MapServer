@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.2.2 (2004-07-27)
+Version 4.2.2 (2004-07-28)
 --------------------------
 
 - Fix a buffer overflow when building post request for WFS layers with 
@@ -28,6 +28,7 @@ Version 4.2.2 (2004-07-27)
   were stomping on each other when they were freeing resources and this
   caused truncated WMS GetCapabilities (bug 779)
 
+- Pass FEATURE_COUNT instead of FEATURECOUNT in WMS GetFeatureInfo (bug 790)
 
 Version 4.2.1 (2004-07-12)
 --------------------------
