@@ -3644,7 +3644,7 @@ fi
 if test -n "$GDAL_CONFIG" ; then
 
   saved_LIBS="$LIBS"
-  LIBS="$LIBS `gdal-config --libs`"
+  LIBS="$LIBS `$GDAL_CONFIG --libs`"
   echo $ac_n "checking for OGRRegisterAll in -lgdal.1.1""... $ac_c" 1>&6
 echo "configure:3650: checking for OGRRegisterAll in -lgdal.1.1" >&5
 ac_lib_var=`echo gdal.1.1'_'OGRRegisterAll | sed 'y%./+-%__p_%'`
@@ -3690,8 +3690,8 @@ fi
   HAVE_GDAL_LIB=yes
 
   if test -n "$OGR_ENABLED" ; then
-      OGR_LIB="`gdal-config --libs`"
-      OGR_INC="`gdal-config --cflags`"
+      OGR_LIB="`$GDAL_CONFIG --libs`"
+      OGR_INC="`$GDAL_CONFIG --cflags`"
       echo "$ac_t""        using OGR from system libs." 1>&6
   else
       echo "configure: warning:         OGR not found in system libs... use --with-ogr=DIR." 1>&2
