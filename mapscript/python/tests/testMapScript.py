@@ -284,6 +284,27 @@ class SaveToStringTestCase(unittest.TestCase):
         else:
             assert 1
 
+class ClonedSaveToStringTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testSaveToString(self):
+        msimg = self.mapobj1.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'clonedTestSaveToString.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.format == 'PNG'
+            assert pyimg.size == (600, 600)
+            assert pyimg.mode == 'P'
+        else:
+            assert 1
+
 class NoFontSetTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj('')
@@ -441,6 +462,51 @@ class ZoomRectangleTestCase(unittest.TestCase):
         self.assertRaises(MapServerError, 
             self.mapobj1.zoomRectangle, r, w, h, extent, None)
 
+class ClonedZoomRectangleTestCase(unittest.TestCase):
+    "testing new zoom* methods that we are adapting from the PHP MapScript"
+    
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+        # Change the extent for purposes of zoom testing
+        rect = rectObj()
+        rect.minx, rect.miny, rect.maxx, rect.maxy = (-50.0, -50.0, 50.0, 50.0)
+        self.mapobj1.extent = rect
+        # Change height/width as well
+        self.mapobj1.width, self.mapobj1.height = (100, 100)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testZoomRectangle(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        r = rectObj()
+        r.minx, r.miny, r.maxx, r.maxy = (1, 26, 26, 1)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomRectangle(r, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -49.0, (new_extent.minx, new_extent.miny, new_extent.maxx, new_extent.maxy)
+        assert new_extent.miny == 24.0, new_extent.miny
+        assert new_extent.maxx == -24.0, new_extent.maxx
+        assert new_extent.maxy == 49.0, new_extent.maxy
+    def testZoomRectangleConstrained(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        max = rectObj()
+        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
+        r = rectObj()
+        r.minx, r.miny, r.maxx, r.maxy = (0, 200, 200, 0)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomRectangle(r, w, h, extent, max)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == max.minx, new_extent.minx
+        assert new_extent.miny == max.miny, new_extent.miny
+        assert new_extent.maxx == max.maxx, new_extent.maxx
+        assert new_extent.maxy == max.maxy, new_extent.maxy
+    def testZoomRectangleBadly(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        r = rectObj()
+        r.minx, r.miny, r.maxx, r.maxy = (0, 0, 200, 200)
+        extent = self.mapobj1.extent
+        self.assertRaises(MapServerError, 
+            self.mapobj1.zoomRectangle, r, w, h, extent, None)
+
 class ZoomScaleTestCase(unittest.TestCase):
     "testing new zoom* methods that we are adapting from the PHP MapScript"
    
@@ -505,6 +571,34 @@ class ZoomScaleTestCase(unittest.TestCase):
         assert new_extent.maxx == max.maxx, new_extent.maxx
         assert new_extent.maxy == max.maxy, new_extent.maxy
 
+class NewImageObjTestCase(unittest.TestCase):
+    "testing new zoom* methods that we are adapting from the PHP MapScript"
+   
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testPrepareImageThisOwn(self):
+        imgobj = self.mapobj1.prepareImage()
+        assert imgobj.thisown == 1
+    def testdrawQueryThisOwn(self):
+        imgobj = self.mapobj1.drawQuery()
+        assert imgobj.thisown == 1
+    def testdrawScalebarThisOwn(self):
+        imgobj = self.mapobj1.drawScalebar()
+        assert imgobj.thisown == 1
+    def testdrawLegendThisOwn(self):
+        imgobj = self.mapobj1.drawLegend()
+        assert imgobj.thisown == 1
+    def testdrawReferenceMapThisOwn(self):
+        imgobj = self.mapobj1.drawReferenceMap()
+        assert imgobj.thisown == 1
+    def testCreateLegendIconThisOwn(self):
+        layerobj = self.mapobj1.getLayer(0)
+        classobj = layerobj.getClass(0)
+        imgobj = classobj.createLegendIcon(self.mapobj1, layerobj, 20, 20)
+        assert imgobj.thisown == 1
+        
 if __name__ == '__main__':
     unittest.main()
 
