@@ -219,6 +219,11 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
 
   copyRect = map->extent;
+/*
+  msDebug( "map->extent=%.10e,%.10e,%.10e,%.10e\n", 
+           copyRect.minx, copyRect.miny, 
+           copyRect.maxx, copyRect.maxy );
+*/
 
   if( copyRect.minx < GEO_TRANS(adfGeoTransform,0,src_ysize) )
       copyRect.minx = GEO_TRANS(adfGeoTransform,0,src_ysize);
@@ -233,6 +238,13 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy )
       return 0;
 
+/*
+  msDebug( "copyRect=%.10e,%.10e,%.10e,%.10e\n", 
+           copyRect.minx, copyRect.miny, 
+           copyRect.maxx, copyRect.maxy );
+
+  msDebug( "cellsize=%.13e\n", map->cellsize );
+*/
   /*
    * Copy the source and destination raster coordinates.
    */
@@ -253,14 +265,19 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 
   dst_xoff = (int) ((copyRect.minx - map->extent.minx) / map->cellsize);
   dst_yoff = (int) ((map->extent.maxy - copyRect.maxy) / map->cellsize);
-  dst_xsize = (int) ((copyRect.maxx - copyRect.minx) / map->cellsize);
+  dst_xsize = (int) ((copyRect.maxx - copyRect.minx) / map->cellsize + 0.5);
   dst_xsize = MIN(MAX(1,dst_xsize),gdImageSX(img) - dst_xoff);
-  dst_ysize = (int) ((copyRect.maxy - copyRect.miny) / map->cellsize);
+  dst_ysize = (int) ((copyRect.maxy - copyRect.miny) / map->cellsize + 0.5);
   dst_ysize = MIN(MAX(1,dst_ysize),gdImageSY(img) - dst_yoff);
 
   if( dst_xsize == 0 || dst_ysize == 0 )
       return 0;
-  
+/*
+  msDebug( "src=%d,%d,%d,%d dst=%d,%d,%d,%d\n", 
+           src_xoff, src_yoff, src_xsize, src_ysize, 
+           dst_xoff, dst_yoff, dst_xsize, dst_ysize );
+*/  
+
   /*
    * Fetch the band(s).  For now we just operate on the first band of
    * the file. 
