@@ -32,6 +32,26 @@
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
 
+#ifdef SWIGPYTHON
+// For Python, errors reported via the ms_error structure are translated
+// into RuntimeError exceptions. (Chris Chamberlin <cdc@aracnet.com>)
+%{
+  static void _raise_ms_exception(void) {
+    char errbuf[256];
+    snprintf(errbuf, 255, "%s: %s %s\n", ms_error.routine, msGetErrorString(ms_error.code), ms_error.message);
+    _SWIG_exception(SWIG_RuntimeError, errbuf);
+  }
+  
+  #define raise_ms_exception() { _raise_ms_exception(); return NULL; }
+%}
+
+%except {
+  $function
+    if ( (ms_error.code != MS_NOERR) && (ms_error.code != -1) )
+      raise_ms_exception();
+}
+#endif // SWIGPYTHON
+
 //
 // class extensions for mapObj
 //
