@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.1 (CVS)
 ------------------------
 
+- Implement DataURL, MetadataURL and DescriptionURL metadata in 
+  mapcontext.c (bug 523)
+
 - PHP MapScript's pasteImage() now takes a hex color value (e.g. 0xrrggbb)
   for the transparent color instead of a color index. (bug 463)
 
