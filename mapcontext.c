@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.32  2002/11/27 21:00:44  julien
+ * Fatal error if server version is missing in load function
+ *
  * Revision 1.31  2002/11/27 20:14:19  julien
  * Use the map srs if no layer srs is specify
  *
@@ -702,8 +705,11 @@ int msLoadMapContext(mapObj *map, char *filename)
                   if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
                        &(layer->metadata), "wms_server_version") == MS_FAILURE)
                   {
-                      msDebug("Mandatory data Server.version missing in %s.",
-                              filename);
+                      CPLDestroyXMLNode(psRoot);
+                      msSetError(MS_MAPCONTEXTERR, 
+                                "Mandatory data Server.version missing in %s.",
+                                 "msLoadMapContext()", filename);
+                      return MS_FAILURE;
                   }
               }
               else
@@ -711,8 +717,11 @@ int msLoadMapContext(mapObj *map, char *filename)
                   if(msGetMapContextXMLHashValue(psLayer, "Server.wmtver", 
                        &(layer->metadata), "wms_server_version") == MS_FAILURE)
                   {
-                      msDebug("Mandatory data Server.wmtver missing in %s.",
-                              filename);
+                      CPLDestroyXMLNode(psRoot);
+                      msSetError(MS_MAPCONTEXTERR, 
+                                 "Mandatory data Server.wmtver missing in %s.",
+                                 "msLoadMapContext()", filename);
+                      return MS_FAILURE;
                   }
               }
 
