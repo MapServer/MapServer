@@ -50,16 +50,15 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     msSetError(MS_IOERR, "(%s)", "msJoinDBFTables()", join->table);
     if(cwd_path)
         free(cwd_path);
-    return(-1);
+    return(MS_FAILURE);
   }
   if(cwd_path)
       free(cwd_path);
 
   if((idx = msDBFGetItemIndex(hDBF, join->to)) == -1) { 
-    msSetError(MS_DBFERR, "Item %s not found.", "msJoinDBFTables()",
-               join->to);
+    msSetError(MS_DBFERR, "Item %s not found.", "msJoinDBFTables()", join->to);
     msDBFClose(hDBF);
-    return(-1);
+    return(MS_FAILURE);
   }
 
   /*
@@ -69,7 +68,7 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
   if(!join->items) {
     join->items = msDBFGetItems(hDBF);
     if(!join->items) {
-      return(-1);
+      return(MS_FAILURE);
     }
   }
 
@@ -79,7 +78,7 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     
     if((join->data = (char ***)malloc(sizeof(char **))) == NULL) {
       msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
-      return(-1);
+      return(MS_FAILURE);
     }
     
     for(i=0; i<nrecs; i++) { /* find a match */
@@ -90,14 +89,12 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     if(i == nrecs) { /* just return zero length strings */
       if((join->data[0] = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
 	msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
-	return(-1);
+	return(MS_FAILURE);
       }
       for(i=0; i<join->numitems; i++)
 	join->data[0][i] = strdup("\0"); /* intialize to zero length strings */
     } else {
-      if((join->data[0] = msDBFGetValues(hDBF,i)) == NULL) {
-	return(-1);
-      }
+      if((join->data[0] = msDBFGetValues(hDBF,i)) == NULL) return(MS_FAILURE);
     }
 
   } else {
@@ -112,7 +109,7 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     ids = (int *)malloc(sizeof(int)*nrecs);
     if(!ids) {
       msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
-      return(-1);
+      return(MS_FAILURE);
     }
     
     j=0;
@@ -129,7 +126,7 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
       if((join->data = (char ***)malloc(sizeof(char **)*join->numrecords)) == NULL) {
 	msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
 	free(ids);
-	return(-1);
+	return(MS_FAILURE);
       }
 
       for(i=0; i<join->numrecords; i++) {
@@ -137,13 +134,13 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
 	if(!join->data[i]) {
 	  msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
 	  free(ids);
-	  return(-1);
+	  return(MS_FAILURE);
 	}
 
 	join->data[i] = msDBFGetValues(hDBF,ids[i]);
 	if(!join->data[i]) {
 	  free(ids);
-	  return(-1);
+	  return(MS_FAILURE);
 	}
       }
     }
@@ -152,7 +149,7 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
   }
 
   msDBFClose(hDBF);
-  return(0);
+  return(MS_SUCCESS);
 }
 
 extern int msyyresult; // result of parsing, true/false
