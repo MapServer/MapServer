@@ -29,6 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.32  2004/04/14 04:54:30  dan
+ * Created msOWSLookupMetadata() and added namespaces lookup in all
+ * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
+ * that calls those functions for now to avoid breaking something just
+ * before the release. (bug 615, 568)
+ *
  * Revision 1.31  2004/02/23 21:24:44  assefa
  * Name sapce missing for DescribeFeatureType request.
  *
@@ -292,13 +298,13 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    msOWSPrintParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
               "        <Name>%s</Name>\n", NULL);
 
-   msOWSPrintMetadata(stdout, lp->metadata, "wfs_title", OWS_WARN,
+   msOWSPrintMetadata(stdout, lp->metadata, NULL, "wfs_title", OWS_WARN,
                  "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintMetadata(stdout, lp->metadata, "wfs_abstract", OWS_NOERR,
+   msOWSPrintMetadata(stdout, lp->metadata, NULL, "wfs_abstract", OWS_NOERR,
                  "        <Abstract>%s</Abstract>\n", NULL);
 
-   msOWSPrintMetadataList(stdout, lp->metadata, "wfs_keywordlist", 
+   msOWSPrintMetadataList(stdout, lp->metadata, NULL, "wfs_keywordlist", 
                      "        <Keywords>\n", "        </Keywords>\n",
                      "          %s\n");
 
@@ -377,7 +383,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
 
   printf("Content-type: text/xml%c%c",10,10); 
 
-  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_encoding", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
 
@@ -401,20 +407,20 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
  printf("  <Name>MapServer WFS</Name>\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_title", OWS_WARN,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_title", OWS_WARN,
                 "  <Title>%s</Title>\n", map->name);
-  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_abstract", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_abstract", OWS_NOERR,
                 "  <Abstract>%s</Abstract>\n", NULL);
 
-  msOWSPrintMetadataList(stdout, map->web.metadata, "wfs_keywordlist", 
+  msOWSPrintMetadataList(stdout, map->web.metadata, NULL, "wfs_keywordlist", 
                     "  <Keywords>\n", "  </Keywords>\n",
                     "    %s\n");
   printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
 
-  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_fees", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_fees", OWS_NOERR,
                 "  <Fees>%s</Fees>\n", NULL);
   
-  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_accessconstraints", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_accessconstraints", OWS_NOERR,
                 "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
 
   printf("</Service>\n\n");
@@ -573,7 +579,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     */
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(stdout, map->web.metadata, "wfs_encoding", OWS_NOERR,
+    msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
@@ -1058,7 +1064,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
 
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(stdout, map->web.metadata, "wfs_encoding", OWS_NOERR,
+    msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 

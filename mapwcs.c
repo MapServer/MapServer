@@ -195,7 +195,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
   printf("Content-type: text/xml%c%c",10,10);
 
   // print common capability elements 
-  msOWSPrintMetadata(stdout, map->web.metadata, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
 
   printf("<WCS_Capabilities\n"
          "   version=\"%s\" \n"

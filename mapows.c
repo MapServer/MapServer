@@ -5,6 +5,12 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.24  2004/04/14 04:54:30  dan
+ * Created msOWSLookupMetadata() and added namespaces lookup in all
+ * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
+ * that calls those functions for now to avoid breaking something just
+ * before the release. (bug 615, 568)
+ *
  * Revision 1.23  2004/03/30 00:04:49  dan
  * Cleaned up changelog
  *
@@ -291,7 +297,70 @@ const char *msOWSGetSchemasLocation(mapObj *map)
     return schemas_location;
 }
 
+/*
+** msOWSLookupMetadata()
+**
+** Attempts to lookup a given metadata name in multiple OWS namespaces.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup 
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+*/
+const char *msOWSLookupMetadata(hashTableObj metadata, 
+                                const char *namespaces, const char *name)
+{
+    const char *value = NULL;
 
+    if (namespaces == NULL)
+    {
+        value = msLookupHashTable(metadata, (char*)name);
+    }
+    else
+    {
+        char buf[100] = "ows_";
+
+        strncpy(buf+4, name, 95);
+        buf[99] = '\0';
+
+        while (value == NULL && *namespaces != '\0')
+        {
+            switch (*namespaces)
+            {
+              case 'O':         /* ows_... */
+                buf[0] = 'o';
+                buf[1] = 'w';
+                buf[2] = 's';
+                break;
+              case 'M':         /* wms_... */
+                buf[0] = 'w';
+                buf[1] = 'm';
+                buf[2] = 's';
+                break;
+              case 'F':         /* wfs_... */
+                buf[0] = 'w';
+                buf[1] = 'f';
+                buf[2] = 's';
+                break;
+              case 'C':         /* wcs_... */
+                buf[0] = 'w';
+                buf[1] = 'c';
+                buf[2] = 's';
+                break;
+              case 'G':         /* gml_... */
+                buf[0] = 'g';
+                buf[1] = 'm';
+                buf[2] = 'l';
+                break;
+            }
+
+            value = msLookupHashTable(metadata, buf);
+            namespaces++;
+        }
+    }
+
+    return value;
+}
 
 /*
 ** msOWSPrintMetadata()
@@ -302,14 +371,15 @@ const char *msOWSGetSchemasLocation(mapObj *map)
 ** default will be used.
 */
 
-int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name, 
+int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, 
+                       const char *namespaces, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value) 
 {
-    const char *value;
+    const char *value = NULL;
     int status = MS_NOERR;
 
-    if((value = msLookupHashTable(metadata, (char*)name)))
+    if((value = msOWSLookupMetadata(metadata, namespaces, name)) != NULL)
     { 
         fprintf(stream, format, value);
     }
@@ -317,7 +387,7 @@ int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name,
     {
         if (action_if_not_found == OWS_WARN)
         {
-            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s' was missing in this context. -->\n", name);
+            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
             status = action_if_not_found;
         }
 
@@ -339,14 +409,15 @@ int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name,
 */
 
 int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata, 
-                             const char *name, int action_if_not_found, 
+                             const char *namespaces, const char *name, 
+                             int action_if_not_found, 
                              const char *format, const char *default_value) 
 {
     const char *value;
     char * pszEncodedValue=NULL;
     int status = MS_NOERR;
 
-    if((value = msLookupHashTable(metadata, (char*)name)))
+    if((value = msOWSLookupMetadata(metadata, namespaces, name)))
     {
         pszEncodedValue = msEncodeHTMLEntities(value);
         fprintf(stream, format, pszEncodedValue);
@@ -356,7 +427,7 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata,
     {
         if (action_if_not_found == OWS_WARN)
         {
-            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s' was missing in this context. -->\n", name);
+            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
             status = action_if_not_found;
         }
 
@@ -381,7 +452,8 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata,
 */
 
 int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName, 
-                            const char *name, int action_if_not_found, 
+                            const char *namespaces, const char *name, 
+                            int action_if_not_found, 
                             const char *format, const char *default_value) 
 {
     const char *value;
@@ -392,7 +464,7 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
     {
        if (map->layers[i].group && (strcmp(map->layers[i].group, pszGroupName) == 0) && map->layers[i].metadata)
        {
-         if((value = msLookupHashTable(map->layers[i].metadata, (char*)name)))
+         if((value = msOWSLookupMetadata(map->layers[i].metadata, namespaces, name)))
          { 
             fprintf(stream, format, value);
             return status;
@@ -402,7 +474,7 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 
     if (action_if_not_found == OWS_WARN)
     {
-       fprintf(stream, "<!-- WARNING: Mandatory metadata '%s' was missing in this context. -->\n", name);
+       fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
        status = action_if_not_found;
     }
 
@@ -446,11 +518,12 @@ int msOWSPrintParam(FILE *stream, const char *name, const char *value,
 ** Prints comma-separated lists metadata.  (e.g. keywordList)
 **/
 int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata, 
-                           const char *name, const char *startTag, 
+                           const char *namespaces, const char *name, 
+                           const char *startTag, 
                            const char *endTag, const char *itemFormat) 
 {
     const char *value;
-    if((value = msLookupHashTable(metadata, (char*)name))) 
+    if((value = msOWSLookupMetadata(metadata, namespaces, name))) 
     {
       char **keywords;
       int numkeywords;
@@ -519,10 +592,8 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
                tabspace, extent->minx, extent->miny, 
                extent->maxx, extent->maxy);
 
-        if( ((resx = msLookupHashTable( metadata, "wms_resx" )) != NULL ||
-             (resx = msLookupHashTable( metadata, "wfs_resx" )) != NULL )
-            && ((resy = msLookupHashTable( metadata, "wms_resy" )) != NULL ||
-                (resy = msLookupHashTable( metadata, "wfs_resy" )) != NULL ) )
+        if( (resx = msOWSLookupMetadata( metadata, "MFO", "resx" )) != NULL &&
+            (resy = msOWSLookupMetadata( metadata, "MFO", "resy" )) != NULL )
             fprintf( stream, "\n%s            resx=\"%s\" resy=\"%s\"",
                     tabspace, resx, resy );
  
@@ -536,7 +607,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 ** Print the contact information
 */
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
-                           const char *wmtver, hashTableObj metadata )
+                            const char *wmtver, hashTableObj metadata )
 {
   int bEnableContact = 0;
 
@@ -557,9 +628,9 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       // ContactPersonPrimary is optional, but when present then all its 
       // sub-elements are mandatory
       fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
-      msOWSPrintMetadata(stream, metadata, "wms_contactperson", 
+      msOWSPrintMetadata(stream, metadata, NULL, "wms_contactperson", 
                   OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, "wms_contactorganization", 
+      msOWSPrintMetadata(stream, metadata, NULL,"wms_contactorganization", 
              OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
              NULL);
       fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
@@ -567,7 +638,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintMetadata(stream, metadata, "wms_contactposition", 
+        if(msOWSPrintMetadata(stream, metadata, NULL, "wms_contactposition", 
                            OWS_NOERR, 
      "    <ContactInformation>\n      <ContactPosition>%s</ContactPosition>\n",
                               NULL) != 0)
@@ -575,7 +646,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     }
     else
     {
-        msOWSPrintMetadata(stream, metadata, "wms_contactposition", 
+        msOWSPrintMetadata(stream, metadata, NULL, "wms_contactposition", 
                     OWS_NOERR, "      <ContactPosition>%s</ContactPosition>\n",
                            NULL);
     }
@@ -596,17 +667,17 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       // ContactAdress is optional, but when present then all its 
       // sub-elements are mandatory
       fprintf(stream, "%s  <ContactAddress>\n", tabspace);
-      msOWSPrintMetadata(stream, metadata, "wms_addresstype", OWS_WARN,
+      msOWSPrintMetadata(stream, metadata, NULL, "wms_addresstype", OWS_WARN,
                     "        <AddressType>%s</AddressType>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, "wms_address", OWS_WARN,
+      msOWSPrintMetadata(stream, metadata, NULL, "wms_address", OWS_WARN,
                     "        <Address>%s</Address>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, "wms_city", OWS_WARN,
+      msOWSPrintMetadata(stream, metadata, NULL, "wms_city", OWS_WARN,
                     "        <City>%s</City>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, "wms_stateorprovince", 
+      msOWSPrintMetadata(stream, metadata, NULL, "wms_stateorprovince", 
            OWS_WARN,"        <StateOrProvince>%s</StateOrProvince>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, "wms_postcode", OWS_WARN,
+      msOWSPrintMetadata(stream, metadata, NULL, "wms_postcode", OWS_WARN,
                     "        <PostCode>%s</PostCode>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, "wms_country", OWS_WARN,
+      msOWSPrintMetadata(stream, metadata, NULL, "wms_country", OWS_WARN,
                     "        <Country>%s</Country>\n", NULL);
       fprintf(stream, "%s  </ContactAddress>\n", tabspace);
     }
@@ -614,7 +685,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintMetadata(stream, metadata, "wms_contactvoicetelephone", 
+        if(msOWSPrintMetadata(stream, metadata, NULL, "wms_contactvoicetelephone", 
                            OWS_NOERR,
                            "    <ContactInformation>\n      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
                               NULL) != 0)
@@ -622,7 +693,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     }
     else
     {
-        msOWSPrintMetadata(stream, metadata, "wms_contactvoicetelephone", 
+        msOWSPrintMetadata(stream, metadata, NULL, "wms_contactvoicetelephone", 
                            OWS_NOERR,
                    "      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
                            NULL);
@@ -630,29 +701,29 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintMetadata(stream, metadata, 
-                           "wms_contactfacsimiletelephone", OWS_NOERR,
+        if(msOWSPrintMetadata(stream, metadata,
+                           NULL, "wms_contactfacsimiletelephone", OWS_NOERR,
                               "    <ContactInformation>\n     <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL) != 0)
             bEnableContact = 1;
     }
     else
     {
         msOWSPrintMetadata(stream, metadata, 
-                           "wms_contactfacsimiletelephone", OWS_NOERR,
+                           NULL, "wms_contactfacsimiletelephone", OWS_NOERR,
                            "      <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL);
     }
 
     if(bEnableContact == 0)
     {
         if(msOWSPrintMetadata(stream, metadata, 
-                           "wms_contactelectronicmailaddress", OWS_NOERR,
+                           NULL, "wms_contactelectronicmailaddress", OWS_NOERR,
                               "    <ContactInformation>\n     <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL) != 0)
             bEnableContact = 1;
     }
     else
     {
         msOWSPrintMetadata(stream, metadata, 
-                           "wms_contactelectronicmailaddress", OWS_NOERR,
+                           NULL, "wms_contactelectronicmailaddress", OWS_NOERR,
                            "  <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL);
     }
 

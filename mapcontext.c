@@ -29,6 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.52  2004/04/14 04:54:30  dan
+ * Created msOWSLookupMetadata() and added namespaces lookup in all
+ * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
+ * that calls those functions for now to avoid breaking something just
+ * before the release. (bug 615, 568)
+ *
  * Revision 1.51  2003/12/23 20:40:38  julien
  * Replace legendurl, logourl, descriptionurl, dataurl and metadataurl metadata
  * by four new metadata by metadata replaced. The new metadata are called
@@ -1358,7 +1364,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
     version = "1.0.0";
 
   // file header
-  msOWSPrintMetadata(stream, map->web.metadata, "wms_encoding", OWS_NOERR,
+  msOWSPrintMetadata(stream, map->web.metadata, 
+                     NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
 
@@ -1448,7 +1455,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
         fprintf( stream, "%s<Name>%s</Name>\n", tabspace, map->name );
 
       fprintf( stream, "%s<!-- Title of Context -->\n", tabspace );
-      msOWSPrintMetadata(stream, map->web.metadata, "wms_title", OWS_WARN,
+      msOWSPrintMetadata(stream, map->web.metadata, 
+                         NULL, "wms_title", OWS_WARN,
                          "    <Title>%s</Title>\n", map->name);
   }
 
@@ -1476,7 +1484,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       }
   }
   else
-    msOWSPrintMetadataList(stream, map->web.metadata, "wms_keywordlist", 
+    msOWSPrintMetadataList(stream, map->web.metadata, NULL, "wms_keywordlist", 
                            "    <Keywords>\n", "    </Keywords>\n",
                            "      %s\n");
 
@@ -1484,17 +1492,20 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   if(strcasecmp(version, "0.1.7") >= 0 &&
      strcasecmp(version, "1.0.0") < 0)
   {
-      msOWSPrintMetadata(stream, map->web.metadata, "wms_abstract", OWS_NOERR,
+      msOWSPrintMetadata(stream, map->web.metadata, 
+                         NULL, "wms_abstract", OWS_NOERR,
                          "    <gml:description>%s</gml:description>\n", NULL);
   }
   else
   {
-      msOWSPrintMetadata(stream, map->web.metadata, "wms_abstract", OWS_NOERR,
+      msOWSPrintMetadata(stream, map->web.metadata, 
+                         NULL, "wms_abstract", OWS_NOERR,
                          "    <Abstract>%s</Abstract>\n", NULL);
   }
 
   // DataURL
-  msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_dataurl", OWS_NOERR,
+  msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+                           NULL, "wms_dataurl", OWS_NOERR,
                 "    <DataURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </DataURL>\n", NULL);
 
   // LogoURL
@@ -1503,18 +1514,18 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   if(pszURL != NULL)
   {
       fprintf( stream, "    <LogoURL");
-      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_width",
-                               OWS_NOERR,
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+                               NULL, "wms_logourl_width", OWS_NOERR,
                                " width=\"%s\"", NULL);
-      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_height",
-                               OWS_NOERR,
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+                               NULL, "wms_logourl_height", OWS_NOERR,
                                " height=\"%s\"", NULL);
-      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_format",
-                               OWS_NOERR,
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+                               NULL, "wms_logourl_format", OWS_NOERR,
                                " format=\"%s\"", NULL);
       fprintf( stream, ">\n");
-      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_href",
-                               OWS_NOERR,
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+                               NULL, "wms_logourl_href", OWS_NOERR,
           "      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                NULL);
       fprintf( stream, "    </LogoURL>\n");
@@ -1528,14 +1539,17 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   {
       fprintf( stream, "    <DescriptionURL");
       msOWSPrintEncodeMetadata(stream, map->web.metadata,
-              "wms_descriptionurl_width", OWS_NOERR, " width=\"%s\"", NULL);
+                               NULL, "wms_descriptionurl_width", OWS_NOERR, 
+                               " width=\"%s\"", NULL);
       msOWSPrintEncodeMetadata(stream, map->web.metadata, 
-              "wms_descriptionurl_height", OWS_NOERR, " height=\"%s\"", NULL);
+                               NULL, "wms_descriptionurl_height", OWS_NOERR, 
+                               " height=\"%s\"", NULL);
       msOWSPrintEncodeMetadata(stream, map->web.metadata, 
-              "wms_descriptionurl_format", OWS_NOERR, " format=\"%s\"", NULL);
+                               NULL, "wms_descriptionurl_format", OWS_NOERR,
+                               " format=\"%s\"", NULL);
       fprintf( stream, ">\n");
       msOWSPrintEncodeMetadata(stream, map->web.metadata, 
-              "wms_descriptionurl_href", OWS_NOERR,
+                               NULL, "wms_descriptionurl_href", OWS_NOERR,
           "      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                NULL);
       fprintf( stream, "    </DescriptionURL>\n");
@@ -1573,16 +1587,18 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           // Server definition
           //
           msOWSPrintMetadata(stream, map->layers[i].metadata, 
-                             "wms_server_version", OWS_WARN,
+                             NULL, "wms_server_version", OWS_WARN,
                              "      <Server service=\"WMS\" version=\"%s\" ",
                              "1.1.0");
           if(map->layers[i].name)
-              msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_title",
-                            OWS_NOERR, "title=\"%s\">\n", map->layers[i].name);
+              msOWSPrintMetadata(stream, map->layers[i].metadata, 
+                                 NULL, "wms_title", OWS_NOERR, 
+                                 "title=\"%s\">\n", map->layers[i].name);
           else
           {
-              msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_title", 
-                                 OWS_NOERR, "title=\"%s\">\n", "");
+              msOWSPrintMetadata(stream, map->layers[i].metadata, 
+                                 NULL, "wms_title", OWS_NOERR, 
+                                 "title=\"%s\">\n", "");
           }
 
           // Get base url of the online resource to be the default value
@@ -1594,7 +1610,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           if( pszChar )
               pszValue[pszChar - pszValue] = '\0';
           if(msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                      "wms_onlineresource", OWS_WARN, 
+                                      NULL, "wms_onlineresource", OWS_WARN, 
          "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                       pszValue) == OWS_WARN)
               fprintf(stream, "<!-- wms_onlineresource not set, using base URL , but probably not what you want -->\n");
@@ -1605,14 +1621,17 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           //
           // Layer information
           //
-          msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_name",
-                             OWS_WARN, "      <Name>%s</Name>\n", 
+          msOWSPrintMetadata(stream, map->layers[i].metadata, 
+                             NULL, "wms_name", OWS_WARN, 
+                             "      <Name>%s</Name>\n", 
                              map->layers[i].name);
-          msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_title",
-                             OWS_WARN, "      <Title>%s</Title>\n", 
+          msOWSPrintMetadata(stream, map->layers[i].metadata, 
+                             NULL, "wms_title", OWS_WARN, 
+                             "      <Title>%s</Title>\n", 
                              map->layers[i].name);
-          msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_abstract",
-                             OWS_NOERR, "      <Abstract>%s</Abstract>\n", 
+          msOWSPrintMetadata(stream, map->layers[i].metadata, 
+                             NULL, "wms_abstract", OWS_NOERR, 
+                             "      <Abstract>%s</Abstract>\n", 
                              NULL);
 
           // Layer SRS
@@ -1625,7 +1644,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           if(strcasecmp(version, "0.1.4") <= 0)
           {
               msOWSPrintMetadata(stream, map->layers[i].metadata, 
-                                 "wms_dataurl", OWS_NOERR, 
+                                 NULL, "wms_dataurl", OWS_NOERR, 
                                  "      <DataURL>%s</DataURL>\n", 
                                  NULL);
           }
@@ -1643,17 +1662,17 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               {
                   fprintf( stream, "      <DataURL");
                   msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                           "wms_dataurl_width", OWS_NOERR,
+                                           NULL, "wms_dataurl_width", OWS_NOERR,
                                            " width=\"%s\"", NULL);
                   msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                           "wms_dataurl_height", OWS_NOERR,
+                                           NULL, "wms_dataurl_height", OWS_NOERR,
                                            " height=\"%s\"", NULL);
                   msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                           "wms_dataurl_format", OWS_NOERR,
+                                           NULL, "wms_dataurl_format", OWS_NOERR,
                                            " format=\"%s\"", NULL);
                   fprintf( stream, ">\n");
                   msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                           "wms_dataurl_href", OWS_NOERR,
+                                           NULL, "wms_dataurl_href", OWS_NOERR,
                                            "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                            NULL);
                   fprintf( stream, "      </DataURL>\n");
@@ -1670,17 +1689,17 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           {
               fprintf( stream, "      <MetadataURL");
               msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                       "wms_metadataurl_width", OWS_NOERR,
+                                       NULL, "wms_metadataurl_width", OWS_NOERR,
                                        " width=\"%s\"", NULL);
               msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                       "wms_metadataurl_height", OWS_NOERR,
+                                       NULL, "wms_metadataurl_height", OWS_NOERR,
                                        " height=\"%s\"", NULL);
               msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                       "wms_metadataurl_format", OWS_NOERR,
+                                       NULL, "wms_metadataurl_format", OWS_NOERR,
                                        " format=\"%s\"", NULL);
               fprintf( stream, ">\n");
               msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
-                                       "wms_metadataurl_href", OWS_NOERR,
+                                       NULL, "wms_metadataurl_href", OWS_NOERR,
                                        "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                        NULL);
               fprintf( stream, "      </MetadataURL>\n");
@@ -1840,7 +1859,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                           fprintf(stream, "          <SLD>\n");
                           msOWSPrintEncodeMetadata(stream, 
                                                    map->layers[i].metadata,
-                                                   pszStyleItem, OWS_NOERR, 
+                                                   NULL, pszStyleItem, 
+                                                   OWS_NOERR, 
      "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                                    NULL);
                           fprintf(stream, "          </SLD>\n");
@@ -1856,7 +1876,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                           sprintf(pszStyleItem, "wms_style_%s_title",pszStyle);
                           // Title
                           msOWSPrintMetadata(stream, map->layers[i].metadata, 
-                                             pszStyleItem, OWS_NOERR, 
+                                             NULL, pszStyleItem, OWS_NOERR, 
                                              "          <Title>%s</Title>\n", 
                                              NULL);
                           free(pszStyleItem);
@@ -1874,21 +1894,21 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                       "wms_style_%s_legendurl_width",pszStyle);
                               msOWSPrintEncodeMetadata(stream, 
                                                        map->layers[i].metadata,
-                                                       pszStyleItem,
+                                                       NULL, pszStyleItem,
                                                        OWS_NOERR,
                                                        " width=\"%s\"", NULL);
                               sprintf(pszStyleItem, 
                                      "wms_style_%s_legendurl_height",pszStyle);
                               msOWSPrintEncodeMetadata(stream, 
                                                        map->layers[i].metadata,
-                                                       pszStyleItem,
+                                                       NULL, pszStyleItem,
                                                        OWS_NOERR,
                                                        " height=\"%s\"", NULL);
                               sprintf(pszStyleItem, 
                                      "wms_style_%s_legendurl_format",pszStyle);
                               msOWSPrintEncodeMetadata(stream, 
                                                        map->layers[i].metadata,
-                                                       pszStyleItem,
+                                                       NULL, pszStyleItem,
                                                        OWS_NOERR,
                                                        " format=\"%s\"", NULL);
                               fprintf( stream, ">\n");
@@ -1896,7 +1916,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                      "wms_style_%s_legendurl_href", pszStyle);
                               msOWSPrintEncodeMetadata(stream, 
                                                        map->layers[i].metadata,
-                                                       pszStyleItem, OWS_NOERR,
+                                                       NULL, pszStyleItem,
+                                                       OWS_NOERR,
                                                        "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                                        NULL);
                               fprintf( stream, "          </LegendURL>\n");

@@ -5,6 +5,12 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.28  2004/04/14 04:54:30  dan
+ * Created msOWSLookupMetadata() and added namespaces lookup in all
+ * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
+ * that calls those functions for now to avoid breaking something just
+ * before the release. (bug 615, 568)
+ *
  * Revision 1.27  2004/04/12 18:38:24  assefa
  * Add dll export support for windows.
  *
@@ -149,20 +155,26 @@ MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 #define OWS_WMS     1
 #define OWS_WFS     2
 
-MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name, 
+MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj metadata, 
+                                    const char *namespaces, const char *name);
+MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, 
+                       const char *namespaces, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value);
 int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata, 
-                             const char *name, int action_if_not_found, 
+                             const char *namespaces, const char *name, 
+                             int action_if_not_found, 
                              const char *format, const char *default_value) ;
 int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName, 
-                            const char *name, int action_if_not_found, 
+                            const char *namespaces, const char *name, 
+                            int action_if_not_found, 
                             const char *format, const char *default_value);
 int msOWSPrintParam(FILE *stream, const char *name, const char *value, 
                     int action_if_not_found, const char *format, 
                     const char *default_value);
 int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata, 
-                           const char *name, const char *startTag, 
+                           const char *namespaces, const char *name, 
+                           const char *startTag, 
                            const char *endTag, const char *itemFormat);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj,

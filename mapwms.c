@@ -74,7 +74,8 @@ int msWMSException(mapObj *map, const char *wmtversion, const char *exception_co
       // In V1.0.1 to 1.0.7, the MIME type was text/xml
       printf("Content-type: text/xml%c%c",10,10);
 
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
+      msOWSPrintMetadata(stdout, map->web.metadata, 
+                         NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
@@ -87,7 +88,8 @@ int msWMSException(mapObj *map, const char *wmtversion, const char *exception_co
       // we cannot return anything else than application/vnd.ogc.se_xml here.
       printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
+      msOWSPrintMetadata(stdout, map->web.metadata, 
+                         NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
@@ -486,24 +488,24 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
    msOWSPrintParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
               "        <Name>%s</Name>\n", NULL);
    // the majority of this section is dependent on appropriately named metadata in the LAYER object
-   msOWSPrintMetadata(stdout, lp->metadata, "wms_title", OWS_WARN,
+   msOWSPrintMetadata(stdout, lp->metadata, NULL, "wms_title", OWS_WARN,
                  "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintMetadata(stdout, lp->metadata, "wms_abstract", OWS_NOERR,
+   msOWSPrintMetadata(stdout, lp->metadata, NULL, "wms_abstract", OWS_NOERR,
                  "        <Abstract>%s</Abstract>\n", NULL);
 
    if (strcasecmp(wmtver, "1.0.0") == 0)
    {
        // <Keywords> in V 1.0.0
        // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
-       msOWSPrintMetadataList(stdout, lp->metadata, "wms_keywordlist", 
+       msOWSPrintMetadataList(stdout, lp->metadata, NULL, "wms_keywordlist", 
                               "        <Keywords>", "        </Keywords>\n",
                               "%s ");
    }
    else
    {
        // <KeywordList><Keyword> ... in V1.0.6+
-       msOWSPrintMetadataList(stdout, lp->metadata, "wms_keywordlist", 
+       msOWSPrintMetadataList(stdout, lp->metadata, NULL, "wms_keywordlist", 
                               "        <KeywordList>\n", "        </KeywordList>\n",
                               "          <Keyword>%s</Keyword>\n");
    }
@@ -634,7 +636,8 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   else
       printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.0.8, 1.1.0 and later
 
-  msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, 
+                     NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                 "ISO-8859-1");
   printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
@@ -660,23 +663,25 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
       printf("  <Name>OGC:WMS</Name>\n"); // v 1.1.0+
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintMetadata(stdout, map->web.metadata, "wms_title", OWS_WARN,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wms_title", OWS_WARN,
                 "  <Title>%s</Title>\n", map->name);
-  msOWSPrintMetadata(stdout, map->web.metadata, "wms_abstract", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wms_abstract", OWS_NOERR,
                 "  <Abstract>%s</Abstract>\n", NULL);
 
   if (strcasecmp(wmtver, "1.0.0") == 0)
   {
       // <Keywords> in V 1.0.0
       // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
-      msOWSPrintMetadataList(stdout, map->web.metadata, "wms_keywordlist", 
+      msOWSPrintMetadataList(stdout, map->web.metadata,
+                             NULL, "wms_keywordlist", 
                              "        <Keywords>", "        </Keywords>\n",
                              "%s ");
   }
   else
   {
       // <KeywordList><Keyword> ... in V1.0.6+
-      msOWSPrintMetadataList(stdout, map->web.metadata, "wms_keywordlist", 
+      msOWSPrintMetadataList(stdout, map->web.metadata, 
+                             NULL, "wms_keywordlist", 
                              "        <KeywordList>\n", "        </KeywordList>\n",
                              "          <Keyword>%s</Keyword>\n");
   }
@@ -691,10 +696,10 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   // In 1.1.0, ContactInformation becomes optional.
   msOWSPrintContactInfo(stdout, "  ", wmtver, map->web.metadata);
 
-  msOWSPrintMetadata(stdout, map->web.metadata, "wms_fees", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wms_fees", OWS_NOERR,
                 "  <Fees>%s</Fees>\n", NULL);
 
-  msOWSPrintMetadata(stdout, map->web.metadata, "wms_accessconstraints", 
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wms_accessconstraints", 
              OWS_NOERR, "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
  
   printf("</Service>\n\n");
@@ -801,7 +806,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   // Layer Name is optional but title is mandatory.
   msOWSPrintParam(stdout, "MAP.NAME", map->name, OWS_NOERR, 
                   "    <Name>%s</Name>\n", NULL);
-  msOWSPrintMetadata(stdout, map->web.metadata, "wms_title", OWS_WARN,
+  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wms_title", OWS_WARN,
                 "    <Title>%s</Title>\n", map->name);
 
   // According to normative comments in the 1.0.7 DTD, the root layer's SRS tag
@@ -854,7 +859,8 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
              // Layer Name is optional but title is mandatory.
              msOWSPrintParam(stdout, "GROUP.NAME", lp->group, OWS_NOERR, 
                         "      <Name>%s</Name>\n", NULL);
-             msOWSPrintGroupMetadata(stdout, map, lp->group, "WMS_GROUP_TITLE", OWS_WARN, 
+             msOWSPrintGroupMetadata(stdout, map, lp->group, 
+                                     NULL, "WMS_GROUP_TITLE", OWS_WARN, 
                                 "      <Title>%s</Title>\n", lp->group);
 
              // Dump all layers for this group
@@ -1229,7 +1235,8 @@ int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names,
      }
    }
 
-   msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
+   msOWSPrintMetadata(stdout, map->web.metadata, 
+                      NULL, "wms_encoding", OWS_NOERR,
                       "<?xml version='1.0' encoding=\"%s\"?>\n",
                       "ISO-8859-1");
    printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
