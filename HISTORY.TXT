@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1168: Improve autoscaling through classification rounding issues. 
+
 - Fixed bug writing RGB/RGBA images via GDAL output on bigendian systems. 
 
 - Bug 1152 : Fix WMS style capabilities output for FastCGI enabled builds.

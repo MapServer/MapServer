@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/01/19 21:20:13  frank
+ * improve autoscaling - add small amount to scaling range - bug 1168
+ *
  * Revision 1.39  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -111,45 +114,6 @@
  *
  * Revision 1.13  2004/01/15 19:49:23  frank
  * ensure geotransform is set on failure of GetGeotransform
- *
- * Revision 1.12  2003/10/29 21:23:03  frank
- * Added special logic to flip coordinate system y axis if the input raster image
- * is ungeoreferenced (transform is 0,1,0,0,0,1) to (0,1,0,ysize,0,-1) effectively
- * making the lower left corner the origin instead of the upper left.
- *
- * Revision 1.11  2003/10/07 14:34:56  frank
- * added (untested) nodata support for greyscale/colormapped images
- *
- * Revision 1.10  2003/09/30 13:08:57  frank
- * ensure only 128 colors are normally used in greyscale mode
- *
- * Revision 1.9  2003/02/28 20:58:41  frank
- * added preliminary support for the COLOR_MATCH_THRESHOLD
- *
- * Revision 1.8  2003/02/26 16:47:43  frank
- * dont crash on files with large color tables
- *
- * Revision 1.7  2003/02/24 21:20:54  frank
- * Added RAW_WINDOW support for use my mapresample.c
- *
- * Revision 1.6  2003/01/31 18:57:12  frank
- * fixed offsite support from pseudocolored or greyscale input: bug 274
- *
- * Revision 1.5  2003/01/21 05:55:05  frank
- * avoid core dumping when classifying 24bit image, fixes colors - bug 270
- *
- * Revision 1.4  2003/01/10 15:10:58  frank
- * fixed a few bugs in support for classified rasters
- *
- * Revision 1.3  2002/11/21 19:51:03  frank
- * avoid warnings
- *
- * Revision 1.2  2002/11/20 05:27:38  frank
- * initial 24 to 8 bit dithering
- *
- * Revision 1.1  2002/11/19 18:30:04  frank
- * New
- *
  */
 
 #include <assert.h>
@@ -1623,8 +1587,6 @@ msDrawRasterLayerGDAL_16BitClassification(
 
 /* -------------------------------------------------------------------- */
 /*      Scan for absolute min/max of this block.                        */
-/*                                                                      */
-/*      TODO: Ignore "nodata".                                          */
 /* -------------------------------------------------------------------- */
     bGotFirstValue = FALSE;
     
@@ -1698,8 +1660,9 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* -------------------------------------------------------------------- */
     else if( dfScaleMin == 0.0 && dfScaleMax == 0.0 )
     {
-        dfScaleMin = fDataMin;
-        dfScaleMax = fDataMax;
+        double dfEpsilon = (fDataMax - fDataMin) / (65536*2);
+        dfScaleMin = fDataMin - dfEpsilon;
+        dfScaleMax = fDataMax + dfEpsilon;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1786,7 +1749,9 @@ msDrawRasterLayerGDAL_16BitClassification(
              * Skip nodata pixels ... no processing.
              */
             if( bGotNoData && fRawValue == fNoDataValue )
+            {
                 continue;
+            }
             
             /*
              * The funny +1/-1 is to avoid odd rounding around zero.
@@ -1795,7 +1760,9 @@ msDrawRasterLayerGDAL_16BitClassification(
             iMapIndex = (int) ((fRawValue - dfScaleMin) * dfScaleRatio+1)-1;
 
             if( iMapIndex >= nBucketCount || iMapIndex < 0 )
+            {
                 continue;
+            }
 
             result = cmap[iMapIndex];
             if( result == -1 )
