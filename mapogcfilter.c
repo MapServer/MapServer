@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39  2004/11/22 14:56:53  dan
+ * Added missing argument to msEvalContext()
+ *
  * Revision 1.38  2004/10/28 23:25:18  assefa
  * Return exception when manadatory elements are missing from the filter (Bug 935)
  *
@@ -547,7 +550,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
     status = msLayerOpen(psLayer);
     if (status != MS_SUCCESS) 
       return;
-    annotate = msEvalContext(map, psLayer->labelrequires);
+    annotate = msEvalContext(map, psLayer, psLayer->labelrequires);
     if(map->scale > 0) 
     {
         if((psLayer->labelmaxscale != -1) && (map->scale >= psLayer->labelmaxscale)) 
