@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.124  2004/10/25 14:46:41  assefa
+ * Test on layer status before applying time (Bug 986).
+ *
  * Revision 1.123  2004/10/21 19:20:48  assefa
  * Correct test in time functions on return value (Bug 976).
  *
@@ -349,6 +352,8 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
         for (i=0; i<map->numlayers; i++)
         {
             lp = &(map->layers[i]);
+            if (lp->status != MS_ON && lp->status != MS_DEFAULT)
+              continue;
             //check if the layer is time aware
             timeextent = msOWSLookupMetadata(&(lp->metadata), "MO",
                                              "timeextent");
@@ -453,6 +458,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   const char *projstring;
    char **tokens;
    int n,j = 0;
+   int timerequest = 0;
+   char *stime = NULL;
 
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
@@ -648,12 +655,20 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     //see function msWMSApplyTime
     else if (strcasecmp(names[i], "TIME") == 0)// &&  values[i])
     {
-        if (msWMSApplyTime(map, nVersion, values[i]) == MS_FAILURE)
-        {
-            return MS_FAILURE;// msWMSException(map, nVersion, "InvalidTimeRequest");
-        }
+        stime = values[i];
+        timerequest = 1;
     }
   }
+  /*
+  ** Apply time filters if available in the request
+  */
+  if (timerequest)
+  {
+      if (msWMSApplyTime(map, nVersion, stime) == MS_FAILURE)
+      {
+          return MS_FAILURE;// msWMSException(map, nVersion, "InvalidTimeRequest");
+      }
+  } 
   /*
   ** Apply the selected output format (if one was selected), and override
   ** the transparency if needed.
