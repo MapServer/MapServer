@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/11/11 18:34:13  assefa
+ * Added back the tsrm_ls declaration for windows.
+ *
  * Revision 1.14  2002/10/28 20:31:22  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -683,6 +686,10 @@ int _phpms_object_init(pval *return_value, int  handle_id,
                        function_entry *class_functions,
                        void *zend_class_entry_ptr)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+  void ***tsrm_ls = NULL;
+#endif
+
 #ifdef PHP4
     zend_class_entry *new_class_entry_ptr;
     new_class_entry_ptr = (zend_class_entry *)zend_class_entry_ptr;
