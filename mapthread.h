@@ -10,13 +10,11 @@ void msThreadInit();
 int msGetThreadId();
 void msAcquireLock(int);
 void msReleaseLock(int);
-int  msAllocateLock();
 #else
 #define msThreadInit()
 #define msGetThreadId() (0)
 #define msAcquireLock(x)
 #define msReleaseLock(x)
-#define msAllocateLock() (0)
 #endif
 
 #define TLOCK_PARSER	1
