@@ -16,6 +16,7 @@
 #include "libpq-fe.h"
 #include <string.h>
 
+#if !defined(_WIN32)
 char tolower(char c)
 {
 	if ((c <'A') || (c>'Z'))
@@ -23,7 +24,7 @@ char tolower(char c)
 	return c-'A'+'a';
 
 }
-
+#endif
 
 char *strstrIgnoreCase(char *haystack, char *needle)
 {
