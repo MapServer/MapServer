@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.84  2002/01/30 17:16:08  assefa
+ * Add setimagecolor on the scalebar object.
+ *
  * Revision 1.83  2002/01/29 23:38:31  assefa
  * Add write support for measured shape files.
  *
@@ -367,6 +370,7 @@ DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -581,7 +585,8 @@ function_entry php_reference_class_functions[] = {
 };
 
 function_entry php_scalebar_class_functions[] = {
-    {"set",             php3_ms_scalebar_setProperty,        NULL},    
+    {"set",             php3_ms_scalebar_setProperty,        NULL},
+    {"setimagecolor",   php3_ms_scalebar_setImageColor,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -9071,6 +9076,65 @@ DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     RETURN_LONG(0);
+}           
+
+
+/**********************************************************************
+ *                        scalebar->setimagecolor()
+ **********************************************************************/
+
+/* {{{ proto int scalebar.set(int red, int green, int blue)
+   Set the imagecolor property of the scalebar. Returns -1 on error. */
+DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS)
+{
+    scalebarObj *self;
+    pval        *pThis, *pR, *pG, *pB;
+    int         r, g, b = 0;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 3, &pR, &pG, &pB) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = 
+        (scalebarObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msscalebar),
+                                         list);
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
+    
+    convert_to_long(pR);
+    convert_to_long(pG);
+    convert_to_long(pB);
+
+    r = pR->value.lval;
+    g = pG->value.lval;
+    b = pB->value.lval;
+
+/* -------------------------------------------------------------------- */
+/*      validate values                                                 */
+/* -------------------------------------------------------------------- */
+    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+    {
+        RETURN_FALSE;
+    }
+    
+    self->imagecolor.red = r;
+    self->imagecolor.green = g;
+    self->imagecolor.blue = b;
+
+    RETURN_TRUE;
 }           
 
 /*=====================================================================

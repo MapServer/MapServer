@@ -1001,13 +1001,15 @@ Constructor:
    int interlace;
    int postlabelcache;
    labelObj label;
-   colorObj inagecolor;
+   colorObj imagecolor;
      
  Methods:
 
       int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
-
+        
+      int setimagecolor(int red, int green, int blue)
+        Sets the imagecolor propery (baclground) of the object. Returns false on error.  
 
  legendObj Class
  -----------
