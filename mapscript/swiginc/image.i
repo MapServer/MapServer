@@ -35,7 +35,7 @@
      * If the target language is Python, we ignore this constructor and
      * instead use the one in python/pymodule.i. */
 #ifndef SWIGPYTHON
-    imageObj(int width, int height, outputFormatObj input_format=NULL,
+    imageObj(int width, int height, outputFormatObj *input_format=NULL,
              const char *file=NULL)
     {
         imageObj *image=NULL;
@@ -48,22 +48,21 @@
             format = input_format;
         }
         else {
-            else {
-                format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
-                if (format == NULL)
-                    format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
-                if (format == NULL)
-                    format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
-                if (format == NULL)
-                    format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
-            }
-            if (format == NULL) {
-                msSetError(MS_IMGERR, "Could not create output format %s",
-                           "imageObj()", driver);
-                return NULL;
-            }
-            image = msImageCreate(width, height, format, NULL, NULL, NULL);
-            return image;
+            format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
+            if (format == NULL)
+                format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
+            if (format == NULL)
+                format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
+            if (format == NULL)
+                format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
+        }
+        if (format == NULL) {
+            msSetError(MS_IMGERR, "Could not create output format",
+                       "imageObj()");
+            return NULL;
+        }
+        image = msImageCreate(width, height, format, NULL, NULL, NULL);
+        return image;
         }
     }
 #endif // SWIGPYTHON
