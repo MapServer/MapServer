@@ -120,6 +120,16 @@ Version 4.3 (CVS)
 - Fixed $map->processTemplate() which was always returning NULL.
   Bug introduced in version 4.0 in all flavours of MapScript (bug 410)
 
+- Added a new function in mapsearch.c called msRectIsValid to 
+  check for valid extents.  MapServer now checks that extents input 
+  through the mapfile are valid in mapfile.c (web, map, reference, 
+  and layer).  Modified msMapSetExtent in mapobject.c to use the new 
+  function instead of its home-grown version.
+  
+- Layers now accept an EXTENT through the mapfile (bug 786). Nothing 
+  is done with it at this point, and getExtent still queries the 
+  datasource rather than getting information from the mapfile-specified 
+  extent.
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
