@@ -75,16 +75,15 @@ int msEvalContext(mapObj *map, char *context)
   msAcquireLock( TLOCK_PARSER );
   msyystate = 4; msyystring = tmpstr1;
   status = msyyparse();
+  msReleaseLock( TLOCK_PARSER );
   free(tmpstr1);
 
   if (status != 0)
   {
-    msReleaseLock( TLOCK_PARSER );
     msSetError(MS_PARSEERR, "Failed to parse context",
                             "msEvalContext");
     return MS_FALSE; // error in parse
   }
-  msReleaseLock( TLOCK_PARSER );
   return MS_TRUE;
   //return(msyyresult);
 }
@@ -120,17 +119,16 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     msyystate = 4;
     msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
     status = msyyparse();
+    msReleaseLock( TLOCK_PARSER );
     free(tmpstr);
 
     if (status != 0)
     {
-        msReleaseLock( TLOCK_PARSER );
         msSetError(MS_PARSEERR, "Failed to parse expression",
                                 "msEvalExpression");
         return MS_FALSE;
     }
 
-    msReleaseLock( TLOCK_PARSER );
     return MS_TRUE;
     //return(msyyresult);
     
