@@ -179,7 +179,27 @@ imageObj *msDrawMap(mapObj *map)
         return(NULL);
     }
 
-    map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+    /*
+     * If we want to support nonsquare pixels, note that now, otherwise
+     * adjust the extent size to have square pixels. 
+     */
+    if( msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) )
+    {
+        double cellsize_x = (map->extent.maxx - map->extent.minx)/map->width;
+        double cellsize_y = (map->extent.maxy - map->extent.miny)/map->height;
+
+        if( cellsize_y != 0.0 
+            && (fabs(cellsize_x/cellsize_y) > 1.00001
+                || fabs(cellsize_x/cellsize_y) < 0.99999) )
+        {
+            map->gt.need_geotransform = MS_TRUE;
+            msDebug( "msDrawMap(): kicking into non-square pixel preserving mode." );
+        }
+        map->cellsize = (cellsize_x*0.5 + cellsize_y*0.5);
+    }
+    else
+        map->cellsize = msAdjustExtent(&(map->extent),map->width,map->height);
+
     status = msCalculateScale(map->extent, map->units, map->width, map->height,
                               map->resolution, &map->scale);
     if(status != MS_SUCCESS) return(NULL);
