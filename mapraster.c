@@ -1454,6 +1454,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   char *ext; // OV -egis- temp variable
 #endif
 
+  cwd[0] = '\0';
+
   if( layer->debug > 0 || map->debug > 1 )
       msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
 
