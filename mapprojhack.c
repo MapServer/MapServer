@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2001/10/17 14:13:49  dan
+ * Hopefully fixed conflict between projects.h and proj_api.h includes.
+ *
  * Revision 1.1  2001/10/17 13:12:35  assefa
  * Add functions to set the unis of the map when the projection
  * is changed.
@@ -34,16 +37,19 @@
  **********************************************************************/
 
 /* ==================================================================== 
-      This files includes only projects.h and none of the windows     
-      include file. This is because of a conflict in names between    
-      the project.h and windows include file winreg.h.                
+      This file includes only mapproject.h (which includes projects.h)
+      and none of the windows include files. This is because of a conflict
+      in names (PJ_VALUE) between the projects.h and windows include file
+      winreg.h.                
  ==================================================================== */
 
-#include "mapproject.h"
-
+/* Make sure we include projects.h before mapproject.h, because proj_api.h
+ * may end up being included instead by mapproject.h ifdef USE_PROJ_API_H
+ */
 #ifdef USE_PROJ
-#include "projects.h"
+#include <projects.h>
 #endif
+#include "mapproject.h"
 
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, 
                MS_PIXELS};
