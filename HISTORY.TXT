@@ -30,6 +30,9 @@ Version 4.2.1 (CVS)
   were declared static), and modified item querying so that it closed the
   correct cursor.
 
+- Fixed problem with tiled raster layers if there is no tile in the current
+  view (bug 729).
+
 
 Version 4.2.0 (2004-05-25)
 --------------------------

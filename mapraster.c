@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114.2.2  2004/06/15 17:52:38  dan
+ * Fixed problem with tiled raster layers if there is no tile in the current
+ * view (bug 729).
+ *
  * Revision 1.114.2.1  2004/05/28 19:38:57  dan
  * Disable drawERD() (ERDAS formats) when GDAL is available (bug 691)
  *
@@ -1480,7 +1484,17 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
 #endif
     status = msLayerWhichShapes(tlp, searchrect);
-    if(status != MS_SUCCESS) return(MS_FAILURE); // TODO: probably need more clean up here
+    if (status != MS_SUCCESS) {
+        // Can be either MS_DONE or MS_FAILURE
+        msLayerClose(tlp);
+        if(tilelayerindex == -1) {
+            freeLayer(tlp);  // cleanup temporary tile layer
+            free(tlp);
+        }
+        if (status == MS_DONE) 
+            return MS_SUCCESS;
+        return MS_FAILURE;
+    }
   }
 
   done = MS_FALSE;
@@ -1685,14 +1699,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
   if(layer->tileindex) { // tiling clean-up
     msLayerClose(tlp);
-    if(tileitemindex == -1) {
+    if(tilelayerindex == -1) {
       freeLayer(tlp);
       free(tlp);
     }
     msFreeShape(&tshp);
   }
 
-  return 0;
+  return MS_SUCCESS;
 }
 
 /************************************************************************/
