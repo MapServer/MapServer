@@ -493,7 +493,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     ** Trim/skip leading blanks (SDL/DM Modification - only on numeric types)
     */ 
     if( psDBF->pachFieldType[iField] == 'N' || psDBF->pachFieldType[iField] == 'F' || psDBF->pachFieldType[iField] == 'D' ) {
-        for(i=0;i<strlen(psDBF->pszStringField);i++) {
+        for(i=0; i < psDBF->pszStringField[i] != '\0' ;i++) {
             if(psDBF->pszStringField[i] != ' ')
                 break;	
         }
@@ -659,20 +659,20 @@ static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * 
     if( psDBF->panFieldDecimals[iField] == 0 ) {
       sprintf( szFormat, "%%%dd", psDBF->panFieldSize[iField] );
       sprintf(szSField, szFormat, (int) *((double *) pValue) );
-      if( strlen(szSField) > psDBF->panFieldSize[iField] )
+      if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
 	szSField[psDBF->panFieldSize[iField]] = '\0';
       strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]), szSField, strlen(szSField) );
     } else {
       sprintf( szFormat, "%%%d.%df", psDBF->panFieldSize[iField], psDBF->panFieldDecimals[iField] );
       sprintf(szSField, szFormat, *((double *) pValue) );
-      if( strlen(szSField) > psDBF->panFieldSize[iField] )
+      if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
 	szSField[psDBF->panFieldSize[iField]] = '\0';
       strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),  szSField, strlen(szSField) );
     }
     break;
     
   default:
-    if( strlen((char *) pValue) > psDBF->panFieldSize[iField] )
+    if( (int) strlen((char *) pValue) > psDBF->panFieldSize[iField] )
       j = psDBF->panFieldSize[iField];
     else
       j = strlen((char *) pValue);
