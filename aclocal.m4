@@ -276,7 +276,7 @@ fi
 # if the greps and cuts don't do the job, set these manually
 PERL_CC="`grep ' cc=' perl.out | cut -d, -f1 | cut -d\' -f2`"
 PERL_OPT="`grep ' optimize=' perl.out | cut -d, -f2 | cut -d\' -f2`"
-PERL_CCFLAGS="`grep ' ccflags' perl.out | cut -d, -f1 | cut -d\' -f2`"
+PERL_CCFLAGS="`grep ' ccflags' perl.out | cut -d, -f1 | grep cflags | cut -d\' -f2` `grep ' ccflags' perl.out | cut -d, -f2 | grep ccflags | cut -d\' -f2`"
 PERL_LD="`grep ' ld=' perl.out | cut -d, -f1 | cut -d\' -f2`"
 PERL_LFLAGS="`grep ' cccdlflags=' perl.out | cut -d, -f1 | cut -d\' -f2`"
 PERL_CCDLFLAGS="`grep ' ccdlflags=' perl.out | cut -d, -f4 | cut -d\' -f2 | sed 's, ,,'`"
