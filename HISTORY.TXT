@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- msOGCWKT2ProjectionObj() now uses the OGRSpatialReference::SetFromUserInput()
+  method.  This allows various convenient setting options, including the 
+  ability to handle ESRI WKT by prefixing the WKT string with "ESRI::". 
+
 - Fixed GetLegendGraphic in WMS Capabilities that were missing the '?'
   or '&' separator if it was not included in wms_onlineresource (bug 1065)
 
@@ -26,6 +30,7 @@ Version 4.4.0-beta3 ()
   almost everywhere for common metadata items shared by multiple OGC
   interfaces. (bug 568)
 
+>>>>>>> 1.173
 - Added ows_service_onlineresource metadata for WMS/WFS to distinguish
   between service and GetMap/Capabilities onlineresources (bug 375)
 
