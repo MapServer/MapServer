@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/06/21 18:32:48  frank
+ * Added support for IMAGEMODE INT16 and FLOAT.
+ * Added support for resampling truecolor images.
+ *
  * Revision 1.23  2002/05/15 14:49:31  dan
  * Placed gdImagePaletteCopy() patch inside #ifdef (doesn't fully work yet)
  *
@@ -113,7 +117,7 @@
 #define RES_RATIO	2.0
 
 #ifdef USE_GDAL
-int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
+int drawGDAL(mapObj *map, layerObj *layer, imageObj *img,
              GDALDatasetH hDS );
 #endif
 
@@ -126,19 +130,23 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 /*                       msSimpleRasterResample()                       */
 /************************************************************************/
 
-int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite, 
-                             gdImagePtr psDstImage,
+int msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite, 
+                             imageObj *psDstImage,
                              SimpleTransformer pfnTransform, void *pCBData )
 
 {
     double	*x, *y; 
     int		nDstX, nDstY;
     int         *panSuccess;
-    int		nDstXSize = gdImageSX(psDstImage);
-    int		nDstYSize = gdImageSY(psDstImage);
-    int		nSrcXSize = gdImageSX(psSrcImage);
-    int		nSrcYSize = gdImageSY(psSrcImage);
+    int		nDstXSize = psDstImage->width;
+    int		nDstYSize = psDstImage->height;
+    int		nSrcXSize = psSrcImage->width;
+    int		nSrcYSize = psSrcImage->height;
     int		nFailedPoints = 0, nSetPoints = 0;
+    gdImagePtr  srcImg, dstImg;
+    
+    srcImg = psSrcImage->img.gd;
+    dstImg = psDstImage->img.gd;
 
     x = (double *) malloc( sizeof(double) * nDstXSize );
     y = (double *) malloc( sizeof(double) * nDstXSize );
@@ -172,13 +180,62 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
                 || nSrcX >= nSrcXSize || nSrcY >= nSrcYSize )
                 continue;
 
-            nValue = psSrcImage->pixels[nSrcY][nSrcX];
-            
-            if( nValue == nOffsite )
-                continue;
+            if( MS_RENDERER_GD(psSrcImage->format) )
+            {
+                if( !gdImageTrueColor(psSrcImage->img.gd) )
+                {
+                    nValue = srcImg->pixels[nSrcY][nSrcX];
 
-            nSetPoints++;
-            psDstImage->pixels[nDstY][nDstX] = nValue; 
+                    if( nValue == nOffsite )
+                        continue;
+
+                    nSetPoints++;
+                    dstImg->pixels[nDstY][nDstX] = nValue; 
+                }
+#if GD2_VERS > 1
+                else
+                {
+                    nValue = srcImg->tpixels[nSrcY][nSrcX];
+
+                    nSetPoints++;
+                    dstImg->tpixels[nDstY][nDstX] = nValue; 
+                }
+#endif
+            }
+            else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
+            {
+                if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
+                {
+                    int	nValue;
+
+                    nValue = psSrcImage->img.raw_16bit[
+                        nSrcX + nSrcY * psSrcImage->width];
+
+                    if( nValue == nOffsite )
+                        continue;
+                    
+                    nSetPoints++;
+                    psDstImage->img.raw_16bit[
+                        nDstX + nDstY * psDstImage->width] = nValue;
+                }
+                else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
+                {
+                    float fValue;
+
+                    fValue = psSrcImage->img.raw_float[
+                        nSrcX + nSrcY * psSrcImage->width];
+
+                    if( fValue == nOffsite )
+                        continue;
+                    
+                    nSetPoints++;
+                    psDstImage->img.raw_float[
+                        nDstX + nDstY * psDstImage->width] = fValue;
+                }
+                else
+                {
+                }
+            }
         }
     }
 
@@ -655,7 +712,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 /*                        msResampleGDALToMap()                         */
 /************************************************************************/
 
-int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img, 
+int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
                          GDALDatasetH hDS )
 
 {
@@ -672,7 +729,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     double      adfInvSrcGeoTransform[6];
     rectObj	sSrcExtent;
     mapObj	sDummyMap;
-    gdImagePtr  srcImg;
+    imageObj   *srcImage;
     void	*pTCBData;
     void	*pACBData;
 
@@ -687,8 +744,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /* -------------------------------------------------------------------- */
 /*      Initialize some information.                                    */
 /* -------------------------------------------------------------------- */
-    nDstXSize = gdImageSX(img);
-    nDstYSize = gdImageSY(img);
+    nDstXSize = image->width;
+    nDstYSize = image->height;
 
     adfDstGeoTransform[0] = map->extent.minx - map->cellsize*0.5;
     adfDstGeoTransform[1] = map->cellsize;
@@ -783,28 +840,36 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     sDummyMap.extent.maxy = adfSrcGeoTransform[3]
         + sSrcExtent.maxx * adfSrcGeoTransform[4]
         + sSrcExtent.miny * adfSrcGeoTransform[5];
+
+    sDummyMap.outputformat = map->outputformat;
     
 /* -------------------------------------------------------------------- */
 /*      Setup a dummy map object we can use to read from the source     */
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
-    srcImg = gdImageCreate( 
+    srcImage = msImageCreate( 
         (int) ((sDummyMap.extent.maxx - 
                 sDummyMap.extent.minx)/sDummyMap.cellsize+0.01), 
         (int) ((sDummyMap.extent.maxy - 
-                sDummyMap.extent.miny)/sDummyMap.cellsize+0.01));
+                sDummyMap.extent.miny)/sDummyMap.cellsize+0.01),
+        image->format, NULL, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Copy over the paletted.  For now we avoid                       */
 /*      gdImagePaletteCopy() because it had some problems in            */
 /*      gd-1.8.4. (see bug 1002 at DMSolutions).                        */
 /* -------------------------------------------------------------------- */
-    
-#ifndef TEST_PALETTE_COPY
-    gdImagePaletteCopy( srcImg, img );
-#else
+
+    if( MS_RENDERER_GD(srcImage->format)
+        && gdImageTrueColor( srcImage->img.gd ) )
     {
+#ifndef TEST_PALETTE_COPY
+        gdImagePaletteCopy( srcImage->img.gd, image->img.gd );
+#else
         int nColorCount, iColor;
+        gdImagePtr srcImg = srcImage->img.gd;
+        gdImagePtr img = image->img.gd;
+
         nColorCount = gdImageColorsTotal( img );
         for( iColor = 0; iColor < nColorCount; iColor++ )
         {
@@ -817,36 +882,42 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
             assert( nResultColor == iColor );
         }
         gdImageColorTransparent( srcImg, gdImageGetTransparent( img ) );
-    }
 #endif
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If layer has an offsite color then fill the BG of the           */
 /*      temporary image with this color otherwise applying the          */
 /*      offsite twice results in a solid color in the offsite area      */
 /* -------------------------------------------------------------------- */
-    if (layer->offsite >=0)
+    if (layer->offsite >=0
+        && MS_RENDERER_GD(srcImage->format) )
     {
-        gdImageFilledRectangle(srcImg, 0, 0, 
-                               gdImageSX(srcImg), gdImageSY(srcImg), 
+        gdImageFilledRectangle(srcImage->img.gd, 0, 0, 
+                               srcImage->width, srcImage->height,
                                layer->offsite);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Draw into it, and then copy out the updated palette.            */
 /* -------------------------------------------------------------------- */
-    result = drawGDAL( &sDummyMap, layer, srcImg, hDS );
+    result = drawGDAL( &sDummyMap, layer, srcImage, hDS );
     if( result )
     {
-        gdImageDestroy( srcImg );
+        msFreeImage( srcImage );
         return result;
     }
 
-#ifndef TEST_PALETTE_COPY
-    gdImagePaletteCopy( img, srcImg );
-#else
+    if( MS_RENDERER_GD(srcImage->format)
+        && gdImageTrueColor( srcImage->img.gd ) )
     {
+#ifndef TEST_PALETTE_COPY
+        gdImagePaletteCopy( image->img.gd, srcImage->img.gd );
+#else
         int nColorCount, iColor;
+        gdImagePtr srcImg = srcImage->img.gd;
+        gdImagePtr img = image->img.gd;
+
         nColorCount = gdImageColorsTotal( srcImg );
         for( iColor = 0; iColor < nColorCount; iColor++ )
         {
@@ -859,8 +930,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
             assert( nResultColor == iColor );
         }
         gdImageColorTransparent( img, gdImageGetTransparent( srcImg ) );
-    }
 #endif
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup transformations between our source image, and the         */
@@ -880,7 +951,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     
     if( pTCBData == NULL )
     {
-        gdImageDestroy( srcImg );
+        msFreeImage( srcImage );
         return MS_PROJERR;
     }
 
@@ -893,22 +964,13 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /* -------------------------------------------------------------------- */
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
-    result = msSimpleRasterResampler( srcImg, layer->offsite, img, 
+    result = msSimpleRasterResampler( srcImage, layer->offsite, image, 
                                       msApproxTransformer, pACBData );
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-    {
-        FILE	*fp;
-
-        fp = fopen( "interim.png", "wb" );
-        gdImagePng( srcImg, fp );
-        fclose( fp );
-    }
-#endif
-    gdImageDestroy( srcImg );
+    msFreeImage( srcImage );
 
     msFreeProjTransformer( pTCBData );
     msFreeApproxTransformer( pACBData );
