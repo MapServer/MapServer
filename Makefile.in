@@ -262,7 +262,7 @@ install: libmap.a
 	cp -f map.h $(HEADER_INSTALL)
 
 clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
-	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars
+	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars tile4ms
 
 distclean:
 	$(MAKE) clean
