@@ -875,3 +875,12 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
 
   return(MS_SUCCESS);
 }
+
+/* msRectToFormattedString */
+void msRectToFormattedString(rectObj *rect, char *format, char *buffer, 
+                             int buffer_length) 
+{
+    snprintf(buffer, buffer_length, format,
+             rect->minx, rect->miny, rect->maxx, rect->maxy);
+}
+

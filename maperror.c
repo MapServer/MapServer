@@ -51,7 +51,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"HTTP request error.",
 						"Child array error.",
 						"WCS server error.",
-						"GEOS library error."
+						"GEOS library error.",
+                        "Invalid rectangle."
 };
 
 #ifndef USE_THREAD
