@@ -1090,7 +1090,8 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include WMS Client Connections support...)
 AC_ARG_WITH(wms,
-[  --without-wmsclient     Disable OGC WMS Client Connections (enabled by default).],,)
+[  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
+                          required).],,)
 
 if test "$with_wmsclient" = "no" ; then
 
@@ -1108,6 +1109,32 @@ elif test "$with_wmsclient" = "yes" ; then
   WWW_LIB=`libwww-config --libs`
 
   AC_MSG_RESULT([        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED).])
+
+dnl
+dnl Check for possible conflict if libwww is used on a system with 
+dnl rxposix installed.  See MapServer bug#82
+dnl
+  AC_CHECKING(for potential conflict between system regex and rxposix...)
+  AC_CHECK_LIB(rx, regexec, RXPOSIX=yes,,,)
+
+AC_ARG_ENABLE(rxposix-conflict-error,
+[  --disable-rxposix-conflict-error Do not produce any configure error about
+                                 potential regex vs rxposix conflicts.
+                                 See MapServer bug 82],,)
+
+  if test "$RXPOSIX" = "yes" -a "$enable_rxposix_conflict_error" != "no" ; then
+      AC_MSG_ERROR([
+!!! Your system seems to have the 'rxposix' regex library installed   !!!
+!!! which could cause conflicts with the system regex if it gets      !!!
+!!! picked by libwww.                                                 !!!
+!!! See MapServer bug#82 for more details and possible solutions at   !!!
+!!! http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=82              !!!
+!!!                                                                   !!!
+!!! If you have dealt with this problem already then you may use      !!!
+!!! --disable-rxposix-conflict-error to disable this error            !!!
+|!! message and let configure complete without error.                 !!!])
+  fi
+
 
 fi
 
@@ -1140,7 +1167,7 @@ AC_ARG_ENABLE(ignore-missing-data,
 [  --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.],,)
-if test "enable_ignore_missing_data" != "no" ; then
+if test "$enable_ignore_missing_data" != "no" ; then
 
   IGNORE_MISSING_DATA="-DIGNORE_MISSING_DATA"
 
