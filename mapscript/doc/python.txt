@@ -41,6 +41,12 @@
 ..  The next heading encountered becomes our H2
 ..
 
+.. sectnum::
+
+.. contents::
+    :depth: 2
+    :backlinks: top
+
 =============================================================================
  Introduction
 =============================================================================
@@ -62,10 +68,8 @@ The Python Imaging Library, http://www.pythonware.com/products/pil/, is an
 indispensible tool for image manipulation.  The extensions to imageObj are
 all geared towards better integration of PIL in mapscript applications.
 
-Methods
--------
-
-.. _new imageObj:
+imageObj Methods
+----------------
 
 imageObj(int width, int height [, string driver [, PyObject file]]) : imageObj_
     Create a new instance which is either empty or read from a Python
@@ -96,8 +100,6 @@ imageObj(int width, int height [, string driver [, PyObject file]]) : imageObj_
 
 
     
-.. _saveToString:
-
 saveToString() : string
     Write the image data to a string rather than to a file.  What's the use
     of this?  Consider the following pointless example :)
@@ -135,8 +137,8 @@ saveToString() : string
  lineObj
 ------------------------------------------------------------------------------
 
-Methods
--------
+lineObj Methods
+---------------
 
 __iter__( ) : iterator
     Returns a Python iterator, allowing a new way to iterate over the points
@@ -163,8 +165,8 @@ __iter__( ) : iterator
  pointObj
 ------------------------------------------------------------------------------
 
-Methods
--------
+pointObj Methods
+----------------
 
 __str__() : string
     Return a string formatted like
@@ -197,8 +199,8 @@ __str__() : string
  rectObj
 ------------------------------------------------------------------------------
 
-Methods
--------
+rectObj Methods
+---------------
 
 __contains__( pointObj point ) : boolean
     Returns True if *point* is inside the rectangle, otherwise returns False.
@@ -244,8 +246,8 @@ __str__() : string
  shapeObj
 ------------------------------------------------------------------------------
 
-Methods
--------
+shapeObj Methods
+----------------
 
 __contains__( pointObj point ) : boolean
     Returns True if *point* is inside the rectangle, otherwise returns False.
