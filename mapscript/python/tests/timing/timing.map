@@ -1,0 +1,29 @@
+MAP
+  NAME "Testing"
+  EXTENT -2 -2 2 2
+  IMAGETYPE PNG
+  IMAGECOLOR 255 255 255
+  STATUS ON
+  SIZE 800 800
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+  
+  LAYER
+    NAME "POLYGON"
+    TYPE POLYGON
+    PROJECTION
+      "init=epsg:4326"
+    END
+    STATUS DEFAULT
+    DATA "timing.shp"
+    CLASS
+      STYLE
+        COLOR 0 0 204
+        #OUTLINECOLOR 0 0 204
+      END
+    END
+  END
+
+END
