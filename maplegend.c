@@ -5,227 +5,106 @@
 #define HMARGIN 5 /* margin at left and right of legend graphic */
 
 
-int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height, gdImagePtr img, int dstX, int dstY)
+int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int height, gdImagePtr img, int dstX, int dstY)
 {
-   shapeObj box, zigzag;
-   pointObj marker;
+  int i;
+  shapeObj box, zigzag;
+  pointObj marker;
 
-   // initialize the shapes used to render the legend
-   box.line = (lineObj *)malloc(sizeof(lineObj));
-   box.numlines = 1;
-   box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
-   box.line[0].numpoints = 5;
+  // initialize the shapes used to render the legend
+  box.line = (lineObj *)malloc(sizeof(lineObj));
+  box.numlines = 1;
+  box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
+  box.line[0].numpoints = 5;
 
-   zigzag.line = (lineObj *)malloc(sizeof(lineObj));
-   zigzag.numlines = 1;
-   zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
-   zigzag.line[0].numpoints = 4;
+  zigzag.line = (lineObj *)malloc(sizeof(lineObj));
+  zigzag.numlines = 1;
+  zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+  zigzag.line[0].numpoints = 4;
 
 
-   // compute shapes used to render individual legend pieces
-      marker.x = dstX + MS_NINT(width / 2.0);
-      marker.y = dstY + MS_NINT(height / 2.0);
+  // compute shapes used to render individual legend pieces
+  marker.x = dstX + MS_NINT(width / 2.0);
+  marker.y = dstY + MS_NINT(height / 2.0);
 
-      zigzag.line[0].point[0].x = dstX;
-      zigzag.line[0].point[0].y = dstY + height - 1;
-      zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1;
-      zigzag.line[0].point[1].y = dstY;
-      zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1;
-      zigzag.line[0].point[2].y = dstY + height - 1;
-      zigzag.line[0].point[3].x = dstX + width - 1;
-      zigzag.line[0].point[3].y = dstY;
-      zigzag.line[0].numpoints = 4;
+  zigzag.line[0].point[0].x = dstX;
+  zigzag.line[0].point[0].y = dstY + height - 1;
+  zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1;
+  zigzag.line[0].point[1].y = dstY;
+  zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1;
+  zigzag.line[0].point[2].y = dstY + height - 1;
+  zigzag.line[0].point[3].x = dstX + width - 1;
+  zigzag.line[0].point[3].y = dstY;
+  zigzag.line[0].numpoints = 4;
 
-      box.line[0].point[0].x = dstX;
-      box.line[0].point[0].y = dstY;
-      box.line[0].point[1].x = dstX + width - 1;
-      box.line[0].point[1].y = dstY;
-      box.line[0].point[2].x = dstX + width - 1;
-      box.line[0].point[2].y = dstY + height - 1;
-      box.line[0].point[3].x = dstX;
-      box.line[0].point[3].y = dstY + height - 1;
-      box.line[0].point[4].x = box.line[0].point[0].x;
-      box.line[0].point[4].y = box.line[0].point[0].y;
-      box.line[0].numpoints = 5;
+  box.line[0].point[0].x = dstX;
+  box.line[0].point[0].y = dstY;
+  box.line[0].point[1].x = dstX + width - 1;
+  box.line[0].point[1].y = dstY;
+  box.line[0].point[2].x = dstX + width - 1;
+  box.line[0].point[2].y = dstY + height - 1;
+  box.line[0].point[3].x = dstX;
+  box.line[0].point[3].y = dstY + height - 1;
+  box.line[0].point[4].x = box.line[0].point[0].x;
+  box.line[0].point[4].y = box.line[0].point[0].y;
+  box.line[0].numpoints = 5;
 
-      /* 
-      ** now draw the appropriate color/symbol/size combination 
-      */      
-      switch(lp->type) {
-      case MS_LAYER_ANNOTATION:
-      case MS_LAYER_POINT:
-          msDrawMarkerSymbolGD(&map->symbolset, //TODO
-                              img,
-                              &marker,
-                              class->symbol, 
-                              class->color, 
-                              class->backgroundcolor, 
-                              class->outlinecolor, 
-                              class->sizescaled);
-         
-         if(class->overlaysymbol >= 0)
-           msDrawMarkerSymbolGD(&map->symbolset,
-                              img,
-                              &marker,
-                              class->overlaysymbol,
-                              class->overlaycolor,
-                              class->overlaybackgroundcolor,
-                              class->overlayoutlinecolor, 
-                              class->overlaysizescaled);
-         break;
-      case MS_LAYER_LINE:	
-         msDrawLineSymbolGD(&map->symbolset, 
-                          img, 
-                          &zigzag, 
-                          class->symbol, 
-                          class->color, 
-                          class->backgroundcolor, 
-                          class->sizescaled);
-         
-         if(class->overlaysymbol >= 0) 
-           msDrawLineSymbolGD(&map->symbolset, 
-                            img, 
-                            &zigzag,
-                            class->overlaysymbol, 
-                            class->overlaycolor, 
-                            class->overlaybackgroundcolor, 
-                            class->overlaysizescaled);
-         break;
-      case MS_LAYER_CIRCLE:
-      case MS_LAYER_RASTER:
-      case MS_LAYER_POLYGON:
-         if(class->color >= 0) { // use the box
-             msDrawShadeSymbolGD(&map->symbolset, //TODO 
-                              img, 
-                              &box, 
-                              class->symbol, 
-                              class->color, 
-                              class->backgroundcolor, 
-                              class->outlinecolor, 
-                              class->sizescaled);
-
-            if(class->overlaysymbol >= 0) {
-               if(class->overlaycolor < 0)
-                   msDrawLineSymbolGD(&map->symbolset, //TODO
-                                  img, 
-                                  &box, 
-                                  class->overlaysymbol, 
-                                  class->overlayoutlinecolor, 
-                                  class->overlaybackgroundcolor, 
-                                  class->overlaysizescaled);
-               else
-                   msDrawShadeSymbolGD(&map->symbolset, //TODO
-                                   img, 
-                                   &box, 
-                                   class->overlaysymbol, 
-                                   class->overlaycolor, 
-                                   class->overlaybackgroundcolor, 
-                                   class->overlayoutlinecolor, 
-                                   class->overlaysizescaled);
-            }
-         }
-         else {
-           if(class->overlaycolor >= 0) { // use the box
-              if(class->color < 0)
-                msDrawLineSymbolGD(&map->symbolset,
-                                 img, 
-                                 &box, 
-                                 class->symbol, 
-                                 class->outlinecolor, 
-                                 class->backgroundcolor, 
-                                 class->sizescaled);
-              else
-                  msDrawShadeSymbolGD(&map->symbolset, //TODO
-                                  img, 
-                                  &box, 
-                                  class->symbol, 
-                                  class->color, 
-                                  class->backgroundcolor, 
-                                  class->outlinecolor, 
-                                  class->sizescaled);
-
-           } else { // use the zigzag
-              msDrawLineSymbolGD(&map->symbolset, 
-                               img, 
-                               &zigzag, 
-                               class->symbol, 
-                               class->outlinecolor, 
-                               class->backgroundcolor, 
-                               class->sizescaled);
-              
-              if(class->overlaysymbol >= 0)
-                msDrawLineSymbolGD(&map->symbolset, 
-                                 img, 
-                                 &zigzag, 
-                                 class->overlaysymbol, 
-                                 class->overlaycolor, 
-                                 class->overlaybackgroundcolor, 
-                                 class->overlaysizescaled);
-           }
-         }
-         break;
-      default:
-         return MS_FAILURE;
-         break;
-      } /* end symbol drawing */
-
-   if (class->overlayoutlinecolor > 0)
-   {
-       msDrawShadeSymbolGD(&map->symbolset, //TODO
-                          img, 
-                          &box, 
-                          class->overlaysymbol, 
-                          class->overlaycolor, 
-                          class->overlaybackgroundcolor, 
-                          class->overlayoutlinecolor, 
-                          class->overlaysizescaled);
-   }
-   else
-     if (class->outlinecolor > 0)
-     {
-        msImagePolyline(img, &box, class->outlinecolor);
-     }
-     else
-     {
-        // Draw the outline if a color is specified (0 is background, so who cares about drawing it)
-        if(map->legend.outlinecolor > 0)
-          msImagePolyline(img, &box, map->legend.outlinecolor);
-     }
+  /* 
+  ** now draw the appropriate color/symbol/size combination 
+  */      
+  switch(lp->type) {
+  case MS_LAYER_ANNOTATION:
+  case MS_LAYER_POINT:
+    for(i=0; i<class->numstyles; i++)
+      msDrawMarkerSymbolGD(&map->symbolset, img, &marker, &(class->styles[i]), 1.0);          
+    break;
+  case MS_LAYER_LINE:
+    for(i=0; i<class->numstyles; i++)
+      msDrawLineSymbolGD(&map->symbolset, img, &zigzag, &(class->styles[i]), 1.0); 	
+    break;
+  case MS_LAYER_CIRCLE:
+  case MS_LAYER_RASTER:
+  case MS_LAYER_POLYGON:
+    for(i=0; i<class->numstyles; i++) { // TO DO: it may not be this easy
+      if(MS_VALID_COLOR(&(class->styles[0].color)))
+        msDrawShadeSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), 1.0);
+      else
+	msDrawLineSymbolGD(&map->symbolset, img, &zigzag, &(class->styles[i]), 1.0);
+    }   
+    break;
+  default:
+    return MS_FAILURE;
+    break;
+  } /* end symbol drawing */
    
-   free(box.line[0].point);
-   free(box.line);
-   free(zigzag.line[0].point);
-   free(zigzag.line);
+  free(box.line[0].point);
+  free(box.line);
+  free(zigzag.line[0].point);
+  free(zigzag.line);
 
-   return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
 
 gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height)
 {
-   // Create an image
-   gdImagePtr img;
-  
-   /*
-   ** Initialize the legend image
-   */
-   if((img = gdImageCreate(width, height)) == NULL) {
-      msSetError(MS_GDERR, "Unable to initialize image.", "msCreateLegendIcon()");
-      return(NULL);
-   }
+  gdImagePtr img;
 
-   /*
-   ** Load colormap for the image
-   */
-   if(msLoadPalette(img, &map->palette, map->legend.imagecolor) == -1)
-     return(NULL);
+  img = gdImageCreate(width, height);
+  if(!img) {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msCreateLegendIcon()");
+    return(NULL);
+  }
+  
+  // allocate the background color
+  gdImageColorAllocate(img, map->legend.imagecolor.red, map->legend.imagecolor.green, map->legend.imagecolor.blue);
+
+  // Call drawLegendIcon with destination (0, 0)
+  // Return an empty image if lp==NULL || class=NULL
+  if (lp && class)
+    msDrawLegendIcon(map, lp, class, width, height, img, 0, 0);
    
-   // Call drawLegendIcon with destination (0, 0)
-   // Return an empty image if lp==NULL || class=NULL
-   if (lp && class)
-       msDrawLegendIcon(map, lp, class, width, height, img, 0, 0);
-   
-   return img;
+  return img;
 }
 
 
@@ -234,7 +113,6 @@ gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wi
 ** respects the current scale, and classes without a name are not
 ** added to the legend.
 */
-
 imageObj *msDrawLegend(mapObj *map)
 {
   int status;
@@ -309,31 +187,18 @@ imageObj *msDrawLegend(mapObj *map)
   /*
   ** Initialize the legend image
   */
-  //TODO
   image = msImageCreateGD(size_x, size_y, map->outputformat,
                           map->web.imagepath, map->web.imageurl);
   if (image)
-      img = image->img.gd;
-  else
-  {
-      msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
+    img = image->img.gd;
+  else {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
     return(NULL);
   }
-  //if((img = gdImageCreate(size_x, size_y)) == NULL) {
-  //  msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
-  //  free(heights);
-  //  return(NULL);
-  //}
-
-  /*
-  ** Load colormap for the image
-  */
-  if(msLoadPalette(img, &map->palette, map->legend.imagecolor) == -1)
-     return(NULL);
   
   /* Set background */
-  if( image != NULL )
-      msImageInitGD( image, map->legend.imagecolor );
+  if(image != NULL)
+    msImageInitGD(image, &(map->legend.imagecolor));
 
   pnt.y = VMARGIN;
     
@@ -366,15 +231,14 @@ imageObj *msDrawLegend(mapObj *map)
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
       //TODO
-      msDrawLabel(image, pnt, lp->class[j].name, &(map->legend.label), &map->fontset);
+      msDrawLabel(image, pnt, lp->class[j].name, &(map->legend.label), &map->fontset, 1.0);
 
       pnt.y += map->legend.keyspacingy; /* bump y for next label */
 	
     } // next label
-  } // next layer please
+  } // next layer
 
   free(heights);
-
   return(image);
 }
 
@@ -449,15 +313,16 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     map->layerorder[l] = l;
   }
 
-  map->layers[l].class[0].symbol = s;
-  map->layers[l].class[0].color = 0;
+  map->layers[l].class[0].numstyles = 1;
+  map->layers[l].class[0].styles[0].symbol = s;
+  map->layers[l].class[0].styles[0].color.pen = -1;
   map->layers[l].class[0].label.force = MS_TRUE;
-  map->layers[l].class[0].label.size = map->layers[l].class[0].label.sizescaled = MS_MEDIUM; // must set a size to have a valid label definition
+  map->layers[l].class[0].label.size = MS_MEDIUM; // must set a size to have a valid label definition
 
   if(map->legend.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, map->layers[l].class[0].symbol, 0, -1, -1, 10);
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   else
-    msAddLabel(map, l, 0, -1, -1, point, " ", -1);
+    msAddLabel(map, l, 0, -1, -1, &point, " ", -1, 1.0);
 
   return(0);
 }

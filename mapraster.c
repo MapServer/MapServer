@@ -2220,10 +2220,10 @@ imageObj *msDrawReferenceMap(mapObj *map) {
 
   // convert map extent to reference image coordinates
   x1 = MS_MAP2IMAGE_X(map->extent.minx,  map->reference.extent.minx, cellsize);
-  x2 = MS_MAP2IMAGE_X(map->extent.maxx,  map->reference.extent.minx, cellsize);
-  y1 = MS_MAP2IMAGE_Y(map->extent.miny,  map->reference.extent.maxy, cellsize);
-  y2 = MS_MAP2IMAGE_Y(map->extent.maxy,  map->reference.extent.maxy, cellsize);
-  
+  x2 = MS_MAP2IMAGE_X(map->extent.maxx,  map->reference.extent.minx, cellsize);  
+  y1 = MS_MAP2IMAGE_Y(map->extent.maxy,  map->reference.extent.maxy, cellsize);
+  y2 = MS_MAP2IMAGE_Y(map->extent.miny,  map->reference.extent.maxy, cellsize);
+
   // if extent are smaller than minbox size
   // draw that extent on the reference image
   if( (abs(x2 - x1) > map->reference.minboxsize) || 
@@ -2246,52 +2246,57 @@ imageObj *msDrawReferenceMap(mapObj *map) {
               ((abs(x2 - x1) < map->reference.maxboxsize) && 
                   (abs(y2 - y1) < map->reference.maxboxsize)) )
       {
+	  styleObj style;
+
+          style.color = map->reference.color;
+          style.outlinecolor = map->reference.outlinecolor;
+          style.size = map->reference.markersize;
+
           //if the marker symbol is specify draw this symbol else draw a cross
           if(map->reference.marker != 0)
           {
               pointObj *point = NULL;
 
               point = malloc(sizeof(pointObj));
-              point->x = (double)x1 + x2 - x1;
-              point->y = (double)y1 + y2 - y1;
+              point->x = (double)(x1 + x2)/2;
+              point->y = (double)(y1 + y2)/2;
 
-              msDrawMarkerSymbol(&map->symbolset, image, point, 
-                                 map->reference.marker, c, -1, oc, 
-                                 map->reference.markersize);
+	      style.symbol = map->reference.marker;
+
+              msDrawMarkerSymbol(&map->symbolset, image, point, &style, 1.0);
               free(point);
           }
           else if(map->reference.markername != NULL)
-          {
-              int marker = msGetSymbolIndex(&map->symbolset, 
-                                            map->reference.markername);
+          {              
               pointObj *point = NULL;
 
               point = malloc(sizeof(pointObj));
-              point->x = (double)x1 + ((x2 - x1) / 2);
-              point->y = (double)y1 + ((y2 - y1) / 2);
+              point->x = (double)(x1 + x2)/2;
+              point->y = (double)(y1 + y2)/2;
 
-              msDrawMarkerSymbol(&map->symbolset,image,point, marker, c, -1,oc,
-                                 map->reference.markersize);
+	      style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername);
+
+              msDrawMarkerSymbol(&map->symbolset, image, point, &style, 1.0);
               free(point);
           }
           else
           {
               int x21, y21;
               //determine the center point
-              x21 = x1 + ((x2 - x1) / 2);
-              y21 = y1 + ((y2 - y1) / 2);
+              x21 = MS_NINT((x1 + x2)/2);
+              y21 = MS_NINT((y1 + y2)/2);
 
               //get the color
-              if(oc == -1)
-                  oc = c;
+              if(c == -1)
+                  c = oc;
 
               //draw a cross
-              if(oc != -1)
+              if(c != -1)
               {
-                  gdImageLine(img, x21-8, y21, x21-3, y21, oc);
-                  gdImageLine(img, x21, y21-8, x21, y21-3, oc);
-                  gdImageLine(img, x21, y21+3, x21, y21+8, oc);
-                  gdImageLine(img, x21+3, y21, x21+8, y21, oc);
+                  gdImageLine(img, x21-8, y21, x21-3, y21, c);
+                  gdImageLine(img, x21, y21-8, x21, y21-3, c);
+                  gdImageLine(img, x21, y21+3, x21, y21+8, c);
+                  gdImageLine(img, x21+3, y21, x21+8, y21, c);
               }
           }
       }

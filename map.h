@@ -93,7 +93,7 @@ extern "C" {
 #define MS_MAXIMGSIZE 1024
 
 #define MS_MAXCLASSES 50
-#define MS_MAXQUERIES MS_MAXCLASSES
+#define MS_MAXSTYLES 5
 #define MS_MAXPROJARGS 20
 #define MS_MAXLAYERS 100 /* maximum number of layers in a map file */
 #define MS_MAXJOINS 5
@@ -134,6 +134,7 @@ extern "C" {
 #define MS_PEN_UNSET	-4
 
 #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
+#define MS_VALID_COLOR(color) (((color)->red==-1 || (color)->green==-1 || (color)->blue==-1)?MS_FALSE:MS_TRUE)
 
 #define MS_IMAGE_MIME_TYPE(format) (format->mimetype ? format->mimetype : "unknown")
 #define MS_IMAGE_EXTENSION(format)  (format->extension ? format->extension : "unknown")
@@ -290,7 +291,7 @@ typedef struct {
   int height, width;
   int status;
   int style; /* HILITE, SELECTED or NORMAL */
-  int color;
+  colorObj color;
 } queryMapObj;
 
 // LABEL OBJECT - parameters needed to annotate a layer, legend or scalebar
@@ -298,14 +299,14 @@ typedef struct {
   char *font;
   enum MS_FONT_TYPE type;
 
-  int color;
-  int outlinecolor;
+  colorObj color;
+  colorObj outlinecolor;
 
-  int shadowcolor;
+  colorObj shadowcolor;
   int shadowsizex, shadowsizey;
 
-  int backgroundcolor;
-  int backgroundshadowcolor;
+  colorObj backgroundcolor;
+  colorObj backgroundshadowcolor;
   int backgroundshadowsizex, backgroundshadowsizey;
 
   int size;
@@ -358,9 +359,9 @@ typedef struct {
 
 // STYLE OBJECT - holds parameters for symbolization, multiple styles may be applied within a classObj
 typedef struct {
-  int color;
-  int backgroundcolor;
-  int outlinecolor;
+  colorObj color;
+  colorObj backgroundcolor;
+  colorObj outlinecolor;
 
   int symbol;
   char *symbolname;
@@ -368,6 +369,8 @@ typedef struct {
   int size;
   int sizescaled; // may not need this
   int minsize, maxsize;
+
+  int offsetx, offsety; // for shadows, hollow symbols, etc...
 } styleObj;
 
 // CLASS OBJECT - basic symbolization and classification information
@@ -378,25 +381,8 @@ typedef struct {
 
   int status;
 
-  int color;
-  int backgroundcolor;
-  int outlinecolor;
-  int overlaycolor;
-  int overlaybackgroundcolor;
-  int overlayoutlinecolor;
-
-  int symbol;
-  char *symbolname;
-  int overlaysymbol;
-  char *overlaysymbolname;
-
-  int size;
-  int sizescaled;
-  int minsize, maxsize;
-
-  int overlaysize;
-  int overlaysizescaled;
-  int overlayminsize, overlaymaxsize;
+  styleObj *styles;
+  int numstyles;
 
   labelObj label;
 
@@ -435,21 +421,21 @@ typedef struct {
   char *string;
   double featuresize;
 
-#ifndef __cplusplus
-  classObj class; // we store the whole class cause lots of things might vary for each label
-#else
-  classObj _class;
-#endif
+  styleObj *styles; // copied from the classObj
+  int numstyles;
 
-  int layeridx; // indexes
-  int classidx;
-  int tileidx;
-  int shapeidx;
+  labelObj label; // copied from the classObj
+
+  int layerindex; // indexes
+  int classindex;
+  int tileindex;
+  int shapeindex;
 
   pointObj point; // label point
   shapeObj *poly; // label bounding box
 
-  int status; /* has this label been drawn or not */
+  int status; // has this label been drawn or not
+  int hasmarker; // does this label have a marker associated with it
 } labelCacheMemberObj;
 
 typedef struct {
@@ -532,9 +518,9 @@ typedef struct {
   int style;
   int intervals;
   labelObj label;
-  int color;
-  int backgroundcolor;
-  int outlinecolor;
+  colorObj color;
+  colorObj backgroundcolor;
+  colorObj outlinecolor;
   int units;
   int status; // ON, OFF or EMBED
   int position; // for embeded scalebars
@@ -549,7 +535,7 @@ typedef struct {
   labelObj label;
   int keysizex, keysizey;
   int keyspacingx, keyspacingy;
-  int outlinecolor; // Color of outline of box, -1 for no outline
+  colorObj outlinecolor; // Color of outline of box, -1 for no outline
   int status; // ON, OFF or EMBED
   int height, width;
   int position; // for embeded legends
@@ -853,10 +839,6 @@ mapObj *msLoadMap(char *filename, char *new_map_path);
 int msSaveMap(mapObj *map, char *filename);
 void msFreeMap(mapObj *map);
 void msFreeCharArray(char **array, int num_items);
-int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color);
-int msUpdatePalette(gdImagePtr img, paletteObj *palette);
-int msAddColor(mapObj *map, int red, int green, int blue);
-int msLookupColor(mapObj *map, int color_index );
 int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
 char **msTokenizeMap(char *filename, int *numtokens);
@@ -929,11 +911,8 @@ void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
 
-
-
-void msGetMarkerSize(symbolSetObj *symbolset, classObj *_class, int *width, int *height);
+void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height);
 int getCharacterSize(char *character, int size, char *font, rectObj *rect);
-void billboard(gdImagePtr img, shapeObj *shape, labelObj *label);
 void freeImageCache(struct imageCacheObj *ic);
 
 imageObj *msDrawLegend(mapObj *map); // in maplegend.c
@@ -946,13 +925,13 @@ int msInitFontSet(fontSetObj *fontset);
 int msFreeFontSet(fontSetObj *fontset);
 
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
-int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize);
+int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, double scalefactor);
 
 gdFontPtr msGetBitmapFont(int size);
-int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
-int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
+int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
+int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
-  void msFreeShape(shapeObj *shape); // in mapprimative.c
+void msFreeShape(shapeObj *shape); // in mapprimative.c
 void msInitShape(shapeObj *shape);
 int msCopyShape(shapeObj *from, shapeObj *to);
 void msComputeBounds(shapeObj *shape);
@@ -1064,35 +1043,22 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
 
 int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
 
-int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, 
-                imageObj *image, int overlay);
+int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int overlay);
+int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
-int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
-                int classindex, char *labeltext);
-
-void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, 
-                            pointObj *p, double r,  int sy, int fc, 
-                            int bc, double sz);
-void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, 
-                             pointObj *p, double r, int sy, int fc, int bc, 
-                             int oc, double sz);
-
-void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p,  
-                        int sy, int fc, int bc, int oc, double sz);
+void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
+void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
+void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style, double scalefactor);
+void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
 
 int msDrawLabel(imageObj *image, pointObj labelPnt, char *string, 
-                labelObj *label, fontSetObj *fontset);
+                labelObj *label, fontSetObj *fontset, double scalefactor);
 
-int draw_text(imageObj *image, pointObj labelPnt, char *string, 
-              labelObj *label, fontSetObj *fontset);
+int msDrawText(imageObj *image, pointObj labelPnt, char *string, 
+              labelObj *label, fontSetObj *fontset, double scalefactor);
 
 int msDrawLabelCache(imageObj *image, mapObj *map);
-
-void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
-                      int sy, int fc, int bc, double sz);
-
-void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
-                       int sy, int fc, int bc, int oc, double sz);
 
 void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image);
 void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image);
@@ -1116,7 +1082,8 @@ void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
 imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
                           char *imagepath, char *imageurl);
 imageObj *msImageLoadGD( const char *filename );
-void      msImageInitGD( imageObj *image, colorObj background );
+void      msImageInitGD( imageObj *image, colorObj *background );
+int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
 int msSaveImageGD_LL(gdImagePtr img, char *filename, int type,
@@ -1124,29 +1091,14 @@ int msSaveImageGD_LL(gdImagePtr img, char *filename, int type,
 
 void msFreeImageGD(gdImagePtr img);
 
+void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
+void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
+void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, styleObj *style, double scalefactor);
+void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
+void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
-void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
-                              pointObj *p, double r, int sy, int fc, int bc, 
-                              double sz);
-
-void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
-                               pointObj *p, double r, int sy, int fc, int bc, 
-                               int oc, double sz);
-
-void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
-                          pointObj *p, int sy, int fc, int bc, int oc, 
-                          double sz);
-
-int draw_textGD(gdImagePtr img, pointObj labelPnt, char *string, 
-                labelObj *label, fontSetObj *fontset);
-
+int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
-
-void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, 
-                        int sy, int fc, int bc, double sz);
-
-void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, 
-                         int sy, int fc, int bc, int oc, double sz);
 
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
@@ -1179,7 +1131,6 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              int nClickX, int nClickY, int nFeatureCount,
                              const char *pszInfoFormat); 
-
 
 
 /* ==================================================================== */
@@ -1218,6 +1169,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
 /* ==================================================================== */
+
 /* ==================================================================== */
 /*      prototypes for functions in mapswf.c                            */
 /* ==================================================================== */
@@ -1260,7 +1212,6 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
                          shapeObj *shape);
 #endif
-
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapswf.c                     */

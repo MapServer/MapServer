@@ -489,66 +489,62 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
   return(status);
 }
 
-
-
 /*
-** Returns the size, in pixels, of a marker symbol defined for a specific class. Use for annotation
-** layer collision avoidance.
+** Returns the size, in pixels, of a marker symbol defined for a specific array of styles and scalefactor. Used for annotation
+** layer collision avoidance. A marker is made up of a number of styles.
 */
-void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *height)
+void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height)
 {
+  int i;
   rectObj rect;
   char *font=NULL;
 
-  if(class->symbol > symbolset->numsymbols ||
-     class->symbol == -1) { /* no such symbol, 0 is OK */
-    *width = 0;
-    *height = 0;
-    return;
-  }
+  *width = *height = 0; // set a starting value
 
-  if(class->symbol == 0) { /* single point */
-    *width = 1;
-    *height = 1;
-    return;
-  }
+  for(i=0; i<numstyles; i++) {
 
-  switch(symbolset->symbol[class->symbol].type) {  
-  case(MS_SYMBOL_TRUETYPE):
+    if(styles[i]->symbol > symbolset->numsymbols || styles[i]->symbol == -1) return; /* no such symbol, 0 is OK */
 
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
-    font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[class->symbol].font);
-    if(!font) return;
+    if(styles[i]->symbol == 0) { /* single point */
+      *width = MS_MAX(*width, 1);
+      *height = MS_MAX(*height, 1);
+    }
 
-    if(getCharacterSize(symbolset->symbol[class->symbol].character, class->sizescaled, font, &rect) == -1) return;
+    switch(symbolset->symbol[styles[i]->symbol].type) {  
+   
+#if defined (USE_GD_FT) || defined (USE_GD_TTF) 
+    case(MS_SYMBOL_TRUETYPE):
+      font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[styles[i]->symbol].font);
+      if(!font) return;
 
-    *width = rect.maxx - rect.minx;
-    *height = rect.maxy - rect.miny;
-#else
-    *width = 0;
-    *height = 0;
+      if(getCharacterSize(symbolset->symbol[styles[i]->symbol].character, styles[i]->size, font, &rect) == -1) return;
+
+      *width = MS_MAX(*width, rect.maxx - rect.minx);
+      *height = MS_MAX(*height, rect.maxy - rect.miny);
+
+      break;
 #endif
-    break;
 
-  case(MS_SYMBOL_PIXMAP):
-    if(class->sizescaled == 1) {
-      *width = symbolset->symbol[class->symbol].img->sx;
-      *height = symbolset->symbol[class->symbol].img->sy;
-    } else {
-      *height = class->sizescaled;
-      *width = MS_NINT((class->sizescaled/symbolset->symbol[class->symbol].img->sy) * symbolset->symbol[class->symbol].img->sx);
-    }
-    break;
-  default: /* vector and ellipses, scalable */
-    if(class->sizescaled > 0) {
-      *height = class->sizescaled;
-      *width = MS_NINT((class->sizescaled/symbolset->symbol[class->symbol].sizey) * symbolset->symbol[class->symbol].sizex);
-    } else { /* use symbol defaults */
-      *height = symbolset->symbol[class->symbol].sizey;
-      *width = symbolset->symbol[class->symbol].sizex;
-    }
-    break;
-  }  
+    case(MS_SYMBOL_PIXMAP):
+      if(styles[i]->size == 1) {        
+	*width = MS_MAX(*width, symbolset->symbol[styles[i]->symbol].img->sx);
+        *height = MS_MAX(*height, symbolset->symbol[styles[i]->symbol].img->sy);
+      } else {
+        *width = MS_MAX(*width, MS_NINT((styles[i]->size/symbolset->symbol[styles[i]->symbol].img->sy) * symbolset->symbol[styles[i]->symbol].img->sx));
+        *height = MS_MAX(*height, styles[i]->size);
+      }
+      break;
+    default: /* vector and ellipses, scalable */
+      if(styles[i]->size > 0) {
+        *width = MS_MAX(*width, MS_NINT((styles[i]->size/symbolset->symbol[styles[i]->symbol].sizey) * symbolset->symbol[styles[i]->symbol].sizex));
+        *height = MS_MAX(*height, styles[i]->size);
+      } else { /* use symbol defaults */
+        *width = MS_MAX(*width, symbolset->symbol[styles[i]->symbol].sizex);
+        *height = MS_MAX(*height, symbolset->symbol[styles[i]->symbol].sizey);
+      }
+      break;
+    }  
+  }
 
   return;
 }

@@ -11,66 +11,64 @@
 
 //#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
-// function to save enough of a class to draw a marker and the label
-static void class_cache(classObj *from, classObj *to) 
-{
-  initClass(to);
-
-  to->color = from->color;
-  to->symbol = from->symbol;
-  to->sizescaled = to->size = from->sizescaled;
-  to->backgroundcolor = from->backgroundcolor;
-  to->outlinecolor = from->outlinecolor;
-
-  to->overlaybackgroundcolor = from->overlaybackgroundcolor;
-  to->overlaycolor = from->overlaycolor;
-  to->overlayoutlinecolor = from->overlayoutlinecolor;
-  to->overlaysizescaled = to->overlaysize = from->overlaysizescaled;
-  to->overlaysymbol = from->overlaysymbol;
-
-  to->label = from->label; // this copies all non-pointers
-  if(from->label.font) to->label.font = strdup(from->label.font);
-}
-
-int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize)
+int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, double scalefactor)
 {
   int i;
   char wrap[2];
 
-  if(!string) return(0); /* not an error */
+  layerObj *lp=NULL;
+  classObj *cp=NULL;
+
+  if(!string) return(MS_SUCCESS); /* not an error */
 
   if(map->labelcache.numlabels == map->labelcache.cachesize) { /* just add it to the end */
     map->labelcache.labels = (labelCacheMemberObj *) realloc(map->labelcache.labels, sizeof(labelCacheMemberObj)*(map->labelcache.cachesize+MS_LABELCACHEINCREMENT));
     if(!map->labelcache.labels) {
       msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
-      return(-1);
+      return(MS_FAILURE);
     }
     map->labelcache.cachesize += MS_LABELCACHEINCREMENT;
   }
 
   i = map->labelcache.numlabels;
-  map->labelcache.labels[i].layeridx = layeridx;
-  map->labelcache.labels[i].classidx = classidx;
-  map->labelcache.labels[i].tileidx = tileidx;
-  map->labelcache.labels[i].shapeidx = shapeidx;
+  map->labelcache.labels[i].layerindex = layerindex;
+  map->labelcache.labels[i].classindex = classindex;
+  map->labelcache.labels[i].tileindex = tileindex;
+  map->labelcache.labels[i].shapeindex = shapeindex;
 
-  map->labelcache.labels[i].point = point;
+  lp = &(map->layers[layerindex]);
+  cp = &(map->layers[layerindex].class[classindex]);
+
+  map->labelcache.labels[i].point = *point;
   map->labelcache.labels[i].point.x = MS_NINT(map->labelcache.labels[i].point.x);
   map->labelcache.labels[i].point.y = MS_NINT(map->labelcache.labels[i].point.y);
 
   map->labelcache.labels[i].string = strdup(string);
 
   // GD/Freetype recognizes \r\n as a true line wrap so we must turn the wrap character into that pattern
-  if(map->layers[layeridx].class[classidx].label.type != MS_BITMAP && map->layers[layeridx].class[classidx].label.wrap != '\0') {
-    wrap[0] = map->layers[layeridx].class[classidx].label.wrap;
+  if(cp->label.type != MS_BITMAP && cp->label.wrap != '\0') {
+    wrap[0] = cp->label.wrap;
     wrap[1] = '\0';
     map->labelcache.labels[i].string = gsub(map->labelcache.labels[i].string, wrap, "\r\n");
   }
 
-  class_cache(&(map->layers[layeridx].class[classidx]), &(map->labelcache.labels[i].class)); 
+  // copy the styles (only if there is an accompanying marker)
+  map->labelcache.labels[i].styles = NULL;
+  map->labelcache.labels[i].numstyles = 0;
+  if(lp->type == MS_LAYER_ANNOTATION && MS_VALID_COLOR(&(cp->styles[0].color))) {
+    map->labelcache.labels[i].styles = (styleObj *) malloc(sizeof(styleObj)*cp->numstyles);
+    memcpy(map->labelcache.labels[i].styles, cp->styles, sizeof(styleObj)*cp->numstyles);
+    map->labelcache.labels[i].numstyles = cp->numstyles;
+  }
 
-  // map->labelcache.labels[i].size = map->layers[layeridx].class[classidx].label.sizescaled;
-  // map->labelcache.labels[i].angle = map->layers[layeridx].class[classidx].label.angle;
+  // copy the label
+  map->labelcache.labels[i].label = cp->label; // this copies all non-pointers
+  if(cp->label.font) map->labelcache.labels[i].label.font = strdup(cp->label.font);
+
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+  if(cp->label.type == MS_TRUETYPE) cp->label.size *= scalefactor;
+#endif
+
   map->labelcache.labels[i].featuresize = featuresize;
 
   map->labelcache.labels[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
@@ -78,7 +76,7 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
 
   map->labelcache.labels[i].status = MS_FALSE;
 
-  if(map->layers[layeridx].type == MS_LAYER_POINT) { // cache the marker placement
+  if(lp->type == MS_LAYER_POINT) { // cache the marker placement
     rectObj rect;
     int w, h;
 
@@ -96,9 +94,12 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
     map->labelcache.markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
     msInitShape(map->labelcache.markers[i].poly);
 
-    msGetMarkerSize(&map->symbolset, &(map->layers[layeridx].class[classidx]), &w, &h);
-    rect.minx = MS_NINT(point.x - .5 * w);
-    rect.miny = MS_NINT(point.y - .5 * h);
+    msGetMarkerSize(&map->symbolset, &(cp->styles), cp->numstyles, &w, &h);
+    w *= scalefactor;
+    h *= scalefactor;
+
+    rect.minx = MS_NINT(point->x - .5 * w);
+    rect.miny = MS_NINT(point->y - .5 * h);
     rect.maxx = rect.minx + (w-1);
     rect.maxy = rect.miny + (h-1);
     msRectToPolygon(rect, map->labelcache.markers[i].poly);
@@ -109,8 +110,9 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
 
   map->labelcache.numlabels++;
 
-  return(0);
+  return(MS_SUCCESS);
 }
+
 
 
 int msInitFontSet(fontSetObj *fontset)
@@ -386,8 +388,6 @@ pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, do
   return(q);
 }
 
-
-
 /*
 ** is a label completely in the image (excluding label buffer)
 */
@@ -457,33 +457,7 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
   return(MS_FALSE);
 }
 
-void billboard(gdImagePtr img, shapeObj *shape, labelObj *label)
-{
-  int i;
-  shapeObj temp;
-
-  msInitShape(&temp);
-  msAddLine(&temp, &shape->line[0]);
-
-  if(label->backgroundshadowcolor >= 0) {
-    for(i=0; i<temp.line[0].numpoints; i++) {
-      temp.line[0].point[i].x += label->backgroundshadowsizex;
-      temp.line[0].point[i].y += label->backgroundshadowsizey;
-    }
-    msImageFilledPolygon(img, &temp, label->backgroundshadowcolor);
-    for(i=0; i<temp.line[0].numpoints; i++) {
-      temp.line[0].point[i].x -= label->backgroundshadowsizex;
-      temp.line[0].point[i].y -= label->backgroundshadowsizey;
-    }
-  }
-
-  msImageFilledPolygon(img, &temp, label->backgroundcolor);
-
-  msFreeShape(&temp);
-}
-
-
-int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
+int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
   return(0);
@@ -493,7 +467,7 @@ int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, i
 #endif
 }
 
-int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
+int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
   int i,j;
@@ -506,22 +480,27 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
   int position, rot, gap, in;
   double rx, ry;
 
+  symbolObj *symbol;
+
   msInitShape(&label_poly);
+
+  symbol = &(symbolset->symbol[style->symbol]);
 
   initLabel(&label);
   label.type = MS_TRUETYPE;
-  label.font = s->font;
-  label.sizescaled = size;
-  label.color = color;
-  label.antialias = s->antialias;
+  label.font = symbol->font;
+  label.size = style->size*scalefactor;
+  label.color = style->color; // TODO: now assuming these colors should have previously allocated pen values 
+  label.outlinecolor = style->outlinecolor;
+  label.antialias = symbol->antialias;
   
-  if(msGetLabelSize(s->character, &label, &label_rect, fontset) == -1)
+  if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset) == -1)
     return(-1);
 
   label_width = label_rect.maxx - label_rect.minx;
 
-  rot = (s->gap < 0);
-  gap = MS_ABS(s->gap);
+  rot = (symbol->gap < 0);
+  gap = MS_ABS(symbol->gap);
 
   for(i=0; i<p->numlines; i++) {
     current_length = gap+label_width/2.0; // initial padding for each line
@@ -531,7 +510,7 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
       
       rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
       ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;  
-      position = s->position;
+      position = symbol->position;
       theta = asin(ry);
       if(rx < 0) {
         if(rot){
@@ -554,8 +533,8 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
 	point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
 
   	label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, &label_poly);
-        //TODO
-        draw_textGD(img, label_point, s->character, &label, fontset);
+        
+        msDrawTextGD(img, label_point, symbol->character, &label, symbolset->fontset, scalefactor);
 
 	current_length += label_width + gap;
 	in = 1;

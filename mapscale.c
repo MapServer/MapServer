@@ -120,25 +120,27 @@ imageObj *msDrawScalebar(mapObj *map)
   
   image = msImageCreateGD(map->scalebar.width, sy, map->outputformat,
                           map->web.imagepath, map->web.imageurl);
-  if (image)
-      img = image->img.gd;
-  else
-  {
-      msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
+  if(image)
+    img = image->img.gd;
+  else {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
     return(NULL);
   }
+
   //if((img = gdImageCreate(map->scalebar.width, sy)) == NULL) {
   //  msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
   // return(NULL);
   //}
   
-  if(msLoadPalette(img, &(map->palette), map->scalebar.imagecolor) == -1)  
-    return(NULL);
-  
-  msImageInitGD( image, map->scalebar.imagecolor );
+  msImageInitGD( image, &(map->scalebar.imagecolor));
 
   ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); // center the computed scalebar
   oy = VMARGIN;
+
+  // turn RGB colors into indexed values
+  msImageSetPenGD(img, &(map->scalebar.backgroundcolor));
+  msImageSetPenGD(img, &(map->scalebar.color));
+  msImageSetPenGD(img, &(map->scalebar.outlinecolor));
 
   switch(map->scalebar.style) {
   case(0):
@@ -146,19 +148,19 @@ imageObj *msDrawScalebar(mapObj *map)
     state = 1; /* 1 means filled */
     for(j=0; j<map->scalebar.intervals; j++) {
       if(state == 1)
-	gdImageFilledRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.color);
+	gdImageFilledRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.color.pen);
       else
-	if(map->scalebar.backgroundcolor >= 0) gdImageFilledRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.backgroundcolor);
+	if(map->scalebar.backgroundcolor.pen >= 0) gdImageFilledRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.backgroundcolor.pen);
 
-      if(map->scalebar.outlinecolor >= 0)
-	gdImageRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.outlinecolor);
+      if(map->scalebar.outlinecolor.pen >= 0)
+	gdImageRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.outlinecolor.pen);
 
       sprintf(label, "%g", j*i);
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
       //TODO
-      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
+      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
 
       state = -state;
     }
@@ -169,28 +171,28 @@ imageObj *msDrawScalebar(mapObj *map)
     p.x = ox; // + MS_NINT(fontPtr->w/2);
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
     //TODO
-    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
+    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
     break;
 
   case(1):
 
-    gdImageLine(img, ox, oy, ox + isx*map->scalebar.intervals, oy, map->scalebar.color); /* top line */
+    gdImageLine(img, ox, oy, ox + isx*map->scalebar.intervals, oy, map->scalebar.color.pen); /* top line */
 
     for(j=0; j<map->scalebar.intervals; j++) {
 
-      gdImageLine(img, ox + j*isx, oy, ox + j*isx, oy + map->scalebar.height, map->scalebar.color); /* tick */
+      gdImageLine(img, ox + j*isx, oy, ox + j*isx, oy + map->scalebar.height, map->scalebar.color.pen); /* tick */
       
       sprintf(label, "%g", j*i);
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
       //TODO
-      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
+      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
 
       state = -state;
     }
     
-    gdImageLine(img, ox + j*isx, oy, ox + j*isx, oy + map->scalebar.height, map->scalebar.color); /* last tick */
+    gdImageLine(img, ox + j*isx, oy, ox + j*isx, oy + map->scalebar.height, map->scalebar.color.pen); /* last tick */
 
     sprintf(label, "%g", j*i);
     ox = ox + j*isx - MS_NINT((strlen(label)*fontPtr->w)/2.0);
@@ -199,7 +201,7 @@ imageObj *msDrawScalebar(mapObj *map)
     p.x = ox; // + MS_NINT(fontPtr->w/2);
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
     //TODO
-    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
+    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
     break;
   default:
     msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
@@ -278,15 +280,16 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     map->layerorder[l] = l;
   }
 
-  map->layers[l].class[0].symbol = s;
-  map->layers[l].class[0].color = 0;
+  map->layers[l].class[0].numstyles = 1;
+  map->layers[l].class[0].styles[0].symbol = s;
+  map->layers[l].class[0].styles[0].color.pen = -1;
   map->layers[l].class[0].label.force = MS_TRUE;
-  map->layers[l].class[0].label.size = map->layers[l].class[0].label.sizescaled = MS_MEDIUM; // must set a size to have a valid label definition
+  map->layers[l].class[0].label.size = MS_MEDIUM; // must set a size to have a valid label definition
 
   if(map->scalebar.postlabelcache) // add it directly to the image //TODO
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, map->layers[l].class[0].symbol, 0, -1, -1, 10);
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   else
-    msAddLabel(map, l, 0, -1, -1, point, " ", -1);
+    msAddLabel(map, l, 0, -1, -1, &point, " ", -1, 1.0);
 
   return(0);
 }

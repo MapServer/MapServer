@@ -40,120 +40,6 @@ void msFree(void *p) {
 }
 
 /*
-** Palette maniputation routines. Temporary until a good 24-bit
-** graphics package for PNG shows up... Function returns a palette
-** index value from 0 to MS_MAXCOLORS.
-*/
-int msAddColor(mapObj *map, int red, int green, int blue)
-{
-  int i, rd, bd, gd;
-  double d, mind=0;
-  int ci=-1;
-
-  if((red == -255) || (green < -255) || (blue < -255))
-    return(-255);
-
-  if((red < 0) || (green < 0) || (blue < 0))
-    return(-1);
-
-  if(map->palette.numcolors == MS_MAXCOLORS-1) { /* no more room, find closest (leave room for the background color) */
-    for(i=0; i<map->palette.numcolors; i++) {
-      rd = map->palette.colors[i].red - red;
-      gd = map->palette.colors[i].green - green;
-      bd = map->palette.colors[i].blue - blue;
-      d = rd*rd + gd*gd + bd*bd;
-      if ((i == 0) || (d < mind)) {
-	mind = d;
-	ci = i;
-      }
-    }
-    return(ci+1);
-  } else { /* there is room, but check for dups */
-    for(i=0; i<map->palette.numcolors; i++) {
-      if((map->palette.colors[i].red == red) && (map->palette.colors[i].green == green) && (map->palette.colors[i].blue == blue))
-	return(i+1);
-    }
-    map->palette.colors[map->palette.numcolors].red = red;
-    map->palette.colors[map->palette.numcolors].green = green;
-    map->palette.colors[map->palette.numcolors].blue = blue;
-    map->palette.numcolors++;
-    return(map->palette.numcolors);
-  }
-}
-
-/*
-** Lookup a color index from the palette returning the color value to 
-** use with GD (or other?) drawing functions.
-*/
-
-int msLookupColor( mapObj *map, int color_index )
-
-{
-    if( color_index == -1 )
-        return -1;
-    else if( color_index < 1 || color_index > map->palette.numcolors )
-        return -1;
-    else
-    {
-/* -------------------------------------------------------------------- */
-/*      For drivers other that GD return the color_index.               */
-/* -------------------------------------------------------------------- */
-      if( MS_RENDERER_GD(map->outputformat))
-        return map->palette.colorvalue[color_index-1];
-      else
-        return  color_index;
-    }
-}
-
-/*
-** Applies a palette to a particular image
-*/
-int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color)
-{  
-  int i;
-
-  if(!img) {
-    msSetError(MS_GDERR, "Image not initialized, can't allocate colors yet.", "msLoadPalette()");
-    return(-1);
-  }
-
-  /* allocate the background color */
-  gdImageColorAllocate(img, color.red, color.green, color.blue);
-
-  /* now the palette */
-  for(i=0; i<palette->numcolors; i++)
-  {
-      palette->colorvalue[i] = 
-          gdImageColorAllocate(img, 
-                               palette->colors[i].red, 
-                               palette->colors[i].green, 
-                               palette->colors[i].blue);
-  }
-
-  return(1);
-}
-
-/*
-** Updates the gdImage palette, i.e. add to the gdImage any color from the
-** mapserver palette that it didn't contain yet.
-*/
-int msUpdatePalette(gdImagePtr img, paletteObj *palette)
-{  
-  int i;
-
-  if(!img) {
-    msSetError(MS_GDERR, "Image not initialized, can't allocate colors yet.", "msUpdatePalette()");
-    return(-1);
-  }
-
-  /* Add to image palette any color that it didn't contain yet. */
-  for(i=gdImageColorsTotal(img)-1; i<palette->numcolors; i++)
-    gdImageColorAllocate(img, palette->colors[i].red, palette->colors[i].green, palette->colors[i].blue);
-
-  return(1);
-}
-
-/*
 ** Free memory allocated for a character array
 */
 void msFreeCharArray(char **array, int num_items)
@@ -334,6 +220,11 @@ int loadColor(colorObj *color) {
   if(getInteger(&(color->blue)) == -1) return(MS_FAILURE);
 
   return(MS_SUCCESS);
+}
+
+static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
+  if(MS_VALID_COLOR(color))
+    fprintf(stream, "  %s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
 }
 
 /*
@@ -745,16 +636,16 @@ static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
 */
 void initLabel(labelObj *label)
 {
-  label->antialias = -1; /* off */
+  label->antialias = -1; // off 
 
-  label->color = 1;
-  label->outlinecolor = -1; /* don't use it */
+  initColor(&(label->color), 0,0,0);  
+  initColor(&(label->outlinecolor), -1,-1,-1); // don't use it
 
-  label->shadowcolor = -1; /* don't use it */
+  initColor(&(label->shadowcolor), -1,-1,-1); // don't use it
   label->shadowsizex = label->shadowsizey = 1;
-
-  label->backgroundcolor = -1; /* don't use it */
-  label->backgroundshadowcolor = -1; /* don't use it */
+  
+  initColor(&(label->backgroundcolor), -1,-1,-1); // don't use it
+  initColor(&(label->backgroundshadowcolor), -1,-1,-1); // don't use it  
   label->backgroundshadowsizex = label->backgroundshadowsizey = 1;
 
   label->font = NULL;
@@ -786,7 +677,6 @@ static void freeLabel(labelObj *label)
 
 static int loadLabel(labelObj *label, mapObj *map)
 {
-  int red, green, blue;
   int symbol;
 
   for(;;) {
@@ -805,16 +695,10 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
       break;
     case(BACKGROUNDCOLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      label->backgroundcolor = msAddColor(map,red,green,blue);
+      if(loadColor(&(label->backgroundcolor)) != MS_SUCCESS) return(-1);
       break;
     case(BACKGROUNDSHADOWCOLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      label->backgroundshadowcolor = msAddColor(map,red,green,blue);
+      if(loadColor(&(label->backgroundshadowcolor)) != MS_SUCCESS) return(-1);      
       break;
    case(BACKGROUNDSHADOWSIZE):
       if(getInteger(&(label->backgroundshadowsizex)) == -1) return(-1);
@@ -824,10 +708,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getInteger(&(label->buffer)) == -1) return(-1);
       break;
     case(COLOR): 
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      label->color = msAddColor(map,red,green,blue);      
+      if(loadColor(&(label->color)) != MS_SUCCESS) return(-1);      
       break;
     case(END):
       return(0);
@@ -869,10 +750,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getInteger(&(label->offsety)) == -1) return(-1);
       break;
     case(OUTLINECOLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      label->outlinecolor = msAddColor(map,red,green,blue);
+      if(loadColor(&(label->outlinecolor)) != MS_SUCCESS) return(-1);
       break;    
     case(PARTIALS):
       if((label->partials = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
@@ -882,10 +760,7 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
       break;
     case(SHADOWCOLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      label->shadowcolor = msAddColor(map,red,green,blue);
+      if(loadColor(&(label->shadowcolor)) != MS_SUCCESS) return(-1);      
       break;
     case(SHADOWSIZE):
       if(getInteger(&(label->shadowsizex)) == -1) return(-1);
@@ -919,7 +794,6 @@ static int loadLabel(labelObj *label, mapObj *map)
 
 static void loadLabelString(mapObj *map, labelObj *label, char *value)
 {
-  int red, green, blue;
   int symbol;
 
   switch(msyylex()) {
@@ -944,17 +818,11 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     break;
   case(BACKGROUNDCOLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    label->backgroundcolor = msAddColor(map,red,green,blue);     
+    if(loadColor(&(label->backgroundcolor)) != MS_SUCCESS) return;
     break;
   case(BACKGROUNDSHADOWCOLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    label->backgroundshadowcolor = msAddColor(map,red,green,blue);     
+    if(loadColor(&(label->backgroundshadowcolor)) != MS_SUCCESS) return;
     break;
   case(BACKGROUNDSHADOWSIZE):
     msyystate = 2; msyystring = value;
@@ -962,11 +830,8 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     if(getInteger(&(label->backgroundshadowsizey)) == -1) return;
     break;
   case(COLOR):
-    msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    label->color = msAddColor(map,red,green,blue);     
+    msyystate = 2; msyystring = value;     
+    if(loadColor(&(label->color)) != MS_SUCCESS) return;
     break;    
   case(FONT):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
@@ -1010,10 +875,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     break;  
   case(OUTLINECOLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    label->outlinecolor = msAddColor(map,red,green,blue);
+    if(loadColor(&(label->outlinecolor)) != MS_SUCCESS) return;
     break;
   case(PARTIALS):
     msyystate = 2; msyystring = value;
@@ -1025,10 +887,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     break;
   case(SHADOWCOLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    label->shadowcolor =msAddColor(map,red,green,blue);
+    if(loadColor(&(label->shadowcolor)) != MS_SUCCESS) return;
     break;
   case(SHADOWSIZE):
     msyystate = 2; msyystring = value;
@@ -1058,11 +917,12 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
   }
 }
 
-static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
+static void writeLabel(labelObj *label, FILE *stream, char *tab)
 {
   if(label->size == -1) return; // there is no default label anymore
 
   fprintf(stream, "%sLABEL\n", tab);
+
   if(label->type == MS_BITMAP) {
     fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[label->size]);
     fprintf(stream, "  %sTYPE BITMAP\n", tab);
@@ -1079,16 +939,11 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sTYPE TRUETYPE\n", tab);
   }  
 
-  if(label->backgroundcolor > -1) {
-    fprintf(stream, "  %sBACKGROUNDCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundcolor-1].red, map->palette.colors[label->backgroundcolor-1].green, map->palette.colors[label->backgroundcolor-1].blue);
-    if(label->backgroundshadowcolor > -1) {
-      fprintf(stream, "  %sBACKGROUNDSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundshadowcolor-1].red, map->palette.colors[label->backgroundshadowcolor-1].green, map->palette.colors[label->backgroundshadowcolor-1].blue);
-      fprintf(stream, "  %sBACKGROUNDSHADOWSIZE %d %d\n", tab, label->backgroundshadowsizex, label->backgroundshadowsizey);
-    }
-  }
-
+  writeColor(&(label->backgroundcolor), stream, "BACKGROUNDCOLOR", tab);
+  writeColor(&(label->backgroundshadowcolor), stream, "BACKGROUNDSHADOWCOLOR", tab);
+  if(label->backgroundshadowsizex != 1 && label->backgroundshadowsizey != 1) fprintf(stream, "  %sBACKGROUNDSHADOWSIZE %d %d\n", tab, label->backgroundshadowsizex, label->backgroundshadowsizey);  
   fprintf(stream, "  %sBUFFER %d\n", tab, label->buffer);
-  if(label->color > -1) fprintf(stream, "  %sCOLOR %d %d %d\n", tab, map->palette.colors[label->color-1].red, map->palette.colors[label->color-1].green, map->palette.colors[label->color-1].blue);
+  writeColor(&(label->color), stream, "COLOR", tab);
   fprintf(stream, "  %sFORCE %s\n", tab, msTrueFalse[label->force]);
   fprintf(stream, "  %sMINDISTANCE %d\n", tab, label->mindistance);
   if(label->autominfeaturesize)
@@ -1096,15 +951,14 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
   else
     fprintf(stream, "  %sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
-  if(label->outlinecolor > -1) fprintf(stream, "  %sOUTLINECOLOR %d %d %d\n", tab, map->palette.colors[label->outlinecolor-1].red, map->palette.colors[label->outlinecolor-1].green, map->palette.colors[label->outlinecolor-1].blue);
+  writeColor(&(label->outlinecolor), stream, "OUTLINECOLOR", tab);  
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   if (label->position != MS_XY)   // MS_XY is an internal value used only for legend labels... never write it
     fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
-  if(label->shadowcolor > -1) {
-    fprintf(stream, "  %sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor-1].red, map->palette.colors[label->shadowcolor-1].green, map->palette.colors[label->shadowcolor-1].blue);
-    fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
-  }
+  writeColor(&(label->shadowcolor), stream, "SHADOWCOLOR", tab);
+  if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   if(label->wrap) fprintf(stream, "  %sWRAP %c\n", tab, label->wrap);
+
   fprintf(stream, "%sEND\n", tab);  
 }
 
@@ -1235,36 +1089,112 @@ static void writeHashTable(hashTableObj table, FILE *stream, char *tab, char *ti
 }
 
 /*
+** Initialize, load and free a single style
+*/
+int initStyle(styleObj *style) {
+  initColor(&(style->color), -1,-1,-1); // must explictly set colors
+  initColor(&(style->backgroundcolor), -1,-1,-1);
+  initColor(&(style->outlinecolor), -1,-1,-1);
+  style->symbol = 0; // there is always a default symbol
+  style->symbolname = NULL;
+  style->sizescaled = style->size = 1; // in SIZEUNITS (layerObj)
+  style->minsize = MS_MINSYMBOLSIZE;
+  style->maxsize = MS_MAXSYMBOLSIZE;
+  style->offsetx = style->offsety = -1;
+
+  return MS_SUCCESS;
+}
+
+int loadStyle(styleObj *style) {
+  int state;
+
+  for(;;) {
+    switch(msyylex()) {
+    case(BACKGROUNDCOLOR):
+      if(loadColor(&(style->backgroundcolor)) != MS_SUCCESS) return(MS_FAILURE);
+      break;
+    case(COLOR):
+      if(loadColor(&(style->color)) != MS_SUCCESS) return(MS_FAILURE);
+      break;
+    case(EOF):
+      msSetError(MS_EOFERR, NULL, "loadStyle()");
+      return(MS_FAILURE);
+    case(END):
+      break; // done
+    case(MAXSIZE):
+      if(getInteger(&(style->maxsize)) == -1) return(-1);
+      break;    
+    case(MINSIZE):      
+      if(getInteger(&(style->minsize)) == -1) return(-1);
+      break;
+    case(OFFSET):
+      if(getInteger(&(style->offsetx)) == -1) return(-1);
+      if(getInteger(&(style->offsety)) == -1) return(-1);
+      break;
+    case(OUTLINECOLOR):
+      if(loadColor(&(style->outlinecolor)) != MS_SUCCESS) return(MS_FAILURE);
+      break;
+    case(SIZE):
+      if(getInteger(&(style->size)) == -1) return(MS_FAILURE);
+      style->sizescaled = style->size;
+      break;    
+    case(SYMBOL):
+      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(MS_FAILURE);
+
+      if(state == MS_NUMBER)
+	style->symbol = (int) msyynumber;
+      else
+	style->symbolname = strdup(msyytext);
+      break;
+    default:
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadStyle()", msyytext, msyylineno);
+      return(MS_FAILURE);
+    }
+  }
+
+  return(MS_SUCCESS); 
+}
+
+int loadStyleString(styleObj *style) {
+  // use old shortcut names instead (see loadClassString)...
+  return(MS_SUCCESS);
+}
+
+void freeStyle(styleObj *style) {
+  msFree(style->symbolname);
+}
+
+void writeStyle(styleObj *style, FILE *stream) {
+  fprintf(stream, "      STYLE\n");
+  writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
+  writeColor(&(style->color), stream, "COLOR", "        ");
+  if(style->maxsize > -1) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
+  if(style->minsize > -1) fprintf(stream, "        MINSIZE %d\n", style->minsize);
+  writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
+  fprintf(stream, "        SIZE %d\n", style->size);
+  if(style->symbolname)
+    fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
+  else
+    fprintf(stream, "        SYMBOL %d\n", style->symbol);
+  fprintf(stream, "      END\n");
+}
+
+/*
 ** Initialize, load and free a single class
 */
 int initClass(classObj *class)
 {
+  int i;
+
   class->status = MS_ON;
 
   initExpression(&(class->expression));
   class->name = NULL;
   class->title = NULL;
   initExpression(&(class->text));
-  class->color = -1; /* must explictly set a color */
-  class->symbol = 0;
-  class->sizescaled = class->size = 1; /* one pixel */
-  class->minsize = MS_MINSYMBOLSIZE;
-  class->maxsize = MS_MAXSYMBOLSIZE;
-  class->backgroundcolor = -1;
-  class->outlinecolor = -1;
-
-  class->overlaybackgroundcolor = -1;
-  class->overlaycolor = -1;
-  class->overlayoutlinecolor = -1;
-  class->overlaysizescaled = class->overlaysize = 1;
-  class->overlayminsize = MS_MINSYMBOLSIZE;
-  class->overlaymaxsize = MS_MAXSYMBOLSIZE;
-  class->overlaysymbol = -1;
-  class->overlaysymbolname = NULL;
-
+  
   initLabel(&(class->label));
   class->label.sizescaled = class->label.size = -1; // no default
-  class->symbolname = NULL;
 
   class->numjoins = 0;
   class->template = NULL;
@@ -1274,10 +1204,16 @@ int initClass(classObj *class)
   }
 
   class->type = -1;
-
   class->metadata = NULL;
-
   class->maxscale = class->minscale = -1.0;
+
+  class->numstyles = 0;  
+  if((class->styles = (styleObj *)malloc(MS_MAXSTYLES*sizeof(styleObj))) == NULL) {
+    msSetError(MS_MEMERR, NULL, "initClass()");
+    return(-1);
+  }
+  for(i=0;i<MS_MAXSTYLES;i++) // need to provide meaningful values
+    initStyle(&(class->styles[i]));
 
   return(0);
 }
@@ -1291,13 +1227,14 @@ void freeClass(classObj *class)
   freeExpression(&(class->text));
   msFree(class->name);
   msFree(class->title);
-  msFree(class->symbolname);
-  msFree(class->overlaysymbolname);
   msFree(class->template);
-  for(i=0;i<class->numjoins;i++) /* each join */    
+  for(i=0;i<class->numjoins;i++) // each join
     freeJoin(&(class->joins[i]));
   msFree(class->joins);
   if(class->metadata) msFreeHashTable(class->metadata);
+  for(i=0;i<class->numstyles;i++) // each style    
+    freeStyle(&(class->styles[i]));
+  msFree(class->styles);
 }
 
 /*
@@ -1308,18 +1245,24 @@ void freeClass(classObj *class)
 void resetClassStyle(classObj *class)
 {
   freeLabel(&(class->label));
+
   freeExpression(&(class->text));
+  initExpression(&(class->text));
+
+  /*
+  ** Not sure what to do here, needs DMS attention.
+  **
   msFree(class->symbolname);
   msFree(class->overlaysymbolname);
 
-  initExpression(&(class->text));
-  class->color = -1; /* must explictly set a color */
+  class->color = -1;
   class->symbol = 0;
-  class->sizescaled = class->size = 1; /* one pixel */
+  class->sizescaled = class->size = 1;
   class->minsize = MS_MINSYMBOLSIZE;
   class->maxsize = MS_MAXSYMBOLSIZE;
   class->backgroundcolor = -1;
   class->outlinecolor = -1;
+  class->symbolname = NULL;
 
   class->overlaybackgroundcolor = -1;
   class->overlaycolor = -1;
@@ -1328,37 +1271,24 @@ void resetClassStyle(classObj *class)
   class->overlayminsize = MS_MINSYMBOLSIZE;
   class->overlaymaxsize = MS_MAXSYMBOLSIZE;
   class->overlaysymbol = -1;
-  class->overlaysymbolname = NULL;
+  class->overlaysymbolname = NULL; 
+  **
+  */
 
   initLabel(&(class->label));
   class->label.sizescaled = class->label.size = -1; // no default
-  class->symbolname = NULL;
 
   class->type = -1;
 }
 
-
 int loadClass(classObj *class, mapObj *map)
 {
-  int red, green, blue;
   int state;
 
   initClass(class);
 
   for(;;) {
-    switch(msyylex()) {
-    case(BACKGROUNDCOLOR): 
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      class->backgroundcolor = msAddColor(map, red, green, blue);
-      break;
-    case(COLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      class->color = msAddColor(map, red, green, blue);
-      break;
+    switch(msyylex()) {    
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadClass()");
       return(-1);
@@ -1378,79 +1308,26 @@ int loadClass(classObj *class, mapObj *map)
       break;
     case(MAXSCALE):      
       if(getDouble(&(class->maxscale)) == -1) return(-1);
-      break;
-    case(MAXSIZE):
-      if(getInteger(&(class->maxsize)) == -1) return(-1);
-      break;
+      break;    
     case(METADATA):
       if(loadHashTable(&(class->metadata)) != MS_SUCCESS) return(-1);
       break;
     case(MINSCALE):      
       if(getDouble(&(class->minscale)) == -1) return(-1);
       break;
-    case(MINSIZE):      
-      if(getInteger(&(class->minsize)) == -1) return(-1);
-      break;
     case(NAME):
       if((class->name = getString()) == NULL) return(-1);
-      break; 
-    case(OUTLINECOLOR):      
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      class->outlinecolor = msAddColor(map, red, green, blue);
-      break;
-    case(OVERLAYBACKGROUNDCOLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      class->overlaybackgroundcolor = msAddColor(map, red, green, blue);
-      break;
-    case(OVERLAYCOLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      class->overlaycolor = msAddColor(map, red, green, blue);
-      break;
-    case(OVERLAYMAXSIZE):
-      if(getInteger(&(class->overlaymaxsize)) == -1) return(-1);
-      break;
-    case(OVERLAYMINSIZE):      
-      if(getInteger(&(class->overlayminsize)) == -1) return(-1);
-      break;
-    case(OVERLAYOUTLINECOLOR):      
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      class->overlayoutlinecolor = msAddColor(map, red, green, blue);
-      break;
-    case(OVERLAYSIZE):
-      if(getInteger(&(class->overlaysize)) == -1) return(-1);
-      class->overlaysizescaled = class->overlaysize;
-      break;
-    case(OVERLAYSYMBOL):
-      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
-
-      if(state == MS_NUMBER)
-	class->overlaysymbol = (int) msyynumber;
-      else
-	class->overlaysymbolname = strdup(msyytext);
-      break;
-    case(SIZE):
-      if(getInteger(&(class->size)) == -1) return(-1);
-      class->sizescaled = class->size;
-      break;
+      break;         
     case(STATUS):
       if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
-      break;
-    case(SYMBOL):
-      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
-
-      if(state == MS_NUMBER)
-	class->symbol = (int) msyynumber;
-      else
-	class->symbolname = strdup(msyytext);
-      break;
+      break;    
+    case(STYLE):
+      if(class->numstyles == MS_MAXSTYLES) {
+        msSetError(MS_MISCERR, "Too many CLASS styles defined, only %d allowed. To change, edit value of MS_MAXSTYLES in map.h and recompile." , "loadClass()", MS_MAXSTYLES);
+        return(-1);
+      }
+      if(loadStyle(&(class->styles[class->numstyles])) != MS_SUCCESS) return(-1);
+      class->numstyles++;
     case(TEMPLATE):      
       if((class->template = getString()) == NULL) return(-1);
       break;
@@ -1467,6 +1344,71 @@ int loadClass(classObj *class, mapObj *map)
     case(TYPE):
       if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return(-1);
       break;
+
+    /*
+    ** for backwards compatability, these are shortcuts for style 0
+    */
+    case(BACKGROUNDCOLOR):
+      if(loadColor(&(class->styles[0].backgroundcolor)) != MS_SUCCESS) return(-1);
+      break;
+    case(COLOR):
+      if(loadColor(&(class->styles[0].color)) != MS_SUCCESS) return(-1);
+      class->numstyles = 1; // must *always* set a color or outlinecolor
+      break;
+    case(MAXSIZE):
+      if(getInteger(&(class->styles[0].maxsize)) == -1) return(-1);
+      break;
+    case(MINSIZE):      
+      if(getInteger(&(class->styles[0].minsize)) == -1) return(-1);
+      break;
+    case(OUTLINECOLOR):            
+      if(loadColor(&(class->styles[0].outlinecolor)) != MS_SUCCESS) return(-1);
+      class->numstyles = 1; // must *always* set a color or outlinecolor
+      break;
+    case(SIZE):
+      if(getInteger(&(class->styles[0].size)) == -1) return(-1);
+      class->styles[0].sizescaled = class->styles[0].size;
+      break;
+    case(SYMBOL):
+      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
+      if(state == MS_NUMBER)
+	class->styles[0].symbol = (int) msyynumber;
+      else
+	class->styles[0].symbolname = strdup(msyytext);
+      break;
+
+    /*
+    ** for backwards compatability, these are shortcuts for style 1
+    */
+    case(OVERLAYBACKGROUNDCOLOR):
+      if(loadColor(&(class->styles[1].backgroundcolor)) != MS_SUCCESS) return(-1);
+      break;
+    case(OVERLAYCOLOR):
+      if(loadColor(&(class->styles[1].color)) != MS_SUCCESS) return(-1);
+      class->numstyles = 2; // must *always* set a color or outlinecolor
+      break;
+    case(OVERLAYMAXSIZE):
+      if(getInteger(&(class->styles[1].maxsize)) == -1) return(-1);
+      break;
+    case(OVERLAYMINSIZE):      
+      if(getInteger(&(class->styles[1].minsize)) == -1) return(-1);
+      break;
+    case(OVERLAYOUTLINECOLOR):      
+      if(loadColor(&(class->styles[1].outlinecolor)) != MS_SUCCESS) return(-1);
+      class->numstyles = 2; // must *always* set a color or outlinecolor
+      break;
+    case(OVERLAYSIZE):
+      if(getInteger(&(class->styles[1].size)) == -1) return(-1);
+      class->styles[1].sizescaled = class->styles[1].size;
+      break;
+    case(OVERLAYSYMBOL):
+      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
+      if(state == MS_NUMBER)
+	class->styles[1].symbol = (int) msyynumber;
+      else
+	class->styles[1].symbolname = strdup(msyytext);
+      break;
+
     default:
       msSetError(MS_IDENTERR, "(%s):(%d)", "loadClass()",
                  msyytext, msyylineno);
@@ -1477,24 +1419,10 @@ int loadClass(classObj *class, mapObj *map)
 
 static void loadClassString(mapObj *map, classObj *class, char *value, int type)
 {
-  int red, green, blue;
   int state;
 
   switch(msyylex()) {
-  case(BACKGROUNDCOLOR):
-    msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    class->backgroundcolor = msAddColor(map, red, green, blue);
-    break;
-  case(COLOR):    
-    msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    class->color = msAddColor(map, red, green, blue);
-    break;
+  
   case(EXPRESSION):    
     loadExpressionString(&(class->expression), value);
     break;
@@ -1505,45 +1433,14 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     msyystate = 2; msyystring = value;
     getDouble(&(class->maxscale));
     break;
-  case(MAXSIZE):
-    msyystate = 2; msyystring = value;
-    getInteger(&(class->maxsize));
-    break; 
   case(MINSCALE):
     msyystate = 2; msyystring = value;
     getDouble(&(class->minscale));
-    break;
-  case(MINSIZE):
-    msyystate = 2; msyystring = value;
-    getInteger(&(class->minsize));
-    break;
-  case(OUTLINECOLOR):
-    msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    class->outlinecolor = msAddColor(map, red, green, blue);
-    break;
-  case(SIZE):
-    msyystate = 2; msyystring = value;
-    getInteger(&(class->size));
-    class->sizescaled = class->size;
-    break;
+    break;    
   case(STATUS):
     msyystate = 2; msyystring = value;
     if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
-    break;
-  case(SYMBOL):
-    msyystate = 2; msyystring = value;
-    if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
-
-    if(state == MS_NUMBER)
-      class->symbol = (int) msyynumber;
-    else {
-      if((class->symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
-	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
-    }
-    break;
+    break;  
   case(TEMPLATE):
     msFree(class->template);
     class->template = strdup(value);
@@ -1559,6 +1456,85 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     msyystate = 2; msyystring = value;
     if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return;
     break;
+
+  /*
+  ** for backwards compatability, these are shortcuts for style 0
+  */
+  case(BACKGROUNDCOLOR):
+    msyystate = 2; msyystring = value;
+    if(loadColor(&(class->styles[0].backgroundcolor)) != MS_SUCCESS) return;    
+    break;
+  case(COLOR):
+    msyystate = 2; msyystring = value;
+    if(loadColor(&(class->styles[0].color)) != MS_SUCCESS) return;
+    break;
+  case(MAXSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(class->styles[0].maxsize));
+    break;
+  case(MINSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(class->styles[0].minsize));
+    break;
+  case(OUTLINECOLOR):
+    msyystate = 2; msyystring = value;
+    if(loadColor(&(class->styles[0].outlinecolor)) != MS_SUCCESS) return;
+    break;
+  case(SIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(class->styles[0].size));    
+    break;
+  case(SYMBOL):
+    msyystate = 2; msyystring = value;
+    if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
+
+    if(state == MS_NUMBER)
+      class->styles[0].symbol = (int) msyynumber;
+    else {
+      if((class->styles[0].symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
+	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+    }
+    break;
+
+  /*
+  ** for backwards compatability, these are shortcuts for style 1
+  */
+  case(OVERLAYBACKGROUNDCOLOR):
+    msyystate = 2; msyystring = value;
+    if(loadColor(&(class->styles[1].backgroundcolor)) != MS_SUCCESS) return;    
+    break;
+  case(OVERLAYCOLOR):
+    msyystate = 2; msyystring = value;
+    if(loadColor(&(class->styles[1].color)) != MS_SUCCESS) return;
+    break;
+  case(OVERLAYMAXSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(class->styles[1].maxsize));
+    break;
+  case(OVERLAYMINSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(class->styles[1].minsize));
+    break;
+  case(OVERLAYOUTLINECOLOR):
+    msyystate = 2; msyystring = value;
+    if(loadColor(&(class->styles[1].outlinecolor)) != MS_SUCCESS) return;
+    break;
+  case(OVERLAYSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(class->styles[1].size));
+    break;
+  case(OVERLAYSYMBOL):
+    msyystate = 2; msyystring = value;
+    if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
+
+    if(state == MS_NUMBER)
+      class->styles[1].symbol = (int) msyynumber;
+    else {
+      if((class->styles[1].symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
+	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+    }
+    break;
+
   default:
     break;
   }
@@ -1566,17 +1542,14 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   return;
 }
 
-static void writeClass(mapObj *map, classObj *class, FILE *stream)
+static void writeClass(classObj *class, FILE *stream)
 {
   int i;
 
-  if (class->status == MS_DELETE)
-      return;
+  if(class->status == MS_DELETE) return;
 
   fprintf(stream, "    CLASS\n");
   if(class->name) fprintf(stream, "      NAME \"%s\"\n", class->name);
-  if(class->backgroundcolor > -1) fprintf(stream, "      BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[class->backgroundcolor-1].red, map->palette.colors[class->backgroundcolor-1].green, map->palette.colors[class->backgroundcolor-1].blue);
-  if(class->color > -1) fprintf(stream, "      COLOR %d %d %d\n", map->palette.colors[class->color-1].red, map->palette.colors[class->color-1].green, map->palette.colors[class->color-1].blue);
   if(class->expression.string) {
     fprintf(stream, "      EXPRESSION ");
     writeExpression(&(class->expression), stream);
@@ -1584,27 +1557,13 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
   }
   for(i=0; i<class->numjoins; i++)
     writeJoin(&(class->joins[i]), stream);
-  writeLabel(map, &(class->label), stream, "      ");
+  writeLabel(&(class->label), stream, "      ");
   if(class->maxscale > -1) fprintf(stream, "      MAXSCALE %g\n", class->maxscale);
-  if(class->maxsize > -1) fprintf(stream, "      MAXSIZE %d\n", class->maxsize);
   if(class->metadata) writeHashTable(class->metadata, stream, "      ", "METADATA");
   if(class->minscale > -1) fprintf(stream, "      MINSCALE %g\n", class->minscale);
-  if(class->minsize > -1) fprintf(stream, "      MINSIZE %d\n", class->minsize);
-  if(class->outlinecolor > -1) fprintf(stream, "      OUTLINECOLOR %d %d %d\n", map->palette.colors[class->outlinecolor-1].red, map->palette.colors[class->outlinecolor-1].green, map->palette.colors[class->outlinecolor-1].blue);
-  if(class->overlaycolor > -1) {
-    fprintf(stream, "      OVERLAYCOLOR %d %d %d\n", map->palette.colors[class->overlaycolor-1].red, map->palette.colors[class->overlaycolor-1].green, map->palette.colors[class->overlaycolor-1].blue);
-    fprintf(stream, "      OVERLAYSIZE %d\n", class->overlaysize);
-    if(class->overlaysymbolname)
-      fprintf(stream, "      OVERLAYSYMBOL \"%s\"\n", class->overlaysymbolname);
-    else
-      fprintf(stream, "      OVERLAYSYMBOL %d\n", class->overlaysymbol);
-  }
-  fprintf(stream, "      SIZE %d\n", class->size);
   if(class->status == MS_OFF) fprintf(stream, "      STATUS OFF\n");
-  if(class->symbolname)
-    fprintf(stream, "      SYMBOL \"%s\"\n", class->symbolname);
-  else
-    fprintf(stream, "      SYMBOL %d\n", class->symbol);
+  for(i=0; i<class->numstyles; i++)
+    writeStyle(&(class->styles[i]), stream);
   if(class->template) fprintf(stream, "      TEMPLATE \"%s\"\n", class->template);
   if(class->text.string) {
     fprintf(stream, "      TEXT ");
@@ -2150,7 +2109,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   return;
 }
 
-static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
+static void writeLayer(layerObj *layer, FILE *stream)
 {
   int i;
   featureListNodeObjPtr current=NULL;
@@ -2218,7 +2177,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
 
   // write potentially multiply occuring features last
-  for(i=0; i<layer->numclasses; i++) writeClass(map, &(layer->class[i]), stream);
+  for(i=0; i<layer->numclasses; i++) writeClass(&(layer->class[i]), stream);
 
   current = layer->features;
   while(current != NULL) {
@@ -2542,16 +2501,14 @@ static int loadOutputFormat(mapObj *map)
 */
 void initLegend(legendObj *legend)
 {
-  legend->height = legend->width = 0;
-  legend->imagecolor.red = 255;
-  legend->imagecolor.green = 255;
-  legend->imagecolor.blue = 255;
+  legend->height = legend->width = 0; 
+  initColor(&(legend->imagecolor), 255,255,255); // white
+  initColor(&(legend->outlinecolor), -1,-1,-1);
   initLabel(&legend->label);
   legend->keysizex = 20;
   legend->keysizey = 10;
   legend->keyspacingx = 5;
-  legend->keyspacingy = 5;
-  legend->outlinecolor = -1; /* i,e. off */
+  legend->keyspacingy = 5;  
   legend->status = MS_OFF;
   legend->transparent = MS_NOOVERRIDE;
   legend->interlace = MS_NOOVERRIDE;
@@ -2569,8 +2526,6 @@ void freeLegend(legendObj *legend)
 
 int loadLegend(legendObj *legend, mapObj *map)
 {
-  int red, green, blue;
-
   for(;;) {
     switch(msyylex()) {
     case(EOF):
@@ -2581,9 +2536,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       return(0);
       break;
     case(IMAGECOLOR):      
-      if(getInteger(&(legend->imagecolor.red)) == -1) return(-1);
-      if(getInteger(&(legend->imagecolor.green)) == -1) return(-1);
-      if(getInteger(&(legend->imagecolor.blue)) == -1) return(-1);
+      if(loadColor(&(legend->imagecolor)) != MS_SUCCESS) return(-1);
       break;
     case(INTERLACE):
       if((legend->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -2600,11 +2553,8 @@ int loadLegend(legendObj *legend, mapObj *map)
       if(loadLabel(&(legend->label), map) == -1) return(-1);
       legend->label.angle = 0; /* force */
       break;
-    case(OUTLINECOLOR):      
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      legend->outlinecolor = msAddColor(map,red,green,blue);
+    case(OUTLINECOLOR):     
+      if(loadColor(&(legend->outlinecolor)) != MS_SUCCESS) return(-1);
       break;
     case(POSITION):
       if((legend->position = getSymbol(6, MS_UL,MS_UR,MS_LL,MS_LR,MS_UC,MS_LC)) == -1) return(-1);
@@ -2622,8 +2572,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       if((legend->template = getString()) == NULL) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadLegend()", 
-                 msyytext, msyylineno);      
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadLegend()", msyytext, msyylineno);      
       return(-1);
     }
   } /* next token */
@@ -2631,14 +2580,10 @@ int loadLegend(legendObj *legend, mapObj *map)
 
 static void loadLegendString(mapObj *map, legendObj *legend, char *value)
 {
-  int red, green, blue;
-
   switch(msyylex()) {
-  case(IMAGECOLOR):      
-    msyystate = 2; msyystring = value;
-    if(getInteger(&(legend->imagecolor.red)) == -1) return;
-    if(getInteger(&(legend->imagecolor.green)) == -1) return;
-    if(getInteger(&(legend->imagecolor.blue)) == -1) return;
+  case(IMAGECOLOR):
+    msyystate = 2; msyystring = value;    
+    loadColor(&(legend->imagecolor));
     break;
   case(KEYSIZE):
     msyystate = 2; msyystring = value;
@@ -2655,11 +2600,8 @@ static void loadLegendString(mapObj *map, legendObj *legend, char *value)
     legend->label.angle = 0; /* force */
     break;
   case(OUTLINECOLOR):
-    msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    legend->outlinecolor =msAddColor(map,red,green,blue);
+    msyystate = 2; msyystring = value;    
+    loadColor(&(legend->outlinecolor));
     break;
   case(POSITION):
     msyystate = 2; msyystring = value;
@@ -2684,16 +2626,16 @@ static void loadLegendString(mapObj *map, legendObj *legend, char *value)
   return;
 }
 
-static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
+static void writeLegend(legendObj *legend, FILE *stream)
 {
   fprintf(stream, "  LEGEND\n");
-  fprintf(stream, "    IMAGECOLOR %d %d %d\n", legend->imagecolor.red, legend->imagecolor.green, legend->imagecolor.blue);
+  writeColor(&(legend->imagecolor), stream, "IMAGECOLOR", "    ");  
   if( legend->interlace != MS_NOOVERRIDE )
       fprintf(stream, "    INTERLACE %s\n", msTrueFalse[legend->interlace]);
   fprintf(stream, "    KEYSIZE %d %d\n", legend->keysizex, legend->keysizey);
   fprintf(stream, "    KEYSPACING %d %d\n", legend->keyspacingx, legend->keyspacingy);
-  writeLabel(map, &(legend->label), stream, "    ");
-  if(legend->outlinecolor > -1) fprintf(stream, "    OUTLINECOLOR %d %d %d\n", map->palette.colors[legend->outlinecolor-1].red, map->palette.colors[legend->outlinecolor-1].green, map->palette.colors[legend->outlinecolor-1].blue);
+  writeLabel(&(legend->label), stream, "    ");
+  writeColor(&(legend->outlinecolor), stream, "OUTLINECOLOR", "    ");
   fprintf(stream, "    POSITION %s\n", msLabelPositions[legend->position]);
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
@@ -2708,22 +2650,20 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
 */
 void initScalebar(scalebarObj *scalebar)
 {
-  scalebar->imagecolor.red = 255;
-  scalebar->imagecolor.green = 255;
-  scalebar->imagecolor.blue = 255;
+  initColor(&(scalebar->imagecolor), 255,255,255);
   scalebar->width = 200; 
   scalebar->height = 3;
   scalebar->style = 0; // only 2 styles at this point
   scalebar->intervals = 4;
   initLabel(&scalebar->label);
-  scalebar->label.position = MS_XY; /*  override */
-  scalebar->backgroundcolor = 0; /* image background */
-  scalebar->color = 1; /* at least it won't dump core if not defined */
-  scalebar->outlinecolor = -1; /* no outline */
+  scalebar->label.position = MS_XY; // override
+  initColor(&(scalebar->backgroundcolor), -1,-1,-1);  // if not set, scalebar creation needs to set this to match the background color
+  initColor(&(scalebar->color), 0,0,0); // default to black
+  initColor(&(scalebar->outlinecolor), -1,-1,-1);
   scalebar->units = MS_MILES;
   scalebar->status = MS_OFF;
   scalebar->position = MS_LL;
-  scalebar->transparent = MS_NOOVERRIDE; /* no transparency */
+  scalebar->transparent = MS_NOOVERRIDE; // no transparency
   scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; // draw with labels
 }
@@ -2734,33 +2674,22 @@ void freeScalebar(scalebarObj *scalebar) {
 
 int loadScalebar(scalebarObj *scalebar, mapObj *map)
 {
-  int red, green, blue;
-
   for(;;) {
     switch(msyylex()) {
-    case(BACKGROUNDCOLOR):      
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      scalebar->backgroundcolor = msAddColor(map,red,green,blue);
+    case(BACKGROUNDCOLOR):            
+      if(loadColor(&(scalebar->backgroundcolor)) != MS_SUCCESS) return(-1);
       break;
     case(COLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      scalebar->color = msAddColor(map,red,green,blue);      
+      if(loadColor(&(scalebar->color)) != MS_SUCCESS) return(-1);   
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadScalebar()");      
       return(-1);
     case(END):
-      if(scalebar->color == -1) scalebar->color = msAddColor(map,0,0,0); /* default to black */
       return(0);
       break;
     case(IMAGECOLOR):      
-      if(getInteger(&(scalebar->imagecolor.red)) == -1) return(-1);
-      if(getInteger(&(scalebar->imagecolor.green)) == -1) return(-1);
-      if(getInteger(&(scalebar->imagecolor.blue)) == -1) return(-1);
+      if(loadColor(&(scalebar->imagecolor)) != MS_SUCCESS) return(-1);
       break;
     case(INTERLACE):
       if((scalebar->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -2777,10 +2706,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       }
       break;
     case(OUTLINECOLOR):      
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      scalebar->outlinecolor =msAddColor(map,red,green,blue);
+      if(loadColor(&(scalebar->outlinecolor)) != MS_SUCCESS) return(-1);
       break;
     case(POSITION):
       if((scalebar->position = getSymbol(6, MS_UL,MS_UR,MS_LL,MS_LR,MS_UC,MS_LC)) == -1) 
@@ -2815,29 +2741,18 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
 
 static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
 {
-  int red, green, blue;
-
   switch(msyylex()) {
   case(BACKGROUNDCOLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    scalebar->backgroundcolor =msAddColor(map,red,green,blue);
+    loadColor(&(scalebar->backgroundcolor));
     break;
   case(COLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    scalebar->color = msAddColor(map,red,green,blue);
-    if(scalebar->color == -1) scalebar->color = msAddColor(map,0,0,0); /* default to black */
+    loadColor(&(scalebar->color));
     break;
   case(IMAGECOLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(scalebar->imagecolor.red)) == -1) return;
-    if(getInteger(&(scalebar->imagecolor.green)) == -1) return;
-    if(getInteger(&(scalebar->imagecolor.blue)) == -1) return;
+    loadColor(&(scalebar->imagecolor));
     break;
   case(INTERVALS):
     msyystate = 2; msyystring = value;
@@ -2854,10 +2769,7 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
     break;
   case(OUTLINECOLOR):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    scalebar->outlinecolor =msAddColor(map,red,green,blue);
+    loadColor(&(scalebar->outlinecolor));
     break;
   case(POSITION):
     msyystate = 2; msyystring = value;
@@ -2891,17 +2803,17 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
   return;
 }
 
-static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
+static void writeScalebar(scalebarObj *scalebar, FILE *stream)
 {
   fprintf(stream, "  SCALEBAR\n");
-  if(scalebar->backgroundcolor > -1) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor-1].red, map->palette.colors[scalebar->backgroundcolor-1].green, map->palette.colors[scalebar->backgroundcolor-1].blue);
-  if(scalebar->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[scalebar->color-1].red, map->palette.colors[scalebar->color-1].green, map->palette.colors[scalebar->color-1].blue);
+  writeColor(&(scalebar->backgroundcolor), stream, "BACKGROUNDCOLOR", "    ");
+  writeColor(&(scalebar->color), stream, "COLOR", "    ");
   fprintf(stream, "    IMAGECOLOR %d %d %d\n", scalebar->imagecolor.red, scalebar->imagecolor.green, scalebar->imagecolor.blue);
   if( scalebar->interlace != MS_NOOVERRIDE )
       fprintf(stream, "    INTERLACE %s\n", msTrueFalse[scalebar->interlace]);
   fprintf(stream, "    INTERVALS %d\n", scalebar->intervals);
-  writeLabel(map, &(scalebar->label), stream, "    ");
-  if(scalebar->outlinecolor > -1) fprintf(stream, "    OUTLINECOLOR %d %d %d\n", map->palette.colors[scalebar->outlinecolor-1].red, map->palette.colors[scalebar->outlinecolor-1].green, map->palette.colors[scalebar->outlinecolor-1].blue);
+  writeLabel(&(scalebar->label), stream, "    ");
+  writeColor(&(scalebar->outlinecolor), stream, "OUTLINECOLOR", "    ");
   fprintf(stream, "    POSITION %s\n", msLabelPositions[scalebar->position]);
   if(scalebar->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    SIZE %d %d\n", scalebar->width, scalebar->height);
@@ -2922,26 +2834,20 @@ void initQueryMap(queryMapObj *querymap)
   querymap->width = querymap->height = -1;
   querymap->style = MS_HILITE;
   querymap->status = MS_OFF;
-  querymap->color = -1;
+  initColor(&(querymap->color), 255,255,0); // yellow
 }
 
 int loadQueryMap(queryMapObj *querymap, mapObj *map)
 {
-  int red, green, blue;
-
   for(;;) {
     switch(msyylex()) {
-    case(COLOR):
-      if(getInteger(&(red)) == -1) return(-1);
-      if(getInteger(&(green)) == -1) return(-1);
-      if(getInteger(&(blue)) == -1) return(-1);
-      querymap->color = msAddColor(map,red,green,blue);
+    case(COLOR):      
+      loadColor(&(querymap->color));
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadQueryMap()");
       return(-1);
-    case(END):
-      if(querymap->color == -1) querymap->color = msAddColor(map,255,255,0); /* default to yellow */
+    case(END):     
       return(0);
       break;
     case(SIZE):
@@ -2960,16 +2866,10 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map)
 
 static void loadQueryMapString(mapObj *map, queryMapObj *querymap, char *value)
 {
-  int red, green, blue;
-
   switch(msyylex()) {
   case(COLOR):
-    msyystate = 2; msyystring = value;
-    if(getInteger(&(red)) == -1) return;
-    if(getInteger(&(green)) == -1) return;
-    if(getInteger(&(blue)) == -1) return;
-    querymap->color = msAddColor(map,red,green,blue);
-    if(querymap->color == -1) querymap->color = msAddColor(map,255,255,0); /* default back to yellow */
+    msyystate = 2; msyystring = value;    
+    loadColor(&(querymap->color));
     break;
   case(SIZE):
     msyystate = 2; msyystring = value;
@@ -2989,10 +2889,10 @@ static void loadQueryMapString(mapObj *map, queryMapObj *querymap, char *value)
   return;
 }
 
-static void writeQueryMap(mapObj *map, queryMapObj *querymap, FILE *stream)
+static void writeQueryMap(queryMapObj *querymap, FILE *stream)
 {
   fprintf(stream, "  QUERYMAP\n");
-  if(querymap->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[querymap->color-1].red, map->palette.colors[querymap->color-1].green, map->palette.colors[querymap->color-1].blue);
+  writeColor(&(querymap->color), stream, "COLOR", "    ");
   fprintf(stream, "    SIZE %d %d\n", querymap->width, querymap->height);
   fprintf(stream, "    STATUS %s\n", msStatus[querymap->status]);
   fprintf(stream, "    STYLE %s\n", msQueryMapStyles[querymap->style]);  
@@ -3265,7 +3165,7 @@ int initMap(mapObj *map)
 }
 
 void msFreeMap(mapObj *map) {
-  int i;
+  int i,j;
 
   if(!map) return;
 
@@ -3282,7 +3182,9 @@ void msFreeMap(mapObj *map) {
     msFree(map->labelcache.labels[i].string);
     msFreeShape(map->labelcache.labels[i].poly);
     msFree(map->labelcache.labels[i].poly);
-    freeClass(&(map->labelcache.labels[i].class));
+    for(j=0;j<map->labelcache.labels[i].numstyles;j++)
+      freeStyle(&(map->labelcache.labels[i].styles[j]));
+    msFree(map->labelcache.labels[i].styles);
   }
   msFree(map->labelcache.labels);
 
@@ -3372,16 +3274,16 @@ int msSaveMap(mapObj *map, char *filename)
 
   writeProjection(&(map->projection), stream, "  ");
   
-  writeLegend(map, &(map->legend), stream);
-  writeQueryMap(map, &(map->querymap), stream);
+  writeLegend(&(map->legend), stream);
+  writeQueryMap(&(map->querymap), stream);
   writeReferenceMap(&(map->reference), stream);
-  writeScalebar(map, &(map->scalebar), stream);
+  writeScalebar(&(map->scalebar), stream);
   writeWeb(&(map->web), stream);
 
   for(i=0; i<map->numlayers; i++)
   {
-      writeLayer(map, &(map->layers[map->layerorder[i]]), stream);
-      //writeLayer(map, &(map->layers[i]), stream);
+      writeLayer(&(map->layers[map->layerorder[i]]), stream);
+      //writeLayer(&(map->layers[i]), stream);
   }
 
   //once the map is saved the layer order should be reset
@@ -3403,7 +3305,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
   regex_t re;
   mapObj *map=NULL;
   char *map_path=NULL;
-  int i,j;
+  int i,j,k;
 
   if(!filename) {
     msSetError(MS_MISCERR, "Filename is undefined.", "msLoadMap()");
@@ -3475,34 +3377,18 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       if(msLoadSymbolSet(&(map->symbolset)) == -1) return(NULL);
 
       /* step through layers and classes to resolve symbol names */
-       for(i=0; i<map->numlayers; i++) 
-       {
-          for(j=0; j<map->layers[i].numclasses; j++)
-          {
-             if (map->layers[i].class[j].overlaysymbolname)
-                if ((map->layers[i].class[j].overlaysymbol =  msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
-                    msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d of layer %s.", 
-			       "msLoadMap()",
-                               map->layers[i].class[j].overlaysymbolname,
-                               j, map->layers[i].name);
-
-                    return(NULL);
-                 }
-             
-             if (map->layers[i].class[j].symbolname)
-                if ((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1)
-                 {
-                    msSetError(MS_MISCERR,
-                               "Undefined symbol \"%s\" in class %d of layer %s.",
-                               "msLoadMap()",
-                               map->layers[i].class[j].symbolname,
-                               j, map->layers[i].name);
-                    
-                   return (NULL);
-                 }
-             
-          }
-       }
+      for(i=0; i<map->numlayers; i++) {
+        for(j=0; j<map->layers[i].numclasses; j++){
+	  for(k=0; k<map->layers[i].class[j].numstyles; k++) {
+            if(map->layers[i].class[j].styles[k].symbolname) {
+              if((map->layers[i].class[j].styles[k].symbol =  msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].styles[k].symbolname)) == -1) {
+                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", map->layers[i].class[j].styles[k].symbolname, j, k, map->layers[i].name);
+                return(NULL);
+              }
+            }
+          }              
+        }
+      }
 
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if(msLoadFontSet(&(map->fontset)) == -1) return(NULL);
