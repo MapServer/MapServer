@@ -27,6 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.73  2004/11/18 21:18:36  assefa
+ * Make sure that msDrawWMSLayerLow calls msDrawLayer instead of msDrawRasterLayerLow
+ * directly ensuring that some logic (transparency) that are in msDrawLayer are
+ * applied (Bug 541).
+ *
  * Revision 1.72  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -1043,6 +1048,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     int iReq = -1;
     char szPath[MS_MAXPATHLEN];
     int currenttype;
+    int currentconnectiontype;
     int numclasses;
 
 /* ------------------------------------------------------------------
@@ -1085,7 +1091,9 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     //keep the current type that will be restored at the end of this 
     //function.
     currenttype = lp->type;
+    currentconnectiontype = lp->connectiontype;
     lp->type = MS_LAYER_RASTER;
+    lp->connectiontype = MS_SHAPEFILE;
 
     //set the classes to 0 so that It won't do client side
     //classification if an sld was set.
@@ -1101,7 +1109,9 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     {
         // The simple case... no reprojection needed... render layer directly.
         lp->transform = MS_FALSE;
-        if (msDrawRasterLayerLow(map, lp, img) != 0)
+        //if (msDrawRasterLayerLow(map, lp, img) != 0)
+        //   status = MS_FAILURE;
+         if (msDrawLayer(map, lp, img) != 0)
             status = MS_FAILURE;
     }
     else
@@ -1158,6 +1168,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
     //restore prveious type
     lp->type = currenttype;
+    lp->connectiontype = currentconnectiontype;
 
     //restore previous numclasses
     lp->numclasses = numclasses;
