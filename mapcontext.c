@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.62  2004/10/01 21:26:55  frank
+ * Use msIO_ API.
+ *
  * Revision 1.61  2004/09/30 13:29:56  julien
  * Fix a typo in Format encoding that print all formats in each tags.
  *
@@ -1482,16 +1485,16 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   pszEncodedVal = msEncodeHTMLEntities(version);
   if(nVersion >= OWS_1_0_0)
   {
-      fprintf( stream, "<ViewContext version=\"%s\"", pszEncodedVal );
+      msIO_fprintf( stream, "<ViewContext version=\"%s\"", pszEncodedVal );
   }
   else if(nVersion >= OWS_0_1_7)
   {
-      fprintf( stream, "<View_Context version=\"%s\"", pszEncodedVal );
+      msIO_fprintf( stream, "<View_Context version=\"%s\"", pszEncodedVal );
       
   }
   else // 0.1.4
   {
-      fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", pszEncodedVal );
+      msIO_fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", pszEncodedVal );
   }
   msFree(pszEncodedVal);
 
@@ -1504,39 +1507,39 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       msOWSPrintEncodeParam(stream, "MAP.NAME", map->name, OWS_NOERR, 
                             " id=\"%s\"", NULL);
 
-  fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  msIO_fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
 
   if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 )
   {
-      fprintf( stream, " xmlns:gml=\"http://www.opengis.net/gml\"");
+      msIO_fprintf( stream, " xmlns:gml=\"http://www.opengis.net/gml\"");
   }
   if( nVersion >= OWS_1_0_0 )
   {
-      fprintf( stream, " xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
-      fprintf( stream, " xmlns=\"http://www.opengis.net/context\"");
+      msIO_fprintf( stream, " xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
+      msIO_fprintf( stream, " xmlns=\"http://www.opengis.net/context\"");
       //fprintf( stream, " xmlns:sld=\"http://www.opengis.net/sld");
-      fprintf( stream, 
+      msIO_fprintf( stream, 
                " xsi:schemaLocation=\"http://www.opengis.net/context http://schemas.opengis.net/context/1.0.0/context.xsd\">\n");
   }
   else
   {
-      fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"");
+      msIO_fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"");
 
       pszEncodedVal = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-      fprintf( stream, " xsi:noNamespaceSchemaLocation=\"%s/contexts/",
+      msIO_fprintf( stream, " xsi:noNamespaceSchemaLocation=\"%s/contexts/",
                pszEncodedVal );
       msFree(pszEncodedVal);
       pszEncodedVal = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-      fprintf( stream, "%s/context.xsd\">\n", pszEncodedVal);
+      msIO_fprintf( stream, "%s/context.xsd\">\n", pszEncodedVal);
       msFree(pszEncodedVal);
   }
 
   // set the General information
-  fprintf( stream, "  <General>\n" );
+  msIO_fprintf( stream, "  <General>\n" );
 
   // Window
   if( map->width != -1 || map->height != -1 )
-      fprintf( stream, "    <Window width=\"%d\" height=\"%d\"/>\n", 
+      msIO_fprintf( stream, "    <Window width=\"%d\" height=\"%d\"/>\n", 
                map->width, map->height );
 
   // Bounding box corners and spatial reference system
@@ -1544,14 +1547,14 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       free(tabspace);
   tabspace = strdup("    ");
   value = msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE);
-  fprintf( stream, 
+  msIO_fprintf( stream, 
           "%s<!-- Bounding box corners and spatial reference system -->\n", 
            tabspace );
   if(!value || (strcasecmp(value, "(null)") == 0))
-              fprintf(stream, "<!-- WARNING: Mandatory data 'projection' was missing in this context. -->\n");
+      msIO_fprintf(stream, "<!-- WARNING: Mandatory data 'projection' was missing in this context. -->\n");
 
   pszEncodedVal = msEncodeHTMLEntities(value);
-  fprintf( stream, "%s<BoundingBox SRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n", 
+  msIO_fprintf( stream, "%s<BoundingBox SRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n", 
            tabspace, pszEncodedVal, map->extent.minx, map->extent.miny, 
            map->extent.maxx, map->extent.maxy );
   msFree(pszEncodedVal);
@@ -1568,7 +1571,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           msOWSPrintEncodeParam(stream, "MAP.NAME", map->name, OWS_NOERR, 
                                 "    <Name>%s</Name>\n", NULL);
 
-      fprintf( stream, "%s<!-- Title of Context -->\n", tabspace );
+      msIO_fprintf( stream, "%s<!-- Title of Context -->\n", tabspace );
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
                                NULL, "wms_title", OWS_WARN,
                                "    <Title>%s</Title>\n", map->name);
@@ -1587,15 +1590,15 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           papszKeywords = split(pszValue, ',', &nKeywords);
           if(nKeywords > 0 && papszKeywords)
           {
-              fprintf( stream, "    <KeywordList>\n");
+              msIO_fprintf( stream, "    <KeywordList>\n");
               for(iKey=0; iKey<nKeywords; iKey++)
               {
                   pszEncodedVal = msEncodeHTMLEntities(papszKeywords[iKey]);
-                  fprintf( stream, "      <Keyword>%s</Keyword>\n", 
+                  msIO_fprintf( stream, "      <Keyword>%s</Keyword>\n", 
                           pszEncodedVal);
                   msFree(pszEncodedVal);
               }
-              fprintf( stream, "    </KeywordList>\n");
+              msIO_fprintf( stream, "    </KeywordList>\n");
           }
       }
   }
@@ -1624,7 +1627,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   pszURL = msLookupHashTable(&(map->web.metadata), "wms_logourl_href");
   if(pszURL != NULL)
   {
-      fprintf( stream, "    <LogoURL");
+      msIO_fprintf( stream, "    <LogoURL");
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
                                NULL, "wms_logourl_width", OWS_NOERR,
                                " width=\"%s\"", NULL);
@@ -1634,12 +1637,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
                                NULL, "wms_logourl_format", OWS_NOERR,
                                " format=\"%s\"", NULL);
-      fprintf( stream, ">\n");
+      msIO_fprintf( stream, ">\n");
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
                                NULL, "wms_logourl_href", OWS_NOERR,
           "      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                NULL);
-      fprintf( stream, "    </LogoURL>\n");
+      msIO_fprintf( stream, "    </LogoURL>\n");
   }
 
   // DataURL
@@ -1653,7 +1656,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   pszURL = msLookupHashTable(&(map->web.metadata), "wms_descriptionurl_href");
   if(pszURL != NULL &&  nVersion >= OWS_1_0_0)
   {
-      fprintf( stream, "    <DescriptionURL");
+      msIO_fprintf( stream, "    <DescriptionURL");
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata),
                                NULL, "wms_descriptionurl_width", OWS_NOERR, 
                                " width=\"%s\"", NULL);
@@ -1663,23 +1666,23 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
                                NULL, "wms_descriptionurl_format", OWS_NOERR,
                                " format=\"%s\"", NULL);
-      fprintf( stream, ">\n");
+      msIO_fprintf( stream, ">\n");
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
                                NULL, "wms_descriptionurl_href", OWS_NOERR,
           "      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                NULL);
-      fprintf( stream, "    </DescriptionURL>\n");
+      msIO_fprintf( stream, "    </DescriptionURL>\n");
   }
 
   // Contact Info
   msOWSPrintContactInfo( stream, tabspace, OWS_1_1_0, &(map->web.metadata) );
 
   // Close General
-  fprintf( stream, "  </General>\n" );
+  msIO_fprintf( stream, "  </General>\n" );
   free(tabspace);
 
   // Set the layer list
-  fprintf(stream, "  <LayerList>\n");
+  msIO_fprintf(stream, "  <LayerList>\n");
 
   // Loop on all layer  
   for(i=0; i<map->numlayers; i++)
@@ -1690,7 +1693,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               nValue = 1;
           else
               nValue = 0;
-          fprintf(stream, "    <Layer queryable=\"%d\" hidden=\"%d\">\n", 
+          msIO_fprintf(stream, "    <Layer queryable=\"%d\" hidden=\"%d\">\n", 
                   msIsLayerQueryable(&(map->layers[i])), nValue);
 
           // 
@@ -1723,9 +1726,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                       NULL, "wms_onlineresource", OWS_WARN, 
          "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                       pszValue) == OWS_WARN)
-              fprintf(stream, "<!-- wms_onlineresource not set, using base URL"
+              msIO_fprintf(stream, "<!-- wms_onlineresource not set, using base URL"
                       " , but probably not what you want -->\n");
-          fprintf(stream, "      </Server>\n");
+          msIO_fprintf(stream, "      </Server>\n");
           if(pszValue)
               free(pszValue);
 
@@ -1765,7 +1768,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                           "wms_dataurl_href");
               if(pszURL != NULL)
               {
-                  fprintf( stream, "      <DataURL");
+                  msIO_fprintf( stream, "      <DataURL");
                   msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
                                            NULL, "wms_dataurl_width", OWS_NOERR,
                                            " width=\"%s\"", NULL);
@@ -1775,12 +1778,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
                                            NULL, "wms_dataurl_format", OWS_NOERR,
                                            " format=\"%s\"", NULL);
-                  fprintf( stream, ">\n");
+                  msIO_fprintf( stream, ">\n");
                   msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
                                            NULL, "wms_dataurl_href", OWS_NOERR,
                                            "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                            NULL);
-                  fprintf( stream, "      </DataURL>\n");
+                  msIO_fprintf( stream, "      </DataURL>\n");
               }
           }
 
@@ -1792,7 +1795,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                      "wms_metadataurl_href");
           if(pszURL != NULL)
           {
-              fprintf( stream, "      <MetadataURL");
+              msIO_fprintf( stream, "      <MetadataURL");
               msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
                                        NULL, "wms_metadataurl_width", OWS_NOERR,
                                        " width=\"%s\"", NULL);
@@ -1802,12 +1805,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
                                        NULL, "wms_metadataurl_format", OWS_NOERR,
                                        " format=\"%s\"", NULL);
-              fprintf( stream, ">\n");
+              msIO_fprintf( stream, ">\n");
               msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
                                        NULL, "wms_metadataurl_href", OWS_NOERR,
                                        "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                        NULL);
-              fprintf( stream, "      </MetadataURL>\n");
+              msIO_fprintf( stream, "      </MetadataURL>\n");
           }
 
           // Layer SRS
@@ -1816,7 +1819,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           if(pszValue && (strcasecmp(pszValue, "(null)") != 0))
           {
               pszEncodedVal = msEncodeHTMLEntities(pszValue);
-              fprintf(stream, "      <SRS>%s</SRS>\n", pszEncodedVal);
+              msIO_fprintf(stream, "      <SRS>%s</SRS>\n", pszEncodedVal);
               msFree(pszEncodedVal);
           }
 
@@ -1839,9 +1842,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   if(strcasecmp(pszValue, "") != 0)
                   {
                       pszEncodedVal = msEncodeHTMLEntities(pszValue);
-                      fprintf( stream, "      <FormatList>\n");
-                      fprintf(stream,"        <Format>%s</Format>\n",pszValue);
-                      fprintf( stream, "      </FormatList>\n");
+                      msIO_fprintf( stream, "      <FormatList>\n");
+                      msIO_fprintf(stream,"        <Format>%s</Format>\n",pszValue);
+                      msIO_fprintf( stream, "      </FormatList>\n");
                       msFree(pszEncodedVal);
                   }
               }
@@ -1861,21 +1864,21 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               papszFormats = split(pszValue, ',', &numFormats);
               if(numFormats > 0 && papszFormats)
               {
-                  fprintf( stream, "      <FormatList>\n");
+                  msIO_fprintf( stream, "      <FormatList>\n");
                   for(nForm=0; nForm<numFormats; nForm++)
                   {
                       pszEncodedVal =msEncodeHTMLEntities(papszFormats[nForm]);
                       if(pszCurrent && (strcasecmp(papszFormats[nForm], 
                                                    pszCurrent) == 0))
-                          fprintf( stream,
+                          msIO_fprintf( stream,
                                  "        <Format current=\"1\">%s</Format>\n",
                                    pszEncodedVal);
                       else
-                          fprintf( stream, "        <Format>%s</Format>\n", 
+                          msIO_fprintf( stream, "        <Format>%s</Format>\n", 
                                    pszEncodedVal);
                       msFree(pszEncodedVal);
                   }
-                  fprintf( stream, "      </FormatList>\n");
+                  msIO_fprintf( stream, "      </FormatList>\n");
               }
               if(papszFormats)
                   msFreeCharArray(papszFormats, numFormats);
@@ -1916,29 +1919,29 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   if( (pszValue && (strcasecmp(pszValue, "") != 0)) || 
                       (pszSLD && (strcasecmp(pszSLD, "") != 0)))
                   {
-                      fprintf( stream, "      <StyleList>\n");
-                      fprintf( stream, "        <Style current=\"1\">\n");
+                      msIO_fprintf( stream, "      <StyleList>\n");
+                      msIO_fprintf( stream, "        <Style current=\"1\">\n");
                       if( pszValue && (strcasecmp(pszValue, "") != 0))
                       {
                           pszEncodedVal = msEncodeHTMLEntities(pszValue);
-                          fprintf(stream, "          <Name>%s</Name>\n", 
+                          msIO_fprintf(stream, "          <Name>%s</Name>\n", 
                                   pszEncodedVal);
-                          fprintf(stream,"          <Title>%s</Title>\n",
+                          msIO_fprintf(stream,"          <Title>%s</Title>\n",
                                   pszEncodedVal);
                           msFree(pszEncodedVal);
                       }
                       if( pszSLD && (strcasecmp(pszSLD, "") != 0))
                       {
                           pszEncodedVal = msEncodeHTMLEntities(pszSLD);
-                          fprintf( stream, "          <SLD>\n" );
-                          fprintf( stream, 
+                          msIO_fprintf( stream, "          <SLD>\n" );
+                          msIO_fprintf( stream, 
                          "            <OnlineResource xlink:type=\"simple\" ");
-                          fprintf(stream,"xlink:href=\"%s\"/>", pszEncodedVal);
-                          fprintf( stream, "          </SLD>\n" );
+                          msIO_fprintf(stream,"xlink:href=\"%s\"/>", pszEncodedVal);
+                          msIO_fprintf( stream, "          </SLD>\n" );
                           free(pszEncodedVal);
                       }
-                      fprintf( stream, "        </Style>\n");
-                      fprintf( stream, "      </StyleList>\n");
+                      msIO_fprintf( stream, "        </Style>\n");
+                      msIO_fprintf( stream, "      </StyleList>\n");
                   }
                   if(pszSLD2)
                   {
@@ -1958,7 +1961,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                            "wms_stylelist");
               pszCurrent = msLookupHashTable(&(map->layers[i].metadata), 
                                              "wms_style");
-              fprintf( stream, "      <StyleList>\n");
+              msIO_fprintf( stream, "      <StyleList>\n");
               while(pszValue != NULL)
               {
                   pszStyle = strdup(pszValue);
@@ -1968,23 +1971,23 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   if( strcasecmp(pszStyle, "") != 0)
                   {
                       if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
-                          fprintf( stream,"        <Style current=\"1\">\n" );
+                          msIO_fprintf( stream,"        <Style current=\"1\">\n" );
                       else
-                          fprintf( stream, "        <Style>\n" );
+                          msIO_fprintf( stream, "        <Style>\n" );
 
                       pszStyleItem = (char*)malloc(strlen(pszStyle)+10+5);
                       sprintf(pszStyleItem, "wms_style_%s_sld", pszStyle);
                       if(msLookupHashTable(&(map->layers[i].metadata),
                                            pszStyleItem) != NULL)
                       {
-                          fprintf(stream, "          <SLD>\n");
+                          msIO_fprintf(stream, "          <SLD>\n");
                           msOWSPrintEncodeMetadata(stream, 
                                                    &(map->layers[i].metadata),
                                                    NULL, pszStyleItem, 
                                                    OWS_NOERR, 
      "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                                    NULL);
-                          fprintf(stream, "          </SLD>\n");
+                          msIO_fprintf(stream, "          </SLD>\n");
                           free(pszStyleItem);
                       }
                       else
@@ -1992,7 +1995,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                           free(pszStyleItem);
                           // Name
                           pszEncodedVal = msEncodeHTMLEntities(pszStyle);
-                          fprintf(stream, "          <Name>%s</Name>\n", 
+                          msIO_fprintf(stream, "          <Name>%s</Name>\n", 
                                   pszEncodedVal);
                           msFree(pszEncodedVal);
                           pszStyleItem = (char*)malloc(strlen(pszStyle)+10+8);
@@ -2014,7 +2017,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                                      pszStyleItem);
                           if(pszURL != NULL)
                           {
-                              fprintf( stream, "          <LegendURL");
+                              msIO_fprintf( stream, "          <LegendURL");
                               sprintf(pszStyleItem, 
                                       "wms_style_%s_legendurl_width",pszStyle);
                               msOWSPrintEncodeMetadata(stream, 
@@ -2036,7 +2039,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                                        NULL, pszStyleItem,
                                                        OWS_NOERR,
                                                        " format=\"%s\"", NULL);
-                              fprintf( stream, ">\n");
+                              msIO_fprintf( stream, ">\n");
                               sprintf(pszStyleItem, 
                                      "wms_style_%s_legendurl_href", pszStyle);
                               msOWSPrintEncodeMetadata(stream, 
@@ -2045,40 +2048,40 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                                        OWS_NOERR,
                                                        "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                                        NULL);
-                              fprintf( stream, "          </LegendURL>\n");
+                              msIO_fprintf( stream, "          </LegendURL>\n");
                           }
                           free(pszStyleItem);
                       }
 
-                      fprintf( stream,"        </Style>\n" );
+                      msIO_fprintf( stream,"        </Style>\n" );
                   }
                   free(pszStyle);
                   pszValue = strchr(pszValue, ',');
                   if(pszValue)  
                       pszValue++;
               }
-              fprintf( stream, "      </StyleList>\n");
+              msIO_fprintf( stream, "      </StyleList>\n");
           }
 
-          fprintf(stream, "    </Layer>\n");
+          msIO_fprintf(stream, "    </Layer>\n");
       }
   }
 
   // Close layer list
-  fprintf(stream, "  </LayerList>\n");
+  msIO_fprintf(stream, "  </LayerList>\n");
   // Close Map Context
 
   if(nVersion >= OWS_1_0_0)
   {
-      fprintf(stream, "</ViewContext>\n");
+      msIO_fprintf(stream, "</ViewContext>\n");
   }
   else if(nVersion >= OWS_0_1_7)
   {
-      fprintf(stream, "</View_Context>\n");
+      msIO_fprintf(stream, "</View_Context>\n");
   }
   else // 0.1.4
   {
-      fprintf(stream, "</WMS_Viewer_Context>\n");
+      msIO_fprintf(stream, "</WMS_Viewer_Context>\n");
   }
 
   return MS_SUCCESS;

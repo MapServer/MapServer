@@ -24,15 +24,15 @@ static char *readPostBody( cgiRequestObj *request )
         data = (char *) malloc(data_max+1);
         if( data == NULL )
         {
-            printf("Content-type: text/html%c%c",10,10);
-            printf("malloc() failed, Content-Length: %d unreasonably large?\n",
+            msIO_printf("Content-type: text/html%c%c",10,10);
+            msIO_printf("malloc() failed, Content-Length: %d unreasonably large?\n",
                    data_max );
             exit( 1 );
         }
 
         if ( (int) fread(data, 1, data_max, stdin) < data_max ) {
-            printf("Content-type: text/html%c%c",10,10);
-            printf("POST body is short\n");
+            msIO_printf("Content-type: text/html%c%c",10,10);
+            msIO_printf("POST body is short\n");
             exit(1);
         }
         data[data_max] = '\0';
@@ -61,8 +61,8 @@ static char *readPostBody( cgiRequestObj *request )
 
             if( data == NULL )
             {
-                printf("Content-type: text/html%c%c",10,10);
-                printf("out of memory trying to allocate %d input buffer, POST body too large?\n", data_max+1 );
+                msIO_printf("Content-type: text/html%c%c",10,10);
+                msIO_printf("out of memory trying to allocate %d input buffer, POST body too large?\n", data_max+1 );
                 exit(1);
             }
         }
@@ -79,8 +79,8 @@ int loadParams(cgiRequestObj *request){
   char *s;
 
   if(getenv("REQUEST_METHOD")==NULL) {
-    printf("This script can only be used to decode form results and \n");
-    printf("should be initiated as a CGI process via a httpd server.\n");
+    msIO_printf("This script can only be used to decode form results and \n");
+    msIO_printf("should be initiated as a CGI process via a httpd server.\n");
     exit(0);
   }
 
@@ -129,13 +129,13 @@ int loadParams(cgiRequestObj *request){
       
       s = getenv("QUERY_STRING");
       if(s == NULL) {
-	printf("Content-type: text/html%c%c",10,10);
-	printf("No query information to decode. QUERY_STRING not set.\n");	
+	msIO_printf("Content-type: text/html%c%c",10,10);
+	msIO_printf("No query information to decode. QUERY_STRING not set.\n");	
 	exit(1);
       }
       if(strlen(s)==0) {
-	printf("Content-type: text/html%c%c",10,10);
-	printf("No query information to decode. QUERY_STRING is set, but empty.\n");
+	msIO_printf("Content-type: text/html%c%c",10,10);
+	msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
 	exit(1);
       }
 
@@ -147,8 +147,8 @@ int loadParams(cgiRequestObj *request){
         m++;
       }
     } else {
-      printf("Content-type: text/html%c%c",10,10);
-      printf("This script should be referenced with a METHOD of GET or METHOD of POST.\n");
+      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_printf("This script should be referenced with a METHOD of GET or METHOD of POST.\n");
       exit(1);
     }
   }
