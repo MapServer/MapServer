@@ -774,12 +774,6 @@ memory.") const char * {
     return MS_SUCCESS;
   }
 
-  /*%newobject removeFeature;
-  shapeObj *removeFeature(int featureindex) {
-      return msLayerRemoveInlineFeature(self, featureindex);
-  }
-  */
-
   /*
   Returns the number of inline feature of a layer
   */
@@ -791,7 +785,9 @@ memory.") const char * {
   rectObj *getExtent() {
       rectObj *extent;
       extent = (rectObj *) malloc(sizeof(rectObj));
+      msLayerOpen(self);
       msLayerGetExtent(self, extent);
+      msLayerClose(self);
       return extent;
   }
 

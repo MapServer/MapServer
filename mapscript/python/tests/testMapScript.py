@@ -65,6 +65,22 @@ class RemoveLayerTestCase(unittest.TestCase):
         self.mapobj1.removeLayer(1)
         assert self.mapobj1.getLayer(0).name == l1name
 
+def rectObjToTuple(rect):
+    return (rect.minx, rect.miny, rect.maxx, rect.maxy)
+
+class LayerExtentTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testPolygonExtent(self):
+        layer = self.mapobj1.getLayerByName('POLYGON')
+        e = layer.getExtent()
+        assert int(100*e.minx) == -25
+        assert int(100*e.miny) == 5122
+        assert int(100*e.maxx) == 25
+        assert int(100*e.maxy) == 5172
+        
 # class removal tests
 class RemoveClassTestCase(unittest.TestCase):
     def setUp(self):
