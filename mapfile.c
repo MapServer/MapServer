@@ -422,12 +422,12 @@ int loadProjectionString(projectionObj *p, char *value)
 #endif
 }
 
-void writeProjection(projectionObj *p, FILE *stream, char *tab) {
+static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
   int i;
 
   fprintf(stream, "%sPROJECTION\n", tab);
   for(i=0; i<p->numargs; i++)
-    fprintf(stream, "%s%s\n", tab, p->projargs[i]);
+    fprintf(stream, "\t%s%s\n", tab, p->projargs[i]);
   fprintf(stream, "%sEND\n", tab);
 }
 
@@ -583,6 +583,45 @@ static int loadLabel(labelObj *label, mapObj *map)
       return(-1);
     }
   } /* next token */
+}
+
+static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
+{
+  fprintf(stream, "%sLABEL\n", tab);
+  if(label->type == MS_BITMAP) {
+    fprintf(stream, "\t%sSIZE %s\n", tab, msBitmapFontSizes[label->size]);
+    fprintf(stream, "\t%sTYPE BITMAP\n", tab);
+  } else {
+    if(label->autoangle)
+      fprintf(stream, "\t%sANGLE AUTO\n", tab);
+    else
+      fprintf(stream, "\t%sANGLE %f\n", tab, label->angle*MS_RAD_TO_DEG);
+    if(label->antialias) fprintf(stream, "\t%sANTIALIAS\n", tab);
+    fprintf(stream, "\t%sFONT %s\n", tab, label->font);
+    fprintf(stream, "\t%sMAXSIZE %d\n", tab, label->maxsize);
+    fprintf(stream, "\t%sMINSIZE %d\n", tab, label->minsize);
+    fprintf(stream, "\t%sSIZE %d\n", tab, label->size);
+    fprintf(stream, "\t%sTYPE TRUETYPE\n", tab);
+  }  
+
+  fprintf(stream, "\t%sBUFFER %d\n", tab, label->buffer);
+  fprintf(stream, "\t%sCOLOR %d %d %d\n", tab, map->palette.colors[label->color].red, map->palette.colors[label->color].green, map->palette.colors[label->color].blue);
+  fprintf(stream, "\t%sFORCE %s\n", tab, msTrueFalse[label->force]);
+  fprintf(stream, "\t%sMINDISTANCE %d\n", tab, label->mindistance);
+  if(label->autominfeaturesize)
+    fprintf(stream, "\t%sMINFEATURESIZE AUTO\n", tab);
+  else
+    fprintf(stream, "\t%sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
+  fprintf(stream, "\t%sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
+  if(label->outlinecolor > -1) fprintf(stream, "\t%sOUTLINECOLOR %d %d %d\n", tab, map->palette.colors[label->outlinecolor].red, map->palette.colors[label->outlinecolor].green, map->palette.colors[label->outlinecolor].blue);
+  fprintf(stream, "\t%sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
+  fprintf(stream, "\t%sPOSITION %s\n", tab, msLabelPositions[label->position]);
+  if(label->shadowcolor > -1) {
+    fprintf(stream, "\t%sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor].red, map->palette.colors[label->shadowcolor].green, map->palette.colors[label->shadowcolor].blue);
+    fprintf(stream, "\t%sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
+  }
+  fprintf(stream, "\t%sWRAP %c\n", tab, label->wrap);
+  fprintf(stream, "%sEND\n", tab);  
 }
 
 static void loadLabelString(mapObj *map, labelObj *label, char *value)
