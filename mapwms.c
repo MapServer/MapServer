@@ -27,6 +27,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.135  2004/10/29 22:03:40  dan
+ * Enable MS_NONSQUARE by default for WMS is width/height doesn't match the
+ * extents' x/y ratio (bug 862).
+ * When reprojecting layers in a GetMap request (or if NONSQUARE enabled), then
+ * copy the original map projection to any layer that doesn't have a projection
+ * explicitly set in the mapfile (bug 947)
+ *
  * Revision 1.134  2004/10/29 00:13:17  assefa
  * Support RULE parameter for GetLegendGraphic (Bug 843)
  * Change link:href="...to "xlink:href="... (Bug 1001)
@@ -474,7 +481,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
 int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           char **names, char **values, int numentries)
 {
-  int i, adjust_extent = MS_FALSE;
+  int i, adjust_extent = MS_FALSE, nonsquare_enabled = MS_FALSE;
   int iUnits = -1;
   int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
@@ -711,7 +718,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       msApplyOutputFormat( &(map->outputformat), format, transparent,
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
 
-  //validate all layers given. If an invalid layer is sent, return an exception.
+  /* Validate all layers given. 
+  ** If an invalid layer is sent, return an exception.
+  */
   if (validlayers == 0 || invalidlayers > 0)
   {
       msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
@@ -719,12 +728,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       return msWMSException(map, nVersion, "LayerNotDefined");
   }
 
-  /* validat srs value : When the SRS parameter in a GetMap request contains a SRS
-     that is valid for some, but not all of the layers being requested, then the
-     server shall throw a Service Exception (code = "InvalidSRS").
-     Validate first against epsg in the map and if no matching srs is found
-     validate all layers requested.*/
-
+  /* validate srs value: When the SRS parameter in a GetMap request contains a
+  ** SRS that is valid for some, but not all of the layers being requested, 
+  ** then the server shall throw a Service Exception (code = "InvalidSRS").
+  ** Validate first against epsg in the map and if no matching srs is found
+  ** validate all layers requested.
+  */
   if (epsgbuf && strlen(epsgbuf) > 1)
   {
       epsgvalid = MS_FALSE;
@@ -783,7 +792,99 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
   }
 
+  /* Validate requested image size. 
+   */
+  if(map->width > map->maxsize || map->height > map->maxsize ||
+     map->width < 1 || map->height < 1)
+  {
+      msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
 
+      // Restore valid default values in case errors INIMAGE are used
+      map->width = 400;
+      map->height= 300;
+      return msWMSException(map, nVersion, NULL);
+  }
+
+  /* Check whether requested BBOX and width/height result in non-square pixels
+   */
+  nonsquare_enabled = msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE );
+  if (!nonsquare_enabled)
+  {
+      double dx, dy, reqy;
+      dx = MS_ABS(map->extent.maxx - map->extent.minx);
+      dy = MS_ABS(map->extent.maxy - map->extent.miny);
+
+      reqy = ((double)map->width) * dy / dx;
+
+      // Allow up to 1 pixel of error on the width/height ratios.
+      // If more than 1 pixel then enable non-square pixels
+      if ( MS_ABS((reqy - (double)map->height)) > 1.0 )
+      {
+          msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.");
+          msSetConfigOption(map, "MS_NONSQUARE", "YES");
+          nonsquare_enabled = MS_TRUE;
+      }
+  }
+
+  /* If the requested SRS is different from the default mapfile projection, or
+  ** if a BBOX resulting in non-square pixels is requested then
+  ** copy the original mapfile's projection to any layer that doesn't already 
+  ** have a projection. This will prevent problems when users forget to 
+  ** explicitly set a projection on all layers in a WMS mapfile.
+  */
+  if ((srsbuffer && strlen(srsbuffer) > 1) || nonsquare_enabled)
+  {
+      projectionObj newProj;
+
+      if (map->projection.numargs <= 0)
+      {
+          msSetError(MS_WMSERR, "Cannot set new SRS on a map that doesn't "
+                     "have any projection set. Please make sure your mapfile "
+                     "has a projection defined at the top level.", 
+                     "msWMSLoadGetMapParams()");
+          return msWMSException(map, nVersion, "InvalidSRS");
+      }
+      
+      msInitProjection(&newProj);
+      if (srsbuffer && strlen(srsbuffer) > 1 && 
+          msLoadProjectionString(&newProj, srsbuffer) != 0)
+      {
+          msFreeProjection(&newProj);
+          return msWMSException(map, nVersion, NULL);
+      }
+
+      if (nonsquare_enabled || 
+          msProjectionsDiffer(&(map->projection), &newProj))
+      {
+          char *original_srs = NULL;
+
+          for(i=0; i<map->numlayers; i++)
+          {
+              if (map->layers[i].projection.numargs <= 0 &&
+                  map->layers[i].status != MS_OFF &&
+                  map->layers[i].transform == MS_TRUE)
+              {
+                  // This layer is turned on and needs a projection
+
+                  // Fetch main map projection string only now that we need it
+                  if (original_srs == NULL)
+                      original_srs = msGetProjectionString(&(map->projection));
+
+                  if (msLoadProjectionString(&(map->layers[i].projection),
+                                             original_srs) != 0)
+                  {
+                      msFreeProjection(&newProj);
+                      return msWMSException(map, nVersion, NULL);
+                  }
+                  map->layers[i].project = MS_TRUE;
+              }
+          }
+
+          msFree(original_srs);
+      }
+
+      msFreeProjection(&newProj);
+  }
 
   //apply the srs to the map file. This is only done after validating
   //that the srs given as parameter is valid for all layers
@@ -795,18 +896,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         iUnits = GetMapserverUnitUsingProj(&(map->projection));
         if (iUnits != -1)
           map->units = iUnits;
-  }
-
-  /* Validate requested image size. */
-  if(map->width > map->maxsize || map->height > map->maxsize ||
-     map->width < 1 || map->height < 1)
-  {
-      msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
-
-      // Restore valid default values in case errors INIMAGE are used
-      map->width = 400;
-      map->height= 300;
-      return msWMSException(map, nVersion, NULL);
   }
 
   /* Validate Styles :
@@ -832,7 +921,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   /*
   ** WMS extents are edge to edge while MapServer extents are center of
   ** pixel to center of pixel.  Here we try to adjust the WMS extents
-  ** in by half a pixel.  We wait till here becaus we want to ensure we
+  ** in by half a pixel.  We wait till here because we want to ensure we
   ** are doing this in terms of the correct WIDTH and HEIGHT.
   */
   if( adjust_extent )
