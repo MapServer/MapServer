@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- Fixed raster queries to reproject results back to map projection, and to
+  do point queries distance checking against the correct projection. (bug 1021)
+
 - Get rid of WMS 1.0.8 support. It's not an officially supported verison
   of the spec anyway: it's synonymous for 1.1.0 (bug 1022)
 
