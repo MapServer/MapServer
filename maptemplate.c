@@ -1957,7 +1957,9 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
 {
   FILE *stream;
   char line[MS_BUFFER_LENGTH], *tmpline;
-  int   nBufferSize, nCurrentSize, nExpandBuffer = 0;
+  int   nBufferSize = 0;
+  int   nCurrentSize = 0;
+  int   nExpandBuffer = 0;
 
   regex_t re; /* compiled regular expression to be matched */ 
 
@@ -2082,7 +2084,9 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
     int status;
     int i,j;
     char buffer[1024];
-     int   nBufferSize, nCurrentSize, nExpandBuffer = 0;
+    int   nBufferSize =0;
+    int   nCurrentSize = 0;
+    int   nExpandBuffer = 0;
 
     char *template;
 
@@ -2476,7 +2480,6 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
 {
     mapservObj          *msObj  = NULL;
     char                *pszBuffer = NULL;
-    gdImagePtr          img=NULL;
 
     if (map)
     {
