@@ -71,6 +71,13 @@ OGR=	  @OGR_ENABLED@
 OGR_LIB=  @OGR_LIB@
 OGR_INC=  @OGR_INC@
 OGR_STATIC= @OGR_STATIC@
+
+# Optional GDAL Support (provides read access to a variety of raster formats)
+# See http://www.remotesensing.org/gdal
+GDAL=	  @GDAL_ENABLED@
+GDAL_LIB=  @GDAL_LIB@
+GDAL_INC=  @GDAL_INC@
+
 #
 # UofMN GIS/Image Processing Extension (very experimental)
 #
@@ -103,12 +110,14 @@ XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) \
-        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(MPATROL) $(GD_INC) $(PROJ_INC) \
-	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) $(REGEX_INC) $(MPATROL_INC)
+        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(MPATROL) $(GD_INC) \
+	$(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
+	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC)
 
 # Link flags and shared libs only
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TIFF_LIB) $(PROJ_LIB) \
-          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(MPATROL_LIB) $(XTRALIBS)
+          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
+	  $(MPATROL_LIB) $(XTRALIBS)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
@@ -145,7 +154,7 @@ mapparser.c: mapparser.y
 	$(YACC) -p msyy -d -omapparser.c mapparser.y
 
 mapogr.o: mapogr.cpp
-	$(CXX) -c $(CFLAGS) $(OGR_INC) mapogr.cpp -o mapogr.o
+	$(CXX) -c $(CFLAGS) mapogr.cpp -o mapogr.o
 
 lib: libmap.a
 libmap: libmap.a
@@ -186,8 +195,8 @@ sortshp: sortshp.o
 perlvars:
 	touch perlvars
 	pwd > perlvars
-	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) >> perlvars
-	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) >> perlvars
+	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) >> perlvars
+	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) >> perlvars
 	echo $(LDFLAGS) >> perlvars
 	echo $(STATIC_LIBS) >> perlvars
 
