@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/02 17:42:55  frank
+ * added TLOCK_POOL
+ *
  * Revision 1.5  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -59,6 +62,7 @@ void msReleaseLock(int);
 #define TLOCK_ERROROBJ  3
 #define TLOCK_PROJ      4
 #define TLOCK_TTF       5
+#define TLOCK_POOL      6
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100
