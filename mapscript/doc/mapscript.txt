@@ -1244,7 +1244,7 @@ getOutputFormat( string imagetype ) : outputFormatObj_
     an output format to be found either by driver (like 'GD/PNG') or
     name (like 'PNG24').
 
-insertLayer( layerObj *layer [, int nIndex=-1 ] ) : int
+insertLayer( layerObj layer [, int nIndex=-1 ] ) : int
     Insert a copy of *layer* into the Map at index *nIndex*.  The default
     value of *nIndex* is -1, which means the last possible index.  Returns
     the index of the new Layer, or -1 in the case of a failure.
