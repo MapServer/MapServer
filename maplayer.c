@@ -508,6 +508,8 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
   // populate the iteminfo array
   return(layerInitItemInfo(layer));
 
+  fprintf(stderr, "In msLayerWhichItems().\n");
+
   return(MS_SUCCESS);
 }
 

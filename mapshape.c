@@ -1212,16 +1212,44 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
 {
+  int i;
+  char *filename, tilename[MS_PATH_LENGTH];
+
   if(msSHPOpenFile(&(layer->tileshpfile), "rb", shapepath, layer->tileindex) == -1) return(MS_FAILURE);
   if((layer->tileitemindex = msDBFGetItemIndex(layer->tileshpfile.hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
  
-  return(MS_SUCCESS);
+  // position the source at the FIRST tile to use as a template, this is so the functions that fill the iteminfo array have something to work from
+  for(i=0; i<layer->tileshpfile.numshapes; i++) {
+
+    if(!layer->data) // assume whole filename is in attribute field
+      filename = (char*)msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex);
+    else {  
+      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
+      filename = tilename;
+    }
+      
+    if(strlen(filename) == 0) continue; // check again
+      
+    // open the shapefile
+#ifndef IGNORE_MISSING_DATA
+    if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
+#else
+    if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
+#endif
+
+    return(MS_SUCCESS); // found the template, ok to proceed
+  }
+
+  msSetError(MS_SHPERR, "Unable to open a single tile to use as a template.", "msTiledSHPOpenFile()");
+  return(MS_FAILURE);
 }
 
 int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 {
   int i, status;
   char *filename, tilename[MS_PATH_LENGTH];
+
+  msSHPCloseFile(&(layer->shpfile)); // close previously opened files
 
   status = msSHPWhichShapes(&(layer->tileshpfile), rect);
   if(status != MS_SUCCESS) return(status); // could be MS_DONE or MS_FAILURE
@@ -1235,7 +1263,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 	sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
 	filename = tilename;
       }
-      
+
       if(strlen(filename) == 0) continue; // check again
       
       // open the shapefile
@@ -1251,13 +1279,12 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
       else if(status != MS_SUCCESS)
 	return(MS_FAILURE);
 
-      msDebug("first tile is %s (%d shapes)\n", filename, layer->shpfile.numshapes);
       layer->tileshpfile.lastshape = i;
       break;
     }
   }
 
-  if(i == layer->tileshpfile.numshapes) 
+  if(i == layer->tileshpfile.numshapes)
     return(MS_DONE); // no more tiles
   else
     return(MS_SUCCESS);
@@ -1302,7 +1329,6 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 	  else if(status != MS_SUCCESS)
 	    return(MS_FAILURE);
 	  
-	  msDebug("next tile is %s (%d shapes)\n", filename, layer->shpfile.numshapes);
 	  layer->tileshpfile.lastshape = i;
 	  break;
 	}
