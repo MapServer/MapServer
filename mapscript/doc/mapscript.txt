@@ -1,0 +1,86 @@
+.. _mapObj:
+
+============
+class mapObj
+============
+
+.. _layerObj:
+
+==============
+class layerObj
+==============
+
+.. _imageObj:
+
+==============
+class imageObj
+==============
+
+.. _shapeObj:
+
+==============
+class shapeObj
+==============
+
+.. _rectObj:
+
+=============
+class rectObj
+=============
+
+Map extents and shape bounds are instances of rectObj_.
+   
+----------
+Attributes
+----------
+
+- minx_
+- miny
+- maxx
+- maxy
+
+-------
+Methods
+-------
+
+- constructor_
+- draw_
+- toPolygon_
+   
+-----------------
+Attribute Details
+-----------------
+
+.. _minx:
+
+float **minx**
+
+    Minimum easting of rectangle region.
+
+--------------
+Method Details
+--------------
+
+.. _constructor:
+
+rectObj_ **rectObj** ([float minx, float miny, float maxx, float maxy])
+
+    Create new instance of rectObj_.  The four easting and northing arguments
+    are optional.
+
+
+.. _draw:
+
+int **draw** (mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text)
+
+    Draw rectangle into *img* using style defined by the *classindex* class
+    of *layer*.  The rectangle is labeled with the string *text*.
+
+
+.. _toPolygon:
+
+shapeObj_ **toPolygon** ()
+
+    Convert to a polygon of five vertices.
+        
+
