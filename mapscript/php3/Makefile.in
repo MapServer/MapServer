@@ -35,7 +35,7 @@
 
 CC =     @PHP_CC@
 LD =     @PHP_LD@
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ -DCOMPILE_DL=1 
 
 #
 # Set PHP_SRC_DIR to point to the root of the PHP source tree
@@ -72,7 +72,7 @@ php_mapscript.so: $(PHPMS_OBJS)
 	$(LD) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
 
 %.o: %.c php_mapscript.h
-	$(CC) $(CFLAGS) -DCOMPILE_DL=1 -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 
 clean:
