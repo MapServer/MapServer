@@ -958,27 +958,45 @@ int msLayerGetNumFeatures(layerObj *layer) {
     return i;
 }
 
+void 
+msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
+
+{
+    int len = strlen(key);
+    int i;
+    char *directive;
+
+    directive = (char *) malloc(strlen(key)+strlen(value)+2);
+    sprintf( directive, "%s=%s", key, value );
+
+    for( i = 0; i < layer->numprocessing; i++ )
+    {
+        /* If the key is found, replace it */
+        if( strncasecmp( key, layer->processing[i], len ) == 0 
+            && layer->processing[i][len] == '=' )
+        {
+            free( layer->processing[i] );
+            layer->processing[i] = directive;
+            return;
+        }
+    }
+
+    /* otherwise add the directive at the end. */
+
+    msLayerAddProcessing( layer, directive );
+    free( directive );
+}
+
 void msLayerAddProcessing( layerObj *layer, const char *directive )
 
 {
-  int i, len;
-  
-  len = strcspn(directive, "="); // we only want to compare characters up to the equal sign
-  for(i=0; i<layer->numprocessing; i++) { // check to see if option is already set
-    if(strncasecmp(directive, layer->processing[i], len) == 0) {
-	  free(layer->processing[i]);
-	  layer->processing[i] = strdup(directive);
-      return;
-    }
-  }
-
-  layer->numprocessing++;
-  if( layer->numprocessing == 1 )
-    layer->processing = (char **) malloc(2*sizeof(char *));
-  else
-    layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->numprocessing+1) );
-  layer->processing[layer->numprocessing-1] = strdup(directive);
-  layer->processing[layer->numprocessing] = NULL;
+    layer->numprocessing++;
+    if( layer->numprocessing == 1 )
+        layer->processing = (char **) malloc(2*sizeof(char *));
+    else
+        layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->numprocessing+1) );
+    layer->processing[layer->numprocessing-1] = strdup(directive);
+    layer->processing[layer->numprocessing] = NULL;
 }
 
 char *msLayerGetProcessing( layerObj *layer, int proc_index) {
