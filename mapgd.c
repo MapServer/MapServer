@@ -136,13 +136,31 @@ void msImageInitGD( imageObj *image, colorObj *background )
   }
 }
 
-/**
- * Utility function to load an image in a GD supported format, and
- * return it as a valid imageObj.
- */  
-imageObj *msImageLoadGD( const char *filename )
+/* msImageLoadGD now calls msImageLoadGDStream to do the work, change
+ * made as part of the resolution of bug 550 */
+
+imageObj *msImageLoadGD(const char *filename) {
+    FILE *stream;
+    imageObj *image;
+    stream = fopen(filename, "rb");
+    if (!stream) {
+        msSetError(MS_IOERR, "(%s)", "msImageLoadGD()", filename );
+        return(NULL);
+    }
+    image = msImageLoadGDStream(stream);
+    if (!image) {
+        msSetError(MS_GDERR, "Unable to initialize image '%s'", 
+                   "msLoadImageGD()", filename);
+        fclose(stream);
+        return(NULL);
+    }
+    else return(image);
+}
+
+/* msImageLoadGDStream is called by msImageLoadGD and is useful
+ * by itself */
+imageObj *msImageLoadGDStream(FILE *stream)
 {
-  FILE *stream;
   gdImagePtr img=NULL;
   const char *driver = NULL;
   char bytes[8];
@@ -150,12 +168,6 @@ imageObj *msImageLoadGD( const char *filename )
 
   image = (imageObj *)calloc(1,sizeof(imageObj));
   
-  stream = fopen(filename,"rb"); // allocate input and output images (same size)
-  if(!stream) {
-    msSetError(MS_IOERR, "(%s)", "msImageLoadGD()", filename );
-    return(NULL);
-  }
-
   fread(bytes,8,1,stream); // read some bytes to try and identify the file
   rewind(stream); // reset the image for the readers
   if (memcmp(bytes,"GIF8",4)==0) {
@@ -203,8 +215,7 @@ imageObj *msImageLoadGD( const char *filename )
   }
 
   if(!img) {
-    msSetError(MS_GDERR, "Unable to initialize image '%s'", "msLoadImage()", 
-               filename);
+    msSetError(MS_GDERR, "Unable to initialize image", "msLoadImageGDStream()");
     fclose(stream);
     return(NULL);
   }
@@ -215,11 +226,58 @@ imageObj *msImageLoadGD( const char *filename )
 
   if( image->format == NULL )
   {
-    msSetError(MS_GDERR, "Unable to create default OUTPUTFORMAT definition for driver '%s'.", "msImageLoadGD()", driver );
+    msSetError(MS_GDERR, "Unable to create default OUTPUTFORMAT definition for driver '%s'.", "msImageLoadGDStream()", driver );
     return(NULL);
   }
 
   return image;
+}
+
+/* msImageLoadGDCtx creates an imageObj using the GD's IOCtx interface */
+imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver) {
+    gdImagePtr img=NULL;
+    imageObj *image = NULL;
+
+    image = (imageObj *) calloc(1, sizeof(imageObj));
+
+    if (strcasecmp(driver, "gd/gif") == MS_SUCCESS) {
+#ifdef USE_GD_GIF
+        img = gdImageCreateFromGifCtx(ctx);
+#endif
+    }
+    if (strcasecmp(driver, "gd/png") == MS_SUCCESS) {
+#ifdef USE_GD_PNG
+        img = gdImageCreateFromPngCtx(ctx);
+#endif
+    }
+    else if (strcasecmp(driver, "gd/jpeg") == MS_SUCCESS) {
+#ifdef USE_GD_JPEG
+        img = gdImageCreateFromJpegCtx(ctx);
+#endif
+    }
+
+    if (!img) {
+        msSetError(MS_GDERR, "Unable to initialize image",
+                   "msLoadImageGDStream()");
+        return(NULL);
+    }
+
+    image->img.gd = img;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
+    image->width = img->sx;
+    image->height = img->sy;
+
+    /* Create an outputFormatObj for the format. */
+    image->format = msCreateDefaultOutputFormat( NULL, driver );
+    image->format->refcount++;
+
+    if( image->format == NULL ) {
+        msSetError(MS_GDERR, "Unable to create default OUTPUTFORMAT definition for driver '%s'.", "msImageLoadGDStream()", driver );
+        return(NULL);
+    }
+
+    return image;
 }
 
 static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
