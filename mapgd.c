@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2004/11/08 05:25:06  frank
+ * Applied patch in msImageLoadGDStream() to ensure the format reflects
+ * the interlacedness of the source image.
+ *
  * Revision 1.79  2004/11/05 19:51:28  frank
  * explicitly cast various double x, y and size values to int to avoid warnings
  *
@@ -317,6 +321,16 @@ imageObj *msImageLoadGDStream(FILE *stream)
     return(NULL);
   }
 
+  /*
+  ** Try to ensure we use the same interlacing on the output image as we
+  ** found in the source image. (Bug 1039)
+  */
+  if (gdImageGetInterlaced(img)) {
+      msSetOutputFormatOption( image->format, "INTERLACE", "ON" );
+  } else {
+      msSetOutputFormatOption( image->format, "INTERLACE", "OFF" );
+  }  
+  
   return image;
 }
 
