@@ -15,11 +15,11 @@ void msPrintShape(shapeObj *p)
 {
   int i,j;
 
-  fprintf(stderr, "Shape contains %d parts.\n",  p->numlines);
+  msDebug("Shape contains %d parts.\n",  p->numlines);
   for (i=0; i<p->numlines; i++) {
-    fprintf(stderr, "\tPart %d contains %d points.\n", i, p->line[i].numpoints);
+    msDebug("\tPart %d contains %d points.\n", i, p->line[i].numpoints);
     for (j=0; j<p->line[i].numpoints; j++) {
-      fprintf(stderr, "\t\t%d: (%f, %f)\n", j, p->line[i].point[j].x, p->line[i].point[j].y);
+      msDebug("\t\t%d: (%f, %f)\n", j, p->line[i].point[j].x, p->line[i].point[j].y);
     }
   }
 }

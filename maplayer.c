@@ -36,7 +36,7 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attr
 {
   int i;
 
-  fprintf(stderr, "next shape...\n");
+  msDebug("next shape...\n");
     
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
@@ -271,7 +271,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
 
   if(nt == 0) return(MS_SUCCESS);
 
-  fprintf(stderr, "in msLayerWhichItems() [%d]...\n", nt);
+  msDebug("in msLayerWhichItems() [%d]...\n", nt);
 
   layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
   if(!layer->items) {

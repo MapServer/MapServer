@@ -1,6 +1,7 @@
 #include "map.h"
 #include "maperror.h"
 #include <time.h>
+#include <stdarg.h>
 
 static char *ms_errorCodes[MS_NUMERRORCODES]={"",
 					    "Unable to access file.",
@@ -120,4 +121,15 @@ char *msGetVersion() {
 #endif
 
   return(version);
+}
+
+
+void msDebug( const char * pszFormat, ... )
+{
+#ifndef _WIN32
+    va_list args;
+    va_start(args, pszFormat);
+    vfprintf(stderr, pszFormat, args);
+    va_end(args);
+#endif
 }

@@ -135,7 +135,7 @@ gdImagePtr msDrawMap(mapObj *map)
   layerObj *lp=NULL;
   int status;
 
-  fprintf(stderr, "Drawing map...\n");
+  msDebug("Drawing map...\n");
 
   if(map->width == -1 && map->height == -1) {
     msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
@@ -385,7 +385,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   switch(layer->type) {      
   case MS_ANNOTATION:     
 
-    fprintf(stderr, "drawing annotation shape...\n"); 
+    msDebug("drawing annotation shape...\n"); 
 
     switch(shape->type) {
     case(MS_LINE):
@@ -431,7 +431,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	msTransformShape(shape, map->extent, map->cellsize);
       }
 
-      fprintf(stderr, "polygon annotation, here...\n"); 
+      msDebug("polygon annotation, here...\n"); 
 
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 	if(shape->text) text = shape->text;
@@ -498,7 +498,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     break;
 
   case MS_POINT:
-    fprintf(stderr, "drawing point shape...\n"); 
+    msDebug("drawing point shape...\n"); 
 
     for(j=0; j<shape->numlines;j++) {
       for(i=0; i<shape->line[j].numpoints;i++) {
@@ -876,7 +876,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     shpcache = NULL;
   }
 
-  fprintf(stderr, "done drawing layer %s...\n", layer->name); 
+  msDebug("done drawing layer %s...\n", layer->name); 
 
   return(MS_SUCCESS);
 }

@@ -388,7 +388,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   rectObj rect;
   shapeObj shape;
 
-  fprintf(stderr, "in msQueryByPoint()...\n");
+  msDebug("in msQueryByPoint()...\n");
 
   msInitShape(&shape);
 
@@ -397,7 +397,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   else
     start = stop = qlayer;
 
-  fprintf(stderr, "start = %d, stop = %d\n", start, stop);
+  msDebug("start = %d, stop = %d\n", start, stop);
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
@@ -418,7 +418,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     }
     if(status != MS_SUCCESS) continue;
 
-    fprintf(stderr, "working on %s\n", lp->name);
+    msDebug("working on %s\n", lp->name);
 
     if(buffer <= 0) { // use layer tolerance
       if(lp->toleranceunits == MS_PIXELS)
@@ -498,7 +498,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       break;
   } // next layer
 
-  fprintf(stderr, "done searching\n");
+  msDebug("done searching\n");
 
   // was anything found?
   for(l=start; l>=stop; l--) {    
