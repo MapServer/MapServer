@@ -510,7 +510,7 @@ AC_CHECKING(whether we should include OGR support...)
 AC_ARG_WITH(ogr,
 [  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).],,)
 
-if test "`basename $with_ogr`" = "gdal-config" ; then
+if test "`basename xx/$with_ogr`" = "gdal-config" ; then
   GDAL_CONFIG="$with_ogr"
 fi
 

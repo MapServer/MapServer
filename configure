@@ -3274,7 +3274,7 @@ if test "${with_ogr+set}" = set; then
 fi
 
 
-if test "`basename $with_ogr`" = "gdal-config" ; then
+if test "`basename xx/$with_ogr`" = "gdal-config" ; then
   GDAL_CONFIG="$with_ogr"
 fi
 
