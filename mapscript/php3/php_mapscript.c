@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/10/04 16:01:56  dan
+ * Added missing return value in img->saveImage()
+ *
  * Revision 1.17  2000/09/29 16:47:07  dan
  * Correct bug in function addColor. Convert user input parameters
  * to long.
@@ -168,7 +171,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Sep 18, 2000)"
+#define PHP3_MS_VERSION "(Oct 4, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -2626,6 +2629,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             }
 
             fclose(tmp); /* the temporary file is automatically deleted */
+            retVal = size;
         }
 #else
         /* GD 1.6 / 1.8 */
