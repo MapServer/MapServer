@@ -1695,6 +1695,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
 #if !defined(USE_GDAL) || defined(USE_TIFF)
     if (memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) {
+      if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( TIFF )");
+        return(-1);
+      }
       status = drawTIFF(map, layer, img, filename);
       if(status == -1) {
 	chdir(old_path); /* restore old cwd */
@@ -1705,6 +1709,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 #endif
 
     if (memcmp(dd,"GIF8",4)==0) {
+      if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( GIF )");
+        return(-1);
+      }
       status = drawGIF(map, layer, img, filename);
       if(status == -1) {
 	chdir(old_path); /* restore old cwd */
@@ -1714,6 +1722,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     }
 
     if (memcmp(dd,PNGsig,8)==0) {
+      if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( PNG )");
+        return(-1);
+      }
       status = drawPNG(map, layer, img, filename);
       if(status == -1) {
 	chdir(old_path); /* restore old cwd */
@@ -1723,6 +1735,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     }
     
     if (memcmp(dd,JPEGsig,3)==0) {
+      if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( JPEG )");
+        return(-1);
+      }
       status = drawJPEG(map, layer, img, filename);
       if(status == -1) {
 	chdir(old_path); /* restore old cwd */
@@ -1732,6 +1748,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     }
 
     if (memcmp(dd,"HEAD",4)==0) {
+      if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( ERD )");
+        return(-1);
+      }
       status = drawERD(map, layer, img, filename);
       if(status == -1) {
 	chdir(old_path); /* restore old cwd */
@@ -1748,6 +1768,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     ext = strstr(filename, ".img");
     if (strcmp(ext, ".img") == 0)
       {
+        if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+          msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( EGIS )");
+          return(-1);
+        }
 	status = drawGEN(map, layer, img, filename);
 	chdir(old_path); // restore old cwd
 	
