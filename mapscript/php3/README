@@ -147,6 +147,11 @@ and the MapServer Map File documentation at:
 
  Methods:
 
+   mapObj clone()
+        Returns a handle to a new mapObj which is a clone of the current
+        mapObj.  All parameters in the current mapObj are copied to the
+        new mapObj.  Returns NULL (0) on error.
+
    int set(string property_name, new_value)
         Set map object property to new value. Returns -1 on error.
 

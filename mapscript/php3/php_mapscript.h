@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/02/24 02:19:44  dan
+ * Added map->clone() method
+ *
  * Revision 1.32  2003/02/21 16:55:12  assefa
  * Add function querybyindex and freequery.
  *
@@ -165,6 +168,7 @@
 
 mapObj         *mapObj_new(char *filename, char *new_path);
 void            mapObj_destroy(mapObj* self);
+mapObj         *mapObj_clone(mapObj* self);
 layerObj       *mapObj_getLayer(mapObj* self, int i);
 layerObj       *mapObj_getLayerByName(mapObj* self, char *name);
 int             *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname, 

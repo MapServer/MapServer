@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.148  2003/02/24 02:19:43  dan
+ * Added map->clone() method
+ *
  * Revision 1.147  2003/02/21 16:55:12  assefa
  * Add function querybyindex and freequery.
  *
@@ -219,6 +222,7 @@ DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_clone(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS);
@@ -504,7 +508,7 @@ function_entry php3_ms_functions[] = {
     {"ms_getcwd",       php3_ms_getcwd,         NULL},
     {"ms_getpid",       php3_ms_getpid,         NULL},
     {"ms_getscale",     php3_ms_getscale,       NULL},
-    {"ms_newprojectionobj",   php3_ms_projection_new,       NULL},
+    {"ms_newprojectionobj", php3_ms_projection_new, NULL},
     {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
     {"ms_newstyleobj",  php3_ms_style_new,      NULL},
     {NULL, NULL, NULL}
@@ -535,6 +539,7 @@ DLEXPORT php3_module_entry *get_module(void) { return &php3_ms_module_entry; }
 /*      through _phpms_object_init()                                    */
 /* -------------------------------------------------------------------- */
 function_entry php_map_class_functions[] = {
+    {"clone",           php3_ms_map_clone,              NULL},
     {"set",             php3_ms_map_setProperty,        NULL},
     {"setprojection",   php3_ms_map_setProjection,      NULL},
     {"getprojection",   php3_ms_map_getProjection,      NULL},
@@ -551,8 +556,8 @@ function_entry php_map_class_functions[] = {
     {"getlayer",        php3_ms_map_getLayer,           NULL},
     {"getlayerbyname",  php3_ms_map_getLayerByName,     NULL},
     {"getlayersindexbygroup",  php3_ms_map_getLayersIndexByGroup,     NULL},
-    {"getalllayernames",  php3_ms_map_getAllLayerNames,     NULL},
-    {"getallgroupnames",  php3_ms_map_getAllGroupNames,     NULL},
+    {"getalllayernames",php3_ms_map_getAllLayerNames,   NULL},
+    {"getallgroupnames",php3_ms_map_getAllGroupNames,   NULL},
     {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
     {"setextent",       php3_ms_map_setExtent,          NULL},
     {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
@@ -565,7 +570,7 @@ function_entry php_map_class_functions[] = {
     {"querybyindex",    php3_ms_map_queryByIndex,       NULL},
     {"savequery",       php3_ms_map_savequery,          NULL},
     {"loadquery",       php3_ms_map_loadquery,          NULL},
-    {"freequery",       php3_ms_map_freequery,           NULL},
+    {"freequery",       php3_ms_map_freequery,          NULL},
     {"save",            php3_ms_map_save,               NULL},
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
     {"getmetadata",     php3_ms_map_getMetaData,        NULL},
@@ -579,9 +584,9 @@ function_entry php_map_class_functions[] = {
     {"processtemplate",   php3_ms_map_processTemplate,  NULL},
     {"processlegendtemplate",   php3_ms_map_processLegendTemplate,  NULL},
     {"processquerytemplate",   php3_ms_map_processQueryTemplate,  NULL},
-    {"setsymbolset",   php3_ms_map_setSymbolSet,  NULL},
-    {"getnumsymbols",   php3_ms_map_getNumSymbols,  NULL},
-    {"setfontset",      php3_ms_map_setFontSet,  NULL},
+    {"setsymbolset",    php3_ms_map_setSymbolSet,       NULL},
+    {"getnumsymbols",   php3_ms_map_getNumSymbols,      NULL},
+    {"setfontset",      php3_ms_map_setFontSet,         NULL},
     {"savemapcontext",  php3_ms_map_saveMapContext,     NULL},
     {"loadmapcontext",  php3_ms_map_loadMapContext,     NULL},
     {"selectoutputformat", php3_ms_map_selectOutputFormat, NULL},
@@ -1063,6 +1068,103 @@ DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS)
  *====================================================================*/
 
 /**********************************************************************
+ *                     _phpms_build_map_object()
+ **********************************************************************/
+static long _phpms_build_map_object(mapObj *pMap, HashTable *list, 
+                                    pval *return_value TSRMLS_DC)
+{
+    int         map_id;
+    pval        *new_obj_ptr;
+
+    if (pMap == NULL)
+    {
+        return 0;
+    }
+
+    map_id = php3_list_insert(pMap, PHPMS_GLOBAL(le_msmap));
+
+    _phpms_object_init(return_value, map_id, php_map_class_functions,
+                       PHP4_CLASS_ENTRY(map_class_entry_ptr));
+
+    /* read-only properties */
+    add_property_long(return_value, "numlayers", pMap->numlayers);
+
+    /* editable properties */
+    PHPMS_ADD_PROP_STR(return_value, "name",      pMap->name);
+    add_property_long(return_value,  "status",    pMap->status);
+    add_property_long(return_value,  "width",     pMap->width);
+    add_property_long(return_value,  "height",    pMap->height);
+    add_property_long(return_value,  "transparent", pMap->transparent);
+    add_property_long(return_value,  "interlace", pMap->interlace);
+    PHPMS_ADD_PROP_STR(return_value,  "imagetype", pMap->imagetype);
+    add_property_long(return_value,  "imagequality", pMap->imagequality);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_rect_object(&(pMap->extent), PHPMS_GLOBAL(le_msrect_ref),
+                             list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR);
+
+    add_property_double(return_value,"cellsize",  pMap->cellsize);
+    add_property_long(return_value,  "units",     pMap->units);
+    add_property_double(return_value,"scale",     pMap->scale);
+    add_property_long(return_value,  "resolution",pMap->resolution);
+    PHPMS_ADD_PROP_STR(return_value, "shapepath", pMap->shapepath);
+    add_property_long(return_value,  "keysizex",  pMap->legend.keysizex);
+    add_property_long(return_value,  "keysizey",  pMap->legend.keysizey);
+    add_property_long(return_value, "keyspacingx",pMap->legend.keyspacingx);
+    add_property_long(return_value, "keyspacingy",pMap->legend.keyspacingy);
+
+    PHPMS_ADD_PROP_STR(return_value, "symbolsetfilename", 
+                                                  pMap->symbolset.filename);
+    PHPMS_ADD_PROP_STR(return_value, "fontsetfilename", 
+                                                  pMap->fontset.filename);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_color_object(&(pMap->imagecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_web_object(&(pMap->web), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "web", new_obj_ptr, E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_referenceMap_object(&(pMap->reference), list, 
+                                     new_obj_ptr);
+    _phpms_add_property_object(return_value, "reference", new_obj_ptr,E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_scalebar_object(&(pMap->scalebar), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "scalebar", new_obj_ptr, E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_legend_object(&(pMap->legend), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "legend", new_obj_ptr, E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_projection_object(&(pMap->latlon), PHPMS_GLOBAL(le_msprojection_ref),
+                                   list,  new_obj_ptr);
+    _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR);
+
+    return map_id;
+}
+
+
+
+/**********************************************************************
  *                        ms_newMapObj()
  **********************************************************************/
 
@@ -1072,25 +1174,16 @@ DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pFname, *pNewPath;
-    mapObj      *pNewObj = NULL;
-    int         map_id;
+    mapObj      *pNewMap = NULL;
     int         nArgs;
     char        *pszNewPath = NULL;
-#ifdef PHP4
-    pval        *new_obj_ptr;
     HashTable   *list=NULL;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
-#if defined(PHP4) && defined(WIN32)
+#if defined(WIN32)
     char        szPath[MS_MAXPATHLEN], szFname[MS_MAXPATHLEN];
     char        szNewPath[MS_MAXPATHLEN];
 #endif
 
-#if defined(PHP4)
     /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
      * as an Apache (or ISAPI) module.  It works fine only with PHP configured
      * as a CGI.
@@ -1109,7 +1202,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
               sapi_module.name);
         RETURN_FALSE;
     }
-#endif
 
     nArgs = ARG_COUNT(ht);
     if ((nArgs != 1 && nArgs != 2) ||
@@ -1129,7 +1221,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     /* Attempt to open the MAP file 
      */
 
-#if defined(PHP4) && defined(WIN32)
+#if defined(WIN32)
     /* With PHP4, we have to use the virtual_cwd API... for now we'll
      * just make sure that the .map file path is absolute, but what we
      * should really do is make all of MapServer use the V_* macros and
@@ -1144,15 +1236,15 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     if (pszNewPath)
     {
         msBuildPath(szNewPath, szFname, pszNewPath);
-        pNewObj = mapObj_new(szPath, szNewPath);
+        pNewMap = mapObj_new(szPath, szNewPath);
     }
     else
-       pNewObj = mapObj_new(szPath, pszNewPath);
+       pNewMap = mapObj_new(szPath, pszNewPath);
    
 #else
-    pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
+    pNewMap = mapObj_new(pFname->value.str.val, pszNewPath);
 #endif
-    if (pNewObj == NULL)
+    if (pNewMap == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "Failed to open map file %s", 
@@ -1160,87 +1252,49 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    /* Create a PHP object, add all mapObj methods, etc.
-     */
-    map_id = php3_list_insert(pNewObj, PHPMS_GLOBAL(le_msmap));
+    /* Return map object */
+    _phpms_build_map_object(pNewMap, list, return_value TSRMLS_CC);
 
-    _phpms_object_init(return_value, map_id, php_map_class_functions,
-                       PHP4_CLASS_ENTRY(map_class_entry_ptr));
+}
+/* }}} */
 
-    /* read-only properties */
-    add_property_long(return_value, "numlayers", pNewObj->numlayers);
 
-    /* editable properties */
-    PHPMS_ADD_PROP_STR(return_value, "name",      pNewObj->name);
-    add_property_long(return_value,  "status",    pNewObj->status);
-    add_property_long(return_value,  "width",     pNewObj->width);
-    add_property_long(return_value,  "height",    pNewObj->height);
-    add_property_long(return_value,  "transparent", pNewObj->transparent);
-    add_property_long(return_value,  "interlace", pNewObj->interlace);
-    PHPMS_ADD_PROP_STR(return_value,  "imagetype", pNewObj->imagetype);
-    add_property_long(return_value,  "imagequality", pNewObj->imagequality);
+/**********************************************************************
+ *                        map->clone()
+ **********************************************************************/
 
-#ifdef PHP4
-    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
-    _phpms_build_rect_object(&(pNewObj->extent), PHPMS_GLOBAL(le_msrect_ref),
-                             list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR);
+/* {{{ proto int map.clone()
+   Make a copy of this mapObj and returne a refrence to it. Returns NULL(0) on error. */
 
-    add_property_double(return_value,"cellsize",  pNewObj->cellsize);
-    add_property_long(return_value,  "units",     pNewObj->units);
-    add_property_double(return_value,"scale",     pNewObj->scale);
-    add_property_long(return_value,  "resolution",pNewObj->resolution);
-    PHPMS_ADD_PROP_STR(return_value, "shapepath", pNewObj->shapepath);
-    add_property_long(return_value,  "keysizex",  pNewObj->legend.keysizex);
-    add_property_long(return_value,  "keysizey",  pNewObj->legend.keysizey);
-    add_property_long(return_value, "keyspacingx",pNewObj->legend.keyspacingx);
-    add_property_long(return_value, "keyspacingy",pNewObj->legend.keyspacingy);
+DLEXPORT void php3_ms_map_clone(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj *self, *pNewMap;
+    pval   *pThis;
+    HashTable   *list=NULL;
 
-    PHPMS_ADD_PROP_STR(return_value, "symbolsetfilename", 
-                                                  pNewObj->symbolset.filename);
-    PHPMS_ADD_PROP_STR(return_value, "fontsetfilename", 
-                                                  pNewObj->fontset.filename);
+    pThis = getThis();
 
-#ifdef PHP4
-    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
-    _phpms_build_color_object(&(pNewObj->imagecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+    if (pThis == NULL || ARG_COUNT(ht) != 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
 
-#ifdef PHP4
-    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
-    _phpms_build_web_object(&(pNewObj->web), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "web", new_obj_ptr, E_ERROR);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
 
-#ifdef PHP4
-    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
-    _phpms_build_referenceMap_object(&(pNewObj->reference), list, 
-                                     new_obj_ptr);
-    _phpms_add_property_object(return_value, "reference", new_obj_ptr,E_ERROR);
+    /* Make a copy of current map object */
+    if ((pNewMap = mapObj_clone(self)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_FALSE;
+    }
 
-#ifdef PHP4
-    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
-    _phpms_build_scalebar_object(&(pNewObj->scalebar), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "scalebar", new_obj_ptr, E_ERROR);
+    /* Return new map object */
+    _phpms_build_map_object(pNewMap, list, return_value TSRMLS_CC);
 
-#ifdef PHP4
-    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
-    _phpms_build_legend_object(&(pNewObj->legend), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "legend", new_obj_ptr, E_ERROR);
-
-#ifdef PHP4
-    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
-    _phpms_build_projection_object(&(pNewObj->latlon), PHPMS_GLOBAL(le_msprojection_ref),
-                                   list,  new_obj_ptr);
-    _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR);
-
-    return;
 }
 /* }}} */
 

@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.60  2003/02/24 02:19:43  dan
+ * Added map->clone() method
+ *
  * Revision 1.59  2003/02/21 16:55:12  assefa
  * Add function querybyindex and freequery.
  *
@@ -240,6 +243,18 @@ mapObj *mapObj_new(char *filename, char *new_path) {
 void  mapObj_destroy(mapObj* self) {
     msFreeMap(self);
   }
+
+mapObj *mapObj_clone(mapObj* self) {
+    mapObj *dstMap;
+    dstMap = msNewMapObj();
+    if (msCopyMap(dstMap, self) != MS_SUCCESS)
+    {
+        msFreeMap(dstMap);
+        dstMap = NULL;
+    }
+    return dstMap;
+  }
+
 
 layerObj *mapObj_getLayer(mapObj* self, int i) {
     if(i >= 0 && i < self->numlayers)	
