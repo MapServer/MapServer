@@ -1089,6 +1089,10 @@ MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, int len);
 MS_DLL_EXPORT int strcasecmp(const char *s1, const char *s2);
 #endif
 
+#ifdef NEED_STRLCAT
+MS_DLL_EXPORT size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
+
 MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map); // in mapsymbol.c
 MS_DLL_EXPORT int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map);
 MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map);
