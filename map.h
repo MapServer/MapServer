@@ -923,6 +923,7 @@ typedef struct {
 // Function prototypes, wrapable
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
+MS_DLL_EXPORT void msCleanup(void);
 
 // Function prototypes, not wrapable
 
@@ -1466,9 +1467,8 @@ MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const ch
 
 MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 
-MS_DLL_EXPORT void msCleanup(void);
-
 MS_DLL_EXPORT int msAlphaBlend (int dst, int src);
+
 
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
