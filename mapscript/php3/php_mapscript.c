@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.228  2005/03/07 23:17:42  assefa
+ * Allow shape object's index value to be set (Bug 806)
+ *
  * Revision 1.227  2005/02/28 14:24:12  dan
  * Use gdFree() instead of free in php3_ms_img_saveImage() (bug 1257)
  *
@@ -10126,9 +10129,9 @@ DLEXPORT void php3_ms_shape_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     IF_SET_STRING(     "text",         self->text)
     else IF_SET_LONG(  "classindex",   self->classindex)
+    else IF_SET_LONG(  "index",        self->index)
     else if (strcmp( "numlines",  pPropertyName->value.str.val) == 0 ||
              strcmp( "type",      pPropertyName->value.str.val) == 0 ||
-             strcmp( "index",     pPropertyName->value.str.val) == 0 ||
              strcmp( "tileindex", pPropertyName->value.str.val) == 0 ||
              strcmp( "numvalues", pPropertyName->value.str.val) == 0)
     {
