@@ -881,23 +881,22 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     free(self);
   }
 
-  void saveImage(char *filename) {
+  void save(char *filename) {
 
     // save image parameters ignored ... should be in outputFormatObj
     // used to create the imageObj.
     msSaveImage(NULL, self, filename );
   }
 
-  // Method getImageString renders the imageObj into image data and returns
-  // it as a string.  Inspired by and used like the saveImage() method.  Python and Tcl
-  // only at this time.  Questions and comments to Sean Gillies <sgillies@i3.com>
+  // Method saveToString renders the imageObj into image data and returns
+  // it as a string. Questions and comments to Sean Gillies <sgillies@i3.com>
 
 #if defined (SWIGPYTHON) || defined (SWIGTCL8)
 
 #ifdef SWIGPYTHON
-  PyObject *getImageString() {
+  PyObject *saveToString() {
 #elif defined (SWIGTCL8)
-  Tcl_Obj *getImageString() {
+  Tcl_Obj *saveToString() {
 #endif
 
     unsigned char *imgbytes;
