@@ -390,7 +390,7 @@ GDAL_LIB = $(GDAL_DIR)/gdal_i.lib
 # Setup OGR includes and libraries
 !IFDEF OGR
 OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port
-OGR_LIB = $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
+OGR_LIB = $(GDAL_DIR)/gdal_i.lib
 !ENDIF
 
 # Setup ESRI SDE support.
