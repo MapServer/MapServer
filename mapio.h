@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/11/04 21:06:09  frank
+ * centralize 'stdout binary mode setting' for win32, add for gdal output
+ *
  * Revision 1.2  2004/10/26 15:54:35  sean
  * replace empty arg lists with ( void ) to eliminate swig warnings, and move
  * MS_DLL_EXPORT symbol ahead of function types.
@@ -96,5 +99,9 @@ msIOContext MS_DLL_EXPORT *msIO_getHandler( FILE * );
 */
 int msIO_contextRead( msIOContext *context, void *data, int byteCount );
 int msIO_contextWrite( msIOContext *context, const void *data, int byteCount );
+
+/* this is just for setting normal stdout's to binary mode on windows */
+
+int msIO_needBinaryStdout( void );
 
 #endif /* nef MAPIO_H */

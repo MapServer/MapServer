@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/11/04 21:06:09  frank
+ * centralize 'stdout binary mode setting' for win32, add for gdal output
+ *
  * Revision 1.4  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -441,4 +444,32 @@ int msIO_installFastCGIRedirect()
 }
 
 #endif
+
+/************************************************************************/
+/*                       msIO_needBinaryStdout()                        */
+/*                                                                      */
+/*      This function is intended to ensure that stdout is in binary    */
+/*      mode.                                                           */
+/*                                                                      */
+/*      But don't do it we are using FastCGI.  We will take care of     */
+/*      doing it in the libfcgi library in that case for the normal     */
+/*      cgi case, and for the fastcgi case the _setmode() call          */
+/*      causes a crash.                                                 */
+/************************************************************************/
+
+int msIO_needBinaryStdout()
+
+{
+#if defined(_WIN32) && !defined(USE_FASTCGI)
+    if(_setmode( _fileno(stdout), _O_BINARY) == -1) 
+    {
+      msSetError(MS_IOERR, 
+                 "Unable to change stdout to binary mode.", 
+                 "msIO_needBinaryStdout()" );
+      return(MS_FAILURE);
+    }
+#endif
+    
+    return MS_SUCCESS;
+}
 

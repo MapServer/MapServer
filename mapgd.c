@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2004/11/04 21:06:09  frank
+ * centralize 'stdout binary mode setting' for win32, add for gdal output
+ *
  * Revision 1.77  2004/11/01 14:38:31  dan
  * Fixed typo in error message
  *
@@ -2853,28 +2856,12 @@ int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format)
   /* else use standard output, or mapio's replacement for stdout */
   else 
   {
+      if( msIO_needBinaryStdout() == MS_FAILURE )
+          return MS_FAILURE;
 
-#if defined(_WIN32) && !defined(USE_FASTCGI)
-    /*
-    ** Change stdout mode to binary on win32 platforms
-    **
-    ** --
-    ** 
-    ** But don't do it we are using FastCGI.  We will take care of doing
-    ** it in the libfcgi library in that case for the normal cgi case, and
-    ** for the fastcgi case the _setmode() call causes a crash. 
-    **
-    ** In general I think we should move this out so we don't have to 
-    ** replicate it everwhere we produce binary output. FrankWarmerdam/2004
-    */
-    if(_setmode( _fileno(stdout), _O_BINARY) == -1) {
-      msSetError(MS_IOERR, "Unable to change stdout to binary mode.", "msSaveImage()");
-      return(MS_FAILURE);
-    }
-#endif
-    stream = stdout;
+      stream = stdout;
 #ifdef USE_MAPIO
-    gd_ctx = msIO_getGDIOCtx( stream );
+      gd_ctx = msIO_getGDIOCtx( stream );
 #endif
   }
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/11/04 21:06:09  frank
+ * centralize 'stdout binary mode setting' for win32, add for gdal output
+ *
  * Revision 1.25  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -468,6 +471,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         FILE *fp; 
         unsigned char block[4000];
         int bytes_read;
+
+        if( msIO_needBinaryStdout() == MS_FAILURE )
+            return MS_FAILURE;
 
         fp = fopen( filename, "rb" );
         if( fp == NULL )

@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Centralize "stdout binary mode setting" for win32 in msIO_needBinaryStdout().
+  Use it when writing GDAL files to stdout in mapgdal.c.  Fixes problems with
+  output of binary files from GDAL outputformat drivers on win32 via WMS/WCS.
+
 -  MapServer now provides one default style named (default), title and LegendURL   when generating capabilities.
    Added also the possibility to use the keyword default for STYLES 
    parameter when doing a GetMap (..&STYLES=default,defeault,...). Bug 1011.

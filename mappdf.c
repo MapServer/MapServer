@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/11/04 21:06:09  frank
+ * centralize 'stdout binary mode setting' for win32, add for gdal output
+ *
  * Revision 1.28  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1246,14 +1249,10 @@ int msSaveImagePDF(imageObj *image, char *filename)
         }
         else
         { /* use stdout */
-            #ifdef _WIN32
+
             /* Change stdout mode to binary on win32 platforms*/
-          if(0)//_setmode( _fileno(stdout), _O_BINARY) == -1)
-            {
-                msSetError(MS_IOERR, "Unable to change stdout to binary mode.", "msSaveImagePDF()");
-                return(MS_FAILURE);
-            }
-            #endif
+            if( msIO_needBinaryStdout() == MS_FAILURE )
+                return MS_FAILURE;
             stream = stdout;
         }
   
