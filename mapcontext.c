@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.25  2002/11/22 15:12:51  julien
+ * Fix the seg fault temporaly fixed on 2002/11/21 17:07:34
+ *
  * Revision 1.24  2002/11/21 20:39:40  julien
  * Support the wms_srs metadata and support multiple SRS tag
  *
@@ -1241,11 +1244,17 @@ int msSaveMapContext(mapObj *map, char *filename)
                       fprintf( stream, "        </Style>\n");
                       fprintf( stream, "      </StyleList>\n");
                   }
+                  if(pszSLD2)
+                  {
+                      free(pszSLD2);
+                      pszSLD2 = NULL;
+                  }
               }
               if(pszURL)
+              {
                   free(pszURL);
-//              if(pszSLD2)
-//                  free(pszSLD2);
+                  pszURL = NULL;
+              }
           }
           else
           {
