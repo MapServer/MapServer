@@ -2304,18 +2304,21 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /************************************************************************/
 int msSaveImageSWF(imageObj *image, char *filename)
 {
-    int         i, nLayers = 0;
+    int         i, j, k, nLayers = 0;
     char        szBase[100];
     char        szExt[5];
     char        szTmp[20];
     int         nLength;
     int         iPointPos;
+    int         iSlashPos;
     char        szAction[200];
     SWFAction   oAction;
+    mapObj      *map = NULL;
+    char        *pszRelativeName = NULL;
 
     if (image && MS_DRIVER_SWF(image->format) && filename)
     {
-        
+        map = image->img.swf->map;
 /* -------------------------------------------------------------------- */
 /*      write some AS related to the map file.                          */
 /* -------------------------------------------------------------------- */
@@ -2345,6 +2348,14 @@ int msSaveImageSWF(imageObj *image, char *filename)
         sprintf(szAction, "%s", "mapObj.layers=new Array();"); 
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(image->img.swf->sMainMovie, oAction);
+
+/* -------------------------------------------------------------------- */
+/*      Write class for layer object.                                   */
+/* -------------------------------------------------------------------- */
+        sprintf(szAction, "%s", "function LayerObj(name, type, fullname, relativename){ this.name=name; this.type=type; this.fullname=fullname; this.relativename=relativename;}"); 
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+
         
         nLayers = image->img.swf->nLayerMovies;
         
@@ -2378,12 +2389,42 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /* -------------------------------------------------------------------- */
         for (i=0; i<nLayers; i++)
         {
+/* -------------------------------------------------------------------- */
+/*      build full filename.                                            */
+/* -------------------------------------------------------------------- */
             sprintf(szTmp, "%s%d", "_layer_", i);
             gszFilename[0] = '\0';
             sprintf(gszFilename, szBase);
             strcat(gszFilename, szTmp);
             strcat(gszFilename, ".");
             strcat(gszFilename, szExt);
+/* -------------------------------------------------------------------- */
+/*      build relative name.                                            */
+/* -------------------------------------------------------------------- */
+            nLength = strlen(gszFilename);
+            iSlashPos = -1;
+            for (j=nLength-1; j>=0; j--)
+            {
+                if (gszFilename[j] == '/' || gszFilename[j] == '\\')
+                {
+                    iSlashPos = j;
+                    break;
+                }
+            }
+            if (iSlashPos >=0)
+            {
+                gszTmp[0]='\0';
+                k = 0;
+                for (j=iSlashPos+1; j<nLength; j++)
+                {
+                    gszTmp[k] = gszFilename[j];
+                    k++;
+                }
+                 gszTmp[k] = '\0';
+                 pszRelativeName = gszTmp;
+            }
+            else
+              pszRelativeName = gszFilename;
 
             //test
             //sprintf(gszFilename, "%s%d.swf", "c:/tmp/ms_tmp/layer_", i);
@@ -2397,7 +2438,11 @@ int msSaveImageSWF(imageObj *image, char *filename)
             //test
             //sprintf(gszFilename, "%s%d.swf", "layer_", i);
             
-            sprintf(szAction, "mapObj.layers[%d]=\"%s\";", i, gszFilename);
+            //sprintf(szAction, "mapObj.layers[%d]=\"%s\";", i, gszFilename);
+            sprintf(szAction, "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"%s\",\"%s\");", i, 
+                    map->layers[i].name, map->layers[i].type, gszFilename,
+                    pszRelativeName);
+            
             oAction = compileSWFActionCode(szAction);
             SWFMovie_add(image->img.swf->sMainMovie, oAction);
 
