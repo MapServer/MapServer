@@ -344,7 +344,7 @@ Very important note: Constant names and class member variable names are
    string saveWebImage(int transparent, int interlace)
         Writes image to temp directory.  Returns image URL.
 
-  With GD 1.8:
+  With GD 1.8 (only if JPEG enabled in GD 1.8):
 
    int saveImage(string filename, int type, int transparent, int interlace, 
                  int quality)
@@ -358,7 +358,7 @@ Very important note: Constant names and class member variable names are
         If quality is negative, then the default IJG JPEG quality value is 
         used.
 
-   string saveWebImage(int transparent, int type, int interlace, int quality)
+   string saveWebImage(int type, int transparent, int interlace, int quality)
         Writes image to temp directory.  Returns image URL.
         Type can be either MS_PNG or MS_JPEG
         Quality should be a value in the range 0-95, higher value implies
