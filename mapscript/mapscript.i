@@ -305,6 +305,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadWKTProjectionString(string, &(self->projection));
   }
 
+  char *getProjection() {
+    // NOTE: the returned string should be freed by the caller but right 
+    // now we're leaking it.    
+    return msGetProjectionString(&(self->projection));
+  }
+
   int setProjection(char *string) {
     return msLoadProjectionString(&(self->projection), string);
   }
@@ -421,6 +427,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   int setWKTProjection(char *string) {
     return msLoadWKTProjectionString(string, &(self->projection));
+  }
+
+  char *getProjection() {
+    // NOTE: the returned string should be freed by the caller but right 
+    // now we're leaking it.
+    return msGetProjectionString(&(self->projection));
   }
 
   int setProjection(char *string) {
