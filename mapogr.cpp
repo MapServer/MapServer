@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.80  2004/12/13 03:57:17  frank
+ * modifed to handle all ogr geometry types in ogrGeomPoints per bug 1124
+ *
  * Revision 1.79  2004/11/17 20:40:55  dan
  * Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all
  * GML attributes are returned as strings to MapServer. (bug 1043)
@@ -204,6 +207,10 @@ typedef struct ms_ogr_file_info_t
 
 /**********************************************************************
  *                     ogrPointsAddPoint()
+ *
+ * NOTE: This function assumes the line->point array already has been
+ * allocated large enough for the point to be added, but that numpoints
+ * does not include this new point. 
  **********************************************************************/
 static void ogrPointsAddPoint(lineObj *line, double dX, double dY, 
                               int lineindex, rectObj *bounds)
@@ -224,6 +231,8 @@ static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
 
     line->point[line->numpoints].x = dX;
     line->point[line->numpoints].y = dY;
+    line->point[line->numpoints].z = 0.0;
+    line->point[line->numpoints].m = 0.0;
     line->numpoints++;
 }
 
@@ -234,10 +243,67 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
 {
   int   i;
   int   numpoints;
-  lineObj line={0,NULL};
 
   if (poGeom == NULL)   
       return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Container types result in recursive invocation on each          */
+/*      subobject to add a set of points to the current list.           */
+/* -------------------------------------------------------------------- */
+  switch( wkbFlatten(poGeom->getGeometryType()) )
+  {
+      case wkbGeometryCollection:
+      case wkbMultiLineString:
+      case wkbMultiPolygon:
+      {
+          OGRGeometryCollection *poCollection = (OGRGeometryCollection *)
+              poGeom;
+          
+          for (int iGeom=0; iGeom < poCollection->getNumGeometries(); iGeom++ )
+          {
+              if( ogrGeomPoints( poCollection->getGeometryRef( iGeom ), 
+                                 outshp ) == -1 )
+                  return -1;
+          }
+
+          return 0;							
+      }
+      break;
+
+      case wkbPolygon:
+      {
+          OGRPolygon *poPoly = (OGRPolygon *)poGeom;
+
+          if( ogrGeomPoints( poPoly->getExteriorRing(), outshp ) == -1 )
+              return -1;
+          
+          for (int iRing=0; iRing < poPoly->getNumInteriorRings(); iRing++)
+          {
+              if( ogrGeomPoints( poPoly->getInteriorRing(iRing), outshp )
+                  == -1 )
+                  return -1;
+          }
+          return 0;
+      }
+      break;
+
+      case wkbPoint:
+      case wkbMultiPoint:
+      case wkbLineString:
+      case wkbLinearRing:
+          /* We will handle these directly */
+          break;
+
+      default:
+          /* There shouldn't be any more cases should there? */
+          msSetError(MS_OGRERR, 
+                     "OGRGeometry type `%s' not supported yet.", 
+                     "ogrGeomPoints()",
+                     poGeom->getGeometryName() );
+          return(-1);
+  }
+
 
 /* ------------------------------------------------------------------
  * Count total number of points
@@ -246,25 +312,10 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
   {
       numpoints = 1;
   }
-  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbLineString 
+            || wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
   {
       numpoints = ((OGRLineString*)poGeom)->getNumPoints();
-  }
-  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
-  {
-      OGRPolygon *poPoly = (OGRPolygon *)poGeom;
-      OGRLinearRing *poRing = poPoly->getExteriorRing();
-
-      numpoints=0;
-      if (poRing)
-          numpoints = poRing->getNumPoints();
-
-      for (int iRing=0; iRing < poPoly->getNumInteriorRings(); iRing++)
-      {
-          poRing = poPoly->getInteriorRing(iRing);
-          if (poRing)
-              numpoints += poRing->getNumPoints();
-      }
   }
   else if ( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
   {
@@ -273,56 +324,59 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
   else
   {
       msSetError(MS_OGRERR, 
-                 (char*)CPLSPrintf("OGRGeometry type `%s' not supported yet.", 
-                                   poGeom->getGeometryName()),
-                 "ogrGeomPoints()");
+                 "OGRGeometry type `%s' not supported yet.", 
+                 "ogrGeomPoints()",
+                 poGeom->getGeometryName() );
       return(-1);
   }
 
 /* ------------------------------------------------------------------
- * alloc buffer and filter/transform points
+ * Do we need to allocate a line object to contain all our points? 
  * ------------------------------------------------------------------ */
-  line.numpoints = 0;
-  line.point = (pointObj *)malloc(sizeof(pointObj)*numpoints);
-  if(!line.point) 
+  if( outshp->numlines == 0 )
+  {
+      lineObj newline;
+      
+      newline.numpoints = 0;
+      newline.point = NULL;
+      msAddLine(outshp, &newline);
+  }
+  
+/* ------------------------------------------------------------------
+ * Extend the point array for the new of points to add from the 
+ * current geometry.
+ * ------------------------------------------------------------------ */
+  lineObj *line = outshp->line + outshp->numlines-1;
+
+  if( line->numpoints == 0 )
+      line->point = (pointObj *) malloc(sizeof(pointObj) * numpoints);
+  else
+      line->point = (pointObj *) 
+          realloc(line->point,sizeof(pointObj) * (numpoints+line->numpoints));
+  
+  if(!line->point) 
   {
       msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", 
                  "ogrGeomPoints()");
       return(-1);
   }
    
+/* ------------------------------------------------------------------
+ * alloc buffer and filter/transform points
+ * ------------------------------------------------------------------ */
   if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
   {
       OGRPoint *poPoint = (OGRPoint *)poGeom;
-      ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY(), 
-                        outshp->numlines, &(outshp->bounds));
+      ogrPointsAddPoint(line, poPoint->getX(), poPoint->getY(), 
+                        outshp->numlines-1, &(outshp->bounds));
   }
-  else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+  else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString 
+           || wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
       for(i=0; i<numpoints; i++)
-          ogrPointsAddPoint(&line, poLine->getX(i), poLine->getY(i),
-                            outshp->numlines, &(outshp->bounds));
-  }
-  else if (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
-  {
-      OGRPolygon *poPoly = (OGRPolygon *)poGeom;
-      OGRLinearRing *poRing;
-
-      for (int iRing=-1; iRing < poPoly->getNumInteriorRings(); iRing++)
-      {
-          if (iRing == -1)
-              poRing = poPoly->getExteriorRing();
-          else
-              poRing = poPoly->getInteriorRing(iRing);
-
-          if (poRing)
-          {
-              for(i=0; i<poRing->getNumPoints(); i++)
-                  ogrPointsAddPoint(&line, poRing->getX(i), poRing->getY(i),
-                                    outshp->numlines, &(outshp->bounds));
-          }
-      }
+          ogrPointsAddPoint(line, poLine->getX(i), poLine->getY(i),
+                            outshp->numlines-1, &(outshp->bounds));
   }
   else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
   {
@@ -331,13 +385,10 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
       for(i=0; i<numpoints; i++)
       {
           poPoint = (OGRPoint *)poMultiPoint->getGeometryRef( i );
-          ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY(), 
-                            outshp->numlines, &(outshp->bounds));
+          ogrPointsAddPoint(line, poPoint->getX(), poPoint->getY(), 
+                            outshp->numlines-1, &(outshp->bounds));
       }
   }
-
-  msAddLine(outshp, &line);
-  free(line.point);
 
   outshp->type = MS_SHAPE_POINT;
 

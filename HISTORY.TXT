@@ -24,6 +24,13 @@ Version 4.5
 - Fixed msFreeFileCtx() to call free() instead of gdFree() as per bug 1125. 
   Also renamed gdFreeFileCtx() to msFreeFileCtx(). 
 
+- Ensure error stack is cleared before accepting another call in FastCGI
+  mode in mapserv.c.  Bug 1122
+
+- Support translation of all geometry types to points in mapogr.cpp (now
+  also supports multipolygon, multilinestring and geometrycollection. 
+  bug 1124. 
+
 
 Version 4.4.0 (2004-11-29)
 --------------------------
