@@ -29,6 +29,12 @@ Version 3.6.3-dev
   force use of an internal configure macro to detect ld command and args
   in case the default doesn't work (this is for mapscript/php3/Makefile only)
 
+- Fixed potential crash with WMS GML query output (missing msInitSHape() in 
+  msGMLWriteQuery())
+
+- Fixed Windows-specific problem where WMS capabilities were always returned
+  as 1.0.0 even if 1.1.0 was requested
+
 
 Version 3.6.2 (2002-07-08)
 --------------------------
