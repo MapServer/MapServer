@@ -13,7 +13,6 @@
                                    (type)==MS_JPEG?"jpeg": \
                                    (type)==MS_WBMP?"wbmp":"???unsupported???")
 
-
 /*
 ** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
 */
@@ -30,6 +29,9 @@ int msIsLayerQueryable(layerObj *lp)
 
   return is_queryable;
 }
+
+
+#ifdef USE_WMS
 
 /*
 ** msWMSException()
@@ -697,6 +699,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
   return(MS_SUCCESS);
 }
 
+#endif /* USE_WMS */
 
 /*
 ** msWMSDispatch() is the entry point for WMS requests.
@@ -708,6 +711,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
 */
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries) 
 {
+#ifdef USE_WMS
   int i, status;
   static char *wmtver = NULL, *request=NULL, *service=NULL;
 
@@ -765,4 +769,12 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   msSetError(MS_MISCERR, "Incomplete or unsupported WMS request",
              "msWMSDispatch()");
   return msWMSException(map, wmtver);
+
+#else
+
+  msSetError(MS_MISCERR, "WMS support is not available.", "msWMSDispatch()");
+  return(MS_FAILURE);
+
+#endif
 }
+

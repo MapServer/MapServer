@@ -1442,6 +1442,7 @@ int main(int argc, char *argv[]) {
     ** Start by calling the WMS Dispatcher.  If it fails then we'll process
     ** this as a regular MapServer request.
     */
+#ifdef USE_WMS
     entry_names = (char**)malloc(NumEntries*sizeof(char*));
     entry_values = (char**)malloc(NumEntries*sizeof(char*));
     if (entry_names==NULL || entry_values==NULL) {
@@ -1468,6 +1469,7 @@ int main(int argc, char *argv[]) {
         msFreeCharArray(entry_values, NumEntries);
         exit(0);
     }
+#endif
 
     loadForm();
  

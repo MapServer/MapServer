@@ -643,6 +643,36 @@ ALL_ENABLED="$GDAL_ENABLED $ALL_ENABLED"
 ALL_INC="$GDAL_INC $ALL_INC"
 ALL_LIB="$GDAL_LIB $ALL_LIB"
 
+
+dnl ---------------------------------------------------------------------
+dnl WMS Compatibility - Enabled by default if PROJ.4 is there.
+dnl Can be explicitly disabled using --without-wms
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include WMS support...)
+AC_ARG_WITH(wms,
+[  --without-wms           Disable OGC WMS Compatibility (enabled by default).],,)
+
+if test "$with_wms" = "no" ; then
+
+  AC_MSG_RESULT([        OGC WMS Compatibility disabled by --without-wms.])
+
+elif test -z "$PROJ_ENABLED" ; then
+
+  AC_MSG_RESULT([        OGC WMS Compatibility not enabled (PROJ.4 is required for WMS).])
+
+else
+
+  WMS_ENABLED="-DUSE_WMS"
+  AC_MSG_RESULT([        OGC WMS compatibility enabled ($WMS_ENABLED).])
+
+fi
+
+AC_SUBST(WMS_ENABLED,$WMS_ENABLED)
+
+ALL_ENABLED="$WMS_ENABLED $ALL_ENABLED"
+
+
 dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that
 dnl link with it.

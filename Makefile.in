@@ -78,6 +78,9 @@ GDAL=	  @GDAL_ENABLED@
 GDAL_LIB=  @GDAL_LIB@
 GDAL_INC=  @GDAL_INC@
 
+# OGC WMS Compatibility:  -DUSE_WMS (Requires PROJ4 support)
+WMS=	  @WMS_ENABLED@
+
 #
 # UofMN GIS/Image Processing Extension (very experimental)
 #
@@ -109,7 +112,7 @@ YACC=   @YACC@
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
-CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) \
+CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(WMS) \
         $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(MPATROL) $(GD_INC) \
 	$(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC)

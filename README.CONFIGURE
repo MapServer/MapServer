@@ -38,7 +38,7 @@ instructions.
 
 Here is the list of available options as returned by "./configure --help":
 
-  --with-gd[=DIR]         Specify which version of GD to use (DIR is GD's
+  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
                           install dir).
   --without-tiff          Disable TIFF support.
   --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
@@ -46,13 +46,12 @@ Here is the list of available options as returned by "./configure --help":
   --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
   --without-eppl          Disable EPPL7 support.
   --with-eppl             Include EPPL7 support.
-  --without-ttf           Disable Freetype (TTF) support.
-  --with-ttf[=DIR]        Include Freetype (TTF) support (DIR is Freetype's
-                          install dir).
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
+  --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir).
   --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).
-  --with-gdal[=path]      Include GDAL support (path is to gdal-config).
+  --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config
+  --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.
@@ -196,6 +195,10 @@ PROJ.4 Support:
 
   Starting with MapServer v3.5, PROJ.4.4.2 (or more recent) is required.
 
+  You may also have to install the NADCON data files in order to enable
+  datum shift support if you installed a source distribution.  Look for 
+  proj-nadus-1.0.tar.gz at  http://www.remotesensing.org/proj/.
+
 
 ESRI SDE Support:
 -----------------
@@ -246,6 +249,18 @@ GDAL Support:
   to say --with-gdal, but if the gdal-config script cannot be found, please
   use --with-gdal=/usr/local/bin/gdal-config, or whatever path is is required
   to get the gdal-config script. 
+
+
+OGC WMS Compatibility:
+---------------------
+
+  --without-wms           Disable OGC WMS Compatibility (enabled by default).
+
+  OGC WMS Compatibility is enabled by default if PROJ.4 is included.
+
+  WMS Compatibility allows MapServer (actually the mapserv CGI) to advertize
+  its capabilities and serve maps and feature_info requests following the 
+  OpenGIS Web Mapping Server (WMS) Interface Specification.
 
 
 Miscellaneous flags:
