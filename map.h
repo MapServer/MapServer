@@ -734,10 +734,12 @@ typedef struct layer_obj {
   char **items;
   void *iteminfo; // connection specific information necessary to retrieve values
   expressionObj filter; // connection specific attribute filter
+  int bandsitemindex;
   int filteritemindex;
   int styleitemindex;
 #endif
 
+  char *bandsitem; // which item in a tile contains bands to use (tiled raster data only)
   char *filteritem;
   char *styleitem; // item to be used for style lookup - can also be 'AUTO'
 

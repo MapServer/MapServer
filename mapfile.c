@@ -2010,6 +2010,9 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->tileitemindex = -1;
   layer->tileindex = NULL;
 
+  layer->bandsitem = NULL;
+  layer->bandsitemindex = -1;
+
   layer->currentfeature = layer->features = NULL;
 
   layer->connection = NULL;
@@ -2067,6 +2070,7 @@ void freeLayer(layerObj *layer) {
   msFree(layer->template);
   msFree(layer->tileindex);
   msFree(layer->tileitem);
+  msFree(layer->bandsitem);
   msFree(layer->connection);
 
   msFreeProjection(&(layer->projection));

@@ -111,7 +111,7 @@ void lexer_cleanup() {
 <INITIAL,OBJECT_STRING>backgroundcolor	       { return(BACKGROUNDCOLOR); }
 <INITIAL,OBJECT_STRING>backgroundshadowcolor   { return(BACKGROUNDSHADOWCOLOR); }
 <INITIAL,OBJECT_STRING>backgroundshadowsize    { return(BACKGROUNDSHADOWSIZE); }
-
+<INITIAL,OBJECT_STRING>bandsitem               { return(BANDSITEM); }
 <INITIAL,OBJECT_STRING>buffer                  { return(BUFFER); }
 <INITIAL>character		               { return(CHARACTER); }
 <INITIAL,OBJECT_STRING>class		       { return(CLASS); }

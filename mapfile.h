@@ -190,5 +190,6 @@
 #define QUERYFORMAT 1157
 
 #define CONFIG 1158
+#define BANDSITEM 1159
 
 #endif /* MAPFILE_H */
