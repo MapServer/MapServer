@@ -152,6 +152,9 @@ $dbh->do("CREATE TABLE IF NOT EXISTS SPATIAL_REF_SYS (
   KEY x (XMIN,YMIN,XMAX,YMAX)"
 );
 
+$sqlcreate{'3'} = $sqlcreate{'arc'};
+$sqlcreate{'line'} = $sqlcreate{'arc'};
+
 sub mklayer
 {
     my ($sh, $type, $add) = @_;
@@ -214,8 +217,10 @@ for (@{$shape->{FieldNames}}){
 	
 if ($shape->{Shapetype} eq POINT){
 	mklayer($sh , 'point', $fields);
-} elsif ($shape->{Shapetype} eq LINE or $shape->{Shapetype} eq ARC){
-	mklayer($sh , 'arc', $fields);
+} elsif ($shape->{Shapetype} eq LINE or $shape->{Shapetype} eq 3){
+	mklayer($sh , 'line', $fields);
+} elsif ($shape->{Shapetype} eq ARC){
+        mklayer($sh , 'arc', $fields);
 } elsif ($shape->{Shapetype} eq POLYGON){
 	mklayer($sh , 'polygon', $fields);
 }
@@ -232,7 +237,7 @@ for (0..@{$shape->{Shapes}}-1){
          $gid++;
          $feat++;
 	 undef %object;
-	 if ($shape->{Shapetype} eq LINE or $shape->{Shapetype} eq ARC){
+	 if ($shape->{Shapetype} eq LINE or $shape->{Shapetype} eq 3){
 		$object{x0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt-1][0];
 		$object{y0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt-1][1];
 		$object{x1} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt][0];
@@ -247,6 +252,23 @@ for (0..@{$shape->{Shapes}}-1){
             $sth->finish;
             ($minx, $miny, $maxx, $maxy) = rect($object{x0}, $object{y0}, $object{x1}, $object{y1});
             $dbh->do("insert into $sh (id, layer, vertices, GID, x1, y1, x2, y2 $appendvars) values ('$feat', '$layer{$sh}', 1, '$gid', '$minx', '$miny', '$maxx', '$maxy' $appenddata)") if $vrt eq 0;
+
+	} elsif ($shape->{Shapetype} eq ARC){
+                $object{x0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt-1][0];
+                $object{y0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt-1][1];
+                $object{x1} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt][0];
+                $object{y1} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt][1];
+                next unless $object{x0};
+# line
+            print "-";
+            $dbh->do("insert into ${sh}_num (GID, ESEQ, SEQ, ETYPE, X1, Y1, X2, Y2) values ('$gid', 1, 1, 2, '$object{x0}','$object{y0}','$object{x1}','$object{y1}')");
+            $string =  wkb(0, $ENDIAN, $WKB_LINESTRING, 1, 2,$object{x0}, $object{y0}, $object{x1}, $object{y1});
+            my $sth = $dbh->prepare("insert into ${sh}_bin (GID, XMIN, YMIN, XMAX, YMAX, WKB_GEOMETRY) values ('$gid', '$object{x0}','$object{y0}','$object{x1}','$object{y1}', ? )");
+             $sth->execute($string);
+            $sth->finish;
+            ($minx, $miny, $maxx, $maxy) = rect($object{x0}, $object{y0}, $object{x1}, $object{y1});
+            $dbh->do("insert into $sh (id, layer, vertices, GID, x1, y1, x2, y2 $appendvars) values ('$feat', '$layer{$sh}', 1, '$gid', '$minx', '$miny', '$maxx', '$maxy' $appenddata)") if $vrt eq 0;
+
 
 	 } elsif ($shape->{Shapetype} eq POINT){
 		$object{x0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt][0];
