@@ -1177,6 +1177,9 @@ Constructor:
         Destroys resources used by a shape object.  
 
 
+   string getvalue(layerObj layer, string filedname)
+        Returns the value for a given field name.
+ 
  RectObj Class:
  --------------
 
