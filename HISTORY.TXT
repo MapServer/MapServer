@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Added "z" support in SWIG MapScript for pointObj (bug 871)
+
 - In PHP Mpascript when using  ms_newrectobj, the members minx, miny,
   maxx, maxy are initialized to -1 (Bug 788).
 
