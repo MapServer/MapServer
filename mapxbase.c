@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/02/07 18:37:43  frank
+ * Removed dangerous junk in leading space trimmer.
+ *
  * Revision 1.18  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -524,7 +527,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     ** Trim/skip leading blanks (SDL/DM Modification - only on numeric types)
     */ 
     if( psDBF->pachFieldType[iField] == 'N' || psDBF->pachFieldType[iField] == 'F' || psDBF->pachFieldType[iField] == 'D' ) {
-        for(i=0; i < psDBF->pszStringField[i] != '\0' ;i++) {
+        for(i=0; psDBF->pszStringField[i] != '\0' ;i++) {
             if(psDBF->pszStringField[i] != ' ')
                 break;	
         }
