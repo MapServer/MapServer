@@ -380,7 +380,7 @@ typedef struct {
   double minscale, maxscale;
   char *mintemplate, *maxtemplate;
 
-  char *queryformat; // what format is the query to be returned (e.g. HTML, SVG, ...), given as the name of an output format
+  char *queryformat; // what format is the query to be returned, given as a MIME type
 
 #ifndef SWIG
   hashTableObj metadata;

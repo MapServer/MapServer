@@ -1028,7 +1028,7 @@ int main(int argc, char *argv[]) {
         writeError();
       
       if(QueryFile) {
-          if (msReturnQuery(msObj, "text/html", NULL) != MS_SUCCESS)
+          if (msReturnQuery(msObj, msObj->Map->web.queryformat, NULL) != MS_SUCCESS)
            writeError();
       } else {
 	if(TEMPLATE_TYPE(msObj->Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
@@ -1329,7 +1329,7 @@ int main(int argc, char *argv[]) {
 
       } 
        else { // process the query through templates
-          if (msReturnTemplateQuery(msObj, "text/html", NULL) != MS_SUCCESS) writeError();
+          if (msReturnTemplateQuery(msObj, msObj->Map->web.queryformat, NULL) != MS_SUCCESS) writeError();
           
           if(msObj->SaveQuery) {
              sprintf(buffer, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);

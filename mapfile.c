@@ -3532,7 +3532,7 @@ void initWeb(webObj *web)
   web->imageurl = strdup("");
   web->metadata = NULL;
   web->map = NULL;
-  web->queryformat = NULL;
+  web->queryformat = strdup("text/html");
 }
 
 void freeWeb(webObj *web)
