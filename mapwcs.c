@@ -415,45 +415,46 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   return MS_SUCCESS;
 }
 
-static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
+static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
 {
   const char *value;
   char tag[100]; // should be plenty of space
   
   printf("        <AxisDescription");
-  snprintf(tag, 100, "%s_semantic", id); // optional attributes follow (should escape?)
+  snprintf(tag, 100, "%s_semantic",  name); // optional attributes follow (should escape?)
   msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
-  snprintf(tag, 100, "%s_refsys", id);
+  snprintf(tag, 100, "%s_refsys", name);
   msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " refSys=\"%s\"", NULL);
-  snprintf(tag, 100, "%s_refsyslabel", id);
+  snprintf(tag, 100, "%s_refsyslabel", name);
   msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " refSysLabel=\"%s\"", NULL);
   printf(">\n");
   
   // TODO: add metadataLink (optional)
   
-  snprintf(tag, 100, "%s_description", id);
+  snprintf(tag, 100, "%s_description", name);
   msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, "          <description>%s</description>\n", NULL);
-  snprintf(tag, 100, "%s_name", id);
-  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_WARN, "          <name>%s</name>\n", NULL);
+  // snprintf(tag, 100, "%s_name", name);
+  // msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_WARN, "          <name>%s</name>\n", NULL);
+  printf("          <name>%s</name>\n", name);
  
-  snprintf(tag, 100, "%s_label", id);
+  snprintf(tag, 100, "%s_label", name);
   msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_WARN, "          <label>%s</label>\n", NULL);
   
   // Values
   printf("          <values");
-  snprintf(tag, 100, "%s_values_semantic", id); // optional attributes follow (should escape?)
+  snprintf(tag, 100, "%s_values_semantic", name); // optional attributes follow (should escape?)
   msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
-  snprintf(tag, 100, "%s_values_type", id);
+  snprintf(tag, 100, "%s_values_type", name);
   msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " type=\"%s\"", NULL);
   printf(">\n");
   
   // single values, we do not support optional type and semantic attributes
-  snprintf(tag, 100, "%s_values", id);
+  snprintf(tag, 100, "%s_values", name);
   if(msOWSLookupMetadata(layer->metadata, "COM", tag))
     msOWSPrintMetadataList(stdout, layer->metadata, "COM", tag, NULL, NULL, "            <singleValue>%s</singleValue>\n", NULL);
   
   // intervals, only one per axis for now, we do not support optional type, atomic and semantic attributes
-  snprintf(tag, 100, "%s_interval", id);
+  snprintf(tag, 100, "%s_interval", name);
   if((value = msOWSLookupMetadata(layer->metadata, "COM", tag)) != NULL) {
     char **tokens;
     int numtokens;
@@ -678,6 +679,12 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     outputFormatObj *format;
     char *bandlist=NULL;
 
+    // Make sure all required parameters are available (at least the easy ones)
+    if(!params->crs) {
+      msSetError( MS_WCSERR, "Required parameter CRS was not supplied.", "msWCSGetCoverage()");
+      return msWCSException(params->version);
+    }
+
     // Find the layer we are working with. 
     lp = NULL;
     for(i=0; i<map->numlayers; i++) {
@@ -701,8 +708,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
         if( crs_to_use == NULL )
             crs_to_use = params->crs;
 
-      if (strncasecmp(crs_to_use, "EPSG:", 5) == 0) 
-      {
+      if (strncasecmp(crs_to_use, "EPSG:", 5) == 0) {
         // RESPONSE_CRS=EPSG:xxxx
         char buffer[32];
         int iUnits;
@@ -715,12 +721,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
         iUnits = GetMapserverUnitUsingProj(&(map->projection));
         if (iUnits != -1)
           map->units = iUnits;
-      }
-      else  /* should we support WMS style AUTO: projections? Not for now*/
-      {
-          msSetError(MS_WMSERR, 
-                     "Unsupported SRS namespace (only EPSG currently supported).",
-                     "msWCSGetCoverage()");
+      } else {  /* should we support WMS style AUTO: projections? Not for now*/
+          msSetError(MS_WMSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
           return msWCSException(params->version);
       }
     }
@@ -828,11 +830,13 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     
     // Did we get BBOX values?
     if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
-        msSetError( MS_WCSERR, "BBOX missing or specifies an empty region.", "msWCSGetCoverage()" );
+        msSetError( MS_WCSERR, "Required parameter BBOX missing or specifies an empty region.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
     }
     
-    // Compute width/height from bbox and cellsize. 
+    // If necessary, project the BBOX
+    
+    // Compute width/height from BBOX and cellsize. 
     if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
         params->resx = (params->bbox.maxx - params->bbox.minx) / params->width;
         params->resy = (params->bbox.maxy - params->bbox.miny) / params->height;
