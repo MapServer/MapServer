@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2004/12/21 15:59:14  dan
+ * Do not include port number in online resource if it's http/80 (bug 1075)
+ *
  * Revision 1.54  2004/11/28 02:51:02  frank
  * blow an error if any WxS services are enabled without PROJ
  *
@@ -415,7 +418,12 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
             online_resource = (char*)malloc(sizeof(char)*(strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10));
             if (online_resource) 
             {
-                sprintf(online_resource, "%s://%s:%s%s?", protocol, hostname, port, script);
+                if ((atoi(port) == 80 && strcmp(protocol, "http") == 0) ||
+                    (atoi(port) == 443 && strcmp(protocol, "https") == 0) )
+                    sprintf(online_resource, "%s://%s%s?", protocol, hostname, script);
+                else
+                    sprintf(online_resource, "%s://%s:%s%s?", protocol, hostname, port, script);
+
                 if (mapparam)
                 {
                     int baselen;
