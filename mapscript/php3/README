@@ -1219,6 +1219,18 @@ outputformatObj Class
    int       renderer;
    int       imagemode     
    
+        
+  Methods related to the output format :
+
+   void setformatoption(string property_name, new_value)
+        Add or Modify the format option list. return true on success.
+
+    Example : $oMap->outputformat->setformatoption("OUTPUT_TYPE", "RASTER");
+     
+   string  getformatoption(string property_name)
+        Returns the associated value for the format option property passed
+        as argument. Returns an empty string if property not found.
+
 
 gridObj
 --------

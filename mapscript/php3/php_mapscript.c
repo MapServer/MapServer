@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.162  2003/04/28 15:34:47  assefa
+ * Add setformatoption and getformatoption on the outputformat object.
+ *
  * Revision 1.161  2003/04/25 15:32:58  dan
  * Replaced inchesperUnit[] by a msInchesPerUnit() function that provides
  * better scale values for units DD (adjusts the inches/unit based on lat)
@@ -437,6 +440,10 @@ DLEXPORT void php3_ms_get_error_obj(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_error_next(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_reset_error_list(INTERNAL_FUNCTION_PARAMETERS);
 
+
+DLEXPORT void php_ms_outputformat_setOutputformatoption(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAMETERS);
+
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -803,6 +810,8 @@ function_entry php_style_class_functions[] = {
 };
 
 function_entry php_outputformat_class_functions[] = {
+    {"setformatoption",    php_ms_outputformat_setOutputformatoption,      NULL},    
+    {"getformatoption",    php_ms_outputformat_getOutputformatoption,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -11136,6 +11145,70 @@ static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
     add_property_long(return_value,  "imagemode", poutputformat->imagemode);
 
     return outputformat_id;
+}
+
+DLEXPORT void php_ms_outputformat_setOutputformatoption(INTERNAL_FUNCTION_PARAMETERS)
+{
+    outputFormatObj *self;
+    pval   *pPropertyName, *pNewValue, *pThis;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pPropertyName);
+    convert_to_string(pNewValue);
+     
+    self = (outputFormatObj *)
+      _phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msoutputformat),
+                          list TSRMLS_CC);
+
+    if (self == NULL)
+      RETURN_FALSE;
+
+    msSetOutputFormatOption(self, pPropertyName->value.str.val,
+                            pNewValue->value.str.val);
+
+     RETURN_TRUE;
+}
+
+DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAMETERS)
+{
+    outputFormatObj *self;
+    char *szRetrun = NULL;
+    pval   *pPropertyName, *pThis;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pPropertyName) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pPropertyName);
+     
+    self = (outputFormatObj *)
+      _phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msoutputformat),
+                          list TSRMLS_CC);
+
+    if (self == NULL)
+      RETURN_FALSE;
+
+    szRetrun = msGetOutputFormatOption(self, pPropertyName->value.str.val, "");
+
+    RETVAL_STRING(szRetrun, 1);
+
+    //RETURN_STRING("", 0);  
+
 }
 
 
