@@ -1,6 +1,9 @@
 #include "maptemplate.h"
 #include "maphash.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 /*
  * Redirect to (only use in CGI)
  * 
@@ -611,10 +614,10 @@ int processMetadata(char** pszInstr, hashTableObj ht)
  * 
  * This func return a modified pszInstr.
 */
-int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
+int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char* pszPrefix)
 {
    int nWidth, nHeight, nLen;
-   char *pszImgFname=NULL, *pszFullImgFname=NULL, *pszImgTag;
+   char pszImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
    gdImagePtr img;
    hashTableObj myHashTable=NULL;
    FILE *fIcon;
@@ -646,9 +649,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
          nHeight = atoi(msLookupHashTable(myHashTable, "height"));
       }
 
-      pszImgFname = (char*)malloc(strlen(map->name) + 3 + 3 + 4 + 4 + 3 + 1);
-
-      sprintf(pszImgFname, "%s-%d-%d-%d-%d.%s", map->name, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->imagetype));
+      sprintf(pszImgFname, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->imagetype),'\0');
 
       pszFullImgFname = (char*)malloc(strlen(map->web.imagepath) + strlen(pszImgFname) + 1);
 
@@ -685,8 +686,6 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
             if (myHashTable)
               msFreeHashTable(myHashTable);
 
-            if (pszImgFname)
-              free(pszImgFname);
             if (pszFullImgFname)
               free(pszFullImgFname);
 
@@ -719,13 +718,11 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
          *pszInstr = gsub(*pszInstr, pszTag, pszFullImgFname);
 
          free(pszFullImgFname);
-         free(pszImgFname);
 
          // find the begining of tag
          pszImgTag = strstr(*pszInstr, "[leg_icon");
       }
       else {
-         free(pszImgFname);
          pszImgTag = NULL;
       }
       
@@ -786,7 +783,7 @@ char *strcatalloc(char* pszDest, char* pszSrc)
  * 
  * buffer must be freed by caller.
 */
-int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **pszTemp)
+int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **pszTemp, char* pszPrefix)
 {
    char *pszClassImg;
    int i;
@@ -831,7 +828,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
       // find first layer of this group
       for (i=0; i<map->numlayers; i++)
         if (map->layers[map->layerorder[i]].group && strcmp(map->layers[map->layerorder[i]].group, pszGroupName) == 0)
-          processIcon(map, map->layerorder[i], 0, pszTemp);
+          processIcon(map, map->layerorder[i], 0, pszTemp, pszPrefix);
    }      
       
    return MS_SUCCESS;
@@ -846,7 +843,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
  * 
  * buffer must be freed by caller.
 */
-int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, hashTableObj oLayerArgs, char **pszTemp)
+int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, hashTableObj oLayerArgs, char **pszTemp, char* pszPrefix)
 {
    hashTableObj myHashTable;
    char pszStatus[3];
@@ -944,7 +941,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
     */
    pszClassImg = strstr(*pszTemp, "[leg_icon");
    if (pszClassImg) {
-      processIcon(map, nIdxLayer, 0, pszTemp);
+      processIcon(map, nIdxLayer, 0, pszTemp, pszPrefix);
    }      
 
    /* process all metadata tags
@@ -969,7 +966,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
  * 
  * buffer must be freed by caller.
 */
-int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, int nIdxClass, hashTableObj oClassArgs, char **pszTemp)
+int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, int nIdxClass, hashTableObj oClassArgs, char **pszTemp, char* pszPrefix)
 {
    hashTableObj myHashTable;
    char pszStatus[3];
@@ -1070,7 +1067,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
     */
    pszClassImg = strstr(*pszTemp, "[leg_icon");
    if (pszClassImg) {
-      processIcon(map, nIdxLayer, nIdxClass, pszTemp);
+      processIcon(map, nIdxLayer, nIdxClass, pszTemp, pszPrefix);
    }
 
    /* process all metadata tags
@@ -1086,7 +1083,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    return MS_SUCCESS;
 }
 
-char *generateLegendTemplate(mapObj *map)
+char *generateLegendTemplate(mapservObj *msObj)
 {
    FILE *stream;
    char *file = NULL;
@@ -1098,6 +1095,11 @@ char *generateLegendTemplate(mapObj *map)
    char *legLayerHtmlCopy = NULL;
    char *legClassHtmlCopy = NULL;
    char *legGroupHtmlCopy = NULL;
+   
+   char *pszPrefix = NULL;
+   char *pszMapFname = NULL;
+   
+   struct stat tmpStat;
    
    char *pszOrderMetadata = NULL;
    
@@ -1119,15 +1121,48 @@ char *generateLegendTemplate(mapObj *map)
       return NULL;
    }
 
-   if(regexec(&re, map->legend.template, 0, NULL, 0) != 0) { /* no match */
+   if(regexec(&re, msObj->Map->legend.template, 0, NULL, 0) != 0) { /* no match */
       msSetError(MS_IOERR, "Invalid template file name.", "generateLegendTemplate()");      
      regfree(&re);
      return NULL;
    }
    regfree(&re);
 
+   /*
+    * build prefix filename
+    * for legend icon creation
+   */
+   for(i=0;i<msObj->NumParams;i++) // find the mapfile parameter first
+     if(strcasecmp(msObj->ParamNames[i], "map") == 0) break;
+  
+   if(i == msObj->NumParams)
+      pszMapFname = strcatalloc(pszMapFname, getenv("MS_MAPFILE"));
+   else 
+   {
+      if(getenv(msObj->ParamValues[i])) // an environment references the actual file to use
+        pszMapFname = strcatalloc(pszMapFname, getenv(msObj->ParamValues[i]));
+      else
+        pszMapFname = strcatalloc(pszMapFname, msObj->ParamValues[i]);
+   }
+   
+   if (stat(pszMapFname, &tmpStat) != -1)
+   {
+      char pszSize[5];
+      char pszTime[11];
+      
+      sprintf(pszSize, "%ld_", tmpStat.st_size);
+      sprintf(pszTime, "%ld", tmpStat.st_mtime);      
+
+      pszPrefix = strcatalloc(pszPrefix, msObj->Map->name);
+      pszPrefix = strcatalloc(pszPrefix, "_");
+      pszPrefix = strcatalloc(pszPrefix, pszSize);
+      pszPrefix = strcatalloc(pszPrefix, pszTime);
+   }
+   
+   free(pszMapFname);
+   
    // open template
-   if((stream = fopen(map->legend.template, "r")) == NULL) {
+   if((stream = fopen(msObj->Map->legend.template, "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
       return NULL;
    } 
@@ -1180,16 +1215,16 @@ char *generateLegendTemplate(mapObj *map)
     */
    pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
       
-   if (sortLayerByMetadata(map, pszOrderMetadata) != MS_SUCCESS)
+   if (sortLayerByMetadata(msObj->Map, pszOrderMetadata) != MS_SUCCESS)
      goto error;
       
    if (legGroupHtml) {
       // retrieve group names
-      papszGroups = msGetAllGroupNames(map, &nGroupNames);
+      papszGroups = msGetAllGroupNames(msObj->Map, &nGroupNames);
 
       for (i=0; i<nGroupNames; i++) {
          // process group tags
-         if (generateGroupTemplate(legGroupHtml, map, papszGroups[i], &legGroupHtmlCopy) != MS_SUCCESS)
+         if (generateGroupTemplate(legGroupHtml, msObj->Map, papszGroups[i], &legGroupHtmlCopy, pszPrefix) != MS_SUCCESS)
          {
             if (pszResult)
               free(pszResult);
@@ -1218,21 +1253,21 @@ char *generateLegendTemplate(mapObj *map)
          
          // for all layers in group
          if (legLayerHtml) {
-           for (j=0; j<map->numlayers; j++) {
+           for (j=0; j<msObj->Map->numlayers; j++) {
               /*
                * if order_metadata is set and the order
                * value is less than 0, dont display it
                */
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if (pszOrderMetadata) {
-                 pszOrderValue = msLookupHashTable(map->layers[map->layerorder[j]].metadata, pszOrderMetadata);
+                 pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
                  if (pszOrderValue)
                    nLegendOrder = atoi(pszOrderValue);
               }
 
-              if (nLegendOrder >= 0 && map->layers[map->layerorder[j]].group && strcmp(map->layers[map->layerorder[j]].group, papszGroups[i]) == 0) {
+              if (nLegendOrder >= 0 && msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
                  // process all layer tags
-                 if (generateLayerTemplate(legLayerHtml, map, map->layerorder[j], layerArgs, &legLayerHtmlCopy) != MS_SUCCESS)
+                 if (generateLayerTemplate(legLayerHtml, msObj->Map, msObj->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
                  {
                     if (pszResult)
                       free(pszResult);
@@ -1263,12 +1298,12 @@ char *generateLegendTemplate(mapObj *map)
             
                  // for all classes in layer
                  if (legClassHtml) {
-                    for (k=0; k<map->layers[map->layerorder[j]].numclasses; k++) {
+                    for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
                        // process all class tags
-                       if (!map->layers[map->layerorder[j]].class[k].name)
+                       if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
                          continue;
 
-                       if (generateClassTemplate(legClassHtml, map, map->layerorder[j], k, classArgs, &legClassHtmlCopy) != MS_SUCCESS)
+                       if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
                        {
                           if (pszResult)
                             free(pszResult);
@@ -1304,14 +1339,14 @@ char *generateLegendTemplate(mapObj *map)
    else {
       // if no group template specified
       if (legLayerHtml) {
-         for (j=0; j<map->numlayers; j++) {
+         for (j=0; j<msObj->Map->numlayers; j++) {
             /*
              * if order_metadata is set and the order
              * value is less than 0, dont display it
              */
             pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
             if (pszOrderMetadata) {
-               pszOrderValue = msLookupHashTable(map->layers[map->layerorder[j]].metadata, pszOrderMetadata);
+               pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
                if (pszOrderValue) {
                   nLegendOrder = atoi(pszOrderValue);
                   if (nLegendOrder < 0)
@@ -1320,7 +1355,7 @@ char *generateLegendTemplate(mapObj *map)
             }
 
             // process a layer tags
-            if (generateLayerTemplate(legLayerHtml, map, map->layerorder[j], layerArgs, &legLayerHtmlCopy) != MS_SUCCESS)
+            if (generateLayerTemplate(legLayerHtml, msObj->Map, msObj->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
             {
                if (pszResult)
                  free(pszResult);
@@ -1348,12 +1383,12 @@ char *generateLegendTemplate(mapObj *map)
             
             // for all classes in layer
             if (legClassHtml) {
-               for (k=0; k<map->layers[map->layerorder[j]].numclasses; k++) {
+               for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
                   // process all class tags
-                  if (!map->layers[map->layerorder[j]].class[k].name)
+                  if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
                     continue;
 
-                  if (generateClassTemplate(legClassHtml, map, map->layerorder[j], k, classArgs, &legClassHtmlCopy) != MS_SUCCESS)
+                  if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
                   {
                      if (pszResult)
                        free(pszResult);
@@ -1385,14 +1420,14 @@ char *generateLegendTemplate(mapObj *map)
       }
       else { // if no group and layer template specified
          if (legClassHtml) {
-            for (j=0; j<map->numlayers; j++) {
+            for (j=0; j<msObj->Map->numlayers; j++) {
                /*
                 * if order_metadata is set and the order
                 * value is less than 0, dont display it
                 */
                pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
                if (pszOrderMetadata) {
-                  pszOrderValue = msLookupHashTable(map->layers[map->layerorder[j]].metadata, pszOrderMetadata);
+                  pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
                   if (pszOrderValue) {
                      nLegendOrder = atoi(pszOrderValue);
                      if (nLegendOrder < 0)
@@ -1400,11 +1435,11 @@ char *generateLegendTemplate(mapObj *map)
                   }
                }
                
-               for (k=0; k<map->layers[map->layerorder[j]].numclasses; k++) {
-                  if (!map->layers[map->layerorder[j]].class[k].name)
+               for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
+                  if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
                     continue;
                   
-                  if (generateClassTemplate(legClassHtml, map, map->layerorder[j], k, classArgs, &legClassHtmlCopy) != MS_SUCCESS)
+                  if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
                   {
                      if (pszResult)
                        free(pszResult);
@@ -1492,7 +1527,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
      if (msObj->Map->legend.template) {
         char *legendTemplate;
 
-        legendTemplate = generateLegendTemplate(msObj->Map);
+        legendTemplate = generateLegendTemplate(msObj);
         if (legendTemplate) {
           outstr = gsub(outstr, "[legend]", legendTemplate);
      

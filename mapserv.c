@@ -1081,7 +1081,7 @@ int main(int argc, char *argv[]) {
        {
           char *legendTemplate;
 
-          legendTemplate = generateLegendTemplate(msObj->Map);
+          legendTemplate = generateLegendTemplate(msObj);
           if (legendTemplate) {
              printf("Content-type: text/html\n\n%s", legendTemplate);
 
