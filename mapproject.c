@@ -59,6 +59,7 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
       prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
       
+      prj_point.x = x;
       prj_point.y = rect->maxy;
       msProjectPoint(in, out, &prj_point);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
@@ -79,6 +80,7 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
       prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
       
       prj_point.x = rect->maxx;
+      prj_point.y = y;
       msProjectPoint(in, out, &prj_point);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
       prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
