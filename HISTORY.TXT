@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+-  MapServer now provides one default style named (default), title and LegendURL   when generating capabilities.
+   Added also the possibility to use the keyword default for STYLES 
+   parameter when doing a GetMap (..&STYLES=default,defeault,...). Bug 1011.
+
 - Add xlink:type="simple" in WMS MetadataURL (bug 1027)
 
 
