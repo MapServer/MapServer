@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.44  2002/05/31 16:09:10  assefa
+ * Change call tp msTransformShapeToPixel.
+ *
  * Revision 1.43  2002/05/10 19:16:29  dan
  * Added qitem,qstring args to PHP version of layer->queryByAttributes()
  *
@@ -900,7 +903,7 @@ int shapefileObj_getTransformed(shapefileObj *self, mapObj *map,
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
-    msTransformShape(shape, map->extent, map->cellsize);
+    msTransformShapeToPixel(shape, map->extent, map->cellsize);
 
     return 0;
   }
