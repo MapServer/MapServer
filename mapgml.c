@@ -316,7 +316,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   if(msLookupHashTable(map->web.metadata, "gml_uri"))  fprintf(stream, "xmlns=\"%s\"", msLookupHashTable(map->web.metadata, "gml_uri"));
   fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
   fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
-  fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2000/10/XMLSchema-instance\"");  
+  fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");  
   if(msLookupHashTable(map->web.metadata, "gml_schema")) fprintf(stream, "\n\t xsi:schemaLocation=\"%s\"", msLookupHashTable(map->web.metadata, "gml_schema"));
   fprintf(stream, ">\n");
 
