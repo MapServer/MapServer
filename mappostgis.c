@@ -318,7 +318,13 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 		pos_ftab = pos_from + 6; // This should be the start of the ftab name
 		pos_space = strstr(pos_ftab, " "); // First space
 		//pos_paren = strstr(pos_ftab, ")"); // Closing paren of clause
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+                pos_paren = strrchr(pos_ftab,')');
+#else
 		pos_paren = rindex(pos_ftab,')');
+#endif
+
 
 		if (  (pos_space ==NULL)  || (pos_paren ==NULL) ) {
 
