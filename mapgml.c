@@ -287,6 +287,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   FILE *stream=stdout; // defaults to stdout
   char szPath[MS_MAXPATHLEN];
 
+  msInitShape(&shape);
+
   if(filename && strlen(filename) > 0) { // deal with the filename if present
     stream = fopen(msBuildPath(szPath, map->mappath, filename), "w");
     if(!stream) {
@@ -407,6 +409,100 @@ int msGMLWriteQuery(mapObj *map, char *filename)
     fprintf(stream, "</msGMLOutput>\n"); // default
 
   if(filename && strlen(filename) > 0) fclose(stream);
+
+  return(MS_SUCCESS);
+}
+
+
+/*
+** msGMLWriteWFSQuery()
+**
+** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
+*/
+
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
+{
+  int status;
+  int i,j,k;
+  layerObj *lp=NULL;
+  shapeObj shape;
+
+  msInitShape(&shape);
+
+
+  // step through the layers looking for query results
+  for(i=0; i<map->numlayers; i++) 
+  {
+    lp = &(map->layers[i]);
+
+    if(lp->dump == MS_TRUE && 
+       lp->resultcache && lp->resultcache->numresults > 0) 
+    { // found results
+
+      // actually open the layer
+      status = msLayerOpen(lp, map->shapepath);
+      if(status != MS_SUCCESS) return(status);
+
+      // retrieve all the item names
+      status = msLayerGetItems(lp);
+      if(status != MS_SUCCESS) return(status);
+
+      for(j=0; j<lp->resultcache->numresults; j++) 
+      {
+	status = msLayerGetShape(lp, &shape, 
+                                 lp->resultcache->results[j].tileindex, 
+                                 lp->resultcache->results[j].shapeindex);
+        if(status != MS_SUCCESS) return(status);
+
+#ifdef USE_PROJ
+	// project the shape into the map projection (if necessary), note that this projects the bounds as well
+        if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
+          msProjectShape(&lp->projection, &map->projection, &shape);
+#endif
+
+	// start this feature
+	fprintf(stream, "    <gml:FeatureMember>\n");
+	fprintf(stream, "      <%s>\n", lp->name);
+
+	// write the item/values
+	for(k=0; k<lp->numitems; k++)	
+	  fprintf(stream, "        <%s>%s</%s>\n", 
+                  lp->items[k], shape.values[k], lp->items[k]);
+
+	// write the bounding box
+#ifdef USE_PROJ
+	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "        ");
+	else // then use the layer projection and/or metadata
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "        ");	
+#else
+	gmlWriteBounds(stream, &(shape.bounds), NULL, "        "); // no projection information
+#endif
+
+	// write the feature geometry
+#ifdef USE_PROJ
+	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "        ");
+        else // then use the layer projection and/or metadata
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "        ");      
+#else
+	gmlWriteGeometry(stream, &(shape), NULL, "        ");
+#endif
+
+	// end this feature
+	fprintf(stream, "      </%s>\n", lp->name);
+	fprintf(stream, "    </gml:FeatureMember>\n");
+
+	msFreeShape(&shape); // init too
+      }
+
+      // end this layer
+
+      msLayerClose(lp);
+    }
+
+  } // next layer
+
 
   return(MS_SUCCESS);
 }

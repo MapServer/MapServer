@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2002/10/04 21:29:41  dan
+ * WFS: Added GetCapabilities and basic GetFeature (still some work to do)
+ *
  * Revision 1.1  2002/09/03 03:19:51  dan
  * Set the bases for WFS Server support + moved some WMS/WFS stuff to mapows.c
  *
@@ -67,15 +70,242 @@ static int msWFSException(mapObj *map, const char *wmtversion)
 }
 
 
+
+/*
+**
+*/
+static void msWFSPrintRequestCap(const char *wmtver, const char *request,
+                                 const char *script_url, 
+                                 const char *format_tag, const char *formats, ...)
+{
+  va_list argp;
+  const char *fmt;
+
+  printf("    <%s>\n", request);
+
+  // We expect to receive a NULL-terminated args list of formats
+  if (format_tag != NULL)
+  {
+    printf("      <%s>\n", format_tag);
+    va_start(argp, formats);
+    fmt = formats;
+    while(fmt != NULL)
+    {
+      printf("        <%s/>\n", fmt);
+      fmt = va_arg(argp, const char *);
+    }
+    va_end(argp);
+    printf("      </%s>\n", format_tag);
+  }
+
+  printf("      <DCPType>\n");
+  printf("        <HTTP>\n");
+  printf("          <Get onlineResource=\"%s\" />\n", script_url);
+  printf("        </HTTP>\n");
+  printf("      </DCPType>\n");
+
+#ifdef __TODO__
+// POST method with XML encoding not yet supported.
+  printf("      <DCPType>\n");
+  printf("        <HTTP>\n");
+  printf("          <Post onlineResource=\"%s\" />\n", script_url);
+  printf("        </HTTP>\n");
+  printf("      </DCPType>\n");
+#endif
+
+  printf("    </%s>\n", request);
+}
+
+
+/*
+** msWFSDumpLayer()
+*/
+int msWFSDumpLayer(mapObj *map, layerObj *lp)
+{
+   rectObj ext;
+   
+   printf("    <FeatureType>\n");
+
+   msOWSPrintParam("LAYER.NAME", lp->name, OWS_WARN, 
+              "        <Name>%s</Name>\n", NULL);
+
+   msOWSPrintMetadata(lp->metadata, "wfs_title", OWS_WARN,
+                 "        <Title>%s</Title>\n", lp->name);
+
+   msOWSPrintMetadata(lp->metadata, "wfs_abstract", OWS_NOERR,
+                 "        <Abstract>%s</Abstract>\n", NULL);
+
+   msOWSPrintMetadataList(lp->metadata, "wfs_keywordlist", 
+                     "        <Keywords>\n", "        </Keywords>\n",
+                     "          %s\n");
+
+   // __TODO__ Add optional metadataURL with type, format, etc.
+
+   // In WFS, every layer must have exactly one SRS and there is none at
+   // the top level contrary to WMS
+   if (msGetEPSGProj(&(lp->projection),lp->metadata, MS_FALSE) != NULL)
+   {
+       // If layer has a srs then try using it
+       msOWSPrintParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
+                  msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                  OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
+   }
+   else
+   {
+       // Layer has no SRS, try using map SRS or produce warning
+       msOWSPrintParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
+                  msGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
+                  OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
+   }
+
+   // If layer has no proj set then use map->proj for bounding box.
+   if (msOWSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
+   {
+       if(lp->projection.numargs > 0) 
+       {
+           msOWSPrintLatLonBoundingBox("        ", &(ext), &(lp->projection));
+       } 
+       else 
+       {
+           msOWSPrintLatLonBoundingBox("        ", &(ext), &(map->projection));
+       }
+   }
+   else
+   {
+       printf("<!-- WARNING: Mandatory LatLonBoundingBox could not be established for this layer.  Consider setting wfs_extent metadata. -->\n");
+   }
+
+   printf("    </FeatureType>\n");
+      
+   return MS_SUCCESS;
+}
+
+
+
+
 /*
 ** msWFSGetCapabilities()
 */
 int msWFSGetCapabilities(mapObj *map, const char *wmtver) 
 {
-    printf("Content-type: text/plain%c%c",10,10);
-    printf("msWFSGetCapabilities() not implemented yet.\n\n");
+  char *script_url=NULL, *script_url_encoded;
+  int i;
 
-    return MS_SUCCESS;
+  // Decide which version we're going to return... only 1.0.0 for now
+  wmtver = "1.0.0";
+
+  // We need this server's onlineresource.
+  if ((script_url=msOWSGetOnlineResource(map, "wfs_onlineresource")) == NULL ||
+      (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
+  {
+      return msWFSException(map, wmtver);
+  }
+
+  printf("Content-type: text/xml%c%c",10,10); 
+
+  msOWSPrintMetadata(map->web.metadata, "wfs_encoding", OWS_NOERR,
+                "<?xml version='1.0' encoding=\"%s\" ?>\n",
+                "ISO-8859-1");
+
+  printf("<WFS_Capabilities \n"
+         "   version=\"%s\" \n"
+         "   updateSequence=\"0\" \n"
+         "   xmlns=\"http://www.opengis.net/wfs\" \n"
+         "   xmlns:ogc=\"http://www.opengis.net/ogc\" >\n",
+         wmtver);
+
+  // Report MapServer Version Information
+  printf("\n<!-- %s -->\n\n", msGetVersion());
+
+  /*
+  ** SERVICE definition
+  */
+  printf("<Service>\n");
+  printf("  <Name>MapServer WFS</Name>\n");
+
+  // the majority of this section is dependent on appropriately named metadata in the WEB object
+  msOWSPrintMetadata(map->web.metadata, "wfs_title", OWS_WARN,
+                "  <Title>%s</Title>\n", map->name);
+  msOWSPrintMetadata(map->web.metadata, "wfs_abstract", OWS_NOERR,
+                "  <Abstract>%s</Abstract>\n", NULL);
+  printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+
+  msOWSPrintMetadataList(map->web.metadata, "wfs_keywordlist", 
+                    "  <Keywords>\n", "  </Keywords>\n",
+                    "    %s\n");
+  
+  msOWSPrintMetadata(map->web.metadata, "wfs_accessconstraints", OWS_NOERR,
+                "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
+  msOWSPrintMetadata(map->web.metadata, "wfs_fees", OWS_NOERR,
+                "  <Fees>%s</Fees>\n", NULL);
+
+  printf("</Service>\n\n");
+
+  /* 
+  ** CAPABILITY definitions: list of supported requests
+  */
+
+  printf("<Capability>\n");
+
+  printf("  <Request>\n");
+  msWFSPrintRequestCap(wmtver, "GetCapabilities", script_url_encoded, 
+                       NULL, NULL);
+  msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, 
+                       "SchemaDescriptionLanguage", "XMLSCHEMA", NULL);
+  msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, 
+                       "ResultFormat", "GML2", NULL);
+  printf("  </Request>\n");
+  printf("</Capability>\n\n");
+
+  /* 
+  ** FeatureTypeList: layers
+  */
+
+  printf("<FeatureTypeList>\n");
+
+  // Operations supported... set default at top-level, and more operations
+  // can be added inside each layer... for MapServer only query is supported
+  printf("  <Operations>\n");
+  printf("    <Query/>\n");
+  printf("  </Operations>\n");
+
+  for(i=0; i<map->numlayers; i++)
+  {
+      layerObj *lp;
+      lp = &(map->layers[i]);
+
+      // List only vector layers in which DUMP=TRUE
+      if (lp->dump && lp->type != MS_LAYER_RASTER &&
+          lp->connectiontype != MS_WMS)
+      {
+          msWFSDumpLayer(map, lp);
+      }
+  }
+
+  printf("</FeatureTypeList>\n\n");
+
+
+  /*
+  ** OGC Filter Capabilities ... for now we support only BBOX
+  */
+
+  printf("<ogc:Filter_Capabilities>\n");
+  printf("  <ogc:Spatial_Capabilities>\n");
+  printf("    <ogc:Spatial_Operators>\n");
+  printf("      <ogc:BBOX/>\n");
+  printf("    </ogc:Spatial_Operators>\n");
+  printf("  </ogc:Spatial_Capabilities>\n");
+  printf("</ogc:Filter_Capabilities>\n\n");
+
+  /*
+  ** Done!
+  */
+  printf("</WFS_Capabilities>\n");
+
+  free(script_url);
+  free(script_url_encoded);
+
+  return MS_SUCCESS;
 }
 
 
@@ -120,13 +350,66 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
 int msWFSGetFeature(mapObj *map, const char *wmtver, 
                     char **names, char **values, int numentries)
 {
-    int i, maxfeatures=-1;
-   
+    int         i, maxfeatures=-1;
+    const char *typenames="", *myns_uri;
+    char       *script_url=NULL;
+    rectObj     bbox;
+
+    // Default filter is map extents
+    bbox = map->extent;
+
+    // Read CGI parameters
+    //
+    // __TODO__ Need to support XML encoded requests
+    //
     for(i=0; map && i<numentries; i++) 
     {
         if(strcasecmp(names[i], "TYPENAME") == 0) 
         {
+            char **layers;
+            int numlayers, j, k;
 
+            // keep a ref for layer use.
+            typenames = values[i];
+
+            // Parse comma-delimited list of type names (layers)
+            //
+            // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
+            //
+            layers = split(values[i], ',', &numlayers);
+            if (layers==NULL || numlayers < 1) 
+            {
+                msSetError(MS_WFSERR, 
+                      "At least one type name required in TYPENAME parameter.",
+                           "msWFSGetFeature()");
+                return msWFSException(map, wmtver);
+            }
+
+            for(j=0; j<map->numlayers; j++) 
+            {
+                layerObj *lp;
+
+                lp = &(map->layers[j]);
+
+                // Keep only selected layers, set to OFF by default.
+                lp->status = MS_OFF;
+
+                for (k=0; k<numlayers; k++)
+                {
+                    if (lp->dump && lp->name && 
+                        strcasecmp(lp->name, layers[k]) == 0)
+                    {
+                        lp->status = MS_ON;
+                        if (lp->template == NULL)
+                        {
+                            // Force setting a template to enable query.
+                            lp->template = strdup("ttt.html");
+                        }
+                    }
+                }
+            }
+       
+            msFreeCharArray(layers, numlayers);
         } 
         else if (strcasecmp(names[i], "PROPERTYNAME") == 0)
         {
@@ -146,7 +429,24 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         }
         else if (strcasecmp(names[i], "BBOX") == 0)
         {
-     
+            char **tokens;
+            int n;
+            tokens = split(values[i], ',', &n);
+            if (tokens==NULL || n != 4) 
+            {
+                msSetError(MS_WFSERR, "Wrong number of arguments for BBOX.",
+                           "msWFSGetFeature()");
+                return msWFSException(map, wmtver);
+            }
+            bbox.minx = atof(tokens[0]);
+            bbox.miny = atof(tokens[1]);
+            bbox.maxx = atof(tokens[2]);
+            bbox.maxy = atof(tokens[3]);
+            msFreeCharArray(tokens, n);
+
+            // __TODO__ SRS is implicit: the SRS of selected feature types
+            // Need to handle that better in case layers and maps SRS differ
+
         }
 
     }
@@ -159,8 +459,59 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         return msWFSException(map, wmtver);
     }
 
-    printf("Content-type: text/plain%c%c",10,10);
-    printf("msWFSGetFeature() not implemented yet.\n\n");
+    /*
+    ** Perform Query (only BBOX for now)
+    */
+    // __TODO__ Using a rectangle query may not be the most efficient way
+    // to do things here.
+    if(msQueryByRect(map, -1, bbox) != MS_SUCCESS)
+    {
+        errorObj   *ms_error;
+        ms_error = msGetErrorObj();
+
+        if(ms_error->code != MS_NOTFOUND) 
+            return msWFSException(map, wmtver);
+    }
+
+    /*
+    ** GetFeature response
+    */
+
+    myns_uri = msLookupHashTable(map->web.metadata, "gml_uri");
+    if (myns_uri == NULL)
+        myns_uri = "http://www.ttt.org/myns";
+
+    if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource")) == NULL)
+    {
+        return msWFSException(map, wmtver);
+    }
+
+
+    printf("Content-type: text/xml%c%c",10,10);
+
+    msOWSPrintMetadata(map->web.metadata, "wfs_encoding", OWS_NOERR,
+                       "<?xml version='1.0' encoding=\"%s\" ?>\n",
+                       "ISO-8859-1");
+
+    printf("<wfs:FeatureCollection\n"
+           "   xmlns=\"%s\" \n"
+           "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
+           "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+           "   xmlns:xsi=\"http://www.opengis.net/xsi\"\n"
+           "   xsi:schemaLocation=\"http://www.opengis.net/wfs ../wfs/%s/WFS-basic.xsd \n"
+           "                       %s %sSERVICE=WFS&VERSION=%s&REQUEST=DescribeFeatureType&TYPENAME=%s\">\n", 
+           myns_uri, wmtver, myns_uri, script_url, wmtver, typenames);
+
+
+
+    msGMLWriteWFSQuery(map, stdout);
+
+    /*
+    ** Done!
+    */
+    printf("</wfs:FeatureCollection>\n\n");
+
+    free(script_url);
 
     return MS_SUCCESS;
 }
@@ -240,7 +591,15 @@ int msWFSDispatch(mapObj *map, char **names, char **values, int numentries)
            strcasecmp(request, "Transaction") == 0 )
   {
       // Unsupported WFS request
-      msSetError(MS_WFSERR, "Unsupported WFS request", "msWFSDispatch()");
+      msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
+                 request);
+      return msWFSException(map, wmtver);
+  }
+  else if (strcasecmp(service, "WFS") == 0)
+  {
+      // Invalid WFS request
+      msSetError(MS_WFSERR, "Invalid WFS request: %s", "msWFSDispatch()",
+                 request);
       return msWFSException(map, wmtver);
   }
 
