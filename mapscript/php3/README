@@ -676,10 +676,10 @@ and the MapServer Map File documentation at:
         Ex : $oLayer->setprocessing("SCALE_1=AUTO");
              $oLayer->setprocessing("SCALE_2=AUTO");       
 
-   aString getProcessing
+   aString getProcessing()
         Returns an array containing the processing strings
 
-   boolean clearProcessing
+   boolean clearProcessing()
         Clears all the processing strings
 
    string   executeWFSGetfeature()
