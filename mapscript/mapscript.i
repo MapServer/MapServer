@@ -553,6 +553,19 @@ memory.") const char * {
     return  msSetLayersdrawingOrder(self, panIndexes); 
   }
 
+  int applySLD(mapObj *self, char *sld) {
+    return msSLDApplySLD(self, sld, -1, NULL);
+  }
+
+  int applySLDURL(mapObj *self, char *sld) {
+    return msSLDApplySLDURL(self, sld, -1, NULL);
+  }
+
+  char *generateSLD(mapObj *self) {
+    return msSLDGenerateSLD(self, -1);
+  }
+
+
   %newobject processTemplate;
   char *processTemplate(int bGenerateImages, char **names, char **values, int numentries) {
     return msProcessTemplate(self, bGenerateImages, names, values, numentries);
@@ -782,6 +795,26 @@ memory.") const char * {
         return (msWFSExecuteGetFeature(layer));
 }
 
+  int applySLD(layerObj *self, char *sld, char *stylelayer) {
+    return msSLDApplySLD(self->map, sld, self->index, stylelayer);
+  }
+
+  int applySLDURL(layerObj *self, char *sld, char *stylelayer) {
+    return msSLDApplySLDURL(self->map, sld, self->index, stylelayer);
+  }
+
+  char *generateSLD(layerObj *self) {
+    return msSLDGenerateSLD(self->map, self->index);
+  }
+
+  int moveClassUp(layerObj *self, int index) {
+    return msMoveClassUp(self, index);
+  }
+
+  int moveClassDown(layerObj *self, int index) {
+    return msMoveClassDown(self, index);
+   }
+
 }
 
 // See Bugzilla issue 548 about work on styleObj and classObj
@@ -940,6 +973,13 @@ memory.") const char * {
         }
     }
     
+    int moveStyleUp(classObj *self, int index){
+        return msMoveStyleUp(self, index);
+    }
+
+    int moveStyleDown(classObj *self, int index) {
+       return msMoveStyleDown(self, index);
+     }
 }
 
 //
