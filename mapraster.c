@@ -1,5 +1,6 @@
 #include "map.h"
 #include "mapresample.h"
+#include "mapthread.h"
 
 extern int msyyparse();
 extern int msyylex();
@@ -1956,6 +1957,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
             bGDALInitialized = 1;
         }
         
+        msAcquireLock( TLOCK_GDAL );
         hDS = GDALOpen( filename, GA_ReadOnly );
         if( hDS != NULL )
         {
@@ -1986,6 +1988,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
                         msSetError(MS_OGRERR, "%s","msDrawRasterLayer()",
                                    szLongMsg);
 
+                        msReleaseLock( TLOCK_GDAL );
                         return(MS_FAILURE);
                     }
                 }
@@ -2016,6 +2019,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
             {
                 status = drawGDAL(map, layer, img, hDS );
             }
+            msReleaseLock( TLOCK_GDAL );
 
             if( status == -1 )
             {
