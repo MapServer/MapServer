@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/04/23 18:38:13  dan
+ * Do not reset errorObj in _phpms_report_mapserver_error()
+ *
  * Revision 1.15  2002/11/11 18:34:13  assefa
  * Added back the tsrm_ls declaration for windows.
  *
@@ -108,9 +111,6 @@ void _phpms_report_mapserver_error(int php_err_type)
         php3_error(php_err_type, 
                    "MapServer Error in %s: %s\n", 
                    ms_error->routine, ms_error->message);
-        ms_error->code = -1;
-        strcpy(ms_error->message, "");
-        strcpy(ms_error->routine, "");
     }
 }
 
