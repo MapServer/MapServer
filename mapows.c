@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.18  2004/02/05 04:40:01  sdlime
+ * Added WCS to the OWS request broker function. The WCS request handler just returns MS_DONE for now.
+ *
  * Revision 1.17  2003/09/19 21:54:19  assefa
  * Add support fot the Post request.
  *
@@ -95,6 +98,10 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 #endif
 #ifdef USE_WFS_SVR
     if ((status = msWFSDispatch(map, request)) != MS_DONE )
+        return status;
+#endif
+#ifdef USE_WCS_SVR
+    if ((status = msWCSDispatch(map, request)) != MS_DONE )
         return status;
 #endif
 
