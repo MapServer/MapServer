@@ -859,23 +859,11 @@ void setExtentFromShapes() {
   int i;
   int found=0;
   double dx, dy, cellsize;
-  layerObj *lp;
 
   rectObj tmpext={-1.0,-1.0,-1.0,-1.0};
   pointObj tmppnt={-1.0,-1.0};
 
-  for(i=0; i<msObj->Map->numlayers; i++) {
-    lp = &(msObj->Map->layers[i]);
-
-    if(!lp->resultcache) continue;
-    if(lp->resultcache->numresults <= 0) continue;
-
-    if(!found) {
-      tmpext = lp->resultcache->bounds;
-      found = 1;
-    } else
-      msMergeRect(&(tmpext), &(lp->resultcache->bounds));
-  }
+  found = msGetQueryResultBounds(msObj->Map, &(tmpext));
 
   dx = tmpext.maxx - tmpext.minx;
   dy = tmpext.maxy - tmpext.miny;

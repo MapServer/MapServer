@@ -1084,3 +1084,33 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
   msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()"); 
   return(MS_FAILURE);
 }
+
+/* msGetQueryResultBounds()
+ *
+ * Compute the BBOX of all query results, returns the number of layers found
+ * that contained query results and were included in the BBOX.
+ * i.e. if we return 0 then the value in bounds is invalid.
+ */
+int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
+{
+  int i, found=0;
+  
+  for(i=0; i<map->numlayers; i++) {
+    layerObj *lp;
+    lp = &(map->layers[i]);
+
+    if(!lp->resultcache) continue;
+    if(lp->resultcache->numresults <= 0) continue;
+
+    if(found == 0) {
+      *bounds = lp->resultcache->bounds;
+    } else {
+      msMergeRect(bounds, &(lp->resultcache->bounds));
+    }
+
+    found++;
+  }
+
+  return found;
+}
+  
