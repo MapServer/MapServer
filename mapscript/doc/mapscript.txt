@@ -2402,6 +2402,9 @@ http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see
 the documentation of `layerObj.getShape`_.
 
 
+=========
+Footnotes
+=========
 
 ..  [1] This **really** needs to be changed in the future.  In fact a layer
     is much more re-useable than a map.  We don't keep redundant street
@@ -2411,4 +2414,12 @@ the documentation of `layerObj.getShape`_.
 ..  [2] See the comment about layerObj and mapObj above.  A styleObj is also
     a very reuseable thing.
 
+
+============
+Revision Log
+============
+
+$Log$
+Revision 1.52.2.8  2004/07/20 19:49:42  sean
+Added revision log to the end of the doc
 
