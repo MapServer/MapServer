@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/02/02 19:36:12  frank
+ * Preliminary implementation of MS_SYMBOL_VECTOR in msDrawMarkerSymbolIM
+ *
  * Revision 1.19  2004/11/23 17:09:05  frank
  * check if we have vsnprintf before using it
  *
@@ -252,7 +255,7 @@ DEBUG_IF printf("ImageStartLayerIM\n<BR>");
 		lname = strdup("NONE");
 	if (dxf == 2){
 		im_iprintf(&layerStr, "LAYER\n%s\n", lname);
-	} else {
+	} else if (dxf) {
 		im_iprintf(&layerStr,
 			"  0\nLAYER\n  2\n%s\n"
 			" 70\n  64\n 6\nCONTINUOUS\n", lname);
@@ -345,7 +348,7 @@ DEBUG_IF printf("msImageCreateIM<BR>\n");
 	    /* get href formation string options */
 	    polyHrefFmt = makeFmtSafe(msGetOutputFormatOption
 	      ( format, "POLYHREF", "javascript:Clicked('%s');"), 1);
-	    polyMOverFmt = makeFmtSafe(msGetOutputFormatOption
+            polyMOverFmt = makeFmtSafe(msGetOutputFormatOption
 	      ( format, "POLYMOUSEOVER", ""), 1);
 	    polyMOutFmt = makeFmtSafe(msGetOutputFormatOption
 	      ( format, "POLYMOUSEOUT", ""), 1);
@@ -1109,45 +1112,49 @@ DEBUG_IF printf("P");
     break;
   case(MS_SYMBOL_VECTOR):
 DEBUG_IF printf("V");
-/*    d = size/symbol->sizey;
-    offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
-    offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
-    
-    if(symbol->filled) { // if filled //
-      for(j=0;j < symbol->numpoints;j++) {
-	mPoints[j].x = MS_NINT(d*symbol->points[j].x + offset_x);
-	mPoints[j].y = MS_NINT(d*symbol->points[j].y + offset_y);
-      }
-      if(fc >= 0)
-	gdImageFilledPolygon(img, mPoints, symbol->numpoints, fc);
-      if(oc >= 0)
-	gdImagePolygon(img, mPoints, symbol->numpoints, oc);
-      
-    } else  { // NOT filled //     
+ {
+     double d, offset_x, offset_y;
+     
+     d = size/symbol->sizey;
+     offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
+     offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
 
-      if(fc < 0) return;
-      
-      oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); // convert first point in marker s //
-      oldpnt.y = MS_NINT(d*symbol->points[0].y + offset_y);
-      
-      for(j=1;j < symbol->numpoints;j++) { // step through the marker s //
-	if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
-	  oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
-	  oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-	} else {
-	  if((symbol->points[j-1].x < 0) && (symbol->points[j-1].y < 0)) { // Last point was PENUP, now a new beginning //
-	    oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
-	    oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-	  } else {
-	    newpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
-	    newpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-	    gdImageLine(img, oldpnt.x, oldpnt.y, newpnt.x, newpnt.y, fc);
-	    oldpnt = newpnt;
-	  }
-	}
-      } // end for loop //      
-    } // end if-then-else //
-*/    break;
+     // For now I only render filled vector symbols in imagemap, and no
+     // dxf support available yet. 
+     if(symbol->filled && !dxf /* && fc >= 0 */ ) {
+//         char *title=(p->numvalues) ? p->values[0] : "";
+         char *title = "";
+         int  j;
+
+         im_iprintf (&imgStr, "<area ");
+         if (strcmp(symbolHrefFmt,"%.s")!=0) {
+             im_iprintf (&imgStr, "href=\"");
+             im_iprintf (&imgStr, symbolHrefFmt, lname);
+             im_iprintf (&imgStr, "\" ");
+         }
+         if (strcmp(symbolMOverFmt,"%.s")!=0) {
+             im_iprintf (&imgStr, "onMouseOver=\"");
+             im_iprintf (&imgStr, symbolMOverFmt, lname);
+             im_iprintf (&imgStr, "\" ");
+         }
+         if (strcmp(symbolMOutFmt,"%.s")!=0) {
+             im_iprintf (&imgStr, "onMouseOut=\"");
+             im_iprintf (&imgStr, symbolMOutFmt, lname);
+             im_iprintf (&imgStr, "\" ");
+         }
+         
+         im_iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
+         
+         for(j=0;j < symbol->numpoints;j++) {
+             im_iprintf (&imgStr, "%s %d,%d", j == 0 ? "": ",", 
+                         MS_NINT(d*symbol->points[j].x + offset_x),
+                         MS_NINT(d*symbol->points[j].y + offset_y) );
+         }
+         im_iprintf (&imgStr, "\" />\n");
+     } // end of imagemap, filled case.
+ }
+ break;
+
   default:
 DEBUG_IF printf("DEF");
     break;
@@ -1681,7 +1688,7 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
 
 	if (dxf == 2) {
 		im_iprintf (&imgStr, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
-	} else {
+	} else if (dxf) {
 		im_iprintf (&imgStr, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
 	}
 /*
@@ -2137,3 +2144,4 @@ void msFreeImageIM(imageObj* img)
 {
   free(img->img.imagemap);
 }
+
