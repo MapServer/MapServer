@@ -25,6 +25,9 @@ void msProjectPoint(PJ *in, PJ *out, pointObj *point)
   }
   else
   {
+      p.u = point->x;
+      p.v = point->y;
+
       if(in==NULL) { /* input coordinates are lat/lon */
           p.u *= DEG_TO_RAD; /* convert to radians */
           p.v *= DEG_TO_RAD;  
