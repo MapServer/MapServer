@@ -1590,7 +1590,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->connection = getString()) == NULL) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(3, MS_SDE, MS_OGR, MS_POSTGIS)) == -1) return(-1);
+      if((layer->connectiontype = getSymbol(4, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS)) == -1) return(-1);
       break;
     case(DATA):
       if((layer->data = getString()) == NULL) return(-1);
@@ -1984,8 +1984,10 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
       fprintf(stream, "    CONNECTIONTYPE SDE\n");
     else if(layer->connectiontype == MS_OGR)
       fprintf(stream, "    CONNECTIONTYPE OGR\n");
-    else 
+    else if(layer->connectiontype == MS_POSTGIS)
       fprintf(stream, "    CONNECTIONTYPE POSTGIS\n");
+    else if(layer->connectiontype == MS_WMS)
+      fprintf(stream, "    CONNECTIONTYPE WMS\n");
   }
   if(layer->data) fprintf(stream, "    DATA \"%s\"\n", layer->data);
 

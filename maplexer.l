@@ -240,6 +240,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>ur                       { return(MS_UR); }
 <INITIAL>vector                                { return(MS_SYMBOL_VECTOR); }
 <INITIAL,VALUE_STRING>wbmp		       { return(MS_WBMP); }
+<INITIAL,VALUE_STRING>wms		       { return(MS_WMS); }
 
 <OBJECT_STRING>[0-9]+                          {
                                                  msyynumber = atof(msyytext);
