@@ -531,7 +531,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
     keywords = split(value, ',', &numkeywords);
     if(keywords && numkeywords > 0) {
       printf("  <KeywordList>\n");
-      for(i=0; i<numkeywords; i++) printf("    <Keyword>%s</Keyword\n", keywords[i]);
+      for(i=0; i<numkeywords; i++) printf("    <Keyword>%s</Keyword>\n", keywords[i]);
       printf("  </KeywordList>\n");
       msFreeCharArray(keywords, numkeywords);
     }    
@@ -625,8 +625,9 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
       
       keywords = split(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
+        int kw;
 	printf("      <KeywordList>\n");
-	for(i=0; i<numkeywords; i++) printf("        <Keyword>%s</Keyword\n", keywords[i]);
+	for(kw=0; kw<numkeywords; kw++) printf("        <Keyword>%s</Keyword>\n", keywords[kw]);
 	printf("      </KeywordList>\n");
 	msFreeCharArray(keywords, numkeywords);
       }    
