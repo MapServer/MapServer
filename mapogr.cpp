@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.76  2004/10/28 02:23:17  frank
+ * disable direct error reporting from OGR
+ *
  * Revision 1.75  2004/10/18 20:56:42  frank
  * fixed msOGRSpatialRef2ProjectionObj to work for non-auto: bug 949
  *
@@ -159,6 +162,8 @@
 #  include "cpl_conv.h"
 #  include "cpl_string.h"
 #endif
+
+MS_CVSID("$Id$")
 
 #ifdef USE_OGR
 
@@ -793,6 +798,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   if (!bOGRDriversRegistered)
   {
       OGRRegisterAll();
+      CPLPushErrorHandler( CPLQuietErrorHandler );
       bOGRDriversRegistered = MS_TRUE;
   }
 
