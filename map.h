@@ -606,6 +606,7 @@ int msAddColor(mapObj *map, int red, int green, int blue);
 int msLoadMapString(mapObj *map, char *object, char *value);
 
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems); // in maputil.c
+int msEvalContext(mapObj *map, char *context);
 int msShapeGetClass(layerObj *layer, shapeObj *shape);
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 double msAdjustExtent(rectObj *rect, int width, int height);

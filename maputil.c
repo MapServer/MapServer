@@ -14,6 +14,37 @@ extern int msyyresult; // result of parsing, true/false
 extern int msyystate;
 extern char *msyystring;
 
+int msEvalContext(mapObj *map, char *context)
+{
+  int i, status;
+  char *tmpstr1=NULL, *tmpstr2=NULL;
+
+  if(!context) return(MS_TRUE); // no context requirements
+
+  tmpstr1 = strdup(context);
+
+  for(i=0; i<map->numlayers; i++) { // step through all the layers
+    if(strstr(tmpstr1, map->layers[i].name)) {
+      tmpstr2 = (char *)malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
+      sprintf(tmpstr2, "[%s]", map->layers[i].name);
+
+      if(map->layers[i].status == MS_OFF)
+	tmpstr1 = gsub(tmpstr1, tmpstr2, "0");
+      else
+	tmpstr1 = gsub(tmpstr1, tmpstr2, "1");
+
+      free(tmpstr2);
+    }
+  }
+ 
+  msyystate = 4; msyystring = tmpstr1;
+  status = msyyparse();
+  free(tmpstr1);
+  
+  if(status != 0) return(MS_FALSE); // error in parse
+  return(msyyresult);  
+}
+
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
 {
   int i;
@@ -679,6 +710,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
 
+  if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_SUCCESS);
+  annotate = msEvalContext(map, layer->labelrequires);
+
   if(map->scale > 0) {
     if((layer->maxscale > 0) && (map->scale > layer->maxscale))
       return(MS_SUCCESS);
@@ -769,6 +803,9 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS);
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
+
+  if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_SUCCESS);
+  annotate = msEvalContext(map, layer->labelrequires);
 
   if(map->scale > 0) {
     if((layer->maxscale > 0) && (map->scale > layer->maxscale))
