@@ -203,6 +203,13 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
         * wwwxml.dll
         * wwwzip.dll
 
+------------------------------------------------------------
+        Notes on GDAL
+------------------------------------------------------------
+- If you are compiling the GDAL library (http://gdal.velocet.ca/projects/opengis/)
+with the PNG support, make sure that the libpng that you use in mapserver is the
+same as the one used in GDAL.
+
 ----------------
 $Id$
 ----------------
