@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Correct bug 1151 : generates twice a </Mark> tag when generating an SLD.
+  This was happening the style did not have a size set.
+
 - Oracle Spatial:
   Fixed problem with LayerClose function.
   Added token NONE for DATA statement.
