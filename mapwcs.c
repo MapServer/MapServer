@@ -599,9 +599,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   printf("          <gml:axisName>x</gml:axisName>\n");
   printf("          <gml:axisName>y</gml:axisName>\n");
   printf("          <gml:origin>\n");
-  printf("            <gml:Point>\n");
-  printf("              <gml:coordinates>%g,%g</gml:coordinates>\n", cm.geotransform[0], cm.geotransform[3]);
-  printf("            </gml:Point>\n");
+  printf("            <gml:pos>%g %g</gml:pos>\n", cm.geotransform[0], cm.geotransform[3]);
   printf("          </gml:origin>\n");
   printf("          <gml:offsetVector>%g,0.0</gml:offsetVector>\n", cm.geotransform[1]);
   printf("          <gml:offsetVector>0.0,%g</gml:offsetVector>\n", cm.geotransform[5]);
@@ -657,13 +655,13 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   
   // requestResposeCRSs: check the layer metadata/projection, and then the map metadata/projection if necessary (should never get to the error message)
   if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "COM", MS_FALSE)) != NULL)    
-    printf("      <requestResposeCRSs>%s</requestResposeCRSs>\n", value);
+    printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", value);
   else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "COM", MS_FALSE)) != NULL)
-    printf("      <requestResposeCRSs>%s</requestResposeCRSs>\n", value);
+    printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", value);
   else 
-    printf("      <!-- requestResposeCRSs ERROR: missing required information, no SRSs defined -->\n");
+    printf("      <!-- requestResponseCRSs ERROR: missing required information, no SRSs defined -->\n");
   
-  // NativeCRSs (only one in our case)
+  // nativeCRSs (only one in our case)
   if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "COM", MS_TRUE)) != NULL)    
     printf("      <nativeCRSs>%s</nativeCRSs>\n", value);
   else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "COM", MS_TRUE)) != NULL)
@@ -675,9 +673,10 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   
   
   // supportedFormats
-  printf("    <supportedFormats>\n");
+  printf("    <supportedFormats");
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "nativeformat", OWS_NOERR, " nativeFormat=\"%s\"", NULL);
+  printf(">\n");
   msOWSPrintMetadata(stdout, layer->metadata, "COM", "formats", OWS_NOERR, "      <formats>%s</formats>\n", NULL);
-  msOWSPrintMetadata(stdout, layer->metadata, "COM", "nativeformat", OWS_NOERR, "      <nativeFormat>%s</nativeFormat>\n", NULL);
   printf("    </supportedFormats>\n");
   
   // TODO: add SupportedInterpolations (optional)
