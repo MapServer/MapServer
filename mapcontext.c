@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.58  2004/09/06 16:06:43  julien
+ * Cleanup code to separate parsing into different functions.
+ *
  * Revision 1.57  2004/08/03 23:26:24  dan
  * Cleanup OWS version tests in the code, mapwms.c (bug 799)
  *
@@ -440,6 +443,763 @@ int msGetMapContextXMLFloatValue( CPLXMLNode *psRoot, char *pszXMLPath,
   return MS_SUCCESS;
 }
 
+/*
+** msLoadMapContextURLELements
+**
+** Take a Node and get the width, height, format and href from it.
+** Then put this info in metadatas.
+*/
+int msLoadMapContextURLELements( CPLXMLNode *psRoot, hashTableObj *metadata, 
+                                 const char *pszMetadataRoot)
+{
+  char *pszMetadataName;
+
+  if( psRoot == NULL || metadata == NULL || pszMetadataRoot == NULL )
+      return MS_FAILURE;
+
+  pszMetadataName = (char*) malloc( strlen(pszMetadataRoot) + 10 );
+
+  sprintf( pszMetadataName, "%s_width", pszMetadataRoot );
+  msGetMapContextXMLHashValue( psRoot, "width", metadata, pszMetadataName );
+
+  sprintf( pszMetadataName, "%s_height", pszMetadataRoot );
+  msGetMapContextXMLHashValue( psRoot, "height", metadata, pszMetadataName );
+
+  sprintf( pszMetadataName, "%s_format", pszMetadataRoot );
+  msGetMapContextXMLHashValue( psRoot, "format", metadata, pszMetadataName );
+
+  sprintf( pszMetadataName, "%s_href", pszMetadataRoot );
+  msGetMapContextXMLHashValue( psRoot, "OnlineResource.xlink:href", metadata, 
+                               pszMetadataName );
+
+  free(pszMetadataName);
+
+  return MS_SUCCESS;
+}
+
+/* msLoadMapContextKeyword
+**
+** Put the keywords from a XML node and put them in a metadata.
+** psRoot should be set to keywordlist
+*/
+int msLoadMapContextListInMetadata( CPLXMLNode *psRoot, hashTableObj *metadata,
+                                    char *pszXMLName, char *pszMetadataName, 
+                                    char *pszHashDelimiter)
+{
+  char *pszHash, *pszXMLValue, *pszMetadata;
+
+  if(psRoot == NULL || psRoot->psChild == NULL || 
+     metadata == NULL || pszMetadataName == NULL || pszXMLName == NULL)
+      return MS_FAILURE;
+
+  // Pass from KeywordList to Keyword level
+  psRoot = psRoot->psChild;
+
+  // Loop on all elements and append keywords to the hash table
+  while (psRoot)
+  {
+      if (psRoot->psChild && strcasecmp(psRoot->pszValue, pszXMLName) == 0)
+      {
+          pszXMLValue = psRoot->psChild->pszValue;
+          pszHash = msLookupHashTable(metadata, pszMetadataName);
+          if (pszHash != NULL)
+          {
+              pszMetadata = (char*)malloc(strlen(pszHash)+
+                                          strlen(pszXMLValue)+2);
+              if(pszHashDelimiter == NULL)
+                  sprintf( pszMetadata, "%s%s", pszHash, pszXMLValue );
+              else
+                  sprintf( pszMetadata, "%s%s%s", pszHash, pszHashDelimiter, 
+                           pszXMLValue );
+              msInsertHashTable(metadata, pszMetadataName, pszMetadata);
+              free(pszMetadata);
+          }
+          else
+              msInsertHashTable(metadata, pszMetadataName, pszXMLValue);
+      }
+      psRoot = psRoot->psNext;   
+  }
+
+  return MS_SUCCESS;
+}
+
+/* msLoadMapContextContactInfo
+**
+** Put the Contact informations from a XML node and put them in a metadata.
+**
+*/
+int msLoadMapContextContactInfo( CPLXMLNode *psRoot, hashTableObj *metadata )
+{
+    if(psRoot == NULL || metadata == NULL)
+        return MS_FAILURE;
+
+    // Contact Person primary
+    msGetMapContextXMLHashValue(psRoot, 
+                              "ContactPersonPrimary.ContactPerson", 
+                              metadata, "wms_contactperson");
+  msGetMapContextXMLHashValue(psRoot, 
+                              "ContactPersonPrimary.ContactOrganization", 
+                              metadata, "wms_contactorganization");
+  // Contact Position
+  msGetMapContextXMLHashValue(psRoot, 
+                              "ContactPosition", 
+                              metadata, "wms_contactposition");
+  // Contact Address
+  msGetMapContextXMLHashValue(psRoot, "ContactAddress.AddressType", 
+                              metadata, "wms_addresstype");
+  msGetMapContextXMLHashValue(psRoot, "ContactAddress.Address", 
+                              metadata, "wms_address");
+  msGetMapContextXMLHashValue(psRoot, "ContactAddress.City", 
+                              metadata, "wms_city");
+  msGetMapContextXMLHashValue(psRoot, "ContactAddress.StateOrProvince", 
+                              metadata, "wms_stateorprovince");
+  msGetMapContextXMLHashValue(psRoot, "ContactAddress.PostCode", 
+                              metadata, "wms_postcode");
+  msGetMapContextXMLHashValue(psRoot, "ContactAddress.Country", 
+                              metadata, "wms_country");
+
+  // Others
+  msGetMapContextXMLHashValue(psRoot, "ContactVoiceTelephone", 
+                              metadata, "wms_contactvoicetelephone");
+  msGetMapContextXMLHashValue(psRoot, "ContactFacsimileTelephone", 
+                              metadata, "wms_contactfacsimiletelephone");
+  msGetMapContextXMLHashValue(psRoot, "ContactElectronicMailAddress", 
+                              metadata, "wms_contactelectronicmailaddress");
+
+  return MS_SUCCESS;
+}
+
+/*
+** msLoadMapContextLayerFormat
+**
+**
+*/
+int msLoadMapContextLayerFormat(CPLXMLNode *psFormat, layerObj *layer)
+{
+  char *pszValue, *pszValue1, *pszHash;
+
+  if(psFormat->psChild != NULL && 
+     strcasecmp(psFormat->pszValue, "Format") == 0 )
+  {
+      if(psFormat->psChild->psNext == NULL)
+          pszValue = psFormat->psChild->pszValue;
+      else
+          pszValue = psFormat->psChild->psNext->pszValue;
+  }
+  else
+      pszValue = NULL;
+
+  if(pszValue != NULL && strcasecmp(pszValue, "") != 0)
+  {
+      // wms_format
+      pszValue1 = (char*)CPLGetXMLValue(psFormat, 
+                                        "current", NULL);
+      if(pszValue1 != NULL && 
+         (strcasecmp(pszValue1, "1") == 0))
+          msInsertHashTable(&(layer->metadata), 
+                            "wms_format", pszValue);
+      // wms_formatlist
+      pszHash = msLookupHashTable(&(layer->metadata), 
+                                  "wms_formatlist");
+      if(pszHash != NULL)
+      {
+          pszValue1 = (char*)malloc(strlen(pszHash)+
+                                    strlen(pszValue)+2);
+          sprintf(pszValue1, "%s,%s", pszHash, pszValue);
+          msInsertHashTable(&(layer->metadata), 
+                            "wms_formatlist", pszValue1);
+          free(pszValue1);
+      }
+      else
+          msInsertHashTable(&(layer->metadata), 
+                            "wms_formatlist", pszValue);
+  }
+
+  /* Make sure selected format is supported or select another
+   * supported format.  Note that we can efficiently do this
+   * only for GIF/PNG/JPEG, can't try to handle all GDAL
+   * formats.
+   */
+  pszValue = msLookupHashTable(&(layer->metadata), "wms_format");
+
+  if (
+#ifndef USE_GD_PNG
+      strcasecmp(pszValue, "image/png") == 0 || 
+      strcasecmp(pszValue, "PNG") == 0 ||
+#endif
+#ifndef USE_GD_JPEG
+      strcasecmp(pszValue, "image/jpeg") == 0 || 
+      strcasecmp(pszValue, "JPEG") == 0 ||
+#endif
+#ifndef USE_GD_GIF
+      strcasecmp(pszValue, "image/gif") == 0 || 
+      strcasecmp(pszValue, "GIF") == 0 ||
+#endif
+      0 )
+  {
+      char **papszList=NULL;
+      int i, numformats=0;
+
+      pszValue = msLookupHashTable(&(layer->metadata), 
+                                   "wms_formatlist");
+
+      papszList = split(pszValue, ',', &numformats);
+      for(i=0; i < numformats; i++)
+      {
+          if (
+#ifdef USE_GD_PNG
+              strcasecmp(papszList[i], "image/png") == 0 || 
+              strcasecmp(papszList[i], "PNG") == 0 ||
+#endif
+#ifdef USE_GD_JPEG
+              strcasecmp(papszList[i], "image/jpeg") == 0 || 
+              strcasecmp(papszList[i], "JPEG") == 0 ||
+#endif
+#ifdef USE_GD_GIF
+              strcasecmp(papszList[i], "image/gif") == 0 || 
+              strcasecmp(papszList[i], "GIF") == 0 ||
+#endif
+              0 )
+          {
+              /* Found a match */
+              msInsertHashTable(&(layer->metadata), 
+                                "wms_format", papszList[i]);
+              break;
+          }
+      }
+      if(papszList)
+          msFreeCharArray(papszList, numformats);
+
+  } /* end if unsupported format */
+
+  return MS_SUCCESS;
+}
+
+int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer, 
+                               int nStyle)
+{
+  char *pszValue, *pszValue1, *pszValue2;
+  char *pszHash, *pszStyle=NULL, *pszStyleName;
+
+  pszStyleName =(char*)CPLGetXMLValue(psStyle,"Name",NULL);
+  if(pszStyleName == NULL)
+  {
+       pszStyleName = (char*)malloc(15);
+       sprintf(pszStyleName, "Style{%d}", nStyle);
+  }
+  else
+      pszStyleName = strdup(pszStyleName);
+
+  // wms_style
+  pszValue = (char*)CPLGetXMLValue(psStyle,"current",NULL);
+  if(pszValue != NULL && 
+     (strcasecmp(pszValue, "1") == 0))
+      msInsertHashTable(&(layer->metadata), 
+                        "wms_style", pszStyleName);
+  // wms_stylelist
+  pszHash = msLookupHashTable(&(layer->metadata), 
+                              "wms_stylelist");
+  if(pszHash != NULL)
+  {
+      pszValue1 = (char*)malloc(strlen(pszHash)+
+                                strlen(pszStyleName)+2);
+      sprintf(pszValue1, "%s,%s", pszHash, pszStyleName);
+      msInsertHashTable(&(layer->metadata), 
+                        "wms_stylelist", pszValue1);
+      free(pszValue1);
+  }
+  else
+      msInsertHashTable(&(layer->metadata), 
+                        "wms_stylelist", pszStyleName);
+
+  // Title
+  pszStyle = (char*)malloc(strlen(pszStyleName)+20);
+  sprintf(pszStyle,"wms_style_%s_title",pszStyleName);
+
+  if( msGetMapContextXMLHashValue(psStyle, "Title", &(layer->metadata), 
+                                  pszStyle) == MS_FAILURE )
+      msInsertHashTable(&(layer->metadata), pszStyle, layer->name);
+
+  free(pszStyle);
+
+  // SLD
+  pszStyle = (char*)malloc(strlen(pszStyleName)+15);
+  sprintf(pszStyle, "wms_style_%s_sld", pszStyleName);
+  
+  msGetMapContextXMLHashValueDecode( psStyle, "SLD.OnlineResource.xlink:href", 
+                                     &(layer->metadata), pszStyle );
+  free(pszStyle);
+
+  // LegendURL
+  pszStyle = (char*) malloc(strlen(pszStyleName) + 25);
+
+  sprintf( pszStyle, "wms_style_%s_legendurl",
+           pszStyleName);
+  msLoadMapContextURLELements( CPLGetXMLNode(psStyle, "LegendURL"), 
+                               &(layer->metadata), pszStyle );
+
+  free(pszStyle);
+
+  free(pszStyleName);
+
+  //
+  // Add the stylelist to the layer connection
+  //
+  if(msLookupHashTable(&(layer->metadata), 
+                       "wms_stylelist") == NULL)
+  {
+      if(layer->connection)
+          pszValue = strdup(layer->connection);
+      else
+          pszValue = strdup( "" ); 
+      pszValue1 = strstr(pszValue, "STYLELIST=");
+      if(pszValue1 != NULL)
+      {                          
+          pszValue1 += 10;
+          pszValue2 = strchr(pszValue, '&');
+          if(pszValue2 != NULL)
+              pszValue1[pszValue2-pszValue1] = '\0';
+          msInsertHashTable(&(layer->metadata), "wms_stylelist",
+                            pszValue1);
+      }
+      free(pszValue);
+  }
+
+  //
+  // Add the style to the layer connection
+  //
+  if(msLookupHashTable(&(layer->metadata), "wms_style") == NULL)
+  {
+      if(layer->connection)
+          pszValue = strdup(layer->connection);
+      else
+          pszValue = strdup( "" ); 
+      pszValue1 = strstr(pszValue, "STYLE=");
+      if(pszValue1 != NULL)
+      {                          
+          pszValue1 += 6;
+          pszValue2 = strchr(pszValue, '&');
+          if(pszValue2 != NULL)
+              pszValue1[pszValue2-pszValue1] = '\0';
+          msInsertHashTable(&(layer->metadata), "wms_style",
+                            pszValue1);
+      }
+      free(pszValue);
+  }
+
+  return MS_SUCCESS;
+}
+
+
+
+/*
+** msLoadMapContextGeneral
+**
+** Load the General block of the mapcontext document
+*/
+int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral, 
+                            CPLXMLNode *psMapContext, int nVersion, 
+                            char *filename)
+{
+
+  char *pszProj=NULL;
+  char *pszValue, *pszValue1, *pszValue2;
+
+  // Projection
+  pszValue = (char*)CPLGetXMLValue(psGeneral, 
+                                   "BoundingBox.SRS", NULL);
+  if(pszValue != NULL)
+  {
+      if(strncasecmp(pszValue, "AUTO:", 5) == 0)
+      {
+          pszProj = strdup(pszValue);
+      }
+      else
+      {
+          pszProj = (char*) malloc(sizeof(char)*(strlen(pszValue)+10));
+          sprintf(pszProj, "init=epsg:%s", pszValue+5);
+      }
+
+      msInitProjection(&map->projection);
+      map->projection.args[map->projection.numargs] = strdup(pszProj);
+      map->projection.numargs++;
+      msProcessProjection(&map->projection);
+
+      if( (map->units = GetMapserverUnitUsingProj(&(map->projection))) == -1)
+      {
+          free(pszProj);
+          msSetError( MS_MAPCONTEXTERR, 
+                      "Unable to set units for projection '%s'",
+                      "msLoadMapContext()", pszProj );
+          return MS_FAILURE;
+      }
+      free(pszProj);
+  }
+  else
+  {
+      msDebug("Mandatory data General.BoundingBox.SRS missing in %s.",
+              filename);
+  }
+
+  // Extent
+  if( msGetMapContextXMLFloatValue(psGeneral, "BoundingBox.minx",
+                                   &(map->extent.minx)) == MS_FAILURE)
+  {
+      msDebug("Mandatory data General.BoundingBox.minx missing in %s.",
+              filename);
+  }
+  if( msGetMapContextXMLFloatValue(psGeneral, "BoundingBox.miny",
+                               &(map->extent.miny)) == MS_FAILURE)
+  {
+      msDebug("Mandatory data General.BoundingBox.miny missing in %s.",
+              filename);
+  }
+  if( msGetMapContextXMLFloatValue(psGeneral, "BoundingBox.maxx",
+                               &(map->extent.maxx)) == MS_FAILURE)
+  {
+      msDebug("Mandatory data General.BoundingBox.maxx missing in %s.",
+              filename);
+  }
+  if( msGetMapContextXMLFloatValue(psGeneral, "BoundingBox.maxy",
+                               &(map->extent.maxy)) == MS_FAILURE)
+  {
+      msDebug("Mandatory data General.BoundingBox.maxy missing in %s.",
+              filename);
+  }
+
+  // Title
+  if( msGetMapContextXMLHashValue(psGeneral, "Title", 
+                              &(map->web.metadata), "wms_title") == MS_FAILURE)
+  {
+      if ( nVersion >= OWS_1_0_0 )
+         msDebug("Mandatory data General.Title missing in %s.", filename);
+      else
+      {
+          if( msGetMapContextXMLHashValue(psGeneral, "gml:name", 
+                             &(map->web.metadata), "wms_title") == MS_FAILURE )
+          {
+              if( nVersion < OWS_0_1_7 )
+                msDebug("Mandatory data General.Title missing in %s.", filename);
+              else
+                msDebug("Mandatory data General.gml:name missing in %s.", 
+                        filename);
+          }
+      }
+  }
+
+  // Name
+  if( nVersion >= OWS_1_0_0 )
+  {
+      pszValue = (char*)CPLGetXMLValue(psMapContext, 
+                                       "id", NULL);
+      if (pszValue)
+        map->name = strdup(pszValue);
+  }
+  else
+  {
+      if(msGetMapContextXMLStringValue(psGeneral, "Name", 
+                                       &(map->name)) == MS_FAILURE)
+      {
+          msGetMapContextXMLStringValue(psGeneral, "gml:name", 
+                                        &(map->name));
+      }
+  }
+  // Keyword
+  if( nVersion >= OWS_1_0_0 )
+  {
+      msLoadMapContextListInMetadata( 
+          CPLGetXMLNode(psGeneral, "KeywordList"),
+          &(map->web.metadata), "KEYWORD", "wms_keywordlist", "," );
+  }
+  else
+    msGetMapContextXMLHashValue(psGeneral, "Keywords", 
+                                &(map->web.metadata), "wms_keywordlist");
+
+  // Window
+  pszValue1 = (char*)CPLGetXMLValue(psGeneral,"Window.width",NULL);
+  pszValue2 = (char*)CPLGetXMLValue(psGeneral,"Window.height",NULL);
+  if(pszValue1 != NULL && pszValue2 != NULL)
+  {
+      map->width = atoi(pszValue1);
+      map->height = atoi(pszValue2);
+  }
+
+  // Abstract
+  if( msGetMapContextXMLHashValue( psGeneral, 
+                                   "Abstract", &(map->web.metadata), 
+                                   "wms_abstract") == MS_FAILURE )
+  {
+      msGetMapContextXMLHashValue( psGeneral, "gml:description", 
+                                   &(map->web.metadata), "wms_abstract");
+  }
+
+  // DataURL
+  msGetMapContextXMLHashValueDecode(psGeneral, 
+                                   "DataURL.OnlineResource.xlink:href",
+                                   &(map->web.metadata), "wms_dataurl");
+
+  // LogoURL
+  // The logourl have a width, height, format and an URL
+  msLoadMapContextURLELements( CPLGetXMLNode(psGeneral, "LogoURL"), 
+                               &(map->web.metadata), "wms_logourl" );
+
+  // DescriptionURL
+  // The descriptionurl have a width, height, format and an URL
+  msLoadMapContextURLELements( CPLGetXMLNode(psGeneral, 
+                                             "DescriptionURL"), 
+                               &(map->web.metadata), "wms_descriptionurl" );
+
+  // Contact Info
+  msLoadMapContextContactInfo( 
+      CPLGetXMLNode(psGeneral, "ContactInformation"), 
+      &(map->web.metadata) );
+
+  return MS_SUCCESS;
+}
+
+/*
+** msLoadMapContextLayer
+**
+** Load a Layer block from a MapContext document
+*/
+int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
+                          char *filename)
+{
+  char *pszProj=NULL;
+  char *pszValue;
+  char *pszHash, *pszName=NULL;
+  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle;
+  int nStyle;
+  layerObj *layer;
+
+  // Init new layer
+  layer = &(map->layers[map->numlayers]);
+  initLayer(layer, map);
+  layer->map = (mapObj *)map;
+  layer->type = MS_LAYER_RASTER;
+  /* save the index */
+  map->layers[map->numlayers].index = map->numlayers;
+  map->layerorder[map->numlayers] = map->numlayers;
+  map->numlayers++;
+  
+  
+  // Status
+  pszValue = (char*)CPLGetXMLValue(psLayer, "hidden", "1");
+  if((pszValue != NULL) && (atoi(pszValue) == 0))
+      layer->status = MS_ON;
+  else
+      layer->status = MS_OFF;
+
+  // Queryable
+  pszValue = (char*)CPLGetXMLValue(psLayer, "queryable", "0");
+  if(pszValue !=NULL && atoi(pszValue) == 1)
+      layer->template = strdup("ttt");
+
+  // Name and Title
+  pszValue = (char*)CPLGetXMLValue(psLayer, "Name", NULL);
+  if(pszValue != NULL)
+  {
+      msInsertHashTable( &(layer->metadata), "wms_name", pszValue );
+
+      pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+10));
+      sprintf(pszName, "l%d:%s", layer->index, pszValue);
+      layer->name = strdup(pszName);
+      free(pszName);
+  }
+  else
+  {
+      pszName = (char*)malloc(sizeof(char)*10);
+      sprintf(pszName, "l%d:", layer->index);
+      layer->name = strdup(pszName);
+      free(pszName);
+  }
+
+  if(msGetMapContextXMLHashValue(psLayer, "Title", &(layer->metadata), 
+                                 "wms_title") == MS_FAILURE)
+  {
+      if(msGetMapContextXMLHashValue(psLayer, "Server.title", 
+                          &(layer->metadata), "wms_title") == MS_FAILURE)
+      {
+          msDebug("Mandatory data Layer.Title missing in %s.", filename);
+      }
+  }
+
+  // Abstract
+  msGetMapContextXMLHashValue(psLayer, "Abstract", &(layer->metadata), 
+                              "wms_abstract");
+
+  // DataURL
+  if(nVersion <= OWS_0_1_4)
+  {
+      msGetMapContextXMLHashValueDecode(psLayer, 
+                                        "DataURL.OnlineResource.xlink:href",
+                                        &(layer->metadata), "wms_dataurl");
+  }
+  else
+  {
+      // The DataURL have a width, height, format and an URL
+      // Width and height are not used, but they are included to
+      // be consistent with the spec.
+      msLoadMapContextURLELements( CPLGetXMLNode(psLayer, "DataURL"), 
+                                           &(layer->metadata), "wms_dataurl" );
+  }
+
+  // The MetadataURL have a width, height, format and an URL
+  // Width and height are not used, but they are included to
+  // be consistent with the spec.
+  msLoadMapContextURLELements( CPLGetXMLNode(psLayer, "MetadataURL"), 
+                                       &(layer->metadata), "wms_metadataurl" );
+
+  //
+  // Server
+  //
+  if(nVersion >= OWS_0_1_4)
+  {
+      if(msGetMapContextXMLStringValueDecode(psLayer, 
+                                          "Server.OnlineResource.xlink:href",
+                                          &(layer->connection)) == MS_FAILURE)
+      {
+          msSetError(MS_MAPCONTEXTERR, 
+              "Mandatory data Server.OnlineResource.xlink:href missing in %s.",
+                     "msLoadMapContext()", filename);
+          return MS_FAILURE;
+      }
+      else
+      {
+          msGetMapContextXMLHashValueDecode(psLayer, 
+                                          "Server.OnlineResource.xlink:href", 
+                                     &(layer->metadata), "wms_onlineresource");
+          layer->connectiontype = MS_WMS;
+      }
+  }
+  else
+  {
+      if(msGetMapContextXMLStringValueDecode(psLayer, 
+                                             "Server.onlineResource", 
+                                           &(layer->connection)) == MS_FAILURE)
+      {
+          msSetError(MS_MAPCONTEXTERR, 
+                     "Mandatory data Server.onlineResource missing in %s.",
+                     "msLoadMapContext()", filename);
+          return MS_FAILURE;
+      }
+      else
+      {
+          msGetMapContextXMLHashValueDecode(psLayer, "Server.onlineResource", 
+                                     &(layer->metadata), "wms_onlineresource");
+          layer->connectiontype = MS_WMS;
+      }
+  }
+
+  if(nVersion >= OWS_0_1_4)
+  {
+      if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
+                      &(layer->metadata), "wms_server_version") == MS_FAILURE)
+      {
+          msSetError(MS_MAPCONTEXTERR, 
+                     "Mandatory data Server.version missing in %s.",
+                     "msLoadMapContext()", filename);
+          return MS_FAILURE;
+      }
+  }
+  else
+  {
+      if(msGetMapContextXMLHashValue(psLayer, "Server.wmtver", 
+                      &(layer->metadata), "wms_server_version") == MS_FAILURE)
+      {
+          msSetError(MS_MAPCONTEXTERR, 
+                     "Mandatory data Server.wmtver missing in %s.",
+                     "msLoadMapContext()", filename);
+          return MS_FAILURE;
+      }
+  }
+
+  // Projection
+  msLoadMapContextListInMetadata( psLayer, &(layer->metadata), 
+                                  "SRS", "wms_srs", " " );
+
+  pszHash = msLookupHashTable(&(layer->metadata), "wms_srs");
+  if(((pszHash == NULL) || (strcasecmp(pszHash, "") == 0)) && 
+     map->projection.numargs != 0)
+  {
+      pszProj = map->projection.args[map->projection.numargs-1];
+
+      if(pszProj != NULL)
+      {
+          if(strncasecmp(pszProj, "AUTO:", 5) == 0)
+          {
+              msInsertHashTable(&(layer->metadata),"wms_srs", pszProj);
+          }
+          else
+          {
+              if(strlen(pszProj) > 10)
+              {
+                  pszProj = (char*) malloc(sizeof(char) * (strlen(pszProj)));
+                  sprintf( pszProj, "EPSG:%s", 
+                           map->projection.args[map->projection.numargs-1]+10);
+                  msInsertHashTable(&(layer->metadata),"wms_srs", pszProj);
+              }
+              else
+              {
+                  msDebug("Unable to set data for layer wms_srs from this"
+                          " value %s.", 
+                          pszProj);
+              }
+          }
+      }
+  }
+
+  //
+  // Format
+  //
+  if( nVersion >= OWS_0_1_4 )
+  {
+      psFormatList = CPLGetXMLNode(psLayer, "FormatList");
+  }
+  else
+  {
+      psFormatList = psLayer;
+  }
+
+  if(psFormatList != NULL)
+  {
+      for(psFormat = psFormatList->psChild; 
+          psFormat != NULL; 
+          psFormat = psFormat->psNext)
+      {
+          msLoadMapContextLayerFormat(psFormat, layer);
+      }
+                   
+  } /* end FormatList parsing */
+
+  // Style
+  if( nVersion >= OWS_0_1_4 )
+  {
+      psStyleList = CPLGetXMLNode(psLayer, "StyleList");
+  }
+  else
+  {
+      psStyleList = psLayer;
+  }
+
+  if(psStyleList != NULL)
+  {
+      nStyle = 0;
+      for(psStyle = psStyleList->psChild; 
+          psStyle != NULL; 
+          psStyle = psStyle->psNext)
+      {
+          if(strcasecmp(psStyle->pszValue, "Style") == 0)
+          {
+              nStyle++;
+              msLoadMapContextLayerStyle(psStyle, layer, nVersion);
+          }
+      }
+  }
+
+  return MS_SUCCESS;
+}
+
 #endif
 
 /* msLoadMapContext()
@@ -451,16 +1211,10 @@ int msGetMapContextXMLFloatValue( CPLXMLNode *psRoot, char *pszXMLPath,
 int msLoadMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
-  char *pszWholeText, *pszMapProj=NULL, *pszProj=NULL;
-  char *pszValue, *pszValue1, *pszValue2;
-  char *pszHash, *pszStyle=NULL, *pszStyleName, *pszName=NULL;
-  CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
-  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild, *psKeyword, 
-    *psKeywordList;
-  CPLXMLNode *psLegendURL, *psSRS;
+  char *pszWholeText, *pszValue;
+  CPLXMLNode *psRoot, *psMapContext, *psLayer, *psLayerList, *psChild;
   char szPath[MS_MAXPATHLEN];
-  int nStyle, nVersion=-1;
-  layerObj *layer;
+  int nVersion=-1;
   char szVersionBuf[OWS_VERSION_MAXLEN];
 
   //
@@ -474,7 +1228,7 @@ int msLoadMapContext(mapObj *map, char *filename)
       msSetError( MS_MAPCONTEXTERR, "Unable to read %s", 
                   "msLoadMapContext()", filename );
       return MS_FAILURE;
- }
+  }
 
   if( ( strstr( pszWholeText, "<WMS_Viewer_Context" ) == NULL ) &&
       ( strstr( pszWholeText, "<View_Context" ) == NULL ) &&
@@ -498,10 +1252,15 @@ int msLoadMapContext(mapObj *map, char *filename)
   {
       msSetError( MS_MAPCONTEXTERR, "Invalid XML file (%s)", 
                   "msLoadMapContext()", filename );
+      if(psRoot != NULL)
+          CPLDestroyXMLNode(psRoot);
+
       return MS_FAILURE;
   }
 
+  //
   // Valid the MapContext file and get the root of the document
+  //
   psChild = psRoot;
   psMapContext = NULL;
   while( psChild != NULL )
@@ -558,10 +1317,6 @@ int msLoadMapContext(mapObj *map, char *filename)
       return MS_FAILURE;
   }
 
-  // Load the metadata of the WEB obj
-  //if(map->web.metadata == NULL)
-  //    &(map->web.metadata) =  msCreateHashTable();
-
   // Reformat and save Version in metadata
   msInsertHashTable( &(map->web.metadata), "wms_context_version",
                      msOWSGetVersionString(nVersion, szVersionBuf));
@@ -575,225 +1330,30 @@ int msLoadMapContext(mapObj *map, char *filename)
       }
   }
 
-  // Projection
-  pszValue = (char*)CPLGetXMLValue(psMapContext, 
-                                   "General.BoundingBox.SRS", NULL);
-  if(pszValue != NULL)
+  //
+  // Load the General bloc
+  //
+  psChild = CPLGetXMLNode( psMapContext, "General" );
+  if( psChild == NULL )
   {
-      if(strncasecmp(pszValue, "AUTO:", 5) == 0)
-      {
-          pszProj = strdup(pszValue);
-      }
-      else
-      {
-          pszProj = (char*) malloc(sizeof(char)*(strlen(pszValue)+10));
-          sprintf(pszProj, "init=epsg:%s", pszValue+5);
-      }
-      pszMapProj = strdup(pszValue);
-
-      msInitProjection(&map->projection);
-      map->projection.args[map->projection.numargs] = strdup(pszProj);
-      map->projection.numargs++;
-      msProcessProjection(&map->projection);
-
-      if( (map->units = GetMapserverUnitUsingProj(&(map->projection))) == -1)
-      {
-          free(pszProj);
-          msSetError( MS_MAPCONTEXTERR, 
-                      "Unable to set units for projection '%s'",
-                      "msLoadMapContext()", pszProj );
-          CPLDestroyXMLNode(psRoot);
-          return MS_FAILURE;
-      }
-      free(pszProj);
-  }
-  else
-  {
-      msDebug("Mandatory data General.BoundingBox.SRS missing in %s.",
-              filename);
+      CPLDestroyXMLNode(psRoot);
+      msSetError(MS_MAPCONTEXTERR, 
+                 "The Map Context document provided (%s) does not contain any "
+                 "General elements.",
+                 "msLoadMapContext()", filename);
+      return MS_FAILURE;
   }
 
-  // Extent
-  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.minx",
-                                   &(map->extent.minx)) == MS_FAILURE)
+  if( msLoadMapContextGeneral(map, psChild, psMapContext, 
+                              nVersion, filename) == MS_FAILURE )
   {
-      msDebug("Mandatory data General.BoundingBox.minx missing in %s.",
-              filename);
-  }
-  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.miny",
-                               &(map->extent.miny)) == MS_FAILURE)
-  {
-      msDebug("Mandatory data General.BoundingBox.miny missing in %s.",
-              filename);
-  }
-  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.maxx",
-                               &(map->extent.maxx)) == MS_FAILURE)
-  {
-      msDebug("Mandatory data General.BoundingBox.maxx missing in %s.",
-              filename);
-  }
-  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.maxy",
-                               &(map->extent.maxy)) == MS_FAILURE)
-  {
-      msDebug("Mandatory data General.BoundingBox.maxy missing in %s.",
-              filename);
+      CPLDestroyXMLNode(psRoot);
+      return MS_FAILURE;
   }
 
-  // Title
-  if( msGetMapContextXMLHashValue(psMapContext, "General.Title", 
-                              &(map->web.metadata), "wms_title") == MS_FAILURE)
-  {
-      if ( nVersion >= OWS_1_0_0 )
-         msDebug("Mandatory data General.Title missing in %s.", filename);
-      else
-      {
-          if( msGetMapContextXMLHashValue(psMapContext, "General.gml:name", 
-                             &(map->web.metadata), "wms_title") == MS_FAILURE )
-          {
-              if( nVersion < OWS_0_1_7 )
-                msDebug("Mandatory data General.Title missing in %s.", filename);
-              else
-                msDebug("Mandatory data General.gml:name missing in %s.", 
-                        filename);
-          }
-      }
-  }
-
-  // Name
-  if( nVersion >= OWS_1_0_0 )
-  {
-      pszValue = (char*)CPLGetXMLValue(psMapContext, 
-                                       "id", NULL);
-      if (pszValue)
-        map->name = strdup(pszValue);
-  }
-  else
-  {
-      if(msGetMapContextXMLStringValue(psMapContext, "General.Name", 
-                                       &(map->name)) == MS_FAILURE)
-      {
-          msGetMapContextXMLStringValue(psMapContext, "General.gml:name", 
-                                        &(map->name));
-      }
-  }
-  // Keyword
-  if( nVersion >= OWS_1_0_0 )
-  {
-      psKeywordList = CPLGetXMLNode(psMapContext, "General.KeywordList");
-      if (psKeywordList)
-      {
-          psKeyword = psKeywordList->psChild;
-          while (psKeyword)
-          {
-              if (psKeyword->psChild &&
-                  strcasecmp(psKeyword->pszValue, "KEYWORD") == 0 )
-              {
-                  pszValue = psKeyword->psChild->pszValue;
-                  pszHash = msLookupHashTable(&(map->web.metadata), "wms_keywordlist");
-                  if (pszHash != NULL)
-                  {
-                      pszValue1 = (char*)malloc(strlen(pszHash)+
-                                                strlen(pszValue)+2);
-                      sprintf(pszValue1, "%s,%s", pszHash, pszValue);
-                      msInsertHashTable(&(map->web.metadata), 
-                                        "wms_keywordlist", pszValue1);
-                      free(pszValue1);
-                  }
-                  else
-                    msInsertHashTable(&(map->web.metadata), 
-                                      "wms_keywordlist", pszValue);
-              }
-              psKeyword = psKeyword->psNext;   
-          }
-      }
-  }
-  else
-    msGetMapContextXMLHashValue(psMapContext, "General.Keywords", 
-                                &(map->web.metadata), "wms_keywordlist");
-
-  // Window
-  pszValue1 = (char*)CPLGetXMLValue(psMapContext,"General.Window.width",NULL);
-  pszValue2 = (char*)CPLGetXMLValue(psMapContext,"General.Window.height",NULL);
-  if(pszValue1 != NULL && pszValue2 != NULL)
-  {
-      map->width = atoi(pszValue1);
-      map->height = atoi(pszValue2);
-  }
-
-  // Abstract
-  if(msGetMapContextXMLHashValue(psMapContext, "General.Abstract", 
-                                 &(map->web.metadata), "wms_abstract"))
-  {
-      msGetMapContextXMLHashValue(psMapContext, "General.gml:description", 
-                                  &(map->web.metadata), "wms_abstract");
-  }
-
-  // DataURL
-  msGetMapContextXMLHashValueDecode(psMapContext, 
-                                   "General.DataURL.OnlineResource.xlink:href",
-                                   &(map->web.metadata), "wms_dataurl");
-
-  // LogoURL
-  // The logourl have a width, height, format and an URL
-  msGetMapContextXMLHashValue(psMapContext, "General.LogoURL.width", 
-                              &(map->web.metadata), "wms_logourl_width");
-  msGetMapContextXMLHashValue(psMapContext, "General.LogoURL.height", 
-                              &(map->web.metadata), "wms_logourl_height");
-  msGetMapContextXMLHashValue(psMapContext, "General.LogoURL.format", 
-                              &(map->web.metadata), "wms_logourl_format");
-  msGetMapContextXMLHashValue(psMapContext, 
-                              "General.LogoURL.OnlineResource.xlink:href", 
-                              &(map->web.metadata), "wms_logourl_href");
-
-  // DescriptionURL
-  // The descriptionurl have a width, height, format and an URL
-  msGetMapContextXMLHashValue(psMapContext, "General.DescriptionURL.width", 
-                             &(map->web.metadata), "wms_descriptionurl_width");
-  msGetMapContextXMLHashValue(psMapContext, "General.DescriptionURL.height", 
-                            &(map->web.metadata), "wms_descriptionurl_height");
-  msGetMapContextXMLHashValue(psMapContext, "General.DescriptionURL.format", 
-                            &(map->web.metadata), "wms_descriptionurl_format");
-  msGetMapContextXMLHashValue(psMapContext, 
-                            "General.DescriptionURL.OnlineResource.xlink:href",
-                              &(map->web.metadata), "wms_descriptionurl_href");
-
-  // Contact Info
-  psContactInfo = CPLGetXMLNode(psMapContext, "General.ContactInformation");
-
-  // Contact Person primary
-  msGetMapContextXMLHashValue(psContactInfo, 
-                              "ContactPersonPrimary.ContactPerson", 
-                              &(map->web.metadata), "wms_contactperson");
-  msGetMapContextXMLHashValue(psContactInfo, 
-                              "ContactPersonPrimary.ContactOrganization", 
-                              &(map->web.metadata), "wms_contactorganization");
-  // Contact Position
-  msGetMapContextXMLHashValue(psContactInfo, 
-                              "ContactPosition", 
-                              &(map->web.metadata), "wms_contactposition");
-  // Contact Address
-  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.AddressType", 
-                              &(map->web.metadata), "wms_addresstype");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.Address", 
-                              &(map->web.metadata), "wms_address");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.City", 
-                              &(map->web.metadata), "wms_city");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.StateOrProvince", 
-                              &(map->web.metadata), "wms_stateorprovince");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.PostCode", 
-                              &(map->web.metadata), "wms_postcode");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.Country", 
-                              &(map->web.metadata), "wms_country");
-
-  // Others
-  msGetMapContextXMLHashValue(psContactInfo, "ContactVoiceTelephone", 
-                            &(map->web.metadata), "wms_contactvoicetelephone");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactFacsimileTelephone", 
-                        &(map->web.metadata), "wms_contactfacsimiletelephone");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactElectronicMailAddress", 
-                     &(map->web.metadata), "wms_contactelectronicmailaddress");
-
-  // LayerList
+  //
+  // Load the bloc LayerList
+  //
   psLayerList = CPLGetXMLNode(psMapContext, "LayerList");
   if( psLayerList != NULL )
   {
@@ -803,523 +1363,16 @@ int msLoadMapContext(mapObj *map, char *filename)
       {
           if(EQUAL(psLayer->pszValue, "Layer"))
           {
-              // Init new layer
-              layer = &(map->layers[map->numlayers]);
-              initLayer(layer, map);
-              layer->map = (mapObj *)map;
-              layer->type = MS_LAYER_RASTER;
-              /* save the index */
-              map->layers[map->numlayers].index = map->numlayers;
-              map->layerorder[map->numlayers] = map->numlayers;
-              map->numlayers++;
-              //if(&(layer->metadata) == NULL)
-              //    &(layer->metadata) =  msCreateHashTable();
-
-              // Status
-              pszValue = (char*)CPLGetXMLValue(psLayer, "hidden", "1");
-              if((pszValue != NULL) && (atoi(pszValue) == 0))
-                  layer->status = MS_ON;
-              else
-                  layer->status = MS_OFF;
-
-              // Queryable
-              pszValue = (char*)CPLGetXMLValue(psLayer, "queryable", "0");
-              if(pszValue !=NULL && atoi(pszValue) == 1)
-                  layer->template = strdup("ttt");
-
-              // Name and Title
-              pszValue = (char*)CPLGetXMLValue(psLayer, "Name", NULL);
-              if(pszValue != NULL)
+              if( msLoadMapContextLayer(map, psLayer, nVersion, 
+                                        filename) == MS_FAILURE )
               {
-                  msInsertHashTable( &(layer->metadata), "wms_name", pszValue );
-
-                  pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+10));
-                  sprintf(pszName, "l%d:%s", layer->index, pszValue);
-                  layer->name = strdup(pszName);
-                  free(pszName);
+                  CPLDestroyXMLNode(psRoot);
+                  return MS_FAILURE;
               }
-              else
-              {
-                  pszName = (char*)malloc(sizeof(char)*10);
-                  sprintf(pszName, "l%d:", layer->index);
-                  layer->name = strdup(pszName);
-                  free(pszName);
-              }
-
-              if(msGetMapContextXMLHashValue(psLayer, "Title", 
-                                &(layer->metadata), "wms_title") == MS_FAILURE)
-              {
-                  if(msGetMapContextXMLHashValue(psLayer, "Server.title", 
-                                &(layer->metadata), "wms_title") == MS_FAILURE)
-                  {
-                      msDebug("Mandatory data Layer.Title missing in %s.",
-                              filename);
-                  }
-              }
-
-              // Abstract
-              msGetMapContextXMLHashValue(psLayer, "Abstract", 
-                                          &(layer->metadata), "wms_abstract");
-
-              // DataURL
-              if(nVersion <= OWS_0_1_4)
-              {
-                  msGetMapContextXMLHashValueDecode(psLayer, 
-                                                    "DataURL.OnlineResource.xlink:href",
-                                                    &(layer->metadata), 
-                                                    "wms_dataurl");
-              }
-              else
-              {
-                  // The DataURL have a width, height, format and an URL
-                  // Width and height are not used, but they are included to
-                  // be consistent with the spec.
-                  msGetMapContextXMLHashValue(psLayer, "DataURL.width", 
-                                              &(layer->metadata), 
-                                              "wms_dataurl_width");
-                  msGetMapContextXMLHashValue(psLayer, "DataURL.height", 
-                                              &(layer->metadata), 
-                                              "wms_dataurl_height");
-                  msGetMapContextXMLHashValue(psLayer, "DataURL.format", 
-                                              &(layer->metadata), 
-                                              "wms_dataurl_format");
-                  msGetMapContextXMLHashValue(psLayer, 
-                                           "DataURL.OnlineResource.xlink:href",
-                                              &(layer->metadata), 
-                                              "wms_dataurl_href");
-              }
-
-              // The MetadataURL have a width, height, format and an URL
-              // Width and height are not used, but they are included to
-              // be consistent with the spec.
-              msGetMapContextXMLHashValue(psLayer, "MetadataURL.width", 
-                               &(layer->metadata), "wms_metadataurl_width");
-              msGetMapContextXMLHashValue(psLayer, "MetadataURL.height", 
-                               &(layer->metadata), "wms_metadataurl_height");
-              msGetMapContextXMLHashValue(psLayer, "MetadataURL.format", 
-                               &(layer->metadata), "wms_metadataurl_format");
-              msGetMapContextXMLHashValue(psLayer, 
-                               "MetadataURL.OnlineResource.xlink:href",
-                               &(layer->metadata), "wms_metadataurl_href");
-
-
-              // Server
-              if(nVersion >= OWS_0_1_4)
-              {
-                  if(msGetMapContextXMLStringValueDecode(psLayer, 
-                                           "Server.OnlineResource.xlink:href", 
-                                           &(layer->connection)) == MS_FAILURE)
-                  {
-                      CPLDestroyXMLNode(psRoot);
-                      msSetError(MS_MAPCONTEXTERR, 
-              "Mandatory data Server.OnlineResource.xlink:href missing in %s.",
-                                 "msLoadMapContext()", filename);
-                      return MS_FAILURE;
-                  }
-                  else
-                  {
-                      msGetMapContextXMLHashValueDecode(psLayer, 
-                                     "Server.OnlineResource.xlink:href", 
-                                     &(layer->metadata), "wms_onlineresource");
-                      layer->connectiontype = MS_WMS;
-                  }
-              }
-              else
-              {
-                  if(msGetMapContextXMLStringValueDecode(psLayer, 
-                                           "Server.onlineResource", 
-                                           &(layer->connection)) == MS_FAILURE)
-                  {
-                      CPLDestroyXMLNode(psRoot);
-                      msSetError(MS_MAPCONTEXTERR, 
-                         "Mandatory data Server.onlineResource missing in %s.",
-                                 "msLoadMapContext()", filename);
-                      return MS_FAILURE;
-                  }
-                  else
-                  {
-                      msGetMapContextXMLHashValueDecode(psLayer, 
-                                                      "Server.onlineResource", 
-                                     &(layer->metadata), "wms_onlineresource");
-                      layer->connectiontype = MS_WMS;
-                  }
-              }
-
-              if(nVersion >= OWS_0_1_4)
-              {
-                  if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
-                       &(layer->metadata), "wms_server_version") == MS_FAILURE)
-                  {
-                      CPLDestroyXMLNode(psRoot);
-                      msSetError(MS_MAPCONTEXTERR, 
-                                "Mandatory data Server.version missing in %s.",
-                                 "msLoadMapContext()", filename);
-                      return MS_FAILURE;
-                  }
-              }
-              else
-              {
-                  if(msGetMapContextXMLHashValue(psLayer, "Server.wmtver", 
-                       &(layer->metadata), "wms_server_version") == MS_FAILURE)
-                  {
-                      CPLDestroyXMLNode(psRoot);
-                      msSetError(MS_MAPCONTEXTERR, 
-                                 "Mandatory data Server.wmtver missing in %s.",
-                                 "msLoadMapContext()", filename);
-                      return MS_FAILURE;
-                  }
-              }
-
-              // Projection
-              psSRS = psLayer->psChild;
-              while(psSRS != NULL)
-              {
-                  if(psSRS->psChild != NULL &&
-                     strcasecmp(psSRS->pszValue, "SRS") == 0 )
-                  {
-                      pszValue = psSRS->psChild->pszValue;
-
-                      // Add in wms_srs
-                      pszHash = msLookupHashTable(&(layer->metadata), "wms_srs");
-                      if(pszHash != NULL)
-                      {
-                          pszValue1 = (char*)malloc(strlen(pszHash)+
-                                                    strlen(pszValue)+2);
-                          sprintf(pszValue1, "%s %s", pszHash, pszValue);
-                          msInsertHashTable(&(layer->metadata), 
-                                            "wms_srs", pszValue1);
-                          free(pszValue1);
-                      }
-                      else
-                          msInsertHashTable(&(layer->metadata), 
-                                            "wms_srs", pszValue);
-                  }
-
-                  psSRS = psSRS->psNext;
-              }
-              pszHash = msLookupHashTable(&(layer->metadata), "wms_srs");
-              if((pszHash == NULL) || (strcasecmp(pszHash, "") == 0))
-              {
-                  if(pszMapProj != NULL)
-                  {
-                      msInsertHashTable(&(layer->metadata),"wms_srs", pszMapProj);
-                      if(strncasecmp(pszValue, "AUTO:", 5) == 0)
-                      {
-                          pszProj = strdup(pszValue);
-                      }
-                      else
-                      {
-                          pszProj = (char*) malloc(sizeof(char)*
-                                                   (strlen(pszValue)+10));
-                          sprintf(pszProj, "init=epsg:%s", pszMapProj+5);
-                      }
-
-                      msInitProjection(&layer->projection);
-                      layer->projection.args[layer->projection.numargs] = strdup(pszProj);
-                      layer->projection.numargs++;
-                      msProcessProjection(&layer->projection);
-                      free(pszProj);
-                  }
-              }
-
-              // Format
-              if( nVersion >= OWS_0_1_4 )
-              {
-                  psFormatList = CPLGetXMLNode(psLayer, "FormatList");
-              }
-              else
-              {
-                  psFormatList = psLayer;
-              }
-
-              if(psFormatList != NULL)
-              {
-                  for(psFormat = psFormatList->psChild; 
-                      psFormat != NULL; 
-                      psFormat = psFormat->psNext)
-                  {
-                      if(psFormat->psChild != NULL && 
-                         strcasecmp(psFormat->pszValue, "Format") == 0 )
-                      {
-                          if(psFormat->psChild->psNext == NULL)
-                              pszValue = psFormat->psChild->pszValue;
-                          else
-                              pszValue = psFormat->psChild->psNext->pszValue;
-                      }
-                      else
-                          pszValue = NULL;
-
-                      if(pszValue != NULL && strcasecmp(pszValue, "") != 0)
-                      {
-                          // wms_format
-                          pszValue1 = (char*)CPLGetXMLValue(psFormat, 
-                                                            "current", NULL);
-                          if(pszValue1 != NULL && 
-                             (strcasecmp(pszValue1, "1") == 0))
-                              msInsertHashTable(&(layer->metadata), 
-                                                "wms_format", pszValue);
-                          // wms_formatlist
-                          pszHash = msLookupHashTable(&(layer->metadata), 
-                                                      "wms_formatlist");
-                          if(pszHash != NULL)
-                          {
-                              pszValue1 = (char*)malloc(strlen(pszHash)+
-                                                        strlen(pszValue)+2);
-                              sprintf(pszValue1, "%s,%s", pszHash, pszValue);
-                              msInsertHashTable(&(layer->metadata), 
-                                                "wms_formatlist", pszValue1);
-                              free(pszValue1);
-                          }
-                          else
-                              msInsertHashTable(&(layer->metadata), 
-                                                "wms_formatlist", pszValue);
-                      }
-                  }
-
-                  /* Make sure selected format is supported or select another
-                   * supported format.  Note that we can efficiently do this
-                   * only for GIF/PNG/JPEG, can't try to handle all GDAL
-                   * formats.
-                   */
-                  pszValue = msLookupHashTable(&(layer->metadata), "wms_format");
-
-                  if (
-#ifndef USE_GD_PNG
-                      strcasecmp(pszValue, "image/png") == 0 || 
-                      strcasecmp(pszValue, "PNG") == 0 ||
-#endif
-#ifndef USE_GD_JPEG
-                      strcasecmp(pszValue, "image/jpeg") == 0 || 
-                      strcasecmp(pszValue, "JPEG") == 0 ||
-#endif
-#ifndef USE_GD_GIF
-                      strcasecmp(pszValue, "image/gif") == 0 || 
-                      strcasecmp(pszValue, "GIF") == 0 ||
-#endif
-                      0 )
-                  {
-                      char **papszList=NULL;
-                      int i, numformats=0;
-
-                      pszValue = msLookupHashTable(&(layer->metadata), 
-                                                   "wms_formatlist");
-
-                      papszList = split(pszValue, ',', &numformats);
-                      for(i=0; i < numformats; i++)
-                      {
-                          if (
-#ifdef USE_GD_PNG
-                              strcasecmp(papszList[i], "image/png") == 0 || 
-                              strcasecmp(papszList[i], "PNG") == 0 ||
-#endif
-#ifdef USE_GD_JPEG
-                              strcasecmp(papszList[i], "image/jpeg") == 0 || 
-                              strcasecmp(papszList[i], "JPEG") == 0 ||
-#endif
-#ifdef USE_GD_GIF
-                              strcasecmp(papszList[i], "image/gif") == 0 || 
-                              strcasecmp(papszList[i], "GIF") == 0 ||
-#endif
-                              0 )
-                          {
-                              /* Found a match */
-                              msInsertHashTable(&(layer->metadata), 
-                                                "wms_format", papszList[i]);
-                              break;
-                          }
-                      }
-                      if(papszList)
-                          msFreeCharArray(papszList, numformats);
-
-                  } /* end if unsupported format */
-                   
-              } /* end FormatList parsing */
-
-              // Style
-              if( nVersion >= OWS_0_1_4 )
-              {
-                  psStyleList = CPLGetXMLNode(psLayer, "StyleList");
-              }
-              else
-              {
-                  psStyleList = psLayer;
-              }
-
-              if(psStyleList != NULL)
-              {
-                  nStyle = 0;
-                  for(psStyle = psStyleList->psChild; 
-                      psStyle != NULL; 
-                      psStyle = psStyle->psNext)
-                  {
-                    if(strcasecmp(psStyle->pszValue, "Style") == 0)
-                    {
-                      pszStyleName =(char*)CPLGetXMLValue(psStyle,"Name",NULL);
-                      if(pszStyleName == NULL)
-                      {
-                          nStyle++;
-                          pszStyleName = (char*)malloc(15);
-                          sprintf(pszStyleName, "Style{%d}", nStyle);
-                      }
-                      else
-                          pszStyleName = strdup(pszStyleName);
-
-                      // wms_style
-                      pszValue = (char*)CPLGetXMLValue(psStyle,"current",NULL);
-                      if(pszValue != NULL && 
-                         (strcasecmp(pszValue, "1") == 0))
-                          msInsertHashTable(&(layer->metadata), 
-                                            "wms_style", pszStyleName);
-                      // wms_stylelist
-                      pszHash = msLookupHashTable(&(layer->metadata), 
-                                                  "wms_stylelist");
-                      if(pszHash != NULL)
-                      {
-                          pszValue1 = (char*)malloc(strlen(pszHash)+
-                                                    strlen(pszStyleName)+2);
-                          sprintf(pszValue1, "%s,%s", pszHash, pszStyleName);
-                          msInsertHashTable(&(layer->metadata), 
-                                            "wms_stylelist", pszValue1);
-                          free(pszValue1);
-                      }
-                      else
-                          msInsertHashTable(&(layer->metadata), 
-                                            "wms_stylelist", pszStyleName);
-
-                      // title
-                      pszValue = (char*)CPLGetXMLValue(psStyle, "Title", NULL);
-                      if(pszValue != NULL)
-                      {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+20);
-                          sprintf(pszStyle,"wms_style_%s_title",pszStyleName);
-                          msInsertHashTable(&(layer->metadata),pszStyle,pszValue);
-                          free(pszStyle);
-                      }
-                      else
-                      {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+20);
-                          sprintf(pszStyle,"wms_style_%s_title",pszStyleName);
-                          msInsertHashTable(&(layer->metadata), pszStyle, 
-                                            layer->name);
-                          free(pszStyle);
-                      }
-                      // SLD
-                      pszValue = (char*)CPLGetXMLValue(psStyle, 
-                                        "SLD.OnlineResource.xlink:href", NULL);
-                      if(pszValue != NULL)
-                      {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+15);
-                          sprintf(pszStyle, "wms_style_%s_sld", pszStyleName);
-                          msDecodeHTMLEntities(pszStyle);
-                          msInsertHashTable(&(layer->metadata),pszStyle,pszValue);
-                          free(pszStyle);
-                      }
-                      // LegendURL
-                      if( nVersion >= OWS_0_1_4 )
-                      {
-                          pszValue=(char*)CPLGetXMLValue(psStyle,
-                                   "LegendURL.OnlineResource.xlink:href",NULL);
-                      }
-                      else
-                      {
-                              psLegendURL = CPLGetXMLNode(psStyle,"LegendURL");
-                              if(psLegendURL != NULL)
-                              {
-                                  psLegendURL = psLegendURL->psChild;
-                                  while(psLegendURL != NULL && 
-                                        psLegendURL->eType != CXT_Text)
-                                  {
-                                      psLegendURL = psLegendURL->psNext;
-                                  }
-                                  if(psLegendURL != NULL)
-                                      pszValue = psLegendURL->pszValue;
-                                  else
-                                      pszValue = NULL;
-                              }
-                              else
-                              {
-                                  pszValue = NULL;
-                              }
-                      }
-                      if(pszValue != NULL)
-                      {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+35);
-                          sprintf(pszStyle, "wms_style_%s_legendurl_width",
-                                  pszStyleName);
-                          msGetMapContextXMLHashValue(psStyle, 
-                                                      "LegendURL.width", 
-                                                      &(layer->metadata), 
-                                                      pszStyle);
-                          sprintf(pszStyle, "wms_style_%s_legendurl_height",
-                                  pszStyleName);
-                          msGetMapContextXMLHashValue(psStyle,
-                                                      "LegendURL.height", 
-                                                      &(layer->metadata), 
-                                                      pszStyle);
-                          sprintf(pszStyle, "wms_style_%s_legendurl_format",
-                                  pszStyleName);
-                          msGetMapContextXMLHashValue(psStyle,
-                                                      "LegendURL.format", 
-                                                      &(layer->metadata), 
-                                                      pszStyle);
-                          sprintf(pszStyle, "wms_style_%s_legendurl_href",
-                                  pszStyleName);
-                          msGetMapContextXMLHashValue(psStyle,
-                                         "LegendURL.OnlineResource.xlink:href",
-                                                      &(layer->metadata), 
-                                                      pszStyle);
-                          free(pszStyle);
-                      }
-
-                      free(pszStyleName);
-                    }
-                  }
-              }
-
-              if(msLookupHashTable(&(layer->metadata), 
-                                   "wms_stylelist") == NULL)
-              {
-                  if(layer->connection)
-                      pszValue = strdup(layer->connection);
-                  else
-                      pszValue = strdup( "" ); 
-                  pszValue1 = strstr(pszValue, "STYLELIST=");
-                  if(pszValue1 != NULL)
-                  {                          
-                      pszValue1 += 10;
-                      pszValue2 = strchr(pszValue, '&');
-                      if(pszValue2 != NULL)
-                          pszValue1[pszValue2-pszValue1] = '\0';
-                      msInsertHashTable(&(layer->metadata), "wms_stylelist",
-                                        pszValue1);
-                  }
-                  free(pszValue);
-              }
-              if(msLookupHashTable(&(layer->metadata), "wms_style") == NULL)
-              {
-                  if(layer->connection)
-                      pszValue = strdup(layer->connection);
-                  else
-                      pszValue = strdup( "" ); 
-                  pszValue1 = strstr(pszValue, "STYLE=");
-                  if(pszValue1 != NULL)
-                  {                          
-                      pszValue1 += 6;
-                      pszValue2 = strchr(pszValue, '&');
-                      if(pszValue2 != NULL)
-                          pszValue1[pszValue2-pszValue1] = '\0';
-                      msInsertHashTable(&(layer->metadata), "wms_style",
-                                        pszValue1);
-                  }
-                  free(pszValue);
-              }
-
           }/* end Layer parsing */
       }/* for */
   }
 
-  if(pszMapProj)
-      free(pszMapProj);
   CPLDestroyXMLNode(psRoot);
 
   return MS_SUCCESS;
