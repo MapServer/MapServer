@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.75  2004/10/18 20:56:42  frank
+ * fixed msOGRSpatialRef2ProjectionObj to work for non-auto: bug 949
+ *
  * Revision 1.74  2004/10/09 18:22:41  sean
  * towards resolving bug 339, have implemented a mutex acquiring wrapper for
  * the loadExpressionString function.  the new msLoadExpressionString should be
@@ -692,9 +695,6 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
 int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
                                   projectionObj *proj, int debug_flag )
 {
-  if (proj->numargs == 0  || !EQUAL(proj->args[0], "auto"))
-      return MS_SUCCESS;  // Nothing to do!
-
 #ifdef USE_PROJ
   // First flush the "auto" name from the projargs[]... 
   msFreeProjection( proj );
