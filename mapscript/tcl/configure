@@ -9,10 +9,10 @@ if [ ! -f ../../perlvars ] ; then
    exit
 fi
 
-MAPSERVERHOME=`head -1 ../../perlvars | tail -1`
-MAPSERVERDEFS=`head -2 ../../perlvars | tail -1`
-MAPSERVERINCS=`head -3 ../../perlvars | tail -1`
-MAPSERVERLIBS=`head -4 ../../perlvars | tail -1`
+MAPSERVERHOME=`head -1 ../../mapscriptvars | tail -1`
+MAPSERVERDEFS=`head -2 ../../mapscriptvars | tail -1`
+MAPSERVERINCS=`head -3 ../../mapscriptvars | tail -1`
+MAPSERVERLIBS=`head -4 ../../mapscriptvars | tail -1`
 
 # make sure link to mapscript.i exists
 

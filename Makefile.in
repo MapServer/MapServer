@@ -180,7 +180,7 @@ OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplex
 	$(CC) -c $(CFLAGS) $< -o $@
 
 all: $(MAKE_GD) $(MAKE_EGIS) libmap.a shp2img shp2pdf legend \
-	mapserv shptree shptreevis shptreetst scalebar sortshp perlvars \
+	mapserv shptree shptreevis shptreetst scalebar sortshp mapscriptvars \
 	tile4ms @MAKE_PHPMS@
 
 egis::
@@ -249,13 +249,13 @@ tile4ms: tile4ms.o
 testexpr: testexpr.o mapparser.o maplexer.o
 	$(LD) $(CFLAGS) testexpr.o $(LDFLAGS) $(STATIC_LIBS) -o testexpr
 
-perlvars:
-	touch perlvars
-	pwd > perlvars
-	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) >> perlvars
-	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) >> perlvars
-	echo $(LDFLAGS) >> perlvars
-	echo $(STATIC_LIBS) >> perlvars
+mapscriptvars:
+	touch mapscriptvars
+	pwd > mapscriptvars
+	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) >> mapscriptvars
+	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) >> mapscriptvars
+	echo $(LDFLAGS) >> mapscriptvars
+	echo $(STATIC_LIBS) >> mapscriptvars
 
 egis_clean:
 	cd egis/errLog; $(MAKE) clean; cd ..
@@ -270,7 +270,7 @@ install: libmap.a
 	cp -f map.h $(HEADER_INSTALL)
 
 clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
-	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars tile4ms testexpr
+	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp mapscriptvars tile4ms testexpr
 
 distclean:
 	$(MAKE) clean

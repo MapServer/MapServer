@@ -20,10 +20,10 @@ def unique(list):
   return dict.keys()
 
 # Should be created by the mapserver build process.
-perlvars = "../../perlvars"
+mapscriptvars = "../../mapscriptvars"
 
-# Open and read lines from perlvars.
-fp = open(perlvars, "r")
+# Open and read lines from mapscriptvars.
+fp = open(mapscriptvars, "r")
 
 ms_install_dir = fp.readline()
 ms_macros = fp.readline()

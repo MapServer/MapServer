@@ -1,7 +1,7 @@
 # File : Makefile.PL
 use ExtUtils::MakeMaker;
 
-open(STREAM, '../../perlvars') or die('Unable to open perlvars, have you built the MapServer yet?'); 
+open(STREAM, '../../mapscriptvars') or die('Unable to open mapscriptvars, have you built the MapServer yet?'); 
 
 $home = <STREAM>;
 chomp $home;
