@@ -1781,7 +1781,9 @@ name : string
     A unique identifier.
 
 renderer : int
-    **TODO** what is renderer for?
+    MS_RENDER_WITH_GD, MS_RENDER_WITH_SWF, MS_RENDER_WITH_RAWDATA, 
+    MS_RENDER_WITH_PDF, or MS_RENDER_WITH_IMAGEMAP.  Normally set internally
+    based on the driver and some other setting in the constructor. 
    
 transparent : int
     MS_ON or MS_OFF.
@@ -1808,6 +1810,11 @@ setMimetype( string mimetype ) : void
     
 setOption( string key, string value ) : void
     Set the option at *key* to *value*.
+
+validate() : int
+    Checks some internal consistency issues, and returns MS_TRUE if things
+    are OK and MS_FALSE if there are problems.  Some problems are fixed up
+    internally.  May produce debug output if issues encountered.  
     
 
 -----------------------------------------------------------------------------
