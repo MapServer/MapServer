@@ -701,9 +701,23 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
                       int gd_alpha = 127 - (pabyRawAlpha[k] >> 1);
                       int gd_color = gdTrueColorAlpha(
                           pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], gd_alpha );
-                      
+                      int gd_original_alpha, gd_new_alpha;
+
+                      gd_original_alpha = 
+                          gdTrueColorGetAlpha( gdImg->tpixels[i][j] );
+
+                      /* I assume a fairly simple additive model for 
+                         opaqueness.  Note that gdAlphaBlend() always returns
+                         opaque values (alpha byte is 0). */
+
+                      gd_new_alpha = (127 - gd_alpha) + (127 - gd_original_alpha);
+                      gd_new_alpha = MAX(0,127 - gd_new_alpha);
+
                       gdImg->tpixels[i][j] = 
+                          (gd_new_alpha << 24) + 
                           gdAlphaBlend( gdImg->tpixels[i][j], gd_color );
+                      
+                      
                   }
                   k++;
               }
@@ -2129,8 +2143,9 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
             if( status == -1 )
             {
+                GDALClose( hDS );
                 chdir(old_path); /* restore old cwd */
-                continue;
+                return -1;
             }
 
             GDALClose( hDS );
