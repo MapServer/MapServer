@@ -13,7 +13,7 @@ typedef struct ms_POSTGIS_layer_info_t
 {
 	char		*sql;		//sql query to send to DB
 	PGconn     *conn; 	//connection to db
-	int	 	row_num;  	//what row is the NEXT to be read (for random access)
+	long	 	row_num;  	//what row is the NEXT to be read (for random access)
  	PGresult   *query_result;//for fetching rows from the db
 } msPOSTGISLayerInfo;
 
@@ -172,7 +172,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	{
 		sprintf(query_string_0_5,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && %s)",
 						columns_wanted,geom_table,layer->filter.string,geom_column,box3d);
-		sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') )",
+		sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))",
 						columns_wanted,geom_table,layer->filter.string,geom_column,box3d,geom_table,geom_column);
 	}
 
@@ -206,7 +206,9 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
     PQclear(result);
 
-//printf ("query_string_0_6:%s\n",query_string_0_6);
+	//set enable_seqscan=off not required (already done)
+
+//fprintf (stderr,"query_string_0_6:%s\n",query_string_0_6);
     result = PQexec(layerinfo->conn, query_string_0_6 );
 
     if ( (result!=NULL) && (PQresultStatus(result) == PGRES_COMMAND_OK) )
@@ -227,7 +229,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
     if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
     {
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement (0.6 failed - retry 0.5).", 
+	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement (0.6 failed - retried using 0.5 and it failed).", 
                  "msPOSTGISLayerWhichShapes()");
      
         	PQclear(result);
@@ -236,7 +238,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
     }
 
     PQclear(result);
-//printf ("query_string_0_5:%s\n",query_string_0_5);
+fprintf (stderr,"query_string_0_5:%s\n",query_string_0_5);
 
 
     result = PQexec(layerinfo->conn, query_string_0_5 );
@@ -249,7 +251,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
  		return (MS_SUCCESS);	
     }
 
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  DECLARE statement (0.6 failed - retry 0.5).", 
+	      msSetError(MS_QUERYERR, "Error executing POSTGIS  DECLARE statement (0.6 failed - retried 0.5 and it failed too).", 
                  "msPOSTGISLayerWhichShapes()");
      
         	PQclear(result);
@@ -608,7 +610,9 @@ int	dont_force(char	*wkb, shapeObj *shape)
 	{
 		return force_to_polygons(wkb,shape);
 	}
-		return(MS_FAILURE); //unknown type
+
+
+	return(MS_FAILURE); //unknown type
 }
 
 //find the bounds of the shape
@@ -671,8 +675,9 @@ int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
 	}
 
 
-	result= msPOSTGISLayerGetShapeRandom(layer, shape, layerinfo->row_num   );
-	layerinfo->row_num   ++;
+	result= msPOSTGISLayerGetShapeRandom(layer, shape, &(layerinfo->row_num)   );
+	// getshaperandom will increment the row_num
+	//layerinfo->row_num   ++;
 
 	return result;
 }
@@ -683,12 +688,13 @@ int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
 // TODO: only fetch 1000 rows at a time.  This should check to see if the
 //       requested feature is in the set.  If it is, return it, otherwise
 // 	   grab the next 1000 rows.
-int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long record)
+int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 {
 	msPOSTGISLayerInfo	*layerinfo;
 	char				*wkb;
 	int				result,t,size;
 	char				*temp,*temp2;
+	long				record_oid;
 
 
 	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
@@ -720,18 +726,20 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long record)
 	while(shape->type == MS_SHAPE_NULL)
 	{
 
-		if (  record < PQntuples(layerinfo->query_result) )
+		if (  (*record) < PQntuples(layerinfo->query_result) )
 		{
 			//retreive an item
-			wkb = (char *) PQgetvalue(layerinfo->query_result, record, layer->numitems);
+			wkb = (char *) PQgetvalue(layerinfo->query_result, (*record), layer->numitems);
 			switch(layer->type)
 			{
 				case MS_LAYER_POINT:
 					result = force_to_points(wkb, shape);
 					break;
 				case MS_LAYER_LINE:
-				case MS_LAYER_POLYLINE:
 					result = force_to_lines(wkb, shape);
+					break;
+				case MS_LAYER_POLYLINE:
+					result = force_to_polygons(wkb, shape);
 					break;
 				case MS_LAYER_POLYGON:
 					result = 	force_to_polygons(wkb, shape);
@@ -750,23 +758,27 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long record)
 				for (t=0;t<layer->numitems;t++)
 				{
 
-					 temp = (char *) PQgetvalue(layerinfo->query_result, record, t);
-					 size = PQgetlength(layerinfo->query_result,record, t ) ; 
+					 temp = (char *) PQgetvalue(layerinfo->query_result, (*record), t);
+					 size = PQgetlength(layerinfo->query_result,(*record), t ) ; 
 					 temp2 = (char *) malloc(size+1 );
 					 memcpy(temp2, temp, size);
 					 temp2[size] = 0; //null terminate it
 					 
 					 shape->values[t] = temp2;
 				}
-				temp = (char *) PQgetvalue(layerinfo->query_result, record, t+1); // t is WKB, t+1 is OID
-				record = strtol (temp,NULL,10);
+				temp = (char *) PQgetvalue(layerinfo->query_result, (*record), t+1); // t is WKB, t+1 is OID
+				record_oid = strtol (temp,NULL,10);
 
-				shape->index = record;
+				shape->index = record_oid;
 				shape->numvalues = layer->numitems;
 
 				find_bounds(shape);
-
+				(*record)++; 		//move to next shape
 				return (MS_SUCCESS);
+			}
+			else
+			{
+				(*record)++; //move to next shape
 			}
 		}
 		else
@@ -801,7 +813,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	int				result,t,size;
 	char				*temp1,*temp2;
 
-//fprintf(stderr,"msPOSTGISLayerGetShape called\n");
+fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
 
 	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
 	if (layerinfo == NULL)
@@ -927,8 +939,10 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 					result = force_to_points(wkb, shape);
 					break;
 				case MS_LAYER_LINE:
-				case MS_LAYER_POLYLINE:
 					result = force_to_lines(wkb, shape);
+					break;
+				case MS_LAYER_POLYLINE:
+					result = force_to_polygons(wkb, shape);
 					break;
 				case MS_LAYER_POLYGON:
 					result = 	force_to_polygons(wkb, shape);
@@ -1145,7 +1159,7 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 		return(MS_FAILURE);
 }
 
-int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long record)
+int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 {
 		msSetError(MS_QUERYERR, "msPOSTGISLayerGetShapeRandom called but unimplemented!",
                  "msPOSTGISLayerGetShapeRandom()");
