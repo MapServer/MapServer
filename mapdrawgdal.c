@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/02/26 16:47:43  frank
+ * dont crash on files with large color tables
+ *
  * Revision 1.7  2003/02/24 21:20:54  frank
  * Added RAW_WINDOW support for use my mapresample.c
  *
@@ -450,7 +453,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    * color table.
    */
   if(layer->numclasses > 0 && gdImg ) {
-    int c;
+    int c, color_count;
 
     cmap_set = TRUE;
 
@@ -462,7 +465,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         return -1;
     }
 
-    for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
+    color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
+    for(i=0; i < color_count; i++) {
         colorObj pixel;
         GDALColorEntry sEntry;
 
@@ -497,9 +501,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             cmap[i] = -1;
     }
   } else if( hColorMap != NULL && !truecolor && gdImg ) {
+    int color_count;
     cmap_set = TRUE;
 
-    for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
+    color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
+
+    for(i=0; i < color_count; i++) {
         GDALColorEntry sEntry;
 
         GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
@@ -517,9 +524,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 #if GD2_VERS > 1
   else if( hBand2 == NULL && hColorMap != NULL )
   {
+      int color_count;
       cmap_set = TRUE;
 
-      for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
+      color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
+
+      for(i=0; i < color_count; i++) {
           GDALColorEntry sEntry;
           
           GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
