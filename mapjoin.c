@@ -84,7 +84,7 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
 
   // initialize any members that won't get set later on in this function
   joininfo->target = NULL;
-  joininto->nextrecord = 0;
+  joininfo->nextrecord = 0;
 
   join->joininfo = joininfo;
 
