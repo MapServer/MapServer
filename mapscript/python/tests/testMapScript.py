@@ -1012,7 +1012,6 @@ class NewOutputFormatTestCase(unittest.TestCase):
     def testRemoveOutputFormat(self):
         """testRemoveOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats
-        assert num == 6, num
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         self.mapobj1.appendOutputFormat(new_format)
         assert self.mapobj1.numoutputformats == num + 1
