@@ -3,8 +3,10 @@
 # Tom Poindexter, tpoindex@nyx.net
 #
 
-DLTARGET            = libMapscript
-PACKAGEDIR          = MapscriptTcl1.0
+DLTARGET            = libMapscript11
+PACKAGEDIR          = MapscriptTcl1.1
+
+# Note: also change 'package provide' version in pkgIndex.tcl !!
 
 SWIGINC             = -I@SWIGDIR@/include
 SWIGLIB             = -L@SWIGDIR@/lib
@@ -74,10 +76,14 @@ install: $(DLTARGET)$(TCL_SHLIB_SUFFIX)
 	cp pkgIndex.tcl                   $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
 	cp mapscriptsupp.tcl              $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
 	cp mapscriptsupp.html             $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+	cp mapscript_wrap.html            $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
 
 
 useprebuilt:
 	gunzip -c mapscript_wrap.c.gz >mapscript_wrap.c
+
+prebuilt:  mapscript_wrap.c
+	gzip -cf mapscript_wrap.c >mapscript_wrap.c.gz
 
 tar:
 	if test ! -f mapscript_wrap.c.gz ; then \
@@ -91,4 +97,7 @@ clean:
 
 distclean: clean
 	rm -f Makefile
+
+reallyclean: distclean
+	rm -f mapscript_wrap.*
 

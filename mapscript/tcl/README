@@ -4,6 +4,8 @@ WHAT
 It's a Tcl interface for Mapserver.  You can write Tcl scripts to generate
 maps, read/write shapefiles, etc.
 
+VERSION
+Mapscript 1.1 is built for Mapserver 3.5 +
 
 INSTALL
 A simple 'configure' script and Makefile is included.  The configure is hand
@@ -35,7 +37,7 @@ type:
 
 	** Mapscript/Tcl normally builds as a Tcl stubbed dynamic library.
 	The makefile includes a target 'nostublib' if you want to build
-	with a Tcl version dependent library.
+	with a Tcl version dependent library (not recommended).
 
 	** Tested with Tcl/Tk version 8.3.2, and Swig version 1.1-883
 
@@ -66,7 +68,7 @@ If you get runtime errors reporting missing symbols, check the Mapscript/Tcl
 shared library for shared libraries it may be dependent upon.  In Linux, 
 Solaris (and possibly other unix systems) try this:
 	
-	ldd libMapscript.*
+	ldd libMapscript*.*
 
 Note which libraries are unresolved.  Find the directories which contain the
 libraries that are unresolved, and add those directories to your 

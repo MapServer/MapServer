@@ -7,31 +7,32 @@ mapscript_supp.c</TITLE>
 
 <HR><H1> Mapscript Supplemental Procedures </H1>
 <UL>
-<LI> 1. proc mapscript::featureObjRef
+<LI> 1. proc mapscript::classObjRef
 <LI> 2. proc mapscript::colorObjRef
-<LI> 3. proc mapscript::queryObjRef
-<LI> 4. proc mapscript::shapeResultObjRef
-<LI> 5. proc mapscript::queryResultObjRef
-<LI> 6. proc mapscript::queryMapObjRef
-<LI> 7. proc mapscript::labelObjRef
-<LI> 8. proc mapscript::webObjRef
-<LI> 9. proc mapscript::classObjRef
-<LI> 10. proc mapscript::labelCacheMemberObjRef
-<LI> 11. proc mapscript::markerCacheMemberObjRef
-<LI> 12. proc mapscript::labelCacheObjRef
-<LI> 13. proc mapscript::symbolSetObjRef
-<LI> 14. proc mapscript::referenceMapObjRef
-<LI> 15. proc mapscript::scalebarObjRef
-<LI> 16. proc mapscript::legendObjRef
-<LI> 17. proc mapscript::layerObjRef
-<LI> 18. proc mapscript::mapObjRef
-<LI> 19. proc mapscript::errorObjRef
-<LI> 20. proc mapscript::rectObjRef
-<LI> 21. proc mapscript::pointObjRef
-<LI> 22. proc mapscript::lineObjRef
-<LI> 23. proc mapscript::shapeObjRef
-<LI> 24. proc mapscript::DBFInfoRef
-<LI> 25. proc mapscript::shapefileObjRef
+<LI> 3. proc mapscript::errorObjRef
+<LI> 4. proc mapscript::featureListNodeObjRef
+<LI> 5. proc mapscript::itemObjRef
+<LI> 6. proc mapscript::labelCacheMemberObjRef
+<LI> 7. proc mapscript::labelCacheObjRef
+<LI> 8. proc mapscript::labelObjRef
+<LI> 9. proc mapscript::layerObjRef
+<LI> 10. proc mapscript::legendObjRef
+<LI> 11. proc mapscript::lineObjRef
+<LI> 12. proc mapscript::mapObjRef
+<LI> 13. proc mapscript::markerCacheMemberObjRef
+<LI> 14. proc mapscript::pointObjRef
+<LI> 15. proc mapscript::projectionObjRef
+<LI> 16. proc mapscript::queryMapObjRef
+<LI> 17. proc mapscript::rectObjRef
+<LI> 18. proc mapscript::referenceMapObjRef
+<LI> 19. proc mapscript::resultCacheMemberObjRef
+<LI> 20. proc mapscript::resultCacheObjRef
+<LI> 21. proc mapscript::scalebarObjRef
+<LI> 22. proc mapscript::shapeObjRef
+<LI> 23. proc mapscript::shapefileObjRef
+<LI> 24. proc mapscript::symbolSetObjRef
+<LI> 25. proc mapscript::webObjRef
+<LI> 26. proc mapscript::DBFInfoRef
 </UL>
 
 <H2> Usage </H2>
@@ -58,11 +59,18 @@ set miny [<B>mapscript::rectObjRef</B> $rectPtr cget -miny]
 </BLOCKQUOTE>
 <P>
 Notes:  each of the <EM>objectRef</EM> procedures is just a shortcut to invoke a
-SWIG generated method name. 
+SWIG generated method name.   Method names of:
+<UL>
+<LI> cget
+<LI> configure
+<LI> delete
+</UL>
+invoke that object's cget, configure, and delete method respectively.
+<P> Example:
 <BLOCKQUOTE>
 mapscript::rectObjRef $rectPtr cget -minx
 </BLOCKQUOTE>
-is the same as:
+is equivalent to:
 <BLOCKQUOTE>
 mapscript::rectObj_minx_get $rectPtr
 </BLOCKQUOTE>
@@ -72,7 +80,7 @@ mapscript::rectObj_minx_get $rectPtr
 <LI> 1. proc mapscript::getDBFNames
 <LI> 2. proc mapscript::getDBFTypes
 <LI> 3. proc mapscript::getDBFValues
-<LI> 4. proc mapscript::getDBFQueryInfo
+<LI> 4. proc mapscript::getQueryInfo
 </UL>
 
 <H2> Usage </H2>
@@ -94,13 +102,12 @@ getDBFValues returns a list of field values from a DBF file handle.  The
 the DBFInfo constructor.  <em>Record_number</em> is the record number of the
 row to fetch.
 
-<P><b>mapscript::getDBFQueryInfo <em> mapObj_pointer  queryObj_pointer 
+<P><b>mapscript::getQueryInfo <em> mapObj_pointer  layerObj_pointer 
 </em></b><br>
-getDBFQueryInfo returns a list of layer names and DBF record name-value
-pairs from each layer that map query has generated.  Multiple layer names / 
-DBF record name-value pairs may exist in the returned list.
+getQueryInfo returns a list of name-value
+pairs from a layer that map query has generated.  
 <em> mapObj_pointer</em> and <em>queryObj_pointer</em> must be valid 
-mapObj and queryObj pointers.
+mapObj and layerObj pointers.
 
 
 <BR>
