@@ -175,12 +175,12 @@ imageObj *msDrawMap(mapObj *map)
 
     // compute layer scale factors now
     for(i=0;i<map->numlayers; i++) {
-      if(map->layers[i].symbolscale > 0 && map->scale > 0) {
-    	if(map->layers[i].sizeunits != MS_PIXELS)
-      	  map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
-    	else
-      	  map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
-      }
+      if(map->layers[i].sizeunits != MS_PIXELS)
+        map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
+      else if(map->layers[i].symbolscale > 0 && map->scale > 0)
+        map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+      else
+        map->layers[i].scalefactor = 1;
     }
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
@@ -375,12 +375,12 @@ imageObj *msDrawQueryMap(mapObj *map)
 
   // compute layer scale factors now
   for(i=0;i<map->numlayers; i++) {
-    if(map->layers[i].symbolscale > 0 && map->scale > 0) {
-      if(map->layers[i].sizeunits != MS_PIXELS)
-      	map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
-      else
-      	map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
-    }
+    if(map->layers[i].sizeunits != MS_PIXELS)
+      map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
+    else if(map->layers[i].symbolscale > 0 && map->scale > 0)
+      map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+    else
+      map->layers[i].scalefactor = 1;
   }
 
   for(i=0; i<map->numlayers; i++) {
