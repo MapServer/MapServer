@@ -699,7 +699,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     cm->extent.minx = 0.0;
     cm->extent.maxx = 0.0;
     cm->extent.miny = 0.0;
-    cm->extent.maxx = 0.0;
+    cm->extent.maxy = 0.0;
     if( msOWSGetLayerExtent( layer->map, layer, &cm->extent ) == MS_FAILURE )
       return MS_FAILURE;
     
@@ -803,16 +803,17 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
       return MS_FAILURE;
     }
 
-    cm->extent.minx = 0.0;
-    cm->extent.maxx = 0.0;
-    cm->extent.miny = 0.0;
-    cm->extent.maxx = 0.0;
-    // TODO: somehow need to fill out cm->extent here
 
     msGetGDALGeoTransform( hDS, layer->map, layer, cm->geotransform );
+
     cm->xsize = GDALGetRasterXSize( hDS );
     cm->ysize = GDALGetRasterYSize( hDS );
 
+    cm->extent.minx = cm->geotransform[0];
+    cm->extent.maxx = cm->geotransform[0] + cm->geotransform[1] * cm->xsize + cm->geotransform[2] * cm->ysize;
+    cm->extent.miny = cm->geotransform[3] + cm->geotransform[4] * cm->xsize + cm->geotransform[5] * cm->ysize;
+    cm->extent.maxy = cm->geotransform[3];
+    
     cm->bandcount = GDALGetRasterCount( hDS );
         
     if( cm->bandcount == 0 ) {
