@@ -21,6 +21,8 @@ typedef struct {
   int numargs; /* actual number of projection args */ 
 #ifdef USE_PROJ
   projPJ proj; /* a projection structure for the PROJ package */
+#else
+  void *proj;
 #endif
 } projectionObj;
 
