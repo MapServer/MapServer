@@ -1827,6 +1827,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         continue;
       }
     }
+
     if (memcmp(dd,PNGsig,8)==0) {
       if(layer->transform && 
          msProjectionsDiffer(&(map->projection), &(layer->projection))) {
@@ -1884,6 +1885,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       }
     }
 
+#if !defined(USE_GDAL) || defined(USE_JPEG)
     if (memcmp(dd,JPEGsig,3)==0) 
     {
       if((layer->transform && 
@@ -1911,6 +1913,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         continue;
       }
     }
+#endif /* !defined(USE_GDAL) || defined(USE_JPEG) */
 
     if (memcmp(dd,"HEAD",4)==0) {
       if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
