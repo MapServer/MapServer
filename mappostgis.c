@@ -313,6 +313,8 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	char *pos_from, *pos_ftab, *pos_space, *pos_paren;
 	char f_table_name[5000];
 
+	char postgresqlError[1000];
+
 	layerinfo =  getPostGISLayerInfo(layer);
 
 	/* Set the urid name */
@@ -474,11 +476,14 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
  		return (MS_SUCCESS);
     }
 
+
+	strncpy(postgresqlError,PQerrorMessage(layerinfo->conn),900);
+
 	//okay, that command didnt work.  Its probably a 0.5 database
 	// We have to everything again, after performing a rollback.
 
 	 PQclear(result);
-       result = PQexec(layerinfo->conn, "rollback" );
+     result = PQexec(layerinfo->conn, "rollback" );
 	 PQclear(result);
 	 result = PQexec(layerinfo->conn, "begin" );
 
@@ -493,9 +498,9 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
     PQclear(result);
 
-		sprintf(tmp2, "Error executing POSTGIS  DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error '%s'<br><br>\n\nMore Help:<br><br>\n\n",
+		sprintf(tmp2, "Error executing POSTGIS DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error as '%s'<br><br>\n\nMore Help:<br><br>\n\n",
 				query_string_0_6,
-					PQerrorMessage(layerinfo->conn)
+					postgresqlError
 			 	);
 
 
@@ -1253,6 +1258,8 @@ if (layer->debug)
 
 				find_bounds(shape);
 
+				PQexec(layerinfo->conn, "CLOSE mycursor");
+
 				 	query_result = PQexec(layerinfo->conn, "ROLLBACK");
 				    if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
 				    {
@@ -1270,6 +1277,8 @@ if (layer->debug)
 		}
 		else
 		{
+			PQexec(layerinfo->conn, "CLOSE mycursor");
+
 			query_result = PQexec(layerinfo->conn, "ROLLBACK");
 			if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
 			{
