@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.211  2004/10/15 14:04:17  assefa
+ * 3d shape file support.
+ *
  * Revision 1.210  2004/09/30 19:02:06  julien
  * Get rid of the sizescaled parameter in styleObj and labelObj. (Bug 914)
  *
@@ -488,6 +491,7 @@ DLEXPORT void php3_ms_rect_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_point_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_distanceToPoint(INTERNAL_FUNCTION_PARAMETERS);
@@ -499,6 +503,7 @@ DLEXPORT void php3_ms_line_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_line_addXYZ(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_point(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -968,6 +973,7 @@ function_entry php_class_class_functions[] = {
 
 function_entry php_point_class_functions[] = {
     {"setxy",           php3_ms_point_setXY,            NULL},    
+    {"setxyz",           php3_ms_point_setXYZ,            NULL},    
     {"project",         php3_ms_point_project,          NULL},    
     {"draw",            php3_ms_point_draw,             NULL},    
     {"distancetopoint", php3_ms_point_distanceToPoint,  NULL},    
@@ -981,6 +987,7 @@ function_entry php_line_class_functions[] = {
     {"project",         php3_ms_line_project,           NULL},    
     {"add",             php3_ms_line_add,               NULL},    
     {"addxy",           php3_ms_line_addXY,             NULL},    
+    {"addxyz",           php3_ms_line_addXYZ,             NULL},    
     {"point",           php3_ms_line_point,             NULL},    
     {"free",            php3_ms_line_free,              NULL},    
     {NULL, NULL, NULL}
@@ -9008,6 +9015,7 @@ static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
     /* editable properties */
     add_property_double(return_value,   "x",   ppoint->x);
     add_property_double(return_value,   "y",   ppoint->y);
+    add_property_double(return_value,   "z",   ppoint->z);
     add_property_double(return_value,   "m",   ppoint->m);
 
     return point_id;
@@ -9108,6 +9116,79 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
     _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
     _phpms_set_property_double(pThis, "m", self->y, E_ERROR);
+
+
+    RETURN_LONG(0);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        point->setXYZ()
+ **********************************************************************/
+
+/* {{{ proto int point.setXYZ(double x, double y, double z, double m)
+ 4th argument m is used for Measured shape files. It is not mandatory.
+   Set new point. Returns -1 on error. */
+
+DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pointObj    *self;
+    pval        *pX, *pY, *pZ,*pM, *pThis;
+    int         nArgs = ARG_COUNT(ht);
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        (nArgs != 3 && nArgs != 4))
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (getParameters(ht, nArgs, &pX, &pY, &pZ, &pM) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (pointObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_mspoint_ref),
+                                            PHPMS_GLOBAL(le_mspoint_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_double(pX);
+    convert_to_double(pY);
+    convert_to_double(pZ);
+
+    
+
+    self->x = pX->value.dval;
+    self->y = pY->value.dval;
+    self->z = pZ->value.dval;
+
+    if (nArgs == 4)
+    {
+        convert_to_double(pM); 
+        self->m = pM->value.dval;
+    }
+    else
+      self->m = 0.0; 
+
+    _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
+    _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
+    _phpms_set_property_double(pThis, "z", self->z, E_ERROR);
+    _phpms_set_property_double(pThis, "m", self->m, E_ERROR);
 
 
     RETURN_LONG(0);
@@ -9652,7 +9733,80 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
 
     oPoint.x = pX->value.dval;
     oPoint.y = pY->value.dval;
+    oPoint.z = 0.0;
+
     if (nArgs == 3)
+    {
+        convert_to_double(pM); 
+        oPoint.m = pM->value.dval;
+    }
+    else
+      oPoint.m = 0.0;
+ 
+    self = (lineObj *)_phpms_fetch_handle2(pThis, 
+                                           PHPMS_GLOBAL(le_msline_ref),
+                                           PHPMS_GLOBAL(le_msline_new),
+                                           list TSRMLS_CC);
+
+    if (self)
+    {
+        nRetVal = lineObj_add(self, &oPoint);
+        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR);
+    }
+
+    RETURN_LONG(nRetVal)
+}
+/* }}} */
+
+
+
+/**********************************************************************
+ *                        line->addXYZ()
+ **********************************************************************/
+
+/* {{{ proto int line.addXY(double x, double y, double z, double m)
+4th argument m is used for Measured shape files. It is not mandatory.
+   Adds a point to the end of a line */
+
+DLEXPORT void php3_ms_line_addXYZ(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pThis, *pX, *pY, *pZ, *pM;
+    lineObj     *self;
+    pointObj    oPoint;
+    int         nRetVal=0;
+    int         nArgs = ARG_COUNT(ht);
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+     if (pThis == NULL ||
+         (nArgs != 3 && nArgs != 4))
+     {
+         WRONG_PARAM_COUNT;
+     }
+
+    if (pThis == NULL ||
+        getParameters(ht, nArgs, &pX, &pY, &pZ,&pM) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_double(pX);
+    convert_to_double(pY);
+    convert_to_double(pZ);
+
+    oPoint.x = pX->value.dval;
+    oPoint.y = pY->value.dval;
+    oPoint.z = pY->value.dval;
+
+    if (nArgs == 4)
     {
         convert_to_double(pM); 
         oPoint.m = pM->value.dval;

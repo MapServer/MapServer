@@ -1002,6 +1002,7 @@ Constructor:
 
    double x
    double y
+   double z (used for 3d shape files. set to 0 for other types)
    double m  (used only for measured shape files. set to 0 for other types.)
 
  Methods:
@@ -1011,6 +1012,13 @@ Constructor:
         Note : the 3rd parameter m is used for measured shape files only.
         It is not mandatory.
         Returns 0 on success, -1 on error.
+
+   int setXYZ(double x, double y , double z, [, double m])
+        Set X,Y,Z coordinate values.
+        Note : the 4th parameter m is used for measured shape files only.
+        It is not mandatory.
+        Returns 0 on success, -1 on error.
+     
 
    int draw(mapObj map, layerObj layer, imageObj img, 
             int class_index, string text)
@@ -1055,6 +1063,11 @@ Constructor:
    int addXY(double x, double y [, double m])
         Add a point to the end of line.
         Note : the 3rd parameter m is used for measured shape files only. 
+        It is not mandatory.
+
+   int addXYZ(double x, double y, double z [, double m])
+        Add a point to the end of line.
+        Note : the 4th parameter m is used for measured shape files only. 
         It is not mandatory.
 
    PointObj point(int i)
