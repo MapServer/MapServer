@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2002/12/17 04:50:43  dan
+ * Fixed a few WFS XML validation issues
+ *
  * Revision 1.8  2002/11/20 21:22:32  dan
  * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
  *
@@ -489,7 +492,7 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
 
             printf("\n"
                    "  <element name=\"%s\" \n"
-                   "           type=\"%s_Type\" \n"
+                   "           type=\"myns:%s_Type\" \n"
                    "           substitutionGroup=\"gml:_Feature\" />\n\n",
                    lp->name, lp->name);
 
@@ -693,13 +696,14 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                        "ISO-8859-1");
 
     printf("<wfs:FeatureCollection\n"
-           "   xmlns=\"%s\" \n"
+           "   xmlns=\"%s\"\n"
+           "   xmlns:myns=\"%s\"\n"
            "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
            "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-           "   xmlns:xsi=\"http://www.opengis.net/xsi\"\n"
+           "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
            "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
            "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s\">\n", 
-           myns_uri, 
+           myns_uri, myns_uri,
            msOWSGetSchemasLocation(map), wmtver, 
            myns_uri, script_url_encoded, wmtver, typename);
 

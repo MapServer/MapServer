@@ -428,9 +428,17 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
   int i,j,k;
   layerObj *lp=NULL;
   shapeObj shape;
+  rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
 
   msInitShape(&shape);
 
+  // Need to start with BBOX of the whole resultset
+  if (msGetQueryResultBounds(map, &resultBounds) > 0)
+  {
+      gmlWriteBounds(stream, &resultBounds, 
+                     msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), 
+                     "      ");
+  }
 
   // step through the layers looking for query results
   for(i=0; i<map->numlayers; i++) 
@@ -465,7 +473,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
 #endif
 
 	// start this feature
-	fprintf(stream, "    <gml:FeatureMember>\n");
+	fprintf(stream, "    <gml:featureMember>\n");
 	fprintf(stream, "      <%s>\n", lp->name);
 
 	// write the item/values
@@ -499,7 +507,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
 
 	// end this feature
 	fprintf(stream, "      </%s>\n", lp->name);
-	fprintf(stream, "    </gml:FeatureMember>\n");
+	fprintf(stream, "    </gml:featureMember>\n");
 
 	msFreeShape(&shape); // init too
       }
