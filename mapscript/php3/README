@@ -458,6 +458,9 @@ and the MapServer Map File documentation at:
 
    shapeObj getShape(int tileindex, int shapeindex)
         Retrieve shapeObj from a layer by index.
+        Tileindex is used only for tiled shapefiles (you get it from the
+        resultCacheMemberObj returned by getResult() for instance).
+        Simply pass tileindex = -1 for other data sources.
 
    int addFeature(shapeObj shape)
         Add a new feature in a layer.  Returns -1 on error.
