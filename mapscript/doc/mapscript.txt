@@ -242,8 +242,6 @@ getFirstMetaDataKey() : string
     Returns the first key in the metadata hash table.  With
     getNextMetaDataKey(), provides an opaque iterator over keys.
     
-.. _classObj.getMetaData:
-
 getMetaData( string key ) : string
     Return the value of the classObj metadata at *key*.
 
@@ -252,47 +250,40 @@ getNextMetaDataKey( string lastkey ) : string
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
    
-.. _getStyle:
+.. note:: getFirstMetaDataKey(), getMetaData(), and getNextMetaDataKey()
+          are deprecated and will be removed in a future version.  Replaced
+          by direct metadata access, see hashTableObj_.
 
 getStyle( int index ) : styleObj_
     Return a reference to the styleObj at *index* in the styles array.
 
     See the styleObj_ section for more details on multiple class styles.
 
-.. _insertStyle:
-
 insertStyle( styleObj_ style [, int index=-1 ] ) : int
     Insert a **copy** of *style* into the styles array at index *index*.
     Default is -1, or the end of the array.  Returns the index at which the 
     style was inserted.
 
-.. _moveStyleDown:
-
 moveStyleDown( int index ) : int
     Swap the styleObj at *index* with the styleObj *index* + 1.
     
-.. _moveStyleUp:
-
 moveStyleUp( int index ) : int
     Swap the styleObj at *index* with the styleObj *index* - 1.
-
-.. _removeStyle:
 
 removeStyle( int index ) : styleObj_
     Remove the styleObj at *index* from the styles array and return a
     copy.
 
-.. _setExpression:
-
 setExpression( string expression ) : int
     Set expression string where *expression* is a MapServer regular, logical
     or string expression.  Returns MS_SUCCESS or MS_FAILUIRE.
   
-.. _classObj.setMetaData:
-
 setMetaData( string key, string value ) : int
     Insert *value* into the classObj metadata at *key*.  Returns MS_SUCCESS
     or MS_FAILURE.
+
+.. note:: setMetaData() is deprecated and will be removed in a future
+          version.  Replaced by direct metadata access, see hashTableObj_.
 
 -----------------------------------------------------------------------------
  colorObj
@@ -844,6 +835,10 @@ getNextMetaDataKey( string lastkey ) : string
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
 
+.. note:: getFirstMetaDataKey(), getMetaData(), and getNextMetaDataKey()
+          are deprecated and will be removed in a future version.  Replaced
+          by direct metadata access, see hashTableObj_.
+
 getNumFeatures() : int
     Returns the number of inline features in a layer.  **TODO**: is this
     really only online features or will it return the number of non-inline
@@ -941,13 +936,11 @@ queryByRect( mapObj_ map, rectObj_ rect ) : int
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened.
 
-queryByShape( mapObj_ map, int slayer ) : int
+queryByShape( mapObj_ map, shapeObj_ shape ) : int
     Query layer based on a single shape, the shape has to be a polygon
     at this point. 
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened 
-    **TODO**: What shape is being used?  Does slayer need to be a layer
-    with a single polygon?
 
 removeClass( int index ) : void
     Removes the class indicated.  Note that subsequent classes will be
@@ -957,6 +950,9 @@ removeClass( int index ) : void
 removeMetaData( string key ) : int
     Delete the metadata hash at *key*.  Returns MS_SUCCESS or
     MS_FAILURE.
+
+.. note:: removeMetaData() is deprecated and will be removed in a future
+          version.  Replaced by direct metadata access, see hashTableObj_.
 
 setExtent( float minx, float miny, float maxx, float maxy ) : int
     Sets the extent of a layer.  Returns MS_SUCCESS or MS_FAILURE.
@@ -969,6 +965,9 @@ setFilter( string filter ) : int
 setMetaData( string key, string value ) : int
     Assign *value* to the metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
+
+.. note:: setMetaData() is deprecated and will be removed in a future
+          version.  Replaced by direct metadata access, see hashTableObj_.
 
 setProcessingKey( string key, string value ) : void
     Adds or replaces a processing directive of the form "key=value".  Unlike
@@ -1182,6 +1181,10 @@ getNextMetaDataKey( string lastkey ) : string
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
 
+.. note:: getFirstMetaDataKey(), getMetaData(), and getNextMetaDataKey()
+          are deprecated and will be removed in a future version.  Replaced
+          by direct metadata access, see hashTableObj_.
+
 getOutputFormat( string imagetype ) : outputFormatObj_
     Return the output format corresponding to driver name *imagetype* or
     to format name *imagetype*.  This works exactly the same as the
@@ -1208,6 +1211,9 @@ removeMetaData( string key ) : int
     Delete the web.metadata hash at *key*.  Returns MS_SUCCESS or
     MS_FAILURE.
 
+.. note:: removeMetaData() is deprecated and will be removed in a future
+          version.  Replaced by direct metadata access, see hashTableObj_.
+
 removeOutputFormat( string name ) : int
     Removes the format named *name* from the map's output format list.
     Returns MS_SUCCESS or MS_FAILURE.
@@ -1223,6 +1229,9 @@ setMetaData( string key, string value ) : int
     Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
 
+.. note:: setMetaData() is deprecated and will be removed in a future
+          version.  Replaced by direct metadata access, see hashTableObj_.
+    
 setRotation( float rotation_angle ) : int
     Set map rotation angle. The map view rectangle (specified in 
     EXTENTS) will be rotated by the indicated angle in the counter-
