@@ -128,6 +128,8 @@ imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format,
     imageObj    *oImage = NULL;
     PDF *pdf = NULL;
 
+    char        *driver = strdup("GD/GIF");
+
     assert( strcasecmp(format->driver,"PDF") == 0 );
 
     oImage = (imageObj *)calloc(1,sizeof(imageObj));
@@ -162,16 +164,52 @@ imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format,
     pdf = oImage->img.pdf->pdf;
     /*  load fonts and set the pdf ready to be drawn into*/
     msLoadFontSetPDF((&(map->fontset)), pdf);
-    PDF_begin_page(pdf, width, height);
+    PDF_begin_page(pdf, (float)width, (float)height);
 
     /*pdf has it's origin in the bottom left so we need to flip the coordinate*/
     /*system to fit with the rest of mapserver.*/
-    PDF_translate(pdf,0,map->height);
+    PDF_translate(pdf,0, (float)map->height);
     PDF_scale(pdf, 1,-1);
 
     /*render text with both a fill and a stroke*/
     PDF_set_value(pdf,"textrendering",2);
 
+/* -------------------------------------------------------------------- */
+/*      if the output raster, we crate a GD image that                  */
+/*      will be used to conating the rendering of all the layers.       */
+/* -------------------------------------------------------------------- */
+    if (strcasecmp(msGetOutputFormatOption(oImage->format,"OUTPUT_TYPE",""), 
+                   "RASTER") != 0)
+    {
+        oImage->img.pdf->imagetmp = NULL;
+    }
+    else
+    {
+#ifdef USE_GD_GIF
+        driver = strdup("GD/GIF");
+#else  
+
+#ifdef USE_GD_PNG
+        driver = strdup("GD/PNG");
+#else
+
+#ifdef USE_GD_JPEG
+        driver = strdup("GD/JPEG");
+#else
+
+#ifdef USE_GD_WBMP
+        driver = strdup("GD/WBMP");
+#endif 
+
+#endif
+#endif
+#endif
+     
+        oImage->img.pdf->imagetmp = (imageObj *) 
+          msImageCreateGD(map->width, map->height,  
+                          msCreateDefaultOutputFormat(map, driver),
+                          map->web.imagepath, map->web.imageurl);
+    }
     return oImage;
 }
 
@@ -355,7 +393,26 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
     int marker_width, marker_height;
     int marker_offset_x, marker_offset_y;
     rectObj marker_rect;
+    
+    imageObj    *imagetmp = NULL;
 
+    /* -------------------------------------------------------------------- */
+/*      if not PDF, return.                                             */
+/* -------------------------------------------------------------------- */
+    if (image == NULL || map == NULL || !MS_DRIVER_PDF(image->format))
+        return -1;
+/* -------------------------------------------------------------------- */
+/*      if the output raster, we crate a GD image that                  */
+/*      will be used to conating the rendering of all the layers.       */
+/* -------------------------------------------------------------------- */
+    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE",""), 
+                   "RASTER") == 0)
+    {
+        imagetmp = (imageObj *)image->img.pdf->imagetmp;
+        msImageInitGD( imagetmp, &map->imagecolor);
+        msDrawLabelCacheGD(imagetmp->img.gd, map);
+        return 0;
+    }
     for(l=map->labelcache.numlabels-1; l>=0; l--)
     {
         /* point to right spot in cache */
@@ -954,6 +1011,7 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
     PDF *pdf = NULL;
     char *jpeg = NULL;
     int nLength = 0, nResult = 0;
+    int bRasterOutput = 0;
 
     assert( strcasecmp(map->outputformat->driver,"PDF") == 0 );
     pdf = image->img.pdf->pdf;
@@ -970,14 +1028,30 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
     if( format == NULL )
         return -1;
 
-    image_tmp = msImageCreate( image->width, image->height, format,
-                                      NULL, NULL );
+    bRasterOutput = 0;
+    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE",""), 
+                   "RASTER") == 0)
+    {
+        image_tmp = (imageObj *)image->img.pdf->imagetmp;
+        bRasterOutput = 1;
+    }
+    else
+      image_tmp = msImageCreate( image->width, image->height, format,
+                                 NULL, NULL );
 
     if( image_tmp == NULL )
       return -1;
+
   
     if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
     {
+/* -------------------------------------------------------------------- */
+/*      if it is a RASTER output, just return. At save time the         */
+/*      temporary image will be output to the pdf object.               */
+/* -------------------------------------------------------------------- */
+        if (bRasterOutput)
+          return 0;
+
         /*kludge: this should really be a raw image or png. jpeg is not good*/
         /*but pdflib doesn't support in mem opening of png.*/
         jpeg = gdImageJpegPtr(image_tmp->img.gd, &nLength, 95);
@@ -1012,12 +1086,37 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
 /************************************************************************/
 /*  int msDrawVectorLayerAsRasterPDF                                    */
 /*                                                                      */
-/*  draw vectors to image and add it to the PDF                         */
+/*  draw vectors to image and add it to the PDF at save time.           */
 /************************************************************************/
 int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image)
 {
-    return 0;
+    imageObj    *imagetmp;
+
+    if (!image || !MS_DRIVER_PDF(image->format) )
+      return MS_FAILURE;
+
+   
+    if (strcasecmp(msGetOutputFormatOption(image->format,
+                                           "OUTPUT_TYPE",""), 
+                   "RASTER") != 0)
+    {
+        return MS_FAILURE;
+    }
+
+    imagetmp = (imageObj *)image->img.pdf->imagetmp;
+
+    if (imagetmp)
+    {
+        msImageInitGD( imagetmp, &map->imagecolor );
+        //msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor);
+        msDrawVectorLayer(map, layer, imagetmp);
+        
+        return MS_SUCCESS;
+    }
+
+    return MS_FAILURE;
 }
+
 
 /************************************************************************/
 /*  void msTransformShapePDF                                            */
@@ -1054,12 +1153,44 @@ void msTransformShapePDF(shapeObj *shape, rectObj extent, double cellsize)
 /************************************************************************/
 int msSaveImagePDF(imageObj *image, char *filename)
 {
+
     if (image && MS_DRIVER_PDF(image->format))
     {
         FILE *stream;
         long size;
         const char *pdfBuffer;
+        PDF *pdf = NULL;
+        char *jpeg = NULL;
+        int nLength = 0, nResult = 0;
+        FILE *out;
+        imageObj    *imagetmp;
+
+        mapObj *map = image->img.pdf->map;
+
+        if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE",""), 
+                   "RASTER") == 0)    
+        {
+            pdf = image->img.pdf->pdf;
+            //test
+            //out = fopen("c:/msapps/gmap_pdf/htdocs/test.png", "wb");
+            //gdImagePng(image->img.pdf->imagetmp, out);
+            //fclose(out);
+            imagetmp = (imageObj *)image->img.pdf->imagetmp;
+            jpeg = gdImageJpegPtr(imagetmp->img.gd, &nLength, 95);
+            nResult = PDF_open_image(pdf, "jpeg", "memory",
+                                     jpeg, (long)nLength,
+                                     map->width, map->height,
+                                     3, 8, NULL);
+            gdFree(jpeg);
     
+            PDF_save(pdf); /* save the original coordinate system */
+            PDF_scale(pdf, 1, -1); /* flip the coordinates, and therefore the image */
+            PDF_place_image(pdf,nResult, 0, -(map->height), 1.0);
+            PDF_restore(pdf); /* restore the original coordinate system */
+ 
+            PDF_close_image(pdf,nResult);
+            msFreeImage(image->img.pdf->imagetmp);
+        }
         /*finish the page and put the entire pdf into a buffer*/
         PDF_end_page(image->img.pdf->pdf);
         PDF_close(image->img.pdf->pdf);
@@ -1322,7 +1453,9 @@ int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo,
     char                *driver = strdup("GD/GIF");
     char                *jpeg = NULL;
     int                 nLength = 0, nResult = 0;
-    char                ttt[200];
+    //char                ttt[200];
+
+    int                 bRasterOutput = 0;
 
 #ifdef USE_GD_GIF
     driver = strdup("GD/GIF");
@@ -1364,10 +1497,19 @@ int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo,
 /* -------------------------------------------------------------------- */
 /*      create a temprary GD image and render in it.                    */
 /* -------------------------------------------------------------------- */
-    
-    image_tmp = msImageCreateGD(map->width, map->height,  
-                                msCreateDefaultOutputFormat(map, driver),
-                                map->web.imagepath, map->web.imageurl);
+    if (strcasecmp(msGetOutputFormatOption(image->format,
+                                           "OUTPUT_TYPE",""), 
+                      "RASTER") != 0)
+    {
+        image_tmp = msImageCreateGD(map->width, map->height,  
+                                    msCreateDefaultOutputFormat(map, driver),
+                                    map->web.imagepath, map->web.imageurl);
+    }
+    else
+    {
+        image_tmp = (imageObj *)image->img.pdf->imagetmp;
+        bRasterOutput = 1;
+    }
 
     
     msImageInitGD( image_tmp, &map->imagecolor );
@@ -1375,6 +1517,9 @@ int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo,
     if (msDrawWMSLayerLow(nLayerId, pasReqInfo, numRequests, map, layer, 
                           image_tmp) != -1)
     {
+        if (bRasterOutput)
+          return MS_SUCCESS;
+
         /*kludge: this should really be a raw image or png. jpeg is not good*/
         /*but pdflib doesn't support in mem opening of png.*/
         jpeg = gdImageJpegPtr(image_tmp->img.gd, &nLength, 95);
