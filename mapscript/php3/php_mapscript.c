@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/02/24 01:07:42  dan
+ * Fixed undefined symbols on Windoze
+ *
  * Revision 1.28  2001/02/23 21:58:00  dan
  * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
  *
@@ -399,7 +402,9 @@ function_entry php_layer_class_functions[] = {
 #endif
     {"setprojection",   php3_ms_lyr_setProjection,      NULL},
     {"addfeature",   php3_ms_lyr_addFeature,      NULL},
+#ifdef __TODO35__
     {"classify",   php3_ms_lyr_classify,      NULL},
+#endif
     {NULL, NULL, NULL}
 };
 
@@ -725,7 +730,9 @@ DLEXPORT void php3_ms_free_shape(shapeObj *pShape)
 
 DLEXPORT void php3_ms_free_shapefile(shapefileObj *pShapefile) 
 {
+#ifdef __TODO35__
     shapefileObj_destroy(pShapefile);
+#endif
 }
 
 
@@ -3771,6 +3778,7 @@ DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS)
 
 /* }}} */
 
+#ifdef __TODO35__
 /************************************************************************/
 /*                             layer->classify                          */
 /*                                                                      */
@@ -3816,6 +3824,7 @@ DLEXPORT void php3_ms_lyr_classify(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 /* }}} */
+#endif // __TODO35__
 
 /*=====================================================================
  *                 PHP function wrappers - labelObj class
