@@ -1860,18 +1860,18 @@ Methods
 
 **TODO**
 
-new symbolObj(string symbolname [, string imagefile]) : symbolObj_
+new symbolObj( string symbolname [, string imagefile ] ) : symbolObj
     Create new default symbol named *name*.  If *imagefile* is specified,
     then the symbol will be of type MS_SYMBOL_PIXMAP.
 
 getPoints() : lineObj_
     Returns the symbol points as a lineObj.
 
-setPoints(lineObj_ line) : int
+setPoints( lineObj_ line ) : int
     Sets the symbol points from the points of *line*.  Returns the updated
     number of points.
 
-setStyle(int index, int value) : int
+setStyle( int index, int value ) : int
     Set the style at *index* to *value*.  Returns MS_SUCCESS or MS_FAILURE.
 
 -----------------------------------------------------------------------------
@@ -1896,23 +1896,27 @@ numsymbols : int immutable
 Methods
 -------
 
-new symbolSetObj([string symbolfile]) : symbolSetObj_
+new symbolSetObj( [ string symbolfile ] ) : symbolSetObj
     Create new instance.  If *symbolfile* is specified, symbols will be 
     loaded from the file.
 
-appendSymbol(symbolObj_ symbol) : int
+appendSymbol( symbolObj_ symbol ) : int
     Add a copy of *symbol* to the symbolset and return its index.
 
-getSymbol(int index) : symbolObj_
+getSymbol( int index ) : symbolObj_
     Returns a reference to the symbol at *index*.
 
-getSymbolByName(string name) : symbolObj_
+getSymbolByName( string name ) : symbolObj_
     Returns a reference to the symbol named *name*.
 
-removeSymbol(int index) : symbolObj_
+index( string name ) : int
+    Return the index of the symbol named *name* or -1 in the case that
+    no such symbol is found.
+
+removeSymbol( int index ) : symbolObj_
     Remove the symbol at *index* and return a copy of the symbol.
 
-save(string filename) : int
+save( string filename ) : int
     Save symbol set to a file.  Returns MS_SUCCESS or MS_FAILURE.
 
 ..  [1] This **really** needs to be changed in the future.  In fact a layer
