@@ -755,7 +755,8 @@ typedef struct layer_obj {
 #endif
   
   int transparency; // transparency value 0-100 
-
+  rectObj extent;
+  
   int dump;
   int debug;
 #ifndef SWIG
@@ -1023,6 +1024,7 @@ MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, gdImagePtr img);
 
 MS_DLL_EXPORT int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 MS_DLL_EXPORT int msRectOverlap(rectObj *a, rectObj *b);
+MS_DLL_EXPORT int msRectIsValid(rectObj *rect);
 MS_DLL_EXPORT int msRectContained(rectObj *a, rectObj *b);
 MS_DLL_EXPORT void msMergeRect(rectObj *a, rectObj *b);
 MS_DLL_EXPORT double msDistancePointToPoint(pointObj *a, pointObj *b);
