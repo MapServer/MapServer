@@ -871,7 +871,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
 /*      if the output is a single movie, we crate a GD image that       */
 /*      will be used to conating the rendering of al the layers.        */
 /* -------------------------------------------------------------------- */
-    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE","MULTIPLE"), 
+    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",""), 
                    "MULTIPLE") == 0)
     {
         image->img.swf->imagetmp = NULL;
@@ -928,7 +928,7 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /*      If the output is not multiple layers, do nothing.               */
 /* -------------------------------------------------------------------- */
         if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",
-                                               "MULTIPLE"), 
+                                               ""), 
                        "MULTIPLE") != 0)
           return;
 
@@ -2097,7 +2097,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 /*      GD driver.                                                      */
 /* -------------------------------------------------------------------- */
     if(strcasecmp(msGetOutputFormatOption(image->format,
-                                          "OUTPUT_MOVIE","SINGLE"), 
+                                          "OUTPUT_MOVIE",""), 
                   "SINGLE") == 0)
     {
         imagetmp = (imageObj *)image->img.swf->imagetmp;
@@ -2465,7 +2465,7 @@ int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo,
 /*      create a temprary GD image and render in it.                    */
 /* -------------------------------------------------------------------- */
     if (strcasecmp(msGetOutputFormatOption(image->format,
-                                           "OUTPUT_MOVIE","MULTIPLE"), 
+                                           "OUTPUT_MOVIE",""), 
                       "MULTIPLE") == 0)
     {
         image_tmp = msImageCreateGD(map->width, map->height,  
@@ -2527,7 +2527,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
         return -1;
 
        if (strcasecmp(msGetOutputFormatOption(image->format,
-                                              "OUTPUT_MOVIE","MULTIPLE"), 
+                                              "OUTPUT_MOVIE",""), 
                       "MULTIPLE") == 0)
        {
            image_tmp = msImageCreate( image->width, image->height, format, 
@@ -2578,7 +2578,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /*      if the output is single movie, save the main movie and exit.    */
 /* ==================================================================== */
         if (strcasecmp(msGetOutputFormatOption(image->format,
-                                               "OUTPUT_MOVIE","MULTIPLE"), 
+                                               "OUTPUT_MOVIE",""), 
                        "MULTIPLE") != 0)
         {
             SWFMovie_save(image->img.swf->sMainMovie, filename);  
@@ -2823,7 +2823,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
 
    
     if (strcasecmp(msGetOutputFormatOption(image->format,
-                                           "OUTPUT_MOVIE","MULTIPLE"), 
+                                           "OUTPUT_MOVIE",""), 
                       "MULTIPLE") == 0)
     {
         imagetmp = msImageCreateGD(map->width, map->height,  
@@ -2869,8 +2869,8 @@ SWFMovie GetCurrentMovie(mapObj *map, imageObj *image)
     if (!image || !map || !MS_DRIVER_SWF(image->format) )
       return NULL;
 
-    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE","MULTIPLE"), 
-                   "MULTIPLE") == 0)
+    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",""), 
+                   "MULTIPLE") == 0 && image->img.swf->nCurrentMovie >=0)
     {
         nTmp = image->img.swf->nCurrentMovie;
         return image->img.swf->pasMovies[nTmp];
