@@ -52,6 +52,7 @@ Here is the list of available options as returned by "./configure --help":
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
   --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).
+  --with-gdal[=path]      Include GDAL support (path is to gdal-config).
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.
@@ -218,6 +219,31 @@ OGR Support:
   You have to use the --with-ogr=DIR option to enable OGR support and
   specify where the OGR (or GDAL) source tree is located.  Make sure that 
   this copy of OGR is compiled before using this option.
+
+  OGR can also be installed as part of a GDAL shared library.  To get the
+  full GDAL and OGR source kit visit http://www.remotesensing.org/gdal .
+  When configuring GDAL ensure that --with-ogr is selected.  
+
+  If mapogr.cpp won't compile due to the lack of ogr_featurestyle.h, please
+  copy from gdal-version/ogr/ogr_featurestyle.h into the install include
+  directory (ie. /usr/local/include) or upgrade to GDAL 1.1.4 or later.
+
+
+GDAL Support:
+-------------
+
+  --with-gdal[=path]     Include GDAL support (path is to gdal-config script).
+
+  GDAL support is optional, and it is not included by default. 
+
+  The GDAL library (http://www.remotesensing.org/gdal) allows MapServer
+  to access data in a variety of raster formats, including GeoTIFF, Erdas
+  Imagine, ESRI BIL, and CEOS. 
+
+  If GDAL is installed (ie. in /usr/local) then it should be sufficient
+  to say --with-gdal, but if the gdal-config script cannot be found, please
+  use --with-gdal=/usr/local/bin/gdal-config, or whatever path is is required
+  to get the gdal-config script. 
 
 
 Miscellaneous flags:
