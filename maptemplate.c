@@ -150,7 +150,8 @@ int checkWebScale(mapservObj *msObj)
 }
 
 
-int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
+int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,
+                          char **papszBuffer)
 {
     imageObj *img = NULL;
     int status;
@@ -207,7 +208,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
       }
    }
    
-   if ((status = msReturnQuery(msObj, pszMimeType, NULL)) != MS_SUCCESS)
+   if ((status = msReturnQuery(msObj, pszMimeType, papszBuffer)) != MS_SUCCESS)
      return status;
 
    return MS_SUCCESS;

@@ -1350,7 +1350,7 @@ int main(int argc, char *argv[]) {
 
       } 
        else { // process the query through templates
-          if (msReturnTemplateQuery(msObj, "text/html") != MS_SUCCESS) writeError();
+          if (msReturnTemplateQuery(msObj, "text/html", NULL) != MS_SUCCESS) writeError();
           
           if(msObj->SaveQuery) {
              sprintf(buffer, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);

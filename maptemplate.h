@@ -116,7 +116,8 @@ int msReturnPage(mapservObj* msObj, char* , int, char **);
 int msReturnURL(mapservObj* msObj, char*, int);
 int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer);
 
-int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType);
+int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, 
+                          char **papszBuffer);
 
 int msRedirect(char* url);
 

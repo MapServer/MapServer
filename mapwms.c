@@ -1064,7 +1064,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
      msObj->MapPnt.x = point.x;
      msObj->MapPnt.y = point.y;
      
-     if ((status = msReturnTemplateQuery(msObj, (char*)pszMimeType)) != MS_SUCCESS)
+     if ((status = msReturnTemplateQuery(msObj, (char*)pszMimeType,NULL)) != MS_SUCCESS)
          return msWMSException(map, wmtver);
 
      msFreeMapServObj(msObj);
