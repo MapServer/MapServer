@@ -825,6 +825,10 @@ typedef struct map_obj{ /* structure for a map */
   int debug;   
 
   char *datapattern, *templatepattern;   
+
+  int numconfigoptions;
+  char **configoptionkeys;
+  char **configoptionvalues;
 } mapObj;
 
 //SWF Object structure
@@ -1010,7 +1014,9 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape);
 int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 int msIsLayerQueryable(layerObj *lp);
 void msQueryFree(mapObj *map, int qlayer);
-
+const char *msGetConfigOption( mapObj *map, const char *key);
+void msSetConfigOption( mapObj *map, const char *key, const char *value);
+void msApplyMapConfigOptions( mapObj *map );
 
 void trimBlanks(char *string); // in mapstring.c
 char *chop(char *string);
@@ -1493,7 +1499,7 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 /* ==================================================================== */
 /*      prototypes for functions in mapcopy                             */
 /* ==================================================================== */
-  int msCopyMap(mapObj *dst, mapObj *src);
+int msCopyMap(mapObj *dst, mapObj *src);
 int msCopyLayer(layerObj *dst, layerObj *src);
 
 /* ==================================================================== */

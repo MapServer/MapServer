@@ -109,6 +109,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>class		       { return(CLASS); }
 <INITIAL,OBJECT_STRING>classitem               { return(CLASSITEM); }
 <INITIAL,OBJECT_STRING>color		       { return(COLOR); }
+<INITIAL,OBJECT_STRING>config    	       { return(CONFIG); }
 <INITIAL,OBJECT_STRING>connection	       { return(CONNECTION); }
 <INITIAL,OBJECT_STRING>connectiontype	       { return(CONNECTIONTYPE); }
 <INITIAL,OBJECT_STRING>data		       { return(DATA); }

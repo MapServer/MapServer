@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/03/13 20:11:42  frank
+ * Added CONFIG option support on the mapObj
+ *
  * Revision 1.17  2004/03/05 22:56:55  frank
  * improve GDAL cleanup
  *
@@ -136,6 +139,7 @@ void msGDALCleanup( void )
         GDALDestroyDriverManager();
 #endif
 
+        CPLFreeConfig();
         msReleaseLock( TLOCK_GDAL );
 
         bGDALInitialized = 0;

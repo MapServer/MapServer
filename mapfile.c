@@ -3734,6 +3734,10 @@ int initMap(mapObj *map)
   map->outputformatlist = NULL;
   map->outputformat = NULL;
 
+  map->numconfigoptions = 0;
+  map->configoptionkeys = NULL;
+  map->configoptionvalues = NULL;
+
   map->imagetype = NULL;
 
   map->palette.numcolors = 0;
@@ -3771,7 +3775,7 @@ int initMap(mapObj *map)
   // initialize a default "geographic" projection
   map->latlon.numargs = 2;
   map->latlon.args[0] = strdup("proj=latlong");
-  map->latlon.args[1] = strdup("ellps=clrk66"); // probably want a different ellipsoid
+  map->latlon.args[1] = strdup("ellps=WGS84"); // probably want a different ellipsoid
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
 #endif
 
@@ -3847,6 +3851,7 @@ void msCleanup()
 #endif    
 #ifdef USE_PROJ
     pj_deallocate_grids();
+    msSetPROJ_LIB( NULL );
 #endif
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     msHTTPCleanup();
@@ -3901,6 +3906,13 @@ void msFreeMap(mapObj *map) {
 
   msFree(map->templatepattern);
   msFree(map->datapattern);
+  for( i=0; i < map->numconfigoptions; i++ )
+  {
+      msFree( map->configoptionkeys[i] );
+      msFree( map->configoptionvalues[i] );
+  }
+  msFree( map->configoptionkeys );
+  msFree( map->configoptionvalues );
   msFree(map);
 }
 
@@ -3973,8 +3985,6 @@ int msSaveMap(mapObj *map, char *filename)
       writeLayer(&(map->layers[map->layerorder[i]]), stream);
       //writeLayer(&(map->layers[i]), stream);
   }
-
-
 
   fprintf(stream, "END\n");
 
@@ -4063,6 +4073,25 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
   for(;;) {
 
     switch(msyylex()) {   
+
+    case(CONFIG):
+    {
+        char *key, *value;
+
+        key = getString();
+        if( key == NULL )
+            return NULL;
+
+        value = getString();
+        if( value == NULL )
+            return NULL;
+
+        msSetConfigOption( map, key, value );
+        free( key );
+        free( value );
+    }
+    break;
+
     case(DATAPATTERN):
       if((map->datapattern = getString()) == NULL) return(NULL);
       break;
@@ -4246,6 +4275,18 @@ int msLoadMapString(mapObj *map, char *object, char *value)
   switch(msyylex()) {
   case(MAP):
     switch(msyylex()) {
+    case(CONFIG): {
+        char *key, *value;
+
+        key = getString();
+        value = getString();
+        if( value != NULL && key != NULL )
+        {
+            msSetConfigOption( map, key, value );
+            free( key );
+            free( value );
+        }
+      } break;
     case(EXTENT):
       msyystate = 2; msyystring = value;
       if(getDouble(&(map->extent.minx)) == -1) break;
@@ -4538,4 +4579,71 @@ void msCloseConnections(mapObj *map) {
       break;
     }
   }
+}
+
+const char *msGetConfigOption( mapObj *map, const char *key)
+
+{
+    int i;
+
+    for( i = 0; i < map->numconfigoptions; i++ )
+    {
+        if( strcasecmp(key,map->configoptionkeys[i]) == 0 )
+        {
+            return map->configoptionvalues[i];
+        }
+    }
+
+    return NULL;
+}
+
+void msSetConfigOption( mapObj *map, const char *key, const char *value)
+
+{
+    int i;
+
+    // We have special "early" handling of this so that it will be
+    // in effect when the projection blocks are parsed and pj_init is called.
+    if( strcasecmp(key,"PROJ_LIB") == 0 )
+        msSetPROJ_LIB( value );
+
+    for( i = 0; i < map->numconfigoptions; i++ )
+    {
+        if( strcasecmp(key,map->configoptionkeys[i]) == 0 )
+        {
+            free( map->configoptionvalues[i] );
+            map->configoptionvalues[i] = strdup(value);
+            return;
+        }
+    }
+
+    map->numconfigoptions++;
+    map->configoptionkeys = (char **) 
+        realloc(map->configoptionkeys,sizeof(char*) * map->numconfigoptions);
+    map->configoptionvalues = (char **) 
+        realloc(map->configoptionvalues,sizeof(char*) * map->numconfigoptions);
+
+    map->configoptionkeys[map->numconfigoptions-1] = strdup(key);
+    map->configoptionvalues[map->numconfigoptions-1] = strdup(value);
+}
+
+void msApplyMapConfigOptions( mapObj *map )
+
+{
+    int i;
+
+    for( i = 0; i < map->numconfigoptions; i++ )
+    {
+        if( strcasecmp(map->configoptionkeys[i],"PROJ_LIB") == 0 )
+        {
+            msSetPROJ_LIB( map->configoptionvalues[i] );
+        }
+        else 
+        {
+#ifdef USE_GDAL
+            CPLSetConfigOption( map->configoptionkeys[i], 
+                                map->configoptionvalues[i] );
+#endif         
+        }   
+    }
 }

@@ -189,4 +189,6 @@
 #define KEYIMAGE 1156
 #define QUERYFORMAT 1157
 
+#define CONFIG 1158
+
 #endif /* MAPFILE_H */
