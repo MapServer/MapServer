@@ -113,8 +113,7 @@ queried features::
 
         for i in range(results.numresults):
             result = results.getResult(i)
-            
-            layer.getFeature(result.shapeindex, result.tileindex)
+            feature = layer.getFeature(result.shapeindex, result.tileindex)
             
             ...  # do something with this feature
 
@@ -128,7 +127,7 @@ Scripts using the 4.2 API can continue to access query result members
 through layer methods::
 
    for i in range(layer.getNumResults()):
-       result = layer.getResult(0)
+       result = layer.getResult(i)
        
 but should adopt the new API for use in new work.
 
