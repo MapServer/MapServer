@@ -1663,6 +1663,11 @@ int main(int argc, char *argv[]) {
 
     sprintf(Id, "%ld%d",(long)time(NULL),(int)getpid());
 
+    if(SaveMap) {
+      sprintf(buffer, "%s%s%s.map", Map->web.imagepath, Map->name, Id, MS_QUERY_EXTENSION);
+      if(msSaveMap(Map, buffer) == -1) writeError();
+    }
+
     if((CoordSource == FROMIMGPNT) || (CoordSource == FROMIMGBOX)) /* make sure extent of existing image matches shape of image */
       Map->cellsize = msAdjustExtent(&ImgExt, ImgCols, ImgRows);
 

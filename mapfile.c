@@ -2392,9 +2392,9 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->imagepath) fprintf(stream, "    IMAGEPATH \"%s\"\n", web->imagepath);
   if(web->imageurl) fprintf(stream, "    IMAGEURL \"%s\"\n", web->imageurl);
   if(web->log) fprintf(stream, "    LOG \"%s\"\n", web->log);
-  if(web->maxscale > -1) fprintf(stream, "    MAXSCALE %g", web->maxscale);
+  if(web->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", web->maxscale);
   if(web->maxtemplate) fprintf(stream, "    MAXTEMPLATE \"%s\"\n", web->maxtemplate);
-  if(web->minscale > -1) fprintf(stream, "    MINSCALE %g", web->minscale);
+  if(web->minscale > -1) fprintf(stream, "    MINSCALE %g\n", web->minscale);
   if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
   if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
   fprintf(stream, "  END\n\n");
