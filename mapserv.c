@@ -182,6 +182,7 @@ void loadForm()
   int i,j,k,n;
   char **tokens, *tmpstr;
   regex_t re;
+  int rosa_type=0;
 
   if(regcomp(&re, NUMEXP, REG_EXTENDED) != 0) { // what is a number
     msSetError(MS_REGEXERR, NULL, "loadForm()"); 
@@ -750,6 +751,69 @@ void loadForm()
 	writeError();
       continue;
     }
+/* -------------------------------------------------------------------- */
+/*      The following code is used to support the rosa applet (for      */
+/*      more information on Rosa, please consult :                      */
+/*      http://www2.dmsolutions.ca/webtools/rosa/index.html) .          */
+/*      This code was provided by Tim.Mackey@agso.gov.au.               */
+/*                                                                      */
+/*      For Application using it can be seen at :                       */
+/*http://mapserver.gis.umn.edu/wilma/mapserver-users/0011/msg00077.html */
+/*   http://www.agso.gov.au/map/pilbara/                                */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+
+    if(strcasecmp(msObj->ParamNames[i],"INPUT_TYPE") == 0)
+    { /* Rosa input type */
+        if(strcasecmp(msObj->ParamValues[i],"auto_rect") == 0) 
+        {
+            rosa_type=1; /* rectangle */
+            continue;
+        }
+            
+        if(strcasecmp(msObj->ParamValues[i],"auto_point") == 0) 
+        {
+            rosa_type=2; /* point */
+            continue;
+        }
+    }
+    if(strcasecmp(msObj->ParamNames[i],"INPUT_COORD") == 0) 
+    { /* Rosa coordinates */
+ 
+       switch(rosa_type)
+       {
+         case 1:
+             sscanf(msObj->ParamValues[i],"%lf,%lf;%lf,%lf",
+                    &msObj->ImgBox.minx,&msObj->ImgBox.miny,&msObj->ImgBox.maxx,
+                    &msObj->ImgBox.maxy);
+             if((msObj->ImgBox.minx != msObj->ImgBox.maxx) && 
+                (msObj->ImgBox.miny != msObj->ImgBox.maxy)) 
+             {
+                 msObj->CoordSource = FROMIMGBOX;
+                 QueryCoordSource = FROMIMGBOX;
+             }
+             else 
+             {
+                 msObj->CoordSource = FROMIMGPNT;
+                 QueryCoordSource = FROMIMGPNT;
+                 msObj->ImgPnt.x=msObj->ImgBox.minx;
+                 msObj->ImgPnt.y=msObj->ImgBox.miny;
+	   }
+           break;
+         case 2:
+           sscanf(msObj->ParamValues[i],"%lf,%lf",&msObj->ImgPnt.x,
+                   &msObj->ImgPnt.y);
+           msObj->CoordSource = FROMIMGPNT;
+           QueryCoordSource = FROMIMGPNT;
+           break;
+         }
+       continue;
+    }    
+/* -------------------------------------------------------------------- */
+/*      end of code for Rosa support.                                   */
+/* -------------------------------------------------------------------- */
+
+
   }
 
   regfree(&re);
