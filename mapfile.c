@@ -643,7 +643,7 @@ static void writeGrid( graticuleObj *pGraticule, FILE *stream)
 	fprintf( stream, "        MAXINTERVAL %f\n",		pGraticule->maxincrement		);
 	fprintf( stream, "        MINARCS %g\n",			pGraticule->maxarcs				);
 	fprintf( stream, "        MAXARCS %g\n",			pGraticule->maxarcs				);
-	fprintf( stream, "        LABELFORMAT %s\n",		pGraticule->labelformat			);
+	fprintf( stream, "        LABELFORMAT \"%s\"\n",		pGraticule->labelformat			);
 	fprintf( stream, "      END\n");
 }
 
