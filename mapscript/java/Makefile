@@ -8,6 +8,7 @@ SWIG=/usr/local/bin/swig
 # Java Stuff
 #
 JAVAC=/usr/local/java/bin/javac
+JAR=/usr/local/java/bin/jar
 JAVA_INCLUDE=-I/usr/local/java/include -I/usr/local/java/include/linux
 
 CC=gcc
@@ -24,16 +25,17 @@ LDFLAGS=-L../.. -lmap -lgd -L/usr/local/lib -lgd -ljpeg -lfreetype -lpng -lz -lt
 all: interface mapscript_so mapscript_java
 
 interface: mapscript.i
-	$(SWIG) -java -shadow -package mapscript mapscript.i
-	mkdir mapscript
-	mv *.java mapscript
+	$(SWIG) -java -shadow -package edu.umn.gis.mapscript mapscript.i
 
 mapscript_so: mapscript_wrap.c
 	$(CC) -fpic -c $(CCFLAGS) $(JAVA_INCLUDE) mapscript_wrap.c
-	$(CC) -fpic $(LDFLAGS) -shared mapscript_wrap.o -o libmapscript.so
+	$(CC) -fpic -shared mapscript_wrap.o -o libmapscript.so $(LDFLAGS)
 
 mapscript_java::
-	javac mapscript/*.java
+	$(JAVAC) -d . *.java
 	
+mapscript_jar::
+	$(JAR) cf mapscript.jar edu
+
 clean:
-	rm -rf mapscript *.o *.c *.so
+	rm -rf edu *.o *.c *.so *.java *.jar
