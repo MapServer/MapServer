@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2004/02/06 02:23:01  assefa
+ * Make sure that point symbolizers always initialize the color
+ * parameter of the style.
+ *
  * Revision 1.8  2004/01/05 21:17:53  assefa
  * ApplySLD and ApplySLDURL on a layer can now take a NamedLayer name as argument.
  *
@@ -89,10 +93,11 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                                int bNewClass);
 void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                               int bOtherSymboliser);
+void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
 
 void msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
                                    char *pszDashValue,
-                                   styleObj *psStyle, mapObj *map);
+                                   styleObj *psStyle, mapObj *map, int bPointLayer);
 void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle, 
                               mapObj *map);
 
