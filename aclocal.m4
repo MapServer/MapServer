@@ -195,7 +195,14 @@ AC_DEFUN(AC_LD_SHARED,
   else
     IRIX_ALL=
   fi
-  if test -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
+
+  SHARED_FLAG="-shared"
+
+  if test -n "`uname -a | grep Darwin`" ; then
+    SHARED_FLAG="-bundle -flat_namespace -undefined suppress"
+  fi
+
+  if test -z "`${CXX} $SHARED_FLAG $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       if test -z "$LD_LIBRARY_PATH" ; then
@@ -205,21 +212,21 @@ AC_DEFUN(AC_LD_SHARED,
       fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ${CXX} -shared ... yes"
-        LD_SHARED="${CXX} -shared $IRIX_ALL"
+        echo "checking for ${CXX} $SHARED_FLAG ... yes"
+        LD_SHARED="${CXX} $SHARED_FLAG $IRIX_ALL"
       else
-        echo "checking for ${CXX} -shared ... no(3)"
+        echo "checking for ${CXX} $SHARED_FLAG ... no(3)"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
     else
-      echo "checking for ${CXX} -shared ... no(2)"
+      echo "checking for ${CXX} $SHARED_FLAG ... no(2)"
     fi
   else
-    echo "checking for ${CXX} -shared ... no(1)"
+    echo "checking for ${CXX} $SHARED_FLAG ... no(1)"
   fi
 
   if test "$LD_SHARED" = "/bin/true" \
-          -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
+          -a -z "`ld $SHARED_FLAG conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       if test -z "$LD_LIBRARY_PATH" ; then
@@ -229,8 +236,8 @@ AC_DEFUN(AC_LD_SHARED,
       fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ld -shared ... yes"
-        LD_SHARED="ld -shared"
+        echo "checking for ld $SHARED_FLAG ... yes"
+        LD_SHARED="ld $SHARED_FLAG"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
     fi
@@ -256,7 +263,7 @@ AC_DEFUN(AC_LD_SHARED,
   fi
 
   if test "$LD_SHARED" = "/bin/true" ; then
-    echo "checking for ld -shared ... no"
+    echo "checking for ld $SHARED_FLAG ... no"
     if test ! -x /bin/true ; then
       LD_SHARED=/usr/bin/true
     fi
