@@ -1194,6 +1194,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename)
   /* initialize a few things */
   shpfile->status = NULL;
   shpfile->lastshape = -1;
+  shpfile->isopen = MS_FALSE;
 
   /* open the shapefile file (appending ok) and get basic info */
   if(!mode) 	
@@ -1234,6 +1235,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename)
   }
   free(dbfFilename);
 
+  shpfile->isopen = MS_TRUE;
   return(0); /* all o.k. */
 }
 
@@ -1261,6 +1263,7 @@ int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
   // initialize a few other things
   shpfile->status = NULL;
   shpfile->lastshape = -1;
+  shpfile->isopen = MS_TRUE;
 
   shpfile->hDBF = NULL; // XBase file is NOT created here...
   return(0);
@@ -1268,10 +1271,11 @@ int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
 
 void msSHPCloseFile(shapefileObj *shpfile)
 {
-  if (shpfile) { // Silently return if called with NULL shpfile by freeLayer()
+  if (shpfile && shpfile->isopen == MS_TRUE) { // Silently return if called with NULL shpfile by freeLayer()
     if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
     if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
     if(shpfile->status) free(shpfile->status);
+    shpfile->isopen = MS_FALSE;
   }
 }
 
@@ -1697,9 +1701,8 @@ void msTiledSHPClose(layerObj *layer)
 
   tSHP = layer->layerinfo;
   if(tSHP) {
-    // this causes malloc errors, should be investigated, could be a memory leak
-    //msSHPCloseFile(tSHP->shpfile);
-    //free(tSHP->shpfile);
+    msSHPCloseFile(tSHP->shpfile);
+    free(tSHP->shpfile);
   
     if(tSHP->tilelayerindex != -1) {
       layerObj *tlp;

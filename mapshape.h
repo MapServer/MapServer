@@ -122,6 +122,7 @@ typedef struct {
   char *status;
   rectObj statusbounds; // holds extent associated with the status vector
 
+  int isopen;
 #ifdef SWIG
 %mutable;
 #endif

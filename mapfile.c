@@ -2278,7 +2278,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->transform = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
     case(TYPE):
-      if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE)) == -1) return(-1);
+      if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,TILEINDEX)) == -1) return(-1);
+      if(layer->type == TILEINDEX) layer->type = MS_LAYER_TILEINDEX; // TILEINDEX is also a parameter
       break;    
     case(UNITS):
       if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
@@ -2544,7 +2545,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;   
   case(TYPE):
     msyystate = 2; msyystring = value;
-    if((layer->type = getSymbol(7, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE)) == -1) return;
+    if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,MS_LAYER_TILEINDEX)) == -1) return;
     break;
   case(UNITS):
     msyystate = 2; msyystring = value;

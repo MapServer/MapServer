@@ -231,6 +231,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>templatepattern	       { return(TEMPLATEPATTERN); }
 <INITIAL,OBJECT_STRING>text		       { return(TEXT); }
 <INITIAL,OBJECT_STRING>tileindex	       { return(TILEINDEX); }
+<VALUE_STRING>tileindex                    { return(MS_LAYER_TILEINDEX); }
 <INITIAL,OBJECT_STRING>tileitem		       { return(TILEITEM); }
 <INITIAL,OBJECT_STRING>title	               { return(TITLE); }
 <INITIAL,OBJECT_STRING>to                      { return(TO); }
