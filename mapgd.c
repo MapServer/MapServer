@@ -883,6 +883,10 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
     break;
   case(MS_SYMBOL_PIXMAP):
+
+    // fill with the background color before drawing transparent symbol
+    if(symbol->transparent == MS_TRUE && bc > -1)
+      imageFilledCircle(img, p, r, bc);
     
     gdImageSetTile(img, symbol->img);
 
@@ -1402,6 +1406,9 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     break;
   case(MS_SYMBOL_PIXMAP):
+    // fill with the background color before drawing transparent symbol
+    if(symbol->transparent == MS_TRUE && bc > -1)
+      imageFilledPolygon(img, p, bc, ox, oy); 
     
     gdImageSetTile(img, symbol->img);
     imageFilledPolygon(img, p, gdTiled, ox, oy);

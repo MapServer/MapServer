@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
+- Set the background color of polygons or circles when using transparent
+  PIXMAP symbol.
+
 - SWIG mapscript class extensions are completely moved from mapscript.i
   into separate interface files under mapscript/swiginc.
 
