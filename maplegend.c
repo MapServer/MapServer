@@ -131,7 +131,8 @@ gdImagePtr msDrawLegend(mapObj *map)
 	p.line[0].point[0].x = MS_NINT(HMARGIN + (map->legend.keysizex/2.0)) - 1;
 	p.line[0].point[0].y = MS_NINT(pnt.y + (map->legend.keysizey/2.0)) - 1;
 	p.line[0].numpoints = 1;
-	msDrawMarkerSymbol(&map->markerset, img, &(p.line[0].point[0]), &(lp->class[j]));
+	msDrawMarkerSymbol(&map->symbolset, img, &(p.line[0].point[0]), &(lp->class[j]), MS_FALSE);
+	if(lp->class[j].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &(p.line[0].point[0]), &(lp->class[j]), MS_TRUE);
 	break;
       case MS_LINE:
       case MS_POLYLINE:
@@ -144,7 +145,8 @@ gdImagePtr msDrawLegend(mapObj *map)
 	p.line[0].point[3].x = HMARGIN + map->legend.keysizex - 1;
 	p.line[0].point[3].y = pnt.y;
 	p.line[0].numpoints = 4;
-	msDrawLineSymbol(&map->lineset, img, &p, &(lp->class[j]));       
+	msDrawLineSymbol(&map->symbolset, img, &p, &(lp->class[j]), MS_FALSE);
+	if(lp->class[j].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, &p, &(lp->class[j]), MS_TRUE);
 	break;
       case MS_RASTER:
       case MS_POLYGON:
@@ -159,7 +161,8 @@ gdImagePtr msDrawLegend(mapObj *map)
 	p.line[0].point[4].x = p.line[0].point[0].x;
 	p.line[0].point[4].y = p.line[0].point[0].y;
 	p.line[0].numpoints = 5;
-	msDrawShadeSymbol(&map->shadeset, img, &p, &(lp->class[j]));
+	msDrawShadeSymbol(&map->symbolset, img, &p, &(lp->class[j]), MS_FALSE);
+	if(lp->class[j].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, &p, &(lp->class[j]), MS_TRUE);
 	break;
       default:
 	break;
@@ -200,48 +203,48 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   int s,l;
   pointObj point;
 
-  s = msGetSymbolIndex(&(map->markerset), "legend");
+  s = msGetSymbolIndex(&(map->symbolset), "legend");
   if(s == -1) {
-    s = map->markerset.numsymbols;
-    map->markerset.numsymbols++;
+    s = map->symbolset.numsymbols;
+    map->symbolset.numsymbols++;
   } else {
-    if(map->markerset.symbol[s].img) 
-      gdImageDestroy(map->markerset.symbol[s].img);
+    if(map->symbolset.symbol[s].img) 
+      gdImageDestroy(map->symbolset.symbol[s].img);
   }
 
-  map->markerset.symbol[s].img = msDrawLegend(map);
-  if(!map->markerset.symbol[s].img) return(-1); // something went wrong creating scalebar
+  map->symbolset.symbol[s].img = msDrawLegend(map);
+  if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
-  map->markerset.symbol[s].type = MS_SYMBOL_PIXMAP;
-  map->markerset.symbol[s].name = strdup("legend");  
+  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP;
+  map->symbolset.symbol[s].name = strdup("legend");  
 
   if(map->legend.transparent)
-    gdImageColorTransparent(map->markerset.symbol[s].img, 0);
+    gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
 
   switch(map->legend.position) {
   case(MS_LL):
-    point.x = MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = map->height - MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_LR):
-    point.x = map->width - MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = map->height - MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_LC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = map->height - MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_UR):
-    point.x = map->width - MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_UL):
-    point.x = MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_UC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   }
 
@@ -263,7 +266,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.force = MS_TRUE;
 
   if(map->legend.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbol(&map->markerset, img, &point, &(map->layers[l].class[0]));
+    msDrawMarkerSymbol(&map->symbolset, img, &point, &(map->layers[l].class[0]), MS_FALSE);
   else
     msAddLabel(map, l, 0, -1, -1, point, " ", -1);
 

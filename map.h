@@ -121,7 +121,6 @@ enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement */
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
-enum MS_SYMBOLFILE {MS_MARKERSET, MS_LINESET, MS_SHADESET};
 enum MS_CONNECTION_TYPE {MS_LOCAL, MS_SDE};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
@@ -139,6 +138,7 @@ typedef struct {
 struct featureObj {
   shapeObj shape; /* can handle all cases- point, line and polygon */
   char *class; /* string to classify with */
+  int classindex;
   char *text; /* string to annotate with */
   struct featureObj *next;
 };
@@ -301,15 +301,26 @@ typedef struct {
 #ifndef SWIG  
   expressionObj expression; // the expression to be matched
 #endif
+
   int color;
   int backgroundcolor;
   int outlinecolor;
+  int overlaycolor;
+  int overlaybackgroundcolor;
+  int overlayoutlinecolor;
+
   int symbol;
   char *symbolname;
+  int overlaysymbol;
+  char *overlaysymbolname;
 
   int size;
   int sizescaled;
   int minsize, maxsize;
+
+  int overlaysize;
+  int overlaysizescaled;
+  int overlayminsize, overlaymaxsize;
 
   labelObj label;
   char *name; /* used for legend labeling */
@@ -355,10 +366,12 @@ typedef struct {
 // SYMBOLSET OBJECT
 typedef struct {
   char *filename;
-  int type;
   fontSetObj fontset;
   int numsymbols;
   symbolObj symbol[MS_MAXSYMBOLS];
+
+  struct imageCacheObj *imagecache;
+  int imagecachesize;
 } symbolSetObj;
 
 // REFERENCE MAP OBJECT
@@ -486,11 +499,8 @@ typedef struct { /* structure for a map */
 #endif
 
 #ifndef SWIG
-  symbolSetObj markerset; /* symbol sets */
-  symbolSetObj lineset;
-  symbolSetObj shadeset;
-
-  fontSetObj fontset; /* font set */
+  symbolSetObj symbolset;
+  fontSetObj fontset;
 #endif
 
   labelCacheObj labelcache; /* we need this here so multiple feature processors can access it */
@@ -639,10 +649,10 @@ int strcasecmp(char *s1, char *s2);
 int msLoadSymbolSet(symbolSetObj *symbolset); /* in mapsymbol.c */
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
-void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, classObj *class);
+void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, classObj *class, int overlay);
 void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *height);
-void msDrawMarkerSymbol(symbolSetObj *markerset,gdImagePtr img, pointObj *p, classObj *class);
-void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classObj *class);
+void msDrawMarkerSymbol(symbolSetObj *markerset,gdImagePtr img, pointObj *p, classObj *class, int overlay);
+void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classObj *class, int overlay);
 
 gdImagePtr msDrawLegend(mapObj *map); /* in maplegend.c */
 int msEmbedLegend(mapObj *map, gdImagePtr img);

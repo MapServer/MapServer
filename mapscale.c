@@ -192,48 +192,48 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   int s,l;
   pointObj point;
 
-  s = msGetSymbolIndex(&(map->markerset), "scalebar");
+  s = msGetSymbolIndex(&(map->symbolset), "scalebar");
   if(s == -1) {
-    s = map->markerset.numsymbols;
-    map->markerset.numsymbols++;
+    s = map->symbolset.numsymbols;
+    map->symbolset.numsymbols++;
   } else {
-    if(map->markerset.symbol[s].img) 
-      gdImageDestroy(map->markerset.symbol[s].img);
+    if(map->symbolset.symbol[s].img) 
+      gdImageDestroy(map->symbolset.symbol[s].img);
   }
 
-  map->markerset.symbol[s].img = msDrawScalebar(map);
-  if(!map->markerset.symbol[s].img) return(-1); // something went wrong creating scalebar
+  map->symbolset.symbol[s].img = msDrawScalebar(map);
+  if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
-  map->markerset.symbol[s].type = MS_SYMBOL_PIXMAP;
-  map->markerset.symbol[s].name = strdup("scalebar");  
+  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP;
+  map->symbolset.symbol[s].name = strdup("scalebar");  
 
   if(map->scalebar.transparent)
-    gdImageColorTransparent(map->markerset.symbol[s].img, 0);
+    gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
 
   switch(map->scalebar.position) {
   case(MS_LL):
-    point.x = MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = map->height - MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_LR):
-    point.x = map->width - MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = map->height - MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_LC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = map->height - MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_UR):
-    point.x = map->width - MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_UL):
-    point.x = MS_NINT(map->markerset.symbol[s].img->sx/2.0);
-    point.y = MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   case(MS_UC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = MS_NINT(map->markerset.symbol[s].img->sy/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
     break;
   }
 
@@ -255,7 +255,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.force = MS_TRUE;
 
   if(map->scalebar.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbol(&map->markerset, img, &point, &(map->layers[l].class[0]));
+    msDrawMarkerSymbol(&map->symbolset, img, &point, &(map->layers[l].class[0]), MS_FALSE);
   else
     msAddLabel(map, l, 0, -1, -1, point, " ", -1);
 

@@ -70,25 +70,9 @@
   int getSymbolByName(int type, char *name) {
     int symbol;
 
-    switch (type) {
-    case(MS_MARKERSET):
-      if((symbol = msGetSymbolIndex(&self->markerset, name)) == -1)
-	if((symbol = msAddImageSymbol(&self->markerset, name)) == -1)
-	  return -1;
-      break;
-    case(MS_LINESET):
-      if((symbol = msGetSymbolIndex(&self->lineset, name)) == -1)
-	if((symbol = msAddImageSymbol(&self->lineset, name)) == -1)
-	  return -1;
-      break;
-    case(MS_SHADESET):
-      if((symbol = msGetSymbolIndex(&self->shadeset, name)) == -1)
-	if((symbol = msAddImageSymbol(&self->shadeset, name)) == -1)
-	  return -1;
-      break;
-    default:
-      return -1;
-    }
+    if((symbol = msGetSymbolIndex(&self->markerset, name)) == -1)
+      if((symbol = msAddImageSymbol(&self->markerset, name)) == -1)
+	return -1;
 
     return symbol;
   }

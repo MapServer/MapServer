@@ -483,7 +483,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  for(j=0; j<transformedshape.line[0].numpoints; j++) {
 	    pnt = &(transformedshape.line[0].point[j]); /* point to the correct point */
 
-	    msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[i]);
+	    msDrawMarkerSymbol(&map->symbolset, img, pnt, &layer->class[i], MS_FALSE);
 
 	    if(annotate) {	      
 	      if(numcolumns == 2) {
@@ -537,7 +537,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  if(SE_shape_is_nil(clippedshape)) continue;
 	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
 
-	  msDrawLineSymbol(&map->lineset, img, &transformedshape, &(layer->class[i]));
+	  msDrawLineSymbol(&map->symbolset, img, &transformedshape, &(layer->class[i]), MS_FALSE);
 
 	  if(annotate) {
 	    if(msPolylineLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize, &angle, &length) != -1) {
@@ -598,9 +598,9 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
 
 	  if(layer->type == MS_POLYGON)
-	    msDrawShadeSymbol(&map->shadeset, img, &transformedshape, &(layer->class[i]));
+	    msDrawShadeSymbol(&map->symbolset, img, &transformedshape, &(layer->class[i]), MS_FALSE);
 	  else
-	    msDrawLineSymbol(&map->lineset, img, &transformedshape, &(layer->class[i]));
+	    msDrawLineSymbol(&map->symbolset, img, &transformedshape, &(layer->class[i]), MS_FALSE);
 
 	  if(annotate) {
 	    if(msPolygonLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize) != -1) {

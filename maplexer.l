@@ -118,11 +118,9 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>labelsizeitem           { return(LABELSIZEITEM); }
 <INITIAL,OBJECT_STRING>layer		       { return(LAYER); }
 <INITIAL,OBJECT_STRING>legend		       { return(LEGEND); }
-<INITIAL>lineset		               { return(LINESET); }	
 <INITIAL>log		                       { return(LOG); }
 <INITIAL,OBJECT_STRING>map	               { return(MAP); }
 <INITIAL>marker                                { return(MARKER); }
-<INITIAL>markerset	                       { return(MARKERSET); }
 <INITIAL,OBJECT_STRING>maxfeatures             { return(MAXFEATURES); }
 <INITIAL,OBJECT_STRING>maxscale		       { return(MAXSCALE); }
 <INITIAL,OBJECT_STRING>maxsize	               { return(MAXSIZE); }
@@ -136,6 +134,13 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>offset                  { return(OFFSET); }
 <INITIAL,OBJECT_STRING>offsite                 { return(OFFSITE); }
 <INITIAL,OBJECT_STRING>outlinecolor	       { return(OUTLINECOLOR); }
+<INITIAL,OBJECT_STRING>overlaybackgroundcolor  { return(OVERLAYBACKGROUNDCOLOR); }
+<INITIAL,OBJECT_STRING>overlaycolor            { return(OVERLAYCOLOR); }
+<INITIAL,OBJECT_STRING>overlaymaxsize          { return(OVERLAYMAXSIZE); }
+<INITIAL,OBJECT_STRING>overlayminsize          { return(OVERLAYMINSIZE); }
+<INITIAL,OBJECT_STRING>overlayoutlinecolor     { return(OVERLAYOUTLINECOLOR); }
+<INITIAL,OBJECT_STRING>overlaysize             { return(OVERLAYSIZE); }
+<INITIAL,OBJECT_STRING>overlaysymbol           { return(OVERLAYSYMBOL); }
 <INITIAL,OBJECT_STRING>partials                { return(PARTIALS); }
 <INITIAL,OBJECT_STRING>points                  { return(POINTS); }
 <INITIAL,OBJECT_STRING>position		       { return(POSITION); }
@@ -147,7 +152,6 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>reference	       { return(REFERENCE); }
 <INITIAL,OBJECT_STRING>scale		       { return(SCALE); }
 <INITIAL,OBJECT_STRING>scalebar		       { return(SCALEBAR); }
-<INITIAL>shadeset		               { return(SHADESET); }
 <INITIAL,OBJECT_STRING>shadowcolor             { return(SHADOWCOLOR); }
 <INITIAL,OBJECT_STRING>shadowsize              { return(SHADOWSIZE); }
 <INITIAL,OBJECT_STRING>shapepath               { return(SHAPEPATH); }
@@ -156,6 +160,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>style		       { return(STYLE); }
 <INITIAL,OBJECT_STRING>symbol		       { return(SYMBOL); }
 <INITIAL,OBJECT_STRING>symbolscale             { return(SYMBOLSCALE); }
+<INITIAL,OBJECT_STRING>symbolset               { return(SYMBOLSET); }
 <INITIAL,OBJECT_STRING>table                   { return(TABLE); }
 <INITIAL,OBJECT_STRING>template		       { return(TEMPLATE); }
 <INITIAL,OBJECT_STRING>text		       { return(TEXT); }
@@ -202,6 +207,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>off		       { return(MS_OFF); }
 <INITIAL,VALUE_STRING>on		       { return(MS_ON); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
+<INITIAL>pixels                                { return(MS_PIXELS); }
 <INITIAL,VALUE_STRING>point		       { return(MS_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_POLYGON); }
 <INITIAL,VALUE_STRING>polyline		       { return(MS_POLYLINE); }

@@ -105,7 +105,7 @@ LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TTF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
 
 RM= /bin/rm -f
 
-OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o mapindex.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o $(EPPL_OBJ) $(REGEX_OBJ)
+OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o $(EPPL_OBJ) $(REGEX_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---
@@ -113,8 +113,8 @@ OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o mapindex.
 .c.o: 
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: $(MAKE_GD) $(MAKE_EGIS) $(MAKE_GDFT) libmap.a shp2img sym2img legend \
-	mapserv shpindex shptree scalebar sortshp perlvars @MAKE_PHPMS@
+all: $(MAKE_GD) $(MAKE_EGIS) $(MAKE_GDFT) libmap.a shp2img legend \
+	mapserv shptree scalebar sortshp perlvars @MAKE_PHPMS@
 
 gd::
 	cd gd-1.2; make; cd ..
@@ -192,7 +192,7 @@ php3_mapscript_clean::
 	cd mapscript/php3; make clean; cd ../..
 
 clean:	$(MAKE_GD_CLEAN) $(MAKE_GDFT_CLEAN) $(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
-	rm -f libmap.a *.o shp2img mapserv sym2img legend shpindex shptree scalebar sortshp perlvars
+	rm -f libmap.a *.o shp2img mapserv legend shptree scalebar sortshp perlvars
 
 sorta-clean:
 	rm -f *.o

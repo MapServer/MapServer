@@ -921,6 +921,16 @@ int initClass(classObj *class)
   class->maxsize = MS_MAXSYMBOLSIZE;
   class->backgroundcolor = -1;
   class->outlinecolor = -1;
+
+  class->overlaybackgroundcolor = -1;
+  class->overlaycolor = -1;
+  class->overlayoutlinecolor = -1;
+  class->overlaysizescaled = class->overlaysize = 1;
+  class->overlayminsize = MS_MINSYMBOLSIZE;
+  class->overlaymaxsize = MS_MAXSYMBOLSIZE;
+  class->overlaysymbol = -1;
+  class->overlaysymbolname = NULL;
+
   initLabel(&(class->label));
   class->symbolname = NULL;
 
@@ -934,6 +944,7 @@ void freeClass(classObj *class)
   freeExpression(&(class->text));
   free(class->name);
   free(class->symbolname);
+  free(class->overlaysymbolname);
 }
 
 int loadClass(classObj *class, mapObj *map)
@@ -983,6 +994,42 @@ int loadClass(classObj *class, mapObj *map)
       if(getInteger(&(green)) == -1) return(-1);
       if(getInteger(&(blue)) == -1) return(-1);
       class->outlinecolor = msAddColor(map, red, green, blue);
+      break;
+    case(OVERLAYBACKGROUNDCOLOR):
+      if(getInteger(&(red)) == -1) return(-1);
+      if(getInteger(&(green)) == -1) return(-1);
+      if(getInteger(&(blue)) == -1) return(-1);
+      class->overlaybackgroundcolor = msAddColor(map, red, green, blue);
+      break;
+    case(OVERLAYCOLOR):
+      if(getInteger(&(red)) == -1) return(-1);
+      if(getInteger(&(green)) == -1) return(-1);
+      if(getInteger(&(blue)) == -1) return(-1);
+      class->overlaycolor = msAddColor(map, red, green, blue);
+      break;
+    case(OVERLAYMAXSIZE):
+      if(getInteger(&(class->overlaymaxsize)) == -1) return(-1);
+      break;
+    case(OVERLAYMINSIZE):      
+      if(getInteger(&(class->overlayminsize)) == -1) return(-1);
+      break;
+    case(OVERLAYOUTLINECOLOR):      
+      if(getInteger(&(red)) == -1) return(-1);
+      if(getInteger(&(green)) == -1) return(-1);
+      if(getInteger(&(blue)) == -1) return(-1);
+      class->overlayoutlinecolor = msAddColor(map, red, green, blue);
+      break;
+    case(OVERLAYSIZE):
+      if(getInteger(&(class->overlaysize)) == -1) return(-1);
+      class->overlaysizescaled = class->overlaysize;
+      break;
+    case(OVERLAYSYMBOL):
+      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
+
+      if(state == MS_NUMBER)
+	class->overlaysymbol = (int) msyynumber;
+      else
+	class->overlaysymbolname = strdup(msyytext);
       break;
     case(SIZE):
       if(getInteger(&(class->size)) == -1) return(-1);
@@ -1064,20 +1111,10 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     if(state == MS_NUMBER)
       class->symbol = (int) msyynumber;
     else {
-      switch(type) {
-      case(MS_ANNOTATION):
-      case(MS_POINT):
-	if((class->symbol = msGetSymbolIndex(&(map->markerset), msyytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
-	break;
-      case(MS_LINE):
-      case(MS_POLYLINE):
-	if((class->symbol = msGetSymbolIndex(&(map->lineset), msyytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
-	break;
-      case(MS_POLYGON):
-	if((class->symbol = msGetSymbolIndex(&(map->shadeset), msyytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
-	break;
-      default:
-	break;
+      if((class->symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1) {
+	if((class->symbol = msAddImageSymbol(&(map->symbolset), msyytext)) == -1) {
+	  msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+	}
       }      
     }
     break;
@@ -2567,14 +2604,10 @@ int initMap(mapObj *map)
   map->labelcache.markercachesize = MS_LABELCACHEINITSIZE;
   map->labelcache.nummarkers = 0;
 
-  map->markerset.filename = NULL;
-  map->markerset.numsymbols = 1; /* always 1 symbol */
-
-  map->lineset.filename = NULL;
-  map->lineset.numsymbols = 1; /* always 1 symbol */
-
-  map->shadeset.filename = NULL;
-  map->shadeset.numsymbols = 1; /* always 1 symbol */
+  map->symbolset.filename = NULL;
+  map->symbolset.numsymbols = 1; /* always 1 symbol */
+  map->symbolset.imagecache = NULL;
+  map->symbolset.imagecachesize = 0; /* 0 symbols in the cache */
 
   map->fontset.filename = NULL;
   map->fontset.numfonts = 0;  
@@ -2601,13 +2634,8 @@ void msFreeMap(mapObj *map) {
   free(map->tile);
   free(map->shapepath);
 
-  msFreeSymbolSet(&map->markerset); // free symbol sets
-  msFreeSymbolSet(&map->lineset);
-  msFreeSymbolSet(&map->shadeset);
-
-  free(map->markerset.filename);
-  free(map->lineset.filename);
-  free(map->shadeset.filename);  
+  msFreeSymbolSet(&map->symbolset); // free symbols
+  free(map->symbolset.filename);
 
   freeProjection(&(map->projection));
 
@@ -2669,15 +2697,13 @@ int msSaveMap(mapObj *map, char *filename)
   if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
   fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
   fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
-  if(map->shadeset.filename) fprintf(stream, "  SHADESET \"%s\"\n", map->shadeset.filename);
+  if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);
   if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
   fprintf(stream, "  SIZE %d %d\n", map->width, map->height);
   fprintf(stream, "  STATUS %s\n", msStatus[map->status]);
   if(map->tile) fprintf(stream, "  TILE \"%s\"\n", map->tile);
   fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
-  if(map->lineset.filename) fprintf(stream, "  LINESET \"%s\"\n", map->lineset.filename);
-  if(map->markerset.filename) fprintf(stream, "  MARKERSET \"%s\"\n", map->markerset.filename);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
 
   writeProjection(&(map->projection), stream, "  ");
@@ -2754,43 +2780,27 @@ mapObj *msLoadMap(char *filename)
       map->numlayers = n;
       fclose(msyyin);
 
-      if(msLoadSymbolSet(&(map->markerset)) == -1) return(NULL);
-      if(msLoadSymbolSet(&(map->shadeset)) == -1) return(NULL); 
-      if(msLoadSymbolSet(&(map->lineset)) == -1) return(NULL);
+      if(msLoadSymbolSet(&(map->symbolset)) == -1) return(NULL);
 
       /* step through layers and classes to resolve symbol names */
       for(i=0; i<map->numlayers; i++) {
 	for(j=0; j<map->layers[i].numclasses; j++) {
+
+	  if(map->layers[i].class[j].overlaysymbolname) {
+	    if((map->layers[i].class[j].overlaysymbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
+	      if((map->layers[i].class[j].overlaysymbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
+		msSetError(MS_MISCERR, "Undefined overlay symbol.", "msLoadMap()");
+		return(NULL);
+	      }
+	    }
+	  }
+
 	  if(map->layers[i].class[j].symbolname) {
-	    switch(map->layers[i].type) {
-	    case(MS_ANNOTATION):
-	    case(MS_POINT):
-	      if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->markerset), map->layers[i].class[j].symbolname)) == -1) {
-		if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->markerset), map->layers[i].class[j].symbolname)) == -1) {
-		  msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
-		  return(NULL);
-		}
+	    if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
+	      if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
+		msSetError(MS_MISCERR, "Undefined symbol.", "msLoadMap()");
+		return(NULL);
 	      }
-	      break;
-	    case(MS_LINE):
-	    case(MS_POLYLINE):
-	      if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->lineset), map->layers[i].class[j].symbolname)) == -1) {
-		if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->lineset), map->layers[i].class[j].symbolname)) == -1) {
-		  msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
-		  return(NULL);
-		}
-	      }
-	      break;
-	    case(MS_POLYGON):
-	      if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->shadeset), map->layers[i].class[j].symbolname)) == -1) {
-		if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->shadeset), map->layers[i].class[j].symbolname)) == -1) {
-		  msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
-		  return(NULL);
-		}
-	      }
-	      break;
-	    default:
-	      break;
 	    }
 	  }
 	}
@@ -2830,14 +2840,8 @@ mapObj *msLoadMap(char *filename)
     case(LEGEND):
       if(loadLegend(&(map->legend), map) == -1) return(NULL);
       break;
-    case(LINESET):
-      if((map->lineset.filename = getString()) == NULL) return(NULL);
-      break;
     case(MAP):
-      break;
-    case(MARKERSET):
-      if((map->markerset.filename = getString()) == NULL) return(NULL);
-      break;
+      break;   
     case(NAME):
       free(map->name); /* erase default */
       if((map->name = getString()) == NULL) return(NULL);
@@ -2856,10 +2860,7 @@ mapObj *msLoadMap(char *filename)
       break;
     case(SCALEBAR):
       if(loadScalebar(&(map->scalebar), map) == -1) return(NULL);
-      break;
-    case(SHADESET):
-      if((map->shadeset.filename = getString()) == NULL) return(NULL);
-      break;
+      break;   
     case(SHAPEPATH):
       if((map->shapepath = getString()) == NULL) return(NULL);
       break;
@@ -2869,6 +2870,9 @@ mapObj *msLoadMap(char *filename)
       break;
     case(STATUS):
       if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
+      break;
+    case(SYMBOLSET):
+      if((map->symbolset.filename = getString()) == NULL) return(NULL);
       break;
     case(TILE):
       if((map->tile = getString()) == NULL) return(NULL);

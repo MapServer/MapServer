@@ -7,11 +7,21 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_S
 
 #define MS_MAXSYMBOLS 64            // maximum number of symbols in a symbol file
 #define MS_MAXVECTORPOINTS 100      // shade, marker and line symbol parameters
-#define MS_MAXSTYLESIZE 11
+#define MS_MAXSTYLESIZE 5
+
+#define MS_IMAGECACHESIZE 6
+
+struct imageCacheObj {
+  int color;
+  int symbol;
+  int size;
+  gdImagePtr img;
+  struct imageCacheObj *next;
+};
 
 typedef struct {
   char *name;
-  int type;                         // Type of the marker symbol (i.e. symboltypes)
+  int type;
 
   /*
   ** MS_SYMBOL_STYLED options
