@@ -62,10 +62,12 @@ class InlineFeatureTestCase(MapTestCase):
     def testAddPointFeature(self):
         """InlineFeatureTestCase.testAddPointFeature: adding a point to an inline feature works correctly"""
         inline_layer = self.map.getLayerByName('INLINE')
+        assert inline_layer.connectiontype == mapscript.MS_INLINE
         p = mapscript.pointObj(0.2, 51.5)
         l = mapscript.lineObj()
         self.addPointToLine(l, p)
         shape = mapscript.shapeObj(inline_layer.type)
+        shape.classindex = 0
         self.addLineToShape(shape, l)
         inline_layer.addFeature(shape)
         msimg = self.map.draw()

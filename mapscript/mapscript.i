@@ -31,6 +31,12 @@
 
 %module mapscript
 
+// Hide labelcacheMemberObj from C# due to conflict with member
+// named 'string' (bugs 847, 852).  
+#ifdef SWIGCSHARP
+%ignore labelCacheMemberObj;
+#endif
+
 %{
 #include "../../map.h"
 #include "../../maptemplate.h"
@@ -48,7 +54,11 @@
 
 %}
 
+// Problem with SWIG CSHARP typemap for pointers
+#ifndef SWIGCSHARP
 %include typemaps.i
+#endif
+
 %include constraints.i
 
 /* ===========================================================================

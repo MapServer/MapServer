@@ -51,6 +51,7 @@
             msFreeOutputFormat( self );
     }
 
+#ifndef SWIGJAVA
     void setExtension( const char *extension ) 
     {
         msFree( self->extension );
@@ -62,6 +63,7 @@
         msFree( self->mimetype );
         self->mimetype = strdup(mimetype);
     }
+#endif
 
     void setOption( const char *key, const char *value ) 
     {
