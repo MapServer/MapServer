@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.27  2004/05/11 12:57:29  assefa
+ * Correct bug when testing if an attribute value is a string.
+ *
  * Revision 1.26  2004/02/26 14:48:03  frank
  * Avoid warnings by pre-include cpl_minixml.h before ogr_api.h is included.
  *
@@ -2232,9 +2235,11 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
         nLenght = strlen(psFilterNode->psRightNode->pszValue);
         for (i=0; i<nLenght; i++)
         {
-            if (psFilterNode->psRightNode->pszValue[i] < '0' ||
-                psFilterNode->psRightNode->pszValue[i] > '9')
+            if (!isdigit(psFilterNode->psRightNode->pszValue[i]) &&
+                psFilterNode->psRightNode->pszValue[i] != '.')
             {
+                //if (psFilterNode->psRightNode->pszValue[i] < '0' ||
+                //psFilterNode->psRightNode->pszValue[i] > '9')
                 bString = 1;
                 break;
             }
