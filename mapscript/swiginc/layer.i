@@ -82,6 +82,41 @@
         // else map deconstructor takes care of it
     }
 
+#ifdef SWIGJAVA
+    %newobject cloneLayer;
+    layerObj *cloneLayer() 
+#else
+    %newobject clone;
+    layerObj *clone() 
+#endif
+    {
+        layerObj *layer;
+        int result;
+
+        layer = (layerObj *) malloc(sizeof(layerObj));
+        if (!layer) {
+            msSetError(MS_MEMERR, "Failed to initialize Layer",
+                                  "layerObj()");
+            return NULL;
+        } 
+        result = initLayer(layer, NULL);
+        if (result != MS_SUCCESS) {
+            msSetError(MS_MEMERR, "Failed to initialize Layer",
+                                  "layerObj()");
+            return NULL;
+        }
+
+        if (msCopyLayer(layer, self) != MS_SUCCESS) {
+            freeLayer(layer);
+            free(layer);
+            layer = NULL;
+        }
+        layer->map = NULL;
+        layer->index = -1;
+        
+        return layer;
+    }
+
     int insertClass(classObj *classobj, int index=-1)
     {
         return msInsertClass(self, classobj, index);

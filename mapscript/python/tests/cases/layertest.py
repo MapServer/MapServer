@@ -68,6 +68,18 @@ class LayerConstructorTestCase(MapLayerTestCase):
         assert str(layer) == str(self.map.getLayer(self.map.numlayers-1))
      
 
+class LayerCloningTestCase(MapLayerTestCase):
+
+    def testLayerCloning(self):
+        """check attributes of a cloned layer"""
+        clone = self.layer.clone()
+        assert clone.thisown == 1
+        assert str(clone) != str(self.layer)
+        assert clone.name == self.layer.name
+        assert clone.numclasses == self.layer.numclasses
+        assert clone.map == None, clone.map
+        assert clone.data == self.layer.data
+        
 class LayerExtentTestCase(MapTestCase):
    
     def setUp(self):
