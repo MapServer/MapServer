@@ -1006,6 +1006,10 @@ removeMetaData( string key ) : int
     Delete the metadata hash at *key*.  Returns MS_SUCCESS or
     MS_FAILURE.
 
+setExtent(minx, miny, maxx, maxy) : int
+    Sets the extent of a layer.  Returns MS_SUCCSS or 
+    NULL on failure.
+    
 setFilter( string filter ) : int 
     Sets a filter expression similarly to the FILTER expression in a map 
     file.  Returns MS_SUCCESS on success or MS_FAILURE if the expression
@@ -1267,6 +1271,10 @@ removeOutputFormat( string name ) : int
 setConfigOption( string key, string value ) : void
     Set the indicated key configuration option to the indicated value.  
     Equivalent to including a CONFIG keyword in a map file. 
+
+setExtent(minx, miny, maxx, maxy) : int
+    Sets the extent of a map.  Returns MS_SUCCSS or 
+    NULL on failure.
 
 setMetaData( string key, string value ) : int
     Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
