@@ -11,17 +11,19 @@ level programming language.
 
 PHP and SWIG Branches of Mapscript
 ----------------------------------
-
 The mapscript family tree looks like this:
+
+::
 
                MapServer
                   /\ 
                  /  \    
                 /    \ 
      PHPMapScript     \  SWIGMapScript
-         PHP3      +----+-----+----+----+----+
+         PHP4      +----+-----+----+----+----+
                    |    |     |    |    |    |
                  Perl Python Ruby Java Tcl  ...
+
 
 The Perl, Python, Ruby flavors are like brothers and sisters and the PHP3
 module is like a very close cousin to them.  The Java, Perl, Python, Ruby,
