@@ -910,51 +910,6 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex) {
     return MS_SUCCESS;
 }
 
-/* Code is not safe, will fix this before next release - see issue 562
-shapeObj *msLayerRemoveInlineFeature(layerObj *layer, int shapeindex) {
-    int i = 1;
-	featureListNodeObjPtr current, next;
-    shapeObj *shape;
-
-    if (layer->connectiontype != MS_INLINE) {
-	    msSetError(MS_SHPERR, "Feature can only be removed from inline layers.",
-                              "msLayerRemoveInlineFeature()");
-	    return NULL;
-	}
-	if (shapeindex < 0 ) {
-	    msSetError(MS_SHPERR, "Invalid index: %d",
-                              "msLayerRemoveInlineFeature()", shapeindex);
-	    return NULL;
-	}
-
-	current = layer->features;
-	if (shapeindex == 0) {
-		// if just the first shape is remove we don't have to worry
-        // about the rest
-		//layer->features = current->next;
-        msCopyShape(&(current->shape), shape);
-		freeFeatureList(current);
-        //msFreeShape(&(current->shape));
-		//msFree(current);
-		return shape;
-	} else {
-		while (current != NULL) {
-			if (i == shapeindex) {
-                msCopyShape(&(current->shape), shape);
-				next = current->next;
-				current->next = next->next;
-				msFreeShape(&(next->shape));
-				msFree(next);
-				return shape;
-			}
-			i++;
-		}
-	}
-	msSetError(MS_SHPERR, "Index was not found.", "msLayerRemoveShape()");
-	    return NULL;
-}
-*/
-
 /*
 Returns the number of inline feature of a layer
 */

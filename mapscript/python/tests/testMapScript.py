@@ -634,13 +634,6 @@ class InlineFeatureTestCase(unittest.TestCase):
     def testGetNumFeatures(self):
         inline_layer = self.mapobj1.getLayerByName('INLINE')
         assert inline_layer.getNumFeatures() == 1
-    #def testRemoveFeature(self):
-    #    inline_layer = self.mapobj1.getLayerByName('INLINE')
-    #    s = inline_layer.removeFeature(0)
-    #    l = s.get(0)
-    #    p = l.get(0)
-    #    assert int(p.x * 10) == -2
-    #    assert int(p.y * 10) == 515
 
 if __name__ == '__main__':
     unittest.main()

@@ -1103,7 +1103,6 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, lon
 
 // maplayer.c
 int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);
-shapeObj *msLayerRemoveInlineFeature(layerObj *layer, int shapeindex);
 int msLayerGetNumFeatures(layerObj *layer);
 
 int msTiledSHPOpenFile(layerObj *layer); // in mapshape.c
