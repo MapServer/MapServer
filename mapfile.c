@@ -3364,6 +3364,12 @@ int msSaveMap(mapObj *map, char *filename)
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
 
+  // write symbol with INLINE tag in mapfile
+  for(i=0; i<map->symbolset.numsymbols; i++)
+  {
+      writeSymbol(&(map->symbolset.symbol[i]), stream);
+  }
+
   writeProjection(&(map->projection), stream, "  ");
   
   writeLegend(map, &(map->legend), stream);
@@ -3591,6 +3597,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
 	return(NULL);
       }
       if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols])) == -1)) return(NULL);
+      map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
       map->symbolset.numsymbols++;
       break;
     case(SYMBOLSET):

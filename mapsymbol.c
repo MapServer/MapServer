@@ -63,9 +63,10 @@ void initSymbol(symbolObj *s)
   s->filled = MS_FALSE;
   s->numpoints=0;
   s->img = NULL;
+  s->imagepath = NULL;
   s->name = NULL;
   s->gap = 0;
-
+  s->inmapfile = MS_FALSE;
   s->antialias = MS_FALSE;
   s->font = NULL;
   s->character = '\0';
@@ -81,6 +82,7 @@ static void freeSymbol(symbolObj *s) {
   if(s->name) free(s->name);
   if(s->img) gdImageDestroy(s->img);
   if(s->font) free(s->font);
+  if(s->imagepath) free(s->imagepath);
 }
 
 int loadSymbol(symbolObj *s)
@@ -148,6 +150,9 @@ int loadSymbol(symbolObj *s)
 	fclose(msyyin);
 	return(-1);
       }
+      
+      // Set imagepath
+      s->imagepath = strdup(msyytext);
 
       fread(bytes,8,1,stream); // read some bytes to try and identify the file
       rewind(stream); // reset the image for the readers
@@ -267,6 +272,69 @@ int loadSymbol(symbolObj *s)
       return(-1);
     } /* end switch */
   } /* end for */
+}
+
+void writeSymbol(symbolObj *s, FILE *stream)
+{
+  int i;
+
+  if(s->inmapfile != MS_TRUE) return;
+
+  fprintf(stream, "  SYMBOL\n");
+  if(s->name != NULL) fprintf(stream, "    NAME \"%s\"\n", s->name);
+  
+  switch (s->type) {
+    case(MS_SYMBOL_PIXMAP):
+      fprintf(stream, "    TYPE PIXMAP\n");
+      if(s->imagepath != NULL) fprintf(stream, "    IMAGE %s\n", s->imagepath);
+      fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
+      break;
+    case(MS_SYMBOL_TRUETYPE):
+      fprintf(stream, "    TYPE TRUETYPE\n");
+      if(s->antialias == MS_TRUE) fprintf(stream, "    ANTIALIAS TRUE\n");
+      fprintf(stream, "    CHARACTER %s\n", s->character);
+      fprintf(stream, "    GAP %d\n", s->gap);
+      fprintf(stream, "    FONT %s\n", s->font);
+      fprintf(stream, "    POSITION %d\n", s->position);
+      break;
+    case(MS_SYMBOL_CARTOLINE):
+      fprintf(stream, "    TYPE CARTOLINE\n");
+      fprintf(stream, "    LINECAP %d\n", s->linecap);
+      fprintf(stream, "    LINEJOIN %d\n", s->linejoin);
+      fprintf(stream, "    LINEJOINMAXSIZE %g\n", s->linejoinmaxsize);
+      break;
+    case(MS_SYMBOL_SIMPLE):
+      break;
+    case(MS_SYMBOL_ELLIPSE):
+    //default = MS_SYMBOL_VECTOR
+    default:
+      if(s->type == MS_SYMBOL_ELLIPSE)
+          fprintf(stream, "    TYPE ELLIPSE\n");
+      else
+          fprintf(stream, "    TYPE VECTOR\n");
+
+      if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
+
+      // POINT
+      if(s->numpoints != 0) {
+          fprintf(stream, "    POINTS\n");
+          for(i=0; i<s->numpoints; i++) {
+              fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
+          }
+          fprintf(stream, "    END\n");
+      }
+      // STYLE
+      if(s->stylelength != 0) {
+          fprintf(stream, "    STYLE\n     ");
+          for(i=0; i<s->stylelength; i++) {
+              fprintf(stream, " %d", s->style[i]);
+          }
+          fprintf(stream, "\n    END\n");
+      }
+      break;
+  }
+      
+  fprintf(stream, "  END\n\n");
 }
 
 /*
