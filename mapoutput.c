@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/12/17 23:02:19  dan
+ * I assigned the wrong value to map->imagetype.  Duh!
+ *
  * Revision 1.10  2002/12/17 22:52:43  dan
  * Update value of map->imagetype in msSelectOutputFormat()
  *
@@ -399,7 +402,7 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
     {
         if (map->imagetype)
             free(map->imagetype);
-        map->imagetype = strdup(map->outputformatlist[i]->name);
+        map->imagetype = strdup(format->name);
     }
 
     return format;
