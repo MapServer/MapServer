@@ -99,7 +99,7 @@
     /* to be completed after hobu works up a msRectIsValid function
     int isValid()
     {
-        return msRectIsValid(self);
+        return MS_VALID_EXTENT(self);
     }
     */
     
