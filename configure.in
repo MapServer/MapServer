@@ -300,6 +300,9 @@ elif test -n "$with_ttf" -a "$with_ttf" != "yes" ; then
   test -f $TTF_DIR/include/freetype.h && TTF_INCLUDE="$TTF_DIR/include"
   test -f $TTF_DIR/lib/freetype.h && TTF_INCLUDE="$TTF_DIR/lib"
   test -f $TTF_DIR/freetype.h && TTF_INCLUDE="$TTF_DIR"
+  test -f $TTF_DIR/lib/.libs/libttf.a && TTF_LIBDIR="$TTF_DIR/lib/.libs"
+  test -f $TTF_DIR/lib/libttf.a && TTF_LIBDIR="$TTF_DIR/lib"
+  test -f $TTF_DIR/libttf.a && TTF_LIBDIR="$TTF_DIR"
   test -f $TTF_DIR/lib/.libs/libttf.so && TTF_LIBDIR="$TTF_DIR/lib/.libs"
   test -f $TTF_DIR/lib/libttf.so && TTF_LIBDIR="$TTF_DIR/lib"
   test -f $TTF_DIR/libttf.so && TTF_LIBDIR="$TTF_DIR"
@@ -308,7 +311,7 @@ elif test -n "$with_ttf" -a "$with_ttf" != "yes" ; then
       TTF_LIB="-L$TTF_LIBDIR -lttf"
       AC_ADD_RUNPATH("$TTF_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find freetype.h or libttf.so in $TTF_DIR.")
+      AC_MSG_ERROR("Could not find freetype.h or libttf.so/libttf.a in $TTF_DIR.")
   fi
 
   TTF_ENABLED="-DUSE_TTF"

@@ -453,38 +453,50 @@ gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *results)
     if(lp->postlabelcache) // wait to draw
       continue;
 
-    if(lp->features)
+    // check for inline data
+    if(lp->features) {
       msDrawInlineLayer(map, lp, img);
-    else {
-      if(lp->type == MS_RASTER) { 
-	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
-      } else {
-	
-	switch(map->querymap.style) {
-	case(MS_NORMAL):
-	  if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
-	  break;
-	case(MS_HILITE): /* draw selected features in special color, other features get drawn normally */
-	  if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL); /* 1st, draw normally */
-	  if(results->layers[i].status && results->layers[i].numresults > 0) {
-	    for(j=0; j<lp->numclasses; j++) {
-	      color_buffer[j] = lp->class[j].color; // save the color
-	      lp->class[j].color = map->querymap.color;
-	    }
-	    if(msDrawShapefileLayer(map, lp, img, results->layers[i].status) == -1) return(NULL);
-	    for(j=0; j<lp->numclasses; j++)	      
-	      lp->class[j].color = color_buffer[j]; // restore the color
+      continue;
+    }
+
+    // check for remote data
+    if(lp->connection && lp->connectiontype == MS_SDE) {
+      if(msDrawSDELayer(map, lp, img) == -1) return(NULL);
+      continue;
+    }
+
+    if(lp->connection && lp->connectiontype == MS_OGR) {
+      if(msDrawOGRLayer(map, lp, img) == -1) return(NULL);
+      continue;
+    }
+
+    if(lp->type == MS_RASTER) { 
+      if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+    } else {
+      switch(map->querymap.style) {
+      case(MS_NORMAL):
+	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+	break;
+      case(MS_HILITE): /* draw selected features in special color, other features get drawn normally */
+	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL); /* 1st, draw normally */
+	if(results->layers[i].status && results->layers[i].numresults > 0) {
+	  for(j=0; j<lp->numclasses; j++) {
+	    color_buffer[j] = lp->class[j].color; // save the color
+	    lp->class[j].color = map->querymap.color;
 	  }
-	  break;
-	case(MS_SELECTED): /* draw only the selected features, normally */
-	  if(!results->layers[i].status) {
-	    if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
-	  } else {
-	    if(results->layers[i].numresults > 0)
-	      if(msDrawShapefileLayer(map, lp, img, results->layers[i].status) == -1) return(NULL);
-	  }
-	  break;
+	  if(msDrawShapefileLayer(map, lp, img, results->layers[i].status) == -1) return(NULL);
+	  for(j=0; j<lp->numclasses; j++)	      
+	    lp->class[j].color = color_buffer[j]; // restore the color
 	}
+	break;
+      case(MS_SELECTED): /* draw only the selected features, normally */
+	if(!results->layers[i].status) {
+	  if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+	} else {
+	  if(results->layers[i].numresults > 0)
+	    if(msDrawShapefileLayer(map, lp, img, results->layers[i].status) == -1) return(NULL);
+	}
+	break;
       }
     }
   }
@@ -505,14 +517,17 @@ gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *results)
     if(!lp->postlabelcache) 
       continue;
 
-    if(lp->features)
+    // check for inline data
+    if(lp->features) {
       msDrawInlineLayer(map, lp, img);
-    else
-      if(lp->type == MS_RASTER) {
-	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
-      } else {	
-	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
-      }
+      continue;
+    }
+
+    if(lp->type == MS_RASTER) {
+      if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+    } else {	
+      if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+    }
   }
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
@@ -1185,17 +1200,17 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       continue; // skip it, next tile
 #endif
 
-    /* Find item numbers of any columns to be used */
-    if(layer->classitem) {
-      if((classItemIndex = msGetItemIndex(shpfile.hDBF, layer->classitem)) == -1)
-	return(-1);
-    }
+    /* Find item numbers of any columns to be used, can't check this until you have a file to open so it has to be in 
+       the tile loop. Only need to check one tile since they should have the same structure. */
+    if(t == 0) {
+      if(layer->classitem)
+	if((classItemIndex = msGetItemIndex(shpfile.hDBF, layer->classitem)) == -1) return(-1);
 
-    if(layer->labelitem && annotate) {
-      if((labelItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelitem)) == -1)
-	return(-1);	
-      labelAngleItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelangleitem); /* not required */
-      labelSizeItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelsizeitem);
+      if(layer->labelitem && annotate) {
+	if((labelItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelitem)) == -1) return(-1);	
+	labelAngleItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelangleitem); /* not required */
+	labelSizeItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelsizeitem);
+      }
     }
 
     if(layer->transform == MS_TRUE) {
@@ -1222,7 +1237,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     }
     
     start_feature = 0;
-    if(layer->maxfeatures != -1) { /* user only wants maxFeatures, this only makes sense with sorted shapefiles */
+    if(layer->maxfeatures != -1) { /* user only wants maxfeatures, this only makes sense with sorted, non-tiled shapefiles */
       f = 0;
       for(i=shpfile.numshapes-1; i>=0; i--) {
 	if(f > layer->maxfeatures)
@@ -1608,7 +1623,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       
       for(i=start_feature;i<shpfile.numshapes;i++) {
 	
-	if(!msGetBit(status,i)) continue; /* next shape */
+	if(!msGetBit(status,i)) continue; /* next shape */	
 	
 	if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
 
@@ -1653,7 +1668,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	
 	msFreeShape(&shape);
       }	
-      
+
       break;
       
     default:
@@ -1663,7 +1678,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     
     msCloseSHPFile(&shpfile);
     free(status);
-    
   } /* next tile */
   
   if(layer->tileindex) { /* tiling clean-up */

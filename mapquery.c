@@ -416,10 +416,41 @@ queryResultObj *msQueryUsingItem(mapObj *map, char *layer, int mode, char *item,
     }
 
     queryItemIndex = msGetItemIndex(shpfile.hDBF, map->layers[l].queryitem);
-    
-    if((itemIndex = msGetItemIndex(shpfile.hDBF, item)) == -1) { /* requested item doesn't exist in this table */
-      msCloseSHPFile(&shpfile);
+
+    if(strcmp(item, "rec#") == 0) {
+      char **ids=NULL;
+      int nids, id;
+
+      ids = split(value, '|', &nids);
+      
+      for(i=0; i<nids; i++) {
+	id = atoi(ids[i]);
+	if(id >= 0 && id < shpfile.numshapes) { // valid id
+	  index = shpGetQueryIndex(shpfile.hDBF, &(map->layers[l]), i, queryItemIndex);
+	  if((index < 0) || (index >= map->layers[l].numqueries))
+	    continue;
+	
+	  msSetBit(results->layers[l].status,id,1);
+	  results->layers[l].index[id] = index;
+	  results->layers[l].numresults++;
+	  
+	  if(mode == MS_SINGLE) { /* no need to go any further */
+	    regfree(&re);
+	    free(status);
+	    msCloseSHPFile(&shpfile);
+	    msFreeCharArray(ids, nids);
+	    return(results);
+	  }
+	}
+      }
+      
+      msFreeCharArray(ids, nids);
       continue;
+    } else {
+      if((itemIndex = msGetItemIndex(shpfile.hDBF, item)) == -1) { /* requested item doesn't exist in this table */
+	msCloseSHPFile(&shpfile);
+	continue;
+      }
     }
 
     if(map->extent.minx != map->extent.maxx) { /* use extent as first cut */
@@ -438,7 +469,7 @@ queryResultObj *msQueryUsingItem(mapObj *map, char *layer, int mode, char *item,
       msCloseSHPFile(&shpfile);
       msFreeQueryResults(results);
       return(NULL);
-    }
+    }    
     
     for(i=0; i<shpfile.numshapes; i++) {
       if(!msGetBit(status,i))

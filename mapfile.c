@@ -2143,8 +2143,8 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->intervals = 4;
   initLabel(&scalebar->label);
   scalebar->label.position = MS_XY; /*  override */
-  scalebar->backgroundcolor = -1;
-  scalebar->color = -1;
+  scalebar->backgroundcolor = 0; /* image background */
+  scalebar->color = 1; /* at least it won't dump core if not defined */
   scalebar->outlinecolor = -1; /* no outline */
   scalebar->units = MS_MILES;
   scalebar->status = MS_OFF;

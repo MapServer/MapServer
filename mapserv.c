@@ -1227,12 +1227,12 @@ void returnHTML(char *html)
       }
  
       if(SaveQuery) {
-        sprintf(substr, "%s%s%s.qf", Map->web.imageurl, Map->name, Id);
+        sprintf(substr, "%s%s%s.qf", Map->web.imagepath, Map->name, Id);
         outstr = gsub(outstr, "[queryfile]", substr);
       }
 
       if(SaveMap) {
-        sprintf(substr, "%s%s%s.map", Map->web.imageurl, Map->name, Id);
+        sprintf(substr, "%s%s%s.map", Map->web.imagepath, Map->name, Id);
         outstr = gsub(outstr, "[map]", substr);
       }
 
@@ -1404,6 +1404,17 @@ void returnURL(char *url)
   outstr = gsub(outstr, "[rawmaxy]", substr);
   sprintf(substr, "%f %f %f %f", RawExt.minx, RawExt.miny,  RawExt.maxx, RawExt.maxy);
   outstr = gsub(outstr, "[rawext]", (char *)encode_url(substr));
+
+  
+  if(SaveQuery) {
+    sprintf(substr, "%s%s%s.qf", Map->web.imagepath, Map->name, Id);
+    outstr = gsub(outstr, "[queryfile]", substr);
+  }
+  
+  if(SaveMap) {
+    sprintf(substr, "%s%s%s.map", Map->web.imagepath, Map->name, Id);
+    outstr = gsub(outstr, "[map]", substr);
+  }
   
   strcpy(substr, ""); /* Layer list for a "GET" request */
   for(i=0;i<NumLayers;i++)    

@@ -437,7 +437,7 @@ static char *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
       return( NULL );
 
     if( hEntity < 0 || hEntity >= psDBF->nRecords )
-        return( NULL );
+      return( NULL );
 
     /* -------------------------------------------------------------------- */
     /*	Have we read the record?					    */

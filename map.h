@@ -539,8 +539,7 @@ typedef struct { /* structure for a map */
   paletteObj palette; /* holds a map palette */
   colorObj imagecolor; /* holds the initial image color value */
 
-  short imagetype;
-  short imagequality;
+  int imagetype, imagequality;
 
   projectionObj projection; /* projection information for output map */
 
