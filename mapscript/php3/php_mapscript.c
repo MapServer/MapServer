@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/09/17 17:38:32  dan
+ * Changes in img.saveImage() / saveWebImage() for GD 1.8
+ *
  * Revision 1.12  2000/09/12 13:52:57  dan
  * Fixed img.saveImage() to use php_write() when sending output to stdout.
  *
@@ -152,7 +155,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Sep 12, 2000)"
+#define PHP3_MS_VERSION "(Sep 17, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -642,6 +645,11 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_LOCAL",      MS_LOCAL,       const_flag);
     REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
     REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
+
+    /* output image type constants*/
+    REGISTER_LONG_CONSTANT("MS_GIF",        MS_GIF,         const_flag);
+    REGISTER_LONG_CONSTANT("MS_PNG",        MS_PNG,         const_flag);
+    REGISTER_LONG_CONSTANT("MS_JPEG",       MS_JPEG,        const_flag);
 
     /* querymap style constants */
     REGISTER_LONG_CONSTANT("MS_NORMAL",     MS_NORMAL,      const_flag);
@@ -2181,6 +2189,11 @@ static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
 
 /**********************************************************************
  *                        image->saveImage()
+ * With GD 1.2, 1.3, 1.6:
+ *       saveImage(string filename, int transparent, int interlace)
+ * With GD 1.8:
+ *       saveImage(string filename, int type, int transparent, 
+ *                 int interlace, int quality)
  **********************************************************************/
 
 /* {{{ proto int img.saveImage(string filename, int transparent, int interlace)
@@ -2189,6 +2202,9 @@ static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pFname, *pTransparent, *pInterlace, *pThis;
+#ifdef USE_GD_1_8
+    pval   *pType, *pQuality;
+#endif
     gdImagePtr im = NULL;
     int retVal = 0;
 #ifdef PHP4
@@ -2202,7 +2218,13 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 3, &pFname, &pTransparent, &pInterlace) != SUCCESS)
+#ifdef USE_GD_1_8
+        getParameters(ht, 5, &pFname, &pType, &pTransparent, 
+                      &pInterlace, &pQuality) != SUCCESS
+#else
+        getParameters(ht, 3, &pFname, &pTransparent, &pInterlace) != SUCCESS
+#endif
+        )
     {
         WRONG_PARAM_COUNT;
     }
@@ -2210,6 +2232,10 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pFname);
     convert_to_long(pTransparent);
     convert_to_long(pInterlace);
+#ifdef USE_GD_1_8
+    convert_to_long(pType);
+    convert_to_long(pQuality);
+#endif
 
     im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
 
@@ -2283,8 +2309,15 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             fclose(tmp); /* the temporary file is automatically deleted */
         }
 #else
-
+        /* GD 1.6 / 1.8 */
+#ifdef USE_GD_1_8
+        if(pType->value.lval == MS_PNG)
+            iptr = gdImagePngPtr(im, &size);
+        else
+            iptr = gdImageJpegPtr(im, &size, pQuality->value.lval);
+#else /* USE_GD_1_6 */
         iptr = gdImagePngPtr(im, &size);
+#endif
         if (size == 0) {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed writing image to stdout");
@@ -2311,6 +2344,10 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
 /**********************************************************************
  *                        image->saveWebImage()
+ * With GD 1.2, 1.3, 1.6:
+ *       saveWebImage(int transparent, int interlace)
+ * With GD 1.8:
+ *       saveWebImage(int type, int transparent, int interlace, int quality)
  **********************************************************************/
 
 /* {{{ proto int img.saveWebImage(int transparent, int interlace)
@@ -2319,9 +2356,17 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pTransparent, *pInterlace, *pThis;
+#ifdef USE_GD_1_8
+    pval   *pType, *pQuality;
+#endif
     gdImagePtr im = NULL;
     char *pImagepath, *pImageurl, *pBuf;
     int nBufSize, nLen1, nLen2;
+#ifdef USE_GD_1_6
+    const char *pszImageExt = "png";
+#else
+    const char *pszImageExt = "gif";
+#endif
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2333,13 +2378,28 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 2, &pTransparent, &pInterlace) != SUCCESS)
+#ifdef USE_GD_1_8
+        getParameters(ht, 4, &pType, &pTransparent, 
+                      &pInterlace, &pQuality) != SUCCESS
+#else
+        getParameters(ht, 2, &pTransparent, &pInterlace) != SUCCESS
+#endif
+        )
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_long(pTransparent);
     convert_to_long(pInterlace);
+#ifdef USE_GD_1_8
+    convert_to_long(pType);
+    convert_to_long(pQuality);
+
+    if (pType->value.lval == MS_JPEG)
+        pszImageExt = "jpg";
+    else if (pType->value.lval == MS_PNG)
+        pszImageExt = "png";
+#endif
 
     im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
     pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR);
@@ -2352,12 +2412,19 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     nBufSize = (nLen1>nLen2 ? nLen1:nLen2) + strlen(tmpId) + 30;
     pBuf = (char*)emalloc(nBufSize);
     tmpCount++;
-    sprintf(pBuf, "%s%s%d.%s", pImagepath, tmpId, tmpCount, MS_IMAGE_TYPE);
+    sprintf(pBuf, "%s%s%d.%s", pImagepath, tmpId, tmpCount, pszImageExt);
 
     /* Save the image... 
      */
-    if (im == NULL || msSaveImage(im, pBuf, pTransparent->value.lval, 
-                                  pInterlace->value.lval) != 0)
+    if (im == NULL || 
+#ifdef USE_GD_1_8
+        msSaveImage(im, pBuf, pType->value.lval, pTransparent->value.lval, 
+                    pInterlace->value.lval, pQuality->value.lval) != 0
+#else
+        msSaveImage(im, pBuf, pTransparent->value.lval, 
+                    pInterlace->value.lval) != 0
+#endif
+        )
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "Failed writing image to %s", 
@@ -2366,7 +2433,7 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 
     /* ... and return the corresponding URL
      */
-    sprintf(pBuf, "%s%s%d.%s", pImageurl, tmpId, tmpCount, MS_IMAGE_TYPE);
+    sprintf(pBuf, "%s%s%d.%s", pImageurl, tmpId, tmpCount, pszImageExt);
     RETURN_STRING(pBuf, 0);
 }
 /* }}} */
