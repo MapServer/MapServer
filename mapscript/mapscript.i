@@ -946,21 +946,8 @@ memory.") const char * {
     return msDrawShape(map, layer, self, image, MS_TRUE);
   }
 
-  void setBounds() {
-    int i, j;
-
-    self->bounds.minx = self->bounds.maxx = self->line[0].point[0].x;
-    self->bounds.miny = self->bounds.maxy = self->line[0].point[0].y;
-    
-    for( i=0; i<self->numlines; i++ ) {
-      for( j=0; j<self->line[i].numpoints; j++ ) {
-	self->bounds.minx = MS_MIN(self->bounds.minx, self->line[i].point[j].x);
-	self->bounds.maxx = MS_MAX(self->bounds.maxx, self->line[i].point[j].x);
-	self->bounds.miny = MS_MIN(self->bounds.miny, self->line[i].point[j].y);
-	self->bounds.maxy = MS_MAX(self->bounds.maxy, self->line[i].point[j].y);
-      }
-    }
-
+  void setBounds() {    
+    msComputeBounds(self);
     return;
   }
 
