@@ -44,6 +44,8 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
                                   int sy, int fc, int bc, int oc, 
                                   double sz, int *bDestroyImage)
 {
+#ifdef undef
+
     symbolObj   *symbol;
     int         i;
     gdPoint     oldpnt,newpnt;
@@ -262,6 +264,9 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
     }
 
     return tile;
+#endif
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -460,14 +465,16 @@ SWFShape BuildEllipseShape(int nX, int nY, int nWidth, int nHeight,
         return NULL;
 
     if (psOutlineColor)
-        SWFShape_setLine(oShape, 0, psOutlineColor->red, 
-                         psOutlineColor->green, psOutlineColor->blue, 0xff);
+        SWFShape_setLine(oShape, 0, (byte)psOutlineColor->red, 
+                         (byte)psOutlineColor->green, (byte)psOutlineColor->blue, 0xff);
     
     if (psFillColor)
         SWFShape_setRightFill(oShape, 
-                              SWFShape_addSolidFill(oShape, psFillColor->red, 
-                                                    psFillColor->green, 
-                                                    psFillColor->blue, 0xff));
+                              SWFShape_addSolidFill(oShape, 
+                                                    (byte)psFillColor->red, 
+                                                    (byte)psFillColor->green, 
+                                                    (byte)psFillColor->blue, 
+                                                    0xff));
 
     SWFShape_movePenTo(oShape, (float)(nX-(nWidth/2)), (float)nY);
 
@@ -569,14 +576,14 @@ SWFShape BuildPolygonShape(shapeObj *p, colorObj *psFillColor,
     {
         oShape = newSWFShape();
         if (psOutlineColor)
-            SWFShape_setLine(oShape, 0, psOutlineColor->red, 
-                             psOutlineColor->green, psOutlineColor->blue, 0xff);
+            SWFShape_setLine(oShape, 0, (byte)psOutlineColor->red, 
+                             (byte)psOutlineColor->green, (byte)psOutlineColor->blue, 0xff);
         if (psFillColor)
             SWFShape_setRightFill(oShape,
                                   SWFShape_addSolidFill(oShape, 
-                                                        psFillColor->red, 
-                                                        psFillColor->green, 
-                                                        psFillColor->blue,
+                                                        (byte)psFillColor->red, 
+                                                        (byte)psFillColor->green, 
+                                                        (byte)psFillColor->blue,
                                                         0xff));
 
        for (i = 0; i < p->numlines; i++)
@@ -616,21 +623,24 @@ SWFShape  BuildShape(gdPoint adfPoints[], int nPoints,
     if (psFillColor)
     {
         if (psOutlineColor)
-            SWFShape_setLine(oShape, 0, psOutlineColor->red, 
-                             psOutlineColor->green, psOutlineColor->blue, 0xff);
+            SWFShape_setLine(oShape, 0, (byte)psOutlineColor->red, 
+                             (byte)psOutlineColor->green, (byte)psOutlineColor->blue, 0xff);
 
         SWFShape_setRightFill(oShape, 
-                              SWFShape_addSolidFill(oShape, psFillColor->red, 
-                                                    psFillColor->green, 
-                                                    psFillColor->blue, 0xff));
+                              SWFShape_addSolidFill(oShape, 
+                                                    (byte)psFillColor->red, 
+                                                    (byte)psFillColor->green, 
+                                                    (byte)psFillColor->blue, 
+                                                    0xff));
         /*SWFShape_setRightFill(oShape, 
                               SWFShape_addSolidFill(oShape, 0xFF, 
                                                     0, 
                                                     0, 0xff));*/
     }
     else
-        SWFShape_setLine(oShape, 5, psOutlineColor->red, psOutlineColor->green, 
-                         psOutlineColor->blue, 0xff);
+        SWFShape_setLine(oShape, 5, (byte)psOutlineColor->red, 
+                         (byte)psOutlineColor->green, 
+                         (byte)psOutlineColor->blue, 0xff);
     
 
     SWFShape_movePenTo(oShape, (float)adfPoints[0].x, (float)adfPoints[0].y);
@@ -662,8 +672,8 @@ SWFShape  BuildShapeLine(gdPoint adfPoints[], int nPoints,
     if (psColor == NULL || nPoints <= 0)
         return NULL;
 
-    SWFShape_setLine(oShape, 0, psColor->red, 
-                     psColor->green, psColor->blue, 0xff);
+    SWFShape_setLine(oShape, 0, (byte)psColor->red, 
+                     (byte)psColor->green, (byte)psColor->blue, 0xff);
 
 
     SWFShape_movePenTo(oShape, (float)adfPoints[0].x, (float)adfPoints[0].y);
@@ -1016,7 +1026,7 @@ void msDrawStartShapeUsingIdxSWF(mapObj *map, layerObj *layer, imageObj *image,
     {
         msInitShape(&shape);
         msLayerGetShape(layer, &shape, -1, shapeidx);
-        return msDrawStartShapeSWF(map, layer, image, &shape);
+        msDrawStartShapeSWF(map, layer, image, &shape);
     }
 }
 
@@ -1063,11 +1073,13 @@ void AddMouseActions(SWFButton oButton, int nLayerIndex, int nShapeIndex)
 /*      Draw symbols in an SWF Movie.                                   */
 /************************************************************************/
 void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
-                           pointObj *p, 
-                           int sy, int fc, int bc, int oc, double sz)
+                           pointObj *p, styleObj *style, double scalefactor)
+                           
 {
     symbolObj *symbol;
-    int offset_x, offset_y, x, y;
+    int offset_x, offset_y;
+    double x, y;
+    int size;
     int j;
     gdPoint mPoints[MS_MAXVECTORPOINTS];
 
@@ -1099,29 +1111,47 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
     int nLayerIndex = -1;
     int nShapeIndex = -1;
-   
+
+    int fc = 0; //only used for TTF 
+            
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
     if (image == NULL || !MS_DRIVER_SWF(image->format) )
         return;
 
-    if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
+    symbol = &(symbolset->symbol[style->symbol]);
+    size = MS_NINT(style->size*scalefactor);
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
+
+
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
         return;
 
     //if(fc >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
     //   return;
 
-    if(sz < 1) /* size too small */
+    if(size < 1) /* size too small */
         return;
 
 /* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
     map = image->img.swf->map;
-    getRgbColor(map, fc, &sFc.red, &sFc.green, &sFc.blue);
-    getRgbColor(map, bc, &sBc.red, &sBc.green, &sBc.blue);
-    getRgbColor(map, oc, &sOc.red, &sOc.green, &sOc.blue);
+    sFc.red = style->color.red;
+    sFc.green = style->color.green;
+    sFc.blue = style->color.blue;
+    
+    sBc.red = style->backgroundcolor.red;
+    sBc.green = style->backgroundcolor.green;
+    sBc.blue = style->backgroundcolor.blue;
+
+    sOc.red = style->outlinecolor.red;
+    sOc.green = style->outlinecolor.green;
+    sOc.blue = style->outlinecolor.blue;
+
+    
 
     //TODO : this should come from the map file.
     sColorHighlightObj.red = 0xff;
@@ -1148,7 +1178,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Render the diffrent type of symbols.                            */
 /* -------------------------------------------------------------------- */
-    symbol = &(symbolset->symbol[sy]);
+    //symbol = &(symbolset->symbol[sy]);
 
     nTmp = image->img.swf->nCurrentMovie;
 
@@ -1164,31 +1194,35 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             if(!font) 
                 return;
             
-            if(getCharacterSize(symbol->character, sz, font, &rect) == -1) 
+            if(getCharacterSize(symbol->character, size, font, &rect) == -1) 
                 return;
             
             x = p->x - (rect.maxx - rect.minx)/2 - rect.minx;
             y = p->y - rect.maxy + (rect.maxy - rect.miny)/2;  
 
-            imgtmp = gdImageCreate((rect.maxx - rect.minx)+2,
-                                   (rect.maxy - rect.miny)+2);
+            imgtmp = gdImageCreate((int)((rect.maxx - rect.minx)+2),
+                                   (int)((rect.maxy - rect.miny)+2));
 
 #ifdef USE_GD_TTF
             //gdImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), 
             //                font, sz, 0, x, y, symbol->character);
-             gdImageStringTTF(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
-                              font, sz, 0, 1, 1, symbol->character);
-             oButton = BuildButtonFromGD(imgtmp, NULL);
-             AddMouseActions(oButton, nLayerIndex, nShapeIndex);
+
+            msImageSetPenGD(imgtmp, &(style->color));
+            fc = style->color.pen;
+
+            gdImageStringTTF(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
+                              font, size, 0, 1, 1, symbol->character);
+            oButton = BuildButtonFromGD(imgtmp, NULL);
+            AddMouseActions(oButton, nLayerIndex, nShapeIndex);
              //oShape = gdImage2Shape(imgtmp);
-             oDisplay = SWFMovie_add(image->img.swf->pasMovies[nTmp], 
+            oDisplay = SWFMovie_add(image->img.swf->pasMovies[nTmp], 
                                      oButton);
-             SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
+            SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
 #else
              //gdImageStringFT(img, bbox, ((symbol->antialias)?(fc):-(fc)), 
              //               font, sz, 0, x, y, symbol->character);
             gdImageStringFT(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
-                            font, sz, 0, 1, 1, symbol->character);
+                            font, size, 0, 1, 1, symbol->character);
             //oShape = gdImage2Shape(imgtmp);
             oButton = BuildButtonFromGD(imgtmp, NULL);
             AddMouseActions(oButton, nLayerIndex, nShapeIndex);
@@ -1203,7 +1237,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      Symbol : pixmap.                                                */
 /* -------------------------------------------------------------------- */
         case(MS_SYMBOL_PIXMAP):
-            if(sz == 1) 
+            if(size == 1) 
             { // don't scale
                 offset_x = MS_NINT(p->x - .5*symbol->img->sx);
                 offset_y = MS_NINT(p->y - .5*symbol->img->sy);
@@ -1220,16 +1254,16 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             } 
             else 
             {
-                scale = sz/symbol->img->sy;
+                scale = size/symbol->img->sy;
                 offset_x = MS_NINT(p->x - .5*symbol->img->sx*scale);
                 offset_y = MS_NINT(p->y - .5*symbol->img->sy*scale);
 
-                imgtmp = gdImageCreate(symbol->img->sx*scale, 
-                                       symbol->img->sy*scale);
+                imgtmp = gdImageCreate((int)(symbol->img->sx*scale), 
+                                       (int)(symbol->img->sy*scale));
                 
                 gdImageCopyResized(imgtmp, symbol->img, 0, 0, 0, 0,
-                                   symbol->img->sx*scale, 
-                                   symbol->img->sy*scale, symbol->img->sx, 
+                                   (int)(symbol->img->sx*scale), 
+                                   (int)(symbol->img->sy*scale), symbol->img->sx, 
                                    symbol->img->sy);
             
                 //out = fopen("c:/tmp/ms_tmp/test.jpg", "wb");
@@ -1253,7 +1287,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
         case(MS_SYMBOL_ELLIPSE):
  
-            scale = sz/symbol->sizey;
+            scale = size/symbol->sizey;
             x = MS_NINT(symbol->sizex*scale)+1;
             y = MS_NINT(symbol->sizey*scale)+1;
             offset_x = MS_NINT(p->x - .5*x);
@@ -1262,12 +1296,12 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             psFillColor = NULL;
             psOutlineColor = NULL;
 
-            if (fc >= 0)
+            if (MS_VALID_COLOR(&sFc))
                 psFillColor = &sFc;
-            if (oc >=0)
+            if (MS_VALID_COLOR(&sOc))
                 psOutlineColor = &sOc;
 
-            if(oc >= 0) 
+            if(MS_VALID_COLOR(&sOc)) 
             {
                 if (!symbol->filled)
                     psFillColor = NULL;
@@ -1282,7 +1316,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             } 
             else 
             {
-                if(fc >= 0) 
+                if(MS_VALID_COLOR(&sFc)) 
                 {
                     oButton = 
                         BuildEllipseButton(offset_x, offset_y,
@@ -1302,7 +1336,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
         case(MS_SYMBOL_VECTOR):
 
-            scale = sz/symbol->sizey;
+            scale = size/symbol->sizey;
 
             offset_x = MS_NINT(p->x - scale*.5*symbol->sizex);
             offset_y = MS_NINT(p->y - scale*.5*symbol->sizey);
@@ -1321,9 +1355,9 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 psFillColor = NULL;
                 psOutlineColor = NULL;
 
-                if (fc >= 0)
+                if (MS_VALID_COLOR(&sFc))
                     psFillColor = &sFc;
-                if (oc >=0)
+                if (MS_VALID_COLOR(&sOc))
                     psOutlineColor = &sOc;
                 
                 oButton = BuildButtonPolygon(mPoints, symbol->numpoints,  
@@ -1339,7 +1373,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
             else  
             {
-                if(fc < 0) return;
+                if(!MS_VALID_COLOR(&sFc)) 
+                  return;
       
                 for(j=0;j < symbol->numpoints;j++) 
                 {
@@ -1378,8 +1413,8 @@ SWFShape DrawShapePolyline(shapeObj *p, colorObj *psColor)
     if (p && psColor && p->numlines > 0)
     {
         oShape = newSWFShape();
-        SWFShape_setLine(oShape, 0, psColor->red, 
-                         psColor->green, psColor->blue, 0xff);
+        SWFShape_setLine(oShape, 0, (byte)psColor->red, 
+                         (byte)psColor->green, (byte)psColor->blue, 0xff);
         
         
 
@@ -1503,7 +1538,7 @@ SWFText DrawText(char *string, int nX, int nY, char *pszFontFile,
         oText = newSWFText();
         SWFText_setFont(oText, oFont);
         SWFText_moveTo(oText, (float)nX, (float)nY);
-        SWFText_setColor(oText, psColor->red, psColor->green, psColor->blue, 
+        SWFText_setColor(oText, (byte)psColor->red, (byte)psColor->green, (byte)psColor->blue, 
                          0xff);
         SWFText_setHeight(oText, (float)dfSize);
         SWFText_addString(oText, string, NULL);
@@ -1524,7 +1559,7 @@ SWFText DrawText(char *string, int nX, int nY, char *pszFontFile,
 /*      TODO : lines with symbols is not yet implemented.               */
 /************************************************************************/
 void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
-                         int sy, int fc, int bc, double sz)
+                         styleObj *style, double scalefactor)
 {
     colorObj    sFc;
     colorObj    sBc;
@@ -1536,6 +1571,8 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     int         nLayerIndex = -1;
     int         nShapeIndex = -1;
     layerObj    *psLayerTmp = NULL;
+    int         size = 0;
+    symbolObj *symbol;
 
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
@@ -1546,18 +1583,31 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     if(p == NULL || p->numlines <= 0)
       return;
 
-    if(sy > symbolset->numsymbols || sy < 0) // no such symbol, 0 is OK
+    symbol = &(symbolset->symbol[style->symbol]);
+    size = MS_NINT(style->size*scalefactor);
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
+
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) // no such symbol, 0 is OK
       return;
     
-    if(fc < 0)// || (fc >= gdImageColorsTotal(img))) // invalid color
+
+    if (!MS_VALID_COLOR( &style->color))
       return;
 
 /* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
     map = image->img.swf->map;
-    getRgbColor(map, fc, &sFc.red, &sFc.green, &sFc.blue);
-    getRgbColor(map, bc, &sBc.red, &sBc.green, &sBc.blue);
+
+    sFc.red = style->color.red;
+    sFc.green = style->color.green;
+    sFc.blue = style->color.blue;
+    
+    sBc.red = style->backgroundcolor.red;
+    sBc.green = style->backgroundcolor.green;
+    sBc.blue = style->backgroundcolor.blue;
+
 
     nTmp = image->img.swf->nCurrentMovie;
 
@@ -1614,8 +1664,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /*      Draw polygon features. Only supports solid filled polgons.      */
 /************************************************************************/
 void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
-                          shapeObj *p, int sy, int fc, int bc, int oc, 
-                          double sz)
+                          shapeObj *p, styleObj *style, double scalefactor)
 {
     colorObj    sFc;
     colorObj    sBc;
@@ -1639,24 +1688,29 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     
     int         nLayerIndex = -1;
     int         nShapeIndex = -1;
-
+    symbolObj   *symbol;
 
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
     if (image == NULL || !MS_DRIVER_SWF(image->format) )
-        return;
+      return;
     
     if(p == NULL || p->numlines <= 0)
-        return;
+      return;
 
-    if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
+    symbol = &(symbolset->symbol[style->symbol]);
+    size = MS_NINT(style->size*scalefactor);
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
+
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
         return;
 
     //if(fc >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
     //    return;
 
-    if(sz < 1) /* size too small */
+    if(size < 1) /* size too small */
         return;
 
 /* -------------------------------------------------------------------- */
@@ -1679,23 +1733,33 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
     map = image->img.swf->map;
-    getRgbColor(map, fc, &sFc.red, &sFc.green, &sFc.blue);
-    getRgbColor(map, bc, &sBc.red, &sBc.green, &sBc.blue);
-    getRgbColor(map, oc, &sOc.red, &sOc.green, &sOc.blue);
+
+    sFc.red = style->color.red;
+    sFc.green = style->color.green;
+    sFc.blue = style->color.blue;
+    
+    sBc.red = style->backgroundcolor.red;
+    sBc.green = style->backgroundcolor.green;
+    sBc.blue = style->backgroundcolor.blue;
+
+    sOc.red = style->outlinecolor.red;
+    sOc.green = style->outlinecolor.green;
+    sOc.blue = style->outlinecolor.blue;
+    
 
     //TODO : this should come from the map file.
     sColorHighlightObj.red = 0xff;
     sColorHighlightObj.green = 0;//0xff;
     sColorHighlightObj.blue = 0;
 
-    if (fc > -1)
+    if (MS_VALID_COLOR(&sFc))
         psFillColor = &sFc;
-    if (oc > -1)
+    if (MS_VALID_COLOR(&sOc))
         psOutlineColor = &sOc;
 
     nTmp = image->img.swf->nCurrentMovie;
     
-    if (sy == 0)
+    if (size == 0)
     {
         if (nLayerIndex < 0 ||  nShapeIndex < 0)
         {
@@ -1739,7 +1803,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     }
     else
     {
-        if (fc > -1 || oc > -1)
+        if (MS_VALID_COLOR(&sFc) || MS_VALID_COLOR(&sOc))
         {
             if (nLayerIndex < 0 ||  nShapeIndex < 0)
             {
@@ -1767,7 +1831,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      ming library. Returns 0 on success and -1 on error.             */
 /************************************************************************/
 int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, 
-                labelObj *label, fontSetObj *fontset)
+                labelObj *label, fontSetObj *fontset, double scalefactor)
 {
     int         x, y;
     char        *font=NULL;
@@ -1776,6 +1840,8 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     colorObj    sColor;
     mapObj     *map = NULL;
     SWFText     oText = NULL;
+    double         size = 0;
+    
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -1799,6 +1865,8 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 //    char *error=NULL, *font=NULL;
 //    int bbox[8];
 //    double angle_radians = MS_DEG_TO_RAD*label->angle;
+
+    size = label->size*scalefactor;
 
     if(!fontset) 
     {
@@ -1829,21 +1897,31 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     sColor.green = 0;
     sColor.blue = 0;
 
-    if (label->color > -1)
-        getRgbColor(map, label->color, &sColor.red, &sColor.green, &sColor.blue);
-    else if (label->outlinecolor > -1)
-        getRgbColor(map, label->outlinecolor, &sColor.red, &sColor.green, 
-                    &sColor.blue);
-    else if (label->shadowcolor > -1)
-        getRgbColor(map, label->shadowcolor, &sColor.red, &sColor.green, 
-                    &sColor.blue);
+    if (MS_VALID_COLOR(&label->color))
+    {
+        sColor.red = label->color.red;
+        sColor.green = label->color.green;
+        sColor.blue = label->color.blue;
+    }  
+    else if (MS_VALID_COLOR(&label->outlinecolor))
+    {
+        sColor.red = label->outlinecolor.red;
+        sColor.green = label->outlinecolor.green;
+        sColor.blue = label->outlinecolor.blue;
+    }
+    else if (MS_VALID_COLOR(&label->shadowcolor))
+    {
+        sColor.red = label->shadowcolor.red;
+        sColor.green = label->shadowcolor.green;
+        sColor.blue = label->shadowcolor.blue;
+    }
     else
     {
         msSetError(MS_TTFERR, "Invalid color", "draw_textSWF()");
 	return(-1);
     }
 
-    oText = DrawText(string, x, y, font, label->sizescaled, &sColor);
+    oText = DrawText(string, x, y, font, size, &sColor);
     if (oText)
     {
         nTmp = image->img.swf->nCurrentMovie;
@@ -1944,7 +2022,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     rectObj marker_rect;
     
     int         nCurrentMovie = 0;
-
+    int         bLayerOpen = 0;
     if (!image || !MS_DRIVER_SWF(image->format))
         return -1;
 
@@ -1958,20 +2036,21 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
         cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
 
-        layerPtr = &(map->layers[cachePtr->layeridx]); /* set a couple of other pointers, avoids nasty references */
+        layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
 
 /* ==================================================================== */
 /*      set the current layer so the label will be drawn in the         */
 /*      using the correct SWF handle.                                   */
 /* ==================================================================== */
-        image->img.swf->nCurrentMovie = cachePtr->layeridx;
+        image->img.swf->nCurrentMovie = cachePtr->layerindex;
         
         //msImageStartLayerSWF(map, layerPtr, image);
-        image->img.swf->nCurrentLayerIdx = cachePtr->layeridx;
+        image->img.swf->nCurrentLayerIdx = cachePtr->layerindex;
 /* ==================================================================== */
 /*      at this point the layer (at the shape level is closed). So      */
 /*      we will open it if necessary.                                   */
 /* ==================================================================== */
+        bLayerOpen = 0;
         if (msLookupHashTable(layerPtr->metadata, "SWFDUMPATTRIBUTES") &&
             layerPtr->numitems <= 0)
         {
@@ -1979,16 +2058,16 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
             msLayerWhichItems(layerPtr, MS_TRUE, MS_FALSE, 
                               msLookupHashTable(layerPtr->metadata, 
                                                 "SWFDUMPATTRIBUTES"));
-            //bLayerOpen = 1;
+            bLayerOpen = 1;
         }
         
         
         //image->img.swf->nCurrentShapeIdx = cachePtr->shapeidx;
-        msDrawStartShapeUsingIdxSWF(map, layerPtr, image,  cachePtr->shapeidx);
+        msDrawStartShapeUsingIdxSWF(map, layerPtr, image,  cachePtr->shapeindex);
            
         
-        classPtr = &(cachePtr->class);
-        labelPtr = &(cachePtr->class.label);
+        //classPtr = &(cachePtr->class);
+        labelPtr = &(cachePtr->label);
 
         if(!cachePtr->string)
             continue; /* not an error, just don't want to do anything */
@@ -2004,9 +2083,13 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
             continue; /* label too large relative to the feature */
 
         draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
-        if((layerPtr->type == MS_LAYER_ANNOTATION || layerPtr->type == MS_LAYER_POINT) && (classPtr->color >= 0 || classPtr->outlinecolor > 0 || classPtr->symbol > 0)) { // there *is* a marker
+        if((layerPtr->type == MS_LAYER_ANNOTATION&&  cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker
 
-            msGetMarkerSize(&map->symbolset, classPtr, &marker_width, &marker_height);
+            msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height);
+            
+            marker_width = (int)(marker_width * layerPtr->scalefactor);
+            marker_height = (int)(marker_height * layerPtr->scalefactor);
+
             marker_offset_x = MS_NINT(marker_width/2.0);
             marker_offset_y = MS_NINT(marker_height/2.0);      
 
@@ -2015,7 +2098,10 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
             marker_rect.maxx = marker_rect.minx + (marker_width-1);
             marker_rect.maxy = marker_rect.miny + (marker_height-1);
 
-            if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
+            for(i=0; i<cachePtr->numstyles; i++)
+              cachePtr->styles[i].size = (int)(cachePtr->styles[i].size * layerPtr->scalefactor);
+
+            //if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
         }
 
         if(labelPtr->position == MS_AUTO) {
@@ -2063,7 +2149,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-                            if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -2112,8 +2198,8 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-
-                            if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                            
+                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -2169,7 +2255,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
                 for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
                     if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                        if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                        if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
                             cachePtr->status = MS_FALSE;
                             break;
                         }
@@ -2188,17 +2274,20 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         if(!cachePtr->status)
             continue; /* next label */
 
-        if(draw_marker) { /* need to draw a marker */
-            msDrawMarkerSymbolSWF(&map->symbolset, image, &(cachePtr->point), classPtr->symbol, classPtr->color, classPtr->backgroundcolor, classPtr->outlinecolor, classPtr->sizescaled);
-            if(classPtr->overlaysymbol >= 0) msDrawMarkerSymbolSWF(&map->symbolset, image, &(cachePtr->point), classPtr->overlaysymbol, classPtr->overlaycolor, classPtr->overlaybackgroundcolor, classPtr->overlayoutlinecolor, classPtr->overlaysizescaled);
+        if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0){ /* need to draw a marker */
+            for(i=0; i<cachePtr->numstyles; i++)
+              msDrawMarkerSymbolSWF(&map->symbolset, image, &(cachePtr->point), 
+                                    &(cachePtr->styles[i]), layerPtr->scalefactor);
         }
 
         //TODO
         //if(labelPtr->backgroundcolor >= 0)
         //    billboard(img, cachePtr->poly, labelPtr);
 
-        draw_textSWF(image, p, cachePtr->string, labelPtr, &(map->fontset)); /* actually draw the label */
-        msLayerClose(layerPtr);
+        draw_textSWF(image, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
+
+        if (bLayerOpen)
+          msLayerClose(layerPtr);
         
     } /* next in cache */
 
@@ -2216,7 +2305,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 /*      Draw a label.                                                   */
 /************************************************************************/
 int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, 
-                   labelObj *label, fontSetObj *fontset)
+                   labelObj *label, fontSetObj *fontset, double scalefactor)
 {
     pointObj p;
     rectObj r;
@@ -2235,7 +2324,7 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
                     label->offsety, label->angle, 0, NULL);
     //labelPnt.x += label->offsetx;
     //labelPnt.y += label->offsety;
-    return draw_textSWF(image, p, string, label, fontset);
+    return draw_textSWF(image, p, string, label, fontset, scalefactor);
 
 }
 
@@ -2579,7 +2668,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
 
     if (imagetmp)
     {
-        msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor);
+        //msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor);
         msDrawVectorLayer(map, layer, imagetmp);
         
         oShape = gdImage2Shape(imagetmp->img.gd);

@@ -1187,20 +1187,18 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
 void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 
 int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, 
-                   labelObj *label, fontSetObj *fontset);
+                   labelObj *label, fontSetObj *fontset, double scalefactor);
 
 int msDrawLabelCacheSWF(imageObj *image, mapObj *map);
 
 void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
-                         int sy, int fc, int bc, double sz);
+                         styleObj *style, double scalefactor);
 
 void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
-                          shapeObj *p, int sy, int fc, int bc, int oc, 
-                          double sz);
+                          shapeObj *p, styleObj *style, double scalefactor);
 
 void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
-                           pointObj *p, 
-                           int sy, int fc, int bc, int oc, double sz);
+                           pointObj *p, styleObj *style, double scalefactor);
 int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj*image);
 
@@ -1215,7 +1213,7 @@ int msSaveImageSWF(imageObj *image, char *filename);
 void msFreeImageSWF(imageObj *image);
 
 int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, 
-                 labelObj *label, fontSetObj *fontset);
+                 labelObj *label, fontSetObj *fontset, double scalefactor);
 void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
                          shapeObj *shape);
 #endif

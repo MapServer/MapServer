@@ -1068,7 +1068,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
        
 #ifdef USE_MING_FLASH              
        else if( MS_RENDERER_SWF(image->format) )
-           msDrawMarkerSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
+           msDrawMarkerSymbolSWF(symbolset, image, p, style, scalefactor);
 #endif
     }
 }
@@ -1082,7 +1082,7 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
 
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
-            msDrawLineSymbolSWF(symbolset, image, p, sy, fc, bc, sz);
+            msDrawLineSymbolSWF(symbolset, image, p,  style, scalefactor);
 #endif
     }
 }
@@ -1096,7 +1096,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
 
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
-            msDrawShadeSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
+            msDrawShadeSymbolSWF(symbolset, image, p, style, scalefactor);
 #endif
     }
 }
@@ -1120,7 +1120,7 @@ int msDrawLabel(imageObj *image, pointObj labelPnt, char *string,
 
 #ifdef USE_MING_FLASH
   if ( MS_RENDERER_SWF(image->format) )
-      return msDrawLabelSWF(image, labelPnt, string, label, fontset);
+      return msDrawLabelSWF(image, labelPnt, string, label, fontset, scalefactor);
 #endif
 
   if(label->position != MS_XY) {
@@ -1152,7 +1152,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             nReturnVal = draw_textSWF(image, labelPnt, string, label, 
-                                      fontset); 
+                                      fontset, scalefactor); 
 #endif
     }
 
