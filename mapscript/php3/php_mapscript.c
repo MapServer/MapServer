@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.54  2001/10/04 18:13:07  dan
+ * Fixed ms_NewLayerObj() to update $map->numlayers.
+ *
  * Revision 1.53  2001/10/03 12:41:04  assefa
  * Add function getLayersIndexByGroup.
  *
@@ -100,7 +103,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Spet 13, 2001)"
+#define PHP3_MS_VERSION "(Oct 4, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -3696,6 +3699,10 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
         RETURN_FALSE;
     }
+
+    /* Update mapObj members */
+    _phpms_set_property_long(pMapObj, "numlayers",
+                             parent_map->numlayers, E_ERROR); 
 
     /* We will store a reference to the parent_map object id inside
      * the layer obj.
