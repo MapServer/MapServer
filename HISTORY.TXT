@@ -13,6 +13,12 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 3.6.7 (current CVS)
+--------------------------
+
+- Modified PHP MapScript SAPI test to accept 'cli' as well
+
+
 Version 3.6.6 (2003-06-01)
 --------------------------
 
