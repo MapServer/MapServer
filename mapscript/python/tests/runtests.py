@@ -67,7 +67,7 @@ from cases.zoomtest import ZoomScaleTestCase
 
 from cases.linetest import LineObjTestCase
 from cases.shapetest import ShapePointTestCase
-from cases.shapetest import PointObjTestCase
+from cases.pointtest import PointObjTestCase
 from cases.shapetest import InlineFeatureTestCase
 
 from cases.styletest import DrawProgrammedStylesTestCase

@@ -38,7 +38,7 @@
 
     char *__str__() {
         char buffer[256];
-        char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f }";
+        char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }";
         msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
         return strdup(buffer);
     }
@@ -63,33 +63,55 @@
 }
 
 /* ===========================================================================
-   Python mapserver container iterator class
+   Python mapserver container iterator classes
    ======================================================================== */
    
 %pythoncode {
 
-class LineIterator:
-    
-    def __init__(self, line):
+class MappingIterator:
+    def __init__(self, collection, limit_attr):
         self.current = 0
-        self.line = line
-        self.limit = line.numpoints - 1
-        
+        self.collection = collection
+        self.limit_attr = limit_attr
     def __iter__(self):
         return self
-
+    def _getChildByIndex(self, index):
+        """Subclasses must implement this"""
+        pass
     def next(self):
-        if self.current <= self.limit:
-            p = None
-            try:
-                p = self.line.getPoint(self.current)
-            except AttributeError:
-                p = self.line.get(self.current)
+        if self.current < getattr(self.collection, self.limit_attr):
+            o = self._getChildByIndex(self.current)
             self.current = self.current + 1
-            return p
+            return o
         else:
             raise StopIteration
+
+class LinePointIterator(MappingIterator):
+    def _getChildByIndex(self, index):
+        p = None
+        try:
+            p = self.collection.getPoint(self.current)
+        except AttributeError: # no getPoint
+            p = self.collection.get(self.current)
+        return p
+
+class ShapeLineIterator(MappingIterator):
+    def _getChildByIndex(self, index):
+        l = None
+        try:
+            l = self.collection.getLine(self.current)
+        except AttributeError: # no getLine
+            l = self.collection.get(self.current)
+        return l
         
+class MapLayerIterator(MappingIterator):
+    def _getChildByIndex(self, index):
+        return self.collection.getLayer(i)
+  
+class LayerClassIterator(MappingIterator):
+    def _getChildByIndex(self, index):
+        return self.collection.getClass(i)
+
 }
 
 
@@ -103,7 +125,7 @@ class LineIterator:
 %pythoncode {
 
     def __iter__(self):
-        return LineIterator(self)
+        return LinePointIterator(self, 'numpoints')
     
 }
 
@@ -268,3 +290,5 @@ class LineIterator:
     }
 
 }
+
+

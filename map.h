@@ -780,7 +780,9 @@ typedef struct map_obj{ /* structure for a map */
   int height, width;
   int maxsize;
 
+#ifndef SWIG
   layerObj *layers;
+#endif
 
 #ifdef SWIG
 %immutable;
