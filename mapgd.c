@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2004/11/19 19:45:08  sean
+ * Catch undetected images in msImageLoadGD, set an error and return NULL.  Moved
+ * conditional compilation #ifdefs around the driver recognition in
+ * msImageLoadGDCtx as in mapoutput.c.
+ *
  * Revision 1.86  2004/11/12 00:04:24  sdlime
  * Fixed bug 1036 (ignoring PENUP with filled VECTOR symbols) for the GD marker, line and fill routines.
  *
@@ -377,21 +382,19 @@ imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver)
     gdImagePtr img=NULL;
     imageObj *image = NULL;
 
-    if (strcasecmp(driver, "gd/gif") == MS_SUCCESS) {
 #ifdef USE_GD_GIF
+    if (strcasecmp(driver, "GD/GIF") == MS_SUCCESS)
         img = gdImageCreateFromGifCtx(ctx);
 #endif
-    }
-    if (strcasecmp(driver, "gd/png") == MS_SUCCESS) {
 #ifdef USE_GD_PNG
+    if (strcasecmp(driver, "GD/PNG") == MS_SUCCESS 
+    || strcasecmp(driver, "GD/PNG24") == MS_SUCCESS)
         img = gdImageCreateFromPngCtx(ctx);
 #endif
-    }
-    else if (strcasecmp(driver, "gd/jpeg") == MS_SUCCESS) {
 #ifdef USE_GD_JPEG
+    if (strcasecmp(driver, "GD/JPEG") == MS_SUCCESS)
         img = gdImageCreateFromJpegCtx(ctx);
 #endif
-    }
 
     if (!img) {
         msSetError(MS_GDERR, "Unable to initialize image",
@@ -505,7 +508,14 @@ imageObj *msImageLoadGD(const char *filename)
         return(NULL);
 #endif
     }
-
+    else
+    {
+        msSetError(MS_MISCERR, "Unable to load %s in any format.",
+                   "msImageLoadGD()", filename);
+        fclose(stream);
+        return(NULL);
+    }
+    
     ctx = msNewGDFileCtx(stream);
     image = msImageLoadGDCtx(ctx, driver);
     ctx->gd_free(ctx);
