@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.43  2002/02/08 21:29:18  frank
+ * ensure 3D geometries supported as well as 2D geometries
+ *
  * Revision 1.42  2002/01/15 01:00:51  dan
  * Attempt at fixing thick polygon outline problem (bug 92).  Also rewrote
  * the symbol mapping for brushes and pens at the same time to use the same
@@ -208,15 +211,18 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
 /* ------------------------------------------------------------------
  * Count total number of points
  * ------------------------------------------------------------------ */
-  if (poGeom->getGeometryType() == wkbPoint)
+  if (poGeom->getGeometryType() == wkbPoint
+      || poGeom->getGeometryType() == wkbPoint25D )
   {
       numpoints = 1;
   }
-  else if (poGeom->getGeometryType() == wkbLineString)
+  else if (poGeom->getGeometryType() == wkbLineString
+           || poGeom->getGeometryType() == wkbLineString25D )
   {
       numpoints = ((OGRLineString*)poGeom)->getNumPoints();
   }
-  else if (poGeom->getGeometryType() == wkbPolygon)
+  else if (poGeom->getGeometryType() == wkbPolygon
+           || poGeom->getGeometryType() == wkbPolygon25D )
   {
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing = poPoly->getExteriorRing();
@@ -311,7 +317,8 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 /* ------------------------------------------------------------------
  * Use recursive calls for complex geometries
  * ------------------------------------------------------------------ */
-  if (poGeom->getGeometryType() == wkbPolygon )
+  if (poGeom->getGeometryType() == wkbPolygon 
+      || poGeom->getGeometryType() == wkbPolygon25D )
   {
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing;
@@ -350,14 +357,16 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 /* ------------------------------------------------------------------
  * OGRPoint
  * ------------------------------------------------------------------ */
-  else if (poGeom->getGeometryType() == wkbPoint)
+  else if (poGeom->getGeometryType() == wkbPoint
+           || poGeom->getGeometryType() == wkbPoint25D )
   {
       /* Hummmm a point when we're drawing lines/polygons... just drop it! */
   }
 /* ------------------------------------------------------------------
  * OGRLinearRing/OGRLineString ... both are of type wkbLineString
  * ------------------------------------------------------------------ */
-  else if (poGeom->getGeometryType() == wkbLineString)
+  else if (poGeom->getGeometryType() == wkbLineString
+           || poGeom->getGeometryType() == wkbLineString25D )
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
       int       j, numpoints;
