@@ -10,7 +10,7 @@
 */
 static int layerInitItemInfo(layerObj *layer) 
 {
-  shapefileObj *shpfile;
+  shapefileObj *shpfile=NULL;
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):    
@@ -28,9 +28,7 @@ static int layerInitItemInfo(layerObj *layer)
     break;
   case(MS_TILED_SHAPEFILE):
     // iteminfo needs to be a bit more complex, a list of indexes plus the length of the list
-    layer->iteminfo = (int *) msDBFGetItemIndexes(layer->shpfile.hDBF, layer->items, layer->numitems);
-    if(!layer->iteminfo) return(MS_FAILURE);
-    return(MS_SUCCESS);
+    return(msTiledSHPLayerInitItemInfo(layer));
     break;
   case(MS_INLINE):
     return(MS_SUCCESS); // inline shapes have no items
@@ -486,11 +484,7 @@ int msLayerGetItems(layerObj *layer)
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):    
-    layer->numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
-    layer->items = msDBFGetItems(layer->shpfile.hDBF);    
-    if(!layer->items) return(MS_FAILURE);
-    layerInitItemInfo(layer);
-    return(MS_SUCCESS);
+    return(msTiledSHPLayerGetItems(layer));
     break;
   case(MS_INLINE):
     return(MS_SUCCESS); // inline shapes have no items
@@ -536,8 +530,7 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
-    *extent = layer->tileshpfile.bounds;
-    return(MS_SUCCESS);
+    return(msTiledSHPLayerGetExtent(layer, extent));
     break;
   case(MS_INLINE):
     /* __TODO__ need to compute extents */

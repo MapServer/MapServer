@@ -686,13 +686,7 @@ typedef struct layer_obj {
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
   struct layer_obj *sameconnection;
-
-  // a variety of data connection objects (probably should be pointers!)
-#ifndef SWIG
-  shapefileObj shpfile;
-  shapefileObj tileshpfile;
-#endif
-
+ 
 #ifndef SWIG
   // SDL has converted OracleSpatial, SDE, Graticules, MyGIS
   void *layerinfo; // all connection types should use this generic pointer to a vendor specific structure
@@ -1086,6 +1080,9 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect);
 int msTiledSHPNextShape(layerObj *layer, shapeObj *shape);
 int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 void msTiledSHPClose(layerObj *layer);
+int msTiledSHPLayerGetItems(layerObj *layer);
+int msTiledSHPLayerInitItemInfo(layerObj *layer);
+int msTiledSHPLayerGetExtent(layerObj *layer, rectObj *extent);
 
 int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); // in mapogr.cpp
 int msOGRLayerClose(layerObj *layer);
@@ -1096,8 +1093,7 @@ int msOGRLayerInitItemInfo(layerObj *layer);
 void msOGRLayerFreeItemInfo(layerObj *layer);
 int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
-int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
-                           int tile, long record);
+int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
 int msPOSTGISLayerOpen(layerObj *layer); // in mappostgis.c
 void msPOSTGISLayerFreeItemInfo(layerObj *layer);

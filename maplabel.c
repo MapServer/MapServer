@@ -20,7 +20,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   layerObj *layerPtr=NULL;
   classObj *classPtr=NULL;
 
-  if(!string) return(MS_SUCCESS); /* not an error */
+  if(!string) return(MS_SUCCESS); /* not an error */ 
 
   if(map->labelcache.numlabels == map->labelcache.cachesize) { /* just add it to the end */
     map->labelcache.labels = (labelCacheMemberObj *) realloc(map->labelcache.labels, sizeof(labelCacheMemberObj)*(map->labelcache.cachesize+MS_LABELCACHEINCREMENT));
@@ -34,7 +34,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   cachePtr = &(map->labelcache.labels[map->labelcache.numlabels]); // set up a few pointers for clarity
   layerPtr = &(map->layers[layerindex]);
   classPtr = &(map->layers[layerindex].class[classindex]);
-  
+
   cachePtr->layerindex = layerindex; // so we can get back to this *raw* data if necessary
   cachePtr->classindex = classindex;
   cachePtr->tileindex = tileindex;

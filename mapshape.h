@@ -130,6 +130,12 @@ typedef struct {
 #endif
 } shapefileObj;
 
+// layerInfo structure for tiled shapefiles
+typedef struct { 
+  shapefileObj shpfile;
+  shapefileObj tileshpfile;
+} msTiledSHPLayerInfo;
+
 #ifndef SWIG
 
 // shapefileObj function prototypes 
