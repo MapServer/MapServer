@@ -543,7 +543,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   status = msWCSGetCoverageMetadata(layer, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;
 
-  // Fill in bands rangeset info, if required. 
+  // fill in bands rangeset info, if required. 
   msWCSSetDefaultBandsRangeSetInfo( params, &cm, layer );
   
   // start the Coverage section
@@ -727,253 +727,265 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 
 static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *params)
 {
-    imageObj   *image;
-    layerObj   *lp;
-    int         status, i;
-    const char *value;
-    outputFormatObj *format;
-    char *bandlist=NULL;
+  imageObj   *image;
+  layerObj   *lp;
+  int         status, i;
+  const char *value;
+  outputFormatObj *format;
+  char *bandlist=NULL;
+  char numbands[8]; // should be large enough to hold the number of bands in the bandlist
+  coverageMetadataObj cm;
 
-    // Make sure all required parameters are available (at least the easy ones)
-    if(!params->crs) {
-      msSetError( MS_WCSERR, "Required parameter CRS was not supplied.", "msWCSGetCoverage()");
-      return msWCSException(params->version);
+  // make sure all required parameters are available (at least the easy ones)
+  if(!params->crs) {
+    msSetError( MS_WCSERR, "Required parameter CRS was not supplied.", "msWCSGetCoverage()");
+    return msWCSException(params->version);
+  }
+
+  // find the layer we are working with. 
+  lp = NULL;
+  for(i=0; i<map->numlayers; i++) {
+    if( EQUAL(map->layers[i].name, params->coverages[0]) ) {
+      lp = map->layers + i;
+      break;
     }
+  }
 
-    // Find the layer we are working with. 
-    lp = NULL;
-    for(i=0; i<map->numlayers; i++) {
-      if( EQUAL(map->layers[i].name, params->coverages[0]) ) {
-        lp = map->layers + i;
-        break;
-      }
-    }
+  if(lp == NULL) {
+    msSetError( MS_WCSERR, "COVERAGE=%s not found, not in supported layer list.", "msWCSGetCoverage()", params->coverages[0] );
+    return msWCSException(params->version);
+  }
 
-    if(lp == NULL) {
-      msSetError( MS_WCSERR, "COVERAGE=%s not found, not in supported layer list.", "msWCSGetCoverage()", params->coverages[0] );
-      return msWCSException(params->version);
-    }
+  // make sure the layer is on
+  lp->status = MS_ON;
 
-    // Make sure the layer is on!
-    lp->status = MS_ON;
+  // we need the coverage metadata, since things like numbands may not be available otherwise
+  status = msWCSGetCoverageMetadata(lp, &cm);
+  if(status != MS_SUCCESS) return MS_FAILURE;
 
-    // Handle the response CRS, that is set the map object projection
-    if(params->response_crs || params->crs ) {
-        const char *crs_to_use = params->response_crs;
-        if( crs_to_use == NULL )
-            crs_to_use = params->crs;
+  // fill in bands rangeset info, if required. 
+  msWCSSetDefaultBandsRangeSetInfo(params, &cm, lp);
 
-      if (strncasecmp(crs_to_use, "EPSG:", 5) == 0) {
-        // RESPONSE_CRS=EPSG:xxxx
-        char buffer[32];
-        int iUnits;
+  // handle the response CRS, that is set the map object projection
+  if(params->response_crs || params->crs ) {
+    const char *crs_to_use = params->response_crs;
+    if( crs_to_use == NULL )
+      crs_to_use = params->crs;
 
-        sprintf(buffer, "init=epsg:%.20s", crs_to_use+5);
+    if (strncasecmp(crs_to_use, "EPSG:", 5) == 0) {
+      // RESPONSE_CRS=EPSG:xxxx
+      char buffer[32];
+      int iUnits;
 
-        if (msLoadProjectionString(&(map->projection), buffer) != 0)
-          return msWCSException( params->version );
+      sprintf(buffer, "init=epsg:%.20s", crs_to_use+5);
+
+      if (msLoadProjectionString(&(map->projection), buffer) != 0)
+        return msWCSException( params->version );
         
-        iUnits = GetMapserverUnitUsingProj(&(map->projection));
-        if (iUnits != -1)
-          map->units = iUnits;
-      } else {  /* should we support WMS style AUTO: projections? Not for now*/
-          msSetError(MS_WMSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
-          return msWCSException(params->version);
-      }
+      iUnits = GetMapserverUnitUsingProj(&(map->projection));
+      if (iUnits != -1)
+        map->units = iUnits;
+    } else {  // should we support WMS style AUTO: projections? (not for now)
+      msSetError(MS_WMSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
+      return msWCSException(params->version);
     }
+  }
 
-    // Did we get a TIME value (support only a single value for now)
-    if(params->time) {
-      int tli;
-      layerObj *tlp=NULL;
+  // did we get a TIME value (support only a single value for now)
+  if(params->time) {
+    int tli;
+    layerObj *tlp=NULL;
     
-      // check format of TIME parameter
-      if(strchr(params->time, ',')) {
-        msSetError( MS_WCSERR, "Temporal lists are not supported, only individual values.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-      }
-      if(strchr(params->time, '/')) {
-        msSetError( MS_WCSERR, "Temporal ranges are not supported, only individual values.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-      }
-      
-      // TODO: will need to expand this check if a time period is supported
-      value = msOWSLookupMetadata(lp->metadata, "COM", "timeposition");
-      if(!value) {
-        msSetError( MS_WCSERR, "The coverage does not support temporal subsetting.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-      }
-      if(!strstr(value, params->time)) { // this is likely too simple a test
-        msSetError( MS_WCSERR, "The coverage does not have a time position of %s.", "msWCSGetCoverage()", params->time );
-        return msWCSException(params->version);
-      }
-      
-      // make sure layer is tiled appropriately
-      if(!lp->tileindex) {
-        msSetError( MS_WCSERR, "Underlying layer is not tiled, unable to do temporal subsetting.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-      }
-      tli = msGetLayerIndex(map, lp->tileindex);
-      if(tli == -1) {
-        msSetError( MS_WCSERR, "Underlying layer does not use appropriate tiling mechanism.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-      }
-
-      tlp = &(map->layers[tli]);
-
-      // make sure there is enough information to filter
-      value = msOWSLookupMetadata(lp->metadata, "COM", "timeitem");
-      if(!tlp->filteritem && !value) {
-        msSetError( MS_WCSERR, "Not enough information available to filter.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-      }
-      
-      // override filteritem if specified in metadata
-      if(value) {
-        if(tlp->filteritem) free(tlp->filteritem);
-        tlp->filteritem = strdup(value);
-      }
-      
-      // finally set the filter
-      freeExpression(&tlp->filter);
-      loadExpressionString(&tlp->filter, params->time);
+    // check format of TIME parameter
+    if(strchr(params->time, ',')) {
+      msSetError( MS_WCSERR, "Temporal lists are not supported, only individual values.", "msWCSGetCoverage()" );
+      return msWCSException(params->version);
     }
-           
-    // Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands)
-    value = msOWSLookupMetadata(lp->metadata, "COM", "rangeset_axes"); // this will get all the compound range sets
-    if(value) { 
-      char **tokens;
-      int numtokens;
-      char tag[100];
-      const char *rangeitem;
+    if(strchr(params->time, '/')) {
+      msSetError( MS_WCSERR, "Temporal ranges are not supported, only individual values.", "msWCSGetCoverage()" );
+      return msWCSException(params->version);
+    }
+      
+    // TODO: will need to expand this check if a time period is supported
+    value = msOWSLookupMetadata(lp->metadata, "COM", "timeposition");
+    if(!value) {
+      msSetError( MS_WCSERR, "The coverage does not support temporal subsetting.", "msWCSGetCoverage()" );
+      return msWCSException(params->version);
+    }
+    if(!strstr(value, params->time)) { // this is likely too simple a test
+      msSetError( MS_WCSERR, "The coverage does not have a time position of %s.", "msWCSGetCoverage()", params->time );
+      return msWCSException(params->version);
+    }
+      
+    // make sure layer is tiled appropriately
+    if(!lp->tileindex) {
+      msSetError( MS_WCSERR, "Underlying layer is not tiled, unable to do temporal subsetting.", "msWCSGetCoverage()" );
+      return msWCSException(params->version);
+    }
+    tli = msGetLayerIndex(map, lp->tileindex);
+    if(tli == -1) {
+      msSetError( MS_WCSERR, "Underlying layer does not use appropriate tiling mechanism.", "msWCSGetCoverage()" );
+      return msWCSException(params->version);
+    }
 
-       tokens = split(value, ',', &numtokens);
-       for(i=0; i<numtokens; i++) {
-         if((value = msWCSGetRequestParameter(request, tokens[i])) == NULL) continue; // next rangeset parameter
+    tlp = &(map->layers[tli]);
+
+    // make sure there is enough information to filter
+    value = msOWSLookupMetadata(lp->metadata, "COM", "timeitem");
+    if(!tlp->filteritem && !value) {
+      msSetError( MS_WCSERR, "Not enough information available to filter.", "msWCSGetCoverage()" );
+      return msWCSException(params->version);
+    }
+      
+    // override filteritem if specified in metadata
+    if(value) {
+      if(tlp->filteritem) free(tlp->filteritem);
+      tlp->filteritem = strdup(value);
+    }
+      
+    // finally set the filter
+    freeExpression(&tlp->filter);
+    loadExpressionString(&tlp->filter, params->time);
+  }
+           
+  // Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands)
+  value = msOWSLookupMetadata(lp->metadata, "COM", "rangeset_axes"); // this will get all the compound range sets
+  if(value) { 
+    char **tokens;
+    int numtokens;
+    char tag[100];
+    const char *rangeitem;
+
+    tokens = split(value, ',', &numtokens);
+    for(i=0; i<numtokens; i++) {
+      if((value = msWCSGetRequestParameter(request, tokens[i])) == NULL) continue; // next rangeset parameter
        
-         if(msWCSValidateRangeSetParam(lp->metadata, tokens[i], "COM", value) != MS_SUCCESS) {
-           msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
-           return msWCSException(params->version);
-         }
+      if(msWCSValidateRangeSetParam(lp->metadata, tokens[i], "COM", value) != MS_SUCCESS) {
+        msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
+        return msWCSException(params->version);
+      }
        
-         // xxxxx_rangeitem tells us how to subset
-         snprintf(tag, 100, "%s_rangeitem", tokens[i]);
-         if((rangeitem = msOWSLookupMetadata(lp->metadata, "COM", tag)) == NULL) {
-           msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
-           return msWCSException(params->version);
-         }
+      // xxxxx_rangeitem tells us how to subset
+      snprintf(tag, 100, "%s_rangeitem", tokens[i]);
+      if((rangeitem = msOWSLookupMetadata(lp->metadata, "COM", tag)) == NULL) {
+        msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
+        return msWCSException(params->version);
+      }
          
-         if(strcasecmp(rangeitem, "_bands") == 0) { // special case, subset bands
-           bandlist = msWCSConvertRangeSetToString(value);
+      if(strcasecmp(rangeitem, "_bands") == 0) { // special case, subset bands
+        bandlist = msWCSConvertRangeSetToString(value);
            
-           if(!bandlist) {
-             msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
-             return msWCSException(params->version);
-           }          
-         } else if(strcasecmp(rangeitem, "_pixels") == 0) { // special case, subset pixels
-           msSetError( MS_WCSERR, "Arbitrary range sets based on pixel values are not yet supported.", "msWCSGetCoverage()" );
-           return msWCSException(params->version);
-         } else {
-           msSetError( MS_WCSERR, "Arbitrary range sets based on tile (i.e. image) attributes are not yet supported.", "msWCSGetCoverage()" );
-           return msWCSException(params->version);
-         }
-       }
+        if(!bandlist) {
+          msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
+          return msWCSException(params->version);
+        }          
+      } else if(strcasecmp(rangeitem, "_pixels") == 0) { // special case, subset pixels
+        msSetError( MS_WCSERR, "Arbitrary range sets based on pixel values are not yet supported.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      } else {
+        msSetError( MS_WCSERR, "Arbitrary range sets based on tile (i.e. image) attributes are not yet supported.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      }
+    }
        
-       // clean-up
-       msFreeCharArray(tokens, numtokens);
-    }
+    // clean-up
+    msFreeCharArray(tokens, numtokens);
+  }
     
-    // Did we get BBOX values?
-    if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
-        msSetError( MS_WCSERR, "Required parameter BBOX missing or specifies an empty region.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-    }
+  // did we get BBOX values?
+  if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
+    msSetError( MS_WCSERR, "Required parameter BBOX missing or specifies an empty region.", "msWCSGetCoverage()" );
+    return msWCSException(params->version);
+  }
     
-    // If necessary, project the BBOX
+  // if necessary, project the BBOX
     
-    // Compute width/height from BBOX and cellsize. 
-    if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
-        params->resx = (params->bbox.maxx - params->bbox.minx) / params->width;
-        params->resy = (params->bbox.maxy - params->bbox.miny) / params->height;
-    }
+  // compute width/height from BBOX and cellsize. 
+  if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
+    params->resx = (params->bbox.maxx - params->bbox.minx) / params->width;
+    params->resy = (params->bbox.maxy - params->bbox.miny) / params->height;
+  }
     
-    // Compute cellsize/res from bbox and raster size.
-    if( (params->width == 0 || params->height == 0) && params->resx != 0 && params->resy != 0 ) {
-        params->width = (int) ((params->bbox.maxx - params->bbox.minx) / params->resx + 0.5);
-        params->height = (int) ((params->bbox.maxy - params->bbox.miny) / params->resy + 0.5);
-    }
+  // compute cellsize/res from bbox and raster size.
+  if( (params->width == 0 || params->height == 0) && params->resx != 0 && params->resy != 0 ) {
+    params->width = (int) ((params->bbox.maxx - params->bbox.minx) / params->resx + 0.5);
+    params->height = (int) ((params->bbox.maxy - params->bbox.miny) / params->resy + 0.5);
+  }
 
-    // Are we still underspecified? 
-    if( params->width == 0 || params->height == 0 || params->resx == 0.0 || params->resy == 0.0 ) {
-        msSetError( MS_WCSERR, "A non-zero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-    }
+  // are we still underspecified? 
+  if( params->width == 0 || params->height == 0 || params->resx == 0.0 || params->resy == 0.0 ) {
+    msSetError( MS_WCSERR, "A non-zero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", "msWCSGetCoverage()" );
+    return msWCSException(params->version);
+  }
     
-    // Apply region and size to map object. 
-    map->width = params->width;
-    map->height = params->height;
-    map->extent = params->bbox;
+  // apply region and size to map object. 
+  map->width = params->width;
+  map->height = params->height;
+  map->extent = params->bbox;
  
-    map->cellsize = params->resx; // pick one, MapServer only supports square cells
+  map->cellsize = params->resx; // pick one, MapServer only supports square cells
 
-    // Should we compute a new extent, ala WMS?
-    if( fabs(params->resx/params->resy - 1.0) > 0.001 ) {
-        msSetError( MS_WCSERR,  "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-    }
+  // should we compute a new extent, ala WMS?
+  if( fabs(params->resx/params->resy - 1.0) > 0.001 ) {
+    msSetError( MS_WCSERR,  "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", "msWCSGetCoverage()" );
+    return msWCSException(params->version);
+  }
      
-    // Check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata)
-    if(!params->format) {
-        msSetError( MS_WCSERR,  "Missing required FORMAT parameter.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-    }
-    if(msGetOutputFormatIndex(map,params->format) == -1) {
-        msSetError( MS_WCSERR,  "Unrecognized value for the FORMAT parameter.", "msWCSGetCoverage()" );
-        return msWCSException(params->version);
-    }
+  // check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata)
+  if(!params->format) {
+    msSetError( MS_WCSERR,  "Missing required FORMAT parameter.", "msWCSGetCoverage()" );
+    return msWCSException(params->version);
+  }
+  if(msGetOutputFormatIndex(map,params->format) == -1) {
+    msSetError( MS_WCSERR,  "Unrecognized value for the FORMAT parameter.", "msWCSGetCoverage()" );
+    return msWCSException(params->version);
+  }
 
-    // Create a temporary outputformat (we like will need to tweak parts)
-    format = msCloneOutputFormat(msSelectOutputFormat(map,params->format));
-    msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE); 
+  // create a temporary outputformat (we likely will need to tweak parts)
+  format = msCloneOutputFormat(msSelectOutputFormat(map,params->format));
+  msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE); 
            
-    if(bandlist) {
-      char tmpstr[8]; // should be large enough to hold numbands
+  if(!bandlist) { // build a bandlist (default is ALL bands)
+    bandlist = (char *) malloc(cm.bandcount*30+30 );
+    strcpy(bandlist, "1");
+    for(i = 1; i < cm.bandcount; i++)
+      sprintf(bandlist+strlen(bandlist),",%d", i+1);
+  }
+ 
+  msLayerSetProcessingKey(lp, "BANDS", bandlist);
+  sprintf(numbands, "%d", countChars(bandlist, ',')+1);
+  msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
+               
+  // create the image object 
+  if(!map->outputformat) {
+    msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
+    return msWCSException(params->version);
+  } else if( MS_RENDERER_GD(map->outputformat) ) {
+    image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
+    if( image != NULL ) msImageInitGD( image, &map->imagecolor );
+  } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {
+    image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);
+  } else {
+    msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
+    return msWCSException(params->version);
+  }
 
-      msLayerSetProcessingKey( lp, "BANDS", bandlist );
-      sprintf(tmpstr, "%d", countChars(bandlist, ',')+1);
-      msSetOutputFormatOption(map->outputformat, "BAND_COUNT", tmpstr);
-    }      
-                 
-    // Create the image object. 
-    if(!map->outputformat) {
-        msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
-        return msWCSException(params->version);
-    } else if( MS_RENDERER_GD(map->outputformat) ) {
-        image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
-        if( image != NULL ) msImageInitGD( image, &map->imagecolor );
-    } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-        image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);
-    } else {
-        msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
-        return msWCSException(params->version);
-    }
-
-    // Actually produce the "grid".
-    status = msDrawRasterLayerLow( map, lp, image );
-    if( status != MS_SUCCESS ) {
-        return MS_FAILURE;
-    }
+  // Actually produce the "grid".
+  status = msDrawRasterLayerLow( map, lp, image );
+  if( status != MS_SUCCESS ) {
+    return MS_FAILURE;
+  }
     
-    // Emit back to client.
-    printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
-    status = msSaveImage(map, image, NULL);
+  // Emit back to client.
+  printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+  status = msSaveImage(map, image, NULL);
 
-    // Cleanup
-    msFreeImage(image);
-    msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
-    // msFreeOutputFormat(format);
+  // Cleanup
+  msFreeImage(image);
+  msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+  // msFreeOutputFormat(format);
 
-    return status;
+  return status;
 }
 #endif /* def USE_WCS_SVR */
 
