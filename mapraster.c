@@ -140,6 +140,7 @@ static int add_color(gdImagePtr img, int r, int g, int b)
   return op; /* Return newly allocated color */  
 }
 
+#if defined(USE_GDAL)
 /*
 ** GDAL Support.
 */
@@ -147,7 +148,6 @@ static int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
                     GDALDatasetH hDS )
 
 {
-#if defined(USE_GDAL)
   int i,j, k; /* loop counters */
   int cmap[MAXCOLORS];
   double adfGeoTransform[6];
@@ -313,11 +313,8 @@ static int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   GDALDestroyColorTable( hColorMap );
 
   return 0;
-#else
-  msSetError(MS_IMGERR, "GDAL support is not available.", "drawGDAL()");
-  return(-1);
-#endif
 }
+#endif
 
   
 /*
