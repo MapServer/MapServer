@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.13  2002/12/20 03:43:03  frank
+ * ensure this builds without libcurl
+ *
  * Revision 1.12  2002/12/19 06:30:59  dan
  * Enable caching WMS/WFS request using tmp filename built from URL
  *
@@ -799,7 +802,13 @@ int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     int nStatus, iReq;
 
     // Execute requests
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     nStatus = msHTTPExecuteRequests(pasReqInfo, numRequests, bCheckLocalCache);
+#else
+    msSetError(MS_WMSERR, "msOWSExecuteRequests() called apparently without libcurl configured, msHTTPExecuteRequests() not available.",
+               "msOWSExecuteRequests()");
+    return MS_FAILURE;
+#endif
 
     // Scan list of layers and call the handler for each layer type to
     // pass them the request results.
