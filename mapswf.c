@@ -856,6 +856,8 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     image->img.swf->pasMovies = NULL;
     image->img.swf->nCurrentMovie = -1;
 
+    image->img.swf->panLayerIndex = NULL;
+
     //initalize main movie
     image->img.swf->sMainMovie = newSWFMovie();
     SWFMovie_setDimension(image->img.swf->sMainMovie, (float)width, 
@@ -932,17 +934,27 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
         {
             image->img.swf->pasMovies = 
                 (SWFMovie *)malloc(sizeof(SWFMovie)*nTmp);
+            image->img.swf->panLayerIndex = 
+                (int *)malloc(sizeof(int)*nTmp);
+            
         }
         else
         {
             image->img.swf->pasMovies = 
                 (SWFMovie *)realloc(image->img.swf->pasMovies,
                                     sizeof(SWFMovie)*nTmp);
+            image->img.swf->panLayerIndex = 
+                (int *)realloc(image->img.swf->panLayerIndex,
+                                    sizeof(int)*nTmp);
         }
 
         image->img.swf->nCurrentMovie = nTmp -1;
         image->img.swf->pasMovies[nTmp -1] = newSWFMovie();
     
+        //keeps the layer index for each movie so we can use
+        //it to get a movie index based on the layer index.
+        image->img.swf->panLayerIndex[nTmp -1] = layer->index;
+
         SWFMovie_setDimension(image->img.swf->pasMovies[nTmp -1], 
                               (float)image->width, (float)image->height);
         
@@ -2042,6 +2054,31 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
 }
 
 
+/************************************************************************/
+/*                            msSWFGetMovieIndex                        */
+/*                                                                      */
+/*      Utility function to look in an array of int for a specific      */
+/*      value. Returns the indice of the array on succsess or -1.       */
+/************************************************************************/
+static int msSWFGetMovieIndex(int *panIndex, int nSize, int nIndex)
+{
+    int i = 0;
+    int nIndice = -1;
+
+    if (panIndex && nSize > 0)
+    {
+        for (i=0; i<nSize; i++)
+        {
+            if (panIndex[i] = nIndex)
+            {
+                nIndice = i;
+                break;
+            }
+        }
+    }
+
+    return nIndice;
+}
 
 /************************************************************************/
 /*                         int msDrawLabelCacheSWF                      */
@@ -2119,7 +2156,15 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 /*      set the current layer so the label will be drawn in the         */
 /*      using the correct SWF handle.                                   */
 /* ==================================================================== */
-        image->img.swf->nCurrentMovie = cachePtr->layerindex;
+        
+
+        image->img.swf->nCurrentMovie = 
+          msSWFGetMovieIndex(image->img.swf->panLayerIndex, 
+                             image->img.swf->nLayerMovies,
+                             cachePtr->layerindex);
+
+        if (image->img.swf->nCurrentMovie < 0)
+          continue;
         
         //msImageStartLayerSWF(map, layerPtr, image);
         image->img.swf->nCurrentLayerIdx = cachePtr->layerindex;

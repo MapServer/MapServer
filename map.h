@@ -828,7 +828,8 @@ typedef struct  {
   int nCurrentLayerIdx;
   int nCurrentShapeIdx;
   void    *imagetmp;  //used when the output format is SINGLE 
-                      //(one movie for the whole map)    
+                      //(one movie for the whole map)
+  int *panLayerIndex; // keeps the layer index for every movie created.
 } SWFObj;
 #endif
 
