@@ -3600,6 +3600,7 @@ int initMap(mapObj *map)
   map->units = MS_METERS;
   map->cellsize = 0;
   map->shapepath = NULL;
+  map->mappath = NULL;
   map->imagecolor.red = 255;
   map->imagecolor.green = 255;
   map->imagecolor.blue = 255;
