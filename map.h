@@ -261,22 +261,21 @@ typedef struct {
 // JOIN OBJECT - simple way to access other XBase files, one-to-one or one-to-many supported
 typedef struct {
   char *name;
-  char **items; // array of item/column names
-  char numitems;
-  char ***records; // array of data for 1 or more records
-  int numrecords; // number of records we have data for
+  char **items, ***values; // items/values (can have more than one record)
+  int numitems, numrecords;
 
   char *table;
-  char *from, *to;
-  char *header;
+  char *from, *to; // item names
+
+  void *tableinfo; // vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access
+ 
+  char *header, *footer;
 #ifndef __cplusplus
   char *template;
 #else
   char *_template;
 #endif
-  char *footer;
 
-  char *match;
   enum MS_JOIN_TYPE type;
   char *connection;
   enum MS_JOIN_CONNECTION_TYPE connectiontype;
@@ -1036,8 +1035,7 @@ void msComputeBounds(shapeObj *shape);
 void msRectToPolygon(rectObj rect, shapeObj *poly);
 void msClipPolylineRect(shapeObj *shape, rectObj rect);
 void msClipPolygonRect(shapeObj *shape, rectObj rect);
-void msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
-                      imageObj *image);
+void msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image);
 void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
 void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
@@ -1066,8 +1064,7 @@ int msLayerGetItems(layerObj *layer);
 int msLayerSetItems(layerObj *layer, char **items, int numitems);
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msLayerGetExtent(layerObj *layer, rectObj *extent);
-int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
-                        int tile, long record);
+int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
 int msTiledSHPOpenFile(layerObj *layer); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, rectObj rect);
@@ -1075,8 +1072,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape);
 int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 void msTiledSHPClose(layerObj *layer);
 
-int msOGRLayerOpen(layerObj *layer,                       // in mapogr.cpp
-                   const char *pszOverrideConnection);
+int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); // in mapogr.cpp
 int msOGRLayerClose(layerObj *layer);
 int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
@@ -1132,6 +1128,7 @@ void msGraticuleLayerFreeItemInfo(layerObj *layer);
 int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent);
 int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
+
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
@@ -1161,12 +1158,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map);
 void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image);
 void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image);
 
-
 void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
 void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
-
-
-
 /* ==================================================================== */
 /*      End of Prototypes for functions in mapdraw.c                    */
 /* ==================================================================== */
@@ -1201,9 +1194,13 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
                        int dstX, int dstY, int srcX, int srcY, int w, int h,
                        int pct);
+
 // various JOIN functions (in mapjoin.c)
-int msJoinTable(layerObj *layer, joinObj *join);
-int msDBFJoinTable(layerObj *layer, joinObj *join);
+int msJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
+int msDBFJoinOpenTable(layerObj *layer, joinObj *join);
+int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
+int msDBFJoinCloseTable(joinObj *join);
+
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b);

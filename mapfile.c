@@ -305,12 +305,12 @@ void initJoin(joinObj *join)
   join->name = NULL; /* unique join name, used for variable substitution */
 
   join->items = NULL; /* array to hold item names for the joined table */
-  join->records = NULL; /* arrays of strings to holds 1 or more records worth of data */
+  join->values = NULL; /* arrays of strings to holds 1 or more records worth of data */
   join->numrecords = 0;
 
   join->table = NULL;
 
-  join->match = NULL;
+  join->tableinfo = NULL;
 
   join->from = NULL; /* join items */
   join->to = NULL;
@@ -334,18 +334,19 @@ void freeJoin(joinObj *join)
   msFree(join->from);
   msFree(join->to);
 
-  msFree(join->match);
-
   msFree(join->header);
   msFree(join->template);
   msFree(join->footer);
 
   msFreeCharArray(join->items, join->numitems); /* these may have been free'd elsewhere */
   for(i=0; i<join->numrecords; i++)
-    msFreeCharArray(join->records[i], join->numitems);
-  msFree(join->records);
+    msFreeCharArray(join->values[i], join->numitems);
+  msFree(join->values);
+
+  join->numrecords = join->numitems = 0;
 
   msFree(join->connection);
+  msDBFJoinCloseTable(join);
 }
 
 int loadJoin(joinObj *join)

@@ -88,8 +88,7 @@ int msLayerOpen(layerObj *layer)
 {
   char szPath[MS_MAXPATHLEN];
 
-	if(layer->features
-	  && layer->connectiontype != MS_GRATICULE ) 
+  if(layer->features && layer->connectiontype != MS_GRATICULE ) 
     layer->connectiontype = MS_INLINE;
 
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
@@ -124,11 +123,9 @@ int msLayerOpen(layerObj *layer)
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerOpen(layer));
     break;
-
-		case(MS_GRATICULE):
-			return(msGraticuleLayerOpen(layer));
-			break;
-
+  case(MS_GRATICULE):
+    return(msGraticuleLayerOpen(layer));
+    break;
   default:
     break;
   }

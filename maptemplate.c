@@ -1750,7 +1750,7 @@ int processOneToManyJoin(joinObj *join)
       for(l=0; l<join->numitems; l++) {	  
 	sprintf(substr, "[%s]", join->items[l]);
 	if(strstr(outstr, substr) != NULL) { /* do substitution */
-	  outstr = gsub(outstr, substr, join->records[k][l]);
+	  outstr = gsub(outstr, substr, join->values[k][l]);
 	}
       } /* next item */
       
@@ -2117,7 +2117,32 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
     }
     
-    // FIX: need to re-incorporate JOINS at some point
+    // this handles simple one-to-one joins
+    for(i=0; i<msObj->ResultLayer->numjoins; i++) {
+      for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {	 
+
+        // by default let's encode attributes for HTML presentation
+        sprintf(substr, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
+        if(strstr(outstr, substr) != NULL) {
+	  encodedstr = msEncodeHTMLEntities(msObj->ResultLayer->joins[i].values[0][j]);
+	  outstr = gsub(outstr, substr, encodedstr);
+          free(encodedstr);
+        }
+
+        // of course you might want to embed that data in URLs
+        sprintf(substr, "[%s_%s_esc]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
+        if(strstr(outstr, substr) != NULL) {
+          encodedstr = msEncodeUrl(msObj->ResultLayer->joins[i].values[0][j]);
+          outstr = gsub(outstr, substr, encodedstr);
+          free(encodedstr);
+        }
+
+        // or you might want to access the attributes unaltered
+        sprintf(substr, "[%s_%s_raw]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
+        if(strstr(outstr, substr) != NULL)
+	  outstr = gsub(outstr, substr, msObj->ResultLayer->joins[i].values[0][j]);
+      }
+    }
   }
 
   for(i=0;i<msObj->NumParams;i++) {
@@ -2264,7 +2289,7 @@ int msReturnURL(mapservObj* msObj, char* url, int mode)
 int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 {
   int status;
-  int i,j;
+  int i,j,k;
   char buffer[1024];
   int   nBufferSize =0;
   int   nCurrentSize = 0;
@@ -2322,7 +2347,8 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
         status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
         if(status != MS_SUCCESS) return status;
 
-	// do any necessary JOINS here
+        if(lp->numjoins > 0)
+	  for(k=0; k<lp->numjoins; k++) msJoinTable(lp, &(lp->joins[k]), &(msObj->ResultShape));
 
         if(papszBuffer == NULL) {
           if(msReturnURL(msObj, template, QUERY) != MS_SUCCESS) return MS_FAILURE;
@@ -2336,8 +2362,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       }
     }
   }
-   
-  
+     
   msObj->NR = msObj->NL = 0;
   for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
     lp = &(msObj->Map->layers[i]);
@@ -2397,7 +2422,9 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       if(status != MS_SUCCESS) return status;
 
       // do any necessary JOINS here
-      
+      if(lp->numjoins > 0)
+	for(k=0; k<lp->numjoins; k++) msJoinTable(lp, &(lp->joins[k]), &(msObj->ResultShape));
+ 
       if(lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
         template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
       else 
