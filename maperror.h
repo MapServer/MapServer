@@ -29,8 +29,10 @@ extern "C" {
 #define MS_SDEERR 21
 #define MS_OGRERR 22
 #define MS_QUERYERR 23
+#define MS_WMSERR 24      /* WMS server error */
+#define MS_WMSCONNERR 25  /* WMS connectiontype error */
 
-#define MS_NUMERRORCODES 24
+#define MS_NUMERRORCODES 26
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

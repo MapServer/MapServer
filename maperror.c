@@ -30,6 +30,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"SDE error.",
 						"OGR error.",
 						"Query error."
+						"WMS server error."
+						"WMS connection error."
 };
 
 errorObj ms_error = {-1, "", ""};
