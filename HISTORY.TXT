@@ -30,6 +30,10 @@ Version 3.6.0-beta2 (2002-05-23)
 - WMS Capabilities XML: Return grouped/ungrouped layers in an order closer
   to the natural mapfile order (bug 154)
 
+- Integrated patch from Tim Mackey to support ROSA applet parameters via 
+  mapserv CGI, see: 
+  http://mapserver.gis.umn.edu/wilma/mapserver-users/0011/msg00077.html
+
 
 Version 3.6.0-beta1 (2002-04-30)
 --------------------------------
