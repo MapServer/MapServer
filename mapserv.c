@@ -154,8 +154,15 @@ mapObj *loadMap()
 
   if(!map) writeError();
 
-  // check for any %variable% substitutions here, we do this here so WMS/WFS services can take advantage of this
+  // check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS 
+  // services can take advantage of these "vendor specific" extensions
   for(i=0;i<msObj->NumParams;i++) {
+    if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { // check to see if there are any additions to the mapfile
+      if(msLoadMapString(msObj->Map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1)
+	writeError();
+      continue;
+    }
+
     tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->ParamNames[i]) + 3);
     sprintf(tmpstr,"%%%s%%", msObj->ParamNames[i]);
     
@@ -726,11 +733,13 @@ void loadForm()
       continue;
     }
 
-    if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { // check to see if there are any additions to the mapfile
-      if(msLoadMapString(msObj->Map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1)
-	writeError();
-      continue;
-    }
+    // check to see if there are any additions to the mapfile, this has been moved to loadMap()
+    //  if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { 
+    //   if(msLoadMapString(msObj->Map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1)
+    //	 writeError();
+    //   continue;
+    // }
+
 /* -------------------------------------------------------------------- */
 /*      The following code is used to support the rosa applet (for      */
 /*      more information on Rosa, please consult :                      */
