@@ -157,6 +157,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "TIME") == 0)
 	     params->time = strdup(request->ParamValues[i]);
+       else if(strcasecmp(request->ParamNames[i], "FORMAT") == 0)
+	     params->format = strdup(request->ParamValues[i]);
 
        // and so on...
     }
@@ -633,6 +635,8 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
         return msWCSException(params->version);
       }
       
+      // TODO: check the value against the metadata
+      
       // make sure layer is tiled appropriately
       if(!lp->tileindex) {
         msSetError( MS_WCSERR, "Underlying layer is not tiled, unable to do temporal subsetting.", "msWCSGetCoverage()" );
@@ -677,90 +681,61 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001 
         || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 )
     {
-        msSetError( MS_WCSERR, 
-                    "BBOX missing or specifies an empty region.", 
-                    "msWCSGetCoverage()" );
+        msSetError( MS_WCSERR, "BBOX missing or specifies an empty region.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
     }
     
     // Compute width/height from bbox and cellsize. 
-
-    if( (params->resx == 0.0 || params->resy == 0.0)
-        && params->width != 0 && params->height != 0 )
-    {
+    if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
         params->resx = (params->bbox.maxx - params->bbox.minx) / params->width;
         params->resy = (params->bbox.maxy - params->bbox.miny) / params->height;
     }
     
     // Compute cellsize/res from bbox and raster size.
-
-    if( (params->width == 0 || params->height == 0)
-        && params->resx != 0 && params->resy != 0 )
-    {
+    if( (params->width == 0 || params->height == 0) && params->resx != 0 && params->resy != 0 ) {
         params->width = (int) ((params->bbox.maxx - params->bbox.minx) / params->resx + 0.5);
         params->height = (int) ((params->bbox.maxy - params->bbox.miny) / params->resy + 0.5);
     }
 
     // Are we still underspecified? 
-
-    if( params->width == 0 || params->height == 0 
-        || params->resx == 0.0 || params->resy == 0.0 )
-    {
-        msSetError( MS_WCSERR, 
-                    "A nonzero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", 
-                    "msWCSGetCoverage()" );
+    if( params->width == 0 || params->height == 0 || params->resx == 0.0 || params->resy == 0.0 ) {
+        msSetError( MS_WCSERR, "A non-zero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
     }
     
     // Apply region and size to map object. 
-
     map->width = params->width;
     map->height = params->height;
     map->extent = params->bbox;
  
-    map->cellsize = params->resx; // pick on, MapServer only supports square cells
+    map->cellsize = params->resx; // pick one, MapServer only supports square cells
 
     // Should we compute a new extent, ala WMS?
-    if( fabs(params->resx/params->resy - 1.0) > 0.001 )
-    {
-        msSetError( MS_WCSERR, 
-                    "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", 
-                    "msWCSGetCoverage()" );
+    if( fabs(params->resx/params->resy - 1.0) > 0.001 ) {
+        msSetError( MS_WCSERR,  "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
     }
                         
-    // Select format into map object.
-
-    /* for now we use the default output format defined in the .map file */
+    // Create a temporary outputformat
+    msApplyOutputFormat(&(map->outputformat), msSelectOutputFormat(map,params->format), MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE); 
 
     // Create the image object. 
     if(!map->outputformat) {
-        msSetError(MS_GDERR, "Map outputformat not set!", 
-                   "msWCSGetCoverage()");
+        msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
         return msWCSException(params->version);
-    }
-    else if( MS_RENDERER_GD(map->outputformat) )
-    {
-        image = msImageCreateGD(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl);        
+    } else if( MS_RENDERER_GD(map->outputformat) ) {
+        image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
-    }
-    else if( MS_RENDERER_RAWDATA(map->outputformat) )
-    {
-        image = msImageCreate(map->width, map->height, map->outputformat,
-                              map->web.imagepath, map->web.imageurl);
-    }
-    else
-    {
-        msSetError(MS_GDERR, "Map outputformat not supported for WCS!", 
-                   "msWCSGetCoverage()");
+    } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {
+        image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);
+    } else {
+        msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
         return msWCSException(params->version);
     }
 
     // Actually produce the "grid".
     status = msDrawRasterLayerLow( map, lp, image );
-    if( status != MS_SUCCESS )
-    {
+    if( status != MS_SUCCESS ) {
         return status;
     }
     
@@ -770,6 +745,7 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
 
     // Cleanup
     msFreeImage(image);
+    msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
     return status;
 }
