@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
   shapefileObj shapefile;
 
   treeObj *tree;
-  int byte_order = MS_NATIVE_ORDER;
+  int byte_order = MS_NEW_LSB_ORDER, i;
   int depth=0;
 
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
@@ -45,13 +45,34 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
+  /* -------------------------------------------------------------------- */
+  /*	Establish the byte order on this machine to decide default        */
+  /*    index format                                                      */
+  /* -------------------------------------------------------------------- */
+    i = 1;
+    if( *((uchar *) &i) == 1 )
+      byte_order = MS_NEW_LSB_ORDER;
+    else
+      byte_order = MS_NEW_MSB_ORDER;
+
+
   if(argc<2) {
-   fprintf(stdout,"Syntax: shptree [shpfile] {depth} {N | L | M | NL | NM}\n" );
-   fprintf(stdout,"     N:  Native byte order\n");
-   fprintf(stdout,"     L:  LSB (intel) byte order\n");
-   fprintf(stdout,"     M:  MSB byte order\n");
-   fprintf(stdout,"     NL: LSB byte order, using new index format\n");
-   fprintf(stdout,"     NM: MSB byte order, using new index format\n\n");
+   fprintf(stdout,"Syntax:\n");
+   fprintf(stdout,"    shptree <shpfile> [<depth>] [<index_format>]\n" );
+   fprintf(stdout,"Where:\n");
+   fprintf(stdout," <shpfile> is the name of the .shp file to index.\n");
+   fprintf(stdout," <depth>   (optional) is the maximum depth of the index\n");
+   fprintf(stdout,"           to create, default is 0 meaning that shptree\n");
+   fprintf(stdout,"           will calculate a reasonable default depth.\n");
+   fprintf(stdout," <index_format> (optional) is one of:\n");
+   fprintf(stdout,"           NL: LSB byte order, using new index format\n");
+   fprintf(stdout,"           NM: MSB byte order, using new index format\n");
+   fprintf(stdout,"       The following old format options are deprecated:\n");
+   fprintf(stdout,"           N:  Native byte order\n");
+   fprintf(stdout,"           L:  LSB (intel) byte order\n");
+   fprintf(stdout,"           M:  MSB byte order\n");
+   fprintf(stdout,"       The default index_format on this system is: %s\n\n",
+           (byte_order == MS_NEW_LSB_ORDER) ? "NL" : "NM" );
    exit(0);
   }
 
