@@ -1179,11 +1179,15 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
 int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+
 int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
                        int dstX, int dstY, int srcX, int srcY, int w, int h,
                        int pct);
+char *msGDImageStringTTF(gdImage *im, int *brect, int fg, char *fontlist,
+                         double ptsize, double angle, int x, int y, 
+                         char *string);
 
 // various JOIN functions (in mapjoin.c)
 int msJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);

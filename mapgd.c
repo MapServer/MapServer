@@ -2,6 +2,7 @@
 
 #include "map.h"
 #include "mapparser.h"
+#include "mapthread.h"
 
 #include <time.h>
 
@@ -585,7 +586,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     y = -rect.miny;
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
+    msGDImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 #else
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 #endif    
@@ -750,7 +751,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
+    msGDImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
 #else
     gdImageStringFT(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
 #endif
@@ -1061,7 +1062,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     y = -rect.miny;
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
+    msGDImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 #else
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 #endif    
@@ -1246,7 +1247,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 
     if(label->outlinecolor.pen >= 0) { /* handle the outline color */
 #ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
+      error = msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
 #else
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
 #endif
@@ -1256,9 +1257,9 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       }
 
 #ifdef USE_GD_TTF
-      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
-      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
-      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
+      msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
+      msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
+      msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
 #else
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
@@ -1269,7 +1270,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 
     if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
 #ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
+      error = msGDImageStringTTF(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
 #else
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
 #endif
@@ -1280,7 +1281,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
+    msGDImageStringTTF(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
 #else
     gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
 #endif
@@ -1666,6 +1667,25 @@ void msFreeImageGD(gdImagePtr img)
   gdImageDestroy(img);
 }
 
+/**
+ * This is a cover version of gdImageStringTTF() used to ensure locking
+ * is used.  It seems something in this function is *not* threadsafe.
+ */
+
+char *msGDImageStringTTF(gdImage *im, int *brect, int fg, char *fontlist,
+                         double ptsize, double angle, int x, int y, 
+                         char *string)
+
+{
+    char *result;
+
+    msAcquireLock( TLOCK_TTF );
+    result = gdImageStringTTF( im, brect, fg, fontlist, ptsize, angle,
+                               x, y, string );
+    msReleaseLock( TLOCK_TTF );
+
+    return result;
+}
 
 #if GD2_VERS > 1
 static void
