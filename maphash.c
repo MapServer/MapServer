@@ -64,8 +64,7 @@ char *msLookupHashTable(hashTableObj table, const char *string)
 {
   struct hashObj *tp;
 
-  if(!table || !string) {
-    msSetError(MS_HASHERR, "Invalid hash table or key", "msLookupHashTable");
+  if (!table || !string) {
     return(NULL);
   }
 
@@ -73,6 +72,24 @@ char *msLookupHashTable(hashTableObj table, const char *string)
     if(strcasecmp(string, tp->key) == 0)
       return(tp->data);
 
+  return(NULL);
+}
+
+char *msGetHashTableValue(hashTableObj table, const char *string)
+{
+  struct hashObj *tp;
+
+  if (!table || !string) {
+    msSetError(MS_HASHERR, "NULL hash table or key", "msGetHashTableValue");
+    return(NULL);
+  }
+
+  for (tp=table[hash(string)]; tp!=NULL; tp=tp->next)
+    if (strcasecmp(string, tp->key) == 0)
+      return(tp->data);
+
+  msSetError(MS_HASHERR, "Hash key %s does not exist", "msGetHashTableValue",
+             string);
   return(NULL);
 }
 

@@ -87,8 +87,14 @@ MAP
     STATUS DEFAULT
     DATA "point"
     CLASSITEM "FNAME"
+    LABELITEM "FNAME"
     CLASS
       NAME "0"
+      LABEL
+        TYPE BITMAP
+        COLOR 0 0 0
+        SIZE SMALL
+      END
       STYLE
         COLOR 0 0 0
         SYMBOL 1

@@ -773,7 +773,9 @@ typedef struct map_obj{ /* structure for a map */
   int height, width;
   int maxsize;
 
+#ifndef SWIG
   layerObj *layers;
+#endif
 
 #ifdef SWIG
 %immutable;
@@ -806,7 +808,11 @@ typedef struct map_obj{ /* structure for a map */
   colorObj imagecolor; /* holds the initial image color value */
 
   int numoutputformats;
+
+#ifndef SWIG
   outputFormatObj **outputformatlist;
+#endif
+
   outputFormatObj *outputformat;
 
 #ifdef SWIG
@@ -814,12 +820,8 @@ typedef struct map_obj{ /* structure for a map */
 #endif
   char *imagetype; /* name of current outputformat */
 #ifdef SWIG
-  %mutable;
+%mutable;
 #endif // SWIG
-
-#ifdef SWIG
-%immutable;
-#endif
 
 #ifndef SWIG
   projectionObj projection; /* projection information for output map */

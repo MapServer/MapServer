@@ -502,7 +502,7 @@ memory.") const char * {
   }
 
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->web.metadata, name));
+    return(msGetHashTableValue(self->web.metadata, name));
   }
 
   int setMetaData(char *name, char *value) {
@@ -964,7 +964,7 @@ memory.") const char * {
   }
 
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->metadata, name));
+    return(msGetHashTableValue(self->metadata, name));
   }
 
   int setMetaData(char *name, char *value) {
@@ -1126,7 +1126,7 @@ memory.") const char * {
   }
 
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->metadata, name));
+    return(msGetHashTableValue(self->metadata, name));
   }
 
   int setMetaData(char *name, char *value) {

@@ -977,6 +977,9 @@ class NewOutputFormatTestCase(unittest.TestCase):
         assert self.mapobj1.outputformat.mimetype == 'image/tiff'
 
 class MapMetaDataTestCase(MapTestCase):
+    def testInvalidKeyAccess(self):
+        self.assertRaises(mapscript.MapServerError, 
+                          self.mapobj1.getMetaData, 'foo')
     def testFirstKeyAccess(self):
         key = self.mapobj1.getFirstMetaDataKey()
         assert key == 'key1'
