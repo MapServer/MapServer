@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/05/18 14:42:51  frank
+ * Removed unused variable.
+ *
  * Revision 1.20  2004/05/06 21:06:08  frank
  * temporary filenames should not be altered with msBuildPath()
  *
@@ -460,7 +463,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         FILE *fp; 
         unsigned char block[4000];
         int bytes_read;
-        char szPath[MS_MAXPATHLEN];
 
         fp = fopen( filename, "rb" );
         if( fp == NULL )
