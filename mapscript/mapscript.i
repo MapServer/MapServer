@@ -84,6 +84,13 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     msFreeMap(self);
   }
 
+  mapObj *copy() {
+    mapObj *dstMap;
+    dstMap = msNewMapObj();
+    msCopyMap(dstMap, self);
+    return dstMap;
+  }
+
   layerObj *getLayer(int i) {
     if(i >= 0 && i < self->numlayers)	
       return &(self->layers[i]); /* returns an EXISTING layer */
@@ -102,9 +109,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
   }
 
+  /*
   int addColor(int r, int g, int b) {
     return msAddColor(self, r, g, b);
   }
+  */
 
   int getSymbolByName(char *name) {
     return msGetSymbolIndex(&self->symbolset, name);
@@ -135,12 +144,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
     }
 
-
-    if (MS_DRIVER_GD(self->outputformat))
+    /*if (MS_DRIVER_GD(self->outputformat))
     {    
         if(msLoadPalette(image->img.gd, &(self->palette), self->imagecolor) == -1)
           return NULL;
-    }
+    }*/
+
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
     status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
     if(status != MS_SUCCESS) return NULL;
@@ -368,7 +377,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return; // map deconstructor takes care of it
   }
 
+<<<<<<< mapscript.i
+    
+  int open(char *path) {
+=======
   int open() {
+>>>>>>> 1.94
     int status;
     status =  msLayerOpen(self);
     if (status == MS_SUCCESS) {
@@ -500,6 +514,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return &(layer->class[layer->numclasses-1]);
   }
 
+  void copy(classObj *dstClass, layerObj *dstLayer) {
+    msCopyClass(dstClass, self, dstLayer);
+  }
+  
   ~classObj() {
     return; // do nothing, map deconstrutor takes care of it all
   }
@@ -754,9 +772,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return  msAdjustExtent(self, width, height);
   } 
 
+  /*
   int contrain(rectObj *bounds, double overlay) {
     return msConstrainRect(bounds,self, overlay);
   }
+  */
 
   int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
     shapeObj shape;
