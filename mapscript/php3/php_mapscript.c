@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/06/28 20:25:16  dan
+ * Fixed colorObj.setRGB(), added map.save() + sync with mapscript.i v1.9
+ *
  * Revision 1.1  2000/05/09 21:06:11  dan
  * Initial Import
  *
@@ -95,9 +98,10 @@
  *
  **********************************************************************/
 
+#include "php_mapscript.h"
+
 #include "phpdl.h"
 #include "php3_list.h"
-#include "php_mapscript.h"
 #include "maperror.h"
 
 #include <time.h>
@@ -108,7 +112,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "1.0.010 (May 8, 2000)"
+#define PHP3_MS_VERSION "1.0.011 (Jun 28, 2000)"
 
 /*=====================================================================
  *                         Prototypes
@@ -143,6 +147,7 @@ DLEXPORT void php3_ms_map_nextLabel(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS);
@@ -194,6 +199,7 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_addshape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -243,6 +249,7 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
 /*      utility functions prototypes.                                   */
 /* ==================================================================== */
 DLEXPORT void php3_ms_getcwd(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_getpid(INTERNAL_FUNCTION_PARAMETERS);
 
 /*=====================================================================
  *               PHP Dynamically Loadable Library stuff
@@ -283,6 +290,7 @@ function_entry php3_ms_functions[] = {
     {"ms_newrectobj",      php3_ms_rect_new,  NULL},
     {"ms_newfeatureobj",   php3_ms_feature_new,  NULL},
     {"ms_getcwd",    php3_ms_getcwd,   NULL},
+    {"ms_getpid",    php3_ms_getpid,   NULL},
     {NULL, NULL, NULL}
 };
 
@@ -908,6 +916,19 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value, "keyspacingx",pNewObj->legend.keyspacingx);
     add_property_long(return_value, "keyspacingy",pNewObj->legend.keyspacingy);
 
+    _phpms_build_color_object(&(pNewObj->imagecolor),list, &new_obj_param);
+    _phpms_add_property_object(return_value, 
+                               "imagecolor", &new_obj_param,E_ERROR);
+
+    _phpms_build_web_object(&(pNewObj->web), list, &new_obj_param);
+    _phpms_add_property_object(return_value, "web", &new_obj_param,E_ERROR);
+
+    _phpms_build_referenceMap_object(&(pNewObj->reference), list, 
+                                     &new_obj_param);
+    _phpms_add_property_object(return_value, 
+                               "reference", &new_obj_param, E_ERROR);
+
+    /* methods */
     add_method(return_value, "set",             php3_ms_map_setProperty);
     add_method(return_value, "addcolor",        php3_ms_map_addColor);
     add_method(return_value, "prepareimage",    php3_ms_map_prepareImage);
@@ -922,20 +943,16 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_method(return_value, "getsymbolbyname", php3_ms_map_getSymbolByName);
     add_method(return_value, "nextlabel",       php3_ms_map_nextLabel);
 #endif
-    add_method(return_value, "getcolorbyindex",  php3_ms_map_getLayerByName);
+    add_method(return_value, "getcolorbyindex",  php3_ms_map_getColorByIndex);
 
     add_method(return_value, "setextent",       php3_ms_map_setExtent);
     add_method(return_value, "zoompoint",       php3_ms_map_zoomPoint);
     add_method(return_value, "zoomrectangle",   php3_ms_map_zoomRectangle);
     
     add_method(return_value, "queryusingpoint", php3_ms_map_queryUsingPoint);
-    add_method(return_value, "queryusingrect", php3_ms_map_queryUsingRect);
+    add_method(return_value, "queryusingrect",  php3_ms_map_queryUsingRect);
 
-    _phpms_build_web_object(&(pNewObj->web), list, &new_obj_param);
-    _phpms_add_property_object(return_value, "web", &new_obj_param,E_ERROR);
-
-    _phpms_build_referenceMap_object(&(pNewObj->reference), list, &new_obj_param);
-    _phpms_add_property_object(return_value, "reference", &new_obj_param,E_ERROR);
+    add_method(return_value, "save",            php3_ms_map_save);
 
     return;
 }
@@ -1894,6 +1911,36 @@ DLEXPORT void php3_ms_map_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        map->save()
+ **********************************************************************/
+
+/* {{{ proto int map.save(string filename)
+   Write map object to a file. */
+
+DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis, *pFname;
+    mapObj *self;
+    int    retVal=0;
+
+    if (getThis(&pThis) == FAILURE ||
+        getParameters(ht, 1, &pFname) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFname);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    if (self == NULL || 
+        (retVal = mapObj_save(self, pFname->value.str.val)) != 0)
+        _phpms_report_mapserver_error(E_ERROR);
+
+    RETURN_LONG(retVal);
+}
+/* }}} */
+
 
 /*=====================================================================
  *                 PHP function wrappers - image class
@@ -2109,7 +2156,6 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_double(return_value, "labelmaxscale",player->labelmaxscale);
     add_property_long(return_value,   "maxfeatures",player->maxfeatures);
     add_property_long(return_value,   "offsite",    player->offsite);
-    add_property_long(return_value,   "annotate",   player->annotate);
     add_property_long(return_value,   "transform",  player->transform);
     add_property_long(return_value,   "labelcache", player->labelcache);
     PHPMS_ADD_PROP_STR(return_value,  "labelitem",  player->labelitem);
@@ -2216,7 +2262,6 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("labelmaxscale",self->labelmaxscale)
     else IF_SET_LONG(  "maxfeatures",self->maxfeatures)
     else IF_SET_LONG(  "offsite",    self->offsite)
-    else IF_SET_LONG(  "annotate",   self->annotate)
     else IF_SET_LONG(  "transform",  self->transform)
     else IF_SET_LONG(  "labelcache", self->labelcache)
     else IF_SET_STRING("labelitem",  self->labelitem)
@@ -2733,7 +2778,7 @@ DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval   *pThis, *pString;
     classObj *self=NULL;
-    int     nStatus;
+    int     nStatus=-1;
 
     if (getThis(&pThis) == FAILURE ||
         getParameters(ht, 1, &pString) == FAILURE) 
@@ -2784,7 +2829,7 @@ static long _phpms_build_color_object(colorObj *pcolor,
     add_property_long(return_value,   "green", pcolor->green);
     add_property_long(return_value,   "blue",  pcolor->blue);
 
-    add_method(return_value, "setRGB", php3_ms_color_setRGB);
+    add_method(return_value, "setrgb", php3_ms_color_setRGB);
 
     return color_id;
 }
@@ -2803,7 +2848,7 @@ DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pR, *pG, *pB, *pThis;
 
     if (getThis(&pThis) == FAILURE ||
-        getParameters(ht, 2, &pR, &pG, &pB) != SUCCESS)
+        getParameters(ht, 3, &pR, &pG, &pB) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
@@ -4109,8 +4154,8 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     
-    IF_SET_STRING(       "image",         self->image)
-    else IF_SET_LONG(    "width",   self->width)
+    IF_SET_STRING(       "image",    self->image)
+    else IF_SET_LONG(    "width",    self->width)
     else IF_SET_LONG(    "height",   self->height)
     else IF_SET_LONG(    "status",   self->status) 
     else if (strcmp( "extent", pPropertyName->value.str.val) == 0 ||
@@ -4138,7 +4183,7 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
  *====================================================================*/
 
 /**********************************************************************
- *                     _phpms_build_referenceMap_object()
+ *                     _phpms_build_shapefile_object()
  **********************************************************************/
 static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
                                           HashTable *list, pval *return_value)
@@ -4167,6 +4212,7 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
 
     /* methods */
     add_method(return_value, "getshape",        php3_ms_shapefile_getshape);
+    add_method(return_value,"gettransformed",php3_ms_shapefile_gettransformed);
     add_method(return_value, "getextent",       php3_ms_shapefile_getextent);
     add_method(return_value, "addshape",        php3_ms_shapefile_addshape);
     add_method(return_value, "free",            php3_ms_shapefile_free);
@@ -4287,6 +4333,62 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
     /* Read from the file */
     if (self == NULL || 
         shapefileObj_get(self, pIndex->value.lval, poShape) != 0)
+    {
+        shapeObj_destroy(poShape);
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed reading shape %d.", pIndex->value.lval);
+        RETURN_FALSE;
+    }
+
+    /* Return shape object */
+    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), 
+                              list, return_value);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        shapefile->gettransformed()
+ **********************************************************************/
+
+/* {{{ proto int shapefile.getTransformed(mapObj map, int i)
+   Retrieve shape by index. */
+
+DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pThis, *pIndex, *pMap;
+    shapefileObj *self;
+    shapeObj    *poShape;
+    mapObj      *poMap;
+
+    if (getThis(&pThis) == FAILURE ||
+        getParameters(ht, 2, &pMap, &pIndex) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_double(pIndex);
+
+    self = (shapefileObj *)_phpms_fetch_handle(pThis, 
+                                               PHPMS_GLOBAL(le_msshapefile),
+                                               list);
+
+    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list);
+
+    /* Create a new shapeObj to hold the result 
+     * Note that the type used to create the shape (MS_NULL) does not matter
+     * at this point since it will be set by SHPReadShape().
+     */
+    if ((poShape = shapeObj_new(MS_NULL)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed creating new shape (out of memory?)");
+        RETURN_FALSE;
+    }
+
+    /* Read from the file */
+    if (self == NULL || 
+        shapefileObj_getTransformed(self, poMap, 
+                                    pIndex->value.lval, poShape) != 0)
     {
         shapeObj_destroy(poShape);
         _phpms_report_mapserver_error(E_WARNING);
@@ -4426,5 +4528,13 @@ DLEXPORT void php3_ms_getcwd(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     RETURN_STRING(buffer, 1);
+}
+
+/************************************************************************/
+/*                           php3_ms_getpid()                           */
+/************************************************************************/
+DLEXPORT void php3_ms_getpid(INTERNAL_FUNCTION_PARAMETERS)
+{
+    RETURN_LONG(getpid());
 }
 
