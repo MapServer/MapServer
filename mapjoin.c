@@ -166,8 +166,10 @@ int msDBFJoinNext(joinObj *join)
   }
 
   // clear any old data
-  msFreeCharArray(join->values, join->numitems);
-  join->values = NULL;
+  if(join->values) { 
+    msFreeCharArray(join->values, join->numitems);
+    join->values = NULL;
+  }
 
   n = msDBFGetRecordCount(joininfo->hDBF);
     
