@@ -729,12 +729,6 @@ and the MapServer Map File documentation at:
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
 
-   int setcolor(string property_name, new_value)
-        Set the colors property of the object. 
-        property_name can be "color", or "backgroundcolor", or "outlinecolor",
-        or "backgroundshadowcolor" or "shadowcolor"
-        Returns -1 on error.
-        ex : o_style->setcolor("color", 0, 0, 0);
         
  webObj Class
  -----------
@@ -1169,11 +1163,5 @@ styleObj Class
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
  
-  int setcolor(string property_name, new_value)
-        Set the colors property of the object. 
-        property_name can be "color", or "backgroundcolor", or "outlinecolor"
-        Returns -1 on error.
-        ex : o_style->setcolor("color", 0, 0, 0);
-
                      --------------------------
 
