@@ -435,7 +435,7 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
   AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl check for antialiased drawing (gd 2.0.12 and higher)
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DGD_USE_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DUSE_GD_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
@@ -464,7 +464,7 @@ else
   AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB $GD_XTRA_LIBS)
 
   dnl check for antialiased drawing (gd 2.0.12 and higher)
-  AC_CHECK_LIB(gd, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DGD_USE_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB(gd, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DUSE_GD_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"

@@ -1428,6 +1428,7 @@ int initStyle(styleObj *style) {
   style->maxsize = MS_MAXSYMBOLSIZE;
   style->offsetx = style->offsety = 0; // no offset
   style->offsetx = style->offsety = 0;
+  style->antialias = MS_FALSE;
 
   return MS_SUCCESS;
 }
@@ -1437,6 +1438,15 @@ int loadStyle(styleObj *style) {
 
   for(;;) {
     switch(msyylex()) {
+    case(ANTIALIAS):
+#ifdef USE_GD_ANTIALIAS
+      if((style->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1)
+	return(-1);
+#else
+      msSetError(MS_GDERR, "Antialiasing support is not available. Get a newer version of GD!", "loadStyle()");
+      return(-1);
+#endif
+      break;
     case(BACKGROUNDCOLOR):
       if(loadColor(&(style->backgroundcolor)) != MS_SUCCESS) return(MS_FAILURE);
       break;
@@ -1497,14 +1507,17 @@ void freeStyle(styleObj *style) {
 
 void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
+#if USE_GD_ANTIALIAS
+  if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
+#endif
   writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
 
 #if ALPHACOLOR_ENABLED
-  if( style->color.alpha )
-	writeColorWithAlpha(&(style->color), stream, "ALPHACOLOR", "        ");
+  if(style->color.alpha)
+    writeColorWithAlpha(&(style->color), stream, "ALPHACOLOR", "        ");
   else
 #endif
-	writeColor(&(style->color), stream, "COLOR", "        ");
+    writeColor(&(style->color), stream, "COLOR", "        ");
   if(style->maxsize > -1) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
   if(style->minsize > -1) fprintf(stream, "        MINSIZE %d\n", style->minsize);
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 

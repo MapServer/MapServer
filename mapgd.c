@@ -972,9 +972,18 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     else 
       imagePolyline(img, p, gdStyledBrushed, ox, oy);
   } else {
-    if(!brush && !symbol->img)
+    if(!brush && !symbol->img) {
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+      fprintf(stderr, "here...");
+      if(style->antialias) {
+        gdImageSetAntiAliased(img, fc);
+        imagePolyline(img, p, gdAntiAliased, ox, oy);
+      } else
+        imagePolyline(img, p, fc, ox, oy);
+#else
       imagePolyline(img, p, fc, ox, oy);
-    else
+#endif
+    } else
       imagePolyline(img, p, gdBrushed, ox, oy);
   }
 
@@ -1025,8 +1034,22 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   if(size < 1) return; // size too small
       
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color */    
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+    if(style->antialias) {
+      gdImageSetAntiAliased(img, fc);
+      msImageFilledPolygon(img, p, gdAntiAliased);
+      if(oc>-1) {
+        gdImageSetAntiAliased(img, oc);
+        imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+      }
+    } else {
+      msImageFilledPolygon(img, p, fc);
+      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+    }
+#else
     msImageFilledPolygon(img, p, fc);
     if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#endif    
     return;
   }
   
@@ -1052,7 +1075,15 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+    if(style->antialias && oc>-1) { 
+      gdImageSetAntiAliased(img, oc);     
+      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+    } else 
+      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#else
     if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#endif
     gdImageDestroy(tile);
 #endif
 
@@ -1061,7 +1092,15 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     
     gdImageSetTile(img, symbol->img);
     msImageFilledPolygon(img, p, gdTiled);
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+    if(style->antialias && oc>-1) { 
+      gdImageSetAntiAliased(img, oc);     
+      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+    } else 
+      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#else
     if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#endif
 
     break;
   case(MS_SYMBOL_ELLIPSE):    
@@ -1070,8 +1109,22 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     y = MS_NINT(symbol->sizey*d)+1;
 
     if((x <= 1) && (y <= 1)) { /* No sense using a tile, just fill solid */
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+      if(style->antialias) {
+        gdImageSetAntiAliased(img, fc);
+        msImageFilledPolygon(img, p, gdAntiAliased);
+        if(oc>-1) {
+          gdImageSetAntiAliased(img, oc);
+          imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+        }
+      } else {
+        msImageFilledPolygon(img, p, fc);
+        if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+      }
+#else
       msImageFilledPolygon(img, p, fc);
       if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#endif
       return;
     }
     
@@ -1090,7 +1143,15 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     // fill the polygon in the main image
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+    if(style->antialias && oc>-1) { 
+      gdImageSetAntiAliased(img, oc);     
+      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+    } else 
+      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#else
     if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#endif
     gdImageDestroy(tile);
 
     break;
@@ -1100,8 +1161,22 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     y = MS_NINT(symbol->sizey*d)+1;
 
     if((x <= 1) && (y <= 1)) { /* No sense using a tile, just fill solid */
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+      if(style->antialias) {
+        gdImageSetAntiAliased(img, fc);
+        msImageFilledPolygon(img, p, gdAntiAliased);
+        if(oc>-1) {
+          gdImageSetAntiAliased(img, oc);
+          imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+        }
+      } else {
+        msImageFilledPolygon(img, p, fc);
+        if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+      }
+#else
       msImageFilledPolygon(img, p, fc);
       if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#endif
       return;
     }
 
@@ -1144,8 +1219,16 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     // Fill the polygon in the main image
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img, p, gdTiled);
-    if(oc>-1)
-      imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#if defined(USE_GD_ANTIALIAS) && !defined(ALPHACOLOR_ENABLED)
+    if(style->antialias && oc>-1) { 
+      gdImageSetAntiAliased(img, oc);     
+      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+    } else
+      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#else
+    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+#endif
+    gdImageDestroy(tile);
 
     break;
   default:
@@ -1724,4 +1807,3 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int s
     */
     gdImageAlphaBlending( dst, 0 );
 }
-

@@ -391,6 +391,8 @@ typedef struct {
   int minsize, maxsize;
 
   int offsetx, offsety; // for shadows, hollow symbols, etc...
+
+  int antialias;
 } styleObj;
 
 // CLASS OBJECT - basic symbolization and classification information
