@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.158  2005/01/14 05:03:01  frank
+ * fixed style capabilities (use msIO_fprintf) generation per Bug 1152
+ *
  * Revision 1.157  2004/11/29 21:31:56  dan
  * Fixed WMS GetCapabilities 1.1.0 crash when wms_style_<...>_legendurl_*
  * metadata were used (bug 1096)
@@ -1290,11 +1293,11 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        pszWmsTimeDefault = msOWSLookupMetadata(&(lp->metadata),  "MO",
                                                "timedefault");
 
-       fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\"/>\n");
+       msIO_fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\"/>\n");
        if (pszWmsTimeDefault)
-         fprintf(stdout, "        <Extent name=\"time\" default=\"%s\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeDefault, pszWmsTimeExtent);
+         msIO_fprintf(stdout, "        <Extent name=\"time\" default=\"%s\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeDefault, pszWmsTimeExtent);
        else
-           fprintf(stdout, "        <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);
+           msIO_fprintf(stdout, "        <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);
 
    }
 
@@ -1342,9 +1345,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    if(nVersion <= OWS_1_0_0 && pszLegendURL)
    {
        // First, print the style block
-       fprintf(stdout, "        <Style>\n");
-       fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-       fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+       msIO_fprintf(stdout, "        <Style>\n");
+       msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+       msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
 
           
        // Inside, print the legend url block
@@ -1355,7 +1358,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                 NULL);
 
        // close the style block
-       fprintf(stdout, "        </Style>\n");
+       msIO_fprintf(stdout, "        </Style>\n");
 
    }
    else if(nVersion >= OWS_1_1_0)
@@ -1363,9 +1366,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        if (pszLegendURL)
        {
            // First, print the style block
-           fprintf(stdout, "        <Style>\n");
-           fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-           fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+           msIO_fprintf(stdout, "        <Style>\n");
+           msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+           msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
 
            
            // Inside, print the legend url block
@@ -1380,7 +1383,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                              "          ",
                              MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
                              NULL, NULL, NULL, NULL, NULL, "          ");
-           fprintf(stdout, "        </Style>\n");
+           msIO_fprintf(stdout, "        </Style>\n");
                
        }
        else
@@ -1442,9 +1445,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
                                mimetype);
                            
-                       fprintf(stdout, "        <Style>\n");
-                       fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-                       fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+                       msIO_fprintf(stdout, "        <Style>\n");
+                       msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+                       msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
                       
                        msOWSPrintURLType(stdout, NULL, 
                                          "O", "ttt",
@@ -1460,7 +1463,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                          NULL, width, height, mimetype, legendurl, "          ");
                        
 
-                       fprintf(stdout, "        </Style>\n");
+                       msIO_fprintf(stdout, "        </Style>\n");
                        msFree(legendurl);
                        msFree(mimetype);
 
@@ -1500,7 +1503,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
       {
         errorMsg = "It is not allowed to set both the GROUP and WMS_LAYER_GROUP for a layer";
         msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
-        fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
+        msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
         //cannot return exception at this point because we are already writing to stdout
       }
       else
@@ -1509,7 +1512,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
         {      
           errorMsg = "The WMS_LAYER_GROUP metadata does not start with a '/'";
           msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
-          fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
+          msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
           //cannot return exception at this point because we are already writing to stdout
         }
         else

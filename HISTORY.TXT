@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1152 : Fix WMS style capabilities output for FastCGI enabled builds.
+
 - Bug 1135 : Added support for rotating labels with the map if they were 
   rendered with some particular angle already. 
 
