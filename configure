@@ -5072,7 +5072,7 @@ GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
 
 
 
-unset ac_cv_lib_iconv_iconv_open
+unset ac_cv_lib_iconv_libiconv_open
 unset ac_cv_lib_c_iconv_open
 
 
@@ -5103,75 +5103,7 @@ if test -n "$ICONV_DIR" ; then
   test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
   test -f $ICONV_DIR/lib64/libiconv.a -o -f $ICONV_DIR/lib64/libiconv.so -o -f $ICONV_DIR/lib64/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib64" && ICONV_INCDIR="$ICONV_DIR/include"
 
-  echo "$as_me:$LINENO: checking for iconv_open in -liconv" >&5
-echo $ECHO_N "checking for iconv_open in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv_open+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv "-L$ICONV_LIBDIR" $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv_open ();
-int
-main ()
-{
-iconv_open ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv_open=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv_open=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv_open" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv_open" >&6
-if test $ac_cv_lib_iconv_iconv_open = yes; then
-  ICONV_LIB="-L$ICONV_LIBDIR -liconv"
-fi
-
-  echo "$as_me:$LINENO: checking for iconv_open in -lc" >&5
+            echo "$as_me:$LINENO: checking for iconv_open in -lc" >&5
 echo $ECHO_N "checking for iconv_open in -lc... $ECHO_C" >&6
 if test "${ac_cv_lib_c_iconv_open+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5239,6 +5171,74 @@ if test $ac_cv_lib_c_iconv_open = yes; then
   ICONV_LIB="-L$ICONV_LIBDIR -lc"
 fi
 
+  echo "$as_me:$LINENO: checking for libiconv_open in -liconv" >&5
+echo $ECHO_N "checking for libiconv_open in -liconv... $ECHO_C" >&6
+if test "${ac_cv_lib_iconv_libiconv_open+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-liconv "-L$ICONV_LIBDIR" $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char libiconv_open ();
+int
+main ()
+{
+libiconv_open ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_iconv_libiconv_open=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_iconv_libiconv_open=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_libiconv_open" >&5
+echo "${ECHO_T}$ac_cv_lib_iconv_libiconv_open" >&6
+if test $ac_cv_lib_iconv_libiconv_open = yes; then
+  ICONV_LIB="-L$ICONV_LIBDIR -liconv"
+fi
+
 
 fi
 
@@ -5272,76 +5272,8 @@ echo "${ECHO_T}        using libiconv from $ICONV_LIB" >&6
 else
 
 
-  unset ac_cv_lib_iconv_iconv_open
+  unset ac_cv_lib_iconv_libiconv_open
   unset ac_cv_lib_c_iconv_open
-  echo "$as_me:$LINENO: checking for iconv_open in -liconv" >&5
-echo $ECHO_N "checking for iconv_open in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv_open+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv_open ();
-int
-main ()
-{
-iconv_open ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv_open=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv_open=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv_open" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv_open" >&6
-if test $ac_cv_lib_iconv_iconv_open = yes; then
-  ICONV_LIB="-liconv"
-fi
-
   echo "$as_me:$LINENO: checking for iconv_open in -lc" >&5
 echo $ECHO_N "checking for iconv_open in -lc... $ECHO_C" >&6
 if test "${ac_cv_lib_c_iconv_open+set}" = set; then
@@ -5408,6 +5340,74 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_c_iconv_open" >&5
 echo "${ECHO_T}$ac_cv_lib_c_iconv_open" >&6
 if test $ac_cv_lib_c_iconv_open = yes; then
   ICONV_LIB="-lc"
+fi
+
+  echo "$as_me:$LINENO: checking for libiconv_open in -liconv" >&5
+echo $ECHO_N "checking for libiconv_open in -liconv... $ECHO_C" >&6
+if test "${ac_cv_lib_iconv_libiconv_open+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-liconv  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char libiconv_open ();
+int
+main ()
+{
+libiconv_open ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_iconv_libiconv_open=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_iconv_libiconv_open=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_libiconv_open" >&5
+echo "${ECHO_T}$ac_cv_lib_iconv_libiconv_open" >&6
+if test $ac_cv_lib_iconv_libiconv_open = yes; then
+  ICONV_LIB="-liconv"
 fi
 
 
@@ -5684,8 +5684,8 @@ echo "${ECHO_T}        using libgd 2.0.12 (or higher) from $GD_LIB $GD_XTRA_LIBS
   fi
 
   else
-      { { echo "$as_me:$LINENO: error: \"Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.\"" >&5
-echo "$as_me: error: \"Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.\"" >&2;}
+      { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
+echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
@@ -5876,8 +5876,8 @@ echo "${ECHO_T}        using libgd 2.0.12 (or higher) from system libs ($GD_LIB 
   done
 
   if test "$FOUND_GD" = "false" ; then
-    { { echo "$as_me:$LINENO: error: \"Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.\"" >&5
-echo "$as_me: error: \"Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.\"" >&2;}
+    { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
+echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
    { (exit 1); exit 1; }; }
   fi
 fi

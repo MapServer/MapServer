@@ -51,6 +51,8 @@ Version 4.4.0-beta2 ()
 
 - Implemented FastCGI cleanup support for win32 and unix in mapserv.c.
 
+- Solved configure/compile issues with libiconv (bugs 909, 1017)
+
 
 Version 4.4.0-beta1 (2004-10-21)
 --------------------------------
