@@ -460,3 +460,53 @@ const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bRetur
   return(MS_FAILURE);
 #endif
 }
+
+static char *ms_proj_lib = NULL;
+static char *last_filename = NULL;
+
+static const char *msProjFinder( const char *filename)
+
+{
+    if( last_filename != NULL )
+        free( last_filename );
+
+    if( filename == NULL )
+        return NULL;
+
+    if( ms_proj_lib == NULL )
+        return filename;
+
+    last_filename = (char *) malloc(strlen(filename)+strlen(ms_proj_lib)+2);
+    sprintf( last_filename, "%s/%s", ms_proj_lib, filename );
+
+    return last_filename;
+}
+
+void msSetPROJ_LIB( const char *proj_lib )
+
+{
+#ifdef USE_PROJ
+    static int finder_installed = FALSE;
+
+    if( finder_installed == FALSE )
+    {
+        finder_installed = TRUE;
+        pj_set_finder( msProjFinder );
+    }
+    
+    if( ms_proj_lib != NULL )
+    {
+        free( ms_proj_lib );
+        ms_proj_lib = NULL;
+    }
+
+    if( last_filename != NULL )
+    {
+        free( last_filename );
+        last_filename = NULL;
+    }
+
+    if( proj_lib != NULL )
+        ms_proj_lib = strdup( proj_lib );
+#endif
+}
