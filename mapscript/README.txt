@@ -43,7 +43,4 @@ Installation instructions are located in the individual languages
 directories such as mapscript/perl, mapscript/python.  The shared API
 is documented in the file mapscript/doc/mapscript.txt.
 
-The main mapscript SWIG interface file is mapscript/mapscript.i.  This
-file includes specific class interface files from mapscript/swiginc and
-language specific code from the language directories.
-
+The main mapscript SWIG interface file is mapscript/mapscript.i.
