@@ -2102,6 +2102,9 @@ imageObj *msDrawReferenceMap(mapObj *map) {
     image->img.gd = img;
     image->imagepath = NULL;
     image->imageurl = NULL;
+    image->width = img->sx;
+    image->height = img->sy;
+        
     if (map->web.imagepath)
        image->imagepath = strdup(map->web.imagepath);
     if (map->web.imageurl)
@@ -2120,6 +2123,8 @@ imageObj *msDrawReferenceMap(mapObj *map) {
     image->img.gd = img;
     image->imagepath = NULL;
     image->imageurl = NULL;
+    image->width = img->sx;
+    image->height = img->sy;
     if (map->web.imagepath)
        image->imagepath = strdup(map->web.imagepath);
     if (map->web.imageurl)
@@ -2137,6 +2142,8 @@ imageObj *msDrawReferenceMap(mapObj *map) {
     image->img.gd = img;
     image->imagepath = NULL;
     image->imageurl = NULL;
+    image->width = img->sx;
+    image->height = img->sy;
     if (map->web.imagepath)
        image->imagepath = strdup(map->web.imagepath);
     if (map->web.imageurl)
