@@ -41,7 +41,11 @@ char tolower(char c)
 
 void postresql_NOTICE_HANDLER(void *arg, const char *message)
 {
-	msDebug(message);
+    layerObj *lp;
+    lp = (layerObj*)arg;
+
+    if (lp->debug)
+        msDebug("%s", message);
 }
 
 
@@ -124,8 +128,6 @@ char *strstrIgnoreCase(char *haystack, char *needle)
 	return haystack + (loc-hay_lower);
 }
 
-
-//void postresql_NOTICE_HANDLER(void *arg, const char *message);
 
 
 char *DATAERRORMESSAGE(char *dString, char *preamble)
@@ -223,7 +225,7 @@ if (layer->debug)
 	  return(MS_FAILURE);
     }
 
-	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layerinfo);
+	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layer);
 
 
 
