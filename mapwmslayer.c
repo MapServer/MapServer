@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.57  2004/02/11 20:45:38  assefa
+ * When generating the SLD, generate only for the layer and not the whole map.
+ *
  * Revision 1.56  2004/02/02 20:47:39  assefa
  * Use of wms_sld_body url.
  * Make sure that the layer type is preserved after a msDrawWMSLayerLow call.
@@ -336,7 +339,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     {
         if (strcasecmp(pszSLDBody, "AUTO") == 0)
         {
-            pszSLDGenerated = msSLDGenerateSLD(map, -1);
+            pszSLDGenerated = msSLDGenerateSLD(map, lp->index);
             if (pszSLDGenerated)
             {
                 pszSLDBodyEnc =  msEncodeUrl(pszSLDGenerated);
