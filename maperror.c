@@ -84,7 +84,7 @@ void msWriteError(FILE *stream)
 }
 
 char *msGetVersion() {
-  static char version[256];
+  static char version[384];
 
   sprintf(version, "MapServer version %s", MS_VERSION);
 
@@ -107,10 +107,10 @@ char *msGetVersion() {
   strcat(version, " SUPPORTS=TTF");
 #endif
 #ifdef USE_WMS
-  strcat(version, " SUPPORTS=WMS");
+  strcat(version, " SUPPORTS=WMS_SERVER");
 #endif
 #ifdef USE_WMS_LYR
-  strcat(version, " SUPPORTS=WMS_LYR");
+  strcat(version, " SUPPORTS=WMS_CLIENT");
 #endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
