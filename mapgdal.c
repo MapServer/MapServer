@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/03/05 22:56:55  frank
+ * improve GDAL cleanup
+ *
  * Revision 1.16  2004/03/05 05:57:04  frank
  * support multi-band rawmode output
  *
@@ -126,6 +129,8 @@ void msGDALCleanup( void )
     if( bGDALInitialized )
     {
         msAcquireLock( TLOCK_GDAL );
+        
+        CPLPopErrorHandler();
 
 #if GDAL_RELEASE_DATE > 20021001
         GDALDestroyDriverManager();
