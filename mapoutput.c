@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/11/19 14:38:39  frank
+ * fixed bug in msApplyOutputFormat with transparent override
+ *
  * Revision 1.7  2002/11/19 05:47:37  frank
  * cleanup memory leak
  *
@@ -416,7 +419,7 @@ void msApplyOutputFormat( outputFormatObj **target,
 /*      Do we need to change any values?  If not, then just apply       */
 /*      and return.                                                     */
 /* -------------------------------------------------------------------- */
-    if( transparent != MS_NOOVERRIDE && !format->transparent == !transparent )
+    if( transparent != MS_NOOVERRIDE && !format->transparent != !transparent )
         change_needed = MS_TRUE;
 
     old_imagequality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
