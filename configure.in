@@ -1313,22 +1313,39 @@ AC_ARG_WITH(php,
                           installed. Required in order to compile the
                           PHP/MapScript module.],,)
 
+AC_ARG_ENABLE(internal-ld-detect,
+[  --enable-perlv-ld-detect (applies to --with-php only) 
+                          Use perl -V output to figure the command to use to 
+                          link php_mapscript.so.  Try this only if the default
+                          internal macro didn't work.],,)
+
 if test -n "$with_php" -a -d "$with_php" ; then
   AC_EXPAND_PATH($with_php, PHP_SRC_DIR)
   dnl
   dnl Checks for shared library linking.
   dnl
-  dnl Try to use the perl-based macro if perl is available...
+  dnl Default to internal AC_LD_SHARED macro, or use the the perl-based 
+  dnl if requested and perl is available... 
+  dnl (The perl-V macro was the default in 3.6 and before but this was
+  dnl  changed in 3.7 to use the internal AC_LD_SHARED macro by default)
   dnl
-  dnl if test -n "`which perl`" ; then
-  AC_MSG_CHECKING([whether 'perl -V' works])
-  if  (perl -V > /dev/null 2>&1)  ; then
-    AC_MSG_RESULT(yes)
-    AC_LD_SHARED_FROM_PERL
-    PHP_CC="$PERL_CC"
-    PHP_LD="$PERL_LD"
+
+  if test "$enable_perlv_ld_detect" = "yes" ; then
+      AC_MSG_RESULT(Using perl -V macro to figure ld command to link php_mapscript.so)
+
+      AC_MSG_CHECKING([whether 'perl -V' works])
+      if  (perl -V > /dev/null 2>&1)  ; then
+        AC_MSG_RESULT(yes)
+        AC_LD_SHARED_FROM_PERL
+        PHP_CC="$PERL_CC"
+        PHP_LD="$PERL_LD"
+      else
+        AC_MSG_RESULT(no)
+        AC_MSG_ERROR([ERROR: Cannot use --enable-perlv-ld-detect since Perl -V does not work on this system.])
+      fi
   else
-    AC_MSG_RESULT(no)
+    dnl The default: use the internal AC_LD_SHARED macro
+    dnl
     AC_COMPILER_PIC
     AC_LD_SHARED
     PHP_CC="$CC $C_PIC"
