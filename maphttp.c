@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2003/06/12 20:35:16  dan
+ * Fixed test on result of curl_easy_init() in msHTTPExecuteRequests()
+ *
  * Revision 1.11  2003/04/23 21:32:25  dan
  * More fixes to return value and error reporting in msHTTPExecuteRequests()
  *
@@ -315,7 +318,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
         /* Alloc curl handle */
         http_handle = curl_easy_init();
-        if (multi_handle == NULL)
+        if (http_handle == NULL)
         {
             msSetError(MS_HTTPERR, "curl_easy_init() failed.", 
                        "msHTTPExecuteRequests()");
