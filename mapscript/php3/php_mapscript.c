@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.222  2004/12/19 22:12:55  assefa
+ * numpoints and stylelength memebers of the symbol object needs to be in sync
+ * with the low level values after calles to setpoints ans setstyle (Bug 1137).
+ *
  * Revision 1.221  2004/12/17 20:16:44  assefa
  * Use doubles instead of integers in function php3_ms_symbol_setPoints (Bug 1137).
  *
@@ -13070,6 +13074,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
     
     self->numpoints = (nElements/2);
 
+    _phpms_set_property_long(pThis,"numpoints", self->numpoints , E_ERROR); 
     RETURN_TRUE;
 }
 
@@ -13211,6 +13216,8 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     self->stylelength = nElements;
+
+    _phpms_set_property_long(pThis,"stylelength", self->stylelength , E_ERROR); 
 
     RETURN_TRUE;
 }
