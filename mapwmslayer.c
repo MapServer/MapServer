@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.53  2003/04/23 19:49:41  dan
+ * Use ',' as delimiter for wms_formatlist.  Use lp->connection in priority
+ * over wms_onlineresource metadata in msBuildWMSLayerURLBase()
+ *
  * Revision 1.52  2003/04/23 15:06:14  dan
  * Better formatted error message in msDrawWMSLayerLow()
  *
@@ -183,7 +187,11 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     const char *pszSLD=NULL, *pszVersionKeyword=NULL;
     int nLen;
 
-    pszOnlineResource = msLookupHashTable(lp->metadata, "wms_onlineresource");
+    /* If lp->connection is not set then use wms_onlineresource metadata */
+    pszOnlineResource = lp->connection;
+    if (pszOnlineResource == NULL) 
+      pszOnlineResource = msLookupHashTable(lp->metadata,"wms_onlineresource");
+
     pszVersion =        msLookupHashTable(lp->metadata, "wms_server_version");
     pszName =           msLookupHashTable(lp->metadata, "wms_name");
     pszFormat =         msLookupHashTable(lp->metadata, "wms_format");
@@ -245,7 +253,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         /* Look for the first format in list that matches */
         char **papszTok;
         int i, n;
-        papszTok = split(pszFormatList, ' ', &n);
+        papszTok = split(pszFormatList, ',', &n);
 
         for(i=0; pszFormatEnc==NULL && i<n; i++)
         {
