@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/04/08 17:25:25  frank
+ * added msGetGDALBandList()
+ *
  * Revision 1.23  2004/03/11 23:03:56  assefa
  * Correct bug in a loop in function msDrawRasterLayerGDAL_16BitClassification
  *
@@ -143,9 +146,6 @@ msDrawRasterLayerGDAL_16BitClassification(
     int src_xoff, int src_yoff, int src_xsize, int src_ysize,
     int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
 
-static double 
-msGetGDALNoDataValue( layerObj *layer, GDALRasterBandH hBand,
-                      int *pbGotNoData );
 
 #ifdef ENABLE_DITHER
 static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
@@ -389,25 +389,33 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   }
   else
   {
-      char **papszItems = CSLTokenizeStringComplex( 
-          CSLFetchNameValue(layer->processing,"BANDS"), " ,", FALSE, FALSE );
-      
-      if( CSLCount(papszItems) > 3 )
-          alpha_band = atoi(papszItems[3]);
-      if( CSLCount(papszItems) > 2 )
-      {
-          green_band = atoi(papszItems[1]);
-          blue_band = atoi(papszItems[2]);
-      }
-      if( CSLCount(papszItems) > 0 )
-          red_band = atoi(papszItems[0]);
-      else
-      {
-          msSetError( MS_IMGERR, "BANDS PROCESSING directive has no items.",
-                      "msDrawGDAL()" );
+      int band_count, *band_list;
+
+      band_list = msGetGDALBandList( layer, hDS, 4, &band_count );
+      if( band_list == NULL )
           return -1;
+      
+      if( band_count > 0 )
+          red_band = band_list[0];
+      else
+          red_band = 0;
+      if( band_count > 2 )
+      {
+          green_band = band_list[1];
+          blue_band = band_list[2];
       }
-      CSLDestroy( papszItems );
+      else	
+      {
+          green_band = 0;
+          blue_band = 0;
+      }
+
+      if( band_count > 3 )
+          alpha_band = band_list[3];
+      else
+          alpha_band = 0;
+
+      free( band_list );
   }
 
   if( layer->debug > 1 || (layer->debug > 0 && green_band != 0) )
@@ -1292,7 +1300,7 @@ msDrawRasterLayerGDAL_RawMode(
 {
     void *pBuffer;
     GDALDataType eDataType;
-    int band_list[256];
+    int *band_list, band_count;
     int  i, j, k, band;
     CPLErr eErr;
 
@@ -1318,51 +1326,18 @@ msDrawRasterLayerGDAL_RawMode(
 /* -------------------------------------------------------------------- */
 /*      Work out the band list.                                         */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( layer->processing, "BANDS" ) == NULL )
-    {
-        for( i = 0; i < image->format->bands; i++ )
-        {
-            if( GDALGetRasterCount( hDS ) < i+1 )
-                band_list[i] = GDALGetRasterCount( hDS );
-            else
-                band_list[i] = i+1;
-        }
-    }
-    else
-    {
-        char **papszItems = CSLTokenizeStringComplex( 
-            CSLFetchNameValue(layer->processing,"BANDS"), " ,", FALSE, FALSE );
+    band_list = msGetGDALBandList( layer, hDS, image->format->bands, 
+                                   &band_count );
+    if( band_list == NULL )
+        return -1;
 
-        if( CSLCount(papszItems) == 0 )
-        {
-            CSLDestroy( papszItems );
-            msSetError( MS_IMGERR, "BANDS PROCESSING directive has no items.",
-                        "msDrawRasterLayerGDAL_RawMode()" );
-            return -1;
-        }
-        else if( CSLCount(papszItems) != image->format->bands )
-        {
-            msSetError( MS_IMGERR, "BANDS PROCESSING directive has wrong number of bands, expected %d, got %d.",
-                        "msDrawRasterLayerGDAL_RawMode()",
-                        image->format->bands, CSLCount(papszItems) );
-            CSLDestroy( papszItems );
-            return -1;
-        }
-
-        for( i = 0; i < image->format->bands; i++ )
-        {
-            band_list[i] = atoi(papszItems[i]);
-            if( band_list[i] < 1 || band_list[i] > GDALGetRasterCount(hDS) )
-            {
-                msSetError( MS_IMGERR, 
-                            "BANDS PROCESSING directive includes illegal band '%s', should be from 1 to %d.", 
-                            "msDrawRasterLayerGDAL_RawMode()",
-                            papszItems[i], GDALGetRasterCount(hDS) );
-                CSLDestroy( papszItems );
-                return -1;
-            }
-        }
-        CSLDestroy( papszItems );
+    if( band_count != image->format->bands )
+    {
+        free( band_list );
+        msSetError( MS_IMGERR, "BANDS PROCESSING directive has wrong number of bands, expected %d, got %d.",
+                    "msDrawRasterLayerGDAL_RawMode()",
+                    image->format->bands, band_count );
+        return -1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1379,6 +1354,8 @@ msDrawRasterLayerGDAL_RawMode(
                                 pBuffer, dst_xsize, dst_ysize, eDataType, 
                                 image->format->bands, band_list,
                                 0, 0, 0 );
+    free( band_list );
+
     if( eErr != CE_None )
     {
         msSetError( MS_IOERR, "GDALRasterIO() failed: %s", 
@@ -1713,9 +1690,8 @@ msDrawRasterLayerGDAL_16BitClassification(
 /************************************************************************/
 /*                          msGetGDALNoDataValue()                      */
 /************************************************************************/
-static double 
-msGetGDALNoDataValue( layerObj *layer, GDALRasterBandH hBand,
-                      int *pbGotNoData )
+double 
+msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pbGotNoData )
 
 {
     const char *pszNODATAOpt;
@@ -1746,5 +1722,92 @@ msGetGDALNoDataValue( layerObj *layer, GDALRasterBandH hBand,
         return GDALGetRasterNoDataValue( hBand, pbGotNoData );
 }
 
-#endif
+/************************************************************************/
+/*                         msGetGDALBandList()                          */
+/*                                                                      */
+/*      max_bands - pass zero for no limit.                             */
+/*      band_count - location in which length of the return band        */
+/*      list is placed.                                                 */
+/*                                                                      */
+/*      returns malloc() list of band numbers (*band_count long).       */
+/************************************************************************/
+
+int *msGetGDALBandList( layerObj *layer, void *hDS, 
+                        int max_bands, int *band_count )
+
+{
+    int i, file_bands;
+    int *band_list = NULL;
+
+    file_bands = GDALGetRasterCount( hDS );
+    if( file_bands == 0 )
+    {
+        msSetError( MS_IMGERR, 
+                    "Attempt to operate on GDAL file with no bands, layer=%s.",
+                    "msGetGDALBandList()", 
+                    layer->name );
+        
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Use all (or first) bands.                                       */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( layer->processing, "BANDS" ) == NULL )
+    {
+        *band_count = MIN(file_bands,max_bands);
+        band_list = (int *) malloc(sizeof(int) * *band_count );
+        for( i = 0; i < *band_count; i++ )
+            band_list[i] = i+1;
+        return band_list;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      get bands from BANDS processing directive.                      */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        char **papszItems = CSLTokenizeStringComplex( 
+            CSLFetchNameValue(layer->processing,"BANDS"), " ,", FALSE, FALSE );
+
+        if( CSLCount(papszItems) == 0 )
+        {
+            CSLDestroy( papszItems );
+            msSetError( MS_IMGERR, "BANDS PROCESSING directive has no items.",
+                        "msGetGDALBandList()" );
+            return NULL;
+        }
+        else if( CSLCount(papszItems) > max_bands )
+        {
+            msSetError( MS_IMGERR, "BANDS PROCESSING directive has wrong number of bands, expected at most %d, got %d.",
+                        "msGetGDALBandList()",
+                        max_bands, CSLCount(papszItems) );
+            CSLDestroy( papszItems );
+            return NULL;
+        }
+
+        *band_count = CSLCount(papszItems);
+        band_list = (int *) malloc(sizeof(int) * *band_count);
+
+        for( i = 0; i < *band_count; i++ )
+        {
+            band_list[i] = atoi(papszItems[i]);
+            if( band_list[i] < 1 || band_list[i] > GDALGetRasterCount(hDS) )
+            {
+                msSetError( MS_IMGERR, 
+                            "BANDS PROCESSING directive includes illegal band '%s', should be from 1 to %d.", 
+                            "msGetGDALBandList()",
+                            papszItems[i], GDALGetRasterCount(hDS) );
+                CSLDestroy( papszItems );
+                CPLFree( band_list );
+                return NULL;
+            }
+        }
+        CSLDestroy( papszItems );
+
+        return band_list;
+    }
+}
+
+#endif /* def USE_GDAL */
 
