@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2002/12/17 04:48:25  dan
+ * Accept version 0.0.14 in addition to 1.0.0
+ *
  * Revision 1.4  2002/12/16 20:35:00  dan
  * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
  *
@@ -45,6 +48,7 @@
 #include "maperror.h"
 #include "mapows.h"
 
+#define WFS_V_0_0_14  14
 #define WFS_V_1_0_0  100
 
 
@@ -81,11 +85,11 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
         return NULL;
     }
     pszTmp = strchr(pszTmp, '=')+1;
-    if (strncmp(pszTmp, "1.0.0", 5) >= 0)
+    if (strncmp(pszTmp, "0.0.14", 6) == 0 || strncmp(pszTmp, "1.0.0", 5) >= 0 )
         nVersion = WFS_V_1_0_0;
     else
     {
-        msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 (please verify the VERSION parameter in the connection string).", "msBuildWFSLayerURL()");
+        msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the VERSION parameter in the connection string).", "msBuildWFSLayerURL()");
         return NULL;
     }
 
