@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.400  2005/03/24 22:25:32  frank
+ * Implement assembly for MS_NINT on win32 and linux/i86.
+ *
  * Revision 1.399  2005/03/03 15:31:40  assefa
  * Add compressed parameter in the SVG object.
  *
@@ -334,11 +337,41 @@ extern "C" {
 #define MS_COMMENT 2004
 
 /* General macro definitions */
-#define MS_MIN(a,b)     (((a)<(b))?(a):(b))
+#define MS_MIN(a,b) (((a)<(b))?(a):(b))
 #define MS_MAX(a,b) (((a)>(b))?(a):(b))
 #define MS_ABS(a) (((a)<0) ? -(a) : (a))
 #define MS_SGN(a) (((a)<0) ? -1 : 1)
-#define MS_NINT(x)      ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
+
+/* see http://mega-nerd.com/FPcast/ for some discussion of fast
+   conversion to nearest int.  We avoid lrint() for now because it
+   would be hard to include math.h "properly". */
+
+#if defined(WE_HAVE_THE_C99_LRINT)
+#   define MS_NINT(x) lrint(x)
+#elif defined(_MSC_VER) && defined(_WIN32) && !defined(USE_GENERIC_MS_NINT)
+    static __inline long int MS_NINT (double flt) 
+    {	int intgr;
+  
+    _asm
+        {	fld flt
+                    fistp intgr
+                    } ;
+			
+    return intgr ;
+    } 
+#elif defined(i386) && defined(__GNUC_PREREQ) && !defined(USE_GENERIC_MS_NINT)
+    static __inline long int MS_NINT( double __x ) 
+    {
+        long int __lrintres;                                                        
+        __asm__ __volatile__                                                        
+          ("fistpl %0"                                                              
+           : "=m" (__lrintres) : "t" (__x) : "st");                                 
+        return __lrintres;
+    }
+#else
+#  define MS_NINT(x)      ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
+#endif
+
 
 #define MS_PEN_TRANSPARENT -1
 #define MS_PEN_UNSET     -4
@@ -383,6 +416,10 @@ extern "C" {
 #define MS_IMAGE2MAP_X(x,minx,cx) (minx + cx*x)
 #define MS_IMAGE2MAP_Y(y,maxy,cy) (maxy - cy*y)
 
+/* this version of MS_MAP2IMAGE takes 1/cellsize and is much faster */
+#define MS_MAP2IMAGE_X_IC(x,minx,icx) (MS_NINT((x - minx)*icx))
+#define MS_MAP2IMAGE_Y_IC(y,maxy,icy) (MS_NINT((maxy - y)*icy))
+
 /* For maplabel and mappdf */
 #define LINE_VERT_THRESHOLD .17 /* max absolute value of cos of line angle, the closer to zero the more vertical the line must be */
 
@@ -395,163 +432,163 @@ extern "C" {
 #endif
 
 /* General enumerated types - needed by scripts */
-enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
-enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS};
-enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
-enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX};
-enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
-enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement, don't change it */
-enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
-enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER };
-enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
-enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
+    enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
+    enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS};
+    enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
+    enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX};
+    enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
+    enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement, don't change it */
+    enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
+    enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
+    enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER };
+    enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
+    enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
-enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
+    enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
 
-enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
+    enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
-enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, MS_IMAGEMODE_NULL };
+    enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, MS_IMAGEMODE_NULL };
 
 
 #define MS_FILE_DEFAULT MS_FILE_MAP   
    
 
 /* FONTSET OBJECT - used to hold aliases for TRUETYPE fonts */
-typedef struct {
+    typedef struct {
 #ifdef SWIG
-%immutable;
+        %immutable;
 #endif
-  char *filename; 
-  int numfonts;
+        char *filename; 
+        int numfonts;
 #ifdef SWIG
-%mutable;
+        %mutable;
 #endif
 #ifndef SWIG
-  hashTableObj fonts;
-  struct map_obj *map;
+        hashTableObj fonts;
+        struct map_obj *map;
 #endif
-} fontSetObj;
+    } fontSetObj;
 
 /* FEATURE LIST OBJECT - for inline features, shape caches and queries */
 #ifndef SWIG
-typedef struct listNode {
-  shapeObj shape;
-  struct listNode *next;
-  struct listNode *tailifhead; /* this is the tail node in the list, if this is the head element, otherwise NULL */
-} featureListNodeObj;
+    typedef struct listNode {
+        shapeObj shape;
+        struct listNode *next;
+        struct listNode *tailifhead; /* this is the tail node in the list, if this is the head element, otherwise NULL */
+    } featureListNodeObj;
 
-typedef featureListNodeObj * featureListNodeObjPtr;
+    typedef featureListNodeObj * featureListNodeObjPtr;
 #endif
 
 #ifndef SWIG
 /* PALETTE OBJECT - used to hold colors while a map file is read */
-typedef struct {
-  colorObj colors[MS_MAXCOLORS-1];
-  int      colorvalue[MS_MAXCOLORS-1];
-  int numcolors;
-} paletteObj;
+    typedef struct {
+        colorObj colors[MS_MAXCOLORS-1];
+        int      colorvalue[MS_MAXCOLORS-1];
+        int numcolors;
+    } paletteObj;
 #endif
 
 /* EXPRESSION OBJECT */
 #ifndef SWIG
-typedef struct {
-  char *string;
-  int type;
+    typedef struct {
+        char *string;
+        int type;
 
-  /* logical expression options */
-  char **items;
-  int *indexes;
-  int numitems;
+        /* logical expression options */
+        char **items;
+        int *indexes;
+        int numitems;
 
-  /* regular expression options */
-  regex_t regex; /* compiled regular expression to be matched */
-  int compiled;
-} expressionObj;
+        /* regular expression options */
+        regex_t regex; /* compiled regular expression to be matched */
+        int compiled;
+    } expressionObj;
 #endif
 
 #ifndef SWIG
 /* JOIN OBJECT - simple way to access other XBase files, one-to-one or one-to-many supported */
-typedef struct {
-  char *name;
-  char **items, **values; /* items/values (process 1 record at a time) */
-  int numitems;
+    typedef struct {
+        char *name;
+        char **items, **values; /* items/values (process 1 record at a time) */
+        int numitems;
 
-  char *table;
-  char *from, *to; /* item names */
+        char *table;
+        char *from, *to; /* item names */
 
-  void *joininfo; /* vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access */
+        void *joininfo; /* vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access */
  
-  char *header, *footer;
+        char *header, *footer;
 #ifndef __cplusplus
-  char *template;
+        char *template;
 #else
-  char *_template;
+        char *_template;
 #endif
 
-  enum MS_JOIN_TYPE type;
-  char *connection;
-  enum MS_JOIN_CONNECTION_TYPE connectiontype;
-} joinObj;
+        enum MS_JOIN_TYPE type;
+        char *connection;
+        enum MS_JOIN_CONNECTION_TYPE connectiontype;
+    } joinObj;
 #endif
 
 /* OUTPUT FORMAT OBJECT - see mapoutput.c for most related code. */
-typedef struct {
-  char *name;
-  char *mimetype;
-  char *driver;
-  char *extension;
-  int  renderer;  /* MS_RENDER_WITH_* */
-  int  imagemode; /* MS_IMAGEMODE_* value. */
-  int  transparent;
-  int  bands;
-  int  numformatoptions;
-  char **formatoptions;
-  int  refcount;
-  int inmapfile; /* boolean value for writing */
-} outputFormatObj;
+    typedef struct {
+        char *name;
+        char *mimetype;
+        char *driver;
+        char *extension;
+        int  renderer;  /* MS_RENDER_WITH_* */
+        int  imagemode; /* MS_IMAGEMODE_* value. */
+        int  transparent;
+        int  bands;
+        int  numformatoptions;
+        char **formatoptions;
+        int  refcount;
+        int inmapfile; /* boolean value for writing */
+    } outputFormatObj;
 
 /* The following is used for "don't care" values in transparent, interlace and
    imagequality values. */
 #define MS_NOOVERRIDE  -1111 
 
 /* QUERY MAP OBJECT - used to visualize query results */
-typedef struct {
-  int height, width;
-  int status;
-  int style; /* HILITE, SELECTED or NORMAL */
-  colorObj color;
-} queryMapObj;
+    typedef struct {
+        int height, width;
+        int status;
+        int style; /* HILITE, SELECTED or NORMAL */
+        colorObj color;
+    } queryMapObj;
 
 /* LABEL OBJECT - parameters needed to annotate a layer, legend or scalebar */
-typedef struct {
-  char *font;
-  enum MS_FONT_TYPE type;
+    typedef struct {
+        char *font;
+        enum MS_FONT_TYPE type;
 
-  colorObj color;
-  colorObj outlinecolor;
+        colorObj color;
+        colorObj outlinecolor;
 
-  colorObj shadowcolor;
-  int shadowsizex, shadowsizey;
+        colorObj shadowcolor;
+        int shadowsizex, shadowsizey;
 
-  colorObj backgroundcolor;
-  colorObj backgroundshadowcolor;
-  int backgroundshadowsizex, backgroundshadowsizey;
+        colorObj backgroundcolor;
+        colorObj backgroundshadowcolor;
+        int backgroundshadowsizex, backgroundshadowsizey;
 
-  int size;
-  int minsize, maxsize;
+        int size;
+        int minsize, maxsize;
 
-  int position;
-  int offsetx, offsety;
+        int position;
+        int offsetx, offsety;
 
-  double angle;
-  int autoangle; /* true or false */
+        double angle;
+        int autoangle; /* true or false */
 
-  int buffer; /* space to reserve around a label */
+        int buffer; /* space to reserve around a label */
 
-  int antialias;
+        int antialias;
 
-  char wrap;
+        char wrap;
 
   int minfeaturesize; /* minimum feature size (in pixels) to label */
   int autominfeaturesize; /* true or false */
