@@ -530,10 +530,10 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	msPOSTGISLayerInfo	*layerinfo;
 	int	set_up_result;
 
-	table_name = malloc(500);
-	geom_column_name = malloc(500);
-	urid_name = malloc(500);
-	user_srid = malloc(500);
+	table_name = malloc(5000);
+	geom_column_name = malloc(5000);
+	urid_name = malloc(5000);
+	user_srid = malloc(5000);
 
 
 
