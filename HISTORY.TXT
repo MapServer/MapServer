@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Added greyscale+alpha render support if mapdrawgdal.c: Bug 965. 
+
 - Added --with-fastcgi support to configure.
 
 - support OGC mapcontext through mapserver cgi : Bug 946

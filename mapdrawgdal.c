@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/10/17 03:39:03  frank
+ * added greyscale+alpha support - bug 965
+ *
  * Revision 1.31  2004/09/29 17:12:13  frank
  * fixed casting issues to avoid warnings
  *
@@ -212,7 +215,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   int   anColorCube[256];
   double llx, lly, urx, ury;
   rectObj copyRect, mapRect;
-  unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3, *pabyRawAlpha;
+  unsigned char *pabyRaw1=NULL, *pabyRaw2=NULL, *pabyRaw3=NULL, 
+                *pabyRawAlpha = NULL;
   int truecolor = FALSE;
   int red_band=0, green_band=0, blue_band=0, alpha_band=0, cmt=0;
   gdImagePtr gdImg = NULL;
@@ -235,10 +239,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   {
       gdImg = image->img.gd;
 
-#if GD2_VERS > 1
       truecolor = gdImageTrueColor( gdImg );
-#endif
-
       if( CSLFetchNameValue( layer->processing, 
                              "COLOR_MATCH_THRESHOLD" ) != NULL )
       {
@@ -414,6 +415,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           green_band = 2;
           blue_band = 3;
       }
+
+      if( GDALGetRasterCount( hDS ) == 2 
+          && GDALGetRasterColorInterpretation( 
+              GDALGetRasterBand( hDS, 2 ) ) == GCI_AlphaBand )
+          alpha_band = 2;
+      
       hBand1 = GDALGetRasterBand( hDS, red_band );
       if( layer->numclasses != 0 
           || GDALGetRasterColorTable( hBand1 ) != NULL )
@@ -476,10 +483,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       hBand3 = GDALGetRasterBand( hDS, blue_band );
       if( hBand1 == NULL || hBand2 == NULL || hBand3 == NULL )
           return -1;
-
-      if( alpha_band != 0 )
-          hBandAlpha = GDALGetRasterBand( hDS, alpha_band );
   }
+
+  if( alpha_band != 0 )
+      hBandAlpha = GDALGetRasterBand( hDS, alpha_band );
 
   /*
    * Wipe pen indicators for all our layer class colors if they exist.  
@@ -648,7 +655,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             cmap[i] = -1;
     }
   }
-#if GD2_VERS > 1
   else if( hBand2 == NULL && hColorMap != NULL )
   {
       int color_count;
@@ -672,7 +678,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
               cmap[i] = -1;
       }
   }
-#endif
   else if( !truecolor && gdImg )
   {
       allocColorCube( map, gdImg, anColorCube );
@@ -701,59 +706,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       return -1;
   }
 
-  /*
-  ** Process single band using the provided, or greyscale colormap
-  */
-  if( hBand2 == NULL && !truecolor && gdImg )
-  {
-      assert( cmap_set );
-      k = 0;
-
-      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-      {
-          int	result;
-          
-          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-          {
-              result = cmap[pabyRaw1[k++]];
-              if( result != -1 )
-              {
-#ifndef USE_GD_1_2
-                  gdImg->pixels[i][j] = result;
-#else
-                  gdImg->pixels[j][i] = result;
-#endif
-              }
-          }
-      }
-
-      assert( k == dst_xsize * dst_ysize );
-  }
-
-#if GD2_VERS > 1
-  else if( hBand2 == NULL && truecolor && gdImg )
-  {
-      assert( cmap_set );
-
-      k = 0;
-      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-      {
-          int	result;
-          
-          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-          {
-              result = cmap[pabyRaw1[k++]];
-              if( result != -1 )
-                  gdImg->tpixels[i][j] = result;
-          }
-      }
-  }
-#endif
-
-  /*
-  ** Otherwise read green and blue data, and process through the color cube.
-  */
-  else if( hBand3 != NULL && gdImg )
+  if( hBand2 != NULL && hBand3 != NULL )
   {
       pabyRaw2 = (unsigned char *) malloc(dst_xsize * dst_ysize);
       if( pabyRaw2 == NULL )
@@ -781,27 +734,148 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           free( pabyRaw3 );
           return -1;
       }
+  }
 
-      if( hBandAlpha != NULL )
+  if( hBandAlpha != NULL )
+  {
+      pabyRawAlpha = (unsigned char *) malloc(dst_xsize * dst_ysize);
+      if( pabyRawAlpha == NULL )
+          return -1;
+      
+      if( LoadGDALImage( hBandAlpha, 4, layer, 
+                         src_xoff, src_yoff, src_xsize, src_ysize, 
+                         pabyRawAlpha, dst_xsize, dst_ysize ) == -1 )
       {
-          pabyRawAlpha = (unsigned char *) malloc(dst_xsize * dst_ysize);
-          if( pabyRawAlpha == NULL )
-              return -1;
-          
-          if( LoadGDALImage( hBandAlpha, 4, layer, 
-                             src_xoff, src_yoff, src_xsize, src_ysize, 
-                             pabyRawAlpha, dst_xsize, dst_ysize ) == -1 )
+          free( pabyRaw1 );
+          if( pabyRaw3 != NULL )
           {
-              free( pabyRaw1 );
               free( pabyRaw2 );
               free( pabyRaw3 );
-              free( pabyRawAlpha );
-              return -1;
+          }
+
+          free( pabyRawAlpha );
+          return -1;
+      }
+  }
+  else
+      pabyRawAlpha = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Single band plus colormap with alpha blending to 8bit.          */
+/* -------------------------------------------------------------------- */
+  if( hBand2 == NULL && !truecolor && gdImg && hBandAlpha != NULL )
+  {
+      assert( cmap_set );
+      k = 0;
+
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      {
+          int	result, alpha;
+          
+          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          {
+              alpha = pabyRawAlpha[k];
+
+              result = cmap[pabyRaw1[k++]];
+
+              /* 
+              ** We don't do alpha blending in non-truecolor mode, just
+              ** threshold the point on/off at alpha=128.
+              */
+
+              if( result != -1 && alpha >= 128 )
+                  gdImg->pixels[i][j] = result;
           }
       }
-      else
-          pabyRawAlpha = NULL;
 
+      assert( k == dst_xsize * dst_ysize );
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Single band plus colormap (no alpha) to 8bit.                   */
+/* -------------------------------------------------------------------- */
+  else if( hBand2 == NULL && !truecolor && gdImg )
+  {
+      assert( cmap_set );
+      k = 0;
+
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      {
+          int	result;
+          
+          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          {
+              result = cmap[pabyRaw1[k++]];
+              if( result != -1 )
+              {
+                  gdImg->pixels[i][j] = result;
+              }
+          }
+      }
+
+      assert( k == dst_xsize * dst_ysize );
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Single band plus colormap and alpha to truecolor.               */
+/* -------------------------------------------------------------------- */
+  else if( hBand2 == NULL && truecolor && gdImg && hBandAlpha != NULL )
+  {
+      assert( cmap_set );
+
+      k = 0;
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      {
+          int	result, alpha;
+          
+          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          {
+              alpha = pabyRawAlpha[k];
+              result = cmap[pabyRaw1[k++]];
+
+              if( result == -1 || alpha < 2 )
+                  /* do nothing - transparent */;
+              else if( alpha > 253 )
+                  gdImg->tpixels[i][j] = result;
+              else
+              {
+                  /* mix alpha into "result" */
+                  result += (127 - (alpha >> 1)) << 24;
+                  gdImg->tpixels[i][j] = 
+                      gdAlphaBlend( gdImg->tpixels[i][j], result );
+              }
+          }
+      }
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Single band plus colormap (no alpha) to truecolor               */
+/* -------------------------------------------------------------------- */
+  else if( hBand2 == NULL && truecolor && gdImg )
+  {
+      assert( cmap_set );
+
+      k = 0;
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      {
+          int	result;
+          
+          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          {
+              result = cmap[pabyRaw1[k++]];
+              if( result != -1 )
+                  gdImg->tpixels[i][j] = result;
+          }
+      }
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Input is 3 band RGB.  Alpha blending is mixed into the loop     */
+/*      since this case is less commonly used and has lots of other     */
+/*      overhead.                                                       */
+/* -------------------------------------------------------------------- */
+  else if( hBand3 != NULL && gdImg )
+  {
       /* Dithered 24bit to 8bit conversion */
       if( !truecolor && CSLFetchBoolean( layer->processing, "DITHER", FALSE ) )
       {
@@ -830,11 +904,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                   if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
                       continue;
 
-#ifndef USE_GD_1_2
                   gdImg->pixels[i][j] = pabyDithered[k];
-#else
-                  gdImg->pixels[j][i] = pabyDithered[k];
-#endif
               }
           }
           
@@ -866,15 +936,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                       continue;
 
                   cc_index= RGB_INDEX(pabyRaw1[k],pabyRaw2[k],pabyRaw3[k]);
-#ifndef USE_GD_1_2
                   gdImg->pixels[i][j] = anColorCube[cc_index];
-#else
-                  gdImg->pixels[j][i] = anColorCube[cc_index];
-#endif
               }
           }
       }
-#if GD2_VERS > 1
       else if( truecolor )
       {
           k = 0;
@@ -895,44 +960,35 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                   }
                   else if( pabyRawAlpha[k] != 0 )
                   {
-                      int gd_alpha = 127 - (pabyRawAlpha[k] >> 1);
                       int gd_color = gdTrueColorAlpha(
                           pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], gd_alpha );
-                      int gd_original_alpha, gd_new_alpha;
 
-                      gd_original_alpha = 
-                          gdTrueColorGetAlpha( gdImg->tpixels[i][j] );
+                      /* NOTE: GD versions prior to 2.0.12 didn't take
+                         the source alpha into account at all */
 
-                      /* I assume a fairly simple additive model for 
-                         opaqueness.  Note that gdAlphaBlend() always returns
-                         opaque values (alpha byte is 0). */
-
-                      if( gd_original_alpha == 127 )
-                      {
-                          gdImg->tpixels[i][j] = gd_color;
-                      }
-                      else
-                      {
-                          gd_new_alpha = (127 - gd_alpha) + (127 - gd_original_alpha);
-                          gd_new_alpha = MAX(0,127 - gd_new_alpha);
-                      
-                          gdImg->tpixels[i][j] = 
-                              (gd_new_alpha << 24) + 
-                              gdAlphaBlend( gdImg->tpixels[i][j], gd_color );
-                      }
+                      gdImg->tpixels[i][j] = 
+                          gdAlphaBlend( gdImg->tpixels[i][j], gd_color );
                   }
               }
           }
       }
-#endif
-
-      free( pabyRaw2 );
-      free( pabyRaw3 );
-      if( pabyRawAlpha != NULL )
-          free( pabyRawAlpha );
   }
 
+  /*
+  ** Cleanup
+  */
+
+  if( pabyRaw3 != NULL )
+  {
+      free( pabyRaw2 );
+      free( pabyRaw3 );
+  }
+
+  if( pabyRawAlpha != NULL )
+      free( pabyRawAlpha );
+
   free( pabyRaw1 );
+
   if( hColorMap != NULL )
       GDALDestroyColorTable( hColorMap );
 
@@ -1488,13 +1544,6 @@ msDrawRasterLayerGDAL_16BitClassification(
     CPLErr eErr;
 
     assert( gdImg != NULL );
-
-#if GD2_VERS < 2
-    msSetError( MS_MISCERR, 
-                "16bit classification not supported with GD1.x",
-                "msDrawRasterLayerGDAL_16BitClassification()" );
-    return -1;
-#endif
 
 /* ==================================================================== */
 /*      Read the requested data in one gulp into a floating point       */
