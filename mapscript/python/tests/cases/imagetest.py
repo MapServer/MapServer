@@ -122,7 +122,36 @@ class ImageObjTestCase(unittest.TestCase):
         imgobj = mapscript.imageObj(0, 0, 'GD/JPEG', url)
         assert imgobj.thisown == 1
         assert imgobj.height == 220
-        assert imgobj.width == 329         
+        assert imgobj.width == 329
+
+class ImageWriteTestCase(MapTestCase):
+
+    def testImageWrite(self):
+        """image writes data to an open filehandle"""
+        image = self.map.draw()
+        assert image.thisown == 1
+        filename = 'testImageWrite.png'
+        fh = open(filename, 'wb')
+        image.write(fh)
+        fh.close()
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.format == 'PNG'
+            assert pyimg.size == (200, 200)
+            assert pyimg.mode == 'P'
+        else:
+            assert 1
+
+    def testImageWriteInvalidHandle(self):
+        """get an exception writing to invalid filehandle"""
+        image = self.map.draw()
+        assert image.thisown == 1
+        filename = 'testImageWriteInvalidHandle.png'
+        fh = open(filename, 'rb')
+        image.write(fh)
+        fh.close()
+
+
 if __name__ == '__main__':
     unittest.main()
 
