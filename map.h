@@ -1372,9 +1372,9 @@ MS_DLL_EXPORT int msMoveClassDown(layerObj *layer, int nClassIndex);
 MS_DLL_EXPORT int msMoveStyleUp(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int iStyleIndex);
-MS_DLL_EXPORT int msInsertStyle(classObj *class, styleObj *style,
+MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style,
                                 int nStyleIndex);
-MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *class, int nStyleIndex);
+MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int nStyleIndex);
 
 MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
 
