@@ -170,14 +170,18 @@ mapObj *loadMap()
     if(strcasecmp(ParamNames[i], "map") == 0) break;
   
   if(i == NumParams) {
-    if(getenv("MS_MAPFILE")) // has a default mapfile has not been set
-      map = msLoadMap(getenv("MS_MAPFILE"));      
+    if(getenv("MS_MAPFILE")) // has a default file has not been set
+      map = msLoadMap(getenv("MS_MAPFILE"));
     else {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "loadMap()"); // no default, outta here
       writeError();
     }
-  } else
-    map = msLoadMap(ParamValues[i]);
+  } else {
+    if(getenv(ParamValues[i])) // an environment references the actual file to use
+      map = msLoadMap(getenv(ParamValues[i]));
+    else
+      map = msLoadMap(ParamValues[i]);
+  }
 
   if(!map) writeError();
 
