@@ -100,11 +100,10 @@ REGEX_INC=-I./regex-0.12
 # MapServer uses the same version of the REGEX library that PHP was 
 # compiled with:
 #
-
-#PHP_REGEX=..\php-3.0.14\regex
-#REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
-#          $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
-#REGEX_INC=-I$(PHP_REGEX)
+PHP_REGEX=..\php-3.0.14\regex
+REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
+          $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
+REGEX_INC=-I$(PHP_REGEX)
 
 #
 # REGEX needs some special flags... here they are for VC++ 6.0
@@ -124,17 +123,19 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
 		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
-		mapraster.obj cgiutil.obj mapsde.obj $(EPPL_OBJ) $(REGEX_OBJ)
+		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
+		$(EPPL_OBJ) $(REGEX_OBJ)
+
 MS_HDRS = 	map.h mapfile.h
 
-MS_EXE = 	mapserv.exe shp2img.exe sym2img.exe legend.exe shpindex.exe \
+MS_EXE = 	mapserv.exe shp2img.exe legend.exe shpindex.exe \
 		shptree.exe scalebar.exe sortshp.exe
 
 #
 #
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) $(TTF_LIB) \
-		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(REGEX_OBJ)
+		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) $(TTF_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC)
@@ -170,10 +171,12 @@ gdft::
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
 
 .c.exe:
-	$(CC) $(CFLAGS) $*.c $(LIBS)
+	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
+	$(CC) $*.obj $(LIBS)
 
 .cpp.exe:
-	$(CC) $(CFLAGS) $*.cpp $(LIBS)
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
+	$(CC) $*.obj $(LIBS)
 
 
 clean:
