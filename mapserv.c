@@ -826,7 +826,7 @@ void setExtentFromShapes() {
   }
 
   // in case we don't get  usable extent at this point (i.e. single point result)
-  if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy)) {
+  if(!MS_VALID_EXTENT(tmpext)) {
     if(msObj->Map->web.minscale > 0) { // try web object minscale first
       cellsize = (msObj->Map->web.minscale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); // user supplied a point and a scale
       tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;

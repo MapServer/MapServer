@@ -9,6 +9,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/07/29 16:23:36  hobu
+ * redefine MS_VALID_EXTENT to test an extent rather than the quartet of extent members
+ *
  * Revision 1.8  2004/07/13 20:39:37  dan
  * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
  *
@@ -898,7 +901,7 @@ void setExtentFromShapes() {
   }
 
   // in case we don't get  usable extent at this point (i.e. single point result)
-  if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy)) {
+  if(!MS_VALID_EXTENT(tmpext)) {
     if(msObj->Map->web.minscale > 0) { // try web object minscale first
       cellsize = (msObj->Map->web.minscale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); // user supplied a point and a scale
       tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;

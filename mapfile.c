@@ -3619,7 +3619,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->empty) fprintf(stream, "    EMPTY \"%s\"\n", web->empty);
   if(web->error) fprintf(stream, "    ERROR \"%s\"\n", web->error);
 
-  if(MS_VALID_EXTENT(web->extent.minx, web->extent.miny, web->extent.maxx, web->extent.maxy)) 
+  if(MS_VALID_EXTENT(web->extent)) 
     fprintf(stream, "  EXTENT %g %g %g %g\n", web->extent.minx, web->extent.miny, web->extent.maxx, web->extent.maxy);
 
   if(web->footer) fprintf(stream, "    FOOTER \"%s\"\n", web->footer);
