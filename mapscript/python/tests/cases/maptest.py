@@ -64,6 +64,30 @@ class MapConstructorTestCase(unittest.TestCase):
         assert str(maptype) == "<class 'mapscript.mapObj'>", maptype
         assert test_map.thisown == 1
 
+class MapExtentTestCase(MapTestCase):
+    def testSetExtent(self):
+        """test the setting of a mapObj's extent"""
+        test_map = mapscript.mapObj(TESTMAPFILE)
+        e = test_map.extent
+        result = test_map.setExtent(e.minx, e.miny, e.maxx, e.maxy)
+        self.assertAlmostEqual(test_map.scale, 14.173236)
+        assert result == mapscript.MS_SUCCESS, result
+        
+    def testSetExtentBadly(self):
+        """test that mapscript raises an error for an invalid mapObj extent"""
+        test_map = mapscript.mapObj(TESTMAPFILE)
+        self.assertRaises(mapscript.MapServerError, test_map.setExtent,
+                          1.0, -2.0, -3.0, 4.0)
+        
+    def testReBindingExtent(self):
+        """test the rebinding of a map's extent"""
+        test_map = mapscript.mapObj(TESTMAPFILE)
+        rect1 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
+        rect2 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
+        test_map.extent = rect1
+        assert str(test_map.extent) != str(rect1)
+        del rect1
+        self.assertRectsEqual(test_map.extent, rect2)
         
 class MapLayersTestCase(MapTestCase):
 
