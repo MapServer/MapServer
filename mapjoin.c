@@ -330,7 +330,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   }
   for(i=0; i<joininfo->numcols; i++) {
     join->items[i] = (char *) malloc(8); // plenty of space
-    snprintf(join->items[i], 8, "%d", i+1);
+    sprintf(join->items[i], "%d", i+1);
   }
 
   return(MS_SUCCESS);
