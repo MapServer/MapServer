@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39  2002/11/27 20:13:49  julien
+ * valid only the style (not stylelist) to build the base url
+ *
  * Revision 1.38  2002/11/26 00:06:52  dan
  * Removed offsite hack for bug 214.  Not needed any more since bug is fixed.
  *
@@ -163,7 +166,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         pszStyle = "";
     }
 
-    if (pszFormat==NULL && pszFormatList==NULL)
+    if (pszFormat==NULL)
     {
         msSetError(MS_WMSCONNERR, 
                    "At least wms_format or wms_formatlist is required for "
