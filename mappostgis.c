@@ -110,6 +110,156 @@ int msPOSTGISLayerInitItemInfo(layerObj *layer)
 }
 
 
+//Since we now have PostGIST 0.5, 0.6, and 0.7 (not released yet) calling conventions, 
+// we have to attempt to handle the database in several ways.  If we do the wrong
+// thing, then it'll throw an error and we can rollback and try again.
+//
+// 1. attempt to do 0.7 calling convention (not implemented yet)
+// 2. attempt to do 0.6 calling convention (spatial ref system needed)
+// 3. attempt to do 0.5 calling convention (no spatial ref system)
+
+// The difference between 0.5 and 0.6 is that the bounding box must be 
+// declared to be in the same the same spatial reference system as the
+// geometry column.  For 0.6, we determine the SRID of the column and then
+// tag the bounding box as the same SRID.  
+
+int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string)
+{
+	PGresult	*result;
+	char	columns_wanted[5000];
+	char	temp[200];
+	char	query_string_0_5[6000];
+	char	query_string_0_6[6000];
+	int	t;
+	char	box3d[200];
+	msPOSTGISLayerInfo *layerinfo;
+
+	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+
+	if (layer->numitems ==0)
+	{
+		if (gBYTE_ORDER == LITTLE_ENDIAN)
+			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column);
+		else
+			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column);	
+	}
+	else
+	{
+		columns_wanted[0] = 0; //len=0
+		for (t=0;t<layer->numitems; t++)
+		{
+			sprintf(temp,"text(%s),",layer->items[t]);
+			strcat(columns_wanted,temp);
+		}
+		if (gBYTE_ORDER == LITTLE_ENDIAN)
+			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column);
+		else
+			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column);
+	
+		strcat(columns_wanted,temp);
+	}
+
+	sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy);
+
+	if (layer->filter.string == NULL)
+	{
+		sprintf(query_string_0_5,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && %s",
+						columns_wanted,geom_table,geom_column,box3d);
+		sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
+						columns_wanted,geom_table,geom_column,box3d,geom_table,geom_column);
+	}
+	else
+	{
+		sprintf(query_string_0_5,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && %s)",
+						columns_wanted,geom_table,layer->filter.string,geom_column,box3d);
+		sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') )",
+						columns_wanted,geom_table,layer->filter.string,geom_column,box3d,geom_table,geom_column);
+	}
+
+
+	//allow index searching
+    result  = PQexec(layerinfo->conn, "set enable_seqscan = off");
+    if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
+    {
+	      msSetError(MS_QUERYERR, "Error executing POSTGIS  'set enable_seqscan off'   statement.", 
+                 "msPOSTGISLayerWhichShapes()");
+     
+        	PQclear(result);
+	  	layerinfo->query_result = NULL;
+		return(MS_FAILURE);			//totally screwed!
+    }
+
+
+	//start transaction required by cursor
+
+    result = PQexec(layerinfo->conn, "BEGIN");
+    if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
+    {
+	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement.", 
+                 "msPOSTGISLayerWhichShapes()");
+     
+        	PQclear(result);
+	  	layerinfo->query_result = NULL;
+		return(MS_FAILURE);		// totally screwed
+    }
+
+
+    PQclear(result);
+
+//printf ("query_string_0_6:%s\n",query_string_0_6);
+    result = PQexec(layerinfo->conn, query_string_0_6 );
+
+    if ( (result!=NULL) && (PQresultStatus(result) == PGRES_COMMAND_OK) )
+    {
+	   	PQclear(result);
+		*sql_results = result;
+		strcpy(query_string, query_string_0_6 );
+ 		return (MS_SUCCESS);	
+    }
+
+	//okay, that command didnt work.  Its probably a 0.5 database
+	// We have to everything again, after performing a rollback.
+
+	 PQclear(result);
+       result = PQexec(layerinfo->conn, "rollback" );
+	 PQclear(result);
+	 result = PQexec(layerinfo->conn, "begin" );
+
+    if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
+    {
+	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement (0.6 failed - retry 0.5).", 
+                 "msPOSTGISLayerWhichShapes()");
+     
+        	PQclear(result);
+	  	layerinfo->query_result = NULL;
+		return(MS_FAILURE);		// totally screwed
+    }
+
+    PQclear(result);
+//printf ("query_string_0_5:%s\n",query_string_0_5);
+
+
+    result = PQexec(layerinfo->conn, query_string_0_5 );
+
+    if ( (result!=NULL) && (PQresultStatus(result) == PGRES_COMMAND_OK) )
+    {
+	   	PQclear(result);
+		*sql_results = result;
+		strcpy(query_string, query_string_0_5 );
+ 		return (MS_SUCCESS);	
+    }
+
+	      msSetError(MS_QUERYERR, "Error executing POSTGIS  DECLARE statement (0.6 failed - retry 0.5).", 
+                 "msPOSTGISLayerWhichShapes()");
+     
+        	PQclear(result);
+	  	layerinfo->query_result = NULL;
+		return(MS_FAILURE);		// totally screwed
+
+
+}
+
+
 // build the neccessary SQL
 // allocate a cursor for the SQL query
 // get ready to read from the cursor
@@ -123,10 +273,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	char	table_name[100];
 	char	geom_column_name[100];
 	int	nitems;
-	char	columns_wanted[5000];
-	char	temp[200];
-	char	box3d[200];
-	int	t;
+	int	set_up_result;
 
 	msPOSTGISLayerInfo	*layerinfo;
 
@@ -162,88 +309,11 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	  return(MS_FAILURE);
 	}
 
-	if (layer->numitems ==0)
-	{
-		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column_name);
-		else
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column_name);	
-	}
-	else
-	{
-		columns_wanted[0] = 0; //len=0
-		for (t=0;t<layer->numitems; t++)
-		{
-			sprintf(temp,"text(%s),",layer->items[t]);
-			strcat(columns_wanted,temp);
-		}
-		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column_name);
-		else
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column_name);
-	
-		strcat(columns_wanted,temp);
-	}
-
-	sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy);
-
-	if (layer->filter.string == NULL)
-	{
-		sprintf(query_str,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && %s",
-						columns_wanted,table_name,geom_column_name,box3d);
-	}
-	else
-	{
-		sprintf(query_str,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && %s)",
-						columns_wanted,table_name,layer->filter.string,geom_column_name,box3d);
-	}
-
+	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str);
+	if (set_up_result != MS_SUCCESS)
+		return set_up_result; //relay error
 	layerinfo->sql = query_str;
-//printf(query_str); 
-//printf("\n");
 
-
-    layerinfo->query_result = PQexec(layerinfo->conn, "BEGIN");
-    if (!(layerinfo->query_result) || PQresultStatus(layerinfo->query_result) != PGRES_COMMAND_OK)
-    {
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement.", 
-                 "msPOSTGISLayerWhichShapes()");
-     
-        	PQclear(layerinfo->query_result);
-	  	layerinfo->query_result = NULL;
-		return(MS_FAILURE);
-    }
-
-    layerinfo->query_result = PQexec(layerinfo->conn, "set enable_seqscan = off");
-    if (!(layerinfo->query_result) || PQresultStatus(layerinfo->query_result) != PGRES_COMMAND_OK)
-    {
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  'set enable_seqscan off'   statement.", 
-                 "msPOSTGISLayerWhichShapes()");
-     
-        	PQclear(layerinfo->query_result);
-	  	layerinfo->query_result = NULL;
-		return(MS_FAILURE);
-    }
-
-
-    PQclear(layerinfo->query_result);
-
-    layerinfo->query_result = PQexec(layerinfo->conn, layerinfo->sql );
-
-    if (!(layerinfo->query_result) || PQresultStatus(layerinfo->query_result) != PGRES_COMMAND_OK)
-    {
-		char tmp[4000];
-
-		sprintf(tmp, "Error executing POSTGIS  SQL   statement: %s", layerinfo->sql);
-        	msSetError(MS_QUERYERR, tmp,
-                 "msPOSTGISLayerWhichShapes()");
-     
-        	PQclear(layerinfo->query_result);
-	  	layerinfo->query_result = NULL;
-		return(MS_FAILURE);
-
-    }
-    PQclear(layerinfo->query_result);
 
     layerinfo->query_result = PQexec(layerinfo->conn, "FETCH ALL in mycursor");
     if (!(layerinfo->query_result) || PQresultStatus(layerinfo->query_result) !=  PGRES_TUPLES_OK)
@@ -1090,5 +1160,5 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 }
 
 
-
+// end above's #ifdef USE_POSTGIS
 #endif
