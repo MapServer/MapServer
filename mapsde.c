@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2004/10/21 14:47:07  hobu
+ * MSVC doesn't like it when you start
+ * doing operations before you initialize
+ * something.  Fixup the declaration of
+ * msSDELayerInfo in sdeGetRecord
+ *
  * Revision 1.85  2004/10/21 04:30:57  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -281,9 +287,12 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   SE_COLUMN_DEF *itemdefs;
   SE_SHAPE shapeval=0;
   SE_BLOB_INFO blobval;
+
+  msSDELayerInfo *sde;
+  
   blobval.blob_length = 0;
   blobval.blob_buffer = (CHAR*)malloc(blobval.blob_length);
-  msSDELayerInfo *sde;
+
 
   sde = layer->layerinfo;
 
