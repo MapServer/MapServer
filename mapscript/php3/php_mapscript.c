@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.194  2004/03/27 18:05:58  dan
+ * Removed empty RINIT()/RSHUTDOWN() callbacks for performance,
+ * removed MS_LAYER_GRATICULE and added MS_LAYER_TILEINDEX constants
+ *
  * Revision 1.193  2004/03/19 17:39:04  sean
  * Renamed all occurrances of layerObj member num_processing to numprocessing.
  *
@@ -677,8 +681,6 @@ static unsigned char one_arg_force_ref[] =
   { 1, BYREF_FORCE};
 static unsigned char two_args_first_arg_force_ref[] = 
     { 2, BYREF_FORCE, BYREF_NONE };
-static unsigned char two_args_force_ref[] = 
-    { 2, BYREF_FORCE, BYREF_NONE };
 
 function_entry phpms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
@@ -716,9 +718,11 @@ zend_module_entry php_ms_module_entry = {
     PHP_MINIT(phpms),
     PHP_MSHUTDOWN(phpms),
     /* RINIT()/RSHUTDOWN() are called once per request 
+     * We shouldn't really be using them since they are run on every request
+     * and can hit performance.
      */
-    PHP_RINIT(phpms),
-    PHP_RSHUTDOWN(phpms),
+    NULL /* PHP_RINIT(phpms)     */,
+    NULL /* PHP_RSHUTDOWN(phpms) */,
     PHP_MINFO(mapscript),
 #if ZEND_MODULE_API_NO >= 20010901
     PHPMS_VERSION,          /* extension version number (string) */
@@ -1108,7 +1112,7 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_LAYER_ANNOTATION",MS_LAYER_ANNOTATION,const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_QUERY",MS_LAYER_QUERY, const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_CIRCLE",MS_LAYER_CIRCLE, const_flag);
-    REGISTER_LONG_CONSTANT("MS_LAYER_GRATICULE",MS_LAYER_GRATICULE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_TILEINDEX",MS_LAYER_TILEINDEX, const_flag);
 
     /* layer status constants (see also MS_ON, MS_OFF) */
     REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
