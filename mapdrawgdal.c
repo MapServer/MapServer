@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/03/05 23:18:52  frank
+ * Added small TODO note.
+ *
  * Revision 1.20  2004/03/05 22:58:04  frank
  * preliminary working implementation of msDrawRasterLayerGDAL_16BitClassification
  *
@@ -1430,6 +1433,15 @@ msDrawRasterLayerGDAL_RawMode(
 /*      the 16bit cases at the cost of some complication.               */
 /************************************************************************/
 
+/*
+  TODO: 
+   o Currently the values are cast to int before passing to the 
+     msGetClass() function.  Somehow we need a version of that function
+     that supports floating point values, but a change to the API will be
+     required. 
+   o There is essentially no support for OFFSITE or inherent NODATA values. 
+ */
+
 static int 
 msDrawRasterLayerGDAL_16BitClassification(
     mapObj *map, layerObj *layer, imageObj *image, 
@@ -1586,14 +1598,14 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* -------------------------------------------------------------------- */
 /*      Compute scaling ratio.                                          */
 /* -------------------------------------------------------------------- */
-    if( layer->debug > 0 )
-        msDebug( "msDrawGDAL(%s): scaling to 8bit, src range=%g,%g\n",
-                 layer->name, dfScaleMin, dfScaleMax );
-
     if( dfScaleMax == dfScaleMin )
         dfScaleMax = dfScaleMin + 1.0;
 
     dfScaleRatio = nBucketCount / (dfScaleMax - dfScaleMin);
+
+    if( layer->debug > 0 )
+        msDebug( "msDrawGDAL(%s): scaling to %d buckets from range=%g,%g\n",
+                 layer->name, nBucketCount, dfScaleMin, dfScaleMax );
 
 /* ==================================================================== */
 /*      Compute classification lookup table.                            */
