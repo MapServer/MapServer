@@ -2401,39 +2401,6 @@ interfaces (Bugzilla issue 575 -
 http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see
 the documentation of `layerObj.getShape`_.
 
-Additionally, programmers can experiment with better mapscript class naming
-by defining the symbol *NEXT_GENERATION_NAMES*.  
-
-::
-
-    swig -python -shadow -modern -DNEXT_GENERATION_NAMES -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
-
-The next generation class names are in capitalized camel case form: *Map*,
-*Layer*, *OutputFormat*, and so on rather than the standard *--Obj*
-names which are not clearly distinguished from
-class method names.  We're all using object-oriented languages, so the *Obj*
-suffix is redundant.  It is also a cross-language convention (see CPAN and
-the Python standard library) that package and class names be capitalized.
-Forming class names in a way distinctly different from class attributes and
-methods improves API clarity.
-
-The features enabled by *NEXT_GENERATION_API* will almost certainly become
-standard in a future release.  The next generation class names are more
-controversial and more likely to remain an option for users.  Python users
-want them, and can easily port existing code to use the new names.  For 
-example:
-
-::
-
-    import mapscript
-    
-    # Rename the next generation classes for use with older code
-    mapscript.mapObj = mapscript.Map
-
-    # Continue with older code
-    mapobj = mapscript.mapObj('foo.map')
-    ...
-
 
 
 ..  [1] This **really** needs to be changed in the future.  In fact a layer
