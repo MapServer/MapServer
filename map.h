@@ -880,12 +880,6 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              const char *pszInfoFormat); 
 
 int msGMLWriteQuery(mapObj *map, char *filename); // mapgml.c
-int msGMLStart(FILE *stream, const char *prjElement, const char *prjURI, const char *schemaLocation, const char *prjDescription);
-int msGMLCollectionStart(FILE *stream, const char *colName,  const char *colFID);
-int msGMLWriteShape(FILE *stream, shapeObj *shape, char *name, char *srsName, char **items, char *tab);
-int msGMLCollectionFinish(FILE *stream, const char *colName);
-int msGMLFinish(FILE *stream, const char *prjElement);
-
 
 #endif
 
