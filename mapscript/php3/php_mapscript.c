@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.204  2004/07/07 16:43:45  assefa
+ * Correct bug in Zoomscale : setting the maxextents. (Bug 75)
+ *
  * Revision 1.203  2004/06/29 18:04:40  dan
  * Added layer->sizeunits in PHP MapScript (bug 752)
  *
@@ -3106,7 +3109,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         }
         if (self->extent.maxy > poMaxGeorefExt->maxy)
         {
-            self->extent.miny = poMaxGeorefExt->maxy;
+            self->extent.maxy = poMaxGeorefExt->maxy;
             oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
