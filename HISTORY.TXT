@@ -16,8 +16,9 @@ Version 4.2.4
 --------------------------
 
 - Restored ability to render transparent (indexed or alpha) pixmap symbols
-  on RGB map images, including annotation layers and embedded scalebars
-  (bugs 926, 490).
+  on RGB map images, including annotation layers and embedded scalebars.
+  This feature remains OFF by default for map layers and is enabled by
+  specifying TRANSPARENCY ALPHA (bugs 926, 490).
   
 - New and improved Java mapscript build provided by unicoletti@prometeo.it,
   and examples contributed by Y.K. Choo (bug 876).
