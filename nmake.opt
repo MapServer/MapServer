@@ -385,13 +385,13 @@ JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 
 # Setup GDAL includes and libraries
 !IFDEF GDAL
-GDAL_INC = -I$(GDAL_DIR)/gcore -I$(GDAL_DIR)/alg
+GDAL_INC = -I$(GDAL_DIR)/gcore -I$(GDAL_DIR)/alg -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/port
 GDAL_LIB = $(GDAL_DIR)/gdal_i.lib
 !ENDIF
 
 # Setup OGR includes and libraries
 !IFDEF OGR
-OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port
+OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/port
 OGR_LIB = $(GDAL_DIR)/gdal_i.lib
 !ENDIF
 
