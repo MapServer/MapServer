@@ -536,11 +536,12 @@ and the MapServer Map File documentation at:
    int settext(string text)
         Set the text string for the class object.
    
-   int drawLegendIcon(int width, int height, image im, int dstX, int dstY)
+   int drawLegendIcon(int width, int height, imageObj im, int dstX, int dstY)
         Draw the legend icon on im object at dstX, dstY.
+        Returns MS_SUCCESS/MS_FAILURE.
 
    gdImagePtr createLegendIcon(int width, int height)
-        Draw the legend icon and return image.
+        Draw the legend icon and return a new imageObj.
      
  ImageObj Class:
  ---------------
