@@ -137,14 +137,14 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
-	msSetError(MS_TYPEERR, "(%s):(%d)", "loadSymbol()", msyylineno);
+	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyylineno);
 	fclose(msyyin);
 	return(-1);
       }
       
       if((stream = fopen(msBuildPath(szPath, symbolpath, msyytext), "rb")) == NULL)
       {
-	msSetError(MS_IOERR, "(%s):(%d)", "loadSymbol()", 
+	msSetError(MS_IOERR, "Parsing error near (%s):(line %d)", "loadSymbol()", 
                    msyytext, msyylineno);
 	fclose(msyyin);
 	return(-1);
@@ -210,7 +210,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	  s->numpoints++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, "(%s):(%d)", "loadSymbol()",  
+	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()",  
                      msyytext, msyylineno); 	  
 	  fclose(msyyin);
 	  return(-1);
@@ -240,7 +240,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	  s->stylelength++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, "(%s):(%d)", "loadSymbol()", 
+	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", 
                      msyytext, msyylineno); 	  
 	  fclose(msyyin);
 	  return(-1);
@@ -265,7 +265,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	s->type = MS_SYMBOL_TRUETYPE;
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadSymbol()",
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbol()",
                  msyytext, msyylineno);
       fclose(msyyin);
       return(-1);
@@ -476,7 +476,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
     case(SYMBOLSET):
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "msLoadSymbolSet()",
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadSymbolSet()",
                  msyytext, msyylineno);      
       status = -1;
     } /* end switch */

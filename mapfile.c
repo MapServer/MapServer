@@ -99,7 +99,7 @@ int getSymbol(int n, ...) {
 
   va_end(argp);
 
-  msSetError(MS_SYMERR, "(%s):(%d)", "getSymbol()", msyytext, msyylineno);
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getSymbol()", msyytext, msyylineno);
   return(-1);
 }
 
@@ -125,7 +125,7 @@ char *getString() {
   if(msyylex() == MS_STRING)
     return(strdup(msyytext));
 
-  msSetError(MS_SYMERR, "(%s):(%d)", "getString()", msyytext, msyylineno);
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getString()", msyytext, msyylineno);
   return(NULL);
 }
 
@@ -139,7 +139,7 @@ int getDouble(double *d) {
     return(0); /* success */
   }
 
-  msSetError(MS_SYMERR, "(%s):(%d)", "getDouble()", msyytext, msyylineno); 
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getDouble()", msyytext, msyylineno); 
   return(-1);
 }
 
@@ -153,7 +153,7 @@ int getInteger(int *i) {
     return(0); /* success */
   }
 
-  msSetError(MS_SYMERR, "(%s):(%d)", "getInteger()", msyytext, msyylineno); 
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getInteger()", msyytext, msyylineno); 
   return(-1);
 }
 
@@ -163,7 +163,7 @@ int getCharacter(char *c) {
     return(0);
   }
 
-  msSetError(MS_SYMERR, "(%s):(%d)", "getCharacter()", msyytext, msyylineno); 
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getCharacter()", msyytext, msyylineno); 
   return(-1);
 }
 
@@ -393,7 +393,7 @@ int loadJoin(joinObj *join)
       if((join->type = getSymbol(2, MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadJoin()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadJoin()", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -489,8 +489,8 @@ static int loadFeaturePoints(lineObj *points)
       points->numpoints++;
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadFeaturePoints()", 
-                 msyytext, msyylineno);          
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadFeaturePoints()", 
+                 msyytext, msyylineno );          
       return(-1);      
     }
   }
@@ -525,7 +525,7 @@ static int loadFeature(layerObj	*player, int type)
       if((shape.text = getString()) == NULL) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadfeature()",
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()",
                  msyytext, msyylineno);
       return(-1);
     }
@@ -611,7 +611,7 @@ static int loadGrid( layerObj *pLayer )
 				
 				
 			default:
-				msSetError(MS_IDENTERR, "(%s):(%d)", "loadGrid()", msyytext, msyylineno);          
+				msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadGrid()", msyytext, msyylineno);          
 				return(-1);      
 		}
 	}
@@ -858,7 +858,7 @@ static int loadProjection(projectionObj *p)
       break;
 
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadProjection()",
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadProjection()",
                  msyytext, msyylineno);
       return(-1);
     }
@@ -1095,7 +1095,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getCharacter(&(label->wrap)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadlabel()", 
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadlabel()", 
                  msyytext, msyylineno);
       return(-1);
     }
@@ -1312,7 +1312,7 @@ int loadExpression(expressionObj *exp)
   
   // if(exp->type == MS_REGEX) {
   //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
-  //     sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
+  //     sprintf(ms_error.message, "Parsing error near (%s):(line %d)", exp->string, msyylineno);
   //     msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
   //     return(-1);
   //   }
@@ -1336,7 +1336,7 @@ int loadExpressionString(expressionObj *exp, char *value)
     
   // if(exp->type == MS_REGEX) {
   //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
-  //     sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
+  //     sprintf(ms_error.message, "Parsing error near (%s):(line %d)", exp->string, msyylineno);
   //     msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
   //     return(-1);
   //   }
@@ -1385,8 +1385,8 @@ int loadHashTable(hashTableObj *ptable)
       free(data);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadHashTable()",
-                 msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()",
+                 msyytext, msyylineno );
       return(MS_FAILURE);
     }
   }
@@ -1483,7 +1483,7 @@ int loadStyle(styleObj *style) {
 	style->symbolname = strdup(msyytext);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadStyle()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyytext, msyylineno);
       return(MS_FAILURE);
     }
   }
@@ -1758,8 +1758,8 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
 
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadClass()",
-                 msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadClass()",
+                 msyytext, msyylineno );
       return(-1);
     }
   }
@@ -2298,7 +2298,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadLayer()",
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLayer()",
                  msyytext, msyylineno);      
       return(-1);
     }
@@ -2763,7 +2763,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       if(getInteger(&(ref->maxboxsize)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadReferenceMap()", 
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadReferenceMap()", 
                  msyytext, msyylineno);
       return(-1);
     }
@@ -3003,7 +3003,7 @@ static int loadOutputFormat(mapObj *map)
           imagemode = MS_IMAGEMODE_FLOAT32;
       else
       {
-          msSetError(MS_IDENTERR, "(%s):(%d)", "loadOutputFormat()", 
+          msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadOutputFormat()", 
                      msyytext, msyylineno);      
           return -1;
       }
@@ -3013,7 +3013,7 @@ static int loadOutputFormat(mapObj *map)
       if((transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadOutputFormat()", 
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadOutputFormat()", 
                  msyytext, msyylineno);      
       return(-1);
     }
@@ -3157,7 +3157,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       if((legend->template = getString()) == NULL) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadLegend()", msyytext, msyylineno);      
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLegend()", msyytext, msyylineno);      
       return(-1);
     }
   } /* next token */
@@ -3322,7 +3322,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       if((scalebar->units = getSymbol(5, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadScalebar()",
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadScalebar()",
                  msyytext, msyylineno);      
       return(-1);
     }
@@ -3627,7 +3627,7 @@ int loadWeb(webObj *web, mapObj *map)
       if((web->template = getString()) == NULL) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "loadWeb()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadWeb()", msyytext, msyylineno);
       return(-1);
     }
   }
@@ -4035,7 +4035,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
   msyystate = 5; // restore lexer state to INITIAL
   msyylex();
   msyyrestart(msyyin);
-  msyylineno = 0;
+  msyylineno = 1;  /* Start at line #1 */
 
   if(initMap(map) == -1) /* initialize this map */
     return(NULL);
@@ -4198,7 +4198,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if(loadWeb(&(map->web), map) == -1) return(NULL);
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "msLoadMap()", 
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadMap()", 
                  msyytext, msyylineno);
       return(NULL);
     }
@@ -4377,7 +4377,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
   msyystate = 6; // restore lexer state to INITIAL, and do return comments
   msyylex();
   msyyrestart(msyyin);
-  msyylineno = 0;
+  msyylineno = 1;  /* Start at line #1 */
 
   // we start with room for 256 tokens and will double size of the array 
   // every time we reach the limit
