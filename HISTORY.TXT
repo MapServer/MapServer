@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Ensure the outputFormatObj attached to msImageLoadGDStream() results reflect
+  the interlacedness of the loaded image.  (bug 1039)
+
 - Fixed support for non-square pixels in WCS. (bug 1014)
 
 - Expose only GD formats for GetLegendGraphic in the capabilities (Bug 1011)
