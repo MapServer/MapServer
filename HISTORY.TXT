@@ -13,6 +13,13 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Current Version (CVS)
+---------------------
+
+- Fixed problem with WMS GetFeatureInfo when data was reprojected. Was a
+  problem with msProjectRect and zero-size search rectangles (bug 794)
+
+
 Version 4.2.2 (2004-07-28)
 --------------------------
 
