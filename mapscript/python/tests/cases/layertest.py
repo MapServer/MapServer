@@ -284,6 +284,8 @@ class LayerQueryTestCase(MapLayerTestCase):
         self.layer = self.map.getLayerByName('POINT')
         self.layer.template = 'foo'
 
+class SpatialLayerQueryTestCase(LayerQueryTestCase):
+
     def testRectQuery(self):
         qrect = mapscript.rectObj(-10.0, 45.0, 10.0, 55.0)
         self.layer.queryByRect(self.map, qrect)
@@ -300,11 +302,6 @@ class LayerQueryTestCase(MapLayerTestCase):
         self.layer.queryByPoint(self.map, qpoint, mapscript.MS_MULTIPLE, 2.0)
         assert self.layer.getNumResults() == 1
    
-    def testAttributeQuery(self):
-        self.layer.queryByAttributes(self.map, "FNAME", '"A Point"',
-                                     mapscript.MS_MULTIPLE)
-        assert self.layer.getNumResults() == 1
-
     def testRectQueryNoResults(self):
         qrect = mapscript.rectObj(-101.0, 0.0, -100.0, 1.0)
         self.layer.queryByRect(self.map, qrect)
@@ -321,10 +318,30 @@ class LayerQueryTestCase(MapLayerTestCase):
         self.layer.queryByPoint(self.map, qpoint, mapscript.MS_MULTIPLE, 2.0)
         assert self.layer.getNumResults() == 0
     
+
+class AttributeLayerQueryTestCase(LayerQueryTestCase):
+
+    def testAttributeQuery(self):
+        self.layer.queryByAttributes(self.map, "FNAME", '"A Point"',
+                                     mapscript.MS_MULTIPLE)
+        assert self.layer.getNumResults() == 1
+
+    def testLogicalAttributeQuery(self):
+        self.layer.queryByAttributes(self.map, None, '("[FNAME]" == "A Point")',
+                                     mapscript.MS_MULTIPLE)
+        assert self.layer.getNumResults() == 1
+
+    def testPythonAttributeQuery(self):
+        x = 'f["FNAME"].upper() == "A POINT"'
+        mode = mapscript.MS_MULTIPLE + mapscript.MS_EXTERN
+        self.layer.queryByAttributes(self.map, None, x, mode)
+        assert self.layer.getNumResults() == 1
+
     def testAttributeQueryNoResults(self):
         self.layer.queryByAttributes(self.map, "FNAME", '"Bogus Point"',
                                      mapscript.MS_MULTIPLE)
         assert self.layer.getNumResults() == 0
+
 
 class LayerVisibilityTestCase(MapLayerTestCase):
     
@@ -348,7 +365,20 @@ class LayerVisibilityTestCase(MapLayerTestCase):
         """expect false visibility after zooming out beyond maximum"""
         self.map.zoomScale(2500, mapscript.pointObj(100,100), 200, 200, self.map.extent, None)
         assert self.layer.isVisible() == mapscript.MS_FALSE
+       
+
+class ExternalFilterTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.layer = mapscript.layerObj()
         
+    def testSetExternalFilter(self):
+        x = 'f["Foo"].upper() == "Bar"'
+        self.layer.setFilter(x, mapscript.MS_EXTERN)
+        x2 = self.layer.getFilterString()
+        assert x2 == x, x2
+
+
 
 # ===========================================================================
 # Run the tests outside of the main suite
