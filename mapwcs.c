@@ -795,6 +795,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     int tli;
     layerObj *tlp=NULL;
     
+    // need to handle NOW case
+
     // check format of TIME parameter
     if(strchr(params->time, ',')) {
       msSetError( MS_WCSERR, "Temporal lists are not supported, only individual values.", "msWCSGetCoverage()" );
