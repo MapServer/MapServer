@@ -153,6 +153,7 @@ mapObj *loadMap()
 {
   int i;
   mapObj *map = NULL;
+  char *tmpstr;
 
   for(i=0;i<msObj->NumParams;i++) // find the mapfile parameter first
     if(strcasecmp(msObj->ParamNames[i], "map") == 0) break;
@@ -172,6 +173,22 @@ mapObj *loadMap()
   }
 
   if(!map) writeError();
+
+  // check for any %variable% substitutions here, we do this here so WMS/WFS services can take advantage of this
+  for(i=0;i<msObj->NumParams;i++) {
+    tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->ParamNames[i]) + 3);
+    sprintf(tmpstr,"%%%s%%", msObj->ParamNames[i]);
+    
+    for(j=0; j<msObj->Map->numlayers; j++) {
+      if(msObj->Map->layers[j].data && (strstr(msObj->Map->layers[j].data, tmpstr) != NULL)) msObj->Map->layers[j].data = gsub(msObj->Map->layers[j].data, tmpstr, msObj->ParamValues[i]);
+      if(msObj->Map->layers[j].connection && (strstr(msObj->Map->layers[j].connection, tmpstr) != NULL)) msObj->Map->layers[j].connection = gsub(msObj->Map->layers[j].connection, tmpstr, msObj->ParamValues[i]);
+      if(msObj->Map->layers[j].filter.string && (strstr(msObj->Map->layers[j].filter.string, tmpstr) != NULL)) msObj->Map->layers[j].filter.string = gsub(msObj->Map->layers[j].filter.string, tmpstr, msObj->ParamValues[i]);
+      for(k=0; k<msObj->Map->layers[j].numclasses; k++)
+	if(msObj->Map->layers[j].class[k].expression.string && (strstr(msObj->Map->layers[j].class[k].expression.string, tmpstr) != NULL)) msObj->Map->layers[j].class[k].expression.string = gsub(msObj->Map->layers[j].class[k].expression.string, tmpstr, msObj->ParamValues[i]);
+    }
+    
+    free(tmpstr);
+  }
 
   return map;
 }
@@ -840,19 +857,7 @@ void loadForm()
   if(msObj->Map->height == -1) msObj->Map->height = msObj->ImgRows;
   if(msObj->Map->width == -1) msObj->Map->width = msObj->ImgCols;
 
-  for(i=0;i<msObj->NumParams;i++) {
-    tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->ParamNames[i]) + 3);
-    sprintf(tmpstr,"%%%s%%", msObj->ParamNames[i]);
-    
-    for(j=0; j<msObj->Map->numlayers; j++) {
-      if(msObj->Map->layers[j].connection && (strstr(msObj->Map->layers[j].connection, tmpstr) != NULL)) msObj->Map->layers[j].connection = gsub(msObj->Map->layers[j].connection, tmpstr, msObj->ParamValues[i]);
-      if(msObj->Map->layers[j].filter.string && (strstr(msObj->Map->layers[j].filter.string, tmpstr) != NULL)) msObj->Map->layers[j].filter.string = gsub(msObj->Map->layers[j].filter.string, tmpstr, msObj->ParamValues[i]);
-      for(k=0; k<msObj->Map->layers[j].numclasses; k++)
-	if(msObj->Map->layers[j].class[k].expression.string && (strstr(msObj->Map->layers[j].class[k].expression.string, tmpstr) != NULL)) msObj->Map->layers[j].class[k].expression.string = gsub(msObj->Map->layers[j].class[k].expression.string, tmpstr, msObj->ParamValues[i]);
-    }
-    
-    free(tmpstr);
-  }
+  
 }
 
 void setExtentFromShapes() {
@@ -945,7 +950,6 @@ void returnCoordinate()
 
 // FIX: need to consider JOINS
 // FIX: need to consider 5% shape extent expansion
-
 
 /*
 **
