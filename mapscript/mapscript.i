@@ -137,7 +137,7 @@ memory.") const char * {
 #endif
 
 // Next Generation class names
-#ifdef NEXT_GENERATION_CLASSES
+#ifdef NEXT_GENERATION_NAMES
 %rename(Map) map_obj;
 %rename(Layer) layer_obj;
 %rename(Class) classObj;
@@ -676,7 +676,7 @@ memory.") const char * {
     msLayerClose(self);
   }
 
-#ifdef NEXT_GENERATION_CLASSES
+#ifdef NEXT_GENERATION_API
     %newobject getShape;
     shapeObj *getShape(int shapeindex, int tileindex=0) {
     /* This version properly returns shapeObj and also has its

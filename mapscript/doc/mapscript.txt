@@ -96,14 +96,29 @@ method(type mandatory_parameter [, type optional_parameter=default]) : type
     Description of the method including elaboration on the method
     arguments, the method's actions, and returned values.
 
-The mapscript API is evolving to a state where all get* methods return
-objects.  Unfortunately layerObj.getShape was written to return the index
-of a shape and put the shape itself in a reference argument and this use
-is deeply entrenched.  PHP-Mapscript got this right and the SWIG mapscript
-is going to change to follow suit in the future.
+Next Generation Classes
+-----------------------
+
+By defining the preprocessor symbol *NEXT_GENERATION_CLASSES* when running
+SWIG to produce wrapper code, one can use the "next generation" mapscript
+classes.  For example
+
+::
+
+    swig -python -shadow -modern -DNEXT_GENERATION_CLASSES -o mapscript_wrap.c ../mapscript.i
+
+The next generation classes are named *Map*, *Layer*, *OutputFormat*, and so
+on rather than the standard *mapObj*, *layerObj*, and *outputFormatObj*.  
+We're all using object-oriented languages, so the 'Obj' suffix is redundant.
+It is also a cross-language convention (see CPAN and the Python standard
+library) that class names be capitalized.
+
+There are also some API changes in the next generation classes which result
+from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
+interfaces (see Bugzilla issue 575 - http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see the documentation of `layerObj.getShape`_.
 
 Now that the style of the documentation has been introduced, on to the
-classes themselves
+classes themselves.
 
 =============================================================================
  Mapscript Classes
@@ -481,6 +496,20 @@ The other important association for layerObj is with classObj
     +----------+ 1     0..1 +----------+
     | layerObj | <--------> | classObj |
     +----------+            +----------+
+
+
+Methods
+-------
+
+**TODO**
+
+.. _layerObj.getShape :
+
+getShape() : int
+    Get a shape from layer data.
+    
+*NEXT_GENERATION_API* getShape() : shapeObj_
+    Get a shape from layer data using the next generation API.
 
 -----------------------------------------------------------------------------
  lineObj
