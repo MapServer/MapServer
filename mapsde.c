@@ -136,6 +136,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   long longval;
   struct tm dateval;
 
+  short shortval; // new gdv
+  float floatval;
+
   SE_COLUMN_DEF *itemdefs;
   SE_SHAPE shapeval=0;
 
@@ -175,9 +178,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     
     switch(itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
-      status = SE_stream_get_smallint(sde->stream, i+1, (short *) &longval);
+      status = SE_stream_get_smallint(sde->stream, i+1, &shortval); // changed by gdv
       if(status == SE_SUCCESS)
-	shape->values[i] = long2string(longval);
+	shape->values[i] = long2string(shortval);
       else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       else {
@@ -197,9 +200,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }      
       break;
     case SE_FLOAT_TYPE:
-      status = SE_stream_get_float(sde->stream, i+1, (float *) &doubleval);
+      status = SE_stream_get_float(sde->stream, i+1, &floatval); // changed by gdv
       if(status == SE_SUCCESS)
-	shape->values[i] = double2string(doubleval);
+	shape->values[i] = double2string(floatval);
       else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       else {     
