@@ -44,6 +44,7 @@ int msEvalContext(mapObj *map, char *context)
   int i, status;
   char *tmpstr1=NULL, *tmpstr2=NULL;
   int raster=MS_FALSE;
+  int expresult;       // result of expression parsing operation
 
   if(!context) return(MS_TRUE); // no context requirements
 
@@ -75,6 +76,7 @@ int msEvalContext(mapObj *map, char *context)
   msAcquireLock( TLOCK_PARSER );
   msyystate = 4; msyystring = tmpstr1;
   status = msyyparse();
+  expresult = msyyresult;
   msReleaseLock( TLOCK_PARSER );
   free(tmpstr1);
 
@@ -84,8 +86,7 @@ int msEvalContext(mapObj *map, char *context)
                             "msEvalContext");
     return MS_FALSE; // error in parse
   }
-  return MS_TRUE;
-  //return(msyyresult);
+  return expresult;
 }
 
 /* Parser mutex added for type MS_EXPRESSION -- SG */
@@ -94,7 +95,8 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
   int i;
   char *tmpstr=NULL;
   int status;
-
+  int expresult;  // result of logical expression parsing operation
+  
   if(!expression->string) return(MS_TRUE); // empty expressions are ALWAYS true
 
   switch(expression->type) {
@@ -119,6 +121,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     msyystate = 4;
     msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
     status = msyyparse();
+    expresult = msyyresult;
     msReleaseLock( TLOCK_PARSER );
     free(tmpstr);
 
@@ -129,8 +132,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
         return MS_FALSE;
     }
 
-    return MS_TRUE;
-    //return(msyyresult);
+    return expresult;
     
     break;
   case(MS_REGEX):
