@@ -1979,6 +1979,7 @@ int initLayer(layerObj *layer, mapObj *map)
 {
   layer->debug = MS_OFF;
 
+  layer->numclasses = 0;
   if((layer->class = (classObj *)malloc(sizeof(classObj)*MS_MAXCLASSES)) == NULL) {
     msSetError(MS_MEMERR, NULL, "initLayer()");
     return(-1);
@@ -2013,7 +2014,6 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->classitem = NULL;
   layer->classitemindex = -1;
-  layer->numclasses = 0;
 
   layer->units = MS_METERS;
   if(msInitProjection(&(layer->projection)) == -1) return(-1);
@@ -2138,7 +2138,6 @@ void freeLayer(layerObj *layer) {
 
 int loadLayer(layerObj *layer, mapObj *map)
 {
-  int c=0; // class counter
   int type;
 
   if(initLayer(layer, map) == -1)
@@ -2149,9 +2148,15 @@ int loadLayer(layerObj *layer, mapObj *map)
   for(;;) {
     switch(msyylex()) {
     case(CLASS):
-      if(loadClass(&(layer->class[c]), map, layer) == -1) return(-1);
-      if(layer->class[c].type == -1) layer->class[c].type = layer->type;
-      c++;
+
+      if(layer->numclasses == MS_MAXCLASSES) { // no room
+	msSetError(MS_IDENTERR, "Maximum number of classes reached.", "loadLayer()");
+	return(-1);
+      }
+
+      if(loadClass(&(layer->class[layer->numclasses]), map, layer) == -1) return(-1);
+      if(layer->class[layer->numclasses].type == -1) layer->class[layer->numclasses].type = layer->type;
+      layer->numclasses++;
       break;
     case(CLASSITEM):
       if(getString(&layer->classitem) == MS_FAILURE) return(-1);
@@ -2176,8 +2181,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       return(-1);
       break;
     case(END):
-      layer->numclasses = c;
- 
       // May want to re-write this test to be more specific.
       // if(!layer->connection && layer->data && layer->numclasses > 1 && !layer->classitem) {
       //   msSetError(MS_MISCERR, "Multiple classes defined but no classitem?", "loadLayer()");      
@@ -2185,8 +2188,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       // }
 
       if(layer->type == -1) {
-				msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");      
-				return(-1);
+	msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");      
+	return(-1);
       }
 
       return(0);
@@ -2246,6 +2249,11 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getString(&layer->header) == MS_FAILURE) return(-1);
       break;
     case(JOIN):
+      if(layer->numjoins == MS_MAXJOINS) { // no room
+	msSetError(MS_IDENTERR, "Maximum number of joins reached.", "loadLayer()");
+	return(-1);
+      }
+
       if(loadJoin(&(layer->joins[layer->numjoins])) == -1) return(-1);
       layer->numjoins++;
       break;
@@ -4181,7 +4189,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       break;
     case(LAYER):
       if(map->numlayers == MS_MAXLAYERS) { 
-	    msSetError(MS_IDENTERR, "Too many layers defined.", "msLoadMap()");
+	    msSetError(MS_IDENTERR, "Maximum number of layers reached.", "msLoadMap()");
 	    return(NULL);
       }
       if(loadLayer(&(map->layers[map->numlayers]), map) == -1) return(NULL);
