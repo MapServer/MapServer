@@ -68,6 +68,96 @@ AC_DEFUN(AC_COMPILER_PIC,
 	AC_SUBST(C_PIC,$C_PIC)
 ])
 
+
+
+dnl
+dnl check for -R, etc. switch
+dnl 
+dnl This was borrowed and adapted from the PHP configure.in script
+dnl
+AC_DEFUN(AC_RUNPATH_SWITCH,
+[
+  AC_MSG_CHECKING(if compiler supports -R)
+  AC_CACHE_VAL(php_cv_cc_dashr,[
+	SAVE_LIBS="${LIBS}"
+	LIBS="-R /usr/lib ${LIBS}"
+	AC_TRY_LINK([], [], php_cv_cc_dashr=yes, php_cv_cc_dashr=no)
+	LIBS="${SAVE_LIBS}"])
+  AC_MSG_RESULT($php_cv_cc_dashr)
+  if test $php_cv_cc_dashr = "yes"; then
+	ld_runpath_switch="-R"
+	apxs_runpath_switch="-Wl,-R'"
+  fi
+  if test -z "$ld_runpath_switch" ; then
+	AC_MSG_CHECKING([if compiler supports -Wl,-rpath,])
+	AC_CACHE_VAL(php_cv_cc_rpath,[
+		SAVE_LIBS="${LIBS}"
+		LIBS="-Wl,-rpath,/usr/lib ${LIBS}"
+		AC_TRY_LINK([], [], php_cv_cc_rpath=yes, php_cv_cc_rpath=no)
+		LIBS="${SAVE_LIBS}"])
+	AC_MSG_RESULT($php_cv_cc_rpath)
+	if test $php_cv_cc_rpath = "yes"; then
+		ld_runpath_switch="-Wl,-rpath,"
+		apxs_runpath_switch="-Wl,'-rpath "
+	fi
+  fi
+  if test -z "$ld_runpath_switch" ; then
+	AC_MSG_CHECKING([if compiler supports -Wl,-R])
+	AC_CACHE_VAL(php_cv_cc_dashwlr,[
+		SAVE_LIBS="${LIBS}"
+		LIBS="-Wl,-R/usr/lib ${LIBS}"
+		AC_TRY_LINK([], [], php_cv_cc_dashwlr=yes, php_cv_cc_dashwlr=no)
+		LIBS="${SAVE_LIBS}"])
+	AC_MSG_RESULT($php_cv_cc_dashwlr)
+	if test $php_cv_cc_rpath = "yes"; then
+		ld_runpath_switch="-Wl,-R"
+		apxs_runpath_switch="-Wl,-R'"
+	fi
+  fi
+  if test -z "$ld_runpath_switch" ; then
+	dnl something innocuous
+	ld_runpath_switch="-L"
+	apxs_runpath_switch="-L'"
+  fi
+  
+])
+
+
+dnl
+dnl AC_PHP_ONCE(namespace, variable, code)
+dnl
+dnl execute code, if variable is not set in namespace
+dnl
+AC_DEFUN(AC_PHP_ONCE,[
+  unique=`echo $ac_n "$2$ac_c" | tr -c -d a-zA-Z0-9`
+  cmd="echo $ac_n \"\$$1$unique$ac_c\""
+  if test -n "$unique" && test "`eval $cmd`" = "" ; then
+    eval "$1$unique=set"
+    $3
+  fi
+])
+
+dnl
+dnl AC_ADD_RUNPATH(path)
+dnl
+dnl add a library to linkpath/runpath stored in RPATH 
+dnl works together with AC_RUNPATH_SWITCH()
+dnl
+AC_DEFUN(AC_ADD_RUNPATH,[
+  if test "$1" != "/usr/lib"; then
+    AC_EXPAND_PATH($1, ai_p)
+    AC_PHP_ONCE(LIBPATH, $ai_p, [
+      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
+dnl      if test -n "$APXS" ; then
+dnl        RPATHS="$RPATHS ${apxs_runpath_switch}$ai_p'"
+dnl      else
+        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
+dnl      fi
+    ])
+  fi
+])
+
+
 dnl
 dnl Try to find something to link shared libraries with.  Try "gcc -shared"
 dnl first and then "ld -shared".
