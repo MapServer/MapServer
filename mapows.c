@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2004/11/09 17:59:05  julien
+ * Allow use of msOWSPrintURLType with no metadata. (For bug 1011)
+ *
  * Revision 1.49  2004/10/29 22:18:54  assefa
  * Use ows_schama_location metadata. The default value if metadata is not found
  * is http://schemas.opengeospatial.net
@@ -843,7 +846,9 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
 
     msFree(metadata_name);
 
-    if(type || width || height || urlfrmt || href)
+    if(type || width || height || urlfrmt || href || 
+       (!metadata && (default_type || default_width || default_height || 
+                      default_urlfrmt || default_href)))
     {
         if((!type && type_is_mandatory) || (!width && width_is_mandatory) || 
            (!height && height_is_mandatory) || 
@@ -858,11 +863,11 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         }
         else
         {
-            if(!type && type_format)
+            if(!type && type_format && default_type)
             {
                 type = (char*) malloc(strlen(type_format) + 
                                       strlen(default_type) + 2);
-                sprintf(type, type_format, (default_type ? default_type : ""));
+                sprintf(type, type_format, default_type);
             }
             else if(!type)
                 type = strdup("");

@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Allow use of msOWSPrintURLType with no metadata. In this case the default 
+  parameters will be used. (For bug 1011)
+
 - Ensure the outputFormatObj attached to msImageLoadGDStream() results reflect
   the interlacedness of the loaded image.  Also ensure that the RGB PNG
   reference images work (make imagemode match gdImg). (bug 1039)
