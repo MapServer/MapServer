@@ -681,7 +681,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
 
   status = SE_table_describe(sde->connection, sde->table, &n, &itemdefs);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerGetItems()", "SE_table_describe()");
+    sde_error(status, "msSDELayerGetItemInfo()", "SE_table_describe()");
     return(MS_FAILURE);
   }
 
@@ -720,7 +720,10 @@ int msSDELayerInitItemInfo(layerObj *layer)
 void msSDELayerFreeItemInfo(layerObj *layer)
 {
 #ifdef USE_SDE
-  SE_table_free_descriptions((SE_COLUMN_DEF *)layer->iteminfo);
+  if(layer->iteminfo) {
+    SE_table_free_descriptions((SE_COLUMN_DEF *)layer->iteminfo);  
+    layer->iteminfo = NULL;
+  }
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerFreeItemInfo()");
 #endif
