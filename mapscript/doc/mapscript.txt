@@ -30,8 +30,12 @@
 ..
 
 =============================================================================
-Grand Unified Mapscript Documentation :)
+ Grand Unified Mapscript Documentation :)
 =============================================================================
+:Author: Sean Gillies
+:Contact: sgillies@frii.com
+:Revision: $Revision$
+:Date: $Date$
 
 ..  The next heading encountered becomes our H2
 ..
@@ -74,9 +78,14 @@ Since the 4.0 release, MapServer colors are instances of colorObj.
 Attributes
 ----------
 
-- red: int, mutable
-- green: int, mutable
-- blue: int, mutable
+red : int mutable
+    Red component of color in range [0-255]
+
+green : int mutable
+    Green component of color in range [0-255]
+
+blue : int mutable
+    Blue component of color in range [0-255]
 
 Methods
 -------
@@ -303,7 +312,7 @@ int **draw** (mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, strin
 
 .. _rectObj.project:
 
-int **project** (projectionObj_ *proj_in*, projectionObj_ *proj_out*)
+int **project** (projectionObj_ proj_in, projectionObj_ proj_out)
 
     Reproject rectangle from *proj_in* to *proj_out*.  Transformation
     is done in place.
