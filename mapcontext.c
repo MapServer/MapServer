@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.35  2002/12/19 19:26:11  julien
+ * Don't set the projection for each layer
+ *
  * Revision 1.34  2002/12/11 18:10:39  julien
  * Remove possible WARNING inside other tags
  *
@@ -375,14 +378,14 @@ int msLoadMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
   char *pszWholeText, *pszMapProj=NULL;
-  char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4, *pszChar;
+  char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4;
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
   CPLXMLNode *psLegendURL, *psSRS;
   char szPath[MS_MAXPATHLEN];
   char szProj[20];
-  int nStyle, nFirstSRS;
+  int nStyle;
   layerObj *layer;
 
   //
@@ -732,7 +735,6 @@ int msLoadMapContext(mapObj *map, char *filename)
               }
 
               // Projection
-              nFirstSRS = 1;
               psSRS = psLayer->psChild;
               while(psSRS != NULL)
               {
@@ -740,26 +742,6 @@ int msLoadMapContext(mapObj *map, char *filename)
                      strcasecmp(psSRS->pszValue, "SRS") == 0 )
                   {
                       pszValue = psSRS->psChild->pszValue;
-
-                      if(nFirstSRS == 1)
-                      {
-                          if(pszValue != NULL)
-                          {
-                              pszValue1 = strdup(pszValue);
-                              pszChar = strchr(pszValue1, ' ');
-                              if(pszChar)
-                                  pszValue1[pszChar-pszValue1] = '\0';
-
-                              sprintf(szProj, "init=epsg:%s", pszValue1+5);
-
-                              msInitProjection(&layer->projection);
-                              layer->projection.args[layer->projection.numargs] = strdup(szProj);
-                              layer->projection.numargs++;
-                              msProcessProjection(&layer->projection);
-                              free(pszValue1);
-                          }
-                          nFirstSRS = 0;
-                      }
 
                       // Add in wms_srs
                       pszHash = msLookupHashTable(layer->metadata, "wms_srs");
