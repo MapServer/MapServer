@@ -16,6 +16,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   if( in && in->proj && out && out->proj )
   {
       double	z = 0.0;
+      double x_orig = point->x, y_orig = point->y;
 
       if( pj_is_latlong(in->proj) )
       {
@@ -26,7 +27,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
       error = pj_transform( in->proj, out->proj, 1, 0, 
                             &(point->x), &(point->y), &z );
 
-      if( error )
+      if( error || point->x == HUGE_VAL || point->y == HUGE_VAL )
           return MS_FAILURE;
 
       if( pj_is_latlong(out->proj) )
@@ -198,7 +199,10 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
   int i;
 
   for(i=0; i<shape->numlines; i++)
-      msProjectLine(in, out, shape->line+i );
+  {
+      if( msProjectLine(in, out, shape->line+i ) == MS_FAILURE )
+          return MS_FAILURE;
+  }
 
   return(MS_SUCCESS);
 #else
@@ -258,7 +262,10 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
   else
   {
       for(i=0; i<line->numpoints; i++)
-          msProjectPoint(in, out, &(line->point[i]));
+      {
+          if( msProjectPoint(in, out, &(line->point[i])) == MS_FAILURE )
+              return MS_FAILURE;
+      }
   }
 
   return(MS_SUCCESS);
