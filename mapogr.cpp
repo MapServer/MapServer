@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.27  2001/03/18 17:21:13  dan
+ * Set bounds member on returned shapes, and fixed filtering of incompatible
+ * shape types in layers with mixed geometries.
+ *
  * Revision 1.26  2001/03/15 04:48:35  dan
  * Fixed maplayer.c - had been committed with conflicts in it
  *
@@ -113,8 +117,23 @@ typedef struct ms_ogr_layer_info_t
 /**********************************************************************
  *                     ogrPointsAddPoint()
  **********************************************************************/
-static void ogrPointsAddPoint(lineObj *line, double dX, double dY)
+static void ogrPointsAddPoint(lineObj *line, double dX, double dY, 
+                              int lineindex, rectObj *bounds)
 {
+    /* Keep track of shape bounds */
+    if (line->numpoints == 0 && lineindex == 0)
+    {
+        bounds->minx = bounds->maxx = dX;
+        bounds->miny = bounds->maxy = dY;
+    }
+    else
+    {
+        if (dX < bounds->minx)  bounds->minx = dX;
+        if (dX > bounds->maxx)  bounds->maxx = dX;
+        if (dY < bounds->miny)  bounds->miny = dY;
+        if (dY > bounds->maxy)  bounds->maxy = dY;
+    }
+
     line->point[line->numpoints].x = dX;
     line->point[line->numpoints].y = dY;
     line->numpoints++;
@@ -183,13 +202,15 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
   if (poGeom->getGeometryType() == wkbPoint)
   {
       OGRPoint *poPoint = (OGRPoint *)poGeom;
-      ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY());
+      ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY(), 
+                        outshp->numlines, &(outshp->bounds));
   }
   else if (poGeom->getGeometryType() == wkbLineString)
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
       for(i=0; i<numpoints; i++)
-          ogrPointsAddPoint(&line, poLine->getX(i), poLine->getY(i));
+          ogrPointsAddPoint(&line, poLine->getX(i), poLine->getY(i),
+                            outshp->numlines, &(outshp->bounds));
   }
   else if (poGeom->getGeometryType() == wkbPolygon)
   {
@@ -206,7 +227,8 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
           if (poRing)
           {
               for(i=0; i<poRing->getNumPoints(); i++)
-                  ogrPointsAddPoint(&line, poRing->getX(i), poRing->getY(i));
+                  ogrPointsAddPoint(&line, poRing->getX(i), poRing->getY(i),
+                                    outshp->numlines, &(outshp->bounds));
           }
       }
   }
@@ -286,6 +308,7 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
       OGRLineString *poLine = (OGRLineString *)poGeom;
       int       j, numpoints;
       lineObj   line={0,NULL};
+      double    dX, dY;
 
       if ((numpoints = poLine->getNumPoints()) < 2)
           return 0;
@@ -304,8 +327,23 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 
       for(j=0; j<numpoints; j++)
       {
-          line.point[j].x = poLine->getX(j); 
-          line.point[j].y = poLine->getY(j);
+          dX = line.point[j].x = poLine->getX(j); 
+          dY = line.point[j].y = poLine->getY(j);
+
+          /* Keep track of shape bounds */
+          if (j == 0 && outshp->numlines == 0)
+          {
+              outshp->bounds.minx = outshp->bounds.maxx = dX;
+              outshp->bounds.miny = outshp->bounds.maxy = dY;
+          }
+          else
+          {
+              if (dX < outshp->bounds.minx)  outshp->bounds.minx = dX;
+              if (dX > outshp->bounds.maxx)  outshp->bounds.maxx = dX;
+              if (dY < outshp->bounds.miny)  outshp->bounds.miny = dY;
+              if (dY > outshp->bounds.maxy)  outshp->bounds.maxy = dY;
+          }
+
       }
       line.numpoints = numpoints; 
 
@@ -324,7 +362,7 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
   else
   {
       msSetError(MS_OGRERR, 
-                 (char*)CPLSPrintf("OGRGeometry type `%s' not supported yet.", 
+                 (char*)CPLSPrintf("OGRGeometry type `%s' not supported.",
                                    poGeom->getGeometryName()),
                  "ogrGeomLine()");
       return(-1);
@@ -377,6 +415,8 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
+      if (outshp->type != MS_SHAPE_LINE && outshp->type != MS_SHAPE_POLYGON)
+          outshp->type = MS_SHAPE_NULL;  // Incompatible type for this layer
       break;
 /* ------------------------------------------------------------------
  *      POLYGON layer
@@ -386,6 +426,8 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
+      if (outshp->type != MS_SHAPE_POLYGON)
+          outshp->type = MS_SHAPE_NULL;  // Incompatible type for this layer
       break;
 /* ------------------------------------------------------------------
  *      MS_ANNOTATION layer - return real feature type
@@ -990,7 +1032,8 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
           if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
                                  layer->type) == MS_SUCCESS)
           {
-              break; // Shape is ready to be returned!
+              if (shape->type != MS_SHAPE_NULL)
+                  break; // Shape is ready to be returned!
           }
           else
           {
