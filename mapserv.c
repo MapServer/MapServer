@@ -159,6 +159,33 @@ static double getNumeric(regex_t re, char *s)
 }
 
 /*
+** Extract Map File name from params and load it.  
+** Returns map object or NULL on error.
+*/
+mapObj *loadMap()
+{
+  int i;
+  mapObj *map = NULL;
+
+  for(i=0;i<NumEntries;i++) // find the mapfile parameter first
+    if(strcasecmp(Entries[i].name, "map") == 0) break;
+  
+  if(i == NumEntries) {
+    if(getenv("MS_MAPFILE")) // has a default mapfile has not been set
+      map = msLoadMap(getenv("MS_MAPFILE"));      
+    else {
+      msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "loadMap()"); // no default, outta here
+      writeError();
+    }
+  } else
+    map = msLoadMap(Entries[i].val);
+
+  if(!map) writeError();
+
+  return map;
+}
+
+/*
 ** Process CGI parameters.
 */
 void loadForm()
@@ -166,21 +193,6 @@ void loadForm()
   int i,j,k,n;
   char **tokens, *tmpstr, *expptr;
   regex_t re;
-
-  for(i=0;i<NumEntries;i++) // find the mapfile parameter first
-    if(strcasecmp(Entries[i].name, "map") == 0) break;
-  
-  if(i == NumEntries) {
-    if(getenv("MS_MAPFILE")) // has a default mapfile has not been set
-      Map = msLoadMap(Entries[i].val);      
-    else {
-      msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "loadForm()"); // no default, outta here
-      writeError();
-    }
-  } else
-    Map = msLoadMap(Entries[i].val);
-
-  if(!Map) writeError();
 
   if(regcomp(&re, NUMEXP, REG_EXTENDED) != 0) { // what is a number
     msSetError(MS_REGEXERR, NULL, "loadForm()"); 
@@ -1396,6 +1408,7 @@ void returnQuery()
 int main(int argc, char *argv[]) {
     int i,j;
     char buffer[1024];
+    char **entry_names, **entry_values;
     gdImagePtr img=NULL;
     int status;
 
@@ -1423,6 +1436,39 @@ int main(int argc, char *argv[]) {
     sprintf(Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
 
     NumEntries = loadEntries(Entries);
+    Map = loadMap();
+
+    /*
+    ** Start by calling the WMS Dispatcher.  If it fails then we'll process
+    ** this as a regular MapServer request.
+    */
+    entry_names = (char**)malloc(NumEntries*sizeof(char*));
+    entry_values = (char**)malloc(NumEntries*sizeof(char*));
+    if (entry_names==NULL || entry_values==NULL) {
+	msSetError(MS_MEMERR, NULL, "mapserv()");
+	writeError();
+    }
+    for(i=0;i<NumEntries;i++) {
+        entry_names[i] = strdup(Entries[i].name);
+        entry_values[i] = strdup(Entries[i].val);
+        if (entry_names[i]==NULL || entry_values[i]==NULL) {
+            msSetError(MS_MEMERR, NULL, "mapserv()");
+            writeError();
+        }
+    }
+    if (msWMSDispatch(Map, entry_names, entry_values, NumEntries) != MS_DONE)
+    {
+        /* This was a WMS request... cleanup and exit */
+        msFreeMap(Map);
+        for(i=0;i<NumEntries;i++) {
+            free(Entries[i].val);
+            free(Entries[i].name);
+        }
+        msFreeCharArray(entry_names, NumEntries);
+        msFreeCharArray(entry_values, NumEntries);
+        exit(0);
+    }
+
     loadForm();
  
     if(SaveMap) {
