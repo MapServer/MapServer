@@ -2624,6 +2624,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
+  if(layer->transparency > 0) fprintf(stream, "    TRANSPARENCY %d\n", layer->transparency);
   if (layer->type != -1)
     fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
