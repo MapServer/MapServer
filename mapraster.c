@@ -325,8 +325,13 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
   if( layer->transform )
   {
+      char szPath[MS_MAXPATHLEN];
+
       if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
-          GDALReadWorldFile(GDALGetDescription(hDS), "wld", adfGeoTransform);
+          GDALReadWorldFile(msBuildPath(szPath, 
+                            msBuildPath(szPath, map->map_path, map->shapepath),
+                                        (char *)GDALGetDescription(hDS)),
+                            "wld", adfGeoTransform);
   
       InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
       
@@ -825,17 +830,18 @@ static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, d
 
 /* read georeferencing info from geoTIFF header, if it exists */
 #ifdef USE_TIFF 
-static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *cy)
+static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *cy, char *szCurDir)
 {
   short entries;
   int i,fpos,swap,tiepos,cellpos;
   double tie[6],cell[6];
   TIFFDirEntry tdir;
   FILE *f;
+  char szPath[MS_MAXPATHLEN];
   
   swap=TIFFIsByteSwapped(tif);
   fpos=TIFFCurrentDirOffset(tif);
-  f=fopen(TIFFFileName(tif),"rb");
+  f=fopen(msBuildPath(szPath, szCurDir, TIFFFileName(tif)),"rb");
   if (f==NULL) return(-1);
   fseek(f,fpos,0);
   fread(&entries,2,1,f);
@@ -901,14 +907,18 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   TIFFSetWarningHandler(NULL); // can these be directed to the mapserver error functions?
   TIFFSetErrorHandler(NULL);
 
-  tif = TIFFOpen(filename, "rb");
+  tif = TIFFOpen(msBuildPath(szPath, 
+        msBuildPath(szPath, map->map_path, map->shapepath), filename), "rb");
   if(!tif) {
     msSetError(MS_IMGERR, "Error loading TIFF image.", "drawTIFF()");
     return(-1);
   }
   
-  if(readGEOTiff(tif, &ulx, &uly, &cx, &cy) != 0) {
-    if(readWorldFile(filename, &ulx, &uly, &cx, &cy) != 0) {
+  if(readGEOTiff(tif, &ulx, &uly, &cx, &cy, 
+                 msBuildPath(szPath, map->map_path, map->shapepath)) != 0) {
+    if(readWorldFile(msBuildPath(szPath, 
+               msBuildPath(szPath, map->map_path, map->shapepath), filename), 
+                     &ulx, &uly, &cx, &cy) != 0) {
       TIFFClose(tif);
       return(-1);
     }   
@@ -1115,10 +1125,12 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   double ulx, uly; /* upper left-hand coordinates */
   double skipx,skipy; /* skip factors (x and y) */  
   double cx,cy; /* cell sizes (x and y) */
+  char szPath[MS_MAXPATHLEN];
 
   for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
 
-  pngStream = fopen(filename, "rb");
+  pngStream = fopen(msBuildPath(szPath, 
+          msBuildPath(szPath, map->map_path, map->shapepath), filename), "rb");
   if(!pngStream) {
     msSetError(MS_IOERR, "Error open image file.", "drawPNG()");
     return(-1);
@@ -1136,7 +1148,9 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   h = gdImageSY(png) - .5;
 
   if(layer->transform) {
-    if(readWorldFile(filename, &ulx, &uly, &cx, &cy) != 0)
+    if(readWorldFile(msBuildPath(szPath, 
+        msBuildPath(szPath, map->map_path, map->shapepath), filename), 
+                     &ulx, &uly, &cx, &cy) != 0)
       return(-1);
 
     skipx = map->cellsize/cx;
@@ -1230,10 +1244,12 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   double ulx, uly; /* upper left-hand coordinates */
   double skipx,skipy; /* skip factors (x and y) */  
   double cx,cy; /* cell sizes (x and y) */
+  char szPath[MS_MAXPATHLEN];
 
   for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
 
-  gifStream = fopen(filename, "rb");
+  gifStream = fopen(msBuildPath(szPath, 
+          msBuildPath(szPath, map->map_path, map->shapepath), filename), "rb");
   if(!gifStream) {
     msSetError(MS_IOERR, "Error open image file.", "drawGIF()");
     return(-1);
@@ -1251,7 +1267,9 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   h = gdImageSY(gif) - .5;
 
   if(layer->transform) {
-    if(readWorldFile(filename, &ulx, &uly, &cx, &cy) != 0)
+    if(readWorldFile(msBuildPath(szPath, 
+        msBuildPath(szPath, map->map_path, map->shapepath), filename), 
+                     &ulx, &uly, &cx, &cy) != 0)
       return(-1);
 
     skipx = map->cellsize/cx;
@@ -1350,10 +1368,13 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   struct jpeg_decompress_struct cinfo;
   struct jpeg_error_mgr jerr;
 
+  char szPath[MS_MAXPATHLEN];
+
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_decompress(&cinfo);
 
-  jpegStream = fopen(filename, "rb");
+  jpegStream = fopen(msBuildPath(szPath, 
+          msBuildPath(szPath, map->map_path, map->shapepath), filename), "rb");
   if(!jpegStream) {
     msSetError(MS_IOERR, "Error open image file.", "drawJPEG()");
     return(-1);
@@ -1378,7 +1399,9 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       cmap[i] = add_color(map,img, (i>>4)*17,(i>>4)*17,(i>>4)*17);
   }
 
-  if(readWorldFile(filename, &ulx, &uly, &cx, &cy) != 0)
+  if(readWorldFile(msBuildPath(szPath, 
+        msBuildPath(szPath, map->map_path, map->shapepath), filename), 
+                   &ulx, &uly, &cx, &cy) != 0)
     return(-1);
   
   skipx = map->cellsize/cx;
@@ -1474,14 +1497,17 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   int cmap[MAXCOLORS];
   FILE *erd,*trl;
   erdhead hd;
-
+  char szPath[MS_MAXPATHLEN];
   colorObj pixel;
 
   {union {long i;char c[4];} u; u.i=1; reverse=(u.c[0]==0);}
 
   for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
 
-  erd=fopen(filename,"rb");
+  erd=fopen(msBuildPath(szPath, 
+                        msBuildPath(szPath, map->map_path, map->shapepath), 
+                        filename),
+            "rb");
   if (erd==NULL) {  
     msSetError(MS_IMGERR, "Error loading ERDAS image.", "drawERD()");
     return(-1);
@@ -1509,7 +1535,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   }
   strcpy(tname,filename);
   strcpy(strrchr(tname,'.'),".trl");
-  trl=fopen(tname,"rb");
+  trl=fopen(msBuildPath(szPath, map->map_path, tname),"rb");
   if (trl!=NULL) {  /**** check for trailer file*/
     fread(trec,128,1,trl);
     if (!strncmp(trec,"TRAILER",7)) memcpy(trec,"TRAIL74",7);
@@ -1622,6 +1648,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   int ncol,nrow,yi,rr,i,j,startj,endj,vv;
   double cx,cy,skipx,skipy,x,y,startx,starty;
   int cmap[MAXCOLORS];
+  char szPath[MS_MAXPATHLEN];
   eppfile epp;
   TRGB color;
   clrfile clr;
@@ -1630,7 +1657,10 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
 
-  strcpy(epp.filname,filename);
+  strcpy(epp.filname,msBuildPath(szPath, 
+                                 msBuildPath(szPath, map->map_path, 
+                                             map->shapepath),
+                                 filename));
   if (!eppreset(&epp)) return -1;
   
   ncol=epp.lc-epp.fc+1;
@@ -1649,7 +1679,10 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   }
   
   /* set up colors here */
-  strcpy(clr.filname,filename);
+  strcpy(clr.filname,msBuildPath(szPath, 
+                                 msBuildPath(szPath, map->map_path, 
+                                             map->shapepath),
+                                 filename));
   if (!clrreset(&clr)) { /* use gray from min to max if no color file, classes not honored for greyscale */
     for (i=epp.minval; i<=epp.maxval; i++) {
 
@@ -1957,14 +1990,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   char dd[8];
   char *filename=NULL;
 
-  char old_path[MS_PATH_LENGTH];
-
   int t;
   int tileitemindex=-1;
   shapefileObj tilefile;
   char tilename[MS_PATH_LENGTH];
   int numtiles=1; /* always at least one tile */
   int force_gdal;
+  char szPath[MS_MAXPATHLEN];
+  char cwd[MS_MAXPATHLEN];
 
   rectObj searchrect;
   gdImagePtr img;
@@ -2026,22 +2059,13 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   force_gdal = MS_TRUE;
 #endif
 
-  getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
   if(map->shapepath)
-  {
-      int	error;
-      
-      error = chdir(map->shapepath);
-      if( error != 0 )
-      {
-          msSetError( MS_IOERR, "chdir(%s)", "msDrawRasterLayer()", 
-                      map->shapepath );
-          return -1;
-      }
-  }
+      msBuildPath(cwd, map->map_path, map->shapepath);
+  else
+      msBuildPath(cwd, map->map_path, "");
 
   if(layer->tileindex) { /* we have in index file */
-    if(msSHPOpenFile(&tilefile, "rb", map->shapepath, layer->tileindex) == -1) return(-1);    
+    if(msSHPOpenFile(&tilefile, "rb", msBuildPath(szPath, cwd, map->shapepath), layer->tileindex) == -1) return(-1);    
     if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
     searchrect = map->extent;
 #ifdef USE_PROJ
@@ -2071,7 +2095,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
     if(strlen(filename) == 0) continue;
 
-    f = fopen(filename,"rb");
+    f = fopen(msBuildPath(szPath, cwd, filename),"rb");
     if (!f) {
       memset( dd, 0, 8 );
     }
@@ -2084,7 +2108,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if ((memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) && !force_gdal) {
         status = drawTIFF(map, layer, img, filename);
         if(status == -1) {
-            chdir(old_path); /* restore old cwd */
             return(-1);
         }
         continue;
@@ -2093,7 +2116,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if (memcmp(dd,"GIF8",4)==0 && !force_gdal ) {
         status = drawGIF(map, layer, img, filename);
         if(status == -1) {
-            chdir(old_path); /* restore old cwd */
             return(-1);
         }
         continue;
@@ -2102,7 +2124,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if (memcmp(dd,PNGsig,8)==0 && !force_gdal) {
         status = drawPNG(map, layer, img, filename);
         if(status == -1) {
-            chdir(old_path); /* restore old cwd */
             return(-1);
         }
         continue;
@@ -2112,7 +2133,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     {
         status = drawJPEG(map, layer, img, filename);
         if(status == -1) {
-            chdir(old_path); /* restore old cwd */
             return(-1);
         }
         continue;
@@ -2125,7 +2145,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       }
       status = drawERD(map, layer, img, filename);
       if(status == -1) {
-	chdir(old_path); /* restore old cwd */
 	return(-1);
       }
       continue;
@@ -2144,7 +2163,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
           return(-1);
         }
 	status = drawGEN(map, layer, img, filename);
-	chdir(old_path); // restore old cwd
 	
 	//ext = NULL;
 	return(status);
@@ -2164,7 +2182,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
         }
         
         msAcquireLock( TLOCK_GDAL );
-        hDS = GDALOpen( filename, GA_ReadOnly );
+        hDS = GDALOpen( msBuildPath(szPath, cwd, filename), GA_ReadOnly );
         if( hDS != NULL )
         {
             double	adfGeoTransform[6];
@@ -2208,7 +2226,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
             adfGeoTransform[5] = 1.0;
 
             if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
-                GDALReadWorldFile(filename, "wld", adfGeoTransform);
+                GDALReadWorldFile(msBuildPath(szPath, cwd, filename),
+                                  "wld", adfGeoTransform);
 
             /* 
             ** We want to resample if the source image is rotated, or if
@@ -2236,7 +2255,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
             if( status == -1 )
             {
                 GDALClose( hDS );
-                chdir(old_path); /* restore old cwd */
                 return -1;
             }
 
@@ -2252,7 +2270,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if( !f ) {
       msSetError(MS_IOERR, "(%s)", "msDrawRaster()", filename);
 #ifndef IGNORE_MISSING_DATA
-      chdir(old_path);
       return(-1);
 #else
       continue; // skip it, next tile
@@ -2266,7 +2283,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if(status != 0) {
       if (status == -2) msSetError(MS_IMGERR, "Error reading EPPL file; probably corrupt.", "msDrawEPP()");
       if (status == -1) msSetError(MS_IMGERR, "Unrecognized or unsupported image format", "msDrawRaster()");
-      chdir(old_path); /* restore old cwd */
       return(-1);
     }
     continue;
@@ -2275,7 +2291,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   if(layer->tileindex) /* tiling clean-up */
     msSHPCloseFile(&tilefile);    
 
-  chdir(old_path); /* restore old cwd */
   return 0;
   
 }
@@ -2285,11 +2300,13 @@ imageObj *msDrawReferenceMap(mapObj *map) {
   double cellsize;
   int c=-1, oc=-1;
   int x1,y1,x2,y2;
+  char szPath[MS_MAXPATHLEN];
 
   imageObj   *image = NULL;
   gdImagePtr img=NULL;
 
-  image = msImageLoadGD( map->reference.image );
+  image = msImageLoadGD( msBuildPath(szPath, map->map_path, 
+                                     map->reference.image) );
   if( image == NULL )
       return NULL;
 

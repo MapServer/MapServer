@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.48  2002/09/17 13:08:30  julien
+ * Remove all chdir() function and replace them with the new msBuildPath function.
+ * This have been done to make MapServer thread safe. (Bug 152)
+ *
  * Revision 1.47  2002/08/09 22:55:38  assefa
  * Update code to be in sync with mapserver addition of Styles.
  *
@@ -419,7 +423,7 @@ int mapObj_setSymbolSet(mapObj *self,
     // Symbolset shares same fontset as main mapfile
     self->symbolset.fontset = &(self->fontset);
 
-    return msLoadSymbolSet(&self->symbolset);
+    return msLoadSymbolSet(&self->symbolset, self);
 }
 
 int mapObj_getNumSymbols(mapObj *self)
@@ -435,7 +439,7 @@ int mapObj_setFontSet(mapObj *self, char *szFileName)
     // Set fontset filename
     self->fontset.filename = strdup(szFileName);
 
-    return msLoadFontSet(&(self->fontset));
+    return msLoadFontSet(&(self->fontset), self);
 }
 
   

@@ -247,6 +247,53 @@ char *getPath(char *fn)
 }
 
 /*
+** Returns a *path* built from abs_path and path.
+** The szReturnPath must be declared by the caller function as an array
+** of MS_MAXPATHLEN char
+*/
+char *msBuildPath(char *szReturnPath, char *abs_path, char *path)
+{
+  int abslen, pathlen;
+
+  if(path == NULL)
+  {
+      msSetError(MS_IOERR, NULL, "msBuildPath");
+      return NULL;
+  }
+
+  pathlen = strlen(path);
+  abslen = strlen(abs_path);
+
+  if((pathlen + abslen + 2) > MS_MAXPATHLEN)
+  {
+      msSetError(MS_IOERR, "(%s%s): path is too long", "msBuildPath()",
+                 abs_path, path);
+      return NULL;
+  }
+
+  // Check if path is absolute
+  if((abs_path == NULL) || (abslen == 0) || 
+       (path[0] == '\\') || (path[0] == '/') || 
+         (pathlen > 1 && (path[1] == ':')))
+  {
+      strcpy(szReturnPath, path);
+      return(szReturnPath);
+  }
+
+  // else return abs_path/path
+  if((abs_path[abslen-1] == '/') || (abs_path[abslen-1] == '\\'))
+  {
+      sprintf(szReturnPath, "%s%s", abs_path, path);
+  }
+  else
+  {
+      sprintf(szReturnPath, "%s/%s", abs_path, path);
+  }
+
+  return(szReturnPath);
+}
+
+/*
 ** Splits a string into multiple strings based on ch. Consecutive ch's are ignored.
 */
 char **split(const char *string, char ch, int *num_tokens) 

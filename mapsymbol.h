@@ -23,6 +23,11 @@ typedef struct {
   char *name;
   int type;
   int inmapfile; //boolean value for writing
+
+  /*
+  ** Pointer to his map
+  */
+  struct map_obj *map;
  
   /*
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options

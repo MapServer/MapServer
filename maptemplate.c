@@ -720,6 +720,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 {
    int nWidth, nHeight, nLen;
    char pszImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
+   char szPath[MS_MAXPATHLEN];
    gdImagePtr img;
    hashTableObj myHashTable=NULL;
    FILE *fIcon;
@@ -751,11 +752,8 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 
       sprintf(pszImgFname, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
-      pszFullImgFname = (char*)malloc(strlen(map->web.imagepath) + strlen(pszImgFname) + 1);
-
-      strcpy(pszFullImgFname, map->web.imagepath);
-      strcat(pszFullImgFname, pszImgFname);
-
+      pszFullImgFname = strdup(msBuildPath(szPath, 
+         msBuildPath(szPath, map->map_path, map->web.imagepath), pszImgFname));
       
       // check if icon already exist in cache
       if ((fIcon = fopen(pszFullImgFname, "r+")) != NULL)
@@ -1261,6 +1259,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    regex_t re; /* compiled regular expression to be matched */ 
 
    int  *panCurrentDrawingOrder = NULL;
+   char szPath[MS_MAXPATHLEN];
 
    if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
       msSetError(MS_IOERR, "Error regcomp.", "generateLegendTemplate()");      
@@ -1343,7 +1342,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    }
 
        // open template
-   if((stream = fopen(msObj->Map->legend.template, "r")) == NULL) {
+   if((stream = fopen(msBuildPath(szPath, msObj->Map->map_path, msObj->Map->legend.template), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
       return NULL;
    } 
@@ -2060,6 +2059,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
   int   nExpandBuffer = 0;
 
   regex_t re; /* compiled regular expression to be matched */ 
+  char szPath[MS_MAXPATHLEN];
 
   if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
     msSetError(MS_REGEXERR, NULL, "msReturnPage()");
@@ -2075,7 +2075,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
   }
   regfree(&re);
 
-  if((stream = fopen(html, "r")) == NULL) {
+  if((stream = fopen(msBuildPath(szPath, msObj->Map->map_path, html), "r")) == NULL) {
     msSetError(MS_IOERR, html, "msReturnPage()");
     return MS_FAILURE;
 //    writeError();

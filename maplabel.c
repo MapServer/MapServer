@@ -116,6 +116,7 @@ int msInitFontSet(fontSetObj *fontset)
     fontset->filename = NULL;
     fontset->fonts = NULL;
     fontset->numfonts = 0;
+    fontset->map = NULL;
     return( 0 );
 }
 
@@ -133,13 +134,14 @@ int msFreeFontSet(fontSetObj *fontset)
 }
 
 
-int msLoadFontSet(fontSetObj *fontset)
+int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 {
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH];
   char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
   char *path;
+  char szPath[MS_MAXPATHLEN];
   int i;
 
   if(fontset->numfonts != 0) /* already initialized */
@@ -147,6 +149,8 @@ int msLoadFontSet(fontSetObj *fontset)
 
   if(!fontset->filename)
     return(0);
+
+  fontset->map = (mapObj *)map;
 
   path = getPath(fontset->filename);
 
@@ -156,7 +160,7 @@ int msLoadFontSet(fontSetObj *fontset)
     return(-1);
   }
 
-  stream = fopen(fontset->filename, "r");
+  stream = fopen( msBuildPath(szPath, fontset->map->map_path, fontset->filename), "r");
   if(!stream) {
     msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontset()",
                fontset->filename);
@@ -204,6 +208,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
     int bbox[8];
     char *error=NULL, *font=NULL;
+    char szPath[MS_MAXPATHLEN];
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
@@ -217,12 +222,16 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     }
 
 #ifdef USE_GD_TTF
-    error = gdImageStringTTF(NULL, bbox, 0, font, label->sizescaled, 0, 0, 0, string);
+    error = gdImageStringTTF(NULL, bbox, 0, 
+                             msBuildPath(szPath, fontset->map->map_path, font),
+                             label->sizescaled, 0, 0, 0, string);
 #else
-    error = gdImageStringFT(NULL, bbox, 0, font, label->sizescaled, 0, 0, 0, string);
+    error = gdImageStringFT(NULL, bbox, 0, 
+                             msBuildPath(szPath, fontset->map->map_path, font),
+                            label->sizescaled, 0, 0, 0, string);
 #endif
     if(error) {
-      msSetError(MS_TTFERR, error, "msGetLabelSize()");
+        msSetError(MS_TTFERR, error, "msGetLabelSize()");
       return(-1);
     }
 

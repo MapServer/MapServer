@@ -17,7 +17,7 @@ extern FILE *msyyin;
 extern int msyystate;
 extern char *msyystring;
 
-extern int loadSymbol(symbolObj *s); // in mapsymbol.c
+extern int loadSymbol(symbolObj *s, mapObj *map); // in mapsymbol.c
 extern void writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
 
 /*
@@ -244,6 +244,7 @@ void initJoin(joinObj *join)
   join->footer = NULL;
 
   join->type = MS_SINGLE; /* one-to-one */
+  join->class = NULL;
 }
 
 void freeJoin(joinObj *join) 
@@ -267,9 +268,10 @@ void freeJoin(joinObj *join)
   msFree(join->data);
 }
 
-int loadJoin(joinObj *join)
+int loadJoin(joinObj *join, classObj *class)
 {
   initJoin(join);
+  join->class = (classObj *) class;
 
   for(;;) {
     switch(msyylex()) {
@@ -659,6 +661,7 @@ void initLabel(labelObj *label)
   label->wrap = '\0';
 
   label->force = MS_FALSE;
+
   return;
 }
 
@@ -1270,13 +1273,15 @@ void resetClassStyle(classObj *class)
   class->label.sizescaled = class->label.size = -1; // no default
 
   class->type = -1;
+  class->layer = NULL;
 }
 
-int loadClass(classObj *class, mapObj *map)
+int loadClass(classObj *class, mapObj *map, layerObj *layer)
 {
   int state;
 
   initClass(class);
+  class->layer = (layerObj *) layer;
 
   for(;;) {
     switch(msyylex()) {    
@@ -1290,7 +1295,7 @@ int loadClass(classObj *class, mapObj *map)
       if(loadExpression(&(class->expression)) == -1) return(-1);
       break;
     case(JOIN):
-      if(loadJoin(&(class->joins[class->numjoins])) == -1) return(-1);
+      if(loadJoin(&(class->joins[class->numjoins]), class) == -1) return(-1);
       class->numjoins++;
       break;
     case(LABEL):
@@ -1474,7 +1479,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     break;
   case(SIZE):
     msyystate = 2; msyystring = value;
-    getInteger(&(class->styles[0].size));    
+    getInteger(&(class->styles[0].size));
     break;
   case(SYMBOL):
     msyystate = 2; msyystring = value;
@@ -1582,6 +1587,8 @@ int initLayer(layerObj *layer)
   layer->group = NULL;
   layer->status = MS_OFF;
   layer->data = NULL;
+
+  layer->map = NULL;
 
   layer->type = -1;
 
@@ -1705,10 +1712,12 @@ int loadLayer(layerObj *layer, mapObj *map)
   if(initLayer(layer) == -1)
     return(-1);
 
+  layer->map = (mapObj *)map;
+
   for(;;) {
     switch(msyylex()) {
     case(CLASS):
-      if(loadClass(&(layer->class[c]), map) == -1) return(-1);
+      if(loadClass(&(layer->class[c]), map, layer) == -1) return(-1);
       if(layer->class[c].type == -1) layer->class[c].type = layer->type;
       c++;
       break;
@@ -2197,6 +2206,7 @@ void initReferenceMap(referenceMapObj *ref)
   ref->markersize = 0;
   ref->minboxsize = 3;
   ref->maxboxsize = 0;
+  ref->map = NULL;
 }
 
 void freeReferenceMap(referenceMapObj *ref)
@@ -2205,9 +2215,11 @@ void freeReferenceMap(referenceMapObj *ref)
   msFree(ref->markername);
 }
 
-int loadReferenceMap(referenceMapObj *ref)
+int loadReferenceMap(referenceMapObj *ref, mapObj *map)
 {
   int state;
+
+  ref->map = (mapObj *)map;
 
   for(;;) {
     switch(msyylex()) {
@@ -2508,6 +2520,7 @@ void initLegend(legendObj *legend)
   legend->position = MS_LL;
   legend->postlabelcache = MS_FALSE; // draw with labels
   legend->template = NULL;
+  legend->map = NULL;
 }
 
 void freeLegend(legendObj *legend)
@@ -2519,6 +2532,9 @@ void freeLegend(legendObj *legend)
 
 int loadLegend(legendObj *legend, mapObj *map)
 {
+
+  legend->map = (mapObj *)map;
+
   for(;;) {
     switch(msyylex()) {
     case(EOF):
@@ -2907,6 +2923,7 @@ void initWeb(webObj *web)
   web->imagepath = strdup("");
   web->imageurl = strdup("");
   web->metadata = NULL;
+  web->map = NULL;
 }
 
 void freeWeb(webObj *web)
@@ -2947,8 +2964,10 @@ static void writeWeb(webObj *web, FILE *stream)
   fprintf(stream, "  END\n\n");
 }
 
-int loadWeb(webObj *web)
+int loadWeb(webObj *web, mapObj *map)
 {
+  web->map = (mapObj *)map;
+
   for(;;) {
     switch(msyylex()) {
     case(EMPTY):
@@ -3168,6 +3187,7 @@ void msFreeMap(mapObj *map) {
 
   msFree(map->name);
   msFree(map->shapepath);
+  msFree(map->map_path);
 
   msFreeSymbolSet(&map->symbolset); // free symbols
   msFree(map->symbolset.filename);
@@ -3224,6 +3244,7 @@ int msSaveMap(mapObj *map, char *filename)
 {
   int i;
   FILE *stream;
+  char szPath[MS_MAXPATHLEN];
 
   if(!map) {
     msSetError(MS_MISCERR, "Map is undefined.", "msSaveMap()");
@@ -3235,7 +3256,7 @@ int msSaveMap(mapObj *map, char *filename)
     return(-1);
   }
 
-  stream = fopen(filename, "w");
+  stream = fopen(msBuildPath(szPath, map->map_path, filename), "w");
   if(!stream) {
     msSetError(MS_IOERR, "(%s)", "msSaveMap()", filename);    
     return(-1);
@@ -3301,7 +3322,6 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
 {
   regex_t re;
   mapObj *map=NULL;
-  char *map_path=NULL;
   int i,j,k;
 
   if(!filename) {
@@ -3337,22 +3357,6 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
     return(NULL);
   }
 
-  // If new_map_path is provided then use it, otherwise use the location
-  // of the mapfile as the default path
-  if (new_map_path)
-      map_path = strdup(new_map_path);
-  else
-      map_path = getPath(filename);
-  /* switch so all filenames are relative to the location of the map file */
-  if (chdir(map_path) != 0)
-  {
-    msSetError(MS_IOERR, "chdir(%s) failed.", "msLoadMap()", map_path);
-    free(map_path);
-    free(map);
-    return(NULL);
-  } 
-  free(map_path);
-
   msyystate = 5; // restore lexer state to INITIAL
   msyylex();
   msyyrestart(msyyin);
@@ -3360,6 +3364,13 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
 
   if(initMap(map) == -1) /* initialize this map */
     return(NULL);
+
+  // If new_map_path is provided then use it, otherwise use the location
+  // of the mapfile as the default path
+  if (new_map_path)
+      map->map_path = strdup(new_map_path);
+  else
+      map->map_path = getPath(filename);
 
   for(;;) {
 
@@ -3371,7 +3382,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
           return NULL;
 
-      if(msLoadSymbolSet(&(map->symbolset)) == -1) return(NULL);
+      if(msLoadSymbolSet(&(map->symbolset), map) == -1) return(NULL);
 
       /* step through layers and classes to resolve symbol names */
       for(i=0; i<map->numlayers; i++) {
@@ -3388,7 +3399,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       }
 
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
-      if(msLoadFontSet(&(map->fontset)) == -1) return(NULL);
+      if(msLoadFontSet(&(map->fontset), map) == -1) return(NULL);
 #endif
 
       return(map);
@@ -3453,7 +3464,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       if(loadQueryMap(&(map->querymap), map) == -1) return(NULL);
       break;
     case(REFERENCE):
-      if(loadReferenceMap(&(map->reference)) == -1) return(NULL);
+      if(loadReferenceMap(&(map->reference), map) == -1) return(NULL);
       break;
     case(RESOLUTION):
       if(getInteger(&(map->resolution)) == -1) return(NULL);
@@ -3479,7 +3490,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadMap()");
 	return(NULL);
       }
-      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols])) == -1)) return(NULL);
+      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols]), map) == -1)) return(NULL);
       map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
       map->symbolset.numsymbols++;
       break;
@@ -3493,7 +3504,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) return(NULL);
       break;
     case(WEB):
-      if(loadWeb(&map->web) == -1) return(NULL);
+      if(loadWeb(&(map->web), map) == -1) return(NULL);
       break;
     default:
       msSetError(MS_IDENTERR, "(%s):(%d)", "msLoadMap()", 

@@ -1975,7 +1975,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 	return(-1);
     }
 
-    oText = DrawText(string, x, y, font, size, &sColor);
+    oText = DrawText(string, x, y, msBuildPath(szPath, fontset->map, font), size, &sColor);
     if (oText)
     {
         //nTmp = image->img.swf->nCurrentMovie;
@@ -2017,7 +2017,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
         return(-1);
     }
     
-    oFont  = loadSWFFontFromFile(fopen(font, "rb"));
+    oFont  = loadSWFFontFromFile(fopen(msBuildPath(szPath, fontset->map, font), "rb"));
     if (oFont)
     {
         oText = newSWFText();

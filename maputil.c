@@ -270,10 +270,19 @@ int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay)
 int msSaveImage(mapObj *map, imageObj *img, char *filename)
 {
     int nReturnVal = -1;
+    char szPath[MS_MAXPATHLEN];
     if (img)
     {
         if( MS_DRIVER_GD(img->format) )
-            nReturnVal =  msSaveImageGD(img->img.gd, filename, img->format );
+        {
+            if(map != NULL)
+                nReturnVal = msSaveImageGD(img->img.gd, 
+                                           msBuildPath(szPath, map->map_path, 
+                                                       filename), 
+                                           img->format );
+            else
+                nReturnVal = msSaveImageGD(img->img.gd, filename, img->format);
+        }
 #ifdef USE_GDAL
         else if( MS_DRIVER_GDAL(img->format) )
             nReturnVal = msSaveImageGDAL(map, img, filename);

@@ -27,11 +27,13 @@ int writeLog(int show_error)
   FILE *stream;
   int i;
   time_t t;
+  char szPath[MS_MAXPATHLEN];
 
   if(!msObj->Map) return(0);
   if(!msObj->Map->web.log) return(0);
   
-  if((stream = fopen(msObj->Map->web.log,"a")) == NULL) {
+  if((stream = fopen(msBuildPath(szPath, msObj->Map->map_path, 
+                                   msObj->Map->web.log),"a")) == NULL) {
     msSetError(MS_IOERR, msObj->Map->web.log, "writeLog()");
     return(-1);
   }

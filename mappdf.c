@@ -1269,14 +1269,16 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
     FILE *stream;
     char buffer[MS_BUFFER_LENGTH];
     char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
-    char *path, *fullPath;
+    char *path, *fullPath, szPath[MS_MAXPATHLEN];
     int i;
 
     if(fontset == NULL) return(0);
     if(fontset->filename == NULL) return(0);
-    path = getPath(fontset->filename);
+    path = msBuildPath(szPath, fontset->map->map_path, 
+                       getPath(fontset->filename));
 
-    stream = fopen(fontset->filename, "r");
+    stream = fopen(
+        msBuildPath(szPath, fontset->map->map_path, fontset->filename), "r");
     if(!stream) {
         msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontsetPDF()",
                    fontset->filename);

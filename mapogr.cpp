@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.55  2002/09/17 13:08:28  julien
+ * Remove all chdir() function and replace them with the new msBuildPath function.
+ * This have been done to make MapServer thread safe. (Bug 152)
+ *
  * Revision 1.54  2002/08/16 20:50:10  julien
  * Fixed for new styleObj except for styleitem auto
  *
@@ -872,7 +876,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 /* ------------------------------------------------------------------
  * Parse connection string into dataset name, and layer name. 
  * ------------------------------------------------------------------ */
-  char **papszTokens = NULL;
+  char **papszTokens = NULL, szPath[MS_MAXPATHLEN];
 
   if( connection != NULL )
       papszTokens = CSLTokenizeStringComplex( connection, ",", TRUE, FALSE );
@@ -894,7 +898,8 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   msDebug("msOGRFileOpen(%s)...\n", connection);
 
-  poDS = OGRSFDriverRegistrar::Open( papszTokens[0] );
+  poDS = OGRSFDriverRegistrar::Open( 
+      msBuildPath(szPath, layer->map->map_path, papszTokens[0]) );
   if( poDS == NULL )
   {
       msSetError(MS_OGRERR, 

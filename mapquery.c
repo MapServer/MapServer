@@ -34,24 +34,31 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
   int i, j, idx;
   DBFHandle hDBF;
   int nrecs, *ids=NULL;
+  char *cwd_path=NULL;
+  char szPath[MS_MAXPATHLEN];
 
-  char old_path[MS_PATH_LENGTH];
-  getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
-  if(path) chdir(path);
-  if(tile) chdir(tile);
+  if(tile)
+      cwd_path = strdup(tile);
+  else
+      if(path)
+          cwd_path = strdup(path);
+      else
+          cwd_path = strdup("");
 
   /* first open the lookup table file */
-  if((hDBF = msDBFOpen(join->table, "rb")) == NULL) {
+  if((hDBF = msDBFOpen( msBuildPath(szPath, cwd_path, join->table), "rb" )) == NULL) {
     msSetError(MS_IOERR, "(%s)", "msJoinDBFTables()", join->table);
-    chdir(old_path); /* restore old cwd */
+    if(cwd_path)
+        free(cwd_path);
     return(-1);
   }
+  if(cwd_path)
+      free(cwd_path);
 
   if((idx = msDBFGetItemIndex(hDBF, join->to)) == -1) { 
     msSetError(MS_DBFERR, "Item %s not found.", "msJoinDBFTables()",
                join->to);
     msDBFClose(hDBF);
-    chdir(old_path); /* restore old cwd */
     return(-1);
   }
 
@@ -62,7 +69,6 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
   if(!join->items) {
     join->items = msDBFGetItems(hDBF);
     if(!join->items) {
-      chdir(old_path); /* restore old cwd */
       return(-1);
     }
   }
@@ -73,7 +79,6 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     
     if((join->data = (char ***)malloc(sizeof(char **))) == NULL) {
       msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
-      chdir(old_path); /* restore old cwd */
       return(-1);
     }
     
@@ -85,14 +90,12 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     if(i == nrecs) { /* just return zero length strings */
       if((join->data[0] = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
 	msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
-	chdir(old_path); /* restore old cwd */
 	return(-1);
       }
       for(i=0; i<join->numitems; i++)
 	join->data[0][i] = strdup("\0"); /* intialize to zero length strings */
     } else {
       if((join->data[0] = msDBFGetValues(hDBF,i)) == NULL) {
-	chdir(old_path); /* restore old cwd */
 	return(-1);
       }
     }
@@ -109,7 +112,6 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     ids = (int *)malloc(sizeof(int)*nrecs);
     if(!ids) {
       msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
-      chdir(old_path); /* restore old cwd */
       return(-1);
     }
     
@@ -127,7 +129,6 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
       if((join->data = (char ***)malloc(sizeof(char **)*join->numrecords)) == NULL) {
 	msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
 	free(ids);
-	chdir(old_path); /* restore old cwd */
 	return(-1);
       }
 
@@ -136,14 +137,12 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
 	if(!join->data[i]) {
 	  msSetError(MS_MEMERR, NULL, "msJoinDBFTables()");
 	  free(ids);
-	  chdir(old_path); /* restore old cwd */
 	  return(-1);
 	}
 
 	join->data[i] = msDBFGetValues(hDBF,ids[i]);
 	if(!join->data[i]) {
 	  free(ids);
-	  chdir(old_path); /* restore old cwd */
 	  return(-1);
 	}
       }
@@ -152,7 +151,6 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
     free(ids);
   }
 
-  chdir(old_path); /* restore old cwd */
   msDBFClose(hDBF);
   return(0);
 }

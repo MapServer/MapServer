@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.29  2002/09/17 13:08:30  julien
+ * Remove all chdir() function and replace them with the new msBuildPath function.
+ * This have been done to make MapServer thread safe. (Bug 152)
+ *
  * Revision 1.28  2002/07/08 03:46:42  dan
  * Finished changes to download WMS layers in parallel when drawing map
  *
@@ -762,6 +766,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 #ifdef USE_WMS_LYR
     int status = MS_SUCCESS;
     int iReq = -1;
+    char szPath[MS_MAXPATHLEN];
 
 /* ------------------------------------------------------------------
  * Find the request info for this layer in the array, based on nLayerId
@@ -809,7 +814,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
         // Create a world file with raster extents
         // One line per value, in this order: cx, 0, 0, cy, ulx, uly
-        wldfile = strdup(lp->data);
+        wldfile = msBuildPath(szPath, lp->map->map_path, lp->data);
         if (wldfile)    
             strcpy(wldfile+strlen(wldfile)-3, "wld");
         if (wldfile && (fp = fopen(wldfile, "wt")) != NULL)

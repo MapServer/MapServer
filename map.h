@@ -89,6 +89,7 @@ extern "C" {
 
 #define MS_BUFFER_LENGTH 2048 /* maximum input line length */
 #define MS_URL_LENGTH 1024
+#define MS_MAXPATHLEN 1024
 
 #define MS_MAXIMGSIZE 1024
 
@@ -199,6 +200,7 @@ typedef struct {
   char *filename;
   hashTableObj fonts;
   int numfonts;
+  struct map_obj *map;
 } fontSetObj;
 #endif
 
@@ -261,14 +263,17 @@ typedef struct {
   char *header;
 #ifndef __cplusplus
   char *template;
+  struct class_obj *class;
 #else
   char *_template;
+  struct class_obj *_class;
 #endif
   char *footer;
 
   char *match;
 
   int type;
+
 } joinObj;
 #endif
 
@@ -343,6 +348,8 @@ typedef struct {
   char *log;
   char *imagepath, *imageurl;
 
+  struct map_obj *map;
+
 #ifndef __cplusplus
   char *template;
 #else
@@ -378,12 +385,28 @@ typedef struct {
 } styleObj;
 
 // CLASS OBJECT - basic symbolization and classification information
-typedef struct {
+typedef struct class_obj{
 #ifndef SWIG
   expressionObj expression; // the expression to be matched
 #endif
 
   int status;
+
+  int color;
+  int backgroundcolor;
+  int outlinecolor;
+  int overlaycolor;
+  int overlaybackgroundcolor;
+  int overlayoutlinecolor;
+
+  int symbol;
+  char *symbolname;
+  int overlaysymbol;
+  char *overlaysymbolname;
+
+  int size;
+  int sizescaled;
+  int minsize, maxsize;
 
   styleObj *styles;
   int numstyles;
@@ -414,6 +437,7 @@ typedef struct {
 
   double minscale, maxscale;
 
+  struct layer_obj *layer;
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
@@ -488,6 +512,7 @@ typedef struct {
 #ifndef SWIG
 typedef struct {
   char *filename;
+  struct map_obj *map;
 
   fontSetObj *fontset; // a pointer to the main mapObj version
 
@@ -512,6 +537,7 @@ typedef struct {
   int markersize;
   int minboxsize;
   int maxboxsize;
+  struct map_obj *map;
 } referenceMapObj;
 
 // SCALEBAR OBJECT
@@ -550,11 +576,15 @@ typedef struct {
 #else
    char *_template;
 #endif
+  struct map_obj *map;
 } legendObj;
 
+
 // LAYER OBJECT - basic unit of a map
-typedef struct {
+typedef struct layer_obj {
   int index;
+
+  struct map_obj *map;
 
   char *classitem; // .DBF item to be used for symbol lookup
   int classitemindex;
@@ -678,7 +708,7 @@ typedef struct {
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
-typedef struct { /* structure for a map */
+typedef struct map_obj{ /* structure for a map */
   char *name; /* small identifier for naming etc. */
   int status; /* is map creation on or off */
   int height, width;
@@ -712,6 +742,7 @@ typedef struct { /* structure for a map */
   int resolution;
 
   char *shapepath; /* where are the shape files located */
+  char *map_path; /* path of the mapfile, all path are relative to this path */
 
   paletteObj palette; /* holds a map palette */
   colorObj imagecolor; /* holds the initial image color value */
@@ -895,6 +926,7 @@ void trimEOL(char *string);
 char *gsub(char *str, const char *old, const char *sznew);
 char *stripPath(char *fn);
 char *getPath(char *fn);
+char *msBuildPath(char *szReturnPath, char *abs_path, char *path);
 char **split(const char *string, char cd, int *num_tokens);
 int countChars(char *str, char ch);
 char *long2string(long value);
@@ -913,7 +945,7 @@ int strncasecmp(char *s1, char *s2, int len);
 int strcasecmp(char *s1, char *s2);
 #endif
 
-int msLoadSymbolSet(symbolSetObj *symbolset); // in mapsymbol.c
+int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map); // in mapsymbol.c
 void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
@@ -927,7 +959,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img);
 int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
 gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
    
-int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
+int msLoadFontSet(fontSetObj *fontSet, mapObj *map); // in maplabel.c
 int msInitFontSet(fontSetObj *fontset);
 int msFreeFontSet(fontSetObj *fontset);
 

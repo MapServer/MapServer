@@ -85,13 +85,14 @@ static void freeSymbol(symbolObj *s) {
   if(s->imagepath) free(s->imagepath);
 }
 
-int loadSymbol(symbolObj *s)
+int loadSymbol(symbolObj *s, mapObj *map)
 {
   int done=MS_FALSE;
   FILE *stream;
-  char bytes[8];
+  char bytes[8], szPath[MS_MAXPATHLEN];
 
   initSymbol(s);
+  s->map = (mapObj *)map;
 
   for(;;) {
     switch(msyylex()) {
@@ -144,7 +145,8 @@ int loadSymbol(symbolObj *s)
 	return(-1);
       }
       
-      if((stream = fopen(msyytext, "rb")) == NULL) {
+      if((stream = fopen(msBuildPath(szPath, s->map->map_path, msyytext), "rb")) == NULL)
+      {
 	msSetError(MS_IOERR, "(%s):(%d)", "loadSymbol()", 
                    msyytext, msyylineno);
 	fclose(msyyin);
@@ -344,7 +346,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 {
   FILE *stream;
   int i;
-  char bytes[8];
+  char bytes[8], szPath[MS_MAXPATHLEN];
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msAddImageSymbol()");
@@ -358,8 +360,8 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
     return(-1);
   }
 
-  if((stream = fopen(filename, "rb")) == NULL) {
-    msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", filename);
+  if((stream = fopen(msBuildPath(szPath, symbolset->map->map_path, filename), "rb")) == NULL) {
+    msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
     return(-1);
   }
 
@@ -413,7 +415,7 @@ void msFreeSymbolSet(symbolSetObj *symbolset)
   /* no need to deal with fontset, it's a pointer */
 }
 
-void msInitSymbolSet(symbolSetObj *symbolset) 
+void msInitSymbolSet(symbolSetObj *symbolset)
 {
   symbolset->filename = NULL;
   symbolset->numsymbols = 1; /* always 1 symbol */
@@ -421,36 +423,35 @@ void msInitSymbolSet(symbolSetObj *symbolset)
   symbolset->imagecachesize = 0; /* 0 symbols in the cache */
 
   symbolset->fontset = NULL;
+  symbolset->map = NULL;
 }
 
 /*
 ** Load the symbols contained in the given file
 */
-int msLoadSymbolSet(symbolSetObj *symbolset)
+int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 {
-  char old_path[MS_PATH_LENGTH];
-  char *symbol_path;
+//  char old_path[MS_PATH_LENGTH];
+//  char *symbol_path;
   int status=1;
+  char szPath[MS_MAXPATHLEN];
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msLoadSymbolFile()");
     return(-1);
   }
 
+  symbolset->map = (mapObj *)map;
+
   if(!symbolset->filename) return(0);
 
   /*
   ** Open the file
   */
-  if((msyyin = fopen(symbolset->filename, "r")) == NULL) {
+  if((msyyin = fopen(msBuildPath(szPath, symbolset->map->map_path, symbolset->filename), "r")) == NULL) {
     msSetError(MS_IOERR, "(%s)", "msLoadSymbolFile()", symbolset->filename);
     return(-1);
   }
-
-  getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
-  symbol_path = getPath(symbolset->filename);
-  chdir(symbol_path);
-  free(symbol_path);
 
   msyylineno = 0; /* reset line counter */
   msyyrestart(msyyin); /* flush the scanner - there's a better way but this works for now */
@@ -469,7 +470,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadSymbolSet()");
 	status = -1;      
       }
-      if((loadSymbol(&(symbolset->symbol[symbolset->numsymbols])) == -1)) 
+      if((loadSymbol(&(symbolset->symbol[symbolset->numsymbols]), symbolset->map) == -1)) 
 	status = -1;
       symbolset->numsymbols++;
       break;
@@ -485,7 +486,6 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
   } /* end for */
 
   fclose(msyyin);
-  chdir(old_path);
   return(status);
 }
 

@@ -290,7 +290,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     // Symbolset shares same fontset as main mapfile
     self->symbolset.fontset = &(self->fontset);
 
-    return msLoadSymbolSet(&self->symbolset);
+    return msLoadSymbolSet(&self->symbolset, self);
   }
 
   int getNumSymbols()
@@ -306,7 +306,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     // Set fontset filename
     self->fontset.filename = strdup(szFileName);
 
-    return msLoadFontSet(&(self->fontset));
+    return msLoadFontSet(&(self->fontset), self);
   }
 
   int  moveLayerup(int layerindex) {

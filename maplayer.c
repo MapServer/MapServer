@@ -74,6 +74,7 @@ static void layerFreeItemInfo(layerObj *layer)
 */
 int msLayerOpen(layerObj *layer, char *shapepath)
 {
+  char szPath[MS_MAXPATHLEN];
 
   if(layer->features) 
     layer->connectiontype = MS_INLINE;
@@ -83,7 +84,7 @@ int msLayerOpen(layerObj *layer, char *shapepath)
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, layer->data) == -1) return(MS_FAILURE);
+    if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->map_path, shapepath), layer->data) == -1) return(MS_FAILURE);
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):

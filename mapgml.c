@@ -285,9 +285,10 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   layerObj *lp=NULL;
   shapeObj shape;
   FILE *stream=stdout; // defaults to stdout
+  char szPath[MS_MAXPATHLEN];
 
   if(filename && strlen(filename) > 0) { // deal with the filename if present
-    stream = fopen(filename, "w");
+    stream = fopen(msBuildPath(szPath, map->map_path, filename), "w");
     if(!stream) {
       msSetError(MS_IOERR, "(%s)", "msGMLWriteQuery()", filename);
       return(MS_FAILURE);
