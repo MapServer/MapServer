@@ -1313,7 +1313,7 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
   AC_MSG_RESULT([        found libcurl version $CURL_VER])
   
   dnl Need libcurl 7.10.1 or more recent
-  if test -z "$CURL_VERNUM" -o `expr "$CURL_VERNUM" \< "070a01"` = 1; then
+  if test -z "$CURL_VERNUM" -o `expr "0x$CURL_VERNUM" \< "0x070a01"` = 1; then
     AC_MSG_ERROR([libcurl version 7.10.1 or more recent is required.])
   fi
 
