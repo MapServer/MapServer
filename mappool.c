@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/10/15 18:36:46  frank
+ * Set connections to NULL after it is freed.
+ *
  * Revision 1.2  2004/10/01 22:24:13  frank
  * Added details to the handle confusion error.
  *
@@ -314,6 +317,7 @@ static void msConnPoolClose( int conn_index )
     {
         connectionMax = 0;
         free( connections );
+        connections = NULL;
     }
     
 }
