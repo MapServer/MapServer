@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/08/21 19:07:18  dan
+ * Reset ms_error struct at the end of _phpms_report_mapserver_error()
+ *
  * Revision 1.6  2001/07/20 13:50:27  dan
  * Call zend_list_addref() when creating resource member variables
  *
@@ -68,6 +71,9 @@ void _phpms_report_mapserver_error(int php_err_type)
         php3_error(php_err_type, 
                    "MapServer Error in %s: %s\n", 
                    ms_error.routine, ms_error.message);
+        ms_error.code = -1;
+        strcpy(ms_error.message, "");
+        strcpy(ms_error.routine, "");
     }
 }
 
