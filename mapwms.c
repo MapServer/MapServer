@@ -391,12 +391,12 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       if (strcasecmp(values[i], "GIF") == 0 || 
           strcasecmp(values[i], "image/gif") == 0)
         map->imagetype = MS_GIF;
-      else if (strcasecmp(values[i], "JPEG") == 0 ||
-               strcasecmp(values[i], "image/jpeg") == 0)
-        map->imagetype = MS_JPEG;
       else if (strcasecmp(values[i], "PNG") == 0 ||
                strcasecmp(values[i], "image/png") == 0)
         map->imagetype = MS_PNG;
+      else if (strcasecmp(values[i], "JPEG") == 0 ||
+               strcasecmp(values[i], "image/jpeg") == 0)
+        map->imagetype = MS_JPEG;
       else if (strcasecmp(values[i], "WBMP") == 0 ||
                strcasecmp(values[i], "image/wbmp") == 0)
         map->imagetype = MS_WBMP;
@@ -881,11 +881,11 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 #ifdef USE_GD_GIF
                       "<GIF />"
 #endif
-#ifdef USE_GD_JPEG
-                      "<JPEG />"
-#endif
 #ifdef USE_GD_PNG
                       "<PNG />"
+#endif
+#ifdef USE_GD_JPEG
+                      "<JPEG />"
 #endif
 #ifdef USE_GD_WBMP
                       "<WBMP />"
@@ -907,11 +907,11 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 #ifdef USE_GD_GIF
                       , "image/gif"
 #endif
-#ifdef USE_GD_JPEG
-                      , "image/jpeg"
-#endif
 #ifdef USE_GD_PNG
                       , "image/png"
+#endif
+#ifdef USE_GD_JPEG
+                      , "image/jpeg"
 #endif
 #ifdef USE_GD_WBMP
                       , "image/wbmp"
