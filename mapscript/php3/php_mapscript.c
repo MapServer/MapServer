@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.207  2004/07/26 14:45:52  dan
+ * Fixed php_mapscript to work with PHP5 (bug 718, patch from Sylvain Pasche)
+ *
  * Revision 1.206  2004/07/14 16:07:11  dan
  * Use msMapSetExtent() in map->setExtent() (bug 773)
  *
@@ -715,10 +718,21 @@ static zend_class_entry *error_class_entry_ptr;
 static zend_class_entry *labelcache_class_entry_ptr;
 static zend_class_entry *symbol_class_entry_ptr;
 
+#ifdef ZEND_ENGINE_2  // PHP5
+ZEND_BEGIN_ARG_INFO(one_arg_force_ref, 0)
+    ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(two_args_first_arg_force_ref, 0)
+    ZEND_ARG_PASS_INFO(1)
+    ZEND_ARG_PASS_INFO(0)
+ZEND_END_ARG_INFO()
+#else   // PHP4
 static unsigned char one_arg_force_ref[] = 
   { 1, BYREF_FORCE};
 static unsigned char two_args_first_arg_force_ref[] = 
     { 2, BYREF_FORCE, BYREF_NONE };
+#endif
 
 function_entry phpms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
@@ -1816,7 +1830,7 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
-    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"),
+    if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"),
                        (void **)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
@@ -1946,7 +1960,7 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
             _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
             _phpms_set_property_long(pThis,"units", self->units, E_ERROR); 
 
-            if (zend_hash_find(pThis->value.obj.properties, "extent", 
+            if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                                sizeof("extent"),  (void **)&pExtent) == SUCCESS)
             {
                 _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
@@ -2465,7 +2479,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
 #ifdef PHP4
-    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"), 
+    if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void **)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
@@ -2762,7 +2776,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
 #ifdef PHP4
-    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"), 
+    if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                         (void **)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
@@ -3104,7 +3118,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
 #ifdef PHP4
-    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"), 
+    if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void **)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
@@ -3361,7 +3375,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
          _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
 #ifdef PHP4
-         if (zend_hash_find(pThis->value.obj.properties, "extent", 
+         if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void **)&pExtent) == SUCCESS)
          {
              _phpms_set_property_double((*pExtent),"minx", 
@@ -3450,7 +3464,7 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
          _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
 #ifdef PHP4
-         if (zend_hash_find(pThis->value.obj.properties, "extent", 
+         if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void **)&pExtent) == SUCCESS)
          {
              _phpms_set_property_double((*pExtent),"minx", 
@@ -5604,7 +5618,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_long(pThis,"imagequality", self->imagequality, E_ERROR);
 
 #ifdef PHP4
-    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"), 
+    if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void **)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
@@ -5681,7 +5695,7 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
         if(self->imagetype)
           _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
         
-        if (zend_hash_find(pThis->value.obj.properties, "outputformat", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "outputformat", 
                            sizeof("outputformat"), 
                            (void **)&pOutputformat) == SUCCESS)
         {
@@ -6256,7 +6270,7 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
          */
 #ifdef PHP4
         pval **phandle;
-        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
                            (void **)&phandle) == SUCCESS)
         {
@@ -9365,7 +9379,7 @@ DLEXPORT void php3_ms_point_free(INTERNAL_FUNCTION_PARAMETERS)
          */
 #ifdef PHP4
         pval **phandle;
-        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
                            (void **)&phandle) == SUCCESS)
         {
@@ -9712,7 +9726,7 @@ DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS)
          */
 #ifdef PHP4
         pval **phandle;
-        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
                            (void **)&phandle) == SUCCESS)
         {
@@ -9964,7 +9978,7 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
 #ifdef PHP4
-         if (zend_hash_find(pThis->value.obj.properties, "bounds", 
+         if (zend_hash_find(Z_OBJPROP_P(pThis), "bounds", 
                             sizeof("bounds"), (void **)&pBounds) == SUCCESS)
          {
              _phpms_set_property_double((*pBounds),"minx", self->bounds.minx, 
@@ -10426,7 +10440,7 @@ DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS)
          */
 #ifdef PHP4
         pval **phandle;
-        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
                            (void **)&phandle) == SUCCESS)
         {
@@ -10951,7 +10965,7 @@ DLEXPORT void php3_ms_rect_free(INTERNAL_FUNCTION_PARAMETERS)
          */
 #ifdef PHP4
         pval **phandle;
-        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
                            (void **)&phandle) == SUCCESS)
         {
@@ -11549,7 +11563,7 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS)
          */
 #ifdef PHP4
         pval **phandle;
-        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
                            (void **)&phandle) == SUCCESS)
         {
@@ -11698,7 +11712,7 @@ DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS)
          */
 #ifdef PHP4
         pval **phandle;
-        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+        if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
                            (void **)&phandle) == SUCCESS)
         {

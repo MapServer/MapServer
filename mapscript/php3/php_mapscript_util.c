@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/07/26 14:45:52  dan
+ * Fixed php_mapscript to work with PHP5 (bug 718, patch from Sylvain Pasche)
+ *
  * Revision 1.19  2004/03/09 04:04:44  dan
  * Added ability to set string class members to null (bug 591)
  *
@@ -145,7 +148,7 @@ void *_phpms_fetch_handle2(pval *pObj,
         php3_error(E_ERROR, "Object expected as argument.");
         retVal = NULL;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, "_handle_", 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), "_handle_", 
                             sizeof("_handle_"), 
                             (void **)&phandle) == FAILURE)
     {
@@ -197,7 +200,7 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return NULL;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -244,7 +247,7 @@ char *_phpms_fetch_property_string(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return "";
     }
-    else if (zend_hash_find(pObj->value.obj.properties, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), 
                             property_name, strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -270,7 +273,7 @@ long _phpms_fetch_property_long(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return 0;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -303,7 +306,7 @@ double _phpms_fetch_property_double(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return 0.0;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
    {
@@ -329,7 +332,7 @@ long _phpms_fetch_property_resource(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return 0;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -365,7 +368,7 @@ int _phpms_set_property_string(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return -1;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -393,7 +396,7 @@ int _phpms_set_property_null(pval *pObj, char *property_name, int err_type)
         php3_error(err_type, "Object expected as argument.");
         return -1;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -422,7 +425,7 @@ int _phpms_set_property_long(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return -1;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -451,7 +454,7 @@ int _phpms_set_property_double(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return -1;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+    else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
