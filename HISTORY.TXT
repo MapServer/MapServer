@@ -85,6 +85,9 @@ Version 4.3 (CVS)
 
 - mapogr.cpp: Now echos CPLGetLastErrorMsg() results if OGR open fails. 
 
+- mapraster.c: fixed tile index corruption problem (bug 698)
+
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 

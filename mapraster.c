@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.117  2004/06/01 14:33:43  frank
+ * Fixed bug 698 - filename from tileindex freed before use.
+ *
  * Revision 1.116  2004/05/28 18:34:34  frank
  * removed drawERD() ... now handled by GDAL
  *
@@ -1325,11 +1328,10 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       if(status == MS_DONE) break; // no more tiles/images
        
       if(layer->data == NULL) // assume whole filename is in attribute field
-  	    filename = tshp.values[tileitemindex];
-      else {  
-	    sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
-	    filename = tilename;
-      }
+          strcpy( tilename, tshp.values[tileitemindex] );
+      else
+          sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
+      filename = tilename;
       
       msFreeShape(&tshp); // done with the shape
     } else {
