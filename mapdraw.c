@@ -499,6 +499,20 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 #endif
   
+
+/* ==================================================================== */
+/*      For PDF if the output_type is set to raster, draw the vector    */
+/*      into a gd image.                                                */
+/* ==================================================================== */
+#ifdef USE_PDF
+  if(image &&  MS_RENDERER_PDF(image->format))
+  {
+    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE", ""),  
+                   "RASTER") == 0)
+    return msDrawVectorLayerAsRasterPDF(map, layer, image);
+  }
+#endif
+
   annotate = msEvalContext(map, layer->labelrequires);
   if(map->scale > 0) {
     if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale)) annotate = MS_FALSE;
