@@ -129,7 +129,7 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
 	  chdir(old_path); /* restore old cwd */
 	  return(-1);
 	}
-      }      
+      }
     }
 
     free(ids);

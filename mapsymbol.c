@@ -111,7 +111,7 @@ int loadSymbol(symbolObj *s)
 	msSetError(MS_SYMERR, "Symbol of type PIXMAP has no image data.", "loadSymbol()"); 
 	return(-1);
       }
-      if(((s->type == MS_SYMBOL_ELLIPSE) || (s->type == MS_SYMBOL_VECTOR))  && (s->numpoints == 0)) {
+      if(((s->type == MS_SYMBOL_ELLIPSE) || (s->type == MS_SYMBOL_VECTOR)) && (s->numpoints == 0)) {
 	msSetError(MS_SYMERR, "Symbol of type VECTOR or ELLIPSE has no point data.", "loadSymbol()"); 
 	return(-1);
       }
@@ -360,15 +360,14 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
   */
   for(;;) {
     switch(msyylex()) {
+    case(END):
     case(EOF):      
       status = 0;
-#ifdef USE_TTF
-      if(msLoadFontSet(&(symbolset->fontset)) == -1) return(-1);
-#endif
       break;
     case(FONTSET):
 #ifdef USE_TTF
       if((symbolset->fontset.filename = getString()) == NULL) return(-1);
+      if(msLoadFontSet(&(symbolset->fontset)) == -1) return(-1);
 #endif
       break;    
     case(SYMBOL):
@@ -379,6 +378,8 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
       if((loadSymbol(&(symbolset->symbol[symbolset->numsymbols])) == -1)) 
 	status = -1;
       symbolset->numsymbols++;
+      break;
+    case(SYMBOLSET):
       break;
     default:
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
