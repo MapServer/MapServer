@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.288.2.1  2005/02/21 18:09:42  sean
+ * prevent leak of font from label cache (bug 670).
+ *
  * Revision 1.288  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -4045,6 +4048,8 @@ int msFreeLabelCache(labelCacheObj *cache) {
   // free the labels
   for(i=0; i<cache->numlabels; i++) {
     msFree(cache->labels[i].text);
+    if (cache->labels[i].label.font != NULL)
+        msFree(cache->labels[i].label.font);
     msFreeShape(cache->labels[i].poly); // empties the shape
     msFree(cache->labels[i].poly); // free's the pointer
     for(j=0;j<cache->labels[i].numstyles; j++) freeStyle(&(cache->labels[i].styles[j]));
