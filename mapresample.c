@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/10/29 16:40:40  frank
+ * Fixed bug in propagating colormap into 8bit gdImg'es.  Added some debug
+ * calls ... all now controlled by layer debug flag.
+ *
  * Revision 1.26  2002/08/16 20:50:50  julien
  * Fixed a MS_INIT_COLOR call
  *
@@ -136,9 +140,11 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *img,
 /*                       msSimpleRasterResample()                       */
 /************************************************************************/
 
-int msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite, 
-                             imageObj *psDstImage,
-                             SimpleTransformer pfnTransform, void *pCBData )
+static int 
+msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite, 
+                         imageObj *psDstImage,
+                         SimpleTransformer pfnTransform, void *pCBData,
+                         int debug )
 
 {
     double	*x, *y; 
@@ -252,18 +258,16 @@ int msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
 /* -------------------------------------------------------------------- */
 /*      Some debugging output.                                          */
 /* -------------------------------------------------------------------- */
-#ifndef notdef
-    if( nFailedPoints > 0 )
+    if( nFailedPoints > 0 && debug )
     {
         char	szMsg[256];
-
+        
         sprintf( szMsg, 
                  "msSimpleRasterResampler: "
                  "%d failed to transform, %d actually set.\n", 
                  nFailedPoints, nSetPoints );
         msDebug( szMsg );
     }
-#endif
 
     return 0;
 }
@@ -665,9 +669,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     if( pj_transform( psDstProj->proj, psSrcProj->proj,
                       nSamples, 1, x, y, z ) != 0 )
     {
-        msDebug( "msTransformMapToSource(): "
-                 "pj_transform() failed.  Out of bounds?\n" );
-
         return MS_FALSE;
     }
 
@@ -745,7 +746,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
     if( map->projection.proj == NULL
         || layer->projection.proj == NULL )
+    {
+        if( layer->debug )
+            msDebug( "msResampleGDALToMap(): "
+                     "Either map or layer projection is NULL.\n" );
         return MS_PROJERR;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize some information.                                    */
@@ -793,6 +799,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
     if( !bSuccess )
     {
+        if( layer->debug )
+            msDebug( "msTransformMapToSource(): "
+                     "pj_transform() failed.  Out of bounds?  Loading whole image.\n" );
+
         sSrcExtent.minx = 0;
         sSrcExtent.maxx = nSrcXSize-1;
         sSrcExtent.miny = 0;
@@ -815,7 +825,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         
     if( sSrcExtent.maxx <= sSrcExtent.minx 
         || sSrcExtent.maxy <= sSrcExtent.miny )
+    {
+        if( layer->debug )
+            msDebug( "msResampleGDALToMap(): no overlap ... no result.\n" );
         return 0;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Decide on a resolution to read from the source image at.  We    */
@@ -831,8 +845,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     else
         sDummyMap.cellsize = adfSrcGeoTransform[1];
 
-    msDebug( "msResampleGDALToMap in effect: cellsize = %f\n", 
-             sDummyMap.cellsize );
+    if( layer->debug )
+        msDebug( "msResampleGDALToMap in effect: cellsize = %f\n", 
+                 sDummyMap.cellsize );
 
     sDummyMap.extent.minx = adfSrcGeoTransform[0]
         + sSrcExtent.minx * adfSrcGeoTransform[1]
@@ -867,7 +882,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 
     if( MS_RENDERER_GD(srcImage->format)
-        && gdImageTrueColor( srcImage->img.gd ) )
+        && !gdImageTrueColor( srcImage->img.gd ) )
     {
 #ifndef TEST_PALETTE_COPY
         gdImagePaletteCopy( srcImage->img.gd, image->img.gd );
@@ -958,6 +973,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     
     if( pTCBData == NULL )
     {
+        if( layer->debug )
+            msDebug( "msInitProjTransformer() returned NULL.\n" );
         msFreeImage( srcImage );
         return MS_PROJERR;
     }
@@ -972,7 +989,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
     result = msSimpleRasterResampler( srcImage, layer->offsite.red, image, 
-                                      msApproxTransformer, pACBData );
+                                      msApproxTransformer, pACBData,
+                                      layer->debug );
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
