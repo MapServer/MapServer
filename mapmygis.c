@@ -417,7 +417,8 @@ if (MYDEBUG)printf("msMYGISLayerInitItemInfo called<br>\n");
 //int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
 int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
 {
-	char	columns_wanted[5000];
+	char	columns_wanted[5000]="";
+	char	temp[5000]="";
 	char	query_string_0_5[6000];
 	char	query_string_0_5_real[6000];
 //	char	query_string_0_6[6000];
@@ -427,6 +428,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql
 	char f_table_name[5000];
 	char ftable[5000];
 	char attribselect[5000] = "" ;
+	int 	t;
 
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
@@ -473,8 +475,15 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql
 			strncpy(f_table_name, pos_ftab, pos_space - pos_ftab);
 		}
 	}
-	columns_wanted[1] = 0; //len=0
-	columns_wanted[0] = '*'; //len=0
+//	columns_wanted[0] = 0; //len=0	
+//	printf(":%d:", layer->numitems);
+	for (t=0;t<layer->numitems; t++)
+	{
+//		printf("(%s, %d/%d)", layer->items[t],t,layer->numitems);
+		sprintf(temp,", feature.%s ",layer->items[t]);
+		strcat(columns_wanted,temp);
+	}
+
 //	sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy);
 	sprintf(box3d,"(feature.x2 > %.15g AND feature.y2 > %.15g AND feature.x1 < %.15g AND feature.y1 < %.15g)",rect.minx, rect.miny, rect.maxx, rect.maxy);
 
@@ -521,12 +530,12 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql
 			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s",
 							columns_wanted,geom_table,box3d);
 			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.WKB_GEOMETRY %s from %s WHERE %s AND feature.GID = geometry.GID ORDER BY feature.id",
-						attribselect, geom_table,box3d);
+						columns_wanted, geom_table,box3d);
 		}else {
 			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s)",
-							columns_wanted,geom_table,layer->filter.string,box3d);
+						columns_wanted,geom_table,layer->filter.string,box3d);
 			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.WKB_GEOMETRY %s from %s WHERE (%s) AND feature.GID = geometry.GID AND (%s) ORDER BY feature.id",
-						attribselect, geom_table,layer->filter.string,box3d);
+						columns_wanted, geom_table,layer->filter.string,box3d);
 		}
 	}
 //    	query(layerinfo, "SELECT "); // attrib ?
@@ -1189,7 +1198,6 @@ int msMYGISLayerNextShape(layerObj *layer, shapeObj *shape)
 		return(MS_FAILURE);
 	}
 
-
 	result= msMYGISLayerGetShapeRandom(layer, shape, &(layerinfo->row_num)   );
 	// getshaperandom will increment the row_num
 	if (result)
@@ -1302,9 +1310,12 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 //					if (MYDEBUG)printf("RETR attrib<BR>\n");
 					for (t=0;t<layer->numitems;t++){
 						sprintf(tmpstr, "%d", t);
-						shape->values[t]=strdup("");
+//						shape->values[t]=strdup("");
+						shape->values[t]=strdup(row[layerinfo->attriboffset+t]);
+//						printf("%d/%s<BR>");
 					}
 					if (1){
+					} else if (1) {
 						    if (layer->labelitem && strlen(row[layerinfo->attriboffset+0]) > 0){
 						    	shape->values[layer->labelitemindex]=strdup(row[layerinfo->attriboffset+0]);
 						    }
@@ -1427,15 +1438,18 @@ if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %u<br>\n",record);
 	{
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
+//			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
 		else
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
+//			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
+		 strcpy(columns_wanted, geom_column_name);
 	}
 	else
 	{
 		columns_wanted[0] = 0; //len=0
 		for (t=0;t<layer->numitems; t++)
 		{
-			sprintf(temp,"%s::text,",layer->items[t]);
+			sprintf(temp,", feature.%s",layer->items[t]);
 			strcat(columns_wanted,temp);
 		}
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
@@ -1443,6 +1457,7 @@ if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %u<br>\n",record);
 		else
 			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
 
+		strcpy(temp, geom_column_name);
 		strcat(columns_wanted,temp);
 	}
 
@@ -1600,6 +1615,11 @@ int msMYGISLayerGetItems(layerObj *layer)
 	char	urid_name[5000];
 	char user_srid[5000];
 	char				sql[6000];
+	MYSQL_ROW			row;
+	int				t;
+	char *				sp;
+	
+	
 	//int				nitems;
 
 
@@ -1626,23 +1646,24 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 	msMYGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid);
 
 	// two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
-	sprintf(sql,"EXPLAIN VERBOSE SELECT * FROM %s",table_name);
-		// this will call the mysql_NOTICE_HANDLER() callback!  layer->fields will be populated
-/*	query_result = PQexec(layerinfo->conn, sql );
+	if ((sp = strstr(table_name, " ")) != NULL)
+		*sp = '\0';
+	sprintf(sql,"describe %s",table_name);
+	t = 0;
+	if (query(layerinfo, sql) == MS_FAILURE)
+        	return MS_FAILURE;
+        while ((row = mysql_fetch_row(layerinfo->query_result)) != NULL){
 
+		if (strcmp(row[0], "x1") != 0 && strcmp(row[0], "x2") != 0 && strcmp(row[0], "y1") != 0 && strcmp(row[0], "y2") != 0){
+			t++;
+			layer->items = realloc (layer->items, sizeof(char *) * t);
+			layer->items[t-1] = strdup(row[0]);
 
-    if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
-    {
-		char tmp[4000];
-
-		sprintf(tmp, "Error executing MYGIS  SQL   statement: %s", sql);
-        	msSetError(MS_QUERYERR, tmp,
-                 "msMYGISLayerGetItems()");
-
-        	PQclear(query_result);
-	  	query_result = NULL;
-		return(MS_FAILURE);
-    }
+		}
+	}
+//	memset(layer->items[t],0, str2-str +1);
+//	strncpy(layer->items[t], str, str2-str);
+	layer->numitems =  t; // one less because dont want to do anything with geometry column
 	//layerinfo->fields is a string with a list of all the columns
 
 		// # of items is number of "," in string + 1
@@ -1650,58 +1671,8 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 			//since we dont want to return the geometry column, we remove it.
 				// # columns is reduced by 1
 
-		str = layerinfo->fields;
-		t = 0;
-		while ((str = strstr(str,",")))
-		{
-			str++;
-			t++;
-		}
 
 
-	layer->numitems =  t; // one less because dont want to do anything with geometry column
-	layer->items = malloc (sizeof(char *) * layer->numitems);
-
-
-	str = layerinfo->fields ;
-	t = 0;
-	while (str != NULL)
-	{
-		str2 = strstr(str,","); //NULL or points to the next ","
-		if (str2 != NULL)
-		{
-
-			if (strncmp(geom_column_name, str, str2-str) != 0)
-			{
-				//its not the geometry column
-				layer->items[t] = malloc(str2-str +1) ;
-				memset(layer->items[t],0, str2-str +1);
-				strncpy(layer->items[t], str, str2-str);
-					//memset will null terminate it
-				t++;
-			}
-		}
-		else
-		{
-			if (strcmp(geom_column_name, str) != 0)
-			{
-				layer->items[t] = malloc( strlen(str)+1 )  ;
-				memset(layer->items[t],0, strlen(str) +1);
-				strcpy(layer->items[t], str);
-				t++;
-			}
-		}
-		if (str2 != NULL)
-		{
-			str = str2;
-			str++;
-		}
-		else
-		{
-			str = NULL;
-		}
-	}
-*/
 	return msMYGISLayerInitItemInfo(layer);
 }
 
