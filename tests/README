@@ -1,0 +1,15 @@
+	MapServer Test Data
+	===================
+
+
+The data in this directory is intended to be used by mapserver unit
+tests of various kinds.  Currently (Oct/2004) only the Python MapScript
+unit tests use this data. 
+
+For information on the Python MapScript unit tests see:
+ ../mapscript/python/tests/TESTING.TXT
+
+Other information on testing should be available in the wiki at:
+
+  http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?MapServerTesting
+
