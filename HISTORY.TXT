@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
+- Fixed bug 823 : adding a validation of the SRS parameter when doing
+  a GetMap request on a wms server. Here is the OGC statement :
+ 'When the SRS parameter in a GetMap request contains a SRS 
+  that is valid for some, but not all of the layers being requested, 
+  then the server shall throw a Service Exception (code = "InvalidSRS").'
+
 - Set the background color of polygons or circles when using transparent
   PIXMAP symbol.
 
