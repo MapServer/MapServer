@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21.2.1  2002/07/08 17:28:17  dan
+ * Added map->setFontSet() to MapScript
+ *
  * Revision 1.21  2002/04/22 19:31:57  dan
  * Added optional new_map_path arg to msLoadMap()
  *
@@ -169,9 +172,9 @@ char            *mapObj_processLegendTemplate(mapObj *self,
 char            *mapObj_processQueryTemplate(mapObj *self,
                                              char **names, char **values, 
                                              int numentries);
-int             mapObj_setSymbolSet(mapObj *self,
-                                    char *szFileName);
+int             mapObj_setSymbolSet(mapObj *self, char *szFileName);
 int             mapObj_getNumSymbols(mapObj *self);
+int             mapObj_setFontSet(mapObj *self, char *szFileName);
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);

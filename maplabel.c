@@ -112,6 +112,26 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
   return(0);
 }
 
+int msInitFontSet(fontSetObj *fontset)
+{
+    fontset->filename = NULL;
+    fontset->fonts = NULL;
+    fontset->numfonts = 0;
+    return 0;
+}
+
+int msFreeFontSet(fontSetObj *fontset)
+{
+    if (fontset->filename)
+        free(fontset->filename);
+    fontset->filename = NULL;
+    if (fontset->fonts)
+        msFreeHashTable(fontset->fonts);
+    fontset->fonts = NULL;
+    fontset->numfonts = 0;    
+    return 0;
+}
+
 
 int msLoadFontSet(fontSetObj *fontset)
 {

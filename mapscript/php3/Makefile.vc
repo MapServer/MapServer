@@ -16,7 +16,7 @@
 PHP4 = 1
 
 !ifdef PHP4
-OPTFLAGS =	/nologo /Zi /W3 /Fdphpms.pdb
+OPTFLAGS =	/nologo /Zi /W3 /DDEBUG /Fdphpms.pdb
 BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS
 !else
 OPTFLAGS =	/nologo /Zi /W3
@@ -31,7 +31,10 @@ LINK_OPT =	/dll /debug
 #
 
 !ifdef PHP4
-PHP_SOURCE_DIR = ../../../php-4.0.6
+#PHP_SOURCE_DIR = ../../../php-4.0.6
+#PHP_SOURCE_DIR = ../../../php-4.1.2
+#PHP_SOURCE_DIR = ../../../php-4.2.1
+PHP_SOURCE_DIR = ../../../php-4.2.2
 PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/main -I$(PHP_SOURCE_DIR)/zend -I$(PHP_SOURCE_DIR)/include -I$(PHP_SOURCE_DIR)/tsrm
 !else
 PHP_SOURCE_DIR = ../../../php-3.0.14
@@ -43,7 +46,7 @@ PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/dl
 # Where do you want php3_mapscript.dll to be installed?
 #
 !ifdef PHP4
-PHP_INSTALL_DIR =  \Apache\php4\extensions
+PHP_INSTALL_DIR =  c:\Apache\php4\extensions
 !else
 PHP_INSTALL_DIR =  \Apache\php3
 !endif
@@ -56,13 +59,30 @@ PHP_INSTALL_DIR =  \Apache\php3
 # MS_INCLUDE = -I../.. -I../../gd-1.2 -I../../gdft
 # MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
 #
-MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR
+#MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR
+MS_DEFINE = -DUSE_EPPL  -DUSE_GD_GIF  -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DUSE_GD_TTF -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR -DUSE_GDAL -DIGNORE_MISSING_DATA -DGD_HAS_GDIMAGEGIFPTR
 !ifdef PHP4
-MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -DPHP_NO_ALIASES -I../../gd-1.2 -I../../../proj/src
+MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -DPHP_NO_ALIASES -I../../../gd-1.8.4 -I../../../proj/src
 !else
 MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../../gd-1.8.4 -I../../../proj/src
 !endif
 GDAL_DIR= ../../../gdal
+
+#LIBWWW libararies : incomment the following to build with libwww support
+LIBWWW_LIB=../../../Libwww/bin/wwwcore.lib ../../../Libwww/bin/wwwapp.lib \
+           ../../../Libwww/bin/wwwinit.lib  ../../../Libwww/bin/wwwutils.lib
+
+#ECW support
+#ECWDIR= C:\ProgFile\ECW_SDK
+#ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+#        $(ECWDIR)\lib\NCSUtil.lib
+
+#
+# If you want to ignore missing datafile errors uncomment the following
+# line. This is especially useful with large tiled datasets that may not
+# have complete data for each tile.
+#
+IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 
 MS_LIBS = ../../mapserver.lib \
         ../../../gd-1.8.4/gd.lib \
@@ -72,10 +92,13 @@ MS_LIBS = ../../mapserver.lib \
         ../../../freetype/lib/freetype.lib \
 	../../../tiff-v3.5.4/libtiff/libtiff.lib \
         ../../../proj/src/proj.lib \
+        $(GDAL_DIR)/gdal.lib \
         $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib \
         $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib \
         $(GDAL_DIR)/ogr/ogr.lib \
-        $(GDAL_DIR)/ogr/../port/cpl.lib
+        $(GDAL_DIR)/ogr/../port/cpl.lib \
+        $(LIBWWW_LIB) \
+        $(ECW_LIB)
                 
 
 
@@ -106,7 +129,7 @@ mapscript:      $(PHPMS_DLL)
 proj:	        $(PHPPROJ_DLL)
 
 install:	all
-	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)
+	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)\php_mapscript_36.dll
 
 !ifdef PHP4
 $(PHPMS_DLL):	$(PHPMS_OBJS)
