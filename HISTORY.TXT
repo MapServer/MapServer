@@ -21,7 +21,9 @@ Version 4.2-beta2
 
 - Fixed problem with PHP's pasteImage() method when angle=0
 
-  
+- Fixed build problem in mapresample.c when compiling without GDAL.
+
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 
