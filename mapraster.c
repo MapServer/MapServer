@@ -1463,76 +1463,57 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
   cwd[0] = '\0';
 
-  if( layer->debug > 0 || map->debug > 1 )
-      msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
+  if(layer->debug > 0 || map->debug > 1)
+    msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
 
-  if(!layer->data && !layer->tileindex)
-  {
-      msDebug( "msDrawRasterLayerLow(%s): "
-               "layer data and tileindex NULL ... doing nothing.", 
-               layer->name );
-      return(0);
+  if(!layer->data && !layer->tileindex) {
+    if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): layer data and tileindex NULL ... doing nothing.", layer->name );
+    return(0);
   }
 
-  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
-  {
-      if( layer->debug > 0 )
-          msDebug( "msDrawRasterLayerLow(%s): "
-                   "not status ON or DEFAULT, doing nothing.",
-                   layer->name );
-      return(0);
+  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) {
+    if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): not status ON or DEFAULT, doing nothing.", layer->name );
+    return(0);
   }
 
   if(map->scale > 0) {
-      if((layer->maxscale > 0) && (map->scale > layer->maxscale))
-      {
-          if( layer->debug > 0 )
-              msDebug( "msDrawRasterLayerLow(%s): "
-                       "skipping, map scale %.2g > MAXSCALE=%g\n",
-                       layer->name, map->scale, layer->maxscale );
-          return(0);
-      }
-      if((layer->minscale > 0) && (map->scale <= layer->minscale))
-      {
-          if( layer->debug > 0 )
-              msDebug( "msDrawRasterLayerLow(%s): "
-                       "skipping, map scale %.2g < MINSCALE=%g\n",
-                       layer->name, map->scale, layer->minscale );
-          return(0);
-      }
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale)) {
+      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g > MAXSCALE=%g\n", layer->name, map->scale, layer->maxscale );
+      return(0);
+    }
+    if((layer->minscale > 0) && (map->scale <= layer->minscale)) {
+      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g < MINSCALE=%g\n", layer->name, map->scale, layer->minscale );
+      return(0);
+    }
   }
 
   force_gdal = MS_FALSE;
-  if( MS_RENDERER_GD(image->format) )
-      img = image->img.gd;
-  else
-  {
-      img = NULL;
-      force_gdal = MS_TRUE;
+  if(MS_RENDERER_GD(image->format))
+    img = image->img.gd;
+  else {
+    img = NULL;
+    force_gdal = MS_TRUE;
   }
 
   // Only GDAL supports 24bit GD output.
 #if GD2_VERS > 1
-  if( gdImageTrueColor( img ) )
-  {
+  if(gdImageTrueColor(img)){
 #ifndef USE_GDAL
-      msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
-      return MS_FAILURE;
+    msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
+    return MS_FAILURE;
 #else
-      force_gdal = MS_TRUE;
+    force_gdal = MS_TRUE;
 #endif
   }
 #endif /* def GD2_VERS */
 
   // Only GDAL support image warping.
-  if(layer->transform && 
-     msProjectionsDiffer(&(map->projection), &(layer->projection)))
-  {
+  if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
 #ifndef USE_GDAL
-      msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
-      return MS_FAILURE;
+    msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
+    return MS_FAILURE;
 #else
-      force_gdal = MS_TRUE;
+    force_gdal = MS_TRUE;
 #endif
   }
 
@@ -1560,7 +1541,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       numtiles = tilefile.numshapes;
   }
 
-  for(t=0;t<numtiles;t++) { /* for each tile, always at least 1 tile */
+  for(t=0; t<numtiles; t++) { /* for each tile, always at least 1 tile */
 
     if(layer->tileindex) {
       if(!msGetBit(tilefile.status,t)) continue; /* on to next tile */
@@ -1577,46 +1558,43 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if(strlen(filename) == 0) continue;
 
     f = fopen(msBuildPath3(szPath,  map->mappath, map->shapepath, filename),"rb");
-    if (!f) {
+    if(!f) {
       memset( dd, 0, 8 );
-    }
-    else
-    {
-        fread(dd,8,1,f); // read some bytes to try and identify the file
-        fclose(f);
+    } else {
+      fread(dd,8,1,f); // read some bytes to try and identify the file
+      fclose(f);
     }
 
-    if ((memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) && !force_gdal) {
-        status = drawTIFF(map, layer, img, filename);
-        if(status == -1) {
-            return(MS_FAILURE);
-        }
-        continue;
+    if((memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) && !force_gdal) {
+      status = drawTIFF(map, layer, img, filename);
+      if(status == -1) {
+        return(MS_FAILURE);
+      }
+      continue;
     }
 
-    if (memcmp(dd,"GIF8",4)==0 && !force_gdal ) {
-        status = drawGIF(map, layer, img, filename);
-        if(status == -1) {
-            return(MS_FAILURE);
-        }
-        continue;
+    if(memcmp(dd,"GIF8",4)==0 && !force_gdal ) {
+      status = drawGIF(map, layer, img, filename);
+      if(status == -1) {
+        return(MS_FAILURE);
+      }
+      continue;
     }
 
-    if (memcmp(dd,PNGsig,8)==0 && !force_gdal) {
-        status = drawPNG(map, layer, img, filename);
-        if(status == -1) {
-            return(MS_FAILURE);
-        }
-        continue;
+    if(memcmp(dd,PNGsig,8)==0 && !force_gdal) {
+      status = drawPNG(map, layer, img, filename);
+      if(status == -1) {
+        return(MS_FAILURE);
+      }
+      continue;
     }
 
-    if (memcmp(dd,JPEGsig,3)==0 && !force_gdal) 
-    {
-        status = drawJPEG(map, layer, img, filename);
-        if(status == -1) {
-            return(MS_FAILURE);
-        }
-        continue;
+    if(memcmp(dd,JPEGsig,3)==0 && !force_gdal) {
+      status = drawJPEG(map, layer, img, filename);
+      if(status == -1) {
+        return(MS_FAILURE);
+      }
+      continue;
     }
 
     if (memcmp(dd,"HEAD",4)==0) {
@@ -1637,31 +1615,29 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     // May be put any flag?
     
     ext = strstr(filename, ".img");
-    if (strcmp(ext, ".img") == 0)
-      {
+    if (strcmp(ext, ".img") == 0) {
       if(layer->transform && msProjectionsDiffer(&(map->projection, &(layer->projection))) {
-          msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( EGIS )");
-          return(MS_FAILURE);
-        }
-	status = drawGEN(map, layer, img, filename);
-	
-	//ext = NULL;
-	return(status);
+        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( EGIS )");
+        return(MS_FAILURE);
       }
+      status = drawGEN(map, layer, img, filename);
+	
+      //ext = NULL;
+      return(status);
+    }
 #endif
 
 #ifdef USE_GDAL
     {
-        GDALDatasetH  hDS;
+      GDALDatasetH  hDS;
 
-        msGDALInitialize();
+      msGDALInitialize();
 
-        msAcquireLock( TLOCK_GDAL );
-        hDS = GDALOpen(msBuildPath3(szPath,  map->mappath, 
-                                    map->shapepath, filename) , GA_ReadOnly );
-        if( hDS != NULL )
-        {
-            double	adfGeoTransform[6];
+      msAcquireLock( TLOCK_GDAL );
+      hDS = GDALOpen(msBuildPath3(szPath,  map->mappath, map->shapepath, filename) , GA_ReadOnly );
+
+      if(hDS != NULL) {
+        double	adfGeoTransform[6];
 
             if (layer->projection.numargs > 0 && 
                 EQUAL(layer->projection.args[0], "auto"))
