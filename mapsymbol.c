@@ -4,7 +4,7 @@
 #include "mapfile.h"
 #include "mapparser.h"
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
 #include <gdcache.h>
 #include <gdttf.h>
 #include "freetype.h"
@@ -94,6 +94,7 @@ int loadSymbol(symbolObj *s)
 {
   int done=MS_FALSE;
   FILE *stream;
+  char bytes[8];
 
   initSymbol(s);
 
@@ -148,11 +149,25 @@ int loadSymbol(symbolObj *s)
 	return(-1);
       }
 
-#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
-  s->img = gdImageCreateFromGif(stream);
+      fread(bytes,8,1,stream); // read some bytes to try and identify the file
+      rewind(stream); // reset the image for the readers
+      if (memcmp(bytes,"GIF8",4)==0) {
+#ifdef USE_GD_GIF
+	s->img = gdImageCreateFromGif(stream);
 #else
-  s->img = gdImageCreateFromPng(stream);
+	msSetError(MS_MISCERR, "Unable to load GIF symbol.", "loadSymbol()");
+	fclose(stream);
+	return(-1);
 #endif
+      } else if (memcmp(bytes,PNGsig,8)==0) {
+#ifdef USE_GD_PNG
+	s->img = gdImageCreateFromPng(stream);
+#else
+	msSetError(MS_MISCERR, "Unable to load PNG symbol.", "loadSymbol()");
+	fclose(stream);
+	return(-1);
+#endif
+      }
 
       fclose(stream);
       
@@ -224,7 +239,7 @@ int loadSymbol(symbolObj *s)
       if(getInteger(&(s->transparentcolor)) == -1) return(-1);
       break;
     case(TYPE):
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
       if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE)) == -1)
 	return(-1);	
 #else
@@ -248,6 +263,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 {
   FILE *stream;
   int i;
+  char bytes[8];
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msAddImageSymbol()");
@@ -270,11 +286,25 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   initSymbol(&symbolset->symbol[i]);
 
-#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
-  symbolset->symbol[i].img = gdImageCreateFromGif(stream);
+  fread(bytes,8,1,stream); // read some bytes to try and identify the file
+  rewind(stream); // reset the image for the readers
+  if (memcmp(bytes,"GIF8",4)==0) {
+#ifdef USE_GD_GIF
+    symbolset->symbol[i].img = gdImageCreateFromGif(stream);
 #else
-  symbolset->symbol[i].img = gdImageCreateFromPng(stream);
+    msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
+    fclose(stream);
+    return(-1);
 #endif
+  } else if (memcmp(bytes,PNGsig,8)==0) {
+#ifdef USE_GD_PNG
+    symbolset->symbol[i].img = gdImageCreateFromPng(stream);
+#else
+    msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
+    fclose(stream);
+    return(-1);
+#endif
+  }
 
   fclose(stream);
   
@@ -385,7 +415,7 @@ static int getCharacterSize(char *character, int size, char *font, rectObj *rect
   int bbox[8];
   char *error=NULL;
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
   error = imageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, character, '\n');
   if(error) {
     msSetError(MS_TTFERR, error, "getCharacterSize()");
@@ -454,7 +484,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE):    
     
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[sy].font);
     if(!font) return;
 
@@ -636,7 +666,7 @@ void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *
   switch(symbolset->symbol[class->symbol].type) {  
   case(MS_SYMBOL_TRUETYPE):
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[class->symbol].font);
     if(!font) return;
 
@@ -707,7 +737,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
   switch(symbol->type) {  
   case(MS_SYMBOL_TRUETYPE):
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 

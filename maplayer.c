@@ -147,19 +147,19 @@ void msLayerClose(layerObj *layer)
   }
 }
 
-int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj)
+int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    layer->shpfile.status = msSHPWhichShapes(&(layer->shpfile), rect, &(layer->projection), proj);
+    layer->shpfile.status = msSHPWhichShapes(&(layer->shpfile), rect);
     break;
   case(MS_TILED_SHAPEFILE):
-    msTiledSHPWhichShapes(layer, shapepath, rect, proj);
+    msTiledSHPWhichShapes(layer, shapepath, rect);
     break;
   case(MS_INLINE):
     break;
   case(MS_OGR):
-    return msOGRLayerWhichShapes(layer, shapepath, rect, proj);
+    return msOGRLayerWhichShapes(layer, shapepath, rect);
     break;
   case(MS_TILED_OGR):
     break;

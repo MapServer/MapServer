@@ -84,40 +84,37 @@ char *msGetVersion() {
   sprintf(version, "MapServer version %s", MS_VERSION);
 
 #ifdef USE_GD_1_2
-  strcat(version, " -GD_1_2");
+  strcat(version, " OUTPUT=GIF");
 #endif
-#ifdef USE_GD_1_3
-  strcat(version, " -GD_1_3");
+#ifdef USE_GD_PNG
+  strcat(version, " OUTPUT=PNG");
 #endif
-#ifdef USE_GD_1_6
-  strcat(version, " -GD_1_6");
+#ifdef USE_GD_JPEG
+  strcat(version, " OUTPUT=JPEG");
 #endif
-#ifdef USE_GD_1_8
-  strcat(version, " -GD_1_8");
+#ifdef USE_GD_WBMP
+  strcat(version, " OUTPUT=WBMP");
 #endif
 #ifdef USE_PROJ
-  strcat(version, " -PROJ.4");
+  strcat(version, " SUPPORTS=PROJ");
 #endif
-#ifdef USE_TTF
-  strcat(version, " -FreeType");
+#ifdef USE_GD_TTF
+  strcat(version, " SUPPORTS=TTF");
 #endif
 #ifdef USE_TIFF
-  strcat(version, " -TIFF");
+  strcat(version, " INPUT=TIFF");
 #endif
 #ifdef USE_EPPL
-  strcat(version, " -EPPL7");
+  strcat(version, " INPUT=EPPL7");
 #endif
 #ifdef USE_JPEG
-  strcat(version, " -JPEG");
+  strcat(version, " INPUT=JPEG");
 #endif
 #ifdef USE_SDE
-  strcat(version, " -SDE");
+  strcat(version, " INPUT=SDE");
 #endif
 #ifdef USE_OGR
-  strcat(version, " -OGR");
-#endif
-#ifdef USE_EGIS
-  strcat(version, " -EGIS");
+  strcat(version, " INPUT=OGR");
 #endif
 
   return(version);

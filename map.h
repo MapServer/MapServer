@@ -557,11 +557,7 @@ typedef struct { /* structure for a map */
 } mapObj;
 
 // Function prototypes, wrapable
-#ifndef USE_GD_1_8
-int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace);
-#else
 int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
-#endif
 void msFreeImage(gdImagePtr img);
 
 // Function prototypes, not wrapable
@@ -716,21 +712,20 @@ void msFlipBit(char *array, int index);
 
 int msLayerOpen(layerObj *layer, char *shapepath); // in maplayer.c
 void msLayerClose(layerObj *layer);
-int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *out);
+int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msLayerWhichItems(layerObj *layer, int classify, int annotate);
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems);
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
-int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj);
+int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems);
 void msTiledSHPClose(layerObj *layer);
 
 int msOGRLayerOpen(layerObj *layer, char *shapepath);   // in mapogr.cpp 
 int msOGRLayerClose(layerObj *layer);
-int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, 
-                          rectObj rect, projectionObj *proj);
+int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
                        int tile, int record, int allitems);

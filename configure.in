@@ -39,21 +39,26 @@ AC_SUBST(STRINGS, $STRINGS)
 
 
 dnl ---------------------------------------------------------------------
-dnl Which version of GD are we using?
+dnl Which options does GD have compiled in?
 dnl
-dnl If --with-gd not given, then check in system libs, and if not found
-dnl there then fall back on local copy of gd-1.2
+dnl If --with-gd not given, then check in system libs.
 dnl ---------------------------------------------------------------------
 
 dnl Clear some cache variables
-unset ac_cv_lib_gd_gdImageGif
 unset ac_cv_lib_gd_gdImageString16
-unset ac_cv_lib_gd_gdImageJpeg
+unset ac_cv_lib_gd_gdImageGif
 unset ac_cv_lib_gd_gdImagePng
+unset ac_cv_lib_gd_gdImageJpeg
+unset ac_cv_lib_gd_gdImageWbmp
+unset ac_cv_lib_m_gdImageString16
+unset ac_cv_lib_m_gdImageGif
+unset ac_cv_lib_m_gdImagePng
+unset ac_cv_lib_m_gdImageJpeg
+unset ac_cv_lib_m_gdImageWbmp
 
 AC_CHECKING(which version of GD to use...)
 AC_ARG_WITH(gd,
-[  --with-gd[=DIR]         Specify which version of GD to use (DIR is GD's 
+[  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's 
                           install dir).],,)
 
 if test "$with_gd" = "no" ; then
@@ -66,7 +71,8 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   dnl --with-gd was specified explicitly... try to establish which version
   dnl           of GD this is
   dnl
-  AC_EXPAND_PATH($with_gd, GD_DIR)
+  AC_PARSE_WITH_LIB_STATIC($with_gd, GD_DIR, GD_STATIC)
+  AC_EXPAND_PATH($GD_DIR, GD_DIR)
   test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
   test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
   test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
@@ -82,54 +88,68 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
       AC_MSG_ERROR("Could not find gd.h or libgd.a in $GD_DIR.  Make sure gd is compiled before calling configure.")
   fi
 
-  AC_CHECK_LIB(gd, gdImageGif, GD_DEF=-DUSE_GD_1_2,, $GD_LIB)
-  AC_CHECK_LIB(gd, gdImageString16, GD_DEF=-DUSE_GD_1_3,, $GD_LIB)
-  AC_CHECK_LIB(gd, gdImagePng, GD_DEF=-DUSE_GD_1_6,, $GD_LIB -lpng -lz)
-  AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF=-DUSE_GD_1_8,, $GD_LIB -ljpeg -lpng -lz)
+  if test "$GD_STATIC" = "yes" ; then
+    dnl To test against static GD, do AC_CHECK_LIB calls against -lm and 
+    dnl include libgd.a in GD_LIB param
+    GD_CHECKLIB=m
+    GD_LIB=""
+    GD_STATIC=$GD_LIBDIR/libgd.a
+    AC_MSG_RESULT([static linkage of $GD_STATIC requested... testing supported formats...])
+  else
+    GD_CHECKLIB=gd
+    GD_LIB="-lgd"
+    GD_STATIC=""
+  fi
+
+  dnl For GD 1.2, x/y in buffers are swapped.
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageString16, , GD_DEF=-DUSE_GD_SWAP_XY , $GD_STATIC $GD_LIB)
+
+  dnl Check supported formats
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_STATIC $GD_LIB)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG"; GD_LIB="$GD_LIB -lpng -lz",, $GD_STATIC $GD_LIB -lpng -lz)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_STATIC $GD_LIB -ljpeg)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB)
+
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageTTFString, 	GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_STATIC $GD_LIB -lttf)
 
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
 else
 
   dnl
-  dnl --width-gd was not given... look in system libs, and if not found
-  dnl            then use the local copy of gd 1.2
+  dnl --width-gd was not given... then look in system libs
   dnl
-  AC_CHECK_LIB(gd, gdImageGif, GD_DEF=-DUSE_GD_1_2,,)
-  AC_CHECK_LIB(gd, gdImageString16, GD_DEF=-DUSE_GD_1_3,,)
-  AC_CHECK_LIB(gd, gdImagePng, GD_DEF=-DUSE_GD_1_6,, -lpng -lz)
-  AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF=-DUSE_GD_1_8,, -ljpeg -lpng -lz)
+
+  dnl For GD 1.2, x/y in buffers are swapped.
+  AC_CHECK_LIB(gd, gdImageString16, , GD_DEF=-DUSE_GD_SWAP_XY , $GD_LIB)
+
+  dnl Check supported formats
+  AC_CHECK_LIB(gd, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_LIB)
+  AC_CHECK_LIB(gd, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG"; GD_LIB="$GD_LIB -lpng -lz",, $GD_LIB -lpng -lz)
+  AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_LIB -ljpeg)
+  AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB)
+
+  AC_CHECK_LIB(gd, gdImageTTFString, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_LIB -lttf)
+
   if test -n "$GD_DEF" ; then
-      GD_LIB="-lgd"
+      GD_LIB="-lgd $GD_LIB"
       AC_MSG_RESULT([        using GD ($GD_DEF) from system libs.])
-  else
-      dnl GD not found on system... use local copy of gd 1.2
-      GD_DEF=-DUSE_GD_1_2
-      MAKE_GD=gd
-      MAKE_GD_CLEAN=gd_clean
-      AC_EXPAND_PATH(gd-1.2, GD_DIR)
-      GD_INC=-I$GD_DIR
-      GD_LIB="-L$GD_DIR -lgd"
-      AC_ADD_RUNPATH("$GD_DIR")
-      test -f $GD_DIR/Makefile.in && GD_MAKEFILE="$GD_DIR/Makefile"
-      AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
   fi
 
 fi
 
-if test "$ac_cv_lib_gd_gdImagePng" = "yes"; then
-      GD_LIB="$GD_LIB -lpng -lz"
-fi
 
 AC_SUBST(GD_DEF, $GD_DEF)
 AC_SUBST(GD_INC, $GD_INC)
 AC_SUBST(GD_LIB, $GD_LIB)
+AC_SUBST(GD_STATIC, $GD_STATIC)
 AC_SUBST(MAKE_GD, $MAKE_GD)
 AC_SUBST(MAKE_GD_CLEAN, $MAKE_GD_CLEAN)
 
 ALL_ENABLED="$GD_DEF $ALL_ENABLED"
 ALL_INC="$GD_INC $ALL_INC"
 ALL_LIB="$GD_LIB $ALL_LIB"
+ALL_STATIC_LIB="$GD_STATIC $ALL_STATIC_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl libTIFF (included by default if found on system).
@@ -280,109 +300,6 @@ AC_SUBST(EPPL_ENABLED,$EPPL_ENABLED)
 AC_SUBST(EPPL_OBJ,    $EPPL_OBJ)
 
 ALL_ENABLED="$EPPL_ENABLED $ALL_ENABLED"
-
-
-dnl ---------------------------------------------------------------------
-dnl FreeType (included by default if found on system).
-dnl ---------------------------------------------------------------------
-
-unset ac_cv_lib_ttf_TT_Init_FreeType
-
-AC_CHECKING([whether we should include Freetype (TTF) support...])
-AC_ARG_WITH(ttf,
-[  --without-ttf           Disable Freetype (TTF) support.
-  --with-ttf[=DIR]        Include Freetype (TTF) support (DIR is Freetype's
-                          install dir).],,)
-if test "$with_ttf" = "no" ; then
-  AC_MSG_RESULT([        disabled by --without-ttf])
-elif test -n "$with_ttf" -a "$with_ttf" != "yes" ; then
-
-  AC_EXPAND_PATH($with_ttf, TTF_DIR)
-  test -f $TTF_DIR/include/freetype/freetype.h && TTF_INCLUDE="$TTF_DIR/include/freetype"
-  test -f $TTF_DIR/include/freetype.h && TTF_INCLUDE="$TTF_DIR/include"
-  test -f $TTF_DIR/lib/freetype.h && TTF_INCLUDE="$TTF_DIR/lib"
-  test -f $TTF_DIR/freetype.h && TTF_INCLUDE="$TTF_DIR"
-  test -f $TTF_DIR/lib/.libs/libttf.a && TTF_LIBDIR="$TTF_DIR/lib/.libs"
-  test -f $TTF_DIR/lib/libttf.a && TTF_LIBDIR="$TTF_DIR/lib"
-  test -f $TTF_DIR/libttf.a && TTF_LIBDIR="$TTF_DIR"
-  test -f $TTF_DIR/lib/.libs/libttf.so && TTF_LIBDIR="$TTF_DIR/lib/.libs"
-  test -f $TTF_DIR/lib/libttf.so && TTF_LIBDIR="$TTF_DIR/lib"
-  test -f $TTF_DIR/libttf.so && TTF_LIBDIR="$TTF_DIR"
-  if test -n "$TTF_INCLUDE" -a -n "$TTF_LIBDIR" ; then 
-      TTF_INC=-I$TTF_INCLUDE
-      TTF_LIB="-L$TTF_LIBDIR -lttf"
-      AC_ADD_RUNPATH("$TTF_LIBDIR")
-  else
-      AC_MSG_ERROR("Could not find freetype.h or libttf.so/libttf.a in $TTF_DIR.")
-  fi
-
-  TTF_ENABLED="-DUSE_TTF"
-
-  AC_MSG_RESULT([        using ttf from $TTF_DIR.])
-
-else
-
-  AC_CHECK_LIB(ttf,TT_Init_FreeType, TTF_FOUND_LIB=yes,,,)
-  AC_CHECK_HEADER(freetype.h, TTF_FOUND_HDR=yes,,,)
-
-  AC_CHECK_LIB(ttf,TT_Init_FreeType, TTF_ENABLED=-DUSE_TTF,,,)
-
-  if test -n "$TTF_FOUND_LIB" -a -z "$TTF_FOUND_HDR" ; then
-      dnl Found lib, but header may be in a "freetype" sub-dir somewhere...
-      dnl try to find it in some common system locations
-
-      AC_MSG_CHECKING([for the location of freetype.h])
-      for dirname in /usr /usr/lib /usr/local /usr/local/lib \
-                      /usr/pkg /pkg/lib
-      do
-        for subdirname in include include/freetype 
-        do
-          if test -f "$dirname/$subdirname/freetype.h" ; then
-            TTF_INC="-I$dirname/$subdirname"
-            TTF_FOUND_HDR=yes
-            AC_MSG_RESULT([$dirname/$subdirname/freetype.h])
-          fi
-        done
-      done
-
-      if test -z "$TTF_FOUND_HDR" ; then
-        AC_MSG_RESULT([not found])
-        AC_MSG_RESULT([        found libttf in system libs, but freetype.h was not found...])
-      fi
-  fi
-
-  if test -n "$TTF_FOUND_LIB" -a -n "$TTF_FOUND_HDR" ; then
-      TTF_ENABLED=-DUSE_TTF
-      TTF_LIB="-lttf"
-      AC_MSG_RESULT([        using libttf from system libs.])
-  else
-      AC_MSG_RESULT([        Freetype support not included.])
-  fi
-
-fi
-
-if test -n "$TTF_ENABLED" ; then
-  dnl
-  dnl We need to link with the GDFT directory as well
-  dnl
-  AC_EXPAND_PATH(gdft, GDFT_DIR)
-  TTF_LIB="-L$GDFT_DIR -lgdft $TTF_LIB"
-  AC_ADD_RUNPATH("$GDFT_DIR")
-  TTF_INC="-I$GDFT_DIR $TTF_INC"
-  MAKE_GDFT="gdft"
-  MAKE_GDFT_CLEAN="gdft_clean"
-fi
-
-AC_SUBST(TTF_ENABLED,    $TTF_ENABLED)
-AC_SUBST(TTF_INC,        $TTF_INC)
-AC_SUBST(TTF_LIB,        $TTF_LIB)
-AC_SUBST(MAKE_GDFT,      $MAKE_GDFT)
-AC_SUBST(MAKE_GDFT_CLEAN,$MAKE_GDFT_CLEAN)
-
-ALL_ENABLED="$TTF_ENABLED $ALL_ENABLED"
-ALL_INC="$TTF_INC $ALL_INC"
-ALL_LIB="$TTF_LIB $ALL_LIB"
-
 
 dnl ---------------------------------------------------------------------
 dnl Find PROJ.4 ONLY IF REQUESTED.
@@ -550,36 +467,18 @@ AC_CHECKING(whether we should include OGR support...)
 AC_ARG_WITH(ogr,
 [  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).],,)
 
-if test "`basename $with_ogr`" = "gdal-config" ; then
-  GDAL_CONFIG="$with_ogr"
-fi
-
 if test "$with_ogr" = "yes" ; then
-  AC_PATH_PROG(GDAL_CONFIG, gdal-config, no)
 
-  if test "$GDAL_CONFIG" = "no" ; then
-    AC_MSG_ERROR([couldn't find gdal-config])
-  fi
-fi
-
-if test -n "$GDAL_CONFIG" ; then
-
-  saved_LIBS="$LIBS"
-  LIBS="$LIBS `gdal-config --libs`"
   AC_CHECK_LIB(gdal.1.1, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
-  LIBS="$saved_LIBS"
-
-  HAVE_GDAL_LIB=yes
 
   if test -n "$OGR_ENABLED" ; then
-      OGR_LIB="`gdal-config --libs`"
-      OGR_INC="`gdal-config --cflags`"
+      OGR_LIB="-lgdal.1.1 -ljpeg -lpng -ldl -logdi -lzlib"
       AC_MSG_RESULT([        using OGR from system libs.])
   else
       AC_MSG_WARN([        OGR not found in system libs... use --with-ogr=DIR.])
   fi
 
-elif test -n "$with_ogr" -a "$with_ogr" != "no" ; then
+elif test -n "$with_ogr" -a "$with_ogr " != "no" ; then
 
   AC_EXPAND_PATH($with_ogr, OGR_DIR)
 
@@ -601,7 +500,8 @@ dnl check for static OGR libs
   if test -n "$OGR_INCDIR" -a -n "$OGR_FRMTSDIR" -a -n "$OGR_CPLDIR" -a \
           -n "$OGR_OGRLIB" -a -n "$OGR_FRMTSLIB" -a -n "$OGR_CPLLIB" ; then 
       OGR_INC="-I$OGR_FRMTSDIR -I$OGR_INCDIR -I$OGR_CPLDIR"
-      OGR_LIB="$OGR_FRMTSLIB $OGR_OGRLIB $OGR_CPLLIB"
+      OGR_LIB=""
+      OGR_STATIC="$OGR_FRMTSLIB $OGR_OGRLIB $OGR_CPLLIB"
 
 dnl check for OGDI
       if test -n "$TOPDIR" -a -n "$TARGET" ; then
@@ -624,60 +524,12 @@ fi
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 AC_SUBST(OGR_INC,    $OGR_INC)
 AC_SUBST(OGR_LIB,    $OGR_LIB)
+AC_SUBST(OGR_STATIC, $OGR_STATIC)
 
 ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$OGR_INC $ALL_INC"
 ALL_LIB="$OGR_LIB $ALL_LIB"
-
-dnl ---------------------------------------------------------------------
-dnl Find GDAL only if requested (and not supplied by OGR)
-dnl ---------------------------------------------------------------------
-AC_MSG_CHECKING(if GDAL support requested)
-
-AC_ARG_WITH(gdal,
-[  --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config],,)
-
-if test "$with_gdal" = "yes" ; then
-
-  AC_MSG_RESULT([yes])  
-
-  if test -z "$GDAL_CONFIG" ; then
-    AC_PATH_PROG(GDAL_CONFIG, gdal-config, no)
-  fi
-
-  if test "$GDAL_CONFIG" = "no" ; then
-    AC_MSG_ERROR([couldn't find gdal-config])
-  fi
-
-elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
-
-  GDAL_CONFIG=$with_gdal
-  AC_MSG_RESULT([yes, user supplied gdal-config])  
-
-else
-
-  AC_MSG_RESULT([no])
-
-fi
-
-if test -n "$GDAL_CONFIG" ; then
-
-  if test "$HAVE_GDAL_LIB" != "yes" ; then
-    GDAL_LIB=`$GDAL_CONFIG --libs`
-  fi
-
-  GDAL_INC=`$GDAL_CONFIG --cflags`
-  GDAL_ENABLED=-DUSE_GDAL
-
-fi
-
-AC_SUBST(GDAL_ENABLED,$GDAL_ENABLED)
-AC_SUBST(GDAL_INC,    $GDAL_INC)
-AC_SUBST(GDAL_LIB,    $GDAL_LIB)
-
-ALL_ENABLED="$GDAL_ENABLED $ALL_ENABLED"
-ALL_INC="$GDAL_INC $ALL_INC"
-ALL_LIB="$GDAL_LIB $ALL_LIB"
+ALL_STATIC_LIB="$OGR_STATIC $ALL_STATIC_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that
@@ -947,7 +799,8 @@ dnl ---------------------------------------------------------------------
 AC_SUBST(ALL_ENABLED, $ALL_ENABLED)
 AC_SUBST(ALL_INC, $ALL_INC)
 AC_SUBST(ALL_LIB, $ALL_LIB)
+AC_SUBST(ALL_STATIC_LIB, $ALL_STATIC_LIB)
 AC_SUBST(RPATHS, [$RPATHS])
 
-AC_OUTPUT(Makefile $GD_MAKEFILE gdft/Makefile $PHPMS_MAKEFILE)
+AC_OUTPUT(Makefile $PHPMS_MAKEFILE)
 

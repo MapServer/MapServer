@@ -19,6 +19,7 @@ extern int loadSymbol(symbolObj *s); // in mapsymbol.c
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
 */
+static char *msOutputImageType[4]={"GIF", "PNG", "JPEG", "WBMP"};
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
 static char *msLayerTypes[6]={"POINT", "LINE", "POLYGON", "POLYLINE", "RASTER", "ANNOTATION"};
 static char *msLabelPositions[10]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO"};
@@ -669,7 +670,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       msSetError(MS_EOFERR, NULL, "loadLabel()");      
       return(-1);
     case(FONT):
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
       if((label->font = getString()) == NULL) return(-1);
 #else
       msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadlabel()");    
@@ -725,7 +726,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getInteger(&(label->shadowsizey)) == -1) return(-1);
       break;
     case(SIZE):
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
       if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	return(-1);
       if(label->size == MS_NUMBER)
@@ -804,7 +805,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     free(label->font);
     label->font = strdup(value);
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     free(label->font);
     label->font = strdup(value);
     
@@ -873,7 +874,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     break;
   case(SIZE):
     msyystate = 2; msyystring = value;
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
     if(label->size == MS_NUMBER)
       label->size = msyynumber;
@@ -2552,7 +2553,7 @@ int initMap(mapObj *map)
   map->imagecolor.green = 255;
   map->imagecolor.blue = 255;
 
-#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
+#ifdef USE_GD_GIF
   map->imagetype = MS_GIF;
 #else
   map->imagetype = MS_PNG;
@@ -2671,11 +2672,8 @@ int msSaveMap(mapObj *map, char *filename)
   if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
   fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
 
-#ifdef USE_GD_1_8
-  if(map->imagetype == MS_JPEG) fprintf(stream, "  IMAGETYPE JPEG\n");
-  if(map->imagetype == MS_WBMP) fprintf(stream, "  IMAGETYPE WBMP\n");
   fprintf(stream, "  IMAGEQUALITY %d\n", map->imagequality);
-#endif
+  fprintf(stream, "  IMAGETYPE %s\n", msOutputImageType[layer->imagetype]);
 
   fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
   if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);
@@ -2788,7 +2786,7 @@ mapObj *msLoadMap(char *filename)
 	}
       }
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
       if(msLoadFontSet(&(map->fontset)) == -1) return(NULL);
 #endif
 
@@ -2811,14 +2809,12 @@ mapObj *msLoadMap(char *filename)
       if(getInteger(&(map->imagecolor.green)) == -1) return(NULL);
       if(getInteger(&(map->imagecolor.blue)) == -1) return(NULL);
       break; 
-#ifdef USE_GD_1_8
     case(IMAGEQUALITY):
       if(getInteger(&(map->imagequality)) == -1) return(NULL);
       break;
     case(IMAGETYPE):
-      if((map->imagetype = getSymbol(3, MS_PNG,MS_JPEG,MS_WBMP)) == -1) return(NULL);
+      if((map->imagetype = getSymbol(4, MS_GIF, MS_PNG,MS_JPEG,MS_WBMP)) == -1) return(NULL);
       break;
-#endif
     case(INTERLACE):
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
       break;
@@ -2925,16 +2921,14 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getInteger(&(map->imagecolor.green)) == -1) break;
       if(getInteger(&(map->imagecolor.blue)) == -1) break;
       break;
-#ifdef USE_GD_1_8
     case(IMAGEQUALITY):
       msyystate = 2; msyystring = value;
       if(getInteger(&(map->imagequality)) == -1) break;
       break;
     case(IMAGETYPE):
       msyystate = 2; msyystring = value;
-      if((map->imagetype = getSymbol(3, MS_PNG,MS_JPEG,MS_WBMP)) == -1) break;
+      if((map->imagetype = getSymbol(4, MS_GIF,MS_PNG,MS_JPEG,MS_WBMP)) == -1) break;
       break;
-#endif
     case(LAYER):      
       if(getInteger(&i) == -1) break;
       if(i>=map->numlayers || i<0) break;

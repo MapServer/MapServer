@@ -255,6 +255,8 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   layerObj *lp;
   int status;
   
+  rectObj searchrect;
+
   shapeObj shape;
 
   if(qlayer < 0 || qlayer >= map->numlayers) {
@@ -274,7 +276,12 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   if(status != MS_SUCCESS) return(MS_FAILURE);
   
   // identify target shapes
-  status = msLayerWhichShapes(lp, map->shapepath, map->extent, &(map->projection));
+  searchrect = map->extent;
+#ifdef USE_PROJ     
+  if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+    msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+#endif
+  status = msLayerWhichShapes(lp, map->shapepath, searchrect);
   if(status != MS_SUCCESS) {
     msLayerClose(lp);
     return(MS_FAILURE);
@@ -319,12 +326,13 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
   layerObj *lp;
 
   char status;
-  shapeObj shape, search_shape;
+  shapeObj shape, searchshape;
+  rectObj searchrect;
 
   msInitShape(&shape);
-  msInitShape(&search_shape);
+  msInitShape(&searchshape);
 
-  msRectToPolygon(rect, &search_shape);
+  msRectToPolygon(rect, &searchshape);
 
   if(qlayer < 0 || qlayer >= map->numlayers)
     start = map->numlayers-1;
@@ -359,7 +367,12 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
-    status = msLayerWhichShapes(lp, map->shapepath, rect, &(map->projection));
+    searchrect = rect;
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+#endif
+    status = msLayerWhichShapes(lp, map->shapepath, searchrect);
     if(status != MS_SUCCESS) {
       msLayerClose(lp);
       return(MS_FAILURE);
@@ -383,18 +396,23 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 	continue;
       }
 
+#ifdef USE_PROJ
+      if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(lp->projection.proj, map->projection.proj, shape);
+#endif
+
       if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
 	status = MS_TRUE;
       } else {
 	switch(shape.type) { // make sure shape actually intersects the rect (ADD FUNCTIONS SPECIFIC TO RECTOBJ)
 	case MS_POINT:
-	  status = msIntersectMultipointPolygon(&shape.line[0], &search_shape);
+	  status = msIntersectMultipointPolygon(&shape.line[0], &searchshape);
 	  break;
 	case MS_LINE:
-	  status = msIntersectPolylinePolygon(&shape, &search_shape);
+	  status = msIntersectPolylinePolygon(&shape, &searchshape);
 	  break;
 	case MS_POLYGON:
-	  status = msIntersectPolygons(&shape, &search_shape);
+	  status = msIntersectPolygons(&shape, &searchshape);
 	  break;
 	default:
 	  break;
@@ -418,7 +436,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     msLayerClose(lp);
   } // next layer
  
-  msFreeShape(&search_shape);
+  msFreeShape(&searchshape);
  
   // was anything found?
   for(l=start; l>=stop; l--) {    
@@ -440,7 +458,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   layerObj *lp;
 
   char status;
-  rectObj rect;
+  rectObj rect, searchrect;
   shapeObj shape;
 
   msDebug("in msQueryByPoint()...\n");
@@ -497,7 +515,12 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
-    status = msLayerWhichShapes(lp, map->shapepath, rect, &(map->projection));
+    searchrect = rect;
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+#endif
+    status = msLayerWhichShapes(lp, map->shapepath, rect);
     if(status != MS_SUCCESS) { 
       msLayerClose(lp);
       return(MS_FAILURE);
@@ -519,6 +542,11 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 	msFreeShape(&shape);
 	continue;
       }
+
+#ifdef USE_PROJ
+      if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(lp->projection.proj, map->projection.proj, shape);
+#endif
 
       if(shape.type == MS_POINT)
 	d = msDistanceFromPointToMultipoint(&p, &shape.line[0]);
@@ -570,15 +598,16 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   return(MS_FAILURE);
 }
 
-int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
+int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
 {
   int start, stop=0, i, l;
   shapeObj shape;
   layerObj *lp;
   char status;
+  rectObj searchrect;
 
-  // FIX: do some checking on search_shape here...
-  if(search_shape->type != MS_POLYGON) {
+  // FIX: do some checking on searchshape here...
+  if(searchshape->type != MS_POLYGON) {
     msSetError(MS_MISCERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
     return(MS_FAILURE);
   }
@@ -588,7 +617,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
   else
     start = stop = qlayer;
 
-  msComputeBounds(search_shape); // make sure an accurate extent exists
+  msComputeBounds(searchshape); // make sure an accurate extent exists
  
   for(l=start; l>=stop; l--) { /* each layer */
     lp = &(map->layers[l]);
@@ -618,7 +647,12 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
-    status = msLayerWhichShapes(lp, map->shapepath, search_shape->bounds, &(map->projection));
+    searchrect = searchshape->bounds;
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+#endif
+    status = msLayerWhichShapes(lp, map->shapepath, searchrect, &(map->projection));
     if(status != MS_SUCCESS) {
       msLayerClose(lp);
       return(MS_FAILURE);
@@ -642,15 +676,20 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
 	continue;
       }
 
+#ifdef USE_PROJ
+      if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(lp->projection.proj, map->projection.proj, shape);
+#endif
+
       switch(shape.type) { // make sure shape actually intersects the shape
       case MS_POINT:
-	status = msIntersectMultipointPolygon(&shape.line[0], search_shape);	
+	status = msIntersectMultipointPolygon(&shape.line[0], searchshape);	
 	break;
       case MS_LINE:
-	status = msIntersectPolylinePolygon(&shape, search_shape);
+	status = msIntersectPolylinePolygon(&shape, searchshape);
 	break;
       case MS_POLYGON:
-	status = msIntersectPolygons(&shape, search_shape);
+	status = msIntersectPolygons(&shape, searchshape);
 	break;
       default:
 	break;

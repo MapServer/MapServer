@@ -1004,23 +1004,16 @@ void msSHPCloseFile(shapefileObj *shpfile)
   if(shpfile->status) free(shpfile->status);
 }
 
-char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, projectionObj *in, projectionObj *out)
+char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
 {
   int i;
-  rectObj shaperect, searchrect;
+  rectObj shaperect;
   char *status=NULL;
   char *filename;
 
-  searchrect = rect;
-
-#ifdef USE_PROJ     
-  if((in->numargs > 0) && (out->numargs > 0))
-    msProjectRect(out->proj, in->proj, &searchrect); // project the searchrect to shapefile coords
-#endif
-
   // FIX: need an overlap test here (i.e. rect and shapefile DON"T overlap)...
 
-  if(msRectContained(&shpfile->bounds, &searchrect) == MS_TRUE) {
+  if(msRectContained(&shpfile->bounds, &rect) == MS_TRUE) {
     status = msAllocBitArray(shpfile->numshapes);
     if(!status) {
       msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");
@@ -1035,11 +1028,11 @@ char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, projectionObj *in, p
     }
     sprintf(filename, "%s%s", shpfile->source, MS_INDEX_EXTENSION);
     
-    status = msSearchDiskTree(filename, searchrect);
+    status = msSearchDiskTree(filename, rect);
     free(filename);
 
     if(status) // index 
-      msFilterTreeSearch(shpfile, status, searchrect);
+      msFilterTreeSearch(shpfile, status, rect);
     else { // no index 
       status = msAllocBitArray(shpfile->numshapes);
       if(!status) {
@@ -1049,7 +1042,7 @@ char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, projectionObj *in, p
       
       for(i=0;i<shpfile->numshapes;i++) {
 	if(!msSHPReadBounds(shpfile->hSHP, i, &shaperect))
-	  if(msRectOverlap(&shaperect, &searchrect) == MS_TRUE)
+	  if(msRectOverlap(&shaperect, &rect) == MS_TRUE)
 	    msSetBit(status, i, 1);
       }
     }   
@@ -1066,12 +1059,12 @@ int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
   return(MS_SUCCESS);
 }
 
-int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj)
+int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 {
   int i;
   char *filename, tilename[MS_PATH_LENGTH];
 
-  layer->tileshpfile.status = msSHPWhichShapes(&(layer->tileshpfile), rect, &(layer->projection), proj);
+  layer->tileshpfile.status = msSHPWhichShapes(&(layer->tileshpfile), rect);
   if(!(layer->tileshpfile.status)) return(MS_FAILURE);
 
   // position the source at the FIRST shapefile
@@ -1098,7 +1091,7 @@ int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projec
     }
   }
 
-  layer->shpfile.status = msSHPWhichShapes(&(layer->shpfile), rect, &(layer->projection), proj);
+  layer->shpfile.status = msSHPWhichShapes(&(layer->shpfile), rect);
   if(!(layer->shpfile.status)) return(MS_FAILURE);
 
   return(MS_SUCCESS);

@@ -300,7 +300,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
   // layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
   layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
   layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
   if(layer->class[c].label.type == MS_TRUETYPE) { 
     layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
     layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
@@ -716,7 +716,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     // layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
     layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
     layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     if(layer->class[i].label.type == MS_TRUETYPE) { 
       layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
       layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
@@ -797,6 +797,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   shapeObj shape;
   double scalefactor=1;
 
+  rectObj searchrect;
+
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
   if(layer->type == MS_RASTER) return(msDrawRasterLayer(map, layer, img));
@@ -825,7 +827,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     // layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
     layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
     layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     if(layer->class[i].label.type == MS_TRUETYPE) { 
       layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
       layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
@@ -843,7 +845,12 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // identify target shapes
-  status = msLayerWhichShapes(layer, map->shapepath, map->extent, &(map->projection));
+  searchrect = map->extent;
+#ifdef USE_PROJ
+  if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+    msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+#endif
+  status = msLayerWhichShapes(layer, map->shapepath, searchrect, &(map->projection));
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // step through the target shapes
@@ -898,49 +905,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 /*
 ** Save an image to a file named filename, if filename is NULL it goes to stdout
 */
-#ifndef USE_GD_1_8 
-int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace)
-{
-  FILE *stream;
 
-  if(filename != NULL && strlen(filename) > 0) {
-    stream = fopen(filename, "wb");
-    if(!stream) {
-      sprintf(ms_error.message, "(%s)", filename);
-      msSetError(MS_IOERR, ms_error.message, "msSaveImage()");      
-      return(MS_FAILURE);
-    }
-  } else { /* use stdout */
-    
-#ifdef _WIN32
-    /*
-    ** Change stdout mode to binary on win32 platforms
-    */
-    if(_setmode( _fileno(stdout), _O_BINARY) == -1) {
-      msSetError(MS_IOERR, "Unable to change stdout to binary mode.", "msSaveImage()");
-      return(MS_FAILURE);
-    }
-#endif
-    stream = stdout;
-  }
-
-  if(interlace)
-    gdImageInterlace(img, 1);
-
-  if(transparent)
-    gdImageColorTransparent(img, 0);
-
-#ifndef USE_GD_1_6 
-  gdImageGif(img, stream);
-#else	
-  gdImagePng(img, stream);
-#endif
-  
-  if(filename != NULL && strlen(filename) > 0) fclose(stream);
-
-  return(MS_SUCCESS);
-}
-#else
 int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality)
 {
   FILE *stream;
@@ -972,18 +937,48 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
   if(transparent)
     gdImageColorTransparent(img, 0);
 
-  if(type == MS_PNG)
+  switch(type) {
+  case(MS_GIF):
+#ifdef MS_GD_GIF
+    gdImageGif(img, stream);
+#else
+    msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImage()");
+    return(MS_FAILURE);
+#endif
+    break;
+  case(MS_PNG):
+#ifdef MS_GD_PNG
     gdImagePng(img, stream);
-  else if(type == MS_JPEG)
+#else
+    msSetError(MS_MISCERR, "PNG output is not available.", "msSaveImage()");
+    return(MS_FAILURE);
+#endif
+    break;
+  case(MS_JPEG):
+#ifdef MS_GD_JPEG
     gdImageJpeg(img, stream, quality);
-  else
+#else
+     msSetError(MS_MISCERR, "JPEG output is not available.", "msSaveImage()");
+     return(MS_FAILURE);
+#endif
+     break;
+  case(MS_WBMP):
+#ifdef MS_GD_WBMP
     gdImageWBMP(img, 1, stream);
+#else
+    msSetError(MS_MISCERR, "WBMP output is not available.", "msSaveImage()");
+    return(MS_FAILURE);
+#endif
+    break;
+  default:
+    msSetError(MS_MISCERR, "Unknown output image type.", "msSaveImage()");
+    return(MS_FAILURE);
+  }
 
   if(filename != NULL && strlen(filename) > 0) fclose(stream);
 
   return(MS_SUCCESS);
 }
-#endif
 
 void msFreeImage(gdImagePtr img)
 {

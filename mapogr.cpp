@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2001/03/02 05:42:43  sdlime
+ * Checking in Dan's new configure stuff. Updated code to essentially be GD versionless. Needs lot's of testing.
+ *
  * Revision 1.19  2001/03/02 05:05:19  dan
  * Fixed problem reading LOCAL_CS SpatialRef. Handle as if no PROJECTION was set
  *
@@ -853,8 +856,7 @@ int msOGRLayerClose(layerObj *layer)
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, 
-                          rectObj rect, projectionObj *proj) 
+int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect) 
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;

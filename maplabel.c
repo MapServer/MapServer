@@ -7,13 +7,15 @@
 #include <gdfontmb.h>
 #include <gdfontg.h>
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
 #include <gdcache.h>
 #include <gdttf.h>
 #include "freetype.h"
 #endif
 
 #include "map.h"
+
+// FIX: need to be handle the label wrapping
 
 #define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
@@ -93,7 +95,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
 
 int msLoadFontSet(fontSetObj *fontset) 
 {
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH];
   char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
@@ -159,7 +161,7 @@ int msLoadFontSet(fontSetObj *fontset)
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset) /* assumes an angle of 0 */
 {
   if(label->type == MS_TRUETYPE) {
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     int bbox[8];
     char *error=NULL, *font=NULL;
 
@@ -170,7 +172,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
       return(-1);
     }
 
-    error = imageStringTTF(NULL, bbox, 0, font, label->sizescaled, 0, 0, 0, string, label->wrap);
+    error = gdImageStringFT(NULL, bbox, 0, font, label->sizescaled, 0, 0, 0, string);
     if(error) {
       msSetError(MS_TTFERR, error, "msGetLabelSize()");
       return(-1);
@@ -346,7 +348,7 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     char *error=NULL, *font=NULL;
     int bbox[8];
 
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
     if(!fontset) {
       msSetError(MS_TTFERR, "No fontset defined.", "draw_text()");
       return(-1);
@@ -365,25 +367,25 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     }
 
     if(label->outlinecolor >= 0) { /* handle the outline color */
-      error = imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y-1, string, label->wrap);
+      error = gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y-1, string);
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
 	return(-1);
       }
-      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y+1, string, label->wrap);
-      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y+1, string, label->wrap);
-      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y-1, string, label->wrap);
+      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y+1, string);
+      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y+1, string);
+      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y-1, string);
     }
 
     if(label->shadowcolor >= 0) { /* handle the shadow color */
-      error = imageStringTTF(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, label->angle, x+label->shadowsizex, y+label->shadowsizey, string, label->wrap);
+      error = gdImageStringFT(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, label->angle, x+label->shadowsizex, y+label->shadowsizey, string);
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
 	return(-1);
       }
     }
 
-    imageStringTTF(img, bbox, label->antialias*label->color, font, label->sizescaled, label->angle, x, y, string, label->wrap);
+    gdImageStringFT(img, bbox, label->antialias*label->color, font, label->sizescaled, label->angle, x, y, string);
     
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "draw_text()");
@@ -778,7 +780,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
 int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
 {
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
   return(0);
 #else
   msSetError(MS_TTFERR, "TrueType font support is not available.", "msImageTruetypeArrow()");
@@ -788,7 +790,7 @@ int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, i
 
 int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
 {
-#ifdef USE_TTF
+#ifdef USE_GD_TTF
   int i,j;
   double theta, length, current_length;
   labelObj label;

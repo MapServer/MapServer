@@ -39,6 +39,7 @@ extern char *msyystring;
 
 #define NUMGRAYS 16
 
+// FIX: need WBMP sig
 unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 
@@ -590,13 +591,8 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	  xi=MS_NINT(x);
 	  vv=buf[xi+boffset];  
 	  
-#ifndef USE_GD_1_2
 	  if (cmap[vv] != -1) 
 	    img->pixels[i][j] = cmap[vv];
-#else
-	  if (cmap[vv] != -1) 
-	    img->pixels[j][i] = cmap[vv];
-#endif
 	  
 	  x+=skipx;
         }
@@ -607,13 +603,8 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
           xi=MS_NINT(x);
           vv=(buf[(xi >> 1) + boffset] >> (4*((yi+1) & 1))) & 15;
 
-#ifndef USE_GD_1_2
 	  if (cmap[vv] != -1) 
 	    img->pixels[i][j] = cmap[vv];
-#else
-	  if (cmap[vv] != -1) 
-	    img->pixels[j][i] = cmap[vv];
-#endif
 
 	  x+=skipx;
 	}  
@@ -624,13 +615,8 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
           xi=MS_NINT(x);    
           vv=(buf[(xi >> 3) + boffset] >> (7-(xi & 7))) & 1;         
 
-#ifndef USE_GD_1_2
 	  if (cmap[vv] != -1) 
 	    img->pixels[i][j] = cmap[vv];
-#else
-	  if (cmap[vv] != -1) 
-	    img->pixels[j][i] = cmap[vv];
-#endif
 
 	  x+=skipx;
 	}  
@@ -651,7 +637,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 
 static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
-#if ! defined (USE_GD_1_2) && ! defined (USE_GD_1_3)
+#ifdef USE_GD_PNG
   int i,j; /* loop counters */
   double x,y;
   int cmap[MAXCOLORS];
@@ -754,7 +740,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
 static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
-#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
+#ifdef USE_GD_GIF
   int i,j; /* loop counters */
   double x,y;
   int cmap[MAXCOLORS];
@@ -837,17 +823,9 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       x = startx;
       for(j=0; j<img->sx; j++) {
 	if((x >= 0) && (x < w)) {
-
-#ifndef USE_GD_1_2
 	  pixel = gif->pixels[MS_NINT(y)][MS_NINT(x)];	  
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
-#else
-	  pixel = gif->pixels[MS_NINT(x)][MS_NINT(y)];
-	  if(cmap[pixel] != -1)
-	    img->pixels[j][i] = cmap[pixel];
-#endif
-
 	}
 	x+=skipx;
       }
@@ -959,11 +937,7 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	if((x >= 0) && (x < cinfo.output_width)) {
 	  pixel = buffer[0][MS_NINT(x)];
 	  if(cmap[pixel] != -1)
-#ifndef USE_GD_1_2
 	    img->pixels[i][j] = cmap[pixel];
-#else
-	    img->pixels[j][i] = cmap[pixel];
-#endif
 	}
 	x+=skipx;
 	if(x>=cinfo.output_width) // next x is out of the image, so quit
@@ -1124,13 +1098,8 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
           else vv=(pb[vv >> 1]) & 15;
         }  
         
-#ifndef USE_GD_1_2
 	if(cmap[vv] != -1)
 	  img->pixels[i][j] = cmap[vv];
-#else
-	if(cmap[vv] != -1)
-	  img->pixels[j][i] = cmap[vv];
-#endif
 
        x+=skipx;
       }
@@ -1648,9 +1617,7 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   int c=-1, oc=-1;
   int x1,y1,x2,y2;
 
-#ifdef USE_GD_1_8
   char bytes[8];
-#endif
 
   /* Allocate input and output images (same size) */
   stream = fopen(map->reference.image,"rb");
@@ -1660,27 +1627,36 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
     return(NULL);
   }
 
-#ifdef USE_GD_1_8
   fread(bytes,8,1,stream); // read some bytes to try and identify the file
   rewind(stream); // reset the image for the readers
-  if (memcmp(bytes,PNGsig,8)==0) {
+  if (memcmp(bytes,"GIF8",4)==0) {
+#ifdef USE_GD_GIF
+    img = gdImageCreateFromGif(stream);
+    map->reference.imagetype = MS_GIF;
+#else
+    msSetError(MS_MISCERR, "Unable to load GIF reference image.", "msDrawReferenceMap()");
+    fclose(stream);
+    return(NULL);
+#endif
+  } else if (memcmp(bytes,PNGsig,8)==0) {
+#ifdef USE_GD_PNG
     img = gdImageCreateFromPng(stream);
     map->reference.imagetype = MS_PNG;
-  } else {
+#else
+    msSetError(MS_MISCERR, "Unable to load PNG reference image.", "msDrawReferenceMap()");
+    fclose(stream);
+    return(NULL);
+#endif
+  } else if (memcmp(bytes,JPEGsig,3)==0) {
+#ifdef USE_GD_JPEG
     img = gdImageCreateFromJpeg(stream);
     map->reference.imagetype = MS_JPEG;
+#else
+    msSetError(MS_MISCERR, "Unable to load JPEG reference image.", "msDrawReferenceMap()");
+    fclose(stream);
+    return(NULL);
+#endif
   }
-#endif
-
-#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
-  img = gdImageCreateFromGif(stream);
-  map->reference.imagetype = MS_GIF;
-#endif
-
-#ifdef USE_GD_1_6
-  img = gdImageCreateFromPng(stream);
-  map->reference.imagetype = MS_PNG;
-#endif
 
   if(!img) {
     msSetError(MS_GDERR, "Unable to initialize image.", "msDrawReferenceMap()");

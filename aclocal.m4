@@ -13,6 +13,23 @@ AC_DEFUN(AC_EXPAND_PATH,[
 ])
 
 
+dnl
+dnl AC_PARSE_WITH_LIB_STATIC(with_param, out_libpath, out_isstatic)
+dnl
+dnl parse a --with-lib=[static,]/path/to/lib string, and set out_libpath 
+dnl with the library path, and out_isstatic=yes if "static," was there.
+dnl
+AC_DEFUN(AC_PARSE_WITH_LIB_STATIC,[
+  if echo "$1" | grep '^static,' >/dev/null ; then
+    $2=`echo "$1" | sed "s/^static,//"`
+    $3=yes
+  else
+    $2=$1
+    $3=no
+  fi
+])
+
+
 
 AC_DEFUN(AC_COMPILER_WFLAGS,
 [
@@ -67,7 +84,6 @@ AC_DEFUN(AC_COMPILER_PIC,
 
 	AC_SUBST(C_PIC,$C_PIC)
 ])
-
 
 
 dnl

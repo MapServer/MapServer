@@ -23,13 +23,6 @@ IGNORE_MISSING_DATA = @IGNORE_MISSING_DATA@
 # STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
 STRINGS= @STRINGS@
 
-# Freetype distribution (TrueType font support). Available at http://www.freetype.org/. (RECOMMENDED)
-TTF_LIB=   @TTF_LIB@
-TTF_INC=   @TTF_INC@
-TTF=       @TTF_ENABLED@
-MAKE_GDFT= @MAKE_GDFT@
-MAKE_GDFT_CLEAN= @MAKE_GDFT_CLEAN@
-
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
 PROJ_INC= @PROJ_INC@
 PROJ_LIB= @PROJ_LIB@
@@ -48,8 +41,7 @@ GDFONT_OBJ=gd-1.2/gdfontt.o gd-1.2/gdfonts.o gd-1.2/gdfontmb.o gd-1.2/gdfontl.o 
 GD_INC=  @GD_INC@
 GD_LIB=  @GD_LIB@
 GD=      @GD_DEF@
-MAKE_GD= @MAKE_GD@
-MAKE_GD_CLEAN = @MAKE_GD_CLEAN@
+GD_STATIC = @GD_STATIC@
 
 # TIFF distribution (raster support for TIFF and GEOTIFF imagery). (RECOMMENDED)
 TIFF_INC= @TIFF_INC@
@@ -78,13 +70,7 @@ SDE_INC=  @SDE_INC@
 OGR=	  @OGR_ENABLED@
 OGR_LIB=  @OGR_LIB@
 OGR_INC=  @OGR_INC@
-
-# Optional GDAL Support (provides read access to a variety of raster formats)
-# See http://www.remotesensing.org/gdal
-GDAL=	  @GDAL_ENABLED@
-GDAL_LIB=  @GDAL_LIB@
-GDAL_INC=  @GDAL_INC@
-
+OGR_STATIC= @OGR_STATIC@
 #
 # UofMN GIS/Image Processing Extension (very experimental)
 #
@@ -116,14 +102,16 @@ YACC=   @YACC@
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
-CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) \
-        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(MPATROL) $(GD_INC) \
-	$(PROJ_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
-	$(REGEX_INC) $(MPATROL_INC) $(GDAL_INC)
+CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) \
+        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(MPATROL) $(GD_INC) $(PROJ_INC) \
+	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) $(REGEX_INC) $(MPATROL_INC)
 
-LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TTF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
-          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
-	$(MPATROL_LIB) $(XTRALIBS)
+# Link flags and shared libs only
+LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TIFF_LIB) $(PROJ_LIB) \
+          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(MPATROL_LIB) $(XTRALIBS)
+
+# STATIC_LIBS is full filename with path of libs that will be statically linked
+STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
 
 RM= /bin/rm -f
 
@@ -135,14 +123,8 @@ OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o
 .c.o: 
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: $(MAKE_GD) $(MAKE_EGIS) $(MAKE_GDFT) libmap.a shp2img legend \
+all: $(MAKE_GD) $(MAKE_EGIS) libmap.a shp2img legend \
 	mapserv shptree shptreevis shptreetst scalebar sortshp perlvars @MAKE_PHPMS@
-
-gd::
-	cd gd-1.2; make; cd ..
-
-gdft::
-	cd gdft; make; cd ..
 
 egis::
 	cd egis/errLog; make; cd ..
@@ -172,48 +154,43 @@ libmap.a: map.h $(OBJS) map.h
 	$(RANLIB) libmap.a
 
 shp2img: libmap.a  shp2img.o map.h
-	$(CC) $(CFLAGS) shp2img.o $(LDFLAGS) -o shp2img
+	$(CC) $(CFLAGS) shp2img.o $(LDFLAGS) $(STATIC_LIBS) -o shp2img
 
 sym2img: libmap.a   sym2img.o map.h
-	$(CC) $(CFLAGS) sym2img.o $(LDFLAGS) -o sym2img
+	$(CC) $(CFLAGS) sym2img.o $(LDFLAGS) $(STATIC_LIBS) -o sym2img
 
 legend: libmap.a  legend.o map.h
-	$(CC) $(CFLAGS) legend.o $(LDFLAGS) -o legend
+	$(CC) $(CFLAGS) legend.o $(LDFLAGS) $(STATIC_LIBS) -o legend
 
 scalebar: libmap.a  scalebar.o map.h
-	$(CC) $(CFLAGS) scalebar.o $(LDFLAGS) -o scalebar
+	$(CC) $(CFLAGS) scalebar.o $(LDFLAGS) $(STATIC_LIBS) -o scalebar
 
 mapserv: mapserv.h libmap.a  mapserv.o cgiutil.o map.h
-	$(CC) $(CFLAGS) mapserv.o cgiutil.o  $(LDFLAGS) -o mapserv
+	$(CC) $(CFLAGS) mapserv.o cgiutil.o  $(LDFLAGS) $(STATIC_LIBS) -o mapserv
 
 shpindex: libmap.a shpindex.o map.h
-	$(CC) $(CFLAGS) shpindex.o $(LDFLAGS) -o shpindex
+	$(CC) $(CFLAGS) shpindex.o $(LDFLAGS) $(STATIC_LIBS) -o shpindex
 
 shptree: libmap.a shptree.o map.h
-	$(CC) $(CFLAGS) shptree.o $(LDFLAGS) -o shptree
+	$(CC) $(CFLAGS) shptree.o $(LDFLAGS) $(STATIC_LIBS) -o shptree
 
 shptreevis: libmap.a shptreevis.o map.h
-	$(CC) $(CFLAGS) shptreevis.o $(LDFLAGS) -o shptreevis
+	$(CC) $(CFLAGS) shptreevis.o $(LDFLAGS) $(STATIC_LIBS) -o shptreevis
 
 shptreetst: libmap.a shptreetst.o map.h
-	$(CC) $(CFLAGS) shptreetst.o $(LDFLAGS) -o shptreetst
+	$(CC) $(CFLAGS) shptreetst.o $(LDFLAGS) $(STATIC_LIBS) -o shptreetst
 
 sortshp: sortshp.o
-	$(CC) $(CFLAGS) sortshp.o $(LDFLAGS) -o sortshp
+	$(CC) $(CFLAGS) sortshp.o $(LDFLAGS) $(STATIC_LIBS) -o sortshp
 
 perlvars:
 	touch perlvars
 	pwd > perlvars
-	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) >> perlvars
-	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) >> perlvars
+	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) >> perlvars
+	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) >> perlvars
 	echo $(LDFLAGS) >> perlvars
+	echo $(STATIC_LIBS) >> perlvars
 
-gd_clean:
-	cd gd-1.2; make clean; cd ..
- 
-gdft_clean:
-	cd gdft; make clean; cd ..
- 
 egis_clean:
 	cd egis/errLog; make clean; cd ..
 	cd egis/imgSrc; make clean; cd ..
@@ -222,7 +199,7 @@ egis_clean:
 php3_mapscript_clean::
 	cd mapscript/php3; make clean; cd ../..
 
-clean:	$(MAKE_GD_CLEAN) $(MAKE_GDFT_CLEAN) $(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
+clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
 	rm -f libmap.a *.o shp2img mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars
 
 sorta-clean:
