@@ -296,6 +296,8 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   lp->resultcache->bounds = shape.bounds;
     
   msFreeShape(&shape);
+  msLayerClose(lp);
+
   return(MS_SUCCESS);
 }
 
@@ -367,6 +369,10 @@ int msQueryByAttributes(mapObj *map, int qlayer)
     
     msFreeShape(&shape);
   }
+
+  if(status != MS_DONE) return(MS_FAILURE);
+  
+  msLayerClose(lp);
 
   // was anything found? 
   if(lp->resultcache && lp->resultcache->numresults > 0)
