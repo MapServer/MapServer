@@ -15,7 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta4?
 --------------------
 
-- WMS GetCapbilities : Service online resource was not url encoded (bug 1093)
+- WCS GetCapabilities : Added ResponsibleParty support.
+
+- WMS GetCapabilities : Service online resource was not url encoded (bug 1093)
  
 - Fixed php mapscript problem with wfs_filter selection : Bug 1092.
 
