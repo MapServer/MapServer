@@ -18,6 +18,10 @@ Version 3.6.3-dev
 
 - Fixed problem with numeric labels with OGR's STYLEITEM AUTO (bug 185)
 
+- PHP MapScript: fixed set() method on all object types for parameters
+  of type float and string.  The param value was not forced to the right
+  type and this could lead to unexpected values being set or crashes.
+
 
 Version 3.6.2 (2002-07-08)
 --------------------------
