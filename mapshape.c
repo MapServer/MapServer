@@ -1040,10 +1040,10 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
 	
 	msProjectPoint(in->proj, out->proj, &shape->line[0].point[i]);
 
-	shape->bounds.minx = MS_MIN(shape->bounds.minx, shape->line[i].point[j].x);
-	shape->bounds.miny = MS_MIN(shape->bounds.miny, shape->line[i].point[j].y);
-	shape->bounds.maxx = MS_MAX(shape->bounds.maxx, shape->line[i].point[j].x);
-	shape->bounds.maxy = MS_MAX(shape->bounds.maxy, shape->line[i].point[j].y);
+	shape->bounds.minx = MS_MIN(shape->bounds.minx, shape->line[0].point[i].x);
+	shape->bounds.miny = MS_MIN(shape->bounds.miny, shape->line[0].point[i].y);
+	shape->bounds.maxx = MS_MAX(shape->bounds.maxx, shape->line[0].point[i].x);
+	shape->bounds.maxy = MS_MAX(shape->bounds.maxy, shape->line[0].point[i].y);
       }
 
       shape->type = MS_POINT;
