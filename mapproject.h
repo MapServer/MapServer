@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/02/17 17:55:19  frank
+ * ignore USE_PROJ_API_H, just always use proj_api.h
+ *
  * Revision 1.24  2004/11/16 21:56:18  dan
  * msGetEPSGProj() obsolete, replaced by msOWSGetEPSGProj() (bug 568)
  *
@@ -46,12 +49,7 @@ extern "C" {
 #endif
 
 #ifdef USE_PROJ
-#  ifdef USE_PROJ_API_H
-#    include <proj_api.h>
-#  else
-#    include <projects.h>
-     typedef PJ *projPJ;
-#  endif
+#  include <proj_api.h>
 #endif
 
 

@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- mapproject.h/configure.in: Don't check for USE_PROJ_API_H anymore.  Assume 
+  we have a modern PROJ.4.
+
 - Bug 839: Fix memory leak of font name in label cache (in mapfile.c). 
 
 - Added msForceTmpFileBase() and mapserv -tmpbase switch to allow overriding
