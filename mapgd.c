@@ -72,6 +72,8 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   
   icp->img = img;
   icp->color = style->color;
+  icp->outlinecolor = style->outlinecolor;
+  icp->backgroundcolor = style->backgroundcolor;
   icp->symbol = style->symbol;
   icp->size = size;
   icp->next = ic; // insert at the beginning
