@@ -1862,17 +1862,32 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       }
     }
     
-    if (memcmp(dd,JPEGsig,3)==0) {
-      if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
+    if (memcmp(dd,JPEGsig,3)==0) 
+    {
+      if((layer->transform && 
+          msProjectionsDiffer(&(map->projection), &(layer->projection))) ||
+          layer->connectiontype == MS_WMS )
+      {
+        // If reprojection requested, or layer is a WMS connection then we
+        // want to delegate JPEG drawing to GDAL because drawJPEG() supports
+        // only greyscale jpegs and doesn't support reprojections.
+#ifdef USE_GDAL
+        // Do nothing here... GDAL will pick the image later.
+#else
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( JPEG )");
         return(-1);
+#endif
       }
-      status = drawJPEG(map, layer, img, filename);
-      if(status == -1) {
-	chdir(old_path); /* restore old cwd */
-	return(-1);
+      else
+      {
+        // No reprojection and not a WMS connection
+        status = drawJPEG(map, layer, img, filename);
+        if(status == -1) {
+	  chdir(old_path); /* restore old cwd */
+          return(-1);
+        }
+        continue;
       }
-      continue;
     }
 
     if (memcmp(dd,"HEAD",4)==0) {
