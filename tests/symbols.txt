@@ -7,3 +7,10 @@ SYMBOL
       1 1 
     END 
 END
+
+SYMBOL
+    NAME 'xmarks-png'
+    TYPE PIXMAP
+    IMAGE 'xmarks.png'
+END
+

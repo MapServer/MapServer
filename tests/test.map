@@ -1,6 +1,7 @@
 MAP
   NAME "Testing"
   EXTENT -0.5 50.977222 0.5 51.977222
+  #IMAGETYPE PNG24
   IMAGETYPE PNG
   IMAGECOLOR 255 255 255
   STATUS ON
@@ -168,6 +169,26 @@ MAP
         COLOR 0 0 0
         SYMBOL 1
         SIZE 3
+      END
+    END
+  END
+
+  LAYER
+    NAME "INLINE-PIXMAP"
+    TYPE POINT
+    DEBUG ON
+    PROJECTION
+      "init=epsg:4326"
+    END
+    STATUS DEFAULT
+    FEATURE
+      POINTS 0.2 51.5 END
+    END
+    CLASS
+      NAME "0"
+      STYLE
+        SYMBOL 'xmarks-png'
+        SIZE 24
       END
     END
   END
