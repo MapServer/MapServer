@@ -1,6 +1,20 @@
                     PHP/MapScript Mapserver Module
                     ==============================
 
+--------------------------------------------------------------------
+IMPORTANT - READ THIS FIRST:
+
+  The Win32 build process is not very friendly for unexperienced users.
+  So it is strongly recommended that you use one of the precompiled 
+  versions of php_mapscript.dll available on DM Solutions Group's web site:
+     http://www2.dmsolutions.ca/mapserver/dl/
+
+  If for some reason you still decide to compile Win32 binaries yourself,
+  then don't do it unless you really know what you're doing... and
+  hopefully the rest of this file contains some hints that may help 
+  you.  Good Luck!
+--------------------------------------------------------------------
+
 This file contains informations specific to building the PHP/MapScript
 extension on Windows using MSVC++ 6.0.  
 
@@ -12,25 +26,35 @@ PHP/MapScript extension.
 Step 1: Build the PHP.LIB import library
 =======
 
-Before you can build the 'php3_mapscript.dll' extension, you need the 
-PHP.LIB import library.  To build PHP.LIB, you will have to download the 
-php_3.0.14.tar.gz source code, and follow the instructions in the
-README.WIN32 file in there to build php.exe with MSVC++ 6.0.
+ *** PHP3 ***
+ Before you can build the 'php3_mapscript.dll' extension, you need the 
+ PHP.LIB import library.  To build PHP.LIB, you will have to download the 
+ php_3.0.14.tar.gz source code, and follow the instructions in the
+ README.WIN32 file in there to build php.exe with MSVC++ 6.0.
 
   - Extract php_3.0.14.tar.gz to your HD
   - Read the php_3.0.14\README.WIN32 file.
   - Open php_3.0.14\win32\php3.dsw using MSVC++ 6.0
   - Start building php.exe, this will also create PHP.LIB
 
+ *** PHP4.0.4 ***
+ The PHP 4.0.4 win32 binaries (php-4.0.4-Win32.zip) distributed on 
+ http://www.php.net/ included the necessary php4ts.lib import library,
+ so it is not necessary to build the PHP4 source in this case:
+  - Extract php-4.0.4.tar.gz  (this will create a php-4.0.4 tree)
+  - Extract php-4.0.4-Win32.zip and configure PHP4 on your server
+  - mkdir php-4.0.4\lib
+  - Copy php4ts.lib (from php-4.0.4-Win32.zip) to php-4.0.4\lib
+  - Continue with the rest of the instructions below.
 
-Step 2: Build PHP3_MAPSCRIPT.DLL
+Step 2: Build PHP3_MAPSCRIPT.DLL/PHP_MAPSCRIPT.DLL
 =======
 
 Review the mapscript\php3\makefile.vc and make any modifications required
 for your configuration.  Make sure PHP_SOURCE_DIR points to where you 
-installed the PHP3 source tree in step 1 above.
+installed the PHP source tree in step 1 above.
 
-Then to compile PHP3_MAPSCRIPT.DLL:
+Then to compile PHP3_MAPSCRIPT.DLL/PHP_MAPSCRIPT.DLL:
 
  - Open a DOS prompt window
  - Run the VCVARS32.BAT script to initialize the VC++ environment
@@ -40,10 +64,11 @@ Then to compile PHP3_MAPSCRIPT.DLL:
  - Then start the build with: 
      nmake /f makefile.vc 
 
-This will create the "PHP3_MAPSCRIPT.DLL"
+This will create the "PHP3_MAPSCRIPT.DLL" for PHP3, or "PHP_MAPSCRIPT.DLL"
+for PHP4.
 
 
-Step 3: Install PHP3_MAPSCRIPT.DLL
+Step 3: Install PHP3_MAPSCRIPT.DLL/PHP_MAPSCRIPT.DLL
 =======
 
 PHP3_MAPSCRIPT.DLL is a regular PHP module, you should copy it to the same
@@ -52,14 +77,16 @@ directory as the other PHP3_*.DLL modules that came with PHP.
 Then the module can be loaded in one of 2 ways:
 
  - Adding a "extension=php3_mapscript.dll" line to the PHP3.INI file will
-   load it automatically for every PHP3 page.
+   load it automatically for every PHP page.
 
  - The other possibility is to load the module only when needed using the
-   following PHP3 call:
-        dl("php3_mapscript.dll");
+   following PHP call:
+        dl("php3_mapscript.dll");  // for the PHP3 module
+     or
+        dl("php_mapscript.dll");  // for the PHP4 module
 
 You can test that the module is properly loaded by executing the
-phpinfo() command in a PHP3 page... the "MapScript" extension should be
+phpinfo() command in a PHP page... the "MapScript" extension should be
 included in the list of extensions in the phpinfo() report.
 
 
