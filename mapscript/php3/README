@@ -13,6 +13,9 @@ This module is still under development and is not (yet) an officially
 supported part of MapServer, so for any questions/comments/suggestions/
 bug-reports, please Email me, Daniel Morissette (danmo@videotron.ca)
 
+See also the PHP/MapScript FAQ at:
+	http://www2.dmsolutions.on.ca/mapserver/php_mapscript_faq.html
+
                       --------------------------
 
 Currently supported classes, properties and methods:
@@ -22,7 +25,6 @@ For more complete information, see the MapScript documentation at:
 	http://mapserver.gis.umn.edu/mapscript.html
 and the Map File documentation at:
 	http://mapserver.gis.umn.edu/mapfile.html
-
 
 Very important note: Constant names and class member variable names are
                      case-sensitive in PHP.
@@ -86,9 +88,9 @@ Very important note: Constant names and class member variable names are
    int    	keysizey
    int    	keyspacingx
    int    	keyspacingy
-   webObj 	web;
-   referenceMapObj reference;
-	
+   webObj 	web
+   referenceMapObj reference
+   colorObj     imagecolor	
 
  Methods:
 
@@ -161,6 +163,9 @@ Very important note: Constant names and class member variable names are
         Passing buffer <=0 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
         ground units) instead.
+
+   int save(string filename)
+        Save current map object state to a file. Returns -1 on error.
 
 
  LayerObj Class:
@@ -599,6 +604,9 @@ Constructor:
  Methods:
 
    shapeObj getShape(int i)
+        Retrieve shape by index.
+
+   shapeObj getTransformed(mapObj map, int i)
         Retrieve shape by index.
 
    rectObj getExtent(int i)
