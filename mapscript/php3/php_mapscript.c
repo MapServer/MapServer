@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.87  2002/02/19 19:02:23  assefa
+ * Update scale and cellsize values in the php object after in the
+ * map->draw and map->drawquery functions. (BID 109).
+ *
  * Revision 1.86  2002/02/08 18:51:11  dan
  * Remove class and layer args to setSymbolByName()
  *
@@ -2612,6 +2616,14 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         /* Return an image object */
+/* -------------------------------------------------------------------- */
+/*      since the darwmap forces the scale and cellsize calculation,    */
+/*      we also update the php object with the latest values.           */
+/* -------------------------------------------------------------------- */
+         _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
+                                    E_ERROR); 
+         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+
         _phpms_build_img_object(im, &(self->web), list, return_value);
     }
 }
@@ -2652,6 +2664,14 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
     }
     else
     {
+/* -------------------------------------------------------------------- */
+/*      since the darwmap forces the scale and cellsize calculation,    */
+/*      we also update the php object with the latest values.           */
+/* -------------------------------------------------------------------- */
+         _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
+                                    E_ERROR); 
+         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+
         /* Return an image object */
         _phpms_build_img_object(im, &(self->web), list, return_value);
     }
