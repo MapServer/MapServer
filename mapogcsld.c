@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.37  2004/07/29 21:50:19  assefa
+ * Use wfs_filter metedata when generating an SLD (Bug 782)
+ *
  * Revision 1.36  2004/07/28 22:16:17  assefa
  * Add support for spatial filters inside an SLD. (Bug 782).
  *
@@ -3549,6 +3552,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     char *pszSLD = NULL;
     char *pszTmp = NULL;
     double dfMinScale =-1, dfMaxScale = -1;
+    const char *pszWfsFilter= NULL;
 
     if (psLayer && 
         (psLayer->status == MS_ON || psLayer->status == MS_DEFAULT) &&
@@ -3576,6 +3580,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         sprintf(szTmp, "%s\n",  "<FeatureTypeStyle>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
+        pszWfsFilter = msLookupHashTable(&(psLayer->metadata), "wfs_filter");
         if (psLayer->numclasses > 0)
         {
             for (i=psLayer->numclasses-1; i>=0; i--)
@@ -3586,7 +3591,8 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 /* -------------------------------------------------------------------- */
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
-                pszFilter = msSLDGetFilter(&psLayer->class[i]);
+            
+                pszFilter = msSLDGetFilter(&psLayer->class[i], pszWfsFilter);
                     
                 if (pszFilter)
                 {
@@ -4524,7 +4530,7 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
 
       
 
-char *msSLDParseLogicalExpression(char *pszExpression)
+char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
 {
     FilterEncodingNode *psNode = NULL;
     char *pszFLTExpression = NULL;
@@ -4542,7 +4548,16 @@ char *msSLDParseLogicalExpression(char *pszExpression)
         if (pszFLTExpression)
         {
             pszTmp = strcatalloc(pszTmp, "<ogc:Filter>");
+            if (pszWfsFilter)
+            {
+                pszTmp = strcatalloc(pszTmp, "<AND>");
+                pszTmp = strcatalloc(pszTmp, (char *)pszWfsFilter);
+            }
             pszTmp = strcatalloc(pszTmp, pszFLTExpression);
+
+            if (pszWfsFilter)
+              pszTmp = strcatalloc(pszTmp, "</AND>");
+
             pszTmp = strcatalloc(pszTmp, "</ogc:Filter>\n");
 
             free(pszFLTExpression);
@@ -4658,7 +4673,7 @@ char *msSLDParseExpression(char *pszExpression)
 /*      expression. TODO : move function to mapogcfilter.c when         */
 /*      finished.                                                       */
 /************************************************************************/
-char *msSLDGetFilter(classObj *psClass)
+char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
 {
     char *pszFilter = NULL;
     char szBuffer[500];
@@ -4671,21 +4686,30 @@ char *msSLDGetFilter(classObj *psClass)
         {
             if (psClass->layer && psClass->layer->classitem)
             {
-                sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>\n", 
+                if (pszWfsFilter)
+                  sprintf(szBuffer, "<ogc:Filter><AND>%s<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></AND></ogc:Filter>\n", 
+                        pszWfsFilter, psClass->layer->classitem, psClass->expression.string);
+                else
+                  sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>\n", 
                         psClass->layer->classitem, psClass->expression.string);
                 pszFilter = strdup(szBuffer);
             }
         }
         else if (psClass->expression.type == MS_EXPRESSION)
         {
-            pszFilter = msSLDParseLogicalExpression(psClass->expression.string);
+            pszFilter = msSLDParseLogicalExpression(psClass->expression.string, 
+                                                    pszWfsFilter);
         }
         else if (psClass->expression.type == MS_REGEX)
         {
             if (psClass->layer && psClass->layer->classitem)
             {
-                sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 
-                        psClass->layer->classitem, psClass->expression.string);
+                if (pszWfsFilter)
+                  sprintf(szBuffer, "<ogc:Filter><AND>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></AND></ogc:Filter>\n", 
+                        pszWfsFilter, psClass->layer->classitem, psClass->expression.string);
+                else
+                  sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 
+                          psClass->layer->classitem, psClass->expression.string);
                 pszFilter = strdup(szBuffer);
             }
         }

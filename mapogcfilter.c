@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.29  2004/07/29 21:50:19  assefa
+ * Use wfs_filter metedata when generating an SLD (Bug 782)
+ *
  * Revision 1.28  2004/07/28 22:16:16  assefa
  * Add support for spatial filters inside an SLD. (Bug 782).
  *
@@ -480,7 +483,10 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
                               int iLayerIndex)
 {
     layerObj *psLayer = NULL;
-    int i = 0;
+    int i = 0, status = MS_FALSE;
+    shapeObj shape;
+    int nClassIndex = -1;
+    char        annotate=MS_TRUE;
 
     if (!anValues || nSize <= 0 || !map || iLayerIndex < 0 ||
         iLayerIndex > map->numlayers-1)
@@ -504,9 +510,31 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
     psLayer->resultcache->bounds.maxx = -1;
     psLayer->resultcache->bounds.maxy = -1;
 
+    status = msLayerOpen(psLayer);
+    if (status != MS_SUCCESS) 
+      return;
+    annotate = msEvalContext(map, psLayer->labelrequires);
+    if(map->scale > 0) 
+    {
+        if((psLayer->labelmaxscale != -1) && (map->scale >= psLayer->labelmaxscale)) 
+          annotate = MS_FALSE;
+        if((psLayer->labelminscale != -1) && (map->scale < psLayer->labelminscale)) 
+          annotate = MS_FALSE;
+    }
+    status = msLayerWhichItems(psLayer, MS_TRUE, annotate, NULL);
+    if (status != MS_SUCCESS) 
+      return;
 
     for (i=0; i<nSize; i++)
-      addResult(psLayer->resultcache, 0, anValues[i], -1);
+    {
+        status = msLayerGetShape(psLayer, &shape, -1, anValues[i]);
+        if (status != MS_SUCCESS)
+          nClassIndex = -1;
+        else
+          nClassIndex = msShapeGetClass(psLayer, &shape, map->scale);
+        
+        addResult(psLayer->resultcache, nClassIndex, anValues[i], -1);
+    }
 
 
 }

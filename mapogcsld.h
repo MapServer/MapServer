@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2004/07/29 21:50:19  assefa
+ * Use wfs_filter metedata when generating an SLD (Bug 782)
+ *
  * Revision 1.10  2004/04/12 18:38:24  assefa
  * Add dll export support for windows.
  *
@@ -119,7 +122,7 @@ void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer);
 char *msSLDGenerateSLDLayer(layerObj *psLayer);
 
-char *msSLDGetFilter(classObj *psClass);
+char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter);
 char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer);
 char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer);
 char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer);
