@@ -1104,6 +1104,18 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
     return msWMSException(map, wmtver, "LayerNotQueryable");
   }
 
+/* -------------------------------------------------------------------- */
+/*      check if all layers selected are queryable. If not send an      */
+/*      exception.                                                      */
+/* -------------------------------------------------------------------- */
+  for (i=0; i<map->numlayers; i++)
+  {
+      if (map->layers[i].status == MS_ON && !msIsLayerQueryable(&map->layers[i]))
+      {
+          msSetError(MS_WMSERR, "Requested layer(s) are not queryable.", "msWMSFeatureInfo()");
+          return msWMSException(map, wmtver, "LayerNotQueryable");
+      }
+  }
   if(point.x == -1.0 || point.y == -1.0) {
     msSetError(MS_WMSERR, "Required X/Y parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
     return msWMSException(map, wmtver, NULL);
