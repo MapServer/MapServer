@@ -1199,6 +1199,7 @@ imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
                           char *imagepath, char *imageurl);
 imageObj *msImageLoadIM( const char *filename );
 void      msImageInitIM( imageObj *image );
+void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
 
 int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
 int msSaveImageIM_LL(imageObj* img, char *filename, int type,
@@ -1213,8 +1214,8 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
 void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
 void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
 
-int msDrawTextIM(gdImagePtr img, pointObj labelPnt, imageObj *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-int msDrawLabelCacheIM(char* img, mapObj *map);
+int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /* ==================================================================== */
 /*      End of Prototypes for functions in mapimagemap.c                */
 /* ==================================================================== */
