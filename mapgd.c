@@ -245,6 +245,7 @@ imageObj *msImageLoadGD( const char *filename )
 
   /* Create an outputFormatObj for the format. */
   image->format = msCreateDefaultOutputFormat( NULL, driver );
+  image->format->refcount++;
 
   if( image->format == NULL )
   {
