@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.0-dev (CVS)
 ------------------------------
 
+- Attempt at fixing GD vs libiconv dependency problems (bug 348)
+
 - Fixed problem with invalid BoundingBox tag in WMS capabilities (bug 34)
 
 - Fixed problems with SIZEUNITS not working properly (bug 373)
