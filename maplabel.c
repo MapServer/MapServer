@@ -260,8 +260,8 @@ static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int
     y1 = (h/2.0);
     break;
   case MS_CC:
-    x1 = -(w/2.0);
-    y1 = (h/2.0);
+    x1 = -(w/2.0) + ox;
+    y1 = (h/2.0) + oy;
     break;
   case MS_CR:
     x1 = ox + MARKER_SLOP;
@@ -707,7 +707,10 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-      p = get_metrics(&(cachePtr->point), label.position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+      if(label.position == MS_CC)
+        p = get_metrics(&(cachePtr->point), label.position, r, label.offsetx, label.offsety, label.angle, label.buffer, cachePtr->poly);
+      else
+        p = get_metrics(&(cachePtr->point), label.position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
 
       if(draw_marker)
 	msRect2Polygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
