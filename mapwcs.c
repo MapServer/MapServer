@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/02/12 04:41:32  sdlime
+ * Changed %g to %.15g for WCS output (bug 1232).
+ *
  * Revision 1.62  2004/11/29 14:36:22  sdlime
  * Last of the typos for bug 954, also use ows_service_onlineresource if using WMS metadata.
  *
@@ -574,8 +577,8 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 
   // TODO: add elevation and temporal ranges to lonLatEnvelope (optional)
   msIO_printf("    <lonLatEnvelope srsName=\"WGS84(DD)\">\n");
-  msIO_printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny); // TODO: don't know if this is right
-  msIO_printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
+  msIO_printf("      <gml:pos>%.15g %.15g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny); // TODO: don't know if this is right
+  msIO_printf("      <gml:pos>%.15g %.15g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
   msIO_printf("    </lonLatEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
@@ -751,8 +754,8 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   // TODO: add elevation and temporal ranges to lonLatEnvelope (optional)
   msIO_printf("    <lonLatEnvelope srsName=\"WGS84(DD)\">\n");
-  msIO_printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
-  msIO_printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
+  msIO_printf("      <gml:pos>%.15g %.15g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
+  msIO_printf("      <gml:pos>%.15g %.15g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
   msIO_printf("    </lonLatEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
@@ -766,8 +769,8 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   
   // envelope in lat/lon
   msIO_printf("        <gml:Envelope srsName=\"WGS84(DD)\">\n");
-  msIO_printf("          <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
-  msIO_printf("          <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
+  msIO_printf("          <gml:pos>%.15g %.15g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
+  msIO_printf("          <gml:pos>%.15g %.15g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
   msIO_printf("        </gml:Envelope>\n");
   
   // envelope in the native srs
@@ -777,8 +780,8 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
     msIO_printf("        <gml:Envelope srsName=\"%s\">\n", value);
   else 
     msIO_printf("        <!-- NativeCRSs ERROR: missing required information, no SRSs defined -->\n");
-  msIO_printf("          <gml:pos>%g %g</gml:pos>\n", cm.extent.minx, cm.extent.miny);
-  msIO_printf("          <gml:pos>%g %g</gml:pos>\n", cm.extent.maxx, cm.extent.maxy);
+  msIO_printf("          <gml:pos>%.15g %.15g</gml:pos>\n", cm.extent.minx, cm.extent.miny);
+  msIO_printf("          <gml:pos>%.15g %.15g</gml:pos>\n", cm.extent.maxx, cm.extent.maxy);
   msIO_printf("        </gml:Envelope>\n");
 
   // gml:rectifiedGrid
@@ -792,10 +795,10 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("          <gml:axisName>x</gml:axisName>\n");
   msIO_printf("          <gml:axisName>y</gml:axisName>\n");
   msIO_printf("          <gml:origin>\n");
-  msIO_printf("            <gml:pos>%g %g</gml:pos>\n", cm.geotransform[0], cm.geotransform[3]);
+  msIO_printf("            <gml:pos>%.15g %.15g</gml:pos>\n", cm.geotransform[0], cm.geotransform[3]);
   msIO_printf("          </gml:origin>\n");
-  msIO_printf("          <gml:offsetVector>%g %g</gml:offsetVector>\n", cm.geotransform[1], cm.geotransform[2]); // offset vector in X direction
-  msIO_printf("          <gml:offsetVector>%g %g</gml:offsetVector>\n", cm.geotransform[4], cm.geotransform[5]); // offset vector in Y direction
+  msIO_printf("          <gml:offsetVector>%.15g %.15g</gml:offsetVector>\n", cm.geotransform[1], cm.geotransform[2]); // offset vector in X direction
+  msIO_printf("          <gml:offsetVector>%.15g %.15g</gml:offsetVector>\n", cm.geotransform[4], cm.geotransform[5]); // offset vector in Y direction
   msIO_printf("        </gml:RectifiedGrid>\n");
 
   msIO_printf("      </spatialDomain>\n");
