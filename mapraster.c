@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.123  2004/11/15 18:55:49  frank
+ * added "experimental" drawSDE support.
+ *
  * Revision 1.122  2004/11/05 03:08:23  frank
  * Cleanup layer level leaks under various error conditions.
  * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=713
@@ -1382,6 +1385,17 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     if(strlen(filename) == 0) continue;
+
+#ifdef USE_SDE
+    if (layer->connectiontype == MS_SDE) {
+      status = drawSDE(map, layer, img);
+      if(status == -1) {
+          final_status = status;
+          goto cleanup;
+      }
+      continue;
+    }
+#endif
 
     msBuildPath3(szPath, map->mappath, map->shapepath, filename);
 
