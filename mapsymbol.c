@@ -10,7 +10,6 @@ extern double msyynumber;
 extern char *msyytext;
 extern int msyylineno;
 extern FILE *msyyin;
-extern int msyyfiletype;
 
 extern unsigned char PNGsig[8];
 extern unsigned char JPEGsig[3];
@@ -252,12 +251,14 @@ int loadSymbol(symbolObj *s)
       break;
     case(TYPE):
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE)) == -1)
+      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_CARTOLINE)) == -1)
 	return(-1);	
 #else
-      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE, MS_SYMBOL_CARTOLINE)) == -1)
+      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_CARTOLINE)) == -1)
 	return(-1);
 #endif
+      if(s->type == MS_TRUETYPE) // TrueType keyword is valid several place in map files and symbol files, this simplifies the lexer
+	s->type = MS_SYMBOL_TRUETYPE;
       break;
     default:
       msSetError(MS_IDENTERR, "(%s):(%d)", "loadSymbol()",
@@ -385,7 +386,6 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
 
   msyylineno = 0; /* reset line counter */
   msyyrestart(msyyin); /* flush the scanner - there's a better way but this works for now */
-  msyyfiletype = MS_FILE_SYMBOL;
 
   /*
   ** Read the symbol file
@@ -416,7 +416,6 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
     if(status != 1) break;
   } /* end for */
 
-  msyyfiletype = MS_FILE_DEFAULT;
   fclose(msyyin);
   chdir(old_path);
   return(status);

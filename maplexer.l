@@ -13,7 +13,6 @@
 
 double msyynumber;
 int msyylineno = 1;
-int msyyfiletype = MS_FILE_DEFAULT;
 
 int msyystate=0;
 char *msyystring=NULL;
@@ -262,7 +261,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>tiny		       { return(MS_TINY); }
 <INITIAL,VALUE_STRING>triangle		       { return(MS_CJC_TRIANGLE); }
 <INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }
-<INITIAL,VALUE_STRING>truetype		       { if(msyyfiletype == MS_FILE_SYMBOL) return(MS_SYMBOL_TRUETYPE); else return(MS_TRUETYPE); }
+<INITIAL,VALUE_STRING>truetype		       { return(MS_TRUETYPE); }
 <INITIAL,VALUE_STRING>uc                       { return(MS_UC); }
 <INITIAL,VALUE_STRING>ul                       { return(MS_UL); }
 <INITIAL,VALUE_STRING>ur                       { return(MS_UR); }
