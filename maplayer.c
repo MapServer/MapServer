@@ -222,12 +222,31 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
 
 int msLayerWhichItems(layerObj *layer, int classify, int annotate) 
 {
-  int i, j, nt=0, ne=0;
+  int i, nt=0, ne=0;
 
   if(classify && layer->classitem) nt++;
   if(annotate && layer->labelitem) nt++;
   if(annotate && layer->labelsizeitem) nt++;
   if(annotate && layer->labelangleitem) nt++;
+
+  ne = 0;
+  if(classify && layer->filter.type == MS_EXPRESSION) { 
+    ne = countChars(layer->filter.string, '[');
+    if(ne > 0) {
+      layer->filter.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
+      if(!(layer->filter.items)) {
+	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	return(MS_FAILURE);
+      }
+      layer->filter.indexes = (int *)malloc(ne*sizeof(int));
+      if(!(layer->filter.indexes)) {
+	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	return(MS_FAILURE);
+      }
+      layer->filter.numitems = 0;
+      nt += ne;
+    }
+  }
 
   for(i=0; i<layer->numclasses; i++) {
     ne = 0;
@@ -271,21 +290,20 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
 
   if(nt == 0) return(MS_SUCCESS);
 
-  msDebug("in msLayerWhichItems() [%d]...\n", nt);
-
   layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
   if(!layer->items) {
     msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
     return(MS_FAILURE);
   }
-
   layer->numitems = 0;
 
   if(classify && layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
   if(annotate && layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
   if(annotate && layer->labelsizeitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
   if(annotate && layer->labelangleitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
- 
+  
+  if(classify && layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));
+   
   for(i=0; i<layer->numclasses; i++) {
     if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
     if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));
