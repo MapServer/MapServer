@@ -1733,7 +1733,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
       if(loadColorWithAlpha(&(class->styles[0].color)) != MS_SUCCESS) return(-1);
-      class->numstyles = 1; // must *always* set a color or outlinecolor
+      class->numstyles = 1; // must *always* set a color, symbol or outlinecolor
       break;
 #endif
     case(MAXSIZE):
@@ -1744,7 +1744,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(OUTLINECOLOR):            
       if(loadColor(&(class->styles[0].outlinecolor)) != MS_SUCCESS) return(-1);
-      class->numstyles = 1; // must *always* set a color or outlinecolor
+      class->numstyles = 1; // must *always* set a color, symbol or outlinecolor
       break;
     case(SIZE):
       if(getInteger(&(class->styles[0].size)) == -1) return(-1);
@@ -1757,6 +1757,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       else
 	class->styles[0].symbolname = strdup(msyytext);
       break;
+      class->numstyles = 1;
 
     /*
     ** for backwards compatability, these are shortcuts for style 1
@@ -1766,7 +1767,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(OVERLAYCOLOR):
       if(loadColor(&(class->styles[1].color)) != MS_SUCCESS) return(-1);
-      class->numstyles = 2; // must *always* set a color or outlinecolor
+      class->numstyles = 2; // must *always* set a color, symbol or outlinecolor
       break;
     case(OVERLAYMAXSIZE):
       if(getInteger(&(class->styles[1].maxsize)) == -1) return(-1);
@@ -1776,7 +1777,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(OVERLAYOUTLINECOLOR):      
       if(loadColor(&(class->styles[1].outlinecolor)) != MS_SUCCESS) return(-1);
-      class->numstyles = 2; // must *always* set a color or outlinecolor
+      class->numstyles = 2; // must *always* set a color, symbol or outlinecolor
       break;
     case(OVERLAYSIZE):
       if(getInteger(&(class->styles[1].size)) == -1) return(-1);
@@ -1789,7 +1790,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       else
 	class->styles[1].symbolname = strdup(msyytext);
       break;
-
+      class->numstyles = 2;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadClass()",
                  msyytext, msyylineno );
