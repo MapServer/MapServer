@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.22  2004/02/26 18:38:08  frank
+ * fixed last change
+ *
  * Revision 1.21  2004/02/26 16:13:24  frank
  * Correct msOWSGetLayerExtent() error message.
  *
@@ -670,7 +673,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
   static char *value;
 
   if ((value = msLookupHashTable(lp->metadata, "wms_extent")) != NULL ||
-      (value = msLookupHashTable(lp->metadata, "wfs_extent")) != NULL )
+      (value = msLookupHashTable(lp->metadata, "wfs_extent")) != NULL ||
       (value = msLookupHashTable(lp->metadata, "wcs_extent")) != NULL )
   {
     char **tokens;
