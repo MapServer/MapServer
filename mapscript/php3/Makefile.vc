@@ -11,13 +11,12 @@
 # $Id$
 #
 
-#To use the PHP4 module uncomment the following line
+# To use PHP4 (instead of PHP3) uncomment the following line
+# The default when PHP4=1 is not set is to build for PHP3
 #PHP4 = 1
 
-#OPTFLAGS =	/nologo /Zi /W3 /DDEBUG
-
 !ifdef PHP4
-OPTFLAGS =	/nologo /Zi /W3 /DNO_REGEX_EXTRA_H
+OPTFLAGS =	/nologo /Zi /W3 
 BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DPHP4
 !else
 OPTFLAGS =	/nologo /Zi /W3
@@ -75,7 +74,11 @@ MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
 
 PHPMS_OBJS =  php_mapscript_util.obj php_mapscript.obj mapscript_i.obj
 
+!ifdef PHP4
+PHPMS_DLL =	php_mapscript.dll
+!else
 PHPMS_DLL =	php3_mapscript.dll
+!endif
 
 CFLAGS = 	$(BASE_CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
 
