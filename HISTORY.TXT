@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1135 : Added support for LABELS_ROTATE_WITH_MAP processing option on 
+  layers.  If set true, msDrawShape() will apply map rotation to labels as well
+  so that label rotate with the map.
+
 - Bug 1143 : Missing call to msInitShape.
 
 - Fixed PHP5 support for windows : Bug 1100. 
