@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.65  2003/11/09 20:19:09  frank
+ * fixed support for 3D multipoint datasets
+ *
  * Revision 1.64  2003/10/17 18:51:25  dan
  * Open OGR files relative to shapepath first, then try relative to mapfile
  * path if not found. (bug 295)
@@ -236,23 +239,20 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
       return(-1);
   }
    
-  if (poGeom->getGeometryType() == wkbPoint
-      || poGeom->getGeometryType() == wkbPoint25D )
+  if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
   {
       OGRPoint *poPoint = (OGRPoint *)poGeom;
       ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY(), 
                         outshp->numlines, &(outshp->bounds));
   }
-  else if (poGeom->getGeometryType() == wkbLineString
-           || poGeom->getGeometryType() == wkbLineString25D)
+  else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
       for(i=0; i<numpoints; i++)
           ogrPointsAddPoint(&line, poLine->getX(i), poLine->getY(i),
                             outshp->numlines, &(outshp->bounds));
   }
-  else if (poGeom->getGeometryType() == wkbPolygon
-           || poGeom->getGeometryType() == wkbPolygon25D)
+  else if (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
   {
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing;
@@ -272,7 +272,7 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
           }
       }
   }
-  if (poGeom->getGeometryType() == wkbMultiPoint )
+  else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
   {
       OGRPoint *poPoint;
       OGRMultiPoint *poMultiPoint = (OGRMultiPoint *)poGeom;
