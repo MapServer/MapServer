@@ -532,7 +532,7 @@
       case(MS_SHAPE_LINE):
 	return msIntersectPolylinePolygon(shape, self);
       case(MS_SHAPE_POLYGON):
-	return msIntersectPolylines(self, shape);
+	return msIntersectPolygons(self, shape);
       }
       break;
     }
