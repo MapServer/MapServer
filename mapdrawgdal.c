@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/11/20 05:27:38  frank
+ * initial 24 to 8 bit dithering
+ *
  * Revision 1.1  2002/11/19 18:30:04  frank
  * New
  *
@@ -51,11 +54,24 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 #include "gdal.h"
 #include "cpl_string.h"
 
+#if GDAL_VERSION_NUM > 1174
+#  define ENABLE_DITHER
+#endif
+
+#ifdef ENABLE_DITHER
+#include "gdal_alg.h"
+#endif
+
 static CPLErr 
 LoadGDALImage( GDALRasterBandH hBand, int iColorIndex, 
                layerObj *layer, 
                int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
                GByte *pabyBuffer, int dst_xsize, int dst_ysize );
+
+static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
+                         GByte *pabyDithered, int xsize, int ysize, 
+                         int bTransparent, colorObj transparentColor,
+                         gdImagePtr gdImg );
 
 /*
  * Stuff for allocating color cubes, and mapping between RGB values and
@@ -589,7 +605,52 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       else
           pabyRawAlpha = NULL;
 
-      if( !truecolor )
+      /* Dithered 24bit to 8bit conversion */
+      if( !truecolor && CSLFetchBoolean( layer->processing, "DITHER", FALSE ) )
+      {
+#ifdef ENABLE_DITHER
+          unsigned char *pabyDithered;
+
+          pabyDithered = (unsigned char *) malloc(dst_xsize * dst_ysize);
+          if( pabyDithered == NULL )
+              return -1;
+          
+          Dither24to8( pabyRaw1, pabyRaw2, pabyRaw3, pabyDithered,
+                       dst_xsize, dst_ysize, image->format->transparent, 
+                       map->imagecolor, gdImg );
+
+          k = 0;
+          for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+          {
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ )
+              {
+                  if( MS_VALID_COLOR( layer->offsite )
+                      && pabyRaw1[k] == layer->offsite.red
+                      && pabyRaw2[k] == layer->offsite.green
+                      && pabyRaw3[k] == layer->offsite.blue )
+                      continue;
+
+                  if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
+                      continue;
+
+#ifndef USE_GD_1_2
+                  gdImg->pixels[i][j] = pabyDithered[k];
+#else
+                  gdImg->pixels[j][i] = pabyDithered[k];
+#endif
+              }
+          }
+          
+          free( pabyDithered );
+#else
+          msSetError( MS_IMGERR, 
+                      "DITHER not supported in this build.  Update to latest GDAL, and define the ENABLE_DITHER macro.", "drawGDAL()" );
+          return -1;
+#endif 
+      }
+
+      /* Color cubed 24bit to 8bit conversion. */
+      else if( !truecolor )
       {
           k = 0;
           for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
@@ -823,10 +884,6 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
     return 0;
 }
 
-/*
-** Allocate color table entries as best possible for a color cube.
-*/
-
 /************************************************************************/
 /*                           allocColorCube()                           */
 /*                                                                      */
@@ -876,5 +933,104 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
     }
     return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                            Dither24to8()                             */
+/*                                                                      */
+/*      Wrapper for GDAL dithering algorithm.                           */
+/************************************************************************/
+
+#ifdef ENABLE_DITHER
+
+static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
+                         GByte *pabyDithered, int xsize, int ysize, 
+                         int bTransparent, colorObj transparent,
+                         gdImagePtr gdImg )
+
+{
+    GDALDatasetH hDS;
+    GDALDriverH  hDriver;
+    char **papszBandOptions = NULL;
+    char szDataPointer[120];
+    GDALColorTableH hCT;
+    int c;
+
+/* -------------------------------------------------------------------- */
+/*      Create the "memory" GDAL dataset referencing our working        */
+/*      arrays.                                                         */
+/* -------------------------------------------------------------------- */
+    hDriver = GDALGetDriverByName( "MEM" );
+    if( hDriver == NULL )
+        return;
+
+    hDS = GDALCreate( hDriver, "TempDitherDS", xsize, ysize, 0, GDT_Byte, 
+                      NULL );
+
+    /* Add Red Band */
+    sprintf( szDataPointer, "%p", pabyRed );
+    papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
+                                        szDataPointer );
+    GDALAddBand( hDS, GDT_Byte, papszBandOptions );
+                                        
+    /* Add Green Band */
+    sprintf( szDataPointer, "%p", pabyGreen );
+    papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
+                                        szDataPointer );
+    GDALAddBand( hDS, GDT_Byte, papszBandOptions );
+                                        
+    /* Add Blue Band */
+    sprintf( szDataPointer, "%p", pabyBlue );
+    papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
+                                        szDataPointer );
+    GDALAddBand( hDS, GDT_Byte, papszBandOptions );
+                                        
+    /* Add Dithered Band */
+    sprintf( szDataPointer, "%p", pabyDithered );
+    papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
+                                        szDataPointer );
+    GDALAddBand( hDS, GDT_Byte, papszBandOptions );
+
+    CSLDestroy( papszBandOptions );
+                                        
+/* -------------------------------------------------------------------- */
+/*      Create the color table.                                         */
+/* -------------------------------------------------------------------- */
+    hCT = GDALCreateColorTable( GPI_RGB );
+
+    for (c = 0; c < gdImg->colorsTotal; c++) 
+    {
+        GDALColorEntry sEntry;
+              
+        sEntry.c1 = gdImg->red[c];
+        sEntry.c2 = gdImg->green[c];
+        sEntry.c3 = gdImg->blue[c];
+
+        if( bTransparent 
+            && transparent.red == sEntry.c1
+            && transparent.green == sEntry.c2
+            && transparent.blue == sEntry.c3 )
+            sEntry.c4 = 0;
+        else
+            sEntry.c4 = 255;
+        
+        GDALSetColorEntry( hCT, c, &sEntry );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Perform dithering.                                              */
+/* -------------------------------------------------------------------- */
+    GDALDitherRGB2PCT( GDALGetRasterBand( hDS, 1 ),
+                       GDALGetRasterBand( hDS, 2 ),
+                       GDALGetRasterBand( hDS, 3 ),
+                       GDALGetRasterBand( hDS, 4 ),
+                       hCT, NULL, NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    GDALDestroyColorTable( hCT );
+    GDALClose( hDS );
+}
+#endif /* def ENABLE_DITHER */
 
 #endif
