@@ -183,7 +183,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       else {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_smallint()");
 	return(MS_FAILURE);
-      }      
+      }
+      break;
     case SE_INTEGER_TYPE:
       status = SE_stream_get_integer(sde->stream, i+1, &longval);
       if(status == SE_SUCCESS)
