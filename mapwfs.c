@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2002/10/09 02:29:03  dan
+ * Initial implementation of WFS client support.
+ *
  * Revision 1.4  2002/10/08 05:05:14  dan
  * Encode HTML entities in schema url in GML output
  *
@@ -442,7 +445,7 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
     /*
     ** DescribeFeatureType response
     */
-    printf("Content-type: text/plain%c%c",10,10);
+    printf("Content-type: text/xml%c%c",10,10);
 
     msOWSPrintMetadata(map->web.metadata, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
@@ -478,14 +481,13 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
 
         for (j=0; j<numlayers && !bFound; j++)
         {
-            if (msWFSIsLayerSupported(lp) && lp->name && 
-                strcasecmp(lp->name, layers[j]) == 0)
+            if ( lp->name && strcasecmp(lp->name, layers[j]) == 0)
             {
                 bFound = 1;
             }
         }
 
-        if (numlayers == 0 || bFound)
+        if ( (numlayers == 0 || bFound) && msWFSIsLayerSupported(lp) )
         {
             /*
             ** OK, describe this layer

@@ -571,6 +571,7 @@ dnl ---------------------------------------------------------------------
 dnl libTIFF (included by default if found on system).
 dnl ---------------------------------------------------------------------
 
+dnl Clear some cache variables
 unset ac_cv_lib_tiff_TIFFOpen
 
 AC_CHECKING(whether we should include TIFF support...)
@@ -660,6 +661,7 @@ dnl ---------------------------------------------------------------------
 dnl Find PROJ.4 ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
 
+dnl Clear some cache variables
 unset ac_cv_lib_proj_pj_init
 unset ac_cv_lib_proj_pj_transform
 unset ac_cv_lib_proj_pj_latlong_from_proj
@@ -1140,8 +1142,9 @@ AC_SUBST(MING_ENABLED,$MING_ENABLED)
 AC_SUBST(MING_INC,$MING_INC)
 AC_SUBST(MING_LIB,$MING_LIB)
 
+
 dnl ---------------------------------------------------------------------
-dnl WMS Compatibility - Enabled by default if PROJ.4 is there.
+dnl WMS Server Compatibility - Enabled by default if PROJ.4 is there.
 dnl Can be explicitly disabled using --without-wms
 dnl ---------------------------------------------------------------------
 
@@ -1170,12 +1173,44 @@ ALL_ENABLED="$WMS_SVR_ENABLED $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
-dnl WMS Client support - Enabled by default if PROJ.4 and libwww are there.
-dnl Can be explicitly disabled using --without-wmsclient
+dnl WFS Server support - Requires OGR and PROJ
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include WFS Server support...)
+AC_ARG_WITH(wfs,
+[  --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).],,)
+
+if test "$with_wfs" != "yes" ; then
+
+  AC_MSG_RESULT([        OGC WFS Server support not requested.])
+
+elif test -z "$OGR_ENABLED" ; then
+
+  AC_MSG_ERROR([OGC WFS Server support cannot be enabled: missing OGR which is required).])
+
+elif test -z "$PROJ_ENABLED" ; then
+
+  AC_MSG_ERROR([OGC WFS Server support cannot be enabled: missing PROJ4 which is required).])
+
+elif test "$with_wfs" = "yes" ; then
+
+  WFS_SVR_ENABLED="-DUSE_WFS_SVR"
+  AC_MSG_RESULT([        OGC WFS Server support enabled ($WFS_SVR_ENABLED).])
+
+fi
+
+AC_SUBST(WFS_SVR_ENABLED,$WFS_SVR_ENABLED)
+
+ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
+
+
+dnl ---------------------------------------------------------------------
+dnl WMS and WFS Client support - Requires PROJ.4 and libwww.
+dnl OGR recommended for WMS and required for WFS
 dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include WMS Client Connections support...)
-AC_ARG_WITH(wms,
+AC_ARG_WITH(wmsclient,
 [  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
                           required).],,)
 
@@ -1188,6 +1223,38 @@ elif test -z "$PROJ_ENABLED" ; then
   AC_MSG_RESULT([        OGC WMS Client Connections not enabled (PROJ.4 and libwww required).])
 
 elif test "$with_wmsclient" = "yes" ; then
+
+  dnl we'll test for libwww below.
+  WMS_REQUESTED="yes"
+
+fi
+
+
+AC_CHECKING(whether we should include WFS Client Connections support...)
+AC_ARG_WITH(wfsclient,
+[  --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libwww and
+                          OGR required).],,)
+
+if test "$with_wfsclient" = "no" ; then
+
+  AC_MSG_RESULT([        OGC WFS Client Layers disabled by --without-wfsclient.])
+
+elif test -z "$PROJ_ENABLED" -o -z "$OGR_ENABLED"; then
+
+  AC_MSG_RESULT([        OGC WFS Client Connections not enabled (PROJ.4, libwwwand OGR required).])
+
+elif test "$with_wfsclient" = "yes" ; then
+
+  dnl we'll test for libwww below.
+  WFS_REQUESTED="yes"
+
+fi
+
+
+dnl Clear some cache variables
+unset ac_cv_path_LIBWWW_CONFIG
+
+if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
 
   AC_PATH_PROG(LIBWWW_CONFIG, libwww-config, no)
 
@@ -1205,12 +1272,18 @@ elif test "$with_wmsclient" = "yes" ; then
   fi
 
 
-  WMS_LYR_ENABLED="-DUSE_WMS_LYR"
+  if test "$WMS_REQUESTED" = "yes" ; then
+    WMS_LYR_ENABLED="-DUSE_WMS_LYR"
+    AC_MSG_RESULT([        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED).])
+  fi
+
+  if test "$WFS_REQUESTED" = "yes" ; then
+    WFS_LYR_ENABLED="-DUSE_WFS_LYR"
+    AC_MSG_RESULT([        OGC WFS Client Connections enabled ($WFS_LYR_ENABLED).])
+  fi
 
   WWW_INC=`$LIBWWW_CONFIG --cflags`
   WWW_LIB=`$LIBWWW_CONFIG --libs`
-
-  AC_MSG_RESULT([        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED).])
 
 dnl
 dnl Check for possible conflict if libwww is used on a system with 
@@ -1241,45 +1314,13 @@ AC_ARG_ENABLE(rxposix-conflict-error,
 fi
 
 AC_SUBST(WMS_LYR_ENABLED,$WMS_LYR_ENABLED)
+AC_SUBST(WFS_LYR_ENABLED,$WFS_LYR_ENABLED)
 AC_SUBST(WWW_INC,    $WWW_INC)
 AC_SUBST(WWW_LIB,    $WWW_LIB)
 
-ALL_ENABLED="$WMS_LYR_ENABLED $ALL_ENABLED"
+ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $ALL_ENABLED"
 ALL_INC="$WWW_INC $ALL_INC"
 ALL_LIB="$WWW_LIB $ALL_LIB"
-
-
-
-dnl ---------------------------------------------------------------------
-dnl WFS Server support - Requires OGR and PROJ required
-dnl ---------------------------------------------------------------------
-
-AC_CHECKING(whether we should include WFS Server support...)
-AC_ARG_WITH(wfs,
-[  --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).],,)
-
-if test "$with_wfs" != "yes" ; then
-
-  AC_MSG_RESULT([        OGC WFS Server support not requested.])
-
-elif test -z "$OGR_ENABLED" ; then
-
-  AC_MSG_ERROR([OGC WFS Server support cannot be enabled: missing OGR which is required).])
-
-elif test -z "$PROJ_ENABLED" ; then
-
-  AC_MSG_ERROR([OGC WFS Server support cannot be enabled: missing PROJ4 which is required).])
-
-elif test "$with_wfs" = "yes" ; then
-
-  WFS_SVR_ENABLED="-DUSE_WFS_SVR"
-  AC_MSG_RESULT([        OGC WFS Server support enabled ($WFS_SVR_ENABLED).])
-
-fi
-
-AC_SUBST(WFS_SVR_ENABLED,$WFS_SVR_ENABLED)
-
-ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
 
 
 

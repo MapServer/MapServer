@@ -186,7 +186,7 @@ enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL};
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS};
 
 enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
 
@@ -1084,6 +1084,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
+int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
 
 int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style);
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);

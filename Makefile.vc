@@ -49,8 +49,10 @@ WMS=-DUSE_WMS_SVR
 #WWWLIB_INC=-I../Libwww/library/src -I../libwww/modules/expat/xmlparse
 #WWWLIB_LIB=../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
 
-#Use this flag to compile with WFS support, requires OGR and PROJ4
+# Use -DUSE_WFS_SVR to compile with WFS server support, requires OGR and PROJ4
+# Use -DUSE_WFS_LYR to compile with WFS client support, requires libwww
 WFS=-DUSE_WFS_SVR
+
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
@@ -175,10 +177,11 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
 		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
 		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
-        maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
-        mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
-        mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj mapgdal.obj \
-        mapwfs.obj mapows.obj mappdf.obj \
+		maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
+		mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
+		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj\
+		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttpd.obj\
+		mappdf.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h

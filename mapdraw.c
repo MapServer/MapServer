@@ -46,8 +46,13 @@ imageObj *msDrawMap(mapObj *map)
     layerObj *lp=NULL;
     int status;
     imageObj *image = NULL;
-    httpRequestObj asWMSReqInfo[MS_MAXLAYERS];
-    int numWMSRequests=0;
+
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+    httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
+    int numOWSRequests=0;
+
+    msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
+#endif
 
     if(map->width == -1 || map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
@@ -106,27 +111,41 @@ imageObj *msDrawMap(mapObj *map)
       }
     }
 
-#ifdef USE_WMS_LYR
-    // Pre-download all WMS layers in parallel before starting to draw map
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+    // Pre-download all WMS/WFS layers in parallel before starting to draw map
     for(i=0; i<map->numlayers; i++) 
     {
         // layerorder doesn't matter at this point
+#ifdef USE_WMS_LYR
         if (map->layers[i].connectiontype == MS_WMS)  
         {
             if ( msPrepareWMSLayerRequest(i, map, &(map->layers[i]),
-                                          asWMSReqInfo, 
-                                          &numWMSRequests) == MS_FAILURE)
+                                          asOWSReqInfo, 
+                                          &numOWSRequests) == MS_FAILURE)
             {
                 return NULL;
             }
         }
+#endif
+#ifdef USE_WFS_LYR
+        if (map->layers[i].connectiontype == MS_WFS)  
+        {
+            if ( msPrepareWFSLayerRequest(i, map, &(map->layers[i]),
+                                          asOWSReqInfo, 
+                                          &numOWSRequests) == MS_FAILURE)
+            {
+                return NULL;
+            }
+        }
+#endif
     }
-    if (numWMSRequests && 
-        msWMSExecuteRequests(asWMSReqInfo, numWMSRequests) == MS_FAILURE)
+    if (numOWSRequests && 
+        msHTTPExecuteRequests(asOWSReqInfo, numOWSRequests) == MS_FAILURE)
     {
         return NULL;
     }
-#endif
+#endif /* USE_WMS_LYR || USE_WFS_LYR */
+
     // OK, now we can start drawing
 
     for(i=0; i<map->numlayers; i++) {
@@ -140,7 +159,14 @@ imageObj *msDrawMap(mapObj *map)
 
             if (lp->connectiontype == MS_WMS) 
 #ifdef USE_WMS_LYR 
-                status = msDrawWMSLayerLow(i, asWMSReqInfo, numWMSRequests, 
+                status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
+                                           map, lp, image);
+#else
+	        status = MS_FAILURE;
+#endif
+            else if (lp->connectiontype == MS_WFS) 
+#ifdef USE_WFS_LYR 
+                status = msDrawWFSLayerLow(i, asOWSReqInfo, numOWSRequests, 
                                            map, lp, image);
 #else
 	        status = MS_FAILURE;
@@ -170,7 +196,14 @@ imageObj *msDrawMap(mapObj *map)
 
     if (lp->connectiontype == MS_WMS)  
 #ifdef USE_WMS_LYR 
-        status = msDrawWMSLayerLow(i, asWMSReqInfo, numWMSRequests, 
+        status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
+                                   map, lp, image);
+#else
+	status = MS_FAILURE;
+#endif
+    else if (lp->connectiontype == MS_WFS)
+#ifdef USE_WFS_LYR 
+        status = msDrawWFSLayerLow(i, asOWSReqInfo, numOWSRequests, 
                                    map, lp, image);
 #else
 	status = MS_FAILURE;
@@ -186,8 +219,10 @@ imageObj *msDrawMap(mapObj *map)
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
       msEmbedLegend(map, image->img.gd); //TODO
 
-  // Cleanup WMS Request stuff
-  msFreeRequestObj(asWMSReqInfo, numWMSRequests);
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+  // Cleanup WMS/WFS Request stuff
+  msHTTPFreeRequestObj(asOWSReqInfo, numOWSRequests);
+#endif
 
   return(image);
 }
@@ -336,6 +371,14 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   {
 #ifdef USE_WMS_LYR
       retcode = msDrawWMSLayer(map, layer, image);
+#else  
+      retcode = MS_FAILURE;
+#endif
+  }
+  else if(layer->connectiontype == MS_WFS) 
+  {
+#ifdef USE_WFS_LYR
+      retcode = msDrawWFSLayer(map, layer, image);
 #else  
       retcode = MS_FAILURE;
 #endif
@@ -680,12 +723,14 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 /* ------------------------------------------------------------------
  * Start by downloading the layer
  * ------------------------------------------------------------------ */
-        httpRequestObj asReqInfo[1];
+        httpRequestObj asReqInfo[2];
         int numReq = 0;
-        
+
+        msHTTPInitRequestObj(asReqInfo, 2);
+
         if ( msPrepareWMSLayerRequest(1, map, layer,
                                       asReqInfo, &numReq) == MS_FAILURE  ||
-             msWMSExecuteRequests(asReqInfo, numReq) == MS_FAILURE )
+             msHTTPExecuteRequests(asReqInfo, numReq) == MS_FAILURE )
         {
             return MS_FAILURE;
         }
@@ -719,12 +764,54 @@ PDF doesn't support WMS yet so return failure
         else
             nStatus = MS_SUCCESS; // Should we fail if output doesn't support WMS?
         // Cleanup
-        msFreeRequestObj(asReqInfo, numReq);
+        msHTTPFreeRequestObj(asReqInfo, numReq);
     }
 
     return nStatus;
 }
 #endif
+
+/**
+ * msDrawWFSLayer()
+ *
+ * Draw a single WFS layer.  
+ * Multiple WFS layers in a map are preloaded and then drawn using
+ * msDrawWFSLayerLow()
+ */
+
+#ifdef USE_WFS_LYR
+int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image)
+{
+    int nStatus = MS_FAILURE;
+
+    if (image && map && layer)
+    {
+/* ------------------------------------------------------------------
+ * Start by downloading the layer then pass control to msDrawWFSLayerLow()
+ * ------------------------------------------------------------------ */
+        httpRequestObj asReqInfo[2];
+        int numReq = 0;
+
+        msHTTPInitRequestObj(asReqInfo, 2);
+
+        if ( msPrepareWFSLayerRequest(1, map, layer,
+                                      asReqInfo, &numReq) == MS_FAILURE  ||
+             msHTTPExecuteRequests(asReqInfo, numReq) == MS_FAILURE )
+        {
+            return MS_FAILURE;
+        }
+
+        nStatus = msDrawWFSLayerLow(1, asReqInfo, numReq,
+                                    map, layer, image) ;
+
+        // Cleanup
+        msHTTPFreeRequestObj(asReqInfo, numReq);
+    }
+
+    return nStatus;
+}
+#endif
+
 
 /*
 ** Function to render an individual shape, the style variable enables/disables the drawing of a single style

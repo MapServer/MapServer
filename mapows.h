@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.4  2002/10/09 02:29:03  dan
+ * Initial implementation of WFS client support.
+ *
  * Revision 1.3  2002/10/08 02:40:08  dan
  * Added WFS DescribeFeatureType
  *
@@ -64,15 +67,9 @@ int msGMLWriteQuery(mapObj *map, char *filename);
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream);
 #endif
 
-/*====================================================================
- *   mapwms.c
- *====================================================================*/
-int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); 
-
-
 
 /*====================================================================
- *   mapwmslayer.c
+ *   maphttp.c
  *====================================================================*/
 
 typedef struct http_request_info
@@ -86,10 +83,26 @@ typedef struct http_request_info
     rectObj     bbox;
 } httpRequestObj;
 
-void msFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests);
+int  msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
+                   int nTimeout);
+
+
+/*====================================================================
+ *   mapwms.c
+ *====================================================================*/
+int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); 
+
+
+
+/*====================================================================
+ *   mapwmslayer.c
+ *====================================================================*/
+
 int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                              httpRequestObj *pasReqInfo, int *numRequests);
-int msWMSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests);
 int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *lp, 
                       imageObj *img);
@@ -113,6 +126,11 @@ const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);
  *   mapwfslayer.c
  *====================================================================*/
 
+int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
+                             httpRequestObj *pasReqInfo, int *numRequests);
+int msDrawWFSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
+                      int numRequests, mapObj *map, layerObj *lp, 
+                      imageObj *img);
 
 #endif /* MAPOWS_H */
 

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.31  2002/10/09 02:29:03  dan
+ * Initial implementation of WFS client support.
+ *
  * Revision 1.30  2002/09/20 03:44:07  sdlime
  * Swapped map_path for mappath for consistency.
  *
@@ -67,59 +70,7 @@
  * Added -DENABLE_STDERR_DEBUG in --enable-debug config option to
  * enable/disable msDebug() output to stderr.  Default is disabled.
  *
- * Revision 1.18  2001/12/13 21:29:30  dan
- * Changed wms_connectiontimeout metadata value to be in seconds (was ms)
- *
- * Revision 1.17  2001/12/13 02:07:17  dan
- * Accept any isspace() character as delimiter in wms_srs metadata parsing
- *
- * Revision 1.16  2001/12/12 00:55:58  dan
- * Took out the old version of msWMSGetImage() that didn't have an event
- * loop as we are relying on the event loop now for timeouts.
- *
- * Revision 1.15  2001/12/11 18:41:44  dan
- * Fixed a typo in vnd.ogc.se_* MIME type for exceptions (was vnd.odc_*)
- *
- * Revision 1.14  2001/11/13 22:44:38  assefa
- * Use a metadata wms_connectiontimeout that can be set in the map
- * file.
- *
- * Revision 1.13  2001/11/08 15:26:10  dan
- * Include FEATURE_COUNT in GetFeatureInfo URL only if greater than zero
- *
- * Revision 1.12  2001/11/01 20:46:48  dan
- * Fixed msDrawWMSLayer(): reprojected layer bbox was not initialized.
- *
- * Revision 1.11  2001/11/01 02:46:29  dan
- * Added msWMSGetFeatureInfoURL()
- *
- * Revision 1.10  2001/10/29 16:45:47  dan
- * Uncommented the unlink() call to delete the downloaded map image
- *
- * Revision 1.9  2001/10/11 22:29:20  dan
- * Took out terminate_handler 2.  Tested, working fine on Linux.
- *
- * Revision 1.8  2001/10/09 22:02:00  assefa
- * Use the non-preemptive mode : tested on windows.
- *
- * Revision 1.7  2001/08/22 15:56:58  dan
- * Added wms_latlonboundingbox metadata to check if layer overlaps.
- *
- * Revision 1.6  2001/08/22 04:48:34  dan
- * Create wld file for the WMS map slide so that it can be reprojected by GDAL
- *
- * Revision 1.5  2001/08/21 23:12:26  dan
- * Test layer status at beginning of msDrawWMSLayer()
- *
- * Revision 1.4  2001/08/21 19:11:53  dan
- * Improved error handling, verify HTTP status, etc.
- *
- * Revision 1.3  2001/08/17 20:08:07  dan
- * A few more fixes... we're able to load layers from cubeserv in GMap... cool!
- *
- * Revision 1.2  2001/08/17 17:54:32  dan
- * Handle SRS and BBOX properly.  Still have to reproject image received 
- * from server.
+ * ...
  *
  * Revision 1.1  2001/08/14 21:26:54  dan
  * Initial revision - only loads and draws WMS CONNECTION URL for now.
@@ -130,245 +81,15 @@
 #include "maperror.h"
 
 #include <time.h>
+#include <ctype.h>
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <process.h>
 #endif
 
-#ifdef USE_WMS_LYR
-
 #define WMS_V_1_0_0  100
 #define WMS_V_1_0_7  107
 #define WMS_V_1_1_0  110
-
-
-/*
-** Note: This code uses the w3c-libwww library to access remote WMS servers 
-** via the HTTP protocol.  
-** See http://www.w3.org/Library/ for the lib's source code and install docs.
-** See http://www.w3.org/Library/Examples/LoadToFile.c for sample code on which
-** big portions of msWMSGetImage was based.
-*/
-
-#include <WWWLib.h>
-#include <WWWHTTP.h>
-#include <WWWInit.h>
-
-
-static int tracer (const char * fmt, va_list pArgs)
-{
-/* Do not write to stderr on windoze as this makes Apache hang. */
-#ifdef ENABLE_STDERR_DEBUG
-    return (vfprintf(stderr, fmt, pArgs));
-#else
-    return 0;
-#endif
-}
-
-
-/* Non-preemptive version: uses an event loop.  
- * Works on both Linux and Windows.
- */
-
-/*
-**  We get called here from the event loop when we are done
-**  loading.
-*/
-static int terminate_handler (HTRequest * request, HTResponse * response,
-                              void * param, int status)
-{
-    httpRequestObj *pasReqInfo = NULL;
-    int i, bAllDone=TRUE;
-    
-    if (param) 
-        pasReqInfo = (httpRequestObj *)param;
-
-    /* Record status information for this request */
-    for(i=0; pasReqInfo[i].request != NULL; i++)
-    {
-        if (pasReqInfo[i].request == request)
-        {
-            pasReqInfo[i].nStatus = status;
-        }
-        else if (pasReqInfo[i].nStatus == 0)
-        {
-            bAllDone = FALSE; // At least one request is not done yet.
-        }
-    }
-
-   /* We are done with this request */
-    HTRequest_delete(request);
-
-    msDebug("terminate_handler()\n");
-
-    /* Stop event loop once all requests are completed */
-    if (bAllDone)
-    {
-        msDebug("terminate_handler stopping event loop\n");
-        HTEventList_stopLoop();
-    }
-
-    return 0;
-}
-
-
-/**********************************************************************
- *                          msWMSExecuteRequests()
- *
- * Fetch a map slide via HTTP request and save to specified temp file.
- *
- * Based on sample code from http://www.w3.org/Library/Examples/LoadToFile.c
- **********************************************************************/
-int msWMSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
-{
-    HTRequest *         request = NULL;
-    int                 i, nStatus = MS_SUCCESS, nTimeout;
-
-    if (numRequests == 0)
-        return MS_SUCCESS;  /* Nothing to do */
-
-    /* Initiate W3C Reference Library with a client profile */
-    HTProfile_newNoCacheClient("MapServer WMS Client", "1.0");
-
-    /* And the traces... */
-#if 0
-    HTSetTraceMessageMask("sop");
-#endif
-
-    /* Need our own trace and print functions */
-    HTPrint_setCallback(tracer);
-    HTTrace_setCallback(tracer);
-
-    /* Add our own filter to terminate the application */
-    HTNet_addAfter(terminate_handler, NULL, pasReqInfo, 
-                   HT_ALL, HT_FILTER_LAST);
-
-    /* Set the timeout for how long we are going to wait for a response 
-     *  we use the longest timeout value in the array of requests 
-     */
-    nTimeout = pasReqInfo[0].nTimeout;
-    for (i=1; i<numRequests; i++)
-    {
-        if (pasReqInfo[i].nTimeout > nTimeout)
-            nTimeout = pasReqInfo[i].nTimeout;
-    }
-
-    if (nTimeout <= 0)
-        nTimeout = 30000;
-            
-    HTHost_setEventTimeout(nTimeout);
-
-
-    for (i=0; i<numRequests; i++)
-    {
-        if (pasReqInfo[i].pszGetUrl == NULL || 
-            pasReqInfo[i].pszOutputFile == NULL)
-        {
-            msSetError(MS_WMSCONNERR, "URL or output file parameter missing.", 
-                       "msWMSExecuteRequests()");
-            return(MS_FAILURE);
-        }
-
-        request = HTRequest_new();
-
-        pasReqInfo[i].request = request;
-
-        msDebug("WMS GET %s\n", pasReqInfo[i].pszGetUrl);
-
-        /* Start the load */
-        if (HTLoadToFile(pasReqInfo[i].pszGetUrl, request,
-                         pasReqInfo[i].pszOutputFile) != YES) 
-        {
-            msSetError(MS_WMSCONNERR, "Can't open output file %s.", 
-                       "msWMSExecuteRequests()", pasReqInfo[i].pszOutputFile);
-            HTProfile_delete();
-            return(MS_FAILURE);
-        }
-
-    }
-    msDebug("WMS: Before eventloop\n");
-
-    /* Go into the event loop... */
-    HTEventList_loop(request);
-//    HTEventList_newLoop();
-
-    msDebug("WMS: After eventloop\n");
-
-    /* Check status of all requests and report errors */
-    for (i=0; i<numRequests; i++)
-    {
-        if (pasReqInfo[i].nStatus != 200)
-        {
-            nStatus = MS_FAILURE;
-
-            if (pasReqInfo[i].nStatus == HT_TIMEOUT)
-            {
-                msDebug("WMS: TIMEOUT of %d seconds execeeded for %s", 
-                        nTimeout/1000, pasReqInfo[i].pszGetUrl );
-
-                nStatus = MS_SUCCESS;  // Timeout isn't a fatal error
-            }
-            else
-            {
-                msDebug("WMS: HTTP GET request failed with status %d for %s",
-                        pasReqInfo[i].nStatus, pasReqInfo[i].pszGetUrl);
-
-                msSetError(MS_WMSCONNERR, 
-                           "HTTP GET request failed with status %d for %s",
-                           "msWMSExecuteRequests()", pasReqInfo[i].nStatus, 
-                           pasReqInfo[i].pszGetUrl);
-            }
-        }
-    }
-
-    /* cleanup */
-    HTProfile_delete();
-
-    return nStatus;
-}
-
-/**********************************************************************
- *                          msWMSGetImage()
- *
- * Wrapper to call msWMSGetImages() for a single image.
- **********************************************************************/
-int msWMSGetImage(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
-                  int nTimeout)
-{
-    httpRequestObj *pasReqInfo;
-
-    /* Alloc httpRequestInfo structs through which status of each request 
-       will be returned. */
-    pasReqInfo = (httpRequestObj*)calloc(1, sizeof(httpRequestObj));
-
-    pasReqInfo[0].pszGetUrl = strdup(pszGetUrl);
-    pasReqInfo[0].pszOutputFile = strdup(pszOutputFile);
-    
-    if (msWMSExecuteRequests(pasReqInfo, 1) != MS_SUCCESS)
-    {
-        *pnHTTPStatus = pasReqInfo[0].nStatus;
-        msDebug("WMS GET failed.\n", pszGetUrl);
-        free(pszGetUrl);
-        //return MS_FAILURE;
-/* ==================================================================== 
-      we still return SUCCESS here so that the layer is only          
-      skipped intead of aborting the whole draw map.                   
- ==================================================================== */
-        return MS_SUCCESS;
-    }
-
-    *pnHTTPStatus = pasReqInfo[0].nStatus;
-
-    free(pasReqInfo[0].pszGetUrl);
-    free(pasReqInfo[0].pszOutputFile);
-    free(pasReqInfo);
-
-    return MS_SUCCESS;
-}
-
-
-
-#endif /* USE_WMS_LYR */
 
 
 /**********************************************************************
@@ -445,7 +166,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * - Otherwise request layer in its default SRS and we'll reproject later
  * ------------------------------------------------------------------ */
     if ((pszEPSG = (char*)msGetEPSGProj(&(map->projection), 
-                                           NULL, TRUE)) != NULL &&
+                                           NULL, MS_TRUE)) != NULL &&
         (pszEPSG = strdup(pszEPSG)) != NULL &&
         strncasecmp(pszEPSG, "EPSG:", 5) == 0)
     {
@@ -454,7 +175,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         nLen = strlen(pszEPSG);
 
-        pszLyrEPSG = msGetEPSGProj(&(lp->projection), lp->metadata, FALSE);
+        pszLyrEPSG = msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE);
 
         if (pszLyrEPSG == NULL ||
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
@@ -468,7 +189,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     if (pszEPSG == NULL &&
         ((pszEPSG = (char*)msGetEPSGProj(&(lp->projection), 
-                                            lp->metadata, TRUE)) == NULL ||
+                                            lp->metadata, MS_TRUE)) == NULL ||
          (pszEPSG = strdup(pszEPSG)) == NULL ||
          strncasecmp(pszEPSG, "EPSG:", 5) != 0) )
     {
@@ -481,7 +202,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * Set layer SRS and reproject map extents to the layer's SRS
  * ------------------------------------------------------------------ */
     // No need to set lp->proj if it's already set to the right EPSG code
-    if ((pszTmp = msGetEPSGProj(&(lp->projection), NULL, TRUE)) == NULL ||
+    if ((pszTmp = msGetEPSGProj(&(lp->projection), NULL, MS_TRUE)) == NULL ||
         strcasecmp(pszEPSG, pszTmp) != 0)
     {
         char szProj[20];
@@ -741,21 +462,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
 #endif /* USE_WMS_LYR */
 
-}
-
-/**********************************************************************
- *                          msFreeRequestObj()
- *
- **********************************************************************/
-
-void msFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests) 
-{
-    int i;
-    for(i=0; i<numRequests; i++)
-    {
-        free(pasReqInfo[i].pszGetUrl);
-        free(pasReqInfo[i].pszOutputFile);
-    }
 }
 
 /**********************************************************************

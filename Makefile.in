@@ -112,7 +112,7 @@ WWW_LIB= @WWW_LIB@
 # OGC WFS Server: -DUSE_WFS_SVR (Requires OGR, PROJ4 recommended)
 # OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libwww)
 
-OWS=	  @WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@
+OWS=	@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@
 
 #
 # UofMN GIS/Image Processing Extension (very experimental)
@@ -170,7 +170,7 @@ STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
 
 RM= /bin/rm -f
 
-OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapows.o mapwfs.o $(EPPL_OBJ) $(REGEX_OBJ) $(PDF_OBJ)
+OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapows.o mapwfs.o mapwfslayer.o maphttp.o $(EPPL_OBJ) $(REGEX_OBJ) $(PDF_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---
