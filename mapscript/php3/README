@@ -664,8 +664,8 @@ and the MapServer Map File documentation at:
    int removeMetaData(string name)
         Remove a metadata entry for the layer.  Returns MS_SUCCESS/MS_FAILURE.
 
-   int getWMSFeatureInfoURL(int clickX, int clickY, int featureCount, 
-                            string infoFormat)
+   string getWMSFeatureInfoURL(int clickX, int clickY, int featureCount, 
+                               string infoFormat)
         Return a WMS GetFeatureInfo URL (works only for WMS layers)
         clickX, clickY is the location of to query in pixel coordinates
         with (0,0) at the top left of the image.
