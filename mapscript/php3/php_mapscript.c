@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.209  2004/09/23 13:51:44  julien
+ * Implement ENCODING label parameter to support internationalization.
+ * Note that this require the inconv library. (Bug 858)
+ *
  * Revision 1.208  2004/07/28 22:03:50  dan
  * Added layer->getFilter() to PHP MapScript (bug 787)
  *
@@ -8097,6 +8101,7 @@ static long _phpms_build_label_object(labelObj *plabel,
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "font",       plabel->font);
+    PHPMS_ADD_PROP_STR(return_value,  "encoding",   plabel->encoding);
     add_property_long(return_value,   "type",       plabel->type);
     add_property_long(return_value,   "shadowsizex",plabel->shadowsizex);
     add_property_long(return_value,   "shadowsizey",plabel->shadowsizey);
@@ -8184,6 +8189,7 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     IF_SET_STRING(     "font",         self->font)
+    else IF_SET_STRING("encoding",     self->encoding)
     else IF_SET_LONG(  "type",         self->type)
     else IF_SET_LONG(  "shadowsizex",  self->shadowsizex)
     else IF_SET_LONG(  "shadowsizey",  self->shadowsizey)
