@@ -1007,8 +1007,9 @@ void returnCoordinate()
 
 char *processLine(char *instr, int mode) 
 {
-  int i;
+  int i, j;
   char repstr[1024], substr[1024], *outstr; // repstr = replace string, substr = sub string
+  struct hashObj *tp=NULL;
 
 #ifdef USE_PROJ
   rectObj llextent;
@@ -1056,69 +1057,82 @@ char *processLine(char *instr, int mode)
   outstr = gsub(outstr, "[layers]", repstr);
   outstr = gsub(outstr, "[layers_esc]", (char *)encode_url(repstr));   
 
-  // HERE: NEED TO FINISH ESCAPING
-
-  // for(i=0;i<Map->numlayers;i++) {
-  //   sprintf(repstr, "[%s_desc]", Map->layers[i].name);
-  //   if(Map->layers[i].status == MS_ON)
-  //     outstr = gsub(outstr, repstr, Map->layers[i].description);
-  //   else
-  //     outstr = gsub(outstr, repstr, "");
-  // }
-
   for(i=0;i<Map->numlayers;i++) { // Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here
     if(isOn(Map->layers[i].name, Map->layers[i].group) == MS_TRUE) {
       if(Map->layers[i].group) {
-	sprintf(repstr, "[%s_select]", Map->layers[i].group);
-	outstr = gsub(outstr, repstr, "selected");
-	sprintf(repstr, "[%s_check]", Map->layers[i].group);
-	outstr = gsub(outstr, repstr, "checked");
+	sprintf(substr, "[%s_select]", Map->layers[i].group);
+	outstr = gsub(outstr, substr, "selected");
+	sprintf(substr, "[%s_check]", Map->layers[i].group);
+	outstr = gsub(outstr, substr, "checked");
       }
-      sprintf(repstr, "[%s_select]", Map->layers[i].name);
-      outstr = gsub(outstr, repstr, "selected");
-      sprintf(repstr, "[%s_check]", Map->layers[i].name);
-      outstr = gsub(outstr, repstr, "checked");
+      sprintf(substr, "[%s_select]", Map->layers[i].name);
+      outstr = gsub(outstr, substr, "selected");
+      sprintf(substr, "[%s_check]", Map->layers[i].name);
+      outstr = gsub(outstr, substr, "checked");
     } else {
       if(Map->layers[i].group) {
-	sprintf(repstr, "[%s_select]", Map->layers[i].group);
-	outstr = gsub(outstr, repstr, "");
-	sprintf(repstr, "[%s_check]", Map->layers[i].group);
-	outstr = gsub(outstr, repstr, "");
+	sprintf(substr, "[%s_select]", Map->layers[i].group);
+	outstr = gsub(outstr, substr, "");
+	sprintf(substr, "[%s_check]", Map->layers[i].group);
+	outstr = gsub(outstr, substr, "");
       }
-      sprintf(repstr, "[%s_select]", Map->layers[i].name);
-      outstr = gsub(outstr, repstr, "");
-      sprintf(repstr, "[%s_check]", Map->layers[i].name);
-      outstr = gsub(outstr, repstr, "");
+      sprintf(substr, "[%s_select]", Map->layers[i].name);
+      outstr = gsub(outstr, substr, "");
+      sprintf(substr, "[%s_check]", Map->layers[i].name);
+      outstr = gsub(outstr, substr, "");
     }
   }
 
   for(i=-1;i<=1;i++) { /* make zoom direction persistant */
     if(ZoomDirection == i) {
-      sprintf(repstr, "[zoomdir_%d_select]", i);
-      outstr = gsub(outstr, repstr, "selected");
-      sprintf(repstr, "[zoomdir_%d_check]", i);
-      outstr = gsub(outstr, repstr, "checked");
+      sprintf(substr, "[zoomdir_%d_select]", i);
+      outstr = gsub(outstr, substr, "selected");
+      sprintf(substr, "[zoomdir_%d_check]", i);
+      outstr = gsub(outstr, substr, "checked");
     } else {
-      sprintf(repstr, "[zoomdir_%d_select]", i);
-      outstr = gsub(outstr, repstr, "");
-      sprintf(repstr, "[zoomdir_%d_check]", i);
-      outstr = gsub(outstr, repstr, "");
+      sprintf(substr, "[zoomdir_%d_select]", i);
+      outstr = gsub(outstr, substr, "");
+      sprintf(substr, "[zoomdir_%d_check]", i);
+      outstr = gsub(outstr, substr, "");
     }
   }
   
   for(i=MINZOOM;i<=MAXZOOM;i++) { /* make zoom persistant */
     if(Zoom == i) {
-      sprintf(repstr, "[zoom_%d_select]", i);
-      outstr = gsub(outstr, repstr, "selected");
-      sprintf(repstr, "[zoom_%d_check]", i);
-      outstr = gsub(outstr, repstr, "checked");
+      sprintf(substr, "[zoom_%d_select]", i);
+      outstr = gsub(outstr, substr, "selected");
+      sprintf(substr, "[zoom_%d_check]", i);
+      outstr = gsub(outstr, substr, "checked");
     } else {
-      sprintf(repstr, "[zoom_%d_select]", i);
-      outstr = gsub(outstr, repstr, "");
-      sprintf(repstr, "[zoom_%d_check]", i);
-      outstr = gsub(outstr, repstr, "");
+      sprintf(substr, "[zoom_%d_select]", i);
+      outstr = gsub(outstr, substr, "");
+      sprintf(substr, "[zoom_%d_check]", i);
+      outstr = gsub(outstr, substr, "");
     }
   }
+
+  // allow metadata access in template
+  for(i=0;i<Map->numlayers;i++) {
+    if(Map->layers[i].metadata && strstr(outstr, Map->layers[i].name)) {
+      for(j=0; j<MS_HASHSIZE; j++) {
+	if (Map->layers[i].metadata[j] != NULL) {
+	  for(tp=Map->layers[i].metadata[j]; tp!=NULL; tp=tp->next) {            
+	    sprintf(substr, "[%s_%s]", Map->layers[i].name, tp->key);
+	    if(Map->layers[i].status == MS_ON)
+	      outstr = gsub(outstr, substr, tp->data);  
+	    else
+	      outstr = gsub(outstr, substr, "");
+	    sprintf(substr, "[%s_%s_esc]", Map->layers[i].name, tp->key);
+	    if(Map->layers[i].status == MS_ON)
+	      outstr = gsub(outstr, substr, (char *)encode_url(tp->data));  
+	    else
+	      outstr = gsub(outstr, substr, "");
+	  }
+	}
+      }
+    }
+  }
+
 
   sprintf(repstr, "%f", MapPnt.x);
   outstr = gsub(outstr, "[mapx]", repstr);

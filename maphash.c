@@ -56,7 +56,7 @@ struct hashObj *msInsertHashTable(hashTableObj table, char *string, char *data)
 }
 
 char *msLookupHashTable(hashTableObj table, char *string)
- {
+{
   struct hashObj *tp;
 
   if(!table || !string)
