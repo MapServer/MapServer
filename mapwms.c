@@ -346,7 +346,6 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                     }
                     //build the time string
                     msLayerSetTimeFilter(lp, time, timefield);
-                    msSaveMap(map, "c:/msapps/time_test/htdocs/save_filter.map");
                     timeextent= NULL;
                 }
             }
