@@ -1162,7 +1162,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent);
 int msSDELayerInitItemInfo(layerObj *layer);
 void msSDELayerFreeItemInfo(layerObj *layer);
 char *msSDELayerGetSpatialColumn(layerObj *layer);
-char *msSDELayerGetRowIDColumn(void);
+char *msSDELayerGetRowIDColumn(layerObj *layer);
 
 int msOracleSpatialLayerOpen(layerObj *layer);
 int msOracleSpatialLayerClose(layerObj *layer);

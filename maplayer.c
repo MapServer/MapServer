@@ -759,7 +759,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
       msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
       return(MS_FAILURE);
     }
-    layer->items[0] = msSDELayerGetRowIDColumn(); // row id
+    layer->items[0] = msSDELayerGetRowIDColumn(layer); // row id
     layer->items[1] = msSDELayerGetSpatialColumn(layer);
     layer->numitems = 2;
   } else {
