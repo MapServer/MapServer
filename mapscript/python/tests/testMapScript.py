@@ -172,6 +172,20 @@ class NoFontSetTestCase(unittest.TestCase):
     def testNoGetFontSetFile(self):
         assert self.mapobj1.getFontSetFile() == None
 
+class ExpressionTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testClearExpression(self):
+        self.mapobj1.getLayer(0).setFilter('')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '"(null)"', fs
+    def testSetExpression(self):
+        self.mapobj1.getLayer(0).setFilter('"foo"')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '"foo"', fs
+        
 if __name__ == '__main__':
     unittest.main()
 
