@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/01/04 22:55:27  assefa
+ * Add PHP5 support for windows (Bug 1100).
+ *
  * Revision 1.8  2004/03/09 04:04:44  dan
  * Added ability to set string class members to null (bug 591)
  *
@@ -57,7 +60,7 @@
  *
  */
 
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
 #include "php.h"
 #include "php_globals.h"
 #else
@@ -72,6 +75,7 @@
 #define TSRMLS_CC
 #endif
 
+
 /**********************************************************************
  *                  macros for setting object properties
  **********************************************************************/
@@ -79,7 +83,7 @@
   if (strcmp(pPropertyName->value.str.val, php_name) == 0)      \
   {                                                             \
     convert_to_long(pNewValue);                                 \
-    _phpms_set_property_long(pThis,php_name, pNewValue->value.lval, E_ERROR); \
+    _phpms_set_property_long(pThis,php_name, pNewValue->value.lval, E_ERROR TSRMLS_CC); \
     internal_var = pNewValue->value.lval;                       \
   }
 
@@ -87,7 +91,7 @@
   if (strcmp(pPropertyName->value.str.val, php_name) == 0)      \
   {                                                             \
     convert_to_double(pNewValue);                               \
-    _phpms_set_property_double(pThis,php_name,pNewValue->value.dval,E_ERROR); \
+    _phpms_set_property_double(pThis,php_name,pNewValue->value.dval,E_ERROR TSRMLS_CC); \
     internal_var = pNewValue->value.dval;                       \
   }
 
@@ -98,12 +102,12 @@
     internal_var = NULL;                                        \
     if (ZVAL_IS_NULL(pNewValue))                                \
     {                                                           \
-      _phpms_set_property_null(pThis, php_name, E_ERROR);       \
+      _phpms_set_property_null(pThis, php_name, E_ERROR TSRMLS_CC);       \
     }                                                           \
     else                                                        \
     {                                                           \
       convert_to_string(pNewValue);                             \
-      _phpms_set_property_string(pThis,php_name,pNewValue->value.str.val,E_ERROR); \
+      _phpms_set_property_string(pThis,php_name,pNewValue->value.str.val,E_ERROR TSRMLS_CC); \
       if (pNewValue->value.str.val)                             \
         internal_var = strdup(pNewValue->value.str.val);        \
     }                                                           \
@@ -113,7 +117,7 @@
   if (strcmp(pPropertyName->value.str.val, php_name) == 0)      \
   {                                                             \
     convert_to_long(pNewValue);                                 \
-    _phpms_set_property_long(pThis,php_name, pNewValue->value.lval, E_ERROR); \
+    _phpms_set_property_long(pThis,php_name, pNewValue->value.lval, E_ERROR TSRMLS_CC); \
     internal_var = (unsigned char)pNewValue->value.lval;                       \
   }
 
@@ -127,8 +131,8 @@
 /* -------------------------------------------------------------------- */
 int _phpms_object_init(pval *return_value, int  handle_id,
                        function_entry *class_functions,
-                       void           *zend_class_entry_ptr);
-#ifdef PHP4
+                       void           *zend_class_entry_ptr TSRMLS_DC);
+#if defined (PHP4) || defined (PHP5)
 #  define PHP4_CLASS_ENTRY(a) a
 #else
 #  define PHP4_CLASS_ENTRY(a) NULL
@@ -154,23 +158,23 @@ char *_phpms_fetch_property_handle(pval *pObj, char *property_name,
                                    int handle_type, HashTable *list TSRMLS_DC,
                                    int err_type);
 char *_phpms_fetch_property_string(pval *pObj, char *property_name, 
-                                   int err_type);
+                                   int err_type TSRMLS_DC);
 long _phpms_fetch_property_long(pval *pObj, char *property_name, 
-                                int err_type);
+                                int err_type TSRMLS_DC);
 double _phpms_fetch_property_double(pval *pObj, char *property_name,
-                                    int err_type);
+                                    int err_type TSRMLS_DC);
 long _phpms_fetch_property_resource(pval *pObj, char *property_name, 
-                                    int err_type);
+                                    int err_type TSRMLS_DC);
 int _phpms_set_property_string(pval *pObj, char *property_name, 
-                               char *szNewValue, int err_type);
-int _phpms_set_property_null(pval *pObj, char *property_name, int err_type);
+                               char *szNewValue, int err_type TSRMLS_DC);
+int _phpms_set_property_null(pval *pObj, char *property_name, int err_type TSRMLS_DC);
 int _phpms_set_property_long(pval *pObj, char *property_name, 
-                             long lNewValue, int err_type);
+                             long lNewValue, int err_type TSRMLS_DC);
 int _phpms_set_property_double(pval *pObj, char *property_name, 
-                               double dNewValue, int err_type);
+                               double dNewValue, int err_type TSRMLS_DC);
 int _phpms_add_property_object(pval *pObj,      
                                char *property_name, pval *pObjToAdd,
-                               int err_type);
+                               int err_type TSRMLS_DC);
 int _php_extract_associative_array(HashTable *php, char **array);
 
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/01/04 22:55:27  assefa
+ * Add PHP5 support for windows (Bug 1100).
+ *
  * Revision 1.21  2004/11/11 05:21:00  dan
  * Fixed compile warnings: 'dereferencing type-punned pointer will break
  * strict-aliasing rules' using (void*) cast instead of (void**) (bug 1053)
@@ -110,6 +113,7 @@
 
 #include "php_mapscript_util.h"
 #include "maperror.h"
+
 
 /*=====================================================================
  *                       Misc support functions
@@ -242,8 +246,9 @@ char *_phpms_fetch_property_handle(pval *pObj, char *property_name,
  *                     _phpms_fetch_property_string()
  **********************************************************************/
 char *_phpms_fetch_property_string(pval *pObj, char *property_name, 
-                                   int err_type)
+                                   int err_type TSRMLS_DC)
 {
+
     pval **phandle;
 
     if (pObj->type != IS_OBJECT)
@@ -268,7 +273,7 @@ char *_phpms_fetch_property_string(pval *pObj, char *property_name,
  *                     _phpms_fetch_property_long()
  **********************************************************************/
 long _phpms_fetch_property_long(pval *pObj, char *property_name, 
-                                int err_type)
+                                int err_type TSRMLS_DC)
 {
     pval **phandle;
 
@@ -301,7 +306,7 @@ long _phpms_fetch_property_long(pval *pObj, char *property_name,
  *                     _phpms_fetch_property_double()
  **********************************************************************/
 double _phpms_fetch_property_double(pval *pObj, char *property_name,
-                                    int err_type)
+                                    int err_type TSRMLS_DC)
 {
     pval **phandle;
 
@@ -327,7 +332,7 @@ double _phpms_fetch_property_double(pval *pObj, char *property_name,
  *                     _phpms_fetch_property_resource()
  **********************************************************************/
 long _phpms_fetch_property_resource(pval *pObj, char *property_name, 
-                                    int err_type)
+                                    int err_type TSRMLS_DC)
 {
     pval **phandle;
 
@@ -363,7 +368,7 @@ long _phpms_fetch_property_resource(pval *pObj, char *property_name,
  *                     _phpms_set_property_string()
  **********************************************************************/
 int _phpms_set_property_string(pval *pObj, char *property_name, 
-                               char *szNewValue, int err_type)
+                               char *szNewValue, int err_type TSRMLS_DC)
 {
     pval **phandle;
 
@@ -391,7 +396,7 @@ int _phpms_set_property_string(pval *pObj, char *property_name,
 /**********************************************************************
  *                     _phpms_set_property_null()
  **********************************************************************/
-int _phpms_set_property_null(pval *pObj, char *property_name, int err_type)
+int _phpms_set_property_null(pval *pObj, char *property_name, int err_type TSRMLS_DC)
 {
     pval **phandle;
 
@@ -420,7 +425,7 @@ int _phpms_set_property_null(pval *pObj, char *property_name, int err_type)
  *                     _phpms_set_property_long()
  **********************************************************************/
 int _phpms_set_property_long(pval *pObj, char *property_name, 
-                             long lNewValue, int err_type)
+                             long lNewValue, int err_type TSRMLS_DC)
 {
     pval **phandle;
 
@@ -449,7 +454,7 @@ int _phpms_set_property_long(pval *pObj, char *property_name,
  *                     _phpms_set_property_double()
  **********************************************************************/
 int _phpms_set_property_double(pval *pObj, char *property_name, 
-                               double dNewValue, int err_type)
+                               double dNewValue, int err_type TSRMLS_DC)
 {
     pval **phandle;
 
@@ -479,7 +484,7 @@ int _phpms_set_property_double(pval *pObj, char *property_name,
  **********************************************************************/
 int _phpms_add_property_object(pval *pObj,      
                                char *property_name, pval *pObjToAdd,
-                               int err_type)
+                               int err_type TSRMLS_DC)
 {
     if (add_property_zval(pObj, property_name, pObjToAdd) == FAILURE)
     {
@@ -502,12 +507,8 @@ int _phpms_add_property_object(pval *pObj,
  **********************************************************************/
 int _phpms_object_init(pval *return_value, int  handle_id,
                        function_entry *class_functions,
-                       void *zend_class_entry_ptr)
+                       void *zend_class_entry_ptr TSRMLS_DC)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-  void ***tsrm_ls = NULL;
-#endif
-
     zend_class_entry *new_class_entry_ptr;
     new_class_entry_ptr = (zend_class_entry *)zend_class_entry_ptr;
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.223  2005/01/04 22:55:27  assefa
+ * Add PHP5 support for windows (Bug 1100).
+ *
  * Revision 1.222  2004/12/19 22:12:55  assefa
  * numpoints and stylelength memebers of the symbol object needs to be in sync
  * with the low level values after calles to setpoints ans setstyle (Bug 1137).
@@ -362,6 +365,10 @@
 #define DLEXPORT ZEND_DLEXPORT
 #endif
 
+//#if defined(_WIN32) && !defined(__CYGWIN__)
+//void ***tsrm_ls;
+//#endif
+
 /*=====================================================================
  *                         Prototypes
  *====================================================================*/
@@ -607,39 +614,39 @@ DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS);
 
 
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
-                                    HashTable *list, pval *return_value);
+                                    HashTable *list, pval *return_value  TSRMLS_DC);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
                                       HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_class_object(classObj *pclass, int parent_map_id, 
                                       int parent_layer_id, HashTable *list, 
                                       pval *return_value TSRMLS_DC);
 static long _phpms_build_label_object(labelObj *plabel,
-                                      HashTable *list, pval *return_value);
+                                      HashTable *list, pval *return_value TSRMLS_DC);
 
 static long _phpms_build_color_object(colorObj *pcolor,
-                                      HashTable *list, pval *return_value);
+                                      HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
-                                      HashTable *list, pval *return_value);
+                                      HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
                                       layerObj *pLayer,
-                                      HashTable *list, pval *return_value);
+                                      HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_web_object(webObj *pweb,
-                                    HashTable *list, pval *return_value);
+                                    HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_rect_object(rectObj *prect, int handle_type,
-                                     HashTable *list, pval *return_value);
+                                     HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
-                                          HashTable *list, pval *return_value);
+                                          HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
                                                   HashTable *list TSRMLS_DC, 
                                                   pval *return_value);
 
 static long _phpms_build_projection_object(projectionObj *pproj, 
                                            int handle_type, HashTable *list, 
-                                           pval *return_value);
+                                           pval *return_value TSRMLS_DC);
 static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
-                                         HashTable *list, pval *return_value);
+                                         HashTable *list, pval *return_value TSRMLS_DC);
 static long _phpms_build_legend_object(legendObj *plegend,
-                                       HashTable *list, pval *return_value);
+                                       HashTable *list, pval *return_value TSRMLS_DC);
 
 static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id, 
                                       int parent_layer_id, 
@@ -649,7 +656,7 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
 
 static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
                                              HashTable *list, 
-                                             pval *return_value);
+                                             pval *return_value TSRMLS_DC);
 
 static long _phpms_build_grid_object(graticuleObj *pgrid, 
                                      int parent_layer_id,
@@ -658,7 +665,7 @@ static long _phpms_build_grid_object(graticuleObj *pgrid,
 
 static long _phpms_build_labelcache_object(labelCacheObj *plabelcache,
                                            HashTable *list, 
-                                           pval *return_value);
+                                           pval *return_value TSRMLS_DC);
 
 static long _phpms_build_symbol_object(symbolObj *psSymbol, 
                                        int parent_map_id, 
@@ -1572,7 +1579,7 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     map_id = php3_list_insert(pMap, PHPMS_GLOBAL(le_msmap));
 
     _phpms_object_init(return_value, map_id, php_map_class_functions,
-                       PHP4_CLASS_ENTRY(map_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(map_class_entry_ptr) TSRMLS_CC);
 
     /* read-only properties */
     add_property_long(return_value, "numlayers", pMap->numlayers);
@@ -1593,8 +1600,8 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
     _phpms_build_rect_object(&(pMap->extent), PHPMS_GLOBAL(le_msrect_ref),
-                             list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR);
+                             list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     add_property_double(return_value,"cellsize",  pMap->cellsize);
     add_property_long(return_value,  "units",     pMap->units);
@@ -1615,48 +1622,48 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
-    _phpms_build_color_object(&(pMap->imagecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pMap->imagecolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
-    _phpms_build_web_object(&(pMap->web), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "web", new_obj_ptr, E_ERROR);
+    _phpms_build_web_object(&(pMap->web), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "web", new_obj_ptr, E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
     _phpms_build_referenceMap_object(&(pMap->reference), list, 
-                                     new_obj_ptr);
-    _phpms_add_property_object(return_value, "reference", new_obj_ptr,E_ERROR);
+                                     new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "reference", new_obj_ptr,E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
-    _phpms_build_scalebar_object(&(pMap->scalebar), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "scalebar", new_obj_ptr, E_ERROR);
+    _phpms_build_scalebar_object(&(pMap->scalebar), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "scalebar", new_obj_ptr, E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
-    _phpms_build_legend_object(&(pMap->legend), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "legend", new_obj_ptr, E_ERROR);
+    _phpms_build_legend_object(&(pMap->legend), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "legend", new_obj_ptr, E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
     _phpms_build_projection_object(&(pMap->latlon), PHPMS_GLOBAL(le_msprojection_ref),
-                                   list,  new_obj_ptr);
-    _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR);
+                                   list,  new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_outputformat_object(pMap->outputformat, list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "outputformat", new_obj_ptr, E_ERROR);
+    _phpms_build_outputformat_object(pMap->outputformat, list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "outputformat", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_labelcache_object(&(pMap->labelcache), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "labelcache", new_obj_ptr, E_ERROR);
+    _phpms_build_labelcache_object(&(pMap->labelcache), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "labelcache", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     return map_id;
 }
@@ -1903,20 +1910,20 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 
     /* We still sync the class members even if the call failed */
 
-    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"),
                        (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
     }
 
     RETURN_LONG(nStatus);
@@ -2006,10 +2013,10 @@ DLEXPORT void php3_ms_map_setSize(INTERNAL_FUNCTION_PARAMETERS)
      * them as well, and if/when they are updated by the low-level function
      * then they'll be sync'd 
      */
-    _phpms_set_property_double(pThis, "cellsize", self->cellsize, E_ERROR); 
-    _phpms_set_property_double(pThis, "scale",    self->scale,    E_ERROR); 
-    _phpms_set_property_double(pThis, "width",    self->width,    E_ERROR); 
-    _phpms_set_property_double(pThis, "height",   self->height,   E_ERROR); 
+    _phpms_set_property_double(pThis, "cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis, "scale",    self->scale,    E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis, "width",    self->width,    E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis, "height",   self->height,   E_ERROR TSRMLS_CC); 
 
 
     RETURN_LONG(nStatus);
@@ -2021,7 +2028,7 @@ DLEXPORT void php3_ms_map_setSize(INTERNAL_FUNCTION_PARAMETERS)
 
 static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
                                       int nArgs, pval *pProjString, 
-                                      pval *pSetUnitsAndExtents)
+                                      pval *pSetUnitsAndExtents TSRMLS_DC)
 {
 #ifdef USE_PROJ
     int                 nStatus = 0;
@@ -2086,21 +2093,21 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
             msCalculateScale(self->extent, self->units, self->width, self->height, 
                              self->resolution, &(self->scale));
 
-            _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
-            _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
-            _phpms_set_property_long(pThis,"units", self->units, E_ERROR); 
+            _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
+            _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+            _phpms_set_property_long(pThis,"units", self->units, E_ERROR TSRMLS_CC); 
 
             if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                                sizeof("extent"), (void *)&pExtent) == SUCCESS)
             {
                 _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
-                                           E_ERROR);
+                                           E_ERROR TSRMLS_CC);
                 _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
-                                           E_ERROR);
+                                           E_ERROR TSRMLS_CC);
                 _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
-                                           E_ERROR);
+                                           E_ERROR TSRMLS_CC);
                 _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
-                                           E_ERROR);
+                                           E_ERROR TSRMLS_CC);
             }
         }
     }
@@ -2157,7 +2164,7 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
 
     nStatus = _php3_ms_map_setProjection(MS_FALSE, self, pThis, 
                                          nArgs, pProjString, 
-                                         pSetUnitsAndExtents);
+                                         pSetUnitsAndExtents TSRMLS_CC);
 
     RETURN_LONG(nStatus);
 }
@@ -2207,7 +2214,7 @@ DLEXPORT void php3_ms_map_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS)
 
     nStatus = _php3_ms_map_setProjection(MS_TRUE, self, pThis, 
                                          nArgs, pProjString, 
-                                         pSetUnitsAndExtents);
+                                         pSetUnitsAndExtents TSRMLS_CC);
 
     RETURN_LONG(nStatus);
 }
@@ -2599,20 +2606,20 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
     }
 
-    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
     }
 
      RETURN_TRUE;
@@ -2875,20 +2882,20 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
     }
 
-    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                         (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
     }
 
     RETURN_TRUE;
@@ -3192,20 +3199,20 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
     }
 
-    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
     }
 
      RETURN_TRUE;
@@ -3305,7 +3312,7 @@ DLEXPORT void php3_ms_map_getSymbolObjectById(INTERNAL_FUNCTION_PARAMETERS)
          pSymId->value.lval >= self->symbolset.numsymbols)
       php3_error(E_ERROR, "Invalid symbol index.");
 
-    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
 
     psSymbol = &self->symbolset.symbol[pSymId->value.lval];
     /* Return style object */
@@ -3348,7 +3355,7 @@ DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
 
     /* Return an image object */
-    _phpms_build_img_object(im, &(self->web), list, return_value);
+    _phpms_build_img_object(im, &(self->web), list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3421,27 +3428,27 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 /*      we also update the php object with the latest values.           */
 /* -------------------------------------------------------------------- */
          _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
-                                    E_ERROR); 
-         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+                                    E_ERROR TSRMLS_CC); 
+         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
 
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void *)&pExtent) == SUCCESS)
          {
              _phpms_set_property_double((*pExtent),"minx", 
                                         self->extent.minx, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pExtent),"miny", 
                                         self->extent.miny, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pExtent),"maxx", 
                                         self->extent.maxx, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pExtent),"maxy", 
                                         self->extent.maxy, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
          }
          
-         _phpms_build_img_object(im, &(self->web), list, return_value);
+         _phpms_build_img_object(im, &(self->web), list, return_value TSRMLS_CC);
     }
 }
 /* }}} */
@@ -3482,28 +3489,28 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
 /*      we also update the php object with the latest values.           */
 /* -------------------------------------------------------------------- */
          _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
-                                    E_ERROR); 
-         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+                                    E_ERROR TSRMLS_CC); 
+         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
 
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void *)&pExtent) == SUCCESS)
          {
              _phpms_set_property_double((*pExtent),"minx", 
                                         self->extent.minx, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pExtent),"miny", 
                                         self->extent.miny, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pExtent),"maxx", 
                                         self->extent.maxx, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pExtent),"maxy", 
                                         self->extent.maxy, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
          }
 
         /* Return an image object */
-         _phpms_build_img_object(im, &(self->web), list, return_value);
+         _phpms_build_img_object(im, &(self->web), list, return_value TSRMLS_CC);
     }
 }
      
@@ -3542,7 +3549,7 @@ DLEXPORT void php3_ms_map_drawLegend(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
 
     /* Return an image object */
-    _phpms_build_img_object(im, &(self->web), list, return_value);
+    _phpms_build_img_object(im, &(self->web), list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3579,7 +3586,7 @@ DLEXPORT void php3_ms_map_drawReferenceMap(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
 
     /* Return an image object */
-    _phpms_build_img_object(im, &(self->web), list, return_value);
+    _phpms_build_img_object(im, &(self->web), list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3617,7 +3624,7 @@ DLEXPORT void php3_ms_map_drawScaleBar(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
 
     /* Return an image object */
-    _phpms_build_img_object(im, &(self->web), list, return_value);
+    _phpms_build_img_object(im, &(self->web), list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3790,7 +3797,7 @@ DLEXPORT void php3_ms_map_getLayer(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent object id (this) inside
      * the layer obj.
      */
-    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
 
     /* Return layer object */
     _phpms_build_layer_object(newLayer, map_id, list, return_value TSRMLS_CC);
@@ -3847,7 +3854,7 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent object id (this) inside
      * the layer obj.
      */
-    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
 
     /* Return layer object */
     _phpms_build_layer_object(newLayer, map_id, list, return_value TSRMLS_CC);
@@ -4095,7 +4102,7 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* Return color object */
-    _phpms_build_color_object(&oColor, list, return_value);
+    _phpms_build_color_object(&oColor, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -4588,7 +4595,7 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)
     }
     /* Return rectObj */
     _phpms_build_rect_object(&oGeorefExt, PHPMS_GLOBAL(le_msrect_new), 
-                             list, return_value);
+                             list, return_value TSRMLS_CC);
 #else
     php3_error(E_ERROR, 
                "getLatLongExtent() available only with PROJ.4 support.");
@@ -5368,7 +5375,7 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
     if (self->symbolset.filename)
         _phpms_set_property_string(pThis, "symbolsetfilename", 
                                    self->symbolset.filename?
-                                       self->symbolset.filename:"", E_ERROR); 
+                                       self->symbolset.filename:"", E_ERROR TSRMLS_CC); 
 
     RETURN_LONG(retVal);
 #endif
@@ -5470,7 +5477,7 @@ DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
     if (self->fontset.filename)
         _phpms_set_property_string(pThis, "fontsetfilename", 
                                    self->fontset.filename?
-                                       self->fontset.filename:"", E_ERROR);
+                                       self->fontset.filename:"", E_ERROR TSRMLS_CC);
 
     RETURN_LONG(retVal);
 }
@@ -5604,39 +5611,39 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* read-only properties */
-    _phpms_set_property_long(pThis, "numlayers", self->numlayers, E_ERROR);
+    _phpms_set_property_long(pThis, "numlayers", self->numlayers, E_ERROR TSRMLS_CC);
 
     /* editable properties */
     if(self->name)
-        _phpms_set_property_string(pThis, "name",      self->name, E_ERROR);
-    _phpms_set_property_long(pThis,  "status",    self->status, E_ERROR);
-    _phpms_set_property_long(pThis,  "width",     self->width, E_ERROR);
-    _phpms_set_property_long(pThis,  "height",    self->height, E_ERROR);
-    _phpms_set_property_long(pThis,  "transparent", self->transparent, E_ERROR);
-    _phpms_set_property_long(pThis,  "interlace", self->interlace, E_ERROR);
+        _phpms_set_property_string(pThis, "name",      self->name, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis,  "status",    self->status, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis,  "width",     self->width, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis,  "height",    self->height, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis,  "transparent", self->transparent, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis,  "interlace", self->interlace, E_ERROR TSRMLS_CC);
     if(self->imagetype)
-        _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
-    _phpms_set_property_long(pThis,"imagequality", self->imagequality, E_ERROR);
+        _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis,"imagequality", self->imagequality, E_ERROR TSRMLS_CC);
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
-                                   E_ERROR);
+                                   E_ERROR TSRMLS_CC);
     }
 
-    _phpms_set_property_double(pThis,"cellsize",  self->cellsize, E_ERROR);
-    _phpms_set_property_long(pThis,  "units",     self->units, E_ERROR);
-    _phpms_set_property_double(pThis,"scale",     self->scale, E_ERROR);
-    _phpms_set_property_double(pThis,  "resolution",self->resolution, E_ERROR);
+    _phpms_set_property_double(pThis,"cellsize",  self->cellsize, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis,  "units",     self->units, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis,"scale",     self->scale, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis,  "resolution",self->resolution, E_ERROR TSRMLS_CC);
     if(self->shapepath)
-        _phpms_set_property_string(pThis, "shapepath",self->shapepath,E_ERROR);
+        _phpms_set_property_string(pThis, "shapepath",self->shapepath,E_ERROR TSRMLS_CC);
 
 
     RETURN_LONG(retVal);
@@ -5690,7 +5697,7 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         if(self->imagetype)
-          _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
+          _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR TSRMLS_CC);
         
         if (zend_hash_find(Z_OBJPROP_P(pThis), "outputformat", 
                            sizeof("outputformat"), 
@@ -5698,22 +5705,22 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
         {
             _phpms_set_property_string((*pOutputformat),"name", 
                                        self->outputformat->name,
-                                       E_ERROR);
+                                       E_ERROR TSRMLS_CC);
             _phpms_set_property_string((*pOutputformat),"mimetype", 
                                        self->outputformat->mimetype,
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
             _phpms_set_property_string((*pOutputformat),"driver", 
                                        self->outputformat->driver,
-                                       E_ERROR);
+                                       E_ERROR TSRMLS_CC);
             _phpms_set_property_string((*pOutputformat),"extension", 
                                        self->outputformat->extension,
-                                       E_ERROR);
+                                       E_ERROR TSRMLS_CC);
             _phpms_set_property_long((*pOutputformat),"renderer", 
-                                     self->outputformat->renderer, E_ERROR); 
+                                     self->outputformat->renderer, E_ERROR TSRMLS_CC); 
             _phpms_set_property_long((*pOutputformat),"imagemode", 
-                                     self->outputformat->imagemode, E_ERROR);
+                                     self->outputformat->imagemode, E_ERROR TSRMLS_CC);
             _phpms_set_property_long((*pOutputformat),"transparent", 
-                                     self->outputformat->transparent, E_ERROR);
+                                     self->outputformat->transparent, E_ERROR TSRMLS_CC);
         }
     }
 
@@ -5848,7 +5855,7 @@ DLEXPORT void php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_img_object()
  **********************************************************************/
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
-                                    HashTable *list, pval *return_value)
+                                    HashTable *list, pval *return_value TSRMLS_DC)
 {
     int img_id;
 
@@ -5858,7 +5865,7 @@ static long _phpms_build_img_object(imageObj *im, webObj *pweb,
     img_id = php3_list_insert(im, PHPMS_GLOBAL(le_msimg));
 
     _phpms_object_init(return_value, img_id, php_img_class_functions,
-                       PHP4_CLASS_ENTRY(img_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(img_class_entry_ptr) TSRMLS_CC);
 
     /* width/height params are read-only */
     add_property_long(return_value, "width", im->width);
@@ -5944,10 +5951,11 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
         retVal = 0;
 
+
 #ifdef PHP4
-        php_header();
+        php_header(TSRMLS_C);
 #else
-        php3_header();
+         php_header();
 #endif
 
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
@@ -6043,8 +6051,8 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     im = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
-    pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR);
-    pImageurl = _phpms_fetch_property_string(pThis, "imageurl", E_ERROR);
+    pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR TSRMLS_CC);
+    pImageurl = _phpms_fetch_property_string(pThis, "imageurl", E_ERROR TSRMLS_CC);
 
     pszImageExt = im->format->extension;
 
@@ -6254,7 +6262,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     layer_id = php3_list_insert(player, PHPMS_GLOBAL(le_mslayer));
 
     _phpms_object_init(return_value, layer_id, php_layer_class_functions,
-                       PHP4_CLASS_ENTRY(layer_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(layer_class_entry_ptr) TSRMLS_CC);
 
 #ifdef PHP4
     zend_list_addref(parent_map_id);
@@ -6306,8 +6314,8 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "labelrequires", player->labelrequires);
 
     MAKE_STD_ZVAL(new_obj_ptr);
-    _phpms_build_color_object(&(player->offsite),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR);
+    _phpms_build_color_object(&(player->offsite),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     if (player->connectiontype == MS_GRATICULE && 
         player->layerinfo != NULL)
@@ -6316,7 +6324,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
          _phpms_build_grid_object((graticuleObj *)(player->layerinfo),
                                   layer_id,
                                   list, new_obj_ptr TSRMLS_CC);
-         _phpms_add_property_object(return_value, "grid", new_obj_ptr, E_ERROR);
+         _phpms_add_property_object(return_value, "grid", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     }
     return layer_id;
@@ -6379,12 +6387,12 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Update mapObj members */
     _phpms_set_property_long(pMapObj, "numlayers",
-                             parent_map->numlayers, E_ERROR); 
+                             parent_map->numlayers, E_ERROR TSRMLS_CC); 
 
     /* We will store a reference to the parent_map object id inside
      * the layer obj.
      */
-    map_id = _phpms_fetch_property_resource(pMapObj, "_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pMapObj, "_handle_", E_ERROR TSRMLS_CC);
 
     /* Return layer object */
     _phpms_build_layer_object(pNewLayer, map_id, list, return_value TSRMLS_CC);
@@ -6625,12 +6633,12 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent object id (this) inside
      * the class obj.
      */
-    layer_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
 
     /* We will store a reference to the map parent object id (this) inside
      * the class obj.
      */
-    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR TSRMLS_CC);
 
     /* Return layer object */
     _phpms_build_class_object(newClass, map_id, layer_id, list, 
@@ -7409,7 +7417,7 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return valid object */
     _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), self,
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -7458,7 +7466,7 @@ DLEXPORT void php3_ms_lyr_getExtent(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return rectObj */
     _phpms_build_rect_object(poRect, PHPMS_GLOBAL(le_msrect_new), 
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -7744,7 +7752,7 @@ DLEXPORT void php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS)
     layer->processing[layer->numprocessing-1] = strdup(pString->value.str.val);
     layer->processing[layer->numprocessing] = NULL;
     
-    _phpms_set_property_long(pThis, "num_processing", layer->numprocessing, E_ERROR);
+    _phpms_set_property_long(pThis, "num_processing", layer->numprocessing, E_ERROR TSRMLS_CC);
 
     RETURN_TRUE;
 }    
@@ -7825,7 +7833,7 @@ DLEXPORT void php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS)
         layer->numprocessing = 0;
         free(layer->processing);
 
-        _phpms_set_property_long(pThis, "num_processing", layer->numprocessing, E_ERROR);
+        _phpms_set_property_long(pThis, "num_processing", layer->numprocessing, E_ERROR TSRMLS_CC);
 
     }
 }        
@@ -8106,7 +8114,7 @@ DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_label_object()
  **********************************************************************/
 static long _phpms_build_label_object(labelObj *plabel,
-                                      HashTable *list, pval *return_value)
+                                      HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         label_id;
     pval        *new_obj_ptr;
@@ -8117,7 +8125,7 @@ static long _phpms_build_label_object(labelObj *plabel,
     label_id = php3_list_insert(plabel, PHPMS_GLOBAL(le_mslabel));
 
     _phpms_object_init(return_value, label_id, php_label_class_functions,
-                       PHP4_CLASS_ENTRY(label_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(label_class_entry_ptr) TSRMLS_CC);
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "font",       plabel->font);
@@ -8147,25 +8155,25 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "force",      plabel->force);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(plabel->color),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(plabel->color),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(plabel->outlinecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(plabel->outlinecolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(plabel->shadowcolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "shadowcolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(plabel->shadowcolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "shadowcolor",new_obj_ptr,E_ERROR TSRMLS_CC);
  
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(plabel->backgroundcolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(plabel->backgroundcolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(plabel->backgroundshadowcolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "backgroundshadowcolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(plabel->backgroundshadowcolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "backgroundshadowcolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
 
     return label_id;
@@ -8240,7 +8248,7 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     if (self->size == -1)
     {
-        _phpms_set_property_long(pThis,"size", MS_MEDIUM, E_ERROR);
+        _phpms_set_property_long(pThis,"size", MS_MEDIUM, E_ERROR TSRMLS_CC);
         self->size =  MS_MEDIUM;
     }
 
@@ -8275,7 +8283,7 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     class_id = php3_list_insert(pclass, PHPMS_GLOBAL(le_msclass));
 
     _phpms_object_init(return_value, class_id, php_class_class_functions,
-                       PHP4_CLASS_ENTRY(class_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(class_class_entry_ptr) TSRMLS_CC);
 
 #ifdef PHP4
     add_property_resource(return_value, "_layer_handle_", parent_layer_id);
@@ -8302,8 +8310,8 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
-    _phpms_build_label_object(&(pclass->label), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR);
+    _phpms_build_label_object(&(pclass->label), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR TSRMLS_CC);
 
     add_property_double(return_value,  "minscale", pclass->minscale);
     add_property_double(return_value,  "maxscale", pclass->maxscale);
@@ -8363,17 +8371,17 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
     }
 
      _phpms_set_property_long(pLayerObj,"numclasses", parent_layer->numclasses, 
-                              E_ERROR); 
+                              E_ERROR TSRMLS_CC); 
 
     /* We will store a reference to the parent_layer object id inside
      * the class obj.
      */
-    layer_id = _phpms_fetch_property_resource(pLayerObj, "_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pLayerObj, "_handle_", E_ERROR TSRMLS_CC);
 
     /* We will store a reference to the parent_map object id inside
      * the class obj.
      */
-    map_id = _phpms_fetch_property_resource(pLayerObj, "_map_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pLayerObj, "_map_handle_", E_ERROR TSRMLS_CC);
    
     /* Return class object */
     _phpms_build_class_object(pNewClass, map_id, layer_id, list, 
@@ -8731,7 +8739,7 @@ DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* Return an image object */
-    _phpms_build_img_object(im, &(parent_map->web), list, return_value);
+    _phpms_build_img_object(im, &(parent_map->web), list, return_value TSRMLS_CC);
 }
 
 
@@ -8781,10 +8789,10 @@ DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS)
 
     psStyle = &(self->styles[ pIndex->value.lval]);
     
-    class_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
+    class_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
     layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", 
-                                               E_ERROR);
-    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+                                               E_ERROR TSRMLS_CC);
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR TSRMLS_CC);
       
     /* Return style object */
     _phpms_build_style_object(psStyle, map_id, layer_id, class_id, list, 
@@ -8822,8 +8830,8 @@ DLEXPORT void php3_ms_class_clone(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", E_ERROR);
-    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", E_ERROR TSRMLS_CC);
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR TSRMLS_CC);
 
      /* Return class object */
     _phpms_build_class_object(pNewClass, map_id, layer_id, list, 
@@ -8911,7 +8919,7 @@ DLEXPORT void  php3_ms_class_deleteStyle(INTERNAL_FUNCTION_PARAMETERS)
          nStatus = classObj_deleteStyle(self, pIdx->value.lval);
 
          if (nStatus == MS_TRUE)
-           _phpms_set_property_long(pThis,"numstyles", self->numstyles, E_ERROR); 
+           _phpms_set_property_long(pThis,"numstyles", self->numstyles, E_ERROR TSRMLS_CC); 
      }
 
      RETURN_LONG(nStatus);
@@ -8929,7 +8937,7 @@ DLEXPORT void  php3_ms_class_deleteStyle(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_color_object()
  **********************************************************************/
 static long _phpms_build_color_object(colorObj *pcolor,
-                                      HashTable *list, pval *return_value)
+                                      HashTable *list, pval *return_value TSRMLS_DC)
 {
     int color_id;
 
@@ -8939,7 +8947,7 @@ static long _phpms_build_color_object(colorObj *pcolor,
     color_id = php3_list_insert(pcolor, PHPMS_GLOBAL(le_mscolor));
 
     _phpms_object_init(return_value, color_id, php_color_class_functions,
-                       PHP4_CLASS_ENTRY(color_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(color_class_entry_ptr) TSRMLS_CC);
 
     /* editable properties */
     add_property_long(return_value,   "red",   pcolor->red);
@@ -8990,9 +8998,9 @@ DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS)
 
     MS_INIT_COLOR(*self, pR->value.lval, pG->value.lval, pB->value.lval);
 
-    _phpms_set_property_long(pThis, "red",   self->red, E_ERROR);
-    _phpms_set_property_long(pThis, "green", self->green, E_ERROR);
-    _phpms_set_property_long(pThis, "blue",  self->blue, E_ERROR);
+    _phpms_set_property_long(pThis, "red",   self->red, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis, "green", self->green, E_ERROR TSRMLS_CC);
+    _phpms_set_property_long(pThis, "blue",  self->blue, E_ERROR TSRMLS_CC);
 
     RETURN_LONG(0);
 }
@@ -9010,7 +9018,7 @@ DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS)
  * le_mspoint_new for a newly allocated object
  **********************************************************************/
 static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
-                                      HashTable *list, pval *return_value)
+                                      HashTable *list, pval *return_value TSRMLS_DC)
 {
     int point_id;
 
@@ -9020,7 +9028,7 @@ static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
     point_id = php3_list_insert(ppoint, handle_type);
 
     _phpms_object_init(return_value, point_id, php_point_class_functions,
-                       PHP4_CLASS_ENTRY(point_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(point_class_entry_ptr) TSRMLS_CC);
 
     /* editable properties */
     add_property_double(return_value,   "x",   ppoint->x);
@@ -9059,7 +9067,7 @@ DLEXPORT void php3_ms_point_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return point object */
     _phpms_build_point_object(pNewPoint, PHPMS_GLOBAL(le_mspoint_new), 
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -9123,9 +9131,9 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     else
       self->m = 0.0; 
 
-    _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
-    _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
-    _phpms_set_property_double(pThis, "m", self->y, E_ERROR);
+    _phpms_set_property_double(pThis, "x", self->x, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "y", self->y, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "m", self->y, E_ERROR TSRMLS_CC);
 
 
     RETURN_LONG(0);
@@ -9195,10 +9203,10 @@ DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS)
     else
       self->m = 0.0; 
 
-    _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
-    _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
-    _phpms_set_property_double(pThis, "z", self->z, E_ERROR);
-    _phpms_set_property_double(pThis, "m", self->m, E_ERROR);
+    _phpms_set_property_double(pThis, "x", self->x, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "y", self->y, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "z", self->z, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "m", self->m, E_ERROR TSRMLS_CC);
 
 
     RETURN_LONG(0);
@@ -9258,8 +9266,8 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         // Update the members of the PHP wrapper object.
-        _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
-        _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
+        _phpms_set_property_double(pThis, "x", self->x, E_ERROR TSRMLS_CC);
+        _phpms_set_property_double(pThis, "y", self->y, E_ERROR TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -9525,7 +9533,7 @@ DLEXPORT void php3_ms_point_free(INTERNAL_FUNCTION_PARAMETERS)
  * le_msline_new for a newly allocated object
  **********************************************************************/
 static long _phpms_build_line_object(lineObj *pline, int handle_type,
-                                      HashTable *list, pval *return_value)
+                                      HashTable *list, pval *return_value TSRMLS_DC)
 {
     int line_id;
 
@@ -9535,7 +9543,7 @@ static long _phpms_build_line_object(lineObj *pline, int handle_type,
     line_id = php3_list_insert(pline, handle_type);
 
     _phpms_object_init(return_value, line_id, php_line_class_functions,
-                       PHP4_CLASS_ENTRY(line_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(line_class_entry_ptr) TSRMLS_CC);
 
     /* read-only properties */
     add_property_long(return_value, "numpoints", pline->numpoints);
@@ -9571,7 +9579,7 @@ DLEXPORT void php3_ms_line_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return line object */
     _phpms_build_line_object(pNewLine, PHPMS_GLOBAL(le_msline_new), 
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -9675,7 +9683,7 @@ DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS)
     if (self && poPoint)
     {
         nRetVal = lineObj_add(self, poPoint);
-        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR);
+        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR TSRMLS_CC);
     }
 
     RETURN_LONG(nRetVal)
@@ -9744,7 +9752,7 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
     if (self)
     {
         nRetVal = lineObj_add(self, &oPoint);
-        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR);
+        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR TSRMLS_CC);
     }
 
     RETURN_LONG(nRetVal)
@@ -9815,7 +9823,7 @@ DLEXPORT void php3_ms_line_addXYZ(INTERNAL_FUNCTION_PARAMETERS)
     if (self)
     {
         nRetVal = lineObj_add(self, &oPoint);
-        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR);
+        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR TSRMLS_CC);
     }
 
     RETURN_LONG(nRetVal)
@@ -9869,7 +9877,7 @@ DLEXPORT void php3_ms_line_point(INTERNAL_FUNCTION_PARAMETERS)
      */
     _phpms_build_point_object(&(self->point[pIndex->value.lval]), 
                                 PHPMS_GLOBAL(le_mspoint_ref), 
-                                list, return_value);
+                                list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -9928,7 +9936,7 @@ DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS)
  **********************************************************************/
 static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
                                       layerObj *pLayer,
-                                      HashTable *list, pval *return_value)
+                                      HashTable *list, pval *return_value TSRMLS_DC)
 {
     int     shape_id;
 #ifdef PHP4
@@ -9945,7 +9953,7 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     shape_id = php3_list_insert(pshape, handle_type);
 
     _phpms_object_init(return_value, shape_id, php_shape_class_functions,
-                       PHP4_CLASS_ENTRY(shape_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(shape_class_entry_ptr) TSRMLS_CC);
 
     /* read-only properties */
     add_property_long(return_value, "numlines", pshape->numlines);
@@ -9960,8 +9968,8 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
     _phpms_build_rect_object(&(pshape->bounds), PHPMS_GLOBAL(le_msrect_ref), 
-                             list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR);
+                             list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR TSRMLS_CC);
 
     /* Package values as an associative array
      * For now we do this only for shapes returned from map layers, and not
@@ -9982,7 +9990,7 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
                              pLayer->items[i], pshape->values[i], 1);
         }
         _phpms_add_property_object(return_value, "values", 
-                                   new_obj_ptr, E_ERROR);
+                                   new_obj_ptr, E_ERROR TSRMLS_CC);
     }
     else if (pLayer)
     {
@@ -10025,7 +10033,7 @@ DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return shape object */
     _phpms_build_shape_object(pNewShape, PHPMS_GLOBAL(le_msshape_new), NULL,
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -10143,13 +10151,13 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
                             sizeof("bounds"), (void *)&pBounds) == SUCCESS)
          {
              _phpms_set_property_double((*pBounds),"minx", self->bounds.minx, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pBounds),"miny", self->bounds.miny, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pBounds),"maxx", self->bounds.maxx, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
              _phpms_set_property_double((*pBounds),"maxy", self->bounds.maxy, 
-                                        E_ERROR);
+                                        E_ERROR TSRMLS_CC);
          }
     }
 
@@ -10199,7 +10207,7 @@ DLEXPORT void php3_ms_shape_add(INTERNAL_FUNCTION_PARAMETERS)
     if (self && poLine)
     {
         nRetVal = shapeObj_add(self, poLine);
-        _phpms_set_property_long(pThis, "numlines", self->numlines, E_ERROR);
+        _phpms_set_property_long(pThis, "numlines", self->numlines, E_ERROR TSRMLS_CC);
     }
 
     RETURN_LONG(nRetVal)
@@ -10252,7 +10260,7 @@ DLEXPORT void php3_ms_shape_line(INTERNAL_FUNCTION_PARAMETERS)
      */
     _phpms_build_line_object(&(self->line[pIndex->value.lval]), 
                                 PHPMS_GLOBAL(le_msline_ref), 
-                                list, return_value);
+                                list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -10490,7 +10498,7 @@ DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS)
         
     _phpms_build_point_object(point, 
                               PHPMS_GLOBAL(le_mspoint_ref), 
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 
 
@@ -10545,7 +10553,7 @@ DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS)
 
      _phpms_build_point_object(intersection, 
                               PHPMS_GLOBAL(le_mspoint_ref), 
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
      
 /**********************************************************************
@@ -10597,7 +10605,7 @@ DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_web_object()
  **********************************************************************/
 static long _phpms_build_web_object(webObj *pweb, 
-                                    HashTable *list, pval *return_value)
+                                    HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         web_id;
 #ifdef PHP4
@@ -10614,7 +10622,7 @@ static long _phpms_build_web_object(webObj *pweb,
     web_id = php3_list_insert(pweb, PHPMS_GLOBAL(le_msweb));
 
     _phpms_object_init(return_value, web_id, php_web_class_functions,
-                       PHP4_CLASS_ENTRY(web_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(web_class_entry_ptr) TSRMLS_CC);
 
     PHPMS_ADD_PROP_STR(return_value,  "log",            pweb->log);
     PHPMS_ADD_PROP_STR(return_value,  "imagepath",      pweb->imagepath);
@@ -10635,8 +10643,8 @@ static long _phpms_build_web_object(webObj *pweb,
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
     _phpms_build_rect_object(&(pweb->extent), PHPMS_GLOBAL(le_msrect_ref), 
-                             list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "extent", new_obj_ptr,E_ERROR);
+                             list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "extent", new_obj_ptr,E_ERROR TSRMLS_CC);
 
     return web_id;
 }
@@ -10726,7 +10734,7 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS)
  * le_msrect_new for a newly allocated object
  **********************************************************************/
 static long _phpms_build_rect_object(rectObj *prect, int handle_type, 
-                                     HashTable *list, pval *return_value)
+                                     HashTable *list, pval *return_value TSRMLS_DC)
 {
     int rect_id;
 
@@ -10736,7 +10744,7 @@ static long _phpms_build_rect_object(rectObj *prect, int handle_type,
     rect_id = php3_list_insert(prect, handle_type);
 
     _phpms_object_init(return_value, rect_id, php_rect_class_functions,
-                       PHP4_CLASS_ENTRY(rect_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(rect_class_entry_ptr) TSRMLS_CC);
 
     add_property_double(return_value,   "minx",       prect->minx);
     add_property_double(return_value,   "miny",       prect->miny);
@@ -10774,7 +10782,7 @@ DLEXPORT void php3_ms_rect_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return rect object */
     _phpms_build_rect_object(pNewRect, PHPMS_GLOBAL(le_msrect_new), 
-                             list, return_value);
+                             list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -10829,10 +10837,10 @@ DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         // Update the members of the PHP wrapper object.
-        _phpms_set_property_double(pThis, "minx", self->minx, E_ERROR);
-        _phpms_set_property_double(pThis, "miny", self->miny, E_ERROR);
-        _phpms_set_property_double(pThis, "maxx", self->maxx, E_ERROR);
-        _phpms_set_property_double(pThis, "maxy", self->maxy, E_ERROR);
+        _phpms_set_property_double(pThis, "minx", self->minx, E_ERROR TSRMLS_CC);
+        _phpms_set_property_double(pThis, "miny", self->miny, E_ERROR TSRMLS_CC);
+        _phpms_set_property_double(pThis, "maxx", self->maxx, E_ERROR TSRMLS_CC);
+        _phpms_set_property_double(pThis, "maxy", self->maxy, E_ERROR TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -10942,10 +10950,10 @@ DLEXPORT void php3_ms_rect_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     self->maxx = pXMax->value.dval;
     self->maxy = pYMax->value.dval;
 
-    _phpms_set_property_double(pThis, "minx", self->minx, E_ERROR);
-    _phpms_set_property_double(pThis, "miny", self->miny, E_ERROR);
-    _phpms_set_property_double(pThis, "maxx", self->maxx, E_ERROR);
-    _phpms_set_property_double(pThis, "maxy", self->maxy, E_ERROR);
+    _phpms_set_property_double(pThis, "minx", self->minx, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "miny", self->miny, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "maxx", self->maxx, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis, "maxy", self->maxy, E_ERROR TSRMLS_CC);
 
     RETURN_LONG(0);
 }
@@ -11104,7 +11112,7 @@ DLEXPORT void php3_ms_rect_free(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_referenceMap_object()
  **********************************************************************/
 static long _phpms_build_referenceMap_object(referenceMapObj *preference, 
-                                    HashTable *list, pval *return_value)
+                                    HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         reference_id;
 #ifdef PHP4
@@ -11122,7 +11130,7 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
 
     _phpms_object_init(return_value, reference_id, 
                        php_reference_class_functions,
-                       PHP4_CLASS_ENTRY(reference_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(reference_class_entry_ptr) TSRMLS_CC);
 
     PHPMS_ADD_PROP_STR(return_value,  "image",   preference->image);
     add_property_long(return_value,   "width",  preference->width);
@@ -11133,21 +11141,21 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
     _phpms_build_rect_object(&(preference->extent), 
-                             PHPMS_GLOBAL(le_msrect_ref),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR);
+                             PHPMS_GLOBAL(le_msrect_ref),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
-    _phpms_build_color_object(&(preference->color),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "color", new_obj_ptr, E_ERROR);
+    _phpms_build_color_object(&(preference->color),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "color", new_obj_ptr, E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
-    _phpms_build_color_object(&(preference->outlinecolor),list, new_obj_ptr);
+    _phpms_build_color_object(&(preference->outlinecolor),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "outlinecolor", 
-                               new_obj_ptr, E_ERROR);
+                               new_obj_ptr, E_ERROR TSRMLS_CC);
 
     return reference_id;
 }
@@ -11225,7 +11233,7 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_shapefile_object()
  **********************************************************************/
 static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
-                                          HashTable *list, pval *return_value)
+                                          HashTable *list, pval *return_value TSRMLS_DC)
 {
     int shapefile_id;
 #ifdef PHP4
@@ -11243,7 +11251,7 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
 
     _phpms_object_init(return_value, shapefile_id, 
                        php_shapefile_class_functions,
-                       PHP4_CLASS_ENTRY(shapefile_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(shapefile_class_entry_ptr) TSRMLS_CC);
 
     /* read-only properties */
     add_property_long(return_value, "numshapes",  pshapefile->numshapes);
@@ -11254,8 +11262,8 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
     _phpms_build_rect_object(&(pshapefile->bounds), 
-                             PHPMS_GLOBAL(le_msrect_ref), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR);
+                             PHPMS_GLOBAL(le_msrect_ref), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR TSRMLS_CC);
 
     return shapefile_id;
 }
@@ -11295,7 +11303,7 @@ DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Create a PHP object, add all shapefileObj methods, etc.
      */
-    _phpms_build_shapefile_object(pNewObj, list, return_value);
+    _phpms_build_shapefile_object(pNewObj, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -11452,7 +11460,7 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return shape object */
     _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), NULL,
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -11511,7 +11519,7 @@ DLEXPORT void php3_ms_shapefile_getpoint(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return point object */
     _phpms_build_point_object(poPoint, PHPMS_GLOBAL(le_mspoint_new),
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -11576,7 +11584,7 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return shape object */
     _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), NULL,
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -11634,7 +11642,7 @@ DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return rectObj */
     _phpms_build_rect_object(poRect, PHPMS_GLOBAL(le_msrect_new), 
-                              list, return_value);
+                              list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -11718,7 +11726,7 @@ static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
 **********************************************************************/
 static long _phpms_build_projection_object(projectionObj *pproj, 
                                            int handle_type, 
-                                           HashTable *list, pval *return_value)
+                                           HashTable *list, pval *return_value TSRMLS_DC)
 {
     int projection_id;
 
@@ -11729,7 +11737,7 @@ static long _phpms_build_projection_object(projectionObj *pproj,
 
     _phpms_object_init(return_value, projection_id, 
                        php_projection_class_functions,
-                       PHP4_CLASS_ENTRY(projection_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(projection_class_entry_ptr) TSRMLS_CC);
 
     return projection_id;
 }
@@ -11765,7 +11773,7 @@ DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS)
     /* Return rect object */
     _phpms_build_projection_object(pNewProj, 
                                    PHPMS_GLOBAL(le_msprojection_new), 
-                                   list, return_value);
+                                   list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -11820,7 +11828,7 @@ DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_scalebar_object()
  **********************************************************************/
 static long _phpms_build_scalebar_object(scalebarObj *pscalebar, 
-                                         HashTable *list, pval *return_value)
+                                         HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         scalebar_id;
 #ifdef PHP4
@@ -11837,7 +11845,7 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
     scalebar_id = php3_list_insert(pscalebar, PHPMS_GLOBAL(le_msscalebar));
 
     _phpms_object_init(return_value, scalebar_id, php_scalebar_class_functions,
-                       PHP4_CLASS_ENTRY(scalebar_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(scalebar_class_entry_ptr) TSRMLS_CC);
 
     add_property_long(return_value,  "height",          pscalebar->height);
     add_property_long(return_value,  "width",           pscalebar->width);
@@ -11856,29 +11864,29 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
-    _phpms_build_label_object(&(pscalebar->label), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR);
+    _phpms_build_label_object(&(pscalebar->label), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
-    _phpms_build_color_object(&(pscalebar->imagecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pscalebar->imagecolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(pscalebar->color),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pscalebar->color),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR TSRMLS_CC);
 
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(pscalebar->backgroundcolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pscalebar->backgroundcolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
   
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(pscalebar->outlinecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pscalebar->outlinecolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
     
     return scalebar_id;
 }
@@ -12015,7 +12023,7 @@ DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_legend_object()
  **********************************************************************/
 static long _phpms_build_legend_object(legendObj *plegend, 
-                                       HashTable *list, pval *return_value)
+                                       HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         legend_id;
 #ifdef PHP4
@@ -12032,7 +12040,7 @@ static long _phpms_build_legend_object(legendObj *plegend,
     legend_id = php3_list_insert(plegend, PHPMS_GLOBAL(le_mslegend));
 
     _phpms_object_init(return_value, legend_id, php_legend_class_functions,
-                       PHP4_CLASS_ENTRY(legend_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(legend_class_entry_ptr) TSRMLS_CC);
 
     add_property_long(return_value,  "height",          plegend->height);
     add_property_long(return_value,  "width",           plegend->width);
@@ -12052,18 +12060,18 @@ static long _phpms_build_legend_object(legendObj *plegend,
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
-    _phpms_build_label_object(&(plegend->label), list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR);
+    _phpms_build_label_object(&(plegend->label), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR TSRMLS_CC);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
-    _phpms_build_color_object(&(plegend->imagecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(plegend->imagecolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(plegend->outlinecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(plegend->outlinecolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     return legend_id;
 }
@@ -12160,7 +12168,7 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     style_id = php3_list_insert(pstyle, PHPMS_GLOBAL(le_msstyle));
 
     _phpms_object_init(return_value, style_id, php_style_class_functions,
-                       PHP4_CLASS_ENTRY(style_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(style_class_entry_ptr) TSRMLS_CC);
 
     add_property_resource(return_value, "_class_handle_", parent_class_id);
     zend_list_addref(parent_class_id);
@@ -12182,16 +12190,16 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     add_property_long(return_value,   "offsety",       pstyle->offsety);
     
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(pstyle->color),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pstyle->color),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(pstyle->backgroundcolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pstyle->backgroundcolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-    _phpms_build_color_object(&(pstyle->outlinecolor),list, new_obj_ptr);
-    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
+    _phpms_build_color_object(&(pstyle->outlinecolor),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     return style_id;
 }
@@ -12241,23 +12249,23 @@ DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS)
     }
 
      _phpms_set_property_long(pClassObj,"numstyles", parent_class->numstyles, 
-                              E_ERROR); 
+                              E_ERROR TSRMLS_CC); 
 
      
     /* We will store a reference to the parent_class object id inside
      * the obj.
      */
-    class_id = _phpms_fetch_property_resource(pClassObj, "_handle_", E_ERROR);
+    class_id = _phpms_fetch_property_resource(pClassObj, "_handle_", E_ERROR TSRMLS_CC);
 
     /* We will store a reference to the parent_layer object id inside
      * the obj.
      */
-    layer_id = _phpms_fetch_property_resource(pClassObj, "_layer_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pClassObj, "_layer_handle_", E_ERROR TSRMLS_CC);
 
     /* We will store a reference to the parent_map object id inside
      * the obj.
      */
-    map_id = _phpms_fetch_property_resource(pClassObj, "_map_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pClassObj, "_map_handle_", E_ERROR TSRMLS_CC);
    
     /* Return style object */
     _phpms_build_style_object(pNewStyle, map_id, layer_id, class_id, list, 
@@ -12330,7 +12338,7 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
         {
             RETURN_LONG(-1);
         }
-        _phpms_set_property_long(pThis,"symbol", self->symbol, E_ERROR); 
+        _phpms_set_property_long(pThis,"symbol", self->symbol, E_ERROR TSRMLS_CC); 
     }
 
     RETURN_LONG(0);
@@ -12359,9 +12367,9 @@ DLEXPORT void php3_ms_style_clone(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    class_id = _phpms_fetch_property_resource(pThis, "_class_handle_", E_ERROR);
-    layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", E_ERROR);
-    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+    class_id = _phpms_fetch_property_resource(pThis, "_class_handle_", E_ERROR TSRMLS_CC);
+    layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", E_ERROR TSRMLS_CC);
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR TSRMLS_CC);
 
      /* Return style object */
     _phpms_build_style_object(pNewStyle, map_id, layer_id, class_id, list, 
@@ -12381,7 +12389,7 @@ DLEXPORT void php3_ms_style_clone(INTERNAL_FUNCTION_PARAMETERS)
  **********************************************************************/
 static long _phpms_build_outputformat_object(outputFormatObj *poutputformat, 
                                              HashTable *list, 
-                                             pval *return_value)
+                                             pval *return_value TSRMLS_DC)
 {
     int         outputformat_id;
 
@@ -12393,7 +12401,7 @@ static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
 
     _phpms_object_init(return_value, outputformat_id, 
                        php_outputformat_class_functions,
-                       PHP4_CLASS_ENTRY(outputformat_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(outputformat_class_entry_ptr) TSRMLS_CC);
 
     PHPMS_ADD_PROP_STR(return_value, "name", poutputformat->name);
     PHPMS_ADD_PROP_STR(return_value, "mimetype", poutputformat->mimetype);
@@ -12571,7 +12579,7 @@ static long _phpms_build_grid_object(graticuleObj *pgrid,
 
     _phpms_object_init(return_value, grid_id, 
                        php_grid_class_functions,
-                       PHP4_CLASS_ENTRY(grid_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(grid_class_entry_ptr) TSRMLS_CC);
 
     add_property_resource(return_value, "_layer_handle_", parent_layer_id);
     zend_list_addref(parent_layer_id);
@@ -12605,7 +12613,7 @@ DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS)
                                                   PHPMS_GLOBAL(le_mslayer),
                                                   list TSRMLS_CC);
 
-    layer_id = _phpms_fetch_property_resource(pLayerObj, "_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pLayerObj, "_handle_", E_ERROR TSRMLS_CC);
 
     if (parent_class == NULL)
     {
@@ -12617,7 +12625,7 @@ DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Update layerObj members */
     _phpms_set_property_long(pLayerObj, "connectiontype",
-                             parent_class->connectiontype, E_ERROR); 
+                             parent_class->connectiontype, E_ERROR TSRMLS_CC); 
 
     if (parent_class->layerinfo != NULL)
       free(parent_class->layerinfo);
@@ -12629,7 +12637,7 @@ DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_build_grid_object((graticuleObj *)(parent_class->layerinfo),
                              layer_id,
                              list, new_obj_ptr TSRMLS_CC);
-    _phpms_add_property_object(pLayerObj, "grid", new_obj_ptr, E_ERROR);
+    _phpms_add_property_object(pLayerObj, "grid", new_obj_ptr, E_ERROR TSRMLS_CC);
     
 }
 /* }}} */
@@ -12703,7 +12711,7 @@ DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_error_object()
  **********************************************************************/
 static long _phpms_build_error_object(errorObj *perror, 
-                                     HashTable *list, pval *return_value)
+                                     HashTable *list, pval *return_value TSRMLS_DC)
 {
     int error_id;
 
@@ -12713,7 +12721,7 @@ static long _phpms_build_error_object(errorObj *perror,
     error_id = php3_list_insert(perror, PHPMS_GLOBAL(le_mserror_ref) );
 
     _phpms_object_init(return_value, error_id, php_error_class_functions,
-                       PHP4_CLASS_ENTRY(error_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(error_class_entry_ptr) TSRMLS_CC);
 
     add_property_long(return_value,     "code",         perror->code);
     PHPMS_ADD_PROP_STR(return_value,    "routine",      perror->routine);
@@ -12747,7 +12755,7 @@ DLEXPORT void php3_ms_get_error_obj(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* Return error object */
-    _phpms_build_error_object(pError, list, return_value);
+    _phpms_build_error_object(pError, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -12799,7 +12807,7 @@ DLEXPORT void php3_ms_error_next(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* Return error object */
-    _phpms_build_error_object(self->next, list, return_value);
+    _phpms_build_error_object(self->next, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -12826,7 +12834,7 @@ DLEXPORT void php3_ms_reset_error_list(INTERNAL_FUNCTION_PARAMETERS)
  **********************************************************************/
 static long _phpms_build_labelcache_object(labelCacheObj *plabelcache, 
                                            HashTable *list, 
-                                           pval *return_value)
+                                           pval *return_value TSRMLS_DC)
 {
     int         labelcache_id;
 
@@ -12838,7 +12846,7 @@ static long _phpms_build_labelcache_object(labelCacheObj *plabelcache,
 
     _phpms_object_init(return_value, labelcache_id, 
                        php_labelcache_class_functions,
-                       PHP4_CLASS_ENTRY(labelcache_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(labelcache_class_entry_ptr) TSRMLS_CC);
 
     return labelcache_id;
 }
@@ -12927,7 +12935,7 @@ static long _phpms_build_symbol_object(symbolObj *psSymbol,
     symbol_id = php3_list_insert(psSymbol, PHPMS_GLOBAL(le_mssymbol));
 
     _phpms_object_init(return_value, symbol_id, php_symbol_class_functions,
-                       PHP4_CLASS_ENTRY(symbol_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(symbol_class_entry_ptr) TSRMLS_CC);
 
     add_property_resource(return_value, "_map_handle_", parent_map_id);
     zend_list_addref(parent_map_id);
@@ -13074,7 +13082,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
     
     self->numpoints = (nElements/2);
 
-    _phpms_set_property_long(pThis,"numpoints", self->numpoints , E_ERROR); 
+    _phpms_set_property_long(pThis,"numpoints", self->numpoints , E_ERROR TSRMLS_CC); 
     RETURN_TRUE;
 }
 
@@ -13217,7 +13225,7 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     
     self->stylelength = nElements;
 
-    _phpms_set_property_long(pThis,"stylelength", self->stylelength , E_ERROR); 
+    _phpms_set_property_long(pThis,"stylelength", self->stylelength , E_ERROR TSRMLS_CC); 
 
     RETURN_TRUE;
 }

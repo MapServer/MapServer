@@ -11,9 +11,6 @@
 # $Id$
 #
 
-# To use PHP4 (instead of PHP3) uncomment the following line
-# The default when PHP4=1 is not set is to build for PHP3
-PHP4 = 1
 # Flag indicating to the option files that this is the build of PHP/MapScript
 PHP_BUILD_CALL=TRUE
 !INCLUDE ../../nmake.opt
@@ -71,16 +68,16 @@ mapscript:      $(PHPMS_DLL)
 proj:	        $(PHPPROJ_DLL)
 
 install:	all
-	copy $(PHPMS_DLL) "c:\php\php4\extensions\php_mapscript_41.dll"
+	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)\php_mapscript_45.dll"
 
 !ifdef PHP4
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LDFLAGS) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
-		$(PHP_DIR)\lib\php4ts.lib
+		$(PHP_DIR)\lib\$(PHP_TS_LIB_NAME)
 
 $(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
 	link $(LDFLAGS) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
-		$(PHP_DIR)\lib\php4ts.lib
+		$(PHP_DIR)\lib\$(PHP_TS_LIB_NAME)
 !else
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LDFLAGS) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/01/04 22:55:27  assefa
+ * Add PHP5 support for windows (Bug 1100).
+ *
  * Revision 1.8  2002/03/08 23:16:41  assefa
  * Add PHP4.1 support.
  *
@@ -134,7 +137,7 @@
 #include <projects.h>
 #include "php_mapscript_util.h"
 
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
 #include "php.h"
 #include "php_globals.h"
 #else
@@ -153,7 +156,7 @@
 #include <errno.h>
 #endif
 
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
 #define ZEND_DEBUG 0
 #endif
 
@@ -186,7 +189,7 @@ PHP_MINFO_FUNCTION(phpproj);
 DLEXPORT void php_info_proj(void);
 #endif
 
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
 static zend_class_entry *proj_class_entry_ptr;
 #endif 
 
@@ -252,7 +255,7 @@ DLEXPORT void php_info_proj(void)
 
 DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
 {
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     zend_class_entry tmp_class_entry;
 #endif
 
@@ -260,7 +263,7 @@ DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
         register_list_destructors(php_proj_pj_free,
                                   NULL);
 
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     INIT_CLASS_ENTRY(tmp_class_entry, "proj", php_proj_class_functions);
     proj_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 #endif
@@ -286,7 +289,7 @@ DLEXPORT int php_end_proj(SHUTDOWN_FUNC_ARGS)
  *                       _php_proj_build_proj_object
  **********************************************************************/
 static long _php_proj_build_proj_object(PJ *pj,
-                                        HashTable *list, pval *return_value)
+                                        HashTable *list, pval *return_value TSRMLS_DC)
 {
     int pj_id;
 
@@ -296,7 +299,7 @@ static long _php_proj_build_proj_object(PJ *pj,
     pj_id = php3_list_insert(pj, PHPMS_GLOBAL(le_projobj));
 
     _phpms_object_init(return_value, pj_id, php_proj_class_functions,
-                       PHP4_CLASS_ENTRY(proj_class_entry_ptr));
+                       PHP4_CLASS_ENTRY(proj_class_entry_ptr) TSRMLS_CC);
 
     return pj_id;
 }
@@ -328,7 +331,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pArrayOfParams = NULL;
 
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     pval        **pParam = NULL;
     HashTable   *list=NULL;
 #else
@@ -368,7 +371,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
         if (_php3_hash_index_find(pArrayOfParams->value.ht, i, 
                                   (void **)&pParam) != FAILURE)
         {
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
             convert_to_string((*pParam));
             if ((*pParam)->value.str.val != NULL)
               papszBuf[i] = strdup((*pParam)->value.str.val);
@@ -383,7 +386,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 
     pj = pj_init(nParamCount, papszBuf);
            
-    _php_proj_build_proj_object(pj, list, return_value);  
+    _php_proj_build_proj_object(pj, list, return_value TSRMLS_CC);  
 }
 
 
@@ -409,7 +412,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
 #endif
     pval        *p1, *p2;
@@ -479,7 +482,7 @@ DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
 #endif
     pval        *p1, *p2;
@@ -539,7 +542,7 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
 #endif
     pval        *p1, *p2;
@@ -627,7 +630,7 @@ DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
 #endif
     pval        *p1, *p2;
@@ -710,7 +713,7 @@ DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
 /* ==================================================================== */
 #ifndef PHP4
 
-#ifdef PHP4
+#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
 #endif
 

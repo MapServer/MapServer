@@ -15,8 +15,26 @@
 # Secition I: PHP Mapscript Options
 ########################################################################
 # PHP4 or PHP3
-# To use PHP4 (instead of PHP3) uncomment the following line
+# To use PHP4 or PHP5 (instead of PHP3) uncomment the following line
 # The default when PHP4=1 is not set is to build for PHP3
+
+#PHP4 flag works for PHP4 and PHP5. You need to modify the install 
+#directory and the TS librarary name depending on your use of PHP4
+#or PHP5
+
 PHP4=1
-# Install directory for PHP
-PHP_INSTALL_DIR=c:\php\php4\extensions
+
+# Install directory for PHP4
+#PHP_INSTALL_DIR=c:\php\php4\extensions 
+
+# Install directory for PHP5
+PHP_INSTALL_DIR=c:\php\php5\ext 
+
+
+
+# PHP TS library for PHP4
+#PHP_TS_LIB_NAME=php4ts.lib
+
+# PHP TS library for PHP5
+PHP_TS_LIB_NAME=php5ts.lib
+
