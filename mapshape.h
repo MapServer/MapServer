@@ -139,6 +139,7 @@ int SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds );
 void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape );
 
 int SHPWriteShape( SHPHandle psSHP, shapeObj *shape );
+#endif
 
 // XBase function prototypes
 DBFHandle DBFOpen( const char * pszDBFFile, const char * pszAccess );
@@ -159,7 +160,6 @@ int DBFWriteDoubleAttribute( DBFHandle hDBF, int iShape, int iField, double dFie
 int DBFWriteStringAttribute( DBFHandle hDBF, int iShape, int iField, const char * pszFieldValue );
 
 void DBFClose( DBFHandle hDBF );
-#endif
 
 #ifdef __cplusplus
 }
