@@ -1220,7 +1220,7 @@ outputformatObj Class
    string    extension;
    int       renderer;
    int       imagemode     
-   
+   int       transparent
         
   Methods related to the output format :
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.166  2003/05/29 13:31:16  assefa
+ * Add access to the transparent parameter in the outputformat object.
+ *
  * Revision 1.165  2003/05/27 19:36:31  assefa
  * Add labelcaheObj.
  *
@@ -3315,6 +3318,7 @@ DLEXPORT void php3_ms_map_drawScaleBar(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -5389,7 +5393,9 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
             _phpms_set_property_long((*pOutputformat),"renderer", 
                                      self->outputformat->renderer, E_ERROR); 
             _phpms_set_property_long((*pOutputformat),"imagemode", 
-                                     self->outputformat->imagemode, E_ERROR); 
+                                     self->outputformat->imagemode, E_ERROR);
+            _phpms_set_property_long((*pOutputformat),"transparent", 
+                                     self->outputformat->transparent, E_ERROR);
         }
     }
 
@@ -11200,6 +11206,7 @@ static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
     PHPMS_ADD_PROP_STR(return_value, "extension", poutputformat->extension);
     add_property_long(return_value,  "renderer", poutputformat->renderer);
     add_property_long(return_value,  "imagemode", poutputformat->imagemode);
+    add_property_long(return_value,  "transparent", poutputformat->transparent);
 
     return outputformat_id;
 }
