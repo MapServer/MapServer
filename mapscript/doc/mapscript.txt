@@ -164,8 +164,8 @@ classes themselves.
 
 References to sections below will be added here as the documentation grows.
 
-classObj_, colorObj_, imageObj_, labelObj_, pointObj_, rectObj_, shapeObj_,
-styleObj_
+classObj_, colorObj_, imageObj_, labelObj_, outputFormatObj_, pointObj_,
+rectObj_, shapeObj_, styleObj_
 
 -----------------------------------------------------------------------------
  classObj
@@ -549,6 +549,14 @@ getShape(shapeObj_ shape, int tileindex, int shapeindex) : int
 **NEXT_GENERATION_API** getShape(int shapeindex [, int tileindex=0]) : shapeObj_
     Get a shape from layer data using the next generation API.
 
+
+-----------------------------------------------------------------------------
+ legendObj
+-----------------------------------------------------------------------------
+
+x
+
+
 -----------------------------------------------------------------------------
  lineObj
 -----------------------------------------------------------------------------
@@ -813,6 +821,21 @@ project(projectionObj_ proj_in, projectionObj_ proj_out) : int
 
 toPolygon() : shapeObj_
     Convert to a polygon of five vertices.
+
+
+-----------------------------------------------------------------------------
+ referenceMapObj
+-----------------------------------------------------------------------------
+
+x
+
+
+-----------------------------------------------------------------------------
+ scalebarObj
+-----------------------------------------------------------------------------
+
+x
+
 
 -----------------------------------------------------------------------------
  shapeObj
