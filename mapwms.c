@@ -329,16 +329,23 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                                               "MissingDimensionValue");
                     }
                     else
-                      //TODO verfiy if the default value is in the
-                      // time extent given.
-                       msLayerSetTimeFilter(lp, timedefault, timefield);
+                    {
+                        if (msValidateTimeValue((char *)timedefault, timeextent) == MS_FALSE)
+                        {
+                            msSetError(MS_WMSERR, "No Time value was given, and the default time value %s is invalid or outside the time extent defined %s", "msWMSApplyTime", timedefault, timeextent);
+                        //return MS_FALSE;
+                            return msWMSException(map, version,
+                                              "InvalidDimensionValue");
+                        }
+                        msLayerSetTimeFilter(lp, timedefault, timefield);
+                    }
                 }
                 else
                 {
                     //check if given time is in the range
                     if (msValidateTimeValue(time, timeextent) == MS_FALSE)
                     {
-                        msSetError(MS_WMSERR, "Time value(s) %s given is outside the time extent defined (%s).", "msWMSApplyTime", time, timeextent);
+                        msSetError(MS_WMSERR, "Time value(s) %s given is invalid or outside the time extent defined (%s).", "msWMSApplyTime", time, timeextent);
                         //return MS_FALSE;
                         return msWMSException(map, version,
                                               "InvalidDimensionValue");
