@@ -55,7 +55,7 @@ except ImportError:
 
 class SaveToStringTestCase(MapTestCase):
     def testSaveToString(self):
-        """SaveToStringTestCase.testSaveToString: test that an image can be saved as a string"""
+        """test that an image can be saved as a string"""
         msimg = self.map.draw()
         assert msimg.thisown == 1
         data = msimg.saveToString()
@@ -116,8 +116,9 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
+    
     def testConstructorUrlStream(self):
-        """ImageObjTestCase.testConstructorUrlStream: imageObj with a URL stream works"""
+        """imageObj with a URL stream works"""
         url = urllib.urlopen('http://mapserver.gis.umn.edu/bugs/ant.jpg')
         imgobj = mapscript.imageObj(0, 0, 'GD/JPEG', url)
         assert imgobj.thisown == 1
@@ -133,6 +134,26 @@ class ImageWriteTestCase(MapTestCase):
         filename = 'testImageWrite.png'
         fh = open(filename, 'wb')
         image.write(fh)
+        fh.close()
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.format == 'PNG'
+            assert pyimg.size == (200, 200)
+            assert pyimg.mode == 'P'
+        else:
+            assert 1
+
+    def testImageWriteStringIO(self):
+        """image writes data to a StringIO instance"""
+        image = self.map.draw()
+        assert image.thisown == 1
+        
+        s = cStringIO.StringIO()
+        image.write(s)
+
+        filename = 'testImageWriteStringIO.png'
+        fh = open(filename, 'wb')
+        fh.write(s.getvalue())
         fh.close()
         if have_image:
             pyimg = Image.open(filename)
