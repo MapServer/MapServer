@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.140  2004/11/04 12:32:39  julien
+ * Add xlink:type=... in WMS MetadataURL (bug 1027)
+ *
  * Revision 1.139  2004/11/03 20:01:19  dan
  * Protect msDebug() call with a if(msp->debug)
  *
@@ -1219,7 +1222,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                          NULL, NULL, ">\n          <Format>%s</Format", 
                          "\n          <OnlineResource xmlns:xlink=\""
                          "http://www.w3.org/1999/xlink\" "
-                         "xlink:href=\"%s\"/>\n        ", 
+                         "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
                          MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
                          NULL, NULL, NULL, NULL, NULL, "        ");
 

@@ -16,7 +16,7 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
-- ...
+- Add xlink:type="simple" in WMS MetadataURL (bug 1027)
 
 
 Version 4.4.0-beta2 (2004-11-03)
