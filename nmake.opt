@@ -23,9 +23,6 @@
 # Section I: Mapserver Options
 ########################################################################
 
-MS_LIB = 	mapserver.lib
-MS_LIB_DLL  =	mapserver_i.lib
-
 # Uncomment the following to link mapserv.exe withh dll
 DLLBUILD=1
 
@@ -37,6 +34,8 @@ MS_BASE = 	C:\projects\mapserver
 # Optimized, with using MSVCRT. 
 OPTFLAGS =	/nologo /MD $(WARNING_LEVEL) $(DEBUG)
 
+#LDFLAGS =	/NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+
 # Debug with MSVCRT
 #OPTFLAGS =	/nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG)
 
@@ -45,101 +44,31 @@ OPTFLAGS =	/nologo /MD $(WARNING_LEVEL) $(DEBUG)
 
 # Input raster format options:
 #
-# The lite version of mapserver 4.x supports only PNG and JPEG data for input.
-#
-# If you wish to support any of the following raster formats you will need
-# the GDAL support library from http://www.remotesensing.org/gdal.
-# Once you have the library, set the flag below to compile with GDAL and
-# provide the full path to GDAL project directory
-#
-# Format Name
-#   Arc/Info ASCII Grid AAIGrid
-#   Arc/Info Binary Grid (.adf) AIG
-#   Microsoft Windows Device Independent Bitmap (.bmp) BMP
-#   BSB Nautical Chart Format (.kap) BSB
-#   CEOS (Spot for instance) CEOS
-#   First Generation USGS DOQ (.doq) DOQ1
-#   New Labelled USGS DOQ (.doq) DOQ2
-#   Military Elevation Data (.dt0, .dt1) DTED
-#   ERMapper Compressed Wavelets (.ecw) ECW
-#   ESRI .hdr Labelled EHdr
-#   ENVI .hdr Labelled Raster ENVI
-#   Envisat Image Product (.n1) Envisat
-#   EOSAT FAST Format FAST
-#   FITS (.fits) FITS
-#   Graphics Interchange Format (.gif) GIF
-#   Arc/Info Binary Grid (.adf) GIO
-#   GRASS Rasters GRASS
-#   TIFF / GeoTIFF (.tif) GTiff
-#   Hierarchical Data Format Release 4 (HDF4) HDF4
-#   Erdas Imagine (.img) HFA
-#   Atlantis MFF2e HKV
-#   Japanese DEM (.mem) JDEM
-#   JPEG2000 (.jp2, .j2k) JPEG2000
-#   JPEG2000 (.jp2, .j2k) JP2KAK
-#   NOAA Polar Orbiter Level 1b Data Set (AVHRR) L1B
-#   Atlantis MFF MFF
-#   NITF NITF
-#   OGDI Bridge OGDI
-#   PCI .aux Labelled PAux Yes
-#   Netpbm (.ppm,.pgm) PNM Yes
-#   USGS SDTS DEM (*CATD.DDF) SDTS
-#   SAR CEOS SAR_CEOS
-#   USGS ASCII DEM (.dem) USGSDEM
-#   X11 Pixmap (.xpm) XPM
-GDAL=-DUSE_GDAL
-GDAL_DIR=c:\projects\gdal
+# The lite version of mapserver 4.x supports only GIF, PNG and JPEG data for 
+# input. If you wish to support many geospatial raster formats for input
+# you will need the GDAL support library from http://www.gdal.org/.  
+# Once built, enable the GDAL flag, and point GDAL_DIR to the directory
+# where GDAL was built. 
+#GDAL=-DUSE_GDAL
+#GDAL_DIR=c:\projects\gdal-1.2.5
 
 #
 # Input vector format options
 #
 # The lite version of Mapserver 4.x only suports ESRI shapefiles for input.
 #
-# If you wish to support any of the following vector formats you will need
-# the GDAL support library with OGR from http://www.remotesensing.org/gdal.
-# Once you have the library, set the flag below to compile with OGR and
-# provide the full path to GDAL project directory
+# The OGR library (part of GDAL) supports a variety of geospatial vector
+# formats including mapinfo, Arc/Info binary coverages, S-57, SDTS, 
+# Microstation DGN (pre-v7), TIGER, UK .NTF.  It also include support for
+# treating non-spatial tablular data from ODBC, CSV, mysql, Oracle Spatial, 
+# and PostgreSQL as spatial table with use of the VRT (virtual) driver. 
 #
-# Format Name
-#   Arc/Info Binary Coverage
-#   FMEObjects Gateway
-#   IHO S-57 (ENC)
-#   Mapinfo File
-#   Microstation DGN
-#   OGDI Vectors
-#   Oracle Spatial
-#   PostgreSQL
-#   SDTS
-#   UK .NTF
-#   U.S. Census TIGER/Line
+# NOTE: Both -DUSE_OGR and -DUSE_GDAL need to be defined if you want to 
+# use GDAL/OGR for both raster and vector support, but GDAL_DIR needs only
+# be defined once.
 #
-OGR=-DUSE_OGR
-GDAL_DIR=c:\projects\gdal
-
-#ECW support
-#
-#ECW is one of the formats supported through GDAL. If you have built
-#gdal with ECW support, you need to link it with the ECW librarires.
-#uncommnet the following lines to have the ECW support.
-ECW_DIR= C:\projects\ECW_SDK
-
-#Xerces support
-#
-#If GDAL was compoiled with the Xerces support, you need to use the 
-#xerces library. #uncommnet the following line to have the Xerces support
-XERCES_DIR = c:\projects\xerces-c1_6_0-win32
-
-# Comment out the following to disable ODBC support.
-#ODBC_SUPPORTED = 1
-
-# Tiff Input
-# 
-# Tiff input is also available through GDAL. If you wish to build to support
-# TIFF input without GDAL you will need to unccomment the following flag 
-# and set the full path to the project directory containing libtiff.
-# See http://www.libtiff.org/ for support library
-#TIFF=-DUSE_TIFF
-#TIFFDIR=c:/my_path_to/tiff-v3.5.4
+#OGR=-DUSE_OGR
+#GDAL_DIR=c:\projects\gdal-1.2.5
 
 # JPEG Input:
 # JPEG input for raster layers is also available through GDAL, If you wish 
@@ -147,24 +76,26 @@ XERCES_DIR = c:\projects\xerces-c1_6_0-win32
 # and provide the full path to the jpeg support library project directory.
 # See http://www.ijg.org/ for support library.
 #JPEG=-DUSE_JPEG
-#JPEG_DIR=c:/projects/gdal/frmts/jpeg/libjpeg
+#JPEG_DIR=c:/projects/libjpeg
 
 # Output format options:
-# If you wish to allow JPEG output maps, uncomment the following flag
-# and provide the full path to the jpeg support library project directory.
-# See http://www.ijg.org/ for support library.
+# If you wish to allow JPEG output maps, uncomment the following flag.
+# If not using a GD build with an internal copy of libjpeg, you will
+# also need to uncomment JPEG_DIR and point to it; however, with BGD.DLL
+# that is not necessary.
 OUTPUT_JPEG=-DUSE_GD_JPEG
-JPEG_DIR=c:/projects/gdal/frmts/jpeg/libjpeg
+#JPEG_DIR=c:/projects/libjpeg
 
-# If you wish to allow PNG output maps, uncomment the following flag
-# and provide the full path to the png and zlib support library project
-# directories.
+# If you wish to allow PNG output maps, uncomment the following flag.
+# If not using a GD build with an internal copy of libpng, you will
+# also need to uncomment PNG_DIR and ZLIB_DIR and point to it; however, with 
+# BGD.DLL that is not necessary.
 # See http://www.libpng.org/pub/png/libpng.html for support library.
 # See http://www.gzip.org/zlib/ for support library.
 OUTPUT_PNG=-DUSE_GD_PNG
-PNG_DIR=c:/projects/libpng-1.0.8
 
-ZLIB_DIR=c:/projects/zlib-1.1.3
+#PNG_DIR=c:/projects/libpng-1.2.7
+#ZLIB_DIR=c:/projects/zlib-1.2.1
 
 # If you wish to allow Windows BMP output maps, uncomment the following flag.
 OUTPUT_WBMP=-DUSE_GD_WBMP
@@ -172,25 +103,26 @@ OUTPUT_WBMP=-DUSE_GD_WBMP
 # If you wish to have FLASH output, uncomment the following flag and provide
 # the full path to the MING support library project directory.
 # See http://ming.sourceforge.net/ for support library.
-MING=-DUSE_MING_FLASH
-MING_DIR=c:/projects/ming-0.2a
+#MING=-DUSE_MING_FLASH
 #MING_DIR=c:/projects/ming-0.3beta1
 
 
 # If you wish to have PDF output, uncomment the following flag and provide the
 # full path to the PDF support library project directory.
 # See http://www.pdflib.com/ for support library.
-PDF=-DUSE_PDF
-PDF_DIR=c:/projects/pdflib-4.0.3
+#PDF=-DUSE_PDF
+#PDF_DIR=c:/projects/pdflib-6.0.0
 
 
 # Annotation fonts.
 #
 # If you wish to annotate your maps with true type fonts unccomment the
 # following flag. Provide the full path to the FreeType 2.x external
-# supprt library.  See http://www.freetype.org for support library.
+# support library, unless it is provided within your GD build as is the
+# case with BGD.DLL.  
+# See http://www.freetype.org for support library.
 ANNOTATION_FT=-DUSE_GD_FT
-FT_DIR=c:/projects/freetype-2.1.3
+#FT_DIR=c:/projects/freetype-2.1.3
 
 
 # Direct connectivity to Postgresql PostGIS.
@@ -205,10 +137,6 @@ FT_DIR=c:/projects/freetype-2.1.3
 #Orcale
 #ORACLE_DIR = c:\Oracle\Ora81
 #ORACLE=-DUSE_ORACLESPATIAL
-
-#OGDI
-#OGDI_DIR = c:\projects\ogdi-3.1.0
-#OGDI_LIB = $(OGDI_DIR)\lib\ogdi31.lib
 
 # Direct connectivity to ArcSDE.
 # 
@@ -242,9 +170,8 @@ FT_DIR=c:/projects/freetype-2.1.3
 # have complete data for each tile.
 IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 
-NEED_NONBLOCKING_STDERR=-DNEED_NONBLOCKING_STDERR
-
-#ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
+#NEED_NONBLOCKING_STDERR=-DNEED_NONBLOCKING_STDERR
+ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
 
 # If you want antialiasing (note that It requires gd2)
 USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
@@ -252,8 +179,7 @@ USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 # Use this flag to compile with WMS Server support.
 # To find out more about the OpenGIS Web Map Server Specification go to
 # http://www.opengis.org/
-WMS=-DUSE_WMS_SVR
-
+#WMS=-DUSE_WMS_SVR
 
 # Use this flag to compile with WMS Client support. WMS Client support
 # allows you to pull layers from other OGIS WMS servers on the interent and
@@ -262,19 +188,21 @@ WMS=-DUSE_WMS_SVR
 # http://www.opengis.org/
 # you need the libcurl library from http://curl.haxx.se/library/c/
 # Set the full path to the curl project directory.
-# You will also need to set the full path to the Microsoft Visual C++ windows
-# socket library.
-WMSCLIENT= -DUSE_WMS_LYR
+# You may also need to the full path to the windows socket library.
+#WMSCLIENT= -DUSE_WMS_LYR
+
 #CURL_DIR=c:/projects/curl-7.10.2
-CURL_DIR=c:/projects/curl-7.10.7
-WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
+#CURL_DIR=c:/projects/curl-7.10.7
+#WINSOCK_LIB = "WSOCK32.LIB"
+#WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
 
 # Use -DUSE_WFS_SVR to compile with WFS server support, requires OGR and PROJ4
-# Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
-WFS=-DUSE_WFS_SVR
-WFSCLIENT= -DUSE_WFS_LYR
+#WFS=-DUSE_WFS_SVR
 
-# Use -DUSE_WCS_SVR to compile with WCS server support
+# Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
+#WFSCLIENT= -DUSE_WFS_LYR
+
+# Use -DUSE_WCS_SVR to compile with WCS server support, requires GDAL.
 #WCS=-DUSE_WCS_SVR
 
 #libiconv support is used for to support double bytes (see bug 911).
@@ -282,21 +210,20 @@ WFSCLIENT= -DUSE_WFS_LYR
 #ICONV=-DUSE_ICONV
 #
 
-
 # Reprojecting.
 # If you would like mapserver to be able to reproject data from one
 # geographic projection to another, uncomment the following flag
 # Proj.4 distribution (cartographic projection routines). 
 # Not required for normal use. (EXPERIMENTAL)
 # For PROJ_DIR use full path to Proj.4 distribution
-PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
-PROJ_DIR=c:\projects\proj
+#PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
+#PROJ_DIR=c:\projects\proj-4.4.9
 
 # PHP Mapscript.
 # If you plan to build PHP mapscript uncomment the following flag and
 # set the full path to the PHP project directory
-PHP=1
-PHP_DIR=c:\projects\php-4.3.4
+#PHP=1
+#PHP_DIR=c:\projects\php-4.3.4
 
 # Apparently these aren't as commonplace. Edit the
 # following line to reflect the missing functions on your platform.
@@ -325,11 +252,12 @@ STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRLCAT
 #you should uncomment the following line
 OUTPUT_GIF=-DUSE_GD_GIF -DGD_HAS_GDIMAGEGIFPTR
 
-GD_DIR=c:/projects/gd-2.0.15
+GD_DIR=c:/projects/gdwin32
+GD_LIB=$(GD_DIR)/bgd.lib
 
 #if the GD version you are using is above GD 2.0.22, uncomment the following flag to
 #have a proper support for bitmap fonts (see Bug 969 for more details)
-#GD_HAS_GETBITMAPFONT=-DGD_HAS_GETBITMAPFONT
+GD_HAS_GETBITMAPFONT=-DGD_HAS_GETBITMAPFONT
 
 # REGEX Libary
 # 
@@ -342,7 +270,7 @@ GD_DIR=c:/projects/gd-2.0.15
 # You do not need this library if you are compiling for PHP mapscript.
 # In that case the PHP regex library will be used instead
 !IFNDEF PHP
-REGEX_DIR=c:/my_path_to/regex-0.12
+REGEX_DIR=c:\projects\regex-0.12
 !ENDIF
 
 
@@ -366,10 +294,13 @@ LDEBUG=/debug
 # Should not need to be updated.
 ########################################################################
 
+MS_LIB = 	mapserver.lib
+MS_LIB_DLL  =	mapserver_i.lib
+
 # Proj.4 include and library
 !IFDEF PROJ_DIR
 PROJ_INC=-I$(PROJ_DIR)/src
-PROJ_LIB=$(PROJ_DIR)/src/proj.lib
+PROJ_LIB=$(PROJ_DIR)/src/proj_i.lib
 !ENDIF
 
 # CURL include and library
@@ -379,35 +310,34 @@ CURL_LIB = $(CURL_DIR)/lib/libcurl.lib
 !ENDIF
 
 # Set the jpeg library
-!IFDEF OUTPUT_JPEG
+!IFDEF JPEG_DIR
 JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 !ENDIF
 
 # Set the png support libaries
-!IFDEF OUTPUT_PNG
+!IFDEF PNG_DIR
 PNG_LIB=$(PNG_DIR)/libpng.lib $(ZLIB_DIR)/zlib.lib
 !ENDIF
 
 # Set the FreeType library
-!IFDEF ANNOTATION_FT
+!IFDEF FT_DIR
 #FT_LIB=$(FT_DIR)/objs/freetype211.lib
 FT_LIB=$(FT_DIR)/objs/freetype211ST_D.lib
 !ENDIF
 
 # GD include and library
 GD_INC=	-I$(GD_DIR)
-GD_LIB=	$(GD_DIR)/gd.lib  \
-	$(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
+GD_LIBS= $(GD_DIR)/bgd.lib  $(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
 GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT) $(GD_HAS_GETBITMAPFONT)
 
 # Tiff library on input
 !IFDEF TIFF
-TIFF_INC=-I$(TIFF_DIR)/tiff-v3.5.4/libtiff
-TIFF_LIB=$(TIFF_DIR)/tiff-v3.5.4/libtiff/libtiff.lib
+TIFF_INC=-I$(TIFF_DIR)/libtiff
+TIFF_LIB=$(TIFF_DIR)/libtiff/libtiff.lib
 !ENDIF
 
 # JPEG library on input
-!IFDEF JPEG
+!IFDEF JPEG_DIR
 JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 !ENDIF
 
@@ -427,21 +357,6 @@ OGR_LIB = $(GDAL_DIR)/gdal_i.lib
 !IFDEF SDE_OPT
 SDE_INC=-I$(SDE_DIR)/include
 SDE_LIB=$(SDE_DIR)/lib/sde80.lib $(SDE_DIR)/lib/sg80.lib $(SDE_DIR)/lib/pe80.lib
-!ENDIF
-
-#ECW support
-!IFDEF ECW_DIR
-ECW_LIB=$(ECW_DIR)\lib\NCSEcw.lib $(ECW_DIR)\lib\NCSEcwC.lib \
-        $(ECW_DIR)\lib\NCSUtil.lib
-!ENDIF
-
-#Xerces support
-!IFDEF XERCES_DIR
-XERCES_LIB=$(XERCES_DIR)/lib/xerces-c_1.lib
-!ENDIF
-
-!IFDEF ODBC_SUPPORTED
-ODBC_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\ODBC32.lib"
 !ENDIF
 
 # Setup REGEX object and includes
@@ -530,11 +445,11 @@ IMGGEN_LIB=-L$(IMGGEN_DIR) -limgGEN
 ########################################################################
 # Should not need to be updated.
 ########################################################################
-EXTERNAL_LIBS=$(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
+EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
-     $(XERCES_LIB) $(ECW_LIB) $(ORACLE_LIB) $(OGDI_LIB) $(ODBC_LIB) $(SDE_LIB) $(ICONV_LIB)
+     $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB)
 
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
