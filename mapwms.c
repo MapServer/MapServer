@@ -1266,10 +1266,15 @@ int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names,
                                    lp->type == MS_LAYER_LINE ||
                                    lp->type == MS_LAYER_POLYGON ) )
            { 
+             char *pszOnlineResEncoded;
+             pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyr);
+
              printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
-                    lp->name, pszOnlineResLyr);
+                    lp->name, pszOnlineResEncoded);
              printf("<Query typeName=\"%s\" />\n", lp->name);
              printf("</LayerDescription>\n");
+
+             msFree(pszOnlineResEncoded);
            }
            else
            {
