@@ -1534,6 +1534,39 @@ ALL_LIB="$CURL_LIB $ALL_LIB"
 
 
 dnl ---------------------------------------------------------------------
+dnl Support for FastCGI enabled builds.
+dnl ---------------------------------------------------------------------
+AC_CHECKING(whether FastCGI support should be enabled)
+AC_ARG_WITH(fastcgi,
+[  --with-fastcgi=path     Enable FastCGI, point to installed tree.],,)
+
+if test "$with_fastcgi" = "no" -o "$with_fastcgi" = "" ; then
+
+  AC_MSG_RESULT([        FastCGI support not enabled.])
+
+else 
+
+  if test "$with_fastcgi" = "yes" ; then
+    FASTCGI_INC=""
+    FASTCGI_LIB="-lfcgi"
+  else
+    FASTCGI_INC="-I$with_fastcgi/include"
+    FASTCGI_LIB="-L$with_fastcgi/lib -lfcgi"
+  fi
+
+  AC_CHECK_LIB(fcgi,FCGI_Accept,FASTCGI_ENABLED=-DUSE_FASTCGI,,,)
+
+fi
+
+AC_SUBST(FASTCGI_ENABLED,$FASTCGI_ENABLED)
+AC_SUBST(FASTCGI_INC,    $FASTCGI_INC)
+AC_SUBST(FASTCGI_LIB,    $FASTCGI_LIB)
+
+ALL_ENABLED="$FASTCGI_ENABLED $ALL_ENABLED"
+ALL_INC="$FASTCGI_INC $ALL_INC"
+ALL_LIB="$FASTCGI_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
 dnl Try to detect Apache version (httpd -v)
 dnl ---------------------------------------------------------------------
 

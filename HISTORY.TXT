@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Added --with-fastcgi support to configure.
+
 - support OGC mapcontext through mapserver cgi : Bug 946
 
 - support for reading 3d shape file (z) : Bug 869.
