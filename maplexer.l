@@ -204,6 +204,7 @@ void lexer_cleanup() {
 <INITIAL,OBJECT_STRING>maxsize	               { return(MAXSIZE); }
 <INITIAL,OBJECT_STRING>maxsubdivide	       { return(MAXSUBDIVIDE); }
 <INITIAL,OBJECT_STRING>maxtemplate	       { return(MAXTEMPLATE); }
+<INITIAL,OBJECT_STRING>maxwidth                { return(MAXWIDTH); }
 <INITIAL,OBJECT_STRING>metadata	               { return(METADATA); }
 <INITIAL,OBJECT_STRING>mimetype	               { return(MIMETYPE); }
 <INITIAL,OBJECT_STRING>minarcs		       { return(MINARCS); }
@@ -215,6 +216,7 @@ void lexer_cleanup() {
 <INITIAL,OBJECT_STRING>minsize		       { return(MINSIZE); }
 <INITIAL,OBJECT_STRING>minsubdivide	       { return(MINSUBDIVIDE); }
 <INITIAL,OBJECT_STRING>mintemplate	       { return(MINTEMPLATE); }
+<INITIAL,OBJECT_STRING>minwidth                { return(MINWIDTH); }
 <INITIAL,OBJECT_STRING>name		       { return(NAME); }
 <INITIAL,OBJECT_STRING>offset                  { return(OFFSET); }
 <INITIAL,OBJECT_STRING>offsite                 { return(OFFSITE); }

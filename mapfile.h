@@ -203,6 +203,9 @@
 #define SIZEITEM 1161
 
 #define ENCODING 1162
+
 #define WIDTH 1163
+#define MINWIDTH 1164
+#define MAXWIDTH 1165
 
 #endif /* MAPFILE_H */

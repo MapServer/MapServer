@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.389  2005/01/26 06:14:53  sdlime
+ * Added style maxwidth/minwidth read/write/copy.
+ *
  * Revision 1.388  2005/01/12 21:11:21  frank
  * removed LABELS_ROTATE_WITH_MAP, rotate labels if angle!=0 or labelangleitem
  *
@@ -274,6 +277,9 @@ extern "C" {
 
 #define MS_MINSYMBOLSIZE 1   // in pixels
 #define MS_MAXSYMBOLSIZE 500
+
+#define MS_MINSYMBOLWIDTH 1   // in pixels
+#define MS_MAXSYMBOLWIDTH 32
 
 #define MS_URL 0 /* template types */
 #define MS_FILE 1

@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/01/26 06:14:53  sdlime
+ * Added style maxwidth/minwidth read/write/copy.
+ *
  * Revision 1.34  2005/01/26 05:21:19  sdlime
  * Added support for reading/writing/copying a style width.
  *
@@ -366,9 +369,11 @@ int msCopyStyle(styleObj *dst, styleObj *src)
 
     MS_COPYSTELEM(symbol);
     MS_COPYSTELEM(size);
-    MS_COPYSTELEM(width);
     MS_COPYSTELEM(minsize);
     MS_COPYSTELEM(maxsize);
+    MS_COPYSTELEM(width);
+    MS_COPYSTELEM(minwidth);
+    MS_COPYSTELEM(maxwidth);
     MS_COPYSTELEM(offsetx);
     MS_COPYSTELEM(offsety);
     MS_COPYSTELEM(antialias);

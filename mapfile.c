@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.291  2005/01/26 06:14:53  sdlime
+ * Added style maxwidth/minwidth read/write/copy.
+ *
  * Revision 1.290  2005/01/26 05:21:19  sdlime
  * Added support for reading/writing/copying a style width.
  *
@@ -1586,9 +1589,11 @@ int initStyle(styleObj *style) {
   style->symbol = 0; // there is always a default symbol
   style->symbolname = NULL;
   style->size = -1; // in SIZEUNITS (layerObj)
-  style->width = 1; // in pixels
   style->minsize = MS_MINSYMBOLSIZE;
   style->maxsize = MS_MAXSYMBOLSIZE;
+  style->width = 1; // in pixels
+  style->minwidth = MS_MINSYMBOLWIDTH;
+  style->maxwidth = MS_MAXSYMBOLWIDTH;
   style->offsetx = style->offsety = 0; // no offset
   style->antialias = MS_FALSE;
   style->isachild = MS_TRUE;
@@ -1606,14 +1611,14 @@ int loadStyle(styleObj *style) {
   for(;;) {
     switch(msyylex()) {
     case(ANGLE):
-      if(getDouble(&(style->angle)) == -1) return(-1);
+      if(getDouble(&(style->angle)) == -1) return(MS_FAILURE);
       break;
     case(ANGLEITEM):
-      if(getString(&style->angleitem) == MS_FAILURE) return(-1);
+      if(getString(&style->angleitem) == MS_FAILURE) return(MS_FAILURE);
       break;
     case(ANTIALIAS):
       if((style->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1)
-	return(-1);
+	return(MS_FAILURE);
       break;
     case(BACKGROUNDCOLOR):
       if(loadColor(&(style->backgroundcolor)) != MS_SUCCESS) return(MS_FAILURE);
@@ -1633,14 +1638,20 @@ int loadStyle(styleObj *style) {
       return(MS_SUCCESS); // done
       break;
     case(MAXSIZE):
-      if(getInteger(&(style->maxsize)) == -1) return(-1);
+      if(getInteger(&(style->maxsize)) == -1) return(MS_FAILURE);
       break;
     case(MINSIZE):
-      if(getInteger(&(style->minsize)) == -1) return(-1);
+      if(getInteger(&(style->minsize)) == -1) return(MS_FAILURE);
+      break;
+    case(MAXWIDTH):
+      if(getInteger(&(style->maxwidth)) == -1) return(MS_FAILURE);
+      break;
+    case(MINWIDTH):
+      if(getInteger(&(style->minwidth)) == -1) return(MS_FAILURE);
       break;
     case(OFFSET):
-      if(getInteger(&(style->offsetx)) == -1) return(-1);
-      if(getInteger(&(style->offsety)) == -1) return(-1);
+      if(getInteger(&(style->offsetx)) == -1) return(MS_FAILURE);
+      if(getInteger(&(style->offsety)) == -1) return(MS_FAILURE);
       break;
     case(OUTLINECOLOR):
       if(loadColor(&(style->outlinecolor)) != MS_SUCCESS) return(MS_FAILURE);
@@ -1649,7 +1660,7 @@ int loadStyle(styleObj *style) {
       if(getInteger(&(style->size)) == -1) return(MS_FAILURE);
       break;
     case(SIZEITEM):
-      if(getString(&style->sizeitem) == MS_FAILURE) return(-1);
+      if(getString(&style->sizeitem) == MS_FAILURE) return(MS_FAILURE);
       break;
     case(SYMBOL):
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(MS_FAILURE);
@@ -1659,7 +1670,7 @@ int loadStyle(styleObj *style) {
 	style->symbolname = strdup(msyytext);
       break;
     case(WIDTH):
-      if(getInteger(&(style->width)) == -1) return(-1);
+      if(getInteger(&(style->width)) == -1) return(MS_FAILURE);
       if(style->width < 1) {
         msSetError(MS_MISCERR, "Invalid WIDTH, must an integer greater or equal to 1." , "loadStyle()");
         return(MS_FAILURE);
@@ -1696,8 +1707,10 @@ void writeStyle(styleObj *style, FILE *stream) {
   else
 #endif
     writeColor(&(style->color), stream, "COLOR", "        ");
-  if(style->maxsize > -1) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
-  if(style->minsize > -1) fprintf(stream, "        MINSIZE %d\n", style->minsize);
+  if(style->maxsize != MS_MAXSYMBOLSIZE) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
+  if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %d\n", style->minsize);
+  if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %d\n", style->maxwidth);
+  if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
   if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
   if(style->sizeitem) fprintf(stream, "        SIZEITEM %s\n", style->sizeitem);
