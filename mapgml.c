@@ -375,7 +375,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
       msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                 "gml_layername", MS_NOERR, "\t<%s>\n", NULL);
+                                 "gml_layername", MS_NOERR, "\t<%s>\n", value);
       msFree(value);
 
       // actually open the layer
@@ -460,7 +460,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
       msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                 "gml_layername", MS_NOERR, "\t</%s>\n", NULL);
+                                 "gml_layername", MS_NOERR, "\t</%s>\n", value);
       msFree(value);
 
       msLayerClose(lp);
