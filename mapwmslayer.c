@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2001/11/01 20:46:48  dan
+ * Fixed msDrawWMSLayer(): reprojected layer bbox was not initialized.
+ *
  * Revision 1.11  2001/11/01 02:46:29  dan
  * Added msWMSGetFeatureInfoURL()
  *
@@ -349,7 +352,7 @@ const char *msTmpFile(const char *path, const char *ext)
 
 char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                          int nClickX, int nClickY, int nFeatureCount,
-                         const char *pszInfoFormat) 
+                         const char *pszInfoFormat, rectObj *bbox_ret) 
 {
 #ifdef USE_WMS_LYR
     char *pszURL = NULL, *pszEPSG = NULL;
@@ -465,6 +468,9 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msProjectRect(&(map->projection), &(lp->projection), &bbox);
     }
 
+    if (bbox_ret != NULL)
+        *bbox_ret = bbox;
+
 /* ------------------------------------------------------------------
  * Build the request URL.
  * At this point we set only the following parameters for GetMap:
@@ -571,7 +577,7 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
 {
     return msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
                               nClickX, nClickY, nFeatureCount,
-                              pszInfoFormat);
+                              pszInfoFormat, NULL);
 }
 
 
@@ -595,6 +601,17 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         return MS_SUCCESS;
 
 /* ------------------------------------------------------------------
+ * Build the request URL, this will also set layer projection and
+ * compute BBOX in that projection.
+ * ------------------------------------------------------------------ */
+    if ((pszURL = msBuildWMSLayerURL(map, lp, WMS_GETMAP, 
+                                     0, 0, 0, NULL, &bbox)) == NULL)
+    {
+        /* an error was already reported. */
+        return MS_FAILURE;
+    }
+
+/* ------------------------------------------------------------------
  * Check if layer overlaps current view window (using wms_latlonboundingbox)
  * ------------------------------------------------------------------ */
     if ((pszTmp = msLookupHashTable(lp->metadata, 
@@ -608,6 +625,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         if (tokens==NULL || n != 4) {
             msSetError(MS_WMSCONNERR, "Wrong number of arguments for 'wms_latlonboundingbox' metadata.",
                        "msDrawWMSLayer()");
+            free(pszURL);
             return MS_FAILURE;
         }
 
@@ -623,23 +641,20 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
 
         msProjectRect(&(map->latlon), &(lp->projection), &ext);
         if (!msRectOverlap(&bbox, &ext))
+        {
+            free(pszURL);
             return MS_SUCCESS;  // No overlap.
+        }
     }
 
 /* ------------------------------------------------------------------
- * Build the request URL and download image
+ * Download image
  * ------------------------------------------------------------------ */
-    if ((pszURL = msBuildWMSLayerURL(map, lp, WMS_GETMAP, 
-                                     0, 0, 0, NULL)) == NULL)
-    {
-        /* an error was already reported. */
-        return MS_FAILURE;
-    }
-
     msDebug("WMS GET %s\n", pszURL);
     if (msWMSGetImage(pszURL, lp->data) != MS_SUCCESS)
     {
         msDebug("WMS GET failed.\n", pszURL);
+        free(pszURL);
         return MS_FAILURE;
     }
     msDebug("WMS GET completed OK.\n");
