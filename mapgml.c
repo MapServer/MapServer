@@ -1,6 +1,11 @@
 #include "map.h"
 #include "maperror.h"
 
+
+// Use only mapgml.c if WMS or WFS is available
+
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
+
 // checks to see if ring r is an outer ring of shape
 static int isOuterRing(shapeObj *shape, int r) {
   pointObj point; // a point in the ring
@@ -65,7 +70,7 @@ static int gmlWriteBounds(FILE *stream, rectObj *rect, const char *srsname, char
   if(srsname)
   {
     srsname_encoded = msEncodeHTMLEntities(srsname);
-    fprintf(stream, "%s\t<gml:Box srsName=\"%s\">\n", tab, srsname);
+    fprintf(stream, "%s\t<gml:Box srsName=\"%s\">\n", tab, srsname_encoded);
     msFree(srsname_encoded);
   }
   else
@@ -311,6 +316,10 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
   return(MS_SUCCESS);
 }
 
+#endif
+
+#if defined(USE_WMS_SVR)
+
 int msGMLWriteQuery(mapObj *map, char *filename)
 {
   int status;
@@ -319,7 +328,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   shapeObj shape;
   FILE *stream=stdout; // defaults to stdout
   char szPath[MS_MAXPATHLEN];
-  char *value, *encoded;
+  char *value;
 
   msInitShape(&shape);
 
@@ -333,56 +342,26 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
   // charset encoding: lookup "gml_encoding" metadata first, then 
   // "wms_encoding", and if not found then use "ISO-8859-1" as default.
-  if(msLookupHashTable(&(map->web.metadata), "gml_encoding")) 
-  {
-      value = msLookupHashTable(&(map->web.metadata), "gml_encoding");
-      encoded = msEncodeHTMLEntities(value);
-      fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", encoded);
-      msFree(encoded);
-  }
-  else if(msLookupHashTable(&(map->web.metadata), "wms_encoding")) 
-  {
-      value = msLookupHashTable(&(map->web.metadata), "wms_encoding");
-      encoded = msEncodeHTMLEntities(value);
-      fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", encoded);
-      msFree(encoded);
-  }
-  else
-      fprintf(stream, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n\n");
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), "GM", "encoding", 
+                      MS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", 
+                           "ISO-8859-1");
 
-  if((value = msLookupHashTable(&(map->web.metadata), "gml_rootname")) != NULL)
-  {
-      encoded = msEncodeHTMLEntities(value);
-      fprintf( stream,"<%s ", encoded );
-      msFree(encoded);
-  }
-  else
-      fprintf( stream,"<msGMLOutput " );
+  msOWSPrintValidateMetadata(stream, &(map->web.metadata),NULL, "gml_rootname",
+                      MS_NOERR, "<%s ", "msGMLOutput");
 
-  if((value = msLookupHashTable(&(map->web.metadata), "gml_uri")) != NULL)
-  {
-      encoded = msEncodeHTMLEntities(value);
-      fprintf( stream, "xmlns=\"%s\"", encoded );
-      msFree(encoded);
-  }
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_uri", 
+                      MS_NOERR, "xmlns=\"%s\"", NULL);
   fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
   fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
   fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-  if((value = msLookupHashTable(&(map->web.metadata), "gml_schema")) != NULL)
-  {
-      encoded = msEncodeHTMLEntities(value);
-      fprintf( stream, "\n\t xsi:schemaLocation=\"%s\"", encoded );
-      msFree(encoded);
-  }
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_schema", 
+                      MS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
   fprintf(stream, ">\n");
 
   // a schema *should* be required
-  if((value = msLookupHashTable(&(map->web.metadata), "gml_description")) != NULL)
-  {
-      encoded = msEncodeHTMLEntities(value);
-      fprintf( stream, "\t<gml:description>%s</gml:description>\n", encoded );
-      msFree(encoded);
-  }
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
+                           "gml_description", MS_NOERR, 
+                           "\t<gml:description>%s</gml:description>\n", NULL);
 
   // step through the layers looking for query results
   for(i=0; i<map->numlayers; i++) {
@@ -391,21 +370,13 @@ int msGMLWriteQuery(mapObj *map, char *filename)
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { // found results
 
       // start this collection (layer)
-      if((value = msLookupHashTable(&(lp->metadata), "gml_layername")) != NULL)
-      {
-          encoded = msEncodeHTMLEntities(value);
-          fprintf( stream, "\t<%s>\n", encoded ); // specify a collection name
-          msFree(encoded);
-      }
-      else
-      {
-          value = (char*) malloc(strlen(lp->name)+7);
-          sprintf(value, "%s_layer", lp->name); // fall back on the layer name + "Layer"
-          encoded = msEncodeHTMLEntities(value);
-          fprintf( stream, "\t<%s>\n", encoded );
-          msFree(encoded);
-          msFree(value);
-      }
+      // if no layer name provided 
+      // fall back on the layer name + "Layer"
+      value = (char*) malloc(strlen(lp->name)+7);
+      sprintf(value, "%s_layer", lp->name);
+      msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
+                                 "gml_layername", MS_NOERR, "\t<%s>\n", NULL);
+      msFree(value);
 
       // actually open the layer
       status = msLayerOpen(lp);
@@ -426,34 +397,28 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 #endif
 
 	// start this feature
-        // specify a feature name
-	if((value =msLookupHashTable(&(lp->metadata), "gml_featurename")) != 
-           NULL)
-        {
-            encoded = msEncodeHTMLEntities(value);
-            fprintf(stream, "\t\t<%s>\n", encoded);
-            msFree(encoded);
-        }
+        // specify a feature name, if nothing provided 
         // fall back on the layer name + "Feature"
-        else
-        {
-            value = (char*) malloc(strlen(lp->name)+9);
-            sprintf(value, "%s_feature", lp->name);
-            encoded = msEncodeHTMLEntities(value);
-            fprintf(stream, "\t\t<%s>\n", encoded);
-            msFree(encoded);
-            msFree(value);
-        }
+        value = (char*) malloc(strlen(lp->name)+9);
+        sprintf(value, "%s_feature", lp->name);
+        msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
+                                   "gml_featurename", MS_NOERR, 
+                                   "\t\t<%s>\n", NULL);
+        msFree(value);
 
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
         {
           char *encoded_val;
+
+          if(msIsXMLTagValid(lp->items[k]) == MS_FALSE)
+              fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a "
+                      "XML tag context. -->\n", lp->items[k]);
+
           encoded_val = msEncodeHTMLEntities(shape.values[k]);
-          value = msEncodeHTMLEntities(lp->items[k]);
-	  fprintf(stream, "\t\t\t<%s>%s</%s>\n", value, encoded_val, value);
+	  fprintf(stream, "\t\t\t<%s>%s</%s>\n", lp->items[k], encoded_val, 
+                  lp->items[k]);
           free(encoded_val);
-          msFree(value);
         }
 
 	// write the bounding box
@@ -477,68 +442,41 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 #endif
 
 	// end this feature
-        // specify a feature name
-        if((value=msLookupHashTable(&(lp->metadata), "gml_featurename")) != 
-           NULL)
-        {
-            encoded = msEncodeHTMLEntities(value);
-            fprintf(stream, "\t\t</%s>\n", value);
-            msFree(encoded);
-        }
+        // specify a feature name if nothing provided
         // fall back on the layer name + "Feature"
-        else
-        {
-            value = (char*) malloc(strlen(lp->name)+9);
-            sprintf(value, "%s_feature", lp->name);
-            encoded = msEncodeHTMLEntities(value);
-            fprintf(stream, "\t\t</%s>\n", value);
-            msFree(encoded);
-            msFree(value);
-        }
+        value = (char*) malloc(strlen(lp->name)+9);
+        sprintf(value, "%s_feature", lp->name);
+        msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
+                                   "gml_featurename", MS_NOERR, 
+                                   "\t\t</%s>\n", NULL);
+        msFree(value);
 
 	msFreeShape(&shape); // init too
       }
 
       // end this collection (layer)
-      // specify a collection name
-      if((value=msLookupHashTable(&(lp->metadata), "gml_layername")) != NULL)
-      {
-          encoded = msEncodeHTMLEntities(value);
-          fprintf(stream, "\t</%s>\n", value);
-          msFree(encoded);
-      }
+      // if no layer name provided 
       // fall back on the layer name + "Layer"
-      else
-      {
-          value = (char*) malloc(strlen(lp->name)+7);
-          sprintf(value, "%s_layer", lp->name);
-          encoded = msEncodeHTMLEntities(value);
-          fprintf(stream, "\t</%s>\n", value);
-          msFree(encoded);
-          msFree(value);
-      }
+      value = (char*) malloc(strlen(lp->name)+7);
+      sprintf(value, "%s_layer", lp->name);
+      msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
+                                 "gml_layername", MS_NOERR, "\t</%s>\n", NULL);
+      msFree(value);
 
       msLayerClose(lp);
     }
   } // next layer
 
   // end this document
-  if((value=msLookupHashTable(&(map->web.metadata), "gml_rootname")) != NULL)
-  {
-      encoded = msEncodeHTMLEntities(value);
-      fprintf(stream, "</%s>\n", encoded);
-      msFree(encoded);
-  }
-  else
-  {
-      fprintf(stream, "</msGMLOutput>\n"); // default
-  }
+  msOWSPrintValidateMetadata(stream, &(map->web.metadata),NULL, "gml_rootname",
+                             MS_NOERR, "</%s>\n", "msGMLOutput");
 
   if(filename && strlen(filename) > 0) fclose(stream);
 
   return(MS_SUCCESS);
 }
 
+#endif
 
 #ifdef USE_WFS_SVR
 
@@ -579,9 +517,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
        lp->resultcache && lp->resultcache->numresults > 0) 
     { // found results
       int   *item_is_xml = NULL;
-      const char *xml_items;
-      char *geom_name, *layer_name, *value;
-      geom_name = msEncodeHTMLEntities( msWFSGetGeomElementName(map, lp) );
+      const char *geom_name, *xml_items;
+      char *layer_name;
+      geom_name = msWFSGetGeomElementName(map, lp);
 
       // actually open the layer
       status = msLayerOpen(lp);
@@ -632,15 +570,16 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 	// start this feature
         if (namespace)
         {
-            value = (char*) malloc(strlen(namespace)+strlen(lp->name)+2);
-            sprintf(value, "%s:%s", namespace, lp->name);
-            layer_name = msEncodeHTMLEntities(value);
-            msFree(value);
+            layer_name = (char*) malloc(strlen(namespace)+strlen(lp->name)+2);
+            sprintf(layer_name, "%s:%s", namespace, lp->name);
         }
         else
-            layer_name = msEncodeHTMLEntities(lp->name);
+            layer_name = strdup(lp->name);
 
 	fprintf(stream, "    <gml:featureMember>\n");
+        if(msIsXMLTagValid(layer_name) == MS_FALSE)
+            fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+                    "in a XML tag context. -->\n", layer_name);
         fprintf(stream, "      <%s>\n", layer_name);
 
         //write name and description attributs if specified in the map file
@@ -701,7 +640,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
         {
-          char *encoded_val, *encoded_namespace, *encoded_item;
+          char *encoded_val;
           
           if( item_is_xml[k] == MS_TRUE )
               encoded_val = strdup(shape.values[k]);
@@ -713,21 +652,22 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
           if (description_gml && strcmp(description_gml,  lp->items[k]) == 0)
             continue;
 
-          encoded_item = msEncodeHTMLEntities(lp->items[k]);
+          if(msIsXMLTagValid(lp->items[k]) == MS_FALSE)
+              fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+                      "in a XML tag context. -->\n", lp->items[k]);
           
           if (namespace)
           {
-            encoded_namespace = msEncodeHTMLEntities(namespace);
+            if(msIsXMLTagValid(namespace) == MS_FALSE)
+              fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+                      "in a XML tag context. -->\n", namespace);
             fprintf(stream, "        <%s:%s>%s</%s:%s>\n", 
-                    encoded_namespace, encoded_item, encoded_val, 
-                    encoded_namespace, encoded_item);
-            msFree(encoded_namespace);
+                    namespace, lp->items[k], encoded_val, 
+                    namespace, lp->items[k]);
           }
           else      
             fprintf(stream, "        <%s>%s</%s>\n", 
-                    encoded_item, encoded_val, encoded_item);
-          free(encoded_val);
-          msFree(encoded_item);
+                    lp->items[k], encoded_val, lp->items[k]);
         }
 
 	// end this feature
@@ -747,8 +687,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
       }
 
       free( item_is_xml );
-
-      msFree(geom_name);
 
       msLayerClose(lp);
     }

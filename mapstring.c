@@ -668,6 +668,33 @@ void msDecodeHTMLEntities(const char *string)
 }
 
 /*
+** msIsXMLValid
+**
+** Check if the string is an XML valid string. It should contains only
+** A-Z, a-z, 0-9, '_', '-', '.', and ':'
+** Return MS_TRUE or MS_FALSE
+*/
+int msIsXMLTagValid(const char *string)
+{
+    int i, nLen;
+
+    nLen = strlen(string);
+
+    for(i=0; i<nLen; i++)
+    {
+        if( !( string[i] >= 'A' && string[i] <= 'Z' ) && 
+            !( string[i] >= 'a' && string[i] <= 'z' ) && 
+            !( string[i] >= '0' && string[i] <= '9' ) && 
+            string[i] != '-' && string[i] != '.' && 
+            string[i] != ':' && string[i] != '_' )
+            return MS_FALSE;
+    }
+
+    return MS_TRUE;
+}
+
+
+/*
  * Concatenate pszSrc to pszDest and reallocate memory if necessary.
 */
 char *strcatalloc(char *pszDest, char *pszSrc)

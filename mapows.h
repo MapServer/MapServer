@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.41  2004/09/25 17:16:31  julien
+ * Don't encode XML tag (Bug 897)
+ * Don't compile mapgml.c function if not necessary (Bug 896)
+ *
  * Revision 1.40  2004/09/23 19:18:10  julien
  * Encode all metadata and parameter printed in an XML document (Bug 802)
  *
@@ -218,6 +222,10 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
                              const char *namespaces, const char *name, 
                              int action_if_not_found, 
                              const char *format, const char *default_value) ;
+int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata, 
+                               const char *namespaces, const char *name, 
+                               int action_if_not_found, 
+                               const char *format, const char *default_value);
 int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName, 
                             const char *namespaces, const char *name, 
                             int action_if_not_found, 
@@ -260,8 +268,10 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 /*====================================================================
  *   mapgml.c
  *====================================================================*/
+#ifdef USE_WMS_SVR
 // export to fix bug 851
 MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename);
+#endif
 
 #ifdef USE_WFS_SVR
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);

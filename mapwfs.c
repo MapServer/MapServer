@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.42  2004/09/25 17:16:31  julien
+ * Don't encode XML tag (Bug 897)
+ * Don't compile mapgml.c function if not necessary (Bug 896)
+ *
  * Revision 1.41  2004/09/23 19:18:10  julien
  * Encode all metadata and parameter printed in an XML document (Bug 802)
  *
@@ -211,7 +215,6 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
 {
   va_list argp;
   const char *fmt;
-  char *encoded;
 
   printf("    <%s>\n", request);
 
@@ -223,10 +226,7 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
     fmt = formats;
     while(fmt != NULL)
     {
-      encoded = msEncodeHTMLEntities(fmt);
       printf("        <%s/>\n", encoded);
-      msFree(encoded);
-
       fmt = va_arg(argp, const char *);
     }
     va_end(argp);
@@ -621,8 +621,11 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
-    user_namespace_prefix = msEncodeHTMLEntities( 
-      msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix") );
+    user_namespace_prefix = msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
+    if(user_namespace_prefix && 
+       msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
+        fprintf(stream, "<!-- WARNING: The value '%s' is not valid XML "
+                "namespace. -->\n", user_namespace_prefix);
     user_namespace_uri = msEncodeHTMLEntities( 
       msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri") );
     
@@ -754,7 +757,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     printf("\n</schema>\n");
 
     msFree(encoded_name);
-    msFree(user_namespace_prefix);
     msFree(user_namespace_uri);
 
     if (layers)
@@ -1141,8 +1143,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     user_namespace_prefix = msLookupHashTable(&(map->web.metadata), 
                                               "wfs_namespace_prefix");
-    if(user_namespace_prefix != NULL)
-        user_namespace_prefix = msEncodeHTMLEntities( user_namespace_prefix );
+    if(user_namespace_prefix != NULL &&
+       msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
+        fprintf(stream, "<!-- WARNING: The value '%s' is not valid XML "
+                "namespace. -->\n", user_namespace_prefix);
 
     if (user_namespace_prefix && user_namespace_uri)
       pszNameSpace = strdup(user_namespace_prefix);

@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.38  2004/09/25 17:16:31  julien
+ * Don't encode XML tag (Bug 897)
+ * Don't compile mapgml.c function if not necessary (Bug 896)
+ *
  * Revision 1.37  2004/09/23 19:18:10  julien
  * Encode all metadata and parameter printed in an XML document (Bug 802)
  *
@@ -551,6 +555,51 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
             pszEncodedValue = msEncodeHTMLEntities(default_value);
             fprintf(stream, format, default_value);
             free(pszEncodedValue);
+        }
+    }
+
+    return status;
+}
+
+/*
+** msOWSPrintValidateMetadata()
+**
+** Attempt to output a capability item.  If corresponding metadata is not 
+** found then one of a number of predefined actions will be taken. 
+** If a default value is provided and metadata is absent then the 
+** default will be used.
+** Also validate the value with msIsXMLTagValid.
+*/
+
+int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata, 
+                               const char *namespaces, const char *name, 
+                               int action_if_not_found, 
+                               const char *format, const char *default_value) 
+{
+    const char *value;
+    int status = MS_NOERR;
+
+    if((value = msOWSLookupMetadata(metadata, namespaces, name)))
+    {
+        if(msIsXMLTagValid(value) == MS_FALSE)
+            fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a "
+                    "XML tag context. -->\n", value);
+        fprintf(stream, format, value);
+    }
+    else
+    {
+        if (action_if_not_found == OWS_WARN)
+        {
+            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+            status = action_if_not_found;
+        }
+
+        if (default_value)
+        {
+            if(msIsXMLTagValid(value) == MS_FALSE)
+                fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+                        "in a XML tag context. -->\n", default_value);
+            fprintf(stream, format, default_value);
         }
     }
 
