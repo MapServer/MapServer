@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- New C# mapscript makefiles and examples provided by Y.K. Choo
+  <ykchoo@geozervice.com> committed under mapscript/csharp/ (bug 867).
+  
 - Renamed 'string' member of labelCacheMemberObj to 'text' to avoid
   conflicts in SWIG mapscript with C# and Java types (bug 852).
   
