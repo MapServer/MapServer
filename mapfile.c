@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
@@ -831,6 +833,13 @@ static int loadProjection(projectionObj *p)
 {
 #ifdef USE_PROJ
   int i=0;
+
+  if ( p->proj != NULL )
+  {
+      msSetError(MS_MISCERR, "Projection is already initialized. Multiple projection definitions are not allowed in this object. (line %d)", 
+                   "loadProjection()", msyylineno);	  
+        return(-1);
+   }
 
   for(;;) {
     switch(msyylex()) {
