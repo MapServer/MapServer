@@ -1320,6 +1320,28 @@ ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
+dnl WCS Server support - Requires GDAL and PROJ
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include WCS Server support...)
+AC_ARG_WITH(wcs,[  --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).],,)
+
+if test "$with_wcs" != "yes" ; then
+  AC_MSG_RESULT([        OGC WCS Server support not requested.])  
+elif test -z "$GDAL_ENABLED" ; then
+  AC_MSG_ERROR([OGC WCS Server support cannot be enabled: missing GDAL which is required).])
+elif test -z "$PROJ_ENABLED" ; then
+  AC_MSG_ERROR([OGC WCS Server support cannot be enabled: missing PROJ4 which is required).])
+elif test "$with_wcs" = "yes" ; then
+  WCS_SVR_ENABLED="-DUSE_WCS_SVR"
+  AC_MSG_RESULT([        OGC WCS Server support enabled ($WCS_SVR_ENABLED).])
+fi
+
+AC_SUBST(WCS_SVR_ENABLED,$WCS_SVR_ENABLED)
+ALL_ENABLED="$WCS_SVR_ENABLED $ALL_ENABLED"
+
+
+dnl ---------------------------------------------------------------------
 dnl WMS and WFS Client support - Requires PROJ.4 and libcurl.
 dnl OGR recommended for WMS and required for WFS
 dnl ---------------------------------------------------------------------
