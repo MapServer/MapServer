@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.64  2003/10/17 18:51:25  dan
+ * Open OGR files relative to shapepath first, then try relative to mapfile
+ * path if not found. (bug 295)
+ *
  * Revision 1.63  2003/10/03 13:38:53  frank
  * fix support for wkbLineString25D in ogrGeomLine()
  *
@@ -773,14 +777,29 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 /* ------------------------------------------------------------------
  * Attempt to open OGR dataset
  * ------------------------------------------------------------------ */
-  char szPath[MS_MAXPATHLEN];
+  char szPath[MS_MAXPATHLEN] = "";
   OGRDataSource *poDS;
 
   if( layer->debug )
       msDebug("msOGRFileOpen(%s)...\n", connection);
 
-  poDS = OGRSFDriverRegistrar::Open( 
-      msTryBuildPath(szPath, layer->map->mappath, pszDSName) );
+  if (msTryBuildPath3(szPath, layer->map->mappath, 
+                      layer->map->shapepath, pszDSName) != NULL ||
+      msTryBuildPath(szPath, layer->map->mappath, pszDSName) != NULL)
+  {
+      /* Use relative path */
+      if( layer->debug )
+          msDebug("OGROPen(%s)\n", szPath);
+      poDS = OGRSFDriverRegistrar::Open( szPath );
+  }
+  else
+  {
+      /* pszDSName was succesful */
+      if( layer->debug )
+          msDebug("OGROPen(%s)\n", pszDSName);
+      poDS = OGRSFDriverRegistrar::Open( pszDSName );
+  }
+
   if( poDS == NULL )
   {
       msSetError(MS_OGRERR, 
