@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.129  2004/10/27 19:51:24  assefa
+ * Correct XML for DescribeLayer response (Bug 683)
+ *
  * Revision 1.128  2004/10/27 14:58:34  assefa
  * Correct exception message for GetFeatureInfo (Bug 819)
  *
@@ -2056,7 +2059,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                       NULL, "wms_encoding", OWS_NOERR,
                       "<?xml version='1.0' encoding=\"%s\"?>\n",
                       "ISO-8859-1");
-   msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
+   msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"http://schemas.opengeospatial.net/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n");
    msIO_printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
 
    //check if map-level metadata wfs_onlineresource is available
@@ -2087,8 +2090,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyr);
              pszLayerName = msEncodeHTMLEntities(lp->name);
 
-             msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
-                    pszLayerName, pszOnlineResEncoded);
+             msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\" owsType=\"WFS\" owsURL=\"%s\">\n",
+                    pszLayerName, pszOnlineResEncoded, pszOnlineResEncoded);
              msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
              msIO_printf("</LayerDescription>\n");
 
