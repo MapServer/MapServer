@@ -3,11 +3,6 @@
 
 #ifdef USE_PROJ
 
-int msCompareProjections(PJ *pj1, PJ *pj2) 
-{
-
-}
-
 void msProjectPoint(PJ *in, PJ *out, pointObj *point)
 {
   projUV p;
@@ -35,34 +30,50 @@ void msProjectPoint(PJ *in, PJ *out, pointObj *point)
   return;
 }
 
+#define SAMPLING_FACTOR 100
+
 void msProjectRect(PJ *in, PJ *out, rectObj *rect)
 {
   pointObj prj_point;
   rectObj prj_rect;
 
+  double dx, dy;
+  double x, y;
+
+  dx = (rect->maxx - rect->minx)/SAMPLING_FACTOR;
+  dy = (rect->maxy - rect->miny)/SAMPLING_FACTOR;
+
   prj_point.x = rect->minx;
   prj_point.y = rect->miny;
   msProjectPoint(in, out, &prj_point);
-  prj_rect.minx = prj_point.x;
-  prj_rect.miny = prj_point.y;
+  prj_rect.minx = prj_rect.maxx = prj_point.x;
+  prj_rect.miny = prj_rect.maxy = prj_point.y;
 
-  prj_point.x = rect->maxx;
-  prj_point.y = rect->miny;
-  msProjectPoint(in, out, &prj_point);
-  prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
-  prj_rect.maxx = prj_point.x;
+  for(x=rect->minx+dx; x<rect->maxx; x+=dx) {
+    prj_point.x = x;
+    prj_point.y = rect->miny;
+    msProjectPoint(in, out, &prj_point);
+    prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
+    prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
 
-  prj_point.x = rect->maxx;
-  prj_point.y = rect->maxy;
-  msProjectPoint(in, out, &prj_point);
-  prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
-  prj_rect.maxy = prj_point.y;
+    prj_point.y = rect->maxy;
+    msProjectPoint(in, out, &prj_point);
+    prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
+    prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
+  }
+  
+  for(y=rect->miny+dy; y<rect->maxy; y+=dy) {
+    prj_point.y = y;
+    prj_point.x = rect->minx;    
+    msProjectPoint(in, out, &prj_point);
+    prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
+    prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
 
-  prj_point.x = rect->minx;
-  prj_point.y = rect->maxy;
-  msProjectPoint(in, out, &prj_point);
-  prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
-  prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
+    prj_point.x = rect->maxx;
+    msProjectPoint(in, out, &prj_point);
+    prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
+    prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
+  }
 
   rect->minx = prj_rect.minx;
   rect->miny = prj_rect.miny;

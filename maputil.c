@@ -531,27 +531,25 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
 {
   int c;
   char *text=NULL;
-  double scalefactor=1;
+  double scalefactor=1.0;
   
   if((c = msGetClassIndex(layer, class_string)) == -1) return(0);
+  
+  if(layer->symbolscale > 0 && map->scale > 0) scalefactor = layer->symbolscale/map->scale;
 
-  // apply scaling to symbols and fonts
-  if(layer->symbolscale > 0 && map->scale > 0) {
-    scalefactor = layer->symbolscale/map->scale;
-    layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
-    layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
-    layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
-    layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
-    layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
-    layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
+  layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
+  layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
+  layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+  layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
+  layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
+  layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
 #ifdef USE_TTF
-    if(layer->class[c].label.type == MS_TRUETYPE) { 
-      layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
-      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
-      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
-    }
-#endif      
+  if(layer->class[c].label.type == MS_TRUETYPE) { 
+    layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
+    layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+    layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
   }
+#endif      
 
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -630,23 +628,21 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 
   if((c = msGetClassIndex(layer, class_string)) == -1) return(0);  
 
-  // apply scaling to symbols and fonts
-  if(layer->symbolscale > 0 && map->scale > 0) {
-    scalefactor = layer->symbolscale/map->scale;
-    layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
-    layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
-    layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
-    layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
-    layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
-    layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
+  if(layer->symbolscale > 0 && map->scale > 0) scalefactor = layer->symbolscale/map->scale;
+
+  layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
+  layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
+  layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+  layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
+  layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
+  layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
 #ifdef USE_TTF
-    if(layer->class[c].label.type == MS_TRUETYPE) { 
-      layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
-      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
-      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
-    }
-#endif      
+  if(layer->class[c].label.type == MS_TRUETYPE) { 
+    layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
+    layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+    layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
   }
+#endif      
 
 #ifdef USE_PROJ
   if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -805,7 +801,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   double angle, length;
   char *text;
   pointObj *pnt;
-  double scalefactor=1;
+  double scalefactor=1.0;
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
@@ -821,24 +817,22 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       annotate = MS_FALSE;
   }
 
-  // apply scaling to symbols and fonts
-  if(layer->symbolscale > 0) {
-    scalefactor = layer->symbolscale/map->scale;
-    for(i=0; i<layer->numclasses; i++) {
-      layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
-      layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
-      layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
-      layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
-      layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
-      layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
+  if(layer->symbolscale > 0) scalefactor = layer->symbolscale/map->scale;
+  
+  for(i=0; i<layer->numclasses; i++) {
+    layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
+    layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
+    layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+    layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
+    layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
+    layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
 #ifdef USE_TTF
-      if(layer->class[i].label.type == MS_TRUETYPE) { 
-	layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
-	layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
-	layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
-      }
-#endif
+    if(layer->class[i].label.type == MS_TRUETYPE) { 
+      layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
+      layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
+      layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
     }
+#endif
   }
  
   /* Set clipping rectangle (used by certain layer types only) */
@@ -1127,24 +1121,22 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       annotate = MS_FALSE;
   }  
   
-  // apply scaling to symbols and fonts
-  if(layer->symbolscale > 0) {
-    scalefactor = layer->symbolscale/map->scale;
-    for(i=0; i<layer->numclasses; i++) {
-      layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
-      layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
-      layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
-      layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
-      layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
-      layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
+  if(layer->symbolscale > 0) scalefactor = layer->symbolscale/map->scale;
+
+  for(i=0; i<layer->numclasses; i++) {
+    layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
+    layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
+    layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+    layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
+    layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
+    layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
 #ifdef USE_TTF
-      if(layer->class[i].label.type == MS_TRUETYPE) { 
-	layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
-	layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
-	layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
-      }
-#endif
+    if(layer->class[i].label.type == MS_TRUETYPE) { 
+      layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
+      layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
+      layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
     }
+#endif
   }
 
   cliprect.minx = map->extent.minx - 2*map->cellsize; /* set clipping rectangle just a bit larger than the map extent */
@@ -1771,73 +1763,4 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
 void msFreeImage(gdImagePtr img)
 {
   gdImageDestroy(img);
-}
-
-gdImagePtr msDrawReferenceMap(mapObj *map) {
-  FILE *stream;
-  gdImagePtr img=NULL;
-  double cellsize;
-  int c=-1, oc=-1;
-  int x1,y1,x2,y2;
-
-  char bytes[8];
-
-  /* Allocate input and output images (same size) */
-  stream = fopen(map->reference.image,"rb");
-  if(!stream) {
-    msSetError(MS_IOERR, NULL, "msDrawReferenceMap()");
-    sprintf(ms_error.message, "(%s)", map->reference.image);
-    return(NULL);
-  }
-
-#ifdef USE_GD_1_8
-  fread(bytes,8,1,stream); // read some bytes to try and identify the file
-  if (memcmp(dd,PNGsig,8)==0) {
-    img = gdImageCreateFromPng(stream);
-    map->reference.imagetype = MS_PNG;
-  } else {
-    img = gdImageCreateFromJpeg(stream);
-    map->reference.imagetype = MS_JPEG;
-  }
-#endif
-
-#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
-  img = gdImageCreateFromGif(stream);
-  map->reference.imagetype = MS_GIF;
-#endif
-
-ifdef USE_GD_1_6
-  img = gdImageCreateFromPng(stream);
-  map->reference.imagetype = MS_PNG;
-#endif
-
-  if(!img) {
-    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawReferenceMap()");
-    fclose(stream);
-    return(NULL);
-  }
-
-  /* Re-map users extent to this image */
-  cellsize = msAdjustExtent(&(map->reference.extent), img->sx, img->sy);
-
-  /* allocate some colors */
-  if(map->reference.outlinecolor.red != -1 && map->reference.outlinecolor.green != -1 && map->reference.outlinecolor.blue != -1)
-    oc = gdImageColorAllocate(img, map->reference.outlinecolor.red, map->reference.outlinecolor.green, map->reference.outlinecolor.blue);
-  if(map->reference.color.red != -1 && map->reference.color.green != -1 && map->reference.color.blue != -1)
-    c = gdImageColorAllocate(img, map->reference.color.red, map->reference.color.green, map->reference.color.blue); 
-  
-  /* Remember 0,0 file coordinates equals minx,maxy map coordinates (e.g. UTM) */
-  x1 = MS_NINT((map->extent.minx - map->reference.extent.minx)/cellsize);
-  x2 = MS_NINT((map->extent.maxx - map->reference.extent.minx)/cellsize);
-  y2 = MS_NINT((map->reference.extent.maxy - map->extent.miny)/cellsize);
-  y1 = MS_NINT((map->reference.extent.maxy - map->extent.maxy)/cellsize);
-  
-  /* Add graphic element to the output image file */
-  if(c != -1)
-    gdImageFilledRectangle(img,x1,y1,x2,y2,c);
-  if(oc != -1)
-    gdImageRectangle(img,x1,y1,x2,y2,oc);
-  
-  fclose(stream);
-  return(img);
 }

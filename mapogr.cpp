@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/09/17 03:10:19  sdlime
+ * Fixed a few more things. Real close, just needs some testing.
+ *
  * Revision 1.4  2000/09/11 14:28:29  dan
  * Added extern "C" in MS headers with external functions (was in mapogr.cpp)
  *
@@ -356,28 +359,28 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
       annotate = MS_FALSE;
   }
+  
+  /* ------------------------------------------------------------------
+   * apply scaling to symbols and fonts
+   * ------------------------------------------------------------------ */
+  if(layer->symbolscale > 0) scalefactor = layer->symbolscale/map->scale;
 
-/* ------------------------------------------------------------------
- * apply scaling to symbols and fonts
- * ------------------------------------------------------------------ */
-  if(layer->symbolscale > 0) {
-    scalefactor = layer->symbolscale/map->scale;
-    for(i=0; i<layer->numclasses; i++) {
-      layer->_class[i].sizescaled = MS_NINT(layer->_class[i].size * scalefactor);
-      layer->_class[i].sizescaled = MS_MAX(layer->_class[i].sizescaled, layer->_class[i].minsize);
-      layer->_class[i].sizescaled = MS_MIN(layer->_class[i].sizescaled, layer->_class[i].maxsize);
-      layer->_class[i].overlaysizescaled = MS_NINT(layer->_class[i].overlaysize * scalefactor);
-      layer->_class[i].overlaysizescaled = MS_MAX(layer->_class[i].overlaysizescaled, layer->_class[i].overlayminsize);
-      layer->_class[i].overlaysizescaled = MS_MIN(layer->_class[i].overlaysizescaled, layer->_class[i].overlaymaxsize);
+  for(i=0; i<layer->numclasses; i++) {
+    layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
+    layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
+    layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+    layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
+    layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
+    layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
 #ifdef USE_TTF
-      if(layer->_class[i].label.type == MS_TRUETYPE) { 
-	layer->_class[i].label.sizescaled = MS_NINT(layer->_class[i].label.size * scalefactor);
-	layer->_class[i].label.sizescaled = MS_MAX(layer->_class[i].label.sizescaled, layer->_class[i].label.minsize);
-	layer->_class[i].label.sizescaled = MS_MIN(layer->_class[i].label.sizescaled, layer->_class[i].label.maxsize);
-      }
-#endif /* USE_TTF */
+    if(layer->class[i].label.type == MS_TRUETYPE) { 
+      layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
+      layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
+      layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
     }
+#endif
   }
+
 
 /* ------------------------------------------------------------------
  * Attempt to open OGR dataset

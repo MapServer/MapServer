@@ -1432,7 +1432,7 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   map->reference.imagetype = MS_GIF;
 #endif
 
-ifdef USE_GD_1_6
+#ifdef USE_GD_1_6
   img = gdImageCreateFromPng(stream);
   map->reference.imagetype = MS_PNG;
 #endif

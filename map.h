@@ -80,8 +80,8 @@ extern "C" {
 #define MS_ITEMNAMELEN 32
 #define MS_NAMELEN 20
 
-#define MS_MINSYMBOLSIZE 1
-#define MS_MAXSYMBOLSIZE 50
+#define MS_MINSYMBOLSIZE 1   // in pixels
+#define MS_MAXSYMBOLSIZE 100
 
 #define MS_SINGLE 0 /* modes for searching (spatial/database) */
 #define MS_MULTIPLE 1
