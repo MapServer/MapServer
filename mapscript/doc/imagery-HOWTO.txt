@@ -123,15 +123,16 @@ on disk by adding a mapObj as a second optional argument to 'save'::
 Direct Output
 -------------
 
-An image can be dumped to an open filehandle using the 'write' method.  By
-default, the filehandle is 'stdout'::
+An image can be dumped to an open filehandle using the 'getBytes' method which
+is preferred to 'write' for MapServer 4.5/6.  By default, the filehandle is 
+'stdout'::
 
     # Send an image to a web browser
-    print "Content-type: " + map_image.format.mimetype + "\n\n"
-    map_image.write()
+    print 'Content-type: ' + map_image.format.mimetype + '\n'
+    print map_image.getBytes()
 
 This method is not fully functional for all SWIG mapscript languages.  See the
-API Reference (mapscript.txt) for details.  The 'write' method is new in 4.4.
+API Reference (mapscript.txt) for details.  The 'getBytes' method is new in 4.5.
     
 
 Images and Symbols
