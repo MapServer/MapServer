@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/11/01 16:55:38  sdlime
+ * Changed overlaysize handling (when scaled) to be relative to the main class size.
+ *
  * Revision 1.8  2000/11/01 04:23:32  sdlime
  * Changed insertFeatureList to make a copy of the input shape rather than simply pointing to it. Added msCopyShape function that might be useful in other places.
  *
@@ -380,7 +383,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     layer->_class[i].sizescaled = MS_NINT(layer->_class[i].size * scalefactor);
     layer->_class[i].sizescaled = MS_MAX(layer->_class[i].sizescaled, layer->_class[i].minsize);
     layer->_class[i].sizescaled = MS_MIN(layer->_class[i].sizescaled, layer->_class[i].maxsize);
-    layer->_class[i].overlaysizescaled = MS_NINT(layer->_class[i].overlaysize * scalefactor);
+    layer->class[i].overlaysizescaled = layer->class[i].sizescaled - (layer->class[i].size - layer->class[i].overlaysize);
+    // layer->_class[i].overlaysizescaled = MS_NINT(layer->_class[i].overlaysize * scalefactor);
     layer->_class[i].overlaysizescaled = MS_MAX(layer->_class[i].overlaysizescaled, layer->_class[i].overlayminsize);
     layer->_class[i].overlaysizescaled = MS_MIN(layer->_class[i].overlaysizescaled, layer->_class[i].overlaymaxsize);
 #ifdef USE_TTF
