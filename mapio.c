@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/10/08 19:11:39  frank
+ * ensure msIO_vfprintf is undefed
+ *
  * Revision 1.2  2004/10/05 04:23:10  sdlime
  * Added include for stdarg.h to mapio.c.
  *
@@ -56,6 +59,7 @@ static void msIO_Initialize( void );
 #  undef msIO_printf
 #  undef msIO_fprintf
 #  undef msIO_fwrite
+#  undef msIO_vfprintf
 #endif
 
 /************************************************************************/
