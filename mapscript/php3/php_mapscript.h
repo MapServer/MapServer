@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/10/30 22:37:27  assefa
+ * Add functions executewfsgetfeature on a WFS layer object.
+ * Add function getexpression on a class object.
+ *
  * Revision 1.35  2003/10/28 16:50:25  assefa
  * Add functions removeMetaData on map and layer.
  *
@@ -266,10 +270,12 @@ char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map,
                                                int click_x, int click_y,     
                                                int feature_count, 
                                                char *info_format);
+char *layerObj_executeWFSGetFeature(layerObj *self);
 
 classObj       *classObj_new(layerObj *layer);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
+char            *classObj_getExpression(classObj *self);
 int             classObj_setText(classObj *self,layerObj *layer,char *string);
 int             classObj_drawLegendIcon(classObj *self,
                                         mapObj *map,

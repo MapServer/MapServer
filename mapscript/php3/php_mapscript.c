@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.182  2003/10/30 22:37:27  assefa
+ * Add functions executewfsgetfeature on a WFS layer object.
+ * Add function getexpression on a class object.
+ *
  * Revision 1.181  2003/10/28 16:50:24  assefa
  * Add functions removeMetaData on map and layer.
  *
@@ -351,10 +355,12 @@ DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_getProcessing(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_getExpression(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
@@ -786,6 +792,7 @@ function_entry php_layer_class_functions[] = {
     {"setprocessing",   php3_ms_lyr_setProcessing,           NULL},
     {"getprocessing",   php3_ms_lyr_getProcessing,           NULL},
     {"clearprocessing", php3_ms_lyr_clearProcessing,           NULL},
+    {"executewfsgetfeature", php3_ms_lyr_executeWFSGetfeature,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -797,6 +804,7 @@ function_entry php_label_class_functions[] = {
 function_entry php_class_class_functions[] = {
     {"set",              php3_ms_class_setProperty,      NULL},    
     {"setexpression",    php3_ms_class_setExpression,    NULL},    
+    {"getexpression",    php3_ms_class_getExpression,    NULL},    
     {"settext",          php3_ms_class_setText,          NULL},
     {"drawlegendicon",   php3_ms_class_drawLegendIcon,   NULL},
     {"createlegendicon", php3_ms_class_createLegendIcon, NULL},   
@@ -7418,6 +7426,39 @@ DLEXPORT void php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS)
     }
 }        
 
+
+/**********************************************************************
+ *                        layer->executewfsgetfeature()
+ *
+ * Execute a GetFeature request on a wfs layer and return the name
+ * of the temporary GML file created.
+ **********************************************************************/
+
+/* {{{ string layer.executewfsgetfeature()*/
+
+DLEXPORT void php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    layerObj    *layer=NULL;
+    char        *pszValue = NULL;
+
+    HashTable   *list=NULL;
+    pThis = getThis();
+    
+
+    if (pThis == NULL)
+        WRONG_PARAM_COUNT;
+
+    layer = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                            list TSRMLS_CC);
+    
+    if (layer == NULL || (pszValue=layerObj_executeWFSGetFeature(layer)) == NULL)
+       RETURN_STRING("", 1);
+
+    RETVAL_STRING(pszValue, 1);
+    free(pszValue);
+}
+ 
 /* }}} */
 
 /*=====================================================================
@@ -7800,6 +7841,44 @@ DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(0);
 }
 /* }}} */
+
+
+/************************************************************************/
+/*                          class->getExpression()                      */
+/*                                                                      */
+/*      Returns the expression string for a class object.               */
+/*                                                                      */
+/************************************************************************/
+
+/* {{{ proto int class.getExpression(string exression)
+   Set the expression string for a class object. */
+
+DLEXPORT void php3_ms_class_getExpression(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval   *pThis;
+    classObj *self=NULL;
+    HashTable   *list=NULL;
+     char   *pszValue = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (pszValue = classObj_getExpression(self)) == NULL)
+    {
+        pszValue = "";
+    }
+
+    RETURN_STRING(pszValue, 1);
+}
+/* }}} */
+
 
 /************************************************************************/
 /*                          class->setText()                            */

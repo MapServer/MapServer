@@ -660,7 +660,12 @@ and the MapServer Map File documentation at:
 
    boolean clearProcessing
         Clears all the processing strings
-   
+
+   string   executeWFSGetfeature()
+       Executes a GetFeature request on a WFS layer and returns the
+       name of the temporary GML file created. Returns an empty
+       string on error.
+
  ClassObj Class:
  ---------------
 
@@ -689,7 +694,10 @@ and the MapServer Map File documentation at:
 
    int setexpression(string expression)
         Set the expression string for the class object.
-           
+   
+   char getexpression(string expression)
+        Returns the expression string for the class object.
+            
    int settext(string text)
         Set the text string for the class object.
    
