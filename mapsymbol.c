@@ -504,7 +504,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   char szPath[MS_MAXPATHLEN], *pszSymbolPath=NULL;
 
   if(!symbolset) {
-    msSetError(MS_SYMERR, "Symbol structure unallocated.", "msLoadSymbolSet()");
+    msSetError(MS_SYMERR, "Symbol structure unallocated.", "loadSymbolSet()");
     return(-1);
   }
 
@@ -516,7 +516,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   ** Open the file
   */
   if((msyyin = fopen(msBuildPath(szPath, symbolset->map->mappath, symbolset->filename), "r")) == NULL) {
-    msSetError(MS_IOERR, "(%s)", "msLoadSymbolSet()", symbolset->filename);
+    msSetError(MS_IOERR, "(%s)", "loadSymbolSet()", symbolset->filename);
     return(-1);
   }
 
@@ -546,7 +546,8 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
     case(SYMBOLSET):
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadSymbolSet()",
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)",
+                              "loadSymbolSet()",
                  msyytext, msyylineno);      
       status = -1;
     } /* end switch */
