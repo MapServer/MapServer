@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/10/29 16:40:59  frank
+ * removed prototype for function that is now static
+ *
  * Revision 1.2  2002/06/21 18:33:45  frank
  * added INT16 and FLOAT image mode support
  *
@@ -49,10 +52,6 @@
 
 typedef int (*SimpleTransformer)( void *pCBData, int nPoints, 
                                   double *x, double *y, int *panSuccess );
-
-int msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
-                             imageObj *psDstImage,
-                             SimpleTransformer pfnTransform, void *pCBData );
 
 void *msInitProjTransformer( projectionObj *psSrc, 
                              double *padfSrcGeoTransform, 
