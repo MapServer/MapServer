@@ -33,7 +33,7 @@
  Mapscript Development Documentation
 *****************************************************************************
 
-:Release: 4.2.2
+:Release: 4.2.3
 :Revision: $Revision$
 :Date: $Date$
 :Author: Sean Gillies
@@ -1763,9 +1763,11 @@ Methods
 
 .. _new rectObj:
 
-new rectObj( [ float minx=0.0, float miny=0.0, float maxx=0.0, float maxy=0.0 ] ) : rectObj
-    Create new instance.  The four easting and northing arguments
-    are optional.
+new rectObj( [ float minx=0.0, float miny=0.0, float maxx=0.0, float maxy=0.0, int imageunits=MS_FALSE ] ) : rectObj
+    Create new instance.  The four easting and northing arguments are
+    optional. Note the new optional fifth argument which allows creation of
+    rectangles in image (pixel/line) units which are also tested for
+    validity.
 
 .. _rectObj.draw:
 

@@ -1464,14 +1464,28 @@ memory.") const char * {
 // class extensions for rectObj
 //
 %extend rectObj {
-  rectObj(double minx=0.0, double miny=0.0, double maxx=0.0, double maxy=0.0) {	
+  rectObj(double minx=0.0, double miny=0.0, double maxx=0.0, double maxy=0.0,
+          int imageunits=MS_FALSE) {	
     rectObj *rect;
     
-    // Check bounds
-    if (minx > maxx || miny > maxy) {
-        msSetError(MS_MISCERR, "Invalid bounds.", "rectObj()");
-        return NULL;
-    }
+        // Check bounds
+        if (imageunits == MS_FALSE) {  // a normal easting/northing rect
+        
+            if (minx > maxx || miny > maxy) {
+                msSetError(MS_MISCERR, "Invalid bounds.", "rectObj()");
+                return NULL;
+            }
+        }
+        else { // a pixel/line image rect
+        
+            if (minx > maxx || maxy > miny) {
+                msSetError(MS_MISCERR, 
+                    "Invalid bounds for image (pixel/line) rectangle.",
+                    "rectObj()");
+                return NULL;
+            }
+        }
+
     
     rect = (rectObj *)calloc(1, sizeof(rectObj));
     if(!rect)

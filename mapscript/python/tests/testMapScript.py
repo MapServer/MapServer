@@ -512,7 +512,7 @@ class ZoomPointTestCase(MapPrimitivesTestCase):
         w = 0
         h = -1
         self.assertRaises(mapscript.MapServerError, 
-            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+            self.mapobj1.zoomPoint, -2, p, w, h, extent, None)
     def testZoomBadExtent(self):
         p = mapscript.pointObj()
         p.x, p.y = (50, 50)
@@ -521,7 +521,7 @@ class ZoomPointTestCase(MapPrimitivesTestCase):
         w = 100
         h = 100
         self.assertRaises(mapscript.MapServerError, 
-            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+            self.mapobj1.zoomPoint, -2, p, w, h, extent, None)
 
 class ZoomRectangleTestCase(MapPrimitivesTestCase):
     "testing new zoom* methods that we are adapting from the PHP MapScript"
@@ -658,6 +658,22 @@ class RectObjTestCase(MapPrimitivesTestCase):
         point = self.getPointFromLine(line, 0)
         self.assertAlmostEqual(point.x, -1.0)
         self.assertAlmostEqual(point.y, -2.0)
+
+class ImageRectObjTestCase(MapPrimitivesTestCase):
+
+    def testRectObjConstructorArgs(self):
+        """create a rect in image units"""
+        r = mapscript.rectObj(-1.0, 2.0, 3.0, 0.0, mapscript.MS_TRUE)
+        self.assertAlmostEqual(r.minx, -1.0)
+        self.assertAlmostEqual(r.miny, 2.0)
+        self.assertAlmostEqual(r.maxx, 3.0)
+        self.assertAlmostEqual(r.maxy, 0.0)
+
+    def testRectObjConstructorBadYCoords(self):
+        """in image units miny should be greater than maxy"""
+        self.assertRaises(mapscript.MapServerError, mapscript.rectObj,
+                          -1.0, 0.0, 3.0, 2.0, mapscript.MS_TRUE)
+    
 
 # lineObj tests
 
