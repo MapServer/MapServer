@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.63  2004/03/30 15:44:20  dan
+ * Fixed leak of pszURL when merging multiple WMS layers
+ *
  * Revision 1.62  2004/03/30 14:55:44  dan
  * Added wms_force_separate_request metadata to prevent a WMS layer from
  * being included in multi-layer request.
@@ -926,14 +929,14 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if (bOkToMerge && (*numRequests)>0)
     {
 /* ------------------------------------------------------------------
- * Update the last request in the array
+ * Update the last request in the array:  (*numRequests)-1
  * ------------------------------------------------------------------ */
-        msFree(pasReqInfo[(*numRequests)].pszGetUrl);
+        msFree(pasReqInfo[(*numRequests)-1].pszGetUrl);
         pasReqInfo[(*numRequests)-1].pszGetUrl = pszURL;
         pszURL = NULL;
-        pasReqInfo[(*numRequests)].debug |= lp->debug;
-        if (nTimeout > pasReqInfo[(*numRequests)].nTimeout)
-            pasReqInfo[(*numRequests)].nTimeout = nTimeout;
+        pasReqInfo[(*numRequests)-1].debug |= lp->debug;
+        if (nTimeout > pasReqInfo[(*numRequests)-1].nTimeout)
+            pasReqInfo[(*numRequests)-1].nTimeout = nTimeout;
     }
     else
     {
