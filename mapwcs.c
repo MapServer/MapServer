@@ -1036,8 +1036,6 @@ return msWCSGetCoverage(map, request, params);
 #ifdef USE_WCS_SVR
 static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 {
-  projectionObj llproj;
- 
   // get information that is "data" independent
   if((cm->srs = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "COM", MS_TRUE)) == NULL) {
     if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "COM", MS_TRUE)) == NULL) {
