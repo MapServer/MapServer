@@ -20,7 +20,9 @@
 #
 
 if {![string length [info commands ::mapscript::ms_error]]} {
+ catch {
   ::mapscript::errorObj ::mapscript::ms_error -this [::mapscript::ms_error_get]
+ }
 }
 
 #
@@ -76,8 +78,12 @@ proc _mapscript_init_ {} {
     }
 }
 
+
+# run the help proc initialization, then get rid of it
+
 _mapscript_init_
 rename _mapscript_init_ {}
+
 
 #
 # now create convenience procs
