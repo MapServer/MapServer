@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
+- Add support for spatial filters in the SLD (Bug 782)
+
 - A few fixes to allow php_mapscript to work with both PHP4 and PHP5.
   PHP5 support should still be considered experimental. (bug 718)
 
