@@ -275,7 +275,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   */
   SE_layerinfo_create(NULL, &layerinfo);
 
-  params = split(layer->data, '.', &numparams);
+  params = split(layer->data, ',', &numparams);
   if(!params) {
     msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msDrawSDELayer()");
     return(-1);
