@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2002/10/08 05:05:14  dan
+ * Encode HTML entities in schema url in GML output
+ *
  * Revision 1.3  2002/10/08 02:40:08  dan
  * Added WFS DescribeFeatureType
  *
@@ -551,7 +554,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
 {
     int         i, maxfeatures=-1;
     const char *typename="", *myns_uri;
-    char       *script_url=NULL;
+    char       *script_url=NULL, *script_url_encoded;
     rectObj     bbox;
 
     // Default filter is map extents
@@ -680,7 +683,8 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     if (myns_uri == NULL)
         myns_uri = "http://www.ttt.org/myns";
 
-    if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource")) == NULL)
+    if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource")) ==NULL ||
+        (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
     {
         return msWFSException(map, wmtver);
     }
@@ -698,10 +702,10 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
            "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
            "   xmlns:xsi=\"http://www.opengis.net/xsi\"\n"
            "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
-           "                       %s %sSERVICE=WFS&VERSION=%s&REQUEST=DescribeFeatureType&TYPENAME=%s\">\n", 
+           "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s\">\n", 
            myns_uri, 
            msWFSGetSchemasLocation(map), wmtver, 
-           myns_uri, script_url, wmtver, typename);
+           myns_uri, script_url_encoded, wmtver, typename);
 
 
     /* __TODO__ WFS expects homogenous geometry types, but our layers can
@@ -715,6 +719,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     printf("</wfs:FeatureCollection>\n\n");
 
     free(script_url);
+    free(script_url_encoded);
 
     return MS_SUCCESS;
 }
