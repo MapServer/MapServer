@@ -1953,7 +1953,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 	return(-1);
     }
 
-    oText = DrawText(string, x, y, msBuildPath(szPath, fontset->map, font), size, &sColor);
+    oText = DrawText(string, x, y, msBuildPath(szPath, fontset->filename, font), size, &sColor);
     if (oText)
     {
         //nTmp = image->img.swf->nCurrentMovie;
@@ -1997,7 +1997,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
         return(-1);
     }
     
-    oFont  = loadSWFFontFromFile(fopen(msBuildPath(szPath, fontset->map, font), "rb"));
+    oFont  = loadSWFFontFromFile(fopen(msBuildPath(szPath, fontset->filename, font), "rb"));
     if (oFont)
     {
         oText = newSWFText();
@@ -2144,7 +2144,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker
 
 	    // TO DO: at the moment only checks the bottom style, perhaps should check all of them
-            if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCESS)
+            if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
 	      return(-1);
             
             marker_width = (int)(marker_width);
@@ -2397,28 +2397,26 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *layer, imageObj *image)
 {
-    //int                 nTmp = 0;
-    outputFormatObj     *format = NULL;
     imageObj            *image_tmp = NULL;
     SWFShape            oShape;
     int                 iReq = -1;
-    char        *driver = strdup("GD/GIF");
+    const char         *driver = "GD/GIF";
     int         bFreeImage = 0;
 
 #ifdef USE_GD_GIF
-    driver = strdup("GD/GIF");
+    driver = "GD/GIF";
 #else  
 
 #ifdef USE_GD_PNG
-     driver = strdup("GD/PNG");
+     driver = "GD/PNG";
 #else
 
 #ifdef USE_GD_JPEG
-     driver = strdup("GD/JPEG");
+     driver = "GD/JPEG";
 #else
 
 #ifdef USE_GD_WBMP
-     driver = strdup("GD/WBMP");
+     driver = "GD/WBMP";
 #endif 
 
 #endif
