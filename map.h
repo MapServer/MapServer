@@ -98,12 +98,6 @@ extern "C" {
 #define MS_FEATUREINITSIZE 10 /* how many points initially can a feature have */ 
 #define MS_FEATUREINCREMENT 10
 
-#ifndef USE_GD_1_6 
-#define MS_IMAGE_TYPE "gif"
-#else	
-#define MS_IMAGE_TYPE "png"
-#endif
-
 #define MS_EXPRESSION 2000
 #define MS_REGEX 2001
 #define MS_STRING 2002
@@ -126,6 +120,7 @@ enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
 enum MS_CONNECTION_TYPE {MS_LOCAL, MS_SDE, MS_OGR};
+enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
@@ -398,6 +393,9 @@ typedef struct {
   colorObj color;
   colorObj outlinecolor;
   char *image;
+#ifndef SWIG
+  int imagetype;
+#endif
   int status;
 } referenceMapObj;
 
@@ -541,6 +539,9 @@ typedef struct { /* structure for a map */
   paletteObj palette; /* holds a map palette */
   colorObj imagecolor; /* holds the initial image color value */
 
+  short imagetype;
+  short imagequality;
+
   projectionObj projection; /* projection information for output map */
 
   referenceMapObj reference;
@@ -556,8 +557,11 @@ typedef struct { /* structure for a map */
 } mapObj;
 
 // Function prototypes, wrapable
-
-int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace); /* in maputil.c */
+#ifndef USE_GD_1_8
+int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace);
+#else
+int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
+#endif
 void msFreeImage(gdImagePtr img);
 
 // Function prototypes, not wrapable
@@ -612,7 +616,6 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, char *class_string, char *label_string);
 int msGetItemIndex(DBFHandle dbffile, char *name);
 int msGetClassIndex(layerObj *layer, char *str);
-gdImagePtr msDrawReferenceMap(mapObj *map);
 char **msGetDBFItems(DBFHandle dbffile);
 char **msGetDBFValues(DBFHandle dbffile, int record);
 void msApplyScale(mapObj *map);
@@ -706,6 +709,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 int msAddLine(shapeObj *p, lineObj *new_line);
 
 int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapraster.c */
+gdImagePtr msDrawReferenceMap(mapObj *map);
 
 size_t msGetBitArraySize(int numbits); /* in mapbits.c */
 char *msAllocBitArray(int numbits);

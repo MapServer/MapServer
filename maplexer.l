@@ -101,6 +101,8 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>header		       { return(HEADER); }
 <INITIAL>image			               { return(IMAGE); }
 <INITIAL,OBJECT_STRING>imagecolor	       { return(IMAGECOLOR); }
+<INITIAL,OBJECT_STRING>imagetype	       { return(IMAGETYPE); }
+<INITIAL,OBJECT_STRING>imagequality	       { return(IMAGEQUALITY); }
 <INITIAL>imagepath			       { return(IMAGEPATH); }
 <INITIAL>imageurl			       { return(IMAGEURL); }
 <INITIAL,OBJECT_STRING>index                   { return(INDEX); }
@@ -190,8 +192,10 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>false                    { return(MS_FALSE); }
 <INITIAL,VALUE_STRING>feet		       { return(MS_FEET); }
 <INITIAL,VALUE_STRING>giant		       { return(MS_GIANT); }
+<INITIAL,VALUE_STRING>gif		       { return(MS_GIF); }
 <INITIAL,VALUE_STRING>hilite		       { return(MS_HILITE); }
 <INITIAL,VALUE_STRING>inches		       { return(MS_INCHES); }
+<INITIAL,VALUE_STRING>jpg|jpeg		       { return(MS_JPEG); }
 <INITIAL,VALUE_STRING>kilometers	       { return(MS_KILOMETERS); }
 <INITIAL,VALUE_STRING>large		       { return(MS_LARGE); }
 <INITIAL,VALUE_STRING>lc                       { return(MS_LC); }
@@ -209,6 +213,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>on		       { return(MS_ON); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
 <INITIAL>pixels                                { return(MS_PIXELS); }
+<INITIAL,VALUE_STRING>png		       { return(MS_PNG); }
 <INITIAL,VALUE_STRING>point		       { return(MS_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_POLYGON); }
 <INITIAL,VALUE_STRING>polyline		       { return(MS_POLYLINE); }

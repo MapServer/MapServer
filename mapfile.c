@@ -2582,6 +2582,14 @@ int initMap(mapObj *map)
   map->imagecolor.green = 255;
   map->imagecolor.blue = 255;
 
+#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
+  map->imagetype = MS_GIF;
+#else
+  map->imagetype = MS_PNG;
+#endif
+
+  map->imagequality = 75;
+
   map->palette.numcolors = 0;
 
   map->transparent = MS_OFF; /* no transparency */
@@ -2695,6 +2703,12 @@ int msSaveMap(mapObj *map, char *filename)
   fprintf(stream, "  EXTENT %g %g %g %g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
   if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
   fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
+
+#ifdef USE_GD_1_8
+  if(map->imagetype == MS_JPEG) fprintf(stream, "  IMAGETYPE JPEG\n");
+  fprintf(stream, "  IMAGEQUALITY %d\n", map->imagequality);
+#endif
+
   fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
   if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);
   if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
@@ -2826,12 +2840,20 @@ mapObj *msLoadMap(char *filename)
       if(getInteger(&(map->imagecolor.green)) == -1) return(NULL);
       if(getInteger(&(map->imagecolor.blue)) == -1) return(NULL);
       break; 
+#ifdef USE_GD_1_8
+    case(IMAGEQUALITY):
+      if(getInteger(&(map->imagequality)) == -1) return(NULL);
+      break;
+    case(IMAGETYPE):
+      if((map->imagetype = getSymbol(2, MS_PNG,MS_JPEG)) == -1) return(NULL);
+      break;
+#endif
     case(INTERLACE):
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
       break;
     case(LAYER):
       if(map->numlayers == MS_MAXLAYERS) { 
-	msSetError(MS_IDENTERR, "Too many layerss defined.", "msLoadMap()");
+	msSetError(MS_IDENTERR, "Too many layers defined.", "msLoadMap()");
 	return(NULL);
       }
       if(loadLayer(&(map->layers[map->numlayers]), map) == -1) return(NULL);
@@ -2928,6 +2950,16 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getInteger(&(map->imagecolor.green)) == -1) break;
       if(getInteger(&(map->imagecolor.blue)) == -1) break;
       break;
+#ifdef USE_GD_1_8
+    case(IMAGEQUALITY):
+      msyystate = 2; msyystring = value;
+      if(getInteger(&(map->imagequality)) == -1) break;
+      break;
+    case(IMAGETYPE):
+      msyystate = 2; msyystring = value;
+      if((map->imagetype = getSymbol(2, MS_PNG,MS_JPEG)) == -1) break;
+      break;
+#endif
     case(LAYER):
       if(getInteger(&i) == -1) break;
       if(i>=map->numlayers || i<0) break;

@@ -653,13 +653,7 @@ void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     static int		nPartMax = 0, *panParts = NULL;
     static int		nBufSize = 0;
 
-    /* initialize the shape */
-    shape->line = NULL;
-    shape->numlines = 0;
-    shape->bounds.minx = shape->bounds.miny = 0;
-    shape->bounds.maxx = shape->bounds.maxy = 0;
-    shape->type = MS_NULL;
-    shape->text = NULL;
+    msInitShape(shape); /* initialize the shape */
 
     /* -------------------------------------------------------------------- */
     /*      Validate the record/entity number.                              */
@@ -875,13 +869,7 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
       return;
     }
 
-    /* initialize the shape */
-    shape->line = NULL;
-    shape->numlines = 0;
-    shape->bounds.minx = shape->bounds.miny = 0;
-    shape->bounds.maxx = shape->bounds.maxy = 0;
-    shape->type = MS_NULL;
-    shape->text = NULL;
+    msInitShape(shape); /* initialize the shape */
 
     /* -------------------------------------------------------------------- */
     /*      Validate the record/entity number.                              */
@@ -1103,64 +1091,56 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
 
 void SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
 {
-   /* -------------------------------------------------------------------- */
-   /*      Validate the record/entity number.                              */
-   /* -------------------------------------------------------------------- */
-    if( hEntity < -1 || hEntity >= psSHP->nRecords ) {
-      padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
-      return;
-    }
+  /* -------------------------------------------------------------------- */
+  /*      Validate the record/entity number.                              */
+  /* -------------------------------------------------------------------- */
+  if( psSHP->nRecords <= 0 || hEntity < -1 || hEntity >= psSHP->nRecords ) {
+    padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
+    return;
+  }
 
+  /* -------------------------------------------------------------------- */
+  /*	If the entity is -1 we fetch the bounds for the whole file.	    */
+  /* -------------------------------------------------------------------- */
+  if( hEntity == -1 ) {
+    padBounds->minx = psSHP->adBoundsMin[0];
+    padBounds->miny = psSHP->adBoundsMin[1];
+    padBounds->maxx = psSHP->adBoundsMax[0];
+    padBounds->maxy = psSHP->adBoundsMax[1];
+  } else {    
     if( psSHP->panRecSize[hEntity] == 4 ) { // NULL shape
       padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
       return;
     } 
-
-    /* -------------------------------------------------------------------- */
-    /*	If the entity is -1 we fetch the bounds for the whole file.	    */
-    /* -------------------------------------------------------------------- */
-    if( hEntity == -1 ) {
-      padBounds->minx = psSHP->adBoundsMin[0];
-      padBounds->miny = psSHP->adBoundsMin[1];
-      padBounds->maxx = psSHP->adBoundsMax[0];
-      padBounds->maxy = psSHP->adBoundsMax[1];
+    
+    if( psSHP->nShapeType != MS_SHP_POINT ) {
+      fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
+      fread( padBounds, sizeof(double)*4, 1, psSHP->fpSHP );
+      
+      if( bBigEndian ) {
+	SwapWord( 8, &(padBounds->minx) );
+	SwapWord( 8, &(padBounds->miny) );
+	SwapWord( 8, &(padBounds->maxx) );
+	SwapWord( 8, &(padBounds->maxy) );
+      }
+    } else {
+      /* -------------------------------------------------------------------- */
+      /*      For points we fetch the point, and duplicate it as the          */
+      /*      minimum and maximum bound.                                      */
+      /* -------------------------------------------------------------------- */
+      
+      fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
+      fread( padBounds, sizeof(double)*2, 1, psSHP->fpSHP );
+      
+      if( bBigEndian ) {
+	SwapWord( 8, &(padBounds->minx) );
+	SwapWord( 8, &(padBounds->miny) );
+      }
+      
+      padBounds->maxx = padBounds->minx;
+      padBounds->maxy = padBounds->miny;
     }
-
-    /* -------------------------------------------------------------------- */
-    /*      Extract bounds for any record but a point record.               */
-    /* -------------------------------------------------------------------- */
-    else if( psSHP->nShapeType != MS_SHP_POINT )
-    {
-	fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
-	fread( padBounds, sizeof(double)*4, 1, psSHP->fpSHP );
-
-	if( bBigEndian )
-	{
-	    SwapWord( 8, &(padBounds->minx) );
-	    SwapWord( 8, &(padBounds->miny) );
-	    SwapWord( 8, &(padBounds->maxx) );
-	    SwapWord( 8, &(padBounds->maxy) );
-	}
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      For points we fetch the point, and duplicate it as the          */
-    /*      minimum and maximum bound.                                      */
-    /* -------------------------------------------------------------------- */
-    else
-    {
-	fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
-	fread( padBounds, sizeof(double)*2, 1, psSHP->fpSHP );
-
-	if( bBigEndian )
-	{
-	    SwapWord( 8, &(padBounds->minx) );
-	    SwapWord( 8, &(padBounds->miny) );
-	}
-
-	padBounds->maxx = padBounds->minx;
-	padBounds->maxy = padBounds->miny;
-    }
+  }
 }
 
 int msOpenSHPFile(shapefileObj *shpfile, char *path, char *tile, char *filename)

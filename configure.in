@@ -49,6 +49,7 @@ dnl Clear some cache variables
 unset ac_cv_lib_gd_gdImageGif
 unset ac_cv_lib_gd_gdImageString16
 unset ac_cv_lib_gd_gdImagePng
+unset ac_cv_lib_gd_gdImageJpeg
 
 AC_CHECKING(which version of GD to use...)
 AC_ARG_WITH(gd,
@@ -94,6 +95,7 @@ else
   AC_CHECK_LIB(gd, gdImageGif, GD_DEF=-DUSE_GD_1_2,,)
   AC_CHECK_LIB(gd, gdImageString16, GD_DEF=-DUSE_GD_1_3,,)
   AC_CHECK_LIB(gd, gdImagePng, GD_DEF=-DUSE_GD_1_6,, -lpng -lz)
+  AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF=-DUSE_GD_1_8,, -ljpeg)
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd"
       AC_MSG_RESULT([        using GD ($GD_DEF) from system libs.])

@@ -419,7 +419,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 
 static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
-#ifdef USE_GD_1_6
+#if ! defined (USE_GD_1_2) && ! defined (USE_GD_1_3)
   int i,j; /* loop counters */
   double x,y;
   int cmap[MAXCOLORS];
@@ -522,7 +522,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
 static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
-#ifndef USE_GD_1_6
+#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
   int i,j; /* loop counters */
   double x,y;
   int cmap[MAXCOLORS];
@@ -1397,4 +1397,73 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   chdir(old_path); /* restore old cwd */
   return 0;
+}
+
+gdImagePtr msDrawReferenceMap(mapObj *map) {
+  FILE *stream;
+  gdImagePtr img=NULL;
+  double cellsize;
+  int c=-1, oc=-1;
+  int x1,y1,x2,y2;
+
+  char bytes[8];
+
+  /* Allocate input and output images (same size) */
+  stream = fopen(map->reference.image,"rb");
+  if(!stream) {
+    msSetError(MS_IOERR, NULL, "msDrawReferenceMap()");
+    sprintf(ms_error.message, "(%s)", map->reference.image);
+    return(NULL);
+  }
+
+#ifdef USE_GD_1_8
+  fread(bytes,8,1,stream); // read some bytes to try and identify the file
+  if (memcmp(dd,PNGsig,8)==0) {
+    img = gdImageCreateFromPng(stream);
+    map->reference.imagetype = MS_PNG;
+  } else {
+    img = gdImageCreateFromJpeg(stream);
+    map->reference.imagetype = MS_JPEG;
+  }
+#endif
+
+#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
+  img = gdImageCreateFromGif(stream);
+  map->reference.imagetype = MS_GIF;
+#endif
+
+ifdef USE_GD_1_6
+  img = gdImageCreateFromPng(stream);
+  map->reference.imagetype = MS_PNG;
+#endif
+
+  if(!img) {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawReferenceMap()");
+    fclose(stream);
+    return(NULL);
+  }
+
+  /* Re-map users extent to this image */
+  cellsize = msAdjustExtent(&(map->reference.extent), img->sx, img->sy);
+
+  /* allocate some colors */
+  if(map->reference.outlinecolor.red != -1 && map->reference.outlinecolor.green != -1 && map->reference.outlinecolor.blue != -1)
+    oc = gdImageColorAllocate(img, map->reference.outlinecolor.red, map->reference.outlinecolor.green, map->reference.outlinecolor.blue);
+  if(map->reference.color.red != -1 && map->reference.color.green != -1 && map->reference.color.blue != -1)
+    c = gdImageColorAllocate(img, map->reference.color.red, map->reference.color.green, map->reference.color.blue); 
+  
+  /* Remember 0,0 file coordinates equals minx,maxy map coordinates (e.g. UTM) */
+  x1 = MS_NINT((map->extent.minx - map->reference.extent.minx)/cellsize);
+  x2 = MS_NINT((map->extent.maxx - map->reference.extent.minx)/cellsize);
+  y2 = MS_NINT((map->reference.extent.maxy - map->extent.miny)/cellsize);
+  y1 = MS_NINT((map->reference.extent.maxy - map->extent.maxy)/cellsize);
+  
+  /* Add graphic element to the output image file */
+  if(c != -1)
+    gdImageFilledRectangle(img,x1,y1,x2,y2,c);
+  if(oc != -1)
+    gdImageRectangle(img,x1,y1,x2,y2,oc);
+  
+  fclose(stream);
+  return(img);
 }

@@ -1683,6 +1683,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 /*
 ** Save an image to a file named filename, if filename is NULL it goes to stdout
 */
+#ifndef USE_GD_1_8 
 int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace)
 {
   FILE *stream;
@@ -1724,6 +1725,48 @@ int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace)
 
   return(0);
 }
+#else
+int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality)
+{
+  FILE *stream;
+
+  if(filename != NULL && strlen(filename) > 0) {
+    stream = fopen(filename, "wb");
+    if(!stream) {
+      msSetError(MS_IOERR, NULL, "msSaveImage()");      
+      sprintf(ms_error.message, "(%s)", filename);
+      return(-1);
+    }
+  } else { /* use stdout */
+    
+#ifdef _WIN32
+    /*
+    ** Change stdout mode to binary on win32 platforms
+    */
+    if(_setmode( _fileno(stdout), _O_BINARY) == -1) {
+      msSetError(MS_IOERR, "Unable to change stdout to binary mode.", "msSaveImage()");
+      return(-1);
+    }
+#endif
+    stream = stdout;
+  }
+
+  if(interlace)
+    gdImageInterlace(img, 1);
+
+  if(transparent)
+    gdImageColorTransparent(img, 0);
+
+  if(type == MS_PNG)
+    gdImagePng(img, stream);
+  else
+    gdImageJpeg(img, stream, quality);
+
+  if(filename != NULL && strlen(filename) > 0) fclose(stream);
+
+  return(0);
+}
+#endif
 
 void msFreeImage(gdImagePtr img)
 {
@@ -1737,6 +1780,8 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   int c=-1, oc=-1;
   int x1,y1,x2,y2;
 
+  char bytes[8];
+
   /* Allocate input and output images (same size) */
   stream = fopen(map->reference.image,"rb");
   if(!stream) {
@@ -1745,11 +1790,27 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
     return(NULL);
   }
 
-#ifndef USE_GD_1_6 
-  img = gdImageCreateFromGif(stream);
-#else
-  img = gdImageCreateFromPng(stream);
+#ifdef USE_GD_1_8
+  fread(bytes,8,1,stream); // read some bytes to try and identify the file
+  if (memcmp(dd,PNGsig,8)==0) {
+    img = gdImageCreateFromPng(stream);
+    map->reference.imagetype = MS_PNG;
+  } else {
+    img = gdImageCreateFromJpeg(stream);
+    map->reference.imagetype = MS_JPEG;
+  }
 #endif
+
+#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
+  img = gdImageCreateFromGif(stream);
+  map->reference.imagetype = MS_GIF;
+#endif
+
+ifdef USE_GD_1_6
+  img = gdImageCreateFromPng(stream);
+  map->reference.imagetype = MS_PNG;
+#endif
+
   if(!img) {
     msSetError(MS_GDERR, "Unable to initialize image.", "msDrawReferenceMap()");
     fclose(stream);

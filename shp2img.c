@@ -95,7 +95,12 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
+#ifndef USE_GD_1_8
   msSaveImage(img, outfile, map->transparent, map->interlace);
+#else
+  msSaveImage(img, outfile, map->imagetype, map->transparent, map->interlace, map->imagequality);
+#endif
+
   gdImageDestroy(img);
 
   msFreeMap(map);

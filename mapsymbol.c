@@ -147,12 +147,13 @@ int loadSymbol(symbolObj *s)
 	fclose(msyyin);
 	return(-1);
       }
-      
-#ifndef USE_GD_1_6
-      s->img = gdImageCreateFromGif(stream);
-#else	
-      s->img = gdImageCreateFromPng(stream);
+
+#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
+  s->img = gdImageCreateFromGif(stream);
+#else
+  s->img = gdImageCreateFromPng(stream);
 #endif
+
       fclose(stream);
       
       if(s->img == NULL) {
@@ -267,11 +268,12 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   initSymbol(&symbolset->symbol[i]);
 
-#ifndef USE_GD_1_6
+#if defined (USE_GD_1_2) || defined (USE_GD_1_3)
   symbolset->symbol[i].img = gdImageCreateFromGif(stream);
 #else
   symbolset->symbol[i].img = gdImageCreateFromPng(stream);
 #endif
+
   fclose(stream);
   
   if(!symbolset->symbol[i].img) {

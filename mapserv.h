@@ -22,8 +22,12 @@
 #define MINZOOM -25
 #define NUMEXP "[-]?(([0-9]+)|([0-9]*[.][0-9]+)([eE][-+]?[0-9]+)?)"
 #define EXTENT_PADDING .05
+#define IDSIZE 128
 
 extern int enter_string;
+
+// output image extensions
+static char *outputImageType[3]={"gif", "png", "jpg"};
 
 /*
 ** Macros
@@ -79,7 +83,7 @@ int ZoomDirection=0; /* whether zooming in or out, default is pan or 0 */
 int ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */
 
 int Mode=BROWSE; /* can be BROWSE, QUERY, etc. */
-char Id[128]; /* big enough for time + pid */
+char Id[IDSIZE]="\0"; /* big enough for time + pid */
 
 /* 
 ** variables for multiple query results processing 
