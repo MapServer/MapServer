@@ -2762,21 +2762,27 @@ mapObj *msLoadMap(char *filename)
 	    case(MS_ANNOTATION):
 	    case(MS_POINT):
 	      if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->markerset), map->layers[i].class[j].symbolname)) == -1) {
-		msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
-		return(NULL);
+		if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->markerset), map->layers[i].class[j].symbolname)) == -1) {
+		  msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
+		  return(NULL);
+		}
 	      }
 	      break;
 	    case(MS_LINE):
 	    case(MS_POLYLINE):
 	      if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->lineset), map->layers[i].class[j].symbolname)) == -1) {
-		msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
-		return(NULL);
+		if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->lineset), map->layers[i].class[j].symbolname)) == -1) {
+		  msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
+		  return(NULL);
+		}
 	      }
 	      break;
 	    case(MS_POLYGON):
 	      if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->shadeset), map->layers[i].class[j].symbolname)) == -1) {
-		msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
-		return(NULL);
+		if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->shadeset), map->layers[i].class[j].symbolname)) == -1) {
+		  msSetError(MS_EOFERR, "Undefined symbol.", "msLoadMap()");
+		  return(NULL);
+		}
 	      }
 	      break;
 	    default:

@@ -192,6 +192,54 @@ static int loadSymbol(symbolObj *s)
   } /* end for */
 }
 
+/*
+** Little helper function to allow us to build symbol files on-the-fly from just a file name.
+*/
+int msAddImageSymbol(symbolSetObj *symbolset, char *filename) 
+{
+  FILE *stream;
+  int i;
+
+  if(!symbolset) {
+    msSetError(MS_SYMERR, "Symbol structure unallocated.", "msAddImageSymbol()");
+    return(-1);
+  }
+
+  if(!filename || strlen(filename) == 0) return(-1);
+
+  if(symbolset->numsymbols == MS_MAXSYMBOLS) { // no room
+    msSetError(MS_SYMERR, "Maximum number of symbols reached.", "msAddImageSymbol()");
+    return(-1);
+  }
+
+  if((stream = fopen(filename, "rb")) == NULL) {
+    msSetError(MS_IOERR, NULL, "msAddImageSymbol()");
+    return(-1);
+  }
+
+  i = symbolset->numsymbols;  
+
+  initSymbol(&symbolset->symbol[i]);
+
+#ifndef USE_GD_1_6
+  symbolset->symbol[i].img = gdImageCreateFromGif(stream);
+#else
+  symbolset->symbol[i].img = gdImageCreateFromPng(stream);
+#endif
+  fclose(stream);
+  
+  if(!symbolset->symbol[i].img) {
+    msSetError(MS_GDERR, NULL, "msAddImageSymbol()");
+    return(-1);
+  }
+
+  symbolset->symbol[i].name = strdup(filename);
+  symbolset->symbol[i].type = MS_SYMBOL_PIXMAP;
+  symbolset->numsymbols++;
+
+  return(i);
+}
+
 void msFreeSymbolSet(symbolSetObj *symbolset)
 {
   int i;
