@@ -84,6 +84,7 @@
         return MS_SUCCESS;
     }
 
+    %newobject toString;
     char *toString() 
     {
         char buffer[256];
