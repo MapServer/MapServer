@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/11/18 19:27:16  frank
+ * Fixed formatting of debug message.
+ *
  * Revision 1.28  2004/11/17 23:53:07  assefa
  * Advertize only gd and gdal formats for wms capabilities (Bug 455).
  *
@@ -925,7 +928,7 @@ int msOutputFormatValidate( outputFormatObj *format )
     if( format->transparent && format->imagemode == MS_IMAGEMODE_RGB )
     {
         msDebug( "OUTPUTFORMAT %s has TRANSPARENT set ON, but an IMAGEMODE\n"
-                 " of RGB instead of RGBA.  Changing imagemode to RGBA.", 
+                 " of RGB instead of RGBA.  Changing imagemode to RGBA.\n", 
                  format->name );
         format->imagemode = MS_IMAGEMODE_RGBA;
         result = MS_FALSE;
