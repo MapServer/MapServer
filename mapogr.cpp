@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.38  2001/07/18 21:06:11  dan
+ * Include USE_GD_FT in test for TTF fonts
+ *
  * Revision 1.37  2001/07/04 19:06:39  dan
  * Styleitem AUTO: properly handle ogr-pen-1, the invisible pen.
  *
@@ -1368,7 +1371,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               // Label font... do our best to use TrueType fonts, otherwise
               // fallback on bitmap fonts.
-#ifdef USE_GD_TTF
+#if defined(USE_GD_TTF) || defined (USE_GD_FT)
               const char *pszName;
               if ((pszName = poLabelStyle->FontName(bIsNull)) != NULL && 
                   !bIsNull && pszName[0] != '\0' &&
@@ -1400,8 +1403,6 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // Check for Pen Pattern "ogr-pen-1": the invisible pen
               // If that's what we have then set pen color to -1
               const char *pszName;
-              char  **params;
-              int   numparams;
               if ((pszName = poPenStyle->Id(bIsNull)) != NULL && 
                   !bIsNull && strstr(pszName, "ogr-pen-1") != NULL)
               {
