@@ -13,6 +13,11 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 4.3 (CVS)
+-----------------
+
+
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 
