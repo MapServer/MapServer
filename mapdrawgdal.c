@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25.2.2  2004/05/11 22:36:37  frank
+ * fix the Bug493 raster cracking fix
+ *
  * Revision 1.25.2.1  2004/05/06 03:33:18  frank
  * Fixed problem with computing dst_xsize and dst_ysize for rendering image.
  * In some subtle cases they would be one less than made sense.
@@ -333,6 +336,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
       dst_lrx = (int) ((copyRect.maxx - mapRect.minx) / map->cellsize + 0.5);
       dst_lry = (int) ((mapRect.maxy - copyRect.miny) / map->cellsize + 0.5);
+      dst_lrx = MAX(0,MIN(image->width,dst_lrx));
+      dst_lrx = MAX(0,MIN(image->height,dst_lry));
       
       dst_xsize = MAX(0,MIN(image->width,dst_lrx - dst_xoff));
       dst_ysize = MAX(0,MIN(image->height,dst_lry - dst_yoff));
@@ -1463,7 +1468,7 @@ msDrawRasterLayerGDAL_16BitClassification(
     double dfScaleMin=0.0, dfScaleMax=0.0, dfScaleRatio;
     int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount=0;
     GDALDataType eDataType;
-    float fDataMin, fDataMax, fNoDataValue;
+    float fDataMin=0.0, fDataMax=255.0, fNoDataValue;
     const char *pszScaleInfo;
     int  bUseIntegers = FALSE;
     int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;

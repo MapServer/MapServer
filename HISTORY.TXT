@@ -34,6 +34,9 @@ Version 4.2-???
 - msBuildPath() no longer used with temporary filenames when saving images
   via GDAL.
 
+- Bug 493: fix the raster cracking fix.  The last fix introduced a serious
+  heap corruption / errant pointer problem in some render cases. 
+
   
 Version 4.2-beta2 (2004-05-03)
 ------------------------------
