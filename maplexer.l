@@ -123,6 +123,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>labelitem               { return(LABELITEM); }
 <INITIAL,OBJECT_STRING>labelmaxscale	       { return(LABELMAXSCALE); }
 <INITIAL,OBJECT_STRING>labelminscale	       { return(LABELMINSCALE); }
+<INITIAL,OBJECT_STRING>labelrequires           { return(LABELREQUIRES); }
 <INITIAL,OBJECT_STRING>labelsizeitem           { return(LABELSIZEITEM); }
 <INITIAL,OBJECT_STRING>layer		       { return(LAYER); }
 <INITIAL,OBJECT_STRING>legend		       { return(LEGEND); }
@@ -157,6 +158,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>queryitem	       { return(QUERYITEM); }
 <INITIAL,OBJECT_STRING>querymap	               { return(QUERYMAP); }
 <INITIAL,OBJECT_STRING>reference	       { return(REFERENCE); }
+<INITIAL,OBJECT_STRING>requres	               { return(REQUIRES); }
 <INITIAL,OBJECT_STRING>scale		       { return(SCALE); }
 <INITIAL,OBJECT_STRING>scalebar		       { return(SCALEBAR); }
 <INITIAL,OBJECT_STRING>shadowcolor             { return(SHADOWCOLOR); }

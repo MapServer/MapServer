@@ -1004,6 +1004,7 @@ void msSHPCloseFile(shapefileObj *shpfile)
   if(shpfile->status) free(shpfile->status);
 }
 
+// status array lives in the shpfile, can return MS_SUCCESS/MS_FAILURE/MS_DONE
 char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
 {
   int i;
@@ -1011,7 +1012,8 @@ char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
   char *status=NULL;
   char *filename;
 
-  // FIX: need an overlap test here (i.e. rect and shapefile DON"T overlap)...
+  // rect and shapefile DON"T overlap...
+  // if(msRectContained(&shpfile->bounds, &rect) != MS_TRUE) return(MS_DONE);
 
   if(msRectContained(&shpfile->bounds, &rect) == MS_TRUE) {
     status = msAllocBitArray(shpfile->numshapes);
@@ -1115,7 +1117,7 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
 
     layer->tileshpfile.lastshape = i;
     
-    // more to it here!
+    // FIX: more to it here!
     
     return(msTiledSHPNextShape(layer, shapepath, shape)); // next shape
   }
@@ -1138,12 +1140,23 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
 
 int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems) 
 {
-  if((tile < 0) || (tile >= layer->tileshpfile.numshapes)) return(MS_FAILURE);
-  if(tile != layer->tileshpfile.lastshape) { // open the correct tile
-    msSHPCloseFile(&(layer->shpfile));
-    
-    // more to it here!
-    
+  char *filename, tilename[MS_PATH_LENGTH];
+
+  if((tile < 0) || (tile >= layer->tileshpfile.numshapes)) return(MS_FAILURE); // invalid tile id
+
+  if(tile != layer->tileshpfile.lastshape) { // correct tile is not currenly open so open the correct tile
+    msSHPCloseFile(&(layer->shpfile)); // close current tile
+
+    if(!layer->data) // assume whole filename is in attribute field
+      filename = msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex);
+    else {  
+      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
+      filename = tilename;
+    }
+      
+    // open the shapefile, since a specific tile was request an error should be generated if that tile does not exist
+    if(strlen(filename) == 0) return(MS_FAILURE);
+    if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) return(MS_FAILURE);
   }
 
   if((record < 0) || (record >= layer->shpfile.numshapes)) return(MS_FAILURE);

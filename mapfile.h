@@ -131,4 +131,7 @@
 #define FILTER 1116
 #define FILTERITEM 1117
 
+#define REQUIRES 1118
+#define LABELREQUIRES 1119
+
 #endif /* MAPFILE_H */

@@ -453,6 +453,8 @@ typedef struct {
   int status; // on or off
   char *data; // filename, can be relative or full path
   enum MS_FEATURE_TYPE type;
+
+  int annotate; // boolean flag for annotation
   
   double tolerance; // search buffer for point and line queries (in toleranceunits)
   int toleranceunits;
@@ -490,7 +492,7 @@ typedef struct {
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
   void *sdelayer; // For SDE layers, will contain a sdeLayerObj struct
 
-  // attribute handling components
+  // attribute/classification handling components
   char **items;
   int numitems;
   int *itemindexes;
@@ -501,6 +503,9 @@ typedef struct {
 
   char *filteritem;
   int filteritemindex;
+
+  char *requires; // context expressions, simple enough to not use expressionObj
+  char *labelrequires;
 
 } layerObj;
 

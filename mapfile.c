@@ -1323,6 +1323,8 @@ int initLayer(layerObj *layer)
 
   layer->type = -1;
 
+  layer->annotate = MS_FALSE;
+
   layer->toleranceunits = MS_PIXELS;
   layer->tolerance = 3; /* perhaps this should have a different value based on type */
 
@@ -1373,6 +1375,8 @@ int initLayer(layerObj *layer)
   layer->filteritem = NULL;
   layer->filteritemindex = -1;
 
+  layer->requires = label->labelrequires = NULL;
+
   return(0);
 }
 
@@ -1413,6 +1417,9 @@ void freeLayer(layerObj *layer) {
 
   free(layer->filteritem);
   freeExpression(&(layer->filter));
+
+  free(layer->requires);
+  free(layer->labelrequires);
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -1509,6 +1516,9 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(LABELMINSCALE):      
       if(getDouble(&(layer->labelminscale)) == -1) return(-1);
       break;    
+    case(LABELREQUIRES):
+      if((layer->labelrequires = getString()) == NULL) return(-1);
+      break;
     case(LABELSIZEITEM):
       if((layer->labelsizeitem = getString()) == NULL) return(-1);
       break;
@@ -1537,6 +1547,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(PROJECTION):
       if(loadProjection(&(layer->projection)) == -1) return(-1);
+      break;
+    case(REQUIRES):
+      if((layer->requires = getString()) == NULL) return(-1);
       break;
     case(STATUS):
       if((layer->status = getSymbol(4, MS_ON,MS_OFF,MS_QUERY,MS_DEFAULT)) == -1) return(-1);
@@ -1699,6 +1712,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msyystate = 2; msyystring = value;
     if(getDouble(&(layer->labelminscale)) == -1) return;
     break;    
+  case(LABELREQUIRES):
+    free(layer->labelrequires);
+    layer->labelrequires = strdup(value);
+    break;
   case(LABELSIZEITEM):
     free(layer->labelsizeitem);
     layer->labelsizeitem = strdup(value);
@@ -1731,6 +1748,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(PROJECTION):
     loadProjectionString(&(layer->projection), value);
+    break;
+  case(REQUIRES):
+    free(layer->requires);
+    layer->requires = strdup(value);
     break;
   case(MS_STRING):    
     for(i=0;i<layer->numclasses; i++) {
@@ -1797,6 +1818,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->labelitem) fprintf(stream, "    LABELITEM \"%s\"\n", layer->labelitem);
   if(layer->labelmaxscale > -1) fprintf(stream, "    LABELMAXSCALE %g\n", layer->labelmaxscale);
   if(layer->labelminscale > -1) fprintf(stream, "    LABELMINSCALE %g\n", layer->labelminscale);
+  if(layer->labelrequires) fprintf(stream, "    LABELREQUIRES \"%s\"\n", layer->labelrequires);
   if(layer->labelsizeitem) fprintf(stream, "    LABELSIZEITEM \"%s\"\n", layer->labelsizeitem);
   if(layer->legend) fprintf(stream, "    LEGEND \"%s\"\n", layer->legend);
   if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
@@ -1806,6 +1828,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->offsite > -1) fprintf(stream, "    OFFSITE %d\n", layer->offsite);
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   writeProjection(&(layer->projection), stream, "    ");
+  if(layer->requires) fprintf(stream, "    REQUIRES \"%s\"\n", layer->requires);
   fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
   if(layer->symbolscale > -1) fprintf(stream, "    SYMBOLSCALE %g\n", layer->symbolscale);
   if(layer->tileindex) {
