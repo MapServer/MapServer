@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2003/09/04 17:47:15  assefa
+ * Add filterencoding tests.
+ *
  * Revision 1.13  2003/02/05 04:40:11  sdlime
  * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The shapefile opening routine now expects just a filename. So, you must use msBuildPath or msBuildPath3 to create a full qualified filename. Relatively simple change, but required lots of changes. Demo still works...
  *
@@ -80,6 +83,7 @@
 /* There is a dependency to GDAL/OGR for the GML driver and MiniXML parser */
 #include "cpl_minixml.h"
 
+#include "filterencoding.h"
 
 /*
 ** msWFSException()
@@ -586,7 +590,13 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     char       *script_url=NULL, *script_url_encoded;
     rectObj     bbox;
     const char  *pszOutputSRS = NULL;
+    
+    char **layers = NULL;
+    int numlayers = 0;
 
+    char   *pszFilter = NULL;
+    int bFilterSet, bBBOXSet = 0;
+   
     // Default filter is map extents
     bbox = map->extent;
 
@@ -594,12 +604,12 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     //
     // __TODO__ Need to support XML encoded requests
     //
+
     for(i=0; map && i<numentries; i++) 
     {
         if(strcasecmp(names[i], "TYPENAME") == 0) 
         {
-            char **layers;
-            int numlayers, j, k;
+            int j, k;
             const char *pszMapSRS = NULL;
 
             // keep a ref for layer use.
@@ -681,11 +691,10 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                 }
             }
        
-            msFreeCharArray(layers, numlayers);
         } 
         else if (strcasecmp(names[i], "PROPERTYNAME") == 0)
         {
-     
+            
         }
         else if (strcasecmp(names[i], "MAXFEATURES") == 0) 
         {
@@ -697,7 +706,8 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         }
         else if (strcasecmp(names[i], "FILTER") == 0)
         {
-     
+            bFilterSet = 1;
+            pszFilter = values[i];
         }
         else if (strcasecmp(names[i], "BBOX") == 0)
         {
@@ -721,6 +731,134 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         }
 
     }
+
+
+    if (bFilterSet && pszFilter && strlen(pszFilter) > 0)
+    {
+        char **tokens = NULL;
+        int nFilters;
+        FilterEncodingNode *psNode = NULL;
+        char *szExpression = NULL;
+        char *szClassItem = NULL;
+        layerObj *lp;
+        int iLayerIndex =1;
+/* -------------------------------------------------------------------- */
+/*      Validate the parameters. When a FILTER parameter is given,      */
+/*      It needs the TYPENAME parameter for the layers. Also Filter     */
+/*      is Mutually exclusive with FEATUREID and BBOX (see wfs specs    */
+/*      1.0 section 13.7.3 on GetFeature)                               */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+        if (typename == NULL || strlen(typename) <= 0 || 
+            layers == NULL || numlayers <= 0)
+        {
+            msSetError(MS_WFSERR, 
+                   "Required TYPENAME parameter missing for GetFeature with a FILTER parameter.", 
+                   "msWFSGetFeature()");
+            return msWFSException(map, wmtver);
+        }
+        if (bBBOXSet)
+        {
+             msSetError(MS_WFSERR, 
+                   "BBOX parameter and FILTER parameter are mutually exclusive in GetFeature.", 
+                   "msWFSGetFeature()");
+            return msWFSException(map, wmtver);
+        }
+/* -------------------------------------------------------------------- */
+/*      Parse the Filter parameter. If there are several Filter         */
+/*      parameters, each Filter is inside a parantheses. Eg :           */
+/*      FILTER=(<Filter><Within><PropertyName>                          */
+/*      INWATERA_1M/WKB_GEOM|INWATERA_1M/WKB_GEOM                       */
+/*      <PropertyName><gml:Box><gml:coordinates>10,10 20,20</gml:coordinates>*/
+/*      </gml:Box></Within></Filter>)(<Filter><Within><PropertyName>    */
+/*      INWATERA_1M/WKB_GEOM<PropertyName><gml:Box><gml:coordinates>10,10*/
+/*      20,20</gml:coordinates></gml:Box></Within></Filter>)            */
+/* -------------------------------------------------------------------- */
+        if (pszFilter[0] == "(")        
+        {
+            tokens = split(pszFilter, '(', &nFilters);
+            if (tokens == NULL || nFilters <=0 || nFilters != numlayers)
+            {
+                msSetError(MS_WFSERR, "Wrong number of FILTER attributes",
+                           "msWFSGetFeature()");
+                return msWFSException(map, wmtver);
+            }
+            for (i=0; i<nFilters; i++)
+            {
+                psNode = PaserFilterEncoding(tokens[i]);
+                if (!psNode)
+                  continue;
+                szExpression = GetMapserverExpression(psNode);
+                //TODO when the filter contains a bbox : need a diffrent logic
+                if (szExpression)
+                {
+                    iLayerIndex = msGetLayerIndex(map, layers[i]);
+                    if (iLayerIndex < 0)
+                      continue;
+                    lp = &(map->layers[iLayerIndex]);
+                    if (initClass(&(lp->class[0])) == -1)
+                      continue;
+                    lp->class[0].type = lp->type;
+                    lp->numclasses++;
+
+                    loadExpressionString(&lp->class[0].expression, szExpression);
+                    msQueryByRect(map, lp->index, map->extent);
+                }
+            }
+        }
+/* -------------------------------------------------------------------- */
+/*      Assuming here that there is only 1 filter and applied on one layer.*/
+/* -------------------------------------------------------------------- */
+        else if (numlayers == 1)
+        {
+            psNode = PaserFilterEncoding(pszFilter);
+            if (psNode)
+               szExpression = GetMapserverExpression(psNode);
+            if (szExpression)
+            {
+                szClassItem = GetMapserverExpressionClassItem(psNode);
+                iLayerIndex = msGetLayerIndex(map, layers[0]);
+                if (iLayerIndex > 0)
+                {
+                    lp = &(map->layers[iLayerIndex]);
+                    if (initClass(&(lp->class[0])) != -1)
+                    {
+                        lp->class[0].type = lp->type;
+                        lp->numclasses = 1;
+                        loadExpressionString(&lp->class[0].expression, 
+                                             szExpression);
+/* -------------------------------------------------------------------- */
+/*      classitems are necessary for filter type PropertyIsLike         */
+/* -------------------------------------------------------------------- */
+                        if (szClassItem)
+                        {
+                            if (lp->classitem)
+                              free (lp->classitem);
+                            lp->classitem = strdup(szClassItem);
+                        }
+
+                        if (!lp->class[0].template)
+                          lp->class[0].template = strdup("ttt.html");
+/* -------------------------------------------------------------------- */
+/*      Need to free the template so the all shapes's will not end      */
+/*      up being queried. The query is dependent on the class           */
+/*      expression.                                                     */
+/* -------------------------------------------------------------------- */
+                        if (lp->template)
+                        {
+                            free(lp->template);
+                            lp->template = NULL;
+                        }
+
+                        msQueryByRect(map, lp->index, map->extent);
+                    }
+                }
+            }
+        }
+    }//end if filert set
+
+    if(layers)
+      msFreeCharArray(layers, numlayers);
 
     if(typename == NULL) 
     {

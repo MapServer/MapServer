@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2003/09/04 17:47:15  assefa
+ * Add filterencoding tests.
+ *
  * Revision 1.12  2003/03/26 20:24:38  dan
  * Do not call msDebug() unless debug flag is turned on
  *
@@ -69,6 +72,7 @@
 #include "map.h"
 #include "maperror.h"
 #include "mapows.h"
+#include "md5.h"
 
 #define WFS_V_0_0_14  14
 #define WFS_V_1_0_0  100
@@ -176,9 +180,20 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
     // because if they end up in exponent format (123e+06) the + will be seen
     // as a space by the remote server.
 
-    sprintf(pszURL, 
-            "%s&REQUEST=GetFeature&BBOX=%f,%f,%f,%f",
-            lp->connection, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+/* -------------------------------------------------------------------- */
+/*      If the filter parameter is given in the wfs_filter metadata,    */
+/*      we use it and do not send the BBOX paramter as they are         */
+/*      mutually exclusive.                                             */
+/* -------------------------------------------------------------------- */
+    if ((pszTmp = msLookupHashTable(lp->metadata, 
+                                       "wfs_filter")) != NULL)
+      sprintf(pszURL, 
+              "%s&REQUEST=GetFeature&FILTER=%s",
+              lp->connection, msEncodeUrl(pszTmp));
+    else
+      sprintf(pszURL, 
+              "%s&REQUEST=GetFeature&BBOX=%f,%f,%f,%f",
+              lp->connection, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
 
     return pszURL;
 
@@ -266,6 +281,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     int nTimeout;
     int nStatus = MS_SUCCESS;
     msWFSLayerInfo *psInfo = NULL;
+    char *pszMD5FileName = NULL;
 
     if (lp->connectiontype != MS_WFS || lp->connection == NULL)
         return MS_FAILURE;
@@ -318,11 +334,15 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * ------------------------------------------------------------------ */
     pasReqInfo[(*numRequests)].nLayerId = nLayerId;
     pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
-    pszURL = NULL;
     // We'll store the remote server's response to a tmp file.
+    //Build the tmp name using the MD5 transformation algorithm
+    pszMD5FileName = MDString (pszURL);
+    pszURL = NULL;
+    
     pasReqInfo[(*numRequests)].pszOutputFile =  
         msOWSBuildURLFilename(map->web.imagepath, 
-                              pasReqInfo[(*numRequests)].pszGetUrl,".tmp.gml");
+                              pszMD5FileName,".tmp.gml");
+    free(pszMD5FileName);
     pasReqInfo[(*numRequests)].nStatus = 0;
     pasReqInfo[(*numRequests)].nTimeout = nTimeout;
     pasReqInfo[(*numRequests)].bbox = bbox;
