@@ -14,7 +14,7 @@ the CVS logs is updated daily at the following URL:
 
 
 
-Version 4.0.1 (2003-10-09)
+Version 4.0.1 (2003-10-14)
 --------------------------
 
 - Fixed problem with cloned mapObj's fontset->filename pointing to the
@@ -30,6 +30,12 @@ Version 4.0.1 (2003-10-09)
 - Fixed double free in SWIG imageObj's free method (bug 393)
 
 - Fixed seg fault with WMS GetFeatureInfo of type text/html
+
+- PostGIS: added postresql_NOTICE_HANDLER() sending output via msDebug() 
+  and only when layer->debug is set (bug 418)
+
+- Added Apache version detection in configure and added non-blocking flag
+  on stderr in msDebug() to work around Apache 2.x bug (bug 458)
 
 
 Version 4.0 (2003-08-01)
