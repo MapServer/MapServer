@@ -494,13 +494,14 @@ width : int immutable
 Methods
 -------
 
-new imageObj( int width, int height [, string driver=NULL [, string filename=NULL ] ] ) : imageObj
+new imageObj( int width, int height [, string driver=NULL [, string filename=NULL [, mapObj_ map=NULL ] ] ] ) : imageObj
     Create new instance of imageObj.  If *filename* is specified, an imageObj
     is created from the file and any specified *width*, *height*, and
     *driver* parameters will be overridden by values of the image in 
     *filename*.  Otherwise, if *driver* is specified an imageObj is created
     using that driver.  See the *driver* attribute above for details.  If
     *filename* is not specified, then *width* and *height* should be specified.
+    An optional *map* can be provided for other special use cases.
 
 save( string filename [, mapObj parent_map=NULL ] ) : int
     Save image to *filename*.  The optional *parent_map* parameter must be
@@ -1258,6 +1259,9 @@ insertLayer( layerObj layer [, int nIndex=-1 ] ) : int
 loadOWSParameters( string version, OWSRequest_ request ) : int
     Load OWS request parameters (BBOX, LAYERS, &c.) into map.  Returns
     MS_SUCCESS or MS_FAILURE.
+
+prepareImage( ) : imageObj_
+    Returns an imageObj initialized to map extents and outputformat.
 
 removeLayer( int nIndex ) : layerObj_
     Remove the Layer at index *nIndex* and return a copy.
