@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2004/02/05 20:01:58  assefa
+ * Set layer tolernace when using query by shape.
+ *
  * Revision 1.19  2004/02/05 19:19:20  assefa
  * strip names spaces ogc and gml from the xml string.
  *
@@ -171,6 +174,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     int bPointQuery = 0, bShapeQuery=0;
     shapeObj *psQueryShape = NULL;
     double dfDistance = -1;
+    double dfCurrentTolerance = 0;
 
     if (!psNode || !map || iLayerIndex < 0 ||
         iLayerIndex > map->numlayers-1)
@@ -306,8 +310,17 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                      psQueryShape->line[0].point[0], dfDistance);
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0)
-      msQueryByShape(map, lp->index,  psQueryShape);
+    {
+        if (dfDistance > 0)
+        {
+            dfCurrentTolerance = lp->tolerance;
+            lp->tolerance = dfDistance;
+        }
+        msQueryByShape(map, lp->index,  psQueryShape);
       
+        if (dfDistance > 0)
+          lp->tolerance = dfCurrentTolerance;
+    }
 
     if (szExpression)
       free(szExpression);
@@ -1858,8 +1871,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance)
             psNode->eType == FILTER_NODE_TYPE_GEOMETRY_LINE ||
             psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON)
         {
-            if (psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POINT &&
-                psNode->pszValue && pdfDistance)
+            if (psNode->pszValue && pdfDistance)
               *pdfDistance = atof(psNode->pszValue);
 
             return (shapeObj *)psNode->pOther;
