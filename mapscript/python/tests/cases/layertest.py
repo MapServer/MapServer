@@ -331,12 +331,6 @@ class AttributeLayerQueryTestCase(LayerQueryTestCase):
                                      mapscript.MS_MULTIPLE)
         assert self.layer.getNumResults() == 1
 
-    def testPythonAttributeQuery(self):
-        x = 'f["FNAME"].upper() == "A POINT"'
-        mode = mapscript.MS_MULTIPLE + mapscript.MS_EXTERN
-        self.layer.queryByAttributes(self.map, None, x, mode)
-        assert self.layer.getNumResults() == 1
-
     def testAttributeQueryNoResults(self):
         self.layer.queryByAttributes(self.map, "FNAME", '"Bogus Point"',
                                      mapscript.MS_MULTIPLE)
@@ -367,17 +361,54 @@ class LayerVisibilityTestCase(MapLayerTestCase):
         assert self.layer.isVisible() == mapscript.MS_FALSE
        
 
-class ExternalFilterTestCase(unittest.TestCase):
+from random import random
+
+class InlineLayerTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.layer = mapscript.layerObj()
-        
-    def testSetExternalFilter(self):
-        x = 'f["Foo"].upper() == "Bar"'
-        self.layer.setFilter(x, mapscript.MS_EXTERN)
-        x2 = self.layer.getFilterString()
-        assert x2 == x, x2
+        # Inline feature layer
+        self.ilayer = mapscript.layerObj()
+        self.ilayer.type = mapscript.MS_LAYER_POLYGON
+        self.ilayer.status = mapscript.MS_DEFAULT
+        self.ilayer.connectiontype = mapscript.MS_INLINE
 
+        cs = 'f7fcfd,e5f5f9,ccece6,99d8c9,66c2a4,41ae76,238b45,006d2c,00441b'
+        colors = ['#' + h for h in cs.split(',')]
+        #print colors
+        
+        for i in range(9):
+            # Make a class for feature
+            ci = self.ilayer.insertClass(mapscript.classObj())
+            co = self.ilayer.getClass(ci)
+            si = co.insertStyle(mapscript.styleObj())
+            so = co.getStyle(si)
+            so.color.setHex(colors[i])
+            co.label.color.setHex('#000000')
+            co.label.outlinecolor.setHex('#FFFFFF')
+            co.label.type = mapscript.MS_BITMAP
+            co.label.size = mapscript.MS_SMALL
+            
+            # The shape to add is randomly generated
+            xc = 4.0*(random() - 0.5)
+            yc = 4.0*(random() - 0.5)
+            r = mapscript.rectObj(xc-0.25, yc-0.25, xc+0.25, yc+0.25)
+            s = r.toPolygon()
+            
+            # Classify
+            s.classindex = i
+            s.text = "F%d" % (i)
+            
+            # Add to inline feature layer
+            self.ilayer.addFeature(s)
+
+    def testExternalClassification(self):
+        mo = mapscript.mapObj()
+        mo.setSize(400, 400)
+        mo.setExtent(-2.5, -2.5, 2.5, 2.5)
+        mo.selectOutputFormat('image/png')
+        mo.insertLayer(self.ilayer)
+        im = mo.draw()
+        im.save('testExternalClassification.png')
 
 
 # ===========================================================================

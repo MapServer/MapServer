@@ -67,17 +67,6 @@ class ClassCloningTestCase(unittest.TestCase):
         assert clone.thisown == 1
         assert clone.minscale == 5.0
 
-class ExternalExpressionTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.c = mapscript.classObj()
-        
-    def testSetExternalExpression(self):
-        x = 'f["Foo"].upper() == "Bar"'
-        self.c.setExpression(x, mapscript.MS_EXTERN)
-        x2 = self.c.getExpressionString()
-        assert x2 == x, x2
-
 
 # ===========================================================================
 # Run the tests outside of the main suite
