@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2002/11/20 21:25:35  dan
+ * Duh! Forgot to set the proper path for the contexts/0.1.4/context.xsd
+ *
  * Revision 1.18  2002/11/20 21:22:32  dan
  * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
  *
@@ -1073,7 +1076,7 @@ int msSaveMapContext(mapObj *map, char *filename)
   fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
   fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"" );
   fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-  fprintf( stream, " xsi:noNamespaceSchemaLocation=\"%s\">\n", 
+  fprintf( stream, " xsi:noNamespaceSchemaLocation=\"%s/contexts/0.1.4/context.xsd\">\n", 
            msOWSGetSchemasLocation(map) );
 
   // set the General information
