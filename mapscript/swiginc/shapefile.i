@@ -77,7 +77,6 @@
     %newobject getShape;
     shapeObj *getShape(int i)
     {
-        int retval;
         shapeObj *shape;
         shape = (shapeObj *)malloc(sizeof(shapeObj));
         if (!shape)
