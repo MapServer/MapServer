@@ -366,7 +366,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
           nLength = nEnd-nStart;
 
           strncpy(papszLines[i], errormsg+nStart, nLength);
-          papszLines[i][nLength+1] = '\0';
+          papszLines[i][nLength] = '\0';
         }
       }
     } else {
