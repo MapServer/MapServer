@@ -812,6 +812,7 @@ int initLayer(layerObj *layer);
 int initClass(classObj *_class);
 void initLabel(labelObj *label);
 void resetClassStyle(classObj *_class);
+int initStyle(styleObj *style);
 
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 void freeFeatureList(featureListNodeObjPtr list);
