@@ -62,7 +62,7 @@ directory and execute
 ::
 
     python tests/testMapScript.py -v
-    python tests/testCloneMap.py -v
+    python tests/runtests.py -v
 
 The tests can (and should) be run before the module is installed.
 
