@@ -9,9 +9,56 @@
 
 #include "map.h"
 
-// FIX: need to be handle the label wrapping
-
 //#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
+
+// function to save enough of a class to draw a marker and the label
+static void class_cache(classObj *from, classObj *to) 
+{
+  initClass(to);
+
+  to->color = from->color;
+  to->symbol = from->symbol;
+  to->sizescaled = to->size = from->sizescaled;
+  to->backgroundcolor = from->backgroundcolor;
+  to->outlinecolor = from->outlinecolor;
+
+  to->overlaybackgroundcolor = from->overlaybackgroundcolor;
+  to->overlaycolor = from->overlaycolor;
+  to->overlayoutlinecolor = from->overlayoutlinecolor;
+  to->overlaysizescaled = to->overlaysize = from->overlaysizescaled;
+  to->overlaysymbol = from->overlaysymbol;
+
+  to->label.antialias = from->label.antialias;
+
+  to->label.color = from->label.color;
+  to->label.outlinecolor = from->label.outlinecolor;
+
+  to->label.shadowcolor = from->label.shadowcolor;
+  to->label.shadowsizex = from->label.shadowsizex;
+  to->label.shadowsizey = from->label.shadowsizey;
+
+  to->label.backgroundcolor = from->label.backgroundcolor;
+  to->label.backgroundshadowcolor = from->label.backgroundshadowcolor;
+  to->label.backgroundshadowsizex = from->label.backgroundshadowsizex;
+  to->label.backgroundshadowsizey = from->label.backgroundshadowsizey;
+
+  to->label.font = from->label.font;
+  to->label.type = from->label.type;
+  to->label.sizescaled = from->label.sizescaled;
+  to->label.size = from->label.size;
+
+  to->label.position = from->label.position;
+  to->label.angle = from->label.angle;
+  to->label.buffer = from->label.buffer;
+  to->label.offsetx = from->label.offsetx;
+  to->label.offsety = from->label.offsety;
+
+  to->label.minfeaturesize = from->label.minfeaturesize;
+  to->label.autominfeaturesize = from->label.autominfeaturesize;
+  to->label.mindistance = from->label.mindistance;
+  to->label.partials = from->label.partials;
+  to->label.force = from->label.force;
+}
 
 int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize)
 {
@@ -48,8 +95,10 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
     map->labelcache.labels[i].string = gsub(map->labelcache.labels[i].string, wrap, "\r\n");
   }
 
-  map->labelcache.labels[i].size = map->layers[layeridx].class[classidx].label.sizescaled;
-  map->labelcache.labels[i].angle = map->layers[layeridx].class[classidx].label.angle;
+  class_cache(&(map->layers[layeridx].class[classidx]), &(map->labelcache.labels[i].class)); 
+
+  // map->labelcache.labels[i].size = map->layers[layeridx].class[classidx].label.sizescaled;
+  // map->labelcache.labels[i].angle = map->layers[layeridx].class[classidx].label.angle;
   map->labelcache.labels[i].featuresize = featuresize;
 
   map->labelcache.labels[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
@@ -57,7 +106,7 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
 
   map->labelcache.labels[i].status = MS_FALSE;
 
-  if(map->layers[layeridx].type == MS_LAYER_POINT) {
+  if(map->layers[layeridx].type == MS_LAYER_POINT) { // cache the marker placement
     rectObj rect;
     int w, h;
 
@@ -598,11 +647,11 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
   int i, j, l;
 
   rectObj r;
-
-  labelObj label;
+  
   labelCacheMemberObj *cachePtr=NULL;
   classObj *classPtr=NULL;
   layerObj *layerPtr=NULL;
+  labelObj *labelPtr=NULL;
 
   int draw_marker;
   int marker_width, marker_height;
@@ -614,7 +663,8 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
     cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
 
     layerPtr = &(map->layers[cachePtr->layeridx]); /* set a couple of other pointers, avoids nasty references */
-    classPtr = &(layerPtr->class[cachePtr->classidx]);
+    classPtr = &(cachePtr->class);
+    labelPtr = &(cachePtr->class.label);
 
     if(!cachePtr->string)
       continue; /* not an error, just don't want to do anything */
@@ -622,14 +672,10 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
     if(strlen(cachePtr->string) == 0)
       continue; /* not an error, just don't want to do anything */
 
-    label = classPtr->label;
-    label.sizescaled = label.size = cachePtr->size;
-    label.angle = cachePtr->angle;
-
-    if(msGetLabelSize(cachePtr->string, &label, &r, &(map->fontset)) == -1)
+    if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset)) == -1)
       return(-1);
 
-    if(label.autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+    if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
       continue; /* label too large relative to the feature */
 
     draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
@@ -647,7 +693,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
     }
 
-    if(label.position == MS_AUTO) {
+    if(labelPtr->position == MS_AUTO) {
 
       if(layerPtr->type == MS_LAYER_LINE) {
 	int position = MS_UC;
@@ -658,19 +704,19 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
 	  if(j == 1) {
-	    if(fabs(cos(label.angle)) < LINE_VERT_THRESHOLD)
-	      label.angle += 180.0;
+	    if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
+	      labelPtr->angle += 180.0;
 	    else
 	      position = MS_LC;
 	  }
 
-	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
 	  if(draw_marker)
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
-	  if(!label.partials) { // check against image first
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
+	  if(!labelPtr->partials) { // check against image first
+	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
 	      continue; // next angle
 	    }
@@ -691,7 +737,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
 	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-	      if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+	      if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -714,13 +760,13 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
 	  if(draw_marker)
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
-	  if(!label.partials) { // check against image first
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
+	  if(!labelPtr->partials) { // check against image first
+	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
 	      continue; // next position
 	    }
@@ -741,7 +787,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
 	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-	      if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+	      if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -758,24 +804,24 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	} // next position
       }
 
-      if(label.force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+      if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
 
     } else {
 
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-      if(label.position == MS_CC) // don't need the marker_offset
-        p = get_metrics(&(cachePtr->point), label.position, r, label.offsetx, label.offsety, label.angle, label.buffer, cachePtr->poly);
+      if(labelPtr->position == MS_CC) // don't need the marker_offset
+        p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
       else
-        p = get_metrics(&(cachePtr->point), label.position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+        p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
       if(draw_marker)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
-      if(!label.force) { // no need to check anything else
+      if(!labelPtr->force) { // no need to check anything else
 
-	if(!label.partials) {
-	  if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE)
+	if(!labelPtr->partials) {
+	  if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
 	    cachePtr->status = MS_FALSE;
 	}
 
@@ -796,7 +842,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
 	for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
 	  if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-	    if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+	    if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
@@ -820,10 +866,10 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       if(classPtr->overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &(cachePtr->point), classPtr->overlaysymbol, classPtr->overlaycolor, classPtr->overlaybackgroundcolor, classPtr->overlayoutlinecolor, classPtr->overlaysizescaled);
     }
 
-    if(label.backgroundcolor >= 0)
-      billboard(img, cachePtr->poly, &label);
+    if(labelPtr->backgroundcolor >= 0)
+      billboard(img, cachePtr->poly, labelPtr);
 
-    draw_text(img, p, cachePtr->string, &label, &(map->fontset)); /* actually draw the label */
+    draw_text(img, p, cachePtr->string, labelPtr, &(map->fontset)); /* actually draw the label */
 
   } /* next in cache */
 

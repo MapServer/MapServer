@@ -2943,6 +2943,7 @@ void msFreeMap(mapObj *map) {
     msFree(map->labelcache.labels[i].string);
     msFreeShape(map->labelcache.labels[i].poly);
     msFree(map->labelcache.labels[i].poly);
+    freeClass(&(map->labelcache.labels[i].class));
   }
   msFree(map->labelcache.labels);
 

@@ -349,18 +349,22 @@ typedef struct {
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
 typedef struct {
-  int size; /* parameters that can vary for each label/feature */
-  double angle;
   char *string;
   double featuresize;
 
-  int layeridx; /* indexes */
+#ifndef __cplusplus
+  classObj class; // we store the whole class cause lots of things might vary for each label
+#else
+  classObj _class;
+#endif
+
+  int layeridx; // indexes
   int classidx;
   int tileidx;
   int shapeidx;
 
-  pointObj point; /* label point */
-  shapeObj *poly; /* label bounding box */
+  pointObj point; // label point
+  shapeObj *poly; // label bounding box
 
   int status; /* has this label been drawn or not */
 } labelCacheMemberObj;
