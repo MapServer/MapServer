@@ -649,6 +649,12 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
   if(status != MS_SUCCESS)
     return(MS_FAILURE); // something went wrong fetching the record/shape
 
+  status = SE_stream_close(sde->stream, 1);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerGetShape()", "SE_stream_close()");
+    return(MS_FAILURE);
+  }
+
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetShape()");
