@@ -13,10 +13,10 @@ int msIsLayerQueryable(layerObj *lp)
       lp->type == MS_LAYER_GRATICULE)
     return MS_FALSE;
 
-  if(lp->template) return MS_TRUE;
+  if(lp->template && strlen(lp->template) > 0) return MS_TRUE;
 
   for(i=0; i<lp->numclasses; i++) {
-    if(lp->class[i].template) {
+    if(lp->class[i].template && strlen(lp->class[i].template) > 0) {
       is_queryable = MS_TRUE;
       break;
     }
