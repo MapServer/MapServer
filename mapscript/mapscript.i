@@ -357,6 +357,14 @@ memory.") const char * {
       }
   }
 
+    // append the given outputFormatObj to the map's outputformat
+    //%newobject newOutputFormat;
+    //outputFormatObj *newOutputFormat(char *name, char *driver) {
+    //    outputFormatObj *format = NULL;
+    //    format =  msAllocOutputFormat(self, name, driver);
+    //    return format;
+    //}
+  
   void setOutputFormat( outputFormatObj *format ) {
       msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
@@ -1279,6 +1287,13 @@ memory.") const char * {
   void setOption( const char *key, const char *value ) {
     msSetOutputFormatOption( self, key, value );
   }
+
+    %newobject getOption;
+    char *getOption(const char *key, const char *value="") {
+        const char *retval;
+        retval = msGetOutputFormatOption(self, key, value);
+        return strdup(retval);
+    }
 }
 
 //

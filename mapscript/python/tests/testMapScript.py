@@ -589,7 +589,6 @@ class ZoomScaleTestCase(unittest.TestCase):
         assert new_extent.maxy == max.maxy, new_extent.maxy
 
 class NewImageObjTestCase(unittest.TestCase):
-    "testing new zoom* methods that we are adapting from the PHP MapScript"
    
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile)
@@ -615,7 +614,48 @@ class NewImageObjTestCase(unittest.TestCase):
         classobj = layerobj.getClass(0)
         imgobj = classobj.createLegendIcon(self.mapobj1, layerobj, 20, 20)
         assert imgobj.thisown == 1
-        
+
+#class AddOutputFormatTestCase(unittest.TestCase):
+#    """This test case is developed to address MapServer bug 510"""
+
+#    def setUp(self):
+#        self.mapobj1 = mapObj(testMapfile)
+#    def tearDown(self):
+#        self.mapobj1 = None
+#    def testClonedMapOutputFormat(self):
+#        n = self.mapobj1.numoutputformats
+#        f = self.mapobj1.newOutputFormat('png_test', 'GD/PNG')
+#        assert self.mapobj1.numoutputformats == n + 1, self.mapobj1.numoutputformats
+#        self.mapobj1.setImageType('png_test')
+#        assert self.mapobj1.outputformat == f
+
+class ClonedMapOutputFormatTestCase(unittest.TestCase):
+    """This test case is developed to address MapServer bug 510"""
+    
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testClonedMapKeepsOutputFormat(self):
+        self.mapobj1.setImageType('image/jpeg')
+        assert self.mapobj1.outputformat.mimetype == 'image/jpeg'
+        mapobj_clone = self.mapobj1.clone()
+        assert mapobj_clone.thisown == 1
+        mime = mapobj_clone.outputformat.mimetype
+        assert mime == 'image/jpeg', mime
+    def testClonedMapKeepsModifiedOutputFormat(self):
+        self.mapobj1.setImageType('image/jpeg')
+        self.mapobj1.outputformat.setOption('QUALITY','90');
+        assert self.mapobj1.outputformat.mimetype == 'image/jpeg'
+        iquality = self.mapobj1.outputformat.getOption('QUALITY')
+        assert iquality == '90'
+        mapobj_clone = self.mapobj1.clone()
+        assert mapobj_clone.thisown == 1
+        quality = mapobj_clone.outputformat.getOption('QUALITY')
+        assert quality == iquality, quality
+
+
+
 if __name__ == '__main__':
     unittest.main()
 
