@@ -54,15 +54,19 @@ lib_dirs = unique(lib_dirs)
 lib_dirs = lib_dirs + string.split(ms_install_dir)
 
 libs = []
+extras = []
+
 for x in lib_opts:
     if x[:2] == '-l':
         libs.append( x[2:] )
     if x[-4:] == '.lib' or x[-4:] == '.LIB':
-	dir, lib = os.path.split(x)
-	libs.append( lib[:-4] )
-	if len(dir) > 0 :
-	    lib_dirs.append( dir )
-
+	    dir, lib = os.path.split(x)
+	    libs.append( lib[:-4] )
+	    if len(dir) > 0:
+	        lib_dirs.append( dir )
+    if x[-2:] == '.a':
+        extras.append(x)
+        
 libs = unique(libs)
 lib_dirs = unique(lib_dirs)
 
@@ -79,6 +83,11 @@ for item in ms_includes:
 	    include_dirs.append( item[2:] )
 
 # Here is the distutils setup function that does all the magic.
+
+# Uncomment lines below if using static gd
+#extras.append("-static")
+#extras.append("-lgd")
+
 setup(name = "mapscript",
       version = ms_version,
       description = "Python interface to MapServer",
@@ -90,8 +99,7 @@ setup(name = "mapscript",
                                library_dirs = lib_dirs,
                                libraries = libs,
                                define_macros =  macros,
-                               # Uncomment line below if using static gd
-                               #extra_link_args = ["-static", "-lgd"],
+                               extra_link_args = extras,
                               )
                     ],
       py_modules = ["mapscript"]
