@@ -225,9 +225,14 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 	free(innerlist);
       } else {  // write a MultiPolygon	
 	if(srsname)
+        {
           fprintf(stream, "%s<gml:MultiPolygon srsName=\"%s\">\n", tab, srsname);
+        }
         else
           fprintf(stream, "%s<gml:MultiPolygon>\n", tab);
+        
+        fprintf(stream, "%s<gml:polygonMember>\n", tab);
+ 
 
 	for(i=0; i<shape->numlines; i++) { // step through the outer rings
           if(outerlist[i] == MS_TRUE) {
@@ -273,6 +278,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
           }
         }
 
+        fprintf(stream, "%s</gml:polygonMember>\n", tab);
 	fprintf(stream, "%s</gml:MultiPolygon>\n", tab);
       }
       free(outerlist);
