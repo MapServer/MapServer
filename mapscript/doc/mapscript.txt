@@ -33,7 +33,7 @@
  Mapscript Development Documentation
 *****************************************************************************
 
-:Release: 4.2
+:Release: 4.2.1
 :Revision: $Revision$
 :Date: $Date$
 :Author: Sean Gillies
@@ -1319,16 +1319,13 @@ applySLDURL( string sldurl ) : int
     MS_SUCCESS or MS_FAILURE.
     
 clone( ) : mapObj
-    Returns a clone of the map.  Presently, the map's fontset and
-    symbolset are not copied and users must explicitly set these for the
-    cloned map.  See http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=557.
-
-    ::
-
-        map_clone = map_orig.clone( )
-        map_clone.setFontSet("absolute/path/to/fontset/file")
-        map_clone.setSymbolSet("absolute/path/to/symbolset/file")
-        img = map_clone.draw( )
+    Returns a clone of the map.  In the 4.2.1 release there is no need for any
+    post clone tweaking of the new mapObj.
+    
+    .. note:: 
+       In revisions previous to 4.2.1 the map's fontset and symbolset
+       are not copied and users must explicitly set these for the cloned map.
+       See http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=557.
 
 draw( ) : imageObj_
     Draw the map, processing layers according to their defined order and
