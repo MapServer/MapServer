@@ -24,6 +24,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %}
 #endif
 
+// Hide labelcacheMemberObj from C# due to conflict with member
+// named 'string' (bugs 847, 852).  
+#ifdef SWIGCSHARP
+%ignore labelCacheMemberObj;
+#endif
+
 %module mapscript
 %{
 #include "../../map.h"
