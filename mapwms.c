@@ -1532,7 +1532,7 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
         return msWMSException(map, nVersion, "LayerNotDefined");
     }
 
-    printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+    printf("Content-type: application/vnd.ogc.sld+xml%c%c",10,10);
     sld = msSLDGenerateSLD(map, -1);
     if (sld)
     {
