@@ -1,3 +1,5 @@
+# $Id$
+#
 # setup.py file for MapScript
 # version 1.0
 

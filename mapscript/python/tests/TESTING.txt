@@ -1,0 +1,12 @@
+$Id$
+
+Python MapScript Unit Tests
+
+To run the tests, execute 
+
+   python tests/testMapScript.py
+
+from the mapscript/python directory.  By default, the unit test
+script will insert the local build directory produced by Python
+distutils into the head of the Python PATH.  This allows us to
+run the unit tests before installing the mapscript module.

@@ -1,0 +1,2 @@
+LucidaSansRegular /Users/sean/Library/Fonts/LucidaSansRegular.ttf
+LucidaSansDemiBold /Users/sean/Library/Fonts/LucidaSansDemiBold.ttf
