@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.80  2004/06/23 20:17:57  dan
+ * Updated current methods for changes to the hashTableObj (bug 737)
+ *
  * Revision 1.79  2004/05/31 15:35:03  dan
  * Added setRotation() (bug 702) and fixed layer->drawQuery() (bug 695)
  *
@@ -33,249 +36,7 @@
  * applySLDURL and applySLD on a layer object can now take an optional
  * argument which is the name of the NamedLayer to use to style the layer.
  *
- * Revision 1.72  2003/12/03 18:56:08  assefa
- * Add functions to apply and to generate sld on a layer object.
- *
- * Revision 1.71  2003/12/01 16:12:01  assefa
- * Add applysld and applysldurl on map.
- *
- * Revision 1.70  2003/10/30 22:55:04  assefa
- * getexpression function in Sync with the mapscript.i
- *
- * Revision 1.69  2003/10/30 22:37:28  assefa
- * Add functions executewfsgetfeature on a WFS layer object.
- * Add function getexpression on a class object.
- *
- * Revision 1.68  2003/10/28 16:50:25  assefa
- * Add functions removeMetaData on map and layer.
- *
- * Revision 1.67  2003/09/04 16:05:15  assefa
- * Add msClearLayerPenValues in classObj_drawLegendIcon.
- *
- * Revision 1.66  2003/07/03 15:31:47  assefa
- * Add the possibility to generate image for function
- * processquerytemplate (bug 341).
- *
- * Revision 1.65  2003/06/26 13:54:23  assefa
- * Use calloc instead of malloc in shapefileObj_new (Bug 344).
- *
- * Revision 1.64  2003/06/03 23:49:16  assefa
- * Set layer->prject to true when setting the projection.
- *
- * Revision 1.63  2003/05/27 19:30:03  assefa
- * Call msFreeLabelCache instaed of loacl call for function
- * labelCacheObj_freeCache.
- *
- * Revision 1.62  2003/03/26 20:23:31  dan
- * msLoadWKTProjectionString() has been renamed msOGCWKT2ProjectionObj()
- *
- * Revision 1.61  2003/03/24 15:31:14  attila
- * mapimage module can now generate DXF imagemaps
- *
- * Revision 1.60  2003/02/24 02:19:43  dan
- * Added map->clone() method
- *
- * Revision 1.59  2003/02/21 16:55:12  assefa
- * Add function querybyindex and freequery.
- *
- * Revision 1.58  2003/02/14 20:17:27  assefa
- * Add savequery and loadquery functions.
- *
- * Revision 1.57  2003/02/11 19:01:08  assefa
- * Distnace points functions have changed names.
- *
- * Revision 1.56  2003/01/11 00:06:40  dan
- * Added setWKTProjection() to mapObj and layerObj
- *
- * Revision 1.55  2003/01/08 15:00:16  assefa
- * Add setsymbolbyname in the style class.
- *
- * Revision 1.54  2002/12/24 03:26:24  dan
- * Make msCreateLegendIcon() return imageObj + properly handle format (bug 227)
- *
- * Revision 1.53  2002/12/20 21:40:46  julien
- * Create default output format even if format are specified in mapfile
- *
- * Revision 1.52  2002/12/12 19:30:49  assefa
- * Correct call to msDrawShape function.
- *
- * Revision 1.51  2002/10/28 20:31:21  dan
- * New support for WMS Map Context (from Julien)
- *
- * Revision 1.3  2002/10/22 20:03:57  julien
- * Add the mapcontext support
- *
- * Revision 1.50  2002/10/24 18:10:08  assefa
- * Add map argument to initLayer function.
- *
- * Revision 1.49  2002/10/23 19:44:08  assefa
- * Add setcolor functions for style and label objects.
- * Add function to select the output format.
- * Correct PrepareImage and PasteImage functions.
- *
- * Revision 1.48  2002/09/17 13:08:30  julien
- * Remove all chdir() function and replace them with the new msBuildPath 
- * function.
- * This have been done to make MapServer thread safe. (Bug 152)
- *
- * Revision 1.47  2002/08/09 22:55:38  assefa
- * Update code to be in sync with mapserver addition of Styles.
- *
- * Revision 1.46  2002/07/08 19:07:06  dan
- * Added map->setFontSet() to MapScript
- *
- * Revision 1.45  2002/06/11 23:47:11  assefa
- * Upgrade code to support new outputformat support.
- *
- * Revision 1.44  2002/05/31 16:09:10  assefa
- * Change call tp msTransformShapeToPixel.
- *
- * Revision 1.43  2002/05/10 19:16:29  dan
- * Added qitem,qstring args to PHP version of layer->queryByAttributes()
- *
- * Revision 1.42  2002/05/08 19:09:49  dan
- * Attempt at fixing class.createLegendIcon()
- *
- * Revision 1.41  2002/05/02 15:55:51  assefa
- * Adapt code to support imageObj.
- *
- * Revision 1.40  2002/04/23 15:40:21  dan
- * Call msGetSymbolIndex() directly in mapObj_getSymbolByName()
- *
- * Revision 1.39  2002/04/22 20:23:56  dan
- * Fixed map->setSymbolSet(): reference to map->fontset was left NULL and
- * TTF symbols were causing a crash.
- *
- * Revision 1.38  2002/04/22 19:31:57  dan
- * Added optional new_map_path arg to msLoadMap()
- *
- * Revision 1.37  2002/04/12 15:44:30  sacha
- * Change msGetSymbolIdByName by msGetSymbolIndex.
- *
- * Revision 1.36  2002/03/14 21:36:12  sacha
- * Add two mapscript function (in PHP and perl)
- * setSymbolSet(filename) that load a symbol file dynanictly
- * getNumSymbols() return the number of symbol in map.
- *
- * Revision 1.35  2002/03/07 22:31:01  assefa
- * Add template processing functions.
- *
- * Revision 1.34  2002/02/08 19:13:05  dan
- * Opps... I have deleted mapObj_getSymbolByName() by accident
- *
- * Revision 1.33  2002/02/08 18:51:11  dan
- * Remove class and layer args to setSymbolByName()
- *
- * Revision 1.32  2002/02/08 18:25:39  sacha
- * let mapserv add a new symbol when we use the classobj setproperty function
- * with "symbolname" and "overlaysymbolname" arg.
- *
- * Revision 1.31  2002/01/29 23:38:32  assefa
- * Add write support for measured shape files.
- *
- * Revision 1.30  2002/01/22 21:19:01  sacha
- * Add two functions in maplegend.c
- * - msDrawLegendIcon that draw an class legend icon over an existing image.
- * - msCreateLegendIcon that draw an class legend icon and return the newly
- * created image.
- * Also, an php examples in mapscript/php3/examples/test_draw_legend_icon.phtml
- *
- * Revision 1.29  2001/12/19 03:46:02  assefa
- * Support of Measured shpe files.
- *
- * Revision 1.28  2001/11/01 21:10:09  assefa
- * Add getProjection on map and layer object.
- *
- * Revision 1.27  2001/11/01 02:47:06  dan
- * Added layerObj->getWMSFeatureInfoURL()
- *
- * Revision 1.26  2001/10/23 19:17:38  assefa
- * Use layerorder instead of panPrioList.
- *
- * Revision 1.25  2001/10/23 01:32:46  assefa
- * Add Drawing Priority support.
- *
- * Revision 1.24  2001/10/03 12:41:04  assefa
- * Add function getLayersIndexByGroup.
- *
- * Revision 1.23  2001/08/29 14:36:06  dan
- * Changes to msCalculateScale() args.  Sync with mapscript.i v1.42
- *
- * Revision 1.22  2001/08/01 13:52:59  dan
- * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
- * to getSymbolByName().
- *
- * Revision 1.21  2001/07/26 19:50:08  assefa
- * Add projection class and related functions.
- *
- * Revision 1.20  2001/04/19 15:11:34  dan
- * Sync with mapscript.i v.1.32
- *
- * Revision 1.19  2001/03/30 04:16:14  dan
- * Removed shapepath parameter to layer->getshape()
- *
- * Revision 1.18  2001/03/28 02:10:15  assefa
- * Change loadProjectionString to msLoadProjectionString
- *
- * Revision 1.17  2001/03/21 21:55:28  dan
- * Added get/setMetaData() for layerObj and mapObj()
- *
- * Revision 1.16  2001/03/21 17:43:33  dan
- * Added layer->class->type ... in sync with mapscript.i v1.29
- *
- * Revision 1.15  2001/03/16 22:08:36  dan
- * Removed allitems param to msLayerGetShape()
- *
- * Revision 1.14  2001/03/12 19:02:46  dan
- * Added query-related stuff in PHP MapScript
- *
- * Revision 1.13  2001/03/09 19:33:13  dan
- * Updated PHP MapScript... still a few methods missing, and needs testing.
- *
- * Revision 1.12  2001/02/23 21:58:00  dan
- * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
- *
- * Revision 1.11  2000/11/01 16:31:07  dan
- * Add missing functions (in sync with mapscript).
- *
- * Revision 1.10  2000/09/25 22:48:54  dan
- * Aded update access for msOpenShapeFile()  (sync with mapscript.i v1.19)
- *
- * Revision 1.9  2000/09/22 13:56:10  dan
- * Added msInitShape() in rectObj_draw()
- *
- * Revision 1.8  2000/09/13 21:04:34  dan
- * Use msInitShape() in shapeObj constructor
- *
- * Revision 1.7  2000/09/07 20:18:20  dan
- * Sync with mapscript.i version 1.16
- *
- * Revision 1.6  2000/08/24 05:46:22  dan
- * #ifdef everything related to featureObj
- *
- * Revision 1.5  2000/08/16 21:14:00  dan
- * Sync with mapscript.i version 1.12
- *
- * Revision 1.4  2000/07/12 20:19:30  dan
- * Sync with mapscript.i version 1.10
- *
- * Revision 1.3  2000/06/28 20:22:02  dan
- * Sync with mapscript.i version 1.9
- *
- * Revision 1.2  2000/05/23 20:46:45  dan
- * Sync with mapscript.i version 1.5
- *
- * Revision 1.1  2000/05/09 21:06:11  dan
- * Initial Import
- *
- * Revision 1.6  2000/04/26 16:10:02  daniel
- * Changes to build with ms_3.3.010
- *
- * Revision 1.5  2000/03/17 19:03:07  daniel
- * Update to 3.3.008: removed prototypes for addFeature() and initFeature()
- *
- * Revision 1.4  2000/03/15 00:36:31  daniel
- * Finished conversion of all cover functions to real C
+ * ...
  *
  * Revision 1.3  2000/03/11 21:53:27  daniel
  * Ported extension to MapServer version 3.3.008
@@ -511,19 +272,17 @@ int mapObj_save(mapObj* self, char *filename) {
   }
 
 char *mapObj_getMetaData(mapObj *self, char *name) {
-    return(msLookupHashTable(self->web.metadata, name));
+    return(msLookupHashTable(&(self->web.metadata), name));
   }
 
 int mapObj_setMetaData(mapObj *self, char *name, char *value) {
-    if (!self->web.metadata)
-        self->web.metadata = msCreateHashTable();
-    if (msInsertHashTable(self->web.metadata, name, value) == NULL)
+    if (msInsertHashTable(&(self->web.metadata), name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
   }
 
 int mapObj_removeMetaData(mapObj *self, char *name) {
-    return(msRemoveHashTable(self->web.metadata, name));
+    return(msRemoveHashTable(&(self->web.metadata), name));
 }
 
 int mapObj_moveLayerup(mapObj *self, int layerindex){
@@ -751,20 +510,18 @@ int layerObj_addFeature(layerObj *self, shapeObj *shape) {
   }
 
 char *layerObj_getMetaData(layerObj *self, char *name) {
-    return(msLookupHashTable(self->metadata, name));
+    return(msLookupHashTable(&(self->metadata), name));
   }
 
 
 int layerObj_setMetaData(layerObj *self, char *name, char *value) {
-    if (!self->metadata)
-        self->metadata = msCreateHashTable();
-    if (msInsertHashTable(self->metadata, name, value) == NULL)
+    if (msInsertHashTable(&(self->metadata), name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
   }
 
 int layerObj_removeMetaData(layerObj *self, char *name) {
-    return(msRemoveHashTable(self->metadata, name));
+    return(msRemoveHashTable(&(self->metadata), name));
   }
 
 char *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map, int click_x, int click_y,     
