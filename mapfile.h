@@ -170,4 +170,6 @@
 #define FILEPATTERN 1142
 #define DATAPATTERN 1143
 
+#define PROCESSING 1144
+
 #endif /* MAPFILE_H */

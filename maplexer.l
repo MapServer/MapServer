@@ -193,6 +193,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>points                  { return(POINTS); }
 <INITIAL,OBJECT_STRING>position		       { return(POSITION); }
 <INITIAL,OBJECT_STRING>postlabelcache	       { return(POSTLABELCACHE); }
+<INITIAL,OBJECT_STRING>processing	       { return(PROCESSING); }
 <INITIAL,OBJECT_STRING>projection	       { return(PROJECTION); }
 <INITIAL,OBJECT_STRING>querymap	               { return(QUERYMAP); }
 <INITIAL,OBJECT_STRING>reference	       { return(REFERENCE); }

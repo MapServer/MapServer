@@ -1666,6 +1666,9 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->styleitemindex = -1;
 
   layer->transparency = 0;
+
+  layer->num_processing = 0;
+  layer->processing = NULL;
   
   return(0);
 }
@@ -1708,6 +1711,9 @@ void freeLayer(layerObj *layer) {
   msFree(layer->labelrequires);
 
   if(layer->metadata) msFreeHashTable(layer->metadata);
+
+  if( layer->num_processing > 0 )
+      msFreeCharArray( layer->processing, layer->num_processing );
 
   msFree(layer->styleitem);
 }
@@ -1837,6 +1843,24 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(OFFSITE):
       if(loadColor(&(layer->offsite)) != MS_SUCCESS) return(-1);
       break;
+    case(PROCESSING):
+    {
+        /* NOTE: processing array maintained as size+1 with NULL terminator.
+                 This ensure that CSL (GDAL string list) functions can be
+                 used on the list for easy processing. */
+        char *value;
+        if((value = getString()) == NULL) return(-1);
+        layer->num_processing++;
+        if( layer->num_processing == 1 )
+            layer->processing = (char **) malloc(2*sizeof(char *));
+        else
+            layer->processing = (char **) 
+                realloc(layer->processing, 
+                        sizeof(char*) * (layer->num_processing+1) );
+        layer->processing[layer->num_processing-1] = value;
+        layer->processing[layer->num_processing] = NULL;
+    }
+    break;
     case(TRANSPARENCY):
       if(getInteger(&(layer->transparency)) == -1) return(-1);         
       break;

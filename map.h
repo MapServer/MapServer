@@ -712,6 +712,11 @@ typedef struct layer_obj {
 
   int dump;
   int debug;
+
+#ifndef SWIG
+  int  num_processing;
+  char **processing;
+#endif
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
@@ -1149,6 +1154,11 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b);
+int msGetClass(layerObj *layer, colorObj *color);
+
+//in mapdrawgdal.c
+int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, 
+                          void *hDSVoid );
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */
