@@ -26,6 +26,7 @@ static void initSymbol(symbolObj *s)
   s->numarcs = 1; // always at least 1 arc
   s->numon[0] = 0;
   s->numoff[0] = 0;
+  s->offset[0] = 0;
   s->sizex = 0;
   s->sizey = 0;
   s->filled = MS_FALSE;
@@ -230,6 +231,12 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
   yyrestart(yyin); /* flush the scanner - there's a better way but this works for now */
   yyfiletype = MS_FILE_SYMBOL;
 
+#ifdef USE_TTF
+  symbolset->fontset.filename = NULL;
+  symbolset->fontset.numfonts = 0;  
+  symbolset->fontset.fonts = NULL;
+#endif
+
   /*
   ** Read the symbol file
   */
@@ -238,10 +245,20 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
     case(END):      
       symbolset->numsymbols = n;
       status = 0;
+
+#ifdef USE_TTF
+      if(msLoadFontSet(&(symbolset->fontset)) == -1) return(-1);
+#endif
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "msLoadSymbolFile()");      
       status = -1;
+      break;
+    case(FONTSET):
+#ifdef USE_TTF
+      free(symbolset->fontset.filename);
+      if((symbolset->fontset.filename = getString()) == NULL) return(-1);
+#endif
       break;
     case(LINESET):
       symbolset->type = MS_LINESET;
@@ -310,7 +327,7 @@ static int getCharacterSize(char *character, int size, char *font, rectObj *rect
 /* ------------------------------------------------------------------------------- */
 /*       Draw a shade symbol of the specified size and color                       */
 /* ------------------------------------------------------------------------------- */
-void msDrawShadeSymbol(symbolSetObj *shadeset, fontSetObj *fontset, gdImagePtr img, shapeObj *p, classObj *class)
+void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, classObj *class)
 {
   int i;
   gdPoint oldpnt,newpnt;
@@ -363,7 +380,7 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, fontSetObj *fontset, gdImagePtr i
   case(MS_SYMBOL_TRUETYPE):    
     
 #ifdef USE_TTF
-    font = msLookupHashTable(fontset->fonts, shadeset->symbol[s].font);
+    font = msLookupHashTable(shadeset->fontset.fonts, shadeset->symbol[s].font);
     if(!font) return;
 
     if(getCharacterSize(shadeset->symbol[s].character, sz, font, &rect) == -1) return;
@@ -524,7 +541,7 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, fontSetObj *fontset, gdImagePtr i
 ** Returns the size, in pixels, of a marker symbol defined for a specific class. Use for annotation
 ** layer collision avoidance.
 */
-void msGetMarkerSize(symbolSetObj *markerset, fontSetObj *fontset, classObj *class, int *width, int *height)
+void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *height)
 {
   rectObj rect;
   char *font=NULL;
@@ -545,7 +562,7 @@ void msGetMarkerSize(symbolSetObj *markerset, fontSetObj *fontset, classObj *cla
   case(MS_SYMBOL_TRUETYPE):
 
 #ifdef USE_TTF
-    font = msLookupHashTable(fontset->fonts, markerset->symbol[class->symbol].font);
+    font = msLookupHashTable(markerset->fontset.fonts, markerset->symbol[class->symbol].font);
     if(!font) return;
 
     if(getCharacterSize(markerset->symbol[class->symbol].character, class->size, font, &rect) == -1) return;
@@ -579,7 +596,7 @@ void msGetMarkerSize(symbolSetObj *markerset, fontSetObj *fontset, classObj *cla
 /* ------------------------------------------------------------------------------- */
 /*       Draw a single marker symbol of the specified size and color               */
 /* ------------------------------------------------------------------------------- */
-void msDrawMarkerSymbol(symbolSetObj *markerset, fontSetObj *fontset, gdImagePtr img, pointObj *p, classObj *class)
+void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, classObj *class)
 {
   int offset_x, offset_y, x, y;
   int j;
@@ -620,7 +637,7 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, fontSetObj *fontset, gdImagePtr
   case(MS_SYMBOL_TRUETYPE):    
 
 #ifdef USE_TTF
-    font = msLookupHashTable(fontset->fonts, markerset->symbol[s].font);
+    font = msLookupHashTable(markerset->fontset.fonts, markerset->symbol[s].font);
     if(!font) return;
 
     if(getCharacterSize(markerset->symbol[s].character, sz, font, &rect) == -1) return;
@@ -728,7 +745,7 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, fontSetObj *fontset, gdImagePtr
 /* ------------------------------------------------------------------------------- */
 /*       Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------------- */
-void msDrawLineSymbol(symbolSetObj *lineset, fontSetObj *fontset, gdImagePtr img, shapeObj *p, classObj *class)
+void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classObj *class)
 {
   int i, j;
   symbolObj *sym;

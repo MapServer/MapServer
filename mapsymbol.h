@@ -3,9 +3,6 @@
 
 #include <gd.h>
 
-enum ms_symbolfile {MS_MARKERSET, MS_LINESET, MS_SHADESET}; // all we need for scripting
-
-#ifndef SWIG
 enum MS_SYMBOL_TYPE {MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_STYLED, MS_SYMBOL_TRUETYPE};
 
 #define MS_MAXSYMBOLS 32            // maximum number of symbols in a symbol file
@@ -47,13 +44,5 @@ typedef struct {
   char *font;
 
 } symbolObj;
-
-typedef struct {
-  char *filename;
-  int type;
-  int numsymbols;
-  symbolObj symbol[MS_MAXSYMBOLS];
-} symbolSetObj;
-#endif
 
 #endif /* MAPSYMBOL_H */

@@ -21,11 +21,10 @@ int main(int argc, char *argv[])
   int gray, green, red, black, white;
   classObj class;
   symbolSetObj symbolSet;
-  fontSetObj fontSet={NULL, NULL, 0};
 
    /* ---- check the number of arguments, return syntax if not correct ---- */
-  if( argc < 3 ) {
-      fprintf(stdout, "Syntax: sym2img [symbolset] [fontset|none] [outfile]\n" );
+  if( argc < 2 ) {
+      fprintf(stdout, "Syntax: sym2img [symbolset] [outfile]\n" );
       exit(0);
   }
 
@@ -37,7 +36,6 @@ int main(int argc, char *argv[])
 
   /* Initialize the symbol and font sets */
   symbolSet.filename = strdup(argv[1]);
-  fontSet.filename = strdup(argv[2]);
 
   /* 
   ** load the symbol file
@@ -47,13 +45,6 @@ int main(int argc, char *argv[])
     exit(0);
   }
   
-  if(strcasecmp(fontSet.filename, "none") != 0) {
-    if(msLoadFontSet(&fontSet) == -1) { 
-      msWriteError(stderr);
-      exit(0);
-    }
-  }
-
   ns = symbolSet.numsymbols;
 
   if(ns < NCOLS) {
@@ -93,7 +84,7 @@ int main(int argc, char *argv[])
 	p.line[0].point[0].x = MS_NINT(j + CELLSIZE/2);
 	p.line[0].point[0].y = MS_NINT(i + CELLSIZE/2);
 	p.line[0].numpoints = 1;
-	msDrawMarkerSymbol(&(symbolSet), &(fontSet), img, &(p.line[0].point[0]), &(class));
+	msDrawMarkerSymbol(&(symbolSet), img, &(p.line[0].point[0]), &(class));
 	break;
 
       case(MS_LINESET):
@@ -108,7 +99,7 @@ int main(int argc, char *argv[])
 	p.line[0].point[3].x = j + (CELLSIZE-LBUF) - 1;
         p.line[0].point[3].y = i;
 	p.line[0].numpoints = 4;
-        msDrawLineSymbol(&(symbolSet), &(fontSet), img, &p, &(class));
+        msDrawLineSymbol(&(symbolSet), img, &p, &(class));
 	break;
 
       case(MS_SHADESET):
@@ -123,7 +114,7 @@ int main(int argc, char *argv[])
 	p.line[0].point[3].x = j;
 	p.line[0].point[3].y = i + CELLSIZE-1;
 	p.line[0].numpoints = 4;
-	msDrawShadeSymbol(&(symbolSet), &(fontSet), img, &p, &(class));
+	msDrawShadeSymbol(&(symbolSet), img, &p, &(class));
 	break;
 
       default:

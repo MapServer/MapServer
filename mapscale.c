@@ -256,7 +256,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.force = MS_TRUE;
 
   if(map->scalebar.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbol(&map->markerset, &map->fontset, img, &point, &(map->layers[l].class[0]));
+    msDrawMarkerSymbol(&map->markerset, img, &point, &(map->layers[l].class[0]));
   else
     msAddLabel(map, l, 0, -1, -1, point, " ", -1);
 

@@ -121,6 +121,7 @@ enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement */
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
+enum MS_SYMBOLFILE {MS_MARKERSET, MS_LINESET, MS_SHADESET};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
@@ -339,6 +340,15 @@ typedef struct {
   int markercachesize;
 } labelCacheObj;
 #endif
+
+// SYMBOLSET OBJECT
+typedef struct {
+  char *filename;
+  int type;
+  fontSetObj fontset;
+  int numsymbols;
+  symbolObj symbol[MS_MAXSYMBOLS];
+} symbolSetObj;
 
 // REFERENCE MAP OBJECT
 typedef struct {
@@ -615,10 +625,10 @@ int strcasecmp(char *s1, char *s2);
 #endif
 
 int msLoadSymbolFile(symbolSetObj *symbolset); /* in mapsymbol.c */
-void msDrawShadeSymbol(symbolSetObj *shadeset, fontSetObj *fontset, gdImagePtr img, shapeObj *p, classObj *class);
-void msGetMarkerSize(symbolSetObj *markerset, fontSetObj *fontset, classObj *class, int *width, int *height);
-void msDrawMarkerSymbol(symbolSetObj *markerset, fontSetObj *fontset, gdImagePtr img, pointObj *p, classObj *class);
-void msDrawLineSymbol(symbolSetObj *lineset, fontSetObj *fontset, gdImagePtr img, shapeObj *p, classObj *class);
+void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, classObj *class);
+void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *height);
+void msDrawMarkerSymbol(symbolSetObj *markerset,gdImagePtr img, pointObj *p, classObj *class);
+void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classObj *class);
 
 gdImagePtr msDrawLegend(mapObj *map); /* in maplegend.c */
 int msEmbedLegend(mapObj *map, gdImagePtr img);

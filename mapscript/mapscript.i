@@ -14,7 +14,6 @@
 %include "../../map.h"
 %include "../../maperror.h"
 %include "../../mapprimitive.h"
-%include "../../mapsymbol.h"
 %include "../../mapshape.h"
 
 %apply Pointer NONNULL { gdImagePtr img };

@@ -119,7 +119,7 @@ gdImagePtr msDrawLegend(mapObj *map)
 	p.line[0].point[0].x = MS_NINT(HMARGIN + (map->legend.keysizex/2.0)) - 1;
 	p.line[0].point[0].y = MS_NINT(pnt.y + (map->legend.keysizey/2.0)) - 1;
 	p.line[0].numpoints = 1;
-	msDrawMarkerSymbol(&map->markerset, &map->fontset, img, &(p.line[0].point[0]), &(lp->class[j]));
+	msDrawMarkerSymbol(&map->markerset, img, &(p.line[0].point[0]), &(lp->class[j]));
 	break;
       case MS_LINE:
       case MS_POLYLINE:
@@ -132,7 +132,7 @@ gdImagePtr msDrawLegend(mapObj *map)
 	p.line[0].point[3].x = HMARGIN + map->legend.keysizex - 1;
 	p.line[0].point[3].y = pnt.y;
 	p.line[0].numpoints = 4;
-	msDrawLineSymbol(&map->lineset, &map->fontset, img, &p, &(lp->class[j]));       
+	msDrawLineSymbol(&map->lineset, img, &p, &(lp->class[j]));       
 	break;
       case MS_RASTER:
       case MS_POLYGON:
@@ -147,7 +147,7 @@ gdImagePtr msDrawLegend(mapObj *map)
 	p.line[0].point[4].x = p.line[0].point[0].x;
 	p.line[0].point[4].y = p.line[0].point[0].y;
 	p.line[0].numpoints = 5;
-	msDrawShadeSymbol(&map->shadeset, &map->fontset, img, &p, &(lp->class[j]));
+	msDrawShadeSymbol(&map->shadeset, img, &p, &(lp->class[j]));
 	break;
       default:
 	break;
@@ -251,7 +251,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.force = MS_TRUE;
 
   if(map->legend.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbol(&map->markerset, &map->fontset, img, &point, &(map->layers[l].class[0]));
+    msDrawMarkerSymbol(&map->markerset, img, &point, &(map->layers[l].class[0]));
   else
     msAddLabel(map, l, 0, -1, -1, point, " ", -1);
 
