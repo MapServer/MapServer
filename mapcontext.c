@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.57  2004/08/03 23:26:24  dan
+ * Cleanup OWS version tests in the code, mapwms.c (bug 799)
+ *
  * Revision 1.56  2004/08/03 22:12:34  dan
  * Cleanup OWS version tests in the code, started with mapcontext.c (bug 799)
  *
@@ -458,6 +461,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   char szPath[MS_MAXPATHLEN];
   int nStyle, nVersion=-1;
   layerObj *layer;
+  char szVersionBuf[OWS_VERSION_MAXLEN];
 
   //
   // Load the raw XML file
@@ -559,9 +563,8 @@ int msLoadMapContext(mapObj *map, char *filename)
   //    &(map->web.metadata) =  msCreateHashTable();
 
   // Reformat and save Version in metadata
-  pszValue = msOWSGetVersionString(nVersion);
-  msInsertHashTable( &(map->web.metadata), "wms_context_version", pszValue );
-  free(pszValue);
+  msInsertHashTable( &(map->web.metadata), "wms_context_version",
+                     msOWSGetVersionString(nVersion, szVersionBuf));
 
   if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0)
   {
@@ -1596,7 +1599,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   }
 
   // Contact Info
-  msOWSPrintContactInfo( stream, tabspace, "1.1.0", &(map->web.metadata) );
+  msOWSPrintContactInfo( stream, tabspace, OWS_1_1_0, &(map->web.metadata) );
 
   // Close General
   fprintf( stream, "  </General>\n" );

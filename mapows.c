@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.36  2004/08/03 23:26:24  dan
+ * Cleanup OWS version tests in the code, mapwms.c (bug 799)
+ *
  * Revision 1.35  2004/08/03 22:12:34  dan
  * Cleanup OWS version tests in the code, started with mapcontext.c (bug 799)
  *
@@ -384,16 +387,17 @@ int msOWSParseVersionString(const char *pszVersion)
 ** Returns a OWS version string in the format a.b.c from the integer
 ** version value passed as argument (0x0a0b0c)
 **
-** Returns a newly allocated buffer that should be freed by the caller.
+** Fills in the pszBuffer and returns a reference to it. Recommended buffer
+** size is OWS_VERSION_MAXLEN chars.
 */
-char *msOWSGetVersionString(int nVersion)
+const char *msOWSGetVersionString(int nVersion, char *pszBuffer)
 {
-    char szVersion[30];
 
-    sprintf(szVersion, "%d.%d.%d", 
+    if (pszBuffer)
+        snprintf(pszBuffer, OWS_VERSION_MAXLEN-1, "%d.%d.%d", 
             (nVersion/0x10000)%0x100, (nVersion/0x100)%0x100, nVersion%0x100);
 
-    return strdup(szVersion);
+    return pszBuffer;
 }
 
 
@@ -717,14 +721,14 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 ** Print the contact information
 */
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
-                            const char *wmtver, hashTableObj *metadata )
+                            int nVersion, hashTableObj *metadata )
 {
   int bEnableContact = 0;
 
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
   // In 1.1.0, ContactInformation becomes optional.
-  if (strcasecmp(wmtver, "1.0.0") > 0) 
+  if (nVersion > OWS_1_0_0) 
   {
     if(msLookupHashTable(metadata, "wms_contactperson") ||
        msLookupHashTable(metadata, "wms_contactorganization")) 

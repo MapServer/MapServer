@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.38  2004/08/03 23:26:24  dan
+ * Cleanup OWS version tests in the code, mapwms.c (bug 799)
+ *
  * Revision 1.37  2004/08/03 22:12:34  dan
  * Cleanup OWS version tests in the code, started with mapcontext.c (bug 799)
  *
@@ -181,11 +184,13 @@ MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 #define OWS_1_0_0   0x010000
 #define OWS_1_0_6   0x010006
 #define OWS_1_0_7   0x010007
+#define OWS_1_0_8   0x010008
 #define OWS_1_1_0   0x010100
 #define OWS_1_1_1   0x010101
+#define OWS_VERSION_MAXLEN   20  // Buffer size for msOWSGetVersionString()
 
 MS_DLL_EXPORT int msOWSParseVersionString(const char *pszVersion);
-MS_DLL_EXPORT char *msOWSGetVersionString(int nVersion);
+MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);
 
 
 // OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata()
@@ -227,7 +232,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
                            projectionObj *srcproj,
                            hashTableObj *metadata );
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
-                           const char *wmtver, hashTableObj *metadata );
+                           int nVersion, hashTableObj *metadata );
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                          mapObj *map, int bCheckLocalCache);
@@ -252,7 +257,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
  *   mapwms.c
  *====================================================================*/
 int msWMSDispatch(mapObj *map, cgiRequestObj *req); 
-MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
+MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           char **names, char **values, int numentries);
 
 
