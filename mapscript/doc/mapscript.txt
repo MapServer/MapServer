@@ -2413,13 +2413,3 @@ Footnotes
 
 ..  [2] See the comment about layerObj and mapObj above.  A styleObj is also
     a very reuseable thing.
-
-
-============
-Revision Log
-============
-
-$Log$
-Revision 1.52.2.8  2004/07/20 19:49:42  sean
-Added revision log to the end of the doc
-
