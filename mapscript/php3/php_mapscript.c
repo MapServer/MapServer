@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.135  2003/01/10 19:21:26  dan
+ * Removed style->sizescaled from PHP wrappers
+ *
  * Revision 1.134  2003/01/08 16:21:25  assefa
  * Bug in ms_newMapObj related to empty filename.
  *
@@ -10530,7 +10533,6 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     add_property_long(return_value,   "symbol",     pstyle->symbol);
     PHPMS_ADD_PROP_STR(return_value,  "symbolname", pstyle->symbolname);
     add_property_long(return_value,   "size",       pstyle->size);
-    add_property_long(return_value,   "sizescaled",       pstyle->sizescaled);
     add_property_long(return_value,   "minsize",       pstyle->minsize);
     add_property_long(return_value,   "maxsize",       pstyle->maxsize);
     add_property_long(return_value,   "offsetx",       pstyle->offsetx);
@@ -10651,14 +10653,13 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_string(pPropertyName);
 
-    IF_SET_LONG(  "symbol",         self->symbol)
-    else IF_SET_STRING( "symbolname",         self->symbolname)
-    else IF_SET_LONG(  "size",         self->size)
-    else IF_SET_LONG(  "sizescaled",       self->sizescaled)
-    else IF_SET_LONG("minsize", self->minsize)
-    else IF_SET_LONG("maxsize", self->maxsize)
-    else IF_SET_LONG("offsetx",      self->offsetx)
-    else IF_SET_LONG("offsety",      self->offsety)
+    IF_SET_LONG(  "symbol",             self->symbol)
+    else IF_SET_STRING( "symbolname",   self->symbolname)
+    else IF_SET_LONG( "size",           self->size)
+    else IF_SET_LONG( "minsize",        self->minsize)
+    else IF_SET_LONG( "maxsize",        self->maxsize)
+    else IF_SET_LONG( "offsetx",        self->offsetx)
+    else IF_SET_LONG( "offsety",        self->offsety)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.",
