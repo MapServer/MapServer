@@ -100,7 +100,7 @@ classes themselves
 
 References to sections below will be added here as the documentation grows.
 
-classObj_, colorObj_, pointObj_, rectObj_, styleObj_
+classObj_, colorObj_, pointObj_, rectObj_, shapeObj_, styleObj_
 
 -----------------------------------------------------------------------------
  classObj
@@ -281,6 +281,12 @@ Methods
 x
 
 -----------------------------------------------------------------------------
+ imageObj
+-----------------------------------------------------------------------------
+
+x 
+
+-----------------------------------------------------------------------------
  labelObj
 -----------------------------------------------------------------------------
 
@@ -293,10 +299,10 @@ x
 x
 
 -----------------------------------------------------------------------------
- imageObj
+ lineObj
 -----------------------------------------------------------------------------
 
-x 
+x
 
 -----------------------------------------------------------------------------
  pointObj
@@ -410,7 +416,104 @@ toPolygon() : shapeObj_
  shapeObj
 -----------------------------------------------------------------------------
 
-x
+The shapeObj class implements a multipart polygon.  Each part is a closed
+lineObj_.  Each feature of a layer's data is a shapeObj.
+
+Attributes
+----------
+
+text : string
+    Shape annotation.
+    
+classindex : int
+    The class index for features of a classified layer.
+    
+type : int immutable
+    MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, or MS_SHAPE_NULL.
+    
+numlines : int immutable
+    Number of parts.
+
+index : int immutable
+    Feature index within the layer.
+    
+tileindex : int immutable
+    Index of tiled file for tileindexed layers.
+    
+bounds : rectObj_ immutable
+    Bounding box of shape.
+    
+numvalues : int immutable
+    Number of shape attributes.
+    
+values : p_p_char immutable
+    This is a SWIG pointer to the underlying C array.  Users should access
+    values through the getValue_ method.  
+ 
+ 
+Methods
+-------
+
+.. _new shapeObj:
+
+new shapeObj(int type) : shapeObj_
+    Return a new shapeObj of the specified *type*.  See the type attribute
+    above.
+
+.. _shapeObj.add:
+
+add(lineObj_ line) : int
+    Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
+
+.. _shapeObj.get:
+
+get(int index) : lineObj_
+    Returns a reference to part at *index*.  Reference is valid
+    only during the life of the shapeObj.
+
+.. _shapeObj.draw:
+
+draw(mapObj_ map, layerObj_ layer, imageObj_ img) : int
+    Draws the individual shape using layer.  Returns MS_SUCCESS or MS_FAILURE.
+
+.. _contains:
+
+contains(pointObj_ point) : int
+    Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
+
+.. _shapeObj.intersects:
+
+intersects(shapeObj_ shape) : int
+    Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
+
+.. _shapeObj.project:
+
+project(projectionObj_ proj_in, projectionObj_ proj_out) : int
+    Reproject shape from *proj_in* to *proj_out*.  Transformation
+    is done in place.  Returns MS_SUCCESS or MS_FAILURE.
+
+setBounds : void    
+    Must be called to calculate new bounding box after new parts have been
+    added.
+
+    **TODO**: should return int and set msSetError.
+    
+copy(shapeObj_ shape_copy) : int
+    Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
+
+    **TODO**: this method should return shapeObj not int!
+
+.. _getValue:
+
+getValue(int i) : string
+    Return the shape attribute at index *i*.
+
+distanceToPoint(pointObj_ point) : float
+    Return distance to *point*.
+    
+distanceToShape(shapeObj_ shape) : float
+    Return the minimum distance to *shape*.
+
 
 -----------------------------------------------------------------------------
  styleObj
