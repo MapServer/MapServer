@@ -228,6 +228,49 @@ int isOn(mapservObj *msObj, char *name, char *group)
   return(MS_FALSE);
 }
 
+/************************************************************************/
+/*            int sortLayerByOrder(mapObj *map, char* pszOrder)         */
+/*                                                                      */
+/*      sorth the displaying in ascending or descending order.          */
+/************************************************************************/
+int sortLayerByOrder(mapObj *map, char* pszOrder)
+{
+    int *panCurrentOrder = NULL;
+    int i = 0;
+
+    if (!map) 
+    {
+        msSetError(MS_WEBERR, "Invalid pointer.", "sortLayerByOrder()");
+        return MS_FAILURE;
+    }
+/* ==================================================================== */
+/*      The flag "ascending" is in fact not useful since the            */
+/*      default ordering is ascending.                                  */
+/* ==================================================================== */
+
+/* -------------------------------------------------------------------- */
+/*      the map->layerorder should be set at this point in the          */
+/*      sortLayerByMetadata.                                            */
+/* -------------------------------------------------------------------- */
+    if (map->layerorder)
+    {
+        panCurrentOrder = (int*)malloc(map->numlayers * sizeof(int));
+         for (i=0; i<map->numlayers ;i++)
+           panCurrentOrder[i] = map->layerorder[i];
+         
+         if (strcasecmp(pszOrder, "DESCENDING") == 0)
+         {
+             for (i=0; i<map->numlayers; i++)
+               map->layerorder[i] = panCurrentOrder[map->numlayers-1-i];
+         }
+
+         free(panCurrentOrder);
+    }
+
+    return MS_SUCCESS;
+}
+             
+             
 /*!
  * This function set the map->layerorder
  * index order by the metadata collumn name
@@ -1254,6 +1297,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    struct stat tmpStat;
    
    char *pszOrderMetadata = NULL;
+   char *pszOrder = NULL;
    
    int i,j,k;
    char **papszGroups = NULL;
@@ -1412,7 +1456,19 @@ char *generateLegendTemplate(mapservObj *msObj)
       
    if (sortLayerByMetadata(msObj->Map, pszOrderMetadata) != MS_SUCCESS)
      goto error;
-      
+   
+/* -------------------------------------------------------------------- */
+/*      if the order tag is set to ascending or descending, the         */
+/*      current order will be changed to correspond to that.            */
+/* -------------------------------------------------------------------- */
+   pszOrder = msLookupHashTable(layerArgs, "order");
+   if (pszOrder && ((strcasecmp(pszOrder, "ASCENDING") == 0) ||
+                    (strcasecmp(pszOrder, "DESCENDING") == 0)))
+   {
+       if (sortLayerByOrder(msObj->Map, pszOrder) != MS_SUCCESS)
+         goto error;
+   }
+   
    if (legGroupHtml) {
       // retrieve group names
       papszGroups = msGetAllGroupNames(msObj->Map, &nGroupNames);
@@ -2722,7 +2778,7 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
 /*                                    char **names, char **values,      */
 /*                                    int numentries)                   */
 /*                                                                      */
-/*      Utility method to ptocess the lened template.                   */
+/*      Utility method to process the legend template.                   */
 /************************************************************************/
 char *msProcessLegendTemplate(mapObj *map,
                               char **names, char **values, 
