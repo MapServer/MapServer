@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "map.h"
 #include "maperror.h"
 #include "mapgml.h"
@@ -19,7 +21,6 @@ int msIsLayerQueryable(layerObj *lp)
 
   return is_queryable;
 }
-
 
 #ifdef USE_WMS
 
@@ -91,6 +92,61 @@ int msWMSException(mapObj *map, const char *wmtversion)
   }
 
   return MS_FAILURE; // so that we can call 'return msWMSException();' anywhere
+}
+
+/*
+** msWMSMakeAllLayersUnique()
+*/
+static int msRenameLayer(layerObj *lp, int count)
+{
+    char *newname;
+    newname = (char*)malloc((strlen(lp->name)+5)*sizeof(char));
+    if (!newname) 
+    {
+        msSetError(MS_MEMERR, NULL, "msWMSDispatch");
+        return MS_FAILURE;
+    }
+    sprintf(newname, "%s_%2.2d", lp->name, count);
+    free(lp->name);
+    lp->name = newname;
+    
+    return MS_SUCCESS;
+}
+
+/*
+** msWMSMakeAllLayersUnique()
+*/
+static int msWMSMakeAllLayersUnique(mapObj *map, const char *wmtver)
+{
+  int i, j;
+
+  // Make sure all layers in the map file have valid and unique names
+  for(i=0; i<map->numlayers; i++)
+  {
+      int count=1;
+      for(j=i+1; j<map->numlayers; j++)
+      {
+          if (map->layers[i].name == NULL || map->layers[j].name == NULL)
+          {
+              msSetError(MS_MISCERR, 
+                         "At least one layer is missing a name in map file.", 
+                         "msWMSDispatch");
+              return msWMSException(map, wmtver);
+          }
+          if (strcasecmp(map->layers[i].name, map->layers[j].name) == 0 &&
+              msRenameLayer(&(map->layers[j]), ++count) != MS_SUCCESS)
+          {
+              return msWMSException(map, wmtver);
+          }
+      }
+
+      // Don't forget to rename the first layer if duplicates were found
+      if (count > 1 && msRenameLayer(&(map->layers[i]), 1) != MS_SUCCESS)
+      {
+          return msWMSException(map, wmtver);
+      }
+  }
+  return MS_SUCCESS;
 }
 
 /*
@@ -535,7 +591,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
       }    
     }
 
-    if((value = msLookupHashTable(lp->metadata, "wms_all_proj"))) printf("      <SRS>%s</SRS>\n", value);
+    if((value = msLookupHashTable(lp->metadata, "wms_all_srs"))) printf("      <SRS>%s</SRS>\n", value);
     if (msWMSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
     {
       if(lp->projection.numargs > 0) {
@@ -738,7 +794,9 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
 
   return(MS_SUCCESS);
 }
+
 #endif /* USE_WMS */
+
 
 /*
 ** msWMSDispatch() is the entry point for WMS requests.
@@ -779,11 +837,16 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   {
       if (!wmtver) 
           wmtver = "1.0.7";  // VERSION is optional with getCapabilities only
+      if ((status = msWMSMakeAllLayersUnique(map, wmtver)) != MS_SUCCESS) 
+          return status;
       return msWMSCapabilities(map, wmtver);
   }
 
   // VERSION *and* REQUEST required by both getMap and getFeatureInfo
   if (wmtver==NULL || request==NULL) return MS_DONE; // Not a WMS request
+
+  if ((status = msWMSMakeAllLayersUnique(map, wmtver)) != MS_SUCCESS) 
+      return status;
 
   // getMap parameters are used by both getMap and getFeatureInfo
   status = msWMSLoadGetMapParams(map, wmtver, names, values, numentries);
