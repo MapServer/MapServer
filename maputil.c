@@ -154,7 +154,6 @@ static int shpGetClassIndex(DBFHandle hDBF, layerObj *layer, int record, int ite
 	found=MS_TRUE;
       break;
     case(MS_EXPRESSION):
-
       tmpstr = strdup(layer->class[i].expression.string);
 
       if(!values) {
@@ -167,7 +166,7 @@ static int shpGetClassIndex(DBFHandle hDBF, layerObj *layer, int record, int ite
 
 	numitems = DBFGetFieldCount(hDBF);
 	items = msGetDBFItems(hDBF);
-	
+
 	layer->class[i].expression.items = (char **)malloc(numitems);
 	layer->class[i].expression.indexes = (int *)malloc(numitems);
 
@@ -235,10 +234,10 @@ static char *shpGetAnnotation(DBFHandle hDBF, classObj *class, int record, int i
 
 	numitems = DBFGetFieldCount(hDBF);
 	items = msGetDBFItems(hDBF);
-	
+
 	class->text.items = (char **)malloc(numitems);
 	class->text.indexes = (int *)malloc(numitems);
-	
+
 	for(i=0; i<numitems; i++) {
 	  sprintf(substr, "[%s]", items[i]);
 	  if(strstr(tmpstr, substr) != NULL) {
@@ -247,18 +246,18 @@ static char *shpGetAnnotation(DBFHandle hDBF, classObj *class, int record, int i
 	    class->text.numitems++;
 	  }
 	}
-	
+
 	msFreeCharArray(items,numitems);
       }
-      
+
       for(i=0; i<class->text.numitems; i++)
-	tmpstr = gsub(tmpstr, class->text.items[i], values[class->text.indexes[i]]); 
-      
+	tmpstr = gsub(tmpstr, class->text.items[i], values[class->text.indexes[i]]);
+
       msFreeCharArray(values,numitems);
       break;
     }
   } else {
-    if(item < 0) return(NULL);    
+    if(item < 0) return(NULL);
     tmpstr = strdup(DBFReadStringAttribute(hDBF, record, item));
   }
 
@@ -306,61 +305,6 @@ double msAdjustExtent(rectObj *rect, int width, int height)
   return(cellsize);
 }
 
-/*
-** Does several things related to scaling. Turns layers OFF that fall outside scaling limits. 
-** Toggles an annotation flag based on scale. Applies scaling to symbols and fonts for layers 
-** with a symbol scale.
-*/
-void msApplyScale(mapObj *map)
-{
-  int i,j;
-  double scalefactor;
-  layerObj *layer;
-
-  if(map->scaled) return;
-
-  if(map->scale == -1) return;
-
-  for(i=0; i<map->numlayers; i++) {
-    layer = &(map->layers[i]);
-
-    // check status
-    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
-      layer->status = MS_OFF;
-    if((layer->minscale > 0) && (map->scale <= layer->minscale))
-      layer->status = MS_OFF;
-
-    // check annotation status
-    if(layer->annotate) {
-      if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
-	layer->annotate = MS_FALSE;
-      if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
-	layer->annotate = MS_FALSE;
-    }
-
-    // apply scaling to symbols and fonts
-    if(layer->symbolscale > 0) {
-      scalefactor = layer->symbolscale/map->scale;
-      for(j=0; j<layer->numclasses; j++) {
-	layer->class[j].size = MS_NINT(layer->class[j].size * scalefactor);
-	layer->class[j].size = MS_MAX(layer->class[j].size, layer->class[j].minsize);
-	layer->class[j].size = MS_MIN(layer->class[j].size, layer->class[j].maxsize);
-
-#ifdef USE_TTF
-	if(layer->class[j].label.type == MS_TRUETYPE) { 
-	  layer->class[j].label.size = MS_NINT(layer->class[j].label.size * scalefactor);
-	  layer->class[j].label.size = MS_MAX(layer->class[j].label.size, layer->class[j].label.minsize);
-	  layer->class[j].label.size = MS_MIN(layer->class[j].label.size, layer->class[j].label.maxsize);
-	}
-#endif
-
-      }
-    }
-  }
-
-  map->scaled = MS_TRUE;
-}
-
 gdImagePtr msDrawMap(mapObj *map)
 {
   int i;
@@ -387,8 +331,6 @@ gdImagePtr msDrawMap(mapObj *map)
   
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
-
-  msApplyScale(map);
 
   for(i=0; i<map->numlayers; i++) { /* for each layer */
 
@@ -488,8 +430,6 @@ gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *results)
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
 
-  msApplyScale(map);
-  
   for(i=0; i<map->numlayers; i++) { /* for each layer */
 
     lp = &(map->layers[i]);
@@ -569,17 +509,32 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
 {
   int c;
   char *text=NULL;
+  double scalefactor=1;
+  
+  if((c = getClassIndex(layer, class_string)) == -1) return(0);
 
-  switch(layer->type) {      
-  case MS_ANNOTATION:
-    
-    if((c = getClassIndex(layer, class_string)) == -1) return(0);
- 
+  // apply scaling to symbols and fonts
+  if(layer->symbolscale > 0 && map->scale > 0) {
+    scalefactor = layer->symbolscale/map->scale;
+    layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
+    layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
+    layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+#ifdef USE_TTF
+    if(layer->class[c].label.type == MS_TRUETYPE) { 
+      layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
+      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
+    }
+#endif      
+  }
+
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
       msProjectPoint(layer->projection.proj, map->projection.proj, point);
 #endif
- 
+
+  switch(layer->type) {      
+  case MS_ANNOTATION:    
     if(layer->transform) {
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
@@ -601,14 +556,6 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
     break;
 
   case MS_POINT:
-
-    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
-
-#ifdef USE_PROJ
-    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPoint(layer->projection.proj, map->projection.proj, point);
-#endif
-
     if(layer->transform) {
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
@@ -649,6 +596,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
   double angle, length;
   char *text=NULL;
   pointObj *pnt;
+  double scalefactor=1;
 
   /* Set clipping rectangle (used by certain layer types only) */
   if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
@@ -657,17 +605,31 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
       cliprect.maxx = map->extent.maxx + 2*map->cellsize;
       cliprect.maxy = map->extent.maxy + 2*map->cellsize;
   }
+
+  if((c = getClassIndex(layer, class_string)) == -1) return(0);
+
+  // apply scaling to symbols and fonts
+  if(layer->symbolscale > 0 && map->scale > 0) {
+    scalefactor = layer->symbolscale/map->scale;
+    layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
+    layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
+    layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+#ifdef USE_TTF
+    if(layer->class[c].label.type == MS_TRUETYPE) { 
+      layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
+      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
+    }
+#endif      
+  }
+
+#ifdef USE_PROJ
+  if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+    msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
+#endif
     
   switch(layer->type) {      
-  case MS_ANNOTATION:
-     
-    if((c = getClassIndex(layer, class_string)) == -1) return(0);
- 
-#ifdef USE_PROJ
-    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
-#endif
-
+  case MS_ANNOTATION:     
     for(j=0; j<shape->numlines;j++) {
       for(i=0; i<shape->line[j].numpoints;i++) {
 
@@ -696,14 +658,6 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     break;
 
   case MS_POINT:
-
-    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
-
-#ifdef USE_PROJ
-    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
-#endif
-
     for(j=0; j<shape->numlines;j++) {
       for(i=0; i<shape->line[j].numpoints;i++) {
 	  
@@ -734,15 +688,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     }
     break;      
 
-  case MS_POLYLINE:    
-
-    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
-
-#ifdef USE_PROJ
-    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
-#endif
-      
+  case MS_POLYLINE:
     if(layer->transform) {      
       msClipPolygonRect(shape, cliprect, shape);
       if(shape->numlines == 0) return(0);
@@ -765,16 +711,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
       }
     }
     break;
-    
-  case MS_LINE:
-  
-    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
 
-#ifdef USE_PROJ
-    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
-#endif
-     
+  case MS_LINE:
     if(layer->transform) {
       msClipPolylineRect(shape, map->extent, shape);
       if(shape->numlines == 0) return(0);
@@ -801,15 +739,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     }
     break;
     
-  case MS_POLYGON:
- 
-    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
-
-#ifdef USE_PROJ
-    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
-#endif
-      
+  case MS_POLYGON: 
     if(layer->transform) {      
       msClipPolygonRect(shape, cliprect, shape);
       if(shape->numlines == 0) return(0);
@@ -848,14 +778,44 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   int i,j,c;
   struct featureObj *fptr=NULL;
   rectObj cliprect;
+  short annotate=MS_TRUE;
   pointObj annopnt;
   double angle, length;
   char *text;
   pointObj *pnt;
+  double scalefactor=1;
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
 
+  if(map->scale > 0) {
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
+      return(0);
+    if((layer->minscale > 0) && (map->scale <= layer->minscale))
+      return(0);
+    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+      annotate = MS_FALSE;
+    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+      annotate = MS_FALSE;
+  }
+
+  // apply scaling to symbols and fonts
+  if(layer->symbolscale > 0) {
+    scalefactor = layer->symbolscale/map->scale;
+    for(i=0; i<layer->numclasses; i++) {
+      layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
+      layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
+      layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+#ifdef USE_TTF
+      if(layer->class[i].label.type == MS_TRUETYPE) { 
+	layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
+	layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
+	layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
+      }
+#endif
+    }
+  }
+ 
   /* Set clipping rectangle (used by certain layer types only) */
   if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
       cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
@@ -866,7 +826,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     
   switch(layer->type) {      
   case MS_ANNOTATION:
-    if(!layer->annotate) break;
+    if(!annotate) break;
 
     for(fptr=layer->features; fptr; fptr=fptr->next) {
 
@@ -929,9 +889,10 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	    msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
 	  }
 	  
-	  if(layer->annotate) {
+	  if(annotate) {
 	    if(fptr->text) text = fptr->text; 
-	    else text = layer->class[c].text.string;
+	    else if(layer->class[c].text.string) text = layer->class[c].text.string;
+	    else continue;
 
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
@@ -963,9 +924,10 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
       msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]); 
       
-      if(layer->annotate) {
+      if(annotate) {
 	if(fptr->text) text = fptr->text; 
-	else text = layer->class[c].text.string;
+	else if(layer->class[c].text.string) text = layer->class[c].text.string;
+	else continue;
 
 	if(msPolygonLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
 	  if(layer->labelcache) {
@@ -997,9 +959,10 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
       msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]); 
       
-      if(layer->annotate) {
+      if(annotate) {
 	if(fptr->text) text = fptr->text; 
-	else text = layer->class[c].text.string;
+	else if(layer->class[c].text.string) text = layer->class[c].text.string;
+	else continue;	
 
 	if(msPolylineLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
 	  if(layer->class[c].label.autoangle)
@@ -1034,9 +997,10 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
       msDrawShadeSymbol(&map->shadeset, img, &fptr->shape, &layer->class[c]);
       
-      if(layer->annotate) {
+      if(annotate) {
 	if(fptr->text) text = fptr->text; 
-	else text = layer->class[c].text.string;
+	else if(layer->class[c].text.string) text = layer->class[c].text.string;
+	else continue;
 
 	if(msPolygonLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
 	  if(layer->labelcache)
@@ -1072,7 +1036,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
   char *filename=NULL;
 
-  double sf=1.0;
   int c=-1; /* what class is a particular feature */
 
   int start_feature;
@@ -1081,6 +1044,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
   shapeObj shape={0,NULL,{-1,-1,-1,-1},MS_NULL};
   pointObj *pnt;
 
+  short annotate=MS_TRUE;
   pointObj annopnt;
   char *annotxt=NULL;
 
@@ -1095,11 +1059,41 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
   double angle, length; /* line labeling parameters */
 
+  double scalefactor=1;
+
   if(!layer->data && !layer->tileindex)
     return(0);
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
+
+  if(map->scale > 0) {
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
+      return(0);
+    if((layer->minscale > 0) && (map->scale <= layer->minscale))
+      return(0);
+    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+      annotate = MS_FALSE;
+    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+      annotate = MS_FALSE;
+  }  
+
+  // apply scaling to symbols and fonts
+  if(layer->symbolscale > 0) {
+    scalefactor = layer->symbolscale/map->scale;
+    for(i=0; i<layer->numclasses; i++) {
+      layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
+      layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
+      layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+#ifdef USE_TTF
+      if(layer->class[i].label.type == MS_TRUETYPE) { 
+	layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
+	layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
+	layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
+      }
+#endif
+    }
+  }
 
   /* Set clipping rectangle (used by certain layer types only) */
   if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
@@ -1154,7 +1148,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	return(-1);
     }
 
-    if(layer->labelitem && layer->annotate) {
+    if(layer->labelitem && annotate) {
       if((labelItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelitem)) == -1)
 	return(-1);	
       labelAngleItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelangleitem); /* not required */
@@ -1198,7 +1192,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     switch(layer->type) {
     case MS_ANNOTATION:
       
-      if(!layer->annotate) break;
+      if(!annotate) break;
       
       switch(shpfile.type) {
       case MS_SHP_POINT:
@@ -1217,6 +1211,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 #endif	  
 	  
 	  annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+	  if(!annotxt) continue;	    
 
 	  for(j=0; j<shape.line[0].numpoints; j++) {
 	    pnt = &(shape.line[0].point[j]); /* point to the correct point */	      
@@ -1231,9 +1226,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      layer->class[c].label.angle = DBFReadDoubleAttribute(shpfile.hDBF, i, labelAngleItemIndex)*MS_DEG_TO_RAD;
 	    
 	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	      layer->class[c].label.size = DBFReadIntegerAttribute(shpfile.hDBF, i, labelSizeItemIndex)*sf;
-	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
-	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	      layer->class[c].label.sizescaled = DBFReadIntegerAttribute(shpfile.hDBF, i, labelSizeItemIndex)*scalefactor;
+	      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+	      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	    }
 	    
 	    if(layer->labelcache)
@@ -1279,15 +1274,16 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
 	    
 	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
-	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
-	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	      layer->class[c].label.sizescaled = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*scalefactor;
+	      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+	      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	    }
 
 	    if(layer->class[c].label.autoangle)
 	      layer->class[c].label.angle = angle;
 
 	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+	    if(!annotxt) continue;
 
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, length);
@@ -1332,13 +1328,14 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
 	    
 	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
-	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
-	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	      layer->class[c].label.sizescaled = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*scalefactor;
+	      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+	      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	    }
 
 	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
-	    
+	    if(!annotxt) continue;
+
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
 	    else {
@@ -1372,8 +1369,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	SHPReadShape(shpfile.hSHP, i, &shape);	    
 #endif
 
-	if(layer->annotate)
-	  annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+	if(annotate) annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
 
 	for(j=0; j<shape.numlines;j++) {
 	  for(k=0; k<shape.line[j].numpoints;k++) {
@@ -1389,14 +1385,15 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
 	    }
 	
-	    if(layer->annotate) {
+	    if(annotate && annotxt) {
+	      
 	      if(labelAngleItemIndex != -1)
 		layer->class[c].label.angle = DBFReadDoubleAttribute(shpfile.hDBF, i, labelAngleItemIndex)*MS_DEG_TO_RAD;
 	      
 	      if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-		layer->class[c].label.size = DBFReadIntegerAttribute(shpfile.hDBF, i, labelSizeItemIndex)*sf;
-		layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
-		layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+		layer->class[c].label.sizescaled = DBFReadIntegerAttribute(shpfile.hDBF, i, labelSizeItemIndex)*scalefactor;
+		layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+		layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	      }
 
 	      if(layer->labelcache)
@@ -1409,7 +1406,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	
 	pnt = NULL;
 	msFreeShape(&shape);
-	if(layer->annotate)
+	if(annotate)
 	  free(annotxt);
       }	
       
@@ -1444,18 +1441,16 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	}
 	msDrawLineSymbol(&map->lineset, img, &shape, &(layer->class[c]));
 	
-	if(layer->annotate) {	  
+	if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
 	    if(labelAngleItemIndex != -1)
 	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
 	  
 	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
-	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
-	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	      layer->class[c].label.sizescaled = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*scalefactor;
+	      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+	      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	    }	    
-	    
-	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
 	    
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
@@ -1498,7 +1493,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	}
 	msDrawLineSymbol(&map->lineset, img, &shape, &(layer->class[c]));	
 	
-	if(layer->annotate) {	 	    
+	if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolylineLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
 
 	    if(layer->class[c].label.autoangle)
@@ -1508,12 +1503,10 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
 	    
 	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
-	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
-	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	      layer->class[c].label.sizescaled = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*scalefactor;
+	      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+	      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	    }
-	    
-	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
 	    
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, length);
@@ -1558,18 +1551,16 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	}
 	msDrawShadeSymbol(&map->shadeset, img, &shape, &(layer->class[c]));
 
-	if(layer->annotate) {
+	if(annotate  && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
 	    if(labelAngleItemIndex != -1)
 	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
 	    
 	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
-	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
-	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	      layer->class[c].label.sizescaled = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*scalefactor;
+	      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
+	      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	    }
-	    
-	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
 	    
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);

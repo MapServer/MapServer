@@ -520,6 +520,13 @@ queryResultObj *msQueryUsingRect(mapObj *map, char *layer, rectObj *rect) {
     if((map->layers[l].status == MS_OFF) || (map->layers[l].numqueries == 0) || (map->layers[l].tileindex != NULL))
       continue;
 
+    if(map->scale > 0) {
+      if((map->layers[l].maxscale > 0) && (map->scale > map->layers[l].maxscale))
+	continue;
+      if((map->layers[l].minscale > 0) && (map->scale <= map->layers[l].minscale))
+	continue;
+    }
+
     if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
        
 #ifdef USE_PROJ
@@ -677,6 +684,13 @@ queryResultObj *msQueryUsingPoint(mapObj *map, char *layer, int mode, pointObj p
     if((map->layers[l].status == MS_OFF) || (map->layers[l].numqueries == 0) || (map->layers[l].tileindex != NULL))
       continue;
 
+    if(map->scale > 0) {
+      if((map->layers[l].maxscale > 0) && (map->scale > map->layers[l].maxscale))
+	continue;
+      if((map->layers[l].minscale > 0) && (map->scale <= map->layers[l].minscale))
+	continue;
+    }
+
     if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
   
     if(buffer <= 0) { /* use layer tolerance */ 
@@ -824,6 +838,13 @@ int msQueryUsingFeatures(mapObj *map, char *layer, queryResultObj *results)
         
     if((l == search_layer) || (map->layers[l].status == MS_OFF) || (map->layers[l].numqueries == 0) || (map->layers[l].tileindex != NULL))
       continue;
+
+    if(map->scale > 0) {
+      if((map->layers[l].maxscale > 0) && (map->scale > map->layers[l].maxscale))
+	continue;
+      if((map->layers[l].minscale > 0) && (map->scale <= map->layers[l].minscale))
+	continue;
+    }
 
     if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(-1);
 
@@ -1025,6 +1046,13 @@ queryResultObj *msQueryUsingShape(mapObj *map, char *layer, shapeObj *search_sha
         
     if((map->layers[l].status == MS_OFF) || (map->layers[l].numqueries == 0) || (map->layers[l].tileindex != NULL))
       continue;
+
+    if(map->scale > 0) {
+      if((map->layers[l].maxscale > 0) && (map->scale > map->layers[l].maxscale))
+	continue;
+      if((map->layers[l].minscale > 0) && (map->scale <= map->layers[l].minscale))
+	continue;
+    }
 
     if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
 

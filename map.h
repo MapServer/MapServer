@@ -255,7 +255,9 @@ typedef struct {
   int shadowsizex, shadowsizey;
 
   int size;
+  int sizescaled;
   int minsize, maxsize;
+
   int position;
   int offsetx, offsety;
 
@@ -299,8 +301,11 @@ typedef struct {
   int outlinecolor;
   int symbol;
   char *symbolname;
+
   int size;
+  int sizescaled;
   int minsize, maxsize;
+
   labelObj label;
   char *name; /* used for legend labeling */
 #ifndef SWIG
@@ -439,7 +444,6 @@ typedef struct {
 
   int offsite; /* offsite value for raster images */
 
-  int annotate; /* can this layer be annotated */
   int transform; /* does this layer have to be transformed to file coordinates */
 
   int labelcache; /* on or off */
@@ -494,8 +498,6 @@ typedef struct { /* structure for a map */
 
   enum MS_UNITS units; /* units of the projection */
   double scale; /* scale of the output image */
-
-  int scaled; // has this map had a scaling applied
 
   char *shapepath; /* where are the shape files located */
   char *tile; /* an optional tile name to use as well */

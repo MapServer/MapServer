@@ -350,7 +350,7 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
   if(class->color >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
     return;
 
-  if(class->size < 1) /* size too small */
+  if(class->sizescaled < 1) /* size too small */
     return;
   
   if(p->numlines <= 0)
@@ -360,7 +360,7 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
   bc = class->backgroundcolor;
   fc = class->color;
   s = class->symbol;
-  sz = class->size;
+  sz = class->sizescaled;
 
   if(s == 0) { /* simply draw a single pixel of the specified color */
     if(fc>-1)
@@ -565,7 +565,7 @@ void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *
     font = msLookupHashTable(markerset->fontset.fonts, markerset->symbol[class->symbol].font);
     if(!font) return;
 
-    if(getCharacterSize(markerset->symbol[class->symbol].character, class->size, font, &rect) == -1) return;
+    if(getCharacterSize(markerset->symbol[class->symbol].character, class->sizescaled, font, &rect) == -1) return;
 
     *width = rect.maxx - rect.minx;
     *height = rect.maxy - rect.miny;
@@ -580,9 +580,9 @@ void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *
     *height = markerset->symbol[class->symbol].img->sy;
     break;
   default: /* vector and ellipses, scalable */
-    if(class->size > 0) {
-      *height = class->size;
-      *width = MS_NINT((class->size/markerset->symbol[class->symbol].sizey) * markerset->symbol[class->symbol].sizex);
+    if(class->sizescaled > 0) {
+      *height = class->sizescaled;
+      *width = MS_NINT((class->sizescaled/markerset->symbol[class->symbol].sizey) * markerset->symbol[class->symbol].sizex);
     } else { /* use symbol defaults */
       *height = markerset->symbol[class->symbol].sizey;
       *width = markerset->symbol[class->symbol].sizex;
@@ -620,13 +620,13 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, cl
   if(class->color >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
     return;
 
-  if(class->size < 1) /* size too small */
+  if(class->sizescaled < 1) /* size too small */
     return;
 
   oc = class->outlinecolor;
   fc = class->color;
   s = class->symbol;
-  sz = class->size;
+  sz = class->sizescaled;
 
   if(s == 0 && fc >= 0) { /* simply draw a single pixel of the specified color */
     gdImageSetPixel(img, p->x, p->y, fc);
@@ -766,12 +766,12 @@ void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classO
   if((class->color < 0) || (class->color >= gdImageColorsTotal(img))) /* invalid color */
     return;
 
-  if(class->size < 1) /* size too small */
+  if(class->sizescaled < 1) /* size too small */
     return;
 
   fc = class->color;
   bc = class->backgroundcolor;
-  size = class->size;
+  size = class->sizescaled;
 
   if(class->symbol == 0) { /* just draw a single width line */
     msImagePolyline(img, p, fc);

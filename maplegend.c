@@ -25,8 +25,6 @@ gdImagePtr msDrawLegend(mapObj *map)
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
 
-  msApplyScale(map);
-
   /* Initialize the polygon/polyline */
   p.line = (lineObj *)malloc(sizeof(lineObj));
   p.numlines = 1;
@@ -39,6 +37,13 @@ gdImagePtr msDrawLegend(mapObj *map)
   for(i=0; i<map->numlayers; i++) {
     if((map->layers[i].status == MS_OFF) || (map->layers[i].status == MS_QUERY)) /* skip it */
       continue;
+
+    if(map->scale > 0) {
+      if((map->layers[i].maxscale > 0) && (map->scale > map->layers[i].maxscale))
+	continue;
+      if((map->layers[i].minscale > 0) && (map->scale <= map->layers[i].minscale))
+	continue;
+    }
     
     for(j=0;j<map->layers[i].numclasses;j++) {
       if(map->layers[i].class[j].name == NULL)
@@ -103,6 +108,13 @@ gdImagePtr msDrawLegend(mapObj *map)
 
     if((lp->numclasses == 0) || (lp->status == MS_OFF) || (lp->status == MS_QUERY))
       continue; /* skip this layer */
+
+    if(map->scale > 0) {
+      if((lp->maxscale > 0) && (map->scale > lp->maxscale))
+	continue;
+      if((lp->minscale > 0) && (map->scale <= lp->minscale))
+	continue;
+    }
 
     for(j=0; j<lp->numclasses; j++) { /* always at least 1 class */
 

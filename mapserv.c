@@ -1901,7 +1901,7 @@ int main(int argc, char *argv[]) {
 	Map->width = ImgCols;
 	Map->height = ImgRows;
 	Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	 
-	msApplyScale(Map);
+
 	if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_SINGLE, MapPnt, 0)) == NULL) writeError();
 	break;
 
@@ -1982,16 +1982,14 @@ int main(int argc, char *argv[]) {
 
 	if(SearchMap) { // compute new extent, pan etc then search that extent
 	  setExtent();
-	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
-	  msApplyScale(Map);
 	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
 	  if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
 	} else {
 	  Map->extent = ImgExt; // use the existing image parameters
 	  Map->width = ImgCols;
 	  Map->height = ImgRows;
 	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	 
-	  msApplyScale(Map);
 	  if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_MULTIPLE, MapPnt, 0)) == NULL) writeError();
 	}
 	break;
@@ -2001,7 +1999,6 @@ int main(int argc, char *argv[]) {
 	if(SearchMap) { // compute new extent, pan etc then search that extent
 	  setExtent();
 	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
-	  msApplyScale(Map);
 	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
 	  if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
 	} else {
@@ -2011,7 +2008,6 @@ int main(int argc, char *argv[]) {
 	  Map->width = ImgCols;
 	  Map->height = ImgRows;
 	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	  
-	  msApplyScale(Map);
 
 	  cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1); // calculate the new search extent
 	  celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
@@ -2030,7 +2026,6 @@ int main(int argc, char *argv[]) {
 	Map->height = ImgRows;
 	Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
 	Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
-	msApplyScale(Map);
 
 	// convert from image to map coordinates here (see setCoordinate)
 	for(i=0; i<SelectShape.numlines; i++) {

@@ -82,7 +82,6 @@
 
   void prepareQuery() {
     self->scale = msCalculateScale(self->extent, self->units, self->width, self->height);
-    msApplyScale(self);
   }
 
   gdImagePtr prepareImage() {
@@ -108,8 +107,6 @@
   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
     self->scale = msCalculateScale(self->extent, self->units, self->width, self->height);
-
-    msApplyScale(self);
 
     return img;
   }
@@ -173,6 +170,10 @@
 
   int setProjection(char *string) {
     return(loadProjectionString(&(self->projection), string));
+  }
+
+  int save(char *filename) {
+    return msSaveMap(self, filename);
   }
 }
 
@@ -312,13 +313,7 @@
   }
 
   int setText(layerObj *layer, char *string) {
-    int status;
-
-    status = loadExpressionString(&self->text, string);
-    if(status != -1)	
-      layer->annotate = MS_TRUE;
-
-    return status;
+    return loadExpressionString(&self->text, string);
   }
 }
 

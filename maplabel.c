@@ -40,7 +40,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
   map->labelcache.labels[i].shapeidx = shape;
   map->labelcache.labels[i].point = point;
   map->labelcache.labels[i].string = strdup(string);
-  map->labelcache.labels[i].size = map->layers[layer].class[class].label.size;
+  map->labelcache.labels[i].size = map->layers[layer].class[class].label.sizescaled;
   map->labelcache.labels[i].angle = map->layers[layer].class[class].label.angle;
   map->labelcache.labels[i].featuresize = featuresize;
 
@@ -165,7 +165,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
       return(-1);
     }
 
-    error = imageStringTTF(NULL, bbox, 0, font, label->size, 0, 0, 0, string, label->wrap);
+    error = imageStringTTF(NULL, bbox, 0, font, label->sizescaled, 0, 0, 0, string, label->wrap);
     if(error) {
       msSetError(MS_TTFERR, error, "msGetLabelSize()");
       return(-1);
@@ -352,25 +352,25 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     }
 
     if(label->outlinecolor >= 0) { /* handle the outline color */
-      error = imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->size, label->angle, x-1, y-1, string, label->wrap);
+      error = imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y-1, string, label->wrap);
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
 	return(-1);
       }
-      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->size, label->angle, x-1, y+1, string, label->wrap);
-      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->size, label->angle, x+1, y+1, string, label->wrap);
-      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->size, label->angle, x+1, y-1, string, label->wrap);
+      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y+1, string, label->wrap);
+      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y+1, string, label->wrap);
+      imageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y-1, string, label->wrap);
     }
 
     if(label->shadowcolor >= 0) { /* handle the shadow color */
-      error = imageStringTTF(img, bbox, label->antialias*label->shadowcolor, font, label->size, label->angle, x+label->shadowsizex, y+label->shadowsizey, string, label->wrap);
+      error = imageStringTTF(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, label->angle, x+label->shadowsizex, y+label->shadowsizey, string, label->wrap);
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
 	return(-1);
       }
     }
 
-    imageStringTTF(img, bbox, label->antialias*label->color, font, label->size, label->angle, x, y, string, label->wrap);
+    imageStringTTF(img, bbox, label->antialias*label->color, font, label->sizescaled, label->angle, x, y, string, label->wrap);
     
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "draw_text()");
@@ -530,7 +530,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       continue; /* not an error, just don't want to do anything */
 
     label = classPtr->label;
-    label.size = cachePtr->size;
+    label.sizescaled = label.size = cachePtr->size;
     label.angle = cachePtr->angle;
 
     if(msGetLabelSize(cachePtr->string, &label, &r, &(map->fontset)) == -1)

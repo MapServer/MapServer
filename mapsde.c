@@ -127,6 +127,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 #ifdef USE_SDE
   int i;
 
+  double scalefactor=1;
+
   SE_CONNECTION connection=0;
   SE_STREAM stream=0;
   SE_ERROR error;
@@ -142,6 +144,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   SE_SQL_CONSTRUCT *sql;
   SE_FILTER filter;
 
+  short annotate=MS_TRUE;
   char *annotation=NULL;
   short annotation_is_null;
 
@@ -156,6 +159,34 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
+
+  if(map->scale > 0) {
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
+      return(0);
+    if((layer->minscale > 0) && (map->scale <= layer->minscale))
+      return(0);
+    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+      annotate = MS_FALSE;
+    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+      annotate = MS_FALSE;
+  }
+
+  // apply scaling to symbols and fonts
+  if(layer->symbolscale > 0) {
+    scalefactor = layer->symbolscale/map->scale;
+    for(i=0; i<layer->numclasses; i++) {
+      layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
+      layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
+      layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+#ifdef USE_TTF
+      if(layer->class[i].label.type == MS_TRUETYPE) { 
+	layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
+	layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
+	layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
+      }
+#endif
+    }
+  }
 
   /* Set clipping rectangle (used by certain layer types only) */
   if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
