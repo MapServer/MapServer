@@ -845,8 +845,8 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
       switch(tempShape.type) {
       case(MS_SHAPE_POINT):
         // at this point we only convert the first point of the first shape
-	tempShape.line[0].point.x = MS_MAP2IMAGE_X(tempShape.line[0].point.x, map->extent.minx, map->cellsize);
-        tempShape.line[0].point.y = MS_MAP2IMAGE_Y(tempShape.line[0].point.y, map->extent.maxy, map->cellsize);
+	tempShape.line[0].point[0].x = MS_MAP2IMAGE_X(tempShape.line[0].point[0].x, map->extent.minx, map->cellsize);
+        tempShape.line[0].point[0].y = MS_MAP2IMAGE_Y(tempShape.line[0].point[0].y, map->extent.maxy, map->cellsize);
 	break;
       case(MS_SHAPE_LINE):
 	msClipPolylineRect(&tempShape, map->extent);
