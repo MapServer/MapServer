@@ -820,6 +820,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
+  if(layer->connectiontype == MS_WMS) return(msDrawWMSLayer(map, layer, img));
+
   if(layer->type == MS_LAYER_RASTER) return(msDrawRasterLayer(map, layer, img));
   if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS);
 
