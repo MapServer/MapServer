@@ -196,6 +196,30 @@ logical_exp:
 					 else
 					   $$ = MS_FALSE;
 				       }
+       | string_exp GT string_exp      {
+                                         if(strcmp($1, $3) > 0)
+					   $$ = MS_TRUE;
+					 else
+					   $$ = MS_FALSE;
+                                       }
+       | string_exp LT string_exp      {
+                                         if(strcmp($1, $3) < 0)
+					   $$ = MS_TRUE;
+					 else
+					   $$ = MS_FALSE;
+                                       }
+       | string_exp GE string_exp      {
+                                         if(strcmp($1, $3) >= 0)
+					   $$ = MS_TRUE;
+					 else
+					   $$ = MS_FALSE;
+                                       }
+       | string_exp LE string_exp      {
+                                         if(strcmp($1, $3) <= 0)
+					   $$ = MS_TRUE;
+					 else
+					   $$ = MS_FALSE;
+                                       }
        | string_exp IN string_exp      {
 					 char *delim,*bufferp;
 
