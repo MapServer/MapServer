@@ -29,7 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
- * Revision 1.7  2002/11/04 20:35:17  julien
+ * Revision 1.8  2002/11/04 20:39:17  julien
  * Change a validation to prevent a crash
  *
  * Revision 1.6  2002/11/04 20:16:09  julien
@@ -161,7 +161,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   free( pszWholeText );
 
   // We assume parser will report errors via CPL.
-  if( psRoot == NULL && psRoot->psNext != NULL )
+  if( psRoot == NULL || psRoot->psNext == NULL )
   {
       msSetError(MS_MAPCONTEXTERR, "(%s)", "msLoadMapContext()", filename);
       return MS_FAILURE;
