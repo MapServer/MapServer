@@ -218,13 +218,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        else if(strcasecmp(request->ParamNames[i], "COVERAGE") == 0)
          params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "TIME") == 0)
-	     params->time = strdup(request->ParamValues[i]);
+           params->time = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "FORMAT") == 0)
-	     params->format = strdup(request->ParamValues[i]);
-	   else if(strcasecmp(request->ParamNames[i], "CRS") == 0)
-	     params->crs = strdup(request->ParamValues[i]);
-	   else if(strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0)
-	     params->response_crs = strdup(request->ParamValues[i]);
+           params->format = strdup(request->ParamValues[i]);
+       else if(strcasecmp(request->ParamNames[i], "CRS") == 0)
+           params->crs = strdup(request->ParamValues[i]);
+       else if(strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0)
+           params->response_crs = strdup(request->ParamValues[i]);
 
 	   
        // and so on...
@@ -696,10 +696,32 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     lp->status = MS_ON;
 
     // Handle the response CRS, that is set the map object projection
-    if(params->response_crs) {
-      if(msLoadProjectionString(&map->projection, params->response_crs) != 0) { 
-        msSetError( MS_WCSERR, "Error setting map object projection.", "msWCSGetCoverage()", params->response_crs );
-        return msWCSException(params->version);
+    if(params->response_crs || params->crs ) {
+        const char *crs_to_use = params->response_crs;
+        if( crs_to_use == NULL )
+            crs_to_use = params->crs;
+
+      if (strncasecmp(crs_to_use, "EPSG:", 5) == 0) 
+      {
+        // RESPONSE_CRS=EPSG:xxxx
+        char buffer[32];
+        int iUnits;
+
+        sprintf(buffer, "init=epsg:%.20s", crs_to_use+5);
+
+        if (msLoadProjectionString(&(map->projection), buffer) != 0)
+          return msWCSException( params->version );
+        
+        iUnits = GetMapserverUnitUsingProj(&(map->projection));
+        if (iUnits != -1)
+          map->units = iUnits;
+      }
+      else  /* should we support WMS style AUTO: projections? Not for now*/
+      {
+          msSetError(MS_WMSERR, 
+                     "Unsupported SRS namespace (only EPSG currently supported).",
+                     "msWCSGetCoverage()");
+          return msWCSException(params->version);
       }
     }
 
