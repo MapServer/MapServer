@@ -64,14 +64,14 @@ class DynamicGraphicSymbolTestCase(MapTestCase):
 
     def setUp(self):
         MapTestCase.setUp(self)
-        f = open(HOME_IMAGE, 'r')
+        f = open(HOME_IMAGE, 'rb')
         s = StringIO.StringIO(f.read())
         f.close()
         symb_img = mapscript.imageObj(s)
         self.h_symbol = mapscript.symbolObj('house')
         self.h_symbol.type = mapscript.MS_SYMBOL_PIXMAP
         self.h_symbol.setImage(symb_img)
-        f = open(XMARKS_IMAGE, 'r')
+        f = open(XMARKS_IMAGE, 'rb')
         s = StringIO.StringIO(f.read())
         f.close()
         symb_img = mapscript.imageObj(s)

@@ -197,40 +197,41 @@
             {
                 /* Detect image format */
                 pybytes = PyObject_CallMethod(arg1, "read", "i", 8);
+                PyObject_CallMethod(arg1, "seek", "i", 0);
             
                 if (memcmp(PyString_AsString(pybytes),"GIF8",4)==0) 
                 {
 %#ifdef USE_GD_GIF
-                    driver = "GD/GIF";
+                    image = createImageObjFromPyFile(arg1, "GD/GIF");
 %#else
                     msSetError(MS_MISCERR, "Unable to load GIF image.",
-                               "msImageLoadGD()");
-                    return(NULL);
+                               "imageObj()");
 %#endif
                 }
                 else if (memcmp(PyString_AsString(pybytes),PNGsig,8)==0) 
                 {
 %#ifdef USE_GD_PNG
-                    driver = "GD/PNG";
+                    image = createImageObjFromPyFile(arg1, "GD/PNG");
 %#else
                     msSetError(MS_MISCERR, "Unable to load PNG image.",
-                           "msImageLoadGD()");
-                    return(NULL);
+                               "imageObj()");
 %#endif
                 }
                 else if (memcmp(PyString_AsString(pybytes),JPEGsig,3)==0) 
                 {
 %#ifdef USE_GD_JPEG
-                    driver = "GD/JPEG";
+                    image = createImageObjFromPyFile(arg1, "GD/JPEG");
 %#else
                     msSetError(MS_MISCERR, "Unable to load JPEG image.", 
-                                "msImageLoadGD()");
-                    return(NULL);
+                               "imageObj()");
 %#endif
                 }
+                else
+                {
+                    msSetError(MS_MISCERR, "Failed to detect image format.  Likely cause is invalid image or improper filemode.  On windows, Python files should be opened in 'rb' mode.", "imageObj()");
+                }
 
-                PyObject_CallMethod(arg1, "seek", "i", 0);
-                return (imageObj *) createImageObjFromPyFile(arg1, driver);
+                return image;
             
             }
             else // such as a url handle
