@@ -578,6 +578,10 @@ memory.") const char * {
     return msGetConfigOption(self,key);
   }
 
+  void applyConfigOptions() {
+    msApplyMapConfigOptions( self );
+  } 
+
   /* SLD */
   
     int applySLD(char *sld) {
