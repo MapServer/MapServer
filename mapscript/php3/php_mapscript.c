@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.225  2005/02/09 20:45:12  assefa
+ * Modiy saveimage function to be able to output SVG to stdout.
+ *
  * Revision 1.224  2005/01/28 15:28:26  assefa
  * Add constant MS_GD_ALPHA (Bug 1185).
  *
@@ -5912,6 +5915,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     HashTable   *list=NULL;
 #endif
 
+
 #ifdef PHP4
     pThis = getThis();
 #else
@@ -5949,12 +5953,11 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     else
     {           /* no filename - stdout */
         int size=0;
-#if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
-        void *iptr=NULL;
-#else
         int   b;
         FILE *tmp;
         char  buf[4096];
+#if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
+        void *iptr=NULL;
 #endif
 
         retVal = 0;
@@ -5974,6 +5977,36 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             iptr = im->img.imagemap;
 	    size = strlen(im->img.imagemap);
         }
+        else if (MS_DRIVER_SVG(im->format))
+        {
+            retVal = -1;
+            tmp = tmpfile(); 
+            if (tmp == NULL) 
+            {
+                 _phpms_report_mapserver_error(E_WARNING);
+                php3_error(E_ERROR, "Unable to open temporary file for SVG output.");
+                retVal = -1;
+            }
+            if (msSaveImagetoFpSVG(im, tmp) == MS_SUCCESS)
+            {
+                fseek(tmp, 0, SEEK_SET);
+                while ((b = fread(buf, 1, sizeof(buf), tmp)) > 0) 
+                {
+                    php_write(buf, b TSRMLS_CC);
+                }
+                fclose(tmp);
+                retVal = 1;
+            }
+            else
+            {
+                _phpms_report_mapserver_error(E_WARNING);
+                php3_error(E_ERROR, "Unable to open temporary file for SVG output.");
+                retVal = -1;
+            } 
+
+            RETURN_LONG(retVal);
+        }   
+    
         if (size == 0) {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed writing image to stdout");
