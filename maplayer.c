@@ -88,25 +88,31 @@ int msLayerOpen(layerObj *layer, char *shapepath)
 
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
 {
-  int i;
+  int i, filter_passed;
   char **values=NULL;
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    i = layer->shpfile.lastshape + 1;
-    while(i<layer->shpfile.numshapes && !msGetBit(layer->shpfile.status,i)) i++; // next "in" shape
-    layer->shpfile.lastshape = i;
+    do {
+      i = layer->shpfile.lastshape + 1;
+      while(i<layer->shpfile.numshapes && !msGetBit(layer->shpfile.status,i)) i++; // next "in" shape
+      layer->shpfile.lastshape = i;
 
-    if(i == layer->shpfile.numshapes) return(MS_DONE); // nothing else to read
-
-    if(layer->numitems > 0 && layer->iteminfo) {
-      values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
-      if(!values) return(MS_FAILURE);
-      if(msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems) != MS_TRUE) return(msLayerNextShape(layer, shapepath, shape));
-    }
+      if(i == layer->shpfile.numshapes) return(MS_DONE); // nothing else to read
+      filter_passed = MS_TRUE;  // By default accept ANY shape
+      if(layer->numitems > 0 && layer->iteminfo) {
+        values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
+        if(!values) return(MS_FAILURE);
+        if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
+            msFreeCharArray(values, layer->numitems);
+            values = NULL;
+        }
+      }
+    } while(!filter_passed);  // Loop until both spatial and attribute filters match
 
     msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
     shape->values = values;
+    shape->numvalues = layer->numitems;
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPNextShape(layer, shapepath, shape));
@@ -134,12 +140,12 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
+    msSHPReadShape(layer->shpfile.hSHP, record, shape);
     if(layer->numitems > 0 && layer->iteminfo) {
       shape->numvalues = layer->numitems;
       shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->iteminfo, layer->numitems);
       if(!shape->values) return(MS_FAILURE);
     }
-    msSHPReadShape(layer->shpfile.hSHP, record, shape);
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPGetShape(layer, shapepath, shape, tile, record));
