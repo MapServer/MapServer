@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.168  2003/06/04 17:57:12  assefa
+ * add initGrid call.
+ *
  * Revision 1.167  2003/06/03 14:55:34  assefa
  * Add layer type  MS_LAYER_GRATICULE.
  *
@@ -6552,6 +6555,7 @@ DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pThis;
     int     nStatus = 0;
 
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -11353,7 +11357,8 @@ DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS)
       free(parent_class->layerinfo);
 
     parent_class->layerinfo = (graticuleObj *)malloc( sizeof( graticuleObj ) );
-    
+    initGrid((graticuleObj *)parent_class->layerinfo );
+
     MAKE_STD_ZVAL(new_obj_ptr);
     _phpms_build_grid_object((graticuleObj *)(parent_class->layerinfo),
                              layer_id,
