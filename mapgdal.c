@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/11/16 21:39:45  frank
+ * fix support for generating colormaped files with transparency
+ *
  * Revision 1.9  2002/09/20 03:44:06  sdlime
  * Swapped map_path for mappath for consistency.
  *
@@ -210,7 +213,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 #if GD2_VERS > 1
             else if( nBands > 1 && iBand < 3 )
             {
-                // note, we need to fix handling of alpha!
                 GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
                           ((GByte *) image->img.gd->tpixels[iLine])+(2-iBand), 
                               image->width, 1, GDT_Byte, 4, 0 );
@@ -262,7 +264,15 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
             sEntry.c1 = image->img.gd->red[iColor];
             sEntry.c2 = image->img.gd->green[iColor];
             sEntry.c3 = image->img.gd->blue[iColor];
-            sEntry.c4 = 255;
+
+            if( iColor == gdImageGetTransparent( image->img.gd ) )
+                sEntry.c4 = 0;
+            else if( iColor == 0 
+                     && gdImageGetTransparent( image->img.gd ) == -1 
+                     && format->transparent )
+                sEntry.c4 = 0;
+            else
+                sEntry.c4 = 255;
 
             GDALSetColorEntry( hCT, iColor, &sEntry );
         }
