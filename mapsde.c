@@ -15,7 +15,7 @@ static void sde_error(long error_code, char *routine, char *sde_routine) {
   SE_error_get_string(error_code, error_string);
 
   msSetError(MS_SDEERR, NULL, routine);
-  sprintf(ms_error.message, "%s: %s (%ld)", sde_routine, error_string, error_code);
+  sprintf(ms_error.message, "%s: %s. (%ld)", sde_routine, error_string, error_code);
 
   return;
 }
@@ -125,7 +125,7 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
 
 int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 #ifdef USE_SDE
-  int i,j;
+  int i;
 
   SE_CONNECTION connection=0;
   SE_STREAM stream=0;
@@ -136,7 +136,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   SE_LAYERINFO layerinfo;
 
   SE_ENVELOPE rect, cliprect, shaperect;
-  SE_SHAPE filtershape=0, shape=0, clipshape=0;
+  SE_SHAPE filtershape=0, shape1=0, clipshape=0;
   short shape_is_null;
 
   SE_SQL_CONSTRUCT *sql;
@@ -145,7 +145,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   char *annotation=NULL;
   short annotation_is_null;
 
-  char *columns[2]; // at most 2 - the shape, and optionally an annotation
+  const char *columns[2]; // at most 2 - the shape, and optionally an annotation
   int numcolumns;
   
   char **params;
@@ -199,7 +199,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   ** Get some basic information about the layer (error checking)
   */
   SE_layerinfo_create(NULL, &layerinfo);
-  SE_coordref_create(&coordref);
 
   params = split(layer->data, ',', &numparams);
   if(!params) {
@@ -218,6 +217,13 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     return(-1);
   }
 
+  SE_coordref_create(&coordref);
+  status = SE_layerinfo_get_coordref(layerinfo, coordref);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msDrawSDELayer()", "SE_layerinfo_get_coordref()");
+    return(-1);
+  }
+
   status = SE_layerinfo_get_envelope(layerinfo, &rect);
   if(status != SE_SUCCESS) {
     sde_error(status, "msDrawSDELayer()", "SE_layerinfo_get_envelope()");
@@ -231,8 +237,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   /*
   ** define the spatial filter, used with all classes
-  */
-  SE_layerinfo_get_coordref(layerinfo, coordref);
+  */  
   SE_shape_create(coordref, &filtershape);
 
   rect.minx = MS_MAX(map->extent.minx, rect.minx);
@@ -251,12 +256,9 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   filter.filter.shape = filtershape;
   filter.method = SM_ENVP;
   filter.filter_type = SE_SHAPE_FILTER;
+  filter.truth = TRUE;
 
-  status = SE_stream_set_spatial_constraints(stream, SE_SPATIAL_FIRST, FALSE, 1, &filter);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_stream_set_spatial_constraints()");
-    return(-1);
-  }
+  /* can't set the spatial constraints here, must wait till after SE_stream_query() is called */ 
 
   /*
   ** define a portion of the SQL construct here, the where clause changes with each class
@@ -282,6 +284,9 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     columns[1] = strdup(layer->labelitem);    
   }  
 
+  for(i=0; i<numcolumns; i++)
+    fprintf(stderr, "%s\n",  columns[i]);
+
   msFreeCharArray(params, numparams);
 
   /*
@@ -300,14 +305,21 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
-    status = SE_stream_bind_output_column(stream, 0, shape, &shape_is_null);
+    status = SE_stream_set_spatial_constraints(stream, SE_SPATIAL_FIRST, FALSE, 1, &filter);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msDrawSDELayer()", "SE_stream_set_spatial_constraints()");
+      return(-1);
+    }
+
+    SE_shape_create(coordref, &shape1);
+    status = SE_stream_bind_output_column(stream, 1, shape1, &shape_is_null);
     if(status != SE_SUCCESS) {
       sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
       return(-1);
     }
 
     if(numcolumns == 2) {
-      status = SE_stream_bind_output_column(stream, 0, annotation, &annotation_is_null);
+      status = SE_stream_bind_output_column(stream, 2, annotation, &annotation_is_null);
       if(status != SE_SUCCESS) {
 	sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
 	return(-1);
@@ -337,11 +349,11 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  return(-1);
 	}
 
-	clipshape = shape;
-	SE_shape_get_extent(shape, 0, &shaperect);
+	clipshape = shape1;
+	SE_shape_get_extent(shape1, 0, &shaperect);
 	if(!sdeRectContained(&shaperect, &cliprect)) {
 	  if(!sdeRectOverlap(&shaperect, &cliprect)) continue;
-	  SE_shape_clip(shape, &cliprect, clipshape);
+	  SE_shape_clip(shape1, &cliprect, clipshape);
 	  if(SE_shape_is_nil(clipshape)) continue;
 	}
 	sdeTransformShape(map->extent, map->cellsize, clipshape, &shape2);
@@ -360,8 +372,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	      msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
 	  }
 	}
-
-	SE_shape_free(shape);
+	
 	SE_shape_free(clipshape);
 	msFreeShape(&shape2);
 
@@ -372,6 +383,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
+    SE_shape_free(shape1);
     free(sql->where);
   }
 
