@@ -13,6 +13,7 @@ MS_LIB_DLL  =	mapscript_i.lib
 #
 # Java Stuff
 JAVA_HOME = "C:\Progra~1\Java\jdk1.5.0"
+JAVADOC=$(JAVA_HOME)\bin\javadoc
 JAVAC=$(JAVA_HOME)\bin\javac
 JAVA=$(JAVA_HOME)\bin\java
 JAR=$(JAVA_HOME)\bin\jar
@@ -45,6 +46,10 @@ mapscript_lib: mapscript_wrap.obj
         link /dll /debug \
 		mapscript_wrap.obj $(EXTERNAL_LIBS) ..\..\mapserver_i.lib $(LDFLAGS) /def:..\..\mapserver.def \
                 /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
+
+mapscript_javadoc:
+	$(JAVADOC) -d doc -sourcepath edu/umn/gis/mapscript/*.java
+		
 mapscript_jar:
 	$(JAR) cf mapscript.jar edu
 test:

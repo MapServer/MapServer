@@ -180,6 +180,7 @@ SWIG=swig
 #
 # Java Stuff
 #
+JAVADOC=javadoc
 JAVAC=javac
 JAVA=java
 JAR=jar
@@ -210,7 +211,10 @@ mapscript_so: mapscript_wrap.c
 
 mapscript_java::
 	$(JAVAC) edu/umn/gis/mapscript/*.java
-	
+
+mapscript_javadoc::
+	$(JAVADOC) -d doc -sourcepath edu/umn/gis/mapscript/*.java
+		
 mapscript_jar::
 	$(JAR) cf mapscript.jar edu
 
