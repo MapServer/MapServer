@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.2
 --------------------------
 
+- Fixed bug writing RGB/RGBA images via GDAL output on bigendian systems. 
+
 - Bug 1152 : Fix WMS style capabilities output for FastCGI enabled builds.
 
 - Bug 1143 : Missing call to msInitShape.
