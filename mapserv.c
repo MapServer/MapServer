@@ -1,3 +1,4 @@
+/* $Id$ */
 
 #ifdef USE_FASTCGI
 #define NO_FCGI_DEFINES
@@ -632,16 +633,43 @@ void loadForm()
     }
 
     if(strncasecmp(msObj->request->ParamNames[i],"layers", 6) == 0) { // turn a set of layers, delimited by spaces, on
-      int num_layers=0, l;
-      char **layers=NULL;
 
-      layers = split(msObj->request->ParamValues[i], ' ', &(num_layers));
-      for(l=0; l<num_layers; l++)
-	    msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
-      msObj->NumLayers += l;
+      /* If layers=all then turn on all layers */
+      if (strcasecmp(msObj->request->ParamValues[i], "all") == 0 && msObj->Map != NULL)
+      {
+          int l;
 
-      msFreeCharArray(layers, num_layers);
-      num_layers = 0;
+          /* Reset NumLayers=0. If individual layers were already selected then free the previous values.  */
+          for(l=0; l<msObj->NumLayers; l++)
+              msFree(msObj->Layers[l]);
+          msObj->NumLayers=0;
+
+          for(msObj->NumLayers=0; msObj->NumLayers < msObj->Map->numlayers; msObj->NumLayers++)
+          {
+              if (msObj->Map->layers[msObj->NumLayers].name)
+              {
+                  msObj->Layers[msObj->NumLayers] = strdup(msObj->Map->layers[msObj->NumLayers].name);
+              }
+              else
+              {
+                  msObj->Layers[msObj->NumLayers] = strdup("");
+              }
+          }
+      }
+      else
+      {
+          int num_layers=0, l;
+          char **layers=NULL;
+
+          layers = split(msObj->request->ParamValues[i], ' ', &(num_layers));
+          for(l=0; l<num_layers; l++)
+              msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
+          msObj->NumLayers += l;
+
+          msFreeCharArray(layers, num_layers);
+          num_layers = 0;
+      }
+
       continue;
     }
 
