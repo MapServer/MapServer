@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.135  2004/11/01 23:24:57  assefa
+ * Work on Bug 1023 : only layers coming from a mapcontext use the
+ * wms_name to set status on/off.
+ *
  * Revision 1.134  2004/10/29 22:32:36  frank
  * Added a bit of debugging for new requests in fastcgi mode, with the
  * process id.
@@ -1038,6 +1042,8 @@ int main(int argc, char *argv[]) {
     imageObj *img=NULL;
     int status;
     char *sname = NULL;
+    int mapcontext_used = 0;
+
 
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
       printf("%s\n", msGetVersion());
@@ -1153,10 +1159,27 @@ int main(int argc, char *argv[]) {
     /*
     ** For each layer lets set layer status
     */
+    /*
+    ** Patch to control layers status for layers coming from a context
+    ** Please see bug 1023 for more info on this bug
+    */
+    mapcontext_used = 0;
+    for(i=0;i<msObj->request->NumParams;i++) 
+    {
+        if (strcasecmp(msObj->request->ParamNames[i],"context") == 0 &&
+            msObj->request->ParamValues[i] && 
+            strlen(msObj->request->ParamValues[i]) > 0)
+          mapcontext_used =1;
+    }
+            
+        
     for(i=0;i<msObj->Map->numlayers;i++) {
       if((msObj->Map->layers[i].status != MS_DEFAULT)) {
           //for wms layers, use the wms_name metadata if available
-          if (msObj->Map->layers[i].connectiontype == MS_WMS)
+          //if it comes from a mapcontext (see Bug 1023 fo more
+          //details
+          if (msObj->Map->layers[i].connectiontype == MS_WMS &&
+              mapcontext_used)
           {
               sname = msLookupHashTable(&(msObj->Map->layers[i].metadata), 
                                        "wms_name");
@@ -1237,7 +1260,9 @@ int main(int argc, char *argv[]) {
       if(!img) writeError();
 
       if (MS_DRIVER_SWF(msObj->Map->outputformat))
-        msIO_printf("Content-type: text/html%c%c", 10,10);
+      {
+          msIO_printf("Content-type: text/html%c%c", 10,10);
+      }
       else
         msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
       if( msObj->Mode == MAP )
