@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2001/03/02 03:48:08  frank
+ * fixed to ensure it compiles with gdal and without ogr
+ *
  * Revision 1.17  2001/03/01 22:54:07  dan
  * Test for geographic proj using IsGeographic() before conversion to PROJ4
  *
@@ -59,11 +62,15 @@
 #include "map.h"
 #include "mapproject.h"
 
+#if defined(USE_OGR) || defined(USE_GDAL)
+#  include "ogr_spatialref.h"
+#  include "cpl_conv.h"
+#  include "cpl_string.h"
+#endif
+
 #ifdef USE_OGR
 
 #include "ogrsf_frmts.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
 #include "ogr_featurestyle.h"
 
 typedef struct ms_ogr_layer_info_t
