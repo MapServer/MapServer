@@ -91,6 +91,7 @@ int msyyreturncomments = 0;
 <EXPRESSION_STRING>le|<=                       { return(LE); }
 <EXPRESSION_STRING>=~                          { return(RE); }
 <EXPRESSION_STRING>in                          { return(IN); }
+<EXPRESSION_STRING>not|!                       { return(NOT); }
 
 <EXPRESSION_STRING>length                      { return(LENGTH); }
 
