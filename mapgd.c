@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2005/01/28 05:54:38  sdlime
+ * Added WIDTH support to circle/polygon vector fills and vector markers. In both cases vector symbols must be unfilled.
+ *
  * Revision 1.94  2005/01/27 05:33:29  sdlime
  * Added width support to mapgd.c line drawing function. It takes effect in situations where single pixel lines are drawn, simple lines orvector brushes (for linework in the brush). Width is scalable. I had to revert to the original code for applying the scaling factor and size/width bounds. I have no idea why it was changed in the first place.
  *
@@ -588,15 +591,15 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
 }
 
 // Function to create a custom hatch symbol.
-static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *clip, styleObj *style)
+static gdImagePtr createHatch(gdImagePtr img, int sx, int sy, rectObj *clip, styleObj *style, double scalefactor)
 {
   gdImagePtr hatch;
   int x1, x2, y1, y2;
-  int size;
+  int size, width;
   double angle;
   int fg, bg;
 
-  hatch = createBrush(img, width, height, style, &fg, &bg);
+  hatch = createBrush(img, sx, sy, style, &fg, &bg);
 
   if(style->antialias == MS_TRUE) {
     gdImageSetAntiAliased(hatch, fg);
@@ -604,10 +607,18 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
   }
 
   if(style->size == -1)
-      // TODO: Can we use msSymbolGetDefaultSize() here? See bug 751.
-      size = 1;
+    size = 1; // TODO: Can we use msSymbolGetDefaultSize() here? See bug 751.
   else
-      size = style->size;
+    size = style->size;
+
+  size = MS_NINT(size*scalefactor);
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
+
+  width = MS_NINT(style->width*scalefactor);
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
+  gdImageSetThickness(hatch, width);
 
   // normalize the angle (180 to 0, 0 is east, 90 is north 180 is west)
   angle = fmod(style->angle, 360.0);
@@ -617,25 +628,25 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
   if(angle >= 45 && angle <= 90) {
     x2 = (int)clip->minx; // 0
     y2 = (int)clip->miny; // 0
-    y1 = (int)clip->maxy-1; // height-1 
+    y1 = (int)clip->maxy-1; // sy-1 
     x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
 
     size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
 
-    while(x1 < clip->maxx) { // width
+    while(x1 < clip->maxx) { // sx
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       x1+=size;
       x2+=size; 
     }
   } else if(angle <= 135 && angle > 90) {
     x2 = (int)clip->minx; // 0
-    y2 = (int)clip->maxy-1; // height-1
+    y2 = (int)clip->maxy-1; // sy-1
     y1 = (int)clip->miny; // 0
     x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
 
     size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
 
-    while(x1 < clip->maxx) { // width
+    while(x1 < clip->maxx) { // sx
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       x1+=size;
       x2+=size;
@@ -643,31 +654,32 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
   } else if(angle >= 0 && angle < 45) {    
     x1 = (int)clip->minx; // 0
     y1 = (int)clip->miny; // 0
-    x2 = (int)clip->maxx-1; // width-1
+    x2 = (int)clip->maxx-1; // sx-1
     y2 = (int)(y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
 
     size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
 
-    while(y2 < clip->maxy) { // height
+    while(y2 < clip->maxy) { // sy
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       y1+=size;
       y2+=size;
     }
   } else if(angle < 180 && angle > 135) {
-    x2 = (int)clip->maxx-1; // width-1
+    x2 = (int)clip->maxx-1; // sx-1
     y2 = (int)clip->miny; // 0
     x1 = (int)clip->minx; // 0
     y1 = (int) (y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
 
     size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
 
-    while(y1 < clip->maxy) { // height
+    while(y1 < clip->maxy) { // sy
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       y1+=size;
       y2+=size;
     }
   }
 
+  gdImageSetThickness(hatch, 1);
   return(hatch);
 }
 
@@ -1161,6 +1173,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   int fc, bc, oc;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   double size, d;  
+  int width;
 
   int bbox[8];
   rectObj rect;
@@ -1185,22 +1198,21 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   oy = style->offsety;
 
   if(style->size == -1) {
-      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
-      size = MS_NINT(size*scalefactor);
-  }
-  else
-  {
-      size = MS_NINT(style->size*scalefactor);
-  }
+    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = MS_NINT(size*scalefactor);
+  } else
+    size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
+
+  width = MS_NINT(style->width*scalefactor);
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
   if(fc < 0) return; // invalid color, -1 is valid
   if(size < 1) return; // size too small
 
-  printf("here (3)...\n");
-      
   if(style->symbol == 0) { // solid fill        
     gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), fc);
     if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
@@ -1294,6 +1306,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
       oldpnt.x = MS_NINT(d*symbol->points[0].x); /* convert first point in shade smbol */
       oldpnt.y = MS_NINT(d*symbol->points[0].y);
 
+      gdImageSetThickness(tile, width);
+
       /* step through the shade symbol */
       for(i=1;i < symbol->numpoints;i++) {
 	if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) {
@@ -1311,6 +1325,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 	  }
 	}
       } /* end for loop */
+
+      gdImageSetThickness(tile, 1);
     }
 
     gdImageSetTile(img, tile);
@@ -1345,6 +1361,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   int tmp_fc=-1, tmp_bc, tmp_oc=-1;
   int fc, bc, oc;
   double size,d;
+  int width;
 
   int ox, oy;
   
@@ -1366,15 +1383,16 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   oy = style->offsety;
 
   if(style->size == -1) {
-      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
-      size = MS_NINT(size*scalefactor);
-  }
-  else
-  {
-      size = MS_NINT(style->size*scalefactor);
-  }
+    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = MS_NINT(size*scalefactor);
+  } else
+    size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
+
+  width = MS_NINT(style->width*scalefactor);
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
   if(fc<0 && oc<0 && symbol->type != MS_SYMBOL_PIXMAP) return; // nothing to do (color not required for a pixmap symbol)
@@ -1473,6 +1491,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
     offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
     
+        
     if(symbol->filled) { /* if filled */
       
       k = 0; // point counter
@@ -1504,6 +1523,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       
       oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); /* convert first point in marker s */
       oldpnt.y = MS_NINT(d*symbol->points[0].y + offset_y);
+
+      gdImageSetThickness(img, width);
       
       for(j=1;j < symbol->numpoints;j++) { /* step through the marker s */
 	if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
@@ -1520,7 +1541,9 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 	    oldpnt = newpnt;
 	  }
 	}
-      } /* end for loop */      
+      } /* end for loop */   
+
+        gdImageSetThickness(img, 1);
     } /* end if-then-else */
     break;
   default:
@@ -1573,7 +1596,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
-  width = MS_NINT(width*scalefactor);
+  width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, style->minwidth);
   width = MS_MIN(width, style->maxwidth);
 
@@ -1583,7 +1606,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   ox = MS_NINT(style->offsetx*scalefactor);
   oy = (style->offsety == -99) ? -99 : (int)(style->offsety*scalefactor);
 
-  if(style->symbol == 0) { // just draw a single width line
+  if(style->symbol == 0) { // just draw a single width lin
     gdImageSetThickness(img, width);
     imagePolyline(img, p, fc, ox, oy);
     gdImageSetThickness(img, 1);
@@ -1647,7 +1670,6 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     // create the brush image
     if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
-      gdImageSetThickness(brush, width);
 
       k = 0; // point counter
       for(i=0;i < symbol->numpoints;i++) {
@@ -1662,7 +1684,6 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       }
       if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
 
-      gdImageSetThickness(brush, 1);
       symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
     }
 
@@ -1719,6 +1740,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
   double size, d;
+  int width;
   
   int bbox[8];
   rectObj rect;
@@ -1735,14 +1757,19 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
+
   if(style->size == -1) {
       size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
       size = MS_NINT(size*scalefactor);
-  }
-  else
+  } else
       size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
+
+  width = MS_NINT(style->width*scalefactor);
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
+
   ox = MS_NINT(style->offsetx*scalefactor); // should we scale the offsets?
   oy = MS_NINT(style->offsety*scalefactor);
 
@@ -1775,7 +1802,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     msComputeBounds(p); // we need to know how big to make the tile
     // tile = createHatch(img, (p->bounds.maxx-p->bounds.minx), (p->bounds.maxy-p->bounds.miny), style);    
-    tile = createHatch(img, img->sx, img->sy, &p->bounds, style);
+    tile = createHatch(img, img->sx, img->sy, &p->bounds, style, scalefactor);
 
     gdImageSetTile(img, tile);
     imageFilledPolygon(img, p, gdTiled, ox, oy);
@@ -1926,6 +1953,8 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       oldpnt.x = MS_NINT(d*symbol->points[0].x); /* convert first point in shade smbol */
       oldpnt.y = MS_NINT(d*symbol->points[0].y);
 
+      gdImageSetThickness(tile, width);
+
       /* step through the shade sy */
       for(i=1;i < symbol->numpoints;i++) {
 	if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) {
@@ -1943,6 +1972,8 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 	  }
 	}
       } /* end for loop */
+
+      gdImageSetThickness(tile, 1);
     }
 
     // Fill the polygon in the main image
