@@ -1539,14 +1539,26 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
        * __TODO__ The real implementation should actually return only context
        * info for selected layers in the LAYERS parameter.
        */
+      const char *getcontext_enabled;
+      getcontext_enabled = msLookupHashTable(map->web.metadata,
+                                             "wms_getcontext_enabled");
+
       if (wmtver)
       {
           // VERSION, if specified, is Map Context version, not WMS version
           // Pass it via wms_context_version metadata
           msInsertHashTable(map->web.metadata, "wms_context_version", wmtver);
       }
-      // Now set wmtver to 1.1.0 for error handling purposes
-      wmtver = "1.1.0";
+      // Now set wmtver to 1.1.1 for error handling purposes
+      wmtver = "1.1.1";
+
+      if (getcontext_enabled==NULL || atoi(getcontext_enabled) == 0)
+      {
+        msSetError(MS_WMSERR, "GetContext not enabled on this server.",
+                   "msWMSDispatch()");
+        return msWMSException(map, wmtver, NULL);
+      }
+
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
           return msWMSException(map, wmtver, NULL);
       printf("Content-type: text/xml\n\n");
