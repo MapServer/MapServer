@@ -6,7 +6,7 @@
 #include <time.h>
 
 #ifdef USE_ICONV
-#include "iconv.h"
+#include <iconv.h>
 #endif
 
 #ifdef _WIN32
