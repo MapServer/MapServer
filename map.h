@@ -858,6 +858,7 @@ int msAddColor(mapObj *map, int red, int green, int blue);
 int msLookupColor(mapObj *map, int color_index );
 int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
+int msTokenizeMap(char *filename);
 
 
 #if defined USE_PDF

@@ -3634,6 +3634,7 @@ mapObj *msLoadMap(char *filename, char *new_map_path)
     return map;
 }
 
+
 /*
 ** READ FROM STRINGS INSTEAD OF FILE - ASSUMES A MAP FILE HAS ALREADY BEEN LOADED
 */
@@ -3750,3 +3751,73 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 
   return(0);
 }
+
+
+/*
+** Returns an array with one entry per mapfile token.  Useful to manipulate
+** mapfiles in MapScript.
+*/
+static int tokenizeMapInternal(char *filename)
+{
+  regex_t re;
+
+  if(!filename) {
+    msSetError(MS_MISCERR, "Filename is undefined.", "msLoadMap()");
+    return MS_FAILURE;
+  }
+  
+  /*
+  ** Check map filename to make sure it's legal
+  */
+  if(regcomp(&re, MS_MAPFILE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
+   msSetError(MS_REGEXERR, "(%s)", "msLoadMap()", MS_MAPFILE_EXPR);   
+   return MS_FAILURE;
+  }
+  if(regexec(&re, filename, 0, NULL, 0) != 0) { /* no match */
+    regfree(&re);
+    msSetError(MS_IOERR, "Illegal mapfile name.", "msLoadMap()");
+    return MS_FAILURE;
+  }
+  regfree(&re);
+  
+  if((msyyin = fopen(filename,"r")) == NULL) {
+    msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
+    return MS_FAILURE;
+  }
+
+  msyystate = 6; // restore lexer state to INITIAL, and do return comments
+  msyylex();
+  msyyrestart(msyyin);
+  msyylineno = 0;
+
+  for(;;) {
+
+    switch(msyylex()) {   
+      case(EOF):
+        fclose(msyyin);      
+        return MS_SUCCESS;
+        break;
+      default:
+        printf("%s\n", msyytext);
+    }
+
+  }
+
+  return MS_SUCCESS;
+
+}
+
+//
+// Wraps tokenizeMapInternal
+//
+int msTokenizeMap(char *filename)
+{
+    int status;
+
+    msAcquireLock( TLOCK_PARSER );
+    status = tokenizeMapInternal( filename );
+    msReleaseLock( TLOCK_PARSER );
+
+    return status;
+}
+
