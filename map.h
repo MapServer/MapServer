@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.376  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.375  2004/11/16 14:34:26  frank
  * Avoid warning caused by last comment.
  *
@@ -1334,9 +1338,6 @@ MS_DLL_EXPORT int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj 
 MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
                          OGRwkbGeometryType type);
 #endif
-
-// mapgml.c
-MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename);
 
 MS_DLL_EXPORT int msPOSTGISLayerOpen(layerObj *layer); // in mappostgis.c
 MS_DLL_EXPORT int msPOSTGISLayerIsOpen(layerObj *layer);

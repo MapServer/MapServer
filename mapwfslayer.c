@@ -27,6 +27,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.26  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -154,7 +158,7 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
       return NULL;
     
     psParams = msWFSCreateParamsObj();
-    pszTmp = msLookupHashTable(&(lp->metadata), "wfs_version");
+    pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "version");
     if (pszTmp)
       psParams->pszVersion = strdup(pszTmp);
     else
@@ -173,7 +177,7 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     }
 
 
-    pszTmp = msLookupHashTable(&(lp->metadata), "wfs_service");
+    pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "service");
     if (pszTmp)
       psParams->pszService = strdup(pszTmp);
     else
@@ -190,7 +194,7 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     }
 
 
-    pszTmp = msLookupHashTable(&(lp->metadata), "wfs_typename");
+    pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "typename");
     if (pszTmp)
       psParams->pszTypeName = strdup(pszTmp);
     else
@@ -227,7 +231,7 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
         }
     }
 
-    pszTmp = msLookupHashTable(&(lp->metadata), "wfs_filter");
+    pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "filter");
     if (pszTmp && strlen(pszTmp) > 0)
     {
         psParams->pszFilter = malloc(sizeof(char)*(strlen(pszTmp)+17+1));
@@ -235,7 +239,7 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
         //<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ogc ../filter/1.0.0/filter.xsd http://www.opengis.net/gml../gml/2.1/geometry.xsd\">
     }
 
-     pszTmp = msLookupHashTable(&(lp->metadata), "wfs_maxfeatures");
+     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "maxfeatures");
      if (pszTmp)
        psParams->nMaxFeatures = atoi(pszTmp);
 
@@ -648,8 +652,8 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 /*      If it is a Post request, the URL will only contain the          */
 /*      connection string comming from the layer.                       */
 /* -------------------------------------------------------------------- */
-    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
-                                    "wfs_request_method")) != NULL)
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "FO", "request_method")) != NULL)
     {
         if (strncmp(pszTmp, "GET", 3) ==0)
         {
@@ -675,13 +679,13 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * First check the metadata in the layer object and then in the map object.
  * ------------------------------------------------------------------ */
     nTimeout = 30;  // Default is 30 seconds 
-    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
-                                    "wfs_connectiontimeout")) != NULL)
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "FO", "connectiontimeout")) != NULL)
     {
         nTimeout = atoi(pszTmp);
     }
-    else if ((pszTmp = msLookupHashTable(&(map->web.metadata), 
-                                         "wfs_connectiontimeout")) != NULL)
+    else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata), 
+                                           "FO", "connectiontimeout")) != NULL)
     {
         nTimeout = atoi(pszTmp);
     }
@@ -986,8 +990,8 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
 /* ------------------------------------------------------------------
  * Check if layer overlaps current view window (using wfs_latlonboundingbox)
  * ------------------------------------------------------------------ */
-    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
-                                    "wfs_latlonboundingbox")) != NULL)
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "FO", "latlonboundingbox")) != NULL)
     {
         char **tokens;
         int n;

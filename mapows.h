@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.46  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.45  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -195,7 +199,7 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
-MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name, cgiRequestObj *req);
+MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 
 // Constants for OWS Service version numbers
@@ -276,10 +280,12 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,
-                           hashTableObj *metadata );
+                           hashTableObj *metadata,
+                           const char *namespaces);
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
-                           int nVersion, hashTableObj *metadata );
-int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
+                            int nVersion, hashTableObj *metadata,
+                            const char *namespaces  );
+int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectObj *ext);
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                          mapObj *map, int bCheckLocalCache);
 void msOWSProcessException(layerObj *lp, const char *pszFname, 
@@ -294,11 +300,11 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
  *====================================================================*/
 #ifdef USE_WMS_SVR
 // export to fix bug 851
-MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename);
+MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces);
 #endif
 
 #ifdef USE_WFS_SVR
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
+MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
 #endif
 
 

@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.152  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.151  2004/11/16 20:19:39  dan
  * First pass at supporting "ows_*" metadata names in WMS/WFS (bug 568)
  *
@@ -155,11 +159,6 @@
 #endif
 
 MS_CVSID("$Id$")
-
-/*
-** msWMSGetEPSGProj() moved to mapproject.c and renamed msGetEPSGProj(). This function turns
-** out to be generally useful outside of WMS context.
-*/
 
 /* ==================================================================
  * WMS Server stuff.
@@ -806,8 +805,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   if (epsgbuf && strlen(epsgbuf) > 1)
   {
       epsgvalid = MS_FALSE;
-      projstring = msGetEPSGProj(&(map->projection), &(map->web.metadata),
-                                 MS_FALSE);
+      projstring = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
+                                    "MO", MS_FALSE);
       if (projstring)
       {
           tokens = split(projstring, ' ', &n);
@@ -831,9 +830,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
               epsgvalid = MS_FALSE;
               if (map->layers[i].status == MS_ON)
               {
-                  projstring = msGetEPSGProj(&(map->layers[i].projection),
-                                             &(map->layers[i].metadata),
-                                             MS_FALSE);
+                  projstring = msOWSGetEPSGProj(&(map->layers[i].projection),
+                                                &(map->layers[i].metadata),
+                                                "MO", MS_FALSE);
                   if (projstring)
                   {
                       tokens = split(projstring, ' ', &n);
@@ -1180,12 +1179,13 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                                     "          <Keyword>%s</Keyword>\n", NULL);
    }
 
-   if (msGetEPSGProj(&(map->projection),&(map->web.metadata),MS_FALSE) == NULL)
+   if (msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),
+                        "MO", MS_FALSE) == NULL)
    {
        if (nVersion > OWS_1_1_0)
        {
-           projstring = msGetEPSGProj(&(lp->projection), &(lp->metadata),
-                                      MS_FALSE);
+           projstring = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
+                                         "MO", MS_FALSE);
            if (!projstring)
              msIO_fprintf(stdout, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata");
            else
@@ -1208,8 +1208,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
          // If map has no proj then every layer MUST have one or produce a warning
          msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, "
                                "LAYER.PROJECTION or wms_srs metadata",
-                               msGetEPSGProj(&(lp->projection),
-                                             &(lp->metadata), MS_FALSE),
+                               msOWSGetEPSGProj(&(lp->projection),
+                                                &(lp->metadata), "MO", MS_FALSE),
                                OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
@@ -1217,8 +1217,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        //starting 1.1.1 SRS are given in individual tags
        if (nVersion > OWS_1_1_0)
        {
-           projstring = msGetEPSGProj(&(lp->projection), &(lp->metadata),
-                                      MS_FALSE);
+           projstring = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
+                                         "MO", MS_FALSE);
            if (projstring)
            {
                tokens = split(projstring, ' ', &n);
@@ -1239,27 +1239,27 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        // No warning required in this case since there's at least a map proj.
          msOWSPrintEncodeParam(stdout,
                                " LAYER.PROJECTION (or wms_srs metadata)",
-                               msGetEPSGProj(&(lp->projection),
-                                             &(lp->metadata), MS_FALSE),
+                               msOWSGetEPSGProj(&(lp->projection),
+                                                &(lp->metadata),"MO",MS_FALSE),
                                OWS_NOERR, "        <SRS>%s</SRS>\n", NULL);
    }
 
    // If layer has no proj set then use map->proj for bounding box.
-   if (msOWSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
+   if (msOWSGetLayerExtent(map, lp, "MO", &ext) == MS_SUCCESS)
    {
        if(lp->projection.numargs > 0)
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
                                        &(lp->projection), OWS_WMS);
            msOWSPrintBoundingBox( stdout,"        ", &(ext), &(lp->projection),
-                                  &(lp->metadata) );
+                                  &(lp->metadata), "MO" );
        }
        else
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
                                        &(map->projection), OWS_WMS);
            msOWSPrintBoundingBox(stdout,"        ", &(ext), &(map->projection),
-                                  &(map->web.metadata) );
+                                  &(map->web.metadata), "MO" );
        }
    }
 
@@ -1640,7 +1640,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   // Default to use the value of the "onlineresource" metadata, and if not
   // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?"
   // the returned string should be freed once we're done with it.
-  if ((script_url=msOWSGetOnlineResource(map, "wms_onlineresource", req)) == NULL ||
+  if ((script_url=msOWSGetOnlineResource(map, "MO", "onlineresource", req)) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
   {
       return msWMSException(map, nVersion, NULL);
@@ -1721,7 +1721,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
   // In 1.1.0, ContactInformation becomes optional.
-  msOWSPrintContactInfo(stdout, "  ", nVersion, &(map->web.metadata));
+  msOWSPrintContactInfo(stdout, "  ", nVersion, &(map->web.metadata), "MO");
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "fees",
                            OWS_NOERR, "  <Fees>%s</Fees>\n", NULL);
@@ -1842,13 +1842,14 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   // is REQUIRED.  It also suggests that we use an empty SRS element if there
   // is no common SRS.
   msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
-             msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_FALSE),
-             OWS_WARN, "    <SRS>%s</SRS>\n", "");
+             msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
+                              "MO", MS_FALSE),
+                        OWS_WARN, "    <SRS>%s</SRS>\n", "");
 
   msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent),
                               &(map->projection), OWS_WMS);
   msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
-                         &(map->web.metadata) );
+                         &(map->web.metadata), "MO" );
   msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale,
                       map->resolution);
 
@@ -2317,7 +2318,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     else
         msIO_printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
 
-    msGMLWriteQuery(map, NULL); // default is stdout
+    msGMLWriteQuery(map, NULL, "GMO"); // default is stdout
 
   } else
   if (pszMimeType && (strcmp(pszMimeType, info_format) == 0))

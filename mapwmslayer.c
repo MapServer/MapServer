@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.72  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.71  2004/11/12 17:05:01  assefa
  * Use %.17g instrad of %f when output bbox values (Bug 678)
  *
@@ -254,23 +258,24 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
     const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
     const char *pszSLD=NULL, *pszVersionKeyword=NULL;
-    const char *pszSLDBody=NULL;
-    char *pszSLDGenerated = NULL, *pszSLDURL = NULL;
+    const char *pszSLDBody=NULL, *pszSLDURL = NULL;
+    char *pszSLDGenerated = NULL;
 
     /* If lp->connection is not set then use wms_onlineresource metadata */
     pszOnlineResource = lp->connection;
     if (pszOnlineResource == NULL) 
-      pszOnlineResource = msLookupHashTable(&(lp->metadata),"wms_onlineresource");
+      pszOnlineResource = msOWSLookupMetadata(&(lp->metadata), 
+                                              "MO", "onlineresource");
 
-    pszVersion =        msLookupHashTable(&(lp->metadata), "wms_server_version");
-    pszName =           msLookupHashTable(&(lp->metadata), "wms_name");
-    pszFormat =         msLookupHashTable(&(lp->metadata), "wms_format");
-    pszFormatList =     msLookupHashTable(&(lp->metadata), "wms_formatlist");
-    pszStyle =          msLookupHashTable(&(lp->metadata), "wms_style");
-    pszStyleList =      msLookupHashTable(&(lp->metadata), "wms_stylelist");
-    pszTime =           msLookupHashTable(&(lp->metadata), "wms_time");
-    pszSLDBody =        msLookupHashTable(&(lp->metadata), "wms_sld_body");
-    pszSLDURL =         msLookupHashTable(&(lp->metadata), "wms_sld_url");
+    pszVersion =        msOWSLookupMetadata(&(lp->metadata), "MO", "server_version");
+    pszName =           msOWSLookupMetadata(&(lp->metadata), "MO", "name");
+    pszFormat =         msOWSLookupMetadata(&(lp->metadata), "MO", "format");
+    pszFormatList =     msOWSLookupMetadata(&(lp->metadata), "MO", "formatlist");
+    pszStyle =          msOWSLookupMetadata(&(lp->metadata), "MO", "style");
+    pszStyleList =      msOWSLookupMetadata(&(lp->metadata), "MO", "stylelist");
+    pszTime =           msOWSLookupMetadata(&(lp->metadata), "MO", "time");
+    pszSLDBody =        msOWSLookupMetadata(&(lp->metadata), "MO", "sld_body");
+    pszSLDURL =         msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url");
 
     if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
     {
@@ -371,8 +376,8 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     {
         // Was a wms_style_..._sld URL provided?
         char szBuf[100];
-        sprintf(szBuf, "wms_style_%.80s_sld", pszStyle);
-        pszSLD = msLookupHashTable(&(lp->metadata), szBuf);
+        sprintf(szBuf, "style_%.80s_sld", pszStyle);
+        pszSLD = msOWSLookupMetadata(&(lp->metadata), "MO", szBuf);
 
         if (pszSLD)
         {
@@ -540,8 +545,8 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * - If map SRS is valid for this layer then use it
  * - Otherwise request layer in its default SRS and we'll reproject later
  * ------------------------------------------------------------------ */
-    if ((pszEPSG = (char*)msGetEPSGProj(&(map->projection), 
-                                           NULL, MS_TRUE)) != NULL &&
+    if ((pszEPSG = (char*)msOWSGetEPSGProj(&(map->projection), 
+                                           NULL, NULL, MS_TRUE)) != NULL &&
         (pszEPSG = strdup(pszEPSG)) != NULL &&
         (strncasecmp(pszEPSG, "EPSG:", 5) == 0 ||
          strncasecmp(pszEPSG, "AUTO:", 5) == 0) )
@@ -560,7 +565,8 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         nLen = strlen(pszEPSG);
 
-        pszLyrEPSG = msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_FALSE);
+        pszLyrEPSG = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
+                                      "MO", MS_FALSE);
 
         if (pszLyrEPSG == NULL ||
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
@@ -575,8 +581,8 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
 
     if (pszEPSG == NULL &&
-        ((pszEPSG = (char*)msGetEPSGProj(&(lp->projection), 
-                                            &(lp->metadata), MS_TRUE)) == NULL ||
+        ((pszEPSG = (char*)msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
+                                            "MO", MS_TRUE)) == NULL ||
          (pszEPSG = strdup(pszEPSG)) == NULL ||
          (strncasecmp(pszEPSG, "EPSG:", 5) != 0 &&
           strncasecmp(pszEPSG, "AUTO:", 5) != 0 ) ) )
@@ -613,7 +619,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * Set layer SRS and reproject map extents to the layer's SRS
  * ------------------------------------------------------------------ */
     // No need to set lp->proj if it's already set to the right EPSG code
-    if ((pszTmp = msGetEPSGProj(&(lp->projection), NULL, MS_TRUE)) == NULL ||
+    if ((pszTmp = msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE)) == NULL ||
         strcasecmp(pszEPSG, pszTmp) != 0)
     {
         if (strncasecmp(pszEPSG, "EPSG:", 5) == 0)
@@ -813,8 +819,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 /* ------------------------------------------------------------------
  * Check if layer overlaps current view window (using wms_latlonboundingbox)
  * ------------------------------------------------------------------ */
-    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
-                                    "wms_latlonboundingbox")) != NULL)
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "MO", "latlonboundingbox")) != NULL)
     {
         char **tokens;
         int n;
@@ -854,13 +860,13 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * First check the metadata in the layer object and then in the map object.
  * ------------------------------------------------------------------ */
     nTimeout = 30;  // Default is 30 seconds 
-    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
-                                    "wms_connectiontimeout")) != NULL)
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "MO", "connectiontimeout")) != NULL)
     {
         nTimeout = atoi(pszTmp); 
     }
-    else if ((pszTmp = msLookupHashTable(&(map->web.metadata), 
-                                         "wms_connectiontimeout")) != NULL)
+    else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata), 
+                                           "MO", "connectiontimeout")) != NULL)
     {
         nTimeout = atoi(pszTmp);
     }
@@ -871,8 +877,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * this layer from being combined with any other layer.
  * ------------------------------------------------------------------ */
     bForceSeparateRequest = MS_FALSE;
-    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
-                                    "wms_force_separate_request")) != NULL)
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "MO", "force_separate_request")) != NULL)
     {
         bForceSeparateRequest = atoi(pszTmp); 
     }
@@ -1084,8 +1090,8 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     //set the classes to 0 so that It won't do client side
     //classification if an sld was set.
     numclasses = lp->numclasses;
-    if (msLookupHashTable(&(lp->metadata), "wms_sld_body") ||
-        msLookupHashTable(&(lp->metadata), "wms_sld_url"))        
+    if (msOWSLookupMetadata(&(lp->metadata), "MO", "sld_body") ||
+        msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url"))        
       lp->numclasses = 0;
 
     if (lp->data) free(lp->data);

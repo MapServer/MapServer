@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.51  2004/11/15 21:10:38  dan
  * No need to call msLayerOpen/Close before/after msLayerGetExtent() any more
  * (bug 1051)
@@ -307,7 +311,7 @@ int msOWSMakeAllLayersUnique(mapObj *map)
 ** Returns a newly allocated string that should be freed by the caller or
 ** NULL in case of error.
 */
-char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name, 
+char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, 
                               cgiRequestObj *req)
 {
     const char *value;
@@ -318,7 +322,7 @@ char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name,
     // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?"
     // (+append the map=... param if it was explicitly passed in QUERY_STRING)
     //
-    if ((value = msLookupHashTable(&(map->web.metadata), (char*)metadata_name))) 
+    if ((value = msOWSLookupMetadata(&(map->web.metadata), namespaces, metadata_name))) 
     {
         online_resource = (char*) malloc(strlen(value)+2);
 
@@ -1101,7 +1105,8 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,
-                           hashTableObj *metadata ) 
+                           hashTableObj *metadata,
+                           const char *namespaces) 
 {
     const char	*value, *resx, *resy;
     char *encoded, *encoded_resx, *encoded_resy;
@@ -1109,7 +1114,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
     /* Look for EPSG code in PROJECTION block only.  "wms_srs" metadata cannot be
      * used to establish the native projection of a layer for BoundingBox purposes.
      */
-    value = msGetEPSGProj(srcproj, NULL, MS_TRUE);
+    value = msOWSGetEPSGProj(srcproj, NULL, namespaces, MS_TRUE);
     
     if( value != NULL )
     {
@@ -1142,7 +1147,8 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 ** Print the contact information
 */
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
-                            int nVersion, hashTableObj *metadata )
+                            int nVersion, hashTableObj *metadata, 
+                            const char *namespaces )
 {
   int bEnableContact = 0;
 
@@ -1151,8 +1157,8 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
   // In 1.1.0, ContactInformation becomes optional.
   if (nVersion > OWS_1_0_0) 
   {
-    if(msLookupHashTable(metadata, "wms_contactperson") ||
-       msLookupHashTable(metadata, "wms_contactorganization")) 
+    if(msOWSLookupMetadata(metadata, namespaces, "contactperson") ||
+       msOWSLookupMetadata(metadata, namespaces, "contactorganization")) 
     {
       if(bEnableContact == 0)
       {
@@ -1164,9 +1170,9 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       // sub-elements are mandatory
       msIO_fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
 
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactperson", 
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactperson", 
                   OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactorganization", 
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactorganization", 
              OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
              NULL);
       msIO_fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
@@ -1175,7 +1181,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     if(bEnableContact == 0)
     {
 
-        if(msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactposition",
+        if(msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactposition",
                            OWS_NOERR, 
      "    <ContactInformation>\n      <ContactPosition>%s</ContactPosition>\n",
                               NULL) != 0)
@@ -1184,17 +1190,17 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     else
     {
 
-        msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactposition", 
+        msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactposition", 
                     OWS_NOERR, "      <ContactPosition>%s</ContactPosition>\n",
                            NULL);
     }
 
-    if(msLookupHashTable( metadata, "wms_addresstype" ) || 
-       msLookupHashTable( metadata, "wms_address" ) || 
-       msLookupHashTable( metadata, "wms_city" ) ||
-       msLookupHashTable( metadata, "wms_stateorprovince" ) || 
-       msLookupHashTable( metadata, "wms_postcode" ) ||
-       msLookupHashTable( metadata, "wms_country" )) 
+    if(msOWSLookupMetadata( metadata, namespaces, "addresstype" ) || 
+       msOWSLookupMetadata( metadata, namespaces, "address" ) || 
+       msOWSLookupMetadata( metadata, namespaces, "city" ) ||
+       msOWSLookupMetadata( metadata, namespaces, "stateorprovince" ) || 
+       msOWSLookupMetadata( metadata, namespaces, "postcode" ) ||
+       msOWSLookupMetadata( metadata, namespaces, "country" )) 
     {
       if(bEnableContact == 0)
       {
@@ -1206,17 +1212,17 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       // sub-elements are mandatory
       msIO_fprintf(stream, "%s  <ContactAddress>\n", tabspace);
 
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF","addresstype", OWS_WARN,
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces,"addresstype", OWS_WARN,
                               "        <AddressType>%s</AddressType>\n", NULL);
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "address", OWS_WARN,
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "address", OWS_WARN,
                        "        <Address>%s</Address>\n", NULL);
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "city", OWS_WARN,
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "city", OWS_WARN,
                     "        <City>%s</City>\n", NULL);
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "stateorprovince", 
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "stateorprovince", 
            OWS_WARN,"        <StateOrProvince>%s</StateOrProvince>\n", NULL);
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "postcode", OWS_WARN,
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "postcode", OWS_WARN,
                     "        <PostCode>%s</PostCode>\n", NULL);
-      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "country", OWS_WARN,
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "country", OWS_WARN,
                     "        <Country>%s</Country>\n", NULL);
       msIO_fprintf(stream, "%s  </ContactAddress>\n", tabspace);
     }
@@ -1224,7 +1230,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintEncodeMetadata(stream, metadata, "OMF", 
+        if(msOWSPrintEncodeMetadata(stream, metadata, namespaces, 
                                     "contactvoicetelephone", OWS_NOERR,
                                     "    <ContactInformation>\n"
                    "      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
@@ -1233,7 +1239,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     }
     else
     {
-        msOWSPrintEncodeMetadata(stream, metadata, "OMF", 
+        msOWSPrintEncodeMetadata(stream, metadata, namespaces, 
                                  "contactvoicetelephone", OWS_NOERR,
                    "      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
                            NULL);
@@ -1242,7 +1248,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     if(bEnableContact == 0)
     {
         if(msOWSPrintEncodeMetadata(stream, metadata,
-                           "OMF", "contactfacsimiletelephone", OWS_NOERR,
+                           namespaces, "contactfacsimiletelephone", OWS_NOERR,
                               "    <ContactInformation>\n     "
                  "<ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n",
                                     NULL) != 0)
@@ -1251,7 +1257,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     else
     {
         msOWSPrintEncodeMetadata(stream, metadata, 
-                           "OMF", "contactfacsimiletelephone", OWS_NOERR,
+                           namespaces, "contactfacsimiletelephone", OWS_NOERR,
            "      <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n",
                                  NULL);
     }
@@ -1259,7 +1265,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     if(bEnableContact == 0)
     {
         if(msOWSPrintEncodeMetadata(stream, metadata, 
-                           "OMF", "contactelectronicmailaddress", OWS_NOERR,
+                           namespaces, "contactelectronicmailaddress", OWS_NOERR,
                               "    <ContactInformation>\n     "
            "<ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n",
                                     NULL) != 0)
@@ -1268,7 +1274,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     else
     {
         msOWSPrintEncodeMetadata(stream, metadata, 
-                           "OMF", "contactelectronicmailaddress", OWS_NOERR,
+                           namespaces, "contactelectronicmailaddress", OWS_NOERR,
          "  <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n",
                                  NULL);
     }
@@ -1288,13 +1294,12 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 ** if not found then call msLayerGetExtent() which will lookup the 
 ** layer->extent member, and if not found will open layer to read extent.
 **
-** __TODO__ Need to be able to pass in a namespace.
 */
-int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
+int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectObj *ext)
 {
   static const char *value;
 
-  if ((value = msOWSLookupMetadata(&(lp->metadata), "MFCO", "extent")) != NULL)
+  if ((value = msOWSLookupMetadata(&(lp->metadata), namespaces, "extent")) != NULL)
   {
     char **tokens;
     int n;

@@ -16,6 +16,13 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Updated WMS/WFS client and server code to lookup "ows_*" metadata names
+  in addition to the default "wms_*" (or "wfs_*") metadatas (WCS was already
+  implemented this way). This reduces the amount of duplication in mapfiles
+  that support multiple OGC interfaces since "ows_*" metadata can be used
+  almost everywhere for common metadata items shared by multiple OGC
+  interfaces. (bug 568)
+
 - Added ows_service_onlineresource metadata for WMS/WFS to distinguish
   between service and GetMap/Capabilities onlineresources (bug 375)
 

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.38  2004/11/15 21:39:15  frank
  * fix last fix: GDALPrintPointer to CPLPrintPointer
  *
@@ -1395,7 +1399,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 /*      Try OWS extent metadata.                                        */
 /* -------------------------------------------------------------------- */
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
-    else if( msOWSGetLayerExtent( map, layer, &rect ) == MS_SUCCESS )
+    else if( msOWSGetLayerExtent( map, layer, "MFCO", &rect ) == MS_SUCCESS )
     {
         padfGeoTransform[0] = rect.minx;
         padfGeoTransform[1] = (rect.maxx - rect.minx) /

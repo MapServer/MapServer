@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.56  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.55  2004/11/16 20:19:39  dan
  * First pass at supporting "ows_*" metadata names in WMS/WFS (bug 568)
  *
@@ -415,23 +419,23 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    //    each layer is advertized in its own projection as defined in the
    //    layer's projection object or wfs_srs metadata.
    //
-   if (msGetEPSGProj(&(map->projection),&(map->web.metadata), MS_TRUE) != NULL)
+   if (msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE) != NULL)
    {
        // Map has a SRS.  Use it for all layers.
        msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msGetEPSGProj(&(map->projection),&(map->web.metadata),MS_TRUE),
+                  msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
    {
        // Map has no SRS.  Use layer SRS or produce a warning.
        msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE),
+                  msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
 
    // If layer has no proj set then use map->proj for bounding box.
-   if (msOWSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
+   if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS)
    {
        if(lp->projection.numargs > 0) 
        {
@@ -475,7 +479,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   wmtver = "1.0.0";
 
   // We need this server's onlineresource.
-  if ((script_url=msOWSGetOnlineResource(map, "wfs_onlineresource", req)) == NULL ||
+  if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
   {
       return msWFSException(map, wmtver);
@@ -917,9 +921,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
             }
         }
 
-        pszMapSRS = msGetEPSGProj(&(map->projection),
-                                  &(map->web.metadata), 
-                                  MS_TRUE);
+        pszMapSRS = msOWSGetEPSGProj(&(map->projection),
+                                     &(map->web.metadata), 
+                                     "FO", MS_TRUE);
 
         // Keep only selected layers, set to OFF by default.
         for(j=0; j<map->numlayers; j++) 
@@ -960,9 +964,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                     // rules for SRS.
                     if ((pszThisLayerSRS = pszMapSRS) == NULL)
                     {
-                        pszThisLayerSRS = msGetEPSGProj(&(lp->projection),
-                                                        &(lp->metadata), 
-                                                        MS_TRUE);
+                        pszThisLayerSRS = msOWSGetEPSGProj(&(lp->projection),
+                                                           &(lp->metadata), 
+                                                           "FO", MS_TRUE);
                     }
 
                     if (pszThisLayerSRS == NULL)
@@ -1202,7 +1206,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     */
 
 
-    if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource",req)) ==NULL ||
+    if ((script_url=msOWSGetOnlineResource(map,"FO","onlineresource",req)) ==NULL ||
         (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
     {
         return msWFSException(map, paramsObj->pszVersion);

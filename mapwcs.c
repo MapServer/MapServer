@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.58  2004/11/08 00:33:00  frank
  * Fixed support for non-square pixels in WCS. (bug 1014)
  *
@@ -397,7 +401,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   char *script_url=NULL, *script_url_encoded;
 
    // we need this server's onlineresource for the request section
-  if((script_url=msOWSGetOnlineResource(map, "wcs_onlineresource", req)) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
+  if((script_url=msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
     return msWCSException(map, params->version);
   }
 
@@ -1168,7 +1172,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     cm->extent.maxx = 0.0;
     cm->extent.miny = 0.0;
     cm->extent.maxy = 0.0;
-    if( msOWSGetLayerExtent( layer->map, layer, &cm->extent ) == MS_FAILURE )
+    if( msOWSGetLayerExtent( layer->map, layer, "CO", &cm->extent ) == MS_FAILURE )
       return MS_FAILURE;
     
     // get resolution

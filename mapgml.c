@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.44  2004/11/09 16:00:34  sean
  * move conditional compilation inside definition of msGMLWriteQuery and
  * msGMLWriteWFSQuery.  if OWS macros aren't defined, these functions set an
@@ -361,7 +365,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 
 #endif
 
-int msGMLWriteQuery(mapObj *map, char *filename)
+int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 {
 #if defined(USE_WMS_SVR)
   int status;
@@ -384,25 +388,25 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
   // charset encoding: lookup "gml_encoding" metadata first, then 
   // "wms_encoding", and if not found then use "ISO-8859-1" as default.
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), "GM", "encoding", 
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "encoding", 
                       OWS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", 
                            "ISO-8859-1");
 
-  msOWSPrintValidateMetadata(stream, &(map->web.metadata),NULL, "gml_rootname",
+  msOWSPrintValidateMetadata(stream, &(map->web.metadata),namespaces, "rootname",
                       OWS_NOERR, "<%s ", "msGMLOutput");
 
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_uri", 
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "uri", 
                       OWS_NOERR, "xmlns=\"%s\"", NULL);
   msIO_fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
   msIO_fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
   msIO_fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_schema", 
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "schema", 
                       OWS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
   msIO_fprintf(stream, ">\n");
 
   // a schema *should* be required
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                           "gml_description", OWS_NOERR, 
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, 
+                           "description", OWS_NOERR, 
                            "\t<gml:description>%s</gml:description>\n", NULL);
 
   // step through the layers looking for query results
@@ -416,8 +420,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
       // fall back on the layer name + "Layer"
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
-      msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                 "gml_layername", OWS_NOERR, "\t<%s>\n", value);
+      msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
+                                 "layername", OWS_NOERR, "\t<%s>\n", value);
       msFree(value);
 
       // actually open the layer
@@ -443,8 +447,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
         // fall back on the layer name + "Feature"
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
-        msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                   "gml_featurename", OWS_NOERR, 
+        msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
+                                   "featurename", OWS_NOERR, 
                                    "\t\t<%s>\n", value);
         msFree(value);
 
@@ -465,20 +469,20 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
 	// write the bounding box
 #ifdef USE_PROJ
-	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "\t\t\t");
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) // use the map projection first
+	  gmlWriteBounds(stream, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
 	else // then use the layer projection and/or metadata
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "\t\t\t");	
+	  gmlWriteBounds(stream, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), "\t\t\t");	
 #else
 	gmlWriteBounds(stream, &(shape.bounds), NULL, "\t\t\t"); // no projection information
 #endif
 
 	// write the feature geometry
 #ifdef USE_PROJ
-	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "\t\t\t");
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) // use the map projection first
+	  gmlWriteGeometry(stream, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
         else // then use the layer projection and/or metadata
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "\t\t\t");      
+	  gmlWriteGeometry(stream, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), "\t\t\t");      
 #else
 	gmlWriteGeometry(stream, &(shape), NULL, "\t\t\t");
 #endif
@@ -488,8 +492,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
         // fall back on the layer name + "Feature"
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
-        msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                   "gml_featurename", OWS_NOERR, 
+        msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
+                                   "featurename", OWS_NOERR, 
                                    "\t\t</%s>\n", value);
         msFree(value);
 
@@ -501,8 +505,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
       // fall back on the layer name + "Layer"
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
-      msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                 "gml_layername", OWS_NOERR, "\t</%s>\n", value);
+      msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
+                                 "layername", OWS_NOERR, "\t</%s>\n", value);
       msFree(value);
 
       msLayerClose(lp);
@@ -510,7 +514,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   } // next layer
 
   // end this document
-  msOWSPrintValidateMetadata(stream, &(map->web.metadata),NULL, "gml_rootname",
+  msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname",
                              OWS_NOERR, "</%s>\n", "msGMLOutput");
 
   if(filename && strlen(filename) > 0) fclose(stream);
@@ -531,7 +535,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 */
 
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, 
-                       char *namespace)
+                       char *wfs_namespace)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -549,7 +553,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
   if (msGetQueryResultBounds(map, &resultBounds) > 0)
   {
       gmlWriteBounds(stream, &resultBounds, 
-                     msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), 
+                     msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), 
                      "      ");
   }
 
@@ -613,10 +617,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 #endif
         
 	// start this feature
-        if (namespace)
+        if (wfs_namespace)
         {
-            layer_name = (char*) malloc(strlen(namespace)+strlen(lp->name)+2);
-            sprintf(layer_name, "%s:%s", namespace, lp->name);
+            layer_name = (char*) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
+            sprintf(layer_name, "%s:%s", wfs_namespace, lp->name);
         }
         else
             layer_name = strdup(lp->name);
@@ -657,11 +661,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
          }
          
 	// write the bounding box
-	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) // use the map projection first
 #ifdef USE_PROJ
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "        ");
+	  gmlWriteBounds(stream, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
 	else // then use the layer projection and/or metadata
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "        ");	
+	  gmlWriteBounds(stream, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");	
 #else
 	gmlWriteBounds(stream, &(shape.bounds), NULL, "        "); // no projection information
 #endif
@@ -672,10 +676,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
                     
 	// write the feature geometry
 #ifdef USE_PROJ
-	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "          ");
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) // use the map projection first
+	  gmlWriteGeometry(stream, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "          ");
         else // then use the layer projection and/or metadata
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "          ");      
+	  gmlWriteGeometry(stream, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "          ");      
 #else
 	gmlWriteGeometry(stream, &(shape), NULL, "          ");
 #endif
@@ -701,14 +705,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
               msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
                       "in a XML tag context. -->\n", lp->items[k]);
           
-          if (namespace)
+          if (wfs_namespace)
           {
-            if(msIsXMLTagValid(namespace) == MS_FALSE)
+            if(msIsXMLTagValid(wfs_namespace) == MS_FALSE)
               msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
-                      "in a XML tag context. -->\n", namespace);
+                      "in a XML tag context. -->\n", wfs_namespace);
             msIO_fprintf(stream, "        <%s:%s>%s</%s:%s>\n", 
-                    namespace, lp->items[k], encoded_val, 
-                    namespace, lp->items[k]);
+                    wfs_namespace, lp->items[k], encoded_val, 
+                    wfs_namespace, lp->items[k]);
           }
           else      
             msIO_fprintf(stream, "        <%s>%s</%s>\n", 

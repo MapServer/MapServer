@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.69  2004/11/16 21:57:49  dan
+ * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
+ * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
+ *
  * Revision 1.68  2004/11/10 20:55:40  assefa
  * Do not output <StyleList> if the metadata wms_stylelist is an empty
  * string (Bug 595).
@@ -1623,7 +1627,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   if(tabspace)
       free(tabspace);
   tabspace = strdup("    ");
-  value = msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE);
+  value = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_TRUE);
   msIO_fprintf( stream, 
           "%s<!-- Bounding box corners and spatial reference system -->\n", 
            tabspace );
@@ -1724,7 +1728,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                     NULL, NULL, NULL, NULL, NULL, "    ");
 
   // Contact Info
-  msOWSPrintContactInfo( stream, tabspace, OWS_1_1_0, &(map->web.metadata) );
+  msOWSPrintContactInfo( stream, tabspace, OWS_1_1_0, &(map->web.metadata), "MO" );
 
   // Close General
   msIO_fprintf( stream, "  </General>\n" );
@@ -1836,8 +1840,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                             MS_TRUE, NULL, NULL, NULL, NULL, NULL, "      ");
 
           // Layer SRS
-          pszValue = (char*)msGetEPSGProj(&(map->layers[i].projection), 
-                                          &(map->layers[i].metadata), MS_FALSE);
+          pszValue = (char*)msOWSGetEPSGProj(&(map->layers[i].projection), 
+                                             &(map->layers[i].metadata),
+                                             "MO", MS_FALSE);
           if(pszValue && (strcasecmp(pszValue, "(null)") != 0))
           {
               pszEncodedVal = msEncodeHTMLEntities(pszValue);
