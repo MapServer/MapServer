@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.53  2004/04/14 05:14:54  dan
+ * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
+ *
  * Revision 1.52  2004/04/14 04:54:30  dan
  * Created msOWSLookupMetadata() and added namespaces lookup in all
  * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
@@ -1486,7 +1489,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   else
     msOWSPrintMetadataList(stream, map->web.metadata, NULL, "wms_keywordlist", 
                            "    <Keywords>\n", "    </Keywords>\n",
-                           "      %s\n");
+                           "      %s\n", NULL);
 
   //abstract
   if(strcasecmp(version, "0.1.7") >= 0 &&

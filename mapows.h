@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.29  2004/04/14 05:14:54  dan
+ * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
+ *
  * Revision 1.28  2004/04/14 04:54:30  dan
  * Created msOWSLookupMetadata() and added namespaces lookup in all
  * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
@@ -175,7 +178,8 @@ int msOWSPrintParam(FILE *stream, const char *name, const char *value,
 int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata, 
                            const char *namespaces, const char *name, 
                            const char *startTag, 
-                           const char *endTag, const char *itemFormat);
+                           const char *endTag, const char *itemFormat,
+                           const char *default_value);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj,
                                  int nService);

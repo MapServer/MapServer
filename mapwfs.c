@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.33  2004/04/14 05:14:54  dan
+ * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
+ *
  * Revision 1.32  2004/04/14 04:54:30  dan
  * Created msOWSLookupMetadata() and added namespaces lookup in all
  * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
@@ -306,7 +309,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 
    msOWSPrintMetadataList(stdout, lp->metadata, NULL, "wfs_keywordlist", 
                      "        <Keywords>\n", "        </Keywords>\n",
-                     "          %s\n");
+                     "          %s\n", NULL);
 
    // __TODO__ Add optional metadataURL with type, format, etc.
 
@@ -414,7 +417,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
 
   msOWSPrintMetadataList(stdout, map->web.metadata, NULL, "wfs_keywordlist", 
                     "  <Keywords>\n", "  </Keywords>\n",
-                    "    %s\n");
+                    "    %s\n", NULL);
   printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
 
   msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_fees", OWS_NOERR,

@@ -500,14 +500,14 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
        // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
        msOWSPrintMetadataList(stdout, lp->metadata, NULL, "wms_keywordlist", 
                               "        <Keywords>", "        </Keywords>\n",
-                              "%s ");
+                              "%s ", NULL);
    }
    else
    {
        // <KeywordList><Keyword> ... in V1.0.6+
        msOWSPrintMetadataList(stdout, lp->metadata, NULL, "wms_keywordlist", 
                               "        <KeywordList>\n", "        </KeywordList>\n",
-                              "          <Keyword>%s</Keyword>\n");
+                              "          <Keyword>%s</Keyword>\n", NULL);
    }
 
    if (msGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
@@ -675,7 +675,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
       msOWSPrintMetadataList(stdout, map->web.metadata,
                              NULL, "wms_keywordlist", 
                              "        <Keywords>", "        </Keywords>\n",
-                             "%s ");
+                             "%s ", NULL);
   }
   else
   {
@@ -683,7 +683,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
       msOWSPrintMetadataList(stdout, map->web.metadata, 
                              NULL, "wms_keywordlist", 
                              "        <KeywordList>\n", "        </KeywordList>\n",
-                             "          <Keyword>%s</Keyword>\n");
+                             "          <Keyword>%s</Keyword>\n", NULL);
   }
 
   if (strcasecmp(wmtver, "1.0.0") == 0)
