@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.48  2003/07/15 15:22:23  assefa
+ * Modify schema location url.
+ *
  * Revision 1.47  2003/07/15 14:07:07  assefa
  * replace View_context by ViewContext for 1.0. support.
  *
@@ -1364,7 +1367,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       fprintf( stream, " xmlns=\"http://www.opengis.net/context\"");
       //fprintf( stream, " xmlns:sld=\"http://www.opengis.net/sld");
       fprintf( stream, 
-               " xsi:schemaLocation=\"http://www.opengis.net/context context.xsd\">\n");
+               " xsi:schemaLocation=\"http://www.opengis.net/context http://schemas.opengis.net/context/1.0.0/context.xsd\">\n");
   }
   else
   {
