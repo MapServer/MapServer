@@ -205,6 +205,9 @@ POSTGIS_DIR =c:/projects/libpq
 # have complete data for each tile.
 IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 
+# If you want antialiasing (note that It requires gd2)
+USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
+
 # Use this flag to compile with WMS Server support.
 # To find out more about the OpenGIS Web Map Server Specification go to
 # http://www.opengis.org/
@@ -467,6 +470,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 MS_CFLAGS=$(INCLUDES) $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
           $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) \
-          -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF) $(EGIS)
+          -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF) $(EGIS) \
+        $(USE_GD_ANTIALIAS)
 
 
