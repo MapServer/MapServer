@@ -228,18 +228,25 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     // Python implementation to define needed variables, initialization
     #ifdef SWIGPYTHON
     #endif
-#ifdef notdef
+
     // generic code to get imgbytes, size
-    switch (self->imagetype) {
-      case(MS_GIF):
+    if( !MS_RENDERER_GD(self->outputformat) )
+    {
+        msSetError(MS_MISCERR, "Unsupported output image type (%s).",
+                              "getImageToVar()", self->outputformat->driver );
+        return(MS_FAILURE);
+    }
+    else if( strcasecmp(self->outputformat->driver,"GD/GIF") == 0 )
+    {
         #ifdef USE_GD_GIF
           // GD /w gif doesn't have gdImageGifPtr()
           msSetError(MS_MISCERR, "GIF output is not available.",
                               "getImageToVar()");
           return(MS_FAILURE);
         #endif
-        break;
-      case(MS_PNG):
+    }
+    else if( strcasecmp(self->outputformat->driver,"GD/PNG") == 0 )
+    {
         #ifdef USE_GD_PNG
           imgbytes = gdImagePngPtr(image->img.gd, &size);
         #else
@@ -247,8 +254,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
                               "getImageToVar()");
           return(MS_FAILURE);
         #endif
-        break;
-      case(MS_JPEG):
+    }
+    else if( strcasecmp(self->outputformat->driver,"GD/JPEG") == 0 )
+    {
         #ifdef USE_GD_JPEG
           imgbytes = gdImageJpegPtr(image->img.gd, &size, self->imagequality);
         #else
@@ -256,8 +264,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
                               "getImageToVar()");
           return(MS_FAILURE);
         #endif
-        break;
-      case(MS_WBMP):
+    }
+    else if( strcasecmp(self->outputformat->driver,"GD/WBMP") == 0 )
+    {
         #ifdef USE_GD_WBMP
           imgbytes = gdImageWBMPPtr(image->img.gd, &size, 1);
         #else
@@ -265,13 +274,13 @@ static Tcl_Interp *SWIG_TCL_INTERP;
                               "getImageToVar()");
           return(MS_FAILURE);
         #endif
-        break;
-      default:
-        msSetError(MS_MISCERR, "Unknown output image type.",
-                              "getImageToVar()");
+    }
+    else
+    {
+        msSetError(MS_MISCERR, "Unsupported output image type (%s).",
+                              "getImageToVar()", self->outputformat->driver );
         return(MS_FAILURE);
     }
-#endif
 
     // Tcl implementation to set variable
     #ifdef SWIGTCL8
@@ -953,7 +962,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
     // save image parameters ignored ... should be in outputFormatObj
     // used to create the imageObj.
-    msSaveImage(self, filename );
+    msSaveImage(NULL, self, filename );
   }
 
   
