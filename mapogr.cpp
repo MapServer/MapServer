@@ -29,8 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.35  2001/06/27 20:16:02  dan
+ * Improved font and symbol name mapping for STYLEITEM AUTO
+ *
  * Revision 1.34  2001/06/24 17:32:25  dan
- * Initial implementation of STYLEITEM AUTO for rendering maps using style info from the data source instead of static mapfile classes.  Still a few issues with fonts and symbols.
+ * Initial implementation of STYLEITEM AUTO for rendering maps using style 
+ * info from the data source instead of static mapfile classes.  Still a few 
+ * issues with fonts and symbols.
  *
  * Revision 1.33  2001/04/03 23:16:19  dan
  * Fixed args to calls to reprojection functions
@@ -1306,7 +1311,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
       OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
       poStyleMgr->InitFromFeature(psInfo->poLastFeature);
-      msDebug("OGRStyle: %s\n", psInfo->poLastFeature->GetStyleString());
+      // msDebug("OGRStyle: %s\n", psInfo->poLastFeature->GetStyleString());
 
       int numParts = poStyleMgr->GetPartCount();
       for(int i=0; i<numParts; i++)
@@ -1341,21 +1346,28 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               // Label font... do our best to use TrueType fonts, otherwise
               // fallback on bitmap fonts.
-              // __TODO__ Should check for native font name and ogr generic
-              // font names first.
 #ifdef USE_GD_TTF
-              if (msLookupHashTable(map->fontset.fonts, "default") != NULL)
+              const char *pszName;
+              if ((pszName = poLabelStyle->FontName(bDefault)) != NULL && 
+                  !bDefault && pszName[0] != '\0' &&
+                  msLookupHashTable(map->fontset.fonts, (char*)pszName) != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup(pszName);
+                  // msDebug("** Using '%s' TTF font **\n", pszName);
+              }
+              else if (msLookupHashTable(map->fontset.fonts,"default") != NULL)
               {
                   c->label.type = MS_TRUETYPE;
                   c->label.font = strdup("default");
-                  msDebug("** Using 'default' TTF font **\n");
+                  // msDebug("** Using 'default' TTF font **\n");
               }
               else
 #endif
               {
                   c->label.type = MS_BITMAP;
                   c->label.size = MS_MEDIUM;
-                  msDebug("** Using 'medium' BITMAP font **\n");
+                  // msDebug("** Using 'medium' BITMAP font **\n");
               }
           }
           else if (poStylePart->GetType() == OGRSTCPen)
@@ -1372,7 +1384,17 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                       c->outlinecolor = msAddColor(map, r,g,b);
                   else
                       c->outlinecolor = c->color = msAddColor(map, r,g,b);
-                  msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, c->outlinecolor);
+                  // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, c->outlinecolor);
+              }
+
+              c->size = (int)poPenStyle->Width(bDefault);
+              if (c->size > 1 && !bDefault)
+              {
+                  // If user provided a "default-circle" symbol then we'll use
+                  // it for producing thick lines.  Otherwise symbol will be
+                  // set to -1 and line will be 1 pixel wide.
+                  c->symbol = msGetSymbolIndex(&(map->symbolset), 
+                                               "default-circle");
               }
           }
           else if (poStylePart->GetType() == OGRSTCBrush)
@@ -1384,7 +1406,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                  ForeColor(bDefault),r,g,b,t))
               {
                   c->color = msAddColor(map, r,g,b);
-                  msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
+                  // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
               }
               if (poBrushStyle->GetRGBFromString(poBrushStyle->
                                                  BackColor(bDefault),r,g,b,t) 
@@ -1397,13 +1419,41 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           {
               OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
-              // __TODO__ Need to map OGR symbols names somehow
-              c->symbol = 0;
               if (poSymbolStyle->GetRGBFromString(poSymbolStyle->
                                                   Color(bDefault),r,g,b,t))
               {
                   c->color = msAddColor(map, r,g,b);
               }
+
+              c->size = (int)poSymbolStyle->Size(bDefault);
+
+              // Symbol name mapping:
+              // First look for the native symbol name, then the ogr-...
+              // generic name, and in last resort try "default-marker" if
+              // provided by user.
+              const char *pszName;
+              char  **params;
+              int   numparams;
+              if ((pszName = poSymbolStyle->Id(bDefault)) != NULL && 
+                  !bDefault && pszName[0] != '\0' &&
+                  (params = split(pszName, '.', &numparams))!=NULL)
+              {
+                  c->symbol = -1;
+                  for(int j=0; j<numparams && c->symbol == -1; j++)
+                  {
+                      c->symbol = msGetSymbolIndex(&(map->symbolset), 
+                                                   params[j]);
+                  }
+                  msFreeCharArray(params, numparams);
+              }
+              if (c->symbol == -1)
+              {
+                  c->symbol = msGetSymbolIndex(&(map->symbolset),
+                                               "default-marker");
+              }
+              if (c->symbol == -1)
+                  c->symbol = 0;
+
           }
 
           delete poStylePart;
