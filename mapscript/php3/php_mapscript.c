@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.50  2001/09/10 15:37:24  assefa
+ * Add error messages in the zoom functions when the extents given are
+ * wrong.
+ *
  * Revision 1.49  2001/08/29 14:36:06  dan
  * Changes to msCalculateScale() args.  Sync with mapscript.i v1.42
  *
@@ -1272,6 +1276,8 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
+
+
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
     if (self == NULL)
     {
@@ -1315,6 +1321,34 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         php3_error(E_ERROR, "zoomPoint failed : incorrect parameters\n");
         RETURN_FALSE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      check if the values passed are consistent min > max.             */
+/* -------------------------------------------------------------------- */
+    if (poGeorefExt->minx >= poGeorefExt->maxx)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "zoomPoint failed : Georeferenced coordinates minx >= maxx\n");
+    }
+    if (poGeorefExt->miny >= poGeorefExt->maxy)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "zoomPoint failed : Georeferenced coordinates miny >= maxy\n");
+    }
+    if (bMaxExtSet)
+    {
+        if (poMaxGeorefExt->minx >= poMaxGeorefExt->maxx)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "zoomPoint failed : Max Georeferenced coordinates minx >= maxx\n");
+        }
+        if (poMaxGeorefExt->miny >= poMaxGeorefExt->maxy)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "zoomPoint failed : Max Georeferenced coordinates miny >= maxy\n");
+        }
+    }
+
     
     dfGeoPosX = Pix2Georef((int)poPixPos->x, 0, (int)pWidth->value.lval, 
                            poGeorefExt->minx, poGeorefExt->maxx, 0); 
@@ -1614,7 +1648,34 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         php3_error(E_ERROR, "zoomRectangle failed : incorrect parameters\n");
             /*RETURN_FALSE;*/
     }
-    
+
+/* -------------------------------------------------------------------- */
+/*      check if the values passed are consistent min > max.            */
+/* -------------------------------------------------------------------- */
+    if (poGeorefExt->minx >= poGeorefExt->maxx)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "zoomRectangle failed : Georeferenced coordinates minx >= maxx\n");
+    }
+    if (poGeorefExt->miny >= poGeorefExt->maxy)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "zoomRectangle failed : Georeferenced coordinates miny >= maxy\n");
+    }
+    if (bMaxExtSet)
+    {
+        if (poMaxGeorefExt->minx >= poMaxGeorefExt->maxx)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "zoomRectangle failed : Max Georeferenced coordinates minx >= maxx\n");
+        }
+        if (poMaxGeorefExt->miny >= poMaxGeorefExt->maxy)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "zoomRectangle failed : Max Georeferenced coordinates miny >= maxy\n");
+        }
+    }
+
 
     oNewGeorefExt.minx = Pix2Georef((int)poPixExt->minx, 0, 
                                     (int)pWidth->value.lval, 
@@ -1887,7 +1948,35 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         php3_error(E_ERROR, "zoomScale failed : incorrect parameters\n");
         RETURN_FALSE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      check if the values passed are consistent min > max.             */
+/* -------------------------------------------------------------------- */
+    if (poGeorefExt->minx >= poGeorefExt->maxx)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "zoomScale failed : Georeferenced coordinates minx >= maxx\n");
+    }
+    if (poGeorefExt->miny >= poGeorefExt->maxy)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "zoomScale failed : Georeferenced coordinates miny >= maxy\n");
+    }
+    if (bMaxExtSet)
+    {
+        if (poMaxGeorefExt->minx >= poMaxGeorefExt->maxx)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "zoomScale failed : Max Georeferenced coordinates minx >= maxx\n");
+        }
+        if (poMaxGeorefExt->miny >= poMaxGeorefExt->maxy)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "zoomScale failed : Max Georeferenced coordinates miny >= maxy\n");
+        }
+    }
     
+
     dfGeoPosX = Pix2Georef((int)poPixPos->x, 0, (int)pWidth->value.lval, 
                            poGeorefExt->minx, poGeorefExt->maxx, 0); 
     dfGeoPosY = Pix2Georef((int)poPixPos->y, 0, (int)pHeight->value.lval, 
