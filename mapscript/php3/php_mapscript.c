@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.88  2002/02/19 19:58:14  assefa
+ * Forgot to udate extents information in the php object
+ * when map->draw and map->drawquery are called.
+ *
  * Revision 1.87  2002/02/19 19:02:23  assefa
  * Update scale and cellsize values in the php object after in the
  * map->draw and map->drawquery functions. (BID 109).
@@ -2591,6 +2595,13 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     gdImagePtr im = NULL;
+
+#ifdef PHP4
+    pval   **pExtent;
+#else
+    pval   *pExtent;
+#endif
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2624,6 +2635,38 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
                                     E_ERROR); 
          _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
+#ifdef PHP4
+         if (zend_hash_find(pThis->value.obj.properties, "extent", 
+                            sizeof("extent"), (void **)&pExtent) == SUCCESS)
+         {
+             _phpms_set_property_double((*pExtent),"minx", 
+                                        self->extent.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pExtent),"miny", 
+                                        self->extent.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pExtent),"maxx", 
+                                        self->extent.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pExtent),"maxy", 
+                                        self->extent.maxy, 
+                                        E_ERROR);
+         }
+#else
+         if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
+                             (void **)&pExtent) == SUCCESS)
+         {
+             _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
+                                        E_ERROR);
+         }
+#endif
+         
         _phpms_build_img_object(im, &(self->web), list, return_value);
     }
 }
@@ -2640,6 +2683,12 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis;
     mapObj      *self;
     gdImagePtr im = NULL;
+
+#ifdef PHP4
+    pval   **pExtent;
+#else
+    pval   *pExtent;
+#endif
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -2671,6 +2720,38 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
          _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
                                     E_ERROR); 
          _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+
+#ifdef PHP4
+         if (zend_hash_find(pThis->value.obj.properties, "extent", 
+                            sizeof("extent"), (void **)&pExtent) == SUCCESS)
+         {
+             _phpms_set_property_double((*pExtent),"minx", 
+                                        self->extent.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pExtent),"miny", 
+                                        self->extent.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pExtent),"maxx", 
+                                        self->extent.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pExtent),"maxy", 
+                                        self->extent.maxy, 
+                                        E_ERROR);
+         }
+#else
+         if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
+                             (void **)&pExtent) == SUCCESS)
+         {
+             _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
+                                        E_ERROR);
+         }
+#endif
 
         /* Return an image object */
         _phpms_build_img_object(im, &(self->web), list, return_value);
