@@ -25,6 +25,8 @@ typedef struct {
 #ifndef SWIG
 struct imageCacheObj {
   colorObj color;
+  colorObj outlinecolor;
+  colorObj backgroundcolor;
   int symbol;
   int size;
   gdImagePtr img;
@@ -47,7 +49,11 @@ typedef struct {
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
   */
   double sizex, sizey;
+
+#ifndef SWIG
   pointObj points[MS_MAXVECTORPOINTS];
+#endif
+
 #ifdef SWIG
   %immutable;
 #endif // SWIG

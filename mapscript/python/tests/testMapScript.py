@@ -13,32 +13,16 @@ platformdir = '-'.join((distutils.util.get_platform(),
                        '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, 'build/lib.' + platformdir)
 
-# Our testing mapfile
-testMapfile = '../../tests/test.map'
-testNoFontSetMapfile = '../../tests/test_nofontset.map'
-test_image = '../../tests/test.png'
+# Set the variable below to the mapserver/tests path
+TESTS_PATH = '../../tests'
+
+testMapfile = os.path.join(TESTS_PATH, 'test.map')
+testNoFontSetMapfile = os.path.join(TESTS_PATH, 'test_nofontset.map')
+test_image = os.path.join(TESTS_PATH, 'test.png')
+xmarks_image = os.path.join(TESTS_PATH, 'xmarks.png')
 
 # Import all from mapscript
 import mapscript
-
-# If mapscript is using the next generation names
-if 'mapObj' not in dir(mapscript):
-    mapscript.mapObj = mapscript.Map
-    mapscript.layerObj = mapscript.Layer
-    mapscript.classObj = mapscript.Class
-    mapscript.styleObj = mapscript.Style
-    mapscript.shapeObj = mapscript.Shape
-    mapscript.lineObj = mapscript.Line
-    mapscript.pointObj = mapscript.Point
-    mapscript.rectObj = mapscript.Rect
-    mapscript.outputFormatObj = mapscript.OutputFormat
-    mapscript.symbolObj = mapscript.Symbol
-    mapscript.symbolSetObj = mapscript.SymbolSet
-    mapscript.colorObj = mapscript.Color
-    mapscript.imageObj = mapscript.Image
-    mapscript.shapefileObj = mapscript.Shapefile
-    mapscript.projectionObj = mapscript.Projection
-    mapscript.fontSetObj = mapscript.FontSet
 
 # Base class for Primitives Tests -- no actual tests in this class
 
@@ -125,6 +109,7 @@ class MapTestCase(MapscriptTestCase):
     def tearDown(self):
         self.mapobj1 = None
 
+
 # ---------------------------------------------------------------------------
 # The tests begin here
 
@@ -133,6 +118,14 @@ class LayerTestCase(MapTestCase):
     def testLayerConstructor(self):
         layer = mapscript.layerObj(self.mapobj1)
         assert layer.thisown == 1
+
+    def testDrawMapBrokenLayer(self):
+        layer = self.mapobj1.getLayer(2)
+        layer.data = 'foo'
+        self.assertRaises(mapscript.MapServerError, self.mapobj1.draw)
+
+    def testDrawMap(self):
+        img = self.mapobj1.draw()
 
 # Layer ordering tests
 class LayerOrderTestCase(MapTestCase):
@@ -156,7 +149,7 @@ class LayerOrderTestCase(MapTestCase):
 # Layer removal tests
 class RemoveLayerTestCase(MapTestCase):
     def testRemoveLayer1NumLayers(self):
-        self.mapobj1.removeLayer(0)
+        layer = self.mapobj1.removeLayer(0)
         assert self.mapobj1.numlayers == 3
     def testRemoveLayer1LayerName(self):
         l2name = self.mapobj1.getLayer(1).name
@@ -204,18 +197,19 @@ class LayerRasterProcessingTestCase(MapTestCase):
 # class removal tests
 class RemoveClassTestCase(MapTestCase):
     def testRemoveClass1NumClasses(self):
-        self.mapobj1.getLayer(0).removeClass(0)
+        c = self.mapobj1.getLayer(0).removeClass(0)
+        assert c.thisown == 1
         assert self.mapobj1.getLayer(0).numclasses == 1
     def testRemoveClass1ClassName(self):
         c2name = self.mapobj1.getLayer(0).getClass(1).name
-        self.mapobj1.getLayer(0).removeClass(0)
+        c = self.mapobj1.getLayer(0).removeClass(0)
         assert self.mapobj1.getLayer(0).getClass(0).name == c2name
     def testRemoveClass2NumClasses(self):
-        self.mapobj1.getLayer(0).removeClass(1)
+        c = self.mapobj1.getLayer(0).removeClass(1)
         assert self.mapobj1.getLayer(0).numclasses == 1
     def testRemoveClass2ClassName(self):
         c1name = self.mapobj1.getLayer(0).getClass(0).name
-        self.mapobj1.getLayer(0).removeClass(1)
+        c = self.mapobj1.getLayer(0).removeClass(1)
         assert self.mapobj1.getLayer(0).getClass(0).name == c1name
 
 # symbol tests
@@ -233,16 +227,17 @@ class SymbolTestCase(MapPrimitivesTestCase):
         self.mapobj1.symbolset.appendSymbol(symbola) 
         self.mapobj1.symbolset.appendSymbol(symbolb) 
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 4, num
+        assert num == 5, num
     def testRemoveSymbolFromMapSymbolSet(self):
-        self.mapobj1.symbolset.removeSymbol(1)
+        sym = self.mapobj1.symbolset.removeSymbol(1)
+        assert sym.name == 'line'
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 1, num
+        assert num == 2, num
     def testConstructor(self):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
     def testConstructorImage(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
         assert symbol.name == 'xmarks'
         assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
     def testGetPoints(self):
@@ -272,15 +267,15 @@ class SymbolSetTestCase(MapTestCase):
     
     def testGetNumSymbols(self):
         num = self.mapobj1.getNumSymbols()
-        assert num == 2, num
+        assert num == 3, num
     
     def testSymbolSetNumsymbols(self):
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 2, num
+        assert num == 3, num
     
     def testSymbolSetSymbolNames(self):
         set = self.mapobj1.symbolset
-        names = [None, 'line', 'tie']
+        names = [None, 'line', 'xmarks-png']
         for i in range(set.numsymbols):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -296,7 +291,7 @@ class SymbolSetTestCase(MapTestCase):
     def testConstructorFile(self):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         num = symbolset.numsymbols
-        assert num == 2, num
+        assert num == 3, num
     def testAddSymbolToNewSymbolSet(self):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
@@ -304,8 +299,8 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbola) 
         symbolset.appendSymbol(symbolb) 
         num = symbolset.numsymbols
-        assert num == 4, num
-        names = [None, 'line', 'testa', 'testb']
+        assert num == 5, num
+        names = [None, 'line', 'xmarks-png', 'testa', 'testb']
         for i in range(symbolset.numsymbols):
             symbol = symbolset.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -313,7 +308,7 @@ class SymbolSetTestCase(MapTestCase):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbolset.removeSymbol(1)
         num = symbolset.numsymbols
-        assert num == 1, num
+        assert num == 2, num
     def testSaveNewSymbolSet(self):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
@@ -321,23 +316,38 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbola) 
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
+
     def testDrawNewSymbol(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
+        self.mapobj1.setImageType('JPEG')
         symbol_index = self.mapobj1.symbolset.appendSymbol(symbol)
-        assert symbol_index == 2, symbol_index
+        assert symbol_index == 3, symbol_index
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 3, num
+        assert num == 4, num
         inline_layer = self.mapobj1.getLayerByName('INLINE')
+        inline_layer.transparency = mapscript.MS_GD_ALPHA
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
         s.size = 24
         msimg = self.mapobj1.draw()
         assert msimg.thisown == 1
         data = msimg.saveToString()
-        filename = 'testDrawNewSymbol.png'
+        filename = 'testDrawNewSymbol.jpg'
         fh = open(filename, 'wb')
         fh.write(data)
         fh.close()
+    
+    # Test fix of bugs 926 and 490    
+    def testRGBASymbolOnJPEG(self):
+        inline_layer = self.mapobj1.getLayerByName('INLINE')
+        inline_layer.transparency = mapscript.MS_GD_ALPHA
+        s = inline_layer.getClass(0).getStyle(0)
+        s.symbol = 2
+        s.size = 24
+        self.mapobj1.setImageType('JPEG')
+        msimg = self.mapobj1.draw()
+        filename = 'testRGBASymbol.jpg'
+        msimg.save(filename)
 
 # fontset tests
 class FontSetTestCase(MapTestCase):
@@ -408,6 +418,20 @@ class SaveToStringTestCase(unittest.TestCase):
         else:
             assert 1
 
+class DrawLargeJPEGTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapscript.mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testDrawLargeJPEG(self):
+        self.mapobj1.width = 1000
+        self.mapobj1.height = 800
+        self.mapobj1.setImageType('JPEG')
+        image = self.mapobj1.draw()
+        assert image.height == 800
+        assert image.width == 1000
+        image.save('testLargeJPEG.jpg')
+
 class NoFontSetTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapscript.mapObj('')
@@ -439,7 +463,6 @@ class ExpressionTestCase(unittest.TestCase):
         assert fs == '/foo/', fs
     def testSetLogicalExpression(self):
         self.mapobj1.getLayer(0).setFilter('([foo] >= 2)')
-        #self.mapobj1.getLayer(0).setFilter('foo')
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '([foo] >= 2)', fs
 
@@ -495,7 +518,7 @@ class ZoomPointTestCase(MapPrimitivesTestCase):
         w = 0
         h = -1
         self.assertRaises(mapscript.MapServerError, 
-            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+            self.mapobj1.zoomPoint, -2, p, w, h, extent, None)
     def testZoomBadExtent(self):
         p = mapscript.pointObj()
         p.x, p.y = (50, 50)
@@ -504,7 +527,7 @@ class ZoomPointTestCase(MapPrimitivesTestCase):
         w = 100
         h = 100
         self.assertRaises(mapscript.MapServerError, 
-            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+            self.mapobj1.zoomPoint, -2, p, w, h, extent, None)
 
 class ZoomRectangleTestCase(MapPrimitivesTestCase):
     "testing new zoom* methods that we are adapting from the PHP MapScript"
@@ -642,6 +665,21 @@ class RectObjTestCase(MapPrimitivesTestCase):
         self.assertAlmostEqual(point.x, -1.0)
         self.assertAlmostEqual(point.y, -2.0)
 
+class ImageRectObjTestCase(MapPrimitivesTestCase):
+
+    def testRectObjConstructorArgs(self):
+        """create a rect in image units"""
+        r = mapscript.rectObj(-1.0, 2.0, 3.0, 0.0, mapscript.MS_TRUE)
+        self.assertAlmostEqual(r.minx, -1.0)
+        self.assertAlmostEqual(r.miny, 2.0)
+        self.assertAlmostEqual(r.maxx, 3.0)
+        self.assertAlmostEqual(r.maxy, 0.0)
+
+    def testRectObjConstructorBadYCoords(self):
+        """in image units miny should be greater than maxy"""
+        self.assertRaises(mapscript.MapServerError, mapscript.rectObj,
+                          -1.0, 0.0, 3.0, 2.0, mapscript.MS_TRUE)
+    
 # lineObj tests
 
 class LineObjTestCase(MapPrimitivesTestCase):
@@ -678,11 +716,13 @@ class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""
     
     def copyShape(self, shape):
+        """Try the next generation API, fall back to standard API"""
         try:
             return shape.copy()
-        except AttributeError:
+        except TypeError:
             s = mapscript.shapeObj(shape.type)
-            return shape.copy(s)
+            shape.copy(s)
+            return s
         except:
             raise
 
@@ -733,7 +773,7 @@ class PointObjTestCase(MapscriptTestCase):
 class ColorObjTestCase(unittest.TestCase):
     def testColorObjConstructorNoArgs(self):
         c = mapscript.colorObj()
-        assert (c.red, c.green, c.blue) == (0, 0, 0)
+        assert (c.red, c.green, c.blue, c.pen) == (0, 0, 0, -4)
     def testColorObjConstructorArgs(self):
         c = mapscript.colorObj(1, 2, 3)
         assert (c.red, c.green, c.blue) == (1, 2, 3)
@@ -743,11 +783,11 @@ class ColorObjTestCase(unittest.TestCase):
     def testColorObjSetRGB(self):
         c = mapscript.colorObj()
         c.setRGB(255, 255, 255)
-        assert (c.red, c.green, c.blue) == (255, 255, 255)
+        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
     def testColorObjSetHexLower(self):
         c = mapscript.colorObj()
         c.setHex('#ffffff')
-        assert (c.red, c.green, c.blue) == (255, 255, 255)
+        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
     def testColorObjSetHexUpper(self):
         c = mapscript.colorObj()
         c.setHex('#FFFFFF')
@@ -905,6 +945,7 @@ class NewStylesTestCase(unittest.TestCase):
         new_style = mapscript.styleObj()
         self.assertRaises(mapscript.MapServerChildError, class0.insertStyle, new_style, 6)
 
+
 class InlineFeatureTestCase(MapPrimitivesTestCase):
     """tests for issue http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=562"""
     def setUp(self):
@@ -930,6 +971,7 @@ class InlineFeatureTestCase(MapPrimitivesTestCase):
             inline_layer.getShape(s, 0, 0)
         except TypeError: # next generation API
             s = inline_layer.getShape(0)
+        inline_layer.close()
         l = self.getLineFromShape(s, 0)
         p = self.getPointFromLine(l, 0)
         self.assertAlmostEqual(p.x, -0.2)
@@ -945,11 +987,24 @@ class NewOutputFormatTestCase(unittest.TestCase):
     def tearDown(self):
         self.mapobj1 = None
     def testOutputFormatConstructor(self):
+        """testOutputFormatConstructor may error without GDAL"""
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiff')
         assert new_format.refcount == 1, new_format.refcount
         assert new_format.name == 'gtiff'
         assert new_format.mimetype == 'image/tiff'
+    
+    def testOutputFormatMembers(self):
+        """test set/get of mimetype and extension"""
+        new_format = mapscript.outputFormatObj('GD/JPEG', 'foo')
+        assert new_format.refcount == 1, new_format.refcount
+        assert new_format.name == 'foo'
+        new_format.extension = 'jpig'
+        new_format.mimetype = 'image/jpig'
+        assert new_format.extension == 'jpig'
+        assert new_format.mimetype == 'image/jpig'
+
     def testAppendNewOutputFormat(self):
+        """testAppendNewOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         assert new_format.refcount == 1, new_format.refcount
@@ -962,8 +1017,8 @@ class NewOutputFormatTestCase(unittest.TestCase):
         filename = 'testAppendNewOutputFormat.tif'
         imgobj.save(filename)
     def testRemoveOutputFormat(self):
+        """testRemoveOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats
-        assert num == 6, num
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         self.mapobj1.appendOutputFormat(new_format)
         assert self.mapobj1.numoutputformats == num + 1
@@ -977,6 +1032,9 @@ class NewOutputFormatTestCase(unittest.TestCase):
         assert self.mapobj1.outputformat.mimetype == 'image/tiff'
 
 class MapMetaDataTestCase(MapTestCase):
+    #def testInvalidKeyAccess(self):
+        #self.assertRaises(mapscript.MapServerError, 
+        #                  self.mapobj1.getMetaData, 'foo')
     def testFirstKeyAccess(self):
         key = self.mapobj1.getFirstMetaDataKey()
         assert key == 'key1'
@@ -1025,7 +1083,91 @@ class MapMetaDataTestCase(MapTestCase):
     def testAccessNullClassMetaData(self):
         layer = self.mapobj1.getLayer(1).getClass(1)
         self.assertRaises(mapscript.MapServerError, layer.getFirstMetaDataKey)
+
+class DrawProgrammedStylesTestCase(MapTestCase):
+    
+    def testDrawPoints(self):
+        points = [mapscript.pointObj(-0.2, 51.6),
+                  mapscript.pointObj(0.0, 51.2),
+                  mapscript.pointObj(0.2, 51.6)]
+        colors = [mapscript.colorObj(255,0,0),
+                  mapscript.colorObj(0,255,0),
+                  mapscript.colorObj(0,0,255)]
+        img = self.mapobj1.prepareImage()
+        layer = self.mapobj1.getLayerByName('POINT')
+        class0 = layer.getClass(0)
+        for i in range(len(points)):
+            style0 = class0.getStyle(0)
+            style0.color = colors[i]
+            assert style0.color.toHex() == colors[i].toHex()
+            points[i].draw(self.mapobj1, layer, img, 0, "foo")
+        img.save('test_draw_points.png')
+
+class BrushCachingTestCase(MapTestCase):
+    
+    def testDrawMapWithSecondPolygon(self):
+        """draw a blue polygon and a red polygon"""
+        p = self.mapobj1.getLayerByName('POLYGON')
+        ip = mapscript.layerObj(self.mapobj1)
+        ip.type = mapscript.MS_LAYER_POLYGON
+        ip.status = mapscript.MS_DEFAULT
+        c0 = mapscript.classObj(ip)
         
+        # turn off first polygon layer's color
+        p.getClass(0).getStyle(0).color.setRGB(-1,-1,-1)
+        
+        # copy this style to inline polygon layer, then change outlinecolor
+        c0.insertStyle(p.getClass(0).getStyle(0))
+        st0 = c0.getStyle(0)
+        st0.outlinecolor.setRGB(255, 0, 0)
+        
+        # pull out the first feature from polygon layer, shift it
+        # and use this as an inline feature in new layer
+        p.open()
+        s0 = None
+        try:
+            s0 = mapscript.shapeObj(p.type)
+            p.getShape(s0, -1, 0)
+        except:
+            s0 = p.getShape(0)
+        p.close()
+        r0 = s0.bounds
+        r1 = mapscript.rectObj(r0.minx-0.1, r0.miny-0.1, r0.maxx-0.1, r0.maxy-0.1)
+        s1 = r1.toPolygon()
+        
+        ip.addFeature(s1)
+        img = self.mapobj1.draw()
+        img.save('test_drawmapw2ndpolygon.png')
+        
+class QueryTestCase(MapTestCase):
+    """Query tests"""
+
+    def testLayerQueryRect(self):
+        e = self.mapobj1.extent
+        qrect = mapscript.rectObj(e.minx, e.miny, e.maxx, e.maxy)
+        point_layer = self.mapobj1.getLayerByName('POINT')
+        point_layer.template = 'foo'
+        point_layer.queryByRect(self.mapobj1, qrect)
+        assert point_layer.getNumResults() == 1
+        result = point_layer.getResult(0)
+        assert result.shapeindex == 0, result.shapeindex
+
+    def testLayerQueryRectResults(self):
+        e = self.mapobj1.extent
+        qrect = mapscript.rectObj(e.minx, e.miny, e.maxx, e.maxy)
+        point_layer = self.mapobj1.getLayerByName('POINT')
+        point_layer.template = 'foo'
+        point_layer.queryByRect(self.mapobj1, qrect)
+        assert point_layer.resultcache.numresults == 1
+        assert str(type(point_layer.resultcache.bounds)) == "<class 'mapscript.rectObj'>"
+        result = point_layer.getResult(0)
+        assert result.shapeindex == 0, result.shapeindex
+
+
+
+
+
+
 if __name__ == '__main__':
     unittest.main()
 

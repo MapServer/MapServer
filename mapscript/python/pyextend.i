@@ -46,34 +46,6 @@
     }
 }
 
-/*%extend fontSetObj {
-    
-    // get a list of font alias/filename tuples from the map fontset
-
-    PyObject *getFonts() {
-        int i;
-        PyObject *PyFonts, *PyTemp;
-        struct hashObj *tp=NULL;
-        char **keys;
-
-        keys = (char **)malloc(sizeof(char *) * MS_HASHSIZE);
-        msGetHashTableKeys(self->fonts, keys, MS_HASHSIZE); 
-        
-        PyFonts = PyList_New(0);
-
-        for (i=0; i<MS_HASHSIZE; i++) {
-            if (keys[i] != NULL) {
-                PyTemp = PyTuple_New(2);
-                PyTuple_SetItem(PyTemp, 0, PyString_FromString(tp->key));
-                PyTuple_SetItem(PyTemp, 1, PyString_FromString(tp->data));
-                PyList_Append(PyFonts, PyTemp);
-            }
-        }
-        return PyFonts;
-    }
-            
-}*/
-
 /****************************************************************************
  * Support for bridging Python file-like objects and GD through IOCtx
  ***************************************************************************/
@@ -85,11 +57,7 @@
 %extend imageObj {
 
     /* New imageObj constructor taking an optional PyFile-ish object
-     * argument.
-     *
-     * Furthermore, we are defaulting width and height so that in case
-     * anyone wants to swig mapscript with the -keyword option, they can
-     * omit width and height.  Work done as part of Bugzilla issue 550. */
+     * argument. Work done as part of Bugzilla issue 550. */
 
     imageObj(int width, int height, const char *driver=NULL,
              PyObject *file=Py_None)
@@ -120,11 +88,11 @@
         }
         // Is file a filename?
         else if (PyString_Check(file)) {
-            return msImageLoadGD((char *) PyString_AsString(file));
+            return (imageObj *) msImageLoadGD((char *) PyString_AsString(file));
         }
         // Is a file-like object
         else if (file && driver) {
-            return createImageObjFromPyFile(width, height, file, driver);
+            return (imageObj *) createImageObjFromPyFile(width, height, file, driver);
         }
         else {
             msSetError(MS_IMGERR, "Failed to create image (%s, %s)", "imageObj()", file, driver);
@@ -162,7 +130,7 @@
 %#else
             msSetError(MS_IMGERR, "GIF output is not available.", 
                        "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else if (strcasecmp(self->format->driver, "gd/png") == 0) {
 %#ifdef USE_GD_PNG
@@ -170,7 +138,7 @@
 %#else
             msSetError(MS_IMGERR, "PNG output is not available.", 
                        "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else if (strcasecmp(self->format->driver, "gd/jpeg") == 0) {
 %#ifdef USE_GD_JPEG
@@ -179,7 +147,7 @@
 %#else
             msSetError(MS_IMGERR, "JPEG output is not available.", 
                        "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else if (strcasecmp(self->format->driver, "gd/wbmp") == 0) {
 %#ifdef USE_GD_WBMP
@@ -187,12 +155,12 @@
 %#else
             msSetError(MS_IMGERR, "WBMP output is not available.", 
                       "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else {
             msSetError(MS_IMGERR, "Unknown output image type driver: %s.", 
                        "saveToString()", self->format->driver );
-            return(MS_FAILURE);
+            return NULL;
         } 
         
         imgstring = PyString_FromStringAndSize(imgbytes, size); 
@@ -201,3 +169,4 @@
     }
 
 }
+

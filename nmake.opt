@@ -276,7 +276,7 @@ PHP_DIR=c:\projects\php-4.3.4
 # following line to reflect the missing functions on your platform.
 #
 #STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
-STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
+STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRLCAT
 
 
 ########################################################################

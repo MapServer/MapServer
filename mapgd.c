@@ -37,7 +37,16 @@ static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, in
 
   icp = ic;
   while(icp) {
-    if(icp->symbol == style->symbol && msCompareColors(&icp->color, &style->color) == MS_TRUE && icp->size == size) return(icp->img);
+    /* Now checking all three colors -- SG (bug 868) */
+    if (icp->symbol == style->symbol 
+    && msCompareColors(&icp->color, &style->color) == MS_TRUE
+    && msCompareColors(&icp->outlinecolor, &style->outlinecolor)
+       == MS_TRUE
+    && msCompareColors(&icp->backgroundcolor, &style->backgroundcolor)
+       == MS_TRUE 
+    && icp->size == size) {
+        return(icp->img);
+    }
     icp = icp->next;
   }
 
@@ -63,6 +72,8 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   
   icp->img = img;
   icp->color = style->color;
+  icp->outlinecolor = style->outlinecolor;
+  icp->backgroundcolor = style->backgroundcolor;
   icp->symbol = style->symbol;
   icp->size = size;
   icp->next = ic; // insert at the beginning
@@ -986,6 +997,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   symbolObj *symbol;
   int offset_x, offset_y, x, y;
   int j;
+  int oldAlphaBlending=0;
   gdPoint oldpnt,newpnt;
   gdPoint mPoints[MS_MAXVECTORPOINTS];
   char *error=NULL;
@@ -1061,6 +1073,13 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 
     break;
   case(MS_SYMBOL_PIXMAP):
+    
+    if( gdImageTrueColor(img) )
+    {
+        oldAlphaBlending = img->alphaBlendingFlag;
+        gdImageAlphaBlending( img, 1 );
+    }
+    
     if(size == 1) { // don't scale
       offset_x = MS_NINT(p->x - .5*symbol->img->sx + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
@@ -1071,6 +1090,10 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       offset_y = MS_NINT(p->y - .5*symbol->img->sy*d + oy);
       // gdImageCopyResized(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy);
       gdImageCopyResampled(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy);
+    }
+    if( gdImageTrueColor(img) )
+    {
+        gdImageAlphaBlending( img, oldAlphaBlending );
     }
     break;
   case(MS_SYMBOL_ELLIPSE): // TODO: Need to leverage the image cache!
@@ -2258,7 +2281,8 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 {
   pointObj p;
   int i, j, l;
-
+  int oldAlphaBlending=0;
+  
   rectObj r;
   
   labelCacheMemberObj *cachePtr=NULL;
@@ -2269,6 +2293,10 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
 
+  /* bug 490 - switch on alpha blending for label cache */
+  oldAlphaBlending = img->alphaBlendingFlag;
+  gdImageAlphaBlending( img, 1);
+  
   for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
     cachePtr = &(map->labelcache.labels[l]); // point to right spot in the label cache
@@ -2479,6 +2507,9 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
   } // next label
 
+  /* bug 490 - reverse alpha blending for label cache */
+  gdImageAlphaBlending( img, oldAlphaBlending );
+
   return(0);
 }
 
@@ -2618,6 +2649,7 @@ static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src,  int dstX, int dst
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct)
 {
     int x, y;
+    int oldAlphaBlending;
 
     /* for most cases the GD copy is fine */
     if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) )
@@ -2627,6 +2659,7 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int s
     ** Turn off blending in output image to prevent it doing it's own attempt
     ** at blending instead of using our result. 
     */
+    oldAlphaBlending = dst->alphaBlendingFlag;
     gdImageAlphaBlending( dst, 0 );
 
     for (y = 0; (y < h); y++)
@@ -2675,5 +2708,5 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int s
     /*
     ** Restore original alpha blending flag. 
     */
-    gdImageAlphaBlending( dst, 0 );
+    gdImageAlphaBlending( dst, oldAlphaBlending );
 }

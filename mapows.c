@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.26.2.1  2004/05/03 03:46:14  dan
+ * Include map= param in default onlineresource of GetCapabilties if it
+ * was explicitly set in QUERY_STRING (bug 643)
+ *
  * Revision 1.26  2004/04/14 07:31:40  dan
  * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
  *
@@ -121,8 +125,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
       return status;
 
 #ifdef USE_WMS_SVR
-    if ((status = msWMSDispatch(map, request->ParamNames, request->ParamValues,
-                                request->NumParams)) != MS_DONE )
+    if ((status = msWMSDispatch(map, request)) != MS_DONE )
         return status;
 #endif
 #ifdef USE_WFS_SVR
@@ -202,7 +205,8 @@ int msOWSMakeAllLayersUnique(mapObj *map)
 ** Returns a newly allocated string that should be freed by the caller or
 ** NULL in case of error.
 */
-char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name)
+char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name, 
+                              cgiRequestObj *req)
 {
     const char *value;
     char *online_resource = NULL;
@@ -210,6 +214,8 @@ char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name)
     // We need this script's URL, including hostname.
     // Default to use the value of the "onlineresource" metadata, and if not
     // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?"
+    // (+append the map=... param if it was explicitly passed in QUERY_STRING)
+    //
     if ((value = msLookupHashTable(map->web.metadata, (char*)metadata_name))) 
     {
         online_resource = (char*) malloc(strlen(value)+2);
@@ -228,7 +234,9 @@ char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name)
     }
     else 
     {
-        const char *hostname, *port, *script, *protocol="http";
+        const char *hostname, *port, *script, *protocol="http", *mapparam=NULL;
+        int mapparam_len = 0;
+
         hostname = getenv("SERVER_NAME");
         port = getenv("SERVER_PORT");
         script = getenv("SCRIPT_NAME");
@@ -241,10 +249,34 @@ char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name)
             protocol = "https";
         }
 
+        /* If map=.. was explicitly set then we'll include it in onlineresource
+         */
+        if (req->type == MS_GET_REQUEST)
+        {
+            int i;
+            for(i=0; i<req->NumParams; i++)
+            {
+                if (strcasecmp(req->ParamNames[i], "map") == 0)
+                {
+                    mapparam = req->ParamValues[i];
+                    mapparam_len = strlen(mapparam)+5; /* +5 for "map="+"&" */
+                    break;
+                }
+            }
+        }
+
         if (hostname && port && script) {
-            online_resource = (char*)malloc(sizeof(char)*(strlen(hostname)+strlen(port)+strlen(script)+10));
+            online_resource = (char*)malloc(sizeof(char)*(strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10));
             if (online_resource) 
+            {
                 sprintf(online_resource, "%s://%s:%s%s?", protocol, hostname, port, script);
+                if (mapparam)
+                {
+                    int baselen;
+                    baselen = strlen(online_resource);
+                    sprintf(online_resource+baselen, "map=%s&", mapparam);
+                }
+            }
         }
         else 
         {

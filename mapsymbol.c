@@ -3,6 +3,8 @@
 
 #include "map.h"
 #include "mapfile.h"
+#include "mapcopy.h"
+#include "mapthread.h"
 
 extern int msyylex(); /* lexer globals */
 extern void msyyrestart();
@@ -438,10 +440,29 @@ void msInitSymbolSet(symbolSetObj *symbolset)
   memset( symbolset->symbol, 0, sizeof(symbolObj) );
 }
 
-/*
-** Load the symbols contained in the given file
-*/
+/* ---------------------------------------------------------------------------
+   msLoadSymbolSet and loadSymbolSet
+
+   msLoadSymbolSet wraps calls to loadSymbolSet with mutex acquisition and
+   release.  It should be used everywhere outside the mapfile loading
+   phase of an application.  loadSymbolSet should only be used when a mutex
+   exists.  It does not check for existence of a lock!
+
+   See bug 339 for more details -- SG.
+   ------------------------------------------------------------------------ */
+
 int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
+{
+    int retval = MS_FAILURE;
+    
+    msAcquireLock( TLOCK_PARSER );
+    retval = loadSymbolSet( symbolset, map );
+    msReleaseLock( TLOCK_PARSER );
+
+    return retval;
+}
+
+int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 {
 //  char old_path[MS_PATH_LENGTH];
 //  char *symbol_path;
@@ -620,19 +641,37 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
     int i;
     symbolObj *symbol;
     if (symbolset->numsymbols == 1) {
-        msSetError(MS_CHILDERR, "Cannot remove a symbolset's sole symbol", "removeSymbol()");
+        msSetError(MS_CHILDERR, "Cannot remove a symbolset's sole symbol",
+                   "removeSymbol()");
         return NULL;
     }
     else if (nSymbolIndex < 0 || nSymbolIndex >= symbolset->numsymbols) {
-        msSetError(MS_CHILDERR, "Cannot remove symbol, invalid nSymbolIndex %d", "removeSymbol()", nSymbolIndex);
+        msSetError(MS_CHILDERR, "Cannot remove symbol, invalid index %d",
+                   "removeSymbol()", nSymbolIndex);
         return NULL;
     }
     else {
-        symbol = (symbolObj *)malloc(sizeof(symbolObj));
-        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]), NULL);
-        for (i=nSymbolIndex+1; i<symbolset->numsymbols; i++) {
-            symbolset->symbol[i-1] = symbolset->symbol[i];
+        /* allocate a copy of the removed layer */
+        symbol = (symbolObj *) malloc(sizeof(symbolObj));
+        if (!symbol) {
+            msSetError(MS_MEMERR, 
+                       "Failed to allocate layerObj to return as removed Layer",
+                       "msRemoveLayer");
+            return NULL;
         }
+        initSymbol(symbol);
+        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]), NULL);
+        
+        /* Iteratively copy the higher index symbols down one index */
+        for (i=nSymbolIndex; i<symbolset->numsymbols-1; i++) {
+            freeSymbol(&(symbolset->symbol[i]));
+            initSymbol(&(symbolset->symbol[i]));
+            msCopySymbol(&(symbolset->symbol[i]), &(symbolset->symbol[i+1]),
+                         symbolset->map);
+        }
+        /* Free the extra layer at the end */
+        freeSymbol(&(symbolset->symbol[symbolset->numsymbols-1]));
+        
         symbolset->numsymbols--;
         return symbol;
     }
@@ -641,7 +680,8 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
 int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
     int i;
     if (!symbolset || !stream) {
-        msSetError(MS_SYMERR, "Cannot save symbolset.", "msSaveSymbolSetStream()");
+        msSetError(MS_SYMERR, "Cannot save symbolset.",
+                   "msSaveSymbolSetStream()");
         return MS_FAILURE;
     }
     // Don't ever write out the default symbol at index 0
@@ -721,26 +761,30 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
 
 int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   int i;
-  initSymbol(dst);
-  copyStringProperty(&(dst->name), src->name);
-  copyProperty(&(dst->type), &(src->type), sizeof(int));
-  copyProperty(&(dst->inmapfile), &(src->inmapfile), sizeof(int));
-  copyProperty(&(dst->map), &map, sizeof(mapObj *));
-  copyProperty(&(dst->sizex), &(src->sizex), sizeof(double)),
-  copyProperty(&(dst->sizey), &(src->sizey), sizeof(double));
-  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
-    if (msCopyPoint(&(dst->points[i]), &(src->points[i])) != MS_SUCCESS)
-    {
-      msSetError(MS_MEMERR, "Failed to copy point.", "msCopySymbol()");
-      return(MS_FAILURE);
-    }
-  }
-  copyProperty(&(dst->numpoints), &(src->numpoints), sizeof(int));
-  copyProperty(&(dst->filled), &(src->filled), sizeof(int));
-  copyProperty(&(dst->stylelength), &(src->stylelength), sizeof(int));
   
-  copyProperty(&(dst->style), &(src->style),
-               sizeof(int)*MS_MAXSTYLELENGTH);
+  initSymbol(dst);
+  
+  MS_COPYSTRING(dst->name, src->name);
+  MS_COPYSTELEM(type);
+  MS_COPYSTELEM(inmapfile);
+  
+  /* map is a special case */
+  dst->map = map;
+  
+  MS_COPYSTELEM(sizex);
+  MS_COPYSTELEM(sizey);
+  
+  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
+    MS_COPYPOINT(&(dst->points[i]), &(src->points[i]));
+  }
+  
+  MS_COPYSTELEM(numpoints);
+  MS_COPYSTELEM(filled);
+  MS_COPYSTELEM(stylelength);
+
+  for (i=0; i<MS_MAXSTYLELENGTH; i++) {
+      dst->style[i] = src->style[i];
+  }
   
   //gdImagePtr img;
   if (src->img) {
@@ -752,22 +796,17 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
                  src->img->sx, src->img->sy);
   }
 
-  copyStringProperty(&(dst->imagepath), src->imagepath);
-  copyProperty(&(dst->transparent), &(src->transparent),sizeof(int));
-  
-  copyProperty(&(dst->transparentcolor), &(src->transparentcolor),
-               sizeof(int));
-  
-  copyStringProperty(&(dst->character), src->character);
-  copyProperty(&(dst->antialias), &(src->antialias), sizeof(int));
-  copyStringProperty(&(dst->font), src->font);
-  copyProperty(&(dst->gap), &(src->gap), sizeof(int));
-  copyProperty(&(dst->position), &(src->position), sizeof(int));
-  copyProperty(&(dst->linecap), &(src->linecap), sizeof(int));
-  copyProperty(&(dst->linejoin), &(src->linejoin), sizeof(int));
-  
-  copyProperty(&(dst->linejoinmaxsize), &(src->linejoinmaxsize),
-               sizeof(double));
+  MS_COPYSTRING(dst->imagepath, src->imagepath);
+  MS_COPYSTELEM(transparent);
+  MS_COPYSTELEM(transparentcolor);
+  MS_COPYSTRING(dst->character, src->character);
+  MS_COPYSTELEM(antialias);
+  MS_COPYSTRING(dst->font, src->font);
+  MS_COPYSTELEM(gap);
+  MS_COPYSTELEM(position);
+  MS_COPYSTELEM(linecap);
+  MS_COPYSTELEM(linejoin);
+  MS_COPYSTELEM(linejoinmaxsize);
 
   return(MS_SUCCESS);
 } 
@@ -782,18 +821,14 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
 {
   int i, return_value;
   
-  copyStringProperty(&(dst->filename), src->filename);
-  copyProperty(&(dst->map), &map, sizeof(mapObj *));
-
+  MS_COPYSTRING(dst->filename, src->filename);
+  
+  dst->map = map;
   dst->fontset = &(map->fontset);
   
-  /*if (msCopyFontSet(dst->fontset, src->fontset, map) != MS_SUCCESS) {
-    msSetError(MS_MEMERR,"Failed to copy fontset.","msCopySymbolSet()");
-    return(MS_FAILURE);
-  }*/
-  
-  copyProperty(&(dst->numsymbols), &(src->numsymbols), sizeof(int));
-  
+  MS_COPYSTELEM(numsymbols);
+ 
+  /* Copy child symbols */
   for (i = 0; i < dst->numsymbols; i++) {
     return_value = msCopySymbol(&(dst->symbol[i]), &(src->symbol[i]), map);
     if (return_value != MS_SUCCESS) {
@@ -802,12 +837,12 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
     }
   }
 
-  copyProperty(&(dst->imagecachesize),
-               &(src->imagecachesize), sizeof(int));
+  MS_COPYSTELEM(imagecachesize);
   
   // I have a feeling that the code below is not quite right - Sean
-  copyProperty(&(dst->imagecache), &(src->imagecache),
+  /*copyProperty(&(dst->imagecache), &(src->imagecache),
                sizeof(struct imageCacheObj));
+   */
 
   return(MS_SUCCESS);
 }

@@ -24,13 +24,31 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %}
 #endif
 
+// Hide labelcacheMemberObj from C# due to conflict with member
+// named 'string' (bugs 847, 852).  
+#ifdef SWIGCSHARP
+%ignore labelCacheMemberObj;
+#endif
+
 %module mapscript
 %{
 #include "../../map.h"
 #include "../../maptemplate.h"
+#include "../../mapogcsld.h"
+#include "../../mapcopy.h"
 %}
 
+#ifdef SWIGPYTHON
+%{
+#include "pygdioctx/pygdioctx.h"
+%}
+#endif
+
+// Problem with SWIG CSHARP typemap for pointers
+#ifndef SWIGCSHARP
 %include typemaps.i
+#endif
+
 %include constraints.i
 
 
@@ -231,8 +249,15 @@ memory.") const char * {
     msFreeMap(self);
   }
 
+  /* Avoid conflicts with Java's clone (bug 848). */
+
+#ifdef SWIGJAVA  
+  %newobject clone_;
+  mapObj *clone_() {
+#else
   %newobject clone;
   mapObj *clone() {
+#endif
     mapObj *dstMap;
     dstMap = msNewMapObj();
     if (msCopyMap(dstMap, self) != MS_SUCCESS)
@@ -270,27 +295,46 @@ memory.") const char * {
   /* removeLayer() adjusts the layers array, the indices of
    * the remaining layers, the layersdrawing order, and numlayers
    */
-  int removeLayer(int index) {
-    int i, drawindex = MS_MAXLAYERS + 1;
-    if ((index < 0) || (index >= self->numlayers)) {
-      return MS_FAILURE;
-    }
-    for (i = index + 1; i < self->numlayers; i++) {
-      self->layers[i].index--;
-      self->layers[i-1] = self->layers[i];
-    }
-    for (i = 0; i < self->numlayers; i++) {
-      if (self->layerorder[i] == index) {
-        drawindex = i;
-        break;
+
+  int removeLayer(int nIndex) 
+  {
+      int i;
+      int order_index;
+      
+      if (nIndex < 0 || nIndex >= self->numlayers) {
+          msSetError(MS_CHILDERR, "Cannot remove Layer, invalid index %d",
+                     "msRemoveLayer()", nIndex);
+          return MS_FAILURE;
       }
-      if (i > drawindex) {
-        self->layerorder[i-1] = self->layerorder[i];
+      else {
+          /* Iteratively copy the higher index layers down one index */
+          for (i=nIndex; i<self->numlayers-1; i++) {
+              freeLayer(&(self->layers[i]));
+              initLayer(&(self->layers[i]), self);
+              msCopyLayer(&self->layers[i], &self->layers[i+1]);
+              self->layers[i].index = i;
+          }
+          /* Free the extra layer at the end */
+          freeLayer(&(self->layers[self->numlayers-1]));
+          
+          /* Adjust drawing order */
+          order_index = 0;
+          for (i=0; i<self->numlayers; i++) {
+              if (self->layerorder[i] > nIndex) self->layerorder[i]--;
+              if (self->layerorder[i] == nIndex) {
+                  order_index = i;
+                  break;
+              }
+          }
+          for (i=order_index; i<self->numlayers-1; i++) {
+              self->layerorder[i] = self->layerorder[i+1];
+              if (self->layerorder[i] > nIndex) self->layerorder[i]--;
+          }
+          
+          /* decrement number of layers and return copy of removed layer */
+          self->numlayers--;
+          return MS_SUCCESS;
       }
-    }
-    self->numlayers--;
-    self->layerorder[self->numlayers] = 0;
-    return MS_SUCCESS;
   }
 
   layerObj *getLayer(int i) {
@@ -476,17 +520,17 @@ memory.") const char * {
     return msQueryByShape(self, -1, shape);
   }
 
-  int setWKTProjection(char *string) {
-    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
+  int setWKTProjection(char *wkt) {
+    return msOGCWKT2ProjectionObj(wkt, &(self->projection), self->debug);
   }
 
   %newobject getProjection;
   char *getProjection() {
-    return msGetProjectionString(&(self->projection));
+    return (char *) msGetProjectionString(&(self->projection));
   }
 
-  int setProjection(char *string) {
-    return msLoadProjectionString(&(self->projection), string);
+  int setProjection(char *proj4) {
+    return msLoadProjectionString(&(self->projection), proj4);
   }
 
   int save(char *filename) {
@@ -502,7 +546,17 @@ memory.") const char * {
   }
 
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->web.metadata, name));
+    char *value = NULL;
+    if (!name) {
+      msSetError(MS_HASHERR, "NULL key", "getMetaData");
+    }
+     
+    value = (char *) msLookupHashTable(self->web.metadata, name);
+    if (!value) {
+      msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
+      return NULL;
+    }
+    return value;
   }
 
   int setMetaData(char *name, char *value) {
@@ -518,11 +572,11 @@ memory.") const char * {
   }
 
   char *getFirstMetaDataKey() {
-    return msFirstKeyFromHashTable(self->web.metadata);
+    return (char *) msFirstKeyFromHashTable(self->web.metadata);
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return msNextKeyFromHashTable(self->web.metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(self->web.metadata, lastkey);
   }
   
   int setSymbolSet(char *szFileName) {
@@ -605,7 +659,7 @@ memory.") const char * {
     
     %newobject generateSLD;
     char *generateSLD() {
-        return msSLDGenerateSLD(self, -1);
+        return (char *) msSLDGenerateSLD(self, -1);
     }
 
 
@@ -613,22 +667,22 @@ memory.") const char * {
     char *processTemplate(int bGenerateImages, char **names, char **values,
                           int numentries)
     {
-        return msProcessTemplate(self, bGenerateImages, names, values,
+        return (char *) msProcessTemplate(self, bGenerateImages, names, values,
                                  numentries);
     }
   
     %newobject processLegendTemplate;
     char *processLegendTemplate(char **names, char **values, int numentries) {
-        return msProcessLegendTemplate(self, names, values, numentries);
+        return (char *) msProcessLegendTemplate(self, names, values, numentries);
     }
   
     %newobject processQueryTemplate;
     char *processQueryTemplate(char **names, char **values, int numentries) {
-        return msProcessQueryTemplate(self, 1, names, values, numentries);
+        return (char *) msProcessQueryTemplate(self, 1, names, values, numentries);
     }
 
     outputFormatObj *getOutputFormatByName(char *name) {
-        return msSelectOutputFormat(self, name); 
+        return (outputFormatObj *) msSelectOutputFormat(self, name); 
     }
     
     int appendOutputFormat(outputFormatObj *format) {
@@ -657,16 +711,20 @@ memory.") const char * {
     }
 
     ~symbolObj() {
-        if (self->name) free(self->name);
-        if (self->img) gdImageDestroy(self->img);
-        if (self->font) free(self->font);
-        if (self->imagepath) free(self->imagepath);
+        if (self)
+        {
+            msFree(self->name);
+            msFree(self->font);
+            msFree(self->imagepath);
+            if (self->img) gdImageDestroy(self->img);
+            free(self);
+        }
     }
 
     int setPoints(lineObj *line) {
         int i;
         for (i=0; i<line->numpoints; i++) {
-            msCopyPoint(&(self->points[i]), &(line->point[i]));
+            MS_COPYPOINT(&(self->points[i]), &(line->point[i]));
         }
         self->numpoints = line->numpoints;
         return self->numpoints;
@@ -715,7 +773,12 @@ memory.") const char * {
     }
    
     ~symbolSetObj() {
-        msFreeSymbolSet(self);
+        if (self)
+        {
+            msFreeSymbolSet(self);
+            msFree(self->filename);
+            free(self);
+        }
     }
 
     symbolObj *getSymbol(int i) {
@@ -774,22 +837,68 @@ memory.") const char * {
     return &(map->layers[map->numlayers-1]);
   }
 
-  ~layerObj() {
-    return; // map deconstructor takes care of it
-  }
-
-  /* removeClass()
-   */
-  void removeClass(int index) {
-    int i;
-    for (i = index + 1; i < self->numclasses; i++) {
-#ifndef __cplusplus
-      self->class[i-1] = self->class[i];
-#else
-      self->_class[i-1] = self->_class[i];
-#endif
+    ~layerObj()
+    {
+        if (!self->map)
+        {
+            freeLayer(self);
+            free(self);
+        }
     }
-    self->numclasses--;
+
+    %newobject removeClass;
+    classObj *removeClass(int nIndex) 
+    {
+        int i;
+        classObj *classobj;
+      
+        if (nIndex < 0 || nIndex >= self->numclasses)
+        {
+            msSetError(MS_CHILDERR, "Cannot remove class, invalid index %d",
+                       "removeClass()", nIndex);
+            return NULL;
+        }
+        else 
+        {
+            classobj = (classObj *) malloc(sizeof(classObj));
+            if (!classobj) {
+                msSetError(MS_MEMERR, 
+                    "Failed to allocate classObj to return as removed Class",
+                    "msRemoveClass");
+                return NULL;
+            }
+        
+            initClass(classobj);
+#ifndef __cplusplus
+            msCopyClass(classobj, &(self->class[nIndex]), NULL);
+#else
+            msCopyClass(classobj, &(self->_class[nIndex]), NULL);
+#endif
+            classobj->layer = NULL;
+
+          /* Iteratively copy the higher index classes down one index */
+          for (i=nIndex; i<self->numclasses-1; i++) {
+#ifndef __cplusplus
+              freeClass(&(self->class[i]));
+              initClass(&(self->class[i]));
+              msCopyClass(&self->class[i], &self->class[i+1], self);
+#else
+              freeClass(&(self->_class[i]));
+              initClass(&(self->_class[i]));
+              msCopyClass(&self->_class[i], &self->_class[i+1], self);
+#endif
+          }
+          /* Free the extra class at the end */
+#ifndef __cplusplus
+          freeClass(&(self->class[self->numclasses-1]));
+#else  
+          freeClass(&(self->_class[self->numclasses-1]));
+#endif
+          
+          /* decrement number of layers and return copy of removed layer */
+          self->numclasses--;
+          return classobj;
+      }
   }
 
   int open() {
@@ -876,7 +985,7 @@ memory.") const char * {
   }
 
   int drawQuery(mapObj *map, imageObj *image) {
-    return msDrawLayer(map, self, image);    
+    return msDrawQueryLayer(map, self, image);    
   }
 
   int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) {
@@ -899,12 +1008,12 @@ memory.") const char * {
     return msQueryByShape(map, self->index, shape);
   }
 
-  int setFilter(char *string) {
-      if (!string || strlen(string) == 0) {
+  int setFilter(char *filter) {
+      if (!filter || strlen(filter) == 0) {
           freeExpression(&self->filter);
           return MS_SUCCESS;
       }
-      else return loadExpressionString(&self->filter, string);
+      else return msLoadExpressionString(&self->filter, filter);
   }
 
   %newobject getFilterString;
@@ -924,19 +1033,19 @@ memory.") const char * {
     return NULL;
   }
 
-  int setWKTProjection(char *string) {
+  int setWKTProjection(char *wkt) {
     self->project = MS_TRUE;
-    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
+    return msOGCWKT2ProjectionObj(wkt, &(self->projection), self->debug);
   }
 
   %newobject getProjection;
   char *getProjection() {    
-    return msGetProjectionString(&(self->projection));
+    return (char *) msGetProjectionString(&(self->projection));
   }
 
-  int setProjection(char *string) {
+  int setProjection(char *proj4) {
     self->project = MS_TRUE;
-    return msLoadProjectionString(&(self->projection), string);
+    return msLoadProjectionString(&(self->projection), proj4);
   }
 
   int addFeature(shapeObj *shape) {    
@@ -964,7 +1073,17 @@ memory.") const char * {
   }
 
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->metadata, name));
+    char *value = NULL;
+    if (!name) {
+      msSetError(MS_HASHERR, "NULL key", "getMetaData");
+    }
+     
+    value = (char *) msLookupHashTable(self->metadata, name);
+    if (!value) {
+      msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
+      return NULL;
+    }
+    return value;
   }
 
   int setMetaData(char *name, char *value) {
@@ -980,24 +1099,24 @@ memory.") const char * {
   }
 
   char *getFirstMetaDataKey() {
-      return msFirstKeyFromHashTable(self->metadata);
+      return (char *) msFirstKeyFromHashTable(self->metadata);
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return msNextKeyFromHashTable(self->metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(self->metadata, lastkey);
   }
   
     %newobject getWMSFeatureInfoURL;
     char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y,
                                int feature_count, char *info_format)
     {
-        return(msWMSGetFeatureInfoURL(map, self, click_x, click_y,
-               feature_count, info_format));
+        return (char *) msWMSGetFeatureInfoURL(map, self, click_x, click_y,
+               feature_count, info_format);
     }
  
     %newobject executeWFSGetFeature;
     char *executeWFSGetFeature(layerObj *layer) {
-        return (msWFSExecuteGetFeature(layer));
+        return (char *) msWFSExecuteGetFeature(layer);
     }
 
     int applySLD(char *sld, char *stylelayer) {
@@ -1010,7 +1129,7 @@ memory.") const char * {
 
     %newobject generateSLD; 
     char *generateSLD() {
-        return msSLDGenerateSLD(self->map, self->index);
+        return (char *) msSLDGenerateSLD(self->map, self->index);
     }
 
     int moveClassUp(int index) {
@@ -1026,7 +1145,7 @@ memory.") const char * {
     }
 
     char *getProcessing(int index) {
-        return msLayerGetProcessing(self, index);
+        return (char *) msLayerGetProcessing(self, index);
     }
 
     int clearProcessing() {
@@ -1078,29 +1197,37 @@ memory.") const char * {
 //
 %extend classObj {
 
-  classObj(layerObj *layer) {
-    if(layer->numclasses == MS_MAXCLASSES) // no room
+  classObj(layerObj *layer) 
+  {
+    if (!layer) return NULL;
+    if (layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
 
     if(initClass(&(layer->class[layer->numclasses])) == -1)
       return NULL;
+    
     layer->class[layer->numclasses].type = layer->type;
-
+    layer->class[layer->numclasses].layer = layer;
     layer->numclasses++;
 
     return &(layer->class[layer->numclasses-1]);
   }
 
-  ~classObj() {
-    return; // do nothing, map deconstrutor takes care of it all
-  }
+    ~classObj()
+    {
+        if (!self->layer)
+        {
+            freeClass(self);
+            free(self);
+        }
+    }
 
-  int setExpression(char *string) {
-      if (!string || strlen(string) == 0) {
+  int setExpression(char *expression) {
+      if (!expression || strlen(expression) == 0) {
           freeExpression(&self->expression);
           return MS_SUCCESS;
       }
-      else return loadExpressionString(&self->expression, string);
+      else return msLoadExpressionString(&self->expression, expression);
   }
 
   %newobject getExpressionString;
@@ -1121,12 +1248,22 @@ memory.") const char * {
   }
 
   // Should be deprecated!  Completely bogus layer argument.  SG.
-  int setText(layerObj *layer, char *string) {
-    return loadExpressionString(&self->text, string);
+  int setText(layerObj *layer, char *text) {
+    return msLoadExpressionString(&self->text, text);
   }
 
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->metadata, name));
+    char *value = NULL;
+    if (!name) {
+      msSetError(MS_HASHERR, "NULL key", "getMetaData");
+    }
+     
+    value = (char *) msLookupHashTable(self->metadata, name);
+    if (!value) {
+      msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
+      return NULL;
+    }
+    return value;
   }
 
   int setMetaData(char *name, char *value) {
@@ -1138,11 +1275,11 @@ memory.") const char * {
   }
 
   char *getFirstMetaDataKey() {
-    return msFirstKeyFromHashTable(self->metadata);
+    return (char *) msFirstKeyFromHashTable(self->metadata);
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return msNextKeyFromHashTable(self->metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(self->metadata, lastkey);
   }
   
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
@@ -1171,7 +1308,7 @@ memory.") const char * {
 
     %newobject removeStyle;
     styleObj *removeStyle(int index) {
-        return msRemoveStyle(self, index);
+        return (styleObj *) msRemoveStyle(self, index);
     }
 
     int moveStyleUp(int index) {
@@ -1202,8 +1339,8 @@ memory.") const char * {
     free(self);
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectPoint(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectPoint(projin, projout, self);
   }	
 
   int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
@@ -1253,8 +1390,8 @@ memory.") const char * {
     free(self);		
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectLine(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectLine(projin, projout, self);
   }
 
 #ifdef NEXT_GENERATION_API
@@ -1326,8 +1463,8 @@ memory.") const char * {
     free(self);		
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectShape(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectShape(projin, projout, self);
   }
 
 #ifdef NEXT_GENERATION_API
@@ -1426,14 +1563,28 @@ memory.") const char * {
 // class extensions for rectObj
 //
 %extend rectObj {
-  rectObj(double minx=0.0, double miny=0.0, double maxx=0.0, double maxy=0.0) {	
+  rectObj(double minx=0.0, double miny=0.0, double maxx=0.0, double maxy=0.0,
+          int imageunits=MS_FALSE) {	
     rectObj *rect;
     
-    // Check bounds
-    if (minx > maxx || miny > maxy) {
-        msSetError(MS_MISCERR, "Invalid bounds.", "rectObj()");
-        return NULL;
-    }
+        // Check bounds
+        if (imageunits == MS_FALSE) {  // a normal easting/northing rect
+        
+            if (minx > maxx || miny > maxy) {
+                msSetError(MS_MISCERR, "Invalid bounds.", "rectObj()");
+                return NULL;
+            }
+        }
+        else { // a pixel/line image rect
+        
+            if (minx > maxx || maxy > miny) {
+                msSetError(MS_MISCERR, 
+                    "Invalid bounds for image (pixel/line) rectangle.",
+                    "rectObj()");
+                return NULL;
+            }
+        }
+
     
     rect = (rectObj *)calloc(1, sizeof(rectObj));
     if(!rect)
@@ -1451,8 +1602,8 @@ memory.") const char * {
     free(self);
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectRect(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectRect(projin, projout, self);
   }
 
   double fit(int width, int height) {
@@ -1606,7 +1757,7 @@ memory.") const char * {
         outputFormatObj *format;
 
         if (file) {
-            return msImageLoadGD(file);
+            return (imageObj *) msImageLoadGD(file);
         }
         else {
             if (driver) {
@@ -1636,8 +1787,10 @@ memory.") const char * {
     msFreeImage(self);    
   }
 
+  // Deprecated in 4.2 - users should delete or undef instances instead
+  // of calling the free method.
   void free() {
-    msFreeImage(self);    
+    //msFreeImage(self);    
   }
 
     /* saveGeo - see Bugzilla issue 549 */ 
@@ -1734,9 +1887,10 @@ memory.") const char * {
     format = msCreateDefaultOutputFormat(NULL, driver);
     if( format != NULL ) 
         format->refcount++;
-    if (name != NULL)
+    if (name != NULL) {
+        free(format->name);
         format->name = strdup(name);
-    
+    }
     return format;
   }
 
@@ -1745,6 +1899,12 @@ memory.") const char * {
       msFreeOutputFormat( self );
   }
 
+/* SWIG for Java automatically emits getFoo/setFoo functions for each
+   attribute.  Since outputFormatObj.extension and mimetype are 
+   directly accessible, there's no need for these extension methods
+   (bug 848).*/
+   
+#ifndef SWIGJAVA
   void setExtension( const char *extension ) {
     msFree( self->extension );
     self->extension = strdup(extension);
@@ -1754,6 +1914,7 @@ memory.") const char * {
     msFree( self->mimetype );
     self->mimetype = strdup(mimetype);
   }
+#endif
 
   void setOption( const char *key, const char *value ) {
     msSetOutputFormatOption( self, key, value );
@@ -1771,7 +1932,7 @@ memory.") const char * {
 // class extensions for projectionObj
 //
 %extend projectionObj {
-  projectionObj(char *string) {
+  projectionObj(char *proj4) {
     int status;
     projectionObj *proj=NULL;
 
@@ -1779,7 +1940,7 @@ memory.") const char * {
     if(!proj) return NULL;
     msInitProjection(proj);
 
-    status = msLoadProjectionString(proj, string);
+    status = msLoadProjectionString(proj, proj4);
     if(status == -1) {
       msFreeProjection(proj);
       free(proj);
@@ -1842,7 +2003,7 @@ memory.") const char * {
 
 %extend colorObj {
   
-    colorObj(int red=0, int green=0, int blue=0) {
+    colorObj(int red=0, int green=0, int blue=0, int pen=MS_PEN_UNSET) {
         colorObj *color;
         
         // Check colors
@@ -1858,6 +2019,7 @@ memory.") const char * {
         color->red = red;
         color->green = green;
         color->blue = blue;
+        color->pen = pen;
 
         return(color);    	
     }
@@ -1876,6 +2038,8 @@ memory.") const char * {
         self->red = red;
         self->green = green;
         self->blue = blue;
+        self->pen = MS_PEN_UNSET;
+        
         return MS_SUCCESS;
     }
 
@@ -1892,6 +2056,8 @@ memory.") const char * {
             self->red = red;
             self->green = green;
             self->blue = blue;
+            self->pen = MS_PEN_UNSET;
+            
             return MS_SUCCESS;
         }
         else {
@@ -1911,11 +2077,11 @@ memory.") const char * {
 %extend fontSetObj {
    
   char *getFirstFont() {
-    return msFirstKeyFromHashTable(self->fonts);
+    return (char *) msFirstKeyFromHashTable(self->fonts);
   }
  
   char *getNextFont(char *font) {
-    return msNextKeyFromHashTable(self->fonts, font);
+    return (char *) msNextKeyFromHashTable(self->fonts, font);
   }
   
 }

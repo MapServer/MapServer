@@ -27,6 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.65.2.1  2004/07/28 17:53:07  dan
+ * Pass FEATURE_COUNT instead of FEATURECOUNT in GetFeatureInfo (bug 790)
+ *
+ * Revision 1.65  2004/04/17 06:33:24  dan
+ * Increased precision of values written to .wld file for WMS layers (bug 446)
+ *
  * Revision 1.64  2004/04/05 21:57:06  assefa
  * Fix bug in msWMSGetFeatureInfoURL not passing a wmsparams structure to the
  * msBuildWMSLayerURL.
@@ -676,7 +682,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         // and if not passed then the behavior is up to the server
         if (nFeatureCount > 0)
         {
-            msSetWMSParamInt(psWMSParams, "FEATURECOUNT", nFeatureCount);
+            msSetWMSParamInt(psWMSParams, "FEATURE_COUNT", nFeatureCount);
         }
 
     }
@@ -1082,23 +1088,24 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
             strcpy(wldfile+strlen(wldfile)-3, "wld");
         if (wldfile && (fp = fopen(wldfile, "wt")) != NULL)
         {
-            fprintf(fp, "%f\n", MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
-                                            pasReqInfo[iReq].bbox.maxx, 
-                                            map->width));
+            fprintf(fp, "%.12f\n", MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
+                                               pasReqInfo[iReq].bbox.maxx, 
+                                               map->width));
             fprintf(fp, "0\n");
             fprintf(fp, "0\n");
-            fprintf(fp, "%f\n", MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
-                                            pasReqInfo[iReq].bbox.miny, 
-                                            map->height));
-            fprintf(fp, "%f\n", pasReqInfo[iReq].bbox.minx);
-            fprintf(fp, "%f\n", pasReqInfo[iReq].bbox.maxy);
+            fprintf(fp, "%.12f\n", MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
+                                               pasReqInfo[iReq].bbox.miny, 
+                                               map->height));
+            fprintf(fp, "%.12f\n", pasReqInfo[iReq].bbox.minx);
+            fprintf(fp, "%.12f\n", pasReqInfo[iReq].bbox.maxy);
             fclose(fp);
 
             // GDAL should be called to reproject automatically.
             if (msDrawRasterLayerLow(map, lp, img) != 0)
                 status = MS_FAILURE;
 
-            unlink(wldfile);
+            if (!lp->debug)
+                unlink(wldfile);
         }
         else
         {

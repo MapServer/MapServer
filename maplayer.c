@@ -124,10 +124,15 @@ int msLayerOpen(layerObj *layer)
 
     layer->layerinfo = shpfile;
 
-    if(msSHPOpenFile(shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1) 
+    if(msSHPOpenFile(shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1)
+    {
       if(msSHPOpenFile(shpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->data)) == -1)
+      {
+        layer->layerinfo = NULL;
+        free(shpfile);
         return(MS_FAILURE);
-   
+      }
+    }
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
