@@ -2196,13 +2196,14 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(EXTENT):
     {
-        if(getDouble(&(layer->extent.minx)) == -1) return(NULL);
-        if(getDouble(&(layer->extent.miny)) == -1) return(NULL);
-        if(getDouble(&(layer->extent.maxx)) == -1) return(NULL);
-        if(getDouble(&(layer->extent.maxy)) == -1) return(NULL);
+        if(getDouble(&(layer->extent.minx)) == -1) return(-1);
+        if(getDouble(&(layer->extent.miny)) == -1) return(-1);
+        if(getDouble(&(layer->extent.maxx)) == -1) return(-1);
+        if(getDouble(&(layer->extent.maxy)) == -1) return(-1);
         if (!MS_VALID_EXTENT(layer->extent)) {
-        	msSetError(MS_MISCERR, "Given layer extent is invalid.", "loadLayer()"); 
-        	return(NULL);
+            msSetError(MS_MISCERR, "Given layer extent is invalid.", 
+                       "loadLayer()"); 
+            return(-1);
         }
         break;
     }
@@ -2793,7 +2794,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       if(getDouble(&(ref->extent.maxy)) == -1) return(-1);
       if (!MS_VALID_EXTENT(ref->extent)) {
       	msSetError(MS_MISCERR, "Given reference extent is invalid.", "loadReferenceMap()"); 
-        return(NULL);
+        return(-1);
       	}
       break;  
     case(IMAGE):
@@ -2865,8 +2866,8 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     if(getDouble(&(ref->extent.maxy)) == -1) return;
     if (!MS_VALID_EXTENT(ref->extent)) {
     	msSetError(MS_MISCERR, "Given reference extent is invalid.", "loadReferenceMapString()"); 
-      return(NULL);
-    	}
+      return;
+    }
     break;  
   case(IMAGE):
     msFree(ref->image); ref->image = NULL;
@@ -3668,10 +3669,10 @@ int loadWeb(webObj *web, mapObj *map)
       if(getDouble(&(web->extent.miny)) == -1) return(-1);
       if(getDouble(&(web->extent.maxx)) == -1) return(-1);
       if(getDouble(&(web->extent.maxy)) == -1) return(-1);
-	    if (!MS_VALID_EXTENT(web->extent)) {
-	    	msSetError(MS_MISCERR, "Given web extent is invalid.", "loadWeb()"); 
-	      return(NULL);
-	    	}
+      if (!MS_VALID_EXTENT(web->extent)) {
+          msSetError(MS_MISCERR, "Given web extent is invalid.", "loadWeb()"); 
+          return(-1);
+      }
       break;
     case(FOOTER):
       if(getString(&web->footer) == MS_FAILURE) return(-1);
@@ -3738,8 +3739,8 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     if(getDouble(&(web->extent.maxy)) == -1) return;
     if (!MS_VALID_EXTENT(web->extent)) {
     	msSetError(MS_MISCERR, "Given web extent is invalid.", "loadWeb()"); 
-      return(NULL);
-    	}
+        return;
+    }
     break;
   case(FOOTER):
     if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
@@ -4319,9 +4320,9 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getDouble(&(map->extent.maxx)) == -1) break;
       if(getDouble(&(map->extent.maxy)) == -1) break;
       if (!MS_VALID_EXTENT(map->extent)) {
-  			msSetError(MS_MISCERR, "Given map extent is invalid.", "msLoadMapString()"); 
-    		return(NULL);
-  			}
+          msSetError(MS_MISCERR, "Given map extent is invalid.", "msLoadMapString()"); 
+          break;
+      }
       msMapComputeGeotransform( map );
       break;
     case(ANGLE):
