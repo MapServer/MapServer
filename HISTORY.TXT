@@ -14,6 +14,7 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.4.0-beta4?
 --------------------
+- Fixed : SLD rasters was failing when there was Spatial Filter (Bug 1087) 
 
 - Fixed mapwfslayer.c build error when WFS was not enabled (bug 1083)
 
