@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.115  2004/05/28 05:12:34  sdlime
+ * Fixed (I believe) bug 660, a memory leak in msDrawRasterLow()...
+ *
  * Revision 1.114  2004/04/16 20:19:39  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -1492,7 +1495,9 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       else {  
 	    sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
 	    filename = tilename;
-      }      
+      }
+      
+      msFreeShape(&tshp); // done with the shape
     } else {
       filename = layer->data;
       done = MS_TRUE; // only one image so we're done after this
@@ -1683,7 +1688,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       freeLayer(tlp);
       free(tlp);
     }
-    msFreeShape(&tshp);
   }
 
   return 0;
