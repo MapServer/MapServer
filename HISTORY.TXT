@@ -23,6 +23,8 @@ Version 4.4.1 (???)
 - Fixed wms 1.1.1 capabilities issue : It points now to WMS_MS_Capabilities.dtd
    instead of capabilities_1_1_1.dtd (Bug 1097)
 
+- Fixed problem with accumlated error stacks in fastcgi mode.  Bug 1122
+
 Version 4.4.0 (2004-11-29)
 --------------------------
 
