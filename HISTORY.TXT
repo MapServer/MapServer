@@ -16,7 +16,16 @@ the CVS logs is updated daily at the following URL:
 Version 3.7-dev (CVS)
 ---------------------
 
-- Removed shapepath argument to all layer access functions (affects MapScript)
+- msQueryByShape and msQueryByFeature honor layer tolerances. In effect you can to buffered
+  queries now. At the momoment only polygon select features are supported, but there's nothing
+  inherent in the underlying computations that says lines won't work as well.
+
+- Simple one-to-one joins are working again. Reworked the join code so that table connections
+  are persistant within a join (across joins is a todo). Joins, like layers are wrapped with
+  a connection neutral front end, that sets us up to do MySQL or whatever in addition to XBase.
+
+- Removed shapepath argument to all layer access functions (affects MapScript). It's still used
+  but we leverage the layer pointer back to the parent mapObj so the API is cleaner.
 
 - Changed default presentation of feature attributes to escape a few problematic
   characters for HTML display (eg. > becomes &gt;). Added [itemname_raw] substitution
