@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/03/11 23:03:56  assefa
+ * Correct bug in a loop in function msDrawRasterLayerGDAL_16BitClassification
+ *
  * Revision 1.22  2004/03/08 17:50:22  frank
  * completed 16bit classified support
  *
@@ -1521,12 +1524,12 @@ msDrawRasterLayerGDAL_16BitClassification(
     
     for( i = 1; i < nPixelCount; i++ )
     {
-        if( bGotNoData && pafRawData[0] == fNoDataValue )
+        if( bGotNoData && pafRawData[i] == fNoDataValue )
             continue;
 
         if( !bGotFirstValue )
         {
-            fDataMin = fDataMax = pafRawData[0];
+            fDataMin = fDataMax = pafRawData[i];
             bGotFirstValue = TRUE;
         }
         else
