@@ -117,6 +117,9 @@ typedef struct {
   DBFHandle hDBF; // DBF file pointer 
 #endif
 
+  int *indexes; // what items do we need to retrieve from this shapefile
+  int numindexes;
+  
   int lastshape;
 
   char *status;
