@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.126  2004/10/25 17:38:44  julien
+ * Remove debug info tag.
+ *
  * Revision 1.125  2004/10/25 17:30:38  julien
  * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
  *
@@ -1107,10 +1110,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        char *pszMetadataName;
        pszMetadataName = (char*)malloc(strlen(pszStyle)+205);
        sprintf(pszMetadataName, "style_%s_legendurl_href", pszStyle);
-       fprintf(stdout, "        <%s/>\n",pszMetadataName);
+
        if(msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName) != NULL)
        {
-       fprintf(stdout, "        <%s/>\n",pszMetadataName);
            if(nVersion <= OWS_1_0_0)
            {
                // First, print the style block
