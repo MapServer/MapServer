@@ -688,7 +688,9 @@ queryResultObj *msQueryUsingPoint(mapObj *map, char *layer, int mode, pointObj p
   char *status=NULL; // bit array 
   int index, queryItemIndex;
 
-  shapeObj shape={0,NULL,{-1,-1,-1,-1},MS_NULL};
+  shapeObj shape;
+
+  msInitShape(&shape);
 
   /*
   ** Do we have query layer, if not we need to search all layers
@@ -723,7 +725,7 @@ queryResultObj *msQueryUsingPoint(mapObj *map, char *layer, int mode, pointObj p
     }
 
     if(msOpenSHPFile(&shpfile, "rb", map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
-  
+    
     if(buffer <= 0) { /* use layer tolerance */ 
       if(map->layers[l].toleranceunits == MS_PIXELS)
 	tolerance = map->layers[l].tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
