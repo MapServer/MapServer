@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/03/02 04:23:36  assefa
+ * Partial support of symbols (vector and ellipse).
+ *
  * Revision 1.9  2005/02/21 22:22:32  assefa
  * Add code for GOSVG_LATLONG_TRANSFORMATION.
  *
@@ -673,7 +676,7 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 
 #define Tcl_UniChar int
 #define TCL_UTF_MAX 3
-
+//comes from gd source code.
 static int gdTcl_UtfToUniChar (char *str, Tcl_UniChar * chPtr)
 {
   int byte;
@@ -1283,6 +1286,17 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image, 
                           pointObj *p, styleObj *style, double scalefactor)
 {
+    char szTmp[100];
+    symbolObj *symbol=NULL;
+    double size,d;
+    int width;
+    int x,y,rx,ry;
+    char *pszFill = NULL, *pszStroke=NULL;
+    int bFillSetToNone = 0;
+    int i, j, k;
+    pointObj mPoints[MS_MAXVECTORPOINTS];
+    pointObj oldpnt,newpnt;
+    int offset_x, offset_y;
 
 /* -------------------------------------------------------------------- */
 /*      if not svg or invaid inputs, return.                            */
@@ -1290,7 +1304,210 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     if (!image || !p || !style || !MS_DRIVER_SVG(image->format) )
       return;
    
+    if(!p) return;
+
+    symbol = &(symbolset->symbol[style->symbol]);
+
+ 
+    if(style->size == -1) {
+    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = MS_NINT(size*scalefactor);
+    } else
+      size = MS_NINT(style->size*scalefactor);
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
+
+    width = MS_NINT(style->width*scalefactor);
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
+
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+    
+    if (!MS_VALID_COLOR(style->color) && !MS_VALID_COLOR(style->outlinecolor) && 
+        symbol->type != MS_SYMBOL_PIXMAP)
+      return;
+
+     if(size < 1) return; /* size too small */
+
+     if(style->symbol == 0 )//&& fc >= 0) { /* simply draw a single pixel of the specified color */
+     {
+         //gdImageSetPixel(img, (int)(p->x + ox), (int)(p->y + oy), fc);
+         return;
+     }
+
+      switch(symbol->type) 
+      { 
+          case(MS_SYMBOL_TRUETYPE): 
+            
+            break;
+
+          case(MS_SYMBOL_PIXMAP):
+            break;
+            
+          case(MS_SYMBOL_ELLIPSE):
+            d = size/symbol->sizey;
+            rx = MS_NINT((symbol->sizex*d)/2);
+            ry = MS_NINT((symbol->sizey*d)/2);
+            
+            x = MS_NINT(p->x  + style->offsetx);
+            y = MS_NINT(p->y  + style->offsety);
+
+            //TODO : style->angle
+            pszFill = strcatalloc(pszFill,"");
+            if (MS_VALID_COLOR(style->color) && symbol->filled)
+            {
+                sprintf(szTmp, "fill=\"#%02x%02x%02x\"",style->color.red, 
+                        style->color.green,
+                        style->color.blue);
+                pszFill = strcatalloc(pszFill, szTmp);
+            }
+            else
+            {
+                pszFill = strcatalloc(pszFill,"fill=\"none\"");
+                bFillSetToNone =1;
+            }
+            pszStroke = strcatalloc(pszStroke, "");
+            if (MS_VALID_COLOR(style->outlinecolor))
+            {
+                sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",style->outlinecolor.red, 
+                        style->outlinecolor.green,
+                        style->outlinecolor.blue);
+                pszStroke = strcatalloc(pszStroke, szTmp);
+            } 
+            else if (bFillSetToNone)
+            {
+                //if the fill color is not setc (or the symbol is not filled) and 
+                //the outline color is not set, set the stroke to black. 
+                //This is the way the gd outputs reacts to this case
+                sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",0,0,0);
+                pszStroke = strcatalloc(pszStroke, szTmp);
+            }
+            
+
+            msIO_fprintf(image->img.svg->stream, "<ellipse cx=\"%d\" cy=\"%d\" rx=\"%d\" ry=\"%d\" %s %s />\n", x, y, rx, ry, pszFill, pszStroke);
+            msFree(pszFill);
+            msFree(pszStroke);
+            
+            break;
+
+          case(MS_SYMBOL_VECTOR):
+            d = size/symbol->sizey;
+            offset_x = MS_NINT(p->x - d*.5*symbol->sizex +  style->offsetx);
+            offset_y = MS_NINT(p->y - d*.5*symbol->sizey +  style->offsety);
+
+            pszFill = strcatalloc(pszFill,"");
+            if (MS_VALID_COLOR(style->color) && symbol->filled)
+            {
+                sprintf(szTmp, "fill=\"#%02x%02x%02x\"",
+                        style->color.red, 
+                        style->color.green,
+                        style->color.blue);
+                pszFill = strcatalloc(pszFill, szTmp);
+            }
+            else
+            {
+                bFillSetToNone = 1;
+                pszFill = strcatalloc(pszFill,"fill=\"none\"");
+            }
+            pszStroke = strcatalloc(pszStroke, "");
+            if (MS_VALID_COLOR(style->outlinecolor))
+            {
+                sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",
+                        style->outlinecolor.red, 
+                        style->outlinecolor.green,
+                        style->outlinecolor.blue);
+                pszStroke = strcatalloc(pszStroke, szTmp);
+            }
+            else if (bFillSetToNone)
+            {
+                //if the fill color is not setc (or the symbol is not filled) and 
+                //the outline color is not set, set the stroke to black. 
+                //This is the way the gd outputs reacts to this case
+                sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",0,0,0);
+                pszStroke = strcatalloc(pszStroke, szTmp);
+            }
+            if (width <= 0)
+              width = 1;
+
+            if(symbol->filled) 
+            { /* if filled */
+                k = 0; /* point counter */
+                for(j=0;j < symbol->numpoints;j++) 
+                {
+                    if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) 
+                    { /* new polygon (PENUP) */
+                        if(k>2) 
+                        {
+                            
+                            msIO_fprintf(image->img.svg->stream, 
+                                         "<polygon %s %s  stroke-width=\"%d\" %s points=\"", 
+                                         pszFill, pszStroke, width);
+                            
+                            for (i=0; i<k;i++)
+                            {
+                                 msIO_fprintf(image->img.svg->stream, " %d,%d", 
+                                              (int)mPoints[i].x, (int)mPoints[i].y);
+                            }
+                            msIO_fprintf(image->img.svg->stream, "\"/>\n");
+                        }
+                        k = 0; /* reset point counter */
+                    } 
+                    else 
+                    {
+                        mPoints[k].x = MS_NINT(d*symbol->points[j].x + offset_x);
+                        mPoints[k].y = MS_NINT(d*symbol->points[j].y + offset_y); 
+                        k++;
+                    }
+                }
+
+                msIO_fprintf(image->img.svg->stream, 
+                             "<polygon %s %s  stroke-width=\"%d\" %s points=\"", 
+                             pszFill, pszStroke, width);
+                            
+                for (i=0; i<k;i++)
+                {
+                    msIO_fprintf(image->img.svg->stream, " %d,%d", 
+                                 (int)mPoints[i].x, (int)mPoints[i].y);
+                }
+                msIO_fprintf(image->img.svg->stream, "\"/>\n");
+                
+            }
+            else
+            { /* NOT filled */     
+                
+                 
+
+                oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); /* convert first point in marker s */
+                oldpnt.y = MS_NINT(d*symbol->points[0].y + offset_y);
+      
+                for(j=1;j < symbol->numpoints;j++) { /* step through the marker s */
+                    if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
+                        oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
+                        oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
+                    } else {
+                        if((symbol->points[j-1].x < 0) && (symbol->points[j-1].y < 0)) { /* Last point was PENUP, now a new beginning */
+                            oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
+                            oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
+                        } else {
+                            newpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
+                            newpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
+                            msIO_fprintf(image->img.svg->stream, 
+                              "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" %s %s stroke-width=\"%d\" stroke-linecap=\"round\" />\n",
+                                         (int)oldpnt.x, (int)oldpnt.y, (int)newpnt.x, (int)newpnt.y,
+                                         pszFill, pszStroke, width);
+                            oldpnt = newpnt;
+                        }
+                    }
+                } /* end for loop */   
+
+            }
+            break;
+           
+          default:
+            break;
+      }  
 }
+
 
 
 /************************************************************************/
@@ -1387,7 +1604,7 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
             if( fp == NULL )
             {
                 msSetError( MS_MISCERR, 
-                            "Failed to open %s for streaming to stdout.",
+                            "Failed to open temporaray svg file %s",
                             "msSaveImageSVG()", image->img.svg->filename);
                 return MS_FAILURE;
             }
