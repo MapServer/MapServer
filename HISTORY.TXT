@@ -16,7 +16,7 @@ the CVS logs is updated daily at the following URL:
 Version 4.0-dev (CVS)
 ------------------------------
 
--
+- Added prototype of FastCGI support in mapserv_fcgi.c (not built by default).
 
 Version 4.0-beta1 (2003-06-06)
 ------------------------------
