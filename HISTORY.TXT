@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- imageObj::write() method for SWIG mapscript (bug 941).
+
 - Protect users from 3 potential sources of threading problems: parsing
   expression strings outside of msLoadMap, evaluating mapserver logical
   expressions, and loading symbol set files outside of msLoadMap (bug 339).
