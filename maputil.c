@@ -1265,6 +1265,57 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
     return -1;
 }
 
+
+/*
+** Set the array used for the drawing order. The array passed must contain
+** all the layer's index ordered by the drawing priority.
+** Ex : for 3 layers in the map file, if 
+**                          panIndexes[0] = 2
+**                          panIndexes[1] = 0
+**                          panIndexes[2] = 1
+**                          will set the darwing order to layer 2, layer 0,
+**                          and then layer 1.
+**
+** Note : It is assumed that the index panIndexes has the same number of
+**        of elements as the number of layers in the map.
+** Return TRUE on success else FALSE.
+*/
+int msSetLayersdrawingOrder(mapObj *self, int *panIndexes)
+{
+    int nElements = 0;
+    int i, j = 0;
+    int bFound = 0;
+
+    if (self && panIndexes)
+    {
+        nElements = self->numlayers;
+        for (i=0; i<nElements; i++)
+        {
+            bFound = 0;
+            for (j=0; j<nElements; j++)
+            {
+                if (panIndexes[j] == i)
+                {
+                    bFound = 1;
+                    break;
+                }
+            }
+            if (!bFound)
+                return 0;
+        }
+/* -------------------------------------------------------------------- */
+/*    At this point the array is valid so update the layers order array.*/
+/* -------------------------------------------------------------------- */
+        for (i=0; i<nElements; i++)
+        {
+            self->layerorder[i] = panIndexes[i];
+        }
+        return 1;
+    }
+    return 0;
+}
+
+
 /*
 ** Return the projection string. 
 */

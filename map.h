@@ -784,6 +784,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img);
 //Defined in maputil.c
 int msMoveLayerUp(mapObj *map, int nLayerIndex);
 int msMoveLayerDown(mapObj *map, int nLayerIndex);
+int msSetLayersdrawingOrder(mapObj *self, int *panIndexes);
 
 char *msGetProjectionString(projectionObj *proj);
 pointObj *getPointUsingMeasure(shapeObj *shape, double m);
