@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.163  2003/05/19 16:09:26  assefa
+ * Set transparency and interlace in SaveImage.
+ *
  * Revision 1.162  2003/04/28 15:34:47  assefa
  * Add setformatoption and getformatoption on the outputformat object.
  *
@@ -3028,7 +3031,6 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     imageObj *im = NULL;
 
-
 #ifdef PHP4
     pval   **pExtent;
 #else
@@ -3050,7 +3052,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     {
         WRONG_PARAM_COUNT;
     }
-    
+
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_draw(self)) == NULL)
     {
@@ -4571,6 +4573,7 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
+
     if (ZEND_NUM_ARGS() != 1 || getParameters(ht,1,&pArrayIndexes)==FAILURE) 
     {
         WRONG_PARAM_COUNT;
@@ -5414,6 +5417,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pFname, *pThis;
     imageObj *im = NULL;
     int retVal = 0;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -5462,6 +5466,19 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 #else
         php3_header();
 #endif
+
+        if( MS_DRIVER_GD(im->format) )
+          //if ((strncasecmp((im->format)->driver,"gd/",3)==0))
+        {
+            if(strcasecmp("ON",
+                          msGetOutputFormatOption(im->format, 
+                                                  "INTERLACE", "ON" ))
+                == 0 )
+              gdImageInterlace(im->img.gd, 1);
+
+            if(im->format->transparent)
+              gdImageColorTransparent(im->img.gd, 0);
+        }
 
         if(im->format->name && strcasecmp(im->format->name, "imagemap")==0){ 
             iptr = im->img.imagemap;
@@ -5572,6 +5589,7 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     char *pImagepath, *pImageurl, *pBuf;
     int nBufSize, nLen1, nLen2;
     const char *pszImageExt;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -6018,6 +6036,8 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self;
     imageObj *im = NULL;
     int    retVal=0;
+
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
