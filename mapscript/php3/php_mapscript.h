@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.40  2004/01/05 21:27:14  assefa
+ * applySLDURL and applySLD on a layer object can now take an optional
+ * argument which is the name of the NamedLayer to use to style the layer.
+ *
  * Revision 1.39  2003/12/03 18:56:09  assefa
  * Add functions to apply and to generate sld on a layer object.
  *
@@ -284,8 +288,8 @@ char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map,
                                                int feature_count, 
                                                char *info_format);
 char            *layerObj_executeWFSGetFeature(layerObj *self);
-int             layerObj_applySLD(layerObj *self, char *sld);
-int             layerObj_applySLDURL(layerObj *self, char *sld);
+int             layerObj_applySLD(layerObj *self, char *sld, char *stylelayer);
+int             layerObj_applySLDURL(layerObj *self, char *sld, char *stylelayer);
 char            *layerObj_generateSLD(layerObj *self);
 
 classObj       *classObj_new(layerObj *layer);

@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.187  2004/01/05 21:27:13  assefa
+ * applySLDURL and applySLD on a layer object can now take an optional
+ * argument which is the name of the NamedLayer to use to style the layer.
+ *
  * Revision 1.186  2003/12/12 13:31:24  dan
  * Added layer->dump property
  *
@@ -7612,25 +7616,32 @@ DLEXPORT void php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS)
 {
      pval        *pThis;
-     pval        *pSLDString;
+     pval        *pSLDString=NULL, *pStyleLayer=NULL;
      layerObj      *self=NULL;
      HashTable   *list=NULL;
      int         nStatus = MS_SUCCESS;
+     int         nArgs = ARG_COUNT(ht);
 
      pThis = getThis();
 
      if (pThis == NULL)
-    {
-        RETURN_LONG(MS_FAILURE);
+     {
+         RETURN_LONG(MS_FAILURE);
     }
 
-    if (getParameters(ht,1,&pSLDString) == FAILURE)
-    {
+     if (nArgs != 1 && nArgs != 2)
+     {
         WRONG_PARAM_COUNT;
-    }
+     }
+     if (getParameters(ht,nArgs,&pSLDString, &pStyleLayer) == FAILURE)
+     {
+        WRONG_PARAM_COUNT;
+     }
 
     convert_to_string(pSLDString);
-
+    if (nArgs == 2)
+      convert_to_string(pStyleLayer);
+    
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
                                          list TSRMLS_CC);
     if (self == NULL)
@@ -7638,7 +7649,11 @@ DLEXPORT void php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_LONG(MS_FAILURE);
     }
 
-    nStatus = layerObj_applySLD(self, pSLDString->value.str.val);
+    if (nArgs == 2)
+      nStatus = layerObj_applySLD(self, pSLDString->value.str.val,
+                                  pStyleLayer->value.str.val);
+    else
+      nStatus = layerObj_applySLD(self, pSLDString->value.str.val, NULL);
 
     RETURN_LONG(nStatus);
 }
@@ -7652,24 +7667,31 @@ DLEXPORT void php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS)
 {
      pval        *pThis;
-     pval        *pSLDString;
+     pval        *pSLDString=NULL, *pStyleLayer=NULL;
      layerObj      *self=NULL;
      HashTable   *list=NULL;
      int         nStatus = MS_SUCCESS;
+     int         nArgs = ARG_COUNT(ht);
 
      pThis = getThis();
 
      if (pThis == NULL)
-    {
-        RETURN_LONG(MS_FAILURE);
-    }
-
-    if (getParameters(ht,1,&pSLDString) == FAILURE)
+     {
+         RETURN_LONG(MS_FAILURE);
+     }
+     if (nArgs != 1 && nArgs != 2)
+     {
+        WRONG_PARAM_COUNT;
+     }
+     
+    if (getParameters(ht,nArgs,&pSLDString, &pStyleLayer) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_string(pSLDString);
+    if (nArgs == 2)
+      convert_to_string(pStyleLayer);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
                                          list TSRMLS_CC);
@@ -7678,7 +7700,11 @@ DLEXPORT void php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_LONG(MS_FAILURE);
     }
 
-    nStatus = layerObj_applySLDURL(self, pSLDString->value.str.val);
+    if (nArgs == 2)
+      nStatus = layerObj_applySLDURL(self, pSLDString->value.str.val,
+                                      pStyleLayer->value.str.val);
+    else
+      nStatus = layerObj_applySLDURL(self, pSLDString->value.str.val, NULL);
 
     RETURN_LONG(nStatus);
 }

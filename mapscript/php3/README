@@ -680,15 +680,22 @@ and the MapServer Map File documentation at:
        name of the temporary GML file created. Returns an empty
        string on error.
 
-   int applySLD(string sldxml)
-        Apply the SLD document to the layer object. The matching between the
-        sld document and the layer will be done using the layer's name.
+   int applySLD(string sldxml, string namedlayer)
+        Apply the SLD document to the layer object. 
+        The matching between the sld document and the layer will be done 
+        using the layer's name.
+        If a namedlayer argument is passed (argument is optional), 
+        the NamedLayer in the sld that matchs it will be used to style 
+        the layer.
         See SLD How to for more information on the SLD support.
 
-  int applySLDURL(string sldurl)
+  int applySLDURL(string sldurl, string namedlayer)
         Apply the SLD document pointed by the URL to the layer object. The 
         matching between the sld document and the layer will be done using 
         the layer's name.
+        If a namedlayer argument is passed (argument is optional), 
+        the NamedLayer in the sld that matchs it will be used to style 
+        the layer.
         See SLD How to for more information on the SLD support.
 
   char generateSLD()

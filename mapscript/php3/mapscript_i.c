@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.73  2004/01/05 21:27:14  assefa
+ * applySLDURL and applySLD on a layer object can now take an optional
+ * argument which is the name of the NamedLayer to use to style the layer.
+ *
  * Revision 1.72  2003/12/03 18:56:08  assefa
  * Add functions to apply and to generate sld on a layer object.
  *
@@ -598,11 +602,11 @@ int mapObj_selectOutputFormat(mapObj *self,
 
 int mapObj_applySLD(mapObj *self, char *sld)
 {
-    return msSLDApplySLD(self, sld, -1);
+    return msSLDApplySLD(self, sld, -1, NULL);
 }
 int mapObj_applySLDURL(mapObj *self, char *sld)
 {
-    return msSLDApplySLDURL(self, sld, -1);
+    return msSLDApplySLDURL(self, sld, -1, NULL);
 }
 
 char *mapObj_generateSLD(mapObj *self)
@@ -750,13 +754,13 @@ char *layerObj_executeWFSGetFeature(layerObj *self) {
   return (msWFSExecuteGetFeature(self));
 }
 
-int layerObj_applySLD(layerObj *self, char *sld)
+int layerObj_applySLD(layerObj *self, char *sld, char *stylelayer)
 {
-    return msSLDApplySLD(self->map, sld, self->index);
+    return msSLDApplySLD(self->map, sld, self->index, stylelayer);
 }
-int layerObj_applySLDURL(layerObj *self, char *sld)
+int layerObj_applySLDURL(layerObj *self, char *sld, char *stylelayer)
 {
-    return msSLDApplySLDURL(self->map, sld, self->index);
+    return msSLDApplySLDURL(self->map, sld, self->index, stylelayer);
 }
 
 char *layerObj_generateSLD(layerObj *self)
