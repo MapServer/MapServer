@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.51  2002/04/26 18:00:35  julien
+ * Enabled OGRMultiPoint in ogrGeomLine and ogrGeomPoint
+ *
  * Revision 1.50  2002/04/04 19:05:41  frank
  * improve error reporting
  *
@@ -266,6 +269,10 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
               numpoints += poRing->getNumPoints();
       }
   }
+  else if (poGeom->getGeometryType() == wkbMultiPoint )
+  {
+      numpoints = ((OGRMultiPoint*)poGeom)->getNumGeometries();
+  }
   else
   {
       msSetError(MS_OGRERR, 
@@ -321,6 +328,17 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
                   ogrPointsAddPoint(&line, poRing->getX(i), poRing->getY(i),
                                     outshp->numlines, &(outshp->bounds));
           }
+      }
+  }
+  if (poGeom->getGeometryType() == wkbMultiPoint )
+  {
+      OGRPoint *poPoint;
+      OGRMultiPoint *poMultiPoint = (OGRMultiPoint *)poGeom;
+      for(i=0; i<numpoints; i++)
+      {
+          poPoint = (OGRPoint *)poMultiPoint->getGeometryRef( i );
+          ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY(), 
+                            outshp->numlines, &(outshp->bounds));
       }
   }
 
@@ -387,10 +405,11 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
       }
   }
 /* ------------------------------------------------------------------
- * OGRPoint
+ * OGRPoint and OGRMultiPoint
  * ------------------------------------------------------------------ */
   else if (poGeom->getGeometryType() == wkbPoint
-           || poGeom->getGeometryType() == wkbPoint25D )
+           || poGeom->getGeometryType() == wkbPoint25D 
+           || poGeom->getGeometryType() == wkbMultiPoint )
   {
       /* Hummmm a point when we're drawing lines/polygons... just drop it! */
   }
