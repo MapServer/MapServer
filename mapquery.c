@@ -9,8 +9,7 @@ int msIsLayerQueryable(layerObj *lp)
 {
   int i, is_queryable = MS_FALSE;
 
-  if ((lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS) ||
-      lp->type == MS_LAYER_GRATICULE)
+  if ((lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS) || lp->type == MS_LAYER_TILEINDEX)
     return MS_FALSE;
 
   if(lp->template && strlen(lp->template) > 0) return MS_TRUE;

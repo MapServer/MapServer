@@ -1287,16 +1287,9 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 		case MS_LAYER_CIRCLE:
 					msDebug( "Ignoring MS_LAYER_CIRCLE in mapMYGIS.c<br>\n" );
 					break;
-		case MS_LAYER_GRATICULE:
-					msDebug( "Ignoring MS_LAYER_GRATICULE in mapMYGIS.c<br>\n" );
-					break;
 		case MS_LAYER_TILEINDEX:
 					msDebug( "Ignoring MS_LAYER_TILEINDEX in mapMYGIS.c<br>\n" );
 					break;
-		case MS_LAYER_MASK:
-					msDebug( "Ignoring MS_LAYER_MASK in mapMYGIS.c<br>\n" );
-					break;
-
 			}
 			if (shape->type != MS_SHAPE_NULL)
 			{
