@@ -918,7 +918,9 @@ void msComputeBounds(shapeObj *shape);
 void msRectToPolygon(rectObj rect, shapeObj *poly);
 void msClipPolylineRect(shapeObj *shape, rectObj rect);
 void msClipPolygonRect(shapeObj *shape, rectObj rect);
-void msTransformShape(shapeObj *shape, rectObj extent, double cellsize);
+void msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
+                      imageObj *image);
+void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
 void msImagePolyline(gdImagePtr img, shapeObj *p, int c);
 void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c);
@@ -1019,6 +1021,8 @@ imageObj *msDrawMap(mapObj *map);
 imageObj *msDrawQueryMap(mapObj *map);
 
 int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image);
+
+int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image);
 
 int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
 
@@ -1168,6 +1172,12 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 
 int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
+
+void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize);
+
+int msSaveImageSWF(imageObj *image, char *filename);
+
+void msFreeImageSWF(imageObj *image);
 
 #endif
 

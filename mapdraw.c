@@ -206,14 +206,8 @@ imageObj *msDrawQueryMap(mapObj *map)
 int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   int i;
-  int status;
-  char annotate=MS_TRUE, cache=MS_FALSE;
-  shapeObj shape;
-  rectObj searchrect;
   gdImagePtr img_cache=NULL;
   int retcode=MS_SUCCESS;
-
-  featureListNodeObjPtr shpcache=NULL, current=NULL;
 
   msImageStartLayer(map, layer, image);
 
@@ -225,7 +219,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
 
   if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_SUCCESS);
-  annotate = msEvalContext(map, layer->labelrequires);
 
   if(map->scale > 0) {
     
@@ -248,10 +241,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       if(i == layer->numclasses) return(MS_SUCCESS);
     }
 
-    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
-      annotate = MS_FALSE;
-    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
-      annotate = MS_FALSE;
+    //if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+    // annotate = MS_FALSE;
+    //if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+    // annotate = MS_FALSE;
   }
 
   if (map->imagetype == MS_GIF ||
@@ -272,176 +265,207 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
           gdImageColorTransparent(image->img.gd, 0);
       }     
   }
-  //For destroy img_temp before return 
-  while (1) 
-  {
     
     // Redirect procesing of some layer types.
     if(layer->connectiontype == MS_WMS) 
     {
         retcode = msDrawWMSLayer(map, layer, image);
-        break;
     }
   
-    if(layer->type == MS_LAYER_RASTER) 
+    else if(layer->type == MS_LAYER_RASTER) 
     {
         retcode = msDrawRasterLayer(map, layer, image);
-      break;
     }
-  
+    //Must be a Vector layer
+    else
+        retcode = msDrawVectorLayer(map, layer, image);
+
+
+    // Destroy the temp image for this layer tranparency
+    if (map->imagetype == MS_GIF ||
+        map->imagetype == MS_PNG ||
+        map->imagetype == MS_JPEG ||
+        map->imagetype == MS_WBMP)
+    {
+        if (layer->transparency > 0)
+        {
+            gdImageCopyMerge(img_cache, image->img.gd, 0, 0, 0, 0, 
+                             image->img.gd->sx, 
+                             image->img.gd->sy, layer->transparency);
+            gdImageDestroy(image->img.gd);
+            image->img.gd = img_cache;
+        }
+    }
+
+    return(retcode);
+}
+
+
+int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
+{
+    int         status;
+    char        annotate=MS_TRUE;
+    shapeObj    shape;
+    rectObj     searchrect;
+    char        cache=MS_FALSE;
+    int         retcode=MS_SUCCESS;
+    featureListNodeObjPtr shpcache=NULL, current=NULL;
+
+    annotate = msEvalContext(map, layer->labelrequires);
+    if(map->scale > 0) 
+    {
+        if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+            annotate = MS_FALSE;
+        if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+            annotate = MS_FALSE;
+    }
+
     // open this layer
     status = msLayerOpen(layer, map->shapepath);
     if(status != MS_SUCCESS) 
-    {
-      retcode = MS_FAILURE;
-      break;
-    }
+        return MS_FAILURE;
   
     // build item list
     status = msLayerWhichItems(layer, MS_TRUE, annotate);
     if(status != MS_SUCCESS) 
-    {
-      retcode = MS_FAILURE;
-      break;
-    }
+        return MS_FAILURE;
   
     // identify target shapes
     if(layer->transform == MS_TRUE)
-      searchrect = map->extent;
-    else {
-      searchrect.minx = searchrect.miny = 0;
-      searchrect.maxx = map->width-1;
-      searchrect.maxy = map->height-1;
+        searchrect = map->extent;
+    else 
+    {
+        searchrect.minx = searchrect.miny = 0;
+        searchrect.maxx = map->width-1;
+        searchrect.maxy = map->height-1;
     }
   
-  #ifdef USE_PROJ
+#ifdef USE_PROJ
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-      msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
-  #endif
+        msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
+#endif
     status = msLayerWhichShapes(layer, searchrect);
-    if(status == MS_DONE) { // no overlap
-      msLayerClose(layer);
-      retcode = MS_SUCCESS;
-      break;
-    } else if(status != MS_SUCCESS) {
-      retcode = MS_FAILURE;
-      break;
+    if(status == MS_DONE) 
+    { // no overlap
+        msLayerClose(layer);
+        return MS_SUCCESS;
+    } 
+    else if(status != MS_SUCCESS) 
+    {
+        return MS_FAILURE;
     }
   
     // step through the target shapes
     msInitShape(&shape);
   
-    while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-  
-      shape.classindex = msShapeGetClass(layer, &shape, map->scale);
-      if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
-        msFreeShape(&shape);
-        continue;
-      }
-  
-      cache = MS_FALSE;
-      if(layer->type == MS_LAYER_LINE || (layer->type == MS_LAYER_POLYGON && layer->class[shape.classindex].color < 0)) 
-        cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
-  
-      // With 'STYLEITEM AUTO', we will have the datasource fill the class'
-      // style parameters for this shape.
-      if (layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0)
-      {
-          if (msLayerGetAutoStyle(map, layer, &(layer->class[shape.classindex]),
-                                  shape.tileindex, shape.index) != MS_SUCCESS)
-          {
-              retcode = MS_FAILURE;
-              break;
-          }
-  
-          // Dynamic class update may have extended the color palette...
-          
-          if (map->imagetype == MS_GIF ||
-              map->imagetype == MS_PNG ||
-              map->imagetype == MS_JPEG ||
-              map->imagetype == MS_WBMP)
-          {
-              if (!msUpdatePalette(image->img.gd, &(map->palette)))
-              {
-                  retcode = MS_FAILURE;
-                  break;
-              }
-          }
-          // __TODO__ For now, we can't cache features with 'AUTO' style
-          cache = MS_FALSE;
-      }
-  
-      if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
-        shape.text = msShapeGetAnnotation(layer, &shape);
-  
-      //TODO
-      status = msDrawShape(map, layer, &shape, image, !cache); // if caching we DON'T want to do overlays at this time
-      if(status != MS_SUCCESS) {
-        msLayerClose(layer);
-        retcode = MS_FAILURE;
-        break;
-      }
-  
-      if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
-        msFreeShape(&shape);
-        continue;
-      }
-  
-      if(cache && layer->class[shape.classindex].overlaysymbol >= 0)
-        if(insertFeatureList(&shpcache, &shape) == NULL) 
+    while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) 
+    {
+        shape.classindex = msShapeGetClass(layer, &shape, map->scale);
+        if((shape.classindex == -1) || 
+           (layer->class[shape.classindex].status == MS_OFF)) 
         {
-          retcode = MS_FAILURE; // problem adding to the cache
-          break;
+            msFreeShape(&shape);
+            continue;
         }
   
-      msFreeShape(&shape);
+        cache = MS_FALSE;
+        if(layer->type == MS_LAYER_LINE ||  
+           (layer->type == MS_LAYER_POLYGON && 
+            layer->class[shape.classindex].color < 0)) 
+            cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
+  
+        // With 'STYLEITEM AUTO', we will have the datasource fill the class'
+        // style parameters for this shape.
+        if (layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0)
+        {
+            if (msLayerGetAutoStyle(map, layer, &(layer->class[shape.classindex]),
+                                        shape.tileindex, shape.index) != MS_SUCCESS)
+                    {
+                        retcode = MS_FAILURE;
+                        break;
+                    }
+  
+                // Dynamic class update may have extended the color palette...
+          
+                if (map->imagetype == MS_GIF ||
+                    map->imagetype == MS_PNG ||
+                    map->imagetype == MS_JPEG ||
+                    map->imagetype == MS_WBMP)
+                    {
+                        if (!msUpdatePalette(image->img.gd, &(map->palette)))
+                            {
+                                retcode = MS_FAILURE;
+                                break;
+                            }
+                    }
+                // __TODO__ For now, we can't cache features with 'AUTO' style
+                cache = MS_FALSE;
+        }
+  
+        if(annotate && (layer->class[shape.classindex].text.string || 
+                        layer->labelitem) && 
+           layer->class[shape.classindex].label.size != -1)
+            shape.text = msShapeGetAnnotation(layer, &shape);
+  
+        // if caching we DON'T want to do overlays at this time
+        status = msDrawShape(map, layer, &shape, image, !cache); 
+        if(status != MS_SUCCESS) 
+        {
+            msLayerClose(layer);
+            retcode = MS_FAILURE;
+            break;
+        }
+  
+        if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
+            msFreeShape(&shape);
+            continue;
+        }
+  
+        if(cache && layer->class[shape.classindex].overlaysymbol >= 0)
+            if(insertFeatureList(&shpcache, &shape) == NULL) 
+            {
+                retcode = MS_FAILURE; // problem adding to the cache
+                break;
+            }
+  
+        msFreeShape(&shape);
     }
     
-    if (retcode == MS_FAILURE) break;
+    if (retcode == MS_FAILURE)
+        return MS_FAILURE;
   
     if(status != MS_DONE) 
     {
-      retcode = MS_FAILURE;
-      break;
-    }
+        return MS_FAILURE;
+        
+    }       
   
-    if(shpcache) {
-      int c;
+    if(shpcache) 
+    {
+        int c;
   
-      for(current=shpcache; current; current=current->next) {
-        c = current->shape.classindex;
+        for(current=shpcache; current; current=current->next) 
+        {
+            c = current->shape.classindex;
 
-        msDrawLineSymbol(&map->symbolset, image, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
-      }
+            msDrawLineSymbol(&map->symbolset, image, &current->shape, 
+                             layer->class[c].overlaysymbol, 
+                             layer->class[c].overlaycolor, 
+                             layer->class[c].overlaybackgroundcolor, 
+                             layer->class[c].overlaysizescaled);
+        }
   
-      freeFeatureList(shpcache);
-      shpcache = NULL;
+        freeFeatureList(shpcache);
+        shpcache = NULL;
     }
   
     msLayerClose(layer);
     
-    retcode = MS_SUCCESS;
-    break;
-  }
-
-  // Destroy the temp image for this layer tranparency
-  if (map->imagetype == MS_GIF ||
-      map->imagetype == MS_PNG ||
-      map->imagetype == MS_JPEG ||
-      map->imagetype == MS_WBMP)
-  {
-      if (layer->transparency > 0)
-      {
-          gdImageCopyMerge(img_cache, image->img.gd, 0, 0, 0, 0, 
-                           image->img.gd->sx, 
-                           image->img.gd->sy, layer->transparency);
-          gdImageDestroy(image->img.gd);
-          image->img.gd = img_cache;
-      }
-  }
-
-  return(retcode);
+    return MS_SUCCESS;
+    
+   
 }
+
 
 
 
@@ -713,7 +737,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape,
       if(layer->transform) {
 	msClipPolylineRect(shape, cliprect);
 	if(shape->numlines == 0) return(MS_SUCCESS);
-	msTransformShape(shape, map->extent, map->cellsize);
+	msTransformShape(shape, map->extent, map->cellsize, image);
       }
 
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
@@ -748,7 +772,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape,
       if(layer->transform) {
 	msClipPolygonRect(shape, cliprect);
 	if(shape->numlines == 0) return(MS_SUCCESS);
-	msTransformShape(shape, map->extent, map->cellsize);
+	msTransformShape(shape, map->extent, map->cellsize, image);
       }
 
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
@@ -864,7 +888,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape,
     if(layer->transform) {
       msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
-      msTransformShape(shape, map->extent, map->cellsize);
+      msTransformShape(shape, map->extent, map->cellsize, image);
     }
 
     msDrawLineSymbol(&map->symbolset, image, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].sizescaled);
@@ -906,7 +930,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape,
     if(layer->transform) {
       msClipPolygonRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
-      msTransformShape(shape, map->extent, map->cellsize);
+      msTransformShape(shape, map->extent, map->cellsize, image);
     }
 
     if(layer->class[c].color < 0)

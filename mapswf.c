@@ -643,12 +643,12 @@ SWFButton   BuildButtonPolygon(gdPoint adfPoints[], int nPoints,
     //                                     bFill, psColor), SWFBUTTON_DOWN);
 
     
-    //SWFButton_addAction(b, compileSWFActionCode("_root.MouseEnter();"),
-    //                    SWFBUTTON_MOUSEDOWN);
+    SWFButton_addAction(b, compileSWFActionCode("_root.MouseEnter();"),
+                        SWFBUTTON_MOUSEOVER);
 
 
-    //SWFButton_addAction(b, compileSWFActionCode("_root.text1=\"bbbbbbb\";"),
-    //                    SWFBUTTON_MOUSEDOWN);
+    SWFButton_addAction(b, compileSWFActionCode("_root.text1=\"mouse_out\";"),
+                        SWFBUTTON_MOUSEOUT);
   
     //SWFButton_addAction(b, compileSWFActionCode("_root.MouseOut();"),
     //                    SWFBUTTON_MOUSEOUT);
@@ -1233,8 +1233,10 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
     nTmp = image->img.swf->nCurrentMovie;
 
-    if(sy == 0) 
-    { // just draw a single width line
+    //For now just draw lines without symbols.
+    if(1)//sy == 0) 
+    { 
+        // just draw a single width line
         oShape = DrawShapePolyline(p, &sFc);
         SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
         return;
@@ -1890,6 +1892,11 @@ int msSaveImageSWF(imageObj *image, char *filename)
         
         nLayers = image->img.swf->nLayerMovies;
         
+/* -------------------------------------------------------------------- */
+/*      extract the name of the file to save and use it to save the     */
+/*      layer files. For example for file name /tmp/ms_tmp/test.swf,    */
+/*      the first layer name will be /tmp/ms_tmp/test_layer0.swf.       */
+/* -------------------------------------------------------------------- */
         nLength = strlen(filename);
         iPointPos = -1;
         for (i=0; i< nLength; i++)
@@ -1911,7 +1918,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
         
         for (i=0; i<nLayers; i++)
         {
-            sprintf(szTmp, "%s%d", "layer_", i);
+            sprintf(szTmp, "%s%d", "_layer_", i);
             gszFilename[0] = '\0';
             sprintf(gszFilename, szBase);
             strcat(gszFilename, szTmp);
@@ -1955,6 +1962,34 @@ void msFreeImageSWF(imageObj *image)
     }
 }
 
+
+
+/************************************************************************/
+/*                           msTransformShapeSWF                        */
+/*                                                                      */
+/*      Transform geographic coordinated to output coordinates.         */
+/************************************************************************/
+void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize)
+{
+    int i,j; 
+
+    if(shape->numlines == 0) return; 
+
+    if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) 
+    { 
+        for(i=0; i<shape->numlines; i++) 
+        {
+            for(j=0; j < shape->line[i].numpoints; j++ ) 
+            {
+                shape->line[i].point[j].x = 
+                    (shape->line[i].point[j].x - extent.minx)/cellsize;
+                shape->line[i].point[j].y = 
+                    (extent.maxy - shape->line[i].point[j].y)/cellsize;
+            }
+        }      
+        return;
+    }
+}
 
 #endif
 

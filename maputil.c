@@ -933,4 +933,24 @@ imageObj *msImageCreate(int width, int height, int imagetype, char *imagepath,
 
     return image;
 }
-    
+
+
+/**
+ * Generic function to transorm the shape coordinates to output coordinates
+ */
+void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, 
+                       imageObj *image)   
+{
+
+#ifdef USE_MING_FLASH
+    if (image != NULL && 
+        image->imagetype == MS_SWF)
+    {
+        msTransformShapeSWF(shape, extent, cellsize);
+        return;
+    }
+#endif
+
+    msTransformShapeToPixel(shape, extent, cellsize);
+}
+ 

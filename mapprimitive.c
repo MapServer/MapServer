@@ -459,9 +459,10 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 /*
 ** Converts from map coordinates to image coordinates
 */
-void msTransformShape(shapeObj *shape, rectObj extent, double cellsize)
+void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
 {
   int i,j,k; /* loop counters */
+
 
   if(shape->numlines == 0) return; // nothing to transform
 
