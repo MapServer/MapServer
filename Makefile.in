@@ -245,7 +245,7 @@ sortshp: sortshp.o
 tile4ms: tile4ms.o
 	$(CC) $(CFLAGS) tile4ms.o $(LDFLAGS) $(STATIC_LIBS) -o tile4ms
 
-testexpr: testexpr.o
+testexpr: testexpr.o mapparser.o
 	$(CC) $(CFLAGS) testexpr.o $(LDFLAGS) $(STATIC_LIBS) -o testexpr
 
 perlvars:
@@ -269,7 +269,7 @@ install: libmap.a
 	cp -f map.h $(HEADER_INSTALL)
 
 clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
-	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars tile4ms
+	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars tile4ms testexpr
 
 distclean:
 	$(MAKE) clean

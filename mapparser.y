@@ -50,7 +50,15 @@ int msyyresult;
 %%
 
 input: /* empty string */
-       | logical_exp      { msyyresult = $1; }
+       | logical_exp      { 
+			    msyyresult = $1; 
+			  }
+       | math_exp	  {
+			    if($1 != 0)
+			      msyyresult = MS_TRUE;
+			    else
+			      msyyresult = MS_FALSE;			    
+			  }
 ;
 
 regular_exp: REGEX ;
@@ -59,19 +67,69 @@ logical_exp:
        logical_exp OR logical_exp      {
 	                                 if($1 == MS_TRUE)
 		                           $$ = MS_TRUE;
-		                         else
-		                           if($3 == MS_TRUE)
-			                     $$ = MS_TRUE;
-			                   else
-			                     $$ = MS_FALSE;
+		                         else if($3 == MS_TRUE)
+			                   $$ = MS_TRUE;
+			                 else
+			                   $$ = MS_FALSE;
 		                       }
        | logical_exp AND logical_exp   {
-	                                 if($1 == MS_TRUE)
+	                                 if($1 == MS_TRUE) {
 			                   if($3 == MS_TRUE)
 			                     $$ = MS_TRUE;
 			                   else
 			                     $$ = MS_FALSE;
+			                 } else
+			                   $$ = MS_FALSE;
+		                       }
+       | logical_exp OR math_exp       {
+	                                 if($1 == MS_TRUE)
+		                           $$ = MS_TRUE;
+		                         else if($3 != 0)
+			                   $$ = MS_TRUE;
 			                 else
+			                   $$ = MS_FALSE;
+		                       }
+       | logical_exp AND math_exp      {
+	                                 if($1 == MS_TRUE) {
+			                   if($3 != 0)
+			                     $$ = MS_TRUE;
+			                   else
+			                     $$ = MS_FALSE;
+			                 } else
+			                   $$ = MS_FALSE;
+		                       }
+       | math_exp OR logical_exp       {
+	                                 if($1 != 0)
+		                           $$ = MS_TRUE;
+		                         else if($3 == MS_TRUE)
+			                   $$ = MS_TRUE;
+			                 else
+			                   $$ = MS_FALSE;
+		                       }
+       | math_exp AND logical_exp      {
+	                                 if($1 != 0) {
+			                   if($3 == MS_TRUE)
+			                     $$ = MS_TRUE;
+			                   else
+			                     $$ = MS_FALSE;
+			                 } else
+			                   $$ = MS_FALSE;
+		                       }
+       | math_exp OR math_exp       {
+	                                 if($1 != 0)
+		                           $$ = MS_TRUE;
+		                         else if($3 != 0)
+			                   $$ = MS_TRUE;
+			                 else
+			                   $$ = MS_FALSE;
+		                       }
+       | math_exp AND math_exp      {
+	                                 if($1 != 0) {
+			                   if($3 != 0)
+			                     $$ = MS_TRUE;
+			                   else
+			                     $$ = MS_FALSE;
+			                 } else
 			                   $$ = MS_FALSE;
 		                       }
        | NOT logical_exp	       { $$ = !$2; }
