@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.1 (???)
 --------------------------
 
+- Use doubles instead of integers in function php3_ms_symbol_setPoints 
+  (Bug 1137).
+
 - Fixed msFreeFileCtx() to call free() instead of gdFree() as per bug 1125. 
   Also renamed gdFreeFileCtx() to msFreeFileCtx(). 
 
