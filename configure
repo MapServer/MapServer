@@ -5574,7 +5574,7 @@ echo "configure:5569: checking whether we should use PHP's regex" >&5
 !!! The current version of PHP MapScript has some problems with       !!!
 !!! PHP4's bundled regex.  Until we figure the solution to the        !!!
 !!! problem, the workaround is to compile PHP4 with the system regex  !!!
-!!! Please re-configure and re-compile PHP4 with --with-system-regex  !!!
+!!! Please re-configure and re-compile PHP4 with --with-regex=system  !!!
 !!! and then re-configure and re-compile MapServer.                   !!!" 1>&2; exit 1; }
     fi
 
