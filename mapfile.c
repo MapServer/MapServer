@@ -4,7 +4,6 @@
 
 #include "map.h"
 #include "mapfile.h"
-#include "mapparser.h"
 #include "mapthread.h"
 
 extern int msyylex();

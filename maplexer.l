@@ -1,13 +1,15 @@
 %{
-
 /* C declarations */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
+#include <time.h>
+
 #include "map.h"
 #include "mapfile.h"
+#include "maptime.h"
 #include "mapsymbol.h"
 #include "mapparser.h"
 
@@ -321,6 +323,14 @@ int msyyreturncomments = 0;
                                                                                                                                                return(NUMBER); 
                                                                                                                                              }
 
+<EXPRESSION_STRING>(\"|\')[0-9]{4}-[0-9]{2}-[0-9]{2}(\"|\')    {
+                                                                 msyytext++;
+			                                         msyytext[strlen(msyytext)-1] = '\0'; 
+                                                                 msTimeInit(&msyylval.tmval);
+                                                                 strptime(msyytext, "%Y-%m-%d", &msyylval.tmval);
+                                                                 return(TIME);
+                                                               }
+
 <INITIAL,VALUE_STRING>\/[^\/]*\/               {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
@@ -336,7 +346,7 @@ int msyyreturncomments = 0;
 
 <INITIAL,VALUE_STRING>\(.*\)                   {
                                                  msyytext++;
-			                         msyytext[strlen(msyytext)-1] = '\0';                                                 
+			                         msyytext[strlen(msyytext)-1] = '\0';
 			                         return(MS_EXPRESSION);
 			                       }
 

@@ -1,7 +1,6 @@
 // $Id$ //
 
 #include "map.h"
-#include "mapparser.h"
 #include "dxfcolor.h"
 
 #include <time.h>

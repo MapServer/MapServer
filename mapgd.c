@@ -1,7 +1,6 @@
 /* $Id$ */
 
 #include "map.h"
-#include "mapparser.h"
 #include "mapthread.h"
 
 #include <time.h>

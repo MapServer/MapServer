@@ -1,9 +1,8 @@
 /* $Id$ */
+#include <time.h>
 
 #include "map.h"
 #include "mapparser.h"
-
-#include <time.h>
 
 #ifdef _WIN32
 #include <fcntl.h>

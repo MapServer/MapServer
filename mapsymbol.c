@@ -1,8 +1,8 @@
 #include <stdarg.h> /* variable number of function arguments support */
+#include <time.h> /* since the parser handles time/date we need this */
 
 #include "map.h"
 #include "mapfile.h"
-#include "mapparser.h"
 
 extern int msyylex(); /* lexer globals */
 extern void msyyrestart();

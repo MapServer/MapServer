@@ -1,3 +1,5 @@
+#include <time.h>
+
 #include "map.h"
 #include "mapparser.h"
 

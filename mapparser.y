@@ -3,15 +3,15 @@
 */
 
 %{
-
 /* C declarations */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
-#include "map.h" // for TRUE/FALSE and REGEX includes
+#include "map.h" /* for TRUE/FALSE and REGEX includes */
+#include "maptime.h" /* for time comparison routines */
 
 extern int msyylex(); /* lexer globals */
 extern int msyyerror();
@@ -24,11 +24,13 @@ int msyyresult;
 %union {
   double dblval;
   int intval;  
-  char *strval;
+  char *strval;  
+  struct tm tmval;
 }
 
 %token <dblval> NUMBER
 %token <strval> STRING
+%token <tmval> TIME
 %token <strval> REGEX
 %left OR
 %left AND
@@ -44,6 +46,7 @@ int msyyresult;
 %type <dblval> math_exp
 %type <strval> string_exp
 %type <strval> regular_exp
+%type <tmval> time_exp
 
 /* Bison/Yacc grammar */
 
@@ -219,7 +222,43 @@ logical_exp:
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-                                       }
+                                       } 
+       | time_exp EQ time_exp      {
+                                     if(msTimeCompare(&($1), &($3)) == 0)
+				       $$ = MS_TRUE;
+				     else
+				       $$ = MS_FALSE;
+				   }
+       | time_exp NE time_exp      {
+                                     if(msTimeCompare(&($1), &($3)) != 0)
+				       $$ = MS_TRUE;
+				     else
+				       $$ = MS_FALSE;
+				   }
+       | time_exp GT time_exp      {
+                                     if(msTimeCompare(&($1), &($3)) > 0)
+				       $$ = MS_TRUE;
+				     else
+				       $$ = MS_FALSE;
+                                   }
+       | time_exp LT time_exp      {
+                                     if(msTimeCompare(&($1), &($3)) < 0)
+				       $$ = MS_TRUE;
+				     else
+				       $$ = MS_FALSE;
+                                   }
+       | time_exp GE time_exp      {
+                                     if(msTimeCompare(&($1), &($3)) >= 0)
+				       $$ = MS_TRUE;
+				     else
+				       $$ = MS_FALSE;
+                                   }
+       | time_exp LE time_exp      {
+                                     if(msTimeCompare(&($1), &($3)) <= 0)
+				       $$ = MS_TRUE;
+				     else
+				       $$ = MS_FALSE;
+                                   }
        | string_exp IN string_exp      {
 					 char *delim,*bufferp;
 
@@ -281,5 +320,9 @@ string_exp: STRING
             | '(' string_exp ')'        { $$ = $2; }
             | string_exp '+' string_exp { sprintf($$, "%s%s", $1, $3); }
 ;
-%%
 
+time_exp: TIME
+          | '(' time_exp ')'        { $$ = $2; }
+;
+
+%%

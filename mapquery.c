@@ -1,8 +1,6 @@
 /* $Id$ */
 
 #include "map.h"
-#include "mapparser.h"
-
 
 /*
 ** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
@@ -26,11 +24,6 @@ int msIsLayerQueryable(layerObj *lp)
 
   return is_queryable;
 }
-
-extern int msyyresult; // result of parsing, true/false
-extern int msyystate;
-extern char *msyystring;
-extern int msyyparse();
 
 static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int tileindex)
 {
