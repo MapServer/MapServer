@@ -812,6 +812,8 @@ char *msSDELayerGetSpatialColumn(layerObj *layer);
 char *msSDELayerGetRowIDColumn();
 
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
+const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
+                             int bReturnOnlyFirstOne);
 
 int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img); // mapwmslayer.c
 

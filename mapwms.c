@@ -6,6 +6,59 @@
 #include "gdfonts.h"
 #include <stdarg.h>
 
+
+/* ==================================================================
+ * Some functions shared by both mapwms.c and mapwmslayer.c
+ * ================================================================== */
+#if (defined(USE_WMS) || defined (USE_WMS_LYR))
+
+/*
+** msWMSGetEPSGProj()
+**
+** Extract projection code for this layer/map.  
+** First look for a wms_srs metadata.  If not found then look for an EPSG
+** code in projectionObj, and if not found then return NULL.
+**
+** If bReturnOnlyFirstOne=TRUE and metadata contains multiple EPSG codes
+** then only the first one (which is assumed to be the layer's default
+** projection) is returned.
+*/
+const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
+                             int bReturnOnlyFirstOne)
+{
+  static char epsgCode[20] ="";
+  static char *value;
+
+  if ((value = msLookupHashTable(metadata, "wms_srs")) != NULL)
+  {
+    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
+    if (!bReturnOnlyFirstOne)
+        return value;
+
+    // Caller requested only first projection code.
+    strncpy(epsgCode, value, 19);
+    epsgCode[19] = '\0';
+    if ((value=strchr(epsgCode, ' ')) != NULL)
+        *value = '\0';
+    return epsgCode;
+  }
+  else if (proj && proj->numargs > 0 && 
+           (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
+           strlen(value) < 20)
+  {
+    sprintf(epsgCode, "EPSG:%s", value+10);
+    return epsgCode;
+  }
+
+  return NULL;
+}
+
+#endif  /* USE_WMS || USE_WMS_LYR */
+
+
+/* ==================================================================
+ * WMS Server stuff.
+ * ================================================================== */
 #ifdef USE_WMS
 
 /*
@@ -439,46 +492,6 @@ static void printRequestCap(const char *wmtver, const char *request,
   printf("    </%s>\n", request);
 }
 
-/*
-** msWMSGetEPSGProj()
-**
-** Extract projection code for this layer/map.  
-** First look for a wms_srs metadata.  If not found then look for an EPSG
-** code in projectionObj, and if not found then return NULL.
-**
-** If bReturnOnlyFirstOne=TRUE and metadata contains multiple EPSG codes
-** then only the first one (which is assumed to be the layer's default
-** projection) is returned.
-*/
-const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
-                             int bReturnOnlyFirstOne)
-{
-  static char epsgCode[20] ="";
-  static char *value;
-
-  if ((value = msLookupHashTable(metadata, "wms_srs")) != NULL)
-  {
-    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
-    if (!bReturnOnlyFirstOne)
-        return value;
-
-    // Caller requested only first projection code.
-    strncpy(epsgCode, value, 19);
-    epsgCode[19] = '\0';
-    if ((value=strchr(epsgCode, ' ')) != NULL)
-        *value = '\0';
-    return epsgCode;
-  }
-  else if (proj && proj->numargs > 0 && 
-           (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
-           strlen(value) < 20)
-  {
-    sprintf(epsgCode, "EPSG:%s", value+10);
-    return epsgCode;
-  }
-
-  return NULL;
-}
 
 /*
 **
