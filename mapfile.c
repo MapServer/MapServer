@@ -1328,8 +1328,11 @@ int loadExpressionString(expressionObj *exp, char *value)
   // initExpression(exp);
 
   if((exp->type = getSymbol(2, MS_EXPRESSION,MS_REGEX)) == -1) {
-    exp->type = MS_STRING; // take the whole value as a string expression
-    exp->string = strdup(value);
+    exp->type = MS_STRING;
+    if((strlen(value) - strlen(msyytext)) == 2)
+      exp->string = strdup(msyytext); // value was quoted
+    else
+      exp->string = strdup(value); // use the whole value
   } else
     exp->string = strdup(msyytext);
     
