@@ -74,8 +74,8 @@ gdImagePtr msDrawScalebar(mapObj *map)
 {
   gdImagePtr img=NULL;
   char label[32];
-  double i;
-  int j, msx; 
+  double i, msx;
+  int j;
   int isx, sx, sy, ox, oy, state, dsx;
   pointObj p;
   gdFontPtr fontPtr;
