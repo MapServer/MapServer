@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2003/12/11 05:12:27  assefa
+ * Remove unused variables.
+ *
  * Revision 1.11  2003/12/10 20:56:17  assefa
  * Generate default symbol (square) when having an "invalid" symbol.
  *
@@ -2734,7 +2737,7 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer)
 char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
 {
     char *pszSLD = NULL;
-    char *pszGraphicSLD = NULL;
+
     char szTmp[100];
     char **aszFontsParts = NULL;
     int nFontParts = 0;
@@ -3124,7 +3127,7 @@ char *msSLDGetComparisonValue(char *pszExpression)
 
 char *msSLDGetLogicalOperator(char *pszExpression)
 {
-    char *pszOper = NULL;
+
     if (!pszExpression)
       return NULL;
 
@@ -3314,7 +3317,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
     char **aszValues = NULL;
     char *pszAttributeName = NULL;
     char *pszAttributeValue = NULL;
-    char cCompare;
+    char cCompare = '=';
     char szCompare[3];
     char szCompare2[3];
     int bOneCharCompare = -1, nTokens = 0, nLength =0;
@@ -3559,13 +3562,13 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
 {
     char *apszExpression[20]; 
     int nLength = 0;
-    int bInsideExpression = 0;
+    //int bInsideExpression = 0;
     int i =0, nOperators=0;
     char *pszFinalExpression = NULL;
-    int iFinal = 0, iIndiceExp=0, nOpeningBrackets=0, nIndice=0;
-    char szTmp[6];
+    int iFinal = 0, iIndiceExp=0, nOpeningBrackets=0;// nIndice=0;
+    //    char szTmp[6];
     int iExpression = 0;
-    char *pszSimplifiedExpression = NULL;
+    //    char *pszSimplifiedExpression = NULL;
     char *pszComparionValue=NULL, *pszAttibuteName=NULL;
     char *pszAttibuteValue=NULL;
     char *pszLeftExpression=NULL, *pszRightExpression=NULL, *pszOperator=NULL;
@@ -4026,10 +4029,6 @@ char *msSLDGetFilter(classObj *psClass)
     char *pszFilter = NULL;
     char szBuffer[500];
 
-    int nttt =0;
-    char *sttt = NULL;
-      
-    //nttt = strlen(sttt);
 
     if (psClass && psClass->expression.string)
     {   
