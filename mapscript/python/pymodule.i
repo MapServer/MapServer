@@ -137,31 +137,46 @@ if (MSExc_MapservError != NULL)
 %}
 
 %{
-  static void _raise_ms_exception(void) {
-    char errbuf[256];
-    errorObj *ms_error = msGetErrorObj();
-    snprintf(errbuf, 255, "%s: %s %s\n", ms_error->routine,
-             msGetErrorString(ms_error->code), ms_error->message);
-    // Map MapServer errors to Python exceptions, will define
-    // custom Python exceptions soon.
-    switch (ms_error->code) {
-        case MS_IOERR:
-            PyErr_SetString(PyExc_IOError, errbuf);
-            break;
-        case MS_MEMERR:
-            PyErr_SetString(PyExc_MemoryError, errbuf);
-            break;
-        case MS_TYPEERR:
-            PyErr_SetString(PyExc_TypeError, errbuf);
-            break;
-        case MS_EOFERR:
-            PyErr_SetString(PyExc_EOFError, errbuf);
-            break;
-        default:
-            PyErr_SetString(MSExc_MapservError, errbuf);
-            break;
+    static void _raise_ms_exception(void) {
+        char errbuf[256];
+        char errmsg[2048]; // room for up to 8 * 256 byte messages
+        int errcode;
+        
+        strcpy(errmsg, "");
+        errorObj *ms_error = msGetErrorObj();
+        errcode = ms_error->code;
+        
+        // Step through the error list, appending to the output error
+        // message.
+        while (ms_error && ms_error->code > 0) {
+            snprintf(errbuf, 255, "%s: %s %s\n", ms_error->routine,
+                     msGetErrorString(ms_error->code), ms_error->message);
+            strcat(errmsg, errbuf);
+            ms_error = ms_error->next;
+        }
+        
+        // Map MapServer errors to Python exceptions, will define
+        // custom Python exceptions soon.  The exception we raise
+        // is based on the error at the head of the MapServer error
+        // list.  All other errors appear in the error message.
+        switch (errcode) {
+            case MS_IOERR:
+                PyErr_SetString(PyExc_IOError, errmsg);
+                break;
+            case MS_MEMERR:
+                PyErr_SetString(PyExc_MemoryError, errmsg);
+                break;
+            case MS_TYPEERR:
+                PyErr_SetString(PyExc_TypeError, errmsg);
+                break;
+            case MS_EOFERR:
+                PyErr_SetString(PyExc_EOFError, errmsg);
+                break;
+            default:
+                PyErr_SetString(MSExc_MapservError, errmsg);
+                break;
+        }
     }
-  }
   
 %}
 
@@ -175,8 +190,8 @@ if (MSExc_MapservError != NULL)
              (strcmp(ms_error->routine, "msSearchDiskTree()") == 0)))
         {
             _raise_ms_exception();
-            // Clear the current error
-            ms_error->code = MS_NOERR;
+            // Clear the error list
+            msResetErrorList();
             return NULL;
         }
     }
