@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2003/09/29 20:43:09  assefa
+ * Query all layers only when filter is not set.
+ *
  * Revision 1.20  2003/09/29 14:18:20  assefa
  * Support a diffrent was of giving the srs value for the gml Box element.
  *
@@ -615,11 +618,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     int bFilterSet = 0;
     int bBBOXSet = 0;
    
-    char *sttt = NULL;
-    int  nttt = 0;
-
-    //nttt = strlen(sttt);
-
+    
     // Default filter is map extents
     bbox = map->extent;
 
@@ -970,13 +969,16 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     */
     // __TODO__ Using a rectangle query may not be the most efficient way
     // to do things here.
-    if(msQueryByRect(map, -1, bbox) != MS_SUCCESS)
+    if (!bFilterSet)
     {
-        errorObj   *ms_error;
-        ms_error = msGetErrorObj();
+        if(msQueryByRect(map, -1, bbox) != MS_SUCCESS)
+        {
+            errorObj   *ms_error;
+            ms_error = msGetErrorObj();
 
-        if(ms_error->code != MS_NOTFOUND) 
-            return msWFSException(map, paramsObj->pszVersion);
+            if(ms_error->code != MS_NOTFOUND) 
+              return msWFSException(map, paramsObj->pszVersion);
+        }
     }
 
     /*
