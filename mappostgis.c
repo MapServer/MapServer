@@ -705,7 +705,7 @@ int	dont_force(char	*wkb, shapeObj *shape)
 		{
 			best_type = MS_SHAPE_LINE;
 		}
-		if (   (type==1) && (best_type != MS_SHAPE_NULL) )
+		if (   (type==1) && (best_type == MS_SHAPE_NULL) )
 		{
 			best_type = MS_SHAPE_POINT;	
 		}
