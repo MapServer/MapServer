@@ -19,6 +19,8 @@ Version 3.6.4-dev
 - Use LD instead of CC to refer to linker program name in the Makefile to
   help dealing with GCC 3.x issues (doesn't resolve the issue completely)
 
+- Added missing MS_LAYER_CIRCLE and MS_CC constants in PHP MapScript
+
 
 Version 3.6.3 (2002-10-07)
 --------------------------
