@@ -63,7 +63,7 @@ int main( int argc, char ** argv )
     char	*bitmap = NULL;
      
     char	mBigEndian;
-    treeNodeObj *node;
+    treeNodeObj *node = NULL;
 
 
 /* -------------------------------------------------------------------- */

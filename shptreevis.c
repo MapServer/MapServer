@@ -71,7 +71,6 @@ int main( int argc, char ** argv )
 #endif   
     int		pos, result;
     char	mBigEndian;
-    char	pabyBuf[64];
 
     int		this_rec, factor;
 
