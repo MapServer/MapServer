@@ -2238,26 +2238,21 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
   regex_t re; /* compiled regular expression to be matched */ 
   char szPath[MS_MAXPATHLEN];
 
-  fprintf(stderr, "working on %s\n", html);
-
   if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
     msSetError(MS_REGEXERR, NULL, "msReturnPage()");
     return MS_FAILURE;
-//    writeError();
   }
 
   if(regexec(&re, html, 0, NULL, 0) != 0) { /* no match */
     regfree(&re);
     msSetError(MS_WEBERR, "Malformed template name.", "msReturnPage()");
     return MS_FAILURE;
-//    writeError();
   }
   regfree(&re);
 
   if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, html), "r")) == NULL) {
     msSetError(MS_IOERR, html, "msReturnPage()");
     return MS_FAILURE;
-//    writeError();
   } 
 
   if (papszBuffer)
