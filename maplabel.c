@@ -518,8 +518,8 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   //-- rescaling symbol and gap
   if(style->size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)style->size;
   if(style->size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)style->size;
-  gap = MS_ABS(symbol->gap)*scalefactor;
-  label.size = style->size*scalefactor;
+  gap = MS_ABS(symbol->gap)* (int) scalefactor;
+  label.size = style->size* (int) scalefactor;
   //label.minsize = style->minsize;
   //label.maxsize = style->maxsize;
 
@@ -530,7 +530,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset, scalefactor) == -1)
     return(-1);
 
-  label_width = label_rect.maxx - label_rect.minx;
+  label_width = (int) label_rect.maxx - (int) label_rect.minx;
 
   for(i=0; i<p->numlines; i++) {
     current_length = gap+label_width/2.0; // initial padding for each line
