@@ -381,6 +381,7 @@ memory.") const char * {
 %include "../swiginc/style.i"
 %include "../swiginc/rect.i"
 %include "../swiginc/image.i"
+%include "../swiginc/shape.i"
 
 //
 // class extensions for pointObj, useful many places
@@ -500,124 +501,6 @@ memory.") const char * {
     self->point[i].x = p->x;
     self->point[i].y = p->y;
     return MS_SUCCESS;    
-  }
-}
-
-//
-// class extensions for shapeObj
-//
-%extend shapeObj {
-  shapeObj(int type) {
-    shapeObj *shape;
-
-    shape = (shapeObj *)malloc(sizeof(shapeObj));
-    if(!shape)
-      return NULL;
-
-    msInitShape(shape);
-    if(type >= 0) shape->type = type;
-
-    return shape;
-  }
-
-  ~shapeObj() {
-    msFreeShape(self);
-    free(self);		
-  }
-
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectShape(in, out, self);
-  }
-
-#ifdef NEXT_GENERATION_API
-  lineObj *getLine(int i) {
-#else
-  lineObj *get(int i) {
-#endif
-    if(i<0 || i>=self->numlines)
-      return NULL;
-    else
-      return &(self->line[i]);
-  }
-
-#ifdef NEXT_GENERATION_API
-  int addLine(lineObj *line) {
-#else
-  int add(lineObj *line) {
-#endif
-    return msAddLine(self, line);
-  }
-
-  int draw(mapObj *map, layerObj *layer, imageObj *image) {
-    return msDrawShape(map, layer, self, image, MS_TRUE);
-  }
-
-  void setBounds() {    
-    msComputeBounds(self);
-    return;
-  }
-
-#ifdef NEXT_GENERATION_API
-    %newobject copy;
-    shapeObj *copy() {
-        shapeObj *shape;
-        shape = (shapeObj *)malloc(sizeof(shapeObj));
-        if (!shape)
-            return NULL;
-        msInitShape(shape);
-        shape->type = self->type;
-        msCopyShape(self, shape);
-        return shape;
-    }
-#else
-    int copy(shapeObj *dest) {
-        return(msCopyShape(self, dest));
-    }
-#endif
-
-  char *getValue(int i) { // returns an EXISTING value
-    if(i >= 0 && i < self->numvalues)
-      return (self->values[i]);
-    else
-      return NULL;
-  }
-
-  int contains(pointObj *point) {
-    if(self->type == MS_SHAPE_POLYGON)
-      return msIntersectPointPolygon(point, self);
-
-    return -1;
-  }
-
-  double distanceToPoint(pointObj *point) {
-    return msDistancePointToShape(point, self);
-  }
-
-  double distanceToShape(shapeObj *shape) {
-    return msDistanceShapeToShape(self, shape);
-  }
-
-  int intersects(shapeObj *shape) {
-    switch(self->type) {
-    case(MS_SHAPE_LINE):
-      switch(shape->type) {
-      case(MS_SHAPE_LINE):
-	return msIntersectPolylines(self, shape);
-      case(MS_SHAPE_POLYGON):
-	return msIntersectPolylinePolygon(self, shape);
-      }
-      break;
-    case(MS_SHAPE_POLYGON):
-      switch(shape->type) {
-      case(MS_SHAPE_LINE):
-	return msIntersectPolylinePolygon(shape, self);
-      case(MS_SHAPE_POLYGON):
-	return msIntersectPolygons(self, shape);
-      }
-      break;
-    }
-
-    return -1;
   }
 }
 
@@ -827,70 +710,8 @@ memory.") const char * {
     }    
 }
 
-// extension to colorObj
-
-%extend colorObj {
-  
-    colorObj(int red=0, int green=0, int blue=0, int pen=MS_PEN_UNSET) {
-        colorObj *color;
-        
-        // Check colors
-        if (red > 255 || green > 255 || blue > 255) {
-            msSetError(MS_MISCERR, "Invalid color index.", "colorObj()");
-            return NULL;
-        }
-    
-        color = (colorObj *)calloc(1, sizeof(colorObj));
-        if (!color)
-            return(NULL);
-    
-        MS_INIT_COLOR(*color, red, green, blue);
-
-        return(color);    	
-    }
-
-    ~colorObj() {
-        free(self);
-    }
- 
-    int setRGB(int red, int green, int blue) {
-        // Check colors
-        if (red > 255 || green > 255 || blue > 255) {
-            msSetError(MS_MISCERR, "Invalid color index.", "setRGB()");
-            return MS_FAILURE;
-        }
-    
-        MS_INIT_COLOR(*self, red, green, blue);
-        return MS_SUCCESS;
-    }
-
-    int setHex(char *psHexColor) {
-        int red, green, blue;
-        if (psHexColor && strlen(psHexColor)== 7 && psHexColor[0] == '#') {
-            red = hex2int(psHexColor+1);
-            green = hex2int(psHexColor+3);
-            blue= hex2int(psHexColor+5);
-            if (red > 255 || green > 255 || blue > 255) {
-                msSetError(MS_MISCERR, "Invalid color index.", "setHex()");
-                return MS_FAILURE;
-            }
-
-            MS_INIT_COLOR(*self, red, green, blue);
-            return MS_SUCCESS;
-        }
-        else {
-            msSetError(MS_MISCERR, "Invalid hex color.", "setHex()");
-            return MS_FAILURE;
-        }
-    }   
-    
-    %newobject toHex;
-    char *toHex() {
-        char hexcolor[7];
-        sprintf(hexcolor, "#%02x%02x%02x", self->red, self->green, self->blue);
-        return strdup(hexcolor);
-    }
-}
+// Color
+%include "../swiginc/color.i"
 
 // OWSRequest
 %include "../swiginc/owsrequest.i"

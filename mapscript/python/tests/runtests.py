@@ -72,7 +72,7 @@ from cases.shapetest import InlineFeatureTestCase
 
 from cases.styletest import DrawProgrammedStylesTestCase
 from cases.styletest import NewStylesTestCase
-from cases.styletest import ColorObjTestCase
+from cases.colortest import ColorObjTestCase
 
 from cases.symboltest import SymbolTestCase
 from cases.symboltest import MapSymbolTestCase

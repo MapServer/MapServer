@@ -1,7 +1,7 @@
 # $Id$
 #
 # Project:  MapServer
-# Purpose:  xUnit style Python mapscript tests of Map "zooming"
+# Purpose:  xUnit style Python mapscript tests of Map Styles
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
@@ -162,38 +162,6 @@ class NewStylesTestCase(MapTestCase):
         new_style = mapscript.styleObj()
         self.assertRaises(mapscript.MapServerChildError, class0.insertStyle, new_style, 6)
 
-class ColorObjTestCase(unittest.TestCase):
-    def testColorObjConstructorNoArgs(self):
-        """ColorObjTestCase.testColorObjConstructorNoArgs: a color can be initialized with no arguments"""
-        c = mapscript.colorObj()
-        assert (c.red, c.green, c.blue, c.pen) == (0, 0, 0, -4)
-    def testColorObjConstructorArgs(self):
-        """ColorObjTestCase.testColorObjConstructorArgs: a color can be initialized with arguments"""
-        c = mapscript.colorObj(1, 2, 3)
-        assert (c.red, c.green, c.blue, c.pen) == (1, 2, 3, -4)
-    def testColorObjToHex(self):
-        """ColorObjTestCase.testColorObjToHex: a color can be outputted as hex"""
-        c = mapscript.colorObj(255, 255, 255)
-        assert c.toHex() == '#ffffff'
-    def testColorObjSetRGB(self):
-        """ColorObjTestCase.testColorObjSetRGB: a color can be set using setRGB method"""
-        c = mapscript.colorObj()
-        c.setRGB(255, 255, 255)
-        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
-    def testColorObjSetHexLower(self):
-        """ColorObjTestCase.testColorObjSetHexLower: a color can be set using lower case hex"""
-        c = mapscript.colorObj()
-        c.setHex('#ffffff')
-        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
-    def testColorObjSetHexUpper(self):
-        """ColorObjTestCase.testColorObjSetHexUpper: a color can be set using upper case hex"""
-        c = mapscript.colorObj()
-        c.setHex('#FFFFFF')
-        assert (c.red, c.green, c.blue) == (255, 255, 255)
-    def testColorObjSetHexBadly(self):
-        """ColorObjTestCase.testColorObjSetHexBadly: invalid hex color string raises proper error"""
-        c = mapscript.colorObj()
-        self.assertRaises(mapscript.MapServerError, c.setHex, '#fffffg')
         
 if __name__ == '__main__':
     unittest.main()
