@@ -19,7 +19,9 @@ Version 4.4.0-beta2 ()
 - Allow use of '=' inside HTML template tag parser. (Bug 978)
 
 - Use metadata ows_schema_location for WMS/WFS/WCS/SLD (Bug 999, 1013, 938)
-
+  (The default value if metadata is not found is 
+   http://schemas.opengeospatial.net)
+ 
 - Generate a RULE <Name> tag when generating an SLD. (Bug 1010)
 
 - WMS GetLegendGraphic uses now the RULE value to return an icon for
