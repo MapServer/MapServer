@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2003/12/01 16:10:13  assefa
+ * Add #ifdef USE_OGR for sld functions available to mapserver.
+ *
  * Revision 1.6  2003/11/30 16:30:04  assefa
  * Support mulitple symbolisers in a Rule.
  *
@@ -57,7 +60,6 @@
 #include "map.h"
 #include "cpl_string.h"
 
-#ifdef USE_OGR
 
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
 #define SLD_MARK_SYMBOL_SQUARE "sld_mark_symbol_square"
@@ -74,8 +76,19 @@
 #define SLD_MARK_SYMBOL_X_FILLED "sld_mark_symbol_x_filled"
 
 
-void msSLDApplySLDURL(mapObj *map, char *szURL)
+
+
+/************************************************************************/
+/*                             msSLDApplySLDURL                         */
+/*                                                                      */
+/*      Use the SLD document given through a URL and apply the SLD      */
+/*      on the map. Layer name and Named Layer's name parameter are     */
+/*      used to do the match.                                           */
+/************************************************************************/
+int msSLDApplySLDURL(mapObj *map, char *szURL)
 {
+#ifdef USE_OGR
+
     char *pszSLDTmpFile = NULL;
     int status = 0;
     char *pszSLDbuf=NULL;
@@ -101,6 +114,19 @@ void msSLDApplySLDURL(mapObj *map, char *szURL)
         if (pszSLDbuf)
           msSLDApplySLD(map, pszSLDbuf);
     }
+
+    return MS_SUCCESS;
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+    msSetError(MS_MISCERR, "OGR support is not available.", "msSLDApplySLDURL()");
+    return(MS_FAILURE);
+
+#endif /* USE_OGR */
+
 }
 
 /************************************************************************/
@@ -111,8 +137,10 @@ void msSLDApplySLDURL(mapObj *map, char *szURL)
 /*      they have the same name, copy the classes asscoaited with       */
 /*      the SLD layers onto the map layers.                             */
 /************************************************************************/
-void msSLDApplySLD(mapObj *map, char *psSLDXML)
+int msSLDApplySLD(mapObj *map, char *psSLDXML)
 {
+#ifdef USE_OGR
+
     int nLayers = 0;
     layerObj *pasLayers = NULL;
     int i, j, k, iClass;
@@ -164,10 +192,27 @@ void msSLDApplySLD(mapObj *map, char *psSLDXML)
                 }
             }
         }
+
     }
 
+
+    return MS_SUCCESS;
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+    msSetError(MS_MISCERR, "OGR support is not available.", "msSLDApplySLD()");
+    return(MS_FAILURE);
+
+#endif /* USE_OGR */
 }
-                        
+
+
+
+#ifdef USE_OGR
+                       
     
 /************************************************************************/
 /*                              msSLDParseSLD                           */
@@ -2070,5 +2115,185 @@ void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
         psColor->green = hex2int(psHexColor+3);
         psColor->blue= hex2int(psHexColor+5);
     }
-}     
+}   
+
 #endif
+
+
+char *msSLDGenerateSLD(mapObj *map)
+{
+#ifdef USE_OGR
+    char szBuffer[5000];
+    int i = 0;
+    char *pszTmp = NULL;
+    szBuffer[0] = '\0';
+
+    if (map)
+    {
+        sprintf(szBuffer, "%s\n", "<StyledLayerDescriptor version=\"1.0.0\">");
+        for (i=0; i<map->numlayers; i++)
+        {
+            pszTmp = msSLDGenerateSLDLayer(&map->layers[i]);
+            if (pszTmp)
+            {
+                strcat(szBuffer, pszTmp);
+                free(pszTmp);
+            }
+        }
+        strcat(szBuffer, "</StyledLayerDescriptor>\n");
+        
+    }
+
+    return strdup(szBuffer);
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+    msSetError(MS_MISCERR, "OGR support is not available.", "msSLDGenerateSLD()");
+    return NULL;
+
+#endif /* USE_OGR */
+
+}
+
+
+
+/************************************************************************/
+/*                          msSLDGenerateSLDLayer                       */
+/*                                                                      */
+/*      Genrate an SLD XML string based on the layer's classes.         */
+/************************************************************************/
+char *msSLDGenerateSLDLayer(layerObj *psLayer)
+{
+#ifdef USE_OGR
+    char szBuffer[5000];
+    char szTmp[100];
+    char szHexColor[6];
+    int i, j;
+    styleObj *psStyle = NULL;
+    int nSymbol = -1;
+    symbolObj *psSymbol = NULL;
+    char szDashArray[100];
+
+    szBuffer[0] = '\0';
+    if (psLayer)
+    {
+        sprintf(szBuffer, "%s\n",  "<NamedLayer>");
+        sprintf(szTmp, "<NAME>%s</NAME>\n",  psLayer->name);
+        strcat(szBuffer, szTmp);
+        szTmp[0]='\0';
+        sprintf(szTmp, "%s\n",  "<UserStyle>");
+        strcat(szBuffer, szTmp);
+        szTmp[0]='\0';
+        sprintf(szTmp, "%s\n",  "<FeatureTypeStyle>");
+        strcat(szBuffer, szTmp);
+        szTmp[0]='\0';
+        if (psLayer->numclasses > 0)
+        {
+            for (i=psLayer->numclasses-1; i>=0; i--)
+            {
+                if (psLayer->class[i].numstyles > 0)
+                {
+                    sprintf(szTmp, "%s\n",  "<Rule>");
+                    strcat(szBuffer, szTmp);
+                    szTmp[0]='\0';
+/* -------------------------------------------------------------------- */
+/*      Line symbolizer.                                                */
+/* -------------------------------------------------------------------- */
+                    if (psLayer->type == MS_LAYER_LINE)
+                    {
+                        for (j=0; j<psLayer->class[i].numstyles; j++)
+                        {
+                            psStyle = &psLayer->class[i].styles[j];
+                            sprintf(szTmp, "%s\n",  "<LineSymbolizer>");
+                            strcat(szBuffer, szTmp);
+                            szTmp[0]='\0';
+                            sprintf(szTmp, "%s\n",  "<Stroke>");
+                            strcat(szBuffer, szTmp);
+                            szTmp[0]='\0';
+                            sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
+                                    psStyle->color.green,psStyle->color.blue);
+                            
+                            
+                            sprintf(szTmp, 
+                                    "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
+                                    szHexColor);
+                            strcat(szBuffer, szTmp);
+                            szTmp[0]='\0';
+                            sprintf(szTmp, 
+                                    "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
+                                    psStyle->size);
+                             strcat(szBuffer, szTmp);
+                            szTmp[0]='\0';
+                            
+/* -------------------------------------------------------------------- */
+/*      dash array                                                      */
+/* -------------------------------------------------------------------- */
+                            nSymbol = -1;
+                            if (psStyle->symbol > 0)
+                              nSymbol = psStyle->symbol;
+                            else if (psStyle->symbolname)
+                              nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
+                                                         psStyle->symbolname);
+                            
+                            if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
+                            {
+                                psSymbol =  &psLayer->map->symbolset.symbol[nSymbol];
+                                if (psSymbol->stylelength > 0)
+                                {
+                                    for (i=0; i<psSymbol->stylelength; i++)
+                                    {
+                                        szTmp[0] = '\0';
+                                        sprintf(szTmp, "%d ", psSymbol->style[i]);
+                                        strcat(szDashArray, szTmp);
+                                    }
+                                    sprintf(szTmp, 
+                                    "<CssParameter name=\"stroke-dasharray\">%s</CssParameter>\n", 
+                                            szDashArray);
+                                    strcat(szBuffer, szTmp);
+                                    szTmp[0]='\0';
+                                }  
+                                           
+                            }
+                            sprintf(szTmp, "%s\n",  "</Stroke>");
+                            strcat(szBuffer, szTmp);
+                            szTmp[0]='\0';
+                            sprintf(szTmp, "%s\n",  "</LineSymbolizer>");
+                            strcat(szBuffer, szTmp);
+                            szTmp[0]='\0';
+                        }
+                    }
+                            
+                    sprintf(szTmp, "%s\n",  "</Rule>");
+                    strcat(szBuffer, szTmp);
+                    szTmp[0]='\0';
+                }
+            }
+        }
+        sprintf(szTmp, "%s\n",  "</FeatureTypeStyle>");
+        strcat(szBuffer, szTmp);
+        szTmp[0]='\0';
+        sprintf(szTmp, "%s\n",  "</UserStyle>");
+        strcat(szBuffer, szTmp);
+        szTmp[0]='\0';
+        sprintf(szTmp, "%s\n",  "</NamedLayer>");
+        strcat(szBuffer, szTmp);
+        szTmp[0]='\0';
+        
+    }
+    return strdup(szBuffer);
+
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+    msSetError(MS_MISCERR, "OGR support is not available.", "msSLDGenerateSLDLayer()");
+    return NULL;
+
+#endif /* USE_OGR */
+
+}

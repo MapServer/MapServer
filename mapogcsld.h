@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2003/12/01 16:10:13  assefa
+ * Add #ifdef USE_OGR for sld functions available to mapserver.
+ *
  * Revision 1.4  2003/11/30 16:30:04  assefa
  * Support mulitple symbolisers in a Rule.
  *
@@ -56,8 +59,9 @@
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-void msSLDApplySLDURL(mapObj *map, char *szURL);
-void msSLDApplySLD(mapObj *map, char *psSLDXML);
+int msSLDApplySLDURL(mapObj *map, char *szURL);
+int msSLDApplySLD(mapObj *map, char *psSLDXML);
+
 layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers);
 void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
 void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer);
@@ -93,4 +97,6 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
 void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
 void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 
+char *msSLDGenerateSLD(mapObj *map);
+char *msSLDGenerateSLDLayer(layerObj *psLayer);
 #endif
