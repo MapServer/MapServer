@@ -41,6 +41,12 @@
 ..  The next heading encountered becomes our H2
 ..
 
+
+.. contents::
+    :depth: 2
+    :backlinks: top
+
+
 =============================================================================
  Introduction
 =============================================================================
@@ -103,7 +109,7 @@ method(type mandatory_parameter [, type optional_parameter=default]) : type
 Class method names are camel case with a leading lower case character
 like *getExpressionString*.
 
-
+-----------------------
 Next Generation Classes
 -----------------------
 
@@ -162,10 +168,6 @@ classes themselves.
  Mapscript Classes
 =============================================================================
 
-References to sections below will be added here as the documentation grows.
-
-classObj_, colorObj_, imageObj_, labelObj_, outputFormatObj_, pointObj_,
-rectObj_, shapeObj_, styleObj_, symbolObj_, symbolSetObj_
 
 -----------------------------------------------------------------------------
  classObj
