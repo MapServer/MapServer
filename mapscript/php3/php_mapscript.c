@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.10  2003/06/11 17:55:07  dan
+ * Modified PHP SAPI test to accept 'cli' as well
+ *
  * Revision 1.104.2.9  2003/04/16 20:31:59  dan
  * Better looking phpinfo() output for php_mapscript (backported from v3.7)
  *
@@ -1074,7 +1077,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * now we'll produce an error of PHP is not running as a CGI.
      */
     if (sapi_module.name && (strcmp(sapi_module.name, "cgi") != 0) &&
-       (strcmp(sapi_module.name, "cgi-fcgi") != 0))
+       (strcmp(sapi_module.name, "cgi-fcgi") != 0) &&
+       (strcmp(sapi_module.name, "cli") != 0))
     {
         php3_error(E_ERROR, 
              "Due to thread-safety problems, php_mapscript cannot be used "
