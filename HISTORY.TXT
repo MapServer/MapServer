@@ -13,8 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Current Version (CVS)
----------------------
+Version 4.2.3 (2004-08-30)
+--------------------------
 
 - Fixed problem with WMS GetFeatureInfo when data was reprojected. Was a
   problem with msProjectRect and zero-size search rectangles (bug 794)
@@ -23,9 +23,6 @@ Current Version (CVS)
 
 - Ported $layer->getExtent() from SWIG to PHP MapScript (bug 826)
 
-
-Version 4.2.3 (to be released)
---------------------------
 - In the case no RULE parameter has been specified in the request
   return the legend with all classes for the specified LAYER.
   Changes has been made in mapwms.c (bug 653)
