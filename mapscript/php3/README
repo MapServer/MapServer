@@ -118,30 +118,31 @@ and the MapServer Map File documentation at:
 
  Members:
 
-   int    	numlayers  (read-only)
-   string 	name
-   int    	status
-   int    	width
-   int    	height
-   int    	transparent
-   int    	interlace
-   int    	imagetype  (read-only, use selectOutputformat())
-   int    	imagequality
+   int          numlayers  (read-only)
+   string       name
+   int          status
+   int          debug
+   int          width
+   int          height
+   int          transparent
+   int          interlace
+   int          imagetype  (read-only, use selectOutputformat())
+   int          imagequality
    int          resolution   (pixels per inch, defaults to 72)
-   rectObj 	extent;	
-   double 	cellsize
+   rectObj      extent; 
+   double       cellsize
    int          units (map units type)
-   double 	scale (read-only, set by drawMap())
-   string 	shapepath
-   int    	keysizex
-   int    	keysizey
-   int    	keyspacingx
-   int    	keyspacingy
-   webObj 	web
+   double       scale (read-only, set by drawMap())
+   string       shapepath
+   int          keysizex
+   int          keysizey
+   int          keyspacingx
+   int          keyspacingy
+   webObj       web
    referenceMapObj reference
    colorObj     imagecolor
    scalebarObj  scalebar
-   legendObj    legend          	
+   legendObj    legend                  
    string       symbolsetfilename (read-only, set by setSymbolSet())
    string       fontsetfilename (read-only, set by setFontSet())
 
@@ -457,6 +458,7 @@ and the MapServer Map File documentation at:
    int    numclasses  (read-only)
    int    index       (read-only)
    int    status      (MS_ON, MS_OFF, MS_DEFAULT or MS_DELETE)
+   int    debug
    string classitem
    string name
    string group

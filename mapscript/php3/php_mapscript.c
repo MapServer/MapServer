@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.151  2003/03/26 21:11:34  dan
+ * Added debug member in layerObj and mapObj
+ *
  * Revision 1.150  2003/03/26 20:23:31  dan
  * msLoadWKTProjectionString() has been renamed msOGCWKT2ProjectionObj()
  *
@@ -1099,6 +1102,7 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value, "name",      pMap->name);
     add_property_long(return_value,  "status",    pMap->status);
+    add_property_long(return_value,  "debug",    pMap->debug);
     add_property_long(return_value,  "width",     pMap->width);
     add_property_long(return_value,  "height",    pMap->height);
     add_property_long(return_value,  "transparent", pMap->transparent);
@@ -1346,6 +1350,7 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     IF_SET_STRING(     "name",        self->name)
     else IF_SET_LONG(  "status",      self->status)
+    else IF_SET_LONG(  "debug",       self->debug)
     else IF_SET_LONG(  "width",       self->width)
     else IF_SET_LONG(  "height",      self->height)
     else IF_SET_LONG(  "transparent", self->transparent)
@@ -5613,6 +5618,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
 
     /* editable properties */
     add_property_long(return_value,   "status",     player->status);
+    add_property_long(return_value,   "debug",      player->debug);
     PHPMS_ADD_PROP_STR(return_value,  "classitem",  player->classitem);
     PHPMS_ADD_PROP_STR(return_value,  "name",       player->name);
     PHPMS_ADD_PROP_STR(return_value,  "group",      player->group);
@@ -5756,6 +5762,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     IF_SET_LONG(       "status",     self->status)
+    else IF_SET_LONG(  "debug",      self->debug)
     else IF_SET_STRING("classitem",  self->classitem)
     else IF_SET_STRING("name",       self->name)
     else IF_SET_STRING("group",      self->group)
