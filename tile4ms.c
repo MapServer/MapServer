@@ -36,7 +36,8 @@
 
 
 /***********************************************************************/
-int process_shapefiles(char *metaFileNameP, char *tileFileNameP) 
+int process_shapefiles(char *metaFileNameP, char *tileFileNameP, 
+                       int tile_path_only) 
 {
 SHPHandle	hSHP, tileSHP;
 rectObj 	extentRect;
@@ -157,6 +158,17 @@ int		tilesProcessed = 0;
 	// store filepath of current shapefile as attribute of rectangle
 	// -------------------------------------------------------------
 
+        // Strip off filename if requested
+        if (tile_path_only)
+        {
+            char *pszTmp;
+            if ((pszTmp = strrchr(shapeFileName, '/')) != NULL ||
+                (pszTmp = strrchr(shapeFileName, '\\')) != NULL )
+            {
+                *(pszTmp+1) = '\0';  // Keep the trailing '/' only.
+            }
+        }
+
 	msDBFWriteStringAttribute(tileDBF, entityNum, 0, shapeFileName);
 
 	tilesProcessed++;
@@ -181,9 +193,10 @@ int		tilesProcessed = 0;
 /***********************************************************************/
 void print_usage_and_exit() {
 
-	printf("\nusage: tile4ms <meta-file> <tile-file>\n" );
-	printf("<meta-file>\tINPUT  file containing list of shapefile names\n\t\t(complete paths 255 chars max, no extension)\n");
-	printf("<tile-file>\tOUTPUT shape file of extent rectangles and names\n\t\tof tiles in <tile-file>.dbf\n\n");
+    printf("\nusage: tile4ms <meta-file> <tile-file> [-tile-path-only]\n");
+    printf("<meta-file>\tINPUT  file containing list of shapefile names\n\t\t(complete paths 255 chars max, no extension)\n");
+    printf("<tile-file>\tOUTPUT shape file of extent rectangles and names\n\t\tof tiles in <tile-file>.dbf\n");
+    printf("-tile-path-only\tOptional flag.  If specified then only the path to the \n\t\tshape files will be stored in the LOCATION field\n\t\tinstead of storing the full filename.\n\n");
 	exit(1);
 }
 
@@ -192,25 +205,31 @@ void print_usage_and_exit() {
 /***********************************************************************/
 int main( int argc, char **argv )
 {
+  int tile_path_only = 0;
 
   // stun user with existence of help 
   // --------------------------------
-  if ((argc == 2)&&(strstr(argv[1], "-h"))) {
-
-	print_usage_and_exit();
-	}
+  if ((argc == 2)&&(strstr(argv[1], "-h"))) 
+  {
+      print_usage_and_exit();
+  }
 
 
   // check arguments
   // ---------------
-  if( argc != 3 )  {
+  if( argc < 3 )
+  {
+      print_usage_and_exit();
+  }
 
-	print_usage_and_exit();
-	}
+  if ( argc == 4 && strcmp(argv[3],"-tile-path-only") == 0) 
+  {
+      tile_path_only = 1;
+  }
 
-
-  process_shapefiles(argv[1], argv[2]);
+  process_shapefiles(argv[1], argv[2], tile_path_only);
 
 
   exit(0);
 }
+
