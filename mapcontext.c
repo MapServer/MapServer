@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.24  2002/11/21 20:39:40  julien
+ * Support the wms_srs metadata and support multiple SRS tag
+ *
  * Revision 1.23  2002/11/21 17:07:34  julien
  * temporaly fix a seg. fault with pszSLD2
  *
@@ -346,10 +349,10 @@ int msLoadMapContext(mapObj *map, char *filename)
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
-  CPLXMLNode *psLegendURL;
+  CPLXMLNode *psLegendURL, *psSRS;
   char szPath[MS_MAXPATHLEN];
   char szProj[20];
-  int nStyle;
+  int nStyle, nFirstSRS;
   layerObj *layer;
 
   //
@@ -701,16 +704,47 @@ int msLoadMapContext(mapObj *map, char *filename)
               }
 
               // Projection
-              pszValue = (char*)CPLGetXMLValue(psLayer, "SRS", NULL);
-              if(pszValue != NULL)
+              nFirstSRS = 1;
+              psSRS = psLayer->psChild;
+              while(psSRS != NULL)
               {
-                  sprintf(szProj, "init=epsg:%s", pszValue+5);
+                  if(psSRS->psChild != NULL &&
+                     strcasecmp(psSRS->pszValue, "SRS") == 0 )
+                  {
+                      pszValue = psSRS->psChild->pszValue;
 
-                  msInitProjection(&layer->projection);
-                  layer->projection.args[layer->projection.numargs] = 
-                      strdup(szProj);
-                  layer->projection.numargs++;
-                  msProcessProjection(&layer->projection);
+                      if(nFirstSRS == 1)
+                      {
+                          pszValue = (char*)CPLGetXMLValue(psLayer,"SRS",NULL);
+                          if(pszValue != NULL)
+                          {
+                              sprintf(szProj, "init=epsg:%s", pszValue+5);
+
+                              msInitProjection(&layer->projection);
+                              layer->projection.args[layer->projection.numargs] = strdup(szProj);
+                              layer->projection.numargs++;
+                              msProcessProjection(&layer->projection);
+                          }
+                          nFirstSRS = 0;
+                      }
+
+                      // Add in wms_srs
+                      pszHash = msLookupHashTable(layer->metadata, "wms_srs");
+                      if(pszHash != NULL)
+                      {
+                          pszValue1 = (char*)malloc(strlen(pszHash)+
+                                                    strlen(pszValue)+2);
+                          sprintf(pszValue1, "%s %s", pszHash, pszValue);
+                          msInsertHashTable(layer->metadata, 
+                                            "wms_srs", pszValue1);
+                          free(pszValue1);
+                      }
+                      else
+                          msInsertHashTable(layer->metadata, 
+                                            "wms_srs", pszValue);
+                  }
+
+                  psSRS = psSRS->psNext;
               }
 
               // Format
@@ -956,10 +990,10 @@ int msSaveMapContext(mapObj *map, char *filename)
 #if defined(USE_WMS_LYR)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL;
+  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, **papszSRS;
   char *pszLegendItem, *pszEncodedVal;
   FILE *stream;
-  int i, nValue;
+  int i, nValue, numSRS, nSRS;
   char szPath[MS_MAXPATHLEN];
 
   // Decide which version we're going to return... only 1.0.0 for now
@@ -1091,9 +1125,19 @@ int msSaveMapContext(mapObj *map, char *filename)
           msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_abstract",
                              OWS_NOERR, "      <Abstract>%s</Abstract>\n", 
                              NULL);
-          fprintf(stream, "      <SRS>%s</SRS>\n", 
-                  msGetEPSGProj(&(map->layers[i].projection), 
-                                map->layers[i].metadata, MS_TRUE));
+
+          // Layer SRS
+          pszValue = msGetEPSGProj(&(map->layers[i].projection), 
+                                   map->layers[i].metadata, MS_FALSE);
+          papszSRS = split(pszValue, ' ', &numSRS);
+          if(numSRS > 0 && papszSRS)
+          {
+              for(nSRS=0; nSRS<numSRS; nSRS++)
+                  fprintf(stream, "      <SRS>%s</SRS>\n", papszSRS[nSRS]);
+          }
+          if(papszSRS)
+              msFreeCharArray(papszSRS, numSRS);
+
           // Format
           if(msLookupHashTable(map->layers[i].metadata,"wms_formatlist")==NULL)
           {
