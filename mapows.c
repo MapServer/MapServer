@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.19  2004/02/24 06:20:37  sdlime
+ * Added msOWSGetMetadata() function.
+ *
  * Revision 1.18  2004/02/05 04:40:01  sdlime
  * Added WCS to the OWS request broker function. The WCS request handler just returns MS_DONE for now.
  *
@@ -73,8 +76,9 @@
 #include "map.h"
 
 #include <ctype.h> /* isalnum() */
+#include <stdarg.h> 
 
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
 
 /*
 ** msOWSDispatch() is the entry point for any OWS request (WMS, WFS, ...)
@@ -108,6 +112,24 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
 }
 
+const char *msOWSGetMetadata(hashTableObj metadata, ...) 
+{
+  va_list arglist;
+  char *arg;
+  const char *value;
+
+  va_start(arglist, metadata);
+  while((arg = va_arg(arglist, char *)) != NULL) {
+    if((value = msLookupHashTable(metadata, (char*) arg))) {
+      va_end(arglist);
+      return(value);
+    }
+  }
+
+  // didn't find the right metadata
+  va_end(arglist);
+  return(NULL);
+}
 
 /*
 ** msRenameLayer()

@@ -1,10 +1,13 @@
 /**********************************************************************
  * $Id$
  *
- * mapows.h - OGC Web Services (WMS, WFS) support function definitions
+ * mapows.h - OGC Web Services (WMS, WFS, WCS) support function definitions
  *
  **********************************************************************
  * $Log$
+ * Revision 1.21  2004/02/24 06:20:37  sdlime
+ * Added msOWSGetMetadata() function.
+ *
  * Revision 1.20  2004/02/05 06:05:54  sdlime
  * Added first WCS prototype to mapows.h
  *
@@ -100,7 +103,6 @@ typedef struct http_request_info
     FILE      * fp;            /* FILE * used during download */
 } httpRequestObj;
 
-
 typedef  struct
 {
   char *pszVersion;
@@ -112,7 +114,7 @@ typedef  struct
   char *pszBbox; //only used with a Get Request
   char *pszOutputFormat; //only used with DescibeFeatureType
 
-}wfsParamsObj;
+} wfsParamsObj;
 
 int msHTTPInit();
 void msHTTPCleanup();
@@ -129,9 +131,10 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
 /*====================================================================
  *   mapows.c
  *====================================================================*/
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
 
 int msOWSDispatch(mapObj *map, cgiRequestObj *request);
+const char *msOWSGetMetadata(hashTableObj metadata, ...);
 int msOWSMakeAllLayersUnique(mapObj *map);
 char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
 const char *msOWSGetSchemasLocation(mapObj *map);
@@ -195,7 +198,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); 
 
 
-
 /*====================================================================
  *   mapwmslayer.c
  *====================================================================*/
@@ -205,7 +207,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *lp, 
                       imageObj *img);
-
 char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              int nClickX, int nClickY, int nFeatureCount,
                              const char *pszInfoFormat); 
@@ -252,7 +253,7 @@ int msLoadMapContext(mapObj *map, char *filename);
  *   mapwcs.c
  *====================================================================*/
 
-int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj);
+int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj); // only 1 public function
 
 #endif /* MAPOWS_H */
 
