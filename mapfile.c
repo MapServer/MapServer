@@ -2699,17 +2699,22 @@ int initMap(mapObj *map)
   map->imagecolor.green = 255;
   map->imagecolor.blue = 255;
 
+  // set the default image type (progression)
 #ifdef USE_GD_GIF
   map->imagetype = MS_GIF;
-#else
+#elif USE_GD_PNG
   map->imagetype = MS_PNG;
+#elif USE_GD_JPEG
+  map->imagetype = MS_JPEG;
+#elif USE_GD_WBMP
+  map->imagetype = MS_WBMP;
 #endif
 
   map->imagequality = 75;
 
   map->palette.numcolors = 0;
 
-  map->transparent = MS_OFF; /* no transparency */
+  map->transparent = MS_OFF;
   map->interlace = MS_ON;
 
   map->labelcache.labels = (labelCacheMemberObj *)malloc(sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE);
