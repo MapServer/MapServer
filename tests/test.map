@@ -113,6 +113,7 @@ MAP
 
   LAYER
     NAME "POINT"
+    EXTENT -0.5 51.0 0.5 52.0
     TYPE POINT
     PROJECTION
       "init=epsg:4326"
