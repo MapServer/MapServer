@@ -313,6 +313,7 @@
 
     if(initClass(&(layer->class[layer->numclasses])) == -1)
       return NULL;
+    layer->class[layer->numclasses].type = layer->type;
 
     layer->numclasses++;
 

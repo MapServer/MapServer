@@ -1051,6 +1051,7 @@ int initClass(classObj *class)
     return(-1);
   }
 
+  class->type = -1;
   return(0);
 }
 
@@ -1181,6 +1182,9 @@ int loadClass(classObj *class, mapObj *map)
 	return(-1);
       }
       break;
+    case(TYPE):
+      if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION)) == -1) return(-1);
+      break;
     default:
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       msSetError(MS_IDENTERR, ms_error.message, "loadClass()");
@@ -1256,6 +1260,10 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   case(TEXT):
     if(loadExpressionString(&(class->text), value) == -1) return;
     if((class->text.type != MS_STRING) && (class->text.type != MS_EXPRESSION)) msSetError(MS_MISCERR, "Text expressions support constant or replacement strings." , "loadClass()");
+  case(TYPE):
+    msyystate = 2; msyystring = value;
+    if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION)) == -1) return;
+    break;
   default:
     break;
   }
@@ -1437,6 +1445,7 @@ int loadLayer(layerObj *layer, mapObj *map)
     switch(msyylex()) {
     case(CLASS):
       if(loadClass(&(layer->class[c]), map) == -1) return(-1);
+      if(layer->class[c].type == -1) layer->class[c].type = layer->type;
       c++;
       break;
     case(CLASSITEM):

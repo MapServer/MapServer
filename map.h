@@ -312,6 +312,8 @@ typedef struct {
 
   joinObj *joins;
   int numjoins;	
+
+  int type;
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
