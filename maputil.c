@@ -452,7 +452,7 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex)
         {
             // we do not need to promote if it is the first one.
             if (iCurrentIndex == 0)
-                return MS_SUCCESS;
+                return MS_FAILURE;
 
             map->layerorder[iCurrentIndex] =  
                 map->layerorder[iCurrentIndex-1];
@@ -488,7 +488,7 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
         {
             // we do not need to demote if it is the last one.
             if (iCurrentIndex == map->numlayers-1)
-                return MS_SUCCESS;
+                return MS_FAILURE;
 
             map->layerorder[iCurrentIndex] =  
                 map->layerorder[iCurrentIndex+1];
@@ -801,13 +801,13 @@ char *msGetProjectionString(projectionObj *proj)
 
 
 /************************************************************************/
-/*        pointObj *getPointUsingMeasure(shapeObj *shape, double m)     */
+/*        pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)   */
 /*                                                                      */
 /*      Using a measured value get the XY location it corresonds        */
 /*      to.                                                             */
 /*                                                                      */
 /************************************************************************/
-pointObj *getPointUsingMeasure(shapeObj *shape, double m)
+pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
 {
     pointObj    *point = NULL;
     lineObj     line;
@@ -1022,13 +1022,13 @@ pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
 
 
 /************************************************************************/
-/*         pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj     */
+/*         pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj   */
 /*      *point)                                                         */
 /*                                                                      */
 /*      Calculate the intersection point betwwen the point and the      */
 /*      shape and return the Measured value at the intersection.        */
 /************************************************************************/
-pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point)
+pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 {       
     double      dfMinDist = 1e35;
     double      dfDist = 0;
