@@ -168,7 +168,6 @@ memory.") const char * {
 %include "../../mapshape.h"
 %include "../../mapproject.h"
 %include "../../map.h"
-%include "../../cgiutil.h"
 
 // try wrapping mapsymbol.h
 %include "../../mapsymbol.h"
@@ -1933,8 +1932,8 @@ memory.") const char * {
 }
 
 // OWSRequest
-%include "owsrequest.i"
+%include "../owsrequest.i"
 
 // HashTable
-%include "hashtable.i"
+%include "../hashtable.i"
 
