@@ -27,8 +27,19 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2004/11/01 14:38:31  dan
+ * Fixed typo in error message
+ *
  * Revision 1.76  2004/10/28 18:55:30  sdlime
- * Fixed a small bug in the marker drawing code to support special circumstances encountered in the reference map drawing code. The problem was that since colors and outlinecolors are shared by both the box and marker with a reference map you could run into situations where certain vector symbols (unfilled) would not render. Basically you could not draw a box outline and a custom unfilled vector marker. The solution was to have the marker drawing code fall back on the outlinecolor if the main color is unset. A one line fix. Now you can have a red box outline and a custom crosshair marker (ala the National Map).
+ * Fixed a small bug in the marker drawing code to support special 
+ * circumstances encountered in the reference map drawing code. The problem 
+ * was that since colors and outlinecolors are shared by both the box and 
+ * marker with a reference map you could run into situations where certain 
+ * vector symbols (unfilled) would not render. Basically you could not draw 
+ * a box outline and a custom unfilled vector marker. The solution was to have
+ * the marker drawing code fall back on the outlinecolor if the main color is 
+ * unset. A one line fix. Now you can have a red box outline and a custom 
+ * crosshair marker (ala the National Map).
  *
  * Revision 1.75  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
@@ -2346,7 +2357,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
 
   cd = iconv_open("UTF-8", encoding);
   if(cd == (iconv_t)-1) {
-    msSetError(MS_IDENTERR, "Encoding not support by libiconv (%s).", 
+    msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).", 
                "msGetEncodedString()", encoding);
     return NULL;
   }
