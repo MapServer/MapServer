@@ -27,6 +27,9 @@ Version 4.2-???
 - Finished prototyping all MapServer functions used by SWIG-Mapscript
   and added 'void' to prototypes of no-arg functions, eliminating all
   but two SWIG-Mapscript build warnings (bug 658).
+
+- Fixed mapwcs.c so that gdal.h and cpl_error.h are not included if
+  USE_WCS_SVR is not enabled ... which is never is in 4.2.
   
 Version 4.2-beta2 (2004-05-03)
 ------------------------------
