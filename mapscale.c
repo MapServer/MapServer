@@ -46,7 +46,7 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
 
   // if((extent.maxx == extent.minx) || (extent.maxy == extent.miny))  
   if(!MS_VALID_EXTENT(extent.minx, extent.miny, extent.maxx, extent.maxy)) {
-    msSetError(MS_MISCERR, "Invalid image extent.", "msCalculateScale()");
+    msSetError(MS_MISCERR, "Invalid image extent, minx=%lf, miny=%lf, maxx=%lf, maxy=%lf.", "msCalculateScale()", extent.minx, extent.miny, extent.maxx, extent.maxy);
     return(MS_FAILURE);
   }
   
