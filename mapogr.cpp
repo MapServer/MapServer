@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.49  2002/03/26 21:00:04  frank
+ * Set the tileindex value in shapeObjs.  Support fetching based on tile+recordid.
+ * Support refetching features for autostyling in tiled layers.
+ *
  * Revision 1.48  2002/03/26 16:53:12  dan
  * Fixed msDebug() format string in msOGRFileClose()
  *
@@ -181,8 +185,11 @@ typedef struct ms_ogr_file_info_t
   OGRLayer    *poLayer;
   OGRFeature  *poLastFeature;
 
-  struct ms_ogr_file_info_t *poCurTile;
-  rectObj     rect;
+  int         nTileId;                  /* applies on the tiles themselves. */
+
+  struct ms_ogr_file_info_t *poCurTile; /* exists on tile index, -> tiles */
+  rectObj     rect;                     /* set by WhichShapes */
+
 } msOGRFileInfo;
 
 /* ==================================================================
@@ -885,6 +892,11 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   psInfo->poDS = poDS;
   psInfo->poLayer = poLayer;
 
+  psInfo->nTileId = 0;
+  psInfo->poCurTile = NULL;
+  psInfo->rect.minx = psInfo->rect.maxx = 0;
+  psInfo->rect.miny = psInfo->rect.maxy = 0;
+
   // Cleanup and exit;
   msFreeCharArray(params, numparams);
 
@@ -1076,6 +1088,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
   }
 
   shape->index = poFeature->GetFID();
+  shape->tileindex = psInfo->nTileId;
 
   // Keep ref. to last feature read in case we need style info.
   if (psInfo->poLastFeature)
@@ -1167,6 +1180,8 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
                        int targetTile = -1 )
 
 {
+    int nFeatureId;
+
 /* -------------------------------------------------------------------- */
 /*      Close old tile if one is open.                                  */
 /* -------------------------------------------------------------------- */
@@ -1205,6 +1220,8 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
 
     connection = strdup(poFeature->GetFieldAsString( layer->tileitem ));
     
+    nFeatureId = poFeature->GetFID();
+
     delete poFeature;
                         
 /* -------------------------------------------------------------------- */
@@ -1222,6 +1239,8 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
     if( psTileInfo == NULL )
         return MS_FAILURE;
 
+    psTileInfo->nTileId = nFeatureId;
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the spatial query on this file.                      */
 /* -------------------------------------------------------------------- */
@@ -1233,7 +1252,6 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
     }
     
     psInfo->poCurTile = psTileInfo;
-
     
 /* -------------------------------------------------------------------- */
 /*      Update the iteminfo in case this layer has a different field    */
@@ -1658,10 +1676,19 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     return(MS_FAILURE);
   }
 
-  // Eventually we should use tile to establish access to the correct
-  // file from the tile index when tile indexing in use. 
+  if( layer->tileindex == NULL )
+      return msOGRFileGetShape(layer, shape, record, psInfo );
+  else
+  {
+      if( psInfo->poCurTile == NULL
+          || psInfo->poCurTile->nTileId != tile )
+      {
+          if( msOGRFileReadTile( layer, psInfo, tile ) != MS_SUCCESS )
+              return MS_FAILURE;
+      }
 
-  return msOGRFileGetShape(layer, shape, record, psInfo );
+      return msOGRFileGetShape(layer, shape, record, psInfo->poCurTile );
+  }
 #else
 /* ------------------------------------------------------------------
  * OGR Support not included...
@@ -1697,6 +1724,9 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
 /* ------------------------------------------------------------------
  * Call OGR's GetExtent()... note that for some formats this will
  * result in a scan of the whole layer and can be an expensive call.
+ *
+ * For tile indexes layers we assume it is sufficient to get the
+ * extents of the tile index.
  * ------------------------------------------------------------------ */
   if (psInfo->poLayer->GetExtent(&oExtent, TRUE) != OGRERR_NONE)
   {
@@ -1789,7 +1819,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
   if( layer->tileindex != NULL )
   {
-      if( psInfo->poCurTile == NULL 
+      if( (psInfo->poCurTile == NULL || tile != psInfo->poCurTile->nTileId)
           && msOGRFileReadTile( layer, psInfo ) != MS_SUCCESS )
           return MS_FAILURE;
       
