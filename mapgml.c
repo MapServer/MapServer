@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/11/09 16:00:34  sean
+ * move conditional compilation inside definition of msGMLWriteQuery and
+ * msGMLWriteWFSQuery.  if OWS macros aren't defined, these functions set an
+ * error and return MS_FAILURE (bug 1046).
+ *
  * Revision 1.43  2004/10/28 18:54:05  dan
  * USe OWS_NOERR instead of MS_NOERR in calls to msOWSPrint*()
  *
@@ -356,10 +361,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 
 #endif
 
-#if defined(USE_WMS_SVR)
-
 int msGMLWriteQuery(mapObj *map, char *filename)
 {
+#if defined(USE_WMS_SVR)
   int status;
   int i,j,k;
   layerObj *lp=NULL;
@@ -512,11 +516,13 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   if(filename && strlen(filename) > 0) fclose(stream);
 
   return(MS_SUCCESS);
-}
 
+#else /* Stub for mapscript */
+    msSetError(MS_MISCERR, "WMS server support not enabled",
+               "msGMLWriteQuery()");
+    return MS_FAILURE;
 #endif
-
-#ifdef USE_WFS_SVR
+}
 
 /*
 ** msGMLWriteWFSQuery()
@@ -527,6 +533,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, 
                        char *namespace)
 {
+#ifdef USE_WFS_SVR
   int status;
   int i,j,k;
   layerObj *lp=NULL;
@@ -736,6 +743,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 
 
   return(MS_SUCCESS);
+
+#else /* Stub for mapscript */
+    msSetError(MS_MISCERR, "WMS server support not enabled",
+               "msGMLWriteWFSQuery()");
+    return MS_FAILURE;
+#endif /* USE_WFS_SVR */
 }
 
-#endif /* USE_WFS_SVR */
