@@ -4,9 +4,14 @@
 $Id$
                       --------------------------
 
-This is a PHP3 module to make MapServer's MapScript functionalities 
-available in PHP3.  The approach used here is a Dynamically Loadable 
-Library, and the module is based on the PHP-3.0.14 code.  
+This is a PHP module to make MapServer's MapScript functionalities 
+available in a PHP Dynamically Loadable Library.  
+
+PHP MapScript was originally developed for PHP-3.0.14 and works with more 
+recent versions of PHP3.  It has also been ported to PHP4, the MapServer
+configure script should automatically detect which version of PHP you are 
+attempting to build with and take the necessary actions.
+
 The module has been tested and used on Linux, Solaris, and WinNT.
 
 This module is constantly under development and is not (yet) an officially 
@@ -44,21 +49,30 @@ Very important note: Constant names and class member variable names are
         MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER,
         MS_ANNOTATION, MS_NULL
 
+    Layer Status:
+        MS_ON, MS_OFF, MS_DEFAULT, MS_QUERY, MS_EMBED
+
     Font types:
         MS_TRUETYPE, MS_BITMAP
 
     Label positions:
         MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
-        MS_CC, MS_AUTO
+        MS_CC, MS_AUTO, MS_XY
 
-    Symbol set types:
-        MS_MARKERSET, MS_LINESET, MS_SHADESET
+    Bitmap font styles:
+        MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT
 
     Shapefile types:
         MS_SHP_POINT, MS_SHP_ARC, MS_SHP_POLYGON, MS_SHP_MULTIPOINT
 
     Query/join types:
         MS_SINGLE, MS_MULTIPLE
+
+    Querymap styles:
+        MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED
+
+    Connection Types:
+        MS_LOCAL, MS_SDE, MS_OGR
 
 
  MapObj Class:
@@ -81,6 +95,7 @@ Very important note: Constant names and class member variable names are
    int    	interlace
    rectObj 	extent;	
    double 	cellsize
+   int          units (map units type)
    double 	scale
    string 	shapepath
    string 	tile
@@ -157,16 +172,29 @@ Very important note: Constant names and class member variable names are
         - Height : Height in pixel of the current image. 
         - Georef extent (rectObj) : current georef extents.
 
-   void queryUsingPoint(pointObj point, int type, double buffer)
-        Query all selected layers in map at point location.
+   queryUsingPoint queryUsingPoint(pointObj point, int type, double buffer)
+        Query all selected layers in map at point location specified in 
+        georeferenced map coordinates (i.e. not pixels).
         Type is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
         ground units) instead.
+        Note that to be queryable a layer must have a QUERYITEM and at least
+        one QUERY object.
+
+   queryUsingPoint queryUsingRect(rectObj rect)
+        Query all selected layers in map using a rectangle specified in 
+        georeferenced map coordinates (i.e. not pixels).
+        Note that to be queryable a layer must have a QUERYITEM and at least
+        one QUERY object.
 
    int save(string filename)
         Save current map object state to a file. Returns -1 on error.
+
+   int setProjection(string proj_params)
+        Set map projection and coordinate system.  Parameters are given as 
+        a single string of comma-delimited PROJ.4 parameters.
 
 
  LayerObj Class:
@@ -181,6 +209,8 @@ Very important note: Constant names and class member variable names are
  Members:
    int    numclasses  (read-only)
    int    index       (read-only)
+   string queryitem   (read-only)
+   string numqueries  (read-only)
    int    status
    string classitem
    string name
@@ -201,6 +231,7 @@ Very important note: Constant names and class member variable names are
    int    annotate
    int    transform
    int    labelcache
+   int    postlabelcache
    string labelitem
    string labelsizeitem
    string labelangleitem
@@ -208,6 +239,8 @@ Very important note: Constant names and class member variable names are
    string tileindex
    string header
    string footer
+   string connection
+   int    connectiontype
 
  Methods:
 
@@ -218,17 +251,26 @@ Very important note: Constant names and class member variable names are
         Draw a single layer, add labels to cache if required. 
         Returns -1 on error.
 
-   featureObj firstFeature()
-        Returns a reference to the first featureObj in this layer, or 0
-        if the layer contains no featureObj yet.
-
-   void queryUsingPoint(pointObj point, int type, double buffer)
-        Query layer in map at point location.
+   queryUsingPoint queryUsingPoint(pointObj point, int type, double buffer)
+        Query layer at point location specified in georeferenced map 
+        coordinates (i.e. not pixels).
         Type is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
         ground units) instead.
+        Note that to be queryable a layer must have a QUERYITEM and at least
+        one QUERY object.
+
+   queryUsingPoint queryUsingRect(rectObj rect)
+        Query layer using a rectangle specified in georeferenced map 
+        coordinates (i.e. not pixels).
+        Note that to be queryable a layer must have a QUERYITEM and at least
+        one QUERY object.
+
+   int setProjection(string proj_params)
+        Set layer projection and coordinate system.  Parameters are given as 
+        a single string of comma-delimited PROJ.4 parameters.
 
 
  ClassObj Class:
@@ -246,10 +288,19 @@ Very important note: Constant names and class member variable names are
    int    color
    int    backgroundcolor
    int    outlinecolor
+   int    overlaycolor
+   int    overlaybackgroundcolor
+   int    overlayoutlinecolor
    int    symbol
    int    size
+   int    sizescaled
    int    minsize
    int    maxsize
+   int    overlaysymbol
+   int    overlaysize
+   int    overlaysizescaled
+   int    overlayminsize
+   int    overlaymaxsize
    labelObj label
 
  Methods:
@@ -263,7 +314,7 @@ Very important note: Constant names and class member variable names are
 
  Constructor:
 
-   Instances of image objects are always created by the map class methods.
+   Instances of ImageObj are always created by the map class methods.
 
  Members:
 
@@ -305,6 +356,7 @@ Very important note: Constant names and class member variable names are
    int    backgroundshadowsizex
    int    backgroundshadowsizey
    int    size
+   int    sizescaled
    int    minsize
    int    maxsize
    int    position
@@ -327,28 +379,28 @@ Very important note: Constant names and class member variable names are
         Set object property to a new value. Returns -1 on error.
 
 
- webObj Calss
+ webObj Class
  -----------
 
  Constructor:
 
-   Instances of image objects are always created by the map class methods.
+   Instances of webObjare always are always embedded inside the mapObj.
 
  Members:
 
    string log;
-   string imagepath;
-   string template;		
-   string imageurl;
-   string header;
-   string footer;
-   string empty; /*read-only*/
-   string error;  /*read-only
-   string mintemplate;
-   string maxtemplate;
-   double minscale;
-   double maxscale;
-   rectObj extent;  /*read-only
+   string imagepath
+   string template		
+   string imageurl
+   string header
+   string footer
+   string empty     (read-only)
+   string error     (read-only)
+   string mintemplate
+   string maxtemplate
+   double minscale
+   double maxscale
+   rectObj extent   (read-only)
 
  Methods:
 
@@ -362,17 +414,17 @@ Very important note: Constant names and class member variable names are
 
 Constructor:
 
-   Instances of image objects are always created by the map class methods.
+   Instances of referenceMapObj are always embedded inside the mapObj.
 
  Members:
  
-   string   image;
-   int      width;
-   int      height;
-   int      status;
-   retcObj  extent; /*read-only*/
-   ColorObj color; /*read-only*/
-   ColorObj outlinecolor; /*read-only*/
+   string   image
+   int      width
+   int      height
+   int      status
+   rectObj  extent       (read-only)
+   ColorObj color        (read-only)
+   ColorObj outlinecolor (read-only)
 
  Method :
 
@@ -384,7 +436,7 @@ Constructor:
 
  Constructor:
 
-   ColorObj are always embedded inside other classes.
+  Instances of ColorObj are always embedded inside other classes.
 
  Members:
 
@@ -564,32 +616,6 @@ Constructor:
         Returns 0 on success, -1 on error.
 
 
- FeatureObj Class:
- ---------------
-
- Constructor:
-   Inline Feature Objects are always created in the context of a layer.
-   They contain a shape object that should be filled using the 
-   shapeObj->add(line) method after the featureObj is created.
-
-   featureObj ms_newFeatureObj(layerObj layer)
-
- Members:
-
-   shapeObj shape
-   string   class
-   string   text
-
- Methods:
-
-   int set(string property_name, new_value)
-        Set object property to a new value. Returns -1 on error.
-
-   int next()
-        Returns the next featureObj in the list for this layer.
-        Returns 0 when the end of the list is reached.
-
-
  ShapefileObj Class:
  -------------------
 
@@ -638,7 +664,7 @@ To compile/install the module on Linux:
 	http://www.php.net/manual/install-unix.php
 
 - The main MapServer configure script will automatically setup the main
-  makefile to compile php_mapscript.so if you pass the --with-php3=DIR
+  makefile to compile php_mapscript.so if you pass the --with-php=DIR
   argument to the configure script.
 
 - Copy the 'php_mapscript.so' library to your PHP extensions directory
@@ -652,13 +678,11 @@ To compile/install the module on Linux:
 - If you get an error from PHP complaining that it cannot load the 
   library, then make sure that you recompiled and reinstalled PHP with
   support for dynamic libraries.  On RedHat 5.x and 6.x, this means
-  adding "-rdynamic" to the CLDFLAGS in the main PHP Makefile after
+  adding "-rdynamic" to the CLDFLAGS in the main PHP3 Makefile after
   running ./configure
   Also make sure all directories in the path to the location of 
   php_mapscript.so are at least r-x for the HTTPd user (usually 'nobody'),
   otherwise dl() may complain that it cannot find the file even if it's 
   there.
-
-
 
                       --------------------------
