@@ -2,6 +2,24 @@
 README.WIN32 - Microsoft Visual C++ Build instructions for MapServer
 --------------------------------------------------------------------
 
+--------------------------------------------------------------------
+IMPORTANT - READ THIS FIRST:
+
+  The Win32 build process is not very friendly for unexperienced users.
+  So it is strongly recommended that you use one of the precompiled 
+  binaries available on the MapServer site:
+     http://mapserver.gis.umn.edu/win32binaries.html
+
+  There are precompiled Win32 binaries available for the last stable
+  release and the latest nightly build and they include the most common
+  options... so you shouldn't have to compile your own executables.
+
+  If for some reason you still decide to compile Win32 binaries yourself,
+  then don't do it unless you really know what you're doing... and
+  hopefully the rest of this file contains some hints that may help 
+  you.  Good Luck!
+--------------------------------------------------------------------
+
 For the developers using MSVC++, a NMAKE makefile (Makefile.vc) to
 build the MapServer library and executable programs is included with
 the distribution. 
