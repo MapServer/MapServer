@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/05/13 03:27:07  frank
+ * fixed bug in query rect, return point geometries
+ *
  * Revision 1.5  2004/05/12 20:55:49  frank
  * don't wipe query results cache between tiles
  *
@@ -561,7 +564,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
         sqrt(adfGeoTransform[1] * adfGeoTransform[1]
              + adfGeoTransform[2] * adfGeoTransform[2]
              + adfGeoTransform[4] * adfGeoTransform[4]
-             + adfGeoTransform[5] * adfGeoTransform[5]) * 0.5 * 1.41421356237;
+             + adfGeoTransform[5] * adfGeoTransform[5]) * 0.5 * 1.41421356237
         + sqrt( rlinfo->range_dist );
     dfAdjustedRange = dfAdjustedRange * dfAdjustedRange;
 
@@ -662,10 +665,13 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 /* -------------------------------------------------------------------- */
 /*      Initialize the results cache.                                   */
 /* -------------------------------------------------------------------- */
-    layer->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+    layer->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); 
     layer->resultcache->results = NULL;
     layer->resultcache->numresults = layer->resultcache->cachesize = 0;
-    layer->resultcache->bounds.minx = layer->resultcache->bounds.miny = layer->resultcache->bounds.maxx = layer->resultcache->bounds.maxy = -1;
+    layer->resultcache->bounds.minx =
+        layer->resultcache->bounds.miny =
+        layer->resultcache->bounds.maxx =
+        layer->resultcache->bounds.maxy = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Check if we should really be acting on this layer and           */
@@ -1043,6 +1049,26 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
                    "msRASTERLayerGetShape()",
                    record, rlinfo->query_results );
         return MS_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Apply the geometry.                                             */
+/* -------------------------------------------------------------------- */
+    if( rlinfo->qc_x != NULL )
+    {
+	lineObj	line;
+        pointObj point;
+
+        shape->type = MS_SHAPE_POINT;
+        
+        line.numpoints = 1;
+        line.point = &point;
+        
+        point.x = rlinfo->qc_x[record];
+        point.y = rlinfo->qc_y[record];
+        point.m = 0.0;
+
+        msAddLine( shape, &line );
     }
 
 /* -------------------------------------------------------------------- */
