@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2004/02/04 19:58:00  assefa
+ * Remove unused variables.
+ *
  * Revision 1.16  2004/02/04 19:46:24  assefa
  * Add support for multiple spatial opertaors inside one filter.
  * Add support for opeartors DWithin and Intersect.
@@ -105,6 +108,7 @@
 
 #include "ogr_api.h"
 
+
 static int compare_ints( const void * a, const void * b)
 {
     return (*(int*)a) - (*(int*)b);
@@ -124,7 +128,7 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape)
         OGRGeometryH hGeometry = NULL;
 
         psTree->psNext = NULL;
-        hGeometry = OGR_G_CreateFromGMLTree( psTree );
+        hGeometry = OGR_G_CreateFromGMLTree((const)psTree );
         psTree->psNext = psNext;
 
         if (hGeometry)
@@ -158,7 +162,6 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     int nTokens = 0;
     projectionObj sProjTmp;
     int *panResults = NULL;
-    int nResults = 0;
     int bPointQuery = 0, bShapeQuery=0;
     shapeObj *psQueryShape = NULL;
     double dfDistance = -1;
@@ -691,7 +694,7 @@ int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
           panResults = FLTArraysOr(panLeftResults, nLeftResult, 
                                  panRightResults, nRightResult, &nResults);
 
-        else if (psNode->pszValue, "NOT")
+        else if (psNode->pszValue && strcasecmp(psNode->pszValue, "NOT") == 0)
           panResults = FLTArraysNot(panLeftResults, nLeftResult, map, 
                                    iLayerIndex, &nResults);
     }
@@ -1249,7 +1252,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 int  bLine = 0, bPolygon = 0;
 
                 
-                CPLXMLNode *psGMLElement = NULL, *psDistance=NULL;
+                CPLXMLNode *psGMLElement = NULL;
 
 
                 psGMLElement = CPLGetXMLNode(psXMLNode, "Polygon");
