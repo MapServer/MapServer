@@ -384,8 +384,9 @@ Methods
 clear( ) : void
     Empties the table of all items.
     
-get( string key ) : string
-    Returns the value of the item by its *key*.
+get( string key [, string default=NULL ] ) : string
+    Returns the value of the item by its *key*, or *default* if the key
+    does not exist.
 
 nextKey( [string key=NULL] ) : string
     Returns the name of the next key or NULL if there is no valid next key.

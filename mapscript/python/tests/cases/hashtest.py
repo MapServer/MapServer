@@ -48,7 +48,10 @@ class HashTableBaseTestCase:
     values = ['value1', 'value2', 'value3', 'value4']
         
     def testUseNonExistentKey(self):
-        self.assertRaises(mapscript.MapServerError, self.table.get, 'bogus')
+        assert self.table.get('bogus') == None
+    
+    def testUseNonExistentKeyWithDefault(self):
+        assert self.table.get('bogus', 'default') == 'default'
 
     def testGetValue(self):
         for key, value in zip(self.keys, self.values):
@@ -56,15 +59,21 @@ class HashTableBaseTestCase:
             assert self.table.get(key.upper()) == value
             assert self.table.get(key.capitalize()) == value
 
+    def testGetValueWithDefault(self):
+        for key, value in zip(self.keys, self.values):
+            assert self.table.get(key, 'foo') == value
+            assert self.table.get(key.upper(), 'foo') == value
+            assert self.table.get(key.capitalize(), 'foo') == value
+            
     def testClear(self):
         self.table.clear()
         for key in self.keys:
-            self.assertRaises(mapscript.MapServerError, self.table.get, key)
+            assert self.table.get(key) == None
 
     def testRemoveItem(self):
         key = self.keys[0]
         self.table.remove(key)
-        self.assertRaises(mapscript.MapServerError, self.table.get, key)
+        assert self.table.get(key) == None
 
     def testNextKey(self):
         key = self.table.nextKey()

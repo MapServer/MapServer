@@ -43,7 +43,7 @@
     }
 
     // get value from item by its key
-    char *get(const char *key) {
+    char *get(const char *key, const char *default_value=NULL) {
         char *value = NULL;
         if (!key) {
             msSetError(MS_HASHERR, "NULL key", "get");
@@ -51,8 +51,7 @@
      
         value = (char *) msLookupHashTable(self, key);
         if (!value) {
-            msSetError(MS_HASHERR, "Key %s does not exist", "get", key);
-            return NULL;
+            return default_value;
         }
         return value;
     }
