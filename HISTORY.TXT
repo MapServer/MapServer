@@ -16,6 +16,21 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
+- Overhaul of mapscript unit testing framework with a comprehensive test
+  runner mapscript/python/tests/runtests.py.
+
+- Modified the MS_VALID_EXTENT macro to take an extent as its argument 
+  instead of the quartet of members. MapServer now checks that extents input 
+  through the mapfile are valid in mapfile.c (web, map, reference, 
+  and layer).  Modified msMapSetExtent in mapobject.c to use the new 
+  macro instead of its home-grown version. Modified all cases that used 
+  MS_VALID_EXTENT to the new use case.
+  
+- Layers now accept an EXTENT through the mapfile (bug 786). Nothing 
+  is done with it at this point, and getExtent still queries the 
+  datasource rather than getting information from the mapfile-specified 
+  extent.
+
 - Fixed problem with WMS GetFeatureInfo when map was reprojected. Was a
   problem with msProjectRect and zero-size search rectangles (bug 794)
 
@@ -130,18 +145,6 @@ Version 4.3 (CVS)
 
 - Fixed $map->processTemplate() which was always returning NULL.
   Bug introduced in version 4.0 in all flavours of MapScript (bug 410)
-
-- Modified the MS_VALID_EXTENT macro to take an extent as its argument 
-  instead of the quartet of members. MapServer now checks that extents input 
-  through the mapfile are valid in mapfile.c (web, map, reference, 
-  and layer).  Modified msMapSetExtent in mapobject.c to use the new 
-  macro instead of its home-grown version. Modified all cases that used 
-  MS_VALID_EXTENT to the new use case.
-  
-- Layers now accept an EXTENT through the mapfile (bug 786). Nothing 
-  is done with it at this point, and getExtent still queries the 
-  datasource rather than getting information from the mapfile-specified 
-  extent.
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
