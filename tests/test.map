@@ -135,7 +135,7 @@ MAP
       END
       LABEL
         TYPE TRUETYPE
-        FONT "Verdana"
+        FONT "Vera"
         SIZE 10
         COLOR 0 0 0
       END

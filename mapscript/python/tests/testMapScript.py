@@ -348,7 +348,7 @@ class FontSetTestCase(MapTestCase):
             if not font:
                 break
             fonts.append(font)
-        assert fonts == ['Verdana', 'Verdanab'], fonts
+        assert fonts == ['Vera', 'VeraBd'], fonts
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -604,7 +604,7 @@ class SetExtentTestCase(MapPrimitivesTestCase):
         e = self.mapobj1.extent
         result = self.mapobj1.setExtent(e.minx, e.miny, e.maxx, e.maxy)
         self.assertAlmostEqual(self.mapobj1.scale, 14.173236)
-        assert result == mapscript.MS_SUCCESS
+        assert result == mapscript.MS_SUCCESS, result
     def testSetExtentBadly(self):
         self.assertRaises(mapscript.MapServerError, self.mapobj1.setExtent,
                           1.0, -2.0, -3.0, 4.0)

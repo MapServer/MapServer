@@ -1,2 +1,2 @@
-Verdana c:\WINNT\Fonts\Verdana.TTF
-Verdana c:\WINNT\Fonts\Verdana.TTF
+Vera    ./vera/Vera.ttf
+VeraBd  ./vera/VeraBd.ttf
