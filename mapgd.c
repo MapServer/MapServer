@@ -297,8 +297,8 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
   int i, j;
-  int dx, dy, dx0, dy0, x, y, x0, y0, ox, oy;
-  double k, k0, q, q0;
+  int dx=0, dy, dx0=0, dy0, x, y, x0=0, y0=0, ox=0, oy=0;
+  double k, k0=0, q=0, q0=0;
   float par=0.71;
 
   if(offsety == -99) { // old-style offset (version 3.3 and earlier)
