@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- If wms_stylelist is an empty string, do not output the <StyleList> tag
+  for MapContexts (Bug 595).
+
 - Avoid passing FILE* to GD library by utilizing GD's gdIOCtx interface
   (bug 1047).
   
