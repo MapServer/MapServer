@@ -1896,7 +1896,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%s", msObj->Id);
   outstr = gsub(outstr, "[id]", repstr);
   
-  strcpy(repstr, ""); // Layer list for a "GET" request
+  strcpy(repstr, ""); // Layer list for a "GET" request (obsolete, use [layers_esc] instead)
   for(i=0;i<msObj->NumLayers;i++)    
     sprintf(repstr, "%s&layer=%s", repstr, msObj->Layers[i]);
   outstr = gsub(outstr, "[get_layers]", repstr);
@@ -1910,6 +1910,17 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   encodedstr = msEncodeUrl(repstr);
   outstr = gsub(outstr, "[layers_esc]", encodedstr);
   free(encodedstr);
+
+  strcpy(repstr, ""); // list of ALL layers that can be toggled
+  for(i=0;i<msObj->Map->numlayers;i++)
+    if(msObj->Map->layers[i].status != MS_DEFAULT) sprintf(repstr, "%s%s ", repstr, msObj->Map->layers[i].name);
+  trimBlanks(repstr);
+  outstr = gsub(outstr, "[toggle_layers]", repstr);
+
+  encodedstr = msEncodeUrl(repstr);
+  outstr = gsub(outstr, "[toggle_layers_esc]", encodedstr);
+  free(encodedstr);
+  
 
   for(i=0;i<msObj->Map->numlayers;i++) { // Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here
     if(isOn(msObj, msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) {
