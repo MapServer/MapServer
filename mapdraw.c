@@ -319,10 +319,20 @@ imageObj *msDrawMap(mapObj *map)
 
     
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
-    msEmbedScalebar(map, image->img.gd); //TODO  
+  {
+      // We need to temporarily restore the original extent for drawing
+      // the scalebar as it uses the extent to recompute cellsize.
+      if( map->gt.need_geotransform )
+          msMapRestoreRealExtent( map );
+
+      msEmbedScalebar(map, image->img.gd); //TODO  
+
+      if( map->gt.need_geotransform )
+          msMapSetFakedExtent( map );
+  }
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
-    msEmbedLegend(map, image->img.gd); //TODO  
+      msEmbedLegend(map, image->img.gd);
 
   if (map->debug)
       msGettimeofday(&starttime, NULL);
