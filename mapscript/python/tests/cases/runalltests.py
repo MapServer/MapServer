@@ -35,10 +35,20 @@
 # tests/cases directory.
 # ===========================================================================
 
+import getopt
 import os
+import sys
 import unittest
 
-TestRunner = unittest.TextTestRunner
+verbosity = 1
+try:
+    opts, args = getopt.getopt(sys.argv[1:], 'v')
+    if opts[0][0] == '-v':
+        verbosity = verbosity + 1
+except:
+    pass
+
+runner = unittest.TextTestRunner(verbosity=verbosity)
 suite = unittest.TestSuite()
 load = unittest.defaultTestLoader.loadTestsFromModule
 
@@ -52,5 +62,5 @@ for test in tests:
 # ---------------------------------------------------------------------------
 # Run
 if __name__ == '__main__':
-    TestRunner().run(suite)
+    runner.run(suite)
 
