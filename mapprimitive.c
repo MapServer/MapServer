@@ -15,11 +15,11 @@ void msPrintShape(shapeObj *p)
 {
   int i,j;
 
-  fprintf(stdout, "Shape contains %d parts.\n",  p->numlines);
+  fprintf(stderr, "Shape contains %d parts.\n",  p->numlines);
   for (i=0; i<p->numlines; i++) {
-    fprintf(stdout, "\tPart %d contains %d points.\n", i, p->line[i].numpoints);
+    fprintf(stderr, "\tPart %d contains %d points.\n", i, p->line[i].numpoints);
     for (j=0; j<p->line[i].numpoints; j++) {
-      fprintf(stdout, "\t\t%d: (%f, %f)\n", j, p->line[i].point[j].x, p->line[i].point[j].y);
+      fprintf(stderr, "\t\t%d: (%f, %f)\n", j, p->line[i].point[j].x, p->line[i].point[j].y);
     }
   }
 }
@@ -63,6 +63,8 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   to->classindex = from->classindex;
   to->index = from->index;
   to->tileindex = from->tileindex;
+
+  // FIX: Need to duplicate attributes
 
   return(0);
 }
@@ -247,26 +249,26 @@ static int clipLine(double *x1, double *y1, double *x2, double *y2, rectObj rect
 ** Routine for clipping a polyline, stored in a shapeObj struct, to a
 ** rectangle. Uses clipLine() function to create a new shapeObj. 
 */
-void msClipPolylineRect(shapeObj *in, rectObj rect, shapeObj *out)
+void msClipPolylineRect(shapeObj *shape, rectObj rect)
 {
   int i,j;
   lineObj line={0,NULL};
   double x1, x2, y1, y2;
   shapeObj tmp={0,NULL};
 
-  if(in->numlines == 0) /* nothing to clip */
+  if(shape->numlines == 0) /* nothing to clip */
     return;
 
-  for(i=0; i<in->numlines; i++) {
+  for(i=0; i<shape->numlines; i++) {
 
-    line.point = (pointObj *)malloc(sizeof(pointObj)*in->line[i].numpoints);
+    line.point = (pointObj *)malloc(sizeof(pointObj)*shape->line[i].numpoints);
     line.numpoints = 0;
 
-    x1 = in->line[i].point[0].x;
-    y1 = in->line[i].point[0].y;
-    for(j=1; j<in->line[i].numpoints; j++) {
-      x2 = in->line[i].point[j].x;
-      y2 = in->line[i].point[j].y;
+    x1 = shape->line[i].point[0].x;
+    y1 = shape->line[i].point[0].y;
+    for(j=1; j<shape->line[i].numpoints; j++) {
+      x2 = shape->line[i].point[j].x;
+      y2 = shape->line[i].point[j].y;
 
       if(clipLine(&x1,&y1,&x2,&y2,rect) == MS_TRUE) {
 	if(line.numpoints == 0) { /* first segment, add both points */
@@ -281,14 +283,14 @@ void msClipPolylineRect(shapeObj *in, rectObj rect, shapeObj *out)
 	  line.numpoints++;	  
 	}
 
-	if((x2 != in->line[i].point[j].x) || (y2 != in->line[i].point[j].y)) {
+	if((x2 != shape->line[i].point[j].x) || (y2 != shape->line[i].point[j].y)) {
 	  msAddLine(&tmp, &line);
 	  line.numpoints = 0; /* new line */
 	}
       }
 
-      x1 = in->line[i].point[j].x;
-      y1 = in->line[i].point[j].y;
+      x1 = shape->line[i].point[j].x;
+      y1 = shape->line[i].point[j].y;
     }
 
     if(line.numpoints > 0)
@@ -297,16 +299,17 @@ void msClipPolylineRect(shapeObj *in, rectObj rect, shapeObj *out)
     line.numpoints = 0; /* new line */
   }
   
-  if(in == out)
-    msFreeShape(in);
-  out->line = tmp.line;
-  out->numlines = tmp.numlines;
+  for (i=0; i<shape->numlines; i++) free(shape->line[i].point);
+  free(shape->line);
+
+  shape->line = tmp.line;
+  shape->numlines = tmp.numlines;
 }
 
 /*
 ** Slightly modified version of the Liang-Barsky polygon clipping algorithm
 */
-void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out)
+void msClipPolygonRect(shapeObj *shape, rectObj rect)
 {
   int i, j;
   double deltax, deltay, xin,xout,  yin,yout;
@@ -318,20 +321,20 @@ void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out)
 
   msInitShape(&tmp);
   
-  if(in->numlines == 0) /* nothing to clip */
+  if(shape->numlines == 0) /* nothing to clip */
     return;
    
-  for(j=0; j<in->numlines; j++) {
+  for(j=0; j<shape->numlines; j++) {
 
-    line.point = (pointObj *)malloc(sizeof(pointObj)*2*in->line[j].numpoints+1); /* worst case scenario, +1 allows us to duplicate the 1st and last point */
+    line.point = (pointObj *)malloc(sizeof(pointObj)*2*shape->line[j].numpoints+1); /* worst case scenario, +1 allows us to duplicate the 1st and last point */
     line.numpoints = 0;
 
-    for (i = 0; i < in->line[j].numpoints-1; i++) {
+    for (i = 0; i < shape->line[j].numpoints-1; i++) {
       
-      x1 = in->line[j].point[i].x;
-      y1 = in->line[j].point[i].y;
-      x2 = in->line[j].point[i+1].x;
-      y2 = in->line[j].point[i+1].y;
+      x1 = shape->line[j].point[i].x;
+      y1 = shape->line[j].point[i].y;
+      x2 = shape->line[j].point[i+1].x;
+      y2 = shape->line[j].point[i+1].y;
       
       deltax = x2-x1;
       if (deltax == 0) { /* bump off of the vertical */
@@ -436,10 +439,11 @@ void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out)
     free(line.point);
   } /* next line */
   
-  if(in == out)
-    msFreeShape(in);
-  out->line = tmp.line;
-  out->numlines = tmp.numlines;
+  for (i=0; i<shape->numlines; i++) free(shape->line[i].point);
+  free(shape->line);
+
+  shape->line = tmp.line;
+  shape->numlines = tmp.numlines;
 
   return;
 }
@@ -447,12 +451,11 @@ void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out)
 /*
 ** Converts from map coordinates to image coordinates
 */
-void msTransformShape(rectObj extent, double cellsize, shapeObj *shape)
+void msTransformShape(shapeObj *shape, rectObj extent, double cellsize)
 {
   int i,j,k; /* loop counters */
 
-  if(shape->numlines == 0)
-    return; /* nothing to do */  
+  if(shape->numlines == 0) return; // nothing to transform
 
   if(shape->type == MS_LINE || shape->type == MS_POLYGON) { // remove co-linear vertices
   
@@ -613,8 +616,7 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
   int x, y, ymin, ymax, *horiz, wrong_order;
   int n;
 
-  if(p->numlines == 0)
-    return;
+  if(p->numlines == 0) return;
 
   /* calculate the total number of vertices */
   n=0;
@@ -725,8 +727,7 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
   free(slope);
   free(horiz);
   free(xintersect);
-
-} /* End of msImageFilledPolygon */
+}
 
 static double length(pointObj a, pointObj b)
 {

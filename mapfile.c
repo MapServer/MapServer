@@ -423,12 +423,13 @@ static int loadFeaturePoints(lineObj *points)
   }
 }
 
-static int loadFeature(featureListNodeObjPtr *list)
+static int loadFeature(featureListNodeObjPtr *list, int type)
 {
   multipointObj points={0,NULL};
   shapeObj shape;
 
   msInitShape(&shape);
+  shape.type = type;
 
   for(;;) {
     switch(msyylex()) {
@@ -1313,7 +1314,8 @@ int initLayer(layerObj *layer)
   layer->legend = NULL;
   layer->status = MS_OFF;
   layer->data = NULL;
-  layer->type = MS_POINT;
+
+  layer->type = -1;
 
   layer->toleranceunits = MS_PIXELS;
   layer->tolerance = 3; /* perhaps this should have a different value based on type */
@@ -1403,6 +1405,7 @@ void freeLayer(layerObj *layer) {
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int c=0; // class counter
+  int type;
 
   if(initLayer(layer) == -1)
     return(-1);
@@ -1440,10 +1443,27 @@ int loadLayer(layerObj *layer, mapObj *map)
 	return(-1);
       }      
 
+      if(layer->type == -1) {
+	msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");      
+	return(-1);
+      }
+
       return(0);
       break;
     case(FEATURE):
-      if(loadFeature(&(layer->features)) == -1) return(-1);      
+      if(layer->type == -1) {
+	msSetError(MS_MISCERR, "Layer type must be set before defining inline features.", "loadLayer()");      
+	return(-1);
+      }
+
+      if(layer->type == MS_POLYGON || layer->type == MS_POLYLINE)
+	type = MS_POLYGON;
+      else if(layer->type == MS_LINE)
+	type = MS_LINE;
+      else
+	type = MS_POINT;	
+
+      if(loadFeature(&(layer->features), type) == -1) return(-1);      
       layer->connectiontype = MS_INLINE;
       break;
     case(FOOTER):
@@ -1536,7 +1556,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
 {
   int i=0,buffer_size=0;
   multipointObj points={0,NULL};
-  int done=0;
+  int done=0, type;
 
   static featureListNodeObjPtr current=NULL;
   shapeObj shape;
@@ -1563,13 +1583,20 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->description = strdup(value);
     break;
   case(FEATURE):    
-    
+    if(layer->type == MS_POLYGON || layer->type == MS_POLYLINE)
+      type = MS_POLYGON;
+    else if(layer->type == MS_LINE)
+      type = MS_LINE;
+    else
+      type = MS_POINT;
+
     switch(msyylex()) {      
     case(POINTS):
       msyystate = 2; msyystring = value;
 
       if(layer->features == NULL) {
 	msInitShape(&shape);
+	shape.type = type;
 	if((current = insertFeatureList(&(layer->features), &shape)) == NULL) return; /* create initial feature */
       }
 
@@ -1606,16 +1633,13 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       if(msAddLine(&(current->shape), &points) == -1) break;
       
       break;
-    
-/* 
-** may need to add code to classify an incoming feature, pretty rare use though
-*/
 
     case(TEXT):
       current->shape.text = strdup(value);
       break;
     default:
       msInitShape(&shape);
+      shape.type = type;
       if((current = insertFeatureList(&(layer->features), &shape)) == NULL) return;
       break;
     }

@@ -375,16 +375,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
     msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
 #endif
-    
+   
   switch(layer->type) {      
   case MS_ANNOTATION:     
+
+    fprintf(stderr, "drawing annotation shape...\n"); 
 
     switch(shape->type) {
     case(MS_LINE):
       if(layer->transform) {      
-	msClipPolylineRect(shape, cliprect, shape);
+	msClipPolylineRect(shape, cliprect);
 	if(shape->numlines == 0) return(MS_SUCCESS);
-	msTransformShape(map->extent, map->cellsize, shape);
+	msTransformShape(shape, map->extent, map->cellsize);
       }
 
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != MS_SUCCESS) {
@@ -417,9 +419,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
       break;
     case(MS_POLYGON):
       if(layer->transform) {      
-	msClipPolygonRect(shape, cliprect, shape);
+	msClipPolygonRect(shape, cliprect);
 	if(shape->numlines == 0) return(MS_SUCCESS);
-	msTransformShape(map->extent, map->cellsize, shape);
+	msTransformShape(shape, map->extent, map->cellsize);
       }
 
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != MS_SUCCESS) {
@@ -487,6 +489,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     break;
 
   case MS_POINT:
+    fprintf(stderr, "drawing point shape...\n"); 
+
     for(j=0; j<shape->numlines;j++) {
       for(i=0; i<shape->line[j].numpoints;i++) {
 	  
@@ -524,11 +528,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     }
     break;      
 
-  case MS_LINE:
+  case MS_LINE:    
+    if(shape->type != MS_POLYGON && shape->type != MS_LINE){ 
+      msSetError(MS_MISCERR, "Only polygon or line shapes can be drawn using a line layer definition.", "msDrawShape()");
+      return(MS_FAILURE);
+    }
+
     if(layer->transform) {
-      msClipPolylineRect(shape, cliprect, shape);
+      msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
-      msTransformShape(map->extent, map->cellsize, shape);
+      msTransformShape(shape, map->extent, map->cellsize);
     }
 
     msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
@@ -560,10 +569,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     break;
 
   case MS_POLYLINE:
+    if(shape->type != MS_POLYGON){ 
+      msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polyline layer definition.", "msDrawShape()");
+      return(MS_FAILURE);
+    }
+
     if(layer->transform) {      
-      msClipPolygonRect(shape, cliprect, shape);
+      msClipPolygonRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
-      msTransformShape(map->extent, map->cellsize, shape);
+      msTransformShape(shape, map->extent, map->cellsize);
     }
     
     msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
@@ -590,11 +604,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
       }
     }
     break;
-  case MS_POLYGON: 
+  case MS_POLYGON:
+    // if(shape->type != MS_POLYGON){ 
+    //   msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polygon layer definition.", "msDrawShape()");
+    //   return(MS_FAILURE);
+    // }
+
     if(layer->transform) {
-      msClipPolygonRect(shape, cliprect, shape);
+      msClipPolygonRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
-      msTransformShape(map->extent, map->cellsize, shape);
+      msTransformShape(shape, map->extent, map->cellsize);
     }
 
     msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
@@ -694,7 +713,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   status = msLayerWhichItems(layer, annotate);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  fprintf(stderr, "built item list...\n"); 
+  fprintf(stderr, "built item list...\n");
 
   // identify target shapes
   status = msLayerWhichShapes(layer, map->shapepath, map->extent, &(map->projection));
