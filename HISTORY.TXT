@@ -19,6 +19,8 @@ Version 4.0.1 (CVS)
 
 - Fixed double free in SWIG imageObj's free method (bug 393)
 
+- Fixed seg fault with WMS GetFeatureInfo of type text/html
+
 
 Version 4.0 (2003-08-01)
 ------------------------
