@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Added SDE Raster drawing support (experimental).
+
 - HTML legends: Added [leg_header_html] and [leg_footer_html] (bug 1032)
 
 - Added "z" support in SWIG MapScript for pointObj (bug 871)
