@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.29  2002/11/25 21:48:07  dan
+ * Set map units after setting new projections in msLoadMapContext()
+ *
  * Revision 1.28  2002/11/25 14:48:10  julien
  * One SRS tag with multiple SRS elements space separated
  *
@@ -456,12 +459,23 @@ int msLoadMapContext(mapObj *map, char *filename)
                                    "General.BoundingBox.SRS", NULL);
   if(pszValue != NULL)
   {
+      int nUnits;
+
       sprintf(szProj, "init=epsg:%s", pszValue+5);
 
       msInitProjection(&map->projection);
       map->projection.args[map->projection.numargs] = strdup(szProj);
       map->projection.numargs++;
       msProcessProjection(&map->projection);
+
+      if ((map->units = GetMapserverUnitUsingProj(&(map->projection))) == -1)
+      {
+          msSetError( MS_MAPCONTEXTERR, 
+                      "Unable to set units for projection '%s'",
+                      "msLoadMapContext()", szProj );
+          CPLDestroyXMLNode(psRoot);
+          return MS_FAILURE;
+      }
   }
   else
   {
