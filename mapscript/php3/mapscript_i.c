@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.10  2000/09/25 22:48:54  dan
+ * Aded update access for msOpenShapeFile()  (sync with mapscript.i v1.19)
+ *
  * Revision 1.9  2000/09/22 13:56:10  dan
  * Added msInitShape() in rectObj_draw()
  *
@@ -583,7 +586,9 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
       return NULL;
 
     if(type == -1)
-      status = msOpenSHPFile(shapefile, NULL, NULL, filename);
+      status = msOpenSHPFile(shapefile, "rb", NULL, NULL, filename);
+    else if (type == -2)
+      status = msOpenSHPFile(shapefile, "rb+", NULL, NULL, filename);
     else
       status = msCreateSHPFile(shapefile, filename, type);
 
