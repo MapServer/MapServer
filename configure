@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB SDERASTER_ENABLED MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB SDERASTER_ENABLED MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -872,6 +872,7 @@ Optional Packages:
   --with-curl-config=PATH Specify path to curl-config.
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
+  --with-warnings=flags   Enable strict warnings (or user defined warnings)
   --with-php=DIR          Specify directory where PHP4's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
@@ -3797,6 +3798,7 @@ fi
 
 
 CFLAGS="$CFLAGS $C_PIC"
+CXXFLAGS="$CXXFLAGS $C_PIC"
 
 echo "$as_me:$LINENO: checking for strcasecmp" >&5
 echo $ECHO_N "checking for strcasecmp... $ECHO_C" >&6
@@ -10063,6 +10065,60 @@ IGNORE_MISSING_DATA=$IGNORE_MISSING_DATA
 
 
 
+echo "$as_me:$LINENO: checking compiler warnings" >&5
+echo $ECHO_N "checking compiler warnings... $ECHO_C" >&6
+
+
+# Check whether --with-warnings or --without-warnings was given.
+if test "${with_warnings+set}" = set; then
+  withval="$with_warnings"
+
+fi;
+
+if test "$with_warnings" = "yes" ; then
+  if test "$GCC" = "yes" ; then
+    WFLAGS="-W -Wall -Wcast-align -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith -Wreturn-type"
+    C_EXTRA_WFLAGS="-Wmissing-declarations"
+
+    echo "$as_me:$LINENO: result: strict" >&5
+echo "${ECHO_T}strict" >&6
+  else
+    WFLAGS=""
+    C_EXTRA_WFLAGS=""
+    echo "$as_me:$LINENO: result: disabled" >&5
+echo "${ECHO_T}disabled" >&6
+  fi
+
+elif test "$with_warnings" = "" ; then
+  if test "$GCC" = "yes" ; then
+    WFLAGS="-Wall"
+    C_EXTRA_WFLAGS=""
+    echo "$as_me:$LINENO: result: basic" >&5
+echo "${ECHO_T}basic" >&6
+  else
+    WFLAGS=""
+    C_EXTRA_WFLAGS=""
+    echo "$as_me:$LINENO: result: disabled" >&5
+echo "${ECHO_T}disabled" >&6
+  fi
+
+elif test "$with_warnings" = "no" ; then
+  WFLAGS=""
+  C_EXTRA_WFLAGS=""
+  echo "$as_me:$LINENO: result: disabled" >&5
+echo "${ECHO_T}disabled" >&6
+
+else
+  WFLAGS="$with_warnings"
+  C_EXTRA_WFLAGS=""
+  echo "$as_me:$LINENO: result: user defined" >&5
+echo "${ECHO_T}user defined" >&6
+fi
+
+CFLAGS="$CFLAGS $WFLAGS $C_EXTRA_WFLAGS"
+CXXFLAGS="$CXXFLAGS $WFLAGS "
+
+
 { echo "$as_me:$LINENO: checking whether we should enable debug features..." >&5
 echo "$as_me: checking whether we should enable debug features..." >&6;}
 # Check whether --enable-debug or --disable-debug was given.
@@ -10072,30 +10128,6 @@ if test "${enable_debug+set}" = set; then
 fi;
 
 if test "$enable_debug" = "yes" ; then
-
-	# -g should already be in compile flags.
-	# check for GNU compiler, and add -Wall
-	if test "$GCC" = "yes"; then
-		C_WFLAGS="-Wall"
-		CFLAGS="$CFLAGS -Wall"
-		cat >>confdefs.h <<\_ACEOF
-#define USE_GNUCC 1
-_ACEOF
-
-	fi
-	if test "$GXX" = "yes"; then
-		CXX_WFLAGS="-Wall"
-		CXXFLAGS="$CXXFLAGS -Wall"
-		cat >>confdefs.h <<\_ACEOF
-#define USE_GNUCC 1
-_ACEOF
-
-	fi
-	CXX_WFLAGS=$CXX_WFLAGS
-
-	C_WFLAGS=$C_WFLAGS
-
-
     DEBUG_FLAGS="-DENABLE_STDERR_DEBUG"
 
   if test -n $APACHE_VERSION -a `expr $APACHE_VERSION \>= "2000000"` = 1 ; then
@@ -10106,41 +10138,15 @@ echo "${ECHO_T}        You requested msDebug() output on a system apparently run
 
   echo "$as_me:$LINENO: result:         Enabling debug features: -g in CFLAGS and msDebug() to stderr ($DEBUG_FLAGS)." >&5
 echo "${ECHO_T}        Enabling debug features: -g in CFLAGS and msDebug() to stderr ($DEBUG_FLAGS)." >&6
+
 else
-
-	# Remove -g from compile flags, we will add via CFG variable if
-	# we need it.
-	CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
-	CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
-
-	# check for GNU compiler, and use -Wall
-	if test "$GCC" = "yes"; then
-		C_WFLAGS="-Wall"
-		CFLAGS="$CFLAGS -Wall"
-		cat >>confdefs.h <<\_ACEOF
-#define USE_GNUCC 1
-_ACEOF
-
-	fi
-	if test "$GXX" = "yes"; then
-		CXX_WFLAGS="-Wall"
-		CXXFLAGS="$CXXFLAGS -Wall"
-		cat >>confdefs.h <<\_ACEOF
-#define USE_GNUCC 1
-_ACEOF
-
-	fi
-	CXX_WFLAGS=$CXX_WFLAGS
-
-	C_WFLAGS=$C_WFLAGS
-
-
+  CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
+  CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
 fi
 
 DEBUG_FLAGS=$DEBUG_FLAGS
 
 ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
-
 
 
 { echo "$as_me:$LINENO: checking for PHP/MapScript module options..." >&5
@@ -11366,8 +11372,6 @@ s,@HTTPD@,$HTTPD,;t t
 s,@MS_INC@,$MS_INC,;t t
 s,@MS_LIB@,$MS_LIB,;t t
 s,@IGNORE_MISSING_DATA@,$IGNORE_MISSING_DATA,;t t
-s,@CXX_WFLAGS@,$CXX_WFLAGS,;t t
-s,@C_WFLAGS@,$C_WFLAGS,;t t
 s,@DEBUG_FLAGS@,$DEBUG_FLAGS,;t t
 s,@LD_SHARED@,$LD_SHARED,;t t
 s,@SO_EXT@,$SO_EXT,;t t

@@ -37,6 +37,7 @@ dnl Add -fPIC to compiler flags if appropriate
 dnl ---------------------------------------------------------------------
 AC_COMPILER_PIC
 CFLAGS="$CFLAGS $C_PIC"
+CXXFLAGS="$CXXFLAGS $C_PIC"
 
 dnl ---------------------------------------------------------------------
 dnl Check for some string functions
@@ -1694,6 +1695,55 @@ AC_SUBST(IGNORE_MISSING_DATA, $IGNORE_MISSING_DATA)
 
 
 dnl ---------------------------------------------------------------------
+dnl Check for warning flags. 
+dnl 
+dnl By default we use -Wall with gcc.  We provide an option for very 
+dnl strict gcc warnings if so desired. 
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING(compiler warnings)
+
+AC_ARG_WITH(warnings,
+[  --with-warnings[=flags]   Enable strict warnings (or user defined warnings)],,)
+
+if test "$with_warnings" = "yes" ; then 
+  if test "$GCC" = "yes" ; then
+    WFLAGS="-W -Wall -Wcast-align -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith -Wreturn-type"
+    C_EXTRA_WFLAGS="-Wmissing-declarations"
+  
+    AC_MSG_RESULT([strict])
+  else
+    WFLAGS=""
+    C_EXTRA_WFLAGS=""
+    AC_MSG_RESULT([disabled])
+  fi
+
+elif test "$with_warnings" = "" ; then 
+  if test "$GCC" = "yes" ; then
+    WFLAGS="-Wall"
+    C_EXTRA_WFLAGS=""
+    AC_MSG_RESULT([basic])
+  else
+    WFLAGS=""
+    C_EXTRA_WFLAGS=""
+    AC_MSG_RESULT([disabled])
+  fi
+
+elif test "$with_warnings" = "no" ; then
+  WFLAGS=""
+  C_EXTRA_WFLAGS=""
+  AC_MSG_RESULT([disabled])
+
+else
+  WFLAGS="$with_warnings"
+  C_EXTRA_WFLAGS=""
+  AC_MSG_RESULT([user defined])
+fi
+
+CFLAGS="$CFLAGS $WFLAGS $C_EXTRA_WFLAGS"
+CXXFLAGS="$CXXFLAGS $WFLAGS "
+
+dnl ---------------------------------------------------------------------
 dnl Check --enable-debug option for "-g" compile flag. (OFF by default)
 dnl ---------------------------------------------------------------------
 
@@ -1705,7 +1755,6 @@ AC_ARG_ENABLE(debug,
                           output (the default).],,)
 
 if test "$enable_debug" = "yes" ; then
-  AC_COMPILER_WFLAGS_DEBUG
   dnl also enable output of msDebug() calls to stderr.
   DEBUG_FLAGS="-DENABLE_STDERR_DEBUG"
 
@@ -1715,13 +1764,14 @@ if test "$enable_debug" = "yes" ; then
   fi
 
   AC_MSG_RESULT([        Enabling debug features: -g in CFLAGS and msDebug() to stderr ($DEBUG_FLAGS).])
+
 else
-  AC_COMPILER_WFLAGS
+  CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
+  CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
 fi
 
 AC_SUBST(DEBUG_FLAGS, $DEBUG_FLAGS)
 ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
-
 
 dnl ---------------------------------------------------------------------
 dnl PHP/MapScript module options
