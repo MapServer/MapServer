@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.16  2001/03/21 17:43:33  dan
+ * Added layer->class->type ... in sync with mapscript.i v1.29
+ *
  * Revision 1.15  2001/03/16 22:08:36  dan
  * Removed allitems param to msLayerGetShape()
  *
@@ -343,6 +346,7 @@ classObj *classObj_new(layerObj *layer) {
 
     if(initClass(&(layer->class[layer->numclasses])) == -1)
       return NULL;
+    layer->class[layer->numclasses].type = layer->type;
 
     layer->numclasses++;
 
