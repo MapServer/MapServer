@@ -511,7 +511,18 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
   fmt = formats;
   while(fmt != NULL)
   {
-      encoded = msEncodeHTMLEntities(fmt);
+      /* Special case for early WMS with subelements in Format (bug 908) */
+      if( nVersion <= OWS_1_0_7 )
+      {
+          encoded = strdup( fmt );
+      }
+
+      /* otherwise we HTML code special characters */
+      else
+      {
+          encoded = msEncodeHTMLEntities(fmt);
+      }
+
       printf("      <Format>%s</Format>\n", encoded);
       msFree(encoded);
 
