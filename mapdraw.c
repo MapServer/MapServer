@@ -1420,6 +1420,9 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
         if( MS_RENDERER_GD(image->format) )
             nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, 
                                      label, fontset, scalefactor);
+	else if( MS_RENDERER_IMAGEMAP(image->format) )
+            nReturnVal = msDrawTextIM(image->img.imagemap, labelPnt, string, 
+                                     label, fontset, scalefactor);
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             nReturnVal = draw_textSWF(image, labelPnt, string, label, 
@@ -1442,6 +1445,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
     {
         if( MS_RENDERER_GD(image->format) )
             nReturnVal = msDrawLabelCacheGD(image->img.gd, map);
+	else if( MS_RENDERER_IMAGEMAP(image->format) )
+            nReturnVal = msDrawLabelCacheIM(image, map);
 
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
@@ -1465,6 +1470,8 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     if (image)
     {
+        if( MS_RENDERER_IMAGEMAP(image->format) )
+            msImageStartLayerIM(map, layer, image);
 #ifdef USE_MING_FLASH
         if( MS_RENDERER_SWF(image->format) )
             msImageStartLayerSWF(map, layer, image);
