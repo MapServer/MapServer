@@ -17,6 +17,10 @@
  *****************************************************************************
  * $Id$
  *
+ * $Log$
+ * Revision 1.12  2004/10/30 02:27:37  frank
+ * Fixed missing log keyword.
+ * 
  * Revision 1.9   $Date$
  * Query item support implemented.
  * Query map is not being generated yet.
