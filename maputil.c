@@ -229,8 +229,11 @@ gdImagePtr msDrawMap(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) {
 
+#ifdef USE_PRIOLIST
+    lp = &(map->layers[ map->panPrioList[i]]);
+#else
     lp = &(map->layers[i]);
-
+#endif
     if(lp->postlabelcache) // wait to draw
       continue;
 
@@ -1084,4 +1087,77 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
 
   return aiIndex;
 }
+
+
+/*
+** Move the layer's order for drawing purpose. Moving it up here
+** will have the effect of drawing the layer earlier. 
+*/
+int msMoveLayerUp(mapObj *map, int nLayerIndex)
+{
+#ifdef USE_PRIOLIST
+    int iCurrentIndex = -1;
+    int i = 0;
+    if (map && nLayerIndex < map->numlayers-1 && nLayerIndex >=0)
+    {
+        for (i=0; i<map->numlayers; i++)
+        {
+            if ( map->panPrioList[i] == nLayerIndex)
+            {
+                iCurrentIndex = i;
+                break;
+            }
+        }
+        if (iCurrentIndex >=0) 
+        {
+            // we do not need to promote if it is the first one.
+            if (iCurrentIndex == 0)
+                return 0;
+
+            map->panPrioList[iCurrentIndex] =  map->panPrioList[iCurrentIndex-1];
+            map->panPrioList[iCurrentIndex-1] = nLayerIndex;
+
+            return 0;
+        }
+    }
+#endif
+    return -1;
+}
+
+/*
+** Move the layer's order for drawing purpose. Moving it down here
+** will have the effect of drawing the layer later. 
+*/
+int msMoveLayerDown(mapObj *map, int nLayerIndex)
+{
+#ifdef USE_PRIOLIST
+    int iCurrentIndex = -1;
+    int i = 0;
+    if (map && nLayerIndex < map->numlayers-1 && nLayerIndex >=0)
+    {
+        for (i=0; i<map->numlayers; i++)
+        {
+            if ( map->panPrioList[i] == nLayerIndex)
+            {
+                iCurrentIndex = i;
+                break;
+            }
+        }
+        if (iCurrentIndex >=0) 
+        {
+            // we do not need to demote if it is the last one.
+            if (iCurrentIndex == map->numlayers-1)
+                return 0;
+
+            map->panPrioList[iCurrentIndex] =  map->panPrioList[iCurrentIndex+1];
+            map->panPrioList[iCurrentIndex+1] = nLayerIndex;
+
+            return 0;
+        }
+    }
+#endif
+    return -1;
+}
+
+
 

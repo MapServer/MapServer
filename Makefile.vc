@@ -144,6 +144,10 @@ REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
 #
 REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
 
+
+#Use this flag to have the Propomote/Demote layers functionnalities
+#PRIOLIST=-DUSE_PRIOLIST
+#
 #
 # --- You shouldn't have to edit anything else. ---
 #
@@ -179,7 +183,8 @@ INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
                 $(WWWLIB_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT)
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) \
+                $(PRIOLIST)
 
 default: 	all
 

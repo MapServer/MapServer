@@ -54,6 +54,7 @@ extern "C" {
 #define MS_OFF 0
 #define MS_DEFAULT 2
 #define MS_EMBED 3
+#define MS_DELETE 4
 #define MS_YES 1
 #define MS_NO 0
 
@@ -612,6 +613,9 @@ typedef struct { /* structure for a map */
 #endif
 
   webObj web;
+
+  int *panPrioList;
+   
 } mapObj;
 
 // Function prototypes, wrapable
@@ -694,6 +698,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 gdImagePtr msDrawScalebar(mapObj *map); // in mapscale.c
 int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
+
+//Functions to chnage the drawing order of the layers.
+//Defined in maputil.c
+int msMoveLayerUp(mapObj *map, int nLayerIndex);
+int msMoveLayerDown(mapObj *map, int nLayerIndex);
 
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);
@@ -867,6 +876,7 @@ int msGMLCollectionStart(FILE *stream, const char *colName,  const char *colFID)
 int msGMLWriteShape(FILE *stream, shapeObj *shape, char *name, char *srsName, char **items, char *tab);
 int msGMLCollectionFinish(FILE *stream, const char *colName);
 int msGMLFinish(FILE *stream, const char *prjElement);
+
 
 #endif
 

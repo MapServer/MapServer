@@ -2020,6 +2020,9 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   int i;
   featureListNodeObjPtr current=NULL;
 
+  if (layer->status == MS_DELETE)
+      return;
+
   fprintf(stream, "  LAYER\n");
   for(i=0; i<layer->numclasses; i++) writeClass(map, &(layer->class[i]), stream);
   if(layer->classitem) fprintf(stream, "    CLASSITEM \"%s\"\n", layer->classitem);
@@ -2358,6 +2361,9 @@ static void loadLegendString(mapObj *map, legendObj *legend, char *value)
 
 static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
 {
+  if (legend->status == MS_DELETE)
+      return;
+ 
   fprintf(stream, "  LEGEND\n");
   fprintf(stream, "    IMAGECOLOR %d %d %d\n", legend->imagecolor.red, legend->imagecolor.green, legend->imagecolor.blue);
   fprintf(stream, "    INTERLACE %s\n", msTrueFalse[legend->interlace]);
@@ -2562,6 +2568,9 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
 
 static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
 {
+  if (scalebar->status == MS_DELETE)
+    return;
+ 
   fprintf(stream, "  SCALEBAR\n");
   if(scalebar->backgroundcolor > -1) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor-1].red, map->palette.colors[scalebar->backgroundcolor-1].green, map->palette.colors[scalebar->backgroundcolor-1].blue);
   if(scalebar->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[scalebar->color-1].red, map->palette.colors[scalebar->color-1].green, map->palette.colors[scalebar->color-1].blue);
@@ -2931,6 +2940,13 @@ int initMap(mapObj *map)
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
 #endif
 
+  //Initialize the priority list (used to modify the order in which the layers
+  //are drawn).
+  map->panPrioList = NULL;
+#ifdef USE_PRIOLIST
+  map->panPrioList = (int *)malloc(sizeof(int)*MS_MAXLAYERS);
+#endif
+
   return(0);
 }
 
@@ -2975,6 +2991,8 @@ void msFreeMap(mapObj *map) {
     freeLayer(&(map->layers[i]));
   msFree(map->layers);
 
+  if (map->panPrioList)
+      free(map->panPrioList);
   msFree(map);
 }
 
@@ -3027,7 +3045,14 @@ int msSaveMap(mapObj *map, char *filename)
   writeScalebar(map, &(map->scalebar), stream);
   writeWeb(&(map->web), stream);
 
-  for(i=0; i<map->numlayers; i++) writeLayer(map, &(map->layers[i]), stream);
+  for(i=0; i<map->numlayers; i++)
+  {
+#ifdef USE_PRIOLIST
+      writeLayer(map, &(map->layers[map->panPrioList[i]]), stream);
+#else
+      writeLayer(map, &(map->layers[i]), stream);
+#endif
+  }
 
   fprintf(stream, "END\n");
 
@@ -3164,6 +3189,10 @@ mapObj *msLoadMap(char *filename)
       }
       if(loadLayer(&(map->layers[map->numlayers]), map) == -1) return(NULL);
       map->layers[map->numlayers].index = map->numlayers; /* save the index */
+#ifdef USE_PRIOLIST
+      //Update the priority list with the layer's index.
+      map->panPrioList[map->numlayers] = map->numlayers;
+#endif
       map->numlayers++;
       break;
     case(LEGEND):
