@@ -111,6 +111,7 @@ void msSHPClose( SHPHandle hSHP );
 void msSHPGetInfo( SHPHandle hSHP, int * pnEntities, int * pnShapeType );
 int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds );
 void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape );
+int msSHPReadPoint(SHPHandle psSHP, int hEntity, pointObj *point );
 int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
 int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
 

@@ -264,6 +264,13 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   lp = &(map->layers[qlayer]);
   msInitShape(&shape);
 
+  // free any previous search results, do it now in case one of the next few tests fail
+  if(lp->resultcache) {
+    if(lp->resultcache->results) free(lp->resultcache->results);
+    free(lp->resultcache);
+    lp->resultcache = NULL;
+  }
+
   // open this layer
   status = msLayerOpen(lp, map->shapepath);
   if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -317,6 +324,13 @@ int msQueryByAttributes(mapObj *map, int qlayer)
 
   lp = &(map->layers[qlayer]);
   msInitShape(&shape);
+
+  // free any previous search results, do it now in case one of the next few tests fail
+  if(lp->resultcache) {
+    if(lp->resultcache->results) free(lp->resultcache->results);
+    free(lp->resultcache);
+    lp->resultcache = NULL;
+  }
 
   // open this layer
   status = msLayerOpen(lp, map->shapepath);
@@ -405,6 +419,13 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
+
+    // free any previous search results, do it now in case one of the next few tests fail
+    if(lp->resultcache) {
+      if(lp->resultcache->results) free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
+    }
 
     if(lp->status == MS_OFF) continue;
 
@@ -537,6 +558,13 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
+
+    // free any previous search results, do it now in case one of the next few tests fail
+    if(lp->resultcache) {
+      if(lp->resultcache->results) free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
+    }
 
     if(lp->status == MS_OFF) continue;
 
@@ -683,6 +711,13 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
  
   for(l=start; l>=stop; l--) { /* each layer */
     lp = &(map->layers[l]);
+
+    // free any previous search results, do it now in case one of the next few tests fail
+    if(lp->resultcache) {
+      if(lp->resultcache->results) free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
+    }
 
     if(lp->status == MS_OFF) continue;
     

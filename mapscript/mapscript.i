@@ -622,6 +622,14 @@
     return 0;
   }
 
+  int getPoint(int i, pointObj *point) {
+    if(i<0 || i>=self->numshapes)
+      return -1;
+
+    msSHPReadPoint(self->hSHP, i, point);
+    return 0;
+  }
+
   int getTransformed(mapObj *map, int i, shapeObj *shape) {
     if(i<0 || i>=self->numshapes)
       return -1;

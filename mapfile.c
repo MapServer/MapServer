@@ -1473,7 +1473,7 @@ void freeLayer(layerObj *layer) {
     freeFeatureList(layer->features);
 
   if(layer->resultcache) {    
-    free(layer->resultcache->results);
+    if(layer->resultcache->results) free(layer->resultcache->results);
     free(layer->resultcache);
   }
 

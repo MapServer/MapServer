@@ -734,6 +734,60 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 }
 
 /*
+** msSHPReadPoint() - Reads a single point from a POINT shape file.
+*/
+int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
+{
+    static uchar	*pabyRec = NULL;   
+    static int		nBufSize = 0;
+
+    /* -------------------------------------------------------------------- */
+    /*      Only valid for point shapefiles                                 */
+    /* -------------------------------------------------------------------- */
+    if( psSHP->nShapeType != SHP_POINT ) {
+      msSetError(MS_SHPERR, "msSHPReadPoint only operates on point shapefiles.", "msSHPReadPoint()");
+      return(MS_FAILURE);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Validate the record/entity number.                              */
+    /* -------------------------------------------------------------------- */
+    if( hEntity < 0 || hEntity >= psSHP->nRecords ) {
+      msSetError(MS_SHPERR, "Record index out of bounds.", "msSHPReadPoint()");
+      return(MS_FAILURE);
+    }
+
+    if( psSHP->panRecSize[hEntity] == 4 ) {
+      msSetError(MS_SHPERR, "NULL feature encountered.", "msSHPReadPoint()");
+      return(MS_FAILURE);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Ensure our record buffer is large enough.                       */
+    /* -------------------------------------------------------------------- */
+    if( psSHP->panRecSize[hEntity]+8 > nBufSize ) {
+	nBufSize = psSHP->panRecSize[hEntity]+8;
+	pabyRec = (uchar *) SfRealloc(pabyRec,nBufSize);
+    }    
+
+    /* -------------------------------------------------------------------- */
+    /*      Read the record.                                                */
+    /* -------------------------------------------------------------------- */
+    fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 );
+    fread( pabyRec, psSHP->panRecSize[hEntity]+8, 1, psSHP->fpSHP );
+      
+    memcpy( &(point->x), pabyRec + 12, 8 );
+    memcpy( &(point->y), pabyRec + 20, 8 );
+      
+    if( bBigEndian ) {
+      SwapWord( 8, &(point->x));
+      SwapWord( 8, &(point->y));
+    }
+
+    return(MS_SUCCESS);
+}
+
+/*
 ** msSHPReadShape() - Reads the vertices for one shape from a shape file.
 */
 void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
