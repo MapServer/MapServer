@@ -19,6 +19,7 @@ Version 4.2 ???
 - Postgis: added "WHERE false" to query that looks up the schema for item
   queries.  This should greatly improve performance for complex queries.
 
+- Mapscript: fixed the shape copy test in mapscript tests.
 
 Version 4.2-beta3 (2004-05-14)
 ------------------------------

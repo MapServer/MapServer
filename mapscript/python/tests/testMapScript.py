@@ -678,11 +678,13 @@ class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""
     
     def copyShape(self, shape):
+        """Try the next generation API, fall back to standard API"""
         try:
             return shape.copy()
-        except AttributeError:
+        except TypeError:
             s = mapscript.shapeObj(shape.type)
-            return shape.copy(s)
+            shape.copy(s)
+            return s
         except:
             raise
 
@@ -945,11 +947,13 @@ class NewOutputFormatTestCase(unittest.TestCase):
     def tearDown(self):
         self.mapobj1 = None
     def testOutputFormatConstructor(self):
+        """testOutputFormatConstructor may error without GDAL"""
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiff')
         assert new_format.refcount == 1, new_format.refcount
         assert new_format.name == 'gtiff'
         assert new_format.mimetype == 'image/tiff'
     def testAppendNewOutputFormat(self):
+        """testAppendNewOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         assert new_format.refcount == 1, new_format.refcount
@@ -962,6 +966,7 @@ class NewOutputFormatTestCase(unittest.TestCase):
         filename = 'testAppendNewOutputFormat.tif'
         imgobj.save(filename)
     def testRemoveOutputFormat(self):
+        """testRemoveOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats
         assert num == 6, num
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
