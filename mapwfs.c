@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.46  2004/10/04 18:52:24  julien
+ * Do not free user_namespace_prefix.
+ *
  * Revision 1.45  2004/10/01 21:51:47  frank
  * Use msIO_ API.
  *
@@ -1235,7 +1238,6 @@ ENAME=%s\">\n",
     if (pszNameSpace)
       free(pszNameSpace);
     msFree(user_namespace_uri);
-    msFree(user_namespace_prefix);
 
 
     return MS_SUCCESS;
