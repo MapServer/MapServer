@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/03/13 16:52:15  dan
+ * Added ZVAL_ADDREF() in add_property_object()
+ *
  * Revision 1.3  2001/03/12 19:02:46  dan
  * Added query-related stuff in PHP MapScript
  *
@@ -543,8 +546,9 @@ int _phpms_add_property_object(pval *pObj,
           php3_error(err_type, "Unable to add %s property", property_name);
         return -1;
     }
-    
+
     *(*phandle) = *pObjToAdd;
+    ZVAL_ADDREF(*phandle);
 
     return 0;
 }
