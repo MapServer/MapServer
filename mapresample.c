@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/08/22 04:33:01  dan
+ * Try calling GDALReadWorldFile() if GDALGetGeoTransform() fails.
+ * When resampling layers with an offsite then init temporary image BG
+ * using the offsite color.
+ *
  * Revision 1.15  2001/06/28 18:22:07  frank
  * improve debug message
  *
@@ -665,7 +670,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     adfDstGeoTransform[4] = 0.0;
     adfDstGeoTransform[5] = - map->cellsize;
 
-    GDALGetGeoTransform( hDS, adfSrcGeoTransform );
+    if (GDALGetGeoTransform( hDS, adfSrcGeoTransform ) != CE_None)
+    {
+        GDALReadWorldFile(layer->data, "wld", adfSrcGeoTransform);
+    }
     nSrcXSize = GDALGetRasterXSize( hDS );
     nSrcYSize = GDALGetRasterYSize( hDS );
 
@@ -760,6 +768,18 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     gdImagePaletteCopy( srcImg, img );
 
 /* -------------------------------------------------------------------- */
+/*      If layer has an offsite color then fill the BG of the           */
+/*      temporary image with this color otherwise applying the          */
+/*      offsite twice results in a solid color in the offsite area      */
+/* -------------------------------------------------------------------- */
+    if (layer->offsite >=0)
+    {
+        gdImageFilledRectangle(srcImg, 0, 0, 
+                               gdImageSX(srcImg), gdImageSY(srcImg), 
+                               layer->offsite);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Draw into it, and then copy out the updated palette.            */
 /* -------------------------------------------------------------------- */
     result = drawGDAL( &sDummyMap, layer, srcImg, hDS );
@@ -827,3 +847,5 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 }
 
 #endif /* def USE_GDAL */
+
+
