@@ -48,7 +48,7 @@ WMS=-DUSE_WMS_SVR
 
 #Use thses flags to compile with libcurl
 #CURL_INC = -I../curl-7.10.2/include
-#CURL_LIB = ../curl-7.10.2/lib/Debug/libcurl.lib
+#CURL_LIB = ../curl-7.10.2/lib/Release/libcurl.lib
 #WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
 
 
