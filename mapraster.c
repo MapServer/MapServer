@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.120  2004/07/29 18:16:44  sdlime
+ * Fixed an error with eppl7 code where row/col access to the GD pixels was reversed.
+ *
  * Revision 1.119  2004/07/23 12:57:18  frank
  * improved header purpose text
  *
@@ -1178,7 +1181,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
         vv=epp.rptr[(int)MS_NINT(x)+1];
 
 	if(cmap[vv] != -1)
-	  img->pixels[j][i] = cmap[vv];
+	  img->pixels[i][j] = cmap[vv];
 
         x+=skipx;
       }
