@@ -43,6 +43,29 @@ void msInitShape(shapeObj *shape)
   shape->queryindex = -1;
 }
 
+int msCopyShape(shapeObj *from, shapeObj *to) {
+  int i;
+
+  if(!from || !to) return(-1);
+
+  for(i=0; i<from->numlines; i++)
+    msAddLine(to, &(from->line[i])); // copy each line
+
+  to->type = from->type;
+
+  to->bounds.minx = from->bounds.minx;
+  to->bounds.miny = from->bounds.miny;
+  to->bounds.maxx = from->bounds.maxx;
+  to->bounds.maxy = from->bounds.maxy;
+
+  if(from->text) to->text = strdup(from->text);
+
+  to->classindex = from->classindex;
+  to->queryindex = from->queryindex;
+
+  return(0);
+}
+
 void msFreeShape(shapeObj *shape)
 {
   int c;
@@ -53,9 +76,7 @@ void msFreeShape(shapeObj *shape)
 
   free(shape->text);
   
-  shape->line = NULL;
-  shape->numlines= 0;
-  shape->text = NULL;
+  msInitShape(shape); // now reset
 }
 
 int msAddLine(shapeObj *p, lineObj *new_line)
@@ -271,8 +292,10 @@ void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out)
   double tinx,tiny,  toutx,touty,  tin1, tin2,  tout;
   double x1,y1, x2,y2;
 
-  shapeObj tmp={0,NULL,{-1,-1,-1,-1},MS_NULL};
+  shapeObj tmp;
   lineObj line={0,NULL};
+
+  msInitShape(&tmp);
   
   if(in->numlines == 0) /* nothing to clip */
     return;

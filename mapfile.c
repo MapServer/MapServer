@@ -227,7 +227,7 @@ int msGetLayerIndex(mapObj *map, char *name)
 }
 
 /* inserts a feature at the end of the list, can create a new list */
-featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj shape)
+featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape)
 {
   featureListNodeObjPtr node, current, previous;
   int i=0;
@@ -236,8 +236,13 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj sh
     msSetError(MS_MEMERR, NULL, "insertFeature()");
     return(NULL);
   }
-  
-  node->shape = shape;
+
+  sprintf(ms_error.message, "in insertFeatureList, input shape has %d lines", shape->numlines);
+  msSetError(MS_MISCERR, ms_error.message, "insertFeature()");
+
+  msInitShape(&(node->shape));
+  if(msCopyShape(shape, &(node->shape)) == -1) return(NULL);
+
   node->next = NULL;
 
   previous = NULL;
@@ -321,7 +326,8 @@ static int loadFeature(featureListNodeObjPtr *list)
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
       return(-1);
     case(END):
-      if(insertFeatureList(list, shape) == NULL) return(-1);
+      if(insertFeatureList(list, &shape) == NULL) return(-1);
+      msFreeShape(&shape);
       return(0);
     case(POINTS):
       if(loadFeaturePoints(&points) == -1) return(-1);
@@ -1638,7 +1644,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
 
       if(layer->features == NULL) {
 	msInitShape(&shape);
-	if((current = insertFeatureList(&(layer->features), shape)) == NULL) return; /* create initial feature */
+	if((current = insertFeatureList(&(layer->features), &shape)) == NULL) return; /* create initial feature */
       }
 
       if((points.point = (pointObj *)malloc(sizeof(pointObj)*MS_FEATUREINITSIZE)) == NULL) {
@@ -1672,7 +1678,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       }
 
       if(msAddLine(&(current->shape), &points) == -1) break;
-
+      
       break;
     
 /* 
@@ -1684,7 +1690,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       break;
     default:
       msInitShape(&shape);
-      if((current = insertFeatureList(&(layer->features), shape)) == NULL) return;
+      if((current = insertFeatureList(&(layer->features), &shape)) == NULL) return;
       break;
     }
 

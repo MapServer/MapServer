@@ -285,7 +285,7 @@
   }
 
   int addFeature(shapeObj *shape) {
-    if(insertFeatureList(&(self->features), *shape) == NULL) 
+    if(insertFeatureList(&(self->features), shape) == NULL) 
       return -1;
     else
       return 0;

@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/11/01 04:23:32  sdlime
+ * Changed insertFeatureList to make a copy of the input shape rather than simply pointing to it. Added msCopyShape function that might be useful in other places.
+ *
  * Revision 1.7  2000/09/18 19:45:25  dan
  * Added support of overlaying symbols
  *
@@ -608,14 +611,12 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	  if(layer->_class[nClassId].overlaysymbol >= 0) // cache shape
           {
               transformedshape.classindex = nClassId;
-              if(insertFeatureList(&shpcache, transformedshape) == NULL) 
+              if(insertFeatureList(&shpcache, &transformedshape) == NULL) 
                   return(-1);
-              msInitShape(&transformedshape);
 	  } 
-          else
-          {
-              msFreeShape(&transformedshape);
-          }
+
+	  msFreeShape(&transformedshape);
+
           break;
 /* ------------------------------------------------------------------
  *      MS_POLYGON / MS_POLYLINE
@@ -688,14 +689,11 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
              layer->_class[nClassId].overlaysymbol >= 0) // cache shape
           {
               transformedshape.classindex = nClassId;
-              if(insertFeatureList(&shpcache, transformedshape) == NULL) 
+              if(insertFeatureList(&shpcache, &transformedshape) == NULL) 
                   return(-1);
-              msInitShape(&transformedshape);
 	  } 
-          else
-          {
-              msFreeShape(&transformedshape);
-          }
+
+	  msFreeShape(&transformedshape);
           break;
     default:
       msSetError(MS_MISCERR, "Unknown or unsupported layer type.", 

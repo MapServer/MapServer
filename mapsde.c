@@ -580,10 +580,10 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
 	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
 	    transformedshape.classindex = i;
-	    if(insertFeatureList(&shpcache, transformedshape) == NULL) return(-1);
-	    msInitShape(&transformedshape);
-	  } else
-	    msFreeShape(&transformedshape);
+	    if(insertFeatureList(&shpcache, &transformedshape) == NULL) return(-1);
+	  }
+
+	  msFreeShape(&transformedshape);
 	} else {
 	  if(status != SE_FINISHED) {
 	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
@@ -650,10 +650,10 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
  	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
 	    transformedshape.classindex = i;
-	    if(insertFeatureList(&shpcache, transformedshape) == NULL) return(-1);
-	    msInitShape(&transformedshape);
-	  } else
-	    msFreeShape(&transformedshape);
+	    if(insertFeatureList(&shpcache, &transformedshape) == NULL) return(-1);
+	  }
+
+	  msFreeShape(&transformedshape);
 	} else {
 	  if(status != SE_FINISHED) {
 	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");

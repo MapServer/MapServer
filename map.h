@@ -588,7 +588,7 @@ int initLayer(layerObj *layer);
 int initClass(classObj *_class);
 int initQuery(queryObj *query);
 
-featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj shape);
+featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 void freeFeatureList(featureListNodeObjPtr list);
 
 int loadProjectionString(projectionObj *p, char *value);
@@ -700,6 +700,7 @@ gdFontPtr msGetBitmapFont(int size);
 
 void msFreeShape(shapeObj *shape); /* in mapprimative.c */
 void msInitShape(shapeObj *shape);
+int msCopyShape(shapeObj *from, shapeObj *to);
 void msRect2Polygon(rectObj rect, shapeObj *poly);
 void msClipPolylineRect(shapeObj *in, rectObj rect, shapeObj *out);
 void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out);
