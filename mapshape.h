@@ -112,6 +112,7 @@ void msSHPGetInfo( SHPHandle hSHP, int * pnEntities, int * pnShapeType );
 int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds );
 void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape );
 int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
+int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
 
 // tiledShapefileObj function prototypes are in map.h
 #endif

@@ -110,7 +110,7 @@
   }
 
   void prepareQuery() {
-    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height);
+    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution);
   }
 
   gdImagePtr prepareImage() {
@@ -135,7 +135,7 @@
       return NULL;
   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
-    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height);
+    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution);
 
     return img;
   }
@@ -639,6 +639,10 @@
   int add(shapeObj *shape) {
     return msSHPWriteShape(self->hSHP, shape);	
   }	
+
+  int addPoint(pointObj *point) {    
+    return msSHPWritePoint(self->hSHP, point);	
+  }
 }
 
 //

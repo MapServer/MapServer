@@ -472,9 +472,99 @@ static void writeBounds( uchar * pabyRec, shapeObj *shape, int nVCount )
   ByteCopy( &dYMax, pabyRec + 24, 8 );
 }
 
+int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
+{
+  int nRecordOffset, nRecordSize=0;
+  uchar	*pabyRec;
+  int32	i32, nPoints, nParts;
+  
+  if( psSHP->nShapeType != SHP_POINT ) return(-1);
+
+  psSHP->bUpdated = MS_TRUE;
+
+  /* -------------------------------------------------------------------- */
+  /*      Add the new entity to the in memory index.                      */
+  /* -------------------------------------------------------------------- */
+  psSHP->nRecords++;
+  if( psSHP->nRecords > psSHP->nMaxRecords ) {
+    psSHP->nMaxRecords = psSHP->nMaxRecords * 1.3 + 100;
+    
+    psSHP->panRecOffset = (int *) 
+      SfRealloc(psSHP->panRecOffset,sizeof(int) * psSHP->nMaxRecords );
+    psSHP->panRecSize = (int *) 
+      SfRealloc(psSHP->panRecSize,sizeof(int) * psSHP->nMaxRecords );
+  }
+
+  /* -------------------------------------------------------------------- */
+  /*      Compute a few things.                                           */
+  /* -------------------------------------------------------------------- */
+  nPoints = 1;
+  nParts = 1;
+  
+  /* -------------------------------------------------------------------- */
+  /*      Initialize record.                                              */
+  /* -------------------------------------------------------------------- */
+  psSHP->panRecOffset[psSHP->nRecords-1] = nRecordOffset = psSHP->nFileSize;
+  
+  pabyRec = (uchar *) malloc(nPoints * 2 * sizeof(double) + nParts * 4 + 128);
+  
+  /* -------------------------------------------------------------------- */
+  /*      Write vertices for a point.                                     */
+  /* -------------------------------------------------------------------- */
+  ByteCopy( &(point->x), pabyRec + 12, 8 );
+  ByteCopy( &(point->y), pabyRec + 20, 8 );
+    
+  if( bBigEndian ) {
+    SwapWord( 8, pabyRec + 12 );
+    SwapWord( 8, pabyRec + 20 );
+  }
+    
+  nRecordSize = 20;
+
+  /* -------------------------------------------------------------------- */
+  /*      Set the shape type, record number, and record size.             */
+  /* -------------------------------------------------------------------- */
+  i32 = psSHP->nRecords-1+1;					/* record # */
+  if( !bBigEndian ) SwapWord( 4, &i32 );
+  ByteCopy( &i32, pabyRec, 4 );
+  
+  i32 = nRecordSize/2;				/* record size */
+  if( !bBigEndian ) SwapWord( 4, &i32 );
+  ByteCopy( &i32, pabyRec + 4, 4 );
+  
+  i32 = psSHP->nShapeType;				/* shape type */
+  if( bBigEndian ) SwapWord( 4, &i32 );
+  ByteCopy( &i32, pabyRec + 8, 4 );
+  
+  /* -------------------------------------------------------------------- */
+  /*      Write out record.                                               */
+  /* -------------------------------------------------------------------- */
+  fseek( psSHP->fpSHP, nRecordOffset, 0 );
+  fwrite( pabyRec, nRecordSize+8, 1, psSHP->fpSHP );
+  free( pabyRec );
+  
+  psSHP->panRecSize[psSHP->nRecords-1] = nRecordSize;
+  psSHP->nFileSize += nRecordSize + 8;
+  
+  /* -------------------------------------------------------------------- */
+  /*	Expand file wide bounds based on this shape.			  */
+  /* -------------------------------------------------------------------- */
+  if( psSHP->nRecords == 1 ) {
+    psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = point->x;
+    psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = point->y;
+  } else {
+    psSHP->adBoundsMin[0] = MS_MIN(psSHP->adBoundsMin[0], point->x);
+    psSHP->adBoundsMin[1] = MS_MIN(psSHP->adBoundsMin[1], point->y);
+    psSHP->adBoundsMax[0] = MS_MAX(psSHP->adBoundsMax[0], point->x);
+    psSHP->adBoundsMax[1] = MS_MAX(psSHP->adBoundsMax[1], point->y);
+  }
+  
+  return( psSHP->nRecords - 1 );
+}
+
 int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 {
-  int	       	nRecordOffset, i, j, k, nRecordSize=0;
+  int nRecordOffset, i, j, k, nRecordSize=0;
   uchar	*pabyRec;
   int32	i32, nPoints, nParts;
   
@@ -624,7 +714,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   psSHP->nFileSize += nRecordSize + 8;
   
   /* -------------------------------------------------------------------- */
-  /*	Expand file wide bounds based on this shape.			    */
+  /*	Expand file wide bounds based on this shape.			  */
   /* -------------------------------------------------------------------- */
   if( psSHP->nRecords == 1 ) {
     psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = shape->line[0].point[0].x;
