@@ -125,7 +125,7 @@ static char *getToken() {
 ** Load a string from the map file. A "string" is defined in lexer.l.
 */
 int getString(char **s) {
-  
+
   if (*s) {
     msSetError(MS_SYMERR, "Duplicate item (%s):(line %d)", "getString()", msyytext, msyylineno);
     return(MS_FAILURE);
@@ -3667,6 +3667,7 @@ int loadWeb(webObj *web, mapObj *map)
       if(getString(&web->mintemplate) == MS_FAILURE) return(-1);
       break; 
     case(QUERYFORMAT):
+      free(web->queryformat); web->queryformat = NULL; // there is a default
       if(getString(&web->queryformat) == MS_FAILURE) return(-1);
       break;   
     case(TEMPLATE):
