@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.363  2004/10/28 04:59:15  sdlime
+ * Increased MS_MAXSYMBOLSIZE constant from 100 to 500. This value is used as a default within styleObj structures. This allows for larger markers to be draw, particularly useful with reference maps where you want a image sized crosshair.
+ *
  * Revision 1.362  2004/10/26 15:54:35  sean
  * replace empty arg lists with ( void ) to eliminate swig warnings, and move
  * MS_DLL_EXPORT symbol ahead of function types.
@@ -171,7 +174,7 @@ extern "C" {
 #define MS_NAMELEN 20
 
 #define MS_MINSYMBOLSIZE 1   // in pixels
-#define MS_MAXSYMBOLSIZE 100
+#define MS_MAXSYMBOLSIZE 500
 
 #define MS_URL 0 /* template types */
 #define MS_FILE 1
