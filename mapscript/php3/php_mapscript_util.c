@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/03/18 17:48:46  dan
+ * Fixed crash with PHP4 version of _phpms_fetch_property_handle2()
+ *
  * Revision 1.4  2001/03/13 16:52:15  dan
  * Added ZVAL_ADDREF() in add_property_object()
  *
@@ -85,7 +88,8 @@ void *_phpms_fetch_handle2(pval *pObj,
         php3_error(E_ERROR, "Object expected as argument.");
         retVal = NULL;
     }
-    else if (zend_hash_find(pObj->value.obj.properties, "_handle_", sizeof("_handle_"), 
+    else if (zend_hash_find(pObj->value.obj.properties, "_handle_", 
+                            sizeof("_handle_"), 
                             (void **)&phandle) == FAILURE)
     {
         php3_error(E_ERROR, 
@@ -175,7 +179,7 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
         php3_error(err_type, "Object expected as argument.");
         return NULL;
     }
-    else if (zend_hash_find(pObj->value.ht, property_name, 
+    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
                             strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
     {
@@ -262,9 +266,6 @@ char *_phpms_fetch_property_string(pval *pObj, char *property_name,
     else if (zend_hash_find(pObj->value.obj.properties, 
                             property_name, strlen(property_name)+1, 
                             (void **)&phandle) == FAILURE)
-        /*_php3_hash_find(pObj->value.ht, property_name, 
-                             strlen(property_name)+1, 
-                             (void **)&phandle) == FAILURE)*/
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
