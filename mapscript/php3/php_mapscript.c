@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.125  2002/11/26 21:19:02  dan
+ * Made load/saveMapContext() produce E_WARNING instead of E_ERROR if
+ * context fails to load or save.  (i.e. so we can trap errors)
+ *
  * Revision 1.124  2002/11/20 22:18:28  julien
  * Propagate changes made by msLoadMapContext to PHP mapObj
  *
@@ -4720,7 +4724,7 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
 
     if (pThis == NULL)
     {
-        RETURN_FALSE;
+        RETURN_LONG(MS_FAILURE);
     }
 
     if (getParameters(ht,1,&pParamFileName) == FAILURE)
@@ -4733,7 +4737,9 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
                                          list TSRMLS_CC);
     if (self == NULL)
-        RETURN_FALSE;
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
 
     if(pParamFileName->value.str.val != NULL && 
        strlen(pParamFileName->value.str.val) > 0)
@@ -4742,8 +4748,9 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
                                         pParamFileName->value.str.val)) != 0)
         {
             _phpms_report_mapserver_error(E_WARNING);
-            php3_error(E_ERROR, "Failed saving map context from %s",
+            php3_error(E_WARNING, "Failed saving map context from %s",
                        pParamFileName->value.str.val);
+            RETURN_LONG(MS_FAILURE);
         }
     }
 
@@ -4781,7 +4788,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
 
     if (pThis == NULL)
     {
-        RETURN_FALSE;
+        RETURN_LONG(MS_FAILURE);
     }
 
     if (getParameters(ht,1,&pParamFileName) == FAILURE)
@@ -4794,7 +4801,9 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
                                          list TSRMLS_CC);
     if (self == NULL)
-        RETURN_FALSE;
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
 
     if(pParamFileName->value.str.val != NULL && 
        strlen(pParamFileName->value.str.val) > 0)
@@ -4803,8 +4812,9 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
                                         pParamFileName->value.str.val)) != 0)
         {
             _phpms_report_mapserver_error(E_WARNING);
-            php3_error(E_ERROR, "Failed loading map context from %s",
+            php3_error(E_WARNING, "Failed loading map context from %s",
                        pParamFileName->value.str.val);
+            RETURN_LONG(MS_FAILURE);
         }
     }
 
