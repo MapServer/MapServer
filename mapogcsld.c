@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2004/01/05 21:17:53  assefa
+ * ApplySLD and ApplySLDURL on a layer can now take a NamedLayer name as argument.
+ *
  * Revision 1.14  2003/12/18 18:58:55  assefa
  * Use the symol name instead of the id for newly created symbols.
  *
@@ -111,7 +114,8 @@
 /*      on the map. Layer name and Named Layer's name parameter are     */
 /*      used to do the match.                                           */
 /************************************************************************/
-int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer)
+int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
+                     char *pszStyleLayerName)
 {
 #ifdef USE_OGR
 
@@ -139,7 +143,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer)
         }
 
         if (pszSLDbuf)
-          msSLDApplySLD(map, pszSLDbuf, iLayer);
+          msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
     }
 
     return MS_SUCCESS;
@@ -164,13 +168,16 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer)
 /*      they have the same name, copy the classes asscoaited with       */
 /*      the SLD layers onto the map layers.                             */
 /************************************************************************/
-int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer)
+int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
+                  char *pszStyleLayerName)
 {
 #ifdef USE_OGR
 
     int nLayers = 0;
     layerObj *pasLayers = NULL;
     int i, j, k, iClass;
+    int bUseSpecificLayer = 0;
+    int bSuccess =0;
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
@@ -180,7 +187,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer)
         for (i=0; i<map->numlayers; i++)
         {
             if (iLayer >=0 && iLayer< map->numlayers)
-              i = iLayer;
+            {
+                i = iLayer;
+                bUseSpecificLayer = 1;
+            }
 
             for (j=0; j<nLayers; j++)
             {
@@ -189,8 +199,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer)
 /*      copy :  - class                                                 */
 /*              - layer's labelitem                                     */
 /* -------------------------------------------------------------------- */
-                if (strcasecmp(map->layers[i].name, pasLayers[j].name) == 0)
+                if ((pszStyleLayerName == NULL && 
+                     strcasecmp(map->layers[i].name, pasLayers[j].name) == 0) ||
+                    (bUseSpecificLayer && pszStyleLayerName && 
+                     strcasecmp(pasLayers[j].name, pszStyleLayerName) == 0))
                 {
+                    bSuccess =1;
 /* -------------------------------------------------------------------- */
 /*      copy classes in reverse order : the Rule priority is the        */
 /*      first rule is the most important (mapserver uses the painter    */
@@ -228,15 +242,18 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer)
                     break;
                 }
             }
-            if (iLayer >=0 && iLayer< map->numlayers)
+            if (bUseSpecificLayer);
               break;
             
         }
 
     }
 
+    if (bSuccess)
+      return MS_SUCCESS;
 
-    return MS_SUCCESS;
+    return(MS_FAILURE);
+    
 
 #else
 /* ------------------------------------------------------------------

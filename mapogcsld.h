@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2004/01/05 21:17:53  assefa
+ * ApplySLD and ApplySLDURL on a layer can now take a NamedLayer name as argument.
+ *
  * Revision 1.7  2003/12/05 04:02:34  assefa
  * Add generation of SLD for points and text.
  *
@@ -65,8 +68,10 @@
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer);
-int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer);
+int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer, 
+                     char *pszStyleLayerName);
+int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
+                  char *pszStyleLayerName);
 
 layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers);
 void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
