@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.82  2002/01/28 16:59:01  dan
+ * Added mapObj->resolution.  Added optional dstx,dsty args to PasteImage().
+ *
  * Revision 1.81  2002/01/24 20:01:36  sacha
  * Change msgetAllGroupNames to msGetAllGroupNames
  *
@@ -1068,6 +1071,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_double(return_value,"cellsize",  pNewObj->cellsize);
     add_property_long(return_value,  "units",     pNewObj->units);
     add_property_double(return_value,"scale",     pNewObj->scale);
+    add_property_long(return_value,  "resolution",pNewObj->resolution);
     PHPMS_ADD_PROP_STR(return_value, "shapepath", pNewObj->shapepath);
     add_property_long(return_value,  "keysizex",  pNewObj->legend.keysizex);
     add_property_long(return_value,  "keysizey",  pNewObj->legend.keysizey);
@@ -1160,6 +1164,7 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("cellsize",    self->cellsize)
     else IF_SET_LONG(  "units",       self->units)
     else IF_SET_DOUBLE("scale",       self->scale)
+    else IF_SET_LONG(  "resolution",  self->resolution)
     else IF_SET_STRING("shapepath",   self->shapepath)
     else IF_SET_LONG(  "keysizex",    self->legend.keysizex)
     else IF_SET_LONG(  "keysizey",    self->legend.keysizey)
@@ -4239,16 +4244,20 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
  *                        image->pasteImage()
  **********************************************************************/
 
-/* {{{ proto void img.pasteImage(imageObj Src, int transparentColor)
+/* {{{ proto void img.pasteImage(imageObj Src, int transparentColor [,int dstx, int dsty])
    Pastes another imageObj on top of this imageObj. transparentColor is
    the index of the color from srcImg that should be considered transparent.
    Pass transparentColor=-1 if you don't want any transparent color.
+   If optional dstx,dsty are provided then it defined the position where the
+   image should be copied (dstx,dsty = top-left corner position).
 */
 
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval   *pSrcImg, *pTransparent, *pThis;
+    pval   *pSrcImg, *pTransparent, *pThis, *pDstX, *pDstY;
     gdImagePtr imgDst = NULL, imgSrc = NULL;
+    int         nDstX=0, nDstY=0;
+    int         nArgs = ARG_COUNT(ht);
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -4260,7 +4269,13 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 2, &pSrcImg, &pTransparent) != SUCCESS  )
+        (nArgs != 2 && nArgs != 4))
+    {
+        WRONG_PARAM_COUNT;
+    }
+    if (pThis == NULL ||
+        getParameters(ht, nArgs, &pSrcImg, &pTransparent, 
+                      &pDstX, &pDstY) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
@@ -4272,6 +4287,14 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
     
     convert_to_long(pTransparent);
 
+    if (nArgs == 4)
+    {
+        convert_to_long(pDstX);
+        convert_to_long(pDstY);
+        nDstX = pDstX->value.lval;
+        nDstY = pDstY->value.lval;
+    }
+
     if (imgSrc != NULL && imgDst != NULL)
     {
         int    nOldTransparentColor;
@@ -4279,7 +4302,8 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
         nOldTransparentColor = gdImageGetTransparent(imgSrc);
         gdImageColorTransparent(imgSrc, pTransparent->value.lval);
 
-        gdImageCopy(imgDst, imgSrc, 0, 0, 0, 0, imgSrc->sx, imgSrc->sy);
+        gdImageCopy(imgDst, imgSrc, nDstX, nDstY, 
+                    0, 0, imgSrc->sx, imgSrc->sy);
 
         gdImageColorTransparent(imgSrc, nOldTransparentColor);
     }
