@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.19  2001/03/30 04:16:14  dan
+ * Removed shapepath parameter to layer->getshape()
+ *
  * Revision 1.18  2001/03/28 02:10:15  assefa
  * Change loadProjectionString to msLoadProjectionString
  *
@@ -280,9 +283,9 @@ void layerObj_close(layerObj *self) {
     msLayerClose(self);
   }
 
-int layerObj_getShape(layerObj *self, char *path, shapeObj *shape, 
+int layerObj_getShape(layerObj *self, shapeObj *shape, 
                       int tileindex, int shapeindex, int allitems) {
-    return msLayerGetShape(self, path, shape, tileindex, shapeindex);
+    return msLayerGetShape(self, shape, tileindex, shapeindex);
   }
 
 resultCacheMemberObj *layerObj_getResult(layerObj *self, int i) {

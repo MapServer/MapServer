@@ -428,7 +428,7 @@ Very important note: Constant names and class member variable names are
    void close()
         Close layer previously opened with open().
 
-   shapeObj getShape(string shapepath, int tileindex, int shapeindex)
+   shapeObj getShape(int tileindex, int shapeindex)
         Retrieve shapeObj from a layer by index.
 
    int getMetaData(string name)

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.41  2001/03/30 04:16:14  dan
+ * Removed shapepath parameter to layer->getshape()
+ *
  * Revision 1.40  2001/03/21 21:55:28  dan
  * Added get/setMetaData() for layerObj and mapObj()
  *
@@ -107,7 +110,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Mar 21, 2001)"
+#define PHP3_MS_VERSION "(Mar 29, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -4185,12 +4188,12 @@ DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS)
  *                        layer->getShape()
  **********************************************************************/
 
-/* {{{ proto shapeObj layer.getShape(shapepath, tileindex, shapeindex)
+/* {{{ proto shapeObj layer.getShape(tileindex, shapeindex)
    Retrieve shapeObj from a layer by index. */
 
 DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
 { 
-    pval  *pThis, *pShapePath, *pTileId, *pShapeId ;
+    pval  *pThis, *pTileId, *pShapeId ;
     layerObj *self=NULL;
     shapeObj    *poShape;
 #ifdef PHP4
@@ -4204,12 +4207,11 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 3, &pShapePath, &pTileId, &pShapeId) != SUCCESS) 
+        getParameters(ht, 2, &pTileId, &pShapeId) != SUCCESS) 
     {
         WRONG_PARAM_COUNT;
     }
 
-    convert_to_string(pShapePath);
     convert_to_long(pTileId);
     convert_to_long(pShapeId);
 
@@ -4228,8 +4230,7 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
                                            list);
 
     if (self == NULL || 
-        layerObj_getShape(self, pShapePath->value.str.val, poShape, 
-                          pTileId->value.lval, 
+        layerObj_getShape(self, poShape, pTileId->value.lval, 
                           pShapeId->value.lval, MS_TRUE) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);

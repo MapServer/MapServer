@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/03/30 04:16:15  dan
+ * Removed shapepath parameter to layer->getshape()
+ *
  * Revision 1.7  2001/03/21 21:55:28  dan
  * Added get/setMetaData() for layerObj and mapObj()
  *
@@ -106,7 +109,7 @@ layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_open(layerObj *self, char *path);
 void            layerObj_close(layerObj *self);
-int             layerObj_getShape(layerObj *self, char *path, shapeObj *shape,
+int             layerObj_getShape(layerObj *self, shapeObj *shape,
                                   int tileindex, int shapeindex, int allitems);
 resultCacheMemberObj *layerObj_getResult(layerObj *self, int i);
 classObj       *layerObj_getClass(layerObj *self, int i);
