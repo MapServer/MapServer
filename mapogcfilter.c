@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.32  2004/09/28 15:50:14  assefa
+ * Correct bug related to gml bbox (Bug 913).
+ *
  * Revision 1.31  2004/09/17 16:31:38  assefa
  * Correct bug with spatial filters Dwithin and Intersect.
  *
@@ -540,6 +543,11 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
           nClassIndex = msShapeGetClass(psLayer, &shape, map->scale);
         
         addResult(psLayer->resultcache, nClassIndex, anValues[i], -1);
+
+        if(psLayer->resultcache->numresults == 1)
+          psLayer->resultcache->bounds = shape.bounds;
+        else
+          msMergeRect(&(psLayer->resultcache->bounds), &shape.bounds);
     }
 
 
