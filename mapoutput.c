@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/01/11 17:32:27  frank
+ * When GD2 isn't available create a PC256 mode JPEG driver by default
+ *
  * Revision 1.13  2002/12/21 22:04:54  frank
  * I regressed the changes Julien made, and reimplemented the same effect
  * with the logic in msApplyDefaultOutputFormats().  Should be much safer now.
@@ -221,7 +224,11 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     {
         format = msAllocOutputFormat( map, "jpeg", driver );
         format->mimetype = strdup("image/jpeg");
+#if GD2_VERS > 1
         format->imagemode = MS_IMAGEMODE_RGB;
+#else
+        format->imagemode = MS_IMAGEMODE_PC256;
+#endif
         format->extension = strdup("jpg");
         format->renderer = MS_RENDER_WITH_GD;
     }
