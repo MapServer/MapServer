@@ -22,6 +22,10 @@ Version 4.2.1 (CVS)
 
 - Python mapscript: fixed win32 and non-standard include dirs (bug 680).
 
+- Mladen Turk's map copying macros in mapcopy.h clean up map cloning and
+  allow for copying of fontset and symbolset.  Added cloning tests in
+  python/tests/testCloneMap.py and refactored testing suite (bugs 640 & 701).
+
 Version 4.2.0 (2004-05-25)
 --------------------------
 
