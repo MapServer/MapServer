@@ -1442,7 +1442,7 @@ int initLayer(layerObj *layer)
 
   layer->requires = layer->labelrequires = NULL;
 
-  layer->metadata = NULL;
+  layer->metadata = msCreateHashTable();
 
   return(0);
 }
