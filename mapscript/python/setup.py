@@ -67,6 +67,8 @@ for item in ms_includes:
 	if item[2:] not in include_dirs:
 	    include_dirs.append( item[2:] )
 
+wrapper_source = "mapscript_wrap.c"
+
 # Here is the distutils setup function that does all the magic.
 # Had to specify 'extra_link_args = ["-static", "-lgd"]' because
 # mapscript requires the gd library, which on my system is static.
@@ -76,7 +78,7 @@ setup(name = "mapscript",
       author = "Mapserver project - SWIGged MapScript library.",
       url = "http://mapserver.gis.umn.edu/",
       ext_modules = [Extension("_mapscript",
-                               ["mapscript_wrap.c", "pygdioctx/pygdioctx.c"],
+                               [wrapper_source, "pygdioctx/pygdioctx.c"],
                                include_dirs = include_dirs,
                                library_dirs = lib_dirs,
                                libraries = libs,
