@@ -444,11 +444,12 @@ static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
 #ifdef USE_PROJ  
   int i;
 
-  if(p->numargs > 0);
-  fprintf(stream, "%sPROJECTION\n", tab);
-  for(i=0; i<p->numargs; i++)
-    fprintf(stream, "  %s%s\n", tab, p->projargs[i]);
-  fprintf(stream, "%sEND\n", tab);
+  if(p->numargs > 0) {
+    fprintf(stream, "%sPROJECTION\n", tab);
+    for(i=0; i<p->numargs; i++)
+      fprintf(stream, "  %s%s\n", tab, p->projargs[i]);
+    fprintf(stream, "%sEND\n", tab);
+  }
 #endif
 }
 
@@ -1354,7 +1355,7 @@ static void writeQuery(queryObj *query, FILE *stream)
   }
   for(i=0; i<query->numjoins; i++)
     writeJoin(&(query->joins[i]), stream);
-  if(query->template) fprintf(stream, "      TEMPATE \"%s\"\n", query->template);
+  if(query->template) fprintf(stream, "      TEMPLATE \"%s\"\n", query->template);
   fprintf(stream, "    END\n");
 }
 
@@ -2722,6 +2723,8 @@ int msSaveMap(mapObj *map, char *filename)
   for(i=0; i<map->numlayers; i++) writeLayer(map, &(map->layers[i]), stream);
 
   fprintf(stream, "END\n");
+
+  fclose(stream);
 
   return(0);
 }
