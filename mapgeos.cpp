@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/23 05:16:50  sdlime
+ * Added GEOS=>shape conversion for GEOS_MULTILINE geometries.
+ *
  * Revision 1.6  2005/02/23 04:52:33  sdlime
  * Added GEOS=>shape conversion for GEOS_MULTIPOINT geometries.
  *
@@ -196,7 +199,7 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(Geometry *g)
   try {
     int i;
     int numPoints = g->getNumPoints();
-    CoordinateSequence *coords = g->getCoordinates();
+    CoordinateSequence *coords = g->getCoordinates(); /* would be nice to have read-only access */
     Coordinate c;
     shapeObj *shape=NULL;
 
@@ -228,14 +231,14 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(Geometry *g)
   }
 }
 
-static shapeObj *msGEOSGeometry2Shape_line(Geometry *g)
+static shapeObj *msGEOSGeometry2Shape_line(LineString *g)
 {
   shapeObj *shape=NULL;
 
   try {
     int i;
     int numPoints = g->getNumPoints();
-    CoordinateSequence *coords = g->getCoordinates();
+    const CoordinateSequence *coords = g->getCoordinatesRO(); /* a pointer to coordinates, do not delete */
     Coordinate c;
 
     shape = (shapeObj *) malloc(sizeof(shapeObj));
@@ -255,10 +258,57 @@ static shapeObj *msGEOSGeometry2Shape_line(Geometry *g)
       /* shape->line[0].point[i].z = c.z; */
     }
 
-    delete coords;
     return shape;
   } catch (GEOSException *ge) {
     msSetError(MS_GEOSERR, "%s", "msGEOSGeometry2Shape_line()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+}
+
+static shapeObj *msGEOSGeometry2Shape_multiline(MultiLineString *g)
+{
+  try {
+    int i, j;
+    int numPoints, numLines = g->getNumGeometries();
+    const CoordinateSequence *coords;
+    const LineString *lineString;
+    Coordinate c;
+
+    shapeObj *shape=NULL;
+    lineObj line;
+
+    shape = (shapeObj *) malloc(sizeof(shapeObj));
+    msInitShape(shape);
+
+    shape->type = MS_SHAPE_LINE;
+    shape->line = (lineObj *) malloc(sizeof(lineObj)*numLines);
+    shape->numlines = numLines;
+
+    for(j=0; j<numLines; j++) {
+      lineString = (LineString *) g->getGeometryN(j);
+      coords = lineString->getCoordinatesRO();
+      numPoints = lineString->getNumPoints();
+
+      line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
+      line.numpoints = numPoints;
+
+      for(i=0; i<numPoints; i++) {
+	c = coords->getAt(i);
+	
+	line.point[i].x = c.x;
+	line.point[i].y = c.y;
+	/* line.point[i].z = c.z; */	
+      }
+      msAddLine(shape, &line);
+      free(line.point);
+    }
+
+    return shape;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSGeometry2Shape_multiline()", (char *) ge->toString().c_str());
     delete ge;
     return NULL;
   } catch (...) {
@@ -295,8 +345,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(Polygon *g)
       
       line.point[i].x = c.x;
       line.point[i].y = c.y;
-      /* line.point[i].z = 0;
-	 line.point[i].m = 0; */
+      /* line.point[i].z = c.z; */
     }
     msAddLine(shape, &line);
     free(line.point);
@@ -347,10 +396,10 @@ shapeObj *msGEOSGeometry2Shape(Geometry *g)
       return msGEOSGeometry2Shape_multipoint(g);
       break;
     case GEOS_LINESTRING:
-      return msGEOSGeometry2Shape_line(g);
+      return msGEOSGeometry2Shape_line((LineString *)g);
       break;
     case GEOS_MULTILINESTRING:
-      return NULL;
+      return msGEOSGeometry2Shape_multiline((MultiLineString *)g);
       break;
     case GEOS_POLYGON:
       return msGEOSGeometry2Shape_polygon((Polygon *)g);
