@@ -1712,6 +1712,11 @@ getOutputFormat( string imagetype ) : outputFormatObj_
     an output format to be found either by driver (like 'GD/PNG') or
     name (like 'PNG24').
 
+getProjection() : string
+    Returns the current projection definition as a PROJ.4 string.
+    (ie. '+proj=utm +zone=11 +datum=WGS84').  Returns NULL/None if no
+    projection is defined on the map.
+
 insertLayer( layerObj layer [, int nIndex=-1 ] ) : int
     Insert a copy of *layer* into the Map at index *nIndex*.  The default
     value of *nIndex* is -1, which means the last possible index.  Returns
@@ -1768,6 +1773,19 @@ setMetaData( string key, string value ) : int
 
 .. note:: setMetaData() is deprecated and will be removed in a future
           version.  Replaced by direct metadata access, see hashTableObj_.
+
+  int setProjection(char *proj4) {
+    return msLoadProjectionString(&(self->projection), proj4);
+  }
+  %newobject getProjection;
+  char *getProjection() {
+    return msGetProjectionString(&(self->projection));
+  }
+
+setProjection( string proj4 ) : int
+    Set the map projection using a PROJ.4 format projection definition. 
+    (ie. "+proj=utm +zone=11 +datum=WGS84").  Returns MS_SUCCESS or 
+    MS_FAILURE. 
     
 setRotation( float rotation_angle ) : int
     Set map rotation angle. The map view rectangle (specified in 
