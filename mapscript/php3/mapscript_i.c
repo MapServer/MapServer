@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.21  2001/07/26 19:50:08  assefa
+ * Add projection class and related functions.
+ *
  * Revision 1.20  2001/04/19 15:11:34  dan
  * Sync with mapscript.i v.1.32
  *
@@ -655,6 +658,14 @@ int shapefileObj_get(shapefileObj *self, int i, shapeObj *shape) {
     return 0;
   }
 
+int shapefileObj_getPoint(shapefileObj *self, int i, pointObj *point) {
+    if(i<0 || i>=self->numshapes)
+      return -1;
+
+    msSHPReadPoint(self->hSHP, i, point);
+    return 0;
+  }
+
 int shapefileObj_getTransformed(shapefileObj *self, mapObj *map, 
                                 int i, shapeObj *shape) {
     if(i<0 || i>=self->numshapes)
@@ -674,6 +685,38 @@ void shapefileObj_getExtent(shapefileObj *self, int i, rectObj *rect) {
 int shapefileObj_add(shapefileObj *self, shapeObj *shape) {
     return msSHPWriteShape(self->hSHP, shape);	
   }	
+
+int shapefileObj_addPoint(shapefileObj *self, pointObj *point) {    
+    return msSHPWritePoint(self->hSHP, point);	
+  }
+
+/**********************************************************************
+ * class extensions for projectionObj
+ **********************************************************************/
+projectionObj *projectionObj_new(char *string) {	
+
+    int status;
+    projectionObj *proj=NULL;
+
+    proj = (projectionObj *)malloc(sizeof(projectionObj));
+    if(!proj) return NULL;
+    msInitProjection(proj);
+
+    status = msLoadProjectionString(proj, string);
+    if(status == -1) {
+      msFreeProjection(proj);
+      free(proj);
+      return NULL;
+    }
+
+    return proj;
+  }
+
+
+void projectionObj_destroy(projectionObj *self) {
+    msFreeProjection(self);
+    free(self);
+  }
 
 /**********************************************************************
  * class extensions for labelCacheObj - TP mods

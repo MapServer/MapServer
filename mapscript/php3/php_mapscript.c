@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.46  2001/07/26 19:50:08  assefa
+ * Add projection class and related functions.
+ *
  * Revision 1.45  2001/07/23 19:11:56  dan
  * Added missing "background..." properties in label_setProperty().
  *
@@ -153,6 +156,7 @@ DLEXPORT void php3_ms_free_shape(shapeObj *pShape);
 DLEXPORT void php3_ms_free_shapefile(shapefileObj *pShapefile);
 DLEXPORT void php3_ms_free_rect(rectObj *pRect);
 DLEXPORT void php3_ms_free_stub(void *ptr) ;
+DLEXPORT void php3_ms_free_projection(projectionObj *pProj);
 
 DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -223,6 +227,7 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_rect_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_rect_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_rect_setExtent(INTERNAL_FUNCTION_PARAMETERS);
@@ -231,6 +236,7 @@ DLEXPORT void php3_ms_rect_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_point_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_distanceToPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_distanceToLine(INTERNAL_FUNCTION_PARAMETERS);
@@ -238,12 +244,14 @@ DLEXPORT void php3_ms_point_distanceToShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_line_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_point(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_add(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_line(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS);
@@ -254,7 +262,9 @@ DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_addshape(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shapefile_addpoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shapefile_getpoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS);
@@ -262,6 +272,9 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS);
 
 static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
                                     HashTable *list, pval *return_value);
@@ -288,6 +301,9 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
 static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
                                                   HashTable *list, 
                                                   pval *return_value);
+
+static long _phpms_build_projection_object(projectionObj *pproj, int handle_type,
+                                           HashTable *list, pval *return_value);
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -322,6 +338,7 @@ static int le_msshape_ref;
 static int le_msshapefile;
 static int le_msweb;
 static int le_msrefmap;
+static int le_msprojection_new;
 
 static char tmpId[128]; /* big enough for time + pid */
 static int  tmpCount;
@@ -343,6 +360,7 @@ static zend_class_entry *point_class_entry_ptr;
 static zend_class_entry *line_class_entry_ptr;
 static zend_class_entry *shape_class_entry_ptr;
 static zend_class_entry *shapefile_class_entry_ptr;
+static zend_class_entry *projection_class_entry_ptr;
 
 #endif
 
@@ -359,6 +377,7 @@ function_entry php3_ms_functions[] = {
     {"ms_getcwd",       php3_ms_getcwd,         NULL},
     {"ms_getpid",       php3_ms_getpid,         NULL},
     {"ms_getscale",     php3_ms_getscale,       NULL},
+    {"ms_newprojectionobj",   php3_ms_projection_new,       NULL},
     {NULL, NULL, NULL}
 };
 
@@ -425,6 +444,7 @@ function_entry php_img_class_functions[] = {
 };
 
 function_entry php_rect_class_functions[] = {
+    {"project",         php3_ms_rect_project,           NULL},    
     {"set",             php3_ms_rect_setProperty,       NULL},    
     {"setextent",       php3_ms_rect_setExtent,         NULL},    
     {"draw",            php3_ms_rect_draw,              NULL},
@@ -483,6 +503,7 @@ function_entry php_class_class_functions[] = {
 
 function_entry php_point_class_functions[] = {
     {"setxy",           php3_ms_point_setXY,            NULL},    
+    {"project",         php3_ms_point_project,             NULL},    
     {"draw",            php3_ms_point_draw,             NULL},    
     {"distancetopoint", php3_ms_point_distanceToPoint,  NULL},    
     {"distancetoline",  php3_ms_point_distanceToLine,   NULL},    
@@ -492,6 +513,7 @@ function_entry php_point_class_functions[] = {
 };
 
 function_entry php_line_class_functions[] = {
+    {"project",         php3_ms_line_project,           NULL},    
     {"add",             php3_ms_line_add,               NULL},    
     {"addxy",           php3_ms_line_addXY,             NULL},    
     {"point",           php3_ms_line_point,             NULL},    
@@ -500,6 +522,7 @@ function_entry php_line_class_functions[] = {
 };
 
 function_entry php_shape_class_functions[] = {
+    {"project",         php3_ms_shape_project,           NULL},    
     {"add",             php3_ms_shape_add,              NULL},    
     {"line",            php3_ms_shape_line,             NULL},    
     {"draw",            php3_ms_shape_draw,             NULL},    
@@ -512,13 +535,19 @@ function_entry php_shape_class_functions[] = {
 
 function_entry php_shapefile_class_functions[] = {
     {"getshape",        php3_ms_shapefile_getshape,     NULL},    
+    {"getpoint",        php3_ms_shapefile_getpoint,     NULL},    
     {"gettransformed",  php3_ms_shapefile_gettransformed, NULL},    
     {"getextent",       php3_ms_shapefile_getextent,    NULL},    
     {"addshape",        php3_ms_shapefile_addshape,     NULL},    
+    {"addpoint",        php3_ms_shapefile_addpoint,     NULL},    
     {"free",            php3_ms_shapefile_free,         NULL},    
     {NULL, NULL, NULL}
 };
 
+function_entry php_projection_class_functions[] = {
+    {"free",            php3_ms_projection_free,              NULL},    
+    {NULL, NULL, NULL}
+};
 
 #ifdef ZEND_VERSION 
 PHP_MINFO_FUNCTION(mapscript)
@@ -573,6 +602,8 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                                                            NULL);
     PHPMS_GLOBAL(le_msrect_ref)= register_list_destructors(php3_ms_free_stub,
                                                            NULL);
+    PHPMS_GLOBAL(le_msprojection_new)= 
+        register_list_destructors(php3_ms_free_projection, NULL);
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -719,6 +750,10 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                      php_shapefile_class_functions);
     shapefile_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
 
+    INIT_CLASS_ENTRY(tmp_class_entry, "projection", 
+                     php_projection_class_functions);
+    projection_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+
 #endif
 
     return SUCCESS;
@@ -774,6 +809,10 @@ DLEXPORT void php3_ms_free_stub(void *ptr)
     /* nothing to do... map destructor takes care of all objects. */
 }
 
+DLEXPORT void php3_ms_free_projection(projectionObj *pProj) 
+{
+    projectionObj_destroy(pProj);
+}
 
 /*=====================================================================
  *                 PHP function wrappers
@@ -5004,6 +5043,61 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        point->project()
+ **********************************************************************/
+
+/* {{{ proto int point.project(projectionObj in, projectionObj out)
+   Project the point. returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval                *pThis, *pIn, *pOut;
+    pointObj            *self;
+    projectionObj       *poInProj;
+    projectionObj       *poOutProj;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (pointObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_mspoint_ref),
+                                            PHPMS_GLOBAL(le_mspoint_new),
+                                            list);
+    poInProj = 
+        (projectionObj*)_phpms_fetch_handle(pIn, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+    poOutProj = 
+        (projectionObj*)_phpms_fetch_handle(pOut, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+
+    if (self && poInProj && poOutProj &&
+        (pointObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+    {
+        RETURN_FALSE;
+    }
+    /* Return point object */
+    _phpms_build_point_object(self, PHPMS_GLOBAL(le_mspoint_ref),
+                              list, return_value);
+
+}
+/* }}} */
+
 
 /**********************************************************************
  *                        point->draw()
@@ -5328,6 +5422,62 @@ DLEXPORT void php3_ms_line_new(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        line->project()
+ **********************************************************************/
+
+/* {{{ proto int line.project(projectionObj in, projectionObj out)
+   Project the point. returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval                *pThis, *pIn, *pOut;
+    lineObj             *self;
+    projectionObj       *poInProj;
+    projectionObj       *poOutProj;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+     if (pThis == NULL ||
+        getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (lineObj *)_phpms_fetch_handle2(pThis, 
+                                           PHPMS_GLOBAL(le_msline_ref),
+                                           PHPMS_GLOBAL(le_msline_new),
+                                           list);
+
+    poInProj = 
+        (projectionObj*)_phpms_fetch_handle(pIn, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+    poOutProj = 
+        (projectionObj*)_phpms_fetch_handle(pOut, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+    if (self && poInProj && poOutProj &&
+        (lineObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+    {
+         RETURN_FALSE;
+    }
+
+    /* Return line object */
+    _phpms_build_line_object(self, PHPMS_GLOBAL(le_msline_ref),
+                             list, return_value);
+}
+/* }}} */
+
+
 
 /**********************************************************************
  *                        line->add()
@@ -5633,6 +5783,62 @@ DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+
+/**********************************************************************
+ *                        shape->project()
+ **********************************************************************/
+
+/* {{{ proto int shape.project(projectionObj in, projectionObj out)
+   Project a Shape. Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval                *pThis, *pIn, *pOut;
+    shapeObj            *self;
+    projectionObj       *poInProj;
+    projectionObj       *poOutProj;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                           PHPMS_GLOBAL(le_msshape_ref),
+                                           PHPMS_GLOBAL(le_msshape_new),
+                                           list);
+     poInProj = 
+        (projectionObj*)_phpms_fetch_handle(pIn, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+    poOutProj = 
+        (projectionObj*)_phpms_fetch_handle(pOut, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+
+    if (self && poInProj && poOutProj &&
+        (shapeObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+    {
+         RETURN_FALSE;
+    }
+
+    /* Return shape object */
+    _phpms_build_shape_object(self, PHPMS_GLOBAL(le_msshape_ref), NULL,
+                              list, return_value);
+
+}
+/* }}} */
 
 /**********************************************************************
  *                        shape->add()
@@ -6157,6 +6363,60 @@ DLEXPORT void php3_ms_rect_new(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /**********************************************************************
+ *                        rect->project()
+ **********************************************************************/
+
+/* {{{ proto int rect.project(projectionObj in, projectionObj out)
+   Project a Rect object Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval                *pThis, *pIn, *pOut;
+    rectObj             *self;
+    projectionObj       *poInProj;
+    projectionObj       *poOutProj;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (rectObj *)_phpms_fetch_handle2(pThis, PHPMS_GLOBAL(le_msrect_ref),
+                                           PHPMS_GLOBAL(le_msrect_new), list);
+    poInProj = 
+        (projectionObj*)_phpms_fetch_handle(pIn, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+    poOutProj = 
+        (projectionObj*)_phpms_fetch_handle(pOut, 
+                                            PHPMS_GLOBAL(le_msprojection_new), 
+                                            list);
+
+    if (self && poInProj && poOutProj &&
+        (rectObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+    {
+        RETURN_FALSE;
+    }
+    
+    /* Return rect object */
+    _phpms_build_rect_object(self, PHPMS_GLOBAL(le_msrect_ref),
+                             list, return_value);
+
+}
+/* }}} */
+
+/**********************************************************************
  *                        rect->set()
  **********************************************************************/
 
@@ -6657,6 +6917,53 @@ DLEXPORT void php3_ms_shapefile_addshape(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /**********************************************************************
+ *                        shapefile->addPoint()
+ **********************************************************************/
+
+/* {{{ proto int shapefile.addPoint(pointObj point)
+   Appends a point to a poin layer. */
+
+DLEXPORT void php3_ms_shapefile_addpoint(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pThis, *pPoint;
+    shapefileObj *self;
+    pointObj    *poPoint;
+    int         nRetVal=0;
+    
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pPoint) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (shapefileObj *)_phpms_fetch_handle(pThis, 
+                                               PHPMS_GLOBAL(le_msshapefile),
+                                               list);
+
+    poPoint = (pointObj*)_phpms_fetch_handle2(pPoint,
+                                              PHPMS_GLOBAL(le_mspoint_ref),
+                                              PHPMS_GLOBAL(le_mspoint_new),
+                                              list);
+
+    if (self && poPoint)
+        nRetVal = shapefileObj_addPoint(self, poPoint);
+
+    RETURN_LONG(nRetVal)
+}
+/* }}} */
+
+
+/**********************************************************************
  *                        shapefile->getShape()
  **********************************************************************/
 
@@ -6713,6 +7020,65 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return shape object */
     _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), NULL,
+                              list, return_value);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        shapefile->getShape()
+ **********************************************************************/
+
+/* {{{ proto int shapefile.getPoint(int i)
+   Retrieve a point by index. */
+
+DLEXPORT void php3_ms_shapefile_getpoint(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pThis, *pIndex;
+    shapefileObj *self;
+    pointObj    *poPoint;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pIndex) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pIndex);
+
+    self = (shapefileObj *)_phpms_fetch_handle(pThis, 
+                                               PHPMS_GLOBAL(le_msshapefile),
+                                               list);
+
+    /* Create a new PointObj to hold the result */
+    if ((poPoint = pointObj_new()) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed creating new point (out of memory?)");
+        RETURN_FALSE;
+    }
+
+    /* Read from the file */
+    if (self == NULL || 
+        shapefileObj_getPoint(self, pIndex->value.lval, poPoint) != 0)
+    {
+        pointObj_destroy(poPoint);
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed reading point %d.", pIndex->value.lval);
+        RETURN_FALSE;
+    }
+
+    /* Return point object */
+    _phpms_build_point_object(poPoint, PHPMS_GLOBAL(le_mspoint_new),
                               list, return_value);
 }
 /* }}} */
@@ -6924,6 +7290,127 @@ static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
 
     return 0;
 }
+
+
+/*=====================================================================
+ *                 PHP function wrappers - projection class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_projection_object()
+**********************************************************************/
+static long _phpms_build_projection_object(projectionObj *pproj, 
+                                           int handle_type, 
+                                           HashTable *list, pval *return_value)
+{
+    int projection_id;
+
+    if (pproj == NULL)
+      return 0;
+
+    projection_id = php3_list_insert(pproj, handle_type);
+
+    _phpms_object_init(return_value, projection_id, 
+                       php_projection_class_functions,
+                       PHP4_CLASS_ENTRY(projection_class_entry_ptr));
+
+    return projection_id;
+}
+ 
+/**********************************************************************
+ *                        ms_newProjectionObj()
+ **********************************************************************/
+
+/* {{{ proto projectionObj ms_newProjectionObj()
+   Create a new projectionObj instance. */
+
+DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pString;
+    projectionObj *pNewProj = NULL;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+    if (getParameters(ht, 1, &pString) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pString);
+
+    if ((pNewProj = projectionObj_new(pString->value.str.val)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        RETURN_FALSE;
+    }
+
+    /* Return rect object */
+    _phpms_build_projection_object(pNewProj, 
+                                   PHPMS_GLOBAL(le_msprojection_new), 
+                                   list, return_value);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        projection->free()
+ **********************************************************************/
+
+/* {{{ proto int projection.free()
+   Destroys resources used by a projection object */
+DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pThis;
+    projectionObj *self;
+
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+
+    if (pThis == NULL ||
+        ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (projectionObj *)_phpms_fetch_handle(pThis, 
+                                                le_msprojection_new, list);
+
+    if (self)
+    {
+        /* Note: we do not have to call the object destructor...
+         * removing the object from the resource list using php3_list_delete()
+         * will also call the object destructor through the list destructor.
+         */
+#ifdef PHP4
+        pval **phandle;
+        if (zend_hash_find(pThis->value.obj.properties, "_handle_", 
+                           sizeof("_handle_"), 
+                           (void **)&phandle) == SUCCESS)
+        {
+            php3_list_delete((*phandle)->value.lval);
+        }
+#else
+        pval *phandle;
+        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
+                            (void **)&phandle) == SUCCESS)
+
+        {
+            php3_list_delete(phandle->value.lval);
+        }
+#endif
+    }
+
+}
+/* }}} */
+
 
 
 /* ==================================================================== */

@@ -647,6 +647,9 @@ Constructor:
   double distanceToShape(shapeObj shape)
         Calculates the minimum distance between a point and a shape.
 
+  projectionObj project(projectionObj in, projectionObj out)
+        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
+      
   void free()
        Releases all resources used by the object.       
 
@@ -672,6 +675,9 @@ Constructor:
    PointObj point(int i)
         Returns a reference to point number i.  Reference is valid only
         during the life of the lineObj that contains the point.
+
+   projectionObj project(projectionObj in, projectionObj out)
+        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
 
    void free()
         Destroys resources used by a line object.     
@@ -723,6 +729,9 @@ Constructor:
    boolean intersects(shapeObj shape)
         Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
      
+   projectionObj project(projectionObj in, projectionObj out)
+        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
+
    void free()
         Destroys resources used by a shape object.  
 
@@ -762,6 +771,9 @@ Constructor:
   double fit(int width, int height)
         Adjust extents of the rectangle to fit the width/height specified.
 
+  projectionObj project(projectionObj in, projectionObj out)
+        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
+
   void free()
         Destroys resources used by a rect object.  
 
@@ -791,6 +803,9 @@ Constructor:
    shapeObj getShape(int i)
         Retrieve shape by index.
 
+   shapeObj getPoint(int i)
+        Retrieve point by index.
+      
    shapeObj getTransformed(mapObj map, int i)
         Retrieve shape by index.
 
@@ -799,6 +814,9 @@ Constructor:
 
    int addShape(shapeObj shape)
         Appends a shape to an open shapefile.
+        
+   int addPoint(pointObj point)
+        Appends a point to an open shapefile.
 
    void free()
         Closes a shape file (and commits all changes in write mode) and 
@@ -820,8 +838,26 @@ Constructor:
    int    classindex    (read-only)
 
 
+ ProjectionObj class:
+ -------------------
 
-                      --------------------------
+ Constructor:
+  
+    shapefileObj ms_newprojectionobj(string projectionstring)
+        
+   Creates a projection object based on the projection string passed
+   as argument.
+   Eg : $projInObj = ms_newprojectionobj("proj=latlong") will create a 
+        geographic projection class.
+
+   Eg of usage : the following example will convert a la/long point to an LCC projection :  
+
+        $projInObj = ms_newprojectionobj("proj=latlong");
+        $projOutObj = ms_newprojectionobj("proj=lcc,ellps=GRS80,lat_0=49,lon_0=-95,lat_1=49,lat_2=77");
+        $poPoint = ms_newpointobj();
+        $poPoint->setXY(-92.0, 62.0);         
+        $poPoint = $poPoint->project($projInObj, $projOutObj);
+
 
 To compile/install the module on Linux:
 =======================================
