@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/10/16 13:49:20  dan
+ * Added missing HashTable *list=NULL for PHP4 in getscale()
+ *
  * Revision 1.19  2000/10/10 14:19:41  dan
  * Fixed #ifdef _WIN32 test to compile on Cygwin
  *
@@ -174,7 +177,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Oct 10, 2000)"
+#define PHP3_MS_VERSION "(Oct 16, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -5440,6 +5443,10 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pUnit;
     rectObj     *poGeorefExt = NULL;
     double      dfScale = 0.0;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
     if (getParameters(ht, 4, 
                       &pGeorefExt, &pWidth, &pHeight, &pUnit) != SUCCESS)
     {
