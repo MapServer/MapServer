@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/03/09 04:04:44  dan
+ * Added ability to set string class members to null (bug 591)
+ *
  * Revision 1.7  2002/08/15 20:47:56  dan
  * Fixed IF_SET_DOUBLE and IF_SET_STRING macros to convert param type
  *
@@ -91,12 +94,19 @@
 #define IF_SET_STRING(php_name, internal_var)                   \
   if (strcmp(pPropertyName->value.str.val, php_name) == 0)      \
   {                                                             \
-    convert_to_string(pNewValue);                               \
-    _phpms_set_property_string(pThis,php_name,pNewValue->value.str.val,E_ERROR); \
     if (internal_var) free(internal_var);                       \
     internal_var = NULL;                                        \
-    if (pNewValue->value.str.val)                               \
-      internal_var = strdup(pNewValue->value.str.val);          \
+    if (ZVAL_IS_NULL(pNewValue))                                \
+    {                                                           \
+      _phpms_set_property_null(pThis, php_name, E_ERROR);       \
+    }                                                           \
+    else                                                        \
+    {                                                           \
+      convert_to_string(pNewValue);                             \
+      _phpms_set_property_string(pThis,php_name,pNewValue->value.str.val,E_ERROR); \
+      if (pNewValue->value.str.val)                             \
+        internal_var = strdup(pNewValue->value.str.val);        \
+    }                                                           \
   }
 
 #define IF_SET_BYTE(php_name, internal_var)                     \
@@ -153,6 +163,7 @@ long _phpms_fetch_property_resource(pval *pObj, char *property_name,
                                     int err_type);
 int _phpms_set_property_string(pval *pObj, char *property_name, 
                                char *szNewValue, int err_type);
+int _phpms_set_property_null(pval *pObj, char *property_name, int err_type);
 int _phpms_set_property_long(pval *pObj, char *property_name, 
                              long lNewValue, int err_type);
 int _phpms_set_property_double(pval *pObj, char *property_name, 

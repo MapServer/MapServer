@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/03/09 04:04:44  dan
+ * Added ability to set string class members to null (bug 591)
+ *
  * Revision 1.18  2003/07/10 21:11:40  dan
  * Return the whole MapServer error stack in _phpms_report_mapserver_error()
  *
@@ -374,6 +377,34 @@ int _phpms_set_property_string(pval *pObj, char *property_name,
     SEPARATE_ZVAL(phandle);
     zval_dtor(*phandle);
     ZVAL_STRING(*phandle, szNewValue, 1);
+
+    return 0;
+}
+
+/**********************************************************************
+ *                     _phpms_set_property_null()
+ **********************************************************************/
+int _phpms_set_property_null(pval *pObj, char *property_name, int err_type)
+{
+    pval **phandle;
+
+    if (pObj->type != IS_OBJECT)
+    {
+        php3_error(err_type, "Object expected as argument.");
+        return -1;
+    }
+    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+                            strlen(property_name)+1, 
+                            (void **)&phandle) == FAILURE)
+    {
+        if (err_type != 0)
+            php3_error(err_type, "Unable to find %s property", property_name);
+        return -1;
+    }
+
+    SEPARATE_ZVAL(phandle);
+    zval_dtor(*phandle);
+    ZVAL_NULL(*phandle);
 
     return 0;
 }
