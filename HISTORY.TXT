@@ -13,6 +13,12 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 4.2-???
+------------------------------
+
+- Fixed another write past end of buffer in INIMAGE WMS errors (bug 644)
+
+
 Version 4.2-beta2 (2004-05-03)
 ------------------------------
 
