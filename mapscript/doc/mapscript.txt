@@ -117,7 +117,9 @@ API.  For example
 
 The API changes in the next generation classes result
 from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
-interfaces (see Bugzilla issue 575 - http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see the documentation of `layerObj.getShape`_.
+interfaces (Bugzilla issue 575 - 
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see
+the documentation of `layerObj.getShape`_.
 
 Additionally, programmers can experiment with better mapscript class naming
 by defining the symbol *NEXT_GENERATION_NAMES*.  
