@@ -47,6 +47,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include "../../mapproject.h"
 %include "../../map.h"
 
+// try wrapping mapsymbol.h
+%include "../../mapsymbol.h"
+
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
 
@@ -140,6 +143,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   imageObj *prepareImage() {
     int i, status;
+    double center_lat;
     imageObj *image=NULL;
 
     if(self->width == -1 || self->height == -1) {
@@ -163,8 +167,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     // compute layer scale factors now
     for(i=0;i<self->numlayers; i++) {
       if(self->layers[i].symbolscale > 0 && self->scale > 0) {
-    	if(self->layers[i].sizeunits != MS_PIXELS)
-      	  self->layers[i].scalefactor = (inchesPerUnit[self->layers[i].sizeunits]/inchesPerUnit[self->units]) / self->cellsize; 
+    	if(self->layers[i].sizeunits != MS_PIXELS) {
+          center_lat = (self->extent.maxy + self->extent.miny)/2.0;
+      	  self->layers[i].scalefactor = (msInchesPerUnit(self->layers[i].sizeunits, center_lat)/msInchesPerUnit(self->units, center_lat)) / self->cellsize;
+        }
     	else
       	  self->layers[i].scalefactor = self->layers[i].symbolscale/self->scale;
       }
@@ -354,6 +360,17 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   char *processQueryTemplate(char **names, char **values, int numentries) {
     return msProcessQueryTemplate(self, names, values, numentries);
   }
+}
+
+%extend symbolSetObj {
+
+    symbolObj *getSymbol(int i) {
+        if (i >= 0 && i < self->numsymbols)	
+            return (symbolObj *) &(self->symbol[i]);
+        else
+            return NULL;
+    }
+
 }
 
 //
