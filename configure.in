@@ -649,8 +649,6 @@ AC_ARG_WITH(sde,
 AC_ARG_WITH(sde-version,
 [  --with-sde-version[=VERSION NUMBER]        Set ESRI SDE verion number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
 
-AC_MSG_RESULT([SDE Version is $SDE_VERSION.])
-
 if test "$with_sde" = "yes" ; then
 
   AC_CHECK_LIB(sde$SDE_VERSION,SE_connection_create,SDE_ENABLED=-DUSE_SDE,,,)
@@ -966,7 +964,7 @@ if test "$ORA_HOME" = "no" ; then
   ORACLESPATIAL_LIB=
 else
   ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL 
-  ORACLESPATIAL_LIB="-L$ORA_HOME/lib"
+  ORACLESPATIAL_LIB="-L$ORA_HOME/lib -ltracepls8"
   ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public" 
 fi
 

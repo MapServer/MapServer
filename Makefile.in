@@ -128,12 +128,12 @@ CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(WMS) \
         $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(POSTGIS) $(MPATROL) \
 	$(GD_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC) $(POSTGIS_INC) \
-	$(WWW_INC)
+	$(WWW_INC) $(ORACLESPATIAL_INC)
 
 # Link flags and shared libs only
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TIFF_LIB) $(PROJ_LIB) \
           $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
-	  $(POSTGIS_LIB) $(WWW_LIB) $(MPATROL_LIB) $(XTRALIBS)
+	  $(POSTGIS_LIB) $(WWW_LIB) $(ORACLESPATIAL_LIB) $(MPATROL_LIB) $(XTRALIBS)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)

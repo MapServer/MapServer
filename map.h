@@ -518,9 +518,11 @@ typedef struct {
   // a variety of data connection objects (probably should be pointers!)
   shapefileObj shpfile;
   shapefileObj tileshpfile;
+
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
   void *sdelayer; // For SDE layers, will contain a sdeLayerObj struct
-  void *postgislayerinfo; //For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
+  void *postgislayerinfo; // For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
+  void *oraclespatiallayerinfo;
 
   // attribute/classification handling components
   char **items;
@@ -793,8 +795,7 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                            int tile, long record);
 
-
-int msPOSTGISLayerOpen(layerObj *layer);
+int msPOSTGISLayerOpen(layerObj *layer); // in mappostgis.c
 void msPOSTGISLayerFreeItemInfo(layerObj *layer);
 int msPOSTGISLayerInitItemInfo(layerObj *layer);
 int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect);
