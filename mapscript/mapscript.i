@@ -1,33 +1,34 @@
-/* ===========================================================================
-   $Id$
+/*
+==============================================================================
+ $Id$
  
-   Project:  MapServer
-   Purpose:  SWIG interface file for the MapServer mapscript module
-   Author:   Steve Lime 
-             Sean Gillies, sgillies@frii.com
+ Project:  MapServer
+ Purpose:  SWIG interface file for the MapServer mapscript module
+ Author:   Steve Lime 
+           Sean Gillies, sgillies@frii.com
              
-   ===========================================================================
-   Copyright (c) 1996-2001 Regents of the University of Minnesota.
+==============================================================================
+ Copyright (c) 1996-2001 Regents of the University of Minnesota.
    
-   Permission is hereby granted, free of charge, to any person obtaining a
-   copy of this software and associated documentation files (the "Software"),
-   to deal in the Software without restriction, including without limitation
-   the rights to use, copy, modify, merge, publish, distribute, sublicense,
-   and/or sell copies of the Software, and to permit persons to whom the
-   Software is furnished to do so, subject to the following conditions:
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the "Software"),
+ to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
  
-   The above copyright notice and this permission notice shall be included
-   in all copies or substantial portions of the Software.
- 
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-   DEALINGS IN THE SOFTWARE.
-   =========================================================================*/
-   
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ DEALINGS IN THE SOFTWARE.
+==============================================================================
+*/
 
 %module mapscript
 
@@ -58,18 +59,20 @@
 %include carrays.i
 %array_class(int, intarray)
 
-/* ===========================================================================
-   Supporting 'None' as an argument to attribute accessor functions
+/*
+===========================================================================
+ Supporting 'None' as an argument to attribute accessor functions
 
-   Typemaps to support NULL in attribute accessor functions
-   provided to Steve Lime by David Beazley and tested for Python
-   only by Sean Gillies.
-   
-   With the use of these typemaps we can execute statements like
+ Typemaps to support NULL in attribute accessor functions
+ provided to Steve Lime by David Beazley and tested for Python
+ only by Sean Gillies.
+  
+ With the use of these typemaps we can execute statements like
 
-     layer.group = None
+   layer.group = None
 
-   ========================================================================= */
+=========================================================================
+*/
 
 #ifdef __cplusplus
 %typemap(memberin) char * {
@@ -147,18 +150,27 @@ memory.") const char * {
 }
 #endif // __cplusplus
 
-/* =========================================================================
-   Exceptions
+/* 
+=========================================================================
+ Exceptions
 
-   Note: Python exceptions are in pymodule.i
-   ====================================================================== */
-#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIHRUBY)
+ Note: Python exceptions are in pymodule.i
+=========================================================================
+*/
+#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIGRUBY)
 %include "../mserror.i"
 #endif
 
-/* =========================================================================
-   Language-specific module code
-   =======================================================================*/
+/* 
+=========================================================================
+ Language-specific module code
+=========================================================================
+*/
+
+/* Java */
+#ifdef SWIGJAVA
+%include "javamodule.i"
+#endif //SWIGJAVA
 
 /* Python */
 #ifdef SWIGPYTHON
@@ -190,9 +202,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %}
 #endif // SWIGTCL8
 
-/* =========================================================================
-   Wrap MapServer structs into mapscript classes
-   =========================================================================*/
+/*
+=========================================================================
+ Wrap MapServer structs into mapscript classes
+=========================================================================
+*/
 
 %include "../../map.h"
 %include "../../mapprimitive.h"
@@ -203,9 +217,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
 
-/* =========================================================================
-   Class extension methods are now included from separate interface files  
-   ====================================================================== */
+/* 
+=========================================================================
+ Class extension methods are now included from separate interface files  
+=========================================================================
+*/
    
 %include "../swiginc/error.i"
 %include "../swiginc/map.i"
@@ -230,9 +246,16 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include "../swiginc/resultcache.i"
 %include "../swiginc/owsrequest.i"
 
-/* =========================================================================
-   Language-specific extensions to mapserver classes are included here 
-   =======================================================================*/
+/* 
+=========================================================================
+ Language-specific extensions to mapserver classes are included here 
+=========================================================================
+*/
+
+/* Java */
+#ifdef SWIGJAVA
+%include "javaextend.i"
+#endif
 
 /* Python */
 #ifdef SWIGPYTHON
@@ -243,4 +266,5 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 #ifdef SWIGRUBY
 %include "rbextend.i"
 #endif
+
 
