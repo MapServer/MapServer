@@ -46,7 +46,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "3.5.1 (development)"
+#define MS_VERSION "3.6 (development)"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
