@@ -218,103 +218,6 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msDrawLabelCache(image, self);
   }
 
-  int getImageToVar(imageObj *image, char *varname) {
-    // set a scripting language variable by name with image data
-    int size = 0;
-    unsigned char *imgbytes;
-
-    // Tcl implementation to define needed variables, initialization
-    #ifdef SWIGTCL8
-      Tcl_Obj *imgobj;
-      int flags = TCL_LEAVE_ERR_MSG;
-      /* no other initialization needed */
-    #endif
-
-    // Perl implementation to define needed variables, initialization
-    #ifdef SWIGPERL
-    #endif
-
-    // Python implementation to define needed variables, initialization
-    #ifdef SWIGPYTHON
-    #endif
-
-    // generic code to get imgbytes, size
-    if( !MS_RENDERER_GD(self->outputformat) )
-    {
-        msSetError(MS_MISCERR, "Unsupported output image type (%s).",
-                              "getImageToVar()", self->outputformat->driver );
-        return(MS_FAILURE);
-    }
-    else if( strcasecmp(self->outputformat->driver,"GD/GIF") == 0 )
-    {
-        #ifdef USE_GD_GIF
-          // GD /w gif doesn't have gdImageGifPtr()
-          msSetError(MS_MISCERR, "GIF output is not available.",
-                              "getImageToVar()");
-          return(MS_FAILURE);
-        #endif
-    }
-    else if( strcasecmp(self->outputformat->driver,"GD/PNG") == 0 )
-    {
-        #ifdef USE_GD_PNG
-          imgbytes = gdImagePngPtr(image->img.gd, &size);
-        #else
-          msSetError(MS_MISCERR, "PNG output is not available.",
-                              "getImageToVar()");
-          return(MS_FAILURE);
-        #endif
-    }
-    else if( strcasecmp(self->outputformat->driver,"GD/JPEG") == 0 )
-    {
-        #ifdef USE_GD_JPEG
-          imgbytes = gdImageJpegPtr(image->img.gd, &size, self->imagequality);
-        #else
-          msSetError(MS_MISCERR, "JPEG output is not available.",
-                              "getImageToVar()");
-          return(MS_FAILURE);
-        #endif
-    }
-    else if( strcasecmp(self->outputformat->driver,"GD/WBMP") == 0 )
-    {
-        #ifdef USE_GD_WBMP
-          imgbytes = gdImageWBMPPtr(image->img.gd, &size, 1);
-        #else
-          msSetError(MS_MISCERR, "WBMP output is not available.",
-                              "getImageToVar()");
-          return(MS_FAILURE);
-        #endif
-    }
-    else
-    {
-        msSetError(MS_MISCERR, "Unsupported output image type (%s).",
-                              "getImageToVar()", self->outputformat->driver );
-        return(MS_FAILURE);
-    }
-
-    // Tcl implementation to set variable
-    #ifdef SWIGTCL8
-      imgobj = Tcl_NewByteArrayObj(imgbytes, size);
-      Tcl_IncrRefCount(imgobj);
-      Tcl_SetVar2Ex(SWIG_TCL_INTERP, varname, (char *)NULL, imgobj, flags);
-      Tcl_DecrRefCount(imgobj);
-      gdFree(imgbytes);
-      return MS_SUCCESS;
-    #endif
-
-    // Perl implementation to set variable
-    #ifdef SWIGPERL
-    #endif
-
-    // Python implementation to set variable
-    #ifdef SWIGPYTHON
-    #endif
-
-    // return failure for unsupported swig languages
-    msSetError(MS_MISCERR, "Unsupported scripting language.",
-                              "getImageToVar()");
-    return MS_FAILURE;
-  }
-
   labelCacheMemberObj *nextLabel() {
     static int i=0;
 
@@ -390,7 +293,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadSymbolSet(&self->symbolset);
   }
 
-  int mapObj_getNumSymbols()
+  int getNumSymbols()
   {
     return self->symbolset.numsymbols;
   }
@@ -985,17 +888,26 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     msSaveImage(NULL, self, filename );
   }
 
-  // Method getImageGDString renders the imageObj into image data and returns
-  // it as a string.  Inspired by and used like the saveImage() method.  Python
+  // Method getImageString renders the imageObj into image data and returns
+  // it as a string.  Inspired by and used like the saveImage() method.  Python and Tcl
   // only at this time.  Questions and comments to Sean Gillies <sgillies@i3.com>
 
-#ifdef SWIGPYTHON
+#if defined (SWIGPYTHON) || defined (SWIGTCL8)
 
-  PyObject *getImageGDString() {
+#ifdef SWIGPYTHON
+  PyObject *getImageString() {
+#elif defined (SWIGTCL8)
+  Tcl_Obj *getImageString() {
+#endif
+
     unsigned char *imgbytes;
     int size;
 
+#ifdef SWIGPYTHON
     PyObject *imgstring; 
+#elif defined (SWIGTCL8)
+    Tcl_Obj *imgstring;
+#endif
 
 #if GD2_VERS > 1
     if(self->format->imagemode == MS_IMAGEMODE_RGBA) {
@@ -1054,13 +966,15 @@ static Tcl_Interp *SWIG_TCL_INTERP;
        return(MS_FAILURE);
     } 
 
-    // Create a Python string from the (char *) imgbytes.
-
-    // The gdImage*Ptr functions return a size for just this purpose.
+#ifdef SWIGPYTHON
+    // Python implementation to create string
     imgstring = PyString_FromStringAndSize(imgbytes, size); 
-
-    // The gd docs recommend gdFree()
-    gdFree(imgbytes); 
+#elif defined (SWIGTCL8)
+    // Tcl implementation to create string
+    imgstring = Tcl_NewByteArrayObj(imgbytes, size);    
+#endif
+    
+    gdFree(imgbytes); // The gd docs recommend gdFree()
 
     return imgstring;
   }
