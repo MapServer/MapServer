@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.367  2004/11/04 22:01:11  frank
+ * Removed the msDrawWMSLayerPDF declaration.  It depends on stuff we don't have
+ * in map.h.
+ *
  * Revision 1.366  2004/11/04 21:45:28  frank
  * Added msDrawWMSLayerPDF() prototype.
  *
@@ -1580,9 +1584,6 @@ MS_DLL_EXPORT int msSaveImagePDF(imageObj *image, char *filename);
 MS_DLL_EXPORT void msFreeImagePDF(imageObj *image);
 MS_DLL_EXPORT int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
-MS_DLL_EXPORT int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo, 
-                                    int numRequests, mapObj *map, 
-                                    layerObj *layer, imageObj *image);
 #endif
 
 /* ==================================================================== */
