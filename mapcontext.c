@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2002/10/31 20:00:07  julien
+ * transform EPSG:*** to init=epsg:***
+ *
  * Revision 1.3  2002/10/31 18:57:35  sacha
  * Fill layerorder and layer.index in msLoadMapContext
  *
@@ -182,8 +185,11 @@ int msLoadMapContext(mapObj *map, char *filename)
                                    "General.BoundingBox.SRS", NULL);
   if(pszValue != NULL)
   {
+      char szProj[20];
+      sprintf(szProj, "init=epsg:%s", pszValue+5);
+
       msInitProjection(&map->projection);
-      map->projection.args[map->projection.numargs] = strdup(pszValue);
+      map->projection.args[map->projection.numargs] = strdup(szProj);
       map->projection.numargs++;
       msProcessProjection(&map->projection);
   }
@@ -392,9 +398,9 @@ int msLoadMapContext(mapObj *map, char *filename)
                   msInsertHashTable(layer->metadata, "wms_title", pszValue);
               else
               {
-                  pszValue =(char*)CPLGetXMLValue(psLayer,"Server.title",NULL);
+                  pszValue=(char*)CPLGetXMLValue(psLayer,"Server.title",NULL);
                   if(pszValue != NULL)
-                      msInsertHashTable(layer->metadata,"wms_title", pszValue);
+                      msInsertHashTable(layer->metadata,"wms_title",pszValue);
                   else
                   {
                       CPLDestroyXMLNode(psRoot);
