@@ -252,7 +252,9 @@ imageObj *msDrawScalebar(mapObj *map)
     break;
   }
 
+  msClearScalebarPenValues( &(map->scalebar));
   return(image);
+
 }
 
 int msEmbedScalebar(mapObj *map, gdImagePtr img)

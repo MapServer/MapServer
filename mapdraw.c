@@ -30,13 +30,67 @@ void msClearLayerPenValues(layerObj *layer) {
     }
 }
 
+
+void msClearScalebarPenValues(scalebarObj *scalebar)
+{
+    if (scalebar)
+    {
+       scalebar->color.pen = MS_PEN_UNSET;
+       scalebar->backgroundcolor.pen = MS_PEN_UNSET;
+       scalebar->outlinecolor.pen = MS_PEN_UNSET;
+       scalebar->imagecolor.pen = MS_PEN_UNSET;
+
+       scalebar->label.color.pen = MS_PEN_UNSET;
+       scalebar->label.outlinecolor.pen = MS_PEN_UNSET;
+       scalebar->label.shadowcolor.pen = MS_PEN_UNSET;
+       scalebar->label.backgroundcolor.pen = MS_PEN_UNSET;
+       scalebar->label.backgroundshadowcolor.pen = MS_PEN_UNSET;
+    }
+}
+
+void msClearLegendPenValues(legendObj *legend)
+{
+    if (legend)
+    {
+       legend->outlinecolor.pen = MS_PEN_UNSET;
+       legend->imagecolor.pen = MS_PEN_UNSET;
+
+       legend->label.color.pen = MS_PEN_UNSET;
+       legend->label.outlinecolor.pen = MS_PEN_UNSET;
+       legend->label.shadowcolor.pen = MS_PEN_UNSET;
+       legend->label.backgroundcolor.pen = MS_PEN_UNSET;
+       legend->label.backgroundshadowcolor.pen = MS_PEN_UNSET;
+    }
+}
+
+void msClearReferenceMapPenValues(referenceMapObj *referencemap)
+{
+    if (referencemap)
+    {
+        referencemap->outlinecolor.pen = MS_PEN_UNSET;
+        referencemap->color.pen = MS_PEN_UNSET;
+    }
+}
+
+
+void msClearQueryMapPenValues(queryMapObj *querymap)
+{
+    if (querymap)
+      querymap->color.pen = MS_PEN_UNSET;
+}
+
+
 void msClearPenValues(mapObj *map) {
   int i;
 
   for(i=0; i<map->numlayers; i++)
     msClearLayerPenValues(&(map->layers[i]));
 
-  return;
+  msClearLegendPenValues(&(map->legend));
+  msClearScalebarPenValues(&(map->scalebar));
+  msClearReferenceMapPenValues(&(map->reference));
+  msClearQueryMapPenValues(&(map->querymap));
+  
 }
 
 /*

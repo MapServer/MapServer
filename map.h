@@ -94,7 +94,7 @@ extern "C" {
 
 #define MS_MAXIMGSIZE 2048
 
-#define MS_MAXCLASSES 50
+#define MS_MAXCLASSES 250
 #define MS_MAXSTYLES 5
 #define MS_MAXPROJARGS 20
 #define MS_MAXLAYERS 100 /* maximum number of layers in a map file */
@@ -1159,7 +1159,12 @@ int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int 
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
 void msClearLayerPenValues(layerObj *layer);
+void msClearScalebarPenValues(scalebarObj *scalebar);
+void msClearLegendPenValues(legendObj *legend);
+void msClearReferenceMapPenValues(referenceMapObj *referencemap);
+void msClearQueryMapPenValues(queryMapObj *querymap);
 void msClearPenValues(mapObj *map);
+
 imageObj *msDrawMap(mapObj *map);
 imageObj *msDrawQueryMap(mapObj *map);
 int msLayerIsVisible(mapObj *map, layerObj *layer);
