@@ -487,12 +487,31 @@ char *msGetVersion() {
   return(version);
 }
 
+void msWebDebug( const char * pszFormat, ... )
+{
+#ifndef _WIN32
+    va_list args;
+    struct timeval tv;
+
+    msIO_fprintf(stdout, "Content-type: text/html%c%c",10,10);
+
+    msGettimeofday(&tv, NULL);
+    msIO_fprintf(stdout, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
+
+    va_start(args, pszFormat);
+    msIO_vfprintf(stdout, pszFormat, args);
+    va_end(args);
+
+    exit(0);
+#endif
+}
+
 void msDebug( const char * pszFormat, ... )
 {
 #ifdef ENABLE_STDERR_DEBUG
     va_list args;
 
-#if defined(NEED_NONBLOCKING_STDERR) && !defined(USE_MAPIO)
+#if defined(NEED_NONBLOCKING_STDERR) && !defined(USE_MAPIO) && !defined(_WIN32)
     static char nonblocking_set = 0;
     if (!nonblocking_set)
     {
@@ -501,9 +520,10 @@ void msDebug( const char * pszFormat, ... )
     }
 #endif
 
-#ifndef USE_FASTCGI
+#if !defined(USE_FASTCGI) && !defined(_WIN32)
     // It seems the FastCGI stuff inserts a timestamp anyways, so 
-    // we might as well skip this one. 
+    // we might as well skip this one.  And the struct timeval doesn't
+    // appear to exist on win32. 
     {
         struct timeval tv;
         msGettimeofday(&tv, NULL);
