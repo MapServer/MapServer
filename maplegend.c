@@ -21,7 +21,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     if(!image) return(MS_FAILURE);
 
     // TO DO: we may want to handle this differently depending on the relative size of the keyimage
-    gdImageCopyResampled(img, image->img.gd, 0, 0, 0, 0,img->sx, img->sy, image->img.gd->sx, image->img.gd->sy);
+    gdImageCopyResampled(img, image->img.gd, dstX, dstY, 0, 0, width, height, image->img.gd->sx, image->img.gd->sy);
       
     return(MS_SUCCESS);
   }
@@ -215,7 +215,7 @@ imageObj *msDrawLegend(mapObj *map)
       n++;
     }
   }
-  
+
   size_x = (2*HMARGIN)+(maxwidth)+(map->legend.keyspacingx)+(map->legend.keysizex);
   size_y = (2*VMARGIN) + ((n-1)*map->legend.keyspacingy);
   for(i=0; i<n; i++) {

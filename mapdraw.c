@@ -13,7 +13,7 @@
  * format type specific) which is why this function is here instead of the GD, PDF or SWF source files.
 */
 void msClearLayerPenValues(layerObj *layer) {
-  int i, j;
+  int i, j;  
 
   for(i=0; i<layer->numclasses; i++) {
       layer->class[i].label.backgroundcolor.pen = MS_PEN_UNSET; // set in billboardXX function
