@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.212  2004/10/22 02:44:03  dan
+ * Sync'd PHP outputFormatObj with the SWIG version to allow editing parameters
+ * of output formats (still need ability to create new formats - bug 979)
+ *
  * Revision 1.211  2004/10/15 14:04:17  assefa
  * 3d shape file support.
  *
@@ -553,8 +557,11 @@ DLEXPORT void php3_ms_error_next(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_reset_error_list(INTERNAL_FUNCTION_PARAMETERS);
 
 
-DLEXPORT void php_ms_outputformat_setOutputformatoption(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAMETERS);
+//DLEXPORT void php_ms_outputformat_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_outputformat_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_outputformat_setOption(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_outputformat_getOption(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_outputformat_validate(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_symbol_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -770,6 +777,7 @@ function_entry phpms_functions[] = {
     {"ms_geterrorobj",  php3_ms_get_error_obj,  NULL},
     {"ms_reseterrorlist", php3_ms_reset_error_list, NULL},
     {"ms_newsymbolobj", php3_ms_symbol_new, NULL},
+//    {"ms_newoutputformatobj", php_ms_outputformat_new, NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1031,8 +1039,13 @@ function_entry php_style_class_functions[] = {
 };
 
 function_entry php_outputformat_class_functions[] = {
-    {"setformatoption", php_ms_outputformat_setOutputformatoption, NULL},
-    {"getformatoption", php_ms_outputformat_getOutputformatoption, NULL},
+    {"set",             php_ms_outputformat_setProperty,NULL},
+    {"setoption",       php_ms_outputformat_setOption,  NULL},
+    {"getoption",       php_ms_outputformat_getOption,  NULL},
+    {"validate",        php_ms_outputformat_validate,   NULL},
+/* The following are deprecated since 4.3. */
+    {"setformatoption", php_ms_outputformat_setOption,  NULL},
+    {"getformatoption", php_ms_outputformat_getOption,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1048,16 +1061,16 @@ function_entry php_error_class_functions[] = {
 
 
 function_entry php_labelcache_class_functions[] = {
-    {"free",    php_ms_labelcache_free,      NULL},    
+    {"free",            php_ms_labelcache_free,         NULL},
     {NULL, NULL, NULL}
 };
 
 function_entry php_symbol_class_functions[] = {
-    {"set",             php3_ms_symbol_setProperty,      NULL},    
-    {"setpoints",             php3_ms_symbol_setPoints,      NULL},    
-    {"getpointsarray",             php3_ms_symbol_getPoints,      NULL},    
-    {"setstyle",             php3_ms_symbol_setStyle,      NULL},    
-    {"getstylearray",             php3_ms_symbol_getStyle,      NULL},    
+    {"set",             php3_ms_symbol_setProperty,     NULL},    
+    {"setpoints",       php3_ms_symbol_setPoints,       NULL},    
+    {"getpointsarray",  php3_ms_symbol_getPoints,       NULL},    
+    {"setstyle",        php3_ms_symbol_setStyle,        NULL},    
+    {"getstylearray",   php3_ms_symbol_getStyle,        NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -1318,8 +1331,16 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_SYMBOL_PIXMAP", MS_SYMBOL_PIXMAP, const_flag);
     REGISTER_LONG_CONSTANT("MS_SYMBOL_TRUETYPE", MS_SYMBOL_TRUETYPE, const_flag);
     REGISTER_LONG_CONSTANT("MS_SYMBOL_CARTOLINE", MS_SYMBOL_CARTOLINE, const_flag);
+    /* MS_IMAGEMODE types for use with outputFormatObj */
+    REGISTER_LONG_CONSTANT("MS_IMAGEMODE_PC256", MS_IMAGEMODE_PC256, const_flag);
+    REGISTER_LONG_CONSTANT("MS_IMAGEMODE_RGB",  MS_IMAGEMODE_RGB, const_flag);
+    REGISTER_LONG_CONSTANT("MS_IMAGEMODE_RGBA", MS_IMAGEMODE_RGBA, const_flag);
+    REGISTER_LONG_CONSTANT("MS_IMAGEMODE_INT16", MS_IMAGEMODE_INT16, const_flag);
+    REGISTER_LONG_CONSTANT("MS_IMAGEMODE_FLOAT32", MS_IMAGEMODE_FLOAT32, const_flag);
+    REGISTER_LONG_CONSTANT("MS_IMAGEMODE_BYTE", MS_IMAGEMODE_BYTE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_IMAGEMODE_NULL", MS_IMAGEMODE_NULL, const_flag);
 
-#ifdef PHP4
+
     INIT_CLASS_ENTRY(tmp_class_entry, "ms_map_obj", php_map_class_functions);
     map_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
@@ -1403,8 +1424,6 @@ PHP_MINIT_FUNCTION(phpms)
      INIT_CLASS_ENTRY(tmp_class_entry, "ms_symbol_obj", 
                       php_symbol_class_functions);
      symbol_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
-
-#endif
 
     return SUCCESS;
 }
@@ -12520,7 +12539,60 @@ static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
     return outputformat_id;
 }
 
-DLEXPORT void php_ms_outputformat_setOutputformatoption(INTERNAL_FUNCTION_PARAMETERS)
+
+/**********************************************************************
+ *                        outputFormat->set()
+ **********************************************************************/
+
+/* {{{ proto int outputFormat.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+DLEXPORT void php_ms_outputformat_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    outputFormatObj *self;
+    mapObj *parent_map;
+    pval   *pPropertyName, *pNewValue, *pThis;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (outputFormatObj *)_phpms_fetch_handle(pThis, 
+                                                  PHPMS_GLOBAL(le_msoutputformat),
+                                                  list TSRMLS_CC);
+   
+    if (self == NULL || parent_map == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    IF_SET_STRING(    "name",           self->name)
+    else IF_SET_STRING( "mimetype",     self->mimetype)
+    else IF_SET_STRING( "driver",       self->driver)
+    else IF_SET_STRING( "extension",    self->extension)
+    else IF_SET_LONG( "renderer",       self->renderer)
+    else IF_SET_LONG( "imagemode",      self->imagemode)
+    else IF_SET_LONG( "transparent",    self->transparent)
+    else
+    {
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.",
+                   pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }
+
+    RETURN_LONG(0);
+}
+
+
+
+DLEXPORT void php_ms_outputformat_setOption(INTERNAL_FUNCTION_PARAMETERS)
 {
     outputFormatObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
@@ -12548,10 +12620,10 @@ DLEXPORT void php_ms_outputformat_setOutputformatoption(INTERNAL_FUNCTION_PARAME
     msSetOutputFormatOption(self, pPropertyName->value.str.val,
                             pNewValue->value.str.val);
 
-     RETURN_TRUE;
+    RETURN_TRUE;
 }
 
-DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php_ms_outputformat_getOption(INTERNAL_FUNCTION_PARAMETERS)
 {
     outputFormatObj *self;
     const char *szRetrun = NULL;
@@ -12579,9 +12651,36 @@ DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAME
     szRetrun = msGetOutputFormatOption(self, pPropertyName->value.str.val, "");
 
     RETVAL_STRING((char*)szRetrun, 1);
+}
 
-    //RETURN_STRING("", 0);  
+DLEXPORT void php_ms_outputformat_validate(INTERNAL_FUNCTION_PARAMETERS)
+{
+    outputFormatObj *self;
+    pval   *pThis;
+    int retVal = MS_FALSE;
+    HashTable   *list=NULL;
 
+    pThis = getThis();
+
+
+    if (pThis == NULL || ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (outputFormatObj *)_phpms_fetch_handle(pThis, 
+                                                  PHPMS_GLOBAL(le_msoutputformat),
+                                                  list TSRMLS_CC);
+
+    if (self == NULL)
+      RETURN_LONG(MS_FALSE);
+
+    if ( (retVal = msOutputFormatValidate( self )) != MS_SUCCESS )
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(retVal);
 }
 
 

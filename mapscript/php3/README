@@ -95,11 +95,17 @@ and the MapServer Map File documentation at:
         MS_IMGERR, MS_HASHERR, MS_JOINERR, MS_NOTFOUND, MS_SHPERR, 
         MS_PARSEERR, MS_SDEERR, MS_OGRERR, MS_QUERYERR, MS_WMSERR, 
         MS_WMSCONNERR, MS_ORACLESPATIALERR, MS_WFSERR, MS_WFSCONNERR, 
-        MS_MAPCONTEXTERR, MS_HTTPERR
+        MS_MAPCONTEXTERR, MS_HTTPERR, MS_WCSERR
 
     Symbol types:
         MS_SYMBOL_SIMPLE,  MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE,
         MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE
+
+    Image Mode types (outputFormatObj):
+
+        MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, 
+        MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, 
+        MS_IMAGEMODE_NULL
 
  Functions:
  ----------
@@ -137,10 +143,7 @@ and the MapServer Map File documentation at:
    int          width
    int          height
    int          maxsize
-   int          transparent
-   int          interlace
-   int          imagetype  (read-only, use selectOutputformat())
-   int          imagequality
+   outputformatObj outputformat
    double       resolution   (pixels per inch, defaults to 72)
    rectObj      extent; 
    double       cellsize
@@ -158,9 +161,12 @@ and the MapServer Map File documentation at:
    legendObj    legend                  
    string       symbolsetfilename (read-only, set by setSymbolSet())
    string       fontsetfilename (read-only, set by setFontSet())
-   outputformatObj outputformat (read only)   
    labelcacheObj labelcache (no memebers. Used only to be able to free the
                              the label cache (ex : map->labelcache->free())
+   int          transparent   (deprecated, use outputFormatObj)
+   int          interlace     (deprecated, use outputFormatObj)
+   int          imagetype     (deprecated, use outputFormatObj)
+   int          imagequality  (deprecated, use outputFormatObj)
           
  Methods:
 
@@ -1377,29 +1383,35 @@ outputformatObj Class
   Instance of outputformatObj is always embedded inside the mapObj.
   It is uses a read only.
 
-  No constructor available
+  No constructor available (coming soon, see bug 979)
 
 
  Members:
 
-   string    name;
-   string    mimetype;
-   string    driver;
-   string    extension;
-   int       renderer;
-   int       imagemode     
+   string    name
+   string    mimetype
+   string    driver
+   string    extension
+   int       renderer
+   int       imagemode     // MS_IMAGEMODE_* value.
    int       transparent
         
   Methods related to the output format :
 
-   void setformatoption(string property_name, new_value)
+   void setOption(string property_name, string new_value)
         Add or Modify the format option list. return true on success.
 
-    Example : $oMap->outputformat->setformatoption("OUTPUT_TYPE", "RASTER");
+        Example: $oMap->outputformat->setOption("OUTPUT_TYPE", "RASTER");
      
-   string  getformatoption(string property_name)
+   string  getOption(string property_name)
         Returns the associated value for the format option property passed
         as argument. Returns an empty string if property not found.
+
+   void setFormatOption(string property_name, string new_value)
+        Deprecated. See setOption().
+
+   string  getFormatOption(string property_name)
+        Deprecated. See getOption().
 
 
 gridObj
