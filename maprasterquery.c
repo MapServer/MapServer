@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/10/13 20:09:24  frank
+ * generate a respectible error in msRASTERLayerOpen()
+ *
  * Revision 1.8  2004/09/28 20:44:52  frank
  * avoid casting warning
  *
@@ -983,7 +986,13 @@ int msRASTERLayerOpen(layerObj *layer)
         rlinfo->refcount = rlinfo->refcount + 1;
 
     if( rlinfo == NULL )
+    {
+        msSetError( MS_MISCERR, 
+                    "Attempt to open a RASTER layer, but this is"
+                    " only supported after a raster query.",
+                    "msRASTERLayerOpen()" );
         return MS_FAILURE;
+    }
     else 
         return MS_SUCCESS;
 #endif /* def USE_GDAL */
