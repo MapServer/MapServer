@@ -173,11 +173,12 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
   
   itemdefs = layer->iteminfo;
   for(i=0; i<layer->numitems; i++) {
-    switch(itemdefs->sde_type) {
+    
+    switch(itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
       status = SE_stream_get_smallint(sde->stream, i+skip+1, (short *) &longval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs->size+1);
+	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
 	sprintf(shape->values[i], "%ld", longval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
@@ -188,7 +189,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_INTEGER_TYPE:
       status = SE_stream_get_integer(sde->stream, i+skip+1, &longval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs->size+1);
+	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
 	sprintf(shape->values[i], "%ld", longval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
@@ -200,7 +201,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_FLOAT_TYPE:
       status = SE_stream_get_float(sde->stream, i+skip+1, (float *) &doubleval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs->size+1);
+	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
 	sprintf(shape->values[i], "%g", doubleval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
@@ -212,7 +213,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_DOUBLE_TYPE:
       status = SE_stream_get_double(sde->stream, i+skip+1, &doubleval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs->size+1);
+	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
 	sprintf(shape->values[i], "%g", doubleval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
@@ -222,7 +223,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       }
       break;
     case SE_STRING_TYPE:
-      shape->values[i] = (char *)malloc(itemdefs->size+1);
+      shape->values[i] = (char *)malloc(itemdefs[i].size+1);
       status = SE_stream_get_string(sde->stream, i+skip+1, shape->values[i]);
       if(status != SE_SUCCESS) {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_string()");
@@ -410,7 +411,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   sde = layer->sdelayer;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
   }
 
@@ -559,7 +560,7 @@ int msSDELayerGetItems(layerObj *layer) {
 
   sde = layer->sdelayer;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
 
@@ -575,8 +576,7 @@ int msSDELayerGetItems(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  for(i=0; i<n; i++) 
-    layer->items[i] = strdup(itemdefs[i].column_name);    
+  for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);    
 
   layer->numitems = n;
   layer->iteminfo = itemdefs;
