@@ -98,7 +98,7 @@ OGR_LIB = $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmt
 OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port
 
 # ESRI SDE support.
-#SDE_OPT=-DUSE_SDE
+#SDE_OPT=-DUSE_SDE -DWIN32
 #SDE_INC=-I../arcsde/include
 #SDE_LIB=../arcsde/lib/sde80.lib ../arcsde/lib/sg80.lib ../arcsde/lib/pe80.lib
 
