@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.289  2004/12/20 22:41:48  sdlime
+ * Changed default style angle from 0 to 360.
+ *
  * Revision 1.288  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -1585,7 +1588,7 @@ int initStyle(styleObj *style) {
   style->offsetx = style->offsety = 0; // no offset
   style->antialias = MS_FALSE;
   style->isachild = MS_TRUE;
-  style->angle = 0;
+  style->angle = 360;
 
   style->angleitem = style->sizeitem = NULL;
   style->angleitemindex = style->sizeitemindex = -1;
