@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.32  2004/05/03 03:45:42  dan
+ * Include map= param in default onlineresource of GetCapabilties if it
+ * was explicitly set in QUERY_STRING (bug 643)
+ *
  * Revision 1.31  2004/04/19 22:08:39  sdlime
  * Added msOWSGetEPSGProj() to mapows.h/.c and updated the original from mapproject.c to use Dan's namespaces.
  *
@@ -151,7 +155,7 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
-MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
+MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 
 // OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata()
@@ -217,7 +221,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
 /*====================================================================
  *   mapwms.c
  *====================================================================*/
-int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); 
+int msWMSDispatch(mapObj *map, cgiRequestObj *req); 
 
 
 /*====================================================================

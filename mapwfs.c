@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.34  2004/05/03 03:45:42  dan
+ * Include map= param in default onlineresource of GetCapabilties if it
+ * was explicitly set in QUERY_STRING (bug 643)
+ *
  * Revision 1.33  2004/04/14 05:14:54  dan
  * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
  *
@@ -369,7 +373,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 /*
 ** msWFSGetCapabilities()
 */
-int msWFSGetCapabilities(mapObj *map, const char *wmtver) 
+int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req) 
 {
   char *script_url=NULL, *script_url_encoded;
   int i;
@@ -378,7 +382,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
   wmtver = "1.0.0";
 
   // We need this server's onlineresource.
-  if ((script_url=msOWSGetOnlineResource(map, "wfs_onlineresource")) == NULL ||
+  if ((script_url=msOWSGetOnlineResource(map, "wfs_onlineresource", req)) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
   {
       return msWFSException(map, wmtver);
@@ -728,7 +732,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 /*
 ** msWFSGetFeature()
 */
-int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
+int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   //const char *wmtver, char **names, char **values, int numentries)
 {
     int         i, maxfeatures=-1;
@@ -1058,7 +1062,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     if (myns_uri == NULL)
         myns_uri = "http://www.ttt.org/myns";
 
-    if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource")) ==NULL ||
+    if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource",req)) ==NULL ||
         (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
     {
         return msWFSException(map, paramsObj->pszVersion);
@@ -1211,7 +1215,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
   ** Start dispatching requests
   */
   if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0 ) 
-      return msWFSGetCapabilities(map, paramsObj->pszVersion);
+      return msWFSGetCapabilities(map, paramsObj->pszVersion, requestobj);
 
   /*
   ** Validate VERSION against the versions that we support... we don't do this
@@ -1231,7 +1235,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
     return msWFSDescribeFeatureType(map, paramsObj);
 
   else if (strcasecmp(paramsObj->pszRequest, "GetFeature") == 0)
-    return msWFSGetFeature(map, paramsObj);
+    return msWFSGetFeature(map, paramsObj, requestobj);
 
 
   else if (strcasecmp(paramsObj->pszRequest, "GetFeatureWithLock") == 0 ||

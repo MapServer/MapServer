@@ -263,12 +263,12 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
   return MS_SUCCESS;
 }
 
-static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params)
+static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
 {
   char *script_url=NULL, *script_url_encoded;
 
    // we need this server's onlineresource for the request section
-  if((script_url=msOWSGetOnlineResource(map, "wcs_onlineresource")) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
+  if((script_url=msOWSGetOnlineResource(map, "wcs_onlineresource", req)) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
     return msWCSException(params->version);
   }
 
@@ -370,7 +370,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
   return MS_SUCCESS;
 }
 
-static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
+static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
 {
   // printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
   printf("Content-type: text/xml%c%c",10,10);
@@ -394,7 +394,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
     msWCSGetCapabilities_Service(map, params);
 
   if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Capability")  == 0)
-    msWCSGetCapabilities_Capability(map, params);
+    msWCSGetCapabilities_Capability(map, params, req);
 
   if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata")  == 0)
     msWCSGetCapabilities_ContentMetadata(map, params);
@@ -907,7 +907,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   ** Start dispatching requests
   */
   if(strcasecmp(params->request, "GetCapabilities") == 0)    
-    return msWCSGetCapabilities(map, params);
+    return msWCSGetCapabilities(map, params, request);
   else if(strcasecmp(params->request, "DescribeCoverage") == 0)    
     return msWCSDescribeCoverage(map, params);
   else if(strcasecmp(params->request, "GetCoverage") == 0)    
