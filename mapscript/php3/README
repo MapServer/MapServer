@@ -325,8 +325,11 @@ Very important note: Constant names and class member variable names are
 
  Methods:
 
-   int saveImage(string filename, , int transparent, int interlace)
-        Writes image object to specifed filename. Returns -1 on error.
+   int saveImage(string filename, int transparent, int interlace)
+        Writes image object to specifed filename.  Returns -1 on error.
+        Passing an empty filename sends output to stdout.  In this case,
+        the PHP header() function should be used to set the documents's
+        content-type prior to calling saveImage().
 
    string saveWebImage(int transparent, int interlace)
         Writes image to temp directory.  Returns image URL.
