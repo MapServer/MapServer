@@ -992,7 +992,10 @@ int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, in
   if (img == NULL)
       return msWMSException(map, wmtver, NULL);
 
-  printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+  if (MS_DRIVER_SWF(map->outputformat))
+    printf("Content-type: text/html%c%c", 10,10);
+  else
+    printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
   if (msSaveImage(map, img, NULL) != MS_SUCCESS)
       return msWMSException(map, wmtver, NULL);
 

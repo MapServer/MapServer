@@ -673,7 +673,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if ((msLookupHashTable(&(layer->metadata), "SWFOUTPUT") &&
         strcasecmp(msLookupHashTable(&(layer->metadata), "SWFOUTPUT"),"RASTER")==0) ||
         strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE", ""),  
-                   "SINGLE") == 0)
+                   "MULTIPLE") != 0)
     return msDrawVectorLayerAsRasterSWF(map, layer, image);
   }
 #endif

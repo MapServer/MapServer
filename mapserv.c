@@ -1043,7 +1043,10 @@ int main(int argc, char *argv[]) {
       
       if(!img) writeError();
 
-      printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+      if (MS_DRIVER_SWF(msObj->Map->outputformat))
+        printf("Content-type: text/html%c%c", 10,10);
+      else
+        printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
       if( msObj->Mode == MAP )
           status = msSaveImage(msObj->Map,img, NULL);
       else

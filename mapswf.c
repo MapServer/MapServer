@@ -862,7 +862,8 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     image->img.swf->sMainMovie = newSWFMovie();
     SWFMovie_setDimension(image->img.swf->sMainMovie, (float)width, 
                           (float)height);
-
+    SWFMovie_setBackground(image->img.swf->sMainMovie, map->imagecolor.red,
+                           map->imagecolor.green, map->imagecolor.blue);
 /* -------------------------------------------------------------------- */
 /*      if the output is a single movie, we crate a GD image that       */
 /*      will be used to conating the rendering of al the layers.        */
@@ -957,7 +958,8 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 
         SWFMovie_setDimension(image->img.swf->pasMovies[nTmp -1], 
                               (float)image->width, (float)image->height);
-        
+         SWFMovie_setBackground(image->img.swf->pasMovies[nTmp -1], map->imagecolor.red,
+                           map->imagecolor.green, map->imagecolor.blue);
         image->img.swf->nCurrentLayerIdx = layer->index;
         //msLayerGetItems(layer);
 
@@ -2612,10 +2614,33 @@ int msSaveImageSWF(imageObj *image, char *filename)
     mapObj      *map = NULL;
     char        *pszRelativeName = NULL;
     int         iSaveResult; 
+    int         bFileIsTemporary = MS_FALSE;
+    const char *pszExtension = NULL;
 
-    if (image && MS_DRIVER_SWF(image->format) && filename)
+    if (image && MS_DRIVER_SWF(image->format))// && filename)
     {
+         map = image->img.swf->map;
 
+/* -------------------------------------------------------------------- */
+/*      We will need to write the output to a temporary file.           */
+/* -------------------------------------------------------------------- */
+         if( filename == NULL )
+         {
+             pszExtension = image->format->extension;
+             if( pszExtension == NULL )
+               pszExtension = "swf";
+
+             if( map && map->web.imagepath && map->web.imageurl)
+               filename = msTmpFile(map->mappath,map->web.imagepath,pszExtension);
+
+             if (!filename)
+               return(MS_FAILURE); 
+            
+             bFileIsTemporary = MS_TRUE;
+         }
+
+         if (!filename)
+           return(MS_FAILURE); 
 /* ==================================================================== */
 /*      if the output is single movie, save the main movie and exit.    */
 /* ==================================================================== */
@@ -2623,11 +2648,34 @@ int msSaveImageSWF(imageObj *image, char *filename)
                                                "OUTPUT_MOVIE",""), 
                        "MULTIPLE") != 0)
         {
+
 #ifdef MING_VERSION_03
             iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename, -1);
 #else
             iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename);
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Is this supposed to be a temporary file?  If so, stream to      */
+/*      stdout and delete the file.                                     */
+/* -------------------------------------------------------------------- */
+            if( bFileIsTemporary )
+            {
+                char *pszURL = (char *)malloc(sizeof(char)*(strlen(map->web.imageurl)+
+                                                            strlen(filename)+
+                                                            strlen(pszExtension)+2));
+
+                sprintf(pszURL, "%s%s.%s", map->web.imageurl, msGetBasename(filename), 
+                        pszExtension);
+              
+                printf("<OBJECT classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0\" WIDTH=%d HEIGHT=%d> <PARAM NAME=movie VALUE=\"%s\"><PARAM NAME=quality VALUE=medium><EMBED src=\"%s\" quality=medium  WIDTH=%d HEIGHT=%d TYPE=\"application/x-shockwave-flash\" PLUGINSPAGE=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\"></EMBED></OBJECT>", map->width, map->height, pszURL, pszURL,  map->width, map->height);
+              
+                //unlink( filename );
+                free( filename );
+                
+            }
+ 
+            
             if (iSaveResult > 0)
               return(MS_SUCCESS);
             else
@@ -2638,8 +2686,8 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /*      If the output is MULTIPLE save individual movies as well as     */
 /*      the main movie.                                                 */
 /* -------------------------------------------------------------------- */
-
-        map = image->img.swf->map;
+        
+       
 /* -------------------------------------------------------------------- */
 /*      write some AS related to the map file.                          */
 /* -------------------------------------------------------------------- */
@@ -2778,10 +2826,25 @@ int msSaveImageSWF(imageObj *image, char *filename)
             oAction = compileSWFActionCode(szAction);
             SWFMovie_add(image->img.swf->sMainMovie, oAction);
 
+/* ==================================================================== */
+/*      when we have a temporary file, we are assuming that the         */
+/*      intention is to send the swf to the browser. So we use          */
+/*      output the URL for the loadMovieNum. Else we output only the    */
+/*      name of the file.                                               */
+/* ==================================================================== */
             //sprintf(szAction, "loadMovie(\"%s\",%d);", gszFilename, i+1);
-            //oAction = compileSWFActionCode(szAction);
-            //SWFMovie_add(image->img.swf->sMainMovie, oAction);
+            if( bFileIsTemporary )
+              sprintf(szAction, "loadMovieNum(\"%s%s\",%d);", map->web.imageurl, 
+                      pszRelativeName, i+1);
+            else
+              sprintf(szAction, "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
+
+            oAction = compileSWFActionCode(szAction);
+            SWFMovie_add(image->img.swf->sMainMovie, oAction);
         }
+        sprintf(szAction, "stop();");
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
         
 #ifdef MING_VERSION_03
         SWFMovie_save(image->img.swf->sMainMovie, filename, -1); 
@@ -2791,6 +2854,21 @@ int msSaveImageSWF(imageObj *image, char *filename)
         //test
         //SWFMovie_save(image->img.swf->sMainMovie, "c:/tmp/ms_tmp/main.swf");  
   
+        if( bFileIsTemporary )
+        {
+            char *pszURL = (char *)malloc(sizeof(char)*(strlen(map->web.imageurl)+
+                                                        strlen(filename)+
+                                                        strlen(pszExtension)+2));
+
+            sprintf(pszURL, "%s%s.%s", map->web.imageurl, msGetBasename(filename), 
+                    pszExtension);
+              
+            printf("<OBJECT classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0\" WIDTH=%d HEIGHT=%d> <PARAM NAME=movie VALUE=\"%s\"><PARAM NAME=quality VALUE=medium> <EMBED src=\"%s\" quality=medium WIDTH=%d HEIGHT=%d TYPE=\"application/x-shockwave-flash\" PLUGINSPAGE=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\"></EMBED></OBJECT>", map->width, map->height, pszURL, pszURL,  map->width, map->height);
+              
+            //unlink( filename );
+            free( filename );
+                
+        }
         return(MS_SUCCESS);
     }
 
