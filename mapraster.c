@@ -266,7 +266,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 
   if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
   {
-      GDALReadWorldFile(layer->data, "wld", adfGeoTransform);
+      GDALReadWorldFile(GDALGetDescription(hDS), "wld", adfGeoTransform);
   }
   InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
 
