@@ -99,7 +99,7 @@ char *msGetVersion() {
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
 #endif
-#ifdef USE_GD_TTF
+#if defined (USE_GD_TTF) || defined (USE_GD_FT)
   strcat(version, " SUPPORTS=TTF");
 #endif
 #ifdef USE_TIFF

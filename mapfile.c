@@ -727,7 +727,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       msSetError(MS_EOFERR, NULL, "loadLabel()");      
       return(-1);
     case(FONT):
-#ifdef USE_GD_TTF
+#if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if((label->font = getString()) == NULL) return(-1);
 #else
       msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadlabel()");    
@@ -783,7 +783,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getInteger(&(label->shadowsizey)) == -1) return(-1);
       break;
     case(SIZE):
-#ifdef USE_GD_TTF
+#if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	return(-1);
       if(label->size == MS_NUMBER)
@@ -862,7 +862,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     free(label->font);
     label->font = strdup(value);
 
-#ifdef USE_GD_TTF
+#if defined (USE_GD_TTF) || defined (USE_GD_FT)
     free(label->font);
     label->font = strdup(value);
     
@@ -931,7 +931,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     break;
   case(SIZE):
     msyystate = 2; msyystring = value;
-#ifdef USE_GD_TTF
+#if defined (USE_GD_TTF) || defined (USE_GD_FT)
     if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
     if(label->size == MS_NUMBER)
       label->size = msyynumber;
@@ -2938,7 +2938,7 @@ mapObj *msLoadMap(char *filename)
 	}
       }
 
-#ifdef USE_GD_TTF
+#if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if(msLoadFontSet(&(map->fontset)) == -1) return(NULL);
 #endif
 
