@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.24  2004/02/27 16:27:15  assefa
+ * Add support for min/max scale in generatesld.
+ *
  * Revision 1.23  2004/02/20 01:01:10  assefa
  * Check the wms_name when applying an sld.
  * Set the layer types when applying an sld.
@@ -447,7 +450,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     char *pszTmpFilter = NULL;
     double dfMinScale=0, dfMaxScale=0;
     char *pszName=NULL, *pszTitle=NULL;
-    
+
     if (psRoot && psLayer)
     {
         psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
@@ -724,27 +727,6 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             psRasterSymbolizer = psRasterSymbolizer->psNext;
             psLayer->type = MS_LAYER_RASTER;
         } 
-
-/* -------------------------------------------------------------------- */
-/*      Parse the minscale and maxscale and applt it to all classes     */
-/*      in the layer.                                                   */
-/* -------------------------------------------------------------------- */
-        psMinScale =  CPLGetXMLNode(psRoot, "MinScaleDenominator");
-        if (psMinScale && psMinScale->psChild && 
-            psMinScale->psChild->pszValue)
-        {
-            for (i=0; i<psLayer->numclasses; i++)
-              psLayer->class[i].minscale = atof(psMinScale->psChild->pszValue);
-        }
-
-        psMaxScale =  CPLGetXMLNode(psRoot, "MaxScaleDenominator");
-        if (psMaxScale && psMaxScale->psChild && 
-            psMaxScale->psChild->pszValue)
-        {
-            for (i=0; i<psLayer->numclasses; i++)
-              psLayer->class[i].maxscale = atof(psMaxScale->psChild->pszValue);
-        }
-
     }
 }
 
@@ -2497,6 +2479,16 @@ void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 /*      client sld support functions                                    */
 /* -------------------------------------------------------------------- */
 
+/************************************************************************/
+/*                msSLDGenerateSLD(mapObj *map, int iLayer)             */
+/*                                                                      */
+/*      Return an SLD document for all layers that are on or            */
+/*      default. The second argument should be set to -1 to genarte     */
+/*      on all layers. Or set to the layer index to generate an SLD     */
+/*      for a specific layer.                                           */
+/*                                                                      */
+/*      The caller should free the returned string.                     */
+/************************************************************************/
 char *msSLDGenerateSLD(mapObj *map, int iLayer)
 {
 #ifdef USE_OGR
@@ -3307,8 +3299,11 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     char *pszFinalSLD = NULL;
     char *pszSLD = NULL;
     char *pszTmp = NULL;
+    double dfMinScale =-1, dfMaxScale = -1;
 
-    if (psLayer && (psLayer->type == MS_LAYER_POINT ||
+    if (psLayer && 
+        (psLayer->status == MS_ON || psLayer->status == MS_DEFAULT) &&
+        (psLayer->type == MS_LAYER_POINT ||
                     psLayer->type == MS_LAYER_LINE ||
                     psLayer->type == MS_LAYER_POLYGON ||
                     psLayer->type == MS_LAYER_ANNOTATION))
@@ -3349,6 +3344,39 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     pszFinalSLD = strcatalloc(pszFinalSLD, pszFilter);
                     free(pszFilter);
                 }
+/* -------------------------------------------------------------------- */
+/*      generate the min/max scale.                                     */
+/* -------------------------------------------------------------------- */
+                dfMinScale = -1.0;
+                if (psLayer->class[i].minscale > 0)
+                  dfMinScale = psLayer->class[i].minscale;      
+                else if (psLayer->minscale > 0)
+                  dfMinScale = psLayer->minscale;
+                else if (psLayer->map && psLayer->map->web.minscale > 0)
+                  dfMinScale = psLayer->map->web.minscale;
+                if (dfMinScale > 0)
+                {
+                     sprintf(szTmp, "<MinScaleDenominator>%f</MinScaleDenominator>\n",  
+                             dfMinScale);
+                     pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                }
+               
+                dfMaxScale = -1.0;
+                if (psLayer->class[i].maxscale > 0)
+                  dfMaxScale = psLayer->class[i].maxscale;      
+                else if (psLayer->maxscale > 0)
+                  dfMaxScale = psLayer->maxscale;
+                else if (psLayer->map && psLayer->map->web.maxscale > 0)
+                  dfMaxScale = psLayer->map->web.maxscale;
+                if (dfMaxScale > 0)
+                {
+                     sprintf(szTmp, "<MaxScaleDenominator>%f</MaxScaleDenominator>\n",  
+                             dfMaxScale);
+                     pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                }
+                 
+
+                  
 /* -------------------------------------------------------------------- */
 /*      Line symbolizer.                                                */
 /*                                                                      */
@@ -4266,7 +4294,7 @@ char *msSLDParseLogicalExpression(char *pszExpression)
         {
             pszTmp = strcatalloc(pszTmp, "<Filter>");
             pszTmp = strcatalloc(pszTmp, pszFLTExpression);
-            pszTmp = strcatalloc(pszTmp, "</Filter>");
+            pszTmp = strcatalloc(pszTmp, "</Filter>\n");
 
             free(pszFLTExpression);
             pszFLTExpression = pszTmp;
