@@ -337,8 +337,13 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if (format == NULL) format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
 
   img = gdImageCreate(width, height);
-  color = gdImageColorAllocate(img, 255,255,255); // BG color
+  color = gdImageColorAllocate(img, map->imagecolor.red, 
+                               map->imagecolor.green,
+                               map->imagecolor.blue); // BG color
   nBlack = gdImageColorAllocate(img, 0,0,0); // Text color
+
+  if (map->outputformat && map->outputformat->transparent)
+    gdImageColorTransparent(img, 0);
 
   sprintf(errormsg, "%s: %s", ms_error->routine, ms_error->message);
   nTextLength = strlen(errormsg); 
