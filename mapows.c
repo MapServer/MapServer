@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/10/25 17:30:38  julien
+ * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
+ *
  * Revision 1.44  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -698,6 +701,168 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
        msFree(encoded);
     }
    
+    return status;
+}
+
+/* msOWSPrintURLType()
+**
+** Attempt to output a capability item.  If corresponding metadata is not 
+** found then one of a number of predefined actions will be taken. 
+** Since it's a capability item, five metadata will be used. Only one name
+** will be prevented and _type, _width, _height, _format and _href will be
+** appended in the metadata search. Then the final string will be build from 
+** the tag_name and the five metadata. The template is:
+** <tag_name%type%width%height%format>%href</tag_name>
+** For example the width format will usually be " width=\"%s\"". 
+** An extern format will be "> <Format>%s</Format"
+** Another template template may be used, but it needs to contains 5 %s, 
+** otherwise leave it to NULL. If tag_format is used, you don't need the 
+** tag_name and the tabspace.
+** Note that all values will be encoded.
+**/
+int msOWSPrintURLType(FILE *stream, hashTableObj *metadata, 
+                      const char *namespaces, const char *name, 
+                      int action_if_not_found, const char *tag_format, 
+                      const char *tag_name, const char *type_format, 
+                      const char *width_format, const char *height_format, 
+                      const char *urlfrmt_format, const char *href_format,
+                      int type_is_mandatory, int width_is_mandatory, 
+                      int height_is_mandatory, int format_is_mandatory, 
+                      int href_is_mandatory, const char *default_type, 
+                      const char *default_width, const char *default_height, 
+                      const char *default_urlfrmt, const char *default_href, 
+                      const char *tabspace)
+{
+    const char *value;
+    char *metadata_name;
+    char *encoded;
+    int status = MS_NOERR;
+    char *type=NULL, *width=NULL, *height=NULL, *urlfrmt=NULL, *href=NULL;
+
+    metadata_name = (char*)malloc(strlen(name)*sizeof(char)+10);
+
+    // Get type
+    if(type_format != NULL)
+    {
+        sprintf(metadata_name, "%s_type", name);
+        value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
+        if(value != NULL)
+        {
+            type = (char*)malloc(strlen(type_format)+strlen(value));
+            encoded = msEncodeHTMLEntities(value);
+            sprintf(type, type_format, encoded);
+            msFree(encoded);
+        }
+    }
+
+    // Get width
+    if(width_format != NULL)
+    {
+        sprintf(metadata_name, "%s_width", name);
+        value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
+        if(value != NULL)
+        {
+            width = (char*)malloc(strlen(width_format)+strlen(value));
+            encoded = msEncodeHTMLEntities(value);
+            sprintf(width, width_format, encoded);
+            msFree(encoded);
+        }
+    }
+
+    // Get height
+    if(height_format != NULL)
+    {
+        sprintf(metadata_name, "%s_height", name);
+        value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
+        if(value != NULL)
+        {
+            height = (char*)malloc(strlen(height_format)+strlen(value));
+            encoded = msEncodeHTMLEntities(value);
+            sprintf(height, height_format, encoded);
+            msFree(encoded);
+        }
+    }
+
+    // Get format
+    if(urlfrmt_format != NULL)
+    {
+        sprintf(metadata_name, "%s_format", name);
+        value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
+        if(value != NULL)
+        {
+            urlfrmt = (char*)malloc(strlen(urlfrmt_format)+strlen(value));
+            encoded = msEncodeHTMLEntities(value);
+            sprintf(urlfrmt, urlfrmt_format, encoded);
+            msFree(encoded);
+        }
+    }
+
+    // Get href
+    if(href_format != NULL)
+    {
+        sprintf(metadata_name, "%s_href", name);
+        value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
+        if(value != NULL)
+        {
+            href = (char*)malloc(strlen(href_format)+strlen(value));
+            encoded = msEncodeHTMLEntities(value);
+            sprintf(href, href_format, encoded);
+            msFree(encoded);
+        }
+    }
+
+    msFree(metadata_name);
+
+    if(type || width || height || urlfrmt || href)
+    {
+        if((!type && type_is_mandatory) || (!width && width_is_mandatory) || 
+           (!height && height_is_mandatory) || 
+           (!urlfrmt && format_is_mandatory) || (!href && href_is_mandatory))
+        {
+            msIO_fprintf(stream, "<!-- WARNING: Some mandatory elements for '%s' are missing in this context. -->\n", tag_name);
+            if (action_if_not_found == OWS_WARN)
+            {
+                msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+                status = action_if_not_found;
+            }
+        }
+        else
+        {
+            if(!type)
+                type = strdup((default_type ? default_type : ""));
+            if(!width)
+                width = strdup((default_width ? default_width : ""));
+            if(!height)
+                height = strdup((default_height ? default_height : ""));
+            if(!urlfrmt)
+                urlfrmt = strdup((default_urlfrmt ? default_urlfrmt : ""));
+            if(!href)
+                href = strdup((default_href ? default_href : ""));
+
+            if(tag_format == NULL)
+                msIO_fprintf(stream, "%s<%s%s%s%s%s>%s</%s>\n", tabspace, 
+                             tag_name, type, width, height, urlfrmt, href, 
+                             tag_name);
+            else
+                msIO_fprintf(stream, tag_format, 
+                             type, width, height, urlfrmt, href);
+        }
+
+        msFree(type);
+        msFree(width);
+        msFree(height);
+        msFree(urlfrmt);
+        msFree(href);
+    }
+    else
+    {
+        if (action_if_not_found == OWS_WARN)
+        {
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+            status = action_if_not_found;
+        }
+    }
+
     return status;
 }
 

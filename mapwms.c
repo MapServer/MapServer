@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.125  2004/10/25 17:30:38  julien
+ * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
+ *
  * Revision 1.124  2004/10/25 14:46:41  assefa
  * Test on layer status before applying time (Bug 986).
  *
@@ -920,7 +923,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    char *encoded;
    int n, i;
    const char *projstring;
-   const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL;
+   const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL, *pszStyle;
 
    if (nVersion <= OWS_1_0_7)
    {
@@ -1067,6 +1070,91 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
            fprintf(stdout, "        <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);
 
    }
+
+   if(nVersion >= OWS_1_1_0)
+       msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl", 
+                         OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"", 
+                         NULL, NULL, ">\n          <Format>%s</Format", 
+                         "\n          <OnlineResource xmlns:xlink=\""
+                         "http://www.w3.org/1999/xlink\" "
+                         "link:href=\"%s\"/>\n        ", 
+                         MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
+                         NULL, NULL, NULL, NULL, NULL, "        ");
+
+   if(nVersion < OWS_1_1_0)
+       msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "dataurl_href",
+                                OWS_NOERR, "        <DataURL>%s</DataURL>\n", 
+                                NULL);
+   else
+       msOWSPrintURLType(stdout, &(lp->metadata), "MO", "dataurl", 
+                         OWS_NOERR, NULL, "DataURL", NULL, NULL, NULL, 
+                         ">\n          <Format>%s</Format", 
+                         "\n          <OnlineResource xmlns:xlink=\""
+                         "http://www.w3.org/1999/xlink\" "
+                         "xlink:type=\"simple\" link:href=\"%s\"/>\n        ", 
+                         MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
+                         NULL, NULL, NULL, NULL, NULL, "        ");
+
+   // The LegendURL reside in a style. The Web Map Context spec already 
+   // included the support on this in mapserver. However, it is not in the 
+   // wms_legendurl_... metadatas it's in the styles metadata,
+   // In wms_style_<style_name>_lengendurl_... metadata. So we have to detect
+   // the current style before reading it. Also in the Style block, we need
+   // a Title and a name. We can get thos in wms_style.
+   pszStyle = msOWSLookupMetadata(&(lp->metadata), "MO", "style");
+   if(pszStyle != NULL && strlen(pszStyle) > 0)
+   {
+       char *pszMetadataName;
+       pszMetadataName = (char*)malloc(strlen(pszStyle)+205);
+       sprintf(pszMetadataName, "style_%s_legendurl_href", pszStyle);
+       fprintf(stdout, "        <%s/>\n",pszMetadataName);
+       if(msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName) != NULL)
+       {
+       fprintf(stdout, "        <%s/>\n",pszMetadataName);
+           if(nVersion <= OWS_1_0_0)
+           {
+               // First, print the style block
+               fprintf(stdout, "        <Style>\n");
+               fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+               fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+
+               // Inside, print the legend url block
+               msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", 
+                                        pszMetadataName,
+                                        OWS_NOERR, 
+                                        "          <StyleURL>%s</StyleURL>\n", 
+                                        NULL);
+
+               // close the style block
+               fprintf(stdout, "        </Style>\n");
+           }
+           else if(nVersion >= OWS_1_1_0)
+           {
+               // First, print the style block
+               fprintf(stdout, "        <Style>\n");
+               fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+               fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+
+               // Inside, print the legend url block
+               sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
+               msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
+                                 OWS_NOERR, NULL, "LegendURL", NULL, 
+                                 " width=\"%s\"", " height=\"%s\"", 
+                                 ">\n             <Format>%s</Format", 
+                                 "\n             <OnlineResource "
+                                 "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                 " xlink:type=\"simple\" link:href=\"%s\"/>\n"
+                                 "          ",
+                                 MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
+                                 NULL, NULL, NULL, NULL, NULL, "          ");
+
+               // close the style block
+               fprintf(stdout, "        </Style>\n");
+           }
+       }
+       msFree(pszMetadataName);
+   }
+   
 
    msWMSPrintScaleHint("        ", lp->minscale, lp->maxscale, map->resolution);
 

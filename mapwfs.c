@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.48  2004/10/25 17:30:38  julien
+ * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
+ *
  * Revision 1.47  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -410,6 +413,12 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    {
        msIO_printf("<!-- WARNING: Mandatory LatLongBoundingBox could not be established for this layer.  Consider setting wfs_extent metadata. -->\n");
    }
+
+   msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl", 
+                     OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"", 
+                     NULL, NULL, " format=\"%s\"", "%s", 
+                     MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
+                     NULL, NULL, NULL, NULL, NULL, "        ");
 
    msIO_printf("    </FeatureType>\n");
       

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2004/10/25 17:30:38  julien
+ * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
+ *
  * Revision 1.51  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -341,7 +344,12 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version);
 
   // optional metadataLink
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "metadatalink_href", OWS_NOERR, "  <metadataLink metadataType=\"other\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);  
+  msOWSPrintURLType(stdout, &(map->web.metadata), "COM", "metadatalink", 
+                    OWS_NOERR, 
+                    "  <metadataLink%s%s%s xlink:type=\"simple\"%s/>", 
+                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,  
+                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE, 
+                    MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "name", OWS_NOERR, "  <name>%s</name>\n", "MapServer WCS");

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.43  2004/10/25 17:30:38  julien
+ * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
+ *
  * Revision 1.42  2004/10/15 20:29:03  assefa
  * Add support for OGC mapcontext through mapserver cgi : Bug 946.
  *
@@ -233,6 +236,18 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
                             const char *namespaces, const char *name, 
                             int action_if_not_found, 
                             const char *format, const char *default_value);
+int msOWSPrintURLType(FILE *stream, hashTableObj *metadata, 
+                      const char *namespaces, const char *name, 
+                      int action_if_not_found, const char *tag_format, 
+                      const char *tag_name, const char *type_format, 
+                      const char *width_format, const char *height_format, 
+                      const char *urlfrmt_format, const char *href_format,
+                      int type_is_mandatory, int width_is_mandatory, 
+                      int height_is_mandatory, int format_is_mandatory, 
+                      int href_is_mandatory, const char *default_type, 
+                      const char *default_width, const char *default_height, 
+                      const char *default_urlfrmt, const char *default_href, 
+                      const char *tabspace);
 int msOWSPrintParam(FILE *stream, const char *name, const char *value, 
                     int action_if_not_found, const char *format, 
                     const char *default_value);
