@@ -419,6 +419,11 @@ typedef struct {
   // application.
   int isachild;
 #endif
+
+  char *angleitem, *sizeitem;
+#ifndef SWIG
+  int angleitemindex, sizeitemindex;
+#endif
 } styleObj;
 
 // CLASS OBJECT - basic symbolization and classification information
