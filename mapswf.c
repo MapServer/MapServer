@@ -2658,7 +2658,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
         
         sprintf(szAction, "mapObj.extent=\"%f,%f,%f,%f\";", 
                 image->img.swf->map->extent.minx,
-                image->img.swf->map->extent.maxx,
+                image->img.swf->map->extent.miny,
                 image->img.swf->map->extent.maxx,
                 image->img.swf->map->extent.maxy);
         oAction = compileSWFActionCode(szAction);
