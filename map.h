@@ -720,13 +720,13 @@ int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msLayerWhichItems(layerObj *layer, int classify, int annotate);
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msLayerGetItems(layerObj *layer, char ***items, int *numitems);
-int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
+int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record);
 int msLayerGetExtent(layerObj *layer, rectObj *extent);
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
-int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
+int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record);
 void msTiledSHPClose(layerObj *layer);
 
 int msOGRLayerOpen(layerObj *layer);   // in mapogr.cpp 

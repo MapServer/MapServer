@@ -1176,7 +1176,7 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   return(MS_SUCCESS);
 }
 
-int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems) 
+int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record) 
 {
   char *filename, tilename[MS_PATH_LENGTH];
 
@@ -1202,16 +1202,7 @@ int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int ti
   msSHPReadShape(layer->shpfile.hSHP, record, shape);
   layer->shpfile.lastshape = record;
 
-  if(allitems == MS_TRUE) {
-    if(!layer->items) { // fill the items layer variable if not already filled
-      layer->numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
-      layer->items = msDBFGetItems(layer->shpfile.hDBF);
-      if(!layer->items) return(MS_FAILURE);
-    }
-    shape->numvalues = layer->numitems;
-    shape->values = msDBFGetValues(layer->shpfile.hDBF, record);
-    if(!shape->values) return(MS_FAILURE);
-  } else if(layer->numitems > 0) {
+  if(layer->numitems > 0) {
     shape->numvalues = layer->numitems;
     shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
     if(!shape->values) return(MS_FAILURE);

@@ -78,30 +78,20 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   return(MS_SUCCESS);
 }
 
-int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems)
+int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record)
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     msSHPReadShape(layer->shpfile.hSHP, record, shape);
 
-    if(allitems == MS_TRUE) {
-      if(!layer->items) { // fill the items layer variable if not already filled
-	layer->numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
-	layer->items = msDBFGetItems(layer->shpfile.hDBF);
-	if(!layer->items) return(MS_FAILURE);
-      }
-      shape->numvalues = layer->numitems;
-      shape->values = msDBFGetValues(layer->shpfile.hDBF, record);      
-      if(!shape->values) return(MS_FAILURE);      
-    } else if(layer->numitems > 0) {
+    if(layer->numitems > 0) {
       shape->numvalues = layer->numitems;
       shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
       if(!shape->values) return(MS_FAILURE);
     }
-
     break;
   case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPGetShape(layer, shapepath, shape, tile, record, allitems));
+    return(msTiledSHPGetShape(layer, shapepath, shape, tile, record));
   case(MS_INLINE):
     msSetError(MS_MISCERR, "Cannot retrieve inline shapes randomly.", "msLayerGetShape()");
     return(MS_FAILURE);
