@@ -797,14 +797,6 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
   free(xintersect);
 }
 
-static double length(pointObj a, pointObj b)
-{
-  double d;
-
-  d = sqrt((pow((a.x-b.x),2) + pow((a.y-b.y),2)));
-  return(d);
-}
-
 // Currently unused.
 #ifdef notdef
 static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
@@ -957,14 +949,11 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
     } while(wrong_order);
     
     /* Great, now find longest span */
-    point1->y = point2->y = y;
     for(i=0; i < nfound; i += 2) {
-      point1->x = xintersect[i];
-      point2->x = xintersect[i+1];
-      len = length(*point1, *point2);
+      len = fabs(xintersect[i] - xintersect[i+1]);
       if(len > max_len) {
 	max_len = len;
-	lp->x = (point1->x + point2->x)/2;
+	lp->x = (xintersect[i] + xintersect[i+1])/2;
 	lp->y = y;
       }
     }
