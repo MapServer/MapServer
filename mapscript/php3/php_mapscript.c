@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.98  2002/03/21 14:58:40  assefa
+ * Set the numclasses memeber properly after adding a new class in a layer.
+ *
  * Revision 1.97  2002/03/20 20:16:17  sacha
  * Added a php function for layer obj getItems that return a list of items.
  *
@@ -5882,6 +5885,8 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
     pval  *pThis, *pTileId, *pShapeId ;
     layerObj *self=NULL;
     shapeObj    *poShape;
+ 
+    
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -5891,6 +5896,7 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
+
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pTileId, &pShapeId) != SUCCESS) 
@@ -6376,6 +6382,9 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
         RETURN_FALSE;
     }
+
+     _phpms_set_property_long(pLayerObj,"numclasses", parent_layer->numclasses, 
+                              E_ERROR); 
 
     /* We will store a reference to the parent_layer object id inside
      * the class obj.
