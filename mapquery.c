@@ -135,7 +135,9 @@ int msLoadQuery(mapObj *map, char *filename) {
   return(MS_SUCCESS);
 }
 
-int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
+
+int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex, 
+                    int addtoquery)
 {
   layerObj *lp;
   int status;
@@ -156,11 +158,14 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
 
   msInitShape(&shape);
 
+  if (!addtoquery)
+  {
   // free any previous search results, do it now in case one of the next few tests fail
-  if(lp->resultcache) {
-    if(lp->resultcache->results) free(lp->resultcache->results);
-    free(lp->resultcache);
-    lp->resultcache = NULL;
+    if(lp->resultcache) {
+      if(lp->resultcache->results) free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
+    }
   }
 
   // open this layer
@@ -171,10 +176,13 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
-  lp->resultcache->results = NULL;
-  lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-  lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+  if (!addtoquery || lp->resultcache == NULL)
+  {
+    lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+    lp->resultcache->results = NULL;
+    lp->resultcache->numresults = lp->resultcache->cachesize = 0;
+    lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+  }
 
   status = msLayerGetShape(lp, &shape, tileindex, shapeindex);
   if(status != MS_SUCCESS) {
@@ -196,12 +204,30 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   }
 
   addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-  lp->resultcache->bounds = shape.bounds;
-    
+  if(lp->resultcache->numresults == 1)
+    lp->resultcache->bounds = shape.bounds;
+  else
+    msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+
   msFreeShape(&shape);
   msLayerClose(lp);
 
   return(MS_SUCCESS);
+}
+
+/* msQueryByIndexAdd()
+ *
+ * Same function as msQueryByIndex but instead of freeing the current
+ * result cache, the new shape will be added to the result.
+ */
+int msQueryByIndexAdd(mapObj *map, int qlayer, int tileindex, int shapeindex)
+{
+     return _msQueryByIndex(map, qlayer, tileindex, shapeindex, 1);
+}
+
+int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
+{
+    return _msQueryByIndex(map, qlayer, tileindex, shapeindex, 0);
 }
 
 int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int mode)
@@ -1038,4 +1064,33 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
 
   return found;
 }
-  
+
+
+/* msQueryFree()
+ *
+ * Free layer's query results. If qlayer == -1, all layers will be treated.
+ */
+void msQueryFree(mapObj *map, int qlayer)
+{
+    int l; /* counters */
+    int start, stop=0;
+    layerObj *lp;
+    
+    if(qlayer < 0 || qlayer >= map->numlayers)
+      start = map->numlayers-1;
+    else
+      start = stop = qlayer;
+
+    for(l=start; l>=stop; l--) 
+    {
+        lp = &(map->layers[l]);
+        if(lp->resultcache) 
+        {
+            if(lp->resultcache->results) 
+              free(lp->resultcache->results);
+            free(lp->resultcache);
+            lp->resultcache = NULL;
+        }
+    }
+}
+      
