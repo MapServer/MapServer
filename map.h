@@ -49,8 +49,7 @@ extern "C" {
 #define MS_ON 1
 #define MS_OFF 0
 #define MS_DEFAULT 2
-#define MS_QUERY 3
-#define MS_EMBED 4
+#define MS_EMBED 3
 #define MS_YES 1
 #define MS_NO 0
 
@@ -121,7 +120,7 @@ extern "C" {
 // General enumerated types - needed by scripts
 enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS};
-enum MS_FEATURE_TYPE {MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER, MS_ANNOTATION, MS_NULL};
+enum MS_FEATURE_TYPE {MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER, MS_ANNOTATION, MS_QUERY, MS_NULL};
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
@@ -721,6 +720,7 @@ void msLayerClose(layerObj *layer);
 int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msLayerWhichItems(layerObj *layer, int classify, int annotate);
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
+int msLayerGetItems(layerObj *layer, char **items, int *numitems);
 int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
@@ -739,7 +739,8 @@ int msSDELayerOpen(layerObj *layer); // in mapsde.c
 void msSDELayerClose(layerObj *layer);
 int msSDELayerWhichShapes(layerObj *layer, rectObj rect);
 int msSDELayerNextShape(layerObj *layer, shapeObj *shape);
-int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record, int allitems);
+int msSDELayerGetItems(layerObj *layer, char **items, int *numitems);
+int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record);
 
 #endif
 

@@ -113,7 +113,7 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
-    return(msSDELayerGetShape(layer, shape, record, allitems));
+    return(msSDELayerGetShape(layer, shape, record));
     break;
   default:
     break;
@@ -151,6 +151,32 @@ void msLayerClose(layerObj *layer)
   default:
     break;
   }
+}
+
+int msLayerGetItems(layerObj *layer, char **items, int *numitems) {
+
+  switch(layer->connectiontype) {
+  case(MS_SHAPEFILE):
+  case(MS_TILED_SHAPEFILE):    
+    *numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
+    items = msDBFGetItems(layer->shpfile.hDBF);
+    if(!items) return(MS_FAILURE);
+    break;
+  case(MS_INLINE):
+    return(MS_SUCCESS); // inline shapes have no items
+    break;
+  case(MS_OGR):
+    break;
+  case(MS_TILED_OGR):
+    break;
+  case(MS_SDE):
+    return(msSDELayerGetItems(layer, items, numitems));
+    break;
+  default:
+    break;
+  }
+
+  return(MS_FAILURE);
 }
 
 int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)

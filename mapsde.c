@@ -19,9 +19,7 @@ typedef struct {
   SE_COORDREF coordref;
   SE_STREAM stream;
 
-  char **items;
-  char numitems;
-  SE_COLUMN_DEF *itemdefs;
+  SE_COLUMN_DEF *itemdefs; // relative to a stream query
 
   char *table, *column;
 } sdeLayerObj;
@@ -39,23 +37,6 @@ static void sde_error(long error_code, char *routine, char *sde_routine) {
   msSetError(MS_SDEERR, ms_error.message, routine);
 
   return;
-}
-
-static int sdeRectOverlap(SE_ENVELOPE *a, SE_ENVELOPE *b)
-{
-  if(a->minx > b->maxx) return(MS_FALSE);
-  if(a->maxx < b->minx) return(MS_FALSE);
-  if(a->miny > b->maxy) return(MS_FALSE);
-  if(a->maxy < b->miny) return(MS_FALSE);
-  return(MS_TRUE);
-}
-
-static int sdeRectContained(SE_ENVELOPE *a, SE_ENVELOPE *b)
-{
-  if(a->minx >= b->minx && a->maxx <= b->maxx)
-    if(a->miny >= b->miny && a->maxy <= b->maxy)
-      return(MS_TRUE);
-  return(MS_FALSE);  
 }
 
 static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
@@ -162,10 +143,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
 
   sde = layer->sdelayer;
 
-  msDebug("in sdeGetRecord(), skip=%d\n", skip);
-  
-  msDebug("layer->numitems = %d\n", layer->numitems);
-
   if(layer->numitems > 0) {
     shape->numattributes = layer->numitems;
     shape->attributes = (char **)malloc(sizeof(char *)*layer->numitems);
@@ -175,15 +152,11 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     }
   }
 
-  msDebug("allocated attribute memory\n");
-
-  // status = SE_shape_create(sde->coordref, &shapeval);
   status = SE_shape_create(NULL, &shapeval);
   if(status != SE_SUCCESS) {
     sde_error(status, "sdeGetRecord()", "SE_shape_create()");
     return(MS_FAILURE);
   }
-  msDebug("shape created...\n");
 
   if(skip == 2) { // a ...Next... request (id, shape)
     status = SE_stream_get_integer(sde->stream, 1, &shape->index);
@@ -191,21 +164,13 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
       return(MS_FAILURE);
     }
-    msDebug("Got the shape id (%d).\n", shape->index);
 
     status = SE_stream_get_shape(sde->stream, 2, shapeval);
     if(status != SE_SUCCESS) { 
       sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
       return(MS_FAILURE);
     }
-    msDebug("Got the shape itself.\n");    
-  } else if(skip == 1) { // a ...Get.. request, with item list (shape)
-    status = SE_stream_get_shape(sde->stream, 1, shapeval);
-    if(status != SE_SUCCESS) { 
-      sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
-      return(MS_FAILURE);
-    }
-  }
+  } 
   
   for(i=1; i<=layer->numitems; i++) {
     switch(sde->itemdefs[i].sde_type) {
@@ -302,8 +267,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
   
   // copy sde shape to a mapserver shape
   status = sdeShapeCopy(shapeval, shape);
-  if(status != MS_SUCCESS)
-    return(MS_FAILURE);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // clean up
   SE_shape_free(shapeval);
@@ -329,8 +293,6 @@ int msSDELayerOpen(layerObj *layer) {
 
   if(layer->sdelayer) return MS_SUCCESS; // layer already open
 
-  msDebug("Opening SDE layer...\n");
-
   params = split(layer->connection, ',', &numparams);
   if(!params) {
     msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msSDELayerOpen()");
@@ -350,8 +312,6 @@ int msSDELayerOpen(layerObj *layer) {
   layer->sdelayer = sde;
 
   // initialize a few things
-  sde->items = NULL;
-  sde->numitems = 0;
   sde->itemdefs = NULL;
   sde->table = sde->column = NULL;
 
@@ -420,7 +380,7 @@ void msSDELayerClose(layerObj *layer) {
 
   sde = layer->sdelayer;
 
-  msFreeCharArray(sde->items, sde->numitems);
+  SE_table_free_descriptions(sde->itemdefs);
   SE_stream_free(sde->stream);
   SE_layerinfo_free(sde->layerinfo);
   SE_coordref_free(sde->coordref);
@@ -434,7 +394,8 @@ void msSDELayerClose(layerObj *layer) {
 // starts a stream query using spatial filter (and optionally attributes)
 int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 #ifdef USE_SDE
-  int i;
+  char **items=NULL;
+  int i, numitems=0;
   long status;
 
   SE_ENVELOPE envelope;
@@ -446,16 +407,12 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   sde = layer->sdelayer;
 
-  msDebug("in msSDELayerWhichShapes\n");
-
   status = SE_shape_create(sde->coordref, &shape);
   // status = SE_shape_create(NULL, &shape);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_shape_create()");
     return(MS_FAILURE);
   }
-
-  msDebug("SE_shape_create ran ok...\n");
 
   status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
   if(status != SE_SUCCESS) {
@@ -467,8 +424,6 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   if(envelope.maxx < rect.minx) return(MS_DONE);
   if(envelope.miny > rect.maxy) return(MS_DONE);
   if(envelope.maxy < rect.miny) return(MS_DONE);
-
-  msDebug("SDE layer extent: %g %g %g %g\n", envelope.minx, envelope.miny, envelope.maxx, envelope.maxy);
 
   // set spatial constraint search shape
   envelope.minx = MS_MAX(rect.minx, envelope.minx); // crop against SDE layer extent *argh*
@@ -501,17 +456,17 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   strcpy(sql->tables[0], sde->table); // main table
 
-  sde->numitems = layer->numitems + 2; // add both the spatial column and the unique id
-  sde->items = (char **)malloc(sde->numitems*sizeof(char *));
-  if(!sde->items) {
-    msSetError(MS_MEMERR, "Error allocating SDE items array.", "msSDELayerWhichShapes()");
+  numitems = layer->numitems + 2; // add both the spatial column and the unique id
+  items = (char **)malloc(numitems*sizeof(char *));
+  if(!items) {
+    msSetError(MS_MEMERR, "Error allocating items array.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
   }
 
-  sde->items[0] = strdup("SE_ROW_ID"); // row id
-  sde->items[1] = strdup(sde->column); // the shape    
+  items[0] = strdup("SE_ROW_ID"); // row id
+  items[1] = strdup(sde->column); // the shape    
   for(i=0; i<layer->numitems; i++)
-    sde->items[i+2] = strdup(layer->items[i]); // any other items needed for labeling or classification
+    items[i+2] = strdup(layer->items[i]); // any other items needed for labeling or classification
 
   // set the "where" clause
   if(!(layer->filter.string))
@@ -519,9 +474,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   else
     sql->where = strdup(layer->filter.string);
 
-  msDebug("Where clause: ()\n", sql->where);
-    
-  status = SE_stream_query(sde->stream, sde->numitems, (const char **)sde->items, sql);
+  status = SE_stream_query(sde->stream, numitems, (const char **)items, sql);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_stream_query()");
     return(MS_FAILURE);
@@ -540,14 +493,12 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   }
 
   // now that query has been run we can gather item descriptions
-  sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*sde->numitems); // don't need defs for id or shape
+  sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*layer->numitems); // don't need defs for id or shape
   if(!sde->itemdefs) {
     msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
   }
-  for(i=2; i<=sde->numitems; i++) { // column numbers start at one, don't mess with SE_ROW_ID column
-    msDebug("query column: %s\n", sde->items[i-1]);
-
+  for(i=1; i<=layer->numitems; i++) { // column numbers start at one
     status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i-1]));
     if(status != MS_SUCCESS) {
       sde_error(status, "msSDELayerWhichShapes()", "SE_stream_describe_column()");
@@ -556,6 +507,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   }
 
   // clean-up
+  msFreeCharArray(items, numitems);
   SE_shape_free(shape);
   SE_sql_construct_free(sql);
 
@@ -598,76 +550,75 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 #endif
 }
 
-int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record, int allitems) {
+int msSDELayerGetItems(layerObj *layer, char **items, int *numitems) {
+#ifdef USE_SDE
+  int i;
+  short n;
+  sdeLayerObj *sde=NULL;  
+  long status;
+
+  sde = layer->sdelayer;
+
+  status = SE_table_describe(sde->connection, sde->table, &n, &sde->itemdefs);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerGetItems()", "SE_table_describe()");
+    return(MS_FAILURE);
+  }
+
+  items = (char **)malloc(n*sizeof(char *));
+  if(!items) {
+    msSetError(MS_MEMERR, "Error allocating layer items array.", "msSDELayerGetItems()");
+    return(MS_FAILURE);
+  }
+
+  for(i=0; i<n; i++) items[i] = strdup(sde->itemdefs[i].column_name);
+  *numitems = n;
+
+  return(MS_SUCCESS);
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetItems()");
+  return(MS_FAILURE);
+#endif
+}
+
+int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 #ifdef USE_SDE
   int i;
   long status;
 
-  sdeLayerObj *sde=NULL;  
+  sdeLayerObj *sde=NULL;
 
   sde = layer->sdelayer;
-  
-  if(allitems == MS_TRUE) {
-    if(!layer->items) { // fill the layer (and sde) items variable if not already filled
-      status = SE_table_describe(sde->connection, sde->table,(short *) &sde->numitems, &sde->itemdefs);
-      if(status != SE_SUCCESS) {
-	sde_error(status, "msSDELayerGetShape()", "SE_table_describe()");
-	return(MS_FAILURE);
-      }
 
-      layer->numitems = sde->numitems;
-      layer->items = (char **)malloc(layer->numitems*sizeof(char *));
-      if(!layer->items) {
-	msSetError(MS_MEMERR, "Error allocating layer items array.", "msSDELayerGetShape()");
-	return(MS_FAILURE);
-      }
-
-      sde->items = (char **)malloc(sde->numitems*sizeof(char *));
-      if(!sde->items) {
-	msSetError(MS_MEMERR, "Error allocating sde items array.", "msSDELayerGetShape()");
-	return(MS_FAILURE);
-      }
-
-      for(i=0; i<sde->numitems; i++) {
-	sde->items[i] = strdup(sde->itemdefs[i].column_name);
-	layer->items[i] = strdup(sde->items[i]);		
-      }
-    }
-    
-    status = sdeGetRecord(layer, shape, 0);
-    if(status != MS_SUCCESS)
-      return(MS_FAILURE); // something went wrong fetching the record/shape 
-  } else {
-    if(!sde->items) { // layer->items may or may not have been allocated
-      sde->numitems = layer->numitems + 1; // add just the spatial column
-      sde->items = (char **)malloc(sde->numitems*sizeof(char *));
-      if(!sde->items) {
-	msSetError(MS_MEMERR, "Error allocating SDE items array.", "msSDELayerGetShape()");
-	return(MS_FAILURE);
-      }
-
-      sde->items[0] = strdup(sde->column); // the spatial column
-      for(i=0; i<layer->numitems; i++)
-	sde->items[i+1] = strdup(layer->items[i]); // any other items needed for labeling or classification
-
-      sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*sde->numitems);
-      if(!sde->itemdefs) {
-	msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerWhichShapes()");
-	return(MS_FAILURE);
-      }
-      for(i=1; i<=sde->numitems; i++) { // columns start at one
-	status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i-1]));
-	if(status != MS_SUCCESS) {
-	  sde_error(status, "msSDELayerWhichShapes()", "SE_stream_describe_column()");
-	  return(MS_FAILURE);
-	}
-      }
-    }
-
-    status = sdeGetRecord(layer, shape, 1);
-    if(status != MS_SUCCESS)
-      return(MS_FAILURE); // something went wrong fetching the record/shape
+  if(layer->numitems < 1) { // must be at least one thing to retrieve (i.e. spatial column)
+    msSetError(MS_MISCERR, "No items requested, SDE requires at least one item.", "msSDELayerGetShape()");
+    return(MS_FAILURE);
   }
+  
+  status = SE_stream_fetch_row(sde->stream, sde->table, record, layer->numitems, (const char **)layer->items);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerGetShape()", "SE_table_describe()");
+    return(MS_FAILURE);
+  }
+
+  if(!sde->itemdefs) {
+    sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*layer->numitems);
+    if(!sde->itemdefs) {
+      msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerGetShape()");
+      return(MS_FAILURE);
+    }
+    for(i=1; i<=layer->numitems; i++) { // columns start at one
+      status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i-1]));
+      if(status != MS_SUCCESS) {
+	sde_error(status, "msSDELayerGetShape()", "SE_stream_describe_column()");
+	return(MS_FAILURE);
+      }
+    }
+  }
+
+  status = sdeGetRecord(layer, shape, 0);
+  if(status != MS_SUCCESS)
+    return(MS_FAILURE); // something went wrong fetching the record/shape
 
   return(MS_SUCCESS);
 #else
