@@ -34,8 +34,9 @@
 
 import unittest
 
-# Import testing modules from the tests/cases directory
+# Import test cases
 from cases.hashtest import HashTableTestCase
+from cases.owstest import OWSRequestTestCase 
 from cases.clonetest import MapCloningTestCase
 
 # Create a test suite
@@ -44,6 +45,7 @@ suite = unittest.TestSuite()
 # Add tests to the suite
 suite.addTest(HashTableTestCase)
 suite.addTest(MapCloningTestCase)
+suite.addTest(OWSRequestTestCase)
 
 # If module is run as a script, execute every test case in the suite
 if __name__ == '__main__':

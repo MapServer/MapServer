@@ -822,53 +822,6 @@ class DrawProgrammedStylesTestCase(MapTestCase):
             points[i].draw(self.mapobj1, layer, img, 0, "foo")
         img.save('test_draw_points.png')
 
-class OWSRequestTestCase(MapTestCase):
-    def testInit(self):
-        request = mapscript.OWSRequest()
-        request.setParameter("BBOX", "-0.3,51.2,0.3,51.8")
-        assert request.NumParams == 1
-        assert request.getName(0) == "BBOX"
-        assert request.getValue(0) == "-0.3,51.2,0.3,51.8"
-    def testGetParameter(self):
-        request = mapscript.OWSRequest()
-        request.setParameter('foo', 'bar')
-        assert request.getValue(0) == 'bar'
-    def testGetParameterByName(self):
-        request = mapscript.OWSRequest()
-        request.setParameter('foo', 'bar')
-        assert request.getValueByName('Foo') == 'bar'
-    def testResetParam(self):
-        request = mapscript.OWSRequest()
-        request.setParameter('foo', 'bar')
-        assert request.NumParams == 1
-        request.setParameter('Foo', 'bra')
-        assert request.NumParams == 1
-        assert request.getValue(0) == 'bra'
-    def testLoadWMSRequest(self):
-        request = mapscript.OWSRequest()
-        request.setParameter("REQUEST", "GetMap")
-        request.setParameter("VERSION", "1.1.0")
-        request.setParameter("FORMAT", "image/png")
-        request.setParameter("LAYERS", "POINT")
-        request.setParameter("BBOX", "-0.30,51.20,0.30,51.80")
-        request.setParameter("SRS", "EPSG:4326")
-        request.setParameter("HEIGHT", "60")
-        request.setParameter("WIDTH", "60")
-        for i in range(self.mapobj1.numlayers):
-            self.mapobj1.getLayer(i).status = mapscript.MS_ON
-        status = self.mapobj1.loadOWSParameters("1.1.0", request)
-        assert status == mapscript.MS_SUCCESS, status
-        self.assertEqual(self.mapobj1.height, 60)
-        self.assertEqual(self.mapobj1.width, 60)
-        self.assertEqual(self.mapobj1.getProjection(), "init=epsg:4326")
-        # MapServer extents are from middle of the pixel
-        self.assertAlmostEqual(self.mapobj1.extent.minx, -0.295)
-        self.assertAlmostEqual(self.mapobj1.extent.miny, 51.205)
-        self.assertAlmostEqual(self.mapobj1.extent.maxx, 0.295)
-        self.assertAlmostEqual(self.mapobj1.extent.maxy, 51.795)
-        img = self.mapobj1.draw()
-        img.save("test_load_ows_request.png")
-
         
 if __name__ == '__main__':
     unittest.main()
