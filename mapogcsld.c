@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2003/11/07 21:35:07  assefa
+ * Add PointSymbolizer.
+ * Add External Graphic symbol support.
+ *
  * Revision 1.1  2003/11/06 23:09:25  assefa
  * OGC SLD support.
  *
@@ -55,6 +59,15 @@
 #define SLD_MARK_SYMBOL_X_FILLED "sld_mark_symbol_x_filled"
 
 
+
+/************************************************************************/
+/*                              msSLDApplySLD                           */
+/*                                                                      */
+/*      Parses the SLD into array of layers. Go through the map and     */
+/*      compare the SLD layers and the map layers using the name. If    */
+/*      they have the same name, copy the classes asscoaited with       */
+/*      the SLD layers onto the map layers.                             */
+/************************************************************************/
 void msSLDApplySLD(mapObj *map, const char *wmtver, char *psSLDXML)
 {
     int nLayers = 0;
@@ -91,6 +104,15 @@ void msSLDApplySLD(mapObj *map, const char *wmtver, char *psSLDXML)
 }
                         
     
+/************************************************************************/
+/*                              msSLDParseSLD                           */
+/*                                                                      */
+/*      Parse the sld document into layers : for each named layer       */
+/*      there is one mapserver layer created with approproate           */
+/*      classes and styles.                                             */
+/*      Returns an array of mapserver layers. The pnLayres if           */
+/*      provided will indicate the size of the returned array.          */
+/************************************************************************/
 layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 {
     CPLXMLNode *psRoot = NULL;
@@ -113,8 +135,10 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
         return NULL;
     }
 
-    //strip namespaces
-    CPLStripXMLNamespace(psRoot, NULL, 1); 
+    //strip namespaces ogc and sld
+    CPLStripXMLNamespace(psRoot, "ogc", 1); 
+    CPLStripXMLNamespace(psRoot, "sld", 1); 
+    
 
 /* -------------------------------------------------------------------- */
 /*      get the root element (Filter).                                  */
@@ -181,6 +205,12 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
     return pasLayers;
 }
 
+
+/************************************************************************/
+/*                           msSLDParseNamedLayer                       */
+/*                                                                      */
+/*      Parse NamedLayer root.                                          */
+/************************************************************************/
 void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle;
@@ -221,6 +251,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode *psLineSymbolizer = NULL;
     CPLXMLNode *psPolygonSymbolizer = NULL;
+    CPLXMLNode *psPointSymbolizer = NULL;
 
     if (psRoot && psLayer)
     {
@@ -248,6 +279,17 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer);
             psPolygonSymbolizer = psPolygonSymbolizer->psNext;
         }
+
+        //Point Symbolizer
+        psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
+        while (psPointSymbolizer && psPointSymbolizer->pszValue && 
+               strcasecmp(psPointSymbolizer->pszValue, 
+                          "PointSymbolizer") == 0)
+        {
+            msSLDParsePointSymbolizer(psPointSymbolizer, psLayer);
+            psPointSymbolizer = psPointSymbolizer->psNext;
+        }
+
     }
 }
 
@@ -627,28 +669,38 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
 /*      Parse the GraphicFill Or GraphicStroke node : look for a        */
 /*      Merker symbol and set the style for that symbol.                */
 /************************************************************************/
-void msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill, 
+void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot, 
                                    char *pszDashValue,
                                    styleObj *psStyle, mapObj *map)
 {
-    CPLXMLNode  *psCssParam, *psGraphic, *psMark, *psSize;
+    CPLXMLNode  *psCssParam, *psGraphic, *psExternalGraphic, *psMark, *psSize;
     CPLXMLNode *psWellKnownName, *psStroke, *psFill;
     char *psColor=NULL, *psColorName = NULL, *psFillName=NULL;
     int nLength = 0;
     char *pszSymbolName = NULL;
     int bFilled = 0; 
 
-    if (psGraphicFill && psStyle && map)
+    if (psRoot && psStyle && map)
     {
-        //only Mark symbols are supported.
-        //TODO : External symbols
-        psGraphic =  CPLGetXMLNode(psGraphicFill, "Graphic");
+/* ==================================================================== */
+/*      This a definition taken from the specification (11.3.2) :       */
+/*      Graphics can either be referenced from an external URL in a common format (such as*/
+/*      GIF or SVG) or may be derived from a Mark. Multiple external URLs and marks may be*/
+/*      referenced with the semantic that they all provide the equivalent graphic in different*/
+/*      formats.                                                        */
+/*                                                                      */
+/*      For this reason, we only need to support one Mark and one       */
+/*      ExtrnalGraphic ????                                             */
+/* ==================================================================== */
+        psGraphic =  CPLGetXMLNode(psRoot, "Graphic");
         if (psGraphic)
         {
             //extract symbol size
             psSize = CPLGetXMLNode(psGraphic, "Size");
             if (psSize && psSize->psChild && psSize->psChild->pszValue)
               psStyle->size = atoi(psSize->psChild->pszValue);
+            else
+              psStyle->size = 6; //defualt value
 
             //extract symbol
             psMark =  CPLGetXMLNode(psGraphic, "Mark");
@@ -671,7 +723,11 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
                      strcasecmp(pszSymbolName, "x") != 0))
                   pszSymbolName = strdup("square");
                     
-                    
+                //set the default color
+                psStyle->color.red = 128;
+                psStyle->color.green = 128;
+                psStyle->color.blue = 128;
+                
                 //check if the symbol should be filled or not
                 psFill = CPLGetXMLNode(psMark, "Fill");
                 psStroke = CPLGetXMLNode(psMark, "Stroke");
@@ -714,6 +770,12 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
                 psStyle->symbol = msSLDGetMarkSymbol(map, pszSymbolName, 
                                                      bFilled, pszDashValue);
                     
+            }
+            else
+            {
+                psExternalGraphic =  CPLGetXMLNode(psGraphic, "ExternalGraphic");
+                if (psExternalGraphic)
+                  msSLDParseExternalGraphic(psExternalGraphic, psStyle, map);
             }
         }
     }
@@ -832,14 +894,21 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
 }
 
 
+
+/************************************************************************/
+/*                            msSLDGetMarkSymbol                        */
+/*                                                                      */
+/*      Get a Mark symbol using the name. Mark symbols can be           */
+/*      square, circle, triangle, star, cross, x.                       */
+/*      If the symbol does not exsist add it to the symbol list.        */
+/************************************************************************/
 int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
                        char *pszDashValue)
 {
     int nSymbolId = 0;
     char **aszValues = NULL;
     int nDash, i;
-    
-     symbolObj *psSymbol = NULL;
+    symbolObj *psSymbol = NULL;
 
     if (!map || !pszSymbolName)
       return 0;
@@ -1105,6 +1174,126 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
     return nSymbolId;
 }
 
+extern unsigned char PNGsig[8];
+int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName)
+{
+    FILE *fp;
+    char bytes[8];
+    gdImagePtr img = NULL;
+    int nSymbolId = 0;
+    symbolObj *psSymbol = NULL;
+
+
+    if (map && pszFileName)
+    {
+        //check if a symbol of a 
+        fp = fopen(pszFileName, "rb");
+        if (fp)
+        {
+            fread(bytes,8,1,fp);
+            rewind(fp);
+            if (memcmp(bytes,"GIF8",4)==0)
+            {
+#ifdef USE_GD_GIF
+                img = gdImageCreateFromGif(fp);
+#endif
+            }
+            else if (memcmp(bytes,PNGsig,8)==0) 
+            {
+#ifdef USE_GD_PNG
+                img = gdImageCreateFromPng(fp);
+#endif        
+            }
+            fclose(fp);
+
+            if (img)
+            {
+                psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
+                nSymbolId = map->symbolset.numsymbols;
+                map->symbolset.numsymbols++;
+                initSymbol(psSymbol);
+                psSymbol->inmapfile = MS_TRUE;
+                psSymbol->sizex = 1;
+                psSymbol->sizey = 1; 
+                psSymbol->type = MS_SYMBOL_PIXMAP;
+
+                psSymbol->img = img;
+            }
+        }
+    }
+    return nSymbolId;
+}
+                 
+
+/************************************************************************/
+/*      msSLDParsePointSymbolizer                                       */
+/*                                                                      */
+/*      Parse point symbolizer.                                         */
+/*                                                                      */
+/*      <xs:element name="PointSymbolizer">                             */
+/*      <xs:complexType>                                                */
+/*      <xs:sequence>                                                   */
+/*      <xs:element ref="sld:Geometry" minOccurs="0"/>                  */
+/*      <xs:element ref="sld:Graphic" minOccurs="0"/>                   */
+/*      </xs:sequence>                                                  */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/************************************************************************/
+void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
+{
+    int nClassId = 0;
+    if (psRoot && psLayer)
+    {
+        initClass(&(psLayer->class[psLayer->numclasses]));
+        nClassId = psLayer->numclasses;
+        initStyle(&(psLayer->class[nClassId].styles[0]));
+        psLayer->class[nClassId].numstyles = 1;
+        psLayer->numclasses++;
+        msSLDParseGraphicFillOrStroke(psRoot, NULL,
+                                      &psLayer->class[nClassId].styles[0],
+                                      psLayer->map);
+    }
+}
+
+
+void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle, 
+                               mapObj *map)
+{
+    char *pszFormat = NULL;
+    CPLXMLNode *psURL=NULL, *psFormat=NULL;
+    char *pszURL=NULL, *pszTmpSymbolName=NULL;
+    int status;
+
+    if (psExternalGraphic && psStyle && map)
+    {
+        psFormat = CPLGetXMLNode(psExternalGraphic, "Format");
+        if (psFormat && psFormat->psChild && psFormat->psChild->pszValue)
+          pszFormat = psFormat->psChild->pszValue;
+
+        //supports GIF and PNG
+        if (pszFormat && 
+            (strcasecmp(pszFormat, "GIF") == 0 ||
+             strcasecmp(pszFormat, "PNG") == 0))
+        {
+            psURL = CPLGetXMLNode(psExternalGraphic, "OnlineResource");
+            if (psURL && psURL->psChild && psURL->psChild->pszValue)
+            {
+                pszURL = psURL->psChild->pszValue;
+
+                if (strcasecmp(pszFormat, "GIF") == 0)
+                  pszTmpSymbolName = msTmpFile(map->web.imagepath, "gif");
+                else
+                  pszTmpSymbolName = msTmpFile(map->web.imagepath, "png");
+
+                if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) ==  
+                    MS_SUCCESS)
+                {
+                    psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName);
+                }
+            }
+        }
+    }
+}
 
 
 /************************************************************************/

@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2003/11/07 21:35:07  assefa
+ * Add PointSymbolizer.
+ * Add External Graphic symbol support.
+ *
  * Revision 1.1  2003/11/06 23:09:25  assefa
  * OGC SLD support.
  *
@@ -56,13 +60,19 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
 
 void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
 void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
+void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
+
 void msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
                                    char *pszDashValue,
                                    styleObj *psStyle, mapObj *map);
+void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle, 
+                              mapObj *map);
+
 int msSLDGetLineSymbol(mapObj *map);
 int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray);
 int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
                        char *pszDashValue);
+int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName);
 
 void msSLDSetColorObject(char *psHexColor, colorObj *psColor);
 #endif
