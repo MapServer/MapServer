@@ -891,10 +891,11 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     msFreeCharArray(tokens, numtokens);
   }
     
-  // did we get BBOX values?
+  // did we get BBOX values? if not use the exent stored in the coverageMetadataObj
   if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
-    msSetError( MS_WCSERR, "Required parameter BBOX missing or specifies an empty region.", "msWCSGetCoverage()" );
-    return msWCSException(params->version);
+    params->bbox = cm.extent;
+    // msSetError( MS_WCSERR, "Required parameter BBOX missing or specifies an empty region.", "msWCSGetCoverage()" );
+    // return msWCSException(params->version);
   }
     
   // if necessary, project the BBOX
