@@ -444,6 +444,18 @@
         return (char *) msSLDGenerateSLD(self->map, self->index);
     }
 
+    int isVisible()
+    {
+        if (!self->map)
+        {
+            msSetError(MS_MISCERR,
+                "visibility has no meaning outside of a map context",
+                "isVisible()");
+            return MS_FAILURE;
+        }
+        return msLayerIsVisible(self->map, self);
+    }
+
     int moveClassUp(int index) 
     {
         return msMoveClassUp(self, index);

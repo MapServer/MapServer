@@ -1387,7 +1387,11 @@ insertClass( classObj_ class [, int index=-1 ] ) : int
     Insert a *copy* of the class into the layer at the requested *index*.
     Default index of -1 means insertion at the end of the array of classes.
     Returns the index at which the class was inserted.
-    
+
+isVisible( ) : int
+    Returns MS_TRUE or MS_FALSE after considering the layer status, minscale,
+    and maxscale within the context of the parent map.
+
 moveClassDown( int class ) : int 
     The class specified by the class index will be moved up into
     the array of layers. Returns MS_SUCCESS or MS_FAILURE.
@@ -1800,7 +1804,22 @@ setRotation( float rotation_angle ) : int
 setSize( int width, int height ) : int
     Set map's image width and height together and carry out the necessary
     subsequent geotransform computation.  Returns MS_SUCCESS or MS_FAILURE.
-    
+   
+zoomPoint( int zoomfactor, pointObj_ imgpoint, int width, int height, rectObj_ extent, rectObj_ maxextent ) : int
+    Zoom by *zoomfactor* to *imgpoint* in pixel units within the image of
+    *height* and *width* dimensions and georeferenced *extent*.  Zooming
+    can be constrained to a maximum *maxextent*.  Returns MS_SUCCESS or
+    MS_FAILURE.
+
+zoomRectangle( rectObj_ imgrect, int width, int height, rectObj_ extent, rectObj_ maxextent ) : int
+    Zoom to a pixel coordinate rectangle in the image of *width* and *height*
+    dimensions and georeferencing *extent*.  Zooming can be constrained to a
+    maximum *maxextent*.  Returns MS_SUCCESS or MS_FAILURE.
+
+zoomScale( float scale, pointObj_ imgpoint, int width, int height, rectObj_ extent, rectObj_ maxextent) : int
+    Like the previous methods, but zooms to the point at a specified scale.
+
+
 -----------------------------------------------------------------------------
  outputFormatObj
 -----------------------------------------------------------------------------
