@@ -141,7 +141,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   */
   if( failure > 0 )
   {
-      msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
+      failure = 0;
       for(x=rect->minx + dx; x<=rect->maxx; x+=dx) {
           for(y=rect->miny + dy; y<=rect->maxy; y+=dy) {
               prj_point.x = x;
@@ -149,6 +149,31 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
               msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
                                 &failure);
           }
+      }
+
+      if( !rect_initialized )
+      {
+          if( out == NULL || out->proj == NULL 
+              || pj_is_latlong(in->proj) )
+          {
+              prj_rect.minx = -180;
+              prj_rect.maxx = 180;
+              prj_rect.miny = -90;
+              prj_rect.maxy = 90;
+          }
+          else
+          {
+              prj_rect.minx = -22000000;
+              prj_rect.maxx = 22000000;
+              prj_rect.miny = -11000000;
+              prj_rect.maxy = 11000000;
+          }
+
+          msDebug( "msProjectRect(): all points failed to reproject, trying to fall back to using world bounds ... hope this helps.\n" );
+      }
+      else
+      {
+          msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
       }
   }
 
