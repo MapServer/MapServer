@@ -1725,6 +1725,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         */
         if (layer->offsite == -1)
         {
+#ifdef USE_GD_GIF
             FILE *gifStream;
             gdImagePtr gif;
 
@@ -1744,11 +1745,15 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
             }
             layer->offsite = gdImageGetTransparent(gif);  // both default to -1
             gdImageDestroy(gif);
+#else
+            msSetError(MS_MISCERR, "GIF Format not supported.", "msDrawRasterLayer( GIF )");
+            return(-1);
+#endif /* USE_GD_GIF */
         }
 #else
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( GIF )");
         return(-1);
-#endif
+#endif  /* USE_GDAL */
       }
       else
       {
@@ -1777,6 +1782,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         */
         if (layer->offsite == -1)
         {
+#ifdef USE_GD_PNG
             FILE *pngStream;
             gdImagePtr png;
 
@@ -1796,6 +1802,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
             }
             layer->offsite = gdImageGetTransparent(png);  // both default to -1
             gdImageDestroy(png);
+#else
+            msSetError(MS_MISCERR, "PNG Format not supported.", "msDrawRasterLayer( PNG )");
+            return(-1);
+#endif /* USE_GD_PNG */
         }
 #else
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( PNG )");
