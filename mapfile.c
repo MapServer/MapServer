@@ -4106,6 +4106,9 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
     case(END):
       fclose(msyyin);      
 
+      /*** Make config options current ***/
+      msApplyMapConfigOptions( map );
+
       /*** OUTPUTFORMAT related setup ***/
       if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
           return NULL;
