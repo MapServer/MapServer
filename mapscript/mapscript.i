@@ -315,6 +315,14 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msSaveMap(self, filename);
   }
 
+  int saveQuery(char *filename) {
+    return msSaveQuery(self, filename);
+  }
+
+  int saveQueryAsGML(char *filename) {
+    return msGMLWriteQuery(self, filename);
+  }
+
   char *getMetaData(char *name) {
     return(msLookupHashTable(self->web.metadata, name));
   }
