@@ -69,7 +69,7 @@ int loadParams(char **names, char **values) {
       values[m] = makeword(s,';');
       plustospace(values[m]);
       unescape_url(values[m]);
-      names[m] = makeword(values[m],'=');
+      names[m] = makeword_skip(values[m],'=',' ');
       m++;
     }
   }
@@ -88,6 +88,24 @@ void getword(char *word, char *line, char stop) {
     y=0;
 
     while((line[y++] = line[x++]));
+}
+
+char *makeword_skip(char *line, char stop, char skip) {
+    int x = 0,y,offset=0;
+    char *word = (char *) malloc(sizeof(char) * (strlen(line) + 1));
+
+    for(x=0;((line[x]) && (line[x] == skip));x++);
+    offset = x;
+
+    for(x=offset;((line[x]) && (line[x] != stop));x++)
+        word[x-offset] = line[x];
+
+    word[x-offset] = '\0';
+    if(line[x]) ++x;
+    y=0;
+
+    while((line[y++] = line[x++]));
+    return word;
 }
 
 char *makeword(char *line, char stop) {

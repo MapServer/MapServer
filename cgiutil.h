@@ -11,6 +11,7 @@
 */ 
 int loadParams(char **, char **);
 void getword(char *, char *, char);
+char *makeword_skip(char *, char, char);
 char *makeword(char *, char);
 char *fmakeword(FILE *, char, int *);
 char x2c(char *);
