@@ -1045,6 +1045,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map); // in mapsymbol.c
 void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
+int msAddNewSymbol(mapObj *map, char *name);
 
 int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
 int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);

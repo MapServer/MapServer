@@ -565,6 +565,33 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   return(MS_SUCCESS);
 }
 
+/*
+ * Add a default new symbol. If the symbol name exists
+ * return the id of the symbol.
+ */
+int msAddNewSymbol(mapObj *map, char *name)
+{
+    int i = 0;
+ 
+    if (!map || !name)
+      return -1;
 
+    i = msGetSymbolIndex(&map->symbolset, name);
+    if (i >= 0)
+      return i;
 
+    if (map->symbolset.numsymbols == MS_MAXSYMBOLS) 
+    {
+        msSetError(MS_SYMERR, "Maximum number of symbols reached.", 
+                   "msAddNewSymbol()");
+        return(-1);
+    }
+    i = map->symbolset.numsymbols;  
+    initSymbol(&map->symbolset.symbol[i]);
+    map->symbolset.symbol[i].name = strdup(name);
+
+    map->symbolset.numsymbols++;
+
+    return i;
+}
 
