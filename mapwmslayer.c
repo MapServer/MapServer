@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2001/08/21 23:12:26  dan
+ * Test layer status at beginning of msDrawWMSLayer()
+ *
  * Revision 1.4  2001/08/21 19:11:53  dan
  * Improved error handling, verify HTTP status, etc.
  *
@@ -311,6 +314,9 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     if (lp->connectiontype != MS_WMS || lp->connection == NULL)
         return MS_FAILURE;
 
+    if((lp->status != MS_ON) && (lp->status != MS_DEFAULT))
+        return MS_SUCCESS;
+
 /* ------------------------------------------------------------------
  * Find out request version
  * ------------------------------------------------------------------ */
@@ -322,7 +328,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         msSetError(MS_WMSCONNERR, "WMS Connection String must contain the VERSION or WMTVER parameter (with name in uppercase).", "msDrawWMSLayer()");
         return MS_FAILURE;
     }
-    pszTmp = strchr(pszTmp, '=');
+    pszTmp = strchr(pszTmp, '=')+1;
     if (strncmp(pszTmp, "1.0.8", 5) >= 0)    /* 1.0.8 == 1.1.0 */
         nVersion = WMS_V_1_1_0;
     else if (strncmp(pszTmp, "1.0.7", 5) >= 0)
@@ -397,6 +403,11 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     {
         msProjectRect(&(map->projection), &(lp->projection), &bbox);
     }
+
+/* ------------------------------------------------------------------
+ * __TODO__ check if layer overlaps current view window
+ * ------------------------------------------------------------------ */
+
 
 /* ------------------------------------------------------------------
  * Build the request URL.
