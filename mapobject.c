@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/07/23 14:12:07  frank
+ * emit error if unimplemented georef<->pixel functions called
+ *
  * Revision 1.8  2004/07/07 21:57:57  sean
  * Completed work on msInsertLayer and msRemoveLayer, added prototypes to map.h.  See bug 759.
  *
@@ -339,6 +342,7 @@ int msMapComputeGeotransform( mapObj * map )
 void msMapPixelToGeoref( mapObj *map, double *x, double *y )
 
 {
+    msSetError(MS_MISCERR, NULL, "msMapPixelToGeoref() not yet implemented");
 }
 
 /************************************************************************/
@@ -348,6 +352,7 @@ void msMapPixelToGeoref( mapObj *map, double *x, double *y )
 void msMapGeorefToPixel( mapObj *map, double *x, double *y )
 
 {
+    msSetError(MS_MISCERR, NULL, "msMapGeorefToPixel() not yet implemented");
 }
 
 /************************************************************************/
