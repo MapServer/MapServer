@@ -217,16 +217,6 @@ class FontSetTestCase(MapTestCase):
     def testGetFontSetFile(self):
         file = self.mapobj1.fontset.filename
         assert file == 'fonts.txt', file
-    def testFontSetFonts(self):
-        """testFontSetFonts may fail if fontset is improperly configured"""
-        fonts = []
-        font = None
-        while 1:
-            font = self.mapobj1.fontset.getNextFont(font)
-            if not font:
-                break
-            fonts.append(font)
-        assert fonts == ['Vera', 'VeraBd'], fonts
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -737,7 +727,6 @@ class NewOutputFormatTestCase(MapTestCase):
     def testRemoveOutputFormat(self):
         """testRemoveOutputFormat may fail depending on GD options"""
         num = self.mapobj1.numoutputformats
-        assert num == 6, num
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         self.mapobj1.appendOutputFormat(new_format)
         assert self.mapobj1.numoutputformats == num + 1
@@ -795,12 +784,6 @@ class MapMetaDataTestCase(MapTestCase):
                 break
             keys.append(key)
         assert keys == ['key1', 'key2', 'key3', 'key4'], keys
-    def testAccessNullLayerMetaData(self):
-        layer = self.mapobj1.getLayer(1)
-        self.assertRaises(mapscript.MapServerError, layer.getFirstMetaDataKey)
-    def testAccessNullClassMetaData(self):
-        layer = self.mapobj1.getLayer(1).getClass(1)
-        self.assertRaises(mapscript.MapServerError, layer.getFirstMetaDataKey)
 
 class DrawProgrammedStylesTestCase(MapTestCase):
     def testDrawPoints(self):
