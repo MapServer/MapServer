@@ -314,6 +314,28 @@ char *msBuildPath(char *szReturnPath, char *abs_path, char *path)
 }
 
 /*
+** Similar to msBuildPath(), but the input path is only qualified by the
+** absolute path if this will result in it pointing to a readable file.
+*/
+
+char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path)
+
+{
+    FILE	*fp;
+
+    if( msBuildPath( szReturnPath, abs_path, path ) == NULL )
+        return NULL;
+
+    fp = fopen( szReturnPath, "r" );
+    if( fp == NULL )
+        strcpy( szReturnPath, path );
+    else
+        fclose( fp );
+
+    return szReturnPath;
+}
+
+/*
 ** Splits a string into multiple strings based on ch. Consecutive ch's are ignored.
 */
 char **split(const char *string, char ch, int *num_tokens) 

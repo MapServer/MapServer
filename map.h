@@ -941,6 +941,7 @@ char *gsub(char *str, const char *old, const char *sznew);
 char *stripPath(char *fn);
 char *getPath(char *fn);
 char *msBuildPath(char *szReturnPath, char *abs_path, char *path);
+char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path);
 char **split(const char *string, char cd, int *num_tokens);
 int countChars(char *str, char ch);
 char *long2string(long value);
