@@ -1460,6 +1460,9 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
 {
   int i;
 
+  if (class->status == MS_DELETE)
+      return;
+
   fprintf(stream, "    CLASS\n");
   if(class->backgroundcolor > -1) fprintf(stream, "      BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[class->backgroundcolor-1].red, map->palette.colors[class->backgroundcolor-1].green, map->palette.colors[class->backgroundcolor-1].blue);
   if(class->color > -1) fprintf(stream, "      COLOR %d %d %d\n", map->palette.colors[class->color-1].red, map->palette.colors[class->color-1].green, map->palette.colors[class->color-1].blue);

@@ -127,7 +127,8 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape)
   int i;
 
   for(i=0; i<layer->numclasses; i++) {
-    if(msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
+    if(layer->class[i].status != MS_DELETE &&
+       msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
       return(i);
   }
 
