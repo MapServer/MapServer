@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.140  2004/11/09 21:34:31  assefa
+ * Used to send html output with emebed flash file when format was set to flash.
+ * Now send directly swf.
+ *
  * Revision 1.139  2004/11/09 16:24:19  frank
  * avoid lots of casting warnings
  *
@@ -1241,12 +1245,8 @@ int main(int argc, char *argv[]) {
       
       if(!img) writeError();
 
-      if (MS_DRIVER_SWF(msObj->Map->outputformat))
-      {
-          msIO_printf("Content-type: text/html%c%c", 10,10);
-      }
-      else
-        msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+      
+      msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
       if( msObj->Mode == MAP )
           status = msSaveImage(msObj->Map,img, NULL);
       else
