@@ -63,7 +63,7 @@ if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
   test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib"
   test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR"
 
-  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then 
+  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then
       JPEG_ENABLED="-DUSE_JPEG"
       JPEG_INC=-I$JPEG_INCLUDE
       JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
@@ -82,7 +82,7 @@ if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
   else
     JPEG_ENABLED="-DUSE_JPEG"
   fi
-  
+
   if test -z "$JPEG_LIB" ; then
 
     AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_LIB="-ljpeg",,,)
@@ -152,7 +152,7 @@ unset ac_cv_lib_c_gdImageGifPtr
 
 AC_CHECKING(which version of GD to use...)
 AC_ARG_WITH(gd,
-[  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's 
+[  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
                           install dir).],,)
 
 if test "$with_gd" = "no" ; then
@@ -181,10 +181,10 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
 
-  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then 
+  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
-      AC_MSG_RESULT([        using libgd from $GD_LIB])     
+      AC_MSG_RESULT([        using libgd from $GD_LIB])
       AC_ADD_RUNPATH("$GD_LIBDIR")
   else
       AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure gd is compiled before calling configure.")
@@ -199,11 +199,11 @@ else
     test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
-    
-    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then 
+
+    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
-      AC_MSG_RESULT([        using libgd from system libs.])     
+      AC_MSG_RESULT([        using libgd from system libs.])
       AC_ADD_RUNPATH("$GD_LIBDIR")
       break
     fi
@@ -224,7 +224,7 @@ unset ac_cv_lib_freetype_FT_Init_FreeType
 unset ac_cv_lib_ttf_TT_Init_FreeType
 
 AC_ARG_WITH(freetype,
-[  --with-freetype=DIR Specify where FreeType is installed (DIR is path to 
+[  --with-freetype=DIR Specify where FreeType is installed (DIR is path to
     FreeType 2.x freetype-config program or FreeType 1.x/2.x install dir).],
     FT_DIR=$withval,FT_DIR='')
 
@@ -275,13 +275,13 @@ if test -n "$FT_LIBDIR" -a -z "$FT_BIN" ; then
   AC_ADD_RUNPATH("$FT_LIBDIR")
 
 else
- 
+
   dnl check for lib in system libs
 
   AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",
     AC_CHECK_LIB(ttf, TT_Init_FreeType, FT_LIB="-lttf",,)
    ,)
-  
+
   if test -n "$FT_LIB" ; then
     AC_MSG_RESULT([        using libfreetype $FT_LIB from system libs.])
   else
@@ -296,9 +296,9 @@ dnl Check where zlib is installed
 dnl ---------------------------------------------------------------------
 
 unset ac_cv_lib_z_z,zlibVersion
- 
+
 AC_ARG_WITH(zlib,
-[  --with-zlib=DIR Specify where zlib is installed (DIR is path to 
+[  --with-zlib=DIR Specify where zlib is installed (DIR is path to
     zlib install dir).],
     ZL_DIR=$withval,ZL_DIR='')
 
@@ -335,9 +335,9 @@ dnl Check where PNG is installed
 dnl ---------------------------------------------------------------------
 
 unset ac_cv_lib_png_png_init_io
- 
+
 AC_ARG_WITH(png,
-[  --with-png=DIR Specify where PNG is installed (DIR is path to 
+[  --with-png=DIR Specify where PNG is installed (DIR is path to
     PNG install dir).],
     PNG_DIR=$withval,PNG_DIR='')
 
@@ -379,9 +379,9 @@ dnl ---------------------------------------------------------------------
 if test -n "$with_gd" -a "$with_gd" != "yes" ; then
 
   dnl check gd lib that was found on --with-gd=
- 
+
   if test "$GD_STATIC" = "yes" ; then
-    dnl To test against static GD, do AC_CHECK_LIB calls against -lc and 
+    dnl To test against static GD, do AC_CHECK_LIB calls against -lc and
     dnl include libgd.a in GD_LIB param
     GD_CHECKLIB=c
     GD_LIB=""
@@ -399,7 +399,7 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
   AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl Check for Freetype 2 support
-  GD_FT_FOUND=no 
+  GD_FT_FOUND=no
   AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl If we can't find Freetype 2 in GD then check for Freetype 1
@@ -434,7 +434,7 @@ else
   AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB $GD_XTRA_LIBS)
 
   dnl Check for Freetype 2 support
-  GD_FT_FOUND=no 
+  GD_FT_FOUND=no
   AC_CHECK_LIB(gd, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_LIB $GD_XTRA_LIBS)
 
   dnl If we can't find Freetype 2 in GD then check for Freetype 1
@@ -473,6 +473,88 @@ dnl Restore LIBS environment to state at beginning of gd tests.
 LIBS="$ms_saved_LIBS"
 
 dnl ---------------------------------------------------------------------
+dnl Find PDFlib library
+dnl
+dnl If --with-pdflib not given, then check in system libs.
+dnl ---------------------------------------------------------------------
+
+dnl We don't want LIBS updated by all the PDF stuff, so we save it and
+dnl restore later.
+
+ms_saved_LIBS="$LIBS"
+
+dnl Clear some cache variables
+unset ac_cv_lib_pdf_PDF_setlinewidth
+unset ac_cv_lib_pdf_PDF_setrgbcolor
+unset ac_cv_lib_pdf_PDF_moveto
+unset ac_cv_lib_pdf_PDF_curveto
+
+AC_CHECKING(whether we should include PDF support...)
+AC_ARG_WITH(pdf,
+[  --without-pdf          Disable PDF support.
+  --with-pdf[=DIR]       Include PDF support (DIR is PDFlib's install dir).],,)
+if test "$with_pdf" = "no" ; then
+  AC_MSG_RESULT([        disabled by --without-pdf])
+elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
+
+  AC_EXPAND_PATH($with_pdf, PDF_DIR)
+  test -f $PDF_DIR/include/pdflib.h && PDF_INCLUDE="$PDF_DIR/include"
+  test -f $PDF_DIR/libpdf/pdflib.h && PDF_INCLUDE="$PDF_DIR/libpdf"
+  test -f $PDF_DIR/include/libpdf/pdflib.h && PDF_INCLUDE="$PDF_DIR/include/libpdf"
+  test -f $PDF_DIR/pdflib.h && PDF_INCLUDE="$PDF_DIR"
+
+  test -f $PDF_DIR/lib/libpdf.a && PDF_LIBDIR="$PDF_DIR/lib"
+  test -f $PDF_DIR/libpdf/libpdf.a && PDF_LIBDIR="$PDF_DIR/libpdf"
+  test -f $PDF_DIR/libpdf.a && PDF_LIBDIR="$PDF_DIR"
+
+  test -f $PDF_DIR/lib/libpdf.so -o $PDF_DIR/lib/libpdf.sl && PDF_LIBDIR="$PDF_DIR/lib"
+  test -f $PDF_DIR/libpdf/libpdf.so -o -f $PDF_DIR/libpdf/libpdf.sl && PDF_LIBDIR="$PDF_DIR/libpdf"
+  test -f $PDF_DIR/libpdf.so -o -f $PDF_DIR/libpdf.sl && PDF_LIBDIR="$PDF_DIR"
+
+  if test -n "$PDF_INCLUDE" -a -n "$PDF_LIBDIR" ; then
+
+      PDF_LIB="-L$PDF_LIBDIR -lPDF"
+      PDF_INC=-I$PDF_INCLUDE
+      AC_ADD_RUNPATH("$PDF_LIBDIR")
+  else
+      AC_MSG_ERROR("Could not find pdflib.h or libpdf.a/libpdf.so in $PDF_DIR.")
+  fi
+
+  PDF_ENABLED="-DUSE_PDF"
+  AC_MSG_RESULT([        using libpdf from $PDF_LIB.])
+
+else
+
+  AC_CHECK_LIB(pdf,PDF_setlinewidth,PDF_LIB="-lpdf",,)
+  AC_CHECK_LIB(pdf,PDF_setrgbcolor,PDF_LIB="-lpdf",,)
+  AC_CHECK_LIB(pdf,PDF_moveto,PDF_LIB="-lpdf",,)
+  AC_CHECK_LIB(pdf,PDF_curveto,PDF_LIB="-lpdf",,)
+  AC_CHECK_LIB(pdf,PDF_show_xy,PDF_LIB="-lpdf",,)
+  if test -n "$PDF_LIB" ; then
+      PDF_ENABLED=-DUSE_PDF
+	  PDF_OBJ="mappdf.o"
+      AC_MSG_RESULT([        using libpdf from system libs.])
+  else
+      AC_MSG_RESULT([        libpdf not found... PDF support not included.])
+  fi
+
+fi
+
+dnl
+dnl libpdf may need the same libs (libz, libjpeg) that are included with GD
+dnl
+PDF_LIB="$PDF_LIB"
+
+AC_SUBST(PDF_ENABLED,$PDF_ENABLED)
+AC_SUBST(PDF_INC,    $PDF_INC)
+AC_SUBST(PDF_LIB,    $PDF_LIB)
+AC_SUBST(PDF_OBJ,    $PDF_OBJ)
+
+ALL_ENABLED="$PDF_ENABLED $ALL_ENABLED"
+ALL_INC="$PDF_INC $ALL_INC"
+ALL_LIB="$PDF_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
 dnl libTIFF (included by default if found on system).
 dnl ---------------------------------------------------------------------
 
@@ -500,7 +582,7 @@ elif test -n "$with_tiff" -a "$with_tiff" != "yes" ; then
   test -f $TIFF_DIR/libtiff/libtiff.so -o -f $TIFF_DIR/libtiff/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/libtiff"
   test -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR"
 
-  if test -n "$TIFF_INCLUDE" -a -n "$TIFF_LIBDIR" ; then 
+  if test -n "$TIFF_INCLUDE" -a -n "$TIFF_LIBDIR" ; then
 
       TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
       TIFF_INC=-I$TIFF_INCLUDE
@@ -526,7 +608,7 @@ fi
 
 dnl
 dnl libtiff may need the same libs (libz, libjpeg) that are included with GD
-dnl 
+dnl
 TIFF_LIB="$TIFF_LIB $GD_XTRA_LIBS"
 
 AC_SUBST(TIFF_ENABLED,$TIFF_ENABLED)
@@ -604,7 +686,7 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   test -f $PROJ_DIR/lib/libproj.so -o -f $PROJ_DIR/lib/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/lib"
   test -f $PROJ_DIR/libproj.so -o -f $PROJ_DIR/libproj.sl && PROJ_LIBDIR="$PROJ_DIR"
 
-  if test -n "$PROJ_INCLUDE" -a -n "$PROJ_LIBDIR" ; then 
+  if test -n "$PROJ_INCLUDE" -a -n "$PROJ_LIBDIR" ; then
       PROJ_INC=-I$PROJ_INCLUDE
       PROJ_LIB="-L$PROJ_LIBDIR -lproj"
       AC_ADD_RUNPATH("$PROJ_LIBDIR")
@@ -677,7 +759,7 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
   test -f $SDE_DIR/lib/libsde$SDE_VERSION.so -o -f $SDE_DIR/lib/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR/lib"
   test -f $SDE_DIR/libsde$SDE_VERSION.so -o -f $SDE_DIR/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR"
 
-  if test -n "$SDE_INCDIR" -a -n "$SDE_LIBDIR" ; then 
+  if test -n "$SDE_INCDIR" -a -n "$SDE_LIBDIR" ; then
       SDE_INC=-I$SDE_INCDIR
       SDE_LIB="-L$SDE_LIBDIR -lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
       AC_CHECK_LIB(pthread, main, SDE_LIB="$SDE_LIB -lpthread",,)
@@ -733,7 +815,7 @@ elif test -n "$with_mpatrol" -a "$with_patrol" != "no" ; then
   test -f $MPATROL_DIR/libmpatrol.so -o -f $MPATROL_DIR/libmpatrol.sl && MPATROL_LIBDIR="$MPATROL_DIR"
   test -f $MPATROL_DIR/lib/libmpatrol.so -o -f $MPATROL_DIR/lib/libmpatrol.sl && MPATROL_LIBDIR="$MPATROL_DIR/lib"
 
-  if test -n "$MPATROL_INCDIR" -a -n "$MPATROL_LIBDIR" ; then 
+  if test -n "$MPATROL_INCDIR" -a -n "$MPATROL_LIBDIR" ; then
       MPATROL_INC=-I$MPATROL_INCDIR
       MPATROL_LIB="-L$MPATROL_LIBDIR -lbfd -liberty -lmpatrol"
       AC_ADD_RUNPATH("$MPATROL_LIBDIR")
@@ -812,7 +894,7 @@ dnl check for static OGR libs
   test -f $OGR_DIR/port/cpl.a && OGR_CPLLIB="$OGR_DIR/port/cpl.a"
 
   if test -n "$OGR_INCDIR" -a -n "$OGR_FRMTSDIR" -a -n "$OGR_CPLDIR" -a \
-          -n "$OGR_OGRLIB" -a -n "$OGR_FRMTSLIB" -a -n "$OGR_CPLLIB" ; then 
+          -n "$OGR_OGRLIB" -a -n "$OGR_FRMTSLIB" -a -n "$OGR_CPLLIB" ; then
       OGR_INC="-I$OGR_FRMTSDIR -I$OGR_INCDIR -I$OGR_CPLDIR"
       OGR_LIB=""
       OGR_STATIC="$OGR_FRMTSLIB $OGR_OGRLIB $OGR_CPLLIB"
@@ -861,7 +943,7 @@ AC_ARG_WITH(gdal,
 
 if test "$with_gdal" = "yes" ; then
 
-  AC_MSG_RESULT([yes])  
+  AC_MSG_RESULT([yes])
 
   if test -z "$GDAL_CONFIG" ; then
     AC_PATH_PROG(GDAL_CONFIG, gdal-config, no)
@@ -874,7 +956,7 @@ if test "$with_gdal" = "yes" ; then
 elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
 
   GDAL_CONFIG=$with_gdal
-  AC_MSG_RESULT([yes, user supplied gdal-config])  
+  AC_MSG_RESULT([yes, user supplied gdal-config])
 
 else
 
@@ -915,7 +997,7 @@ if test "$with_postgis" = "no" -o "$with_postgis" = "" ; then
 elif test "$with_postgis" = "yes" ; then
   AC_MSG_RESULT(yes)
   AC_PATH_PROG(PG_CONFIG, pg_config, no)
-else 
+else
   PG_CONFIG=$with_postgis
 fi
 
@@ -924,7 +1006,7 @@ if test "$PG_CONFIG" = "no" ; then
   POSTGIS_INC=
   POSTGIS_LIB=
 else
-  AC_MSG_RESULT([yes, user supplied pg_config])  
+  AC_MSG_RESULT([yes, user supplied pg_config])
   POSTGIS_ENABLED=-DUSE_POSTGIS
   POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
@@ -934,38 +1016,38 @@ AC_SUBST(POSTGIS_ENABLED,$POSTGIS_ENABLED)
 AC_SUBST(POSTGIS_INC,$POSTGIS_INC)
 AC_SUBST(POSTGIS_LIB,$POSTGIS_LIB)
 
-dnl --------------------------------------------------------------------------- 
-dnl Try to find out if OracleSpatial support requested. 
-dnl ---------------------------------------------------------------------------  
+dnl ---------------------------------------------------------------------------
+dnl Try to find out if OracleSpatial support requested.
+dnl ---------------------------------------------------------------------------
 
-AC_MSG_CHECKING(if OracleSpatial support requested)  
+AC_MSG_CHECKING(if OracleSpatial support requested)
 AC_ARG_WITH(oraclespatial,
-[  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)],,) 
+[  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)],,)
 
 if test "$with_oraclespatial" = "no" -o "$with_oraclespatial" = ""; then
   AC_MSG_RESULT([no])
   ORA_HOME="no"
-elif test "$with_oraclespatial" = "yes"; then 
-  if test -d "$ORACLE_HOME"; then 
+elif test "$with_oraclespatial" = "yes"; then
+  if test -d "$ORACLE_HOME"; then
     AC_MSG_RESULT([yes, set from ORACLE_HOME environment variable])
-    ORA_HOME="$ORACLE_HOME" 
+    ORA_HOME="$ORACLE_HOME"
   else
-    ORA_HOME="no" 
+    ORA_HOME="no"
     AC_MSG_ERROR([ORACLE_HOME variable is not properly set])
   fi
 else
   AC_MSG_RESULT([yes, user supplied ORACLE_HOME])
   ORA_HOME=$with_oraclespatial
-fi 
+fi
 
-if test "$ORA_HOME" = "no" ; then 
+if test "$ORA_HOME" = "no" ; then
   ORACLESPATIAL_ENABLED=
   ORACLESPATIAL_INC=
   ORACLESPATIAL_LIB=
 else
-  ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL 
+  ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL
   ORACLESPATIAL_LIB="-L$ORA_HOME/lib -ltracepls8"
-  ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public" 
+  ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public"
 fi
 
 AC_SUBST(ORACLESPATIAL_ENABLED,$ORACLESPATIAL_ENABLED)
@@ -1021,7 +1103,7 @@ elif test -z "$PROJ_ENABLED" ; then
 elif test "$with_wmsclient" = "yes" ; then
 
   WMS_LYR_ENABLED="-DUSE_WMS_LYR"
-  
+
   WWW_INC=`libwww-config --cflags`
   WWW_LIB=`libwww-config --libs`
 
@@ -1087,8 +1169,8 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(for PHP/MapScript module options...)
 AC_ARG_WITH(php,
-[  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is 
-                          installed. Required in order to compile the 
+[  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is
+                          installed. Required in order to compile the
                           PHP/MapScript module.],,)
 
 if test -n "$with_php" -a -d "$with_php" ; then
@@ -1096,7 +1178,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
   dnl
   dnl Checks for shared library linking.
   dnl
-  dnl Try to use the perl-based macro if perl is available... 
+  dnl Try to use the perl-based macro if perl is available...
   dnl
   dnl if test -n "`which perl`" ; then
   AC_MSG_CHECKING([whether 'perl -V' works])
@@ -1133,7 +1215,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
   fi
 
   dnl
-  dnl Check which PHP version we're using.  
+  dnl Check which PHP version we're using.
   dnl Default is PHP3, and if ZEND_API is set then we assume that we have PHP4.
   dnl
   AC_MSG_CHECKING([whether we have PHP3 or PHP4])
@@ -1210,7 +1292,7 @@ dnl ---------------------------------------------------------------------
 AC_ARG_WITH(apxs,
 [  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
-                          module.  FILE is the optional pathname to the 
+                          module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.],,)
 
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then

@@ -1,6 +1,9 @@
 # Run ./configure in the main MapServer directory to turn this Makefile.in
 # into a proper Makefile
 
+LIB_INSTALL=/usr/local/lib/
+HEADER_INSTALL=/usr/local/include/mapserver-3.5/
+
 #
 # mpatrol runtime memory debugger
 #
@@ -39,6 +42,15 @@ GD_INC=  @GD_INC@
 GD_LIB=  @GD_LIB@
 GD=      @GD_DEF@
 GD_STATIC = @GD_STATIC@
+
+# PDFlib distribution (PDF library w/ PDF support). (EXPERIMENTAL)
+#
+#
+#
+PDF_INC=  @PDF_INC@
+PDF_LIB=  @PDF_LIB@
+PDF=      @PDF_ENABLED@
+PDF_OBJ=  @PDF_OBJ@
 
 # TIFF distribution (raster support for TIFF and GEOTIFF imagery). (RECOMMENDED)
 TIFF_INC= @TIFF_INC@
@@ -82,7 +94,7 @@ POSTGIS_INC=  @POSTGIS_INC@
 
 # Optional ORACLESPATIAL Support. Contact: cabral@cttmar.univali.br
 ORACLESPATIAL=      @ORACLESPATIAL_ENABLED@
-ORACLESPATIAL_LIB=  @ORACLESPATIAL_LIB@ 
+ORACLESPATIAL_LIB=  @ORACLESPATIAL_LIB@
 ORACLESPATIAL_INC=  @ORACLESPATIAL_INC@
 
 # w3c-libwww ... required for WMS Client Connections
@@ -105,7 +117,7 @@ WMS=	  @WMS_ENABLED@ @WMS_LYR_ENABLED@
 #
 # IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
 #
-# In order to compile the PHP_MAPSCRIPT module, we have to make MapServer 
+# In order to compile the PHP_MAPSCRIPT module, we have to make MapServer
 # uses the same version of the REGEX library that PHP was compiled with:
 #
 REGEX_OBJ=	@PHP_REGEX_OBJ@
@@ -125,13 +137,13 @@ XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(WMS) \
-        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(POSTGIS) $(MPATROL) \
-	$(GD_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
+        $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) $(POSTGIS) $(MPATROL) \
+	$(GD_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC) $(POSTGIS_INC) \
 	$(WWW_INC) $(ORACLESPATIAL_INC)
 
 # Link flags and shared libs only
-LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TIFF_LIB) $(PROJ_LIB) \
+LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
           $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
 	  $(POSTGIS_LIB) $(WWW_LIB) $(ORACLESPATIAL_LIB) $(MPATROL_LIB) $(XTRALIBS)
 
@@ -140,12 +152,12 @@ STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
 
 RM= /bin/rm -f
 
-OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o $(EPPL_OBJ) $(REGEX_OBJ)
+OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o $(EPPL_OBJ) $(REGEX_OBJ) $(PDF_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---
 #
-.c.o: 
+.c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
 all: $(MAKE_GD) $(MAKE_EGIS) libmap.a shp2img legend \
@@ -227,6 +239,10 @@ egis_clean:
 
 php3_mapscript_clean::
 	cd mapscript/php3; $(MAKE) clean; cd ../..
+
+install: libmap.a
+	cp -f libmap.a $(LIB_INSTALL)
+	cp -f map.h $(HEADER_INSTALL)
 
 clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
 	rm -f libmap.a *.o shp2img mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars
