@@ -205,7 +205,6 @@ char *msGetErrorCodeString(int code) {
 
 char *msGetErrorString(char *delimiter) 
 {
-  int n=0;
   char *errstr=NULL, errbuf[256];
   errorObj *error = msGetErrorObj();
 
@@ -213,16 +212,15 @@ char *msGetErrorString(char *delimiter)
 
   if((errstr = strdup("")) == NULL) return(NULL); // empty at first
   while(error && error->code != MS_NOERR) {
-    if(n==0) // no delimiter
-      snprintf(errbuf, 255, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);
+    if(error->next && error->next->code != MS_NOERR) // (peek ahead) more errors, use delimiter
+      snprintf(errbuf, 255, "%s: %s %s%s", error->routine, ms_errorCodes[error->code], error->message, delimiter);
     else
-      snprintf(errbuf, 255, "%s%s: %s %s", delimiter, error->routine, ms_errorCodes[error->code], error->message);    
+      snprintf(errbuf, 255, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);    
 
     if((errstr = (char *) realloc(errstr, sizeof(char)*(strlen(errstr)+strlen(errbuf)+1))) == NULL) return(NULL);
     strcat(errstr, errbuf);
 
-    error = error->next;
-    n++;
+    error = error->next;   
   }
 
   return(errstr);
