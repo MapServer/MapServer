@@ -1095,7 +1095,7 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex)
 {
     int iCurrentIndex = -1;
     int i = 0;
-    if (map && nLayerIndex < map->numlayers-1 && nLayerIndex >=0)
+    if (map && nLayerIndex < map->numlayers && nLayerIndex >=0)
     {
         for (i=0; i<map->numlayers; i++)
         {
@@ -1129,7 +1129,7 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
 {
     int iCurrentIndex = -1;
     int i = 0;
-    if (map && nLayerIndex < map->numlayers-1 && nLayerIndex >=0)
+    if (map && nLayerIndex < map->numlayers && nLayerIndex >=0)
     {
         for (i=0; i<map->numlayers; i++)
         {
