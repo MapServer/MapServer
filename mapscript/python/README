@@ -1,6 +1,6 @@
 # $Id$
 
-Python MapScript for MapServer 4.0
+Python MapScript for MapServer 4.1
 
 BUILD
 ----------------------------------------------------------------
@@ -13,18 +13,15 @@ Now that you know what disutils does, use it like
 
   python setup.py build
 
-If you want the advanced feature in setup_wnone.py (read the file
-for details):
-
-  python setup_wnone.py build
-
+Note that setup_wnone.py is deprecated since all of its features
+have been incorporated into setup.py.
 
 TEST
 ----------------------------------------------------------------
-If you have the Itasca demo data on your system, make the
-appropriate edits to tests/test.map and execute
+Make the appropriate edits to tests/test.map under the mapserver
+directory and execute
 
-  python tests/testMapScript.py
+  python tests/testMapScript.py -v
 
 The tests can (and should) be run before the module is installed.
 
@@ -103,4 +100,13 @@ Frank Warmerdam (developer)
 Norman Vine (cygwin and distutils guru)
 Tim Cera (install)
 Michael Schultz (documentation)
+
+MapScript is now using code from gdmodule 
+
+  http://newcenturycomputers.net/projects/gdmodule.html
+
+which makes possible some new and cool imageObj tricks.  The use
+this code is _greatly_ appreciated and MapServer developers look
+forward to being able to share advances with the gdmodule
+developers.
 
