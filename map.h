@@ -1197,9 +1197,10 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj*image);
 
-int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, 
+  /*int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, 
                       mapObj *map, layerObj *layer, imageObj *image);
+  */
 
 void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize);
 
