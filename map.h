@@ -906,7 +906,7 @@ typedef struct {
 // Function prototypes, wrapable
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
-MS_DLL_EXPORT void msCleanup();
+MS_DLL_EXPORT void msCleanup(void);
 
 // Function prototypes, not wrapable
 
@@ -967,7 +967,7 @@ MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
 MS_DLL_EXPORT void msFreeMap(mapObj *map);
 MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
 MS_DLL_EXPORT int msLoadMapString(mapObj *map, char *object, char *value);
-MS_DLL_EXPORT mapObj *msNewMapObj();
+MS_DLL_EXPORT mapObj *msNewMapObj(void);
 MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
 MS_DLL_EXPORT void msFree(void *p);
 MS_DLL_EXPORT char **msTokenizeMap(char *filename, int *numtokens);
@@ -980,9 +980,9 @@ MS_DLL_EXPORT void msCloseConnections(mapObj *map);
 MS_DLL_EXPORT PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
 #endif
 
-MS_DLL_EXPORT void msOGRCleanup();
-MS_DLL_EXPORT void msGDALCleanup();
-MS_DLL_EXPORT void msGDALInitialize();
+MS_DLL_EXPORT void msOGRCleanup(void);
+MS_DLL_EXPORT void msGDALCleanup(void);
+MS_DLL_EXPORT void msGDALInitialize(void);
    
 
 MS_DLL_EXPORT imageObj *msDrawScalebar(mapObj *map); // in mapscale.c
@@ -1068,6 +1068,10 @@ MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
 MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 MS_DLL_EXPORT void msFreeSymbolSet(symbolSetObj *symbolset);
 MS_DLL_EXPORT int msAddNewSymbol(mapObj *map, char *name);
+MS_DLL_EXPORT int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol);
+MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);
+MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename);
+MS_DLL_EXPORT void msLoadImageSymbol(symbolObj *symbol, const char *filename);
 
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
 MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
@@ -1124,6 +1128,8 @@ MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, lo
 MS_DLL_EXPORT int msLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive );
+MS_DLL_EXPORT char *msLayerGetProcessing(layerObj *layer, int index);
+MS_DLL_EXPORT int msLayerClearProcessing(layerObj *layer);
 
 // maplayer.c
 MS_DLL_EXPORT int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);
@@ -1358,6 +1364,8 @@ MS_DLL_EXPORT int msMoveClassDown(layerObj *layer, int nClassIndex);
 MS_DLL_EXPORT int msMoveStyleUp(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int iStyleIndex);
+MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style, int index);
+MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int index);
 
 MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
 

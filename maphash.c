@@ -75,24 +75,6 @@ char *msLookupHashTable(hashTableObj table, const char *string)
   return(NULL);
 }
 
-char *msGetHashTableValue(hashTableObj table, const char *string)
-{
-  struct hashObj *tp;
-
-  if (!table || !string) {
-    msSetError(MS_HASHERR, "NULL hash table or key", "msGetHashTableValue");
-    return(NULL);
-  }
-
-  for (tp=table[hash(string)]; tp!=NULL; tp=tp->next)
-    if (strcasecmp(string, tp->key) == 0)
-      return(tp->data);
-
-  msSetError(MS_HASHERR, "Hash key %s does not exist", "msGetHashTableValue",
-             string);
-  return(NULL);
-}
-
 void msFreeHashTable(hashTableObj table)
 {
   int i;
