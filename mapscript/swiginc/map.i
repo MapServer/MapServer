@@ -178,6 +178,13 @@
                               self->resolution, &self->scale);
     if(status != MS_SUCCESS) return(NULL);
 
+   // update geotransform based on adjusted extent.
+    msMapComputeGeotransform( self );
+
+    // Do we need to fake out stuff for rotated support?
+    if( self->gt.need_geotransform )
+        msMapSetFakedExtent( self );
+
     // compute layer scale factors now
     for(i=0;i<self->numlayers; i++) {
       if(self->layers[i].symbolscale > 0 && self->scale > 0) {
