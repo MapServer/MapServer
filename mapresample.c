@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/11/19 18:32:00  frank
+ * fixed alpha blending if target has alpha zero
+ *
  * Revision 1.33  2002/11/19 04:50:09  frank
  * fixed x/y transpose bug with alpha blending for RGBA imagemode
  *
@@ -149,11 +152,6 @@
 /* The amount of "extra" resolution we will load for our resampling source */
 #define RES_RATIO	2.0
 
-#ifdef USE_GDAL
-int drawGDAL(mapObj *map, layerObj *layer, imageObj *img,
-             GDALDatasetH hDS );
-#endif
-
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
 #  define MAX(a,b)      ((a>b) ? a : b)
@@ -250,16 +248,24 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                            opaqueness.  Note that gdAlphaBlend() always returns
                            opaque values (alpha byte is 0). */
                         
-                        gd_new_alpha = (127 - gd_alpha) 
-                                     + (127 - gd_original_alpha);
-                        gd_new_alpha = MAX(0,127 - gd_new_alpha);
-                        
-                        nSetPoints++;
-                        dstImg->tpixels[nDstY][nDstX] = 
-                            gdAlphaBlend( dstImg->tpixels[nDstY][nDstX], 
-                                          nValue );
-                        dstImg->tpixels[nDstY][nDstX] &= 0x00ffffff;
-                        dstImg->tpixels[nDstY][nDstX] |= gd_new_alpha << 24;
+                        if( gd_original_alpha == 127 )
+                        {
+                            nSetPoints++;
+                            dstImg->tpixels[nDstY][nDstX] = nValue;
+                        }
+                        else
+                        {
+                            gd_new_alpha = (127 - gd_alpha) 
+                                + (127 - gd_original_alpha);
+                            gd_new_alpha = MAX(0,127 - gd_new_alpha);
+                            
+                            nSetPoints++;
+                            dstImg->tpixels[nDstY][nDstX] = 
+                                gdAlphaBlend( dstImg->tpixels[nDstY][nDstX], 
+                                              nValue );
+                            dstImg->tpixels[nDstY][nDstX] &= 0x00ffffff;
+                            dstImg->tpixels[nDstY][nDstX] |= gd_new_alpha << 24;
+                        }
                     }
                     else
                     {
@@ -981,7 +987,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Draw into the temporary image.                                  */
 /* -------------------------------------------------------------------- */
-    result = drawGDAL( &sDummyMap, layer, srcImage, hDS );
+    result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage, hDS );
     if( result )
     {
         msFreeImage( srcImage );
