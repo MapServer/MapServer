@@ -840,10 +840,13 @@ int msProcessProjection(projectionObj *p)
 
 static int loadProjection(projectionObj *p)
 {
+#ifdef USE_PROJ
+  int i=0;
+#endif
+
   p->gt.need_geotransform = MS_FALSE;
 
 #ifdef USE_PROJ
-  int i=0;
 
   if ( p->proj != NULL )
   {
