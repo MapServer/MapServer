@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2003/09/29 20:40:56  assefa
+ * Remove brackets when It is a logical expression.
+ *
  * Revision 1.9  2003/09/29 18:24:27  assefa
  * Add test if value is valid in FLTGetMapserverExpressionClassItem.
  *
@@ -1035,8 +1038,12 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 
         if (!pszTmp)
           return NULL;
-        strcat(szBuffer, pszTmp);
-        strcat(szBuffer, ") ");
+        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") == 0 ||
+            strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") == 0)
+          sprintf(szBuffer, "%s", pszTmp);
+        else
+           sprintf(szBuffer, "(%s)", pszTmp);
+        
 
         return strdup(szBuffer);
     }
@@ -1048,7 +1055,6 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
         ((strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") == 0) ||
          (strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") == 0)))
     {
-        strcat(szBuffer, " (");
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") != 0)
           pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
         else
@@ -1057,7 +1063,6 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
         if (!pszTmp)
           return NULL;
         strcat(szBuffer, pszTmp);
-        strcat(szBuffer, ") ");
 
         return strdup(szBuffer);
     }
