@@ -291,8 +291,6 @@ int msSDELayerOpen(layerObj *layer) {
 
   sdeLayerObj *sde;
 
-  msDebug("SDE, layer opening...\n");
-
   if(layer->sdelayer) return MS_SUCCESS; // layer already open
 
   params = split(layer->connection, ',', &numparams);
@@ -369,8 +367,6 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  msDebug("SDE, layer opened\n");
-
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
@@ -381,8 +377,6 @@ int msSDELayerOpen(layerObj *layer) {
 void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
   sdeLayerObj *sde=NULL;
-
-  msDebug("SDE, layer closing...\n");
 
   sde = layer->sdelayer;
   if (sde == NULL) return;  // Silently return if layer not opened.
@@ -396,7 +390,6 @@ void msSDELayerClose(layerObj *layer) {
   free(layer->sdelayer);
   layer->sdelayer = NULL;
 
-  msDebug("SDE, layer closed\n");
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
   return;
@@ -572,15 +565,11 @@ int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
 
   sde = layer->sdelayer;
 
-  msDebug("SDE, getting item definitions...\n");
-
   status = SE_table_describe(sde->connection, sde->table, &n, &sde->itemdefs);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetItems()", "SE_table_describe()");
     return(MS_FAILURE);
   }
-
-  msDebug("\tran SE_table_describe...\n");
 
   *items = (char **)malloc(n*sizeof(char *));
   if(!(*items)) {
@@ -588,15 +577,9 @@ int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
     return(MS_FAILURE);
   }
 
-  msDebug("\tallocated memory for items (%d)...\n", n);
-
-  for(i=0; i<n; i++) {
-    msDebug("\titem=%s...\n", sde->itemdefs[i].column_name);
-    *items[i] = strdup(sde->itemdefs[i].column_name);
-  }
+  for(i=0; i<n; i++) 
+    (*items)[i] = strdup(sde->itemdefs[i].column_name);    
   *numitems = n;
-
-  msDebug("SDE, got item definitions\n");
 
   return(MS_SUCCESS);
 #else
