@@ -1117,7 +1117,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 // FIX: need to remove recursion (see msLayerNextShape)
 int msTiledSHPNextShape(layerObj *layer, shapeObj *shape) 
 {
-  int i, status, filter_passed;
+  int i, status, filter_passed = MS_FALSE;
   char *filename, tilename[MS_PATH_LENGTH];
   char **values=NULL;
 
