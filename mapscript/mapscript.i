@@ -922,7 +922,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 // class extensions for shapefileObj
 //
 %extend shapefileObj {
-  shapefileObj(char *filename, char *shapepath, int type) {    
+  shapefileObj(char *filename, int type) {    
     shapefileObj *shapefile;
     int status;
 
