@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/11/27 00:07:25  dan
+ * Return -1 if srcImage cannot be created in msResampleGDALToMap()
+ *
  * Revision 1.34  2002/11/19 18:32:00  frank
  * fixed alpha blending if target has alpha zero
  *
@@ -976,6 +979,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         (int) ((sDummyMap.extent.maxy - 
                 sDummyMap.extent.miny)/sDummyMap.cellsize+0.01),
         sDummyMap.outputformat, NULL, NULL );
+
+    if (srcImage == NULL)
+        return -1; /* msSetError() should have been called already */
 
 /* -------------------------------------------------------------------- */
 /*      If this is a GD image, ensure we have things initialized to     */
