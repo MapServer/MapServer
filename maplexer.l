@@ -93,6 +93,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>connection	       { return(CONNECTION); }
 <INITIAL,OBJECT_STRING>connectiontype	       { return(CONNECTIONTYPE); }
 <INITIAL,OBJECT_STRING>data		       { return(DATA); }
+<INITIAL,OBJECT_STRING>driver		       { return(DRIVER); }
 <INITIAL,OBJECT_STRING>dump		       { return(DUMP); }
 <INITIAL,OBJECT_STRING>empty		       { return(EMPTY); }
 <INITIAL>end			               { return(END); }
@@ -107,6 +108,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>font		       { return(FONT); }
 <INITIAL>fontset		               { return(FONTSET); }
 <INITIAL,OBJECT_STRING>force		       { return(FORCE); }
+<INITIAL,OBJECT_STRING>formatoption	       { return(FORMATOPTION); }
 <INITIAL,OBJECT_STRING>from                    { return(FROM); }
 <INITIAL>gap                                   { return(GAP); }
 <INITIAL,OBJECT_STRING>group                   { return(GROUP); }
@@ -115,6 +117,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>imagecolor	       { return(IMAGECOLOR); }
 <INITIAL,OBJECT_STRING>imagetype	       { return(IMAGETYPE); }
 <INITIAL,OBJECT_STRING>imagequality	       { return(IMAGEQUALITY); }
+<INITIAL,OBJECT_STRING>imagemode	       { return(IMAGEMODE); }
 <INITIAL,OBJECT_STRING>imagepath	       { return(IMAGEPATH); }
 <INITIAL,OBJECT_STRING>imageurl		       { return(IMAGEURL); }
 <INITIAL,OBJECT_STRING>index                   { return(INDEX); }
@@ -147,6 +150,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>maxsize	               { return(MAXSIZE); }
 <INITIAL,OBJECT_STRING>maxtemplate	       { return(MAXTEMPLATE); }
 <INITIAL,OBJECT_STRING>metadata	               { return(METADATA); }
+<INITIAL,OBJECT_STRING>mimetype	               { return(MIMETYPE); }
 <INITIAL,OBJECT_STRING>minboxsize              { return(MINBOXSIZE); }
 <INITIAL,OBJECT_STRING>mindistance             { return(MINDISTANCE); }
 <INITIAL,OBJECT_STRING>minfeaturesize          { return(MINFEATURESIZE); }
@@ -157,6 +161,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>offset                  { return(OFFSET); }
 <INITIAL,OBJECT_STRING>offsite                 { return(OFFSITE); }
 <INITIAL,OBJECT_STRING>outlinecolor	       { return(OUTLINECOLOR); }
+<INITIAL,OBJECT_STRING>outputformat	       { return(OUTPUTFORMAT); }
 <INITIAL,OBJECT_STRING>overlaybackgroundcolor  { return(OVERLAYBACKGROUNDCOLOR); }
 <INITIAL,OBJECT_STRING>overlaycolor            { return(OVERLAYCOLOR); }
 <INITIAL,OBJECT_STRING>overlaymaxsize          { return(OVERLAYMAXSIZE); }
@@ -220,11 +225,8 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>false                    { return(MS_FALSE); }
 <INITIAL,VALUE_STRING>feet		       { return(MS_FEET); }
 <INITIAL,VALUE_STRING>giant		       { return(MS_GIANT); }
-<INITIAL,VALUE_STRING>gif		       { return(MS_GIF); }
-<INITIAL,VALUE_STRING>gml		       { return(MS_GML); }
 <INITIAL,VALUE_STRING>hilite		       { return(MS_HILITE); }
 <INITIAL,VALUE_STRING>inches		       { return(MS_INCHES); }
-<INITIAL,VALUE_STRING>jpg|jpeg		       { return(MS_JPEG); }
 <INITIAL,VALUE_STRING>kilometers	       { return(MS_KILOMETERS); }
 <INITIAL,VALUE_STRING>large		       { return(MS_LARGE); }
 <INITIAL,VALUE_STRING>lc                       { return(MS_LC); }
@@ -244,7 +246,6 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>oraclespatial	       { return(MS_ORACLESPATIAL); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
 <INITIAL,VALUE_STRING>pixels                   { return(MS_PIXELS); }
-<INITIAL,VALUE_STRING>png		       { return(MS_PNG); }
 <INITIAL,VALUE_STRING>point		       { return(MS_LAYER_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_LAYER_POLYGON); }
 <INITIAL,VALUE_STRING>postgis		       { return(MS_POSTGIS); }
@@ -257,7 +258,6 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>single                   { return(MS_SINGLE); }
 <INITIAL,VALUE_STRING>small		       { return(MS_SMALL); }
 <INITIAL,VALUE_STRING>square		       { return(MS_CJC_SQUARE); }
-<INITIAL,VALUE_STRING>swf|swf		       { return(MS_SWF); }
 <INITIAL,VALUE_STRING>tiny		       { return(MS_TINY); }
 <INITIAL,VALUE_STRING>triangle		       { return(MS_CJC_TRIANGLE); }
 <INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }
@@ -266,7 +266,6 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>ul                       { return(MS_UL); }
 <INITIAL,VALUE_STRING>ur                       { return(MS_UR); }
 <INITIAL>vector                                { return(MS_SYMBOL_VECTOR); }
-<INITIAL,VALUE_STRING>wbmp		       { return(MS_WBMP); }
 <INITIAL,VALUE_STRING>wms		       { return(MS_WMS); }
 
 <OBJECT_STRING>[0-9]+                          {
