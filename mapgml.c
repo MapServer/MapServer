@@ -483,29 +483,17 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
 	fprintf(stream, "    <gml:featureMember>\n");
 	fprintf(stream, "      <%s>\n", lp->name);
 
-	// write the item/values
-	for(k=0; k<lp->numitems; k++)	
-        {
-          char *encoded_val;
-          encoded_val = msEncodeHTMLEntities(shape.values[k]);
-	  fprintf(stream, "        <%s>%s</%s>\n", 
-                  lp->items[k], encoded_val, lp->items[k]);
-          free(encoded_val);
-
-         
-        }
+	// write the bounding box
+	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
+#ifdef USE_PROJ
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "        ");
+	else // then use the layer projection and/or metadata
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "        ");	
+#else
+	gmlWriteBounds(stream, &(shape.bounds), NULL, "        "); // no projection information
+#endif
 
         fprintf(stream, "        <%s>\n", geom_name); 
-
-	// write the bounding box
-#ifdef USE_PROJ
-	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "          ");
-	else // then use the layer projection and/or metadata
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "          ");	
-#else
-	gmlWriteBounds(stream, &(shape.bounds), NULL, "          "); // no projection information
-#endif
 
 	// write the feature geometry
 #ifdef USE_PROJ
@@ -518,6 +506,16 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
 #endif
 
         fprintf(stream, "        </%s>\n", geom_name); 
+
+	// write the item/values
+	for(k=0; k<lp->numitems; k++)	
+        {
+          char *encoded_val;
+          encoded_val = msEncodeHTMLEntities(shape.values[k]);
+	  fprintf(stream, "        <%s>%s</%s>\n", 
+                  lp->items[k], encoded_val, lp->items[k]);
+          free(encoded_val);
+        }
 
 	// end this feature
 	fprintf(stream, "      </%s>\n", lp->name);
