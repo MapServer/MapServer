@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.42  2004/10/25 20:57:18  assefa
+ * Comments between NamedLayers was causing the rest of NamedLayers to
+ * be ignored (Bug 741)
+ *
  * Revision 1.41  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -496,10 +500,15 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 /*      Parse the named layers.                                         */
 /* -------------------------------------------------------------------- */
     psNamedLayer = CPLGetXMLNode(psSLD, "NamedLayer");
-    while (psNamedLayer &&  psNamedLayer->pszValue && 
-           strcasecmp(psNamedLayer->pszValue, "NamedLayer") == 0)
-
+    while (psNamedLayer)
     {
+        if (!psNamedLayer->pszValue || 
+            strcasecmp(psNamedLayer->pszValue, "NamedLayer") != 0)
+        {
+            psNamedLayer = psNamedLayer->psNext;
+            continue;
+        }
+    
         psNamedLayer = psNamedLayer->psNext;
         nLayers++;
     }
@@ -513,10 +522,16 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
     if (psNamedLayer)
     {
         iLayer = 0;
-        while (psNamedLayer &&  psNamedLayer->pszValue && 
-               strcasecmp(psNamedLayer->pszValue, "NamedLayer") == 0)
+        while (psNamedLayer) 
 
         {
+            if (!psNamedLayer->pszValue || 
+                strcasecmp(psNamedLayer->pszValue, "NamedLayer") != 0)
+            {
+                psNamedLayer = psNamedLayer->psNext;
+                continue;
+            }
+
             psName = CPLGetXMLNode(psNamedLayer, "Name");
             initLayer(&pasLayers[iLayer], map);
             
