@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2005/01/12 21:11:21  frank
+ * removed LABELS_ROTATE_WITH_MAP, rotate labels if angle!=0 or labelangleitem
+ *
  * Revision 1.100  2005/01/11 00:24:59  frank
  * added msLayerLabelsRotateWithMap
  *
@@ -1196,26 +1199,6 @@ int msLayerClearProcessing( layerObj *layer ) {
     }
     return layer->numprocessing;
 }
-
-int msLayerLabelsRotateWithMap( layerObj *layer ) {
-
-    // Eventually we need some sort of caching logic on the layer
-    // or we will find we spend quite a bit of time searching for the
-    // processing directive for rotated maps. 
-    const char *rotate_setting = 
-        msLayerGetProcessingKey( layer, "LABELS_ROTATE_WITH_MAP" );
-
-    if( rotate_setting == NULL )
-        return MS_FALSE;
-    
-    if( strcasecmp(rotate_setting,"YES") == 0 
-        || strcasecmp(rotate_setting,"ON") == 0 
-        || strcasecmp(rotate_setting,"TRUE") == 0 )
-        return MS_TRUE;
-    else
-        return MS_FALSE;
-}
-
 
 int msPOSTGISLayerSetTimeFilter(layerObj *lp, 
                                 const char *timestring, 

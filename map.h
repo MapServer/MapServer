@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.388  2005/01/12 21:11:21  frank
+ * removed LABELS_ROTATE_WITH_MAP, rotate labels if angle!=0 or labelangleitem
+ *
  * Revision 1.387  2005/01/11 00:24:07  frank
  * added labelObj arg to msAddLabel()
  *
@@ -1349,7 +1352,6 @@ MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
 MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
 MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
 MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
-MS_DLL_EXPORT int msLayerLabelsRotateWithMap( layerObj *layer );
 
 MS_DLL_EXPORT int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
                                        const char *timefield);

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2005/01/12 21:11:21  frank
+ * removed LABELS_ROTATE_WITH_MAP, rotate labels if angle!=0 or labelangleitem
+ *
  * Revision 1.81  2005/01/11 00:30:46  frank
  * msDrawShape() now applies map rotation to labels where appropriate:bug 1135
  *
@@ -1328,8 +1331,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if(layer->labelangleitemindex != -1) label.angle = atof(shape->values[layer->labelangleitemindex]);
         if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
-        if( map->gt.rotation_angle != 0.0 
-            && msLayerLabelsRotateWithMap( layer ) )
+        if( label.angle != 0 || layer->labelangleitemindex != -1 )
             label.angle -= map->gt.rotation_angle;
 
         // Angle derived from line overrides even the rotation value.
@@ -1364,8 +1366,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if(layer->labelangleitemindex != -1) label.angle = atof(shape->values[layer->labelangleitemindex]);
         if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
-        if( map->gt.rotation_angle != 0.0 
-            && msLayerLabelsRotateWithMap( layer ) )
+        if( label.angle != 0 || layer->labelangleitemindex != -1 )
             label.angle -= map->gt.rotation_angle;
 
         if(layer->labelcache) {
@@ -1400,8 +1401,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  if(layer->labelsizeitemindex != -1 && label.type == MS_TRUETYPE) 
               label.size = atoi(shape->values[layer->labelsizeitemindex]);  
 
-          if( map->gt.rotation_angle != 0.0 
-              && msLayerLabelsRotateWithMap( layer ) )
+          if( label.angle != 0 || layer->labelangleitemindex != -1 )
               label.angle -= map->gt.rotation_angle;
 
 	  if(shape->text) {
@@ -1451,8 +1451,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  if(layer->labelangleitemindex != -1) label.angle = atof(shape->values[layer->labelangleitemindex]);
 	  if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
-          if( map->gt.rotation_angle != 0.0 
-              && msLayerLabelsRotateWithMap( layer ) )
+          if( label.angle != 0 || layer->labelangleitemindex != -1 )
               label.angle -= map->gt.rotation_angle;
 
 	  if(layer->labelcache) {
@@ -1505,8 +1504,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) 
             label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
-        if( map->gt.rotation_angle != 0.0 
-            && msLayerLabelsRotateWithMap( layer ) )
+        if( label.angle != 0 || layer->labelangleitemindex != -1 )
             label.angle -= map->gt.rotation_angle;
 
 	if(label.autoangle) label.angle = angle;
@@ -1560,8 +1558,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) 
             label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
-        if( map->gt.rotation_angle != 0.0 
-            && msLayerLabelsRotateWithMap( layer ) )
+        if( label.angle != 0 || layer->labelangleitemindex != -1 )
             label.angle -= map->gt.rotation_angle;
 
 	if(layer->labelcache) {
