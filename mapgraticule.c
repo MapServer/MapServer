@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2003/03/25 09:28:39  novak
+ * Fix crash when no labels specified.
+ *
  * Revision 1.6  2003/03/18 04:56:28  sdlime
  * Updating vendor specific layer code to use a common layerinfo (void *) rather than one named for each silly connection type. A bit cleaner code. This is just renaming a layerObj parameter nothing more.Done are sde, osi, mygis, graticules and postgis. Dan will have to deal with OGR and WMS/WFS since he has some merging to do. Renamed the joinObj tableinfo to joininfo. There is a method to my madness- dynamic joins just around the corner.
  *
@@ -292,6 +295,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				if( ! pInfo->blabelaxes )		//  Bottom
 				{
 					pInfo->ilabelstate++;
+					shape->numlines				= 0;
 					return MS_SUCCESS;
 				}
 
@@ -315,6 +319,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				if( ! pInfo->blabelaxes )		//  Top
 				{
 					pInfo->ilabelstate++;
+					shape->numlines				= 0;
 					return MS_SUCCESS;
 				}
 
@@ -371,6 +376,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				if( ! pInfo->blabelaxes )			//  Left  side
 				{
 					pInfo->ilabelstate++;
+					shape->numlines				= 0;
 					return MS_SUCCESS;
 				}
 
@@ -394,6 +400,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				if( ! pInfo->blabelaxes )			//  Right side
 				{
 					pInfo->ilabelstate++;
+					shape->numlines				= 0;
 					return MS_SUCCESS;
 				}
 
