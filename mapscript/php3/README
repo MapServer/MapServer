@@ -368,10 +368,14 @@ and the MapServer Map File documentation at:
      See also : processtemplate function.
 
    int setSymbolSet(string fileName)
-       Load and set a symbol file dynamictly.
+       Load and set a symbol file dynamically.
        
    int getNumSymbols()
        Return the number of symbols in map.
+
+   int setFontSet(string fileName)
+       Load and set a new fontset.
+       
        
  LayerObj Class:
  ---------------
