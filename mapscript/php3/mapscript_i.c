@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.8  2000/09/13 21:04:34  dan
+ * Use msInitShape() in shapeObj constructor
+ *
  * Revision 1.7  2000/09/07 20:18:20  dan
  * Sync with mapscript.i version 1.16
  *
@@ -475,9 +478,7 @@ shapeObj *shapeObj_new(int type) {
     if(!shape)
       return NULL;
 
-    shape->type=type;
-    shape->numlines=0;
-    shape->line=NULL;
+    msInitShape(shape);
 
     return shape;
   }

@@ -448,10 +448,7 @@
     if(!shape)
       return NULL;
 
-    shape->type=type;
-    shape->numlines=0;
-    shape->line=NULL;
-    shape->bounds.minx = shape->bounds.miny = shape->bounds.maxx = shape->bounds.maxy = -1;
+    msInitShape(shape);
 
     return shape;
   }
