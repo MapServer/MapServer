@@ -18,12 +18,16 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.20        $Date$
- * and Revision 1.19    2005/02/10 20:27:03 [CVS-TIME]
- * Bux fix: #1109.
+ * Revision 1.21        $Date$
+ * Added the support for 3D Data.
+ * Bug fix: #1144
  *
- * Revision 1.18 2005/02/04 13:10:46 [CVS-TIME]
- * Bux fix: #1109, #1110, #1111, #1112, #1136,
+ * Revision 1.20        2005/02/14 19:42:44 [CVS-TIME]
+ * and Revision 1.19    2005/02/10 20:27:03 [CVS-TIME]
+ * Bug fix: #1109.
+ *
+ * Revision 1.18        2005/02/04 13:10:46 [CVS-TIME]
+ * Bug fix: #1109, #1110, #1111, #1112, #1136,
  *           #1210, #1211, #1212, #1213.
  * Cleaned code.
  * Added debug messages for internal SQL's.
@@ -93,11 +97,9 @@
  * Using OracleSpatial:
  * - CONNECTIONTYPE oraclespatial
  * - CONNECTION 'username/password@database'
- * - DATA 'geometry_column FROM <table>(SELECT stmt)'
+ * - DATA 'geometry_column FROM <table>'
  *   or
- *   DATA 'geometr_column FROM <table> USING UNIQUE <column>' 
- *   or
- *   DATA 'geometry_column FROM <table> [USING SRID #srid <function> VERSION <vcode>]'
+ *   DATA 'geometry_column FROM <table> [USING UNIQUE <column>' SRID #srid <function> VERSION <vcode>]'
  *       <function> can be:
  *           'FILTER', 'RELATE', GEOPMRELATE' or 'NONE'
  *       <vcode> can be:
@@ -227,23 +229,24 @@ static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo );
 static void msOCICloseHandlers( msOracleSpatialHandler *hand );
 static void msOCICloseLayerInfo( msOracleSpatialLayerInfo *layerinfo );
 static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo );
-static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt );
+static int msOCIGet2DOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt );
+static int msOCIGet3DOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt );
 static int msOCIConvertCircle( pointObj *pt );
 static void osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name);
 static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name);
 static void osGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *srid, rectObj rect);
 static void osNoGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *srid, rectObj rect);
-static double osCalculateArcRadius(double p1x, double p1y, double p2x, double p2y, double p3x, double p3y);
-static void osCalculateArc(double p1x, double p1y, double p2x, double p2y, double pcx, double pcy, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape);
-static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n);
+static double osCalculateArcRadius(pointObj *pnt);
+static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape);
+static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d);
 static void osShapeBounds ( shapeObj *shp );
-static void osCloneShape(shapeObj *shape, shapeObj *newshape);
-static void osPointCluster(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation);
-static void osPoint(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt);
-static void osClosedPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type);
-static void osRectangle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt);
-static void osCircle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt);
-static void osArcPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints);
+static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d);
+static void osPointCluster(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation, int data3d);
+static void osPoint(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d);
+static void osClosedPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type, int data3d);
+static void osRectangle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d);
+static void osCircle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d);
+static void osArcPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d);
 static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind);
 
 /* local status */
@@ -264,7 +267,7 @@ static int TRY( msOracleSpatialHandler *hand, sword status )
         case OCI_ERROR:
             OCIErrorGet((dvoid *)hand->errhp, (ub4)1, (text *)NULL, &errcode, last_oci_call_ms_error, (ub4)sizeof(last_oci_call_ms_error), OCI_HTYPE_ERROR );
             if (errcode == NULLERRCODE)
-                return 1;
+                return 1;            
             last_oci_call_ms_error[sizeof(last_oci_call_ms_error)-1] = 0; /* terminate string!? */
             break;
         case OCI_NEED_DATA: 
@@ -755,7 +758,7 @@ static void osNoGeodeticData(int function, int version, char *query_str, char *g
 }
 
 /* get ordinates from SDO buffer */
-static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt )
+static int msOCIGet2DOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt )
 {
     double x, y;
     int i, n, success = 1;
@@ -764,7 +767,8 @@ static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryOb
 
     msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
   
-    for( i=s, n=0; i < e && success; i+=2, n++ ) {
+    for( i=s, n=0; i < e && success; i+=2, n++ ) 
+    {
         success = TRY( hand,
           OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
                && TRY( hand,
@@ -774,14 +778,49 @@ static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryOb
                && TRY( hand,
           OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&y ) );
     
-    if (success) 
-    {
-      pt[n].x = x;
-      pt[n].y = y;
-    }    
-  }
+        if (success) 
+        {
+            pt[n].x = x;
+            pt[n].y = y;
+        }    
+    }
+    
+    return success ? n : 0;
+}
 
-  return success ? n : 0;
+static int msOCIGet3DOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt )
+{
+    double x, y, z;
+    int i, n, success = 1;
+    boolean exists;
+    OCINumber *oci_number;
+
+    msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
+
+    for( i=s, n=0; i < e && success; i+=3, n++ ) 
+    {
+        success = TRY( hand,
+          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
+               && TRY( hand,
+          OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&x ) )
+               && TRY( hand,
+          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+1, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
+               && TRY( hand,
+          OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&y ) )
+               && TRY( hand,
+          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+2, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
+               && TRY( hand,
+          OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&z ) );
+    
+        if (success) 
+        {
+            pt[n].x = x;
+            pt[n].y = y;
+            pt[n].z = z;
+        }    
+    }
+    
+    return success ? n : 0;
 }
 
 /* convert three-point circle to two-point rectangular bounds */
@@ -880,60 +919,81 @@ static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_c
     sprintf( query_str, "SELECT SDO_GEOM.SDO_CONVEXHULL(%s, %f) AS GEOM from %s)", geom_column_name, TOLERANCE, query_str2);
 }
 
-static double osCalculateArcRadius(double p1x, double p1y, double p2x, double p2y, double p3x, double p3y)
+static double osCalculateArcRadius(pointObj *pnt)
 {
     double rc;
     double r1, r2, r3;
  
-    r1 = sqrt( pow(p1x-p2x,2) + pow(p1y-p2y,2) );
-    r2 = sqrt( pow(p2x-p3x,2) + pow(p2y-p3y,2) );
-    r3 = sqrt( pow(p3x-p1x,2) + pow(p3y-p1y,2) );
+    r1 = sqrt( pow(pnt[0].x-pnt[1].x,2) + pow(pnt[0].y-pnt[1].y,2) );
+    r2 = sqrt( pow(pnt[1].x-pnt[2].x,2) + pow(pnt[1].y-pnt[2].y,2) );
+    r3 = sqrt( pow(pnt[2].x-pnt[0].x,2) + pow(pnt[2].y-pnt[0].y,2) );
     rc = ( r1+r2+r3 )/2;
   
     return ( ( r1*r2*r3 )/( 4*sqrt( rc * (rc-r1) * (rc-r2) * (rc-r3) ) ) );  
 }
 
-static void osCalculateArc(double p1x, double p1y, double p2x, double p2y, double pcx, double pcy, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape)
-{
+static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape)
+{    
     double length, ctrl, angle;  
-    double divbas, plusbas, cosbas, sinbas;
+    double divbas, plusbas, cosbas, sinbas, zrange = 0;
     int i = 0;  
     
     if ( npoints > 0 )
     {     
-        length = sqrt(((p2x- p1x)*(p2x-p1x))+((p2y-p1y)*(p2y-p1y)));  /*2 and 1*/  
+        length = sqrt(((pnt[1].x-pnt[0].x)*(pnt[1].x-pnt[0].x))+((pnt[1].y-pnt[0].y)*(pnt[1].y-pnt[0].y)));        
         ctrl = length/(2*radius);
+        
+        if (data3d)
+        {
+            zrange = labs(pnt[0].z-pnt[1].z)/npoints;            
+            if ((pnt[0].z > pnt[1].z) && side == 1)
+                zrange *= -1;
+            else if ((pnt[0].z < pnt[1].z) && side == 1)
+                    zrange = zrange;
+            else if ((pnt[0].z > pnt[1].z) && side != 1)
+                    zrange *= -1;
+            else if ((pnt[0].z < pnt[1].z) && side != 1)
+                    zrange = zrange;
+        }
     
         if( ctrl <= 1 )
         {
             divbas = 2 * asin(ctrl);
             plusbas = divbas/(npoints);
-            cosbas = (p1x-pcx)/radius;
-            sinbas = (p1y-pcy)/radius; 
+            cosbas = (pnt[0].x-pnt[3].x)/radius;
+            sinbas = (pnt[0].y-pnt[3].y)/radius; 
             angle = plusbas;
   
             arcline.point = (pointObj *)malloc(sizeof(pointObj)*(npoints+1));  
-            arcline.point[0].x = p1x; 
-            arcline.point[0].y = p1y; 
+            arcline.point[0].x = pnt[0].x;
+            arcline.point[0].y = pnt[0].y;
+            if (data3d)
+                arcline.point[0].z = pnt[0].z;
   
             for (i = 1; i <= npoints; i++)
             {
                 if( side == 1)
                 {
-                    arcline.point[i].x = pcx + radius * ((cosbas*cos(angle))-(sinbas*sin(angle)));
-                    arcline.point[i].y = pcy + radius * ((sinbas*cos(angle))+(cosbas*sin(angle)));
+                    arcline.point[i].x = pnt[3].x + radius * ((cosbas*cos(angle))-(sinbas*sin(angle)));
+                    arcline.point[i].y = pnt[3].y + radius * ((sinbas*cos(angle))+(cosbas*sin(angle)));
+                    if (data3d)
+                        arcline.point[i].z = pnt[0].z + (zrange*i);
                 }
                 else
                 {
                     if ( side == -1)
                     {
-                        arcline.point[i].x = pcx + radius * ((cosbas*cos(angle))+(sinbas*sin(angle)));
-                        arcline.point[i].y = pcy + radius * ((sinbas*cos(angle))-(cosbas*sin(angle)));
+                        arcline.point[i].x = pnt[3].x + radius * ((cosbas*cos(angle))+(sinbas*sin(angle)));
+                        arcline.point[i].y = pnt[3].y + radius * ((sinbas*cos(angle))-(cosbas*sin(angle)));
+                        if (data3d)
+                            arcline.point[i].z = pnt[0].z + (zrange*i);
                     }
                     else
                     {
-                         arcline.point[i].x = p1x;
-                         arcline.point[i].y = p1y;
+                         arcline.point[i].x = pnt[0].x;
+                         arcline.point[i].y = pnt[0].y;
+                         if (data3d)
+                             arcline.point[i].z = pnt[0].z;
                     }
                 }      
                 angle += plusbas;
@@ -947,10 +1007,17 @@ static void osCalculateArc(double p1x, double p1y, double p2x, double p2y, doubl
     else
     {
         arcline.point = (pointObj *)malloc(sizeof(pointObj)*(2));
-        arcline.point[0].x = p1x; 
-        arcline.point[0].y = p1y;
-        arcline.point[1].x = p2x; 
-        arcline.point[1].y = p2y;
+        arcline.point[0].x = pnt[0].x;
+        arcline.point[0].y = pnt[0].y;        
+        arcline.point[1].x = pnt[1].x;
+        arcline.point[1].y = pnt[1].y;
+        
+        if(data3d)
+        {
+            arcline.point[0].z = pnt[0].z;
+            arcline.point[1].z = pnt[1].z;
+        }
+        
         arcline.numpoints = 2;
         
         msAddLine( shape, &arcline );    
@@ -958,18 +1025,17 @@ static void osCalculateArc(double p1x, double p1y, double p2x, double p2y, doubl
     }
 }
 
-/*
-Part of this function was based on Terralib function TeGenerateArc
-found in TeGeometryAlgorith.cpp (www.terralib.org).
-Part of this function was based on Dr. Ialo (Univali/Cttmar) functions.
-*/
-static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n)
+/* Part of this function was based on Terralib function TeGenerateArc
+ * found in TeGeometryAlgorith.cpp (www.terralib.org).
+ * Part of this function was based on Dr. Ialo (Univali/Cttmar) functions. */
+static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d)
 {
     double mult, plus1, plus2, plus3, bpoint;
     double cx, cy;   
     double radius, side, area, npoints;
     double dist1 = 0;
     double dist2 = 0;
+    pointObj point5[4];
   
     mult = ( points.point[i+1].x - points.point[i].x ) 
          * ( points.point[i+2].y - points.point[i].y ) 
@@ -1004,17 +1070,29 @@ static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int 
         {
             if((dist1-dist2) < 0)
                 side = -1;    
-        }  
+        }
   
-        radius = osCalculateArcRadius(points.point[i].x, points.point[i].y, points.point[i+1].x, points.point[i+1].y, points.point[i+2].x, points.point[i+2].y);
+        point5[0] = points.point[i];
+        point5[1] = points.point[i+1];
+        point5[2] = points.point[i+2];
+        point5[3].x = cx;
+        point5[3].y = cy;
+        
+        radius = osCalculateArcRadius(point5);
     
         area = ((points.point[i].x + points.point[i+1].x) * (points.point[i+1].y - points.point[i].y))
              + ((points.point[i+1].x + points.point[i+2].x) * (points.point[i+2].y - points.point[i+1].y));
   
-        npoints = labs(area/radius); 
-  
-        osCalculateArc(points.point[i].x, points.point[i].y, points.point[i+1].x, points.point[i+1].y, cx, cy, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
-        osCalculateArc(points.point[i+1].x, points.point[i+1].y, points.point[i+2].x, points.point[i+2].y, cx, cy, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);    
+        npoints = labs(area/radius);   
+        
+        point5[0] = points.point[i];
+        point5[1] = points.point[i+1];
+        osCalculateArc(point5, data3d, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
+        
+        point5[0] = points.point[i+1];
+        point5[1] = points.point[i+2];
+        osCalculateArc(point5, data3d, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
+
     }
     else
     {
@@ -1022,12 +1100,21 @@ static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int 
         arcline.point[0].x = points.point[i].x; 
         arcline.point[0].y = points.point[i].y;
         arcline.point[1].x = points.point[i+2].x; 
-        arcline.point[1].y = points.point[i+2].y;
+        arcline.point[1].y = points.point[i+2].y;        
+        
+        if (data3d)
+        {
+            arcline.point[0].z = points.point[i].z;
+            arcline.point[1].z = points.point[i+2].z;
+        }        
+        
         arcline.numpoints = 2;
         
         msAddLine( shape, &arcline );    
         free (arcline.point);
     }
+    
+    free(point5);
 }
 
 static void osShapeBounds ( shapeObj *shp )
@@ -1058,17 +1145,17 @@ static void osShapeBounds ( shapeObj *shp )
     }
 }
 
-static void osCloneShape(shapeObj *shape, shapeObj *newshape)
+static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d)
 {
     int max_points = 0;
     int i,f,g;
     lineObj shapeline = {0, NULL};    
   
     for (i = 0; i < shape->numlines; i++)
-        max_points += shape->line[i].numpoints;  
+        max_points += shape->line[i].numpoints;
   
     if (max_points > 0)
-        shapeline.point = (pointObj *)malloc( sizeof(pointObj)*max_points );     
+        shapeline.point = (pointObj *)malloc( sizeof(pointObj)*max_points );
   
     g = 0;  
     for ( i = 0 ; i < shape->numlines; i++)
@@ -1077,6 +1164,8 @@ static void osCloneShape(shapeObj *shape, shapeObj *newshape)
         {
             shapeline.point[g].x = shape->line[i].point[f].x;
             shapeline.point[g].y = shape->line[i].point[f].y;
+            if (data3d)
+                shapeline.point[g].z = shape->line[i].point[f].z;
         }
     }  
     
@@ -1088,7 +1177,7 @@ static void osCloneShape(shapeObj *shape, shapeObj *newshape)
     }
 }
 
-static void osPointCluster(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation)
+static void osPointCluster(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation, int data3d)
 {
     int n;
   
@@ -1096,23 +1185,31 @@ static void osPointCluster(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape,
     if (n == interpretation)
     {
         points.point = (pointObj *)malloc( sizeof(pointObj)*n );
-        n = msOCIGetOrdinates( layerinfo, obj, start, end, points.point );
+        
+        if (data3d)
+            n = msOCIGet3DOrdinates( layerinfo, obj, start, end, points.point );
+        else        
+            n = msOCIGet2DOrdinates( layerinfo, obj, start, end, points.point );
     
-       if (n == interpretation && n>0)
-       {
-          shape->type = MS_SHAPE_POINT;
-          points.numpoints = n;
-          msAddLine( shape, &points );
-       }
-       free( points.point );
+        if (n == interpretation && n>0)
+        {
+            shape->type = MS_SHAPE_POINT;
+            points.numpoints = n;
+            msAddLine( shape, &points );
+        }
+        free( points.point );
     }
 }
 
-static void osPoint(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt)
+static void osPoint(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d)
 {
     int n;
     
-    n = msOCIGetOrdinates( layerinfo, obj, start, end, pnt ); /* n must be < 5 */
+    if (data3d)
+        n = msOCIGet3DOrdinates( layerinfo, obj, start, end, pnt );
+    else
+        n = msOCIGet2DOrdinates( layerinfo, obj, start, end, pnt ); /* n must be < 5 */
+    
     if (n == 1)
     {
         shape->type = MS_SHAPE_POINT;
@@ -1122,14 +1219,18 @@ static void osPoint(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeo
     }
 }
 
-static void osClosedPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type)
+static void osClosedPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type, int data3d)
 {
     int n;
   
     n = (end - start)/2;
     points.point = (pointObj *)malloc( sizeof(pointObj)*n );
-    n = msOCIGetOrdinates( layerinfo, obj, start, end, points.point );
-  
+    
+    if (data3d)
+        n = msOCIGet3DOrdinates( layerinfo, obj, start, end, points.point );
+    else
+        n = msOCIGet2DOrdinates( layerinfo, obj, start, end, points.point );
+
     if (n > 0)
     {
         shape->type = (elem_type==21) ? MS_SHAPE_LINE : MS_SHAPE_POLYGON;
@@ -1139,11 +1240,14 @@ static void osClosedPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape
     free( points.point );
 }
 
-static void osRectangle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt)
+static void osRectangle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d)
 {
     int n;
   
-    n = msOCIGetOrdinates( layerinfo, obj, start, end, pnt ); /* n must be < 5 */
+    if (data3d)
+        n = msOCIGet3DOrdinates( layerinfo, obj, start, end, pnt ); /* n must be < 5 */
+    else
+        n = msOCIGet2DOrdinates( layerinfo, obj, start, end, pnt ); /* n must be < 5 */
     
     if (n == 2)
     {
@@ -1151,21 +1255,31 @@ static void osRectangle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SD
         points.numpoints = 5;
         points.point = pnt;
         
-        /* point5 [0] & [1] contains the lower-left and upper-right points of the rectangle */    
+        /* point5 [0] & [1] contains the lower-left and upper-right points of the rectangle */
         pnt[2] = pnt[1];
         pnt[1].x = pnt[0].x;
         pnt[3].x = pnt[2].x;
         pnt[3].y = pnt[0].y;
         pnt[4] = pnt[0]; 
+        if (data3d)
+        {
+            pnt[1].z = pnt[0].z;         
+            pnt[3].z = pnt[2].z;
+        }
+
         msAddLine( shape, &points );
     }
 }
 
-static void osCircle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt)
+static void osCircle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d)
 {
     int n;
  
-    n = msOCIGetOrdinates( layerinfo, obj, start, end, pnt ); /* n must be < 5 */
+    if (data3d)
+        n = msOCIGet3DOrdinates(  layerinfo, obj, start, end, pnt ); /* n must be < 5 */
+    else    
+        n = msOCIGet2DOrdinates( layerinfo, obj, start, end, pnt ); /* n must be < 5 */
+    
     if (n == 3)
     {
         if (msOCIConvertCircle( pnt ))
@@ -1178,14 +1292,18 @@ static void osCircle(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGe
     }
 }
 
-static void osArcPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints)
+static void osArcPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d)
 {
     int n, i;
     lineObj points = {0, NULL};
   
     n = (end - start)/2;
     points.point = (pointObj *)malloc( sizeof(pointObj)*n );   
-    n = msOCIGetOrdinates( layerinfo, obj, start, end, points.point );      
+    
+    if (data3d)
+        n = msOCIGet3DOrdinates( layerinfo, obj, start, end, points.point );
+    else
+        n = msOCIGet2DOrdinates( layerinfo, obj, start, end, points.point );      
   
     if (n > 2)
     {
@@ -1193,7 +1311,7 @@ static void osArcPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, S
         points.numpoints = n;  
     
         for (i = 0; i < n-2; i = i+2)
-            osGenerateArc(shape, arcpoints, points, i, n);
+            osGenerateArc(shape, arcpoints, points, i, n, data3d);
     }  
     free (points.point);
 }
@@ -1204,11 +1322,11 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
     float compound_lenght, compound_count;
     ub4 etype;
     ub4 interpretation;
-    int nelems, nords;
+    int nelems, nords, data3d;
     int elem, ord_start, ord_end;
     boolean exists;
     OCINumber *oci_number;
-    double x, y;
+    double x, y, z;
     int success;
     lineObj points = {0, NULL};
     pointObj point5[5]; /* for quick access */
@@ -1219,20 +1337,29 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
     /*stat the variables for compound polygons*/
     compound_lenght = 0;
     compound_type = 0;
-    compound_count = -1;  
+    compound_count = -1;
+    data3d = 0; 
   
     if (ind->_atomic != OCI_IND_NULL)  /* not a null object */
     {
         nelems = nords = 0;
         success = TRY( hand, OCICollSize( hand->envhp, hand->errhp, (OCIColl *)obj->elem_info, &nelems ) )
                && TRY( hand, OCICollSize( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, &nords ) )
-               && TRY( hand, OCINumberToInt( hand->errhp, &(obj->gtype), (uword)sizeof(int), OCI_NUMBER_SIGNED, (dvoid *)&gtype ) )
-               && (nords%2==0 && nelems%3==0); /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
-      
+               && TRY( hand, OCINumberToInt( hand->errhp, &(obj->gtype), (uword)sizeof(int), OCI_NUMBER_SIGNED, (dvoid *)&gtype ) );
+               /*&& (nords%2==0 && nelems%3==0);*/ /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
+              
         if (success && (gtype==2001 || gtype==2002 || gtype==2003 || gtype==2005 || gtype==2006 || gtype==2007))
+            success = (nords%2==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
+        else if (success && (gtype==3001 || gtype==3002 || gtype==3003 || gtype==3005 || gtype==3006 || gtype==3007))
         {
-            /* reading SDO_POINT from SDO_GEOMETRY for a 2D point geometry */
-            if (gtype==2001 && ind->point._atomic == OCI_IND_NOTNULL && ind->point.x == OCI_IND_NOTNULL && ind->point.y == OCI_IND_NOTNULL)
+            success = (nords%3==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
+            data3d = 1;
+        }
+        
+        if (success)
+        {            
+            /* reading SDO_POINT from SDO_GEOMETRY for a 2D/3D point geometry */
+            if ((gtype==2001 || gtype==3001) && ind->point._atomic == OCI_IND_NOTNULL && ind->point.x == OCI_IND_NOTNULL && ind->point.y == OCI_IND_NOTNULL && (data3d?ind->point.z == OCI_IND_NOTNULL:1))
             {
                 success = TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.x), (uword)sizeof(double), (dvoid *)&x ) )
                        && TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.y), (uword)sizeof(double), (dvoid *)&y ) );
@@ -1246,7 +1373,14 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
                 points.point = point5;
                 point5[0].x = x;
                 point5[0].y = y;
-            
+                if (data3d)
+                {
+                    success = TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.z), (uword)sizeof(double), (dvoid *)&z ));
+                    if (ERROR( "osGetOrdinates()", layerinfo ))
+                        return MS_FAILURE;
+                    else
+                      point5[0].z = z;
+                }            
                 msAddLine( shape, &points );
                 return MS_SUCCESS;
                 /*continue;*/ /* jump to end of big-while below */
@@ -1289,45 +1423,46 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
                   compound_count = 0;            
                   msInitShape(&newshape);
               }
-          
+              
               elem_type = (etype == 1 && interpretation > 1) ? 10 : ((etype%10)*10 + interpretation);
+              
               switch (elem_type) 
               {
                   case 10: /* point cluster with 'interpretation'-points */
-                      osPointCluster (layerinfo, shape, obj, ord_start, ord_end, points, interpretation);
+                      osPointCluster (layerinfo, shape, obj, ord_start, ord_end, points, interpretation, data3d);
                       break;
                   case 11: /* point type */
-                      osPoint(layerinfo, shape, obj, ord_start, ord_end, points, point5);
+                      osPoint(layerinfo, shape, obj, ord_start, ord_end, points, point5, data3d);
                       break;            
                   case 21: /* line string whose vertices are connected by straight line segments */            
                       if (compound_type)             
-                          osClosedPolygon(layerinfo, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end, points, elem_type);
+                          osClosedPolygon(layerinfo, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end, points, elem_type, data3d);
                       else
-                          osClosedPolygon(layerinfo, shape, obj, ord_start, ord_end, points, elem_type);
+                          osClosedPolygon(layerinfo, shape, obj, ord_start, ord_end, points, elem_type, data3d);
                       break;
                   case 22:
                       if (compound_type)             
-                          osArcPolygon(layerinfo, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end , points);
+                          osArcPolygon(layerinfo, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end , points, data3d);
                       else
-                          osArcPolygon(layerinfo, shape, obj, ord_start, ord_end, points);
+                          osArcPolygon(layerinfo, shape, obj, ord_start, ord_end, points, data3d);
                       break;
                   case 31: /* simple polygon with n points, last point equals the first one */
-                      osClosedPolygon(layerinfo, shape, obj, ord_start, ord_end, points, elem_type);
+                      osClosedPolygon(layerinfo, shape, obj, ord_start, ord_end, points, elem_type, data3d);
                       break;
                   case 33: /* rectangle defined by 2 points */
-                      osRectangle(layerinfo, shape, obj, ord_start, ord_end, points, point5);
+                      osRectangle(layerinfo, shape, obj, ord_start, ord_end, points, point5, data3d);
                       break;
                   case 34: /* circle defined by 3 points */
-                      osCircle(layerinfo, shape, obj, ord_start, ord_end, points, point5);
+                      osCircle(layerinfo, shape, obj, ord_start, ord_end, points, point5, data3d);
                       break;
               }
 
               if (compound_count >= compound_lenght)
               {
-                  osCloneShape(&newshape, shape);
+                  osCloneShape(&newshape, shape, data3d);
                   msFreeShape(&newshape);
               }
-                    
+                   
               if (ERROR( "osGetOrdinates()", layerinfo )) 
                   return MS_FAILURE;
             
@@ -1339,7 +1474,7 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
                   compound_count++;
               
           } while (elem < nelems); /* end of element loop */
-      } /* end of gtype big-if */
+        } /* end of gtype big-if */
     } /* end of not-null-object if */  
 
     if (compound_type)
@@ -2077,8 +2212,7 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
         
         return MS_FAILURE;
     }
-    
-    /*shape = (shapeObj *)malloc( sizeof(shapeObj *) * 1);  */
+        
     /* at first, don't know what it is */    
     msInitShape( &shape );        
 
