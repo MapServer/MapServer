@@ -53,10 +53,11 @@ typedef struct {
 ** Function prototypes
 */
 
-errorObj *msGetErrorObj();
+errorObj *msGetErrorObj(void);
 void msSetError(int code, char *message, char *routine, ...);
 void msWriteError(FILE *stream);
-char *msGetVersion();
+char *msGetVersion(void);
+char *msGetErrorString(int code);
 
 #ifndef SWIG
 void msDebug( const char * pszFormat, ... );

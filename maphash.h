@@ -15,7 +15,7 @@ struct hashObj { /* hash table entry */
 
 typedef struct hashObj **  hashTableObj;
 
-hashTableObj msCreateHashTable();
+hashTableObj msCreateHashTable(void);
 struct hashObj *msInsertHashTable(hashTableObj, char *, char *);
 char *msLookupHashTable(hashTableObj, char *);
 void msFreeHashTable(hashTableObj);
