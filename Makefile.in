@@ -138,7 +138,8 @@ OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o
 	$(CC) -c $(CFLAGS) $< -o $@
 
 all: $(MAKE_GD) $(MAKE_EGIS) libmap.a shp2img legend \
-	mapserv shptree shptreevis shptreetst scalebar sortshp perlvars @MAKE_PHPMS@
+	mapserv shptree shptreevis shptreetst scalebar sortshp perlvars \
+	tile4ms @MAKE_PHPMS@
 
 egis::
 	cd egis/errLog; make; cd ..
@@ -196,6 +197,9 @@ shptreetst: libmap.a shptreetst.o map.h
 
 sortshp: sortshp.o
 	$(CC) $(CFLAGS) sortshp.o $(LDFLAGS) $(STATIC_LIBS) -o sortshp
+
+tile4ms: tile4ms.o
+	$(CC) $(CFLAGS) tile4ms.o $(LDFLAGS) $(STATIC_LIBS) -o tile4ms
 
 perlvars:
 	touch perlvars
