@@ -547,6 +547,7 @@
   int draw(mapObj *map, layerObj *layer, gdImagePtr img, char *class_string, char *label_string) {
     shapeObj shape;
 
+    msInitShape(&shape);
     msRect2Polygon(*self, &shape);
     msDrawShape(map, layer, &shape, img, class_string, label_string);
     msFreeShape(&shape);
