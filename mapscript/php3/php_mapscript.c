@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/10/22 16:32:20  dan
+ * Made map->draw() and layer->draw() produce warnings instead of fatal errors
+ *
  * Revision 1.20  2000/10/16 13:49:20  dan
  * Added missing HashTable *list=NULL for PHP4 in getscale()
  *
@@ -91,63 +94,6 @@
  * Revision 1.1  2000/05/09 21:06:11  dan
  * Initial Import
  *
- * Revision 1.20  2000/05/09 20:38:32  daniel
- * Added classObj->setExpression()
- *
- * Revision 1.19  2000/05/05 20:59:41  daniel
- * Added shapefileObj.free() and fixed free() method on other classes
- *
- * Revision 1.18  2000/04/27 20:10:13  daniel
- * Added missing return value in map->zoomRectangle()
- *
- * Revision 1.17  2000/04/27 18:48:29  daniel
- * Fixed test of Max. extents in map->zoomPoint()
- *
- * Revision 1.16  2000/04/26 16:10:02  daniel
- * Changes to build with ms_3.3.010
- *
- * Revision 1.15  2000/04/03 22:37:41  daniel
- * Added include errno.h for Unix
- *
- * Revision 1.14  2000/04/03 15:03:08  assefa
- * Add ms_getcwd function to get current working directory.
- *
- * Revision 1.13  2000/03/27 22:39:46  daniel
- * Fixed compile warnings
- *
- * Revision 1.12  2000/03/27 21:57:46  assefa
- * Add rectange query functions on map and layer objects.
- *
- * Revision 1.11  2000/03/23 23:32:31  assefa
- * Change the way to test for min/max scale when zooming.
- *
- * Revision 1.10  2000/03/20 22:49:00  daniel
- * Fixed shapeResultObj constructor and added missing members to layerObj
- *
- * Revision 1.9  2000/03/20 21:15:43  assefa
- * Add scale and maximum range in zooming functions.
- *
- * Revision 1.8  2000/03/17 23:08:30  daniel
- * Added shapeFileObj, queryUsingPoint() methods, and all MS_* constants
- *
- * Revision 1.7  2000/03/16 20:39:59  daniel
- * Added lineObj, shapeObj, featureObj
- *
- * Revision 1.6  2000/03/16 20:27:23  assefa
- * Add zooming functions. Add getColorByIndex function.
- *
- * Revision 1.5  2000/03/15 23:03:04  assefa
- * Add return values in function getLayerByName.
- *
- * Revision 1.4  2000/03/15 06:20:18  daniel
- * Added pointObj, colorObj, shapeResultObj, queryResultObj, etc.
- *
- * Revision 1.3  2000/03/15 05:27:31  assefa
- * Add Web object, refernece map object, rect object.
- *
- * Revision 1.2  2000/02/07 05:18:02  daniel
- * Added layerObj, classObj, and labelObj
- *
  * Revision 1.1  2000/01/31 08:38:43  daniel
  * First working version - only mapObj implemented with read-only properties
  *
@@ -177,7 +123,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Oct 16, 2000)"
+#define PHP3_MS_VERSION "(Oct 20, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -1978,7 +1924,10 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
     if (self == NULL || (im = mapObj_draw(self)) == NULL)
-        _phpms_report_mapserver_error(E_ERROR);
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_FALSE;
+    }
 
     /* Return an image object */
     _phpms_build_img_object(im, &(self->web), list, return_value);
@@ -3062,7 +3011,7 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
 
     if (im == NULL || self == NULL || parent_map == NULL ||
         (retVal = layerObj_draw(self, parent_map, im)) == -1)
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
 
     RETURN_LONG(retVal);
 }
