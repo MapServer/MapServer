@@ -228,6 +228,12 @@ AC_ARG_WITH(freetype,
     FreeType 2.x freetype-config program or FreeType 1.x/2.x install dir).],
     FT_DIR=$withval,FT_DIR='')
 
+AC_ARG_ENABLE(force-freetype1,
+[  --enable-force-freetype1 Use this to force detection of freetype1 over 
+                           freetype2 on systems which have both versions
+                           installed in system libs such as RH7.1
+                           (By default, freetype2 is detected first)],,)
+ 
 AC_EXPAND_PATH($FT_DIR, FT_DIR)
 AC_CHECKING(where FreeType is installed...)
 FT_LIB=''
@@ -278,9 +284,15 @@ else
 
   dnl check for lib in system libs
 
-  AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",
-    AC_CHECK_LIB(ttf, TT_Init_FreeType, FT_LIB="-lttf",,)
-   ,)
+  if test "$enable_force_freetype1" = "yes" ; then
+    dnl check for freetype1 first
+    AC_CHECK_LIB(ttf, TT_Init_FreeType, FT_LIB="-lttf",
+        AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",,) )
+  else
+    dnl check for freetype2 first
+    AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",
+        AC_CHECK_LIB(ttf, TT_Init_FreeType, FT_LIB="-lttf",,) )
+  fi
 
   if test -n "$FT_LIB" ; then
     AC_MSG_RESULT([        using libfreetype $FT_LIB from system libs.])
@@ -295,7 +307,7 @@ dnl ---------------------------------------------------------------------
 dnl Check where zlib is installed
 dnl ---------------------------------------------------------------------
 
-unset ac_cv_lib_z_z,zlibVersion
+unset ac_cv_lib_z_zlibVersion
 
 AC_ARG_WITH(zlib,
 [  --with-zlib=DIR Specify where zlib is installed (DIR is path to
