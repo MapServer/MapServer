@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/02/28 20:58:41  frank
+ * added preliminary support for the COLOR_MATCH_THRESHOLD
+ *
  * Revision 1.8  2003/02/26 16:47:43  frank
  * dont crash on files with large color tables
  *
@@ -128,7 +131,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   rectObj copyRect, mapRect;
   unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3, *pabyRawAlpha;
   int truecolor = FALSE;
-  int red_band=0, green_band=0, blue_band=0, alpha_band=0;
+  int red_band=0, green_band=0, blue_band=0, alpha_band=0, cmt=0;
   gdImagePtr gdImg = NULL;
   CPLErr  eErr;
   GDALDatasetH hDS = hDSVoid;
@@ -153,6 +156,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 #if GD2_VERS > 1
       truecolor = gdImageTrueColor( gdImg );
 #endif
+
+      if( CSLFetchNameValue( layer->processing, 
+                             "COLOR_MATCH_THRESHOLD" ) != NULL )
+      {
+          cmt = MAX(0,atoi(CSLFetchNameValue( layer->processing, 
+                                              "COLOR_MATCH_THRESHOLD" )));
+      }
   }
 
   src_xsize = GDALGetRasterXSize( hDS );
@@ -494,7 +504,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                     cmap[i] = layer->class[c].styles[0].color.pen;
                 }
                 else /* Use raster color */
-                    cmap[i] = msAddColorGD(map, gdImg, 
+                    cmap[i] = msAddColorGD(map, gdImg, cmt,
                                            pixel.red, pixel.green, pixel.blue);
             }
         } else
@@ -516,7 +526,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 || layer->offsite.red != sEntry.c1
                 || layer->offsite.green != sEntry.c2
                 || layer->offsite.blue != sEntry.c3 ) )
-            cmap[i] = msAddColorGD(map, gdImg, sEntry.c1, sEntry.c2, sEntry.c3);
+            cmap[i] = msAddColorGD(map, gdImg, cmt, 
+                                   sEntry.c1, sEntry.c2, sEntry.c3);
         else
             cmap[i] = -1;
     }
@@ -581,6 +592,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   {
       assert( cmap_set );
       k = 0;
+
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
       {
           int	result;
@@ -598,6 +610,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
               }
           }
       }
+
+      assert( k == dst_xsize * dst_ysize );
   }
 
 #if GD2_VERS > 1
@@ -934,7 +948,7 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
 /* -------------------------------------------------------------------- */
     dfScaleRatio = 256.0 / (dfScaleMax - dfScaleMin);
 
-    for( i = 1; i < nPixelCount; i++ )
+    for( i = 0; i < nPixelCount; i++ )
     {
         float fScaledValue = (pafRawData[i] - dfScaleMin) * dfScaleRatio;
 
@@ -979,7 +993,7 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
                 blue = MS_MIN(255,b * (255 / (BLUE_LEVELS-1)));
 
                 panColorCube[RGB_LEVEL_INDEX(r,g,b)] = 
-                    msAddColorGD(map, img, red, green, blue );
+                    msAddColorGD(map, img, 1, red, green, blue );
                 iColors++;
             }
         }
@@ -994,7 +1008,7 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
         blue = red;
         if(iColors < 256)
         {
-            panColorCube[iColors] = msAddColorGD(map, img, red, green, blue );
+            panColorCube[iColors] = msAddColorGD(map,img,1,red,green,blue);
             iColors++;
         }
     }

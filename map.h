@@ -1198,7 +1198,7 @@ int msDBFJoinCloseTable(joinObj *join);
 
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
-int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b);
+int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
 int msGetClass(layerObj *layer, colorObj *color);
 //in mapdrawgdal.c
 int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, 

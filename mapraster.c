@@ -122,7 +122,7 @@ int msGetClass(layerObj *layer, colorObj *color)
 ** an exact match, then tries to add it to the end of the existing color map,
 ** and if all else fails it finds the closest color.
 */
-int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b)
+int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
 {
   int c; 
   int ct = -1;
@@ -192,12 +192,13 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b)
     if (r == g && r == b)
     {
         if (img->red == img->green && img->red ==  img->blue)
-          dist = rd;
+          dist = rd*rd;
         else
           dist = rd * rd + gd * gd + bd * bd;
     }
     else
       dist = rd * rd + gd * gd + bd * bd;
+
     if (dist < mindist) {
       if (dist == 0) {
 	return c; /* Return exact match color */
@@ -205,9 +206,14 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b)
       mindist = dist;
       ct = c;
     }
-  }       
+  }
 
-  /* no exact match.  We now know closest, but first try to allocate exact */
+  /* no exact match, is the closest within our "color match threshold"? */
+  if( mindist <= cmt*cmt )
+      return ct;
+
+  /* no exact match.  If there are no open colors we return the closest
+     color found.  */
   if (op == -1) {
     op = img->colorsTotal;
     if (op == gdMaxColors) { /* No room for more colors */
@@ -216,6 +222,7 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b)
     img->colorsTotal++;
   }
 
+  /* allocate a new exact match */
   img->red  [op] = r;
   img->green[op] = g;
   img->blue [op] = b;
@@ -420,11 +427,11 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	  else {
             RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	    if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	      cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	    else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
 	      cmap[i] = -1; // make transparent
 	    else
-              cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue); // use raster color
+              cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color
 	  }
 	} 
       }
@@ -437,7 +444,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	pixel.pen = i;
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-	  cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue); // use raster color        
+	  cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color        
       }
     }
     break;
@@ -447,7 +454,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified as 0 or 1
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-          cmap[i]=msAddColorGD(map,img, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
+          cmap[i]=msAddColorGD(map,img, 0, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
       }      
     } else { 
       if (nbits==4) {	
@@ -455,14 +462,14 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	  pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified in range 0 to 15
 
 	  if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-	    cmap[i] = msAddColorGD(map,img, i*17, i*17, i*17); // use raster color, stretched to use entire grayscale range	  
+	    cmap[i] = msAddColorGD(map,img,0, i*17, i*17, i*17); // use raster color, stretched to use entire grayscale range	  
 	}
       } else { /* 8-bit */
 	for (i=0; i<256; i++) {
 	  pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified in range 0 to 255
 
 	  if(!MS_COMPARE_COLORS(pixel, layer->offsite))	    
-	    cmap[i] = msAddColorGD(map,img, (i>>4)*17, (i>>4)*17, (i>>4)*17); // use raster color
+	    cmap[i] = msAddColorGD(map,img, 0, (i>>4)*17, (i>>4)*17, (i>>4)*17); // use raster color
 	}
       }
     }
@@ -473,7 +480,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified as 0 or 1
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-	  cmap[i]=msAddColorGD(map,img, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
+	  cmap[i]=msAddColorGD(map,img, 0, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
       }      
     }
     else {
@@ -635,11 +642,11 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	else {
           RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
           if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	    cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	  else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
 	    cmap[i] = -1; // make transparent
 	  else
-            cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue); // use raster color	  
+            cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color	  
 	}
       }
     }
@@ -652,7 +659,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       pixel.pen = i;
 
       if(!MS_COMPARE_COLORS(pixel, layer->offsite) && i != gdImageGetTransparent(png)) 
-	cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue);
+	cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue);
     }
   }
 
@@ -753,11 +760,11 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	else {
           RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
           if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	    cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	  else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
 	    cmap[i] = -1; // make transparent
 	  else
-            cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue); // use raster color	  
+            cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color	  
 	}	
       }
     }
@@ -770,7 +777,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       pixel.pen = i;
 
       if(!MS_COMPARE_COLORS(pixel, layer->offsite) && i != gdImageGetTransparent(gif)) 
-	cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue);      
+	cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue);      
     }    
   }
 
@@ -850,7 +857,7 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 
     cmap[i] = -1; // initialize to transparent
     if(!MS_COMPARE_COLORS(pixel, layer->offsite))      
-      cmap[i] = msAddColorGD(map,img, (i>>4)*17,(i>>4)*17,(i>>4)*17);
+      cmap[i] = msAddColorGD(map,img, 0, (i>>4)*17,(i>>4)*17,(i>>4)*17);
   }
 
   if(readWorldFile(msBuildPath3(szPath, map->mappath, map->shapepath,filename),
@@ -1012,11 +1019,11 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	    else {
               RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	      if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	        cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	        cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	      else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
 	        cmap[i] = -1; // make transparent
 	      else
-                cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue); // use raster color
+                cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color
 	    }
 	  }
 	}
@@ -1028,7 +1035,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  pixel.pen = i;
 
 	  if(!MS_COMPARE_COLORS(pixel, layer->offsite))	   
-  	    cmap[i] = msAddColorGD(map,img, pixel.red, pixel.green, pixel.blue); // use raster color
+  	    cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color
 	}
       }
     }
@@ -1040,7 +1047,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
       if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {
         j=((i*16)/hd.nclass)*17; 
-	cmap[i] = msAddColorGD(map,img, j, j, j); // use raster color, streched over the 256 color range
+	cmap[i] = msAddColorGD(map,img, 0, j, j, j); // use raster color, streched over the 256 color range
       }
     } 
   }
@@ -1137,7 +1144,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
       if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {
 	j=(((i-epp.minval)*16) / (epp.maxval-epp.minval+1))*17; 
-	cmap[i]=msAddColorGD(map,img,j,j,j);
+	cmap[i]=msAddColorGD(map,img,0,j,j,j);
       }
     }
   } else {
@@ -1159,12 +1166,12 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  else {
             RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	    if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	      cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	    else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
 	      cmap[i] = -1; // make transparent
 	    else {              
 	      clrget(&clr,i,&color);
-	      cmap[i] = msAddColorGD(map,img, color.red, color.green, color.blue); // use raster color
+	      cmap[i] = msAddColorGD(map,img, 0, color.red, color.green, color.blue); // use raster color
 	    }
 	  }
 	}
@@ -1178,7 +1185,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {
 	  clrget(&clr,i,&color);
-	  cmap[i] = msAddColorGD(map,img, color.red, color.green, color.blue);
+	  cmap[i] = msAddColorGD(map,img, 0, color.red, color.green, color.blue);
 	}
       }
     }
@@ -1335,7 +1342,7 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       		if(i != layer->offsite)
 		{
 			j = (i * 16) / 255 * 17;
-			cmap[i] = msAddColorGD(map, img, j, j, j); 
+			cmap[i] = msAddColorGD(map, img, 0, j, j, j); 
 		}
 		else
 			cmap[i] = -1;

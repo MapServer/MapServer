@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/02/28 20:58:41  frank
+ * added preliminary support for the COLOR_MATCH_THRESHOLD
+ *
  * Revision 1.41  2003/02/28 20:02:54  frank
  * fixed sizing of srcImage
  *
@@ -1060,7 +1063,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         for( iColor = 1; iColor < nColorCount; iColor++ )
         {
             anCMap[iColor] = 
-                msAddColorGD( map, image->img.gd, 
+                msAddColorGD( map, image->img.gd, 0, 
                               gdImageRed( srcImage->img.gd, iColor ),
                               gdImageGreen( srcImage->img.gd, iColor ),
                               gdImageBlue( srcImage->img.gd, iColor ) );
