@@ -553,33 +553,39 @@ memory.") const char * {
     return  msSetLayersdrawingOrder(self, panIndexes); 
   }
 
-  int applySLD(mapObj *self, char *sld) {
-    return msSLDApplySLD(self, sld, -1, NULL);
-  }
-
-  int applySLDURL(mapObj *self, char *sld) {
-    return msSLDApplySLDURL(self, sld, -1, NULL);
-  }
-
-  char *generateSLD(mapObj *self) {
-    return msSLDGenerateSLD(self, -1);
-  }
-
-
-  %newobject processTemplate;
-  char *processTemplate(int bGenerateImages, char **names, char **values, int numentries) {
-    return msProcessTemplate(self, bGenerateImages, names, values, numentries);
-  }
+  /* SLD */
   
-  %newobject processLegendTemplate;
-  char *processLegendTemplate(char **names, char **values, int numentries) {
-    return msProcessLegendTemplate(self, names, values, numentries);
-  }
+    int applySLD(char *sld) {
+        return msSLDApplySLD(self, sld, -1, NULL);
+    }
+
+    int applySLDURL(char *sld) {
+        return msSLDApplySLDURL(self, sld, -1, NULL);
+    }
+    
+    %newobject generateSLD;
+    char *generateSLD() {
+        return msSLDGenerateSLD(self, -1);
+    }
+
+
+    %newobject processTemplate;
+    char *processTemplate(int bGenerateImages, char **names, char **values,
+                          int numentries)
+    {
+        return msProcessTemplate(self, bGenerateImages, names, values,
+                                 numentries);
+    }
   
-  %newobject processQueryTemplate;
-  char *processQueryTemplate(char **names, char **values, int numentries) {
-    return msProcessQueryTemplate(self, 1, names, values, numentries);
-  }
+    %newobject processLegendTemplate;
+    char *processLegendTemplate(char **names, char **values, int numentries) {
+        return msProcessLegendTemplate(self, names, values, numentries);
+    }
+  
+    %newobject processQueryTemplate;
+    char *processQueryTemplate(char **names, char **values, int numentries) {
+        return msProcessQueryTemplate(self, 1, names, values, numentries);
+    }
 
 }
 
@@ -786,34 +792,39 @@ memory.") const char * {
     return(msRemoveHashTable(self->metadata, name));
   }
 
-  %newobject getWMSFeatureInfoURL;
-  char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y, int feature_count, char *info_format) {
-    return(msWMSGetFeatureInfoURL(map, self, click_x, click_y, feature_count, info_format));
-  }
+    %newobject getWMSFeatureInfoURL;
+    char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y,
+                               int feature_count, char *info_format)
+    {
+        return(msWMSGetFeatureInfoURL(map, self, click_x, click_y,
+               feature_count, info_format));
+    }
  
-  char *executeWFSGetFeature(layerObj *layer) {
+    %newobject executeWFSGetFeature;
+    char *executeWFSGetFeature(layerObj *layer) {
         return (msWFSExecuteGetFeature(layer));
-}
+    }
 
-  int applySLD(layerObj *self, char *sld, char *stylelayer) {
-    return msSLDApplySLD(self->map, sld, self->index, stylelayer);
-  }
+    int applySLD(char *sld, char *stylelayer) {
+        return msSLDApplySLD(self->map, sld, self->index, stylelayer);
+    }
 
-  int applySLDURL(layerObj *self, char *sld, char *stylelayer) {
-    return msSLDApplySLDURL(self->map, sld, self->index, stylelayer);
-  }
+    int applySLDURL(char *sld, char *stylelayer) {
+        return msSLDApplySLDURL(self->map, sld, self->index, stylelayer);
+    }
 
-  char *generateSLD(layerObj *self) {
-    return msSLDGenerateSLD(self->map, self->index);
-  }
+    %newobject generateSLD; 
+    char *generateSLD() {
+        return msSLDGenerateSLD(self->map, self->index);
+    }
 
-  int moveClassUp(layerObj *self, int index) {
-    return msMoveClassUp(self, index);
-  }
+    int moveClassUp(int index) {
+        return msMoveClassUp(self, index);
+    }
 
-  int moveClassDown(layerObj *self, int index) {
-    return msMoveClassDown(self, index);
-   }
+    int moveClassDown(int index) {
+        return msMoveClassDown(self, index);
+    }
 
 }
 
@@ -914,72 +925,28 @@ memory.") const char * {
     styleObj *getStyle(int i) {
         if (i >= 0 && i < self->numstyles)	
             return &(self->styles[i]);
-        else return NULL;
+        else {
+            msSetError(MS_CHILDERR, "Invalid index: %d", "getStyle()", i);
+            return NULL;
+        }
     }
 
     int insertStyle(styleObj *style, int index=-1) {
-        int i;
-        // Possible to add another style?
-        if (self->numstyles == MS_MAXSTYLES) {
-            msSetError(MS_CHILDERR, "Maximum number of class styles, %d, has been reached", "insertStyle()", MS_MAXSTYLES);
-            return -1;
-        }
-        // Catch attempt to insert past end of styles array
-        else if (index >= MS_MAXSTYLES) {
-            msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", MS_MAXSTYLES-1);
-            return -1;
-        }
-        else if (index < 0) { // Insert at the end by default
-            msCopyStyle(&(self->styles[self->numstyles]), style);
-            self->numstyles++;
-            return self->numstyles-1;
-        }
-        else if (index >= 0 && index < MS_MAXSTYLES) {
-            // Move styles existing at the specified index or greater
-            // to a higher index
-            for (i=self->numstyles-1; i>=index; i--) {
-                self->styles[i+1] = self->styles[i];
-            }
-            msCopyStyle(&(self->styles[index]), style);
-            self->numstyles++;
-            return index;
-        }
-        else {
-            msSetError(MS_CHILDERR, "Invalid index", "insertStyle()");
-            return -1;
-        }
+        return msInsertStyle(self, style, index);
     }
 
     %newobject removeStyle;
     styleObj *removeStyle(int index) {
-        int i;
-        styleObj *style;
-        if (self->numstyles == 1) {
-            msSetError(MS_CHILDERR, "Cannot remove a class's sole style", "removeStyle()");
-            return NULL;
-        }
-        else if (index < 0 || index >= self->numstyles) {
-            msSetError(MS_CHILDERR, "Cannot remove style, invalid index %d", "removeStyle()", index);
-            return NULL;
-        }
-        else {
-            style = (styleObj *)malloc(sizeof(styleObj));
-            msCopyStyle(style, &(self->styles[index]));
-            for (i=index+1; i<self->numstyles; i++) {
-                self->styles[i-1] = self->styles[i];
-            }
-            self->numstyles--;
-            return style;
-        }
+        return msRemoveStyle(self, index);
     }
-    
-    int moveStyleUp(classObj *self, int index){
+
+    int moveStyleUp(int index) {
         return msMoveStyleUp(self, index);
     }
 
-    int moveStyleDown(classObj *self, int index) {
+    int moveStyleDown(int index) {
        return msMoveStyleDown(self, index);
-     }
+    }
 }
 
 //
