@@ -27,11 +27,11 @@ int loadParams(char **names, char **values) {
     cl = atoi(getenv("CONTENT_LENGTH"));
  
     for(x=0;cl && (!feof(stdin));x++) {
-      m=x;
-      values[x] = fmakeword(stdin,'&',&cl);
-      plustospace(values[x]);
-      unescape_url(values[x]);
-      names[x] = makeword(values[x],'=');
+      values[m] = fmakeword(stdin,'&',&cl);
+      plustospace(values[m]);
+      unescape_url(values[m]);
+      names[m] = makeword(values[m],'=');
+      m++;
     }
   } else { 
     if(strcmp(getenv("REQUEST_METHOD"),"GET") == 0) { /* we've got a get request */
@@ -48,17 +48,29 @@ int loadParams(char **names, char **values) {
 	exit(1);
       }
 
-      for(x=0;s[0] != '\0';x++) {
-        m=x;
-        values[x] = makeword(s,'&');
-        plustospace(values[x]);
-        unescape_url(values[x]);
-        names[x] = makeword(values[x],'=');
+      for(x=0;s[0] != '\0';x++) {       
+        values[m] = makeword(s,'&');
+        plustospace(values[m]);
+        unescape_url(values[m]);
+        names[m] = makeword(values[m],'=');
+        m++;
       }
     } else {
       printf("Content-type: text/html%c%c",10,10);
       printf("This script should be referenced with a METHOD of GET or METHOD of POST.\n");
       exit(1);
+    }
+  }
+
+  // check for any available cookies
+  s = getenv("HTTP_COOKIE");
+  if(s == NULL) {
+    for(x=0;s[0] != '\0';x++) {
+      values[m] = makeword(s,';');
+      plustospace(values[m]);
+      unescape_url(values[m]);
+      names[m] = makeword(values[m],'=');
+      m++;
     }
   }
 
