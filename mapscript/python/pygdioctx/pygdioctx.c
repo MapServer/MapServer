@@ -139,17 +139,25 @@ imageObj *createImageObjFromPyFile(PyObject *file, const char *driver)
     {
     imageObj *image=NULL;
     struct PyFileIfaceObj_gdIOCtx *pctx;
-    
-    if (file) {
+
+    if (file == Py_None) 
+    {
+        msSetError(MS_IMGERR, "NULL file object",
+                   "createImageObjFromPyFile()");
+        return NULL;
+    }
+    else if (!driver) 
+    {
+        msSetError(MS_IMGERR, "NULL or invalid driver string",
+                   "createImageObjFromPyFile()");
+        return NULL;
+    }
+    else
+    {
         pctx = alloc_PyFileIfaceObj_IOCtx(file);
         image = msImageLoadGDCtx((gdIOCtx *) pctx, driver);
         free_PyFileIfaceObj_IOCtx(pctx);
         return image;
     }
-    else {
-        msSetError(MS_IMGERR, "Failed to create image", "createImageObjFromPyFile()");
-        return NULL;
-    }
-    
 }
 
