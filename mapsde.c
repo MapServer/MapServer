@@ -143,39 +143,51 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
 
   sde = layer->sdelayer;
 
+  msDebug("in sdeGetRecord(), skip=%d\n", skip);
+  
   status = SE_shape_create(sde->coordref, &shapeval); // allocate early, might be threading problems
   if(status != SE_SUCCESS) {
-    sde_error(status, "sdeGetShape()", "SE_shape_create()");
+    sde_error(status, "sdeGetRecord()", "SE_shape_create()");
     return(MS_FAILURE);
   }
 
-  shape->attributes = (char **)malloc(sizeof(char *)*layer->numitems);
-  if(!shape->attributes) {
-    msSetError(MS_MEMERR, "Error allocation shape attribute array.", "sdeGetShape()");
-    return(MS_FAILURE);
+  msDebug("layer->numitems = %d\n", layer->numitems);
+
+  if(layer->numitems > 0) {
+    shape->attributes = (char **)malloc(sizeof(char *)*layer->numitems);
+    if(!shape->attributes) {
+      msSetError(MS_MEMERR, "Error allocation shape attribute array.", "sdeGetRecord()");
+      return(MS_FAILURE);
+    }
   }
+
+  msDebug("allocated attribute memory\n");
 
   if(skip == 2) { // a ...Next... request (id, shape)
-    status = SE_stream_get_integer(sde->stream, 0, &shape->index);
+    status = SE_stream_get_integer(sde->stream, 1, &shape->index);
     if(status != SE_SUCCESS) {
-      sde_error(status, "sdeGetShape()", "SE_shape_create()");
+      sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
       return(MS_FAILURE);
     }
 
-    status = SE_stream_get_shape(sde->stream, 1, shapeval);
+    msDebug("Got the shape id (%d).\n", shape->index);
+
+    status = SE_stream_get_shape(sde->stream, 2, shapeval);
     if(status != SE_SUCCESS) { 
-      sde_error(status, "sdeGetShape()", "SE_shape_create()");
+      sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
       return(MS_FAILURE);
     }
+
+    msDebug("Got the shape itself.\n");    
   } else if(skip == 1) { // a ...Get.. request, with item list (shape)
-    status = SE_stream_get_shape(sde->stream, 0, shapeval);
+    status = SE_stream_get_shape(sde->stream, 1, shapeval);
     if(status != SE_SUCCESS) { 
-      sde_error(status, "sdeGetShape()", "SE_shape_create()");
+      sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
       return(MS_FAILURE);
     }
   }
   
-  for(i=0; i<layer->numitems; i++) {
+  for(i=1; i<=layer->numitems; i++) {
     switch(sde->itemdefs[i+skip].sde_type) {
     case SE_SMALLINT_TYPE:
       status = SE_stream_get_smallint(sde->stream, i+skip, (short *) &longval);
@@ -185,7 +197,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       } else if(status == SE_NULL_VALUE) {
 	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
-	sde_error(status, "sdeGetShape()", "SE_shape_create()");
+	sde_error(status, "sdeGetRecord()", "SE_stream_get_smallint()");
 	return(MS_FAILURE);
       }      
     case SE_INTEGER_TYPE:
@@ -196,7 +208,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       } else if(status == SE_NULL_VALUE) {
 	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
-	sde_error(status, "sdeGetShape()", "SE_shape_create()");
+	sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
 	return(MS_FAILURE);
       }      
       break;
@@ -208,7 +220,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       } else if(status == SE_NULL_VALUE) {
 	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
-	sde_error(status, "sdeGetShape()", "SE_shape_create()");
+	sde_error(status, "sdeGetRecord()", "SE_stream_get_float()");
 	return(MS_FAILURE);
       }
       break;
@@ -220,7 +232,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       } else if(status == SE_NULL_VALUE) {
 	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
-	sde_error(status, "sdeGetShape()", "SE_shape_create()");
+	sde_error(status, "sdeGetRecord()", "SE_stream_get_double()");
 	return(MS_FAILURE);
       }
       break;
@@ -228,13 +240,13 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       shape->attributes[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
       status = SE_stream_get_string(sde->stream, i+skip, shape->attributes[i]);
       if(status != SE_SUCCESS) {
-	sde_error(status, "sdeGetShape()", "SE_shape_create()");
+	sde_error(status, "sdeGetRecord()", "SE_stream_get_string()");
 	return(MS_FAILURE);
       }
       break;
     case SE_BLOB_TYPE:
       shape->attributes[i] = strdup("<blob>");
-      msSetError(MS_SDEERR, "Retrieval of BLOBs is not yet supported.", "sdeGetShape()");
+      msSetError(MS_SDEERR, "Retrieval of BLOBs is not yet supported.", "sdeGetRecord()");
       break;
     case SE_DATE_TYPE:
       status = SE_stream_get_date(sde->stream, i+skip, &dateval);
@@ -244,7 +256,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       } else if(status == SE_NULL_VALUE) {
 	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
-	sde_error(status, "sdeGetShape()", "SE_shape_create()");
+	sde_error(status, "sdeGetRecord()", "SE_stream_get_date()");
 	return(MS_FAILURE);
       }
       break;
@@ -255,12 +267,12 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       } else if(status == SE_NULL_VALUE) {
 	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
-	sde_error(status, "sdeGetShape()", "SE_shape_create()");
+	sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
 	return(MS_FAILURE);
       }
       break;
     default: 
-      msSetError(MS_SDEERR, "Unknown SDE column type.", "sdeGetShape()");
+      msSetError(MS_SDEERR, "Unknown SDE column type.", "sdeGetRecord()");
       return(MS_FAILURE);
       break;
     }
@@ -422,6 +434,8 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   if(envelope.miny > rect.maxy) return(MS_DONE);
   if(envelope.maxy < rect.miny) return(MS_DONE);
 
+  msDebug("SDE layer extent: %g %g %g %g\n", envelope.minx, envelope.miny, envelope.maxx, envelope.maxy);
+
   // set spatial constraint search shape
   envelope.minx = MS_MAX(rect.minx, envelope.minx); // crop against SDE layer extent *argh*
   envelope.miny = MS_MAX(rect.miny, envelope.miny);
@@ -465,24 +479,13 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   for(i=0; i<layer->numitems; i++)
     sde->items[i+2] = strdup(layer->items[i]); // any other items needed for labeling or classification
 
-  sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*sde->numitems);
-  if(!sde->itemdefs) {
-    msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerWhichShapes()");
-    return(MS_FAILURE);
-  }
-  for(i=0; i<sde->numitems; i++) {
-    status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i]));
-    if(status != MS_SUCCESS) {
-      sde_error(status, "msSDELayerWhichShapes()", "SE_stream_describe_column()");
-      return(MS_FAILURE);
-    }
-  }
-
   // set the "where" clause
   if(!(layer->filter.string))
     sql->where = strdup("");
   else
     sql->where = strdup(layer->filter.string);
+
+  msDebug("Where clause: ()\n", sql->where);
     
   status = SE_stream_query(sde->stream, sde->numitems, (const char **)sde->items, sql);
   if(status != SE_SUCCESS) {
@@ -500,6 +503,23 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_stream_query()");
     return(MS_FAILURE);
+  }
+
+  for(i=0; i<sde->numitems; i++)
+    msDebug("query column: %s\n", sde->items[i]);
+
+  // now that query has been run we can gather item descriptions
+  sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*sde->numitems);
+  if(!sde->itemdefs) {
+    msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerWhichShapes()");
+    return(MS_FAILURE);
+  }
+  for(i=1; i<=sde->numitems; i++) { // column numbers start at one
+    status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i]));
+    if(status != MS_SUCCESS) {
+      sde_error(status, "msSDELayerWhichShapes()", "SE_stream_describe_column()");
+      return(MS_FAILURE);
+    }
   }
 
   // clean-up

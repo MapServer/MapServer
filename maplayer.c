@@ -24,6 +24,7 @@ int msLayerOpen(layerObj *layer, char *shapepath)
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
+    return msSDELayerOpen(layer);
     break;
   default:
     break;
@@ -68,6 +69,7 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
+    return(msSDELayerNextShape(layer, shape));
     break;
   default:
     break;
@@ -109,6 +111,7 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
+    return(msSDELayerGetShape(layer, shape, record, allitems));
     break;
   default:
     break;
@@ -141,6 +144,7 @@ void msLayerClose(layerObj *layer)
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
+    msSDELayerClose(layer);
     break;
   default:
     break;
@@ -164,6 +168,7 @@ int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
+    return(msSDELayerWhichShapes(layer, rect));
     break;
   default:
     break;
