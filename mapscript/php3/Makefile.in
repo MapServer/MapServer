@@ -42,7 +42,7 @@ CFLAGS = @CFLAGS@
 #
 PHP_SRC_DIR = @PHP_SRC_DIR@
 
-PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl
+PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl @APACHE_INC@
 
 #
 # Set MapServer extensions parameters.  See main MapServer Makefile for 
