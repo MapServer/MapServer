@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/01/11 23:25:48  frank
+ * Bug 249: msApplyOutputFormat() will switch imagemode from RGB to RGBA if
+ * transparency is requested.
+ * Added msOutputFormatValidate() function.
+ *
  * Revision 1.14  2003/01/11 17:32:27  frank
  * When GD2 isn't available create a PC256 mode JPEG driver by default
  *
@@ -425,6 +430,9 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
         map->imagetype = strdup(format->name);
     }
 
+    if( format != NULL )
+        msOutputFormatValidate( format );
+
     return format;
 }
 
@@ -459,6 +467,8 @@ void msApplyOutputFormat( outputFormatObj **target,
         return;
     }
 
+    msOutputFormatValidate( format );
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to change any values?  If not, then just apply       */
 /*      and return.                                                     */
@@ -484,7 +494,11 @@ void msApplyOutputFormat( outputFormatObj **target,
             format = msCloneOutputFormat( format );
 
         if( transparent != MS_NOOVERRIDE )
+        {
             format->transparent = transparent;
+            if( format->imagemode == MS_IMAGEMODE_RGB )
+                format->imagemode = MS_IMAGEMODE_RGBA;
+        }
 
         if( imagequality != MS_NOOVERRIDE && imagequality != old_imagequality )
         {
@@ -650,4 +664,35 @@ void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime )
 
     if( mime_count < max_mime )
         mime_list[mime_count] = NULL;
+}
+
+/************************************************************************/
+/*                       msOutputFormatValidate()                       */
+/*                                                                      */
+/*      Do some validation of the output format, and report to debug    */
+/*      output if it doesn't seem valid.                                */
+/************************************************************************/
+
+int msOutputFormatValidate( outputFormatObj *format )
+
+{
+    if( format->transparent && format->imagemode == MS_IMAGEMODE_RGB )
+    {
+        msSetError( MS_MISCERR, 
+                    "OUTPUTFORMAT %s has TRANSPARENT set ON, but an IMAGEMODE of RGB instead of RGBA.", 
+                    "msOutputFormatValidate()",
+                    format->name );
+        return MS_FALSE;
+    }
+
+    if( !format->transparent && format->imagemode == MS_IMAGEMODE_RGBA )
+    {
+        msSetError( MS_MISCERR, 
+                    "OUTPUTFORMAT %s has TRANSPARENT set OFF, but an IMAGEMODE of RGBA instead of RGB.", 
+                    "msOutputFormatValidate()",
+                    format->name );
+        return MS_FALSE;
+    }
+
+    return MS_TRUE;
 }
