@@ -47,7 +47,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"WFS server error.",
 						"WFS connection error.",
 						"WMS Map Context error.",
-						"HTTP request error."
+						"HTTP request error.",
+						"WCS server error."
 };
 
 #ifndef USE_THREAD
