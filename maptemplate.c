@@ -380,6 +380,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
    char **papszArgs, **papszVarVal;
    int nArgs, nDummy;
    int i;
+   char *pszQuoteStr, *pszQuoteStart, *pszQuoteEnd;
    
    if (!pszTag || !pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "getTagArgs()");
@@ -408,11 +409,47 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
             if (!*oHashTable)
               *oHashTable = msCreateHashTable();
             
+            // Enable the use of "" in args
+            // To do so, extract all "" values 
+            // and replace the " in it by spaces
+            if(strchr(pszArgs, '"'))
+            {
+                pszQuoteEnd = pszArgs;
+                while((pszQuoteStart = strchr(pszQuoteEnd, '"')))
+                {
+                    pszQuoteEnd = strchr(pszQuoteStart+1, '"');
+                    if(pszQuoteEnd)
+                    {
+                        pszQuoteEnd[0] = '\0';
+                        while((pszQuoteStr = strchr(pszQuoteStart, ' ')))
+                            pszQuoteStr[0] = '"';
+
+                        // Then remove the starting and ending quote
+                        pszQuoteEnd[0] = '"';
+                        for(i=(pszQuoteStart-pszArgs); i<nLength; i++)
+                        {
+                            if(i+1 >= pszQuoteEnd-pszArgs)
+                                if(i+2 >= nLength)
+                                    pszArgs[i] = '\0';
+                                else
+                                    pszArgs[i] = pszArgs[i+2];
+                            else
+                                pszArgs[i] = pszArgs[i+1];
+                        }
+                    }
+                }
+            }
+
             // put all arguments seperate by space in a hash table
             papszArgs = split(pszArgs, ' ', &nArgs);
 
             // msReturnTemplateQuerycheck all argument if they have values
             for (i=0; i<nArgs; i++) {
+               // Quotes are in fact spaces
+               if(strchr(papszArgs[i],'"'))
+                   while((pszQuoteStr = strchr(papszArgs[i],'"')))
+                       pszQuoteStr[0] = ' ';
+
                if (strchr(papszArgs[i], '='))
                {
                   papszVarVal = split(papszArgs[i], '=', &nDummy);
