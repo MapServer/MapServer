@@ -153,6 +153,35 @@ class RemoveClassTestCase(MapLayerTestCase):
         c = self.layer.removeClass(1)
         assert self.layer.getClass(0).name == c1name
 
+class InsertClassTestCase(MapLayerTestCase):
+
+    def testLayerInsertClass(self):
+        """insert class at default index"""
+        n = self.layer.numclasses
+        new_class = mapscript.classObj()
+        new_class.name = 'foo'
+        new_index = self.layer.insertClass(new_class)
+        assert new_index = n
+        assert self.layer.numclasses = n + 1
+        c = self.layer.getClass(new_index)
+        assert c.thisown = 0
+        assert c.layer = self.layer
+        assert c.name = new_class.name
+        
+    def testLayerInsertClassAtZero(self):
+        """insert class at index 0"""
+        n = self.layer.numclasses
+        new_class = mapscript.classObj()
+        new_class.name = 'foo'
+        new_index = self.layer.insertClass(new_class, 0)
+        assert new_index = 0
+        assert self.layer.numclasses = n + 1
+        c = self.layer.getClass(new_index)
+        assert c.thisown = 0
+        assert c.layer = self.layer
+        assert c.name = new_class.name
+        
+    
 class LayerTestCase(MapTestCase):
     def testLayerConstructorOwnership(self):
         """LayerTestCase.testLayerConstructorOwnership: newly constructed layer has proper ownership"""
