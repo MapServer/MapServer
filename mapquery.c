@@ -456,7 +456,7 @@ queryResultObj *msQueryUsingItem(mapObj *map, char *layer, int mode, char *item,
     if(map->extent.minx != map->extent.maxx) { /* use extent as first cut */
 #ifdef USE_PROJ
       status = msWhichShapesProj(&shpfile, map->extent, &(map->layers[l].projection), &(map->projection));
-#else	    
+#else
       status = msWhichShapes(&shpfile, map->extent);
 #endif      
     } else {
