@@ -43,6 +43,7 @@ from cases.owstest import OWSRequestTestCase
 from cases.clonetest import MapCloningTestCase
 
 from cases.maptest import MapConstructorTestCase, MapLayersTestCase
+from cases.maptest import MapExtentTestCase
 
 from cases.layertest import LayerConstructorTestCase
 from cases.layertest import LayerExtentTestCase
@@ -60,6 +61,7 @@ suite.addTest(OWSRequestTestCase)
 suite.addTests([MapConstructorTestCase])
 
 suite.addTests([MapLayersTestCase,
+                MapExtentTestCase,
                 LayerConstructorTestCase,
                 LayerRasterProcessingTestCase])
 
