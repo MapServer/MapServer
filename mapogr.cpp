@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.28  2001/03/21 04:01:32  frank
+ * added msOGCWKT2ProjectionObj(), update for other proj changes
+ *
  * Revision 1.27  2001/03/18 17:21:13  dan
  * Set bounds member on returned shapes, and fixed filtering of incompatible
  * shape types in layers with mixed geometries.
@@ -638,14 +641,8 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
       return MS_SUCCESS;  // Nothing to do!
 
 #ifdef USE_PROJ
-  int i;
-
   // First flush the "auto" name from the projargs[]... 
-  if(proj->proj) pj_free(proj->proj);
-  proj->proj = NULL;
-  msFreeCharArray(proj->projargs, proj->numargs);  
-  proj->projargs = NULL;
-  proj->numargs = 0;
+  msFreeProjection( proj );
 
   if (poSRS == NULL || poSRS->IsLocal())
   {
@@ -654,19 +651,9 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
       return MS_SUCCESS;  
   }
 
-  // +proj=longlat is a special case because versions of PROJ4 prior to 4.4.2
-  // didn't accept it.  Just catch that case for now and when we switch to
-  // 4.4.2 to use pj_transform() then we can get rid of that special case.
-  if (poSRS->IsGeographic())
-  {
-      // Do the same as what loadProjection() does for GEOGRAPHIC
-      proj->projargs = split("GEOGRAPHIC", ' ', &proj->numargs);
-      proj->proj = NULL;
-      return MS_SUCCESS;
-  }
-
   // Export OGR SRS to a PROJ4 string
   char *pszProj = NULL;
+
   if (poSRS->exportToProj4( &pszProj ) != OGRERR_NONE ||
       pszProj == NULL || strlen(pszProj) == 0)
   {
@@ -676,41 +663,52 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
       return(MS_FAILURE);
   }
 
-  // Set new proj params in projargs[] array
-  // Since OGR and MapServer use different memory management funcs
-  // we have to convert CPL stringlist to mapserver stringlist
-  //
-  char **papszArgs = CSLTokenizeStringComplex(pszProj,"+ ",TRUE,FALSE);
+  msDebug( "AUTO = %s\n", pszProj );
 
-  proj->numargs = CSLCount(papszArgs);
-  proj->projargs =(char**)malloc(proj->numargs*sizeof(char*));
-  if (!proj->projargs) {
-      msSetError(MS_MEMERR, NULL, "msOGRSpatialRef2ProjectionObj()");
-      return(MS_FAILURE);
-  }
-
-  for(i=0; i< proj->numargs; i++)
-      proj->projargs[i] = strdup(papszArgs[i]);
-
-  if( !(proj->proj = pj_init(proj->numargs, proj->projargs))) 
-  {
-      msSetError(MS_PROJERR,(char*) CPLSPrintf("pj_init( %s ) failed: %s. ",
-                                               pszProj, pj_strerrno(pj_errno)),
-                 "msOGRSpatialRef2ProjectionObj()");
-      CPLFree(pszProj);
-      CSLDestroy(papszArgs);
-      return(MS_FAILURE);
-  }
+  if( msLoadProjectionString( proj, pszProj ) != 0 )
+      return MS_FAILURE;
 
   CPLFree(pszProj);
-  CSLDestroy(papszArgs);
-
 #endif
 
   return MS_SUCCESS;
 }
 #endif // defined(USE_OGR) || defined(USE_GDAL)
 
+/**********************************************************************
+ *                     msOGCWKT2ProjectionObj()
+ *
+ * Init a MapServer projectionObj using an OGC WKT definition.
+ * Works only with PROJECTION AUTO
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+
+int msOGCWKT2ProjectionObj( const char *pszWKT, 
+                            projectionObj *proj )
+
+{
+#if defined(USE_OGR) || defined(USE_GDAL)
+
+    OGRSpatialReference		oSRS;
+    char			*pszAltWKT = (char *) pszWKT;
+
+    if( oSRS.importFromWkt( &pszAltWKT ) != OGRERR_NONE )
+    {
+        msSetError(MS_OGRERR, 
+                   "Ingestion of WKT string failed.",
+                   "msOGCWKT2ProjectionObj()");
+        return MS_FAILURE;
+    }
+
+    return msOGRSpatialRef2ProjectionObj( &oSRS, proj );
+#else
+    msSetError(MS_OGRERR, 
+               "Not implemented since neither OGR nor GDAL is enabled.",
+               "msOGCWKT2ProjectionObj()");
+    return MS_FAILURE;
+#endif
+}
 
 /* ==================================================================
  * Here comes the REAL stuff... the functions below are called by maplayer.c
