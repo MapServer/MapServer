@@ -256,8 +256,8 @@
         msQueryFree(self, qlayer);
     }
 
-  int saveQueryAsGML(char *filename) {
-    return msGMLWriteQuery(self, filename);
+  int saveQueryAsGML(char *filename, const char *ns="GOMF") {
+    return msGMLWriteQuery(self, filename, ns);
   }
 
   char *getMetaData(char *name) {
