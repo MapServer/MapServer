@@ -125,7 +125,7 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
 void msLayerClose(layerObj *layer) 
 {
   // no need for items once the layer is closed
-  if(layer->numitems > 0) {
+  if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
     layer->items = NULL;
     layer->numitems = 0;
