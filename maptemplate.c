@@ -2338,7 +2338,15 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%d", msObj->NL); // total number of layers with results
   outstr = gsub(outstr, "[nl]", repstr);
 
-  if(msObj->ResultLayer) {
+  if(msObj->ResultLayer) {    
+    if(strstr(outstr, "[items]") != NULL) {
+      char *itemstr=NULL;
+
+      itemstr = msJoinStrings(msObj->ResultLayer->items, msObj->ResultLayer->numitems, ",");
+      outstr = gsub(outstr, "[items]", itemstr);
+      free(itemstr);
+    }
+
     sprintf(repstr, "%d", msObj->NLR); // total number of results within this layer
     outstr = gsub(outstr, "[nlr]", repstr);
     sprintf(repstr, "%d", msObj->RN); // sequential (eg. 1..n) result number within all layers
@@ -2346,7 +2354,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     sprintf(repstr, "%d", msObj->LRN); // sequential (eg. 1..n) result number within this layer
     outstr = gsub(outstr, "[lrn]", repstr);
     outstr = gsub(outstr, "[cl]", msObj->ResultLayer->name); // current layer name    
-    // if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description
+    // if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description    
   }
 
   if(mode == QUERY) { // return shape and/or values	
@@ -2401,6 +2409,15 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     outstr = gsub(outstr, "[shpidx]", repstr);
     sprintf(repstr, "%d", msObj->ResultShape.tileindex);
     outstr = gsub(outstr, "[tileidx]", repstr);  
+
+    // return ALL attributes in one delimeted list
+    if(strstr(outstr, "[values]") != NULL) {
+      char *valuestr=NULL;
+
+      valuestr = msJoinStrings(msObj->ResultShape.values, msObj->ResultLayer->numitems, ",");
+      outstr = gsub(outstr, "[values]", valuestr);
+      free(valuestr);
+    }
 
     for(i=0;i<msObj->ResultLayer->numitems;i++) {	 
 
