@@ -15,12 +15,12 @@ if(!$file) {
   exit 0;
 }
 
-$shapefile = new shapefileObj($file, -1) or die "Unable to open shapefile $file";
+$shapefile = new mapscript::shapefileObj($file, -1) or die "Unable to open shapefile $file";
 
 print "Shapefile opened (type=". $types{$shapefile->{type}} .") with ".
 $shapefile->{numshapes} ." shape(s)\n";
 
-$shape = new shapeObj(-1);
+$shape = new mapscript::shapeObj(-1);
 
 for($i=0; $i<$shapefile->{numshapes}; $i++) {
     

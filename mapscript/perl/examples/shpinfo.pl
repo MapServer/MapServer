@@ -16,7 +16,7 @@ if(!$file) {
   exit 0;
 }
 
-$shapefile = new shapefileObj($file, -1) or die "Unable to open shapefile $file.";
+$shapefile = new mapscript::shapefileObj($file, -1) or die "Unable to open shapefile $file.";
 
 print "Shapefile $file:\n\n";
 print "\ttype: ". $types{$shapefile->{type}} ."\n"; 
