@@ -17,7 +17,6 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
   int nrecs, *ids=NULL;
 
   char old_path[MS_PATH_LENGTH];
-
   getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
   if(path) chdir(path);
   if(tile) chdir(tile);

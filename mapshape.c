@@ -1140,6 +1140,11 @@ int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
   msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
   msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
 
+  // initialize a few other things
+  shpfile->status = NULL;
+  shpfile->lastshape = -1;
+  shpfile->shapepath = NULL;
+
   shpfile->hDBF = NULL; // XBase file is NOT created here...
   return(0);
 }
