@@ -1557,26 +1557,31 @@ SWFButton DrawButtonPolyline(shapeObj *p, colorObj *psColor,
 SWFText DrawText(char *string, int nX, int nY, char *pszFontFile, 
                  double dfSize, colorObj *psColor)
 {
-    SWFText    oText = NULL;
+    SWFText     oText = NULL;
     SWFFont     oFont = NULL;
-
+    FILE        *f = NULL;
+ 
     if (!string || !pszFontFile || !psColor)
         return NULL;
 
-    oFont  = loadSWFFontFromFile(fopen(pszFontFile, "rb"));
-    if (oFont)
-    {        
-        oText = newSWFText();
-        SWFText_setFont(oText, oFont);
-        SWFText_moveTo(oText, (float)nX, (float)nY);
-        SWFText_setColor(oText, (byte)psColor->red, (byte)psColor->green, (byte)psColor->blue, 
-                         0xff);
-        SWFText_setHeight(oText, (float)dfSize);
-        SWFText_addString(oText, string, NULL);
+    f = fopen(pszFontFile, "rb"); 
+    if (f)
+    {
+        oFont  = loadSWFFontFromFile(f);
+        fclose(f); 
+        if (oFont)
+        {     
+            oText = newSWFText();
+            SWFText_setFont(oText, oFont);
+            SWFText_moveTo(oText, (float)nX, (float)nY);
+            SWFText_setColor(oText, (byte)psColor->red, (byte)psColor->green, (byte)psColor->blue, 
+                             0xff);
+            SWFText_setHeight(oText, (float)dfSize);
+            SWFText_addString(oText, string, NULL);
    
-        return oText;
+            return oText;
+        }
     }
-
     return NULL;
 }
 
@@ -1956,8 +1961,11 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     oText = DrawText(string, x, y, msBuildPath(szPath, fontset->filename, font), size, &sColor);
     if (oText)
     {
+         SWFDisplayItem oDisplay; 
         //nTmp = image->img.swf->nCurrentMovie;
-        SWFMovie_add(GetCurrentMovie(map, image), oText);
+        oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oText);
+        //SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
+        SWFDisplayItem_rotate(oDisplay, (float)label->angle);
     }
 
     return 0;
@@ -1977,6 +1985,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
     SWFFont     oFont = NULL;
     char        *font;
     double      dfWidth = 0.0;
+    FILE        *f = NULL;
 
     char szPath[MS_MAXPATHLEN];
 
@@ -1997,20 +2006,25 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
         return(-1);
     }
     
-    oFont  = loadSWFFontFromFile(fopen(msBuildPath(szPath, fontset->filename, font), "rb"));
-    if (oFont)
+    f = fopen(msBuildPath(szPath, fontset->filename, font), "rb");
+    if (f)
     {
-        oText = newSWFText();
-        SWFText_setFont(oText, oFont);
-        //SWFText_addString(oText, string, NULL);
-        dfWidth = 0.0;
-        dfWidth = (double)SWFText_getStringWidth(oText, string);
+        oFont  = loadSWFFontFromFile(f);
+        fclose(f);
+        if (oFont)
+        {   
+            oText = newSWFText();
+            SWFText_setFont(oText, oFont);
+            //SWFText_addString(oText, string, NULL);
+            dfWidth = 0.0;
+            dfWidth = (double)SWFText_getStringWidth(oText, string);
         
-        if (dfWidth <=0)
-            return -1;
+            if (dfWidth <=0)
+              return -1;
 
-        //destroySWFText(oText);
-        //destroySWFFont(oFont);
+            //destroySWFText(oText);
+            //destroySWFFont(oFont);
+        }
     }
 
     rect->minx = 0;
@@ -2046,7 +2060,6 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     rectObj r;
   
     labelCacheMemberObj *cachePtr=NULL;
-    classObj *classPtr=NULL;
     layerObj *layerPtr=NULL;
     labelObj *labelPtr=NULL;
 
@@ -2547,6 +2560,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
     SWFAction   oAction;
     mapObj      *map = NULL;
     char        *pszRelativeName = NULL;
+    int         iSaveResult; 
 
     if (image && MS_DRIVER_SWF(image->format) && filename)
     {
@@ -2558,8 +2572,11 @@ int msSaveImageSWF(imageObj *image, char *filename)
                                                "OUTPUT_MOVIE",""), 
                        "MULTIPLE") != 0)
         {
-            SWFMovie_save(image->img.swf->sMainMovie, filename);  
-            return(MS_SUCCESS);
+            iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename);
+            if (!iSaveResult)
+              return(MS_SUCCESS);
+            else
+              return(MS_FAILURE); 
         }
 
 /* -------------------------------------------------------------------- */
