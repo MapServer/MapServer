@@ -37,13 +37,14 @@ Step 1: Build the PHP.LIB import library
   - Open php_3.0.14\win32\php3.dsw using MSVC++ 6.0
   - Start building php.exe, this will also create PHP.LIB
 
- *** PHP4.0.4 ***
+ *** PHP4.0.4 (and more recent versions) ***
  The PHP 4.0.4 win32 binaries (php-4.0.4-Win32.zip) distributed on 
- http://www.php.net/ included the necessary php4ts.lib import library,
+ http://www.php.net/ include the necessary php4ts.lib import library,
  so it is not necessary to build the PHP4 source in this case:
-  - Extract php-4.0.4.tar.gz  (this will create a php-4.0.4 tree)
-  - Extract php-4.0.4-Win32.zip and configure PHP4 on your server
-  - mkdir php-4.0.4\lib
+  - Extract php-4.0.4.tar.gz  (this will create a php-4.0.4 source tree)
+  - Extract php-4.0.4-Win32.zip and configure PHP4 on your server as per
+    the instructions in the file install.txt included in the zip file.
+  - mkdir php-4.0.4\lib (i.e. 'mkdir lib' in the root of the source tree)
   - Copy php4ts.lib (from php-4.0.4-Win32.zip) to php-4.0.4\lib
   - Continue with the rest of the instructions below.
 
