@@ -61,7 +61,11 @@ imageObj *msDrawMap(mapObj *map)
 
     msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
 
-    if( MS_RENDERER_GD(map->outputformat) )
+    if(!map->outputformat) {
+        msSetError(MS_GDERR, "Map outputformat not set!", "msDrawMap()");
+        return(NULL);
+    }
+    else if( MS_RENDERER_GD(map->outputformat) )
     {
         image = msImageCreateGD(map->width, map->height, map->outputformat, 
 				map->web.imagepath, map->web.imageurl);        
