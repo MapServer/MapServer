@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Current Version (CVS)
 --------------------------
 
+- Modified tile4ms to check that all DBFs in tile index have the exact
+  same set of fields
+
 - Fixed detection of OGRRegisterAll() with GDAL 1.1.9 in configure. 
   We were looking for libgdal.1.1.so but the name changed to 
   libgdal.so.x.y.z starting with GDAL 1.1.9
