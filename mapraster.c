@@ -301,6 +301,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
   unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3, *pabyRawAlpha;
   int truecolor = FALSE;
   gdImagePtr gdImg = NULL;
+  CPLErr  eErr;
 
   GDALColorTableH hColorMap;
   GDALRasterBandH hBand1, hBand2, hBand3, hBandAlpha;
@@ -382,7 +383,11 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
                       GDALGetRasterYSize(hDS) - src_yoff);
 
       if( src_xsize == 0 || src_ysize == 0 )
+      {
+          if( layer->debug )
+              msDebug( "msDrawGDAL(): no apparent overlap between map view and this window(1).\n" );
           return 0;
+      }
 
       dst_xoff = (int) ((copyRect.minx - mapRect.minx) / map->cellsize);
       dst_yoff = (int) ((mapRect.maxy - copyRect.maxy) / map->cellsize);
@@ -392,7 +397,11 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
       dst_ysize = MIN(MAX(1,dst_ysize),image->height - dst_yoff);
       
       if( dst_xsize == 0 || dst_ysize == 0 )
+      {
+          if( layer->debug )
+              msDebug( "msDrawGDAL(): no apparent overlap between map view and this window(2).\n" );
           return 0;
+      }
   }
 
   /*
@@ -433,8 +442,15 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
       if( pBuffer == NULL )
           return -1;
 
-      GDALRasterIO( hBand1, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
-                    pBuffer, dst_xsize, dst_ysize, eDataType, 0, 0 );
+      eErr = GDALRasterIO( hBand1, GF_Read, 
+                           src_xoff, src_yoff, src_xsize, src_ysize, 
+                           pBuffer, dst_xsize, dst_ysize, eDataType, 0, 0 );
+      if( eErr != CE_None )
+      {
+          msDebug( "GDALRasterIO() failed: %s\n",
+                   CPLGetLastErrorMsg() );
+          free( pBuffer );
+      }
 
       k = 0;
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
@@ -618,8 +634,15 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( pabyRaw1 == NULL )
       return -1;
 
-  GDALRasterIO( hBand1, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
-                pabyRaw1, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+  eErr = GDALRasterIO( hBand1, GF_Read, 
+                       src_xoff, src_yoff, src_xsize, src_ysize, 
+                       pabyRaw1, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+  if( eErr != CE_None )
+  {
+      msDebug( "GDALRasterIO() failed: %s\n",
+               CPLGetLastErrorMsg() );
+      free( pabyRaw1 );
+  }
 
   /*
   ** Process single band using the provided, or greyscale colormap
@@ -676,15 +699,34 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
       if( pabyRaw2 == NULL )
           return -1;
       
-      GDALRasterIO( hBand2, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
-                    pabyRaw2, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+      eErr = GDALRasterIO( hBand2, GF_Read, 
+                           src_xoff, src_yoff, src_xsize, src_ysize, 
+                           pabyRaw2, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+
+      if( eErr != CE_None )
+      {
+          msDebug( "GDALRasterIO() failed: %s\n",
+                   CPLGetLastErrorMsg() );
+          free( pabyRaw1 );
+          free( pabyRaw2 );
+      }
 
       pabyRaw3 = (unsigned char *) malloc(dst_xsize * dst_ysize);
       if( pabyRaw3 == NULL )
           return -1;
       
-      GDALRasterIO( hBand3, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
-                    pabyRaw3, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+      eErr = GDALRasterIO( hBand3, GF_Read, 
+                           src_xoff, src_yoff, src_xsize, src_ysize, 
+                           pabyRaw3, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+
+      if( eErr != CE_None )
+      {
+          msDebug( "GDALRasterIO() failed: %s\n",
+                   CPLGetLastErrorMsg() );
+          free( pabyRaw1 );
+          free( pabyRaw2 );
+          free( pabyRaw3 );
+      }
 
       if( hBandAlpha != NULL )
       {
@@ -692,9 +734,19 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
           if( pabyRawAlpha == NULL )
               return -1;
           
-          GDALRasterIO( hBandAlpha, GF_Read, 
-                        src_xoff, src_yoff, src_xsize, src_ysize, 
-                        pabyRawAlpha, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+          eErr = GDALRasterIO( hBandAlpha, GF_Read, 
+                               src_xoff, src_yoff, src_xsize, src_ysize, 
+                               pabyRawAlpha, dst_xsize, dst_ysize, GDT_Byte, 
+                               0, 0 );
+          if( eErr != CE_None )
+          {
+              msDebug( "GDALRasterIO() failed: %s\n",
+                       CPLGetLastErrorMsg() );
+              free( pabyRaw1 );
+              free( pabyRaw2 );
+              free( pabyRaw3 );
+              free( pabyRawAlpha );
+          }
       }
       else
           pabyRawAlpha = NULL;
