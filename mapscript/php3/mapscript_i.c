@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.67  2003/09/04 16:05:15  assefa
+ * Add msClearLayerPenValues in classObj_drawLegendIcon.
+ *
  * Revision 1.66  2003/07/03 15:31:47  assefa
  * Add the possibility to generate image for function
  * processquerytemplate (bug 341).
@@ -734,6 +737,7 @@ int classObj_setText(classObj *self, layerObj *layer, char *string) {
   }
 
 int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {
+  msClearLayerPenValues(layer); // just in case the mapfile has already been processed
     return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
 }
 
