@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/02/25 21:41:19  frank
+ * fixed bug with asymmetric rounding around zero
+ *
  * Revision 1.39  2003/02/24 21:22:52  frank
  * Restructured the source window quite a bit so that input images with a rotated
  * (or sheared) geotransform would work properly.  Pass RAW_WINDOW to draw func.
@@ -264,7 +267,11 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
             nSrcX = (int) x[nDstX];
             nSrcY = (int) y[nDstX];
 
-            if( nSrcX < 0.0 || nSrcY < 0.0
+            /*
+             * We test the original floating point values to 
+             * avoid errors related to asymmetric rounding around zero.
+             */
+            if( x[nDstX] < 0.0 || y[nDstX] < 0.0
                 || nSrcX >= nSrcXSize || nSrcY >= nSrcYSize )
                 continue;
 
