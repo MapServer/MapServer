@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.24  2003/10/06 13:03:19  assefa
+ * Use of namespace. Correct execption return.
+ *
  * Revision 1.23  2003/09/30 15:56:40  assefa
  * Typenames may have namespaces.
  *
@@ -124,14 +127,17 @@ static int msWFSException(mapObj *map, const char *wmtversion)
     */
     printf("Content-type: text/xml%c%c",10,10);
 
-    printf("<WFS_Exception>\n");
-    printf("  <Exception>\n");
+    printf("<ServiceExceptionReport\n");
+    printf("xmlns=\"http://www.opengis.net/ogc\" ");
+    printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+    printf("xsi:schemaLocation=\"http://www.opengis.net/ogc http://ogc.dmsolutions.ca/wfs/1.0/OGC-exception.xsd\">\n");
+    printf("  <ServiceException>\n");
     /* Optional <Locator> element currently unused. */
-    printf("    <Message>\n");
-    msWriteError(stdout);
-    printf("    </Message>\n");
-    printf("  </Exception>\n");
-    printf("</WFS_Exception>\n");
+    //printf("    <Message>\n");
+    msWriteErrorXML(stdout);
+    //printf("    </Message>\n");
+    printf("  </ServiceException>\n");
+    printf("</ServiceExceptionReport>\n");
 
     return MS_FAILURE; // so we can call 'return msWFSException();' anywhere
 }
@@ -212,17 +218,19 @@ static int msWFSIsLayerSupported(layerObj *lp)
 */
 const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp)
 {
-    const char *name;
-
-    if ((name = msLookupHashTable(lp->metadata, 
-                                  "wfs_geometry_element_name")) == NULL &&
-        (name = msLookupHashTable(map->web.metadata, 
-                                  "wfs_geometry_element_name")) == NULL )
+    switch(lp->type)
     {
-        name = "MS_GEOMETRY";
+        case MS_LAYER_POINT:
+          return "pointProperty";
+        case MS_LAYER_LINE:
+          return "lineStringProperty";
+        case MS_LAYER_POLYGON:
+          return "polygonProperty";
+        default:
+          break;
     }
 
-    return name;
+    return "???unknown???";
 
 }
 
@@ -474,7 +482,9 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     int i, numlayers=0;
     char **layers = NULL;
     const char *myns_uri = NULL;
-
+    char **tokens;
+    int n=0;
+    char *pszNameSpace = strdup("myns");
 
     if(paramsObj->pszTypeName && numlayers == 0) 
     {
@@ -483,6 +493,27 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
         // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
         //
         layers = split(paramsObj->pszTypeName, ',', &numlayers);
+        if (numlayers > 0)
+        {
+            //strip namespace if there is one :ex TYPENAME=cdf:Other
+            tokens = split(layers[0], ':', &n);
+            if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0)
+            {
+                pszNameSpace = strdup(tokens[0]);
+                msFreeCharArray(tokens, n);
+                for (i=0; i<numlayers; i++)
+                {
+                    tokens = split(layers[i], ':', &n);
+                    if (tokens && n==2)
+                    {
+                        free(layers[i]);
+                        layers[i] = strdup(tokens[1]);
+                    }
+                    if (tokens)
+                      msFreeCharArray(tokens, n);
+                }
+            }
+        }
     } 
     if (paramsObj->pszOutputFormat)
     {
@@ -497,8 +528,21 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
         }
     }
 
-    
-
+    //Validate layers
+    if (numlayers > 0)
+    {
+        for (i=0; i<numlayers; i++)
+        {
+            if (msGetLayerIndex(map, layers[i]) < 0)
+            {
+                msSetError(MS_WFSERR, 
+                       "Invalid typename (%s).", 
+                       "msWFSDescribeFeatureType()", paramsObj->pszTypeName);
+                return msWFSException(map, paramsObj->pszVersion);
+            }
+        }
+    }
+            
     /*
     ** DescribeFeatureType response
     */
@@ -514,16 +558,17 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 
     printf("<schema\n"
            "   targetNamespace=\"%s\" \n"
-           "   xmlns:myns=\"%s\" \n"
+           "   xmlns:%s=\"%s\" \n"
+           "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
            "   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
            "   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
            "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
            "   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
-           myns_uri, myns_uri );
+           myns_uri, pszNameSpace, myns_uri );
 
     printf("\n"
            "  <import namespace=\"http://www.opengis.net/gml\" \n"
-           "          schemaLocation=\"%s/gml/2.1/feature.xsd\" />\n",
+           "          schemaLocation=\"%s/gml/2.1.1/feature.xsd\" />\n",
            msOWSGetSchemasLocation(map));
 
     /*
@@ -552,20 +597,18 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 
             printf("\n"
                    "  <element name=\"%s\" \n"
-                   "           type=\"myns:%s_Type\" \n"
+                   "           type=\"%s:%s_Type\" \n"
                    "           substitutionGroup=\"gml:_Feature\" />\n\n",
-                   lp->name, lp->name);
+                   lp->name, pszNameSpace, lp->name);
 
             printf("  <complexType name=\"%s_Type\">\n", lp->name);
             printf("    <complexContent>\n");
             printf("      <extension base=\"gml:AbstractFeatureType\">\n");
             printf("        <sequence>\n");
 
-            printf("          <element name=\"%s\" \n"
-                   "                   type=\"gml:%s\" \n"
-                   "                   nillable=\"false\" />\n",
-                   msWFSGetGeomElementName(map, lp),
-                   msWFSGetGeomType(lp) );
+            printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
+                   msWFSGetGeomElementName(map, lp));
+
 
             if (msLayerOpen(lp) == MS_SUCCESS)
             {
@@ -601,6 +644,9 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     if (layers)
         msFreeCharArray(layers, numlayers);
 
+    if (pszNameSpace)
+      free(pszNameSpace);
+
     return MS_SUCCESS;
 }
 
@@ -623,7 +669,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     char   *pszFilter = NULL;
     int bFilterSet = 0;
     int bBBOXSet = 0;
-   
+    char *pszNameSpace = strdup("myns");
     
     // Default filter is map extents
     bbox = map->extent;
@@ -649,7 +695,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
         //
         layers = split(typename, ',', &numlayers);
 /* ==================================================================== */
-/*      check if the typename contains name spaces (ex cdf:Other),      */
+/*      check if the typename contains namespaces (ex cdf:Other),       */
 /*      If that is the case extarct only the layer name.                */
 /* ==================================================================== */
          
@@ -661,8 +707,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
             return msWFSException(map, paramsObj->pszVersion);
         }
         tokens = split(layers[0], ':', &n);
-        if (tokens && n==2)
+        if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0)
         {
+            pszNameSpace = strdup(tokens[0]);
             msFreeCharArray(tokens, n);
             for (i=0; i<numlayers; i++)
             {
@@ -740,7 +787,19 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
             }
         }
     }
-    
+    //Validate outputformat
+    if (paramsObj->pszOutputFormat)
+    {
+        /* We support only GML2 for now.
+         */
+        if (strcasecmp(paramsObj->pszOutputFormat, "GML2") != 0)
+        {
+            msSetError(MS_WFSERR, 
+                       "Unsupported GetFeature outputFormat (%s). Only GML2 is supported.", 
+                       "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
+            return msWFSException(map, paramsObj->pszVersion);
+        }
+    }
     //else if (strcasecmp(names[i], "PROPERTYNAME") == 0)
     //{
     //        
@@ -1041,21 +1100,24 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
 
     printf("<wfs:FeatureCollection\n"
            "   xmlns=\"%s\"\n"
-           "   xmlns:myns=\"%s\"\n"
+           "   xmlns:%s=\"%s\"\n"
            "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
            "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+           "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
            "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
-           "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s\">\n", 
-           myns_uri, myns_uri,
-           msOWSGetSchemasLocation(map), paramsObj->pszVersion, 
+           "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
+ENAME=%s\">\n",
+           myns_uri, pszNameSpace, myns_uri,
+           msOWSGetSchemasLocation(map), paramsObj->pszVersion,
            myns_uri, script_url_encoded, paramsObj->pszVersion, typename);
 
 
     /* __TODO__ WFS expects homogenous geometry types, but our layers can
     **          contain mixed geometry types... how to deal with that???
     */
-    msGMLWriteWFSQuery(map, stdout, maxfeatures);
+    msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace);
+    
 
     /*
     ** Done!
@@ -1064,6 +1126,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
 
     free(script_url);
     free(script_url_encoded);
+    if (pszNameSpace)
+      free(pszNameSpace);
 
     return MS_SUCCESS;
 }
@@ -1262,6 +1326,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 
                 else if (strcasecmp(request->ParamNames[i], "FILTER") == 0)
                   wfsparams->pszFilter = strdup(request->ParamValues[i]);
+                
+                else if (strcasecmp(request->ParamNames[i], "OUTPUTFORMAT") == 0)
+                  wfsparams->pszOutputFormat = strdup(request->ParamValues[i]);
             }
         }
         //version is optional is the GetCapabilities. If not
@@ -1474,20 +1541,23 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
             {
                 wfsparams->pszRequest = strdup("DescribeFeatureType");
 
-                pszValue = (char*)CPLGetXMLValue(psGetFeature, "version", NULL);
+                pszValue = (char*)CPLGetXMLValue(psDescribeFeature, "version", 
+                                                 NULL);
                 if (pszValue)
                   wfsparams->pszVersion = strdup(pszValue);
 
-                pszValue = (char*)CPLGetXMLValue(psGetFeature, "service", NULL);
+                pszValue = (char*)CPLGetXMLValue(psDescribeFeature, "service", 
+                                                 NULL);
                 if (pszValue)
                   wfsparams->pszService = strdup(pszValue);
 
-                pszValue = (char*)CPLGetXMLValue(psGetFeature, "outputFormat", 
+                pszValue = (char*)CPLGetXMLValue(psDescribeFeature, 
+                                                 "outputFormat", 
                                                  NULL);
                 if (pszValue)
                   wfsparams->pszOutputFormat = strdup(pszValue);
 
-                psTypeName = CPLGetXMLNode(psGetFeature, "TypeName");
+                psTypeName = CPLGetXMLNode(psDescribeFeature, "TypeName");
                 if (psTypeName)
                 {
                     //free typname and filter. There may have been

@@ -428,7 +428,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
 
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, 
+                       char *namespace)
 {
   int status;
   int i,j,k;
@@ -462,9 +463,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
       status = msLayerOpen(lp);
       if(status != MS_SUCCESS) return(status);
 
-      // retrieve all the item names
-      status = msLayerGetItems(lp);
-      if(status != MS_SUCCESS) return(status);
+      // retrieve all the item names. (Note : there might be no attributs)
+      //status = msLayerGetItems(lp);
+      //if(status != MS_SUCCESS) return(status);
 
       for(j=0; j<lp->resultcache->numresults; j++) 
       {
@@ -481,7 +482,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
         
 	// start this feature
 	fprintf(stream, "    <gml:featureMember>\n");
-	fprintf(stream, "      <%s>\n", lp->name);
+        if (namespace)
+          fprintf(stream, "      <%s:%s>\n", namespace,lp->name);
+
+        else
+           fprintf(stream, "      <%s>\n", lp->name);
 
 	// write the bounding box
 	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
@@ -493,7 +498,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
 	gmlWriteBounds(stream, &(shape.bounds), NULL, "        "); // no projection information
 #endif
 
-        fprintf(stream, "        <%s>\n", geom_name); 
+        fprintf(stream, "        <gml:%s>\n", geom_name); 
 
 	// write the feature geometry
 #ifdef USE_PROJ
@@ -505,20 +510,29 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
 	gmlWriteGeometry(stream, &(shape), NULL, "          ");
 #endif
 
-        fprintf(stream, "        </%s>\n", geom_name); 
+        fprintf(stream, "        </gml:%s>\n", geom_name); 
 
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
         {
           char *encoded_val;
           encoded_val = msEncodeHTMLEntities(shape.values[k]);
-	  fprintf(stream, "        <%s>%s</%s>\n", 
-                  lp->items[k], encoded_val, lp->items[k]);
+         
+          if (namespace)
+            fprintf(stream, "        <%s:%s>%s</%s:%s>\n", 
+                    namespace, lp->items[k], encoded_val, namespace, lp->items[k]);
+          else      
+            fprintf(stream, "        <%s>%s</%s>\n", 
+                    lp->items[k], encoded_val, lp->items[k]);
           free(encoded_val);
         }
 
 	// end this feature
-	fprintf(stream, "      </%s>\n", lp->name);
+         if (namespace)
+           fprintf(stream, "      </%s:%s>\n", namespace, lp->name);
+         else
+           fprintf(stream, "      </%s>\n", lp->name);
+
 	fprintf(stream, "    </gml:featureMember>\n");
 
 	msFreeShape(&shape); // init too

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.18  2003/10/06 13:03:19  assefa
+ * Use of namespace. Correct execption return.
+ *
  * Revision 1.17  2003/09/19 21:54:19  assefa
  * Add support fot the Post request.
  *
@@ -176,7 +179,7 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
 int msGMLWriteQuery(mapObj *map, char *filename);
 
 #ifdef USE_WFS_SVR
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures);
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
 #endif
 
 
