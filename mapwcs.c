@@ -342,27 +342,6 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
   return MS_SUCCESS;
 }
 
-/* Example RectifiedGrid from GML 3.0 spec 
-
-<gml:RectifiedGrid dimension="2"> 
-    <gml:limits> 
-      <gml:GridEnvelope> 
-        <gml:low>1 1</gml:low> 
-        <gml:high>3 3</gml:high> 
-      </gml:GridEnvelope> 
-    </gml:limits> 
-    <gml:axisName>u</gml:axisName> 
-    <gml:axisName>v</gml:axisName> 
-    <gml:origin> 
-      <gml:Point gml:id="palindrome"> 
-        <gml:coordinates>1.2,3.3,2.1</gml:coordinates> 
-      </gml:Point> 
-    </gml:origin> 
-    <gml:offsetVector>1,2,3</gml:offsetVector> 
-    <gml:offsetVector >2,1,0</gml:offsetVector> 
-  </gml:RectifiedGrid>   
-*/
-
 static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
 {
   const char *value;
@@ -479,6 +458,25 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   printf("          <gml:pos>%g %g</gml:pos>\n", cm.extent.minx, cm.extent.miny);
   printf("          <gml:pos>%g %g</gml:pos>\n", cm.extent.maxx, cm.extent.maxy);
   printf("        </gml:Envelope>\n");
+
+  // gml:rectifiedGrid
+  printf("        <gml:RectifiedGrid dimension=\"2\">\n");
+  printf("          <gml:limits>\n");
+  printf("            <gml:GridEnvelope>\n");
+  printf("              <gml:low>0 0</gml:low>\n");
+  printf("              <gml:high>%d %d</gml:high>\n", cm.xsize-1, cm.ysize-1);
+  printf("            </gml:GridEnvelope>\n");
+  printf("          </gml:limits>\n");
+  printf("          <gml:axisName>x</gml:axisName>\n");
+  printf("          <gml:axisName>y</gml:axisName>\n");
+  printf("          <gml:origin>\n");
+  printf("            <gml:Point>\n");
+  printf("              <gml:coordinates>%g,%g</gml:coordinates>\n", cm.geotransform[0], cm.geotransform[3]);
+  printf("            </gml:Point>\n");
+  printf("          </gml:origin>\n");
+  printf("          <gml:offsetVector>%g,0.0</gml:offsetVector>\n", cm.geotransform[1]);
+  printf("          <gml:offsetVector>0.0,%g</gml:offsetVector>\n", cm.geotransform[5]);
+  printf("        </gml:RectifiedGrid>\n");
 
   printf("      </SpatialDomain>\n");
 
@@ -605,6 +603,7 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     layerObj   *lp;
     int         status, i;
     const char *value;
+    outputFormatObj *format;
 
     // Find the layer we are working with. 
     lp = NULL;
@@ -635,7 +634,16 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
         return msWCSException(params->version);
       }
       
-      // TODO: check the value against the metadata
+      // TODO: will need to expand this check if a time period is supported
+      value = msOWSLookupMetadata(lp->metadata, "CO", "timeposition");
+      if(!value) {
+        msSetError( MS_WCSERR, "The coverage does not support temporal subsetting.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+      }
+      if(!strstr(value, params->time)) { // this is likely too simple a test
+        msSetError( MS_WCSERR, "The coverage does not have a time position of %s.", "msWCSGetCoverage()", params->time );
+        return msWCSException(params->version);
+      }
       
       // make sure layer is tiled appropriately
       if(!lp->tileindex) {
@@ -715,9 +723,20 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
         msSetError( MS_WCSERR,  "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
     }
+     
+    // Check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata)
+    if(!params->format) {
+        msSetError( MS_WCSERR,  "Missing required FORMAT parameter.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+    }
+    if(msGetOutputFormatIndex(map,params->format) == -1) {
+        msSetError( MS_WCSERR,  "Unrecognized value for the FORMAT parameter.", "msWCSGetCoverage()" );
+        return msWCSException(params->version);
+    }
                         
-    // Create a temporary outputformat
-    msApplyOutputFormat(&(map->outputformat), msSelectOutputFormat(map,params->format), MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE); 
+    // Create a temporary outputformat (we like will need to tweak parts)
+    format = msCloneOutputFormat(msSelectOutputFormat(map,params->format));
+    msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE); 
 
     // Create the image object. 
     if(!map->outputformat) {
@@ -746,6 +765,7 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     // Cleanup
     msFreeImage(image);
     msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+    msFreeOutputFormat(format);
 
     return status;
 }
@@ -927,6 +947,8 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     cm->extent.maxx = cm->geotransform[0] + cm->geotransform[1] * cm->xsize + cm->geotransform[2] * cm->ysize;
     cm->extent.miny = cm->geotransform[3] + cm->geotransform[4] * cm->xsize + cm->geotransform[5] * cm->ysize;
     cm->extent.maxy = cm->geotransform[3];
+    
+    // TODO: need to set resolution
     
     cm->bandcount = GDALGetRasterCount( hDS );
         
