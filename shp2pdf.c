@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
   int PagePixelMargin = 50;
   int MapScaleFactor = 1;
   int MapPixelSize = 500;
-  hashTableObj FontHash=NULL;
 
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
