@@ -109,6 +109,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
 	     params->request = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
 	     params->service = strdup(request->ParamValues[i]);
+	   else if(strcasecmp(request->ParamNames[i], "SECTION") == 0)
+	     params->section = strdup(request->ParamValues[i]);
 
        // GetCoverage parameters.
        else if(strcasecmp(request->ParamNames[i], "BBOX") == 0) {
@@ -193,9 +195,9 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
   printf("Content-type: text/xml%c%c",10,10);
 
   // print common capability elements 
- msOWSPrintMetadata(stdout, map->web.metadata, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
+  msOWSPrintMetadata(stdout, map->web.metadata, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
 
-  printf("<WCS_Capabilities \n"
+  printf("<WCS_Capabilities\n"
          "   version=\"%s\" \n"
          "   updateSequence=\"0\" \n"
          "   xmlns=\"http://www.opengis.net/wcs\" \n"
@@ -204,13 +206,13 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
          "   xsi:schemaLocation=\"http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
          
   // print the various capability sections
-  if(!params->service || strcasecmp(params->service, "Service"))
+  if(!params->section || strcasecmp(params->section, "Service"))
     msWCSGetCapabilities_Service(map, params);
 
-  if(!params->service || strcasecmp(params->service, "Capability"))
+  if(!params->section || strcasecmp(params->section, "Capability"))
     msWCSGetCapabilities_Capability(map, params);
 
-  if(!params->service || strcasecmp(params->service, "ContentMetadata"))
+  if(!params->section || strcasecmp(params->section, "ContentMetadata"))
     msWCSGetCapabilities_ContentMetadata(map, params);
 
   // done
