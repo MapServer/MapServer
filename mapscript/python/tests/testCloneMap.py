@@ -97,7 +97,20 @@ class SymbolSetTestCase(MapCloneTestCase):
         self.mapobj_clone.setSymbolSet(symbolsetfile)
         num = self.mapobj_clone.symbolset.numsymbols
         assert num == 2, num
-    
+   
+class DrawingTestCase(MapCloneTestCase):
+
+    def testDrawClone(self):
+        self.mapobj_clone.setFontSet(fontsetfile)
+        self.mapobj_clone.setSymbolSet(symbolsetfile)
+        msimg = self.mapobj_clone.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'testClone.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+
 if __name__ == '__main__':
     unittest.main()
 
