@@ -565,6 +565,38 @@ class CLonedSetExtentTestCase(unittest.TestCase):
         self.mapobj1.setExtent(e)
         assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
 
+# rectObj constructor tests
+
+class RectObjTestCase(unittest.TestCase):
+    def testRectObjConstructorNoArgs(self):
+        r = rectObj()
+        assert r.minx == 0.0
+        assert r.miny == 0.0
+        assert r.maxx == 0.0
+        assert r.maxy == 0.0
+    def testRectObjConstructorArgs(self):
+        r = rectObj(-1.0, -2.0, 3.0, 4.0)
+        assert r.minx == -1.0
+        assert r.miny == -2.0
+        assert r.maxx == 3.0
+        assert r.maxy == 4.0
+    def testRectObjConstructorBad1(self):
+        self.assertRaises(MapServerError, rectObj, 1.0, -2.0, -3.0, 4.0)
+    def testRectObjConstructorBad1(self):
+        self.assertRaises(MapServerError, rectObj, -1.0, 2.0, 3.0, -2.0)
+        
+# pointObj constructor tests
+
+class PointObjTestCase(unittest.TestCase):
+    def testPointObjConstructorNoArgs(self):
+        p = pointObj()
+        assert p.x == 0.0
+        assert p.y == 0.0
+    def testPointObjConstructorArgs(self):
+        p = pointObj(1.0, 1.0)
+        assert p.x == 1.0
+        assert p.y == 1.0
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -838,8 +838,13 @@ memory.") const char * {
 // class extensions for pointObj, useful many places
 //
 %extend pointObj {
-  pointObj() {
-    return (pointObj *)malloc(sizeof(pointObj));
+  pointObj(double x=0.0, double y=0.0) {
+      pointObj *p;
+      p = (pointObj *)malloc(sizeof(pointObj));
+      if (!p) return NULL;
+      p->x = x;
+      p->y = y;
+      return p;
   }
 
   ~pointObj() {
@@ -1028,13 +1033,24 @@ memory.") const char * {
 // class extensions for rectObj
 //
 %extend rectObj {
-  rectObj() {	
+  rectObj(double minx=0.0, double miny=0.0, double maxx=0.0, double maxy=0.0) {	
     rectObj *rect;
-
+    
+    // Check bounds
+    if (minx > maxx || miny > maxy) {
+        msSetError(MS_MISCERR, "Invalid bounds.", "rectObj()");
+        return NULL;
+    }
+    
     rect = (rectObj *)calloc(1, sizeof(rectObj));
     if(!rect)
       return(NULL);
     
+    rect->minx = minx;
+    rect->miny = miny;
+    rect->maxx = maxx;
+    rect->maxy = maxy;
+
     return(rect);    	
   }
 
