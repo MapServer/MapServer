@@ -147,7 +147,6 @@ if (MSExc_MapServerNotFoundError != NULL)
 
 %{
     static void _raise_ms_exception(void) {
-        char errbuf[256];
         char *errmsg;
         int errcode;
         errorObj *ms_error;
@@ -156,15 +155,6 @@ if (MSExc_MapServerNotFoundError != NULL)
         ms_error = msGetErrorObj();
         errcode = ms_error->code;
         
-        // Step through the error list, appending to the output error
-        // message.
-        /*while (ms_error && ms_error->code > 0) {
-            snprintf(errbuf, 255, "%s: %s %s\n", ms_error->routine,
-                     msGetErrorCodeString(ms_error->code), ms_error->message);
-            strcat(errmsg, errbuf);
-            ms_error = ms_error->next;
-        }*/
-       
         // New style
         errmsg = msGetErrorString("\n");
         
