@@ -165,8 +165,8 @@ getStyle(int index) : styleObj_
 .. _insertStyle:
 
 insertStyle(styleObj_ style [, int index=-1]) : int
-    Insert a styleObj into the styles array at index *index*.  Default
-    is -1, or the end of the array.  Returns the index at which the 
+    Insert a *copy* of *style* into the styles array at index *index*.
+    Default is -1, or the end of the array.  Returns the index at which the 
     style was inserted.
 
 .. _moveStyleDown:
@@ -375,7 +375,7 @@ draw(mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text) :
 
 .. _rectObj.project:
 
-_project(projectionObj_ proj_in, projectionObj_ proj_out) : int
+project(projectionObj_ proj_in, projectionObj_ proj_out) : int
     Reproject rectangle from *proj_in* to *proj_out*.  Transformation
     is done in place.  Returns MS_SUCCESS or MS_FAILURE.
     
@@ -394,4 +394,66 @@ x
  styleObj
 -----------------------------------------------------------------------------
 
+Support for multiple class styles is a new feature in the current unstable
+(4.1) Mapscript and in the next stable (4.2) release.  The initial feature
+request and notes are archived at http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=548.
+
+An instance of styleObj can exist outside of a classObj container and
+needs to be explicitly inserted into the classObj for use in mapping.
+
+::
+
+    styleobj = new styleObj()
+    classobj.insertStyle(styleobj)
+    
+It is important to understand that because all MapServer object attributes
+are *value* *objects* insertStyle_ inserts a *copy* of the
+styleObj instance, not a reference to the instance itself.
+
+Attributes
+----------
+
+symbol : int mutable
+    The index within the map symbolset of the style's symbol.
+    
+symbolname : string immutable
+    Name of the style's symbol.
+    
+size : int mutable
+    Pixel width of the style's pen or symbol.
+
+minsize : int mutable
+    Minimum pen or symbol width for scaling styles.
+    
+maxsize : int mutable
+    Maximum pen or symbol width for scaling.
+    
+offsetx : int mutable
+    Draw with pen or symbol offset from map data.
+    
+offsety : int mutable
+    Draw with pen or symbol offset from map data.
+    
+color : colorObj_ mutable
+    Foreground or fill pen color.
+    
+backgroundcolor : colorObj_ mutable
+    Background pen color.
+    
+outlinecolor : colorObj_ mutable
+    Outline pen color.
+    
+Methods
+-------
+
+.. _new styleObj:
+
+new styleObj() : styleObj_
+    Returns new instance.
+
+-----------------------------------------------------------------------------
+ symbolSetObj
+-----------------------------------------------------------------------------
+
 x
+
