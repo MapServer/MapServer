@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 3.7-dev (CVS)
 ---------------------
 
+- Added imagemap outputformat, which makes possible use of client-side imagemaps in browsers
+
+- Added MySQL support for non-spatial OpenGIS Simple Features SQL stored data
+
 - msQueryByShape and msQueryByFeature honor layer tolerances. In effect you can to buffered
   queries now. At the momoment only polygon select features are supported, but there's nothing
   inherent in the underlying computations that says lines won't work as well.
