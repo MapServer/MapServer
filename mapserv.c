@@ -1709,10 +1709,11 @@ int main(int argc, char *argv[]) {
 	  if(QueryCoordSource != NONE && !UseShapes)
 	    setExtent(); /* set user area of interest */
 
-	  if(Mode == ITEMQUERY || Mode == ITEMQUERYMAP)
+	  if(Mode == ITEMFEATUREQUERY || Mode == ITEMFEATUREQUERYMAP) {
 	    if((status = msQueryByAttributes(Map, SelectLayerIndex, MS_SINGLE)) != MS_SUCCESS) writeError();
-	  else
+	  } else {
 	    if((status = msQueryByAttributes(Map, SelectLayerIndex, MS_MULTIPLE)) != MS_SUCCESS) writeError();
+	  }
 
 	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
 
@@ -1775,10 +1776,11 @@ int main(int argc, char *argv[]) {
 	  if(QueryCoordSource != NONE && !UseShapes)
 	    setExtent(); /* set user area of interest */
 
-	  if(Mode == ITEMQUERY || Mode == ITEMQUERYMAP)
+	  if(Mode == ITEMQUERY || Mode == ITEMQUERYMAP) {
 	    if((status = msQueryByAttributes(Map, QueryLayerIndex, MS_SINGLE)) != MS_SUCCESS) writeError();
-	  else
+	  } else {
 	    if((status = msQueryByAttributes(Map, QueryLayerIndex, MS_MULTIPLE)) != MS_SUCCESS) writeError();
+          }
 
 	  break;
         case NQUERY:
