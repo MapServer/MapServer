@@ -898,15 +898,21 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
     * that belong to this group.
     * Get his status and check for if.
     */
-   for (j=0; j<map->numlayers; j++) 
+   for (j=0; j<map->numlayers; j++)
    {
-      if (map->layers[j].group && strcmp(map->layers[j].group, pszGroupName) == 0) 
+      if (map->layers[map->layerorder[j]].group && strcmp(map->layers[map->layerorder[j]].group, pszGroupName) == 0)
       {
-         sprintf(pszStatus, "%d", map->layers[j].status);
+         sprintf(pszStatus, "%d", map->layers[map->layerorder[j]].status);
          msInsertHashTable(myHashTable, "layer_status", pszStatus);
    
-         if (processMetadata(pszTemp, myHashTable) != MS_SUCCESS)
+         if (processIf(pszTemp, myHashTable) != MS_SUCCESS)
            return MS_FAILURE;
+         
+         if (processIf(pszTemp, map->layers[map->layerorder[j]].metadata) != MS_SUCCESS)
+           return MS_FAILURE;
+
+         if (processMetadata(pszTemp, map->layers[map->layerorder[j]].metadata) != MS_SUCCESS)
+           return MS_FAILURE;         
          
          break;
       }
@@ -979,9 +985,9 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    // check this if Opt flag is not set
    if((nOptFlag & 2) == 0 && map->layers[nIdxLayer].status == MS_OFF)
      return MS_SUCCESS;
-      
+
    // dont display layer is query.
-   // check this if Opt flag is not set      
+   // check this if Opt flag is not set
    if ((nOptFlag & 4) == 0  && map->layers[nIdxLayer].type == MS_LAYER_QUERY)
      return MS_SUCCESS;
 
@@ -1022,10 +1028,10 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
     */
    sprintf(pszStatus, "%d", map->layers[nIdxLayer].status);
    msInsertHashTable(myHashTable, "layer_status", pszStatus);
-   
+
    sprintf(pszType, "%d", map->layers[nIdxLayer].type);
-   msInsertHashTable(myHashTable, "layer_type", pszType);   
-   
+   msInsertHashTable(myHashTable, "layer_type", pszType);
+
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
    
