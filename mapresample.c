@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2001, Frank Warmerdam, DM Solutions Group Inc
+ * Copyright (c) 2001-2002, Frank Warmerdam, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/05/15 14:49:31  dan
+ * Placed gdImagePaletteCopy() patch inside #ifdef (doesn't fully work yet)
+ *
  * Revision 1.22  2002/05/14 17:49:39  frank
  * tentative fix for gdImagePaletteCopy() bug
  *
@@ -664,7 +667,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     return 0;
 #else
     int		nSrcXSize, nSrcYSize, nDstXSize, nDstYSize;
-    int		result, bSuccess, iColor, nColorCount;
+    int		result, bSuccess;
     double	adfSrcGeoTransform[6], adfDstGeoTransform[6];
     double      adfInvSrcGeoTransform[6];
     rectObj	sSrcExtent;
@@ -797,20 +800,25 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /*      gd-1.8.4. (see bug 1002 at DMSolutions).                        */
 /* -------------------------------------------------------------------- */
     
-    /* gdImagePaletteCopy( srcImg, img ); */
-
-    nColorCount = gdImageColorsTotal( img );
-    for( iColor = 0; iColor < nColorCount; iColor++ )
+#ifndef TEST_PALETTE_COPY
+    gdImagePaletteCopy( srcImg, img );
+#else
     {
-        int nResultColor;
+        int nColorCount, iColor;
+        nColorCount = gdImageColorsTotal( img );
+        for( iColor = 0; iColor < nColorCount; iColor++ )
+        {
+            int nResultColor;
 
-        nResultColor = gdImageColorAllocate( srcImg, 
-                                             gdImageRed( img, iColor ),
-                                             gdImageGreen( img, iColor ),
-                                             gdImageBlue( img, iColor ) );
-        assert( nResultColor == iColor );
+            nResultColor = gdImageColorAllocate( srcImg, 
+                                                 gdImageRed( img, iColor ),
+                                                 gdImageGreen( img, iColor ),
+                                                 gdImageBlue( img, iColor ) );
+            assert( nResultColor == iColor );
+        }
+        gdImageColorTransparent( srcImg, gdImageGetTransparent( img ) );
     }
-    gdImageColorTransparent( srcImg, gdImageGetTransparent( img ) );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      If layer has an offsite color then fill the BG of the           */
@@ -834,7 +842,25 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
         return result;
     }
 
+#ifndef TEST_PALETTE_COPY
     gdImagePaletteCopy( img, srcImg );
+#else
+    {
+        int nColorCount, iColor;
+        nColorCount = gdImageColorsTotal( srcImg );
+        for( iColor = 0; iColor < nColorCount; iColor++ )
+        {
+            int nResultColor;
+
+            nResultColor = gdImageColorAllocate( img, 
+                                               gdImageRed( srcImg, iColor ),
+                                               gdImageGreen( srcImg, iColor ),
+                                               gdImageBlue( srcImg, iColor ) );
+            assert( nResultColor == iColor );
+        }
+        gdImageColorTransparent( img, gdImageGetTransparent( srcImg ) );
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Setup transformations between our source image, and the         */
