@@ -1558,8 +1558,8 @@ void freeLayer(layerObj *layer) {
   free(layer->filteritem);
   freeExpression(&(layer->filter));
 
-  free(layer->requires);
-  free(layer->labelrequires);
+  if(layer->requires) free(layer->requires);
+  if(layer->labelrequires) free(layer->labelrequires);
 
   if(layer->metadata) msFreeHashTable(layer->metadata);
 

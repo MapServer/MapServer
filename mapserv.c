@@ -1300,8 +1300,6 @@ void returnQuery()
     }
   }
 
-  fprintf(stderr, "here: starting to return query\n");
-
   NR = NL = 0;
   for(i=0; i<Map->numlayers; i++) { // compute some totals
     lp = &(Map->layers[i]);
@@ -1612,7 +1610,7 @@ int main(int argc, char *argv[]) {
 	    if((status = msQueryByAttributes(Map, SelectLayerIndex, MS_MULTIPLE)) != MS_SUCCESS) writeError();
 	  }
 
-	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
+	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
 
 	  break;
         case FEATUREQUERY:
@@ -1624,7 +1622,7 @@ int main(int argc, char *argv[]) {
 	    writeError();
 	  }
 	  Map->layers[SelectLayerIndex].status = MS_ON;
-
+	  
 	  if(Mode == FEATUREQUERY || Mode == FEATUREQUERYMAP) {
 	    switch(QueryCoordSource) {
 	    case FROMIMGPNT:
@@ -1662,7 +1660,7 @@ int main(int argc, char *argv[]) {
 	    }
 	  } /* end switch */
 	
-	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
+	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
       
 	  break;
         case ITEMQUERY:
