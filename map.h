@@ -1424,7 +1424,7 @@ MS_DLL_EXPORT pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 MS_DLL_EXPORT char **msGetAllGroupNames(mapObj* map, int *numTok);
 MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const char *ext);
 
-MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
+MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */

@@ -1039,7 +1039,7 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
     }
     else
       image_tmp = msImageCreate( image->width, image->height, format,
-                                 NULL, NULL );
+                                 NULL, NULL, map );
 
     if( image_tmp == NULL )
       return -1;

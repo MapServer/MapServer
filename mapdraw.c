@@ -151,7 +151,7 @@ imageObj *msDrawMap(mapObj *map)
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
     {
         image = msImageCreate(map->width, map->height, map->outputformat,
-                              map->web.imagepath, map->web.imageurl);
+                              map->web.imagepath, map->web.imageurl, map);
     }
 #ifdef USE_MING_FLASH
     else if( MS_RENDERER_SWF(map->outputformat) )

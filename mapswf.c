@@ -2574,7 +2574,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
                       "MULTIPLE") == 0)
        {
            image_tmp = msImageCreate( image->width, image->height, format, 
-                                      NULL, NULL );
+                                      NULL, NULL, map );
            bFreeImage = 1;
        }
        else

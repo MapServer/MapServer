@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2004/07/28 21:44:21  assefa
+ * Function msImageCreate has an additional argument (map object).
+ *
  * Revision 1.48  2004/05/25 15:56:26  frank
  * added rotation/geotransform support
  *
@@ -1162,7 +1165,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
     srcImage = msImageCreate( nLoadImgXSize, nLoadImgYSize,
-                              sDummyMap.outputformat, NULL, NULL );
+                              sDummyMap.outputformat, NULL, NULL, map );
 
     if (srcImage == NULL)
         return -1; /* msSetError() should have been called already */

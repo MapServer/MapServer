@@ -886,13 +886,16 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
  *  Generic function to Initalize an image object.
  */
 imageObj *msImageCreate(int width, int height, outputFormatObj *format, 
-                        char *imagepath, char *imageurl)
+                        char *imagepath, char *imageurl, mapObj *map)
 {
     imageObj *image = NULL;
 
     if( MS_RENDERER_GD(format) )
+    {
         image = msImageCreateGD(width, height, format,
                                 imagepath, imageurl);
+        if( image != NULL ) msImageInitGD( image, &map->imagecolor );
+    }
 
     else if( MS_RENDERER_RAWDATA(format) )
     {
@@ -942,6 +945,28 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
             
         return image;
     }
+    else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
+    {
+        image = msImageCreateIM(map->width, map->height, map->outputformat, 
+				map->web.imagepath, map->web.imageurl);        
+        if( image != NULL ) msImageInitIM( image );
+    }
+#ifdef USE_MING_FLASH
+    else if( MS_RENDERER_SWF(map->outputformat) )
+    {
+        image = msImageCreateSWF(map->width, map->height, map->outputformat,
+                                 map->web.imagepath, map->web.imageurl,
+                                 map);
+    }
+#endif
+#ifdef USE_PDF
+    else if( MS_RENDERER_PDF(map->outputformat) )
+    {
+        image = msImageCreatePDF(map->width, map->height, map->outputformat,
+                                 map->web.imagepath, map->web.imageurl,
+                                 map);
+	}
+#endif
     
     else 
     {

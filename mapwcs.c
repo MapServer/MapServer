@@ -966,7 +966,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
     if( image != NULL ) msImageInitGD( image, &map->imagecolor );
   } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-    image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);
+    image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map);
   } else {
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
     return msWCSException(params->version);
