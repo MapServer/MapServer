@@ -16,3 +16,38 @@ imageObj
 
 /* getBytes moved to mapscript/swiginc/image.i */
 
+/*
+==============================================================================
+ pointObj
+==============================================================================
+*/
+
+%extend pointObj 
+{
+  
+    pointObj(double x, double y, double z, double m) 
+    {
+        pointObj *p;
+        p = (pointObj *)calloc(1,sizeof(pointObj));
+        if (!p) return NULL;
+        p->x = x;
+        p->y = y;
+	    p->z = z;
+        p->m = m;
+        return p;
+    }
+
+    pointObj(double x, double y, double z)
+    {
+        pointObj *p;
+        p = (pointObj *)calloc(1,sizeof(pointObj));
+        if (!p) return NULL;
+        p->x = x;
+        p->y = y;
+        p->z = z;
+        p->m = -2e38;
+        return p;
+    }
+
+}
+

@@ -31,7 +31,9 @@
 
 %extend pointObj 
 {
-  
+
+/* Java pointObj constructors are in java/javaextend.i (bug 1106) */
+#ifndef SWIGJAVA
     pointObj(double x=0.0, double y=0.0, double z=0.0, double m=-2e38) 
     {
         pointObj *p;
@@ -39,10 +41,11 @@
         if (!p) return NULL;
         p->x = x;
         p->y = y;
-	p->z = z;
+    	p->z = z;
         p->m = m;
         return p;
     }
+#endif
 
     ~pointObj() 
     {
