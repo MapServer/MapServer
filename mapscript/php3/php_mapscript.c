@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.64  2001/10/31 15:17:14  dan
+ * Added missing ref. to php3_ms_lyr_setFilter in layerObj class
+ *
  * Revision 1.63  2001/10/29 16:33:24  dan
  * Attempt at fixing the random map image problem with mod_php (bug67).
  *
@@ -131,7 +134,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Oct 29, 2001)"
+#define PHP3_MS_VERSION "(Oct 31, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -231,6 +234,7 @@ DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -532,6 +536,7 @@ function_entry php_layer_class_functions[] = {
     {"getshape",        php3_ms_lyr_getShape,           NULL},
     {"getmetadata",     php3_ms_lyr_getMetaData,        NULL},
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
+    {"setfilter",       php3_ms_lyr_setFilter,          NULL},
     {NULL, NULL, NULL}
 };
 
