@@ -17,13 +17,18 @@ $libs = <STREAM>;
 chomp $libs;
 $libs =~ s/\-L\./\-L$home/g;
 
+$static_libs = <STREAM>;
+chomp $static_libs;
+$static_libs =~ s/\-L\./\-L$home/g;
+
 print $inc."\n";
 print $libs."\n";
+print $static_libs."\n";
 
 WriteMakefile(
 	      'NAME' => 'mapscript',
 	      'DEFINE' => $define,
 	      'INC' => $inc,
-	      'LIBS' => [$libs],
+	      'LIBS' => [$libs,$static_libs],
 	      'OBJECT' => 'mapscript_wrap.o'
 	      );
