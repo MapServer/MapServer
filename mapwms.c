@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.133  2004/10/28 21:28:06  assefa
+ * Auto generate GetLegndGraphic URL if wms_stle_<stylename>_legendurl_href
+ * is not present (Bug 1001).
+ *
  * Revision 1.132  2004/10/28 18:16:17  dan
  * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
  * when requested layer was out of scale (bug 1006)
@@ -1122,7 +1126,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    // wms_legendurl_... metadatas it's in the styles metadata,
    // In wms_style_<style_name>_lengendurl_... metadata. So we have to detect
    // the current style before reading it. Also in the Style block, we need
-   // a Title and a name. We can get thos in wms_style.
+   // a Title and a name. We can get those in wms_style.
    pszStyle = msOWSLookupMetadata(&(lp->metadata), "MO", "style");
    if(pszStyle != NULL && strlen(pszStyle) > 0)
    {
@@ -1130,32 +1134,36 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        pszMetadataName = (char*)malloc(strlen(pszStyle)+205);
        sprintf(pszMetadataName, "style_%s_legendurl_href", pszStyle);
 
-       if(msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName) != NULL)
+       
+       if(nVersion <= OWS_1_0_0 && 
+          msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName) != NULL)
        {
-           if(nVersion <= OWS_1_0_0)
+           // First, print the style block
+           fprintf(stdout, "        <Style>\n");
+           fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+           fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+
+          
+           // Inside, print the legend url block
+           msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", 
+                                    pszMetadataName,
+                                    OWS_NOERR, 
+                                    "          <StyleURL>%s</StyleURL>\n", 
+                                    NULL);
+
+           // close the style block
+           fprintf(stdout, "        </Style>\n");
+       }
+       else if(nVersion >= OWS_1_1_0)
+       {
+           if (msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName) != NULL)
            {
                // First, print the style block
                fprintf(stdout, "        <Style>\n");
                fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
                fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
 
-               // Inside, print the legend url block
-               msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", 
-                                        pszMetadataName,
-                                        OWS_NOERR, 
-                                        "          <StyleURL>%s</StyleURL>\n", 
-                                        NULL);
-
-               // close the style block
-               fprintf(stdout, "        </Style>\n");
-           }
-           else if(nVersion >= OWS_1_1_0)
-           {
-               // First, print the style block
-               fprintf(stdout, "        <Style>\n");
-               fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-               fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
-
+           
                // Inside, print the legend url block
                sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
                msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
@@ -1168,11 +1176,53 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                                  "          ",
                                  MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
                                  NULL, NULL, NULL, NULL, NULL, "          ");
-
-               // close the style block
                fprintf(stdout, "        </Style>\n");
+               
            }
+           else
+           {
+               const char *script_url;
+               char *script_url_encoded=NULL;
+
+               script_url = msOWSLookupMetadata(&(map->web.metadata), "MO", 
+                                                "onlineresource");
+               
+               if (script_url)
+               {
+                   int width=20, height=20;
+                   char *legendurl = NULL;
+
+                   if (map->legend.keysizex > 0)
+                     width= map->legend.keysizex ;
+                   if (map->legend.keysizey > 0)
+                     height= map->legend.keysizey;
+                   
+                   script_url_encoded = msEncodeHTMLEntities(script_url);
+                   legendurl = (char*)malloc(strlen(script_url_encoded)+200);
+                   sprintf(legendurl, "%sVERSION=%s&service=WMS&request=GetLegendGraphic&layer=%s&FORMAT=%s",  
+                           script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
+                           msEncodeHTMLEntities(MS_IMAGE_MIME_TYPE(map->outputformat)));
+                   
+                           
+                   fprintf(stdout, "        <Style>\n");
+                   fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+                   fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+                   fprintf(stdout, "          <LegendURL width=\"%d\" height=\"%d\">\n", 
+                           width, height);
+                   fprintf(stdout, "             <Format>%s</Format>\n", MS_IMAGE_MIME_TYPE(map->outputformat));
+                   fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" link:href=\"%s\" />\n", legendurl);
+                   fprintf(stdout, "          </LegendURL>\n");
+                   fprintf(stdout, "        </Style>\n");
+                   free(legendurl);
+                   free(script_url_encoded);
+                           
+               }
+
+           }
+
        }
+       
+       
        msFree(pszMetadataName);
    }
    
