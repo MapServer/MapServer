@@ -133,7 +133,8 @@
   }
 
   %newobject prepareImage;
-  imageObj *prepareImage() {
+  imageObj *prepareImage() 
+  {
     int i, status;
     imageObj *image=NULL;
 
@@ -157,7 +158,7 @@
     else if( MS_RENDERER_RAWDATA(self->outputformat) )
     {
         image = msImageCreate(self->width, self->height, self->outputformat,
-                              self->web.imagepath, self->web.imageurl);
+                              self->web.imagepath, self->web.imageurl, self);
     }
 #ifdef USE_MING_FLASH
     else if( MS_RENDERER_SWF(self->outputformat) )
