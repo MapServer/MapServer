@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2004/10/27 18:13:40  sean
+ * msCopySymbol now properly copies symbol images so that cloned maps render
+ * exactly as the original maps (bug 931).
+ *
  * Revision 1.73  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -842,16 +846,6 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   for (i=0; i<MS_MAXSTYLELENGTH; i++) {
       dst->style[i] = src->style[i];
   }
-  
-  //gdImagePtr img;
-  if (src->img) {
-     if (dst->img) {
-       gdFree(dst->img);
-     }
-     dst->img = gdImageCreate(src->img->sx, src->img->sy);
-     gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
-                 src->img->sx, src->img->sy);
-  }
 
   MS_COPYSTRING(dst->imagepath, src->imagepath);
   MS_COPYSTELEM(transparent);
@@ -864,6 +858,29 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   MS_COPYSTELEM(linecap);
   MS_COPYSTELEM(linejoin);
   MS_COPYSTELEM(linejoinmaxsize);
+
+  /* Copy the actual symbol imagery */
+  if (src->img) {
+     if (dst->img) {
+       gdFree(dst->img);
+     }
+     
+     if (gdImageTrueColor(src->img)) {
+        dst->img = gdImageCreateTrueColor(gdImageSX(src->img),
+                                          gdImageSY(src->img));
+        gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
+        gdImageAlphaBlending(dst->img, 0);
+        gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
+                    gdImageSX(src->img), gdImageSY(src->img));
+     }
+     else {
+        dst->img = gdImageCreate(gdImageSX(src->img), gdImageSY(src->img));
+        gdImageAlphaBlending(dst->img, 0);
+        gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
+        gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
+                    gdImageSX(src->img), gdImageSY(src->img));
+     }
+  }
 
   return(MS_SUCCESS);
 } 

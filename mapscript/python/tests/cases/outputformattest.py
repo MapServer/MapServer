@@ -60,7 +60,7 @@ class MapOutputFormatTestCase(MapTestCase):
         self.map.appendOutputFormat(new_format)
         assert self.map.numoutputformats == num + 1
         assert new_format.refcount == 2, new_format.refcount
-        self.map.setImageType('gtiffx')
+        self.map.selectOutputFormat('gtiffx')
         self.map.save('testAppendNewOutputFormat.map')
         self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         imgobj = self.map.draw()
@@ -78,13 +78,13 @@ class MapOutputFormatTestCase(MapTestCase):
         assert new_format.refcount == 1, new_format.refcount
         assert self.map.numoutputformats == num
         self.assertRaises(mapscript.MapServerError,
-                          self.map.setImageType, 'gtiffx')
-        self.map.setImageType('GTiff')
+                          self.map.selectOutputFormat, 'gtiffx')
+        self.map.selectOutputFormat('GTiff')
         assert self.map.outputformat.mimetype == 'image/tiff'
 
     def testBuiltInPNG24Format(self):
         """test built in PNG RGB format"""
-        self.map.setImageType('PNG24')
+        self.map.selectOutputFormat('PNG24')
         assert self.map.outputformat.mimetype == 'image/png'
         self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         img = self.map.draw()
@@ -94,7 +94,7 @@ class MapOutputFormatTestCase(MapTestCase):
 
     def testBuiltInJPEGFormat(self):
         """test built in JPEG format"""
-        self.map.setImageType('JPEG')
+        self.map.selectOutputFormat('JPEG')
         assert self.map.outputformat.mimetype == 'image/jpeg'
         self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         img = self.map.draw()
