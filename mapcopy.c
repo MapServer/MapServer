@@ -21,6 +21,7 @@
  *
  *********************************************************************/
 
+#include <assert.h>
 #include "map.h"
 #include "mapsymbol.h"
 
@@ -63,6 +64,31 @@ char *copyStringProperty(char **dst, char *src) {
   else {
     if (*dst == NULL) *dst = strdup(src);
     else strcpy(*dst, src);
+  }
+  return *dst;
+}
+
+/***********************************************************************
+ * copyStringPropertyRealloc()                                         *
+ *                                                                     *
+ * Wrapper for strcpy()/strdup(), catches the cases where we try to    *
+ * copy a NULL or pathological string.  Used to copy properties        *
+ * (members) that are strings.   This version assumes that if the      *
+ * destination string is already set that it should be deallocate and  *
+ * reallocated, not copied over.                                       *
+ **********************************************************************/
+
+char *copyStringPropertyRealloc(char **dst, char *src) {
+  if (src == NULL) 
+      *dst = NULL; 
+  else {
+    if (*dst == NULL) 
+        *dst = strdup(src);
+    else 
+    {
+        free( *dst );
+        *dst = strdup(src);
+    }
   }
   return *dst;
 }
@@ -150,10 +176,10 @@ int msCopyShapeObj(shapeObj *dst, shapeObj *src) {
   copyProperty(&(dst->index), &(src->index), sizeof(long));
   copyProperty(&(dst->tileindex), &(src->tileindex), sizeof(int));
   copyProperty(&(dst->classindex), &(src->classindex), sizeof(int));
-  copyStringProperty(&(dst->text), src->text);
+  copyStringPropertyRealloc(&(dst->text), src->text);
   copyProperty(&(dst->numvalues), &(src->numvalues), sizeof(int));
   for (i = 0; i < dst->numvalues; i++) {
-    copyStringProperty(&(dst->values[i]), src->values[i]);
+    copyStringPropertyRealloc(&(dst->values[i]), src->values[i]);
   }
 
   return(0);
@@ -183,7 +209,7 @@ int msCopyItem(itemObj *dst, itemObj *src) {
  **********************************************************************/
 
 int msCopyHashTable(hashTableObj dst, hashTableObj src) {
-    char *key=NULL;
+    const char *key=NULL;
     while (1) {
         key = msNextKeyFromHashTable(src, key);
         if (!key) 
@@ -285,37 +311,6 @@ int msCopyJoin(joinObj *dst, joinObj *src)
   dst->joininfo = NULL;
 
   return(MS_SUCCESS);
-}
-
-/***********************************************************************
- * msCopyOutputFormat()                                                *
- **********************************************************************/
-
-int msCopyOutputFormat(outputFormatObj *dst, outputFormatObj *src)
-{
-  copyStringProperty(&(dst->name), src->name);
-  copyStringProperty(&(dst->mimetype), src->mimetype);
-  copyStringProperty(&(dst->driver), src->driver);
-  copyStringProperty(&(dst->extension), src->extension);
-  copyProperty(&(dst->renderer), &(src->renderer), sizeof(int));
-  copyProperty(&(dst->imagemode), &(src->imagemode), sizeof(int));
-  copyProperty(&(dst->transparent), &(src->transparent), sizeof(int));
-  copyProperty(&(dst->refcount), &(src->refcount), sizeof(int));
-  
-  copyProperty(&(dst->numformatoptions), &(src->numformatoptions),
-               sizeof(int));
-  
-  if (dst->formatoptions > 0) {
-      
-    dst->formatoptions =
-        (char **)malloc(sizeof(char *)*dst->numformatoptions);
-
-    memcpy(&(dst->formatoptions), &(src->formatoptions), 
-           sizeof(char *)*dst->numformatoptions);
-  }
-
-  if (!msOutputFormatValidate(dst)) return(MS_FAILURE);
-  else return(MS_SUCCESS);
 }
 
 /***********************************************************************
@@ -1010,8 +1005,8 @@ int msCopyMap(mapObj *dst, mapObj *src)
 {
   int i, return_value;
   outputFormatObj *format;
- 
-  copyStringProperty(&(dst->name), src->name); 
+
+  copyStringPropertyRealloc(&(dst->name), src->name); 
   copyProperty(&(dst->status), &(src->status), sizeof(int)); 
   copyProperty(&(dst->height), &(src->height), sizeof(int));
   copyProperty(&(dst->width), &(src->width), sizeof(int));
@@ -1053,8 +1048,8 @@ int msCopyMap(mapObj *dst, mapObj *src)
   copyProperty(&(dst->units), &(src->units), sizeof(enum MS_UNITS));
   copyProperty(&(dst->scale), &(src->scale), sizeof(double)); 
   copyProperty(&(dst->resolution), &(src->resolution), sizeof(int));
-  copyStringProperty(&(dst->shapepath), src->shapepath); 
-  copyStringProperty(&(dst->mappath), src->mappath); 
+  copyStringPropertyRealloc(&(dst->shapepath), src->shapepath); 
+  copyStringPropertyRealloc(&(dst->mappath), src->mappath); 
 
   return_value = msCopyColor(&(dst->imagecolor), &(src->imagecolor));
   if (return_value != MS_SUCCESS) {
@@ -1062,36 +1057,32 @@ int msCopyMap(mapObj *dst, mapObj *src)
     return(MS_FAILURE);
   }
 
-  copyProperty(&(dst->numoutputformats), &(src->numoutputformats),
-               sizeof(int));
-
-  return_value = msCopyOutputFormat(dst->outputformat,src->outputformat);
-  if (return_value != MS_SUCCESS) {
-    msSetError(MS_MEMERR, "Failed to copy outputformat.","msCopyMap()");
-    return(MS_FAILURE);
+  /* clear existing destination format list */
+  if( dst->outputformat && --dst->outputformat->refcount < 1 )
+  {
+      msFreeOutputFormat( dst->outputformat );
+      dst->outputformat = NULL;
   }
 
-  for (i = 0; i < src->numoutputformats; i++) {
-    return_value = msCopyOutputFormat(dst->outputformatlist[i],
-                                      src->outputformatlist[i]);
+  for(i=0; i < dst->numoutputformats; i++ ) {
+      if( --dst->outputformatlist[i]->refcount < 1 )
+      msFreeOutputFormat( dst->outputformatlist[i] );
+  }
+  if( dst->outputformatlist != NULL )
+      msFree( dst->outputformatlist );
+  dst->outputformatlist = NULL;
+  dst->outputformat = NULL;
+  dst->numoutputformats = 0;
+
+  for (i = 0; i < src->numoutputformats; i++)
+      msAppendOutputFormat( dst, 
+                            msCloneOutputFormat( src->outputformatlist[i]) );
     
-    if (return_value != MS_SUCCESS) {
-      msSetError(MS_MEMERR, "Failed to copy outputformat.",
-                 "msCopyMap()");
-      
-      return(MS_FAILURE);
-    }
-  }
   // set the active output format
-  format = msCloneOutputFormat(src->outputformat);
-  if (format == NULL)
-    msSetError(MS_MISCERR, "Unable to find IMAGETYPE '%s'.", 
-               "msCopyMap()", src->imagetype );
-  else {  
-    copyStringProperty(&(dst->imagetype), src->imagetype); 
-    msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE, 
-                        MS_NOOVERRIDE, MS_NOOVERRIDE );
-  }
+  copyStringPropertyRealloc(&(dst->imagetype), src->imagetype); 
+  format = msSelectOutputFormat( dst, dst->imagetype );
+  msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE, 
+                      MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   return_value = msCopyProjection(&(dst->projection),&(src->projection));
   if (return_value != MS_SUCCESS) {
