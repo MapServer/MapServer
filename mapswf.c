@@ -15,6 +15,7 @@
 #ifdef USE_MING_FLASH
 
 #include <assert.h>
+#include <zlib.h>
 #include "map.h"
 
 static char gszFilename[128];
@@ -45,7 +46,7 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
     int         i;
     gdPoint     oldpnt,newpnt;
     gdPoint     sPoints[MS_MAXVECTORPOINTS];
-    gdImagePtr tile;
+    gdImagePtr tile = NULL;
     int         x,y;
     int         tile_bg=-1, tile_fg=-1; /*colors (background and foreground)*/
   
@@ -895,7 +896,8 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /*      Start the Element array that will contain the values of the     */
 /*      attributes.                                                     */
 /* -------------------------------------------------------------------- */
-        if (metadata=(msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES")))
+        if( (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES"))
+             != NULL )
         {
             tokens = split(metadata, ',', &n);
             if (tokens && n > 0)
@@ -950,7 +952,8 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 /*      get an array of indexes corresponding to the attributes. We     */
 /*      will use this array to retreive the values.                     */
 /* -------------------------------------------------------------------- */
-        if (metadata=(msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES")))
+        if( (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES")) 
+            != NULL )
         {
             char **tokens;
             int n = 0;
@@ -983,7 +986,7 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
         if (panIndex)
         {
-            sprintf(gszAction, "Element[%l]=new Array();", (int)shape->index);
+            sprintf(gszAction, "Element[%d]=new Array();", (int)shape->index);
             oAction = compileSWFActionCode(gszAction);
             SWFMovie_add(image->img.swf->pasMovies[nTmp], oAction);
 
@@ -1368,7 +1371,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 SWFShape DrawShapePolyline(shapeObj *p, colorObj *psColor)
 {
     int i, j;
-    SWFShape oShape;
+    SWFShape oShape = NULL;
 
     if (p && psColor && p->numlines > 0)
     {
@@ -1861,7 +1864,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
     SWFText    oText = NULL;
     SWFFont     oFont = NULL;
     char        *font;
-    double      dfWidth;
+    double      dfWidth = 0.0;
 
     if (!string || strlen(string) == 0 || !label || !rect ||
         !fontset)
@@ -2237,7 +2240,8 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 {
     int         nTmp = 0;
-    gdImagePtr  imgtmp = NULL;
+    outputFormatObj *format = NULL;
+    imageObj    *image_tmp = NULL;
     SWFShape    oShape;
 
     if (!image || !MS_DRIVER_SWF(image->format) || image->width <= 0 ||
@@ -2247,15 +2251,25 @@ int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /* -------------------------------------------------------------------- */
 /*      create a temprary GD image and render in it.                    */
 /* -------------------------------------------------------------------- */
-    imgtmp = gdImageCreate(image->width, image->height);
-    gdImageColorAllocate(imgtmp, map->imagecolor.red, map->imagecolor.green, 
+    format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
+    if( format == NULL )
+        return -1;
+
+    image_tmp = msImageCreate( image->width, image->height, format, 
+                               NULL, NULL );
+    if( image_tmp == NULL )
+        return -1;
+
+    gdImageColorAllocate(image_tmp->img.gd, 
+                         map->imagecolor.red, map->imagecolor.green, 
                          map->imagecolor.blue);
 
-    if (msDrawWMSLayerGD(map, layer, imgtmp) != -1)
+    if (msDrawWMSLayerLow(map, layer, image_tmp) != -1)
     {
-        oShape = gdImage2Shape(imgtmp);
+        oShape = gdImage2Shape(image_tmp->img.gd);
         nTmp = image->img.swf->nCurrentMovie;
         SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+        msFreeImage( image_tmp );
     }
 
     return 0;
@@ -2272,8 +2286,9 @@ int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 {
     int         nTmp = 0;
-    gdImagePtr  imgtmp = NULL;
     SWFShape    oShape;
+    outputFormatObj *format = NULL;
+    imageObj    *image_tmp = NULL;
 
     if (!image || !MS_DRIVER_SWF(image->format) || image->width <= 0 ||
         image->height <= 0)
@@ -2282,13 +2297,21 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /* -------------------------------------------------------------------- */
 /*      create a temprary GD image and render in it.                    */
 /* -------------------------------------------------------------------- */
-    imgtmp = gdImageCreate(image->width, image->height);
+    format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
+    if( format == NULL )
+        return -1;
 
-    if (msDrawRasterLayerGD(map, layer, imgtmp) != -1)
+    image_tmp = msImageCreate( image->width, image->height, format, 
+                               NULL, NULL );
+    if( image_tmp == NULL )
+        return -1;
+
+    if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
     {
-        oShape = gdImage2Shape(imgtmp);
+        oShape = gdImage2Shape(image_tmp->img.gd);
         nTmp = image->img.swf->nCurrentMovie;
         SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+        msFreeImage( image_tmp );
     }
 
     return 0;
