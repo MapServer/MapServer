@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.68  2001/11/27 15:39:33  dan
+ * Added layer->template
+ *
  * Revision 1.67  2001/11/05 18:25:46  dan
  * Added #ifdef USE_PROJ in map->setProjection()
  *
@@ -143,7 +146,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Nov 5, 2001)"
+#define PHP3_MS_VERSION "(Nov 27, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -4202,6 +4205,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "connection", player->connection);
     add_property_long(return_value,   "connectiontype",player->connectiontype);
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
+    PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
 
     return layer_id;
 }
@@ -4318,6 +4322,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("connection", self->connection)
     else IF_SET_LONG(  "connectiontype", self->connectiontype)
     else IF_SET_STRING("filteritem", self->filteritem)
+    else IF_SET_STRING("template",   self->template)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {

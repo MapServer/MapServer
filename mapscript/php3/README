@@ -119,7 +119,7 @@ and the MapServer Map File documentation at:
    rectObj 	extent;	
    double 	cellsize
    int          units (map units type)
-   double 	scale
+   double 	scale (read-only, set by drawMap())
    string 	shapepath
    int    	keysizex
    int    	keysizey
@@ -357,6 +357,7 @@ and the MapServer Map File documentation at:
    string connection
    int    connectiontype
    string filteritem
+   string template
 
  Methods:
 
