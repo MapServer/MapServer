@@ -458,7 +458,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
     if(lp->dump == MS_TRUE && 
        lp->resultcache && lp->resultcache->numresults > 0) 
     { // found results
-      const char *geom_name;
+      int   *item_is_xml = NULL;
+      const char *geom_name, *xml_items;
       geom_name = msWFSGetGeomElementName(map, lp);
 
       // actually open the layer
@@ -468,6 +469,31 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
       // retrieve all the item names. (Note : there might be no attributs)
       status = msLayerGetItems(lp);
       //if(status != MS_SUCCESS) return(status);
+      
+      /* 
+      ** Determine which items, if any, should be treated as raw XML and not 
+      ** escaped.
+      */
+      item_is_xml = (int *) calloc(sizeof(int),lp->numitems);
+      xml_items = msLookupHashTable(lp->metadata, "wfs_gml_xml_items");
+      if( xml_items != NULL )
+      {
+          int xml_items_count = 0;
+          char **xml_item_list = split( xml_items, ',', &xml_items_count );
+          
+          for( k = 0; k < lp->numitems; k++ )
+          {
+              int xi;
+
+              for( xi = 0; xi < xml_items_count; xi++ )
+              {
+                  if( strcmp(lp->items[k],xml_item_list[xi]) == 0 )
+                      item_is_xml[k] = MS_TRUE;
+              }
+          }
+          
+          msFreeCharArray( xml_item_list, xml_items_count );
+      }
 
       for(j=0; j<lp->resultcache->numresults; j++) 
       {
@@ -549,7 +575,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 	for(k=0; k<lp->numitems; k++)	
         {
           char *encoded_val;
-          encoded_val = msEncodeHTMLEntities(shape.values[k]);
+          
+          if( item_is_xml[k] == MS_TRUE )
+              encoded_val = strdup(shape.values[k]);
+          else
+              encoded_val = msEncodeHTMLEntities(shape.values[k]);
          
           if (name_gml && strcmp(name_gml,  lp->items[k]) == 0)
             continue;
@@ -578,9 +608,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
          features++;
          if (maxfeatures > 0 && features == maxfeatures)
            break;
+         
+         // end this layer
       }
 
-      // end this layer
+      free( item_is_xml );
 
       msLayerClose(lp);
     }
