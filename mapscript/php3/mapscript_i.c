@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.70  2003/10/30 22:55:04  assefa
+ * getexpression function in Sync with the mapscript.i
+ *
  * Revision 1.69  2003/10/30 22:37:28  assefa
  * Add functions executewfsgetfeature on a WFS layer object.
  * Add function getexpression on a class object.
@@ -751,11 +754,23 @@ int classObj_setExpression(classObj *self, char *string) {
     return loadExpressionString(&self->expression, string);
   }
 
-char *classObj_getExpression(classObj *self) {
-  if (!self)
+char *classObj_getExpressionString(classObj *self) {
+  char exprstring[512];
+
+    switch(self->expression.type) {
+    case(MS_REGEX):
+      sprintf(exprstring, "/%s/", self->expression.string);
+      return strdup(exprstring);
+    case(MS_STRING):
+      sprintf(exprstring, "\"%s\"", self->expression.string);
+      return strdup(exprstring);
+    case(MS_EXPRESSION):
+      sprintf(exprstring, "(%s)", self->expression.string);
+      return strdup(exprstring);
+    }
     return NULL;
-  return self->expression.string;
 }
+
 
 
 int classObj_setText(classObj *self, layerObj *layer, char *string) {

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.183  2003/10/30 22:55:03  assefa
+ * getexpression function in Sync with the mapscript.i
+ *
  * Revision 1.182  2003/10/30 22:37:27  assefa
  * Add functions executewfsgetfeature on a WFS layer object.
  * Add function getexpression on a class object.
@@ -7870,12 +7873,15 @@ DLEXPORT void php3_ms_class_getExpression(INTERNAL_FUNCTION_PARAMETERS)
     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
                                            list TSRMLS_CC);
     if (self == NULL || 
-        (pszValue = classObj_getExpression(self)) == NULL)
+        (pszValue = classObj_getExpressionString(self)) == NULL)
     {
-        pszValue = "";
+      RETURN_STRING("", 1);
     }
-
-    RETURN_STRING(pszValue, 1);
+    else
+    {
+      RETURN_STRING(pszValue, 1);
+      free(pszValue);
+    }
 }
 /* }}} */
 

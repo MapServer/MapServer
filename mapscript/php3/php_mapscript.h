@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/10/30 22:55:04  assefa
+ * getexpression function in Sync with the mapscript.i
+ *
  * Revision 1.36  2003/10/30 22:37:27  assefa
  * Add functions executewfsgetfeature on a WFS layer object.
  * Add function getexpression on a class object.
@@ -275,7 +278,7 @@ char *layerObj_executeWFSGetFeature(layerObj *self);
 classObj       *classObj_new(layerObj *layer);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
-char            *classObj_getExpression(classObj *self);
+char            *classObj_getExpressionString(classObj *self);
 int             classObj_setText(classObj *self,layerObj *layer,char *string);
 int             classObj_drawLegendIcon(classObj *self,
                                         mapObj *map,
