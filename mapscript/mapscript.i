@@ -514,6 +514,14 @@ memory.") const char * {
     return(msRemoveHashTable(self->web.metadata, name));
   }
 
+  char *getFirstMetaDataKey() {
+    return msFirstKeyFromHashTable(self->web.metadata);
+  }
+ 
+  char *getNextMetaDataKey(char *lastkey) {
+    return msNextKeyFromHashTable(self->web.metadata, lastkey);
+  }
+  
   int setSymbolSet(char *szFileName) {
     msFreeSymbolSet(&self->symbolset);
     msInitSymbolSet(&self->symbolset);
@@ -958,6 +966,14 @@ memory.") const char * {
     return(msRemoveHashTable(self->metadata, name));
   }
 
+  char *getFirstMetaDataKey() {
+      return msFirstKeyFromHashTable(self->metadata);
+  }
+ 
+  char *getNextMetaDataKey(char *lastkey) {
+    return msNextKeyFromHashTable(self->metadata, lastkey);
+  }
+  
     %newobject getWMSFeatureInfoURL;
     char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y,
                                int feature_count, char *info_format)
@@ -1077,7 +1093,15 @@ memory.") const char * {
         return MS_FAILURE;
     return MS_SUCCESS;
   }
-   
+
+  char *getFirstMetaDataKey() {
+    return msFirstKeyFromHashTable(self->metadata);
+  }
+ 
+  char *getNextMetaDataKey(char *lastkey) {
+    return msNextKeyFromHashTable(self->metadata, lastkey);
+  }
+  
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
     return msDrawLegendIcon(map, layer, self, width, height, dstImage->img.gd, dstX, dstY);
   }

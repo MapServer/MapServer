@@ -262,11 +262,19 @@ getExpressionString() : string
     Return a string representation of the expression enclosed in the quote
     characters appropriate to the expression type.
 
+getFirstMetaDataKey() : string
+    Returns the first key in the metadata hash table.  With
+    getNextMetaDataKey(), provides an opaque iterator over keys.
+    
 .. _classObj.getMetaData:
 
 getMetaData(string key) : string
     Return the value of the classObj metadata at *key*.
 
+getNextMetaDataKey(string lastkey) : string
+    Returns the next key in the metadata hash table or NULL if
+    *lastkey* is the last valid key.
+   
 .. _getStyle:
 
 getStyle(int index) : styleObj_
@@ -543,13 +551,32 @@ Methods
 
 **TODO**
 
+getFirstMetaDataKey() : string
+    Returns the first key in the metadata hash table.  With
+    getNextMetaDataKey(), provides an opaque iterator over keys.
+    
+getMetaData(string key) : string
+    Return the value at *key* from the metadata hash table.
+
+getNextMetaDataKey(string lastkey) : string
+    Returns the next key in the metadata hash table or NULL if
+    *lastkey* is the last valid key.
+    
 .. _layerObj.getShape :
 
 getShape(shapeObj_ shape, int tileindex, int shapeindex) : int
     Get a shape from layer data.
-    
+
 **NEXT_GENERATION_API** getShape(int shapeindex [, int tileindex=0]) : shapeObj_
     Get a shape from layer data using the next generation API.
+
+removeMetaData(string key) : int
+    Delete the metadata hash at *key*.  Returns MS_SUCCESS or
+    MS_FAILURE.
+
+setMetaData(string key, string value) : int
+    Assign *value* to the metadata hash at *key*.  Return MS_SUCCESS
+    or MS_FAILURE.
 
 
 -----------------------------------------------------------------------------
@@ -655,6 +682,21 @@ appendOutputFormat(outputFormatObj_ format) : int
     Attach *format* to the map's output format list.  Returns the updated
     number of output formats.
 
+getConfigOption(string key) : string
+    Fetches the value of the requested configuration key if set.  Returns
+    NULL if the key is not set.  
+
+getFirstMetaDataKey() : string
+    Returns the first key in the web.metadata hash table.  With
+    getNextMetaDataKey(), provides an opaque iterator over keys.
+    
+getMetaData(string key) : string
+    Return the value at *key* from the web.metadata hash table.
+
+getNextMetaDataKey(string lastkey) : string
+    Returns the next key in the web.metadata hash table or NULL if
+    *lastkey* is the last valid key.
+    
 getOutputFormat(string imagetype) : outputFormatObj_
     Return the output format corresponding to driver name *imagetype* or
     to format name *imagetype*.  This works exactly the same as the
@@ -662,18 +704,21 @@ getOutputFormat(string imagetype) : outputFormatObj_
     an output format to be found either by driver (like 'GD/PNG') or
     name (like 'PNG24').
 
+removeMetaData(string key) : int
+    Delete the web.metadata hash at *key*.  Returns MS_SUCCESS or
+    MS_FAILURE.
+
 removeOutputFormat(string name) : int
     Removes the format named *name* from the map's output format list.
     Returns MS_SUCCESS or MS_FAILURE.
 
 setConfigOption(string key, string value) : void
     Set the indicated key configuration option to the indicated value.  
-    Equivelent to including a CONFIG keyword in a map file. 
+    Equivalent to including a CONFIG keyword in a map file. 
 
-getConfigOption(string key) : string
-    Fetches the value of the requested configuration key if set.  Returns
-    NULL if the key is not set.  
-
+setMetaData(string key, string value) : int
+    Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
+    or MS_FAILURE.
 
 -----------------------------------------------------------------------------
  outputFormatObj

@@ -32,8 +32,10 @@ struct hashObj *msInsertHashTable(hashTableObj table,
   struct hashObj *tp;
   unsigned hashval;
 
-  if(!table || !string || !data)
+  if(!table || !string || !data) {
+    msSetError(MS_HASHERR, "Invalid hash table or key", "msInsertHashTable");
     return(NULL);
+  }
 
   for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)
     if(strcasecmp(string, tp->key) == 0)
@@ -41,8 +43,10 @@ struct hashObj *msInsertHashTable(hashTableObj table,
 
   if(tp == NULL) { /* not found */
     tp = (struct hashObj *) malloc(sizeof(*tp));
-    if((tp == NULL) || (tp->key = strdup(string)) == NULL)
+    if((tp == NULL) || (tp->key = strdup(string)) == NULL) {
+      msSetError(MS_HASHERR, "No such hash entry", "msInsertHashTable");
       return(NULL);
+    }
     hashval = hash(string);
     tp->next = table[hashval];
     table[hashval] = tp;
@@ -60,9 +64,11 @@ char *msLookupHashTable(hashTableObj table, const char *string)
 {
   struct hashObj *tp;
 
-  if(!table || !string)
+  if(!table || !string) {
+    msSetError(MS_HASHERR, "Invalid hash table or key", "msLookupHashTable");
     return(NULL);
-
+  }
+  
   for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)
     if(strcasecmp(string, tp->key) == 0)
       return(tp->data);
@@ -98,13 +104,17 @@ int msRemoveHashTable(hashTableObj table, const char *string)
   struct hashObj *prev_tp=NULL;
   int success = 0;
 
-  if(!table || !string)
+  if(!table || !string) {
+    msSetError(MS_HASHERR, "No hash table", "msRemoveHashTable");
     return MS_FAILURE;
-
-  tp=table[hash(string)];
-  if (!tp)
-    return MS_FAILURE;
+  }
   
+  tp=table[hash(string)];
+  if (!tp) {
+    msSetError(MS_HASHERR, "No such hash entry", "msRemoveHashTable");
+    return MS_FAILURE;
+  }
+
   prev_tp = NULL;
   while(tp != NULL)
   {
@@ -138,7 +148,12 @@ const char *msFirstKeyFromHashTable( hashTableObj table )
 
 {
     int hash_index;
-
+    
+    if(!table) {
+        msSetError(MS_HASHERR, "No hash table", "msFirstKeyFromHashTable");
+        return NULL;
+    }
+    
     for( hash_index = 0; hash_index < MS_HASHSIZE; hash_index++ )
     {
         if( table[hash_index] != NULL )
@@ -154,6 +169,11 @@ const char *msNextKeyFromHashTable( hashTableObj table, const char *lastKey )
     int hash_index;
     struct hashObj *link;
 
+    if(!table) {
+        msSetError(MS_HASHERR, "No hash table", "msNextKeyFromHashTable");
+        return NULL;
+    }
+    
     if( lastKey == NULL )
         return msFirstKeyFromHashTable( table );
 

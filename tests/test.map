@@ -8,14 +8,35 @@ MAP
   FONTSET "fonts.txt"
   SYMBOLSET "symbols.txt"
 
+  WEB
+    METADATA
+      "key1" "value1"
+      "key2" "value2"
+      "key3" "value3"
+      "key4" "value4"
+    END
+  END
+  
   LAYER
     NAME "POLYGON"
     TYPE POLYGON
     STATUS DEFAULT
     DATA "polygon"
+    METADATA
+      "key1" "value1"
+      "key2" "value2"
+      "key3" "value3"
+      "key4" "value4"
+    END
     CLASSITEM "FNAME"
     CLASS
       NAME "0"
+      METADATA
+        "key1" "value1"
+        "key2" "value2"
+        "key3" "value3"
+        "key4" "value4"
+      END
       STYLE
         COLOR 255 153 102
         OUTLINECOLOR 0 0 204

@@ -892,7 +892,64 @@ class NewOutputFormatTestCase(unittest.TestCase):
                           self.mapobj1.setImageType, 'gtiffx')
         self.mapobj1.setImageType('GTiff')
         assert self.mapobj1.outputformat.mimetype == 'image/tiff'
-  
+
+class MapTestCase(unittest.TestCase):
+    """Base class for testing with a map fixture"""
+    def setUp(self):
+        self.mapobj1 = mapscript.mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+
+class MapMetaDataTestCase(MapTestCase):
+    def testFirstKeyAccess(self):
+        key = self.mapobj1.getFirstMetaDataKey()
+        assert key == 'key1'
+        val = self.mapobj1.getMetaData(key)
+        assert val == 'value1'
+    def testLastKeyAccess(self):
+        key = self.mapobj1.getFirstMetaDataKey()
+        for i in range(3):
+            key = self.mapobj1.getNextMetaDataKey(key)
+            assert key is not None
+        key = self.mapobj1.getNextMetaDataKey(key)
+        assert key is None
+    def testMapMetaData(self):
+        keys = []
+        key = self.mapobj1.getFirstMetaDataKey()
+        if key is not None: keys.append(key)
+        while 1:
+            key = self.mapobj1.getNextMetaDataKey(key)
+            if not key:
+                break
+            keys.append(key)
+        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
+    def testLayerMetaData(self):
+        keys = []
+        key = self.mapobj1.getLayer(0).getFirstMetaDataKey()
+        if key is not None: keys.append(key)
+        while 1:
+            key = self.mapobj1.getLayer(0).getNextMetaDataKey(key)
+            if not key:
+                break
+            keys.append(key)
+        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
+    def testClassMetaData(self):
+        keys = []
+        key = self.mapobj1.getLayer(0).getClass(0).getFirstMetaDataKey()
+        if key is not None: keys.append(key)
+        while 1:
+            key = self.mapobj1.getLayer(0).getClass(0).getNextMetaDataKey(key)
+            if not key:
+                break
+            keys.append(key)
+        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
+    def testAccessNullLayerMetaData(self):
+        layer = self.mapobj1.getLayer(1)
+        self.assertRaises(mapscript.MapServerError, layer.getFirstMetaDataKey)
+    def testAccessNullClassMetaData(self):
+        layer = self.mapobj1.getLayer(1).getClass(1)
+        self.assertRaises(mapscript.MapServerError, layer.getFirstMetaDataKey)
+        
 if __name__ == '__main__':
     unittest.main()
 
