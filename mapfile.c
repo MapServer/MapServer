@@ -2315,6 +2315,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getString(&layer->tileindex) == MS_FAILURE) return(-1);
       break;
     case(TILEITEM):
+      free(layer->tileitem); layer->tileitem = NULL; // erase default
       if(getString(&layer->tileitem) == MS_FAILURE) return(-1);
       break;
     case(TOLERANCE):
