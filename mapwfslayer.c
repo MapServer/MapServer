@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2002/12/17 05:30:17  dan
+ * Fixed HTTP timeout value (in secs, not msecs) for WMS/WFS requests
+ *
  * Revision 1.5  2002/12/17 04:48:25  dan
  * Accept version 0.0.14 in addition to 1.0.0
  *
@@ -260,16 +263,32 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * the case we will use it, else we use the default which is 30 seconds.
  * First check the metadata in the layer object and then in the map object.
  * ------------------------------------------------------------------ */
-    nTimeout = 30000;  // Default is 30 seconds (internal value in ms)
+    nTimeout = 30;  // Default is 30 seconds 
     if ((pszTmp = msLookupHashTable(lp->metadata, 
                                     "wfs_connectiontimeout")) != NULL)
     {
-        nTimeout = atoi(pszTmp)*1000;  // Convert from seconds to milliseconds
+        nTimeout = atoi(pszTmp);
     }
     else if ((pszTmp = msLookupHashTable(map->web.metadata, 
                                          "wfs_connectiontimeout")) != NULL)
     {
-        nTimeout = atoi(pszTmp)*1000;
+        nTimeout = atoi(pszTmp);
+    }
+
+/* ------------------------------------------------------------------
+ * If nLayerId == -1 then we need to figure it
+ * ------------------------------------------------------------------ */
+    if (nLayerId == -1)
+    {
+        int iLayer;
+        for(iLayer=0; iLayer < map->numlayers; iLayer++)
+        {
+            if (&(map->layers[iLayer]) == lp)
+            {
+                nLayerId = iLayer;
+                break;
+            }
+        }
     }
 
 /* ------------------------------------------------------------------
@@ -527,7 +546,7 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
 
         msHTTPInitRequestObj(asReqInfo, 2);
 
-        if ( msPrepareWFSLayerRequest(1, lp->map, lp,
+        if ( msPrepareWFSLayerRequest(-1, lp->map, lp,
                                       asReqInfo, &numReq) == MS_FAILURE  ||
              msOWSExecuteRequests(asReqInfo, numReq, lp->map) == MS_FAILURE )
         {

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.42  2002/12/17 05:30:17  dan
+ * Fixed HTTP timeout value (in secs, not msecs) for WMS/WFS requests
+ *
  * Revision 1.41  2002/12/16 20:35:00  dan
  * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
  *
@@ -610,16 +613,16 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * the case we will use it, else we use the default which is 30 seconds.
  * First check the metadata in the layer object and then in the map object.
  * ------------------------------------------------------------------ */
-    nTimeout = 30000;  // Default is 30 seconds (internal value in ms)
+    nTimeout = 30;  // Default is 30 seconds 
     if ((pszTmp = msLookupHashTable(lp->metadata, 
                                     "wms_connectiontimeout")) != NULL)
     {
-        nTimeout = atoi(pszTmp)*1000;  // Convert from seconds to milliseconds
+        nTimeout = atoi(pszTmp); 
     }
     else if ((pszTmp = msLookupHashTable(map->web.metadata, 
                                          "wms_connectiontimeout")) != NULL)
     {
-        nTimeout = atoi(pszTmp)*1000;
+        nTimeout = atoi(pszTmp);
     }
 
 /* ------------------------------------------------------------------
