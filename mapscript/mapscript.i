@@ -380,7 +380,7 @@
   }
 
   double distanceToLine(pointObj *a, pointObj *b) {
-    msDistanceFromPointToLine(self, a, b);
+    return msDistanceFromPointToLine(self, a, b);
   }
 
   double distanceToShape(shapeObj *shape) {
