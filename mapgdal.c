@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/03/15 05:52:07  frank
+ * only call CPLFreeConfig() with recent GDALs
+ *
  * Revision 1.18  2004/03/13 20:11:42  frank
  * Added CONFIG option support on the mapObj
  *
@@ -139,7 +142,10 @@ void msGDALCleanup( void )
         GDALDestroyDriverManager();
 #endif
 
+#if GDAL_RELEASE_DATE > 20040101
         CPLFreeConfig();
+#endif
+
         msReleaseLock( TLOCK_GDAL );
 
         bGDALInitialized = 0;
