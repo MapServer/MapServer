@@ -1,9 +1,11 @@
 #include "map.h"
 #include "mapproject.h"
 
+#ifdef USE_PROJ
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
                            projectionObj *src_proj, 
                            projectionObj *dst_proj );
+#endif
 
 int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 {
@@ -63,6 +65,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 #endif
 }
 
+#ifdef USE_PROJ
 static void msProjectGrowRect(projectionObj *in, projectionObj *out, 
                               rectObj *prj_rect, int *rect_initialized, 
                               pointObj *prj_point, int *failure )
@@ -87,6 +90,7 @@ static void msProjectGrowRect(projectionObj *in, projectionObj *out,
     else
         (*failure)++;
 }
+#endif /* def USE_PROJ */
 
 #define NUMBER_OF_SAMPLE_POINTS 100
 
@@ -337,6 +341,8 @@ reprojected to geographic space.  However, it does not:
 
 
 */
+
+#ifdef USE_PROJ
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
                            projectionObj *in, 
                            projectionObj *out )
@@ -369,5 +375,4 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
     else
         return 0;
 }
-
-
+#endif /* def USE_PROJ */
