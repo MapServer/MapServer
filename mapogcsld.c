@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.53  2005/03/29 22:53:14  assefa
+ * Initial support to improve WFS filter performance for DB layers (Bug 1292).
+ *
  * Revision 1.52  2005/02/28 15:24:49  assefa
  * SLD generation bug 1150 : replacing <AND> tag to <ogc:And>
  *
@@ -792,7 +795,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      node will be parsed when applying the SLD and be used to do     */
 /*      queries on the layer.                                           */
 /* ==================================================================== */
-                                if (FTLHasSpatialFilter(psNode))
+                                if (FLTHasSpatialFilter(psNode))
                                   psLayer->layerinfo = (void *)psNode;
 
                                 szExpression = FLTGetMapserverExpression(psNode);

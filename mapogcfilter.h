@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2005/03/29 22:53:14  assefa
+ * Initial support to improve WFS filter performance for DB layers (Bug 1292).
+ *
  * Revision 1.8  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -157,5 +160,21 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode);
-int FTLHasSpatialFilter(FilterEncodingNode *psFilterNode);
+int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
+
+
+//SQL expressions related functions.
+void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
+                          int iLayerIndex);
+
+char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,int connectiontype);
+char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
+char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
+char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
+                                       int connectiontype);
+char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
+                                            int connectiontype);
+int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
+
+
 #endif

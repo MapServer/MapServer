@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.45  2005/03/29 22:53:14  assefa
+ * Initial support to improve WFS filter performance for DB layers (Bug 1292).
+ *
  * Revision 1.44  2005/02/21 20:37:55  assefa
  * Initialize buffer properly (Bug 1252).
  *
@@ -293,7 +296,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         lp->class[0].type = lp->type;
         lp->numclasses = 1;
         msLoadExpressionString(&lp->class[0].expression, 
-                                  szExpression);
+                               szExpression);
 /* -------------------------------------------------------------------- */
 /*      classitems are necessary for filter type PropertyIsLike         */
 /* -------------------------------------------------------------------- */
@@ -599,11 +602,11 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
 }
 
 /************************************************************************/
-/*                               FTLIsInArray                           */
+/*                               FLTIsInArray                           */
 /*                                                                      */
 /*      Verify if a certain value is inside an ordered array.           */
 /************************************************************************/
-int FTLIsInArray(int *panArray, int nSize, int nValue)
+int FLTIsInArray(int *panArray, int nSize, int nValue)
 {
     int i = 0;
     if (panArray && nSize > 0)
@@ -664,7 +667,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
      iResult = 0;
       for (i=0; i<psLayer->resultcache->numresults; i++)
       {
-          if (!FTLIsInArray(panArray, nSize, panTmp[i]) || 
+          if (!FLTIsInArray(panArray, nSize, panTmp[i]) || 
               panArray == NULL)
             panResults[iResult++] = 
               psLayer->resultcache->results[i].shapeindex;
@@ -860,6 +863,108 @@ int *FLTArraysAnd(int *aFirstArray, int nSizeFirst,
 }
 
 
+void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
+                             int iLayerIndex)
+{
+    layerObj *lp = NULL;
+    char *szExpression = NULL;
+    rectObj sQueryRect = map->extent;
+    char *szEPSG = NULL;
+    char **tokens = NULL;
+    int nTokens = 0, nEpsgTmp = 0;
+    projectionObj sProjTmp;
+
+    /*char szBuffer[512];*/
+
+    lp = &(map->layers[iLayerIndex]);
+
+    /* if there is a bbox use it */
+    szEPSG = FLTGetBBOX(psNode, &sQueryRect);
+    if(szEPSG && map->projection.numargs > 0)
+    {
+#ifdef USE_PROJ
+        nTokens = 0;
+        tokens = split(szEPSG,'#', &nTokens);
+        if (tokens && nTokens == 2)
+        {
+            char szTmp[32];
+            sprintf(szTmp, "init=epsg:%s",tokens[1]);
+            msInitProjection(&sProjTmp);
+            if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
+              msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+        }
+        else if (tokens &&  nTokens == 1)
+        {
+            if (tokens)
+              msFreeCharArray(tokens, nTokens);
+            nTokens = 0;
+
+            tokens = split(szEPSG,':', &nTokens);
+            nEpsgTmp = -1;
+            if (tokens &&  nTokens == 1)
+            {
+                nEpsgTmp = atoi(tokens[0]);
+                
+            }
+            else if (tokens &&  nTokens == 2)
+            {
+                nEpsgTmp = atoi(tokens[1]);
+            }
+            if (nEpsgTmp > 0)
+            {
+                char szTmp[32];
+                sprintf(szTmp, "init=epsg:%d",nEpsgTmp);
+                msInitProjection(&sProjTmp);
+                if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
+                  msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+            }
+        }
+        if (tokens)
+          msFreeCharArray(tokens, nTokens);
+#endif
+    }
+
+
+    /*
+    if (lp->connectiontype == MS_OGR)
+    {
+        szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
+        if (szExpression)
+          sprintf(szBuffer, "WHERE %s", szExpression);
+    }
+    else if (lp->connectiontype == MS_POSTGIS)
+    {
+         szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
+         sprintf(szBuffer, "%s", szExpression);
+    }
+    */
+
+    lp->numclasses = 0; /*set classes to 0*/
+
+    szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
+
+    if (szExpression)
+    {
+        msLoadExpressionString(&lp->filter, szExpression);
+        free(szExpression);
+    }
+    msQueryByRect(map, lp->index, sQueryRect);
+ 
+}
+
+int FLTIsSimpleFilter(FilterEncodingNode *psNode)
+{
+    if (FLTValidForBBoxFilter(psNode))
+    {
+        if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
+            FLTNumberOfFilterType(psNode, "Intersect") == 0)
+            
+          return TRUE;
+    }
+
+    return FALSE;
+}
+
 
 /************************************************************************/
 /*                            FLTGetQueryResults                        */
@@ -873,6 +978,7 @@ int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
 {
     int *panResults = NULL, *panLeftResults=NULL, *panRightResults=NULL;
     int nLeftResult=0, nRightResult=0, nResults = 0;
+
 
     if (psNode->eType == FILTER_NODE_TYPE_LOGICAL)
     {
@@ -927,50 +1033,46 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int *panResults = NULL;
     int nResults = 0;
     layerObj *psLayer = NULL;
+    char *sttt = NULL;
 
-/* -------------------------------------------------------------------- */
-/*      If it is a "simple" (meaning only one bbox and/or one           */
-/*      propertyislike, just call FLTGetQueryResultsForNode (builds     */
-/*      the appropriate expression and does the query).                 */
-/*       Else, we have to do a recursive query (use each node to do     */
-/*      a query and the use th operators (and, not, or) to merge        */
-/*      results.                                                        */
-/* -------------------------------------------------------------------- */
-
-    
-    /*    if (FLTValidForBBoxFilter(psNode) && 
-        FLTValidForPropertyIsLikeFilter(psNode))
+    //strlen(sttt);
+/* ==================================================================== */
+/*      Check here to see if it is a simple filter and if that is       */
+/*      the case, we are going to use the FILTER element on             */
+/*      the layer.                                                      */
+/* ==================================================================== */
+    psLayer = &(map->layers[iLayerIndex]);
+    if (!bOnlySpatialFilter && 
+        FLTIsSimpleFilter(psNode) && (psLayer->connectiontype == MS_POSTGIS ||
+                                      psLayer->connectiontype == MS_ORACLESPATIAL))
     {
-        panResults= FLTGetQueryResultsForNode(psNode, map, iLayerIndex,
-                                            &nResults);
-    }
-    
+        FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
+                                             
+    }        
     else
     {
-    */
-    panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
-                                    &nResults, bOnlySpatialFilter);
-    if (panResults)
-      FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
-    /* clear the cache if the results is NULL to make sure there aren't */
-    /* any left over from intermediate queries. */
-    else 
-    {
-        psLayer = &(map->layers[iLayerIndex]);
-            
-        if (psLayer && psLayer->resultcache)
+        panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
+                                        &nResults, bOnlySpatialFilter);
+        if (panResults)
+          FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
+        /* clear the cache if the results is NULL to make sure there aren't */
+        /* any left over from intermediate queries. */
+        else 
         {
-            if (psLayer->resultcache->results)
-              free (psLayer->resultcache->results);
-            free(psLayer->resultcache);
+            if (psLayer && psLayer->resultcache)
+            {
+                if (psLayer->resultcache->results)
+                  free (psLayer->resultcache->results);
+                free(psLayer->resultcache);
             
-            psLayer->resultcache = NULL;
+                psLayer->resultcache = NULL;
+            }
         }
-    }
     
 
-    if (panResults)
-      free(panResults);
+        if (panResults)
+          free(panResults);
+    }
 
     return MS_SUCCESS;
 }
@@ -2198,6 +2300,70 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode)
             
     return pszExpression;
 }
+
+
+/************************************************************************/
+/*                           FLTGetSQLExpression                        */
+/*                                                                      */
+/*      Build SQL expressions from the mapserver nodes.                 */
+/************************************************************************/
+char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, int connectiontype)
+{
+    char *pszExpression = NULL;
+
+    if (!psFilterNode)
+      return NULL;
+
+    if (psFilterNode->eType == FILTER_NODE_TYPE_COMPARISON)
+    {
+        if ( psFilterNode->psLeftNode && psFilterNode->psRightNode)
+        {
+            if (FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
+            {
+                pszExpression = 
+                  FLTGetBinaryComparisonSQLExpresssion(psFilterNode);
+            }            
+            else if (strcasecmp(psFilterNode->pszValue, 
+                                "PropertyIsBetween") == 0)
+            {
+                 pszExpression = 
+                   FLTGetIsBetweenComparisonSQLExpresssion(psFilterNode);
+            }
+            else if (strcasecmp(psFilterNode->pszValue, 
+                                "PropertyIsLike") == 0)
+            {
+                 pszExpression = 
+                   FLTGetIsLikeComparisonSQLExpression(psFilterNode,
+                                                       connectiontype);
+            }
+        }
+    }
+    
+    else if (psFilterNode->eType == FILTER_NODE_TYPE_LOGICAL)
+    {
+        if (strcasecmp(psFilterNode->pszValue, "AND") == 0 ||
+            strcasecmp(psFilterNode->pszValue, "OR") == 0)
+        {
+            pszExpression =
+              FLTGetLogicalComparisonSQLExpresssion(psFilterNode,
+                                                    connectiontype);
+        }
+        else if (strcasecmp(psFilterNode->pszValue, "NOT") == 0)
+        {       
+            pszExpression = 
+              FLTGetLogicalComparisonSQLExpresssion(psFilterNode,
+                                                    connectiontype);
+        }
+    }
+    
+    else if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL)
+    {
+        /* TODO */
+    }
+    
+
+    return pszExpression;
+}
   
 /************************************************************************/
 /*                            FLTGetNodeExpression                      */
@@ -2225,6 +2391,58 @@ char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode)
     return pszExpression;
 }
 
+
+/************************************************************************/
+/*                     FLTGetLogicalComparisonSQLExpresssion            */
+/*                                                                      */
+/*      Return the expression for logical comparison expression.        */
+/************************************************************************/
+char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
+                                            int connectiontype)
+{
+    char szBuffer[512];
+    char *pszTmp = NULL;
+    szBuffer[0] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      OR and AND                                                      */
+/* -------------------------------------------------------------------- */
+    if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
+    {
+        strcat(szBuffer, " (");
+        pszTmp = FLTGetSQLExpression(psFilterNode->psLeftNode, connectiontype);
+        if (!pszTmp)
+          return NULL;
+
+        strcat(szBuffer, pszTmp);
+        strcat(szBuffer, " ");
+        strcat(szBuffer, psFilterNode->pszValue);
+        strcat(szBuffer, " ");
+        pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, connectiontype);
+        if (!pszTmp)
+          return NULL;
+        strcat(szBuffer, pszTmp);
+        strcat(szBuffer, ") ");
+    }
+/* -------------------------------------------------------------------- */
+/*      NOT                                                             */
+/* -------------------------------------------------------------------- */
+    else if (psFilterNode->psLeftNode && 
+             strcasecmp(psFilterNode->pszValue, "NOT") == 0)
+    {
+        strcat(szBuffer, " (NOT ");
+        pszTmp = FLTGetSQLExpression(psFilterNode->psLeftNode, connectiontype);
+        if (!pszTmp)
+          return NULL;
+        strcat(szBuffer, pszTmp);
+        strcat(szBuffer, ") ");
+    }
+    else
+      return NULL;
+    
+    return strdup(szBuffer);
+
+}
 
 /************************************************************************/
 /*                     FLTGetLogicalComparisonExpresssion               */
@@ -2422,6 +2640,192 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
 }
 
 
+
+/************************************************************************/
+/*                      FLTGetBinaryComparisonExpresssion               */
+/*                                                                      */
+/*      Return the expression for a binary comparison filter node.      */
+/************************************************************************/
+char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
+{
+    char szBuffer[512];
+    int i=0, bString=0, nLenght = 0;
+
+    szBuffer[0] = '\0';
+    if (!psFilterNode || !
+        FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
+      return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      check if the value is a numeric value or alphanumeric. If it    */
+/*      is alphanumeric, add quotes around attribute and values.        */
+/* -------------------------------------------------------------------- */
+    bString = 0;
+    if (psFilterNode->psRightNode->pszValue)
+    {
+        nLenght = strlen(psFilterNode->psRightNode->pszValue);
+        for (i=0; i<nLenght; i++)
+        {
+            if (!isdigit(psFilterNode->psRightNode->pszValue[i]) &&
+                psFilterNode->psRightNode->pszValue[i] != '.')
+            {
+                /* if (psFilterNode->psRightNode->pszValue[i] < '0' || */
+                /* psFilterNode->psRightNode->pszValue[i] > '9') */
+                bString = 1;
+                break;
+            }
+        }
+    }
+    
+    /* specical case to be able to have empty strings in the expression. */
+    if (psFilterNode->psRightNode->pszValue == NULL)
+      bString = 1;
+      
+
+    /*opening bracket*/
+    strcat(szBuffer, " (");
+
+    /* attribute */
+    strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
+
+    
+
+    /* logical operator */
+    if (strcasecmp(psFilterNode->pszValue, 
+                   "PropertyIsEqualTo") == 0)
+      strcat(szBuffer, "=");
+    else if (strcasecmp(psFilterNode->pszValue, 
+                        "PropertyIsNotEqualTo") == 0)
+      strcat(szBuffer, "<>"); 
+    else if (strcasecmp(psFilterNode->pszValue, 
+                        "PropertyIsLessThan") == 0)
+      strcat(szBuffer, "<");
+    else if (strcasecmp(psFilterNode->pszValue, 
+                        "PropertyIsGreaterThan") == 0)
+      strcat(szBuffer, ">");
+    else if (strcasecmp(psFilterNode->pszValue, 
+                        "PropertyIsLessThanOrEqualTo") == 0)
+      strcat(szBuffer, "<=");
+    else if (strcasecmp(psFilterNode->pszValue, 
+                        "PropertyIsGreaterThanOrEqualTo") == 0)
+      strcat(szBuffer, ">=");
+    
+    strcat(szBuffer, " ");
+    
+    /* value */
+    if (bString)
+      strcat(szBuffer, "'");
+    
+    if (psFilterNode->psRightNode->pszValue)
+      strcat(szBuffer, psFilterNode->psRightNode->pszValue);
+
+    if (bString)
+      strcat(szBuffer, "'");
+
+
+    /*losing bracket*/
+    strcat(szBuffer, ") ");
+
+    return strdup(szBuffer);
+}
+
+
+/************************************************************************/
+/*                    FLTGetIsBetweenComparisonSQLExpresssion           */
+/*                                                                      */
+/*      Build an SQL expresssion for IsBteween Filter.                  */
+/************************************************************************/
+char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
+{
+    char szBuffer[512];
+    char **aszBounds = NULL;
+    int nBounds = 0;
+    int i=0, bString=0, nLenght = 0;
+
+
+    szBuffer[0] = '\0';
+    if (!psFilterNode ||
+        !(strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0))
+      return NULL;
+
+    if (!psFilterNode->psLeftNode || !psFilterNode->psRightNode )
+      return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get the bounds value which are stored like boundmin;boundmax    */
+/* -------------------------------------------------------------------- */
+    aszBounds = split(psFilterNode->psRightNode->pszValue, ';', &nBounds);
+    if (nBounds != 2)
+      return NULL;
+/* -------------------------------------------------------------------- */
+/*      check if the value is a numeric value or alphanumeric. If it    */
+/*      is alphanumeric, add quotes around attribute and values.        */
+/* -------------------------------------------------------------------- */
+    bString = 0;
+    if (aszBounds[0])
+    {
+        nLenght = strlen(aszBounds[0]);
+        for (i=0; i<nLenght; i++)
+        {
+            if (!isdigit(aszBounds[0][i]) && aszBounds[0][i] != '.')
+            {
+                bString = 1;
+                break;
+            }
+        }
+    }
+    if (!bString)
+    {
+        if (aszBounds[1])
+        {
+            nLenght = strlen(aszBounds[1]);
+            for (i=0; i<nLenght; i++)
+            {
+                if (!isdigit(aszBounds[1][i]) && aszBounds[1][i] != '.')
+                {
+                    bString = 1;
+                    break;
+                }
+            }
+        }
+    }
+        
+
+/* -------------------------------------------------------------------- */
+/*      build expresssion.                                              */
+/* -------------------------------------------------------------------- */
+    /*opening paranthesis */
+    strcat(szBuffer, " (");
+
+    /* attribute */
+    strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
+
+    /*between*/
+    strcat(szBuffer, " BETWEEN ");
+
+    /*bound 1*/
+    if (bString)
+      strcat(szBuffer,"'");
+    strcat(szBuffer, aszBounds[0]);
+    if (bString)
+      strcat(szBuffer,"'");
+
+    strcat(szBuffer, " AND ");
+
+    /*bound 2*/
+    if (bString)
+      strcat(szBuffer, "'");
+    strcat(szBuffer, aszBounds[1]);
+    if (bString)
+      strcat(szBuffer,"'");
+
+    /*closing paranthesis*/
+    strcat(szBuffer, ")");
+     
+    
+    return strdup(szBuffer);
+}
+  
 /************************************************************************/
 /*                    FLTGetIsBetweenComparisonExpresssion              */
 /*                                                                      */
@@ -2571,7 +2975,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 /* -------------------------------------------------------------------- */
     szBuffer[0] = '/';
     szBuffer[1] = '\0';
-    //szBuffer[1] = '^';
+    /*szBuffer[1] = '^';*/
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
     iBuffer = 1;
@@ -2620,14 +3024,105 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
     return strdup(szBuffer);
 }
 
+/************************************************************************/
+/*                      FLTGetIsLikeComparisonSQLExpression             */
+/*                                                                      */
+/*      Build an sql expression for IsLike filter.                      */
+/************************************************************************/
+char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
+                                          int connectiontype)
+{
+    char szBuffer[512];
+    char *pszValue = NULL;
+    
+    char *pszWild = NULL;
+    char *pszSingle = NULL;
+    char *pszEscape = NULL;
+    char szTmp[2];
+
+    int nLength=0, i=0, iBuffer = 0;
+
+
+    if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
+        !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
+      return NULL;
+
+    pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
+    pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
+    pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
+
+    if (!pszWild || strlen(pszWild) == 0 ||
+        !pszSingle || strlen(pszSingle) == 0 || 
+        !pszEscape || strlen(pszEscape) == 0)
+      return NULL;
+
+ 
+
+    szBuffer[0] = '\0';
+    /*opening bracket*/
+    strcat(szBuffer, " (");
+
+    /* attribute name */
+    strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
+    strcat(szBuffer, " like '");
+        
+   
+    pszValue = psFilterNode->psRightNode->pszValue;
+    nLength = strlen(pszValue);
+    iBuffer = strlen(szBuffer);
+    for (i=0; i<nLength; i++)
+    {
+        if (pszValue[i] != pszWild[0] && 
+            pszValue[i] != pszSingle[0] &&
+            pszValue[i] != pszEscape[0])
+        {
+            szBuffer[iBuffer] = pszValue[i];
+            iBuffer++;
+            szBuffer[iBuffer] = '\0';
+        }
+        else if  (pszValue[i] == pszSingle[0])
+        {
+             szBuffer[iBuffer] = '_';
+             iBuffer++;
+             szBuffer[iBuffer] = '\0';
+        }
+        else if  (pszValue[i] == pszEscape[0])
+        {
+            szBuffer[iBuffer] = pszEscape[0];
+            iBuffer++;
+            szBuffer[iBuffer] = '\0';
+            /*if (i<nLength-1)
+            {
+                szBuffer[iBuffer] = pszValue[i+1];
+                iBuffer++;
+                szBuffer[iBuffer] = '\0';
+            }
+            */
+        }
+        else if (pszValue[i] == pszWild[0])
+        {
+            strcat(szBuffer, "%");
+            iBuffer++;
+            szBuffer[iBuffer] = '\0';
+        }
+    } 
+
+    strcat(szBuffer, "' escape '");
+    szTmp[0] = pszEscape[0];
+    szTmp[1] = '\0';
+    strcat(szBuffer,  szTmp);
+    strcat(szBuffer,  "')");
+    
+    return strdup(szBuffer);
+}
 
 /************************************************************************/
-/*                           FTLHasSpatialFilter                        */
+/*                           FLTHasSpatialFilter                        */
 /*                                                                      */
 /*      Utility function to see if a spatial filter is included in      */
 /*      the node.                                                       */
 /************************************************************************/
-int FTLHasSpatialFilter(FilterEncodingNode *psNode)
+int FLTHasSpatialFilter(FilterEncodingNode *psNode)
 {
     int bResult = MS_FALSE;
 
@@ -2637,13 +3132,13 @@ int FTLHasSpatialFilter(FilterEncodingNode *psNode)
     if (psNode->eType == FILTER_NODE_TYPE_LOGICAL)
     {
         if (psNode->psLeftNode)
-          bResult = FTLHasSpatialFilter(psNode->psLeftNode);
+          bResult = FLTHasSpatialFilter(psNode->psLeftNode);
 
         if (bResult)
           return MS_TRUE;
 
         if (psNode->psRightNode)
-           bResult = FTLHasSpatialFilter(psNode->psRightNode);
+           bResult = FLTHasSpatialFilter(psNode->psRightNode);
 
         if (bResult)
           return MS_TRUE;
