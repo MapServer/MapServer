@@ -2361,9 +2361,6 @@ static void loadLegendString(mapObj *map, legendObj *legend, char *value)
 
 static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
 {
-  if (legend->status == MS_DELETE)
-      return;
- 
   fprintf(stream, "  LEGEND\n");
   fprintf(stream, "    IMAGECOLOR %d %d %d\n", legend->imagecolor.red, legend->imagecolor.green, legend->imagecolor.blue);
   fprintf(stream, "    INTERLACE %s\n", msTrueFalse[legend->interlace]);
@@ -2568,9 +2565,6 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
 
 static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
 {
-  if (scalebar->status == MS_DELETE)
-    return;
- 
   fprintf(stream, "  SCALEBAR\n");
   if(scalebar->backgroundcolor > -1) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor-1].red, map->palette.colors[scalebar->backgroundcolor-1].green, map->palette.colors[scalebar->backgroundcolor-1].blue);
   if(scalebar->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[scalebar->color-1].red, map->palette.colors[scalebar->color-1].green, map->palette.colors[scalebar->color-1].blue);
