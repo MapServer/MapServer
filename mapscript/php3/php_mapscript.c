@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.150  2003/03/26 20:23:31  dan
+ * msLoadWKTProjectionString() has been renamed msOGCWKT2ProjectionObj()
+ *
  * Revision 1.149  2003/03/14 13:43:03  attila
  * Introduce MySQL generic support, enabled with --with-mygis when configuring, imagemap output
  *
@@ -1502,7 +1505,7 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
     in = self->projection;
     msInitProjection(&out);
     if (bWKTProj)
-        msLoadWKTProjectionString(pProjString->value.str.val, &(out));
+        msOGCWKT2ProjectionObj(pProjString->value.str.val, &(out),self->debug);
     else
         msLoadProjectionString(&(out),  pProjString->value.str.val);
     sRect = self->extent;

@@ -277,7 +277,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   int setWKTProjection(char *string) {
-    return msLoadWKTProjectionString(string, &(self->projection));
+    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
   }
 
   %new char *getProjection() {
@@ -542,7 +542,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   int setWKTProjection(char *string) {
     self->project = MS_TRUE;
-    return msLoadWKTProjectionString(string, &(self->projection));
+    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
   }
 
   %new char *getProjection() {    

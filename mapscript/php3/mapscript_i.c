@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.62  2003/03/26 20:23:31  dan
+ * msLoadWKTProjectionString() has been renamed msOGCWKT2ProjectionObj()
+ *
  * Revision 1.61  2003/03/24 15:31:14  attila
  * mapimage module can now generate DXF imagemaps
  *
@@ -430,7 +433,7 @@ void mapObj_freeQuery(mapObj *self, int qlayer) {
 }
 
 int mapObj_setWKTProjection(mapObj *self, char *string) {
-    return msLoadWKTProjectionString(string, &(self->projection));
+    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
   }
 
 char *mapObj_getProjection(mapObj* self) {
@@ -644,7 +647,7 @@ int layerObj_setFilter(layerObj *self, char *string) {
 
 int layerObj_setWKTProjection(layerObj *self, char *string) {
     self->project = MS_TRUE;
-    return msLoadWKTProjectionString(string, &(self->projection));
+    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
   }
 
 char *layerObj_getProjection(layerObj* self) {
