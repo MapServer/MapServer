@@ -554,24 +554,15 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   double distanceToPoint(pointObj *point) {
-    return msDistanceBetweenPoints(self, point);
+    return msDistancePointToPoint(self, point);
   }
 
-  double distanceToLine(pointObj *a, pointObj *b) {
-    return msDistanceFromPointToLine(self, a, b);
+  double distanceToSegment(pointObj *a, pointObj *b) {
+    return msDistancePointToSegment(self, a, b);
   }
 
   double distanceToShape(shapeObj *shape) {
-    switch(shape->type) {
-    case(MS_SHAPE_POINT):
-      return msDistanceFromPointToMultipoint(self, &(shape->line[0]));
-    case(MS_SHAPE_LINE):
-      return msDistanceFromPointToPolyline(self, shape);
-    case(MS_SHAPE_POLYGON):
-      return msDistanceFromPointToPolygon(self, shape);
-    }
-
-    return -1;
+    return msDistancePointToShape(self, shape);
   }
 }
 

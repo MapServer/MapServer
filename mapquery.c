@@ -785,13 +785,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 	lp->project = MS_FALSE;
 #endif
 
-      if(shape.type == MS_SHAPE_POINT)
-	d = msDistanceFromPointToMultipoint(&p, &shape.line[0]);
-      else if(shape.type == MS_SHAPE_LINE)
-	d = msDistanceFromPointToPolyline(&p, &shape);
-      else // MS_SHAPE_POLYGON
-	d = msDistanceFromPointToPolygon(&p, &shape);	  
-
+      d = msDistancePointToShape(&p, &shape);
       if( d <= t ) { // found one
 	if(mode == MS_SINGLE) {
 	  lp->resultcache->numresults = 0;

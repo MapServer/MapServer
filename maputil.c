@@ -841,9 +841,7 @@ pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point)
 /* -------------------------------------------------------------------- */
             for (j=0; j<line.numpoints-1; j++)
             {
-                dfDist = msDistanceFromPointToLine(point, 
-                                                   &line.point[j], 
-                                                   &line.point[j+1]);
+                dfDist = msDistancePointToSegment(point, &line.point[j], &line.point[j+1]);
                 if (dfDist < dfMinDist)
                 {
                     oFirst.x = line.point[j].x;

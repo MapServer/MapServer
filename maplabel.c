@@ -454,7 +454,6 @@ double dist(pointObj a, pointObj b)
 ** Variation on msIntersectPolygons. Label polygons aren't like shapefile polygons. They
 ** have no holes, and often do have overlapping parts (i.e. road symbols).
 */
-extern int intersectLines(pointObj a, pointObj b, pointObj c, pointObj d); // from mapsearch.c
 
 //static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
@@ -466,7 +465,7 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
     for(v1=1; v1<p1->line[c1].numpoints; v1++)
       for(c2=0; c2<p2->numlines; c2++)
 	for(v2=1; v2<p2->line[c2].numpoints; v2++)
-	  if(intersectLines(p1->line[c1].point[v1-1], p1->line[c1].point[v1], p2->line[c2].point[v2-1], p2->line[c2].point[v2]) ==  MS_TRUE)
+	  if(msIntersectSegments(&(p1->line[c1].point[v1-1]), &(p1->line[c1].point[v1]), &(p2->line[c2].point[v2-1]), &(p2->line[c2].point[v2])) ==  MS_TRUE)
 	    return(MS_TRUE);
 
   /* STEP 2: polygon one completely contains two (only need to check one point from each part) */

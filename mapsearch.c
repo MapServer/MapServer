@@ -88,122 +88,27 @@ int msPointInPolygon(pointObj *p, lineObj *c)
 }
 
 /*
-** Length of the line segment defined by points a and b.
-*/
-double msDistanceBetweenPoints(pointObj *a, pointObj *b)
-{
-  double d;
-  double dx, dy;
-  
-  dx = a->x - b->x;
-  dy = a->y - b->y;
-  d = sqrt(dx*dx + dy*dy);
-  return(d);
-}
-
-double msDistanceFromPointToLine(pointObj *p, pointObj *a, pointObj *b)
-{
-  double l; /* length of line ab */
-  double r,s;
-
-  l = msDistanceBetweenPoints(a,b);
-
-  if(l == 0.0) // a = b
-    return( msDistanceBetweenPoints(a,p));
-
-  r = ((a->y - p->y)*(a->y - b->y) - (a->x - p->x)*(b->x - a->x))/(l*l);
-
-  if(r > 1) /* perpendicular projection of P is on the forward extention of AB */
-    return(MS_MIN(msDistanceBetweenPoints(p, b),msDistanceBetweenPoints(p, a)));
-  if(r < 0) /* perpendicular projection of P is on the backward extention of AB */
-    return(MS_MIN(msDistanceBetweenPoints(p, b),msDistanceBetweenPoints(p, a)));
-
-  s = ((a->y - p->y)*(b->x - a->x) - (a->x - p->x)*(b->y - a->y))/(l*l);
-
-  return(fabs(s*l));
-}
-
-/*
-** Finds the minimum distance to a group of points.
-*/
-double msDistanceFromPointToMultipoint(pointObj *p, multipointObj *points)
-{
-  int i;
-  double d, mind=-1;
-
-  for(i=0; i<points->numpoints; i++) {
-    d = msDistanceBetweenPoints(p, &(points->point[i]));
-    if((d < mind) || (mind < 0))
-      mind = d;
-  }
-
-  return(mind);
-}
-
-/*
-** Finds minimum distance from a point to a polyline. Computed from the
-** closest line segment in the polyline.
-*/
-double msDistanceFromPointToPolyline(pointObj *p, shapeObj *polyline)
-{
-  int i,j;
-  double d, mind=-1;
-
-  for(j=0;j<polyline->numlines;j++) {
-    for(i=1; i<polyline->line[j].numpoints; i++) {
-      d = msDistanceFromPointToLine(p, &(polyline->line[j].point[i-1]), &(polyline->line[j].point[i]));
-      if((d < mind) || (mind < 0))
-	mind = d;
-    }
-  }
-  return(mind);
-}
-
-/*
-** Finds minimum distance from a point to a polygon. If the point is IN the
-** polygon the distance will be zero. Otherwise the distance will be to the
-** closest line segment in the polygon.
-*/
-double msDistanceFromPointToPolygon(pointObj *p, shapeObj *poly)
-{
-  int i;
-  int status=MS_FALSE;
-  
-  /* first see if the point is IN the polygon */
-  for(i=0; i<poly->numlines; i++) {
-    if(msPointInPolygon(p, &poly->line[i]) == MS_TRUE) { /* ok, the point is in a line */
-      status = !status;
-    }
-  }
-
-  if(status == MS_FALSE) /* i.e. we're not IN the polygon, need a distance */
-    return(msDistanceFromPointToPolyline(p, poly));
-  else    
-    return(0);
-}
-
-/*
 ** Note: the following functions are brute force implementations. Some fancy
 ** computational geometry algorithms would speed things up nicely in many
 ** cases. In due time... -SDL-
 */
 
-int intersectLines(pointObj a, pointObj b, pointObj c, pointObj d) { /* from comp.graphics.alogorithms FAQ */
+int msIntersectSegments(pointObj *a, pointObj *b, pointObj *c, pointObj *d) { /* from comp.graphics.alogorithms FAQ */
 
   double r, s;
   double denominator, numerator;
 
-  numerator = ((a.y-c.y)*(d.x-c.x) - (a.x-c.x)*(d.y-c.y));  
-  denominator = ((b.x-a.x)*(d.y-c.y) - (b.y-a.y)*(d.x-c.x));  
+  numerator = ((a->y-c->y)*(d->x-c->x) - (a->x-c->x)*(d->y-c->y));  
+  denominator = ((b->x-a->x)*(d->y-c->y) - (b->y-a->y)*(d->x-c->x));  
 
   if((denominator == 0) && (numerator == 0)) { /* lines are coincident, intersection is a line segement if it exists */
-    if(a.y == c.y) { /* coincident horizontally, check x's */
-      if(((a.x >= MS_MIN(c.x,d.x)) && (a.x <= MS_MAX(c.x,d.x))) || ((b.x >= MS_MIN(c.x,d.x)) && (b.x <= MS_MAX(c.x,d.x))))
+    if(a->y == c->y) { /* coincident horizontally, check x's */
+      if(((a->x >= MS_MIN(c->x,d->x)) && (a->x <= MS_MAX(c->x,d->x))) || ((b->x >= MS_MIN(c->x,d->x)) && (b->x <= MS_MAX(c->x,d->x))))
 	return(MS_TRUE);
       else
 	return(MS_FALSE);
     } else { /* test for y's will work fine for remaining cases */
-      if(((a.y >= MS_MIN(c.y,d.y)) && (a.y <= MS_MAX(c.y,d.y))) || ((b.y >= MS_MIN(c.y,d.y)) && (b.y <= MS_MAX(c.y,d.y))))
+      if(((a->y >= MS_MIN(c->y,d->y)) && (a->y <= MS_MAX(c->y,d->y))) || ((b->y >= MS_MIN(c->y,d->y)) && (b->y <= MS_MAX(c->y,d->y))))
 	return(MS_TRUE);
       else
 	return(MS_FALSE);
@@ -218,7 +123,7 @@ int intersectLines(pointObj a, pointObj b, pointObj c, pointObj d) { /* from com
   if((r<0) || (r>1))
     return(MS_FALSE); /* no intersection */
 
-  numerator = ((a.y-c.y)*(b.x-a.x) - (a.x-c.x)*(b.y-a.y));
+  numerator = ((a->y-c->y)*(b->x-a->x) - (a->x-c->x)*(b->y-a->y));
   s = numerator/denominator;
 
   if((s<0) || (s>1))
@@ -262,7 +167,7 @@ int msIntersectPolylines(shapeObj *line1, shapeObj *line2) {
     for(v1=1; v1<line1->line[c1].numpoints; v1++)
       for(c2=0; c2<line2->numlines; c2++)
 	for(v2=1; v2<line2->line[c2].numpoints; v2++)
-	  if(intersectLines(line1->line[c1].point[v1-1], line1->line[c1].point[v1], line2->line[c2].point[v2-1], line2->line[c2].point[v2]) ==  MS_TRUE)
+	  if(msIntersectSegments(&(line1->line[c1].point[v1-1]), &(line1->line[c1].point[v1]), &(line2->line[c2].point[v2-1]), &(line2->line[c2].point[v2])) ==  MS_TRUE)
 	    return(MS_TRUE);
 
   return(MS_FALSE);
@@ -276,7 +181,7 @@ int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly) {
     for(v1=1; v1<line->line[c1].numpoints; v1++)
       for(c2=0; c2<poly->numlines; c2++)
 	for(v2=1; v2<poly->line[c2].numpoints; v2++)
-	  if(intersectLines(line->line[c1].point[v1-1], line->line[c1].point[v1], poly->line[c2].point[v2-1], poly->line[c2].point[v2]) ==  MS_TRUE)
+	  if(msIntersectSegments(&(line->line[c1].point[v1-1]), &(line->line[c1].point[v1]), &(poly->line[c2].point[v2-1]), &(poly->line[c2].point[v2])) ==  MS_TRUE)
 	    return(MS_TRUE);
 
   /* STEP 2: polygon might competely contain the polyline or one of it's parts (only need to check one point from each part) */
@@ -308,7 +213,7 @@ int msIntersectPolygons(shapeObj *p1, shapeObj *p2) {
     for(v1=1; v1<p1->line[c1].numpoints; v1++)
       for(c2=0; c2<p2->numlines; c2++)
 	for(v2=1; v2<p2->line[c2].numpoints; v2++)
-	  if(intersectLines(p1->line[c1].point[v1-1], p1->line[c1].point[v1], p2->line[c2].point[v2-1], p2->line[c2].point[v2]) ==  MS_TRUE)	    
+	  if(msIntersectSegments(&(p1->line[c1].point[v1-1]), &(p1->line[c1].point[v1]), &(p2->line[c2].point[v2-1]), &(p2->line[c2].point[v2])) ==  MS_TRUE)	    
 	    return(MS_TRUE);
 
   /*
@@ -317,4 +222,93 @@ int msIntersectPolygons(shapeObj *p1, shapeObj *p2) {
   */
 
   return(MS_FALSE);
+}
+
+
+/*
+** Distance computations
+*/
+
+double msDistancePointToPoint(pointObj *a, pointObj *b)
+{
+  double d;
+  double dx, dy;
+  
+  dx = a->x - b->x;
+  dy = a->y - b->y;
+  d = sqrt(dx*dx + dy*dy);
+  return(d);
+}
+
+double msDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b)
+{
+  double l; /* length of line ab */
+  double r,s;
+
+  l = msDistancePointToPoint(a,b);
+
+  if(l == 0.0) // a = b
+    return( msDistancePointToPoint(a,p));
+
+  r = ((a->y - p->y)*(a->y - b->y) - (a->x - p->x)*(b->x - a->x))/(l*l);
+
+  if(r > 1) /* perpendicular projection of P is on the forward extention of AB */
+    return(MS_MIN(msDistancePointToPoint(p, b),msDistancePointToPoint(p, a)));
+  if(r < 0) /* perpendicular projection of P is on the backward extention of AB */
+    return(MS_MIN(msDistancePointToPoint(p, b),msDistancePointToPoint(p, a)));
+
+  s = ((a->y - p->y)*(b->x - a->x) - (a->x - p->x)*(b->y - a->y))/(l*l);
+
+  return(fabs(s*l));
+}
+
+double msDistanceSegmentToSegment(pointObj *a, pointObj *b, pointObj *c, pointObj *d) 
+{
+  return(-1);
+}
+
+double msDistancePointToShape(pointObj *point, shapeObj *shape)
+{
+  int i, j;
+  double dist, minDist=-1;
+
+  switch(shape->type) {
+  case(MS_SHAPE_POINT):    
+    for(j=0;j<shape->numlines;j++) {
+      for(i=0; i<shape->line[j].numpoints; i++) {
+        dist = msDistancePointToPoint(point, &(shape->line[j].point[i]));
+        if((dist < minDist) || (minDist < 0)) minDist = dist;
+      }
+    }
+    break;
+  case(MS_SHAPE_LINE):
+    for(j=0;j<shape->numlines;j++) {
+      for(i=1; i<shape->line[j].numpoints; i++) {
+        dist = msDistancePointToSegment(point, &(shape->line[j].point[i-1]), &(shape->line[j].point[i]));
+        if((dist < minDist) || (minDist < 0)) minDist = dist;
+      }
+    }
+    break;
+  case(MS_SHAPE_POLYGON):
+    if(msIntersectPointPolygon(point, shape))
+      minDist = 0; // point is IN the shape
+    else { // treat shape just like a line
+      for(j=0;j<shape->numlines;j++) {
+        for(i=1; i<shape->line[j].numpoints; i++) {
+          dist = msDistancePointToSegment(point, &(shape->line[j].point[i-1]), &(shape->line[j].point[i]));
+          if((dist < minDist) || (minDist < 0)) minDist = dist;
+        }
+      }
+    }
+    break;
+  default:
+    break;
+  }
+
+  return(minDist);
+}
+
+double msDistanceShapeToShape(pointObj *point, shapeObj *shape)
+{
+  return(-1);
 }

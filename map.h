@@ -922,12 +922,11 @@ int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);
 int msRectContained(rectObj *a, rectObj *b);
 void msMergeRect(rectObj *a, rectObj *b);
-double msDistanceBetweenPoints(pointObj *a, pointObj *b);
-double msDistanceFromPointToLine(pointObj *p, pointObj *a, pointObj *b);
+double msDistancePointToPoint(pointObj *a, pointObj *b);
+double msDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b);
+double msDistancePointToShape(pointObj *p, shapeObj *shape);
+int msIntersectSegments(pointObj *a, pointObj *b, pointObj *c, pointObj *d);
 int msPointInPolygon(pointObj *p, lineObj *c);
-double msDistanceFromPointToMultipoint(pointObj *p, multipointObj *points);
-double msDistanceFromPointToPolyline(pointObj *p, shapeObj *polyline);
-double msDistanceFromPointToPolygon(pointObj *p, shapeObj *polyline);
 int msIntersectMultipointPolygon(multipointObj *points, shapeObj *polygon);
 int msIntersectPointPolygon(pointObj *p, shapeObj *polygon);
 int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly);
