@@ -1414,8 +1414,8 @@ MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int index);
 MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
 
 // Measured shape utility functions.   
-MS_DLL_EXPORT pointObj *getPointUsingMeasure(shapeObj *shape, double m);
-MS_DLL_EXPORT pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point);
+MS_DLL_EXPORT pointObj *msGetPointUsingMeasure(shapeObj *shape, double m);
+MS_DLL_EXPORT pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point);
 
 MS_DLL_EXPORT char **msGetAllGroupNames(mapObj* map, int *numTok);
 MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const char *ext);
@@ -1526,6 +1526,11 @@ MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
 /* ==================================================================== */
 /*      end prototypes for functions in mapcopy                         */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      prototypes for functions in mapcpl.c                            */
+/* ==================================================================== */
+MS_DLL_EXPORT const char *msGetBasename( const char *pszFullFilename );
 
 /* ==================================================================== */
 /*      include definitions from mapows.h                               */
