@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "maptemplate.h"
 #include "maphash.h"
 #include "map.h"
@@ -472,12 +474,15 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
  * this function return a modified pszInstr.
  * ht mus contain all variables needed by the function
  * to interpret if expression.
+ *
+ * If bLastPass is true then all tests for 'null' values will be
+ * considered true if the corresponding value is not set.
 */
-int processIf(char** pszInstr, hashTableObj ht)
+int processIf(char** pszInstr, hashTableObj ht, int bLastPass)
 {
 //   char *pszNextInstr = pszInstr;
    char *pszStart, *pszEnd=NULL;
-   char *pszName, *pszValue, *pszOperator, *pszThen=NULL;
+   char *pszName, *pszValue, *pszOperator, *pszThen=NULL, *pszHTValue;
    char *pszIfTag;
    char *pszPatIn=NULL, *pszPatOut=NULL, *pszTmp;
    int nInst = 0;
@@ -541,10 +546,13 @@ int processIf(char** pszInstr, hashTableObj ht)
       pszName = msLookupHashTable(ifArgs, "name");
       pszValue = msLookupHashTable(ifArgs, "value");
       pszOperator = msLookupHashTable(ifArgs, "oper");
-      
+      // Default operator if not set is "eq"
+      if (pszOperator == NULL)
+          pszOperator = "eq";
+
       bEmpty = 0;
       
-      if (pszName && pszValue && msLookupHashTable(ht, pszName)) {
+      if (pszName) {
          // build the complete if tag ([if all_args]then string[/if])
          // to replace if by then string if expression is true
          // or by a white space if not.
@@ -554,44 +562,64 @@ int processIf(char** pszInstr, hashTableObj ht)
          pszIfTag[nLength] = '\0';
          strcat(pszIfTag, "[/if]");
          
-         if (pszOperator) {
-            if (strcmp(pszOperator, "neq") == 0) {
-               if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) != 0)
-               {
-                  *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
-               }
-               else
-               {
-                  *pszInstr = gsub(*pszInstr, pszIfTag, "");
-                  bEmpty = 1;
-               }
-            }
-            else {
-               if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
-               {
-                  *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
-               }
-               else
-               {
-                  *pszInstr = gsub(*pszInstr, pszIfTag, "");
-                  bEmpty = 1;
-               }
-            }                 
+         pszHTValue = msLookupHashTable(ht, pszName);
+
+         if (strcmp(pszOperator, "neq") == 0) {
+             if (pszValue && pszHTValue && strcasecmp(pszValue, pszHTValue) != 0)
+             {
+                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+             }
+             else if (pszHTValue)
+             {
+                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 bEmpty = 1;
+             }
+         }
+         else if (strcmp(pszOperator, "eq") == 0) {
+             if (pszValue && pszHTValue && strcasecmp(pszValue, pszHTValue) == 0)
+             {
+                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+             }
+             else if (pszHTValue)
+             {
+                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 bEmpty = 1;
+             }
+         }
+         else if (strcmp(pszOperator, "isnull") == 0) {
+             if (pszHTValue != NULL)
+             {
+                 // We met a non-null value... condition is false
+                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 bEmpty = 1;
+             }
+             else if (bLastPass)
+             {
+                 // On last pass, if value is still null then condition is true
+                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+             }
+         }
+         else if (strcmp(pszOperator, "isset") == 0) {
+             if (pszHTValue != NULL)
+             {
+                 // Found a non-null value... condition is true
+                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+             }
+             else if (bLastPass)
+             {
+                 // On last pass, if value still not set then condition is false
+                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 bEmpty = 1;
+             }
          }
          else {
-            if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
-            {
-               *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
-            }
-            else
-            {
-               *pszInstr = gsub(*pszInstr, pszIfTag, "");
-               bEmpty = 1;
-            }
-         }
-         
+             msSetError(MS_WEBERR, "Unsupported operator (%s) in if tag.", 
+                        "processIf()", pszOperator);
+             return MS_FAILURE;
+         }                    
+
          if (pszIfTag)
-           free(pszIfTag);
+             free(pszIfTag);
 
          pszIfTag = NULL;
       }
@@ -910,10 +938,10 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
          sprintf(pszStatus, "%d", map->layers[map->layerorder[j]].status);
          msInsertHashTable(myHashTable, "layer_status", pszStatus);
    
-         if (processIf(pszTemp, myHashTable) != MS_SUCCESS)
+         if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
          
-         if (processIf(pszTemp, map->layers[map->layerorder[j]].metadata) != MS_SUCCESS)
+         if (processIf(pszTemp, map->layers[map->layerorder[j]].metadata, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
 
          if (processMetadata(pszTemp, map->layers[map->layerorder[j]].metadata) != MS_SUCCESS)
@@ -933,7 +961,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    /*
     * check for if tag
    */
-   if (processIf(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
      return MS_FAILURE;
    
    /*
@@ -1040,13 +1068,13 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
    
-   if (processIf(pszTemp, myHashTable) != MS_SUCCESS)
+   if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->layers[nIdxLayer].metadata, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
 
    msFreeHashTable(myHashTable);
@@ -1167,13 +1195,13 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
    
-   if (processIf(pszTemp, myHashTable) != MS_SUCCESS)
+   if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->layers[nIdxLayer].metadata, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
 
    msFreeHashTable(myHashTable);   
