@@ -30,7 +30,7 @@
 ..
 
 *****************************************************************************
- Mapscript Development Documentation
+ Mapscript API Reference, MapServer version 4.4
 *****************************************************************************
 
 :Author: Sean Gillies
@@ -110,6 +110,13 @@ method(type mandatory_parameter [, type optional_parameter=default]) : type
 Class method names are camel case with a leading lower case character
 like *getExpressionString*.
 
+-----------------------------------------------------------------------------
+ Additional Documentation
+-----------------------------------------------------------------------------
+
+There's no point in duplicating the MapServer Mapfile Reference, which
+remains the primary reference for mapscript class attributes.
+
 
 =============================================================================
  Mapscript Variables
@@ -122,7 +129,7 @@ like *getExpressionString*.
 +---------------------+-------------+-----------+
 | Name                |   Type      |   Value   |
 +=====================+=============+===========+
-|  MS_VERSION         | character   | 4.2.3     |
+|  MS_VERSION         | character   | 4.4       |
 +---------------------+-------------+-----------+
 
 -----------------------------------------------------------------------------
@@ -712,6 +719,9 @@ new classObj( [ layerObj_ parent_layer=NULL ] ) : classObj
     the context of a parent layer by omitting the single constructor
     argument.
 
+clone( ) : classObj
+    Return an independent copy of the class without a parent layer.
+
 createLegendIcon( mapObj_ map, layerObj_ layer, int width, int height ) : imageObj_
     Draw and return a new legend icon.
 
@@ -791,7 +801,7 @@ red : int
     Red component of color in range [0-255]
 
 pen : int
-    **TODO** trigger for change in mapserver pens?
+    Don't mess with this unless you know what you are doing! 
     
 .. note:: Because of the issue with *pen*, setting colors by individual
    components is unreliable.  Best practice is to use setRGB(), setHex(),
@@ -812,15 +822,42 @@ setHex( string hexcolor ) : int
     color component.  Returns MS_SUCCESS or MS_FAILURE.
     
 toHex() : string 
-    Compliments setHex, returning a hexadecimal representation of the
+    Complement to setHex, returning a hexadecimal representation of the
     color components.
+
+
+-----------------------------------------------------------------------------
+ errorObj
+-----------------------------------------------------------------------------
+
+This class allows inspection of the MapServer error stack.  Only needed for
+the Perl module as the other language modules expose the error stack through
+exceptions.
+
+errorObj Attributes
+-------------------
+
+code : int
+    MapServer error code such as MS_IMGERR (1).
+
+message : string
+    Context-dependent error message.
+
+routine : string
+    MapServer function in which the error was set.
+
+errorObj Methods
+----------------
+
+next : errorObj
+    Returns the next error in the stack or NULL if the end has been reached.
 
 
 -----------------------------------------------------------------------------
  fontSetObj
 -----------------------------------------------------------------------------
 
-A fontSetObj is always an attribute of a mapObj_.
+A fontSetObj is always a 'fontset' attribute of a mapObj_.
 
 fontSetObj Attributes
 ---------------------
@@ -899,10 +936,10 @@ imageurl : string immutable
 
 renderer : int 
     MS_RENDER_WITH_GD, MS_RENDER_WITH_SWF, MS_RENDER_WITH_RAWDATA,
-    MS_RENDER_WITH_PDF, or MS_RENDER_WITH_IMAGEMAP
+    MS_RENDER_WITH_PDF, or MS_RENDER_WITH_IMAGEMAP.  Don't mess with this!
 
 size : int
-    I don't see where this is used.  Anyone?
+    I don't see where this is used.  Anyone?  --SG
 
 width : int immutable
     Image width in pixels.
@@ -958,6 +995,108 @@ new intarray( int numitems ) : intarray
     Returns a new instance of the specified length.
 
     
+-----------------------------------------------------------------------------
+ labelCacheMemberObj
+-----------------------------------------------------------------------------
+
+An individual feature label.  The labelCacheMemberObj class is associated
+with labelCacheObj.
+
+::
+
+    +------------------+ 0..*     1 +------------+
+    | LabelCacheMember | <--------- | LabelCache |
+    +------------------+            +------------+
+    
+
+labelCacheMemberObj Attributes
+------------------------------
+
+classindex : int immutable
+    Index of the class of the labeled feature.
+    
+featuresize : float immutable
+    **TODO**
+
+label : labelObj_ immutable
+    Copied from the class of the labeled feature.
+ 
+layerindex : int immutable
+    The index of the layer of the labeled feature.
+    
+numstyles : int immutable
+    Number of styles as for the class of the labeled feature.
+
+point : pointObj_ immutable
+    Label point.
+
+poly : shapeObj_ immutable
+    Label bounding box.
+    
+shapeindex : int immutable
+    Index within shapefile of the labeled feature.
+ 
+status : int immutable
+    Has the label been drawn or not?
+
+styles : styleObj_ immutable
+    **TODO** this should be protected from SWIG.
+    
+text : string immutable
+    Label text.
+
+tileindex : int immutable
+    Tileindex of the layer of the labeled feature.
+    
+labelCacheMemberObj Methods
+---------------------------
+
+None.
+
+.. note::
+   No real scripting control over labeling currently, but there may be
+   some interesting new possibilities if users have control over labeling
+   text, position, and status.
+
+
+-----------------------------------------------------------------------------
+ labelCacheObj
+-----------------------------------------------------------------------------
+
+Set of a map's cached labels.  Has no other existence other than as a
+'labelcache' attribute of a mapObj.  Associated with labelCacheMemberObj and
+markerCacheMemberObj.
+
+::
+
+    +------------+ 1     0..* +-------------------+
+    | LabelCache | ---------> | LabelCacheMember  |
+    +------------+            + ----------------- +
+                              | MarkerCacheMember |
+                              +-------------------+
+
+labelCacheObj Attributes
+------------------------
+
+cachesize : int immutable
+    **TODO**
+
+markercachesize : int immutable
+    **TODO**
+    
+numlabels : int immutable
+    Number of label members.
+
+nummarkers : int immutable
+    Number of marker members.
+
+labelCacheObj Methods
+---------------------
+
+freeCache( ) : void
+    Free the labelcache.
+
+
 -----------------------------------------------------------------------------
  labelObj
 -----------------------------------------------------------------------------
@@ -1103,7 +1242,8 @@ and hashTableObj_
 layerObj Attributes
 -------------------
 
-**TODO**
+bandsitem : ?
+    **TODO**
 
 classitem : string
     The attribute used to classify layer data.
@@ -1142,14 +1282,20 @@ header : string
 index : int immutable
     Index of layer within parent map's layers array.
    
-labelcache : int
-    MS_ON or MS_OFF.  Default is MS_ON.
-    
 labelangleitem : string
     Attribute defining label angle.
-    
+
+labelcache : int
+    MS_ON or MS_OFF.  Default is MS_ON.
+
 labelitem : string
     Attribute defining feature label text.
+
+labelmaxscale : float
+    Maximum scale at which layer will be labeled.
+
+labelminscale : float
+    Minimum scale at which layer will be labeled.
 
 labelrequires : string
     Logical expression.
@@ -1157,12 +1303,6 @@ labelrequires : string
 labelsizeitem : string
     Attribute defining label size.
     
-labelmaxscale : float
-    Maximum scale at which layer will be labeled.
-
-labelminscale : float
-    Minimum scale at which layer will be labeled.
-
 map : mapObj_ immutable
     Reference to parent map.
   
@@ -1198,8 +1338,7 @@ offsite : colorObj_
     transparent pixel value for raster layers.
     
 postlabelcache : int
-    MS_TRUE or MS_FALSE.  Default is MS_FALSE.  **TODO** not entirely clear
-    whether this overrides the labelcache attribute.
+    MS_TRUE or MS_FALSE.  Default is MS_FALSE.
    
 requires : string
     Logical expression.
@@ -1238,7 +1377,10 @@ transform : int
     data that are in image coordinates such as annotation points.
    
 transparency : int
-    Layer transparency in range [0, 100].
+    Layer opacity percentage in range [0, 100].  The special value of 
+    MS_GD_ALPHA (1000) indicates that the alpha transparency of pixmap
+    symbols should be honored, and should be used only for layers that use
+    RGBA pixmap symbols. 
     
 type : int
     See MS_LAYER_TYPE in map.h.
@@ -1248,8 +1390,6 @@ units : int
 
 layerObj Methods
 ----------------
-
-**TODO**
 
 new layerObj( [ mapObj_ parent_map=NULL ] ) : layerObj
     Create a new layerObj in *parent_map*.  The layer index of the new layerObj
@@ -1288,6 +1428,9 @@ clearProcessing() : int
     number of  directives, which will equal MS_SUCCESS if the directives have
     been cleared.
 
+clone() : layerObj
+    Return an independent copy of the layer with no parent map.
+    
 close() : void
     Close the underlying layer.
 
@@ -1321,10 +1464,10 @@ getExtent() : rectObj_
     full read pass through the features of the layer and does not work for
     raster layers.  
 
-getFeature( int shapeindex [, int tileindex ] ) : shapeObj_
+getFeature( int shapeindex [, int tileindex=-1 ] ) : shapeObj_
     Return the layer feature at *shapeindex* and *tileindex*.
 
-getFilter() : string
+getFilterString() : string
     Returns the current filter expression. 
 
 getFirstMetaDataKey() : string
@@ -1353,21 +1496,32 @@ getNumFeatures() : int
     really only online features or will it return the number of non-inline
     features on a regular layer? 
 
-getProcessing( int index) : string
-    Return the raster processing directive at *index*.
-
 getNumResults() : int
     Returns the number of entries in the query result cache for this layer.
+
+getProcessing( int index) : string
+    Return the raster processing directive at *index*.
 
 getResult( int i ) : resultCacheMemberObj_ 
     Fetches the requested query result cache entry, or NULL if the index is
     outside the range of available results.  This method would normally only
     be used after issuing a query operation.
 
+.. note:: getNumResults() and getResult() are deprecated in MapServer 4.3/4.4.
+          Users should instead use the new querying API described in 
+          querying-HOWTO.txt.  layerObj::getResults() is the entry point for
+          the new API.
+
 getResults() : resultCacheObj_
     Returns a reference to layer's result cache.  Should be NULL prior to
     any query, or after a failed query or query with no results.
 
+getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
+    Get a shape from layer data.
+
+.. note:: getShape() is deprecated.  Users should adopt getFeature() for new
+          applications.
+          
 getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, string info_format ) : string
     Return a WMS GetFeatureInfo URL (works only for WMS layers)
     clickX, clickY is the location of to query in pixel coordinates
@@ -1379,9 +1533,6 @@ getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, 
     Returns "" and outputs a warning if layer is not a WMS layer 
     or if it is not queriable.
     
-getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
-    Get a shape from layer data.
-
 insertClass( classObj_ class [, int index=-1 ] ) : int
     Insert a *copy* of the class into the layer at the requested *index*.
     Default index of -1 means insertion at the end of the array of classes.
@@ -1407,7 +1558,7 @@ moveClassUp( int class ) : int
 
 open() : void
     Opens the underlying layer.  This is required before operations like
-    getShape() will work, but is not required before a draw or query call.
+    getFeature() will work, but is not required before a draw or query call.
 
 .. note:: promote() is eliminated in MapServer 4.3.
 
@@ -1497,9 +1648,9 @@ setProcessingKey( string key, string value ) : void
     specific to the layer type and underlying renderer. 
 
 setProjection( string proj4 ) : int
-    Set the layer projection using a PROJ.4 format projection definition. 
-    (ie. "+proj=utm +zone=11 +datum=WGS84").  Returns MS_SUCCESS or 
-    MS_FAILURE. 
+    Set the layer projection using a PROJ.4 format projection definition 
+    (ie. "+proj=utm +zone=11 +datum=WGS84" or "init=EPSG:26911").  Returns 
+    MS_SUCCESS or MS_FAILURE. 
 
 setWKTProjection( string wkt ) : int
     Set the layer projection using OpenGIS Well Known Text format.  Returns
@@ -1529,11 +1680,11 @@ and with labelObj_.
 legendObj Attributes
 --------------------
 
+height : int
+    Legend height.
+    
 imagecolor : colorObj_
     Legend background color.
-
-label : labelObj_
-    legend label.
 
 keysizex : int
     Width in pixels of legend keys.
@@ -1546,6 +1697,9 @@ keyspacingx : int
 
 keyspacingy : int
     Vertical padding.
+
+label : labelObj_
+    legend label.
 
 map : mapObj_
     Reference to parent mapObj.
@@ -1564,6 +1718,9 @@ status : int
 
 template : string
     Path to template file.
+
+width : int
+    Label width.
 
 legendObj Methods
 -----------------
@@ -1641,23 +1798,117 @@ outputFormatObj_.
 mapObj Attributes
 -----------------
 
-**TODO**
+cellsize : float
+    Pixel size in map units.
+
+configoptions : ?
+    **TODO**
+    
+datapattern : string
+    **TODO** not sure this is meaningful for mapscript. 
+    
+debug : int
+    MS_TRUE or MS_FALSE.
+
+extent : rectObj_
+    Map's spatial extent.
+    
+fontset : fontSetObj_
+    The map's defined fonts.
 
 height : int
     Map's output image height in pixels.
 
 .. note:: direct setting of *height* is deprecated in MapServer version 4.3.
    Users should set width and height simultaneously using setSize().
+   
+imagecolor : colorObj_
+    Initial map background color.
     
+imagequality : int
+    JPEG image quality.
+
+.. note:: map imagequality is deprecated in MapServer 4.3/4.4 and should
+          instead be managed through map outputformats.
+          
+imagetype : string immutable
+    Name of the current output format.
+    
+interlace : int
+    Output image interlacing.
+
+.. note:: map interlace is deprecated in MapServer 4.3/4.4 and should
+          instead be managed through map outputformats.
+
+lablecache : labelCacheObj_
+    Map's labelcache.
+
+legend : legendObj_
+    Reference to map's legend.
+
+mappath : string
+    Filesystem path of the map's mapfile.
+    
+maxsize : int
+    **TODO** ?
+    
+name : string
+    Unique identifier.
+
+numlayers : int immutable
+    Number of map layers.
+
 numoutputformats : int
     Number of output formats.
 
 outputformat : outputFormatObj_
     The currently selected output format.
 
-web : webObj_
-    Application configuration.
+.. note:: Map outputformat should not be modified directly.  Use the
+          selectOutputFormat() method to select named formats.
 
+palette : paletteObj
+    **TODO** should this be deprecated?
+   
+querymap : queryMapObj
+    **TODO** should this be exposed to mapscript?
+
+reference : referenceMapObj_
+    Reference to reference map.
+    
+resolution : float
+    Nominal DPI resolution.  Default is 72.
+    
+scale : float
+    The nominal map scale.  A value of 25000 means 1:25000 scale.
+
+scalebar : scalebarObj_
+    Reference to the scale bar.
+    
+shapepath : string
+    Base filesystem path to layer data.  
+    
+status : int
+    MS_OFF, MS_ON, or MS_DEFAULT.
+
+symbolset : symbolSetObj_
+    The map's set of symbols.
+
+templatepattern : string
+    **TODO** not sure this is meaningful for mapscript. 
+
+transparent : int
+    MS_TRUE or MS_FALSE.
+
+.. note:: map transparent is deprecated in MapServer 4.3/4.4 and should
+          instead be managed through map outputformats.
+
+units : int
+    MS_DD, MS_METERS, etc.
+   
+web : webObj_
+    Reference to map's web definitions.
+    
 width : int
     Map's output image width in pixels.
 
@@ -1667,20 +1918,59 @@ width : int
 mapObj Methods
 --------------
 
-**TODO**
-
 new mapObj( [ string filename='' ] ) : mapObj
     Create a new instance of mapObj.  Note that the filename is now optional.
-    
+  
 appendOutputFormat( outputFormatObj_ format ) : int
     Attach *format* to the map's output format list.  Returns the updated
     number of output formats.
 
+applyConfigOptions( ) : void
+    Apply the defined configuration options set by setConfigOption().
+
+applySLD( string sldxml ) : int
+    Parse the SLD XML string *sldxml* and apply to map layers.  Returns
+    MS_SUCCESS or MS_FAILURE.
+
+applySLDURL( string sldurl ) : int
+    Fetch SLD XML from the URL *sldurl* and apply to map layers.  Returns
+    MS_SUCCESS or MS_FAILURE.
+    
 clone( ) : mapObj
-    Returns a clone of the map.
+    Returns a independent copy of the map, less any caches.
+
+    .. note:: In the Java module this method is named 'cloneMap'.
+
+draw( ) : imageObj_
+    Draw the map, processing layers according to their defined order and
+    status.  Return an imageObj.
+
+drawLabelCache( imageObj_ image ) : int
+    Draw map's label cache on *image*.  Returns MS_SUCCESS or MS_FAILURE.
+
+drawLegend( ) : imageObj_
+    Draw map legend, returning an imageObj.
+    
+drawQuery( ) : imageObj_
+    Draw query map, returning an imageObj.
+    
+drawReferenceMap( ) : imageObj_
+    Draw reference map, returning an imageObj.
+
+drawScalebar( ) : imageObj_
+    Draw scale bar, returning an imageObj.
+
+embedLegend( imageObj_ image ) : int
+    Embed map's legend in *image*.  Returns MS_SUCCESS or MS_FAILURE.
+    
+embedScalebar( imageObj_ image ) : int
+    Embed map's scalebar in *image*.  Returns MS_SUCCESS or MS_FAILURE.
 
 freeQuery( [ int qlayer=-1 ] ) : void
     Clear layer query result caches.  Default is -1, or *all* layers.
+    
+generateSLD( ) : string
+    Return SLD XML as a string for map layers.
     
 getConfigOption( string key ) : string
     Fetches the value of the requested configuration key if set.  Returns
@@ -1688,14 +1978,22 @@ getConfigOption( string key ) : string
 
 getFirstMetaDataKey( ) : string
     Returns the first key in the web.metadata hash table.  With
-    getNextMetaDataKey(), provides an opaque iterator over keys.
-   
-getLayersDrawingOrder( ) : intarray_
-    Returns an array-like sequence of integers.  The index of the sequence
-    corresponds to the layer order within the map, the value at an index
-    corresponds to the actual drawing order of the layer.  Layers are
-    drawn in order of increasing layer, beginning with 0.
+    getNextMetaDataKey( ), provides an opaque iterator over keys.
     
+getLayer( int index ) : layerObj_
+    Returns a reference to the layer at *index*.
+
+getLayerByName( string name ) : layerObj_
+    Returns a reference to the named layer.
+   
+getLayersDrawingOrder( ) : int*
+    Returns an array of layer indexes in drawing order.
+
+.. note::
+   Unless the proper typemap is implemented for the module's language
+   a user is more likely to get back an unuseable SWIG pointer to the
+   integer array.
+
 getMetaData( string key ) : string
     Return the value at *key* from the web.metadata hash table.
 
@@ -1704,21 +2002,24 @@ getNextMetaDataKey( string lastkey ) : string
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
 
-.. note:: getFirstMetaDataKey(), getMetaData(), and getNextMetaDataKey()
-          are deprecated and will be removed in a future version.  Replaced
-          by direct metadata access, see hashTableObj_.
-
-getOutputFormat( string imagetype ) : outputFormatObj_
+getOutputFormatByName( string imagetype ) : outputFormatObj_
     Return the output format corresponding to driver name *imagetype* or
     to format name *imagetype*.  This works exactly the same as the
     IMAGETYPE directive in a mapfile, is case insensitive and allows 
     an output format to be found either by driver (like 'GD/PNG') or
     name (like 'PNG24').
 
-getProjection() : string
-    Returns the current projection definition as a PROJ.4 string.
-    (ie. '+proj=utm +zone=11 +datum=WGS84').  Returns NULL/None if no
-    projection is defined on the map.
+getProjection( ) : string
+    Returns the PROJ.4 definition of the map's projection.
+
+getSymbolByName( string name ) : int
+    Return the index of the named symbol in the map's symbolset.
+
+.. note::
+   This method is poorly named and too indirect.  It is preferrable to use
+   the getSymbolByName method of symbolSetObj, which really does return a
+   symbolObj reference, or use the index method of symbolSetObj to get a
+   symbol's index number.
 
 insertLayer( layerObj layer [, int nIndex=-1 ] ) : int
     Insert a copy of *layer* into the Map at index *nIndex*.  The default
@@ -1735,64 +2036,122 @@ loadOWSParameters( OWSRequest_ request [, string version='1.1.1' ] ) : int
 loadQuery( string filename ) : int
     Load a saved query.  Returns MS_SUCCESS or MS_FAILURE.
     
+moveLayerDown( int layerindex ) : int
+    Move the layer at *layerindex* down in the drawing order array, meaning
+    that it is drawn later.  Returns MS_SUCCESS or MS_FAILURE.
+    
+moveLayerUp( int layerindex ) : int
+    Move the layer at *layerindex* up in the drawing order array, meaning
+    that it is drawn earlier.  Returns MS_SUCCESS or MS_FAILURE.
+    
+nextLabel( ) : labelCacheMemberObj_
+    Return the next label from the map's labelcache, allowing iteration
+    over labels.
+
 prepareImage( ) : imageObj_
     Returns an imageObj initialized to map extents and outputformat.
+    
+prepareQuery( ) : void
+    **TODO** this function only calculates the scale or am I missing
+    something?
+  
+processLegendTemplate( string names[], string values[], int numitems ) : string
+    Process MapServer legend template and return HTML.
 
-removeLayer( int nIndex ) : layerObj_
-    Remove the Layer at index *nIndex* and return a copy.
+processQueryTemplate( string names[], string values[], int numitems ) : string
+    Process MapServer query template and return HTML.
+
+processTemplate( int generateimages, string names[], string values[], int numitems ) : string
+    Process MapServer template and return HTML.
+
+.. note::
+   None of the three template processing methods will be useable unless
+   the proper typemaps are implemented in the module for the target
+   language.  Currently the typemaps are not implemented.
+    
+queryByFeatures( int layerindex ) : int
+    Query map layers, result sets contain features that intersect or are
+    contained within the features in the result set of the MS_LAYER_POLYGON
+    type layer at *layerindex*.  Returns MS_SUCCESS or MS_FAILURE.
+
+queryByPoint( pointObj_ point, int mode, float buffer ) : int
+    Query map layers, result sets contain one or more features, depending
+    on *mode*, that intersect *point* within a tolerance *buffer*.
+    Returns MS_SUCCESS or MS_FAILURE.
+
+queryByRect( rectObj_ rect ) : int
+    Query map layers, result sets contain features that intersect or are
+    contained within *rect*.  Returns MS_SUCCESS or MS_FAILURE.
+   
+queryByShape( shapeObj_ shape ) : int
+    Query map layers, result sets contain features that intersect or are
+    contained within *shape*.  Returns MS_SUCCESS or MS_FAILURE.
+
+removeLayer( int index ) : int
+    Remove the layer at *index*.
     
 removeMetaData( string key ) : int
     Delete the web.metadata hash at *key*.  Returns MS_SUCCESS or
     MS_FAILURE.
 
-.. note:: removeMetaData() is deprecated and will be removed in a future
-          version.  Replaced by direct metadata access, see hashTableObj_.
-
 removeOutputFormat( string name ) : int
     Removes the format named *name* from the map's output format list.
     Returns MS_SUCCESS or MS_FAILURE.
 
+save( string filename ) : int
+    Save map to disk as a new map file.  Returns MS_SUCCESS
+    or MS_FAILURE.
+
+saveMapContext( string filename ) : int
+    Save map definition to disk as OGC-compliant XML.  Returns MS_SUCCESS
+    or MS_FAILURE.
+    
 saveQuery( string filename ) : int
-    Save query results to filesystem.  Returns MS_SUCCESS or MS_FAILURE.
-
-setConfigOption( string key, string value ) : void
-    Set the indicated key configuration option to the indicated value.  
-    Equivalent to including a CONFIG keyword in a map file. 
-
+    Save query to disk.  Returns MS_SUCCESS or MS_FAILURE.
+    
+saveQueryAsGML( string filename ) : int
+    Save query to disk.  Returns MS_SUCCESS or MS_FAILURE.
+   
 selectOutputFormat( string imagetype ) : void
     Set the map's active output format to the internal format named
     *imagetype*.  Built-in formats are "PNG", "PNG24", "JPEG", "GIF",
     "GTIFF".
 
+setConfigOption( string key, string value ) : void
+    Set the indicated key configuration option to the indicated value.  
+    Equivalent to including a CONFIG keyword in a map file. 
+
+setExtent( float minx, float miny, float miny, float maxy ) : int
+    Set the map extent, returns MS_SUCCESS or MS_FAILURE.
+
+setFontSet( string filename ) : int
+    Load fonts defined in *filename* into map fontset.  The existing
+    fontset is cleared.  Returns MS_SUCCESS or MS_FAILURE.
+    
+setImageType( string name ) : void
+    Sets map outputformat to the named format.
+  
 .. note:: setImageType() remains in the module but it's use is
-          deprecated.
+          deprecated in favor of selectOutputFormat().
 
-setExtent( float minx, float miny, float maxx, float maxy ) : int
-    Sets the extent of a map.  Returns MS_SUCCESS or MS_FAILURE.
+setLayersDrawingOrder( int layerindexes[]) : int
+    Set map layer drawing order.
 
-setLayersDrawingOrder( intarray_ order ) : int
-    Set layer drawing order of a map.  Returns MS_SUCCESS or MS_FAILURE.
+.. note::
+   Unless the proper typemap is implemented for the module's language
+   users will not be able to pass arrays or lists to this method and
+   it will be unusable.
 
 setMetaData( string key, string value ) : int
     Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
 
-.. note:: setMetaData() is deprecated and will be removed in a future
-          version.  Replaced by direct metadata access, see hashTableObj_.
-
-  int setProjection(char *proj4) {
-    return msLoadProjectionString(&(self->projection), proj4);
-  }
-  %newobject getProjection;
-  char *getProjection() {
-    return msGetProjectionString(&(self->projection));
-  }
-
-setProjection( string proj4 ) : int
-    Set the map projection using a PROJ.4 format projection definition. 
-    (ie. "+proj=utm +zone=11 +datum=WGS84").  Returns MS_SUCCESS or 
-    MS_FAILURE. 
+setOutputFormat( outputFormatObj_ format ) : void
+    Sets map outputformat.
     
+setProjection( string proj4 ) : int
+    Set map projection from PROJ.4 definition string *proj4*.
+
 setRotation( float rotation_angle ) : int
     Set map rotation angle. The map view rectangle (specified in 
     EXTENTS) will be rotated by the indicated angle in the counter-
@@ -1803,6 +2162,13 @@ setRotation( float rotation_angle ) : int
 setSize( int width, int height ) : int
     Set map's image width and height together and carry out the necessary
     subsequent geotransform computation.  Returns MS_SUCCESS or MS_FAILURE.
+   
+setSymbolSet( string filename ) : int
+    Load symbols defined in *filename* into map symbolset.  The existing
+    symbolset is cleared.  Returns MS_SUCCESS or MS_FAILURE.
+    
+setWKTProjection( string wkt ) : int
+    Sets map projection from OGC definition *wkt*.
    
 zoomPoint( int zoomfactor, pointObj_ imgpoint, int width, int height, rectObj_ extent, rectObj_ maxextent ) : int
     Zoom by *zoomfactor* to *imgpoint* in pixel units within the image of
@@ -1836,7 +2202,8 @@ and can also be an attribute of an imageObj_.
 outputFormatObj Attributes
 --------------------------
 
-**TODO**
+bands : ?
+    **TODO**
 
 driver : string
     A string such as 'GD/PNG' or 'GDAL/GTiff'.
@@ -1958,6 +2325,7 @@ getValue( int index ) : string
 getValueByName( string name) : string
     Return the value associated with the parameter *name*.
 
+
 -----------------------------------------------------------------------------
  pointObj
 -----------------------------------------------------------------------------
@@ -1989,8 +2357,7 @@ z : float
 pointObj Methods
 ----------------
 
-new pointObj( [ float x=0.0, float y=0.0, float z=0.0, 
-                float m=-2e38 ] ) : pointObj
+new pointObj( [ float x=0.0, float y=0.0, float z=0.0, float m=-2e38 ] ) : pointObj
     Create new instance.  Easting, northing, and measure arguments are
     optional.
 
@@ -2017,7 +2384,7 @@ setXY( float x, float y [, float m=2e-38 ] ) : int
     The measure will be set only if the value of *m* is greater than the
     ESRI measure no-data value of 1e-38.  Returns MS_SUCCESS or MS_FAILURE.
 
-setXYZ( float x, float y, float z[, float m=-2e38 ] ) : int
+setXYZ( float x, float y, float z [, float m=-2e38 ] ) : int
     Set spatial coordinate and, optionally, measure values simultaneously.
     The measure will be set only if the value of *m* is greater than the
     ESRI measure no-data value of -1e38.  Returns MS_SUCCESS or MS_FAILURE.
@@ -2029,7 +2396,6 @@ setXYZM( float x, float y, float z, float m ) : int
 
 toString() : string
     Return a string formatted like
-
     ::
 
         { 'x': %f , 'y': %f, 'z': %f }
@@ -2037,7 +2403,6 @@ toString() : string
     
     with the coordinate values substituted appropriately.  Python users can
     get the same effect via the pointObj __str__ method
-
     ::
 
         >>> p = mapscript.pointObj(1, 1)
@@ -2053,7 +2418,6 @@ This class is not really fully implemented yet.  MapServer's Maps and Layers
 have Projection attributes, and these are C projectionObj structures, but are
 not directly exposed by the mapscript module.  Currently we have to do 
 some round-a-bout logic like this
-
 ::
 
     point.project(projectionObj(mapobj.getProjection(), 
@@ -2119,7 +2483,6 @@ toPolygon() : shapeObj_
 
 toString() : string
     Return a string formatted like
-
     ::
 
         { 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }
@@ -2127,12 +2490,12 @@ toString() : string
     
     with the bounding values substituted appropriately.  Python users can
     get the same effect via the rectObj __str__ method
-
     ::
 
         >>> r = mapscript.rectObj(0, 0, 1, 1)
         >>> str(r)
-        { 'minx': 0.000000 , 'miny': 0.000000 , 'maxx': 1.000000 , 'maxy': 1.000000 }
+        { 'minx': 0 , 'miny': 0 , 'maxx': 1 , 'maxy': 1 }
+
 
 -----------------------------------------------------------------------------
  referenceMapObj
@@ -2218,6 +2581,8 @@ tileindex : int immutable
 -----------------------------------------------------------------------------
  resultCacheObj
 -----------------------------------------------------------------------------
+
+See querying-HOWTO.txt for extra guidance in using the new 4.4 query API.
 
 resultCacheObj Attributes
 -------------------------
@@ -2432,18 +2797,13 @@ setBounds : void
  styleObj
 -----------------------------------------------------------------------------
 
-An instance of styleObj is associated with one instance of classObj [2]_.
+An instance of styleObj is associated with one instance of classObj.
 
 ::
 
     +-------+ 0..*    1 +-------+
     | Style | <-------- | Class |
     +-------+           +-------+
-
-Support for multiple class styles is a new feature in the current unstable
-(4.1) Mapscript and in the next stable (4.2) release.  The initial feature
-request and notes are archived at 
-http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=548.
 
 An instance of styleObj can exist outside of a classObj container and
 be explicitly inserted into the classObj for use in mapping.
@@ -2456,7 +2816,7 @@ be explicitly inserted into the classObj for use in mapping.
 It is important to understand that insertStyle inserts a **copy** of the
 styleObj instance, not a reference to the instance itself.
 
-The more standard use case 
+The older use case 
 
 ::
 
@@ -2505,6 +2865,9 @@ styleObj Methods
 new styleObj( [ classObj_ parent_class ] ) : styleObj
     Returns new default style Obj instance.  The *parent_class* is
     optional.
+
+clone : styleObj
+    Returns an independent copy of the style with no parent class.
 
 
 -----------------------------------------------------------------------------
@@ -2583,21 +2946,26 @@ type : int
 symbolObj Methods
 -----------------
 
-**TODO**
-
 new symbolObj( string symbolname [, string imagefile ] ) : symbolObj
     Create new default symbol named *name*.  If *imagefile* is specified,
     then the symbol will be of type MS_SYMBOL_PIXMAP.
 
+getImage() : imageObj_
+    Returns a pixmap symbol's imagery as an imageObj.
+    
 getPoints() : lineObj_
     Returns the symbol points as a lineObj.
 
+setImage( imageObj_ image ) : int
+    Set a pixmap symbol's imagery from *image*.
+    
 setPoints( lineObj_ line ) : int
     Sets the symbol points from the points of *line*.  Returns the updated
     number of points.
 
 setStyle( int index, int value ) : int
     Set the style at *index* to *value*.  Returns MS_SUCCESS or MS_FAILURE.
+
 
 -----------------------------------------------------------------------------
  symbolSetObj
@@ -2615,6 +2983,9 @@ of symbolObj_.
 symbolSetObj Attributes
 -----------------------
 
+filename : string
+    Symbolset filename
+    
 numsymbols : int immutable
     Number of symbols in the set.
 
@@ -2708,19 +3079,5 @@ webObj Methods
 --------------
 
 None.
-
-
-=========
-Footnotes
-=========
-    
-
-..  [1] This **really** needs to be changed in the future.  In fact a layer
-    is much more re-useable than a map.  We don't keep redundant street
-    data around for every map we draw.  We should likewise be able to attach
-    the same layerObj to multiple mapObjs.
-
-..  [2] See the comment about layerObj and mapObj above.  A styleObj is also
-    a very reuseable thing.
 
 
