@@ -495,24 +495,31 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
     cmap_set = TRUE;
 
     for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
-      if(i != layer->offsite) {
-        GDALColorEntry sEntry;
+	if( layer->offsite.red != i )
+        {
+            GDALColorEntry sEntry;
 
-	sprintf(tmpstr,"%d", i);
-	c = getClass(layer, tmpstr);
-
-        GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
-
-	if(c == -1) /* doesn't belong to any class, so handle like offsite */
-	  cmap[i] = -1;
-	else {
-	  if(layer->class[c].color == -1) /* use raster color */
-	    cmap[i] = add_color(map, gdImg, sEntry.c1, sEntry.c2, sEntry.c3);
-	  else
-	    cmap[i] = layer->class[c].color; /* use class color */
-	}
-      } else
-	cmap[i] = -1;
+            sprintf(tmpstr,"%d", i);
+            c = getClass(layer, tmpstr);
+            
+            GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
+            
+            if(c == -1)/* doesn't belong to any class, so handle like offsite*/
+                cmap[i] = -1;
+            else if( MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color)) )
+                cmap[i] = -1;
+            else if( MS_VALID_COLOR( &(layer->class[c].styles[0].color) ) )
+                /* use class color */
+                cmap[i] = add_color(map, gdImg, 
+                                    layer->class[c].styles[0].color.red, 
+                                    layer->class[c].styles[0].color.green, 
+                                    layer->class[c].styles[0].color.blue); 
+            else
+                /* Use raster color */
+                cmap[i] = add_color(map, gdImg, 
+                                    sEntry.c1, sEntry.c2, sEntry.c3 );
+        } else
+            cmap[i] = -1;
     }
   } else if( hColorMap != NULL && !truecolor && gdImg ) {
     cmap_set = TRUE;
@@ -522,7 +529,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
         GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
 
-        if(i != layer->offsite && sEntry.c4 != 0) 
+        if(i != layer->offsite.red && sEntry.c4 != 0) 
             cmap[i] = add_color(map, gdImg, sEntry.c1, sEntry.c2, sEntry.c3);
         else
             cmap[i] = -1;
@@ -538,7 +545,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
           
           GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
 
-          if( sEntry.c4 == 0 || i == layer->offsite )
+          if( sEntry.c4 == 0 || i == layer->offsite.red )
               cmap[i] = -1;
           else
               cmap[i] = gdTrueColorAlpha(sEntry.c1, sEntry.c2, sEntry.c3, 
@@ -553,7 +560,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
       cmap_set = TRUE;
       for(i=0; i<256; i++ )
       {
-          if( i == layer->offsite )
+          if( i == layer->offsite.red )
               cmap[i] = -1;
           else
               cmap[i] = gdTrueColor(i,i,i);
