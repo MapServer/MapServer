@@ -48,10 +48,16 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 
   int i,j,k;
   
-  SE_shape_get_type(inshp, &type);
-
-  if(type == SG_NIL_SHAPE) return(MS_SUCCESS); // skip null shapes  
+  status = SE_shape_get_type(inshp, &type);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "sdeCopyShape()", "SE_shape_get_type()");
+    return(MS_FAILURE);
+  }
+  
   switch(type) {
+  case(SG_NIL_SHAPE):
+    return(MS_SUCCESS); // skip null shapes
+    break;
   case(SG_POINT_SHAPE):
   case(SG_MULTI_POINT_SHAPE):
     outshp->type = MS_SHAPE_POINT;
@@ -65,9 +71,9 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   case(SG_AREA_SHAPE):
   case(SG_MULTI_AREA_SHAPE):
     outshp->type = MS_SHAPE_POLYGON;
-    break;
+    break;  
   default:
-    msSetError(MS_SDEERR, "Unsupported SDE shape type.", "sdeCopyShape()");
+    msSetError(MS_SDEERR, "Unsupported SDE shape type (%ld).", "sdeCopyShape()", type);
     return(MS_FAILURE);
   }
 
