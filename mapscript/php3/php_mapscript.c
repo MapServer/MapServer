@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/07/14 19:04:36  dan
+ * Fix in shapefile_getextent(): convert pIndex to long and not double
+ *
  * Revision 1.4  2000/07/12 20:20:50  dan
  * Added labelObj background and shadow members
  *
@@ -118,7 +121,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "1.0.011 (Jul 12, 2000)"
+#define PHP3_MS_VERSION "1.0.011 (Jul 14, 2000)"
 
 /*=====================================================================
  *                         Prototypes
@@ -4478,7 +4481,7 @@ DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    convert_to_double(pIndex);
+    convert_to_long(pIndex);
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
