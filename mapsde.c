@@ -2,8 +2,13 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.78  2004/10/04 20:15:00  hobu
+ * touch up commit comment
+ *
  * Revision 1.77  2004/10/04 20:11:00  hobu
- * Rework of the style to fit code in under 80 columns and add visual breaks between the start and end of functions.  Normalized tabs to spaces wherever I found them, but it is still possible I missed a few
+ * Rework of the style to fit code in under 80 columns and add visual breaks 
+ * between the start and end of functions.  Normalized tabs to spaces wherever 
+ * I found them, but it is still possible I missed a few
  *
 */
 
