@@ -39,7 +39,7 @@ void msClearPenValues(mapObj *map) {
  * Generic function to render the map file.
  * The type of the image created is based on the
  * imagetype parameter in the map file.
-*/
+ */
 
 imageObj *msDrawMap(mapObj *map)
 {
@@ -161,7 +161,6 @@ imageObj *msDrawMap(mapObj *map)
 
         if (map->layerorder[i] != -1) {
             lp = &(map->layers[ map->layerorder[i]]);
-            //lp = &(map->layers[i]);
 
             if(lp->postlabelcache) // wait to draw
                 continue;
@@ -179,18 +178,27 @@ imageObj *msDrawMap(mapObj *map)
                                               map, lp, image);
 #endif
 #ifdef USE_PDF
+/* PDF output doesn't support WMS layers yet
                  else if( MS_RENDERER_PDF(image->format) )
                  {
                      status = MS_FAILURE;
                  }
+*/
 #endif
+                 else
+                 {
+                     msSetError(MS_WMSCONNERR, 
+                                "Output format '%s' doesn't support WMS layers.", 
+                                "msDrawMap()", image->format->name);
+                     status = MS_FAILURE;
+                 }
 #else /* ndef USE_WMS_LYR */
                 status = MS_FAILURE;
 #endif
             }        
             else 
                 status = msDrawLayer(map, lp, image);
-            if(status != MS_SUCCESS) return(NULL);
+            if(status == MS_FAILURE) return(NULL);
         }
     }
 
@@ -236,7 +244,7 @@ imageObj *msDrawMap(mapObj *map)
     }
     else 
         status = msDrawLayer(map, lp, image);
-    if(status != MS_SUCCESS) return(NULL);
+    if(status == MS_FAILURE) return(NULL);
   }
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
@@ -808,17 +816,23 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
                                         map, layer, image);
 #endif
 #ifdef USE_PDF
+/* PDF doesn't support WMS yet so return failure
         else if( MS_RENDERER_PDF(image->format) )
         {
-/*            nReturnVal = msDrawWMSLayerPDF(image, labelPnt, string, label, 
-                                      fontset, scalefactor); 
-PDF doesn't support WMS yet so return failure
+            nReturnVal = msDrawWMSLayerPDF(image, labelPnt, string, label, 
+                                      fontset, scalefactor);
+            nStatus = MS_FAILURE;
+        }
 */
-			nStatus = MS_FAILURE;
-		}
 #endif
         else
+        {
+            msSetError(MS_WMSCONNERR, 
+                       "Output format '%s' doesn't support WMS layers.", 
+                       "msDrawWMSLayer()", image->format->name);
             nStatus = MS_SUCCESS; // Should we fail if output doesn't support WMS?
+        }
+
         // Cleanup
         msHTTPFreeRequestObj(asReqInfo, numReq);
     }

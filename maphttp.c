@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2003/01/10 19:23:22  dan
+ * Do not produce a fatal error if WMS layer download fails, just like in 3.6
+ *
  * Revision 1.7  2003/01/08 22:19:35  assefa
  * Patch for windows with problems related to the select function.
  *
@@ -214,6 +217,11 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
  *
  * If bCheckLocalCache==MS_TRUE then if the pszOutputfile already exists 
  * then is is not downloaded again, and status 242 is returned.
+ *
+ * Return value:
+ * MS_SUCCESS if all requests completed succesfully.
+ * MS_FAILURE if a fatal error happened
+ * MS_DONE if some requests failed with 40x status for instance (not fatal)
  **********************************************************************/
 int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                           int bCheckLocalCache)
@@ -478,11 +486,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
         if (!MS_HTTP_SUCCESS(pasReqInfo[i].nStatus))
         {
-            nStatus = MS_FAILURE;
-
             if (pasReqInfo[i].nStatus == -(CURLE_OPERATION_TIMEOUTED))
             {
-                nStatus = MS_SUCCESS;  // Timeout isn't a fatal error
+                // Timeout isn't a fatal error
             }
             else if (pasReqInfo[i].nStatus > 0)
             {
@@ -496,6 +502,12 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                            "for %s",
                            "msHTTPExecuteRequests()", pasReqInfo[i].nStatus, 
                            pasReqInfo[i].pszErrBuf, pasReqInfo[i].pszGetUrl);
+
+                nStatus = MS_DONE;  // Transfers were completed but may not be succesfull
+            }
+            else
+            {
+                nStatus = MS_FAILURE;
             }
         }
 
