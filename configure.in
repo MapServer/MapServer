@@ -831,7 +831,11 @@ if test -n "$GDAL_CONFIG" ; then
 
   saved_LIBS="$LIBS"
   LIBS="$LIBS `$GDAL_CONFIG --libs`"
-  AC_CHECK_LIB(gdal.1.1, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
+  AC_CHECK_LIB(gdal, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
+  if test -z "$OGR_ENABLED" ; then
+    dnl Not found!  Try using -lgdal.1.1 in case we have gdal 1.1.8 or older
+    AC_CHECK_LIB(gdal.1.1, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
+  fi
   LIBS="$saved_LIBS"
 
   HAVE_GDAL_LIB=yes
