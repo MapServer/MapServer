@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.124  2002/11/20 22:18:28  julien
+ * Propagate changes made by msLoadMapContext to PHP mapObj
+ *
  * Revision 1.123  2002/11/17 17:21:15  dan
  * Fixed bug 186 - Crash with project() method of rect, point, line, shape
  *
@@ -4630,7 +4633,6 @@ DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis;
     pval        *pParamFileName;
     mapObj      *self=NULL;
@@ -4685,7 +4687,6 @@ DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
                                        self->fontset.filename:"", E_ERROR);
 
     RETURN_LONG(retVal);
-#endif
 }
 /* }}} */
 
@@ -4699,7 +4700,6 @@ DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis;
     pval        *pParamFileName;
     mapObj      *self=NULL;
@@ -4748,7 +4748,6 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     RETURN_LONG(retVal);
-#endif
 }
 /* }}} */
 
@@ -4762,7 +4761,6 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis;
     pval        *pParamFileName;
     mapObj      *self=NULL;
@@ -4770,7 +4768,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
 
 #ifdef PHP4
     HashTable   *list=NULL;
-
+    pval        **pExtent;
 #else
     pval        *pValue = NULL;
 #endif
@@ -4810,8 +4808,48 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
         }
     }
 
-    RETURN_LONG(retVal);
+    /* read-only properties */
+    _phpms_set_property_long(pThis, "numlayers", self->numlayers, E_ERROR);
+
+    /* editable properties */
+    if(self->name)
+        _phpms_set_property_string(pThis, "name",      self->name, E_ERROR);
+    _phpms_set_property_long(pThis,  "status",    self->status, E_ERROR);
+    _phpms_set_property_long(pThis,  "width",     self->width, E_ERROR);
+    _phpms_set_property_long(pThis,  "height",    self->height, E_ERROR);
+    _phpms_set_property_long(pThis,  "transparent", self->transparent, E_ERROR);
+    _phpms_set_property_long(pThis,  "interlace", self->interlace, E_ERROR);
+    //_phpms_set_property_long(pThis,  "imagetype", self->imagetype, E_ERROR);
+    if(self->imagetype)
+        _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
+    _phpms_set_property_long(pThis,"imagequality", self->imagequality, E_ERROR);
+
+#ifdef PHP4
+    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"), 
+                       (void **)&pExtent) == SUCCESS)
+    {
+        _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
+                                   E_ERROR);
+        _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
+                                   E_ERROR);
+        _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
+                                   E_ERROR);
+        _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
+                                   E_ERROR);
+    }
+#else
+    /* Not supported for php3 */
 #endif
+
+    _phpms_set_property_double(pThis,"cellsize",  self->cellsize, E_ERROR);
+    _phpms_set_property_long(pThis,  "units",     self->units, E_ERROR);
+    _phpms_set_property_double(pThis,"scale",     self->scale, E_ERROR);
+    _phpms_set_property_long(pThis,  "resolution",self->resolution, E_ERROR);
+    if(self->shapepath)
+        _phpms_set_property_string(pThis, "shapepath",self->shapepath,E_ERROR);
+
+
+    RETURN_LONG(retVal);
 }
 /* }}} */
 
