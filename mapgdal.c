@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/06/13 19:55:57  frank
+ * improve temporary file handling
+ *
  * Revision 1.4  2002/06/12 21:20:32  frank
  * added automatic mimetype and extension setting
  *
@@ -95,7 +98,17 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 /* -------------------------------------------------------------------- */
     if( filename == NULL )
     {
-        filename = msTmpFile("/tmp/", "img.tmp");
+        if( map->web.imagepath != NULL )
+            filename = msTmpFile(map->web.imagepath, "img.tmp");
+        else
+        {
+#ifndef _WIN32
+            filename = msTmpFile("/tmp/", "img.tmp");
+#else
+            filename = msTmpFile("C:\\", "img.tmp");
+#endif
+        }
+            
         bFileIsTemporary = MS_TRUE;
     }
     
