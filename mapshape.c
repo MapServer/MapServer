@@ -207,6 +207,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     return( NULL );
   
   free( pszFullname );
+  free( pszBasename ); 
   
   /* -------------------------------------------------------------------- */
   /*   Read the file size from the SHP file.				    */

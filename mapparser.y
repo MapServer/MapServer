@@ -32,7 +32,7 @@ int msyyresult;
 %token <strval> REGEX
 %left OR
 %left AND
-%left RE EQ NE LT GT LE GE
+%left RE EQ NE LT GT LE GE IN
 %left LENGTH
 %left '+' '-'
 %left '*' '/'
@@ -134,6 +134,25 @@ logical_exp:
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
+				       }
+       | string_exp IN string_exp      {
+					 char *delim,*bufferp;
+
+					 $$ = MS_FALSE;
+					 bufferp=$3;
+
+					 while((delim=strchr(bufferp,',')) != NULL) {
+					   *delim='\0';
+					   if(strcmp($1,bufferp) == 0) {
+					     $$ = MS_TRUE;
+					     break;
+					   } 
+					   *delim=',';
+					   bufferp=delim+1;
+					 }
+
+					 if(strcmp($1,bufferp) == 0)
+					   $$ = MS_TRUE;
 				       }
 ;
 

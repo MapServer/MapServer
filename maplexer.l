@@ -76,6 +76,7 @@ char *msyystring=NULL;
 <EXPRESSION_STRING>ge|>=                       { return(GE); }
 <EXPRESSION_STRING>le|<=                       { return(LE); }
 <EXPRESSION_STRING>=~                          { return(RE); }
+<EXPRESSION_STRING>in                          { return(IN); }
 
 <EXPRESSION_STRING>length                      { return(LENGTH); }
 
@@ -300,14 +301,16 @@ char *msyystring=NULL;
 <EXPRESSION_STRING>\"[^\"]*\"	               {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
-			                         msyylval.strval = strdup(msyytext);
+			                         /* msyylval.strval = strdup(msyytext);*/
+			                         msyylval.strval = msyytext;
 			                         return(STRING);
 			                       }
 
 <EXPRESSION_STRING>\'[^\']*\'	               {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
-			                         msyylval.strval = strdup(msyytext);
+			                         /* msyylval.strval = strdup(msyytext);*/
+			                         msyylval.strval = msyytext;
 			                         return(STRING);
                                                }
 
