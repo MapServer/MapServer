@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2001/12/11 18:41:44  dan
+ * Fixed a typo in vnd.ogc.se_* MIME type for exceptions (was vnd.odc_*)
+ *
  * Revision 1.14  2001/11/13 22:44:38  assefa
  * Use a metadata wms_connectiontimeout that can be set in the map
  * file.
@@ -531,7 +534,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             pszRequestParam = "feature_info";
 
         if (nVersion >= WMS_V_1_1_0)
-            pszExceptionsParam = "application/vnd.odc.se_xml";
+            pszExceptionsParam = "application/vnd.ogc.se_xml";
         else if (nVersion > WMS_V_1_1_0)  /* 1.0.1 to 1.0.7 */
             pszExceptionsParam = "SE_XML";
         else
@@ -561,7 +564,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             pszRequestParam = "Map";
 
         if (nVersion >= WMS_V_1_1_0)
-            pszExceptionsParam = "application/vnd.odc.se_inimage";
+            pszExceptionsParam = "application/vnd.ogc.se_inimage";
         else
             pszExceptionsParam = "INIMAGE";
 
