@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2004/11/09 16:04:54  frank
+ * avoid warning, avoid casting size to int before scaling
+ *
  * Revision 1.74  2004/10/27 18:13:40  sean
  * msCopySymbol now properly copies symbol images so that cloned maps render
  * exactly as the original maps (bug 931).
@@ -622,8 +625,9 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   }
 
   if(style->size == -1) {
-      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
-      size = MS_NINT(size*scalefactor);
+      size = MS_NINT(
+          msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) )
+          * scalefactor );
   }
   else
       size = MS_NINT(style->size*scalefactor);
