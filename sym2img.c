@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   /* 
   ** load the symbol file
   */
-  if(msLoadSymbolFile(&symbolSet) == -1) { 
+  if(msLoadSymbolSet(&symbolSet) == -1) { 
     msWriteError(stderr);
     exit(0);
   }

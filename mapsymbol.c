@@ -192,10 +192,25 @@ static int loadSymbol(symbolObj *s)
   } /* end for */
 }
 
+void msFreeSymbolSet(symbolSetObj *symbolset)
+{
+  int i;
+
+  for(i=0; i<symbolset->numsymbols; i++)
+    freeSymbol(&(symbolset->symbol[i]));
+
+#ifdef USE_TTF
+  if(symbolset->fontset.filename) {
+    free(symbolset->fontset.filename);
+    msFreeHashTable(symbolset->fontset.fonts);
+  }
+#endif
+}
+
 /*
 ** Load the symbols contained in the given file
 */
-int msLoadSymbolFile(symbolSetObj *symbolset)
+int msLoadSymbolSet(symbolSetObj *symbolset)
 {
   int n=1;
   char old_path[MS_PATH_LENGTH];
@@ -256,7 +271,6 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
       break;
     case(FONTSET):
 #ifdef USE_TTF
-      free(symbolset->fontset.filename);
       if((symbolset->fontset.filename = getString()) == NULL) return(-1);
 #endif
       break;

@@ -2551,7 +2551,10 @@ void msFreeMap(mapObj *map) {
   free(map->tile);
   free(map->shapepath);
 
-  /* NEED TO FREE SYMBOL SETS! */
+  msFreeSymbolSet(&map->markerset); // free symbol sets
+  msFreeSymbolSet(&map->lineset);
+  msFreeSymbolSet(&map->shadeset);
+
   free(map->markerset.filename);
   free(map->lineset.filename);
   free(map->shadeset.filename);  
@@ -2697,9 +2700,9 @@ mapObj *msLoadMap(char *filename)
       map->numlayers = n;
       fclose(msyyin);
 
-      if(msLoadSymbolFile(&(map->markerset)) == -1) return(NULL);
-      if(msLoadSymbolFile(&(map->shadeset)) == -1) return(NULL); 
-      if(msLoadSymbolFile(&(map->lineset)) == -1) return(NULL);
+      if(msLoadSymbolSet(&(map->markerset)) == -1) return(NULL);
+      if(msLoadSymbolSet(&(map->shadeset)) == -1) return(NULL); 
+      if(msLoadSymbolSet(&(map->lineset)) == -1) return(NULL);
 
       /* step through layers and classes to resolve symbol names */
       for(i=0; i<map->numlayers; i++) {
