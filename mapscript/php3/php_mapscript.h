@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/06/28 20:22:02  dan
+ * Sync with mapscript.i version 1.9
+ *
  * Revision 1.1  2000/05/09 21:06:11  dan
  * Initial Import
  *
@@ -79,6 +82,7 @@ queryResultObj *mapObj_queryUsingRect(mapObj* self, rectObj *rect);
 int             mapObj_queryUsingFeatures(mapObj* self, 
                                           queryResultObj *results);
 int             mapObj_setProjection(mapObj* self, char *string);
+int             mapObj_save(mapObj* self, char *filename);
 
 
 queryResultObj *queryResultObj_new(char *filename);
@@ -153,6 +157,8 @@ int             rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
 shapefileObj   *shapefileObj_new(char *filename, int type);
 void            shapefileObj_destroy(shapefileObj *self);
 int             shapefileObj_get(shapefileObj *self, int i, shapeObj *shape);
+int             shapefileObj_getTransformed(shapefileObj *self, mapObj *map, 
+                                            int i, shapeObj *shape);
 void            shapefileObj_getExtent(shapefileObj *self, int i, 
                                        rectObj *rect);
 int             shapefileObj_add(shapefileObj *self, shapeObj *shape);

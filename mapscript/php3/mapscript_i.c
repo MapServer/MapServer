@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.3  2000/06/28 20:22:02  dan
+ * Sync with mapscript.i version 1.9
+ *
  * Revision 1.2  2000/05/23 20:46:45  dan
  * Sync with mapscript.i version 1.5
  *
@@ -100,7 +103,6 @@ int mapObj_getSymbolByName(mapObj* self, int type, char *name) {
 void mapObj_prepareQuery(mapObj* self) {
     self->scale = msCalculateScale(self->extent, self->units, 
                                    self->width, self->height);
-    msApplyScale(self);
   }
 
 gdImagePtr mapObj_prepareImage(mapObj* self) {
@@ -126,8 +128,6 @@ gdImagePtr mapObj_prepareImage(mapObj* self) {
   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
     self->scale = msCalculateScale(self->extent, self->units, self->width, self->height);
-
-    msApplyScale(self);
 
     return img;
   }
@@ -166,6 +166,7 @@ int mapObj_drawLabelCache(mapObj* self, gdImagePtr img) {
 
 labelCacheMemberObj *mapObj_nextLabel(mapObj* self) {
     static int i=0;
+
     if(i<self->labelcache.numlabels)
       return &(self->labelcache.labels[i++]);
     else
@@ -187,6 +188,10 @@ int mapObj_queryUsingFeatures(mapObj* self, queryResultObj *results) {
 
 int mapObj_setProjection(mapObj* self, char *string) {
     return(loadProjectionString(&(self->projection), string));
+  }
+
+int mapObj_save(mapObj* self, char *filename) {
+    return msSaveMap(self, filename);
   }
 
 /**********************************************************************
@@ -328,13 +333,7 @@ int classObj_setExpression(classObj *self, char *string) {
   }
 
 int classObj_setText(classObj *self, layerObj *layer, char *string) {
-    int status;
-
-    status = loadExpressionString(&self->text, string);
-    if(status != -1)	
-      layer->annotate = MS_TRUE;
-
-    return status;
+    return loadExpressionString(&self->text, string);
   }
 
 /**********************************************************************
@@ -577,16 +576,17 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
 
     shapefile = (shapefileObj *)malloc(sizeof(shapefileObj));
     if(!shapefile)
-      return(NULL);
+      return NULL;
 
     if(type == -1)
       status = msOpenSHPFile(shapefile, NULL, NULL, filename);
     else
       status = msCreateSHPFile(shapefile, filename, type);
+
     if(status == -1) {
       msCloseSHPFile(shapefile);
       free(shapefile);
-      return(NULL);
+      return NULL;
     }
  
     return(shapefile);
@@ -603,6 +603,18 @@ int shapefileObj_get(shapefileObj *self, int i, shapeObj *shape) {
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     SHPReadShape(self->hSHP, i, shape);
+
+    return 0;
+  }
+
+int shapefileObj_getTransformed(shapefileObj *self, mapObj *map, 
+                                int i, shapeObj *shape) {
+    if(i<0 || i>=self->numshapes)
+      return -1;
+
+    msFreeShape(shape); /* frees all lines and points before re-filling */
+    SHPReadShape(self->hSHP, i, shape);
+    msTransformPolygon(map->extent, map->cellsize, shape);
 
     return 0;
   }
