@@ -87,6 +87,14 @@ and the MapServer Map File documentation at:
         MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, 
         MS_TILED_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL
 
+    Error codes:
+        MS_NOERR, MS_IOERR, MS_MEMERR, MS_TYPEERR, MS_SYMERR, 
+        MS_REGEXERR, MS_TTFERR, MS_DBFERR, MS_GDERR, MS_IDENTERR, 
+        MS_EOFERR, MS_PROJERR, MS_MISCERR, MS_CGIERR, MS_WEBERR, 
+        MS_IMGERR, MS_HASHERR, MS_JOINERR, MS_NOTFOUND, MS_SHPERR, 
+        MS_PARSEERR, MS_SDEERR, MS_OGRERR, MS_QUERYERR, MS_WMSERR, 
+        MS_WMSCONNERR, MS_ORACLESPATIALERR, MS_WFSERR, MS_WFSCONNERR, 
+        MS_MAPCONTEXTERR, MS_HTTPERR
  
 
  Functions:
@@ -1270,7 +1278,7 @@ errorObj
 
  Members:
 
-   int      code
+   int      code      /* See error code constants above */
    string   routine
    string   message
 

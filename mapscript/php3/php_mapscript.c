@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.159  2003/04/23 14:36:46  dan
+ * Added error code constants to php mapscript
+ *
  * Revision 1.158  2003/04/23 13:47:18  dan
  * Modified error handling to record multiple errors in a chained list, with
  * the first error being the most recent.
@@ -1005,6 +1008,40 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_FAILURE",    MS_FAILURE,     const_flag);
     REGISTER_LONG_CONSTANT("MS_DONE",       MS_DONE,        const_flag);
    
+    /* error code constants */
+    REGISTER_LONG_CONSTANT("MS_NOERR",      MS_NOERR,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_IOERR",      MS_IOERR,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_MEMERR",     MS_MEMERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_TYPEERR",    MS_TYPEERR,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_SYMERR",     MS_SYMERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_REGEXERR",   MS_REGEXERR,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_TTFERR",     MS_TTFERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_DBFERR",     MS_DBFERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_GDERR",      MS_GDERR,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_IDENTERR",   MS_IDENTERR,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_EOFERR",     MS_EOFERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_PROJERR",    MS_PROJERR,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_MISCERR",    MS_MISCERR,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_CGIERR",     MS_CGIERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_WEBERR",     MS_WEBERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_IMGERR",     MS_IMGERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_HASHERR",    MS_HASHERR,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_JOINERR",    MS_JOINERR,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_NOTFOUND",   MS_NOTFOUND,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHPERR",     MS_SHPERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_PARSEERR",   MS_PARSEERR,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_SDEERR",     MS_SDEERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_OGRERR",     MS_OGRERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_QUERYERR",   MS_QUERYERR,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_WMSERR",     MS_WMSERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_WMSCONNERR", MS_WMSCONNERR,  const_flag);
+    REGISTER_LONG_CONSTANT("MS_ORACLESPATIALERR", MS_ORACLESPATIALERR, const_flag);
+    REGISTER_LONG_CONSTANT("MS_WFSERR",     MS_WFSERR,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_WFSCONNERR", MS_WFSCONNERR,  const_flag);
+    REGISTER_LONG_CONSTANT("MS_MAPCONTEXTERR", MS_MAPCONTEXTERR, const_flag);
+    REGISTER_LONG_CONSTANT("MS_HTTPERR",    MS_HTTPERR,     const_flag);
+ 
+
     /* We'll use tmpId and tmpCount to generate unique filenames 
      * Note that tmpId and tmpCount are shared between multiple instances
      * of PHP MapScript when PHP4 is running as a module.
