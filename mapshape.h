@@ -10,13 +10,18 @@ extern "C" {
 
 #ifndef SWIG
 #define MS_PATH_LENGTH 1024
-#endif
 
 // Shapefile types
 #define SHP_POINT 1
 #define SHP_ARC 3
 #define SHP_POLYGON 5
 #define SHP_MULTIPOINT 8
+#endif
+
+#define MS_SHAPEFILE_POINT 1
+#define MS_SHAPEFILE_ARC 3
+#define MS_SHAPEFILE_POLYGON 5
+#define MS_SHAPEFILE_MULTIPOINT 8
 
 #ifndef SWIG
 typedef	struct {

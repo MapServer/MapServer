@@ -349,12 +349,12 @@ int msQueryByAttributes(mapObj *map, int qlayer, int mode)
   lp = &(map->layers[qlayer]);
 
   if(!msIsLayerQueryable(lp)) {
-    msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByAttribtes()"); 
+    msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByAttributes()"); 
     return(MS_FAILURE);
   }
 
   if(!lp->filter.string) {
-    msSetError(MS_QUERYERR, "Requested layer has no filter defined.", "msQueryByAttribtes()"); 
+    msSetError(MS_QUERYERR, "Requested layer has no filter defined.", "msQueryByAttributes()"); 
     return(MS_FAILURE);
   }
 

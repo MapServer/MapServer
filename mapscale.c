@@ -203,7 +203,6 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
   map->symbolset.symbol[s].name = strdup("scalebar");  
-  map->symbolset.symbol[s].font = NULL;
 
   if(map->scalebar.transparent)
     gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
