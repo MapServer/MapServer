@@ -350,10 +350,10 @@ void msFreeImage(imageObj *image)
 {
     if (image)
     {
-        if( MS_RENDERER_GD(image->format) )
-            msFreeImageGD(image->img.gd);
-
-	else if( MS_RENDERER_IMAGEMAP(image->format) )
+        if( MS_RENDERER_GD(image->format) ) {
+            if( image->img.gd != NULL )
+                msFreeImageGD(image->img.gd);
+        } else if( MS_RENDERER_IMAGEMAP(image->format) )
             msFreeImageIM(image);
         else if( MS_RENDERER_RAWDATA(image->format) )
             msFree(image->img.raw_16bit);
