@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/11/16 21:17:41  frank
+ * added debugging support
+ *
  * Revision 1.3  2002/01/09 19:15:17  frank
  * added untested windows mutex implementation
  *
@@ -149,6 +152,11 @@ files instead.
 #include "map.h"
 #include "mapthread.h"
 
+static int thread_debug = 0;
+
+static char *lock_names[] = 
+{ NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", NULL };
+
 /************************************************************************/
 /* ==================================================================== */
 /*                               PTHREADS                               */
@@ -170,6 +178,9 @@ void msThreadInit()
 
 {
     static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER;
+
+    if( thread_debug )
+        msDebug( "msThreadInit() (posix)\n" );
 
     pthread_mutex_lock( &core_lock );
 
@@ -201,6 +212,10 @@ void msAcquireLock( int nLockId )
 
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
 
+    if( thread_debug )
+        msDebug( "msAcquireLock(%d/%s) (posix)\n", 
+                 nLockId, lock_names[nLockId] );
+
     pthread_mutex_lock( mutex_locks + nLockId );
 }
 
@@ -213,6 +228,10 @@ void msReleaseLock( int nLockId )
 {
     assert( mutexes_initialized > 0 );
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
+
+    if( thread_debug )
+        msDebug( "msReleaseLock(%d/%s) (posix)\n", 
+                 nLockId, lock_names[nLockId] );
 
     pthread_mutex_unlock( mutex_locks + nLockId );
 }
@@ -244,6 +263,9 @@ void msThreadInit()
 
     if( mutexes_initialized >= TLOCK_STATIC_MAX )
         return;
+
+    if( thread_debug )
+        msDebug( "msThreadInit() (win32)\n" );
 
     if( core_lock == NULL )
         core_lock = CreateMutex( NULL, TRUE, NULL );
@@ -278,6 +300,10 @@ void msAcquireLock( int nLockId )
 
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
 
+    if( thread_debug )
+        msDebug( "msAcquireLock(%d/%s) (win32)\n", 
+                 nLockId, lock_name[nLockId] );
+
     WaitForSingleObject( mutex_locks[nLockId], INFINITE );
 }
 
@@ -290,6 +316,10 @@ void msReleaseLock( int nLockId )
 {
     assert( mutexes_initialized > 0 );
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
+
+    if( thread_debug )
+        msDebug( "msReleaseLock(%d/%s) (win32)\n", 
+                 nLockId, lock_name[nLockId] );
 
     ReleaseMutex( mutex_locks[nLockId] );
 }
