@@ -1072,6 +1072,20 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
       point.x = atof(values[i]);
     else if (strcasecmp(names[i], "Y") == 0)
       point.y = atof(values[i]);
+    else if (strcasecmp(names[i], "RADIUS") == 0) 
+    {
+        // RADIUS in pixels.
+        // This is not part of the spec, but some servers such as cubeserv 
+        // support it as a vendor-specific feature.  
+        // It's easy for MapServer to handle this so let's do it!
+        int j;
+        for(j=0; j<map->numlayers; j++) 
+        {
+            map->layers[j].tolerance = atoi(values[i]);
+            map->layers[j].toleranceunits = MS_PIXELS;
+        }
+    }
+
   }
 
   if(numlayers_found == 0) {
