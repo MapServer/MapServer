@@ -521,6 +521,16 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   gdImagePtr createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
     return msCreateLegendIcon(map, layer, self, width, height);
   }
+  
+  int setSymbolByName(mapObj *map, classObj* myClass, layerObj *lp, char* pszSymbolName) {
+    myClass->symbol = msGetSymbolIdByName(map, myClass, lp, pszSymbolName);
+    return myClass->symbol;
+  }
+  
+  int setOverlaySymbolByName(mapObj *map, classObj* myClass, layerObj *lp, char* pszOverlaySymbolName) {
+    myClass->overlaysymbol = msGetSymbolIdByName(map, myClass, lp, pszOverlaySymbolName);
+    return myClass->overlaysymbol;
+  }
    
 }
 
