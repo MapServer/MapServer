@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.45  2004/10/01 21:51:47  frank
+ * Use msIO_ API.
+ *
  * Revision 1.44  2004/09/29 17:50:18  frank
  * Ifdef out unused msWFSGetGeomType() function to avoid warnings.
  *
@@ -195,19 +198,19 @@ static int msWFSException(mapObj *map, const char *wmtversion)
 {
     /* In WFS, exceptions are always XML.
     */
-    printf("Content-type: text/xml%c%c",10,10);
+    msIO_printf("Content-type: text/xml%c%c",10,10);
 
-    printf("<ServiceExceptionReport\n");
-    printf("xmlns=\"http://www.opengis.net/ogc\" ");
-    printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
-    printf("xsi:schemaLocation=\"http://www.opengis.net/ogc http://ogc.dmsolutions.ca/wfs/1.0/OGC-exception.xsd\">\n");
-    printf("  <ServiceException>\n");
+    msIO_printf("<ServiceExceptionReport\n");
+    msIO_printf("xmlns=\"http://www.opengis.net/ogc\" ");
+    msIO_printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+    msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc http://ogc.dmsolutions.ca/wfs/1.0/OGC-exception.xsd\">\n");
+    msIO_printf("  <ServiceException>\n");
     /* Optional <Locator> element currently unused. */
-    //printf("    <Message>\n");
+    //msIO_printf("    <Message>\n");
     msWriteErrorXML(stdout);
-    //printf("    </Message>\n");
-    printf("  </ServiceException>\n");
-    printf("</ServiceExceptionReport>\n");
+    //msIO_printf("    </Message>\n");
+    msIO_printf("  </ServiceException>\n");
+    msIO_printf("</ServiceExceptionReport>\n");
 
     return MS_FAILURE; // so we can call 'return msWFSException();' anywhere
 }
@@ -224,36 +227,36 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
   va_list argp;
   const char *fmt;
 
-  printf("    <%s>\n", request);
+  msIO_printf("    <%s>\n", request);
 
   // We expect to receive a NULL-terminated args list of formats
   if (format_tag != NULL)
   {
-    printf("      <%s>\n", format_tag);
+    msIO_printf("      <%s>\n", format_tag);
     va_start(argp, formats);
     fmt = formats;
     while(fmt != NULL)
     {
-      printf("        <%s/>\n", fmt);
+      msIO_printf("        <%s/>\n", fmt);
       fmt = va_arg(argp, const char *);
     }
     va_end(argp);
-    printf("      </%s>\n", format_tag);
+    msIO_printf("      </%s>\n", format_tag);
   }
 
-  printf("      <DCPType>\n");
-  printf("        <HTTP>\n");
-  printf("          <Get onlineResource=\"%s\" />\n", script_url);
-  printf("        </HTTP>\n");
-  printf("      </DCPType>\n");
-  printf("      <DCPType>\n");
-  printf("        <HTTP>\n");
-  printf("          <Post onlineResource=\"%s\" />\n", script_url);
-  printf("        </HTTP>\n");
-  printf("      </DCPType>\n");
+  msIO_printf("      <DCPType>\n");
+  msIO_printf("        <HTTP>\n");
+  msIO_printf("          <Get onlineResource=\"%s\" />\n", script_url);
+  msIO_printf("        </HTTP>\n");
+  msIO_printf("      </DCPType>\n");
+  msIO_printf("      <DCPType>\n");
+  msIO_printf("        <HTTP>\n");
+  msIO_printf("          <Post onlineResource=\"%s\" />\n", script_url);
+  msIO_printf("        </HTTP>\n");
+  msIO_printf("      </DCPType>\n");
 
 
-  printf("    </%s>\n", request);
+  msIO_printf("    </%s>\n", request);
 }
 
 /* msWFSIsLayerSupported()
@@ -336,7 +339,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 {
    rectObj ext;
    
-   printf("    <FeatureType>\n");
+   msIO_printf("    <FeatureType>\n");
 
    msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
                          "        <Name>%s</Name>\n", NULL);
@@ -397,10 +400,10 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    }
    else
    {
-       printf("<!-- WARNING: Mandatory LatLongBoundingBox could not be established for this layer.  Consider setting wfs_extent metadata. -->\n");
+       msIO_printf("<!-- WARNING: Mandatory LatLongBoundingBox could not be established for this layer.  Consider setting wfs_extent metadata. -->\n");
    }
 
-   printf("    </FeatureType>\n");
+   msIO_printf("    </FeatureType>\n");
       
    return MS_SUCCESS;
 }
@@ -426,13 +429,13 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
       return msWFSException(map, wmtver);
   }
 
-  printf("Content-type: text/xml%c%c",10,10); 
+  msIO_printf("Content-type: text/xml%c%c",10,10); 
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
 
-  printf("<WFS_Capabilities \n"
+  msIO_printf("<WFS_Capabilities \n"
          "   version=\"%s\" \n"
          "   updateSequence=\"0\" \n"
          "   xmlns=\"http://www.opengis.net/wfs\" \n"
@@ -443,13 +446,13 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
          msOWSGetSchemasLocation(map), wmtver);
 
   // Report MapServer Version Information
-  printf("\n<!-- %s -->\n\n", msGetVersion());
+  msIO_printf("\n<!-- %s -->\n\n", msGetVersion());
 
   /*
   ** SERVICE definition
   */
-  printf("<Service>\n");
- printf("  <Name>MapServer WFS</Name>\n");
+  msIO_printf("<Service>\n");
+ msIO_printf("  <Name>MapServer WFS</Name>\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_title", 
@@ -461,7 +464,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
                                "wfs_keywordlist", 
                                "  <Keywords>\n", "  </Keywords>\n",
                                "    %s\n", NULL);
-  printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+  msIO_printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_fees", 
                            OWS_NOERR, "  <Fees>%s</Fees>\n", NULL);
@@ -471,35 +474,35 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
                            "  <AccessConstraints>%s</AccessConstraints>\n", 
                            NULL);
 
-  printf("</Service>\n\n");
+  msIO_printf("</Service>\n\n");
 
   /* 
   ** CAPABILITY definitions: list of supported requests
   */
 
-  printf("<Capability>\n");
+  msIO_printf("<Capability>\n");
 
-  printf("  <Request>\n");
+  msIO_printf("  <Request>\n");
   msWFSPrintRequestCap(wmtver, "GetCapabilities", script_url_encoded, 
                        NULL, NULL);
   msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, 
                        "SchemaDescriptionLanguage", "XMLSCHEMA", NULL);
   msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, 
                        "ResultFormat", "GML2", NULL);
-  printf("  </Request>\n");
-  printf("</Capability>\n\n");
+  msIO_printf("  </Request>\n");
+  msIO_printf("</Capability>\n\n");
 
   /* 
   ** FeatureTypeList: layers
   */
 
-  printf("<FeatureTypeList>\n");
+  msIO_printf("<FeatureTypeList>\n");
 
   // Operations supported... set default at top-level, and more operations
   // can be added inside each layer... for MapServer only query is supported
-  printf("  <Operations>\n");
-  printf("    <Query/>\n");
-  printf("  </Operations>\n");
+  msIO_printf("  <Operations>\n");
+  msIO_printf("    <Query/>\n");
+  msIO_printf("  </Operations>\n");
 
   for(i=0; i<map->numlayers; i++)
   {
@@ -513,37 +516,37 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
       }
   }
 
-  printf("</FeatureTypeList>\n\n");
+  msIO_printf("</FeatureTypeList>\n\n");
 
 
   /*
   ** OGC Filter Capabilities ... for now we support only BBOX
   */
 
-  printf("<ogc:Filter_Capabilities>\n");
-  printf("  <ogc:Spatial_Capabilities>\n");
-  printf("    <ogc:Spatial_Operators>\n");
-  printf("      <ogc:Intersect/>\n");
-  printf("      <ogc:DWithin/>\n");
-  printf("      <ogc:BBOX/>\n");
-  printf("    </ogc:Spatial_Operators>\n");
-  printf("  </ogc:Spatial_Capabilities>\n");
+  msIO_printf("<ogc:Filter_Capabilities>\n");
+  msIO_printf("  <ogc:Spatial_Capabilities>\n");
+  msIO_printf("    <ogc:Spatial_Operators>\n");
+  msIO_printf("      <ogc:Intersect/>\n");
+  msIO_printf("      <ogc:DWithin/>\n");
+  msIO_printf("      <ogc:BBOX/>\n");
+  msIO_printf("    </ogc:Spatial_Operators>\n");
+  msIO_printf("  </ogc:Spatial_Capabilities>\n");
 
-  printf("  <ogc:Scalar_Capabilities>\n");
-  printf("    <ogc:Logical_Operators />\n");
-  printf("    <ogc:Comparison_Operators>\n");
-  printf("      <ogc:Simple_Comparisons />\n");
-  printf("      <ogc:Like />\n");
-  printf("      <ogc:Between />\n");
-  printf("    </ogc:Comparison_Operators>\n");
-  printf("  </ogc:Scalar_Capabilities>\n");
+  msIO_printf("  <ogc:Scalar_Capabilities>\n");
+  msIO_printf("    <ogc:Logical_Operators />\n");
+  msIO_printf("    <ogc:Comparison_Operators>\n");
+  msIO_printf("      <ogc:Simple_Comparisons />\n");
+  msIO_printf("      <ogc:Like />\n");
+  msIO_printf("      <ogc:Between />\n");
+  msIO_printf("    </ogc:Comparison_Operators>\n");
+  msIO_printf("  </ogc:Scalar_Capabilities>\n");
 
-  printf("</ogc:Filter_Capabilities>\n\n");
+  msIO_printf("</ogc:Filter_Capabilities>\n\n");
 
   /*
   ** Done!
   */
-  printf("</WFS_Capabilities>\n");
+  msIO_printf("</WFS_Capabilities>\n");
 
   free(script_url);
   free(script_url_encoded);
@@ -625,7 +628,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     /*
     ** DescribeFeatureType response
     */
-    printf("Content-type: text/xml%c%c",10,10);
+    msIO_printf("Content-type: text/xml%c%c",10,10);
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
@@ -634,14 +637,14 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     user_namespace_prefix = msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
     if(user_namespace_prefix && 
        msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
-        fprintf(stdout, "<!-- WARNING: The value '%s' is not valid XML "
-                "namespace. -->\n", user_namespace_prefix);
+        msIO_printf("<!-- WARNING: The value '%s' is not valid XML "
+                    "namespace. -->\n", user_namespace_prefix);
     user_namespace_uri = msEncodeHTMLEntities( 
       msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri") );
     
     if (user_namespace_prefix && user_namespace_uri)
     {
-        printf("<schema\n"
+        msIO_printf("<schema\n"
                "   targetNamespace=\"%s\" \n"
                "   xmlns:%s=\"%s\" \n"
                "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
@@ -652,7 +655,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                user_namespace_uri, user_namespace_prefix,  user_namespace_uri);
     }
     else
-     printf("<schema\n"
+     msIO_printf("<schema\n"
                "   targetNamespace=\"%s\" \n"
                "   xmlns:myns=\"%s\" \n"
                "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
@@ -663,7 +666,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                "http://www.ttt.org/myns", "http://www.ttt.org/myns"); 
     
     encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    printf("\n"
+    msIO_printf("\n"
            "  <import namespace=\"http://www.opengis.net/gml\" \n"
            "          schemaLocation=\"%s/gml/2.1.2/feature.xsd\" />\n",
            encoded);
@@ -694,29 +697,29 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             */
             encoded_name = msEncodeHTMLEntities( lp->name );
             if (user_namespace_prefix)
-              printf("\n"
+              msIO_printf("\n"
                    "  <element name=\"%s\" \n"
                    "           type=\"%s:%s_Type\" \n"
                    "           substitutionGroup=\"gml:_Feature\" />\n\n",
                    encoded_name, user_namespace_prefix, encoded_name);
             else
-              printf("\n"
+              msIO_printf("\n"
                      "  <element name=\"%s\" \n"
                      "           type=\"myns:%s_Type\" \n"
                      "           substitutionGroup=\"gml:_Feature\" />\n\n",
                      encoded_name, encoded_name);
 
-            printf("  <complexType name=\"%s_Type\">\n", encoded_name);
-            printf("    <complexContent>\n");
-            printf("      <extension base=\"gml:AbstractFeatureType\">\n");
-            printf("        <sequence>\n");
+            msIO_printf("  <complexType name=\"%s_Type\">\n", encoded_name);
+            msIO_printf("    <complexContent>\n");
+            msIO_printf("      <extension base=\"gml:AbstractFeatureType\">\n");
+            msIO_printf("        <sequence>\n");
 
             encoded = msEncodeHTMLEntities( msWFSGetGeomElementName(map, lp) );
-            printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
+            msIO_printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
                    encoded);
             msFree(encoded);
             /*
-             printf("          <element name=\"%s\" \n"
+             msIO_printf("          <element name=\"%s\" \n"
                    "                   type=\"gml:%s\" \n"
                    "                   nillable=\"false\" />\n",
                    msWFSGetGeomElementName(map, lp),
@@ -739,7 +742,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                           if (description_gml && strcmp(description_gml,  lp->items[k]) == 0)
                             continue;
                           encoded = msEncodeHTMLEntities( lp->items[k] );
-                          printf("          <element name=\"%s\" type=\"string\" />\n",
+                          msIO_printf("          <element name=\"%s\" type=\"string\" />\n",
                                  encoded );
                           msFree(encoded);
                     }
@@ -749,14 +752,14 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             }
             else
             {
-                printf("\n\n<!-- ERROR: Failed openinig layer %s -->\n\n", 
+                msIO_printf("\n\n<!-- ERROR: Failed openinig layer %s -->\n\n", 
                        encoded_name);
             }
 
-            printf("        </sequence>\n");
-            printf("      </extension>\n");
-            printf("    </complexContent>\n");
-            printf("  </complexType>\n");
+            msIO_printf("        </sequence>\n");
+            msIO_printf("      </extension>\n");
+            msIO_printf("    </complexContent>\n");
+            msIO_printf("  </complexType>\n");
 
         }
     }
@@ -764,7 +767,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     /*
     ** Done!
     */
-    printf("\n</schema>\n");
+    msIO_printf("\n</schema>\n");
 
     msFree(encoded_name);
     msFree(user_namespace_uri);
@@ -1139,7 +1142,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     }
 
 
-    printf("Content-type: text/xml%c%c",10,10);
+    msIO_printf("Content-type: text/xml%c%c",10,10);
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, 
                              "wfs_encoding", OWS_NOERR,
@@ -1155,8 +1158,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                                               "wfs_namespace_prefix");
     if(user_namespace_prefix != NULL &&
        msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
-        fprintf(stdout, "<!-- WARNING: The value '%s' is not valid XML "
-                "namespace. -->\n", user_namespace_prefix);
+        msIO_printf("<!-- WARNING: The value '%s' is not valid XML "
+                     "namespace. -->\n", user_namespace_prefix);
 
     if (user_namespace_prefix && user_namespace_uri)
       pszNameSpace = strdup(user_namespace_prefix);
@@ -1169,7 +1172,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     encoded_schema = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     if (user_namespace_prefix && user_namespace_uri)
     {
-        printf("<wfs:FeatureCollection\n"
+        msIO_printf("<wfs:FeatureCollection\n"
                "   xmlns:%s=\"%s\"\n"  
                "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
                "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
@@ -1183,7 +1186,7 @@ ENAME=%s\">\n",
               script_url_encoded, encoded, encoded_typename);
     }
     else
-      printf("<wfs:FeatureCollection\n"
+      msIO_printf("<wfs:FeatureCollection\n"
              "   xmlns=\"%s\"\n"
              "   xmlns:myns=\"%s\"\n"
              "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
@@ -1216,16 +1219,16 @@ ENAME=%s\">\n",
     }
     if (i==map->numlayers)
     {
-        printf("   <gml:boundedBy>\n"); 
-        printf("      <gml:null>inapplicable</gml:null>\n");
-        printf("   </gml:boundedBy>\n"); 
+        msIO_printf("   <gml:boundedBy>\n"); 
+        msIO_printf("      <gml:null>inapplicable</gml:null>\n");
+        msIO_printf("   </gml:boundedBy>\n"); 
     }
     /*
     ** Done!
     */
     
 
-    printf("</wfs:FeatureCollection>\n\n");
+    msIO_printf("</wfs:FeatureCollection>\n\n");
 
     free(script_url);
     free(script_url_encoded);
