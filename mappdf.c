@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/12/07 00:38:51  dan
+ * Fixed segmentation fault when generating PDF output (bug 1105)
+ *
  * Revision 1.30  2004/11/04 21:46:36  frank
  * Commented out unused variable.
  *
@@ -1284,7 +1287,8 @@ int msSaveImagePDF(imageObj *image, char *filename)
 /************************************************************************/
 void msFreeImagePDF(imageObj *image)
 {
-    if (image && MS_DRIVER_PDF(image->format) )
+    if (image && MS_DRIVER_PDF(image->format) &&
+        image->img.pdf && image->img.pdf->pdf)
     {
         PDF_delete(image->img.pdf->pdf);
         image->img.pdf->pdf = NULL;
