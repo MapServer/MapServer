@@ -441,7 +441,6 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
       }while (pszTmp != NULL && nInst > 0);
    }
 
-   
    if (pszStart && pszEnd) {
       // find end of start tag
       pszStart = strchr(pszStart, ']');
@@ -466,6 +465,9 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
          return MS_FAILURE;
       }
    }
+
+   msFree(pszEndTag);
+
    return MS_SUCCESS;
 }
 
@@ -721,7 +723,6 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
    int nWidth, nHeight, nLen;
    char pszImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
    char szPath[MS_MAXPATHLEN];
-   gdImagePtr img;
    hashTableObj myHashTable=NULL;
    FILE *fIcon;
    
@@ -769,6 +770,8 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       else
       {
          // Create an image corresponding to the current class
+          imageObj *img=NULL;
+
          if (map->layers[nIdxLayer].numclasses <= 0 || 
              nIdxClass > map->layers[nIdxLayer].numclasses || nIdxClass < 0)
          {
@@ -791,23 +794,22 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          }
          
          // save it with a unique file name
-         //TODO
-         if(msSaveImageGD(img, pszFullImgFname, map->outputformat) == -1) {
+         if(msSaveImage(map, img, pszFullImgFname) == -1) {
             if (myHashTable)
               msFreeHashTable(myHashTable);
 
-            if (pszFullImgFname)
-              free(pszFullImgFname);
+            msFree(pszFullImgFname);
+            msFreeImage(img);
 
             msSetError(MS_IOERR, "Error while save GD image to disk (%s).", "processIcon()", pszFullImgFname);
             return MS_FAILURE;
          }
          
-         if (pszFullImgFname)
-           free(pszFullImgFname);
-
-         gdImageDestroy(img);
+         msFreeImage(img);
       }
+
+      msFree(pszFullImgFname);
+      pszFullImgFname = NULL;
 
       nLen = (strchr(pszImgTag, ']') + 1) - pszImgTag;
    
@@ -827,7 +829,9 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 
          *pszInstr = gsub(*pszInstr, pszTag, pszFullImgFname);
 
-         free(pszFullImgFname);
+         msFree(pszFullImgFname);
+         pszFullImgFname = NULL;
+         msFree(pszTag);
 
          // find the begining of tag
          pszImgTag = strstr(*pszInstr, "[leg_icon");
@@ -1329,6 +1333,7 @@ char *generateLegendTemplate(mapservObj *msObj)
        }
    
        free(pszMapFname);
+       pszMapFname = NULL;
    }
    else
    {
@@ -1672,26 +1677,26 @@ char *generateLegendTemplate(mapservObj *msObj)
       
    if (papszGroups) {
       for (i=0; i<nGroupNames; i++)
-        free(papszGroups[i]);
+        msFree(papszGroups[i]);
 
-      free(papszGroups);
+      msFree(papszGroups);
    }
    
    msFreeHashTable(groupArgs);
    msFreeHashTable(layerArgs);
    msFreeHashTable(classArgs);
    
-   if (file)
-     free(file);
+   msFree(file);
      
-   if (legGroupHtmlCopy){ free(legGroupHtmlCopy); }
-   if (legLayerHtmlCopy){ free(legLayerHtmlCopy); }
-   if (legClassHtmlCopy){ free(legClassHtmlCopy); }
+   msFree(legGroupHtmlCopy);
+   msFree(legLayerHtmlCopy);
+   msFree(legClassHtmlCopy);
       
-   if (legGroupHtml){ free(legGroupHtml); }
-   if (legLayerHtml){ free(legLayerHtml); }
-   if (legClassHtml){ free(legClassHtml); }
-   
+   msFree(legGroupHtml);
+   msFree(legLayerHtml);
+   msFree(legClassHtml);
+   msFree(pszPrefix);
+
    fclose(stream);
 
 /* -------------------------------------------------------------------- */
@@ -2504,8 +2509,6 @@ void msFreeMapServObj(mapservObj* msObj)
 **/
 int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
 {
-    //gdImagePtr img=NULL;
-    imageObj    *image = NULL;
     char buffer[1024];
     
     if (msObj)
@@ -2515,6 +2518,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
 /* -------------------------------------------------------------------- */
         if(msObj->Map->status == MS_ON) 
         {
+            imageObj    *image = NULL;
             if (szQuery)
                 image = msDrawQueryMap(msObj->Map);
             else
@@ -2525,16 +2529,14 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
                 sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, 
                         msObj->Map->name, msObj->Id, 
                         MS_IMAGE_EXTENSION(msObj->Map->outputformat));	
-                //TODO
+
                 if (msSaveImage(msObj->Map, image, buffer) == -1 &&
                     bReturnOnError)
                 {
-                    //TODO
                     msFreeImage(image);
                     return MS_FALSE;
                 }
-                //TODO
-                gdImageDestroy(image->img.gd);
+                msFreeImage(image);
             }
             else if (bReturnOnError)
                 return MS_FALSE;
@@ -2545,6 +2547,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
 /* -------------------------------------------------------------------- */
         if(msObj->Map->legend.status == MS_ON) 
         {
+            imageObj    *image;
             image = msDrawLegend(msObj->Map);
             if(image)
             { 
@@ -2569,6 +2572,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
 /* -------------------------------------------------------------------- */
         if(msObj->Map->scalebar.status == MS_ON) 
         {
+            imageObj    *image;
             image = msDrawScalebar(msObj->Map);
             if(image)
             {
@@ -2592,6 +2596,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
 /* -------------------------------------------------------------------- */
         if(msObj->Map->reference.status == MS_ON) 
         {
+            imageObj    *image;
             image = msDrawReferenceMap(msObj->Map);
             if(image)
             { 
