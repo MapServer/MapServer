@@ -111,7 +111,7 @@ int msUpdatePalette(gdImagePtr img, paletteObj *palette)
   }
 
   /* Add to image palette any color that it didn't contain yet. */
-  for(i=gdImageColorsTotal(img); i<palette->numcolors; i++)
+  for(i=gdImageColorsTotal(img)-1; i<palette->numcolors; i++)
     gdImageColorAllocate(img, palette->colors[i].red, palette->colors[i].green, palette->colors[i].blue);
 
   return(1);
