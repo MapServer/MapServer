@@ -30,6 +30,10 @@ Version 4.2-???
 
 - Fixed mapwcs.c so that gdal.h and cpl_error.h are not included if
   USE_WCS_SVR is not enabled ... which is never is in 4.2.
+
+- msBuildPath() no longer used with temporary filenames when saving images
+  via GDAL.
+
   
 Version 4.2-beta2 (2004-05-03)
 ------------------------------
