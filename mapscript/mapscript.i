@@ -349,7 +349,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if(map->numlayers == MS_MAXLAYERS) // no room
       return(NULL);
 
-    if(initLayer(&(map->layers[map->numlayers])) == -1)
+    if(initLayer(&(map->layers[map->numlayers]), map) == -1)
       return(NULL);
 
     map->layers[map->numlayers].index = map->numlayers;

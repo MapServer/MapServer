@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.50  2002/10/24 18:10:08  assefa
+ * Add map argument to initLayer function.
+ *
  * Revision 1.49  2002/10/23 19:44:08  assefa
  * Add setcolor functions for style and label objects.
  * Add function to select the output format.
@@ -486,7 +489,7 @@ layerObj *layerObj_new(mapObj *map) {
     if(map->numlayers == MS_MAXLAYERS) // no room
       return(NULL);
 
-    if(initLayer(&(map->layers[map->numlayers])) == -1)
+    if(initLayer(&(map->layers[map->numlayers]), map) == -1)
       return(NULL);
 
     map->layers[map->numlayers].index = map->numlayers;
