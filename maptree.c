@@ -114,8 +114,22 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree)
     memcpy( &psTree->signature, pabyBuf, 3 );
     if( strncmp(psTree->signature,"SQT",3) )
     {
-      /* presume maxdepth never more than 65535 */
-      psTree->LSB_order = !(pabyBuf[4] == 0 && pabyBuf[5] == 0);
+  /* ---------------------------------------------------------------------- */
+  /*     must check if the 2 first bytes equal 0 of max depth that cannot   */
+  /*     be more than 65535. If yes, we must swap all value. The problem    */
+  /*     here is if there's no Depth (bytea 5,6,7,8 in the file) all bytes  */
+  /*     will be set to 0. So,we will test with the number of shapes (bytes */
+  /*     1,2,3,4) that cannot be more than 65535 too.                       */
+  /* ---------------------------------------------------------------------- */
+      if((pabyBuf[4] == 0 && pabyBuf[5] == 0 && 
+          pabyBuf[6] == 0 && pabyBuf[7] == 0))
+      {
+        psTree->LSB_order = !(pabyBuf[0] == 0 && pabyBuf[1] == 0);
+      }
+      else
+      {
+        psTree->LSB_order = !(pabyBuf[4] == 0 && pabyBuf[5] == 0);
+      }
       psTree->needswap = ((psTree->LSB_order) != (!bBigEndian));
 
   /* ---------------------------------------------------------------------- */
