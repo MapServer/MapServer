@@ -85,11 +85,12 @@ EPPL_OBJ=epplib.obj
 
 #
 # VC++ does not include the REGEX library... so we must provide our one.
-# GNU regex-0.12 should be included in the source distribution.
-# If not, then you can get it from:
+# The following definitions will try to build GNU regex-0.12 located in the
+# regex-0.12 sub-directory.
+# If it was not included in the source distribution, then you can get it from:
 #    ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
 #
-REGEX_OBJ=./regex-0.12/regex.obj
+REGEX_OBJ=.\regex-0.12\regex.obj
 REGEX_INC=-I./regex-0.12
 
 #
@@ -122,7 +123,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
 		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
-		mapraster.obj cgiutil.obj $(EPPL_OBJ) $(REGEX_OBJ)
+		mapraster.obj cgiutil.obj mapsde.obj $(EPPL_OBJ) $(REGEX_OBJ)
 MS_HDRS = 	map.h mapfile.h
 
 MS_EXE = 	mapserv.exe shp2img.exe sym2img.exe legend.exe shpindex.exe \
@@ -153,7 +154,7 @@ $(MS_EXE):	$(LIBS)
 
 gd::
 	cd gd-1.2
-	nmake /f makefile.vc OPTFLAGS="$(OPTFLAGS)"
+	nmake /f makefile.nt OPTFLAGS="$(OPTFLAGS)"
 	cd ..
 
 gdft::
@@ -176,14 +177,14 @@ gdft::
 
 clean:
 	del *.obj
-	del regex-0.12\regex.obj
+	del $(REGEX_OBJ)
 	del $(MS_LIB)
 	del $(MS_EXE)
 	del *.pdb
 	del *.exp
 	del *.ilk
 	cd gd-1.2
-	 nmake -f makefile.vc clean
+	 nmake -f makefile.nt clean
 	 cd ..
 	cd gdft
 	 nmake -f makefile.vc clean
