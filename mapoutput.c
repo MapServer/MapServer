@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/01/17 15:47:48  frank
+ * ensure that msApplyDefaultOutputFormats() does not modify map->imagetype
+ *
  * Revision 1.15  2003/01/11 23:25:48  frank
  * Bug 249: msApplyOutputFormat() will switch imagemode from RGB to RGBA if
  * transparency is requested.
@@ -296,6 +299,13 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 void msApplyDefaultOutputFormats( mapObj *map )
 
 {
+    char *saved_imagetype;
+
+    if( map->imagetype == NULL )
+        saved_imagetype = NULL;
+    else
+        saved_imagetype = strdup(map->imagetype);
+
     if( msSelectOutputFormat( map, "gif" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/GIF" );
 
@@ -320,7 +330,9 @@ void msApplyDefaultOutputFormats( mapObj *map )
     if( msSelectOutputFormat( map, "GTiff" ) == NULL )
         msCreateDefaultOutputFormat( map, "GDAL/GTiff" );
 
-    assert( map->numoutputformats > 0 );
+    if( map->imagetype != NULL )
+        free( map->imagetype );
+    map->imagetype = saved_imagetype;
 }
 
 /************************************************************************/
