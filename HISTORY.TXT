@@ -16,9 +16,6 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
-- Print debug messages instead of raising errors in the case of zero query
-  results (bug 361).
-  
 - MapServer version now output to mapscriptvars and read by Perl Makefile.PL
   and Python setup.py (bug 795).
 
