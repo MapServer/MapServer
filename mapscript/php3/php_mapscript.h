@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/12/19 03:46:02  assefa
+ * Support of Measured shpe files.
+ *
  * Revision 1.14  2001/11/01 21:10:09  assefa
  * Add getProjection on map and layer object.
  *
@@ -196,6 +199,8 @@ void            shapeObj_setBounds(shapeObj *self);
 int             shapeObj_copy(shapeObj *self, shapeObj *dest);
 int             shapeObj_contains(shapeObj *self, pointObj *point);
 int             shapeObj_intersects(shapeObj *self, shapeObj *shape);
+pointObj        *shapeObj_getpointusingmeasure(shapeObj *self, double m);
+pointObj        *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point);
 
 rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);

@@ -16,12 +16,25 @@ extern "C" {
 #define SHP_ARC 3
 #define SHP_POLYGON 5
 #define SHP_MULTIPOINT 8
+
+#define SHP_POINTM 21
+#define SHP_ARCM  23
+#define SHP_POLYGONM 25
+#define SHP_MULTIPOINTM 28
+
 #endif
 
 #define MS_SHAPEFILE_POINT 1
 #define MS_SHAPEFILE_ARC 3
 #define MS_SHAPEFILE_POLYGON 5
 #define MS_SHAPEFILE_MULTIPOINT 8
+
+#define MS_SHP_POINTM 21
+#define MS_SHP_ARCM  23
+#define MS_SHP_POLYGONM 25
+#define MS_SHP_MULTIPOINTM 28
+
+
 
 #ifndef SWIG
 typedef	struct {

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.69  2001/12/19 03:46:02  assefa
+ * Support of Measured shpe files.
+ *
  * Revision 1.68  2001/11/27 15:39:33  dan
  * Added layer->template
  *
@@ -293,6 +296,8 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_contains(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS);
@@ -599,6 +604,8 @@ function_entry php_shape_class_functions[] = {
     {"contains",        php3_ms_shape_contains,         NULL},    
     {"intersects",      php3_ms_shape_intersects,       NULL},    
     {"getvalue",        php3_ms_shape_getvalue,         NULL},    
+    {"getpointusingmeasure", php3_ms_shape_getpointusingmeasure,         NULL},    
+    {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint,         NULL},    
     {"free",            php3_ms_shape_free,             NULL},    
     {NULL, NULL, NULL}
 };
@@ -740,11 +747,19 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_SHP_ARC",    SHP_ARC,        const_flag);
     REGISTER_LONG_CONSTANT("MS_SHP_POLYGON",SHP_POLYGON,    const_flag);
     REGISTER_LONG_CONSTANT("MS_SHP_MULTIPOINT",SHP_MULTIPOINT, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHP_POINTM",  SHP_POINTM,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHP_ARCM",    SHP_ARCM,        const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHP_POLYGONM",SHP_POLYGONM,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHP_MULTIPOINTM",SHP_MULTIPOINTM, const_flag);
     /* new names??? */
     REGISTER_LONG_CONSTANT("SHP_POINT",     SHP_POINT,      const_flag);
     REGISTER_LONG_CONSTANT("SHP_ARC",       SHP_ARC,        const_flag);
     REGISTER_LONG_CONSTANT("SHP_POLYGON",   SHP_POLYGON,    const_flag);
     REGISTER_LONG_CONSTANT("SHP_MULTIPOINT",SHP_MULTIPOINT, const_flag);
+    REGISTER_LONG_CONSTANT("SHP_POINTM",     SHP_POINTM,      const_flag);
+    REGISTER_LONG_CONSTANT("SHP_ARCM",       SHP_ARCM,        const_flag);
+    REGISTER_LONG_CONSTANT("SHP_POLYGONM",   SHP_POLYGONM,    const_flag);
+    REGISTER_LONG_CONSTANT("SHP_MULTIPOINTM",SHP_MULTIPOINTM, const_flag);
 
     /* query/join type constants*/
     REGISTER_LONG_CONSTANT("MS_SINGLE",     MS_SINGLE,      const_flag);
@@ -5851,6 +5866,7 @@ static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
     /* editable properties */
     add_property_double(return_value,   "x",   ppoint->x);
     add_property_double(return_value,   "y",   ppoint->y);
+    add_property_double(return_value,   "m",   ppoint->m);
 
     return point_id;
 }
@@ -6385,6 +6401,7 @@ DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS)
     lineObj     *self;
     pointObj    *poPoint;
     int         nRetVal=0;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -6394,6 +6411,7 @@ DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
+
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pPoint) !=SUCCESS)
@@ -6432,6 +6450,7 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
     lineObj     *self;
     pointObj    oPoint;
     int         nRetVal=0;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -6918,6 +6937,7 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *poLayer;
     gdImagePtr  im;
     int         nRetVal=MS_FAILURE;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -7092,6 +7112,108 @@ DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+
+/**********************************************************************
+ *                        shape->getpointusingmeasure()
+ **********************************************************************/
+/* {{{ proto int shape.getpointusingmeasure(double m)
+   Given a shape and a nmesure, return a point object containing the XY
+   location corresponding to the measure */
+
+DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pMeasure;
+    shapeObj     *self = NULL;
+    pointObj    *point = NULL;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pMeasure) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_double(pMeasure);
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    point = shapeObj_getpointusingmeasure(self, pMeasure->value.dval);
+    if (point == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_point_object(point, 
+                              PHPMS_GLOBAL(le_mspoint_ref), 
+                              list, return_value);
+}
+
+
+/**********************************************************************
+ *                        shape->getmeasureusingpoint()
+ **********************************************************************/
+/* {{{ proto int shape.getpointusingmeasure(pointObject point)
+   Given a shape and a point object, return a point object containing the XY
+   location of the intersection between the point and the shape. The point
+   return contains also the extrapolated M value at the intersection. */
+
+DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pPoint;
+    shapeObj     *self = NULL;
+    pointObj    *point = NULL;
+    pointObj    *intersection = NULL;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pPoint) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    point = (pointObj *)_phpms_fetch_handle2(pPoint,
+                                             PHPMS_GLOBAL(le_mspoint_ref),
+                                             PHPMS_GLOBAL(le_mspoint_new),
+                                             list);
+    if (point == NULL)
+      RETURN_FALSE;
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    intersection = shapeObj_getmeasureusingpoint(self, point);
+    if (intersection == NULL)
+      RETURN_FALSE;
+
+     _phpms_build_point_object(intersection, 
+                              PHPMS_GLOBAL(le_mspoint_ref), 
+                              list, return_value);
+}
+     
 /**********************************************************************
  *                        shape->free()
  **********************************************************************/
@@ -7815,7 +7937,7 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
 
     /* read-only properties */
     add_property_long(return_value, "numshapes",  pshapefile->numshapes);
-    add_property_long(return_value, "type",       pshapefile->numshapes);
+    add_property_long(return_value, "type",       pshapefile->type);
     PHPMS_ADD_PROP_STR(return_value,"source",     pshapefile->source);
 
 #ifdef PHP4

@@ -708,6 +708,8 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex);
 int msMoveLayerDown(mapObj *map, int nLayerIndex);
 
 char *msGetProjectionString(projectionObj *proj);
+pointObj *getPointUsingMeasure(shapeObj *shape, double m);
+pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point);
 
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);

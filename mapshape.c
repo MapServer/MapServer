@@ -208,6 +208,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   
   free( pszFullname );
   free( pszBasename ); 
+
   
   /* -------------------------------------------------------------------- */
   /*   Read the file size from the SHP file.				    */
@@ -797,7 +798,9 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     static uchar	*pabyRec = NULL;   
     static int		nPartMax = 0, *panParts = NULL;
     static int		nBufSize = 0;
+    int nOffset = 0;
 
+ 
     msInitShape(shape); /* initialize the shape */
 
     /* -------------------------------------------------------------------- */
@@ -827,7 +830,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*  Extract vertices for a Polygon or Arc.				    */
     /* -------------------------------------------------------------------- */
-    if( psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC )
+    if( psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC || 
+        psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM)
     {
       int32		nPoints, nParts;      
 
@@ -889,6 +893,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	  return;
 	}
 
+        //nOffset = 44 + 8 + 4*nParts;
 	for( j = 0; j < shape->line[i].numpoints; j++ )
 	{
 	  memcpy(&(shape->line[i].point[j].x), pabyRec + 44 + 4*nParts + 8 + k * 16, 8 );
@@ -898,22 +903,37 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	    SwapWord( 8, &(shape->line[i].point[j].x) );
 	    SwapWord( 8, &(shape->line[i].point[j].y) );
 	  }
-
+          
+          shape->line[i].point[j].m = 0; // initialize
+/* -------------------------------------------------------------------- */
+/*      Measured ar and polygon support.                                */
+/* -------------------------------------------------------------------- */
+          if (psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM)
+          {
+              nOffset = 44 + 8 + (4*nParts) + (16*nPoints) ;
+              if( psSHP->panRecSize[hEntity]+8 >= nOffset + 16 + 8*nPoints )
+              {
+                   memcpy(&(shape->line[i].point[j].m), 
+                          pabyRec + nOffset + 16 + k*8, 8 );
+                   if( bBigEndian ) 
+                       SwapWord( 8, &(shape->line[i].point[j].m) );
+              }   
+          }
 	  k++;
 	}
       }
 
-      if(psSHP->nShapeType == SHP_POLYGON)
-	shape->type = MS_SHAPE_POLYGON;
+      if(psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_POLYGONM)
+        shape->type = MS_SHAPE_POLYGON;
       else
-	shape->type = MS_SHAPE_LINE;
+        shape->type = MS_SHAPE_LINE;
 
     }
 
     /* -------------------------------------------------------------------- */
     /*  Extract a MultiPoint.   			                    */
     /* -------------------------------------------------------------------- */
-    else if( psSHP->nShapeType == SHP_MULTIPOINT)
+    else if( psSHP->nShapeType == SHP_MULTIPOINT || psSHP->nShapeType == SHP_MULTIPOINTM)
     {
       int32		nPoints;
 
@@ -953,6 +973,18 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	  SwapWord( 8, &(shape->line[0].point[i].x) );
 	  SwapWord( 8, &(shape->line[0].point[i].y) );
 	}
+
+        shape->line[0].point[i].m = 0; //initialize
+/* -------------------------------------------------------------------- */
+/*      Measured ar and polygon support.                                */
+/* -------------------------------------------------------------------- */
+        if (psSHP->nShapeType == SHP_MULTIPOINTM)
+        {
+            nOffset = 48 + 16*nPoints;
+            memcpy(&(shape->line[0].point[i].m), pabyRec + nOffset + 16 + i*8, 8 );
+            if( bBigEndian ) 
+              SwapWord( 8, &(shape->line[0].point[i].m));
+        }
       }
 
       shape->type = MS_SHAPE_POINT;
@@ -961,7 +993,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*  Extract a Point.   			                    */
     /* -------------------------------------------------------------------- */
-    else if( psSHP->nShapeType == SHP_POINT )
+    else if( psSHP->nShapeType == SHP_POINT ||  psSHP->nShapeType == SHP_POINTM)
     {    
 
       /* -------------------------------------------------------------------- */
@@ -984,6 +1016,21 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	SwapWord( 8, &(shape->line[0].point[0].y));
       }
 
+      shape->line[0].point[0].m = 0; //initialize
+/* -------------------------------------------------------------------- */
+/*      Measured ar and polygon support.                                */
+/* -------------------------------------------------------------------- */
+      if (psSHP->nShapeType == SHP_POINTM)
+      {
+          nOffset = 20 + 8;
+          if( psSHP->panRecSize[hEntity]+8 >= nOffset + 8 )
+          {
+              memcpy(&(shape->line[0].point[0].m), pabyRec + nOffset, 8 );
+        
+              if( bBigEndian ) 
+                SwapWord( 8, &(shape->line[0].point[0].m));
+          }
+      }
       // set the bounding box to the point
       shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
       shape->bounds.miny = shape->bounds.maxy = shape->line[0].point[0].y;

@@ -1230,3 +1230,309 @@ char *msGetProjectionString(projectionObj *proj)
     }
     return pszPojString;
 }
+
+/* ==================================================================== */
+/*      Measured shape utility functions.                               */
+/* ==================================================================== */
+
+
+/************************************************************************/
+/*        pointObj *getPointUsingMeasure(shapeObj *shape, double m)     */
+/*                                                                      */
+/*      Using a measured value get the XY location it corresonds        */
+/*      to.                                                             */
+/*                                                                      */
+/************************************************************************/
+pointObj *getPointUsingMeasure(shapeObj *shape, double m)
+{
+    pointObj    *point = NULL;
+    lineObj     line;
+    double      dfMin = 0;
+    double      dfMax = 0;
+    int         i,j = 0;
+    int         bFound = 0;
+    double      dfFirstPointX = 0;
+    double      dfFirstPointY = 0;
+    double      dfFirstPointM = 0;
+    double      dfSecondPointX = 0;
+    double      dfSecondPointY = 0;
+    double      dfSecondPointM = 0;
+    double      dfCurrentM = 0;
+    double      dfFactor = 0;
+    double      dfTmp = 0;
+
+    if (shape &&  shape->numlines > 0)
+    {
+/* -------------------------------------------------------------------- */
+/*      check fir the first value (min) and the last value(max) to      */
+/*      see if the m is contained between these min and max.            */
+/* -------------------------------------------------------------------- */
+        line = shape->line[0];
+        dfMin = line.point[0].m;
+        line = shape->line[shape->numlines-1];
+        dfMax = line.point[line.numpoints-1].m;
+
+        if (m >= dfMin && m <= dfMax)
+        {
+            for (i=0; i<shape->numlines; i++)
+            {
+                line = shape->line[i];
+                
+                for (j=0; j<line.numpoints; j++)
+                {
+                    dfCurrentM = line.point[j].m;
+                    if (dfCurrentM > m)
+                    {
+                        bFound = 1;
+                        
+                        dfSecondPointX = line.point[j].x;
+                        dfSecondPointY = line.point[j].y;
+                        dfSecondPointM = line.point[j].m;
+                        
+/* -------------------------------------------------------------------- */
+/*      get the previous node xy values.                                */
+/* -------------------------------------------------------------------- */
+                        if (j > 0) //not the first point of the line
+                        {
+                            dfFirstPointX = line.point[j-1].x;
+                            dfFirstPointY = line.point[j-1].y;
+                            dfFirstPointM = line.point[j-1].m;
+                        }
+                        else // get last point of previous line
+                        {
+                            dfFirstPointX = shape->line[i-1].point[0].x;
+                            dfFirstPointY = shape->line[i-1].point[0].y;
+                            dfFirstPointM = shape->line[i-1].point[0].m;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!bFound) 
+          return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      extrapolate the m value to get t he xy coordinate.              */
+/* -------------------------------------------------------------------- */
+
+        if (dfFirstPointM != dfSecondPointM) 
+          dfFactor = (m-dfFirstPointM)/(dfSecondPointM - dfFirstPointM); 
+        else
+          dfFactor = 0;
+
+        point = (pointObj *)malloc(sizeof(pointObj));
+        
+        point->x = dfFirstPointX + (dfFactor * (dfSecondPointX - dfFirstPointX));
+        point->y = dfFirstPointY + 
+            (dfFactor * (dfSecondPointY - dfFirstPointY));
+        point->m = dfFirstPointM + 
+            (dfFactor * (dfSecondPointM - dfFirstPointM));
+        
+        return point;
+    }
+}
+
+
+/************************************************************************/
+/*       IntersectionPointLinepointObj *p, pointObj *a, pointObj *b)    */
+/*                                                                      */
+/*      Retunrs a point object corresponding to the intersection of     */
+/*      point p and a line formed of 2 points : a and b.                */
+/*                                                                      */
+/*      Alorith base on :                                               */
+/*      http://www.faqs.org/faqs/graphics/algorithms-faq/               */
+/*                                                                      */
+/*      Subject 1.02:How do I find the distance from a point to a line? */
+/*                                                                      */
+/*          Let the point be C (Cx,Cy) and the line be AB (Ax,Ay) to (Bx,By).*/
+/*          Let P be the point of perpendicular projection of C on AB.  The parameter*/
+/*          r, which indicates P's position along AB, is computed by the dot product */
+/*          of AC and AB divided by the square of the length of AB:     */
+/*                                                                      */
+/*          (1)     AC dot AB                                           */
+/*              r = ---------                                           */
+/*                  ||AB||^2                                            */
+/*                                                                      */
+/*          r has the following meaning:                                */
+/*                                                                      */
+/*              r=0      P = A                                          */
+/*              r=1      P = B                                          */
+/*              r<0      P is on the backward extension of AB           */
+/*              r>1      P is on the forward extension of AB            */
+/*              0<r<1    P is interior to AB                            */
+/*                                                                      */
+/*          The length of a line segment in d dimensions, AB is computed by:*/
+/*                                                                      */
+/*              L = sqrt( (Bx-Ax)^2 + (By-Ay)^2 + ... + (Bd-Ad)^2)      */
+/*                                                                      */
+/*          so in 2D:                                                   */
+/*                                                                      */
+/*              L = sqrt( (Bx-Ax)^2 + (By-Ay)^2 )                       */
+/*                                                                      */
+/*          and the dot product of two vectors in d dimensions, U dot V is computed:*/
+/*                                                                      */
+/*              D = (Ux * Vx) + (Uy * Vy) + ... + (Ud * Vd)             */
+/*                                                                      */
+/*          so in 2D:                                                   */
+/*                                                                      */
+/*              D = (Ux * Vx) + (Uy * Vy)                               */
+/*                                                                      */
+/*          So (1) expands to:                                          */
+/*                                                                      */
+/*                  (Cx-Ax)(Bx-Ax) + (Cy-Ay)(By-Ay)                     */
+/*              r = -------------------------------                     */
+/*                                L^2                                   */
+/*                                                                      */
+/*          The point P can then be found:                              */
+/*                                                                      */
+/*              Px = Ax + r(Bx-Ax)                                      */
+/*              Py = Ay + r(By-Ay)                                      */
+/*                                                                      */
+/*          And the distance from A to P = r*L.                         */
+/*                                                                      */
+/*          Use another parameter s to indicate the location along PC, with the */
+/*          following meaning:                                          */
+/*                 s<0      C is left of AB                             */
+/*                 s>0      C is right of AB                            */
+/*                 s=0      C is on AB                                  */
+/*                                                                      */
+/*          Compute s as follows:                                       */
+/*                                                                      */
+/*                  (Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)                       */
+/*              s = -----------------------------                       */
+/*                              L^2                                     */
+/*                                                                      */
+/*                                                                      */
+/*          Then the distance from C to P = |s|*L.                      */
+/*                                                                      */
+/************************************************************************/
+pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
+{
+    double r = 0;
+    double L = 0;
+    pointObj *result = NULL;
+
+    if (p && a && b)
+    {
+        L = sqrt(((b->x - a->x)*(b->x - a->x)) + 
+                 ((b->y - a->y)*(b->y - a->y)));
+
+        if (L != 0)
+          r = ((p->x - a->x)*(b->x - a->x) + (p->y - a->y)*(b->y - a->y))/(L*L);
+        else
+          r = 0;
+
+        result = (pointObj *)malloc(sizeof(pointObj));
+/* -------------------------------------------------------------------- */
+/*      We want to make sure that the point returned is on the line     */
+/*                                                                      */
+/*              r=0      P = A                                          */
+/*              r=1      P = B                                          */
+/*              r<0      P is on the backward extension of AB           */
+/*              r>1      P is on the forward extension of AB            */
+/*                    0<r<1    P is interior to AB                      */
+/* -------------------------------------------------------------------- */
+        if (r < 0)
+        {
+            result->x = a->x;
+            result->y = a->y;
+        }
+        else if (r > 1)
+        {
+            result->x = b->x;
+            result->y = b->y;
+        }
+        else
+        {
+            result->x = a->x + r*(b->x - a->x);
+            result->y = a->y + r*(b->y - a->y);
+        }
+        result->m = 0;
+    }
+
+    return result;
+}
+
+
+/************************************************************************/
+/*         pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj     */
+/*      *point)                                                         */
+/*                                                                      */
+/*      Calculate the intersection point betwwen the point and the      */
+/*      shape and return the Measured value at the intersection.        */
+/************************************************************************/
+pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point)
+{       
+    double      dfMinDist = 1e35;
+    double      dfDist = 0;
+    pointObj    oFirst;
+    pointObj    oSecond;
+    int         i, j = 0;
+    lineObj     line;
+    pointObj    *poIntersectionPt = NULL;
+    double      dfFactor = 0;
+    double      dfDistTotal, dfDistToIntersection = 0;
+
+    if (shape && point)
+    {
+        for (i=0; i<shape->numlines; i++)
+        {
+            line = shape->line[i];
+/* -------------------------------------------------------------------- */
+/*      for each line (2 consecutive lines) get the distance between    */
+/*      the line and the point and determine which line segment is      */
+/*      the closeset to the point.                                      */
+/* -------------------------------------------------------------------- */
+            for (j=0; j<line.numpoints-1; j++)
+            {
+                dfDist = msDistanceFromPointToLine(point, 
+                                                   &line.point[j], 
+                                                   &line.point[j+1]);
+                if (dfDist < dfMinDist)
+                {
+                    oFirst.x = line.point[j].x;
+                    oFirst.y = line.point[j].y;
+                    oFirst.m = line.point[j].m;
+                    
+                    oSecond.x =  line.point[j+1].x;
+                    oSecond.y =  line.point[j+1].y;
+                    oSecond.m =  line.point[j+1].m;
+
+                    dfMinDist = dfDist;
+                }
+            }
+        }
+/* -------------------------------------------------------------------- */
+/*      once we have the nearest segment, look for the x,y location     */
+/*      which is the nearest intersection between the line and the      */
+/*      point.                                                          */
+/* -------------------------------------------------------------------- */
+        poIntersectionPt = msIntersectionPointLine(point, &oFirst, &oSecond);
+        if (poIntersectionPt)
+        {
+            dfDistTotal = sqrt(((oSecond.x - oFirst.x)*(oSecond.x - oFirst.x)) + 
+                               ((oSecond.y - oFirst.y)*(oSecond.y - oFirst.y)));
+
+            dfDistToIntersection = sqrt(((poIntersectionPt->x - oFirst.x)*
+                                         (poIntersectionPt->x - oFirst.x)) + 
+                                        ((poIntersectionPt->y - oFirst.y)*
+                                         (poIntersectionPt->y - oFirst.y)));
+
+            dfFactor = dfDistToIntersection / dfDistTotal;
+
+            poIntersectionPt->m = oFirst.m + (oSecond.m - oFirst.m)*dfFactor;
+
+            return poIntersectionPt;
+        }
+    
+    }
+    return NULL;
+}
+
+/* ==================================================================== */
+/*   End   Measured shape utility functions.                            */
+/* ==================================================================== */
+
+

@@ -691,7 +691,7 @@ Constructor:
 
    double x
    double y
-
+   double m //used for measured shape files. set to 0 for other types.     
  Methods:
 
    int setXY(double x, double y)
@@ -805,6 +805,15 @@ Constructor:
    projectionObj project(projectionObj in, projectionObj out)
         Project the shape from "in" projection (1st argument) to "out" 
         projection (2nd argument).
+
+   pointObj getpointusingmeasure(double m)
+        Apply only on Measured shape files. Given a measure m, retun the 
+        corresponding XY location on the shapeobject.
+   
+   pointObj  getmeasureusingpoint(pointObject point)
+       Apply only on Measured shape files. Given an XY Location, find the 
+       nearest point on the shape object. Return a point object
+       of this point with the m value set.
 
    void free()
         Destroys resources used by a shape object.  

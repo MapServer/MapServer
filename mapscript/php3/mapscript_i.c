@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.29  2001/12/19 03:46:02  assefa
+ * Support of Measured shpe files.
+ *
  * Revision 1.28  2001/11/01 21:10:09  assefa
  * Add getProjection on map and layer object.
  *
@@ -630,6 +633,22 @@ int shapeObj_intersects(shapeObj *self, shapeObj *shape) {
 
     return -1;
   }
+
+pointObj *shapeObj_getpointusingmeasure(shapeObj *self, double m) 
+{       
+   if (self)
+     return getPointUsingMeasure(self, m);
+   
+   return NULL;
+}
+
+pointObj *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point) 
+{       
+   if (self)
+     return getMeasureUsingPoint(self, point);
+   
+   return NULL;
+}
 
 /**********************************************************************
  * class extensions for rectObj
