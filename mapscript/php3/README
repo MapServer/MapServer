@@ -353,10 +353,13 @@ Very important note: Constant names and class member variable names are
   With GD 1.2, 1.3, 1.6:
 
    int saveImage(string filename, int transparent, int interlace)
-        Writes image object to specifed filename.  Returns -1 on error.
+        Writes image object to specifed filename..
         Passing an empty filename sends output to stdout.  In this case,
         the PHP header() function should be used to set the documents's
         content-type prior to calling saveImage().
+        The function returns -1 on error.  On success, it returns either 0
+        if writing to an external file, or the number of bytes written if 
+        output is sent to stdout.
 
    string saveWebImage(int transparent, int interlace)
         Writes image to temp directory.  Returns image URL.
@@ -365,7 +368,7 @@ Very important note: Constant names and class member variable names are
 
    int saveImage(string filename, int type, int transparent, int interlace, 
                  int quality)
-        Writes image object to specifed filename.  Returns -1 on error.
+        Writes image object to specifed filename.
         Passing an empty filename sends output to stdout.  In this case,
         the PHP header() function should be used to set the documents's
         content-type prior to calling saveImage().
@@ -374,6 +377,9 @@ Very important note: Constant names and class member variable names are
         higher image quality and larger image sizes.
         If quality is negative, then the default IJG JPEG quality value is 
         used.
+        The function returns -1 on error.  On success, it returns either 0
+        if writing to an external file, or the number of bytes written if 
+        output is sent to stdout.
 
    string saveWebImage(int type, int transparent, int interlace, int quality)
         Writes image to temp directory.  Returns image URL.
