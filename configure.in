@@ -122,160 +122,6 @@ ALL_LIB="$JPEG_LIB $ALL_LIB"
 
 
 dnl ---------------------------------------------------------------------
-dnl Check where libiconv is installed
-dnl ---------------------------------------------------------------------
-
-unset ac_cv_lib_iconv_libiconv_open
-
-AC_ARG_WITH(libiconv,
-[  --with-libiconv=DIR     GD: Specify where libiconv is installed (DIR is path
-                              to libiconv install dir).],
-    ICONV_DIR=$withval,ICONV_DIR='')
-
-AC_EXPAND_PATH($ICONV_DIR, ICONV_DIR)
-AC_CHECKING(where libiconv is installed...)
-ICONV_LIB=''
-
-test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib"
-test -f $ICONV_DIR/libiconv.a -o -f $ICONV_DIR/libiconv.so -o -f $ICONV_DIR/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR"
-
-if test -n "$ICONV_LIBDIR" ; then
-
-  ICONV_LIB="-L$ICONV_LIBDIR -liconv"
-  AC_MSG_RESULT([        using libiconv from $ICONV_LIB])
-  AC_ADD_RUNPATH("$ICONV_DIR")
-
-else
-
-  dnl check for lib in system libs
-
-  AC_CHECK_LIB(iconv, libiconv_open, ICONV_LIB="-liconv",,)
-
-  if test -n "$ICONV_LIB" ; then
-    AC_MSG_RESULT([        using libiconv from system libs.])
-  else
-    AC_MSG_RESULT([        libiconv library cannot be found, possibly needed for GD])
-  fi
-
-fi
-
-
-
-dnl ---------------------------------------------------------------------
-dnl Find GD library
-dnl
-dnl If --with-gd not given, then check in system libs.
-dnl ---------------------------------------------------------------------
-
-dnl We don't want LIBS updated by all the GD stuff, so we save it and
-dnl restore later.
-
-ms_saved_LIBS="$LIBS"
-IS_GD2="false";
-
-dnl Clear some cache variables
-unset ac_cv_lib_gd_gdImageCreate
-unset ac_cv_lib_gd_gdImageString16
-unset ac_cv_lib_gd_gdImageGif
-unset ac_cv_lib_gd_gdImagePng
-unset ac_cv_lib_gd_gdImageJpeg
-unset ac_cv_lib_gd_gdImageWBMP
-unset ac_cv_lib_gd_gdImageStringFT
-unset ac_cv_lib_gd_gdImageGifPtr
-unset ac_cv_lib_c_gdImageCreate
-unset ac_cv_lib_c_gdImageString16
-unset ac_cv_lib_c_gdImageGif
-unset ac_cv_lib_c_gdImagePng
-unset ac_cv_lib_c_gdImageJpeg
-unset ac_cv_lib_c_gdImageWBMP
-unset ac_cv_lib_c_gdImageStringFT
-unset ac_cv_lib_c_gdImageGifPtr
-unset ac_cv_lib_gd_gdImageSetAntiAliased
-
-AC_CHECKING(for GD 2.0.12 or higher...)
-AC_ARG_WITH(gd,
-[  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
-                          install dir).],,)
-
-if test "$with_gd" = "no" ; then
-  AC_MSG_ERROR(GD library cannot be disabled)
-elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
-  dnl
-  dnl --with-gd was specified explicitly... 
-  dnl
-  AC_PARSE_WITH_LIB_STATIC($with_gd, GD_DIR, GD_STATIC)
-  AC_EXPAND_PATH($GD_DIR, GD_DIR)
-  test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
-  test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
-  test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
-
-  test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
-  test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
-  test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
-  test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
-
-  test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
-  test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl && GD_LIBDIR="$GD_DIR/.libs"
-  test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
-  test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
-
-  dnl make sure it is GD 2.x with antialias support
-  AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,-L$GD_LIBDIR)
-
-  if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-    dnl try again including libiconv this time
-    unset ac_cv_lib_gd_gdImageSetAntiAliased
-    AC_CHECKING(whether GD needs libiconv...)
-    AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,-L$GD_LIBDIR $ICONV_LIB)
-    GD_NEED_ICONV_LIB="$ICONV_LIB"
-  fi
-
-  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-      GD_INC=-I$GD_INCLUDE
-      GD_LIB="-L$GD_LIBDIR -lgd"
-      GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      AC_MSG_RESULT([        using libgd 2.0.12 (or higher) from $GD_LIB $GD_XTRA_LIBS])
-      AC_ADD_RUNPATH("$GD_LIBDIR")
-  else
-      AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.")
-  fi
-else
-  dnl  --with-gd specified without a DIR, look for gd in system dirs /usr or /usr/local
-  FOUND_GD="false"
-  for GD_DIR in /usr /usr/local
-  do
-    test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
-    test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
-    test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
-
-    dnl make sure it is GD 2.0.12 or higher
-    AC_CHECK_LIB(gd, gdImageSetAntiAliased, IS_GD2="true")
- 
-    if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-      dnl try again including libiconv this time
-      AC_CHECKING(whether GD needs libiconv...)
-      unset ac_cv_lib_gd_gdImageSetAntiAliased
-      AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,$ICONV_LIB)
-      GD_NEED_ICONV_LIB="$ICONV_LIB"
-    fi
-
-    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-      GD_INC=-I$GD_INCLUDE
-      GD_LIB="-L$GD_LIBDIR -lgd"
-      GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      AC_MSG_RESULT([        using libgd 2.0.12 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS).])
-      AC_ADD_RUNPATH("$GD_LIBDIR")
-      FOUND_GD="true"
-      break;
-    fi
-  done
-
-  if test "$FOUND_GD" = "false" ; then
-    AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.")
-  fi
-fi
-
-dnl ---------------------------------------------------------------------
 dnl Several libraries might be needed for GD: png, zlib, freetype,
 dnl and jpeg (processed above).  Use where GD was found as default.
 dnl ---------------------------------------------------------------------
@@ -457,9 +303,168 @@ if test "$with_xpm" != "no" ; then
 
 fi
 
+
+
+dnl ---------------------------------------------------------------------
+dnl Check where libiconv is installed
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_iconv_libiconv_open
+
+AC_ARG_WITH(libiconv,
+[  --with-libiconv=DIR     GD: Specify where libiconv is installed (DIR is path
+                              to libiconv install dir).],
+    ICONV_DIR=$withval,ICONV_DIR='')
+
+AC_EXPAND_PATH($ICONV_DIR, ICONV_DIR)
+AC_CHECKING(where libiconv is installed...)
+ICONV_LIB=''
+
+test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib"
+test -f $ICONV_DIR/libiconv.a -o -f $ICONV_DIR/libiconv.so -o -f $ICONV_DIR/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR"
+
+if test -n "$ICONV_LIBDIR" ; then
+
+  ICONV_LIB="-L$ICONV_LIBDIR -liconv"
+  AC_MSG_RESULT([        using libiconv from $ICONV_LIB])
+  AC_ADD_RUNPATH("$ICONV_DIR")
+
+else
+
+  dnl check for lib in system libs
+
+  AC_CHECK_LIB(iconv, libiconv_open, ICONV_LIB="-liconv",,)
+
+  if test -n "$ICONV_LIB" ; then
+    AC_MSG_RESULT([        using libiconv from system libs.])
+  else
+    AC_MSG_RESULT([        libiconv library cannot be found, possibly needed for GD])
+  fi
+
+fi
+
+
+dnl Note: don't include iconv by default in GD_XTRA_LIBS as it may not
+dnl       be required.
+
 GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
 
 
+
+
+dnl ---------------------------------------------------------------------
+dnl Find GD library
+dnl
+dnl If --with-gd not given, then check in system libs.
+dnl ---------------------------------------------------------------------
+
+dnl We don't want LIBS updated by all the GD stuff, so we save it and
+dnl restore later.
+
+ms_saved_LIBS="$LIBS"
+IS_GD2="false";
+
+dnl Clear some cache variables
+unset ac_cv_lib_gd_gdImageCreate
+unset ac_cv_lib_gd_gdImageString16
+unset ac_cv_lib_gd_gdImageGif
+unset ac_cv_lib_gd_gdImagePng
+unset ac_cv_lib_gd_gdImageJpeg
+unset ac_cv_lib_gd_gdImageWBMP
+unset ac_cv_lib_gd_gdImageStringFT
+unset ac_cv_lib_gd_gdImageGifPtr
+unset ac_cv_lib_c_gdImageCreate
+unset ac_cv_lib_c_gdImageString16
+unset ac_cv_lib_c_gdImageGif
+unset ac_cv_lib_c_gdImagePng
+unset ac_cv_lib_c_gdImageJpeg
+unset ac_cv_lib_c_gdImageWBMP
+unset ac_cv_lib_c_gdImageStringFT
+unset ac_cv_lib_c_gdImageGifPtr
+unset ac_cv_lib_gd_gdImageSetAntiAliased
+
+AC_CHECKING(for GD 2.0.12 or higher...)
+AC_ARG_WITH(gd,
+[  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
+                          install dir).],,)
+
+if test "$with_gd" = "no" ; then
+  AC_MSG_ERROR(GD library cannot be disabled)
+elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
+  dnl
+  dnl --with-gd was specified explicitly... 
+  dnl
+  AC_PARSE_WITH_LIB_STATIC($with_gd, GD_DIR, GD_STATIC)
+  AC_EXPAND_PATH($GD_DIR, GD_DIR)
+  test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
+  test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
+  test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
+
+  test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
+  test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
+  test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
+
+  test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl && GD_LIBDIR="$GD_DIR/.libs"
+  test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
+  test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
+
+  dnl make sure it is GD 2.x with antialias support
+  AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR)
+
+  if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
+    dnl try again including libiconv this time
+    unset ac_cv_lib_gd_gdImageSetAntiAliased
+    AC_CHECKING(whether GD needs libiconv...)
+    AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR $ICONV_LIB)
+    GD_NEED_ICONV_LIB="$ICONV_LIB"
+  fi
+
+  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
+      GD_INC=-I$GD_INCLUDE
+      GD_LIB="-L$GD_LIBDIR -lgd"
+      GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
+      AC_MSG_RESULT([        using libgd 2.0.12 (or higher) from $GD_LIB $GD_XTRA_LIBS])
+      AC_ADD_RUNPATH("$GD_LIBDIR")
+  else
+      AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.")
+  fi
+else
+  dnl  --with-gd specified without a DIR, look for gd in system dirs /usr or /usr/local
+  FOUND_GD="false"
+  for GD_DIR in /usr /usr/local
+  do
+    test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
+    test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+    test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+
+    dnl make sure it is GD 2.0.12 or higher
+    AC_CHECK_LIB(gd, gdImageSetAntiAliased, IS_GD2="true",,$GD_XTRA_LIBS)
+ 
+    if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
+      dnl try again including libiconv this time
+      AC_CHECKING(whether GD needs libiconv...)
+      unset ac_cv_lib_gd_gdImageSetAntiAliased
+      AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,$GD_XTRA_LIBS $ICONV_LIB)
+      GD_NEED_ICONV_LIB="$ICONV_LIB"
+    fi
+
+    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
+      GD_INC=-I$GD_INCLUDE
+      GD_LIB="-L$GD_LIBDIR -lgd"
+      GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
+      AC_MSG_RESULT([        using libgd 2.0.12 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS).])
+      AC_ADD_RUNPATH("$GD_LIBDIR")
+      FOUND_GD="true"
+      break;
+    fi
+  done
+
+  if test "$FOUND_GD" = "false" ; then
+    AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.")
+  fi
+fi
 
 dnl ---------------------------------------------------------------------
 dnl Continue with GD processing - determine GD formats
