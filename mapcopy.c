@@ -223,24 +223,14 @@ int msCopyHashTable(hashTableObj dst, hashTableObj src) {
 /***********************************************************************
  * msCopyFontSet()                                                     *
  *                                                                     *
- * Copy a fontSetObj, using msCreateHashTable() and msCopyHashTable()  *
+ * Copy a fontSetObj, using msLoadFontSet                              *
  **********************************************************************/
 
 int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map) {
-  if (src->filename != NULL) {
-      if (dst->filename) free(dst->filename);
-      dst->filename = strdup(src->filename);
-  }
-  copyProperty(&(dst->numfonts), &(src->numfonts), sizeof(int));
-  if (src->fonts) {
-    if (!dst->fonts) dst->fonts = msCreateHashTable();
-    if (msCopyHashTable(dst->fonts, src->fonts) != MS_SUCCESS)
-      return(MS_FAILURE);
-  }
-
-  copyProperty(&(dst->map), &map, sizeof(mapObj *));
-
-  return(MS_SUCCESS);
+  int retval;
+  copyStringPropertyRealloc(&(dst->filename), src->filename);
+  retval = msLoadFontSet(dst, map);
+  return retval;
 }
 
 /***********************************************************************
@@ -1007,6 +997,8 @@ int msCopyMap(mapObj *dst, mapObj *src)
   outputFormatObj *format;
 
   copyStringPropertyRealloc(&(dst->name), src->name); 
+  copyStringPropertyRealloc(&(dst->shapepath), src->shapepath); 
+  copyStringPropertyRealloc(&(dst->mappath), src->mappath); 
   copyProperty(&(dst->status), &(src->status), sizeof(int)); 
   copyProperty(&(dst->height), &(src->height), sizeof(int));
   copyProperty(&(dst->width), &(src->width), sizeof(int));
@@ -1022,17 +1014,17 @@ int msCopyMap(mapObj *dst, mapObj *src)
     }
   }
 
-  if (msCopyFontSet(&(dst->fontset), &(src->fontset), dst) != MS_SUCCESS) {
-    msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
-    return(MS_FAILURE);
-  }
+  //if (msCopyFontSet(&(dst->fontset), &(src->fontset), dst) != MS_SUCCESS) {
+  //  msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
+  //  return(MS_FAILURE);
+  //}
   
-  return_value = msCopySymbolSet(&(dst->symbolset), &(src->symbolset),
-                                 dst);
-  if(return_value != MS_SUCCESS) {
-    msSetError(MS_MEMERR, "Failed to copy symbolset.", "msCopyMap()");
-    return(MS_FAILURE);
-  }
+  //return_value = msCopySymbolSet(&(dst->symbolset), &(src->symbolset),
+  //                               dst);
+  //if(return_value != MS_SUCCESS) {
+  //  msSetError(MS_MEMERR, "Failed to copy symbolset.", "msCopyMap()");
+  //  return(MS_FAILURE);
+  //}
   
   //msCopyLabelCache(&(dst->labelcache), &(src->labelcache));
   copyProperty(&(dst->transparent), &(src->transparent), sizeof(int)); 
@@ -1048,8 +1040,6 @@ int msCopyMap(mapObj *dst, mapObj *src)
   copyProperty(&(dst->units), &(src->units), sizeof(enum MS_UNITS));
   copyProperty(&(dst->scale), &(src->scale), sizeof(double)); 
   copyProperty(&(dst->resolution), &(src->resolution), sizeof(int));
-  copyStringPropertyRealloc(&(dst->shapepath), src->shapepath); 
-  copyStringPropertyRealloc(&(dst->mappath), src->mappath); 
 
   return_value = msCopyColor(&(dst->imagecolor), &(src->imagecolor));
   if (return_value != MS_SUCCESS) {
