@@ -844,7 +844,7 @@ and the MapServer Map File documentation at:
        
 
    void pasteImage(imageObj srcImg, int transparentColorHex 
-                   [, int dstX, dstY])
+                   [[, int dstX, int dstY], int angle])
         Copy srcImg on top of the current imageObj.
         transparentColorHex is the color (in 0xrrggbb format) from srcImg 
         that should be considered transparent (i.e. those pixels won't 
@@ -852,6 +852,10 @@ and the MapServer Map File documentation at:
         If optional dstx,dsty are provided then it defines the position 
         where the image should be copied (dstx,dsty = top-left corner 
         position).
+        The optional angle is a value between 0 and 360 degrees to rotate
+        the source image counterclockwise.  Note that if an angle is specified
+        (even if its value is zero) then the dstx and dsty coordinates 
+        specify the CENTER of the destination area.
         Note: this function works only with 8 bits GD images (PNG or GIF).
 
 
