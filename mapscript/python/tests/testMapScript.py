@@ -561,26 +561,29 @@ class SetExtentTestCase(unittest.TestCase):
         self.mapobj1 = mapObj(testMapfile)
     def tearDown(self):
         self.mapobj1 = None
-    def testSetOwnExtent(self):
-        self.mapobj1.setExtent()
-        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
-    def testSetNewExtent(self):
+    def testSetExtent(self):
         e = self.mapobj1.extent
-        self.mapobj1.setExtent(e)
+        result = self.mapobj1.setExtent(e.minx, e.miny, e.maxx, e.maxy)
         assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+        assert result == MS_SUCCESS
+    def testSetExtentBadly(self):
+        self.assertRaises(MapServerError, self.mapobj1.setExtent,
+                          1.0, -2.0, -3.0, 4.0)
+
 
 class CLonedSetExtentTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile).clone()
     def tearDown(self):
         self.mapobj1 = None
-    def testSetOwnExtent(self):
-        self.mapobj1.setExtent()
-        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
-    def testSetNewExtent(self):
+    def testSetExtent(self):
         e = self.mapobj1.extent
-        self.mapobj1.setExtent(e)
+        result = self.mapobj1.setExtent(e.minx, e.miny, e.maxx, e.maxy)
         assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+        assert result == MS_SUCCESS
+    def testSetExtentBadly(self):
+        self.assertRaises(MapServerError, self.mapobj1.setExtent,
+                          1.0, -2.0, -3.0, 4.0)
 
 # rectObj constructor tests
 
