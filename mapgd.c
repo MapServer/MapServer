@@ -10,6 +10,8 @@
 #include <io.h>
 #endif
 
+static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
+static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 
 static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) {
   struct imageCacheObj *icp;
@@ -53,19 +55,33 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
  * Utility function to create a GD image. Returns
  * a pointer to an imageObj structure.
  */  
-imageObj *msImageCreateGD(int width, int height, int imagetype,
+imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
                           char *imagepath, char *imageurl)
 {
     imageObj  *image;
 
     if (width > 0 && height > 0)
     {
-        image = (imageObj *)malloc(sizeof(imageObj));
-        image->img.gd = gdImageCreate(width, height);
+        image = (imageObj *)calloc(1,sizeof(imageObj));
+
+        if( format->imagemode == MS_IMAGEMODE_RGB 
+            || format->imagemode == MS_IMAGEMODE_RGBA )
+        {
+#if GD2_VERS > 1
+            image->img.gd = gdImageCreateTrueColor(width, height);
+#else
+            msSetError(MS_IMGERR, 
+                       "Attempt to use RGB or RGBA IMAGEMODE with GD 1.x, please upgrade to GD 2.x.", "msImageCreateGD()" );
+#endif
+        }
+        else
+            image->img.gd = gdImageCreate(width, height);
     
         if (image->img.gd)
         {
-            image->imagetype = imagetype;
+            image->format = format;
+            format->refcount++;
+
             image->width = width;
             image->height = height;
             image->imagepath = NULL;
@@ -82,8 +98,96 @@ imageObj *msImageCreateGD(int width, int height, int imagetype,
             
             return image;
         }
+        else
+            free( image );
+        
     }
     return NULL;
+}
+
+/**
+ * Utility function to load an image in a GD supported format, and
+ * return it as a valid imageObj.
+ */  
+imageObj *msImageLoadGD( const char *filename )
+{
+  FILE *stream;
+  gdImagePtr img=NULL;
+  const char *driver = NULL;
+  char bytes[8];
+  imageObj      *image = NULL;
+
+  image = (imageObj *)calloc(1,sizeof(imageObj));
+  
+  stream = fopen(filename,"rb"); // allocate input and output images (same size)
+  if(!stream) {
+    msSetError(MS_IOERR, "(%s)", "msImageLoadGD()", filename );
+    return(NULL);
+  }
+
+  fread(bytes,8,1,stream); // read some bytes to try and identify the file
+  rewind(stream); // reset the image for the readers
+  if (memcmp(bytes,"GIF8",4)==0) {
+#ifdef USE_GD_GIF
+    img = gdImageCreateFromGif(stream);
+    driver = "GD/GIF";
+    image->img.gd = img;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
+    image->width = img->sx;
+    image->height = img->sy;
+#else
+    msSetError(MS_MISCERR, "Unable to load GIF reference image.", "msImageLoadGD()");
+    fclose(stream);
+    return(NULL);
+#endif
+  } else if (memcmp(bytes,PNGsig,8)==0) {
+#ifdef USE_GD_PNG
+    img = gdImageCreateFromPng(stream);
+    driver = "GD/PNG";
+    image->img.gd = img;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
+    image->width = img->sx;
+    image->height = img->sy;
+#else
+    msSetError(MS_MISCERR, "Unable to load PNG reference image.", "msImageLoadGD()");
+    fclose(stream);
+    return(NULL);
+#endif
+  } else if (memcmp(bytes,JPEGsig,3)==0) {
+#ifdef USE_GD_JPEG
+    img = gdImageCreateFromJpeg(stream);
+    driver = "GD/JPEG";
+    image->img.gd = img;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
+    image->width = img->sx;
+    image->height = img->sy;
+#else
+    msSetError(MS_MISCERR, "Unable to load JPEG reference image.", "msImageLoadGD()");
+    fclose(stream);
+    return(NULL);
+#endif
+  }
+
+  if(!img) {
+    msSetError(MS_GDERR, "Unable to initialize image '%s'", "msLoadImage()", 
+               filename);
+    fclose(stream);
+    return(NULL);
+  }
+
+  /* Create an outputFormatObj for the format. */
+  image->format = msCreateDefaultOutputFormat( NULL, driver );
+
+  if( image->format == NULL )
+  {
+    msSetError(MS_GDERR, "Unable to create default OUTPUTFORMAT definition for driver '%s'.", "msImageLoadGD()", driver );
+    return(NULL);
+  }
+
+  return image;
 }
 
 /* ---------------------------------------------------------------------------*/
@@ -1140,7 +1244,8 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p,
   if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
     return;
 
-  if(fc >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
+  if(!gdImageTrueColor(img) 
+     && fc >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
     return;
 
   if(sz < 1) /* size too small */
@@ -1333,9 +1438,17 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p,
 ** Save an image to a file named filename, if filename is NULL it goes to stdout
 */
 
-int msSaveImageGD(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality)
+int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
+
 {
-  FILE *stream;
+    FILE *stream;
+
+#if GD2_VERS > 1
+    if( format->imagemode == MS_IMAGEMODE_RGBA )
+        gdImageSaveAlpha( img, 1 );
+    else if( format->imagemode == MS_IMAGEMODE_RGB )
+        gdImageSaveAlpha( img, 0 );
+#endif
 
   if(filename != NULL && strlen(filename) > 0) {
     stream = fopen(filename, "wb");
@@ -1357,48 +1470,55 @@ int msSaveImageGD(gdImagePtr img, char *filename, int type, int transparent, int
     stream = stdout;
   }
 
-  if(interlace)
-    gdImageInterlace(img, 1);
+  if( strcasecmp("ON",msGetOutputFormatOption( format, "INTERLACE", "ON" ))
+      == 0 )
+      gdImageInterlace(img, 1);
 
-  if(transparent)
+  if(format->transparent)
     gdImageColorTransparent(img, 0);
 
-  switch(type) {
-  case(MS_GIF):
+  if( strcasecmp(format->driver,"gd/gif") == 0 )
+  {
 #ifdef USE_GD_GIF
     gdImageGif(img, stream);
 #else
     msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImage()");
     return(MS_FAILURE);
 #endif
-    break;
-  case(MS_PNG):
+  }
+  else if( strcasecmp(format->driver,"gd/png") == 0 )
+  {
 #ifdef USE_GD_PNG
-    gdImagePng(img, stream);
+      gdImagePng(img, stream);
 #else
-    msSetError(MS_MISCERR, "PNG output is not available.", "msSaveImage()");
-    return(MS_FAILURE);
+      msSetError(MS_MISCERR, "PNG output is not available.", "msSaveImage()");
+      return(MS_FAILURE);
 #endif
-    break;
-  case(MS_JPEG):
+  }
+  else if( strcasecmp(format->driver,"gd/jpeg") == 0 )
+  {
 #ifdef USE_GD_JPEG
-    gdImageJpeg(img, stream, quality);
+    gdImageJpeg(img, stream, 
+                atoi(msGetOutputFormatOption( format, "QUALITY", "75" )) );
 #else
      msSetError(MS_MISCERR, "JPEG output is not available.", "msSaveImage()");
      return(MS_FAILURE);
 #endif
-     break;
-  case(MS_WBMP):
+  }
+  else if( strcasecmp(format->driver,"gd/wbmp") == 0 )
+  {
 #ifdef USE_GD_WBMP
-    gdImageWBMP(img, 1, stream);
+      gdImageWBMP(img, 1, stream);
 #else
-    msSetError(MS_MISCERR, "WBMP output is not available.", "msSaveImage()");
-    return(MS_FAILURE);
+      msSetError(MS_MISCERR, "WBMP output is not available.", "msSaveImage()");
+      return(MS_FAILURE);
 #endif
-    break;
-  default:
-    msSetError(MS_MISCERR, "Unknown output image type.", "msSaveImage()");
-    return(MS_FAILURE);
+  }
+  else
+  {
+      msSetError(MS_MISCERR, "Unknown output image type driver: %s.", 
+                 "msSaveImage()", format->driver );
+      return(MS_FAILURE);
   }
 
   if(filename != NULL && strlen(filename) > 0) fclose(stream);
