@@ -578,10 +578,11 @@ and the MapServer Map File documentation at:
         If quality is negative, then the default IJG JPEG quality value is 
         used  (the quality value is ignored for all formats other than JPEG).
 
-   void pasteImage(imageObj srcImg, int transparent)
+   void pasteImage(imageObj srcImg, int transparentColorIndex)
         Copy srcImg on top of the current imageObj.
-        Passing transparent = MS_TRUE will set srcImg's background color as
-        transparent before copying it on top of the image.
+        transparentColorIndex is the color from srcImg that should be
+        considered transparent (i.e. those pixels won't be copied).  
+        Pass -1 if you don't want any transparent color.
 
 
  LabelObj Class:

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.75  2002/01/17 21:05:53  dan
+ * Changed img->pasteImage() to take transparent color index as argument
+ *
  * Revision 1.74  2002/01/17 16:44:43  assefa
  * setlayersdrawingorder only available for PHP4.
  *
@@ -4235,15 +4238,15 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
  *                        image->pasteImage()
  **********************************************************************/
 
-/* {{{ proto void img.pasteImage(imageObj Src, bool bTransparent)
-   Pastes another imageObj on top of this imageObj. Pass bTransparent=MS_TRUE
-   to request that the background color of srcImg be considered transparent
+/* {{{ proto void img.pasteImage(imageObj Src, int transparentColor)
+   Pastes another imageObj on top of this imageObj. transparentColor is
+   the index of the color from srcImg that should be considered transparent.
+   Pass transparentColor=-1 if you don't want any transparent color.
 */
 
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pSrcImg, *pTransparent, *pThis;
-
     gdImagePtr imgDst = NULL, imgSrc = NULL;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -4267,12 +4270,17 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
                                              list);
     
     convert_to_long(pTransparent);
-    if (pTransparent->value.lval)
-        gdImageColorTransparent(imgSrc, 0);
 
     if (imgSrc != NULL && imgDst != NULL)
     {
+        int    nOldTransparentColor;
+
+        nOldTransparentColor = gdImageGetTransparent(imgSrc);
+        gdImageColorTransparent(imgSrc, pTransparent->value.lval);
+
         gdImageCopy(imgDst, imgSrc, 0, 0, 0, 0, imgSrc->sx, imgSrc->sy);
+
+        gdImageColorTransparent(imgSrc, nOldTransparentColor);
     }
     else
     {
