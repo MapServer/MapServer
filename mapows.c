@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2004/10/29 22:18:54  assefa
+ * Use ows_schama_location metadata. The default value if metadata is not found
+ * is http://schemas.opengeospatial.net
+ *
  * Revision 1.48  2004/10/27 19:18:25  julien
  * msOWSPrintURLType: Encode string before asssigning end buffer. (Bug 944)
  *
@@ -402,7 +406,7 @@ const char *msOWSGetSchemasLocation(mapObj *map)
     schemas_location = msLookupHashTable(&(map->web.metadata), 
                                          "ows_schemas_location");
     if (schemas_location == NULL)
-        schemas_location = "..";
+      schemas_location = "http://schemas.opengeospatial.net";//"..";
 
     return schemas_location;
 }

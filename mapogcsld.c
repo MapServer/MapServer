@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.44  2004/10/29 22:18:54  assefa
+ * Use ows_schama_location metadata. The default value if metadata is not found
+ * is http://schemas.opengeospatial.net
+ *
  * Revision 1.43  2004/10/29 19:56:19  assefa
  * Use a class name as the RULE name when generating an SLD.
  *
@@ -2757,10 +2761,13 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
     int i = 0;
     char *pszTmp = NULL;
     char *pszSLD = NULL;
+    char *schemalocation = NULL;
 
     if (map)
     {
-        sprintf(szTmp, "%s\n", "<StyledLayerDescriptor version=\"1.0.0\" xmlns=\"http://www.opengis.net/sld\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/sld http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd\">");
+        schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
+        sprintf(szTmp, "<StyledLayerDescriptor version=\"1.0.0\" xmlns=\"http://www.opengis.net/sld\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/sld %s/sld/1.0.0/StyledLayerDescriptor.xsd\">\n",schemalocation );
+        free(schemalocation);
 
         pszSLD = strcatalloc(pszSLD, szTmp);
         if (iLayer < 0 || iLayer > map->numlayers -1)

@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.51  2004/10/29 22:18:54  assefa
+ * Use ows_schama_location metadata. The default value if metadata is not found
+ * is http://schemas.opengeospatial.net
+ *
  * Revision 1.50  2004/10/26 13:41:48  assefa
  * Change gml outut to "missing" instead of "inaplicable" when no features
  * are found after a query (Bug 597).
@@ -214,6 +218,7 @@ MS_CVSID("$Id$")
 
 static int msWFSException(mapObj *map, const char *wmtversion) 
 {
+    char *schemalocation = NULL;
     /* In WFS, exceptions are always XML.
     */
     msIO_printf("Content-type: text/xml%c%c",10,10);
@@ -221,7 +226,9 @@ static int msWFSException(mapObj *map, const char *wmtversion)
     msIO_printf("<ServiceExceptionReport\n");
     msIO_printf("xmlns=\"http://www.opengis.net/ogc\" ");
     msIO_printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
-    msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc http://ogc.dmsolutions.ca/wfs/1.0/OGC-exception.xsd\">\n");
+    schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
+    msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wms/1.1.1/OGC-exception.xsd\">\n", schemalocation);
+    free(schemalocation);
     msIO_printf("  <ServiceException>\n");
     /* Optional <Locator> element currently unused. */
     //msIO_printf("    <Message>\n");

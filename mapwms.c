@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.136  2004/10/29 22:18:54  assefa
+ * Use ows_schama_location metadata. The default value if metadata is not found
+ * is http://schemas.opengeospatial.net
+ *
  * Revision 1.135  2004/10/29 22:03:40  dan
  * Enable MS_NONSQUARE by default for WMS is width/height doesn't match the
  * extents' x/y ratio (bug 862).
@@ -114,9 +118,14 @@ static char *wms_exception_format=NULL;
 
 int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 {
+    char *schemalocation = NULL;
+
     // Default to WMS 1.1.1 exceptions if version not set yet
     if (nVersion <= 0)
         nVersion = OWS_1_1_1;
+
+    //get scheam location
+    schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
   // Establish default exception format depending on VERSION
   if (wms_exception_format == NULL)
@@ -179,7 +188,8 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                          "ISO-8859-1");
 
-       msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
+      
+      msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"%s/wms/1.1.0/exception_1_1_0.dtd\">\n",schemalocation);
 
       msIO_printf("<ServiceExceptionReport version=\"1.1.0\">\n");
     }
@@ -191,8 +201,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
                            NULL, "wms_encoding", OWS_NOERR,
                   "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                            "ISO-8859-1");
-
-        msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
+        msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"%s/wms/1.1.1/exception_1_1_1.dtd\">\n", schemalocation);
         msIO_printf("<ServiceExceptionReport version=\"1.1.1\">\n");
     }
 
@@ -204,6 +213,9 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     msWriteErrorXML(stdout);
     msIO_printf("</ServiceException>\n");
     msIO_printf("</ServiceExceptionReport>\n");
+
+    free(schemalocation);
+
   }
 
   return MS_FAILURE; // so that we can call 'return msWMSException();' anywhere
@@ -1460,10 +1472,14 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
 */
 int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 {
-  const char *dtd_url = NULL;
+  char *dtd_url = NULL;
   char *script_url=NULL, *script_url_encoded=NULL;
   char *pszMimeType=NULL;
   char szVersionBuf[OWS_VERSION_MAXLEN];
+  char *schemalocation = NULL;
+
+
+   schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
   if (nVersion < 0)
       nVersion = OWS_1_1_1;     // Default to 1.1.1
@@ -1471,23 +1487,31 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   // Decide which version we're going to return.
   if (nVersion < OWS_1_0_7) {
     nVersion = OWS_1_0_0;
-    dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_0.dtd";
+    dtd_url = strdup(schemalocation);
+    dtd_url = strcatalloc(dtd_url, "/wms/1.0.0/capabilities_1_0_0.dtd");
   }
+
   else if (nVersion < OWS_1_0_8) {
     nVersion = OWS_1_0_7;
-    dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_7.dtd";
+    dtd_url = strdup(schemalocation);
+    dtd_url = strcatalloc(dtd_url, "/wms/1.0.7/capabilities_1_0_7.dtd");
+    //dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_7.dtd";
   }
   else if (nVersion < OWS_1_1_0) {
     nVersion = OWS_1_0_8;
-    dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_8.dtd";
+    dtd_url = strdup("http://www.digitalearth.gov/wmt/xml/capabilities_1_0_8.dtd");
   }
   else if (nVersion == OWS_1_1_0) {
     nVersion = OWS_1_1_0;
-    dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_1_0.dtd";
+    dtd_url = strdup(schemalocation);
+    dtd_url = strcatalloc(dtd_url, "/wms/1.1.0/capabilities_1_1_0.dtd");
+    //dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_1_0.dtd";
   }
   else {
     nVersion = OWS_1_1_1;
-    dtd_url = "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd";
+    dtd_url = strdup(schemalocation);
+    dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
+    //dtd_url = "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd";
   }
 
   // We need this server's onlineresource.
@@ -1785,6 +1809,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
   free(script_url);
   free(script_url_encoded);
+
+  free(dtd_url);
+  free(schemalocation);
 
   return(MS_SUCCESS);
 }
@@ -2202,7 +2229,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   const char *pszOnlineResMapWFS = NULL, *pszOnlineResLyrWFS = NULL; 
   const char *pszOnlineResMapWCS = NULL, *pszOnlineResLyrWCS = NULL;
   char *pszOnlineResEncoded=NULL, *pszLayerName=NULL;
-             
+  char *schemalocation = NULL;
+
    for(i=0; map && i<numentries; i++) {
      if(strcasecmp(names[i], "LAYERS") == 0) {
 
@@ -2214,7 +2242,10 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                       NULL, "wms_encoding", OWS_NOERR,
                       "<?xml version='1.0' encoding=\"%s\"?>\n",
                       "ISO-8859-1");
-   msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"http://schemas.opengeospatial.net/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n");
+   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
+   msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"%s/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n", schemalocation);
+   free(schemalocation);
+
    msIO_printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
 
    //check if map-level metadata wfs(wcs)_onlineresource is available
