@@ -61,7 +61,11 @@ Here is the list of available options as returned by "./configure --help":
   --with-apxs[=FILE]      Use this option only if building the PHP3 MapScript
                           on a system where PHP3 was built as a shared Apache
                           module.  FILE is the optional pathname to the
-                          Apache apxs tool; defaults to apxs.                   
+                          Apache apxs tool; defaults to apxs.
+  --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
+                          Required on *BSD systems.
+  --disable-runpath       Do not link with runtime lib path (the default).
+
 All the options are described in more details below.
 
 
@@ -163,6 +167,14 @@ Freetype Support:
 
        and restart httpd.
 
+  Common problem: LibTTF came pre-installed on my system, but freetype.h is 
+                  not found.
+
+    On some systems such as RedHat Linux, the freetype library comes
+    installed by default, but the headers are not.  You will have to install
+    the freetype-devel RPM that came with the Linux CD and then re-run
+    configure.
+
 
 PROJ.4 Support:
 ---------------
@@ -185,6 +197,20 @@ Miscellaneous flags:
 
   --enable-debug          Include -g in CFLAGS for debugging.
   --disable-debug         Do not include -g in CFLAGS (the default).
+  --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
+                          Required on *BSD systems.
+  --disable-runpath       Do not link with runtime lib path (the default).
+
+
+  NOTE FOR *BSD USERS ABOUT --enable-runpath:
+
+    For some reason, the --enable-runpath switch is required in order to 
+    successfully link on *BSD systems.  For most other operating systems
+    you don't need the --enable-runpath switch unless you link MapServer
+    with some shared libraries located outside of the system's runtime 
+    library path.  And even then, it is probably preferable to use 
+    "setenv LD_LIBRARY_PATH ..." in Apache's httpd.conf to set the mapserv
+    CGI or MapScript runtime library path.
 
 
 PHP3/MapScript module:
@@ -216,9 +242,15 @@ PHP3/MapScript module:
   site:
 	http://www.php.net/manual/install-unix.php
 
-  If PHP3 is compiled as an Apache module, then you have to pass to the
-  MapServer configure script the same value for the --with-apxs option 
-  that was passed to the PHP3 configure script.  
+  If PHP3 is compiled as a shared library Apache module, then you have to
+  pass to the MapServer configure script the same value for the 
+  --with-apxs option that was passed to the PHP3 configure script.
+  You can find the configure options that were used to build PHP3 on your
+  system by looking at the "Configuration" section of the output of the
+  PHP3 phpinfo() command.
+
+  If you get errors at compile time about missing headers (ap_*.h, httpd.h,
+  http*.h) then you need to enable apxs: re-run configure with --with-apxs.
 
 
 Perl MapScript Module:
