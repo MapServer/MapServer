@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.47  2003/01/15 19:15:18  dan
+ * Do not set TIME= parameter in GetMap URL if wms_time metadata is empty
+ *
  * Revision 1.46  2003/01/15 19:05:54  dan
  * Fixed the fix from v1.39 - the test on pszFormatsList had been removed
  * instead of the test on pszStylesList
@@ -283,7 +286,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     {
         sprintf(pszURL + strlen(pszURL), "&QUERY_LAYERS=%s", pszName);
     }
-    if (pszTime)
+    if (pszTime && strlen(pszTime) > 0)
     {
         sprintf(pszURL + strlen(pszURL), "&TIME=%s", pszTime);
     }
