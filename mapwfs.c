@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.25  2003/10/08 00:01:35  assefa
+ * Correct IsLikePropery with an OR.
+ * Use of namespace if given in metadata.
+ *
  * Revision 1.24  2003/10/06 13:03:19  assefa
  * Use of namespace. Correct execption return.
  *
@@ -218,20 +222,18 @@ static int msWFSIsLayerSupported(layerObj *lp)
 */
 const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp)
 {
-    switch(lp->type)
+  const char *name;
+
+    if ((name = msLookupHashTable(lp->metadata,
+                                  "wfs_geometry_element_name")) == NULL &&
+        (name = msLookupHashTable(map->web.metadata,
+                                  "wfs_geometry_element_name")) == NULL )
     {
-        case MS_LAYER_POINT:
-          return "pointProperty";
-        case MS_LAYER_LINE:
-          return "lineStringProperty";
-        case MS_LAYER_POLYGON:
-          return "polygonProperty";
-        default:
-          break;
+        name = "MS_GEOMETRY";
     }
 
-    return "???unknown???";
-
+    return name;
+    
 }
 
 /* msWFSGetGeomType()
@@ -484,8 +486,9 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     const char *myns_uri = NULL;
     char **tokens;
     int n=0;
-    char *pszNameSpace = strdup("myns");
-
+    char *user_namespace_prefix = NULL;
+    char *user_namespace_uri = NULL;
+    
     if(paramsObj->pszTypeName && numlayers == 0) 
     {
         // Parse comma-delimited list of type names (layers)
@@ -499,7 +502,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             tokens = split(layers[0], ':', &n);
             if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0)
             {
-                pszNameSpace = strdup(tokens[0]);
                 msFreeCharArray(tokens, n);
                 for (i=0; i<numlayers; i++)
                 {
@@ -556,15 +558,34 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     if (myns_uri == NULL)
         myns_uri = "http://www.ttt.org/myns";
 
-    printf("<schema\n"
-           "   targetNamespace=\"%s\" \n"
-           "   xmlns:%s=\"%s\" \n"
-           "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
-           "   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
-           "   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
-           "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-           "   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
-           myns_uri, pszNameSpace, myns_uri );
+    user_namespace_prefix =  
+      msLookupHashTable(map->web.metadata, "wfs_namespace_prefix");
+    user_namespace_uri =  
+      msLookupHashTable(map->web.metadata, "wfs_namespace_uri");
+    
+    if (user_namespace_prefix && user_namespace_uri)
+    {
+        printf("<schema\n"
+               "   targetNamespace=\"%s\" \n"
+               "   xmlns:%s=\"%s\" \n"
+               "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+               "   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+               "   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
+               "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+               "   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
+               user_namespace_uri, user_namespace_prefix,  user_namespace_uri);
+    }
+    else
+     printf("<schema\n"
+               "   targetNamespace=\"%s\" \n"
+               "   xmlns:myns=\"%s\" \n"
+               "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+               "   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+               "   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
+               "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+               "   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
+               myns_uri, myns_uri); 
+    
 
     printf("\n"
            "  <import namespace=\"http://www.opengis.net/gml\" \n"
@@ -595,19 +616,31 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             ** OK, describe this layer
             */
 
-            printf("\n"
+            if (user_namespace_prefix)
+              printf("\n"
                    "  <element name=\"%s\" \n"
                    "           type=\"%s:%s_Type\" \n"
                    "           substitutionGroup=\"gml:_Feature\" />\n\n",
-                   lp->name, pszNameSpace, lp->name);
+                   lp->name, user_namespace_prefix, lp->name);
+            else
+              printf("\n"
+                     "  <element name=\"%s\" \n"
+                     "           type=\"myns:%s_Type\" \n"
+                     "           substitutionGroup=\"gml:_Feature\" />\n\n",
+                     lp->name, lp->name);
 
             printf("  <complexType name=\"%s_Type\">\n", lp->name);
             printf("    <complexContent>\n");
             printf("      <extension base=\"gml:AbstractFeatureType\">\n");
             printf("        <sequence>\n");
 
-            printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
-                   msWFSGetGeomElementName(map, lp));
+            //printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
+            //      msWFSGetGeomElementName(map, lp));
+             printf("          <element name=\"%s\" \n"
+                   "                   type=\"gml:%s\" \n"
+                   "                   nillable=\"false\" />\n",
+                   msWFSGetGeomElementName(map, lp),
+                   msWFSGetGeomType(lp) );
 
 
             if (msLayerOpen(lp) == MS_SUCCESS)
@@ -615,9 +648,19 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                 if (msLayerGetItems(lp) == MS_SUCCESS)
                 {
                     int k;
+                    char *name_gml = NULL;
+                    char *description_gml = NULL;
+                    name_gml = msLookupHashTable(lp->metadata, "wfs_gml_name_item");
+                    description_gml = msLookupHashTable(lp->metadata, "wfs_gml_description_item");
                     for(k=0; k<lp->numitems; k++)
+                    {
+                         if (name_gml && strcmp(name_gml,  lp->items[k]) == 0)
+                           continue;
+                          if (description_gml && strcmp(description_gml,  lp->items[k]) == 0)
+                            continue;
                         printf("          <element name=\"%s\" type=\"string\" />\n",
                                lp->items[k] );
+                    }
                 }
 
                 msLayerClose(lp);
@@ -644,8 +687,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     if (layers)
         msFreeCharArray(layers, numlayers);
 
-    if (pszNameSpace)
-      free(pszNameSpace);
 
     return MS_SUCCESS;
 }
@@ -670,7 +711,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     int bFilterSet = 0;
     int bBBOXSet = 0;
     char *pszNameSpace = strdup("myns");
-    
+    char *user_namespace_prefix = NULL;
+    char *user_namespace_uri = NULL;
+
     // Default filter is map extents
     bbox = map->extent;
 
@@ -709,7 +752,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
         tokens = split(layers[0], ':', &n);
         if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0)
         {
-            pszNameSpace = strdup(tokens[0]);
+            //pszNameSpace = strdup(tokens[0]);
             msFreeCharArray(tokens, n);
             for (i=0; i<numlayers; i++)
             {
@@ -966,6 +1009,29 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
                         if (lp->classitem)
                           free (lp->classitem);
                         lp->classitem = strdup(szClassItem);
+
+/* ==================================================================== */
+/*      If there is a case where PorprtyIsLike is combined with an      */
+/*      Or, then we need to create a second class with the              */
+/*      PrpertyIsEuql expression. Note that the first expression        */
+/*      returned dows not include the IslikePropery.                    */
+/* ==================================================================== */
+                        if (!FLTIsOnlyPropertyIsLike(psNode))
+                        {
+                             szExpression = 
+                               FLTGetMapserverIsPropertyExpression(psNode);
+                             if (szExpression)
+                             {
+                                 initClass(&(lp->class[1]));
+
+                                 lp->class[1].type = lp->type;
+                                 lp->numclasses++;
+                                 loadExpressionString(&lp->class[1].expression, 
+                                         szExpression);
+                                 if (!lp->class[1].template)
+                                   lp->class[1].template = strdup("ttt.html");
+                             }
+                        }
                     }
 
                     if (!lp->class[0].template)
@@ -1098,17 +1164,45 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
-    printf("<wfs:FeatureCollection\n"
-           "   xmlns=\"%s\"\n"
-           "   xmlns:%s=\"%s\"\n"
-           "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
-           "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-           "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
-           "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-           "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
-           "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
+    user_namespace_uri =  
+      msLookupHashTable(map->web.metadata, "wfs_namespace_uri");
+
+    user_namespace_prefix = 
+      msLookupHashTable(map->web.metadata, "wfs_namespace_prefix");
+    if (user_namespace_prefix && user_namespace_uri)
+      pszNameSpace = strdup(user_namespace_prefix);
+    else
+      pszNameSpace = strdup("myns");
+
+     
+
+    if (user_namespace_prefix && user_namespace_uri)
+    {
+        printf("<wfs:FeatureCollection\n"
+               "   xmlns:%s=\"%s\"\n"  
+               "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
+               "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+               "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+               "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+               "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
+               "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
 ENAME=%s\">\n",
-           myns_uri, pszNameSpace, myns_uri,
+              user_namespace_prefix, user_namespace_uri,
+               msOWSGetSchemasLocation(map), paramsObj->pszVersion,
+               user_namespace_uri, script_url_encoded, paramsObj->pszVersion, typename);
+    }
+    else
+      printf("<wfs:FeatureCollection\n"
+             "   xmlns=\"%s\"\n"
+             "   xmlns:myns=\"%s\"\n"
+             "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
+             "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+             "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+             "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+             "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
+             "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
+ENAME=%s\">\n",
+           myns_uri, myns_uri,
            msOWSGetSchemasLocation(map), paramsObj->pszVersion,
            myns_uri, script_url_encoded, paramsObj->pszVersion, typename);
 
@@ -1118,10 +1212,24 @@ ENAME=%s\">\n",
     */
     msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace);
     
-
+    //if no results where written 
+    for(i=0; i<map->numlayers; i++) 
+    {
+        if (map->layers[i].resultcache && 
+            map->layers[i].resultcache->numresults > 0)
+          break;
+    }
+    if (i==map->numlayers)
+    {
+        printf("   <gml:boundedBy>\n"); 
+        printf("      <gml:null>inapplicable</gml:null>\n");
+        printf("   </gml:boundedBy>\n"); 
+    }
     /*
     ** Done!
     */
+    
+
     printf("</wfs:FeatureCollection>\n\n");
 
     free(script_url);
