@@ -174,8 +174,11 @@ void msRectToPolygon(rectObj rect, shapeObj *poly)
   line.numpoints = 5;
   
   msAddLine(poly, &line);
-  poly->type = MS_SHAPE_POLYGON;
-  poly->bounds = rect;
+  if(poly->numlines == 1) { // poly was empty to begin with
+    poly->type = MS_SHAPE_POLYGON;
+    poly->bounds = rect;
+  } else
+    msMergeRect(&poly->bounds, &rect);
   free(line.point);
 }
 

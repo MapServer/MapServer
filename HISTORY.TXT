@@ -13,8 +13,28 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Version 4.1 (CVS)
-------------------------
+Version 4.2-beta2 (2004-05-03)
+------------------------------
+
+- Map cloning fixed.  However, users must now set the cloned map's fontset
+  and symbolset explicitly (see bug 557).
+
+- Fixed problem with PHP's pasteImage() method when angle=0
+
+- Fixed build problem in mapresample.c when compiling without GDAL.
+
+- Fixed possible crash when producing WMS errors INIMAGE (bug 644)
+
+- Fixed automated generation of onlineresource in OWS GetCapabilities
+  when the xxx_onlineresource metadata is not specified: the map= parameter
+  used to be omitted and is now included in the default onlineresource if
+  it was explicitly set in QUERY_STRING (bug 643)
+
+- Fixed an issue with annotation label overlap. There was an issue with
+  the way msRectToPolygon was computing it's bounding box. (bug 618)
+
+Version 4.2-beta1 (2004-04-17)
+------------------------------
 
 - Added support for WMS 1.1.1 in the WMS interface. 
 
