@@ -428,7 +428,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 {
     int	       	nRecordOffset, i;
     uchar	*pabyRec;
-    char	*pReturnField = NULL;
+/*    char	*pReturnField = NULL;*/
 
     /* -------------------------------------------------------------------- */
     /*	Is the request valid?                  				    */
@@ -488,9 +488,10 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 	if(psDBF->pszStringField[i] != ' ')
 	  break;	
     }
-    pReturnField = psDBF->pszStringField+i; */
+    pReturnField = psDBF->pszStringField+i;
+    return( pReturnField ); */
 
-    return( pReturnField );
+    return (psDBF->pszStringField);
 }
 
 /************************************************************************/
