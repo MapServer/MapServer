@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/07/08 12:36:11  frank
+ * don't crash if format==NULL
+ *
  * Revision 1.19  2003/07/03 03:01:58  assefa
  * Add support for saving the output formats.
  *
@@ -306,7 +309,8 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->renderer = MS_RENDER_WITH_IMAGEMAP;
     }
 
-    format->inmapfile = MS_FALSE;
+    if( format != NULL )
+        format->inmapfile = MS_FALSE;
 
     return format;
 }
