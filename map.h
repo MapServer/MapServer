@@ -756,9 +756,9 @@ void msSDELayerFreeItemInfo(layerObj *layer);
 
 
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
-int msWMSCapabilities(mapObj *map);
-int msWMSGetMap(mapObj *map);
-int msWMSFeatureInfo(mapObj *map);
+int msWMSCapabilities(mapObj *map, const char *wmtver);
+int msWMSGetMap(mapObj *map, const char *wmtver);
+int msWMSFeatureInfo(mapObj *map, const char *wmtver);
 
 #endif
 
