@@ -74,7 +74,7 @@ int loadParams(char **names, char **values) {
     }
   }
 
-  return(m+1);
+  return(m);
 }
 
 void getword(char *word, char *line, char stop) {
