@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.286  2004/10/21 17:58:09  frank
+ * Avoid all direct use of pj_errno.
+ *
  * Revision 1.285  2004/10/21 17:01:48  frank
  * Use pj_get_errno_ref() instead of directly using pj_errno.
  *
@@ -862,8 +865,9 @@ static int _msProcessAutoProjection(projectionObj *p)
 
     msAcquireLock( TLOCK_PROJ );
     if( !(p->proj = pj_init(numargs, args)) ) {
+        int *pj_errno_ref = pj_get_errno_ref();
         msReleaseLock( TLOCK_PROJ );
-        msSetError(MS_PROJERR, pj_strerrno(pj_errno), 
+        msSetError(MS_PROJERR, pj_strerrno(*pj_errno_ref), 
                    "msProcessProjection()");	  
         return(-1);
     }
