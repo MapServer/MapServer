@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2005/01/28 15:09:41  julien
+ * HTML Legend: Add opt_flag support for layer groups. Default flag=15. Bug 1173
+ *
  * Revision 1.103  2004/12/02 18:40:32  sdlime
  * Added template tags to expose the reference map extent (bug 1102).
  *
@@ -1227,12 +1230,15 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
  * 
  * buffer must be freed by caller.
 */
-int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **pszTemp, char* pszPrefix)
+int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, hashTableObj *oGroupArgs, char **pszTemp, char* pszPrefix)
 {
    hashTableObj *myHashTable;
    char pszStatus[3];   
    char *pszClassImg;
+   char *pszOptFlag = NULL;
    int i, j;
+   int nOptFlag = 15;
+   int bShowGroup;
 
    *pszTemp = NULL;
    
@@ -1240,6 +1246,67 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
      msSetError(MS_WEBERR, "Invalid pointer.", "generateGroupTemplate()");
      return MS_FAILURE;
    }
+
+   /*
+    * Get the opt_flag is any.
+    */
+   if (oGroupArgs)
+       pszOptFlag = msLookupHashTable(oGroupArgs, "opt_flag");
+
+   if (pszOptFlag)
+       nOptFlag = atoi(pszOptFlag);
+
+   /*
+    * Check all layers, if one in the group
+    * should be visible, print the group.
+    * (Check for opt_flag)
+    */
+   bShowGroup = 0;
+   for (j=0; j<map->numlayers; j++)
+   {
+       if (map->layers[map->layerorder[j]].group && 
+           strcmp(map->layers[map->layerorder[j]].group, pszGroupName) == 0)
+       {
+           // dont display layer is off.
+           if( (nOptFlag & 2) == 0 && 
+               map->layers[map->layerorder[j]].status == MS_OFF )
+               bShowGroup = 0;
+           else
+               bShowGroup = 1;
+
+           // dont display layer is query.
+           if( (nOptFlag & 4) == 0  && 
+               map->layers[map->layerorder[j]].type == MS_LAYER_QUERY )
+               bShowGroup = 0;
+
+           // dont display layer is annotation.
+           if( (nOptFlag & 8) == 0 && 
+               map->layers[map->layerorder[j]].type == MS_LAYER_ANNOTATION )
+               bShowGroup = 0;
+               
+
+           // dont display layer if out of scale.
+           if ((nOptFlag & 1) == 0)
+           {
+               if(map->scale > 0) {
+                   if((map->layers[map->layerorder[j]].maxscale > 0) && 
+                      (map->scale > map->layers[map->layerorder[j]].maxscale))
+                       bShowGroup = 0;
+                   if((map->layers[map->layerorder[j]].minscale > 0) && 
+                      (map->scale <= map->layers[map->layerorder[j]].minscale))
+                       bShowGroup = 0;
+               }
+           }
+
+           // The group contains one visible layer
+           // Draw the group
+           if( bShowGroup )
+               break;
+       }
+   }
+
+   if( ! bShowGroup )
+       return MS_SUCCESS;
    
    /*
     * Work from a copy
@@ -1258,7 +1325,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
     * on current layer
     */
    myHashTable = msCreateHashTable();
-   
+
    /*
     * Check for the first layer
     * that belong to this group.
@@ -1279,8 +1346,8 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
            return MS_FAILURE;
 
          if (processMetadata(pszTemp, &(map->layers[map->layerorder[j]].metadata)) != MS_SUCCESS)
-           return MS_FAILURE;         
-         
+           return MS_FAILURE;
+
          break;
       }
    }
@@ -1784,7 +1851,7 @@ char *generateLegendTemplate(mapservObj *msObj)
 
       for (i=0; i<nGroupNames; i++) {
          // process group tags
-         if (generateGroupTemplate(legGroupHtml, msObj->Map, papszGroups[i], &legGroupHtmlCopy, pszPrefix) != MS_SUCCESS)
+         if (generateGroupTemplate(legGroupHtml, msObj->Map, papszGroups[i], groupArgs, &legGroupHtmlCopy, pszPrefix) != MS_SUCCESS)
          {
             if (pszResult)
               free(pszResult);
