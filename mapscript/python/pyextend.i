@@ -190,7 +190,6 @@
         FILE *stream;
         unsigned char *imgbuffer;
         int imgsize;
-        int res;
         PyObject *noerr;
        
         /* Return immediately if image driver is not GD */
@@ -213,11 +212,12 @@
         }
         else /* presume a Python gdIOCtx object */
         {
-            imgbuffer = msSaveImageBufferGD(self->img.gd,&imgsize,self->format);
+            imgbuffer = msSaveImageBufferGD(self->img.gd, &imgsize,
+                                            self->format);
             if (imgsize == 0)
             {
                 msSetError(MS_IMGERR, "failed to get image buffer", "write()");
-                return NULL;
+                return MS_FAILURE;
             }
                 
             noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer,

@@ -58,7 +58,12 @@ class ColorObjTestCase(unittest.TestCase):
         """a color can be outputted as hex"""
         c = mapscript.colorObj(255, 255, 255)
         assert c.toHex() == '#ffffff'
-    
+   
+    def testColorObjToHexBadly(self):
+        """raise an error in the case of an undefined color"""
+        c = mapscript.colorObj(-1,-1,-1)
+        self.assertRaises(mapscript.MapServerError, c.toHex)
+
     def testColorObjSetRGB(self):
         """a color can be set using setRGB method"""
         c = mapscript.colorObj()
