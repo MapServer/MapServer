@@ -1758,7 +1758,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
   int records=MS_FALSE;
   FILE *stream=NULL;
   char *outbuf; 
-  char line[MS_BUFFER_LENGTH], *outstr;
+  char line[MS_BUFFER_LENGTH], *tmpline;
   char szPath[MS_MAXPATHLEN];
 
   if((outbuf = strdup("")) == NULL) return(NULL); // empty at first
@@ -1776,7 +1776,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
         }
 
         // echo file to the output buffer, no substitutions
-        while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, line);
+        while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = strcatalloc(outbuf, line);
 
         fclose(stream);
       }
@@ -1791,10 +1791,10 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
     
     while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { // now on to the end of the template
       if(strchr(line, '[') != NULL) {
-        outstr = processLine(msObj, line, QUERY);
-        if(!outstr) return NULL;         
-        strcatalloc(outbuf, outstr);
-        free(outstr);
+        tmpline = processLine(msObj, line, QUERY);
+        if(!tmpline) return NULL;
+        outbuf = strcatalloc(outbuf, tmpline);
+        free(tmpline);
       } else // no subs, just echo
         strcatalloc(outbuf, line);
     }
@@ -1809,7 +1809,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
     }
 
     // echo file to the output buffer, no substitutions
-    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, line);
+    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = strcatalloc(outbuf, line);
     
     fclose(stream);
   }
