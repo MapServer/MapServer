@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2003/01/08 22:19:35  assefa
+ * Patch for windows with problems related to the select function.
+ *
  * Revision 1.6  2003/01/07 23:47:00  assefa
  * Correct Compilation error.
  *
@@ -375,7 +378,17 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         {
           case -1:
             /* select error */
+
+/* ==================================================================== */
+/*      On Windows the select function (just above) returns -1 when     */
+/*      it is called the second time and all the calls after            */
+/*      that. This causes an infinite loop.                             */
+/*      I do not really know why.                                       */
+/*      To sovle the problem the break frop case -1 has been removed.   */
+/* ==================================================================== */
+#ifndef _WIN32            
             break;
+#endif
           case 0:
           default:
             /* timeout or readable/writable sockets */
