@@ -238,29 +238,51 @@ class ExpressionTestCase(MapLayerTestCase):
 
 class LayerQueryTestCase(MapLayerTestCase):
 
+    def setUp(self):
+        MapLayerTestCase.setUp(self)
+        self.layer = self.map.getLayerByName('POINT')
+        self.layer.template = 'foo'
+
     def testRectQuery(self):
         qrect = mapscript.rectObj(-10.0, 45.0, 10.0, 55.0)
-        self.layer.template = 'foo'
         self.layer.queryByRect(self.map, qrect)
         assert self.layer.getNumResults() == 1
 
     def testShapeQuery(self):
         qrect = mapscript.rectObj(-10.0, 45.0, 10.0, 55.0)
         qshape = qrect.toPolygon()
-        self.layer.template = 'foo'
         self.layer.queryByShape(self.map, qshape)
         assert self.layer.getNumResults() == 1
 
     def testPointQuery(self):
         qpoint = mapscript.pointObj(0.0, 51.5)
-        self.layer.template = 'foo'
-        self.layer.queryByPoint(self.map, qpoint, 0, 2.0)
+        self.layer.queryByPoint(self.map, qpoint, mapscript.MS_MULTIPLE, 2.0)
         assert self.layer.getNumResults() == 1
-    
+   
+    def testAttributeQuery(self):
+        self.layer.queryByAttributes(self.map, "FNAME", '"A Point"',
+                                     mapscript.MS_MULTIPLE)
+        assert self.layer.getNumResults() == 1
+
     def testRectQueryNoResults(self):
         qrect = mapscript.rectObj(-101.0, 0.0, -100.0, 1.0)
-        self.layer.template = 'foo'
         self.layer.queryByRect(self.map, qrect)
+        assert self.layer.getNumResults() == 0
+
+    def testShapeQueryNoResults(self):
+        qrect = mapscript.rectObj(-101.0, 0.0, -100.0, 1.0)
+        qshape = qrect.toPolygon()
+        self.layer.queryByShape(self.map, qshape)
+        assert self.layer.getNumResults() == 0
+
+    def testPointQueryNoResults(self):
+        qpoint = mapscript.pointObj(-100.0, 51.5)
+        self.layer.queryByPoint(self.map, qpoint, mapscript.MS_MULTIPLE, 2.0)
+        assert self.layer.getNumResults() == 0
+    
+    def testAttributeQueryNoResults(self):
+        self.layer.queryByAttributes(self.map, "FNAME", '"Bogus Point"',
+                                     mapscript.MS_MULTIPLE)
         assert self.layer.getNumResults() == 0
 
 

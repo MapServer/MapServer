@@ -175,12 +175,6 @@ class MapExceptionTestCase(MapTestCase):
         """MapExceptionTestCase.testDrawBadData: a bad data descriptor in a layer returns proper error"""
         self.map.getLayerByName('POLYGON').data = 'foo'
         self.assertRaises(mapscript.MapServerError, self.map.draw)
-    def testZeroResultsQuery(self):
-        """MapExceptionTestCase.testZeroResultsQuery: zero query results returns proper error"""
-        p = mapscript.pointObj()
-        p.x, p.y = (-600000,1000000) # Way outside demo
-        self.assertRaises(mapscript.MapServerNotFoundError, \
-                         self.map.queryByPoint, p, mapscript.MS_SINGLE, 1.0)
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
