@@ -68,9 +68,25 @@ class LayerExtentTestCase(MapTestCase):
         e = mapscript.rectObj(-0.25, 51.227222, 0.25, 51.727222)
         self.assertRectsEqual(e, layer.getExtent())
     def testSetExtentBadly(self):
+        """test layer.setExtent() to provoke it to raise an error when given a bogus extent"""
         layer = self.map.getLayerByName('POLYGON')
         self.assertRaises(mapscript.MapServerError, layer.setExtent,
-                          1.0, -2.0, -3.0, 4.0)  
+                          1.0, -2.0, -3.0, 4.0)
+    def testGetPresetExtent(self):
+        """test layer.setExtent() and layer.getExtent() to return preset instead of calculating extents"""
+        layer = self.map.getLayerByName('POLYGON')
+        minx, miny, maxx, maxy = 1.0, 1.0, 3.0, 3.0
+        layer.setExtent(minx, miny, maxx, maxy)
+        rect = layer.getExtent()
+        assert minx == rect.minx
+        assert miny == rect.miny
+        assert maxx == rect.maxx
+        assert maxy == rect.maxy
+    def testResetLayerExtent(self):
+        """test resetting a layer's extent"""
+        layer = self.map.getLayerByName('POLYGON')
+        layer.setExtent(-1.0, -1.0, -1.0, -1.0)
+        self.testPolygonGetExtent()
 
 class LayerRasterProcessingTestCase(MapTestCase):
     
