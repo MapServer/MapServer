@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/11/04 21:46:36  frank
+ * Commented out unused variable.
+ *
  * Revision 1.29  2004/11/04 21:06:09  frank
  * centralize 'stdout binary mode setting' for win32, add for gdal output
  *
@@ -1205,7 +1208,6 @@ int msSaveImagePDF(imageObj *image, char *filename)
         PDF *pdf = NULL;
         char *jpeg = NULL;
         int nLength = 0, nResult = 0;
-        FILE *out;
         imageObj    *imagetmp;
 
         mapObj *map = image->img.pdf->map;
@@ -1213,7 +1215,10 @@ int msSaveImagePDF(imageObj *image, char *filename)
         if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE",""), 
                    "RASTER") == 0)    
         {
+            //FILE *out;
+
             pdf = image->img.pdf->pdf;
+
             //test
             //out = fopen("c:/msapps/gmap_pdf/htdocs/test.png", "wb");
             //gdImagePng(image->img.pdf->imagetmp, out);
