@@ -599,7 +599,7 @@ DEBUG printf("msCircleDrawShadeSymbolIM<BR>\n");
   case(MS_SYMBOL_TRUETYPE):    
     
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-    font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
+    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
@@ -832,7 +832,7 @@ DEBUG printf("A");
 DEBUG printf("T");
 /*
  * #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-    font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
+    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
@@ -1258,7 +1258,7 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
   case(MS_SYMBOL_TRUETYPE):    
     
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-    font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
+    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
@@ -1498,7 +1498,7 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
       return(-1);
     }
 
-    font = msLookupHashTable(fontset->fonts, label->font);
+    font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextIM()",
                   label->font);

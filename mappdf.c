@@ -853,7 +853,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
         case(MS_SYMBOL_TRUETYPE):
 
-/*            font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);*/
+/*            font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);*/
 /*            if(!font) return;*/
 /*                //plot using pdf*/
             sprintf(symbolBuffer,"%c",(char)*symbol->character);
@@ -869,7 +869,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 
                 font_id = PDF_findfont(pdf, symbol->font ,"winansi",1);
 /*                sprintf(buffer, "%d",font_id);*/
-/*                msInsertHashTable(symbolset->fontset->fonts, symbol->font, buffer);*/
+/*                msInsertHashTable(&(symbolset->fontset->fonts), symbol->font, buffer);*/
 /*            }*/
 
 
@@ -1297,7 +1297,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
         return(-1);
     }
 
-    font = msLookupHashTable(fontset->fonts, label->font);
+    font = msLookupHashTable(&(fontset->fonts), label->font);
 
     if(!font)
     {

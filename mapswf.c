@@ -91,7 +91,7 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
       case(MS_SYMBOL_TRUETYPE):    
     
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-          font = msLookupHashTable(symbolset->fontset->fonts, 
+          font = msLookupHashTable(&(symbolset->fontset->fonts), 
                                    symbolset->symbol[sy].font);
           if(!font) 
               return NULL;
@@ -965,7 +965,7 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /*      Start the Element array that will contain the values of the     */
 /*      attributes.                                                     */
 /* -------------------------------------------------------------------- */
-        if( (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES"))
+        if( (metadata=msLookupHashTable(&(layer->metadata),"SWFDUMPATTRIBUTES"))
              != NULL )
         {
             tokens = split(metadata, ',', &n);
@@ -1022,7 +1022,7 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 /*      get an array of indexes corresponding to the attributes. We     */
 /*      will use this array to retreive the values.                     */
 /* -------------------------------------------------------------------- */
-        if( (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES")) 
+        if( (metadata=msLookupHashTable(&(layer->metadata),"SWFDUMPATTRIBUTES")) 
             != NULL )
         {
             char **tokens;
@@ -1229,7 +1229,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     psLayerTmp = 
       &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
 
-    if (msLookupHashTable(psLayerTmp->metadata, "SWFDUMPATTRIBUTES"))
+    if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
         nLayerIndex = image->img.swf->nCurrentLayerIdx;
         nShapeIndex = image->img.swf->nCurrentShapeIdx;
@@ -1250,7 +1250,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         case(MS_SYMBOL_TRUETYPE):
 
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-            font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
+            font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
             if(!font) 
                 return;
             
@@ -1669,7 +1669,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     psLayerTmp = 
       &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
 
-    if (msLookupHashTable(psLayerTmp->metadata, "SWFDUMPATTRIBUTES"))
+    if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
         nLayerIndex = image->img.swf->nCurrentLayerIdx;
         nShapeIndex = image->img.swf->nCurrentShapeIdx;
@@ -1771,7 +1771,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     psLayerTmp = 
       &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
 
-    if (msLookupHashTable(psLayerTmp->metadata, "SWFDUMPATTRIBUTES"))
+    if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
         nLayerIndex = image->img.swf->nCurrentLayerIdx;
         nShapeIndex = image->img.swf->nCurrentShapeIdx;
@@ -1929,7 +1929,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
         return(-1);
     }
 
-    font = msLookupHashTable(fontset->fonts, label->font);
+    font = msLookupHashTable(&(fontset->fonts), label->font);
 
     if(!font) 
     {
@@ -2011,7 +2011,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
         !fontset)
         return -1;
 
-    font = msLookupHashTable(fontset->fonts, label->font);
+    font = msLookupHashTable(&(fontset->fonts), label->font);
 
     if(!font) 
     {
@@ -2173,12 +2173,12 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 /*      we will open it if necessary.                                   */
 /* ==================================================================== */
         bLayerOpen = 0;
-        if (msLookupHashTable(layerPtr->metadata, "SWFDUMPATTRIBUTES") &&
+        if (msLookupHashTable(&(layerPtr->metadata), "SWFDUMPATTRIBUTES") &&
             layerPtr->numitems <= 0)
         {
             msLayerOpen(layerPtr);
             msLayerWhichItems(layerPtr, MS_TRUE, MS_FALSE, 
-                              msLookupHashTable(layerPtr->metadata, 
+                              msLookupHashTable(&(layerPtr->metadata)), 
                                                 "SWFDUMPATTRIBUTES"));
             bLayerOpen = 1;
         }
