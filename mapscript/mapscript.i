@@ -136,7 +136,24 @@ memory.") const char * {
 %include "rbmodule.i"
 #endif
 
-//%rename (_class) class;
+// Next Generation class names
+#ifdef NEXT_GENERATION_CLASSES
+%rename(Map) map_obj;
+%rename(Layer) layer_obj;
+%rename(Class) classObj;
+%rename(Style) styleObj;
+%rename(Image) imageObj;
+%rename(Point) pointObj;
+%rename(Line) lineObj;
+%rename(Shape) shapeObj;
+%rename(OutputFormat) outputFormatObj;
+%rename(Symbol) symbolObj;
+%rename(Color) colorObj;
+%rename(Rect) rectObj;
+%rename(Projection) projectionObj;
+%rename(ShapeFile) shapefileObj;
+%rename(SymbolSet) symbolSetObj;
+#endif
 
 // grab mapserver declarations to wrap
 %include "../../mapprimitive.h"
@@ -659,10 +676,30 @@ memory.") const char * {
     msLayerClose(self);
   }
 
-  int getShape(shapeObj *shape, int tileindex, int shapeindex) {
-    return msLayerGetShape(self, shape, tileindex, shapeindex);
-  }
-
+#ifdef NEXT_GENERATION_CLASSES
+    %newobject getShape;
+    shapeObj *getShape(int shapeindex, int tileindex=0) {
+    /* This version properly returns shapeObj and also has its
+     * arguments properly ordered so that users can ignore the
+     * tileindex if they are not accessing a tileindexed layer.
+     * See bug 586:
+     * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=586 */
+        int retval;
+        shapeObj *shape;
+        shape = (shapeObj *)malloc(sizeof(shapeObj));
+        if (!shape)
+            return NULL;
+        msInitShape(shape);
+        shape->type = self->type;
+        retval = msLayerGetShape(self, shape, tileindex, shapeindex);
+        return shape;
+    }
+#else
+    int getShape(shapeObj *shape, int tileindex, int shapeindex) {
+        return msLayerGetShape(self, shape, tileindex, shapeindex);
+    }
+#endif
+  
   resultCacheMemberObj *getResult(int i) {
     if(!self->resultcache) return NULL;
 

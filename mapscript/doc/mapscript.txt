@@ -96,6 +96,11 @@ method(type mandatory_parameter [, type optional_parameter=default]) : type
     Description of the method including elaboration on the method
     arguments, the method's actions, and returned values.
 
+The mapscript API is evolving to a state where all get* methods return
+objects.  Unfortunately layerObj.getShape was written to return the index
+of a shape and put the shape itself in a reference argument and this use
+is deeply entrenched.  PHP-Mapscript got this right and the SWIG mapscript
+is going to change to follow suit in the future.
 
 Now that the style of the documentation has been introduced, on to the
 classes themselves
@@ -577,7 +582,7 @@ Methods
 
 .. _new pointObj:
 
-new pointObj([float x, float y]) : pointObj_
+new pointObj([float x=0.0, float y=0.0]) : pointObj_
     Create new instance.  Easting and northing arguments are optional.
 
 .. _distanceToPoint:
@@ -641,7 +646,7 @@ Methods
 
 .. _new rectObj:
 
-new rectObj([float minx, float miny, float maxx, float maxy]) : rectObj_
+new rectObj([float minx=0.0, float miny=0.0, float maxx=0.0, float maxy=0.0]) : rectObj_
     Create new instance.  The four easting and northing arguments
     are optional.
 
