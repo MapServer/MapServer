@@ -110,7 +110,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
                            "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                            "ISO-8859-1");
 
-        rintf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
+        printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
         printf("<ServiceExceptionReport version=\"1.1.1\">\n");  
     }
 
@@ -134,7 +134,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           char **names, char **values, int numentries)
 {
-  int i,j, adjust_extent = MS_FALSE;
+  int i, adjust_extent = MS_FALSE;
   int iUnits = -1;
   int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
@@ -147,11 +147,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int invalidlayers = 0;
   char epsgbuf[32];
   char srsbuffer[32];
+#ifdef OGC_STRICT_MODE
   int epsgvalid = MS_FALSE;
   const char *projstring;
    char **tokens;
-   int n;
-
+   int n,j = 0;
+#endif
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
 
@@ -365,7 +366,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
      server shall throw a Service Exception (code = "InvalidSRS"). 
      Validate first against epsg in the map and if no matching srs is found
      validate all layers requested.*/
-
+#ifdef OGC_STRICT_MODE
   if (epsgbuf)
   {
       epsgvalid = MS_FALSE;
@@ -424,6 +425,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
   }
 
+#endif
   
 
   //apply the srs to the map file. This is only done after validating
