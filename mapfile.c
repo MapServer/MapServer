@@ -3082,6 +3082,23 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
+/*
+ * Check if symbolname exist in symbolset, if not try
+ * to add it.
+*/
+int msGetSymbolIdByName(mapObj *map, classObj *myClass, layerObj *lp, char *pszSymbolName)
+{
+   int nSymbolId = -1;
+
+   if((nSymbolId = msGetSymbolIndex(&(map->symbolset), pszSymbolName)) == -1)
+   {
+      if ((nSymbolId = msAddImageSymbol(&(map->symbolset), pszSymbolName)) == -1)
+        msSetError(MS_MISCERR, "Invalid  symbol %s.", "msSetSymbolByName()",  pszSymbolName);
+   }
+
+   return(nSymbolId);
+}
+
 static mapObj *msLoadMapInternal(char *filename)
 {
   regex_t re;
@@ -3144,36 +3161,36 @@ static mapObj *msLoadMapInternal(char *filename)
       if(msLoadSymbolSet(&(map->symbolset)) == -1) return(NULL);
 
       /* step through layers and classes to resolve symbol names */
-      for(i=0; i<map->numlayers; i++) {
-	for(j=0; j<map->layers[i].numclasses; j++) {
+       for(i=0; i<map->numlayers; i++) 
+       {
+          for(j=0; j<map->layers[i].numclasses; j++)
+          {
+             if (map->layers[i].class[j].overlaysymbolname)
+                if ((map->layers[i].class[j].overlaysymbol = msGetSymbolIdByName(map, &(map->layers[i].class[j]), &(map->layers[i]), map->layers[i].class[j].overlaysymbolname)) == -1)
+                 {
+                    msSetError(MS_MISCERR,
+                               "Undefined overlay symbol \"%s\" in class %d of layer %s.",
+                               "msLoadMap()",
+                               map->layers[i].class[j].overlaysymbolname,
+                               j, map->layers[i].name);
 
-	  if(map->layers[i].class[j].overlaysymbolname) {
-	    if((map->layers[i].class[j].overlaysymbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
-	      if((map->layers[i].class[j].overlaysymbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
-		msSetError(MS_MISCERR, 
-                    "Undefined overlay symbol \"%s\" in class %d of layer %s.",
-                           "msLoadMap()",
-                           map->layers[i].class[j].overlaysymbolname, 
-                           j, map->layers[i].name);
-		return(NULL);
-	      }
-	    }
-	  }
-
-	  if(map->layers[i].class[j].symbolname) {
-	    if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
-	      if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
-		msSetError(MS_MISCERR, 
-                           "Undefined symbol \"%s\" in class %d of layer %s.", 
-                           "msLoadMap()", 
-                           map->layers[i].class[j].symbolname, 
-                           j, map->layers[i].name);
-		return(NULL);
-	      }
-	    }
-	  }
-	}
-      }
+                    return(NULL);
+                 }
+             
+             if (map->layers[i].class[j].symbolname)
+                if ((map->layers[i].class[j].symbol = msGetSymbolIdByName(map, &(map->layers[i].class[j]), &(map->layers[i]), map->layers[i].class[j].symbolname)) == -1)
+                 {
+                    msSetError(MS_MISCERR,
+                               "Undefined symbol \"%s\" in class %d of layer %s.",
+                               "msLoadMap()",
+                               map->layers[i].class[j].symbolname,
+                               j, map->layers[i].name);
+                    
+                   return (NULL);
+                 }
+             
+          }
+       }
 
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if(msLoadFontSet(&(map->fontset)) == -1) return(NULL);
