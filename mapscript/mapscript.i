@@ -877,7 +877,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
-    msTransformShape(shape, map->extent, map->cellsize);
+    msTransformShapeToPixel(shape, map->extent, map->cellsize);
 
     return 0;
   }
