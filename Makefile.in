@@ -258,5 +258,9 @@ install: libmap.a
 clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
 	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars
 
+distclean:
+	$(MAKE) clean
+	rm config.*
+
 sorta-clean:
 	rm -f *.o
