@@ -1051,7 +1051,13 @@ if test "$with_gdal" = "yes" ; then
 elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
 
   GDAL_CONFIG=$with_gdal
-  AC_MSG_RESULT([yes, user supplied gdal-config])
+
+  if test -f "$GDAL_CONFIG" -a -x "$GDAL_CONFIG" ; then
+    AC_MSG_RESULT([yes, user supplied gdal-config ($GDAL_CONFIG)])
+  else
+    AC_MSG_ERROR(['$GDAL_CONFIG' is not an executable.  Make sure you use --with-gdal=/path/to/gdal-config])
+  fi
+
 
 else
 

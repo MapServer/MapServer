@@ -4962,7 +4962,13 @@ fi
 elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
 
   GDAL_CONFIG=$with_gdal
-  echo "$ac_t""yes, user supplied gdal-config" 1>&6
+
+  if test -f "$GDAL_CONFIG" -a -x "$GDAL_CONFIG" ; then
+    echo "$ac_t""yes, user supplied gdal-config ($GDAL_CONFIG)" 1>&6
+  else
+    { echo "configure: error: '$GDAL_CONFIG' is not an executable.  Make sure you use --with-gdal=/path/to/gdal-config" 1>&2; exit 1; }
+  fi
+
 
 else
 
@@ -4991,7 +4997,7 @@ ALL_LIB="$GDAL_LIB $ALL_LIB"
 
 
 echo $ac_n "checking if PostGIS support requested""... $ac_c" 1>&6
-echo "configure:4995: checking if PostGIS support requested" >&5
+echo "configure:5001: checking if PostGIS support requested" >&5
 
 # Check whether --with-postgis or --without-postgis was given.
 if test "${with_postgis+set}" = set; then
@@ -5008,7 +5014,7 @@ elif test "$with_postgis" = "yes" ; then
   # Extract the first word of "pg_config", so it can be a program name with args.
 set dummy pg_config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:5012: checking for $ac_word" >&5
+echo "configure:5018: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -5066,7 +5072,7 @@ ALL_LIB="$POSTGIS_LIB $ALL_LIB"
 
 
 echo $ac_n "checking if OracleSpatial support requested""... $ac_c" 1>&6
-echo "configure:5070: checking if OracleSpatial support requested" >&5
+echo "configure:5076: checking if OracleSpatial support requested" >&5
 # Check whether --with-oraclespatial or --without-oraclespatial was given.
 if test "${with_oraclespatial+set}" = set; then
   withval="$with_oraclespatial"
@@ -5110,7 +5116,7 @@ ALL_LIB="$ORACLESPATIAL_LIB $ALL_LIB"
 
 
 echo $ac_n "checking if MING/Flash support requested""... $ac_c" 1>&6
-echo "configure:5114: checking if MING/Flash support requested" >&5
+echo "configure:5120: checking if MING/Flash support requested" >&5
 # Check whether --with-ming or --without-ming was given.
 if test "${with_ming+set}" = set; then
   withval="$with_ming"
@@ -5145,7 +5151,7 @@ ALL_LIB="$MING_LIB $ALL_LIB"
 
 
 echo "checking whether we should include WMS Server support..." 1>&6
-echo "configure:5149: checking whether we should include WMS Server support..." >&5
+echo "configure:5155: checking whether we should include WMS Server support..." >&5
 # Check whether --with-wms or --without-wms was given.
 if test "${with_wms+set}" = set; then
   withval="$with_wms"
@@ -5175,7 +5181,7 @@ ALL_ENABLED="$WMS_SVR_ENABLED $ALL_ENABLED"
 
 
 echo "checking whether we should include WFS Server support..." 1>&6
-echo "configure:5179: checking whether we should include WFS Server support..." >&5
+echo "configure:5185: checking whether we should include WFS Server support..." >&5
 # Check whether --with-wfs or --without-wfs was given.
 if test "${with_wfs+set}" = set; then
   withval="$with_wfs"
@@ -5209,7 +5215,7 @@ ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
 
 
 echo "checking whether we should include WMS Client Connections support..." 1>&6
-echo "configure:5213: checking whether we should include WMS Client Connections support..." >&5
+echo "configure:5219: checking whether we should include WMS Client Connections support..." >&5
 # Check whether --with-wmsclient or --without-wmsclient was given.
 if test "${with_wmsclient+set}" = set; then
   withval="$with_wmsclient"
@@ -5233,7 +5239,7 @@ fi
 
 
 echo "checking whether we should include WFS Client Connections support..." 1>&6
-echo "configure:5237: checking whether we should include WFS Client Connections support..." >&5
+echo "configure:5243: checking whether we should include WFS Client Connections support..." >&5
 # Check whether --with-wfsclient or --without-wfsclient was given.
 if test "${with_wfsclient+set}" = set; then
   withval="$with_wfsclient"
@@ -5263,7 +5269,7 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
   # Extract the first word of "curl-config", so it can be a program name with args.
 set dummy curl-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:5267: checking for $ac_word" >&5
+echo "configure:5273: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_LIBCURL_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -5383,7 +5389,7 @@ fi
 
 
 echo "checking whether we should enable debug features..." 1>&6
-echo "configure:5387: checking whether we should enable debug features..." >&5
+echo "configure:5393: checking whether we should enable debug features..." >&5
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
@@ -5452,7 +5458,7 @@ ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
 
 echo "checking for PHP/MapScript module options..." 1>&6
-echo "configure:5456: checking for PHP/MapScript module options..." >&5
+echo "configure:5462: checking for PHP/MapScript module options..." >&5
 # Check whether --with-php or --without-php was given.
 if test "${with_php+set}" = set; then
   withval="$with_php"
@@ -5480,7 +5486,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
       echo "$ac_t""Using perl -V macro to figure ld command to link php_mapscript.so" 1>&6
 
       echo $ac_n "checking whether 'perl -V' works""... $ac_c" 1>&6
-echo "configure:5484: checking whether 'perl -V' works" >&5
+echo "configure:5490: checking whether 'perl -V' works" >&5
       if  (perl -V > /dev/null 2>&1)  ; then
         echo "$ac_t""yes" 1>&6
         
@@ -5646,7 +5652,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:5650: checking for location of config.h or php_config.h" >&5
+echo "configure:5656: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -5659,7 +5665,7 @@ echo "configure:5650: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:5663: checking whether we have PHP3 or PHP4" >&5
+echo "configure:5669: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -5671,7 +5677,7 @@ echo "configure:5663: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:5675: checking whether we should use PHP's regex" >&5
+echo "configure:5681: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -5733,7 +5739,7 @@ if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:5737: checking for location of Apache headers using apxs" >&5
+echo "configure:5743: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -5766,7 +5772,7 @@ if test -n "$with_apache" -a "$with_apache" != "no" ; then
 !!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!" 1>&2; exit 1; }
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:5770: checking for location of Apache headers" >&5
+echo "configure:5776: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi
