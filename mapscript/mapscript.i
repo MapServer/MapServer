@@ -27,6 +27,7 @@
 %include "../../maperror.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
+%include "../../mapproject.h"
 
 %apply Pointer NONNULL { gdImagePtr img };
 %apply Pointer NONNULL { mapObj *map };
@@ -644,6 +645,35 @@
     return msSHPWritePoint(self->hSHP, point);	
   }
 }
+
+//
+// class extensions for projectionObj
+//
+%addmethods projectionObj {
+  projectionObj(char *string) {
+    int status;
+    projectionObj *proj=NULL;
+
+    proj = (projectionObj *)malloc(sizeof(projectionObj));
+    if(!proj) return NULL;
+    msInitProjection(proj);
+
+    status = loadProjectionString(proj, string);
+    if(status == -1) {
+      msFreeProjection(proj);
+      free(proj);
+      return NULL;
+    }
+
+    return proj;
+  }
+
+  ~projectionObj() {
+    msFreeProjection(self);
+    free(self);		
+  }
+}
+
 
 //
 // class extensions for labelCacheObj - TP mods
