@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.141  2003/01/24 17:01:05  dan
+ * Produce a warning instead of an error in getLayerByName() if layer not found
+ *
  * Revision 1.140  2003/01/24 00:41:55  dan
  * Make available the latlon projection object of the map object. (Assefa)
  *
@@ -3263,18 +3266,12 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
                                          list TSRMLS_CC);
-    if (self != NULL)
+    if (self == NULL ||
+        (newLayer=mapObj_getLayerByName(self, pLyrName->value.str.val))==NULL )
     {
-        newLayer = mapObj_getLayerByName(self, pLyrName->value.str.val);
-        if (newLayer == NULL)
-        {
-            _phpms_report_mapserver_error(E_WARNING);
-            php3_error(E_ERROR, "getLayerByName failed for : %s\n",
-                       pLyrName->value.str.val);
-        }
-    }
-    else
-    {
+        // No MapServer error to report.  Just produce a PHP warning.
+        php3_error(E_WARNING, "getLayerByName failed for : %s\n",
+                   pLyrName->value.str.val);
         RETURN_FALSE;
     }
 

@@ -195,7 +195,8 @@ and the MapServer Map File documentation at:
         Returns a layerObj from the map given an index value (0=first layer)
 
    layerObj getLayerByName(string layer_name)
-        Returns a layerObj from the map given a layer name.
+        Returns a layerObj from the map given a layer name.  
+        Returns FALSE if layer doesn't exist.
 
    colorObj getcolorbyindex(int iCloIndex)
 	Returns a colorObj corresponding to the color index in the palette
