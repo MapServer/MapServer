@@ -852,7 +852,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
-  if(fc ) return; // invalid color, -1 is valid
+  if(fc < 0) return; // invalid color, -1 is valid
   if(size < 1) return; // size too small
       
   if(style->symbol == 0) { // simply draw a single pixel of the specified color    
