@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.226  2005/02/11 16:49:11  assefa
+ * Add ifdef USE_SVG for specific case in saveImage.
+ *
  * Revision 1.225  2005/02/09 20:45:12  assefa
  * Modiy saveimage function to be able to output SVG to stdout.
  *
@@ -5977,6 +5980,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             iptr = im->img.imagemap;
 	    size = strlen(im->img.imagemap);
         }
+#ifdef USE_SVG
         else if (MS_DRIVER_SVG(im->format))
         {
             retVal = -1;
@@ -6006,7 +6010,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
             RETURN_LONG(retVal);
         }   
-    
+#endif    
         if (size == 0) {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed writing image to stdout");
