@@ -575,43 +575,43 @@ static int loadGrid( layerObj *pLayer )
 				return(0);
 
 			case( LABELFORMAT ):
-				if( (int) (((graticuleObj *)pLayer->graticulelayerinfo)->pszlabelformat = getString()) == -1) 
+				if( (int) (((graticuleObj *)pLayer->graticulelayerinfo)->labelformat = getString()) == -1) 
 					return(-1);
 
 				break;
 
 			case( MINARCS ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->dminarcs) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->minarcs) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MAXARCS ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->dmaxarcs) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->maxarcs) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MININTERVAL ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->dminincrement) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->minincrement) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MAXINTERVAL ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->dmaxincrement) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->maxincrement) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MINSUBDIVIDE ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->dminarcsubdivisions) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->minsubdivides) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MAXSUBDIVIDE ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->dmaxarcsubdivisions) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->maxsubdivides) == -1) 
 					return(-1);
 
 				break;
@@ -628,13 +628,13 @@ static void writeGrid( graticuleObj *pGraticule, FILE *stream)
 {
 	fprintf(stream,  "    FEATURE\n");
 	fprintf( stream, "      GRID\n");
-	fprintf( stream, "        MINSUBDIVIDE %d\n", (int)	pGraticule->dminarcsubdivisions );
-	fprintf( stream, "        MAXSUBDIVIDE %d\n", (int)	pGraticule->dmaxarcsubdivisions );
-	fprintf( stream, "        MININCREMENT %f\n",		pGraticule->dminincrement		);
-	fprintf( stream, "        MAXINCREMENT %f\n",		pGraticule->dmaxincrement		);
-	fprintf( stream, "        MINARCS %d\n",			pGraticule->dmaxarcs			);
-	fprintf( stream, "        MAXARCS %d\n",			pGraticule->dmaxarcs			);
-	fprintf( stream, "        LABELFORMAT %s\n",		pGraticule->pszlabelformat		);
+	fprintf( stream, "        MINSUBDIVIDE %d\n", (int)	pGraticule->minsubdivides		);
+	fprintf( stream, "        MAXSUBDIVIDE %d\n", (int)	pGraticule->maxsubdivides		);
+	fprintf( stream, "        MININCREMENT %f\n",		pGraticule->minincrement		);
+	fprintf( stream, "        MAXINCREMENT %f\n",		pGraticule->maxincrement		);
+	fprintf( stream, "        MINARCS %d\n",			pGraticule->maxarcs				);
+	fprintf( stream, "        MAXARCS %d\n",			pGraticule->maxarcs				);
+	fprintf( stream, "        LABELFORMAT %s\n",		pGraticule->labelformat			);
 	fprintf( stream, "      END\n");
 	fprintf( stream, "    END\n");
 }

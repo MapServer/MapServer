@@ -594,12 +594,12 @@ typedef struct
 	double		dendlongitude;
 	double		dincrementlatitude;
 	double		dincrementlongitude;
-	double		dminarcs;
-	double		dmaxarcs;
-	double		dminincrement;
-	double		dmaxincrement;
-	double		dminarcsubdivisions;
-	double		dmaxarcsubdivisions;
+	double		minarcs;
+	double		maxarcs;
+	double		minincrement;
+	double		maxincrement;
+	double		minsubdivides;
+	double		maxsubdivides;
 	int			bvertical;
 	int			blabelaxes;
 	int			ilabelstate;
@@ -607,7 +607,7 @@ typedef struct
 	rectObj		extent;
 	lineObj		*pboundinglines;
 	pointObj	*pboundingpoints;
-	char		*pszlabelformat;
+	char		*labelformat;
 } graticuleObj;
 
 // LAYER OBJECT - basic unit of a map

@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
- * Revision 1.3  2003/02/15 20:26:22  novak
- * Initial graticule support
+ * Revision 1.4  2003/02/17 03:12:53  novak
+ * Rename structure variables with map file keywords so that they are identical
  *
  **********************************************************************/
 
@@ -86,23 +86,23 @@ int msGraticuleLayerOpen(layerObj *layer)
 	else
 		pInfo->blabelaxes		= 1;
 
-	if( pInfo->pszlabelformat == NULL )
+	if( pInfo->labelformat == NULL )
 	{
-		pInfo->pszlabelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DEFAULT ) + 1 );
+		pInfo->labelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DEFAULT ) + 1 );
 		pInfo->ilabeltype		= (int)    lpDefault;
-		strcpy( pInfo->pszlabelformat, MAPGRATICULE_FORMAT_STRING_DEFAULT );
+		strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DEFAULT );
 	}
-	else if( strcmp( pInfo->pszlabelformat, "DDMMSS" )	== 0 )
+	else if( strcmp( pInfo->labelformat, "DDMMSS" )	== 0 )
 	{
-		pInfo->pszlabelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
+		pInfo->labelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
 		pInfo->ilabeltype		= (int)    lpDDMMSS;
-		strcpy( pInfo->pszlabelformat, MAPGRATICULE_FORMAT_STRING_DDMMSS );
+		strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMMSS );
 	}
-	else if( strcmp( pInfo->pszlabelformat, "DDMM" )	== 0 )
+	else if( strcmp( pInfo->labelformat, "DDMM" )	== 0 )
 	{
-		pInfo->pszlabelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
+		pInfo->labelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
 		pInfo->ilabeltype		= (int)    lpDDMM;
-		strcpy( pInfo->pszlabelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
+		strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
 	}
 
 	return MS_SUCCESS;
@@ -115,10 +115,10 @@ int msGraticuleLayerClose(layerObj *layer)
 {
 	graticuleObj 		*pInfo			= (graticuleObj *) layer->graticulelayerinfo;
 
-	if( pInfo->pszlabelformat )
+	if( pInfo->labelformat )
 	{
-		free( pInfo->pszlabelformat );
-		pInfo->pszlabelformat			= NULL;
+		free( pInfo->labelformat );
+		pInfo->labelformat			= NULL;
 	}
 
 	if( pInfo->pboundingpoints )
@@ -151,10 +151,10 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 	pInfo->bvertical				= 1;
 	pInfo->extent					= rect;
 	
-	if( pInfo->dminarcs > 0 )
-		iAxisTickCount				= (int) pInfo->dminarcs;
-	else if( pInfo->dminarcs > 0 )
-		iAxisTickCount				= (int) pInfo->dminarcs;
+	if( pInfo->maxarcs > 0 )
+		iAxisTickCount				= (int) pInfo->maxarcs;
+	else if( pInfo->minarcs > 0 )
+		iAxisTickCount				= (int) pInfo->minarcs;
 	
 	DefineAxis( iAxisTickCount, &pInfo->dstartlongitude, &pInfo->dendlongitude,	&pInfo->dincrementlongitude );
 	DefineAxis( iAxisTickCount, &pInfo->dstartlatitude,	&pInfo->dendlatitude,	&pInfo->dincrementlatitude  );
@@ -162,22 +162,22 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 	pInfo->dwhichlatitude			= pInfo->dstartlatitude;
 	pInfo->dwhichlongitude			= pInfo->dstartlongitude;
 
-	if( pInfo->dminincrement > 0.0
-	  && pInfo->dmaxincrement > 0.0
-	  && pInfo->dminincrement == pInfo->dmaxincrement )
+	if( pInfo->minincrement > 0.0
+	  && pInfo->maxincrement > 0.0
+	  && pInfo->minincrement == pInfo->maxincrement )
 	{
-		pInfo->dincrementlongitude	= pInfo->dminincrement;
-		pInfo->dincrementlatitude	= pInfo->dminincrement;
+		pInfo->dincrementlongitude	= pInfo->minincrement;
+		pInfo->dincrementlatitude	= pInfo->minincrement;
 	}
-	else if( pInfo->dminincrement > 0.0 )
+	else if( pInfo->minincrement > 0.0 )
 	{
-		pInfo->dincrementlongitude	= pInfo->dminincrement;
-		pInfo->dincrementlatitude	= pInfo->dminincrement;
+		pInfo->dincrementlongitude	= pInfo->minincrement;
+		pInfo->dincrementlatitude	= pInfo->minincrement;
 	}
-	else if( pInfo->dmaxincrement > 0.0 )
+	else if( pInfo->maxincrement > 0.0 )
 	{
-		pInfo->dincrementlongitude	= pInfo->dmaxincrement;
-		pInfo->dincrementlatitude	= pInfo->dmaxincrement;
+		pInfo->dincrementlongitude	= pInfo->maxincrement;
+		pInfo->dincrementlatitude	= pInfo->maxincrement;
 	}
 //
 //  If using PROJ, project rect back into map system, and generate rect corner points in native system.
@@ -255,18 +255,18 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 {
 	graticuleObj 		*pInfo		= (graticuleObj *) layer->graticulelayerinfo;
 
-	if( pInfo->dminarcsubdivisions <= 0.0
-	  || pInfo->dmaxarcsubdivisions <= 0.0 )
+	if( pInfo->minsubdivides <= 0.0
+	  || pInfo->maxsubdivides <= 0.0 )
 	{
-		pInfo->dminarcsubdivisions	= 
-		pInfo->dmaxarcsubdivisions	= MAPGRATICULE_ARC_SUBDIVISION_DEFAULT;
+		pInfo->minsubdivides		= 
+		pInfo->maxsubdivides		= MAPGRATICULE_ARC_SUBDIVISION_DEFAULT;
 	}
 
 	shape->numlines					= 1;
 	shape->type						= MS_SHAPE_LINE;
 	shape->line						= (lineObj *) malloc( sizeof( lineObj ) );
 
-	shape->line->numpoints			= (int) pInfo->dmaxarcsubdivisions;	
+	shape->line->numpoints			= (int) pInfo->maxsubdivides;	
 //
 //  Subdivide and draw current arc, rendering the arc labels first
 //
@@ -541,19 +541,19 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
 			iMinutes		= (int) (dDataToFormat * 60.0);
 			dDataToFormat	= dDataToFormat - (((double) iMinutes) / 60.0);
 			
-			sprintf( cBuffer, pInfo->pszlabelformat, iDegrees, iMinutes, (int) (dDataToFormat * 3600.0) );
+			sprintf( cBuffer, pInfo->labelformat, iDegrees, iMinutes, (int) (dDataToFormat * 3600.0) );
 			break;
 			
 		case lpDDMM:
 			iDegrees		= (int) dDataToFormat;
 			dDataToFormat	= fabs( dDataToFormat - (double) iDegrees );
 			
-			sprintf( cBuffer, pInfo->pszlabelformat, iDegrees, (int) (dDataToFormat * 60.0) );
+			sprintf( cBuffer, pInfo->labelformat, iDegrees, (int) (dDataToFormat * 60.0) );
 			break;
 
 		case lpDefault:
 		default:
-			sprintf( cBuffer, pInfo->pszlabelformat, dDataToFormat );
+			sprintf( cBuffer, pInfo->labelformat, dDataToFormat );
 	}
 	
 	pShape->text			= strdup( cBuffer );
