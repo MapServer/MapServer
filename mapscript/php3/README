@@ -1178,7 +1178,8 @@ Constructor:
    RectObj are sometimes embedded inside other objects.  New ones can
    also be created with:
 
-   RectObj ms_newRectObj()
+   RectObj ms_newRectObj() (Note: the memebers (minx, miny,maxx,maxy) are 
+                                  initialized to -1); 
 
  Members:
 

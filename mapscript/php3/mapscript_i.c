@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.90  2004/11/12 18:43:01  assefa
+ * rectObj memebers are initialized ot -1 (Bug 788).
+ *
  * Revision 1.89  2004/11/02 21:03:36  assefa
  * Add a 2nd optional argument to LoadMapContext function (Bug 1023).
  *
@@ -909,6 +912,11 @@ rectObj *rectObj_new() {
     rect = (rectObj *)calloc(1, sizeof(rectObj));
     if(!rect)
       return(NULL);
+    
+    rect->minx = -1;
+    rect->miny = -1;
+    rect->maxx = -1;
+    rect->maxy = -1;
     
     return(rect);    	
   }
