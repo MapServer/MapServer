@@ -1,7 +1,7 @@
 #include "map.h"
 
-#define VMARGIN 5 /* buffer around the scalebar */
-#define HMARGIN 5
+#define VMARGIN 3 /* buffer around the scalebar */
+#define HMARGIN 3
 #define VSPACING .8 /* spacing (% of font height) between scalebar and text */
 #define VSLOP 5 /* makes things fit a bit better vertically */
 
@@ -68,13 +68,15 @@ double msCalculateScale(rectObj extent, int units, int width, int height, int re
   return(scale);
 }
 
+#define X_STEP_SIZE 5
+
 gdImagePtr msDrawScalebar(mapObj *map)
 {
   gdImagePtr img=NULL;
   char label[32];
-  double msx, i;
-  int j; 
-  int isx, sx, sy, ox, oy, state;
+  double i;
+  int j, msx; 
+  int isx, sx, sy, ox, oy, state, dsx;
   pointObj p;
   gdFontPtr fontPtr;
 
@@ -89,28 +91,35 @@ gdImagePtr msDrawScalebar(mapObj *map)
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   map->scale = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution);
   
-  msx = (map->cellsize * map->scalebar.width)/(inchesPerUnit[map->scalebar.units]/inchesPerUnit[map->units]);
-  i = roundInterval(msx/map->scalebar.intervals);
-  isx = MS_NINT((i/(inchesPerUnit[map->units]/inchesPerUnit[map->scalebar.units]))/map->cellsize);
+  dsx = map->scalebar.width - 2*HMARGIN;
+  do {
+    msx = (map->cellsize * dsx)/(inchesPerUnit[map->scalebar.units]/inchesPerUnit[map->units]);
+    i = roundInterval(msx/map->scalebar.intervals);
+    sprintf(label, "%g", map->scalebar.intervals*i); // last label
+    isx = MS_NINT((i/(inchesPerUnit[map->units]/inchesPerUnit[map->scalebar.units]))/map->cellsize);  
+    sx = (map->scalebar.intervals*isx) + (1.5 + MS_NINT(strlen(label)/2.0) + (strlen(unitText[map->scalebar.units])))*fontPtr->w;
+
+    if(sx <= (map->scalebar.width - 2*HMARGIN)) break; // it will fit
+
+    dsx -= X_STEP_SIZE; // change the desired size in hopes that it will fit in user supplied width
+  } while(1);
+
+  sy = (2*VMARGIN) + MS_NINT(VSPACING*fontPtr->h) + fontPtr->h + map->scalebar.height - VSLOP;
   
+  if((img = gdImageCreate(map->scalebar.width, sy)) == NULL) {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
+    return(NULL);
+  }
+  
+  if(msLoadPalette(img, &(map->palette), map->scalebar.imagecolor) == -1)  
+    return(NULL);
+  
+  ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2); // center the computed scalebar
+  oy = VMARGIN;  
+
   switch(map->scalebar.style) {
   case(0):
-
-    sprintf(label, "%g", map->scalebar.intervals*i);
-    sx = (2*HMARGIN) + (map->scalebar.intervals*isx) + (1.5 + MS_NINT(strlen(label)/2.0) + (strlen(unitText[map->scalebar.units])))*fontPtr->w;
-    sy = (2*VMARGIN) + MS_NINT(VSPACING*fontPtr->h) + fontPtr->h + map->scalebar.height - VSLOP;
-
-    if((img = gdImageCreate(sx, sy)) == NULL) {
-      msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
-      return(NULL);
-    }
     
-    if(msLoadPalette(img, &(map->palette), map->scalebar.imagecolor) == -1)  
-      return(NULL);
-    
-    ox = HMARGIN + MS_NINT(fontPtr->w/2.0);
-    oy = VMARGIN;
-
     state = 1; /* 1 means filled */
     for(j=0; j<map->scalebar.intervals; j++) {
       if(state == 1)
@@ -137,22 +146,9 @@ gdImagePtr msDrawScalebar(mapObj *map)
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
     msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
     break;
-  case(1):
-    sprintf(label, "%g", map->scalebar.intervals*i);
-    sx = (2*HMARGIN) + (map->scalebar.intervals*isx) + (1.5 + MS_NINT(strlen(label)/2.0) + (strlen(unitText[map->scalebar.units])))*fontPtr->w;
-    sy = (2*VMARGIN) + MS_NINT(VSPACING*fontPtr->h) + fontPtr->h + map->scalebar.height - VSLOP;
 
-    if((img = gdImageCreate(sx, sy)) == NULL) {
-      msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
-      return(NULL);
-    }
-    
-    if(msLoadPalette(img, &(map->palette), map->scalebar.imagecolor) == -1)  
-      return(NULL);
-    
-    ox = HMARGIN + MS_NINT(fontPtr->w/2.0);
-    oy = VMARGIN;
-    
+  case(1):
+
     gdImageLine(img, ox, oy, ox + isx*map->scalebar.intervals, oy, map->scalebar.color); /* top line */
 
     for(j=0; j<map->scalebar.intervals; j++) {
