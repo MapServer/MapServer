@@ -106,7 +106,7 @@ void msFreeCharArray(char **array, int num_items)
   for(i=0;i<num_items;i++)
     free(array[i]);
   free(array);
-  
+
   return;
 }
 
@@ -954,8 +954,8 @@ void freeExpression(expressionObj *exp)
   if(exp->type == MS_REGEX)
     regfree(&(exp->regex));
   if(exp->type == MS_EXPRESSION) {
-    msFreeCharArray(exp->items, exp->numitems);
-    free(exp->indexes);
+    if(exp->numitems) msFreeCharArray(exp->items, exp->numitems);
+    if(exp->indexes) free(exp->indexes);
   }
 }
 
@@ -1366,7 +1366,9 @@ int initLayer(layerObj *layer)
   layer->resultcache= NULL;
 
   initExpression(&(layer->filter));
-  
+  layer->filteritem = NULL;
+  layer->filteritemindex = -1;
+
   return(0);
 }
 
@@ -1405,6 +1407,7 @@ void freeLayer(layerObj *layer) {
     free(layer->resultcache);
   }
 
+  free(layer->filteritem);
   freeExpression(&(layer->filter));
 }
 
@@ -1474,6 +1477,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(FILTER):
       if(loadExpression(&(layer->filter)) == -1) return(-1);
+      break;
+    case(FILTERITEM):
+      if((layer->filteritem = getString()) == NULL) return(-1);
       break;
     case(FOOTER):
       if((layer->footer = getString()) == NULL) return(-1);
@@ -1654,9 +1660,13 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     }
 
     break;
-  case(EXPRESSION):    
+  case(FILTER):    
     loadExpressionString(&(layer->filter), value);
     break;
+  case(FILTERITEM):
+    free(layer->filteritem);
+    layer->filteritem = strdup(value);
+    break; 
   case(FOOTER):
     free(layer->footer);
     layer->footer = strdup(value);
@@ -1773,6 +1783,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
     writeExpression(&(layer->filter), stream);
     fprintf(stream, "\n");
   }
+  if(layer->filteritem) fprintf(stream, "    FILTERITEM \"%s\"\n", layer->filteritem);
 
   if(layer->footer) fprintf(stream, "    FOOTER \"%s\"\n", layer->footer);
   if(layer->group) fprintf(stream, "    GROUP \"%s\"\n", layer->group);

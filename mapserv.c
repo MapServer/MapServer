@@ -709,10 +709,6 @@ void loadForm()
         Mode = QUERY;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"itemnquery") == 0) {
-        Mode = ITEMNQUERY;
-        continue;
-      }
       if(strcasecmp(Entries[i].val,"nquery") == 0) {
         Mode = NQUERY;
         continue;
@@ -731,10 +727,6 @@ void loadForm()
       }
       if(strcasecmp(Entries[i].val,"querymap") == 0) {
         Mode = QUERYMAP;
-        continue;
-      }
-      if(strcasecmp(Entries[i].val,"itemnquerymap") == 0) {
-        Mode = ITEMNQUERYMAP;
         continue;
       }
       if(strcasecmp(Entries[i].val,"nquerymap") == 0) {
@@ -1296,7 +1288,12 @@ void returnQuery()
       status = msLayerOpen(lp, Map->shapepath);
       if(status != MS_SUCCESS) writeError();
 
-      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex, MS_ALLITEMS);
+      if(lp->items) { // FIX: may be a better way to do this
+	msFreeCharArray(lp->items, lp->numitems);
+	lp->numitems = 0;
+      }
+
+      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex, MS_TRUE);
       if(status != MS_SUCCESS) writeError();
 
       returnURL(lp->class[(int)(lp->resultcache->results[0].classindex)].template, QUERY);      
@@ -1344,7 +1341,7 @@ void returnQuery()
 
     LRN = 1; // layer result number
     for(j=0; j<lp->resultcache->numresults; j++) {
-      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex, MS_ALLITEMS);
+      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex, MS_TRUE);
       if(status != MS_SUCCESS) writeError();
 
       returnPage(lp->class[(int)(lp->resultcache->results[j].classindex)].template, QUERY);      
@@ -1592,19 +1589,10 @@ int main(int argc, char *argv[]) {
 	} else
 	  Map->layers[SelectLayerIndex].status = MS_ON;
 
-	if(QueryCoordSource == NONE) { /* use item/value */
+	if(QueryCoordSource == NONE) { // use attributes
 
-	  if((Item == NULL) || (Value == NULL)) {
-	    msSetError(MS_WEBERR, "Missing \"item\"\\\"value\" pairing.", "mapserv()");
-	    writeError();
-	  }
-	  
-	  if(Mode == FEATUREQUERY) {
-	    if((status = msQueryByItem(Map, SelectLayerIndex, MS_SINGLE, Item, Value)) != MS_SUCCESS) writeError();
-	  } else {
-	    if((status = msQueryByItem(Map, SelectLayerIndex, MS_MULTIPLE, Item, Value)) != MS_SUCCESS) writeError();
-	  }
-	  
+	  if((status = msQueryByAttributes(Map, SelectLayerIndex)) != MS_SUCCESS) writeError();	  
+
 	} else { /* use coordinates */
 	  
 	  if(Mode == FEATUREQUERY) {
@@ -1649,22 +1637,13 @@ int main(int argc, char *argv[]) {
       
 	break;
       case ITEMQUERY:
-      case ITEMNQUERY:
       case ITEMQUERYMAP:
-      case ITEMNQUERYMAP:
-	if(!Item || !Value) {
-	  msSetError(MS_WEBERR, "Missing \"item\"\\\"value\" pairing.", "mapserv()");
-	  writeError();
-	}
 	
 	if(QueryCoordSource != NONE && !UseShapes)
 	  setExtent(); /* set user area of interest */
-	
-	if(Mode == ITEMQUERY) {
-	  if((status = msQueryByItem(Map, QueryLayerIndex, MS_SINGLE, Item, Value)) != MS_SUCCESS) writeError();
-	} else {
-	  if((status = msQueryByItem(Map, QueryLayerIndex, MS_MULTIPLE, Item, Value)) != MS_SUCCESS) writeError();
-	}
+
+	if((status = msQueryByAttributes(Map, QueryLayerIndex)) != MS_SUCCESS) writeError();
+
 	break;
       case NQUERY:
       case NQUERYMAP:
@@ -1782,7 +1761,7 @@ int main(int argc, char *argv[]) {
 	img = msDrawQueryMap(Map);
 	if(!img) writeError();
 	
-	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP || Mode == ITEMNQUERYMAP) { // just return the image
+	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP) { // just return the image
 	  printf("Content-type: image/%s%c%c", outputImageType[Map->imagetype], 10,10);
 #ifndef USE_GD_1_8
 	  status = msSaveImage(img, NULL, Map->transparent, Map->interlace);

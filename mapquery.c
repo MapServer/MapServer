@@ -250,10 +250,65 @@ int msLoadQuery(mapObj *map, char *filename) {
 }
 
 
-int msQueryByItem(mapObj *map, int qlayer, int mode, char *item, char *value)
+int msQueryByAttributes(mapObj *map, int qlayer)
 {
-  // FIX: NEED A GENERIC SOMETHING OR OTHER HERE
-  return(MS_FAILURE);
+  layerObj *lp;
+  int status;
+  
+  shapeObj shape;
+
+  if(qlayer < 0 || qlayer >= map->numlayers) {
+    msSetError(MS_MISCERR, "No query layer defined.", "msQueryByAttributes()"); 
+    return(MS_FAILURE);
+  }
+
+  lp = &(map->layers[qlayer]);
+  msInitShape(&shape);
+
+  // build item list (no annotation)
+  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
+  // open this layer
+  status = msLayerOpen(lp, map->shapepath);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+  
+  // identify target shapes
+  status = msLayerWhichShapes(lp, map->shapepath, map->extent, &(map->projection));
+  if(status != MS_SUCCESS) {
+    msLayerClose(lp);
+    return(MS_FAILURE);
+  }
+
+  lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+  lp->resultcache->results = NULL;
+  lp->resultcache->numresults = lp->resultcache->cachesize = 0;
+  lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+  
+  while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
+    shape.classindex = msShapeGetClass(lp, &shape);
+    
+    if(shape.classindex == -1) { // not a valid shape
+      msFreeShape(&shape);
+      continue;
+    }
+    
+    if(!(lp->class[shape.classindex].template)) { // no valid template
+      msFreeShape(&shape);
+      continue;
+    }
+
+    addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+    
+    if(lp->resultcache->numresults == 1)
+      lp->resultcache->bounds = shape.bounds;
+    else
+      msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+    
+    msFreeShape(&shape);
+  }
+
+  return(MS_SUCCESS);
 }
 
 int msQueryByRect(mapObj *map, int qlayer, rectObj rect) 
@@ -315,7 +370,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while((status = msLayerNextShape(lp, map->shapepath, &shape, MS_TRUE)) == MS_SUCCESS) { // step through the shapes
+    while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
 
       if(shape.classindex == -1) { // not a valid shape
@@ -453,7 +508,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while((status = msLayerNextShape(lp, map->shapepath, &shape, MS_TRUE)) == MS_SUCCESS) { // step through the shapes
+    while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
       if(shape.classindex == -1) { // not a valid shape
 	msFreeShape(&shape);
@@ -574,7 +629,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while((status = msLayerNextShape(lp, map->shapepath, &shape, MS_TRUE)) == MS_SUCCESS) { // step through the shapes
+    while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
 
       if(shape.classindex == -1) { // not a valid shape

@@ -129,5 +129,6 @@
 #define GAP 1115
 
 #define FILTER 1116
+#define FILTERITEM 1117
 
 #endif /* MAPFILE_H */

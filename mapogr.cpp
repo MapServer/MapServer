@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2001/02/25 23:46:17  sdlime
+ * Fully implemented FILTER option for shapefiles. Changed parameters for ...NextShapes and ...GetShapes functions.
+ *
  * Revision 1.13  2001/02/23 21:58:00  dan
  * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
  *
@@ -590,8 +593,7 @@ int msOGRLayerWhichShapes(layerObj *layer, char *shapepath,
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, 
-                        int attributes) 
+int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
@@ -664,26 +666,12 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape,
 /* ------------------------------------------------------------------
  * Process shape attributes
  * ------------------------------------------------------------------ */
-    if(attributes == MS_TRUE && layer->numitems > 0) 
+    if(layer->numitems > 0) 
     {
       shape->attributes = msOGRGetValueList(poFeature, layer->items, 
                                             &(layer->itemindexes), 
                                             layer->numitems);
       if(!shape->attributes) return(MS_FAILURE);
-    } 
-    else if (attributes == MS_ALLITEMS) 
-    {
-      if(!layer->items) 
-      { 
-	// fill the items layer variable if not already filled
-        layer->numitems = poFeature->GetFieldCount();
-	layer->items = msOGRGetItems(psInfo->poLayer);
-	if(!layer->items) 
-            return(MS_FAILURE);
-      }
-      shape->attributes = msOGRGetValues(poFeature);
-      if(!shape->attributes) 
-          return(MS_FAILURE);
     }
 
   delete poFeature;
@@ -710,7 +698,7 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape,
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
 int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
-                       int tile, int record, int attributes) 
+                       int tile, int record, int allitems) 
 {
 #ifdef USE_OGR
 

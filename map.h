@@ -110,8 +110,6 @@ extern "C" {
 #define MS_STRING 2002
 #define MS_NUMBER 2003
 
-#define MS_ALLITEMS 12120
-
 // General macro definitions
 #define MS_MIN(a,b)     (((a)<(b))?(a):(b))
 #define MS_MAX(a,b)	(((a)>(b))?(a):(b))
@@ -500,6 +498,9 @@ typedef struct {
   expressionObj filter; // connection specific attribute filter
   #endif
 
+  char *filteritem;
+  int filteritemindex;
+
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
@@ -604,7 +605,8 @@ int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color);
 int msAddColor(mapObj *map, int red, int green, int blue);
 int msLoadMapString(mapObj *map, char *object, char *value);
 
-int msShapeGetClass(layerObj *layer, shapeObj *shape); // in maputil.c
+int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems); // in maputil.c
+int msShapeGetClass(layerObj *layer, shapeObj *shape);
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 double msAdjustExtent(rectObj *rect, int width, int height);
 int msAdjustImage(rectObj rect, int *width, int *height);
@@ -638,7 +640,7 @@ int msIntersectPolylines(shapeObj *line1, shapeObj *line2);
 int msSaveQuery(mapObj *map, char *filename); // in mapquery.c
 int msLoadQuery(mapObj *map, char *filename);
 
-int msQueryByItem(mapObj *map, int qlayer, int mode, char *item, char *value);
+int msQueryByAttributes(mapObj *map, int qlayer);
 int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer);
 int msQueryByRect(mapObj *map, int qlayer, rectObj rect);
 int msQueryByFeatures(mapObj *map, int qlayer, int slayer);
@@ -716,23 +718,22 @@ int msLayerOpen(layerObj *layer, char *shapepath); // in maplayer.c
 void msLayerClose(layerObj *layer);
 int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *out);
 int msLayerWhichItems(layerObj *layer, int classify, int annotate);
-int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attributes);
-int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int attributes);
+int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
+int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems);
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj);
-int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attributes);
-int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int attributes);
+int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
+int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems);
 void msTiledSHPClose(layerObj *layer);
 
 int msOGRLayerOpen(layerObj *layer, char *shapepath);   // in mapogr.cpp 
 int msOGRLayerClose(layerObj *layer);
 int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, 
                           rectObj rect, projectionObj *proj);
-int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, 
-                        int attributes);
+int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
-                       int tile, int record, int attributes);
+                       int tile, int record, int allitems);
 
 #endif
 

@@ -14,53 +14,65 @@ extern int msyyresult; // result of parsing, true/false
 extern int msyystate;
 extern char *msyystring;
 
-int msShapeGetClass(layerObj *layer, shapeObj *shape)
+int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
 {
-  int i,j;
+  int i;
   char *tmpstr=NULL;
-  char found=MS_FALSE;
   int status;
 
-  for(i=0; i<layer->numclasses; i++) {
-    if (!layer->class[i].expression.string) // Empty expression - always matches
-      found=MS_TRUE;
-    else {
-      switch(layer->class[i].expression.type) {
-      case(MS_STRING):
-	if(layer->classitemindex == -1) {
-	  msSetError(MS_MISCERR, "Cannot evaluate expression, CLASSITEM undefined.", "msShapeGetClass()");
-	  return(-1);
-	}
-        if(strcmp(layer->class[i].expression.string, shape->attributes[layer->classitemindex]) == 0) found=MS_TRUE; // got a match
-        break;
-      case(MS_EXPRESSION):
-        tmpstr = strdup(layer->class[i].expression.string);
+  if(!expression->string) return(MS_TRUE); // empty expressions are ALWAYS true
 
-        for(j=0; j<layer->class[i].expression.numitems; j++)
-	  tmpstr = gsub(tmpstr, layer->class[i].expression.items[j], shape->attributes[layer->class[i].expression.indexes[j]]);
-
-        msyystate = 4; msyystring = tmpstr;
-	status = msyyparse();
-	free(tmpstr);
-	
-	if(status != 0) return(-1);
-
-        if(msyyresult) found=MS_TRUE; // got a match  
-        break;
-      case(MS_REGEX):
-	if(layer->classitemindex == -1) {
-	  msSetError(MS_MISCERR, "Cannot evaluate expression, CLASSITEM undefined.", "msShapeGetClass()");
-	  return(-1);
-	}
-        if(regexec(&(layer->class[i].expression.regex), shape->attributes[layer->classitemindex], 0, NULL, 0) == 0) found=MS_TRUE; // got a match	  
-        break;
-      }
+  switch(expression->type) {
+  case(MS_STRING):
+    if(itemindex == -1) {
+      msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
+      return(MS_FALSE);
     }
+    if(itemindex >= numitems) {
+      msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
+      return(MS_FALSE);
+    }
+    if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); // got a match
+    break;
+  case(MS_EXPRESSION):
+    tmpstr = strdup(expression->string);
 
-    if(found) return(i);
+    for(i=0; i<expression->numitems; i++)
+      tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
+
+    msyystate = 4; msyystring = tmpstr;
+    status = msyyparse();
+    free(tmpstr);
+	
+    if(status != 0) return(MS_FALSE); // error in parse
+    return(msyyresult);
+    break;
+  case(MS_REGEX):
+    if(itemindex == -1) {
+      msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
+      return(MS_FALSE);
+    }
+    if(itemindex >= numitems) {
+      msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
+      return(MS_FALSE);
+    }
+    if(regexec(&(expression->regex), items[itemindex], 0, NULL, 0) == 0) return(MS_TRUE); // got a match
+    break;
   }
 
-  return(-1); // not found
+  return(MS_FALSE);
+}
+
+int msShapeGetClass(layerObj *layer, shapeObj *shape)
+{
+  int i;
+
+  for(i=0; i<layer->numclasses; i++) {
+    if(msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->attributes, layer->numitems) == MS_TRUE) 
+      return(i);
+  }
+
+  return(-1); // no match
 }
 
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
@@ -726,7 +738,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // build item list
-  status = msLayerWhichItems(layer, MS_FALSE, annotate); // results have already been classified (this may change)
+  status = msLayerWhichItems(layer, MS_FALSE, annotate); // FIX: results have already been classified (this may change)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   msInitShape(&shape);
@@ -734,7 +746,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(layer->type == MS_LINE || layer->type == MS_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
   for(i=0; i<layer->resultcache->numresults; i++) {    
-    status = msLayerGetShape(layer, map->shapepath, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex, MS_TRUE);
+    status = msLayerGetShape(layer, map->shapepath, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     shape.classindex = layer->resultcache->results[i].classindex;
@@ -771,6 +783,8 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   // if MS_HILITE, restore values
   if(map->querymap.style == MS_HILITE)    
     for(i=0; i<layer->numclasses; i++) layer->class[i].color = colorbuffer[i]; // restore the color
+
+  msLayerClose(layer);
 
   return(MS_SUCCESS);
 }
@@ -837,7 +851,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   if(layer->type == MS_LINE || layer->type == MS_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
-  while((status = msLayerNextShape(layer, map->shapepath, &shape, MS_TRUE)) == MS_SUCCESS) {
+  while((status = msLayerNextShape(layer, map->shapepath, &shape)) == MS_SUCCESS) {
 
     shape.classindex = msShapeGetClass(layer, &shape);    
     if(shape.classindex == -1) {
@@ -876,7 +890,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     shpcache = NULL;
   }
 
-  msDebug("done drawing layer %s...\n", layer->name); 
+  msLayerClose(layer);
 
   return(MS_SUCCESS);
 }
