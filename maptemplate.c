@@ -2143,7 +2143,6 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   outstr = gsub(outstr, "[toggle_layers_esc]", encodedstr);
   free(encodedstr);
   
-
   for(i=0;i<msObj->Map->numlayers;i++) { // Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here
     if(isOn(msObj, msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) {
       if(msObj->Map->layers[i].group) {

@@ -46,6 +46,11 @@ typedef struct {
   int tileindex;
   int classindex;
   char *text;
+
+#ifdef USE_GEOS
+  void *geometry;
+#endif
+
 } shapeObj;
 
 typedef lineObj multipointObj;
@@ -60,13 +65,10 @@ typedef struct {
 } itemObj;
 
 typedef struct {
- int  need_geotransform;
-
- double rotation_angle;  
-
- double geotransform[6];    // Pixel/line to georef.
- double invgeotransform[6]; // georef to pixel/line
-  
+  int  need_geotransform;
+  double rotation_angle;  
+  double geotransform[6];    // Pixel/line to georef.
+  double invgeotransform[6]; // georef to pixel/line  
 } geotransformObj;
 
 #endif /* MAPPRIMITIVE_H */

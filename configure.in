@@ -902,6 +902,75 @@ ALL_INC="$MPATROL_INC $ALL_INC"
 ALL_LIB="$MPATROL_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
+dnl Find GEOS ONLY IF REQUESTED.
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING(if GEOS support requested)
+
+AC_ARG_WITH(geos,
+[  --with-geos[=PATH]      Include GEOS support (PATH is path to geos-config)],,)
+
+if test "$with_geos" = "yes" ; then
+
+  AC_MSG_RESULT([yes])
+
+  if test "`basename xx/$with_geos`" = "geos-config" ; then
+    GEOS_CONFIG="$with_geos"
+  fi
+
+  if test -z "$GEOS_CONFIG" ; then
+    AC_PATH_PROG(GEOS_CONFIG, geos-config, no)
+  fi
+
+  if test "$GEOS_CONFIG" = "no" ; then
+    AC_MSG_ERROR([couldn't find geos-config])
+  fi
+
+  GEOS_ENABLED=-DUSE_GEOS
+
+  GEOS_INCDIR=`$GEOS_CONFIG --include`
+  GEOS_INC="-I$GEOS_INCDIR"
+  GEOS_LIB=`$GEOS_CONFIG --libs`
+
+  AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
+  AC_SUBST(GEOS_INC,    $GEOS_INC)
+  AC_SUBST(GEOS_LIB,    $GEOS_LIB)
+
+  ALL_ENABLED="$GEOS_ENABLED $ALL_ENABLED"
+  ALL_INC="$GEOS_INC $ALL_INC"
+  ALL_LIB="$GEOS_LIB $ALL_LIB"
+
+elif test -n "$with_geos" -a "$with_geos" != "no" ; then
+
+  GEOS_CONFIG=$with_geos
+
+  if test -f "$GEOS_CONFIG" -a -x "$GEOS_CONFIG" ; then
+    AC_MSG_RESULT([yes, user supplied geos-config ($GEOS_CONFIG)])
+  else
+    AC_MSG_ERROR(['$GEOS_CONFIG' is not an executable.  Make sure you use --with-geos=/path/to/geos-config])
+  fi
+
+  GEOS_ENABLED=-DUSE_GEOS
+
+  GEOS_INCDIR=`$GEOS_CONFIG --include`
+  GEOS_INC="-I$GEOS_INCDIR"
+  GEOS_LIB=`$GEOS_CONFIG --libs`
+
+  AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
+  AC_SUBST(GEOS_INC,    $GEOS_INC)
+  AC_SUBST(GEOS_LIB,    $GEOS_LIB)
+
+  ALL_ENABLED="$GEOS_ENABLED $ALL_ENABLED"
+  ALL_INC="$GEOS_INC $ALL_INC"
+  ALL_LIB="$GEOS_LIB $ALL_LIB"
+
+else
+
+  AC_MSG_RESULT([no])
+
+fi
+
+dnl ---------------------------------------------------------------------
 dnl Find OGR ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
 
