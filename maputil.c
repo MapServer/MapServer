@@ -1551,24 +1551,35 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
     int         i = 0, j = 0;
 
     *numTok = 0;
+   
+    if (!map->layerorder)
+    {
+       map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
 
+       /*
+        * Initiate to default order
+        */
+       for (i=0; i<map->numlayers; i++)
+         map->layerorder[i] = i;   
+    }
+   
     if (map != NULL && map->numlayers > 0)
     {
         nCount = map->numlayers;
         papszGroups = (char **)malloc(sizeof(char *)*nCount);
-       
+
         for (i=0; i<nCount; i++)
             papszGroups[i] = NULL;
        
         for (i=0; i<nCount; i++)
         {
             bFound = 0;
-            if (map->layers[i].group)
+            if (map->layers[map->layerorder[i]].group)
             {
                 for (j=0; j<*numTok; j++)
                 {
                     if (papszGroups[j] &&
-                        strcmp(map->layers[i].group, papszGroups[j]) == 0)
+                        strcmp(map->layers[map->layerorder[i]].group, papszGroups[j]) == 0)
                     {
                         bFound = 1;
                         break;
@@ -1577,7 +1588,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
                 if (!bFound)
                 {
                     /* New group... add to the list of groups found */
-                    papszGroups[(*numTok)] = strdup(map->layers[i].group);
+                    papszGroups[(*numTok)] = strdup(map->layers[map->layerorder[i]].group);
                     (*numTok)++;
                 }
             }

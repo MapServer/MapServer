@@ -295,11 +295,11 @@ char* findTag(char* pszInstr, char* pszTag)
    strcpy(pszTag1, "[");   
    strcat(pszTag1, pszTag);
    strcat(pszTag1, " ");
-   
+
    strcpy(pszTag2, "[");      
    strcat(pszTag2, pszTag);
    strcat(pszTag2, "]");
-   
+
    pszStart = strstr(pszInstr, pszTag1);
    if (pszStart == NULL)
       pszStart = strstr(pszInstr, pszTag2);
@@ -425,11 +425,14 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
 //               if (pszNextInstr)
 //                 *pszNextInstr = pszStart + nLength + strlen(pszTag) + 2;
             }
+            return MS_SUCCESS;
          }
       }
    }
    
-   return MS_SUCCESS;
+   msSetError(MS_WEBERR, "Malformed [%s] tag.", "getInlineTag()", pszTag);
+   
+   return MS_FAILURE;
 }
 
 /*!
@@ -445,31 +448,37 @@ int processIf(char* pszInstr, hashTableObj ht)
    char *pszName, *pszValue, *pszOperator, *pszThen=NULL;
    char *pszIfTag;
    int nLength;
-   
+
    hashTableObj ifArgs=NULL;
 
    if (!ht || !pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "processIf()");
      return MS_FAILURE;
    }
-   
+
    // find the if start tag
    pszStart = findTag(pszInstr, "if");
-   
+
    while (pszStart)
    {
       // get the then string (if expression is true)
       if (getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS)
-        return MS_FAILURE;
-         
+      {
+         msSetError(MS_WEBERR, "Malformed then if tag.", "processIf()");
+         return MS_FAILURE;
+      }
+      
       // retrieve if tag args
       if (getTagArgs("if", pszStart, &ifArgs) != MS_SUCCESS)
-        return MS_FAILURE;
-         
+      {
+         msSetError(MS_WEBERR, "Malformed args if tag.", "processIf()");
+         return MS_FAILURE;
+      }
+      
       pszName = msLookupHashTable(ifArgs, "name");
       pszValue = msLookupHashTable(ifArgs, "value");
       pszOperator = msLookupHashTable(ifArgs, "oper");
-         
+
       if (pszName && pszValue && msLookupHashTable(ht, pszName)) {
          // set position at end of if start tag
          pszEnd = strchr(pszStart, ']');
@@ -507,28 +516,22 @@ int processIf(char* pszInstr, hashTableObj ht)
               pszInstr = gsub(pszInstr, pszIfTag, "");
          }
          
+         if (pszIfTag)
+           free(pszIfTag);
 
-         free(pszIfTag);
          pszIfTag = NULL;
       }
-      else {
-         if (pszThen)
-           free(pszThen);
-         if (ifArgs)
-           msFreeHashTable(ifArgs);
-         
-         msSetError(MS_WEBERR, "Malformed if tag.", "processIf()");
-         return MS_FAILURE;
-      }    
       
-      free (pszThen);
+      if (pszThen)
+        free (pszThen);
+      
       pszThen=NULL;
       
       msFreeHashTable(ifArgs);
       ifArgs=NULL;
       
       // find the if start tag
-      pszStart = findTag(pszInstr, "if");
+      pszStart = findTag(pszStart + 1, "if");
    }
    
    return MS_SUCCESS;
@@ -551,15 +554,15 @@ int processMetadata(char* pszInstr, hashTableObj ht)
    int nLength;
 
    hashTableObj metadataArgs = NULL;
-   
+
    if (!ht || !pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "processMetadata()");
      return MS_FAILURE;
    }
-   
+
    // set position to the begining of metadata tag
    pszStart = findTag(pszInstr, "metadata");
-   
+
    while (pszStart) {
       // get metadata args
       if (getTagArgs("metadata", pszStart, &metadataArgs) != MS_SUCCESS)
@@ -567,36 +570,30 @@ int processMetadata(char* pszInstr, hashTableObj ht)
 
       pszHashName = msLookupHashTable(metadataArgs, "name");
       pszHashValue = msLookupHashTable(ht, pszHashName);
-
+      
       if (pszHashName && pszHashValue) {
-         // set position to the end of metadata start tag
-         pszEnd = strchr(pszStart, ']');
-         pszEnd++;
+           // set position to the end of metadata start tag
+           pszEnd = strchr(pszStart, ']');
+           pszEnd++;
 
-         // build the complete metadata tag ([metadata all_args])
-         // to replace it by the corresponding value from ht
-         nLength = pszEnd - pszStart;
-         pszMetadataTag = (char*)malloc(nLength + 1);
-         strncpy(pszMetadataTag, pszStart, nLength);
-         pszMetadataTag[nLength] = '\0';
+           // build the complete metadata tag ([metadata all_args])
+           // to replace it by the corresponding value from ht
+           nLength = pszEnd - pszStart;
+           pszMetadataTag = (char*)malloc(nLength + 1);
+           strncpy(pszMetadataTag, pszStart, nLength);
+           pszMetadataTag[nLength] = '\0';
 
-         pszStart = gsub(pszInstr, pszMetadataTag, pszHashValue);
+           pszStart = gsub(pszInstr, pszMetadataTag, pszHashValue);
 
-         free(pszMetadataTag);
-         pszMetadataTag=NULL;
-      }
-      else {
-         if (metadataArgs)
-           msFreeHashTable(metadataArgs);              
-         msSetError(MS_WEBERR, "Malformed metadata tag.", "processMetadataL()");
-         return MS_FAILURE;
+           free(pszMetadataTag);
+           pszMetadataTag=NULL;
       }
 
       msFreeHashTable(metadataArgs);
       metadataArgs=NULL;
-      
-      // set position to the begining of metadata tag
-      pszStart = findTag(pszInstr, "metadata");
+
+      // set position to the begining of the next metadata tag
+      pszStart = findTag(pszStart + 1, "metadata");
    }
 
    return MS_SUCCESS;
@@ -758,12 +755,12 @@ char *strcatalloc(char* pszDest, char* pszSrc)
  * 
  * buffer must be freed by caller.
 */
-int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **legGroupHtmlCopy)
+int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **pszTemp)
 {
    char *pszClassImg;
    int i;
 
-   *legGroupHtmlCopy = NULL;
+   *pszTemp = NULL;
    
    if (!pszGroupName || !pszGroupTemplate) {
      msSetError(MS_WEBERR, "Invalid pointer.", "generateGroupTemplate()");
@@ -773,24 +770,37 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    /*
     * Work from a copy
     */
-   *legGroupHtmlCopy = (char*)malloc(strlen(pszGroupTemplate) + 1);
-   strcpy(*legGroupHtmlCopy, pszGroupTemplate);
+   *pszTemp = (char*)malloc(strlen(pszGroupTemplate) + 1);
+   strcpy(*pszTemp, pszGroupTemplate);
          
    /*
     * Change group tags
     */
-   *legGroupHtmlCopy = gsub(*legGroupHtmlCopy, "[leg_group_name]", pszGroupName);
-      
+   *pszTemp = gsub(*pszTemp, "[leg_group_name]", pszGroupName);
+
+   /*
+    * Process all metadata tags
+    * only web object is accessible
+   */
+   if (processMetadata(*pszTemp, map->web.metadata) != MS_SUCCESS)
+     return MS_FAILURE;
+   
+   /*
+    * check for if tag
+   */
+   if (processIf(*pszTemp, map->web.metadata) != MS_SUCCESS)
+     return MS_FAILURE;
+   
    /*
     * Check if leg_icon tag exist
     * if so display the first layer first class icon
     */
-   pszClassImg = strstr(*legGroupHtmlCopy, "[leg_icon");
+   pszClassImg = strstr(*pszTemp, "[leg_icon");
    if (pszClassImg) {
       // find first layer of this group
       for (i=0; i<map->numlayers; i++)
         if (map->layers[map->layerorder[i]].group && strcmp(map->layers[map->layerorder[i]].group, pszGroupName) == 0)
-          processIcon(map, map->layerorder[i], 0, legGroupHtmlCopy);
+          processIcon(map, map->layerorder[i], 0, pszTemp);
    }      
       
    return MS_SUCCESS;
@@ -810,6 +820,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    hashTableObj myHashTable;
    char pszStatus[3];
    char pszType[3];
+   
    int nOptFlag=0;
    char *pszOptFlag = NULL;
    char *pszClassImg;
@@ -882,8 +893,18 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    
    sprintf(pszType, "%d", map->layers[nIdxLayer].type);
    msInsertHashTable(myHashTable, "layer_type", pszType);   
-
-   processIf(*pszTemp, myHashTable);
+   
+   msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
+   msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
+   
+   if (processIf(*pszTemp, myHashTable) != MS_SUCCESS)
+      return MS_FAILURE;
+   
+   if (processIf(*pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+      return MS_FAILURE;
+   
+   if (processIf(*pszTemp, map->web.metadata) != MS_SUCCESS)
+      return MS_FAILURE;
 
    msFreeHashTable(myHashTable);
    
@@ -896,8 +917,16 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
       processIcon(map, nIdxLayer, 0, pszTemp);
    }      
 
-   processMetadata(*pszTemp, map->layers[nIdxLayer].metadata);
-      
+   /* process all metadata tags
+    * only current layer and web object
+    * metaddata are accessible
+   */
+   if (processMetadata(*pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+      return MS_FAILURE;
+   
+   if (processMetadata(*pszTemp, map->web.metadata) != MS_SUCCESS)
+      return MS_FAILURE;      
+   
    return MS_SUCCESS;
 }
 
@@ -910,15 +939,19 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
  * 
  * buffer must be freed by caller.
 */
-int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, int nIdxClass, hashTableObj oClassArgs, char **legClassHtmlCopy)
+int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, int nIdxClass, hashTableObj oClassArgs, char **pszTemp)
 {
+   hashTableObj myHashTable;
+   char pszStatus[3];
+   char pszType[3];
+   
    char *pszClassImg;
    int nOptFlag=0;
    char *pszOptFlag = NULL;
 
-   *legClassHtmlCopy = NULL;
+   *pszTemp = NULL;
    
-   if (!pszClassTemplate || 
+   if (!pszClassTemplate ||
        !map || 
        nIdxLayer > map->numlayers ||
        nIdxLayer < 0 ||
@@ -964,23 +997,62 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /*
     * Work from a copy
     */
-   *legClassHtmlCopy = (char*)malloc(strlen(pszClassTemplate) + 1);
-   strcpy(*legClassHtmlCopy, pszClassTemplate);
+   *pszTemp = (char*)malloc(strlen(pszClassTemplate) + 1);
+   strcpy(*pszTemp, pszClassTemplate);
          
    /*
     * Change class tags
     */
-   *legClassHtmlCopy = gsub(*legClassHtmlCopy, "[leg_class_name]", map->layers[nIdxLayer].class[nIdxClass].name);
-   *legClassHtmlCopy = gsub(*legClassHtmlCopy, "[leg_class_title]", map->layers[nIdxLayer].class[nIdxClass].title);
+   *pszTemp = gsub(*pszTemp, "[leg_class_name]", map->layers[nIdxLayer].class[nIdxClass].name);
+   *pszTemp = gsub(*pszTemp, "[leg_class_title]", map->layers[nIdxLayer].class[nIdxClass].title);
+   
+   /*
+    * Create a hash table that contain info
+    * on current layer
+    */
+   myHashTable = msCreateHashTable();
+   
+   /*
+    * for now, only status, type, name and group are  required by template
+    */
+   sprintf(pszStatus, "%d", map->layers[nIdxLayer].status);
+   msInsertHashTable(myHashTable, "layer_status", pszStatus);
+
+   sprintf(pszType, "%d", map->layers[nIdxLayer].type);
+   msInsertHashTable(myHashTable, "layer_type", pszType);   
+   
+   msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
+   msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
+   
+   if (processIf(*pszTemp, myHashTable) != MS_SUCCESS)
+      return MS_FAILURE;
+   
+   if (processIf(*pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+      return MS_FAILURE;
+   
+   if (processIf(*pszTemp, map->web.metadata) != MS_SUCCESS)
+      return MS_FAILURE;
+
+   msFreeHashTable(myHashTable);   
       
    /*
     * Check if leg_icon tag exist
     */
-   pszClassImg = strstr(*legClassHtmlCopy, "[leg_icon");
+   pszClassImg = strstr(*pszTemp, "[leg_icon");
    if (pszClassImg) {
-      processIcon(map, nIdxLayer, nIdxClass, legClassHtmlCopy);
+      processIcon(map, nIdxLayer, nIdxClass, pszTemp);
    }
 
+   /* process all metadata tags
+    * only current layer and web object
+    * metaddata are accessible
+   */
+   if (processMetadata(*pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+      return MS_FAILURE;
+   
+   if (processMetadata(*pszTemp, map->web.metadata) != MS_SUCCESS)
+      return MS_FAILURE;      
+   
    return MS_SUCCESS;
 }
 
@@ -1050,14 +1122,9 @@ char *generateLegendTemplate(mapObj *map)
    /*
     * Seperate groups, layers and class
     */
-   if (getInlineTag("leg_group_html", file, &legGroupHtml) != MS_SUCCESS)
-     return NULL;
-   
-   if (getInlineTag("leg_layer_html", file, &legLayerHtml) != MS_SUCCESS)
-     return NULL;
-   
-   if (getInlineTag("leg_class_html", file, &legClassHtml) != MS_SUCCESS)
-     return NULL;
+   getInlineTag("leg_group_html", file, &legGroupHtml);
+   getInlineTag("leg_layer_html", file, &legLayerHtml);
+   getInlineTag("leg_class_html", file, &legClassHtml);
 
    /*
     * Retrieve arguments of all three parts
