@@ -696,7 +696,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
                       gdImg->tpixels[i][j] = 
                           gdTrueColor(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
                   }
-                  else
+                  else if( pabyRawAlpha[k] != 0 )
                   {
                       int gd_alpha = 127 - (pabyRawAlpha[k] >> 1);
                       int gd_color = gdTrueColorAlpha(
