@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/02/13 22:16:06  dan
+ * Use double as second arg to pow() (bug 1235)
+ *
  * Revision 1.43  2004/12/14 21:30:43  sdlime
  * Moved functions to build lists of inner and outer rings to mapprimitive.c from mapgml.c. They are needed to covert between MapServer polygons and GEOS gemometries (bug 771).
  *
@@ -681,7 +684,7 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
     outside.point = (pointObj *)malloc(sizeof(pointObj)*p->line[i].numpoints);
     inside.numpoints = outside.numpoints = p->line[i].numpoints;    
 
-    angle = asin(MS_ABS(p->line[i].point[1].x - p->line[i].point[0].x)/sqrt((pow((p->line[i].point[1].x - p->line[i].point[0].x),2) + pow((p->line[i].point[1].y - p->line[i].point[0].y),2))));
+    angle = asin(MS_ABS(p->line[i].point[1].x - p->line[i].point[0].x)/sqrt((pow((p->line[i].point[1].x - p->line[i].point[0].x),2.0) + pow((p->line[i].point[1].y - p->line[i].point[0].y),2.0))));
     if(p->line[i].point[0].x < p->line[i].point[1].x)
       dy = sin(angle) * (w/2);
     else
@@ -703,7 +706,7 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
 
     for(j=2; j<p->line[i].numpoints; j++) {
 
-      angle = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2))));
+      angle = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2.0))));
       if(p->line[i].point[j-1].x < p->line[i].point[j].x)
 	dy = sin(angle) * (w/2);
       else
@@ -928,7 +931,7 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
     line_length = 0;
     max_segment_length = 0;
     for(j=1;j<p->line[i].numpoints;j++) {
-      segment_length = sqrt((pow((p->line[i].point[j].x-p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y-p->line[i].point[j-1].y),2)));
+      segment_length = sqrt((pow((p->line[i].point[j].x-p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y-p->line[i].point[j-1].y),2.0)));
       line_length += segment_length;
       if(segment_length > max_segment_length) {
 	max_segment_length = segment_length;
@@ -960,7 +963,7 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
   lp->x = (p->line[i].point[j].x + p->line[i].point[j-1].x)/2.0;
   lp->y = (p->line[i].point[j].y + p->line[i].point[j-1].y)/2.0;
  
-  theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2))));
+  theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2.0))));
 
   if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
     if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
