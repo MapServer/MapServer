@@ -103,7 +103,14 @@ class PointQueryResultsTestCase(LayerQueryTestCase):
         self.layer.close()
         self.assertRectsEqual(results.bounds, feature.bounds)
         assert feature.getValue(1) == 'A Polygon'
-        
+
+    def testQueryResultsListComp(self):
+        """get all results using list comprehension"""
+        results = self.pointquery()
+        result_list = [results.getResult(i) for i in range(results.numresults)]
+        assert len(result_list) == 1
+        assert result_list[0].shapeindex == 0
+
 # ===========================================================================
 # Run the tests outside of the main suite
 
