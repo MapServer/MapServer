@@ -1333,7 +1333,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  
 	  if(layer->transform) {
 	    if(msRectContained(&shape.bounds, &map->extent) == MS_FALSE) {
-	      if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
 	      msClipPolylineRect(&shape, cliprect, &shape);
 	      if(shape.numlines == 0) continue;
 	    }
@@ -1390,7 +1389,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
 	  if(layer->transform) {
 	    if(msRectContained(&shape.bounds, &map->extent) == MS_FALSE) {
-	      if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
 	      msClipPolygonRect(&shape, cliprect, &shape);
 	      if(shape.numlines == 0) continue;
 	    }	      
@@ -1511,7 +1509,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
 	if(layer->transform) {
 	  if(!msRectContained(&shape.bounds, &map->extent)) {
-	    if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
 	    msClipPolylineRect(&shape, cliprect, &shape);
 	    if(shape.numlines == 0) continue;
 	  }
@@ -1546,9 +1543,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
 	if(layer->class[c].overlaysymbol >= 0) { // cache shape
 	  shape.classindex = c;
-	  fprintf(stderr, "Inserting line in cache...\n");
 	  if(insertFeatureList(&shpcache, shape) == NULL) return(-1);
-          fprintf(stderr, "Inserting line in cache...\n");
 	  msInitShape(&shape); // we init instead of free because we don't want to destroy in memory point list
 	} else
 	  msFreeShape(&shape);
@@ -1587,7 +1582,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	
 	if(layer->transform) {
 	  if(!msRectContained(&shape.bounds, &cliprect)) {
-	    if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
 	    msClipPolygonRect(&shape, cliprect, &shape);
 	    if(shape.numlines == 0) continue;
 	  }
@@ -1657,7 +1651,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	
 	if(layer->transform) {
 	  if(!msRectContained(&shape.bounds, &cliprect)) {
-	    if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
 	    msClipPolygonRect(&shape, cliprect, &shape);
 	    if(shape.numlines == 0) continue;
 	  }

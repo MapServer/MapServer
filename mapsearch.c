@@ -356,12 +356,27 @@ char *msWhichShapesProj(shapefileObj *shp, rectObj window, projectionObj *in, pr
 	return(NULL);
       }
       
-      for(i=0;i<shp->numshapes;i++) { /* For each shape */
+      for(i=0;i<shp->numshapes;i++) { /* for each shape */
 	if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
 	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
 	    msSetBit(status, i, 1);
       }
-    }
+    } else { /* there was an index */
+
+      /* 
+      ** We need to refine the status array for potenial matches against
+      ** actual shape boundaries. The index search doesn't have enough 
+      ** information to do this itself.
+      */
+      for(i=0;i<shp->numshapes;i++) { /* for each shape */
+        if(msGetBit(status, i)) {
+	  if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
+	    if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE)
+	      msSetBit(status, i, 0);
+        }
+      }
+
+    } 
   }
  
   return(status); /* success */
@@ -395,18 +410,35 @@ char *msWhichShapes(shapefileObj *shp, rectObj window)
     free(filename);    
 
     if(!status) { /* no index */
+
       status = msAllocBitArray(shp->numshapes);
       if(!status) {
 	msSetError(MS_MEMERR, NULL, "msWhichShapes()");       
 	return(NULL);
       }
       
-      for(i=0;i<shp->numshapes;i++) { /* For each shape */
+      for(i=0;i<shp->numshapes;i++) { /* for each shape */
 	if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
 	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
 	    msSetBit(status, i, 1);
       }
-    }  
+
+    } else { /* there was an index */
+
+      /* 
+      ** We need to refine the status array for potenial matches against
+      ** actual shape boundaries. The index search doesn't have enough 
+      ** information to do this itself.
+      */
+      for(i=0;i<shp->numshapes;i++) { /* for each shape */
+        if(msGetBit(status, i)) {
+	  if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
+	    if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE)
+	      msSetBit(status, i, 0);
+        }
+      }
+
+    } 
   }
 
   return(status); /* success */
