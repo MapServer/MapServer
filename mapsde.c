@@ -238,6 +238,9 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
       layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
       layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+      layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
+      layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
+      layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
 #ifdef USE_TTF
       if(layer->class[i].label.type == MS_TRUETYPE) { 
 	layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);

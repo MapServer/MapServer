@@ -145,10 +145,10 @@ typedef struct {
   char *text; /* string to annotate with */ 
 } featureObj;
 
-typedef struct featureListNodeObj {
+typedef struct listNode {
   featureObj feature;
-  struct featureListNodeObj *next;
-}
+  struct listNode *next;
+} featureListNodeObj;
 
 typedef featureListNodeObj * featureListNodeObjPtr;
 
@@ -569,7 +569,7 @@ int initLayer(layerObj *layer);
 int initClass(classObj *class);
 int initQuery(queryObj *query);
 struct featureObj *addFeature(struct featureObj *list);
-struct featureObj *initFeature();
+void initFeature(featureObj *feature);
 int loadProjectionString(projectionObj *p, char *value);
 int loadExpressionString(expressionObj *exp, char *value);
 
