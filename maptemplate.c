@@ -2260,6 +2260,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     outstr = gsub(outstr, "[shpext_esc]", encodedstr);
     free(encodedstr);
      
+    sprintf(repstr, "%d", msObj->ResultShape.classindex);
+    outstr = gsub(outstr, "[shpclass]", repstr);
+
     if(processCoords(&outstr, &msObj->ResultShape) != MS_SUCCESS)
       return(NULL);
 
