@@ -116,6 +116,21 @@ class RectObjTestCase(MapPrimitivesTestCase):
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
         p = mapscript.pointObj(3.00001, 0.0)
         assert p not in r, (p.x, p.y, r)
+
+class ImageRectObjTestCase(MapPrimitivesTestCase):
+
+    def testRectObjConstructorArgs(self):
+        """create a rect in image units"""
+        r = mapscript.rectObj(-1.0, 2.0, 3.0, 0.0, mapscript.MS_TRUE)
+        self.assertAlmostEqual(r.minx, -1.0)
+        self.assertAlmostEqual(r.miny, 2.0)
+        self.assertAlmostEqual(r.maxx, 3.0)
+        self.assertAlmostEqual(r.maxy, 0.0)
+
+    def testRectObjConstructorBadYCoords(self):
+        """in image units miny should be greater than maxy"""
+        self.assertRaises(mapscript.MapServerError, mapscript.rectObj,
+                          -1.0, 0.0, 3.0, 2.0, mapscript.MS_TRUE)
     
 
 # ===========================================================================

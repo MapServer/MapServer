@@ -1515,9 +1515,11 @@ Methods
 
 .. _new rectObj:
 
-new rectObj( [ float minx=-1.0, float miny=-1.0, float maxx=-1.0, float maxy=-1.0 ] ) : rectObj
+new rectObj( [ float minx=-1.0, float miny=-1.0, float maxx=-1.0, float maxy=-1.0, int imageunits=MS_FALSE ] ) : rectObj
     Create new instance.  The four easting and northing arguments
-    are optional and default to -1.0.
+    are optional and default to -1.0.  Note the new optional fifth argument
+    which allows creation of rectangles in image (pixel/line) units which
+    are also tested for validity.
 
 .. _rectObj.draw:
 

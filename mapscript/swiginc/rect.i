@@ -3,16 +3,29 @@
 %extend rectObj {
 
     rectObj(double minx=-1.0, double miny=-1.0, 
-            double maxx=-1.0, double maxy=-1.0) 
+            double maxx=-1.0, double maxy=-1.0,
+            int imageunits=MS_FALSE) 
     {	
         rectObj *rect;
     
         // Check bounds
-        if (minx > maxx || miny > maxy) {
-            msSetError(MS_RECTERR,
-                "{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
-                "rectObj()", minx, miny, maxx, maxy);
-            return NULL;
+        if (imageunits == MS_FALSE) {  // a normal easting/northing rect
+        
+            if (minx > maxx || miny > maxy) {
+                msSetError(MS_RECTERR,
+                    "{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
+                    "rectObj()", minx, miny, maxx, maxy);
+                return NULL;
+            }
+        }
+        else { // a pixel/line image rect
+        
+            if (minx > maxx || maxy > miny) {
+                msSetError(MS_RECTERR,
+                    "image (pixel/line) units { 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
+                    "rectObj()", minx, miny, maxx, maxy);
+                return NULL;
+            }
         }
     
         rect = (rectObj *)calloc(1, sizeof(rectObj));
