@@ -573,11 +573,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if(!image) return NULL;
 
     image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
+    image->imagetype = map->imagetype;
     image->width = gdImageSX(image->img.gd);
     image->height = gdImageSY(image->img.gd);
-    image->imagepath = image->imageurl = NULL;
-    image->imagetype = map->imagetype;
-    
+    image->imagepath = map->web.imagepath?strdup(map->web.imagepath):NULL; 
+    image->imageurl = map->web.imageurl?strdup(map->web.imageurl):NULL;
+   
     return image;
   }  
 }

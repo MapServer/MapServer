@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.42  2002/05/08 19:09:49  dan
+ * Attempt at fixing class.createLegendIcon()
+ *
  * Revision 1.41  2002/05/02 15:55:51  assefa
  * Adapt code to support imageObj.
  *
@@ -568,12 +571,16 @@ int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int wi
 //TODO
 imageObj *classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height) {
     imageObj *image=NULL;
+
+    image = (imageObj*)malloc(sizeof(imageObj));
+    if (image == NULL) return NULL;
+
     image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
-    image->imagetype = MS_GIF;
+    image->imagetype = map->imagetype;
     image->width = gdImageSX(image->img.gd);
     image->height = gdImageSY(image->img.gd);
-    image->imagepath = NULL; 
-    image->imageurl = NULL;
+    image->imagepath = map->web.imagepath?strdup(map->web.imagepath):NULL; 
+    image->imageurl = map->web.imageurl?strdup(map->web.imageurl):NULL;
 
     return image;
   }
