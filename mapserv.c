@@ -1,7 +1,5 @@
 #include "mapserv.h"
 
-extern double inchesPerUnit[6];
-
 mapservObj* msObj;
 
 int writeLog(int show_error)
@@ -847,7 +845,7 @@ void setExtentFromShapes() {
   tmpext.maxy += dy*EXTENT_PADDING/2.0;
 
   if(msObj->Scale != 0) { // apply the scale around the center point (tmppnt)
-    cellsize = (msObj->Scale/msObj->Map->resolution)/inchesPerUnit[msObj->Map->units]; // user supplied a point and a scale
+    cellsize = (msObj->Scale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); // user supplied a point and a scale
     tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;
     tmpext.miny = tmppnt.y - cellsize*msObj->Map->height/2.0;
     tmpext.maxx = tmppnt.x + cellsize*msObj->Map->width/2.0;
@@ -862,7 +860,7 @@ void setExtentFromShapes() {
   // in case we don't get  usable extent at this point (i.e. single point result)
   if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy)) {
     if(msObj->Map->web.minscale > 0) { // try web object minscale first
-      cellsize = (msObj->Map->web.minscale/msObj->Map->resolution)/inchesPerUnit[msObj->Map->units]; // user supplied a point and a scale
+      cellsize = (msObj->Map->web.minscale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); // user supplied a point and a scale
       tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;
       tmpext.miny = tmppnt.y - cellsize*msObj->Map->height/2.0;
       tmpext.maxx = tmppnt.x + cellsize*msObj->Map->width/2.0;

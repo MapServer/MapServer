@@ -349,7 +349,6 @@ static void msWMSPrintRequestCap(const char *wmtver, const char *request,
 ** the central pixel of a map.  ScaleHint values are the min and max 
 ** recommended values of that diagonal.
 */
-extern double inchesPerUnit[];  // defined in mapscale.c
 void msWMSPrintScaleHint(const char *tabspace, double minscale, 
                          double maxscale, double resolution) 
 {
@@ -358,9 +357,9 @@ void msWMSPrintScaleHint(const char *tabspace, double minscale,
   diag = sqrt(2.0);
 
   if (minscale > 0)
-    scalehintmin = diag*(minscale/resolution)/inchesPerUnit[MS_METERS];
+    scalehintmin = diag*(minscale/resolution)/msInchesPerUnit(MS_METERS,0);
   if (maxscale > 0)
-    scalehintmax = diag*(maxscale/resolution)/inchesPerUnit[MS_METERS];
+    scalehintmax = diag*(maxscale/resolution)/msInchesPerUnit(MS_METERS,0);
 
   if (scalehintmin > 0.0 || scalehintmax > 0.0)
   {

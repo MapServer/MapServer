@@ -42,7 +42,7 @@ static double roundInterval(double d)
 */
 int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scale)
 {
-  double md, gd;
+  double md, gd, center_y;
 
   // if((extent.maxx == extent.minx) || (extent.maxy == extent.miny))  
   if(!MS_VALID_EXTENT(extent.minx, extent.miny, extent.maxx, extent.maxy)) {
@@ -62,7 +62,8 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
   case(MS_MILES):
   case(MS_INCHES):  
   case(MS_FEET):
-    md = width/(resolution*inchesPerUnit[units]); // was (width-1)
+    center_y = (extent.miny+extent.maxy)/2.0;
+    md = width/(resolution*msInchesPerUnit(units, center_y)); // was (width-1)
     gd = extent.maxx - extent.minx;
     *scale = gd/md;
     break;
@@ -73,6 +74,37 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
 
   return(MS_SUCCESS);
 }
+
+double msInchesPerUnit(int units, double center_lat)
+{
+  double lat_adj, ipu = 1.0;
+
+  switch (units) {
+  case(MS_METERS):    
+  case(MS_KILOMETERS):
+  case(MS_MILES):
+  case(MS_INCHES):  
+  case(MS_FEET):
+    ipu = inchesPerUnit[units]; 
+    break;
+  case(MS_DD):
+    /* With geographical (DD) coordinates, we adjust the inchesPerUnit
+     * based on the latitude of the center of the view. For this we assume
+     * we have a perfect sphere and just use cos(lat) in our calculation.
+     */
+    if (center_lat != 0.0)
+        lat_adj = sqrt(1+cos(MS_PI*center_lat/180.0))/sqrt(2.0);
+    else 
+        lat_adj = 1.0;
+    ipu = inchesPerUnit[units]*lat_adj;
+    break;
+  default:
+    break;
+  }
+
+  return ipu;
+}
+
 
 #define X_STEP_SIZE 5
 
@@ -104,10 +136,10 @@ imageObj *msDrawScalebar(mapObj *map)
   
   dsx = map->scalebar.width - 2*HMARGIN;
   do {
-    msx = (map->cellsize * dsx)/(inchesPerUnit[map->scalebar.units]/inchesPerUnit[map->units]);
+    msx = (map->cellsize * dsx)/(msInchesPerUnit(map->scalebar.units,0)/msInchesPerUnit(map->units,0));
     i = roundInterval(msx/map->scalebar.intervals);
     sprintf(label, "%g", map->scalebar.intervals*i); // last label
-    isx = MS_NINT((i/(inchesPerUnit[map->units]/inchesPerUnit[map->scalebar.units]))/map->cellsize);  
+    isx = MS_NINT((i/(msInchesPerUnit(map->units,0)/msInchesPerUnit(map->scalebar.units,0)))/map->cellsize);  
     sx = (map->scalebar.intervals*isx) + MS_NINT((1.5 + strlen(label)/2.0 + strlen(unitText[map->scalebar.units]))*fontPtr->w);
 
     if(sx <= (map->scalebar.width - 2*HMARGIN)) break; // it will fit

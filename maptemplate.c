@@ -71,7 +71,7 @@ int setExtent(mapservObj *msObj)
      msObj->Map->extent.maxy = msObj->MapPnt.y + msObj->Buffer;
      break;
    case FROMSCALE: 
-     cellsize = (msObj->Scale/msObj->Map->resolution)/inchesPerUnit[msObj->Map->units]; // user supplied a point and a scale
+     cellsize = (msObj->Scale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); // user supplied a point and a scale
      msObj->Map->extent.minx = msObj->MapPnt.x - cellsize*msObj->Map->width/2.0;
      msObj->Map->extent.miny = msObj->MapPnt.y - cellsize*msObj->Map->height/2.0;
      msObj->Map->extent.maxx = msObj->MapPnt.x + cellsize*msObj->Map->width/2.0;

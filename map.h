@@ -932,6 +932,7 @@ void msGDALInitialize();
    
 imageObj *msDrawScalebar(mapObj *map); // in mapscale.c
 int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scale);
+double msInchesPerUnit(int units, double center_lat);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
 
 

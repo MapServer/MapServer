@@ -1,10 +1,6 @@
 #include "map.h"
 #include "mapparser.h"
 
-/*
-** Match this with with unit enumerations is map.h
-*/
-static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 
 /*
 ** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
@@ -584,7 +580,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     if(lp->toleranceunits == MS_PIXELS)
       tolerance = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
     else
-      tolerance = lp->tolerance * (inchesPerUnit[lp->toleranceunits]/inchesPerUnit[map->units]);
+      tolerance = lp->tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
    
     // open this layer
     status = msLayerOpen(lp);
@@ -787,7 +783,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       if(lp->toleranceunits == MS_PIXELS)
 	t = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
       else
-	t = lp->tolerance * (inchesPerUnit[lp->toleranceunits]/inchesPerUnit[map->units]);
+	t = lp->tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
     } else // use buffer distance
       t = buffer;
 
@@ -926,7 +922,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     if(lp->toleranceunits == MS_PIXELS)
       tolerance = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
     else
-      tolerance = lp->tolerance * (inchesPerUnit[lp->toleranceunits]/inchesPerUnit[map->units]);
+      tolerance = lp->tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
    
     // open this layer
     status = msLayerOpen(lp);

@@ -6,9 +6,6 @@
 #include <assert.h>
 #include "map.h"
 
-static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
-
-
 
 /*
  * Functions to reset any pen (color index) values previously set. Used primarily to reset things when
@@ -125,7 +122,7 @@ imageObj *msDrawMap(mapObj *map)
     for(i=0;i<map->numlayers; i++) {
       if(map->layers[i].symbolscale > 0 && map->scale > 0) {
     	if(map->layers[i].sizeunits != MS_PIXELS)
-      	  map->layers[i].scalefactor = (inchesPerUnit[map->layers[i].sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
+      	  map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
     	else
       	  map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
       }
@@ -313,7 +310,7 @@ imageObj *msDrawQueryMap(mapObj *map)
   for(i=0;i<map->numlayers; i++) {
     if(map->layers[i].symbolscale > 0 && map->scale > 0) {
       if(map->layers[i].sizeunits != MS_PIXELS)
-      	map->layers[i].scalefactor = (inchesPerUnit[map->layers[i].sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
+      	map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
       else
       	map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
     }
@@ -910,7 +907,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     if(layer->transform) {
       center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
       center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
-      r *= (inchesPerUnit[layer->units]/inchesPerUnit[map->units])/map->cellsize;      
+      r *= (msInchesPerUnit(layer->units,0)/msInchesPerUnit(map->units,0))/map->cellsize;      
     }
 
     // shade symbol drawing will call outline function if color not set

@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.161  2003/04/25 15:32:58  dan
+ * Replaced inchesperUnit[] by a msInchesPerUnit() function that provides
+ * better scale values for units DD (adjusts the inches/unit based on lat)
+ *
  * Revision 1.160  2003/04/23 19:13:29  dan
  * Use class names in the format ms_<classname>_obj for PHP class entry
  * definitions.  (We were getting name collisions with the "error" class.)
@@ -492,6 +496,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS);
 
 
 static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits, 
+                                        double dCenterLat,
                                         int nWidth, double resolution);
 
 /*=====================================================================
@@ -2116,8 +2121,9 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         pZoomFactor->value.lval > 1)
     {
         dfDeltaExt = 
-            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
-                                      self->width, self->resolution);
+            GetDeltaExtentsUsingScale(self->web.minscale, self->units,
+                                      dfGeoPosY, self->width, 
+                                      self->resolution);
         if (dfDeltaExt > 0.0)
         {
             oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
@@ -2407,14 +2413,16 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
 
     if (self->web.minscale > 0 && dfNewScale <  self->web.minscale)
     {
-        dfDeltaExt = 
-            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
-                                      self->width, self->resolution);
         dfMiddleX = oNewGeorefExt.minx + 
             ((oNewGeorefExt.maxx - oNewGeorefExt.minx)/2);
         dfMiddleY = oNewGeorefExt.miny + 
             ((oNewGeorefExt.maxy - oNewGeorefExt.miny)/2);
         
+        dfDeltaExt = 
+            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
+                                      dfMiddleY, self->width, 
+                                      self->resolution);
+
         if (dfDeltaExt > 0.0)
         {
             oNewGeorefExt.minx = dfMiddleX - (dfDeltaExt/2);
@@ -2696,8 +2704,8 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
       nTmp = self->height;
 
     dfDeltaExt = 
-        GetDeltaExtentsUsingScale(pScale->value.dval, self->units, nTmp,
-                                  self->resolution);
+        GetDeltaExtentsUsingScale(pScale->value.dval, self->units, dfGeoPosY,
+                                  nTmp, self->resolution);
                                   
     if (dfDeltaExt > 0.0)
     {
@@ -2752,7 +2760,8 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     {
         dfDeltaExt = 
             GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
-                                      self->width, self->resolution);
+                                      dfGeoPosY, self->width, 
+                                      self->resolution);
         if (dfDeltaExt > 0.0)
         {
             oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
@@ -11513,8 +11522,8 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
 /*                                                                      */
 /*      Base on the function msCalculateScale (mapscale.c)              */
 /************************************************************************/
-extern double inchesPerUnit[6];
 static double GetDeltaExtentsUsingScale(double dfScale, int nUnits, 
+                                        double dCenterLat,
                                         int nWidth, double resolution)
 {
     double md = 0.0;
@@ -11531,7 +11540,7 @@ static double GetDeltaExtentsUsingScale(double dfScale, int nUnits,
       case(MS_MILES):
       case(MS_INCHES):  
       case(MS_FEET):
-        md = nWidth/(resolution*inchesPerUnit[nUnits]);
+        md = nWidth/(resolution*msInchesPerUnit(nUnits,dCenterLat));
         dfDelta = md * dfScale;
         break;
           
