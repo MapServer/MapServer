@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.169  2003/06/11 17:55:00  dan
+ * Modified PHP SAPI test to accept 'cli' as well
+ *
  * Revision 1.168  2003/06/04 17:57:12  assefa
  * add initGrid call.
  *
@@ -1401,7 +1404,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * now we'll produce an error of PHP is not running as a CGI.
      */
     if (sapi_module.name && (strcmp(sapi_module.name, "cgi") != 0) &&
-        (strcmp(sapi_module.name, "cgi-fcgi") != 0))
+        (strcmp(sapi_module.name, "cgi-fcgi") != 0) &&
+        (strcmp(sapi_module.name, "cli") != 0))
     {
         php3_error(E_ERROR, 
              "Due to thread-safety problems, php_mapscript cannot be used "
