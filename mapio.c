@@ -28,10 +28,15 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/10/05 04:23:10  sdlime
+ * Added include for stdarg.h to mapio.c.
+ *
  * Revision 1.1  2004/10/01 19:03:35  frank
  * New
  *
  */
+
+#include <stdarg.h>
 
 #include "map.h"
 
