@@ -319,6 +319,29 @@ class LayerQueryTestCase(MapLayerTestCase):
                                      mapscript.MS_MULTIPLE)
         assert self.layer.getNumResults() == 0
 
+class LayerVisibilityTestCase(MapLayerTestCase):
+    
+    def setUp(self):
+        MapLayerTestCase.setUp(self)
+        self.layer.minscale = 1000
+        self.layer.maxscale = 2000
+        self.layer.status = mapscript.MS_ON
+        self.map.zoomScale(1500, mapscript.pointObj(100,100), 200, 200, self.map.extent, None)
+    
+    def testInitialVisibility(self):
+        """expect visibility"""
+        assert self.layer.isVisible() == mapscript.MS_TRUE
+
+    def testStatusOffVisibility(self):
+        """expect false visibility after switching status off"""
+        self.layer.status = mapscript.MS_OFF
+        assert self.layer.isVisible() == mapscript.MS_FALSE
+
+    def testZoomOutVisibility(self):
+        """expect false visibility after zooming out beyond maximum"""
+        self.map.zoomScale(2500, mapscript.pointObj(100,100), 200, 200, self.map.extent, None)
+        assert self.layer.isVisible() == mapscript.MS_FALSE
+        
 
 # ===========================================================================
 # Run the tests outside of the main suite
