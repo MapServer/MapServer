@@ -1095,13 +1095,13 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
 
       if(symbol == MS_NUMBER)
-	label->minfeaturesize = msyynumber;
+	      label->minfeaturesize = (int)msyynumber;
       else
-	label->autominfeaturesize = MS_TRUE;
+	      label->autominfeaturesize = MS_TRUE;
       break;
     case(MINSIZE):
       if(getInteger(&(label->minsize)) == -1) return(-1);
-      break;
+        break;
     case(OFFSET):
       if(getInteger(&(label->offsetx)) == -1) return(-1);
       if(getInteger(&(label->offsety)) == -1) return(-1);
@@ -1128,10 +1128,10 @@ static int loadLabel(labelObj *label, mapObj *map)
       if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	return(-1);
       if(label->size == MS_NUMBER)
-	label->size = msyynumber;
+	      label->size = (int)msyynumber;
 #else
       if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
-	return(-1);
+	      return(-1);
 #endif
       label->sizescaled = label->size;
       break; 
@@ -1266,7 +1266,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
     if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
     if(label->size == MS_NUMBER)
-      label->size = msyynumber;
+      label->size = (int)msyynumber;
 #else
     if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
 #endif    
