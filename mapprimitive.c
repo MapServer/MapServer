@@ -768,6 +768,8 @@ static double length(pointObj a, pointObj b)
   return(d);
 }
 
+// Currently unused.
+#ifdef notdef
 static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 {
   int i,j;
@@ -794,6 +796,7 @@ static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
   
   return(0);
 }
+#endif
 
 static void get_bbox(shapeObj *poly, double *minx, double *miny, double *maxx, double *maxy) {
   int i, j;
@@ -1097,10 +1100,9 @@ void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, int c, double sz, i
   double dy_odd = 0;
   double sz_half;
   double dx, dy, s, coef;
-  double angle, angle_n, last_angle, angle_left_limit, angle_from, angle_to;
+  double angle, angle_n, last_angle=0, angle_left_limit, angle_from, angle_to;
   gdPoint points[4], last_points[4];
   gdPoint cap_join_points[6];
-  pointObj intersect_points[5];
 
   /* Get odd size */
   odd = ((int)sz % 2)?1:0;
