@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2003/02/19 14:19:02  frank
+ * cleanup warnings
+ *
  * Revision 1.10  2002/12/19 07:35:53  dan
  * Call msWFSLayerWhichShapes() inside open() to force downloading layer and
  * enable msOGRLayerGetItems() to work for queries.  i.e.WFS queries work now.
@@ -198,6 +201,7 @@ typedef struct ms_wfs_layer_info_t
     int         bLayerOpened;      /* False until msWFSLayerOpen() is called*/
 } msWFSLayerInfo;
 
+#ifdef USE_WFS_LYR
 
 /**********************************************************************
  *                          msAllocWFSLayerInfo()
@@ -241,6 +245,8 @@ static void msFreeWFSLayerInfo(msWFSLayerInfo *psInfo)
         free(psInfo);
     }
 }
+
+#endif /* USE_WFS_LYR */
 
 /**********************************************************************
  *                          msPrepareWFSLayerRequest()
