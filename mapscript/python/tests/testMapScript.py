@@ -59,46 +59,6 @@ class RemoveLayerTestCase(MapTestCase):
 def rectObjToTuple(rect):
     return (rect.minx, rect.miny, rect.maxx, rect.maxy)
 
-class LayerExtentTestCase(MapTestCase):
-    def testPolygonExtent(self):
-        layer = self.mapobj1.getLayerByName('POLYGON')
-        e = mapscript.rectObj(-0.25, 51.227222, 0.25, 51.727222)
-        self.assertRectsEqual(e, layer.getExtent())
-  
-class LayerRasterProcessingTestCase(MapTestCase):
-    def testSetProcessing(self):
-        layer = self.mapobj1.getLayer(0)
-        layer.setProcessing('directive0=foo')
-        assert layer.numprocessing == 1, layer.numprocessing
-        layer.setProcessing('directive1=bar')
-        assert layer.numprocessing == 2, layer.numprocessing
-        directives = [layer.getProcessing(i) \
-                      for i in range(layer.numprocessing)]
-        assert directives == ['directive0=foo', 'directive1=bar']
-    def testClearProcessing(self):
-        layer = self.mapobj1.getLayer(0)
-        layer.setProcessing('directive0=foo')
-        assert layer.numprocessing == 1, layer.numprocessing
-        layer.setProcessing('directive1=bar')
-        assert layer.numprocessing == 2, layer.numprocessing
-        assert layer.clearProcessing() == mapscript.MS_SUCCESS
-
-# class removal tests
-class RemoveClassTestCase(MapTestCase):
-    def testRemoveClass1NumClasses(self):
-        self.mapobj1.getLayer(0).removeClass(0)
-        assert self.mapobj1.getLayer(0).numclasses == 1
-    def testRemoveClass1ClassName(self):
-        c2name = self.mapobj1.getLayer(0).getClass(1).name
-        self.mapobj1.getLayer(0).removeClass(0)
-        assert self.mapobj1.getLayer(0).getClass(0).name == c2name
-    def testRemoveClass2NumClasses(self):
-        self.mapobj1.getLayer(0).removeClass(1)
-        assert self.mapobj1.getLayer(0).numclasses == 1
-    def testRemoveClass2ClassName(self):
-        c1name = self.mapobj1.getLayer(0).getClass(0).name
-        self.mapobj1.getLayer(0).removeClass(1)
-        assert self.mapobj1.getLayer(0).getClass(0).name == c1name
 
 # symbol tests
 class SymbolTestCase(MapTestCase):

@@ -35,24 +35,33 @@
 import unittest
 
 # Import test cases
+import cases
+
+from cases.recttest import RectObjTestCase
 from cases.hashtest import HashTableTestCase
 from cases.owstest import OWSRequestTestCase 
 from cases.clonetest import MapCloningTestCase
+
 from cases.maptest import MapConstructorTestCase, MapLayersTestCase
+
 from cases.layertest import LayerConstructorTestCase
-from cases.recttest import RectObjTestCase
+from cases.layertest import LayerExtentTestCase
+from cases.layertest import LayerRasterProcessingTestCase
 
 # Create a test suite
 suite = unittest.TestSuite()
 
 # Add tests to the suite
+suite.addTest(RectObjTestCase)
 suite.addTest(HashTableTestCase)
 suite.addTest(MapCloningTestCase)
 suite.addTest(OWSRequestTestCase)
-suite.addTest(MapConstructorTestCase)
-suite.addTest(MapLayersTestCase)
-suite.addTest(LayerConstructorTestCase)
-suite.addTest(RectObjTestCase)
+
+suite.addTests([MapConstructorTestCase])
+
+suite.addTests([MapLayersTestCase,
+                LayerConstructorTestCase,
+                LayerRasterProcessingTestCase])
 
 # If module is run as a script, execute every test case in the suite
 if __name__ == '__main__':

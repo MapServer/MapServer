@@ -37,6 +37,7 @@ import unittest
 
 # the testing module helps us import the pre-installed mapscript
 from testing import mapscript
+from testing import MapTestCase
 
 # ===========================================================================
 # Test begins now
@@ -58,7 +59,61 @@ class LayerConstructorTestCase(unittest.TestCase):
         assert str(t) == "<class 'mapscript.layerObj'>", t
         assert layer.thisown == 1
         assert str(layer) == str(test_map.getLayer(0))
-            
+     
+
+class LayerExtentTestCase(MapTestCase):
+    
+    def testPolygonGetExtent(self):
+        layer = self.map.getLayerByName('POLYGON')
+        e = mapscript.rectObj(-0.25, 51.227222, 0.25, 51.727222)
+        self.assertRectsEqual(e, layer.getExtent())
+  
+
+class LayerRasterProcessingTestCase(MapTestCase):
+    
+    def testSetProcessing(self):
+        layer = self.map.getLayer(0)
+        layer.setProcessing('directive0=foo')
+        assert layer.numprocessing == 1, layer.numprocessing
+        layer.setProcessing('directive1=bar')
+        assert layer.numprocessing == 2, layer.numprocessing
+        directives = [layer.getProcessing(i) \
+                      for i in range(layer.numprocessing)]
+        assert directives == ['directive0=foo', 'directive1=bar']
+
+    def testClearProcessing(self):
+        layer = self.map.getLayer(0)
+        layer.setProcessing('directive0=foo')
+        assert layer.numprocessing == 1, layer.numprocessing
+        layer.setProcessing('directive1=bar')
+        assert layer.numprocessing == 2, layer.numprocessing
+        assert layer.clearProcessing() == mapscript.MS_SUCCESS
+
+class RemoveClassTestCase(MapTestCase):
+
+    def testRemoveClass1NumClasses(self):
+        layer = self.map.getLayer(0)
+        layer.removeClass(0)
+        assert layer.numclasses == 1
+    
+    def testRemoveClass1ClassName(self):
+        layer = self.map.getLayer(0)
+        c2name = layer.getClass(1).name
+        layer.removeClass(0)
+        assert layer.getClass(0).name == c2name
+    
+    def testRemoveClass2NumClasses(self):
+        layer = self.map.getLayer(0)
+        layer.removeClass(1)
+        assert layer.numclasses == 1
+    
+    def testRemoveClass2ClassName(self):
+        layer = self.map.getLayer(0)
+        c1name = layer.getClass(0).name
+        layer.removeClass(1)
+        assert layer.getClass(0).name == c1name
+
+ 
 # ===========================================================================
 # Run the tests outside of the main suite
 
