@@ -84,7 +84,6 @@ struct map_obj;
 MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
 
 MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
-MS_DLL_EXPORT void msWebDebug( const char * pszFormat, ... );
 #endif
 
 #ifdef __cplusplus

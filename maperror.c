@@ -483,25 +483,6 @@ char *msGetVersion() {
   return(version);
 }
 
-void msWebDebug( const char * pszFormat, ... )
-{
-#ifndef _WIN32
-    va_list args;
-    struct timeval tv;
-
-    fprintf(stdout, "Content-type: text/html%c%c",10,10);
-
-    msGettimeofday(&tv, NULL);
-    fprintf(stdout, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
-
-    va_start(args, pszFormat);
-    vfprintf(stdout, pszFormat, args);
-    va_end(args);
-
-    exit(0);
-#endif
-}
-
 void msDebug( const char * pszFormat, ... )
 {
 #ifdef ENABLE_STDERR_DEBUG
