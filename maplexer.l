@@ -133,6 +133,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>maxscale		       { return(MAXSCALE); }
 <INITIAL,OBJECT_STRING>maxsize	               { return(MAXSIZE); }
 <INITIAL,OBJECT_STRING>maxtemplate	       { return(MAXTEMPLATE); }
+<INITIAL,OBJECT_STRING>metadata	               { return(METADATA); }
 <INITIAL,OBJECT_STRING>mindistance             { return(MINDISTANCE); }
 <INITIAL,OBJECT_STRING>minfeaturesize          { return(MINFEATURESIZE); }
 <INITIAL,OBJECT_STRING>minscale		       { return(MINSCALE); }

@@ -1014,13 +1014,13 @@ char *processLine(char *instr, int mode)
 
   // HERE: NEED TO FINISH ESCAPING
 
-  for(i=0;i<Map->numlayers;i++) { // Layer legend and description strings
-    sprintf(repstr, "[%s_desc]", Map->layers[i].name);
-    if(Map->layers[i].status == MS_ON)
-      outstr = gsub(outstr, repstr, Map->layers[i].description);
-    else
-      outstr = gsub(outstr, repstr, "");
-  }
+  // for(i=0;i<Map->numlayers;i++) {
+  //   sprintf(repstr, "[%s_desc]", Map->layers[i].name);
+  //   if(Map->layers[i].status == MS_ON)
+  //     outstr = gsub(outstr, repstr, Map->layers[i].description);
+  //   else
+  //     outstr = gsub(outstr, repstr, "");
+  // }
 
   for(i=0;i<Map->numlayers;i++) { // Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here
     if(isOn(Map->layers[i].name, Map->layers[i].group) == MS_TRUE) {
@@ -1164,7 +1164,7 @@ char *processLine(char *instr, int mode)
     sprintf(repstr, "%d", LRN); // sequential (eg. 1..n) result number within this layer
     outstr = gsub(outstr, "[lrn]", repstr);
     outstr = gsub(outstr, "[cl]", ResultLayer->name); // current layer name    
-    if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description
+    // if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description
   }
 
   if(mode == QUERY) { // return shape and/or values	

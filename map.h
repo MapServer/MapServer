@@ -133,13 +133,6 @@ enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
-typedef struct {
-  char *title;
-  char *abstract;
-  char *keywords;
-  char *url;
-} metadataObj;
-
 #ifndef SWIG
 // FONTSET OBJECT - used to hold aliases for TRUETYPE fonts
 typedef struct {
@@ -276,6 +269,7 @@ typedef struct {
   rectObj extent; /* clipping extent */
   double minscale, maxscale;
   char *mintemplate, *maxtemplate;
+  hashTableObj metadata;
 } webObj;
 
 // CLASS OBJECT - basic symbolization and classification information
@@ -454,8 +448,6 @@ typedef struct {
   char *name; // should be unique
   char *group; // shouldn't be unique it's supposed to be a group right?
 
-  char *description; // layer title or description
-
   int status; // on or off
   char *data; // filename, can be relative or full path
   enum MS_LAYER_TYPE type;
@@ -513,6 +505,7 @@ typedef struct {
   char *requires; // context expressions, simple enough to not use expressionObj
   char *labelrequires;
 
+  hashTableObj metadata;
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
@@ -565,7 +558,6 @@ typedef struct { /* structure for a map */
 #endif
 
   webObj web;
-
 } mapObj;
 
 // Function prototypes, wrapable

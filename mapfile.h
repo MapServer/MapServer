@@ -134,4 +134,6 @@
 #define REQUIRES 1118
 #define LABELREQUIRES 1119
 
+#define METADATA 1120
+
 #endif /* MAPFILE_H */
