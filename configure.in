@@ -336,7 +336,7 @@ if test "$with_proj" = "yes" ; then
   AC_CHECK_LIB(proj,pj_init,PROJ_ENABLED=-DUSE_PROJ,,,)
 
   if test -n "$PROJ_ENABLED" ; then
-      LIBS="$LIBS -lproj"
+      PROJ_LIB="-lproj"
       AC_MSG_RESULT([        found PROJ.4 in system libs.])
   else
       AC_MSG_WARN([        PROJ.4 not found insystem libs... use --with-proj=DIR.])
@@ -345,8 +345,19 @@ if test "$with_proj" = "yes" ; then
 elif test -n "$with_proj" -a "$with_proj" != "no" ; then
 
   AC_EXPAND_PATH($with_proj, PROJ_DIR)
-  LIBS="-L$PROJ_DIR/src -L$PROJ_DIR/lib -lproj $LIBS"
-  PROJ_INC="-I$PROJ_DIR/src -I$PROJ_DIR/include"
+  test -f $PROJ_DIR/include/projects.h && PROJ_INCLUDE="$PROJ_DIR/include"
+  test -f $PROJ_DIR/src/projects.h && PROJ_INCLUDE="$PROJ_DIR/src"
+  test -f $PROJ_DIR/projects.h && PROJ_INCLUDE="$PROJ_DIR"
+  test -f $PROJ_DIR/src/.libs/libproj.a && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
+  test -f $PROJ_DIR/lib/libproj.a && PROJ_LIBDIR="$PROJ_DIR/lib"
+  test -f $PROJ_DIR/libproj.a && PROJ_LIBDIR="$PROJ_DIR"
+  if test -n "$PROJ_INCLUDE" -a -n "$PROJ_LIBDIR" ; then 
+      PROJ_INC=-I$PROJ_INCLUDE
+      PROJ_LIB="-L$PROJ_LIBDIR -lproj"
+  else
+      AC_MSG_ERROR("Could not find projects.h or libproj.a in $PROJ_DIR.")
+  fi
+
   PROJ_ENABLED=-DUSE_PROJ
   AC_MSG_RESULT([        using PROJ.4 from $PROJ_DIR.])
 
@@ -456,6 +467,40 @@ fi
 
 AC_SUBST(MAKE_PHPMS, $MAKE_PHPMS)
 AC_SUBST(MAKE_PHPMS_CLEAN, $MAKE_PHPMS_CLEAN)
+
+
+dnl ---------------------------------------------------------------------
+dnl 'apxs' option for PHP3 built as an Apache module (libphp3.so)
+dnl --with-apxs[=FILE] should be the exact same value that was passed
+dnl   to the PHP3 configure command.
+dnl
+dnl All we need is to add the Apache include files to the php3 module
+dnl include path.
+dnl ---------------------------------------------------------------------
+
+AC_ARG_WITH(php3,
+[  --with-apxs[=FILE]      Use this option only if building the PHP3 MapScript
+                          on a system where PHP3 was built as a shared Apache
+                          module.  FILE is the optional pathname to the 
+                          Apache apxs tool; defaults to apxs.],,)
+
+if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
+
+  AC_MSG_CHECKING([for location of Apache headers using apxs])
+  if test -z "$MAKE_PHPMS" ; then
+    AC_MSG_ERROR([--with-apxs applies only if --with-php3 is used.])
+
+  elif test "$with_apxs" = "yes" ; then
+    APXS=apxs
+  else
+    APXS="$with_apxs"
+  fi
+
+  APACHE_INC=-I`$APXS -q INCLUDEDIR`
+  AC_MSG_RESULT($APACHE_INC)
+fi
+
+AC_SUBST(APACHE_INC, $APACHE_INC)
 
 
 dnl ---------------------------------------------------------------------
