@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/10 15:10:58  frank
+ * fixed a few bugs in support for classified rasters
+ *
  * Revision 1.3  2002/11/21 19:51:03  frank
  * avoid warnings
  *
@@ -48,8 +51,6 @@
 extern int InvGeoTransform( double *gt_in, double *gt_out );
 
 #define MAXCOLORS 256
-#define	CVT(x) ((x) >> 8) /* converts to 8-bit color value */
-
 #define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
 
 #if defined(USE_GDAL)
@@ -412,9 +413,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
         GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
             
-	pixel.red = CVT(sEntry.c1);
-	pixel.green = CVT(sEntry.c2);
-	pixel.blue = CVT(sEntry.c3);
+	pixel.red = sEntry.c1;
+	pixel.green = sEntry.c2;
+	pixel.blue = sEntry.c3;
 	pixel.pen = i;
         
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
@@ -423,18 +424,21 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             
             if(c == -1)/* doesn't belong to any class, so handle like offsite*/
                 cmap[i] = -1;
-            else if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
-                cmap[i] = -1;
-            else if( MS_VALID_COLOR(layer->class[c].styles[0].color))
-                /* use class color */
-                cmap[i] = msAddColorGD(map, gdImg, 
-                                    layer->class[c].styles[0].color.red, 
-                                    layer->class[c].styles[0].color.green, 
-                                    layer->class[c].styles[0].color.blue); 
             else
-                /* Use raster color */
-                cmap[i] = msAddColorGD(map, gdImg, 
-                                    sEntry.c1, sEntry.c2, sEntry.c3 );
+            {
+                RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
+                if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
+                    cmap[i] = -1;
+                else if( MS_VALID_COLOR(layer->class[c].styles[0].color))
+                    /* use class color */
+                    cmap[i] = msAddColorGD(map, gdImg, 
+                                           layer->class[c].styles[0].color.red, 
+                                           layer->class[c].styles[0].color.green, 
+                                           layer->class[c].styles[0].color.blue); 
+                else /* Use raster color */
+                    cmap[i] = msAddColorGD(map, gdImg, 
+                                           sEntry.c1, sEntry.c2, sEntry.c3 );
+            }
         } else
             cmap[i] = -1;
     }
