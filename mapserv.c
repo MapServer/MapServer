@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.141  2004/11/11 19:55:24  sdlime
+ * Fixed enhancement request 1004, plus a bit more. ERROR and EMPTY properties are now treated as URL templates so for example you could pass the map xy value for a bombed query (perhaps to another service). Also added [errmsg] and [errmsg_esc] tags to the templating code so that the current error stack can be output. Various error messages are delimited by semi-colons.
+ *
  * Revision 1.140  2004/11/09 21:34:31  assefa
  * Used to send html output with emebed flash file when format was set to flash.
  * Now send directly swf.
@@ -153,10 +156,28 @@ void writeError()
   }
 
   if((ms_error->code == MS_NOTFOUND) && (msObj->Map->web.empty)) {
-    msRedirect(msObj->Map->web.empty);
+    // msRedirect(msObj->Map->web.empty);
+    if(msReturnURL(msObj, msObj->Map->web.empty, BROWSE) != MS_SUCCESS) {
+      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_printf("<HTML>\n");
+      msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
+      msIO_printf("<!-- %s -->\n", msGetVersion());
+      msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
+      msWriteError(stdout);
+      msIO_printf("</BODY></HTML>");
+    }
   } else {
     if(msObj->Map->web.error) {      
-      msRedirect(msObj->Map->web.error);
+      // msRedirect(msObj->Map->web.error);
+      if(msReturnURL(msObj, msObj->Map->web.error, BROWSE) != MS_SUCCESS) {
+	msIO_printf("Content-type: text/html%c%c",10,10);
+	msIO_printf("<HTML>\n");
+	msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
+	msIO_printf("<!-- %s -->\n", msGetVersion());
+	msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
+	msWriteError(stdout);
+	msIO_printf("</BODY></HTML>");
+      }
     } else {
       msIO_printf("Content-type: text/html%c%c",10,10);
       msIO_printf("<HTML>\n");

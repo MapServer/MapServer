@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2004/11/11 19:55:24  sdlime
+ * Fixed enhancement request 1004, plus a bit more. ERROR and EMPTY properties are now treated as URL templates so for example you could pass the map xy value for a bombed query (perhaps to another service). Also added [errmsg] and [errmsg_esc] tags to the templating code so that the current error stack can be output. Various error messages are delimited by semi-colons.
+ *
  * Revision 1.97  2004/11/01 15:42:53  julien
  * Allow use of '=' in HTML template tag parser (Bug 978).
  *
@@ -2137,12 +2140,22 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   outstr = strdup(instr); // work from a copy
 
-  outstr = gsub(outstr, "[version]",  msGetVersion());
+  if(strstr(outstr, "[version]")) outstr = gsub(outstr, "[version]",  msGetVersion());
 
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[img]", repstr);
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sref%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[ref]", repstr);
+
+  if(strstr(outstr, "[errmsg")) {
+    char *errmsg = msGetErrorString(";");
+    if(!errmsg) errmsg = strdup("Error message buffer is empty."); // should never happen, but just in case...
+    outstr = gsub(outstr, "[errmsg]", errmsg);
+    encodedstr = msEncodeUrl(errmsg);
+    outstr = gsub(outstr, "[errmsg_esc]", encodedstr);
+    free(errmsg);
+    free(encodedstr);
+  }
   
   if (strstr(outstr, "[legend]")) {
      // if there's a template legend specified, use it
