@@ -482,7 +482,7 @@ int processIf(char** pszInstr, hashTableObj ht)
 
    hashTableObj ifArgs=NULL;
 
-   if (!ht || !*pszInstr) {
+   if (!*pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "processIf()");
      return MS_FAILURE;
    }
@@ -628,7 +628,7 @@ int processMetadata(char** pszInstr, hashTableObj ht)
 
    hashTableObj metadataArgs = NULL;
 
-   if (!ht || !*pszInstr) {
+   if (!*pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "processMetadata()");
      return MS_FAILURE;
    }
