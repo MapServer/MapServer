@@ -671,10 +671,11 @@ and the MapServer Map File documentation at:
    rectObj getExtent()
         Returns the layer's data extents. 
         If the layer's EXTENT member is set then this value is used, 
-        otherwise this call opens and closes the layer to read the 
-        extents, so it should not be used on a layer already opened 
-        using $layer->open(). This is quick on shapefiles, but can be
+        otherwise this call opens/closes the layer to read the 
+        extents. This is quick on shapefiles, but can be
         an expensive operation on some file formats or data sources.
+        This function is safe to use on both opened or closed layers: it
+        is not necessary to call open()/close() before/after calling it.
 
    int addFeature(shapeObj shape)
         Add a new feature in a layer.  Returns -1 on error.

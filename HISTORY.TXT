@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Moved PHP/SWIG MapScript layer->getExtent() logic down to msLayerGetExtent()
+  to avoid code duplication (bug 1051)
+
 - Added SDE Raster drawing support (experimental).
 
 - HTML legends: Added [leg_header_html] and [leg_footer_html] (bug 1032)

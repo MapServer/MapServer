@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.219  2004/11/15 21:11:23  dan
+ * Moved the layer->getExtent() logic down to msLayerGetExtent() (bug 1051)
+ *
  * Revision 1.218  2004/11/11 05:21:00  dan
  * Fixed compile warnings: 'dereferencing type-punned pointer will break
  * strict-aliasing rules' using (void*) cast instead of (void**) (bug 1053)
@@ -7381,25 +7384,10 @@ DLEXPORT void php3_ms_lyr_getExtent(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    if (&(self->extent) && MS_VALID_EXTENT(self->extent))
+    if (msLayerGetExtent(self, poRect) != MS_SUCCESS)
     {
-        /* Extent set in layer, use that value */
-        *poRect = self->extent;
-    }
-    else
-    {
-        /* Open/close layer before/after the call to msGetExtent().
-         * This means the method should not be used
-         * on a layer already opened using $layer->open().
-         */
-        msLayerOpen(self);
-        if (msLayerGetExtent(self, poRect) != MS_SUCCESS)
-        {
-            _phpms_report_mapserver_error(E_WARNING);
-            msLayerClose(self);
-            RETURN_FALSE;
-        }
-        msLayerClose(self);
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_FALSE;
     }
 
     /* Return rectObj */

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2004/11/15 21:11:23  dan
+ * Moved the layer->getExtent() logic down to msLayerGetExtent() (bug 1051)
+ *
  * Revision 1.97  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -651,49 +654,75 @@ int msLayerGetItems(layerObj *layer)
 }
 
 /*
-** Returns extent of spatial coverage for a layer. Used for WMS compatability.
+** Returns extent of spatial coverage for a layer.
+**
+** If layer->extent is set then this value is used, otherwise the 
+** driver-specific implementation is called (this can be expensive).
+**
+** If layer is not already opened then it is opened and closed (so this
+** function can be called on both opened or closed layers).
+**
+** Returns MS_SUCCESS/MS_FAILURE.
 */
 int msLayerGetExtent(layerObj *layer, rectObj *extent) 
 {
+  int need_to_close = MS_FALSE, status = MS_SUCCESS;
+
+  if (MS_VALID_EXTENT(layer->extent))
+  {
+      *extent = layer->extent;
+      return MS_SUCCESS;
+  }
+
+  if (!msLayerIsOpen(layer))
+  {
+      if (msLayerOpen(layer) != MS_SUCCESS)
+          return MS_FAILURE;
+      need_to_close = MS_TRUE;
+  }
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     *extent = ((shapefileObj*)layer->layerinfo)->bounds;
-    return(MS_SUCCESS);
+    status = MS_SUCCESS;
     break;
   case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPLayerGetExtent(layer, extent));
+    status = msTiledSHPLayerGetExtent(layer, extent);
     break;
   case(MS_INLINE):
     /* __TODO__ need to compute extents */
-    return(MS_FAILURE);
+    status = MS_FAILURE;
     break;
   case(MS_OGR):
   case(MS_WFS):
-    return(msOGRLayerGetExtent(layer, extent));
+    status = msOGRLayerGetExtent(layer, extent);
     break;
   case(MS_POSTGIS):
-    return(msPOSTGISLayerGetExtent(layer, extent));
+    status = msPOSTGISLayerGetExtent(layer, extent);
     break;
   case(MS_MYGIS):
-    return(msMYGISLayerGetExtent(layer, extent));
+    status = msMYGISLayerGetExtent(layer, extent);
     break;
   case(MS_SDE):
-    return(msSDELayerGetExtent(layer, extent));
+    status = msSDELayerGetExtent(layer, extent);
     break;
   case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerGetExtent(layer, extent));
+    status = msOracleSpatialLayerGetExtent(layer, extent);
     break;
   case(MS_GRATICULE):
-    return(msGraticuleLayerGetExtent(layer, extent));
+    status = msGraticuleLayerGetExtent(layer, extent);
     break;
   case(MS_RASTER):
-    return(msRASTERLayerGetExtent(layer, extent));
+    status = msRASTERLayerGetExtent(layer, extent);
     break;
   default:
     break;
   }
 
-  return(MS_FAILURE);
+  if (need_to_close)
+      msLayerClose(layer);
+
+  return(status);
 }
 
 static int string2list(char **list, int *listsize, char *string)
