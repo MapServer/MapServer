@@ -1089,14 +1089,14 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
 }
 #endif
 
-void SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
+int SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
 {
   /* -------------------------------------------------------------------- */
   /*      Validate the record/entity number.                              */
   /* -------------------------------------------------------------------- */
   if( psSHP->nRecords <= 0 || hEntity < -1 || hEntity >= psSHP->nRecords ) {
     padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
-    return;
+    return(-1);
   }
 
   /* -------------------------------------------------------------------- */
@@ -1110,7 +1110,7 @@ void SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   } else {    
     if( psSHP->panRecSize[hEntity] == 4 ) { // NULL shape
       padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
-      return;
+      return(-1);
     } 
     
     if( psSHP->nShapeType != MS_SHP_POINT ) {
@@ -1141,6 +1141,8 @@ void SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
       padBounds->maxy = padBounds->miny;
     }
   }
+
+  return(0);
 }
 
 int msOpenSHPFile(shapefileObj *shpfile, char *path, char *tile, char *filename)

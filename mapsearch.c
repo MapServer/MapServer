@@ -357,9 +357,9 @@ char *msWhichShapesProj(shapefileObj *shp, rectObj window, projectionObj *in, pr
       }
       
       for(i=0;i<shp->numshapes;i++) { /* For each shape */
-	SHPReadBounds(shp->hSHP, i, &shape_rect);
-	if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
-	  msSetBit(status, i, 1);
+	if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
+	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
+	    msSetBit(status, i, 1);
       }
     }
   }
@@ -402,9 +402,9 @@ char *msWhichShapes(shapefileObj *shp, rectObj window)
       }
       
       for(i=0;i<shp->numshapes;i++) { /* For each shape */
-	SHPReadBounds(shp->hSHP, i, &shape_rect);
-	if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
-	  msSetBit(status, i, 1);
+	if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
+	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
+	    msSetBit(status, i, 1);
       }
     }  
   }

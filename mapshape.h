@@ -96,7 +96,7 @@ typedef DBFInfo * DBFHandle;
 typedef enum {FTString, FTInteger, FTDouble, FTInvalid} DBFFieldType;
 #endif
 
-// Shapefile object, no write access via scripts 
+// Shapefile object, no write access via scripts                               
 typedef struct {
 #ifdef SWIG
 %readonly
@@ -129,7 +129,7 @@ void SHPGetInfo( SHPHandle hSHP, int * pnEntities, int * pnShapeType );
 void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projectionObj *in, projectionObj *out );
 #endif
 
-void SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds );
+int SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds );
 void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape );
 
 int SHPWriteShape( SHPHandle psSHP, shapeObj *shape );

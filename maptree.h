@@ -27,6 +27,31 @@ typedef struct {
 } treeObj;
 
 
+typedef struct
+{
+    FILE        *fp;
+    char        signature[3];
+    char	LSB_order;
+    char        needswap;
+    char	version;
+    char	flags[3];
+
+    int         nShapes;
+    int         nDepth;
+} SHPTreeInfo;
+typedef SHPTreeInfo * SHPTreeHandle;
+
+#define MS_LSB_ORDER -1
+#define MS_MSB_ORDER -2
+#define MS_NATIVE_ORDER 0
+#define MS_NEW_LSB_ORDER 1
+#define MS_NEW_MSB_ORDER 2
+
+
+SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree);
+void msSHPDiskTreeClose(SHPTreeHandle disktree);
+treeNodeObj *readTreeNode( SHPTreeHandle disktree );
+
 treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth);
 void msTreeTrim(treeObj *tree);
 void msDestroyTree(treeObj *tree);
@@ -35,7 +60,7 @@ char *msSearchTree(treeObj *tree, rectObj aoi);
 char *msSearchDiskTree(char *filename, rectObj aoi);
 
 treeObj *msReadTree(char *filename);
-int msWriteTree(treeObj *tree, char *filename);
+int msWriteTree(treeObj *tree, char *filename, int LSB_order);
 
 #ifdef __cplusplus
 }
