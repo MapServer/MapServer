@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.196  2004/05/04 16:14:06  assefa
+ * Correct building problem on windows.
+ *
  * Revision 1.195  2004/04/30 13:07:14  dan
  * Fixed problem with PHP's pasteImage() method when angle=0
  *
@@ -6066,7 +6069,7 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pSrcImg, *pTransparent, *pThis, *pDstX, *pDstY, *pAngle;
     imageObj *imgDst = NULL, *imgSrc = NULL;
-    int         nDstX=0, nDstY=0, nAngle=0, bAngleSet=MS_FALSE;;
+    int         nDstX=0, nDstY=0, nAngle=0, bAngleSet=MS_FALSE;
     int         nArgs = ARG_COUNT(ht);
 #ifdef PHP4
     HashTable   *list=NULL;
