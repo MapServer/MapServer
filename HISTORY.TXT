@@ -13,6 +13,13 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 3.6.6-dev
+--------------------------
+
+- Disabled the 'make install' target since it just leads to confusion.
+  Make install now outputs quick installation instructions for mapserv.
+  (Bug 280)
+
 
 Version 3.6.5 (2003--3-18)
 --------------------------
