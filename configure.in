@@ -92,7 +92,7 @@ else
   AC_CHECK_LIB(gd, gdImagePng, GD_DEF=-DUSE_GD_1_6,, -lpng -lz)
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd"
-      AC_MSG_RESULT([        found GD ($GD_DEF) in system libs.])
+      AC_MSG_RESULT([        using GD ($GD_DEF) from system libs.])
   else
       dnl GD not found on system... use local copy of gd 1.2
       GD_DEF=-DUSE_GD_1_2
@@ -160,7 +160,7 @@ else
 
   if test -n "$TIFF_ENABLED" ; then
       TIFF_LIB="-ltiff"
-      AC_MSG_RESULT([        found libtiff in system libs.])
+      AC_MSG_RESULT([        using libtiff from system libs.])
   else
       AC_MSG_RESULT([        libtiff not found... TIFF support not included.])
   fi
@@ -212,7 +212,7 @@ else
 
   if test -n "$JPEG_ENABLED" ; then
       JPEG_LIB="-ljpeg"
-      AC_MSG_RESULT([        found libjpeg in system libs.])
+      AC_MSG_RESULT([        using libjpeg from system libs.])
   else
       AC_MSG_RESULT([        libjpeg not found... JPEG support not included.])
   fi
@@ -288,13 +288,41 @@ elif test -n "$with_ttf" -a "$with_ttf" != "yes" ; then
 
 else
 
+  AC_CHECK_LIB(ttf,TT_Init_FreeType, TTF_FOUND_LIB=yes,,,)
+  AC_CHECK_HEADER(freetype.h, TTF_FOUND_HDR=yes,,,)
+
   AC_CHECK_LIB(ttf,TT_Init_FreeType, TTF_ENABLED=-DUSE_TTF,,,)
 
-  if test -n "$TTF_ENABLED" ; then
+  if test -n "$TTF_FOUND_LIB" -a -z "$TTF_FOUND_HDR" ; then
+      dnl Found lib, but header may be in a "freetype" sub-dir somewhere...
+      dnl try to find it in some common system locations
+
+      AC_MSG_CHECKING([for the location of freetype.h])
+      for dirname in /usr /usr/lib /usr/local /usr/local/lib \
+                      /usr/pkg /pkg/lib
+      do
+        for subdirname in include include/freetype 
+        do
+          if test -f "$dirname/$subdirname/freetype.h" ; then
+            TTF_INC="-I$dirname/$subdirname"
+            TTF_FOUND_HDR=yes
+            AC_MSG_RESULT([$dirname/$subdirname/freetype.h])
+          fi
+        done
+      done
+
+      if test -z "$TTF_FOUND_HDR" ; then
+        AC_MSG_RESULT([not found])
+        AC_MSG_RESULT([        found libttf in system libs, but freetype.h was not found...])
+      fi
+  fi
+
+  if test -n "$TTF_FOUND_LIB" -a -n "$TTF_FOUND_HDR" ; then
+      TTF_ENABLED=-DUSE_TTF
       TTF_LIB="-lttf"
-      AC_MSG_RESULT([        found libttf in system libs.])
+      AC_MSG_RESULT([        using libttf from system libs.])
   else
-      AC_MSG_RESULT([        libttf not found... Freetype support not included.])
+      AC_MSG_RESULT([        Freetype support not included.])
   fi
 
 fi
@@ -337,9 +365,9 @@ if test "$with_proj" = "yes" ; then
 
   if test -n "$PROJ_ENABLED" ; then
       PROJ_LIB="-lproj"
-      AC_MSG_RESULT([        found PROJ.4 in system libs.])
+      AC_MSG_RESULT([        using PROJ.4 from system libs.])
   else
-      AC_MSG_WARN([        PROJ.4 not found insystem libs... use --with-proj=DIR.])
+      AC_MSG_WARN([        PROJ.4 not found in system libs... use --with-proj=DIR.])
   fi
 
 elif test -n "$with_proj" -a "$with_proj" != "no" ; then
