@@ -13,6 +13,24 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 3.7-dev (CVS)
+---------------------
+
+- Major changes to support vector output (PDF, SWF, GML, ...):
+   - imageObj is used by all rendering functions instead of gdImagePtr
+   - New msSaveImage() prototype
+  *** Full details still have to be documented here...
+
+- Support for GD-2.0, including 24 bits output
+  *** Full details still have to be documented here...
+
+- Support for output to any GDAL-supported format.
+  *** Full details still have to be documented here...
+
+- New styleObj
+  *** Full details still have to be documented here...
+
+
 Version 3.6.0-beta1 (2002-04-30)
 --------------------------------
 
