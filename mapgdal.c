@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/07/11 17:09:45  frank
+ * corrected error reporting
+ *
  * Revision 1.6  2002/06/21 18:34:31  frank
  * added support for INT16 and FLOAT imagemodes
  *
@@ -337,8 +340,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     if( hOutputDS == NULL )
     {
         GDALClose( hMemDS );
-        msSetError( MS_MISCERR, "Failed to find %s driver.",
-                    "msSaveImageGDAL()", format->driver+5 );
+        msSetError( MS_MISCERR, "Failed to create output %s file.\n%s",
+                    "msSaveImageGDAL()", format->driver+5, 
+                    CPLGetLastErrorMsg() );
         return MS_FAILURE;
     }
 
