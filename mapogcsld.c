@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2004/02/03 23:48:22  assefa
+ * Correct a bug in msSLDApplySLD.
+ *
  * Revision 1.16  2004/01/07 19:02:53  assefa
  * Correct return value on applysld functions.
  * Add ifdef in functions using libcurl related functions (httpxxx).
@@ -254,9 +257,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                     break;
                 }
             }
-            if (bUseSpecificLayer);
+            if (bUseSpecificLayer)
               break;
-            
+          
+              
         }
 
     }
@@ -597,7 +601,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      rules for only one type of symbolizer.                          */
 /* -------------------------------------------------------------------- */
 /* ==================================================================== */
-/*      For each rule a new class is created. If there are more that    */
+/*      For each rule a new class is created. If there are more than    */
 /*      one symbolizer of the same type, a style is added in the        */
 /*      same class.                                                     */
 /* ==================================================================== */
