@@ -27,8 +27,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.90.2.1  2004/12/13 03:39:03  frank
- * fixed msFreeFileCtx() to use free per bug 1125
+ * Revision 1.90.2.2  2004/12/22 16:34:06  sdlime
+ * Fixed hatch symbol function so that the size is consistent regardless of angle.
  *
  * Revision 1.90  2004/11/19 23:11:42  sean
  * in msImageLoadGD, call msImageLoadGDCtx with a const char string rather than a pointer
@@ -611,6 +611,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     y1 = (int)clip->maxy-1; // height-1 
     x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
 
+    size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
+
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       x1+=size;
@@ -621,6 +623,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     y2 = (int)clip->maxy-1; // height-1
     y1 = (int)clip->miny; // 0
     x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
+
+    size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
 
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -633,6 +637,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->maxx-1; // width-1
     y2 = (int)(y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
 
+    size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
+
     while(y2 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       y1+=size;
@@ -643,6 +649,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     y2 = (int)clip->miny; // 0
     x1 = (int)clip->minx; // 0
     y1 = (int) (y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
+
+    size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
 
     while(y1 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -3354,7 +3362,7 @@ static int fileGetchar (gdIOCtx * ctx);
 
 static int fileSeek (struct gdIOCtx *, const int);
 static long fileTell (struct gdIOCtx *);
-static void msFreeFileCtx (gdIOCtx * ctx);
+static void gdFreeFileCtx (gdIOCtx * ctx);
 
 /* return data as a dynamic pointer */
 gdIOCtx *msNewGDFileCtx (FILE * f)
@@ -3378,15 +3386,15 @@ gdIOCtx *msNewGDFileCtx (FILE * f)
   ctx->ctx.tell = fileTell;
   ctx->ctx.seek = fileSeek;
 
-  ctx->ctx.gd_free = msFreeFileCtx;
+  ctx->ctx.gd_free = gdFreeFileCtx;
 
   return (gdIOCtx *) ctx;
 }
 
 static void
-msFreeFileCtx (gdIOCtx * ctx)
+gdFreeFileCtx (gdIOCtx * ctx)
 {
-  free (ctx);
+  gdFree (ctx);
 }
 
 
