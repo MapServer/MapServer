@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/01/27 21:08:45  ned
+ * Minor edits for compiling under Win32
+ *
  * Revision 1.6  2003/02/27 21:26:47  frank
  * Added TLOCK_TTF
  *
@@ -266,7 +269,7 @@ static HANDLE mutex_locks[TLOCK_MAX];
 void msThreadInit()
 
 {
-    static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER;
+//    static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER;
     static HANDLE core_lock = NULL;
 
     if( mutexes_initialized >= TLOCK_STATIC_MAX )
@@ -310,7 +313,7 @@ void msAcquireLock( int nLockId )
 
     if( thread_debug )
         msDebug( "msAcquireLock(%d/%s) (win32)\n", 
-                 nLockId, lock_name[nLockId] );
+                 nLockId, lock_names[nLockId] );
 
     WaitForSingleObject( mutex_locks[nLockId], INFINITE );
 }
@@ -327,7 +330,7 @@ void msReleaseLock( int nLockId )
 
     if( thread_debug )
         msDebug( "msReleaseLock(%d/%s) (win32)\n", 
-                 nLockId, lock_name[nLockId] );
+                 nLockId, lock_names[nLockId] );
 
     ReleaseMutex( mutex_locks[nLockId] );
 }
