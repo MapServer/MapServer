@@ -1295,7 +1295,7 @@ errorObj
        ms_ResetErrorList();
        $img = $map->draw();
        $error = ms_GetErrorObj();
-       while($error && $error->code > 0)
+       while($error && $error->code != MS_NOERR)
        {
            printf("Error in %s: %s<br>\n", $error->routine, $error->message);
            $error = $error->next();
