@@ -166,6 +166,7 @@ int msLayerGetItems(layerObj *layer, char **items, int *numitems) {
     return(MS_SUCCESS); // inline shapes have no items
     break;
   case(MS_OGR):
+    return(msOGRLayerGetItems(layer, &items, numitems));
     break;
   case(MS_TILED_OGR):
     break;

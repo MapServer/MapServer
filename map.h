@@ -734,6 +734,7 @@ int msOGRLayerOpen(layerObj *layer, char *shapepath);   // in mapogr.cpp
 int msOGRLayerClose(layerObj *layer);
 int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
+int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems);
 int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
 
 int msSDELayerOpen(layerObj *layer); // in mapsde.c

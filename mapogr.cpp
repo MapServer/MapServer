@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2001/03/11 22:01:32  dan
+ * Implemented msOGRLayerGetItems()
+ *
  * Revision 1.22  2001/03/05 23:15:46  sdlime
  * Many fixes in mapsde.c, now compiles. Switched shape index to long from int. Layer ...WhichShapes() functions now return MS_DONE if there is no overlap.
  *
@@ -202,7 +205,7 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
   msAddLine(outshp, &line);
   free(line.point);
 
-  outshp->type = MS_POINT;
+  outshp->type = MS_SHAPE_POINT;
 
   return(0);
 }
@@ -228,8 +231,8 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing;
 
-      if (outshp->type == MS_NULL)
-          outshp->type = MS_POLYGON;
+      if (outshp->type == MS_SHAPE_NULL)
+          outshp->type = MS_SHAPE_POLYGON;
 
       for (int iRing=-1; iRing < poPoly->getNumInteriorRings(); iRing++)
       {
@@ -278,8 +281,8 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
       if ((numpoints = poLine->getNumPoints()) < 2)
           return 0;
 
-      if (outshp->type == MS_NULL)
-          outshp->type = MS_LINE;
+      if (outshp->type == MS_SHAPE_NULL)
+          outshp->type = MS_SHAPE_LINE;
 
       line.numpoints = 0;
       line.point = (pointObj *)malloc(sizeof(pointObj)*(numpoints+1));
@@ -329,10 +332,10 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
  * job to match OGR Geometry type and layer type.
  *
  * If layer type is incompatible with geometry, then shape is returned with
- * shape->type = MS_NULL
+ * shape->type = MS_SHAPE_NULL
  **********************************************************************/
 static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
-                              enum MS_FEATURE_TYPE layertype) 
+                              enum MS_LAYER_TYPE layertype) 
 {
 /* ------------------------------------------------------------------
  * Process geometry according to layer type
@@ -348,28 +351,28 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
   switch(layertype) 
   {
 /* ------------------------------------------------------------------
- *      MS_POINT layer - Any geometry can be converted to point/multipoint
+ *      POINT layer - Any geometry can be converted to point/multipoint
  * ------------------------------------------------------------------ */
-    case MS_POINT:
+    case MS_LAYER_POINT:
       if(ogrGeomPoints(poGeom, outshp) == -1)
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
       break;
 /* ------------------------------------------------------------------
- *      MS_LINE / MS_POLYLINE layer
+ *      LINE / POLYLINE layer
  * ------------------------------------------------------------------ */
-    case MS_LINE:
-    case MS_POLYLINE:
+    case MS_LAYER_LINE:
+    case MS_LAYER_POLYLINE:
       if(ogrGeomLine(poGeom, outshp, MS_FALSE) == -1)
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
       break;
 /* ------------------------------------------------------------------
- *      MS_POLYGON layer
+ *      POLYGON layer
  * ------------------------------------------------------------------ */
-    case MS_POLYGON:
+    case MS_LAYER_POLYGON:
       if(ogrGeomLine(poGeom, outshp, MS_TRUE) == -1)
       {
           nStatus = MS_FAILURE; // Error message already produced.
@@ -378,7 +381,8 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
 /* ------------------------------------------------------------------
  *      MS_ANNOTATION layer - return real feature type
  * ------------------------------------------------------------------ */
-    case MS_ANNOTATION:
+    case MS_LAYER_ANNOTATION:
+    case MS_LAYER_QUERY:
       switch(poGeom->getGeometryType())
       {
         case wkbPoint:
@@ -535,39 +539,6 @@ static char **msOGRGetValueList(OGRFeature *poFeature,
   return(values);
 }
 
-
-/**********************************************************************
- *                     msOGRGetItems()
- *
- * Load item (i.e. field) names in a char array
- **********************************************************************/
-static char **msOGRGetItems(OGRLayer *poLayer)
-{
-  char **items;
-  int i, nFields;
-  OGRFeatureDefn *poDefn;
-
-  if((poDefn = poLayer->GetLayerDefn()) == NULL ||
-     (nFields = poDefn->GetFieldCount()) == 0) 
-  {
-    msSetError(MS_OGRERR, "Layer contains no fields.", "msOGRGetItems()");
-    return(NULL);
-  }
-
-  if((items = (char **)malloc(sizeof(char *)*nFields)) == NULL) 
-  {
-    msSetError(MS_MEMERR, NULL, "msOGRGetItems()");
-    return(NULL);
-  }
-
-  for(i=0;i<nFields;i++) 
-  {
-      OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
-      items[i] = strdup(poField->GetNameRef());
-  }
-
-  return(items);
-}
 
 /**********************************************************************
  *                     msOGRGetValues()
@@ -860,7 +831,8 @@ int msOGRLayerClose(layerObj *layer)
  *
  * Init OGR layer structs ready for calls to msOGRLayerNextShape().
  *
- * Returns MS_SUCCESS/MS_FAILURE
+ * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
+ * layer's FILTER overlaps the selected region.
  **********************************************************************/
 int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect) 
 {
@@ -877,6 +849,10 @@ int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 /* ------------------------------------------------------------------
  * Set Spatial filter... this may result in no features being returned
  * if layer does not overlap current view.
+ *
+ * __TODO__ We should return MS_DONE if no shape overlaps the selected 
+ * region and matches the layer's FILTER expression, but there is currently
+ * no _efficient_ way to do that with OGR.
  * ------------------------------------------------------------------ */
   OGRLinearRing oSpatialFilter;
 
@@ -909,6 +885,40 @@ int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 }
 
 /**********************************************************************
+ *                     msOGRLayerGetItems()
+ *
+ * Load item (i.e. field) names in a char array.
+ **********************************************************************/
+int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems)
+{
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  int   i;
+  OGRFeatureDefn *poDefn;
+
+  if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL ||
+     (*numitems = poDefn->GetFieldCount()) == 0) 
+  {
+    msSetError(MS_OGRERR, "Layer contains no fields.", "msOGRLayerGetItems()");
+    return(MS_FAILURE);
+  }
+
+  if((*items = (char **)malloc(sizeof(char *)*(*numitems))) == NULL) 
+  {
+    msSetError(MS_MEMERR, NULL, "msOGRLayerGetItems()");
+    return(MS_FAILURE);
+  }
+
+  for(i=0;i<*numitems;i++) 
+  {
+      OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
+      (*items)[i] = strdup(poField->GetNameRef());
+  }
+
+  return(MS_SUCCESS);
+}
+
+
+/**********************************************************************
  *                     msOGRLayerNextShape()
  *
  * Returns shape sequentially from OGR data source.
@@ -934,9 +944,9 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
  * whose geometry is compatible with current layer type.
  * ------------------------------------------------------------------ */
   msFreeShape(shape);
-  shape->type = MS_NULL;
+  shape->type = MS_SHAPE_NULL;
 
-  while (shape->type == MS_NULL)
+  while (shape->type == MS_SHAPE_NULL)
   {
       if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
       {
@@ -945,14 +955,14 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
 
       if(layer->numitems > 0) 
       {
-          shape->attributes = msOGRGetValueList(poFeature, layer->items, 
+          shape->values = msOGRGetValueList(poFeature, layer->items, 
                                                 &(layer->itemindexes), 
                                                 layer->numitems);
-          if(!shape->attributes) return(MS_FAILURE);
+          if(!shape->values) return(MS_FAILURE);
       }
 
       if (msEvalExpression(&(layer->filter), layer->filteritemindex, 
-                           shape->attributes, layer->numitems) == MS_TRUE)
+                           shape->values, layer->numitems) == MS_TRUE)
       {
           // Feature matched filter expression... process geometry
           // shape->type will be set if geom is compatible with layer type
@@ -971,7 +981,7 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
 
       // Feature rejected... free shape to clear attributes values.
       msFreeShape(shape);
-      shape->type = MS_NULL;
+      shape->type = MS_SHAPE_NULL;
   }
 
   shape->index = poFeature->GetFID();
@@ -1017,7 +1027,7 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
  * Handle shape geometry... 
  * ------------------------------------------------------------------ */
   msFreeShape(shape);
-  shape->type = MS_NULL;
+  shape->type = MS_SHAPE_NULL;
 
   if( (poFeature = psInfo->poLayer->GetFeature(record)) == NULL )
   {
@@ -1031,7 +1041,7 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
       return MS_FAILURE; // Error message already produced.
   }
   
-  if (shape->type == MS_NULL)
+  if (shape->type == MS_SHAPE_NULL)
   {
       msSetError(MS_OGRERR, 
                  "Requested feature is incompatible with layer type",
@@ -1044,24 +1054,25 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
  * ------------------------------------------------------------------ */
   if (allitems == MS_TRUE)
   {
-      if(!layer->items)
+      // fill the items layer variable if not already filled
+      // __TODO__ This will eventually go away when allitems is replaced
+      // by the use of msOGRLayerGetItems() in maplayer.c
+
+      if(!layer->items &&
+         msOGRLayerGetItems(layer, &layer->items, 
+                            &layer->numitems) != MS_SUCCESS)
       {
-      	// fill the items layer variable if not already filled
-          layer->numitems = poFeature->GetFieldCount();
-          layer->items = msOGRGetItems(psInfo->poLayer);
-          if(!layer->items)
-              return(MS_FAILURE);
-      }
-      shape->attributes = msOGRGetValues(poFeature);
-      if(!shape->attributes)
           return(MS_FAILURE);
+      }
+      shape->values = msOGRGetValues(poFeature);
+      if(!shape->values) return (MS_FAILURE);
   }
   else if(layer->numitems > 0) 
   {
-      shape->attributes = msOGRGetValueList(poFeature, layer->items, 
+      shape->values = msOGRGetValueList(poFeature, layer->items, 
                                             &(layer->itemindexes), 
                                             layer->numitems);
-      if(!shape->attributes) return(MS_FAILURE);
+      if(!shape->values) return(MS_FAILURE);
   }   
 
   shape->index = poFeature->GetFID();
