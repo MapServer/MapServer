@@ -1334,10 +1334,8 @@ int loadExpressionString(expressionObj *exp, char *value)
 
   freeExpression(exp); // we're totally replacing the old expression so free then init to start over
   // initExpression(exp);
-
   if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
   exp->string = strdup(msyytext);
-  
   // if(exp->type == MS_REGEX) {
   //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
   //     sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
@@ -2095,7 +2093,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->connection = getString()) == NULL) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(6, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE)) == -1) return(-1);
+      if((layer->connectiontype = getSymbol(8, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS)) == -1) return(-1);
       break;
     case(DATA):
       if((layer->data = getString()) == NULL) return(-1);
@@ -2537,6 +2535,8 @@ static void writeLayer(layerObj *layer, FILE *stream)
       fprintf(stream, "    CONNECTIONTYPE OGR\n");
     else if(layer->connectiontype == MS_POSTGIS)
       fprintf(stream, "    CONNECTIONTYPE POSTGIS\n");
+    else if(layer->connectiontype == MS_MYGIS)
+      fprintf(stream, "    CONNECTIONTYPE MYGIS\n");
     else if(layer->connectiontype == MS_WMS)
       fprintf(stream, "    CONNECTIONTYPE WMS\n");
     else if(layer->connectiontype == MS_ORACLESPATIAL)
