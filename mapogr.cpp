@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.47  2002/03/18 20:40:14  frank
+ * initial pass on tiled ogr support
+ *
  * Revision 1.46  2002/02/22 22:56:26  dan
  * Avoid filling an object with a pen and no brush in layers of type POLYGON
  * when using auto styling.
@@ -167,15 +170,17 @@
 #include "ogrsf_frmts.h"
 #include "ogr_featurestyle.h"
 
-typedef struct ms_ogr_layer_info_t
+typedef struct ms_ogr_file_info_t
 {
-    char        *pszFname;
-    int         nLayerIndex;
-    OGRDataSource *poDS;
-    OGRLayer    *poLayer;
-    OGRFeature  *poLastFeature;
-} msOGRLayerInfo;
+  char        *pszFname;
+  int         nLayerIndex;
+  OGRDataSource *poDS;
+  OGRLayer    *poLayer;
+  OGRFeature  *poLastFeature;
 
+  struct ms_ogr_file_info_t *poCurTile;
+  rectObj     rect;
+} msOGRFileInfo;
 
 /* ==================================================================
  * Geometry conversion functions
@@ -798,6 +803,447 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
 }
 
 /* ==================================================================
+ * The following functions closely relate to the API called from
+ * maplayer.c, but are intended to be used for the tileindex or direct
+ * layer access.
+ * ================================================================== */
+
+#ifdef USE_OGR
+
+/**********************************************************************
+ *                     msOGRFileOpen()
+ *
+ * Open an OGR connection, and initialize a msOGRFileInfo.
+ **********************************************************************/
+
+static msOGRFileInfo *
+msOGRFileOpen(layerObj *layer, const char *connection ) 
+
+{
+/* ------------------------------------------------------------------
+ * Register OGR Drivers, only once per execution
+ * ------------------------------------------------------------------ */
+  static int bDriversRegistered = MS_FALSE;
+  if (!bDriversRegistered)
+      OGRRegisterAll();
+  bDriversRegistered = MS_TRUE;
+
+/* ------------------------------------------------------------------
+ * Attempt to open OGR dataset
+ * ------------------------------------------------------------------ */
+  int   nLayerIndex = 0;
+  char  **params;
+  int   numparams;
+  OGRDataSource *poDS;
+  OGRLayer    *poLayer;
+
+  if(connection==NULL || 
+     (params = split(connection, ',', &numparams))==NULL || 
+     numparams < 1) 
+  {
+      msSetError(MS_OGRERR, "Error parsing OGR connection information.", 
+                 "msOGRFileOpen()");
+      return NULL;
+  }
+
+  msDebug("msOGRFileOpen(%s)...\n", connection);
+
+  poDS = OGRSFDriverRegistrar::Open( params[0] );
+  if( poDS == NULL )
+  {
+      msSetError(MS_OGRERR, 
+                 (char*)CPLSPrintf("Open failed for OGR connection `%s'.  "
+                                   "File not found or unsupported format.", 
+                                   connection),
+                 "msOGRFileOpen()");
+      return NULL;
+  }
+
+  if(numparams > 1) 
+      nLayerIndex = atoi(params[1]);
+
+  poLayer = poDS->GetLayer(nLayerIndex);
+  if (poLayer == NULL)
+  {
+      msSetError(MS_OGRERR, "GetLayer(%d) failed for OGR connection `%s'.",
+                 "msOGRFileOpen()", 
+                 nLayerIndex, connection );
+      delete poDS;
+      return NULL;
+  }
+
+/* ------------------------------------------------------------------
+ * OK... open succeded... alloc and fill msOGRFileInfo inside layer obj
+ * ------------------------------------------------------------------ */
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)CPLCalloc(1,sizeof(msOGRFileInfo));
+
+  psInfo->pszFname = CPLStrdup(params[0]);
+  psInfo->nLayerIndex = nLayerIndex;
+  psInfo->poDS = poDS;
+  psInfo->poLayer = poLayer;
+
+  // Cleanup and exit;
+  msFreeCharArray(params, numparams);
+
+  return psInfo;
+}
+
+/**********************************************************************
+ *                     msOGRFileClose()
+ **********************************************************************/
+static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo ) 
+{
+  if (!psInfo)
+      return MS_SUCCESS;
+
+  msDebug("msOGRFileClose(%s,%s).\n", psInfo->pszFname, psInfo->nLayerIndex);
+
+  CPLFree(psInfo->pszFname);
+
+  if (psInfo->poLastFeature)
+      delete psInfo->poLastFeature;
+
+  /* Destroying poDS automatically closes files, destroys the layer, etc. */
+  delete psInfo->poDS;
+
+  // Free current tile if there is one.
+  if( psInfo->poCurTile != NULL )
+      msOGRFileClose( layer, psInfo->poCurTile );
+
+  CPLFree(psInfo);
+
+  return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                     msOGRFileWhichShapes()
+ *
+ * Init OGR layer structs ready for calls to msOGRFileNextShape().
+ *
+ * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
+ * layer's FILTER overlaps the selected region.
+ **********************************************************************/
+static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
+                                msOGRFileInfo *psInfo ) 
+{
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRFileWhichShapes()");
+    return(MS_FAILURE);
+  }
+
+/* ------------------------------------------------------------------
+ * Set Spatial filter... this may result in no features being returned
+ * if layer does not overlap current view.
+ *
+ * __TODO__ We should return MS_DONE if no shape overlaps the selected 
+ * region and matches the layer's FILTER expression, but there is currently
+ * no _efficient_ way to do that with OGR.
+ * ------------------------------------------------------------------ */
+  OGRLinearRing oSpatialFilter;
+
+  oSpatialFilter.setNumPoints(5);
+  oSpatialFilter.setPoint(0, rect.minx, rect.miny);
+  oSpatialFilter.setPoint(1, rect.maxx, rect.miny);
+  oSpatialFilter.setPoint(2, rect.maxx, rect.maxy);
+  oSpatialFilter.setPoint(3, rect.minx, rect.maxy);
+  oSpatialFilter.setPoint(4, rect.minx, rect.miny);
+
+  psInfo->poLayer->SetSpatialFilter( &oSpatialFilter );
+
+  psInfo->rect = rect;
+
+/* ------------------------------------------------------------------
+ * Reset current feature pointer
+ * ------------------------------------------------------------------ */
+  psInfo->poLayer->ResetReading();
+
+  return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                     msOGRFileGetItems()
+ *
+ * Returns a list of field names in a NULL terminated list of strings.
+ **********************************************************************/
+static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
+{
+  OGRFeatureDefn *poDefn;
+  int i, numitems;
+  char **items;
+
+  if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL ||
+     (numitems = poDefn->GetFieldCount()) == 0) 
+  {
+    msSetError(MS_OGRERR, 
+               "Layer %s,%d contains no fields.", 
+               "msOGRFileGetItems()",
+               psInfo->pszFname, psInfo->nLayerIndex );
+    return NULL;
+  }
+
+  if((items = (char**)malloc(sizeof(char *)*(numitems+1))) == NULL) 
+  {
+    msSetError(MS_MEMERR, NULL, "msOGRFileGetItems()");
+    return NULL;
+  }
+
+  for(i=0;i<numitems;i++)
+  {
+      OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
+      items[i] = strdup(poField->GetNameRef());
+  }                                  
+  items[numitems] = NULL;
+
+  return items;
+}
+
+/**********************************************************************
+ *                     msOGRFileNextShape()
+ *
+ * Returns shape sequentially from OGR data source.
+ * msOGRLayerWhichShape() must have been called first.
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+static int 
+msOGRFileNextShape(layerObj *layer, shapeObj *shape,
+                   msOGRFileInfo *psInfo ) 
+{
+  OGRFeature *poFeature = NULL;
+
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRFileNextShape()");
+    return(MS_FAILURE);
+  }
+
+/* ------------------------------------------------------------------
+ * Read until we find a feature that matches attribute filter and 
+ * whose geometry is compatible with current layer type.
+ * ------------------------------------------------------------------ */
+  msFreeShape(shape);
+  shape->type = MS_SHAPE_NULL;
+
+  while (shape->type == MS_SHAPE_NULL)
+  {
+      if( poFeature )
+          delete poFeature;
+
+      if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
+      {
+          return MS_DONE;  // No more features to read
+      }
+
+      if(layer->numitems > 0) 
+      {
+          shape->values = msOGRGetValues(layer, poFeature);
+          shape->numvalues = layer->numitems;
+          if(!shape->values)
+          {
+              delete poFeature;
+              return(MS_FAILURE);
+          }
+      }
+
+      if (msEvalExpression(&(layer->filter), layer->filteritemindex, 
+                           shape->values, layer->numitems) == MS_TRUE)
+      {
+          // Feature matched filter expression... process geometry
+          // shape->type will be set if geom is compatible with layer type
+          if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
+                                 layer->type) == MS_SUCCESS)
+          {
+              if (shape->type != MS_SHAPE_NULL)
+                  break; // Shape is ready to be returned!
+          }
+          else
+          {
+              msFreeShape(shape);
+              delete poFeature;
+              return MS_FAILURE; // Error message already produced.
+          }
+      }
+
+      // Feature rejected... free shape to clear attributes values.
+      msFreeShape(shape);
+      shape->type = MS_SHAPE_NULL;
+  }
+
+  shape->index = poFeature->GetFID();
+
+  // Keep ref. to last feature read in case we need style info.
+  if (psInfo->poLastFeature)
+      delete psInfo->poLastFeature;
+  psInfo->poLastFeature = poFeature;
+
+  return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                     msOGRFileGetShape()
+ *
+ * Returns shape from OGR data source by id.
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+static int 
+msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
+                  msOGRFileInfo *psInfo )
+{
+  OGRFeature *poFeature;
+
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRFileNextShape()");
+    return(MS_FAILURE);
+  }
+
+/* ------------------------------------------------------------------
+ * Handle shape geometry... 
+ * ------------------------------------------------------------------ */
+  msFreeShape(shape);
+  shape->type = MS_SHAPE_NULL;
+
+  if( (poFeature = psInfo->poLayer->GetFeature(record)) == NULL )
+  {
+      return MS_FAILURE;
+  }
+
+  // shape->type will be set if geom is compatible with layer type
+  if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
+                         layer->type) != MS_SUCCESS)
+  {
+      return MS_FAILURE; // Error message already produced.
+  }
+  
+  if (shape->type == MS_SHAPE_NULL)
+  {
+      msSetError(MS_OGRERR, 
+                 "Requested feature is incompatible with layer type",
+                 "msOGRLayerGetShape()");
+      return MS_FAILURE;
+  }
+
+/* ------------------------------------------------------------------
+ * Process shape attributes
+ * ------------------------------------------------------------------ */
+  if(layer->numitems > 0) 
+  {
+      shape->values = msOGRGetValues(layer, poFeature);
+      shape->numvalues = layer->numitems;
+      if(!shape->values) return(MS_FAILURE);
+  }   
+
+  shape->index = poFeature->GetFID();
+
+  // Keep ref. to last feature read in case we need style info.
+  if (psInfo->poLastFeature)
+      delete psInfo->poLastFeature;
+  psInfo->poLastFeature = poFeature;
+
+  return MS_SUCCESS;
+}
+
+/************************************************************************/
+/*                         msOGRFileReadTile()                          */
+/*                                                                      */
+/*      Advance to the next tile (or if targetTile is not -1 advance    */
+/*      to that tile), causing the tile to become the poCurTile in      */
+/*      the tileindexes psInfo structure.  Returns MS_DONE if there     */
+/*      are no more available tiles.                                    */
+/*                                                                      */
+/*      Newly loaded tiles are automatically "WhichShaped" based on     */
+/*      the current rectangle.                                          */
+/************************************************************************/
+
+int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo, 
+                       int targetTile = -1 )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Close old tile if one is open.                                  */
+/* -------------------------------------------------------------------- */
+    if( psInfo->poCurTile != NULL )
+    {
+        msOGRFileClose( layer, psInfo->poCurTile );
+        psInfo->poCurTile = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the name (connection string really) of the next tile.       */
+/* -------------------------------------------------------------------- */
+    OGRFeature *poFeature;
+    char       *connection = NULL;
+    msOGRFileInfo *psTileInfo = NULL;
+    int status;
+
+#ifndef IGNORE_MISSING_DATA
+  NextFile:
+#endif
+    
+    if( targetTile == -1 )
+        poFeature = psInfo->poLayer->GetNextFeature();
+    
+    else
+        poFeature = psInfo->poLayer->GetFeature( targetTile );
+
+    if( poFeature == NULL )
+    {
+        if( targetTile == -1 )
+            return MS_DONE;
+        else
+            return MS_FAILURE;
+        
+    }
+
+    connection = strdup(poFeature->GetFieldAsString( layer->tileitem ));
+    
+    delete poFeature;
+                        
+/* -------------------------------------------------------------------- */
+/*      Open the new tile file.                                         */
+/* -------------------------------------------------------------------- */
+    psTileInfo = msOGRFileOpen( layer, connection );
+
+    free( connection );
+
+#ifndef IGNORE_MISSING_DATA
+    if( psTileInfo == NULL && targetTile == -1 )
+        goto NextFile;
+#endif
+
+    if( psTileInfo == NULL )
+        return MS_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the spatial query on this file.                      */
+/* -------------------------------------------------------------------- */
+    if( psInfo->rect.minx != 0 || psInfo->rect.maxx != 0 )
+    {
+        status = msOGRFileWhichShapes( layer, psInfo->rect, psTileInfo );
+        if( status != MS_SUCCESS )
+            return status;
+    }
+    
+    psInfo->poCurTile = psTileInfo;
+
+    
+/* -------------------------------------------------------------------- */
+/*      Update the iteminfo in case this layer has a different field    */
+/*      list.                                                           */
+/* -------------------------------------------------------------------- */
+    msOGRLayerInitItemInfo( layer );
+
+    return MS_SUCCESS;
+}
+
+#endif /* def USE_OGR */
+
+/* ==================================================================
  * Here comes the REAL stuff... the functions below are called by maplayer.c
  * ================================================================== */
 
@@ -819,72 +1265,71 @@ int msOGRLayerOpen(layerObj *layer)
 {
 #ifdef USE_OGR
 
+  msOGRFileInfo *psInfo;
+
   if (layer->ogrlayerinfo != NULL)
   {
       return MS_SUCCESS;  // Nothing to do... layer is already opened
   }
 
-/* ------------------------------------------------------------------
- * Register OGR Drivers, only once per execution
- * ------------------------------------------------------------------ */
-  static int bDriversRegistered = MS_FALSE;
-  if (!bDriversRegistered)
-      OGRRegisterAll();
-  bDriversRegistered = MS_TRUE;
-
-/* ------------------------------------------------------------------
- * Attempt to open OGR dataset
- * ------------------------------------------------------------------ */
-  int   nLayerIndex = 0;
-  char  **params;
-  int   numparams;
-  OGRDataSource *poDS;
-  OGRLayer    *poLayer;
-
-  if(layer->connection==NULL || 
-     (params = split(layer->connection, ',', &numparams))==NULL || 
-     numparams < 1) 
+/* -------------------------------------------------------------------- */
+/*      If this is not a tiled layer, just directly open the target.    */
+/* -------------------------------------------------------------------- */
+  if( layer->tileindex == NULL )
   {
-      msSetError(MS_OGRERR, "Error parsing OGR connection information.", 
-                 "msOGRLayerOpen()");
-      return(MS_FAILURE);
+      psInfo = msOGRFileOpen( layer, layer->connection );
+      layer->ogrlayerinfo = psInfo;
+      layer->tileitemindex = -1;
+      
+      if( layer->ogrlayerinfo == NULL )
+          return MS_FAILURE;
   }
 
-  msDebug("msOGRLayerOpen(%s)...\n", layer->connection);
-
-  poDS = OGRSFDriverRegistrar::Open( params[0] );
-  if( poDS == NULL )
+/* -------------------------------------------------------------------- */
+/*      Otherwise we open the tile index, identify the tile item        */
+/*      index and try to select the first file matching our query       */
+/*      region.                                                         */
+/* -------------------------------------------------------------------- */
+  else
   {
-      msSetError(MS_OGRERR, 
-                 (char*)CPLSPrintf("Open failed for OGR connection `%s'.  "
-                                   "File not found or unsupported format.", 
-                                   layer->connection),
-                 "msOGRLayerOpen()");
-      return(MS_FAILURE);
-  }
+      // Open tile index
 
-  if(numparams > 1) 
-      nLayerIndex = atoi(params[1]);
+      psInfo = msOGRFileOpen( layer, layer->tileindex );
+      layer->ogrlayerinfo = psInfo;
+      
+      if( layer->ogrlayerinfo == NULL )
+          return MS_FAILURE;
 
-  poLayer = poDS->GetLayer(nLayerIndex);
-  if (poLayer == NULL)
-  {
-      msSetError(MS_OGRERR, 
-             (char*)CPLSPrintf("GetLayer(%d) failed for OGR connection `%s'.",
-                               nLayerIndex, layer->connection),
-                 "msOGRLayerOpen()");
-      delete poDS;
-      return(MS_FAILURE);
+      // Identify TILEITEM
+
+      OGRFeatureDefn *poDefn = psInfo->poLayer->GetLayerDefn();
+      for( layer->tileitemindex = 0; 
+           layer->tileitemindex < poDefn->GetFieldCount()
+           && !EQUAL(poDefn->GetFieldDefn(layer->tileitemindex)->GetNameRef(),
+                         layer->tileitem); 
+           layer->tileitemindex++ ) {}
+
+      if( layer->tileitemindex == poDefn->GetFieldCount() )
+      {
+          msSetError(MS_OGRERR, 
+                     "Can't identify TILEITEM %s field in TILEINDEX `%s'.",
+                     "msOGRLayerOpen()", 
+                     layer->tileitem, layer->tileindex );
+          msOGRFileClose( layer, psInfo );
+          layer->ogrlayerinfo = NULL;
+          return MS_FAILURE;
+      }
   }
 
 /* ------------------------------------------------------------------
- * If projection was "auto" then set proj to the dataset's projection
+ * If projection was "auto" then set proj to the dataset's projection.
+ * For a tile index, it is assume the tile index has the projection.
  * ------------------------------------------------------------------ */
 #ifdef USE_PROJ
   if (layer->projection.numargs > 0 && 
       EQUAL(layer->projection.args[0], "auto"))
   {
-      OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
+      OGRSpatialReference *poSRS = psInfo->poLayer->GetSpatialRef();
 
       if (msOGRSpatialRef2ProjectionObj(poSRS,
                                         &(layer->projection)) != MS_SUCCESS)
@@ -897,25 +1342,12 @@ int msOGRLayerOpen(layerObj *layer)
                      "OGR connection (`%s').",
                      "msOGRLayerOpen()",
                      ms_error->message, layer->connection);
-          delete poDS;
+          msOGRFileClose( layer, psInfo );
+          layer->ogrlayerinfo = NULL;
           return(MS_FAILURE);
       }
   }
 #endif
-
-/* ------------------------------------------------------------------
- * OK... open succeded... alloc and fill msOGRLayerInfo inside layer obj
- * ------------------------------------------------------------------ */
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)CPLCalloc(1,sizeof(msOGRLayerInfo));
-  layer->ogrlayerinfo = psInfo;
-
-  psInfo->pszFname = CPLStrdup(params[0]);
-  psInfo->nLayerIndex = nLayerIndex;
-  psInfo->poDS = poDS;
-  psInfo->poLayer = poLayer;
-
-  // Cleanup and exit;
-  msFreeCharArray(params, numparams);
 
   return MS_SUCCESS;
 
@@ -936,22 +1368,14 @@ int msOGRLayerOpen(layerObj *layer)
 int msOGRLayerClose(layerObj *layer) 
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
 
   if (psInfo)
   {
-    msDebug("msOGRLayerClose(%s).\n", layer->connection);
+      msDebug("msOGRLayerClose(%s).\n", layer->connection);
 
-    CPLFree(psInfo->pszFname);
-
-    if (psInfo->poLastFeature)
-        delete psInfo->poLastFeature;
-
-    /* Destroying poDS automatically closes files, destroys the layer, etc. */
-    delete psInfo->poDS;
-
-    CPLFree(psInfo);
-    layer->ogrlayerinfo = NULL;
+      msOGRFileClose( layer, psInfo );
+      layer->ogrlayerinfo = NULL;
   }
 
   return MS_SUCCESS;
@@ -978,7 +1402,8 @@ int msOGRLayerClose(layerObj *layer)
 int msOGRLayerWhichShapes(layerObj *layer, rectObj rect) 
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  int   status;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
   {
@@ -987,31 +1412,15 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect)
     return(MS_FAILURE);
   }
 
-/* ------------------------------------------------------------------
- * Set Spatial filter... this may result in no features being returned
- * if layer does not overlap current view.
- *
- * __TODO__ We should return MS_DONE if no shape overlaps the selected 
- * region and matches the layer's FILTER expression, but there is currently
- * no _efficient_ way to do that with OGR.
- * ------------------------------------------------------------------ */
-  OGRLinearRing oSpatialFilter;
+  status = msOGRFileWhichShapes( layer, rect, psInfo );
 
-  oSpatialFilter.setNumPoints(5);
-  oSpatialFilter.setPoint(0, rect.minx, rect.miny);
-  oSpatialFilter.setPoint(1, rect.maxx, rect.miny);
-  oSpatialFilter.setPoint(2, rect.maxx, rect.maxy);
-  oSpatialFilter.setPoint(3, rect.minx, rect.maxy);
-  oSpatialFilter.setPoint(4, rect.minx, rect.miny);
+  if( status != MS_SUCCESS || layer->tileindex == NULL )
+      return status;
 
-  psInfo->poLayer->SetSpatialFilter( &oSpatialFilter );
+  // If we are using a tile index, we need to advance to the first
+  // tile matching the spatial query, and load it. 
 
-/* ------------------------------------------------------------------
- * Reset current feature pointer
- * ------------------------------------------------------------------ */
-  psInfo->poLayer->ResetReading();
-
-  return MS_SUCCESS;
+  return msOGRFileReadTile( layer, psInfo );
 
 #else
 /* ------------------------------------------------------------------
@@ -1028,33 +1437,31 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect)
 /**********************************************************************
  *                     msOGRLayerGetItems()
  *
- * Load item (i.e. field) names in a char array.
+ * Load item (i.e. field) names in a char array.  If we are working
+ * with a tiled layer, ensure a tile is loaded and use it for the items.
+ * It is implicitly assumed that the schemas will match on all tiles. 
  **********************************************************************/
 int msOGRLayerGetItems(layerObj *layer)
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
-  OGRFeatureDefn *poDefn;
-  int i;
-
-  if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL ||
-     (layer->numitems = poDefn->GetFieldCount()) == 0) 
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  
+  if( layer->tileindex != NULL )
   {
-    msSetError(MS_OGRERR, "Layer contains no fields.", "msOGRLayerGetItems()");
-    return(MS_FAILURE);
+      if( psInfo->poCurTile == NULL 
+          && msOGRFileReadTile( layer, psInfo ) != MS_SUCCESS )
+          return MS_FAILURE;
+      
+      psInfo = psInfo->poCurTile;
   }
 
-  if((layer->items = (char**)malloc(sizeof(char *)*layer->numitems)) == NULL) 
-  {
-    msSetError(MS_MEMERR, NULL, "msOGRLayerGetItems()");
-    return(MS_FAILURE);
-  }
+  layer->numitems = 0;
+  layer->items = msOGRFileGetItems(layer, psInfo);
+  if( layer->items == NULL )
+      return MS_FAILURE;
 
-  for(i=0;i<layer->numitems;i++)
-  {
-      OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
-      layer->items[i] = strdup(poField->GetNameRef());
-  }                                                                           
+  while( layer->items[layer->numitems] != NULL )
+      layer->numitems++;
 
   return msOGRLayerInitItemInfo(layer);
 
@@ -1078,12 +1485,21 @@ int msOGRLayerGetItems(layerObj *layer)
 int msOGRLayerInitItemInfo(layerObj *layer)
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
   int   i;
   OGRFeatureDefn *poDefn;
 
   if (layer->numitems == 0)
       return MS_SUCCESS;
+
+  if( layer->tileindex != NULL )
+  {
+      if( psInfo->poCurTile == NULL 
+          && msOGRFileReadTile( layer, psInfo ) != MS_SUCCESS )
+          return MS_FAILURE;
+      
+      psInfo = psInfo->poCurTile;
+  }
 
   if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL) 
   {
@@ -1172,8 +1588,8 @@ void msOGRLayerFreeItemInfo(layerObj *layer)
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
-  OGRFeature *poFeature = NULL;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  int  status;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
   {
@@ -1182,67 +1598,32 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-/* ------------------------------------------------------------------
- * Read until we find a feature that matches attribute filter and 
- * whose geometry is compatible with current layer type.
- * ------------------------------------------------------------------ */
-  msFreeShape(shape);
-  shape->type = MS_SHAPE_NULL;
+  if( layer->tileindex == NULL )
+      return msOGRFileNextShape( layer, shape, psInfo );
 
-  while (shape->type == MS_SHAPE_NULL)
+  // Do we need to load the first tile? 
+  if( psInfo->poCurTile == NULL )
   {
-      if( poFeature )
-          delete poFeature;
-
-      if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
-      {
-          return MS_DONE;  // No more features to read
-      }
-
-      if(layer->numitems > 0) 
-      {
-          shape->values = msOGRGetValues(layer, poFeature);
-          shape->numvalues = layer->numitems;
-          if(!shape->values)
-          {
-              delete poFeature;
-              return(MS_FAILURE);
-          }
-      }
-
-      if (msEvalExpression(&(layer->filter), layer->filteritemindex, 
-                           shape->values, layer->numitems) == MS_TRUE)
-      {
-          // Feature matched filter expression... process geometry
-          // shape->type will be set if geom is compatible with layer type
-          if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
-                                 layer->type) == MS_SUCCESS)
-          {
-              if (shape->type != MS_SHAPE_NULL)
-                  break; // Shape is ready to be returned!
-          }
-          else
-          {
-              msFreeShape(shape);
-              delete poFeature;
-              return MS_FAILURE; // Error message already produced.
-          }
-      }
-
-      // Feature rejected... free shape to clear attributes values.
-      msFreeShape(shape);
-      shape->type = MS_SHAPE_NULL;
+      status = msOGRFileReadTile( layer, psInfo );
+      if( status != MS_SUCCESS )
+          return status;
   }
 
-  shape->index = poFeature->GetFID();
+  do 
+  {
+      // Try getting a shape from this tile.
+      status = msOGRFileNextShape( layer, shape, psInfo->poCurTile );
+      if( status != MS_DONE )
+          return status;
+  
+      // try next tile.
+      status = msOGRFileReadTile( layer, psInfo );
+      if( status != MS_SUCCESS )
+          return status;
+  } while( status == MS_SUCCESS );
 
-  // Keep ref. to last feature read in case we need style info.
-  if (psInfo->poLastFeature)
-      delete psInfo->poLastFeature;
-  psInfo->poLastFeature = poFeature;
-
-  return MS_SUCCESS;
-
+  return status;
+  
 #else
 /* ------------------------------------------------------------------
  * OGR Support not included...
@@ -1265,8 +1646,7 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
 int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
-  OGRFeature *poFeature;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
   {
@@ -1275,50 +1655,10 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     return(MS_FAILURE);
   }
 
-/* ------------------------------------------------------------------
- * Handle shape geometry... 
- * ------------------------------------------------------------------ */
-  msFreeShape(shape);
-  shape->type = MS_SHAPE_NULL;
+  // Eventually we should use tile to establish access to the correct
+  // file from the tile index when tile indexing in use. 
 
-  if( (poFeature = psInfo->poLayer->GetFeature(record)) == NULL )
-  {
-      return MS_FAILURE;
-  }
-
-  // shape->type will be set if geom is compatible with layer type
-  if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
-                         layer->type) != MS_SUCCESS)
-  {
-      return MS_FAILURE; // Error message already produced.
-  }
-  
-  if (shape->type == MS_SHAPE_NULL)
-  {
-      msSetError(MS_OGRERR, 
-                 "Requested feature is incompatible with layer type",
-                 "msOGRLayerGetShape()");
-      return MS_FAILURE;
-  }
-
-/* ------------------------------------------------------------------
- * Process shape attributes
- * ------------------------------------------------------------------ */
-  if(layer->numitems > 0) 
-  {
-      shape->values = msOGRGetValues(layer, poFeature);
-      shape->numvalues = layer->numitems;
-      if(!shape->values) return(MS_FAILURE);
-  }   
-
-  shape->index = poFeature->GetFID();
-
-  // Keep ref. to last feature read in case we need style info.
-  if (psInfo->poLastFeature)
-      delete psInfo->poLastFeature;
-  psInfo->poLastFeature = poFeature;
-
-  return MS_SUCCESS;
+  return msOGRFileGetShape(layer, shape, record, psInfo );
 #else
 /* ------------------------------------------------------------------
  * OGR Support not included...
@@ -1341,7 +1681,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent) 
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
   OGREnvelope oExtent;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
@@ -1435,13 +1775,22 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                            int tile, long record)
 {
 #ifdef USE_OGR
-  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRLayerGetAutoStyle()");
     return(MS_FAILURE);
+  }
+
+  if( layer->tileindex != NULL )
+  {
+      if( psInfo->poCurTile == NULL 
+          && msOGRFileReadTile( layer, psInfo ) != MS_SUCCESS )
+          return MS_FAILURE;
+      
+      psInfo = psInfo->poCurTile;
   }
 
 /* ------------------------------------------------------------------
@@ -1686,4 +2035,3 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
 #endif /* USE_OGR */
 }
-
