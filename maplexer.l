@@ -323,13 +323,13 @@ int msyyreturncomments = 0;
                                                                                                                                                return(NUMBER); 
                                                                                                                                              }
 
-<EXPRESSION_STRING>(\"|\')[0-9]{4}-[0-9]{2}-[0-9]{2}(\"|\')    {
-                                                                 msyytext++;
-			                                         msyytext[strlen(msyytext)-1] = '\0'; 
-                                                                 msTimeInit(&msyylval.tmval);
-                                                                 strptime(msyytext, "%Y-%m-%d", &msyylval.tmval);
-                                                                 return(TIME);
-                                                               }
+<EXPRESSION_STRING>\'[0-9]{4}-[0-9]{2}-[0-9]{2}\'    {
+                                                       msyytext++;
+			                               msyytext[strlen(msyytext)-1] = '\0'; 
+                                                       msTimeInit(&msyylval.tmval);
+                                                       strptime(msyytext, "%Y-%m-%d", &msyylval.tmval);
+                                                       return(TIME);
+                                                     }
 
 <INITIAL,VALUE_STRING>\/[^\/]*\/               {
                                                  msyytext++;
