@@ -4,7 +4,7 @@
  *  Authors: Fernando Simon (fsimon@univali.br)                              * 
  *           Rodrigo Becke Cabral (cabral@univali.br)                        *
  *  Collaborator: Adriana Gomes Alves                                        *
- *  MapServer: MapServer 4.4 (cvs)                                           *
+ *  MapServer: MapServer 4.5 (cvs)                                           *
  *  Oracle: Oracle 9.2 Spatial Cartridge 9.2 release 9.0.1                   *
  *                                                                           *
  *****************************************************************************
@@ -18,9 +18,12 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.18 $Date$
+ * Revision 1.19 $Date$
+ * Bux fix: #1109.
+ *
+ * Revision 1.18 2005/02/04 13:10:46 [CVS-TIME]
  * Bux fix: #1109, #1110, #1111, #1112, #1136,
- *           #1210, #1211, #1212, #1213
+ *           #1210, #1211, #1212, #1213.
  * Cleaned code.
  * Added debug messages for internal SQL's.
  *
@@ -1354,6 +1357,9 @@ int msOracleSpatialLayerOpen( layerObj *layer )
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)malloc(sizeof(msOracleSpatialLayerInfo));
     msOracleSpatialHandler *hand = (msOracleSpatialHandler *)malloc(sizeof(msOracleSpatialHandler));
   
+    if (layer->debug)
+        msDebug("msOracleSpatialLayerOpen called with: %s\n",layer->data);
+    
     memset( hand, 0, sizeof(msOracleSpatialHandler) );  
     memset( layerinfo, 0, sizeof(msOracleSpatialLayerInfo) );  
   
@@ -1754,8 +1760,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
         success = TRY( hand, OCIParamGet ((dvoid*)layerinfo->stmthp, (ub4)OCI_HTYPE_STMT,hand->errhp,(dvoid*)&pard, (ub4)i+1))
                && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,(dvoid*)&rzt,(ub4 *)&flk_len, (ub4) OCI_ATTR_NAME, hand->errhp ));
                 
-                
-        flk = (char *)malloc(flk_len+1);
+        flk = (char *)malloc(sizeof(char*) * flk_len+1);
         if (flk == NULL)
         {
             msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerGetShape()" );
@@ -1767,37 +1772,37 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
             /*memcpy(flk, rzt, flk_len); #FIXED*/
             flk[flk_len] = '\0';
         }
-                 
+        
         /*Comapre the column name (flk) with geom_column_name and ignore with true*/        
         if (strcmp(flk, geom_column_name) != 0)
-        {
-            layer->items[count_item] = (char *)malloc(flk_len+1);            
+        {            
+            layer->items[count_item] = (char *)malloc(sizeof(char) * flk_len+1);
             if (layer->items[count_item] == NULL)
             {
                 msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer", "msOracleSpatialLayerGetShape()" );
                 return MS_FAILURE;
             }
             else
-            {
+            {                
                 /*layer->items[count_item] = (char *)malloc(flk_len); #FIXED*/
                 strcpy(layer->items[count_item], flk);
-            }
-            
+            }            
             count_item++;
         }
         else
             existgeom = 1;
-         
-        strcpy( rzt, "" );
-        strcpy( flk, "" );
+        
+        strcpy( rzt, "" );        
+        free(flk); /* Better?!*/
+        /*strcpy( flk, "" );*/
         flk_len = 0;
     }     
     if (!(existgeom))
     {
         msSetError (MS_ORACLESPATIALERR, "No geometry column, check stmt", "msOracleSpatialLayerGetItems()" );
         return MS_FAILURE;      
-    }
-     
+    }    
+    
     return msOracleSpatialLayerInitItemInfo( layer );  
 }
 
