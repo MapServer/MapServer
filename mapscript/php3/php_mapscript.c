@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.80  2002/01/24 19:58:14  sacha
+ * Move the function GetAllGroupNames from php to mapserver binaries
+ *
  * Revision 1.79  2002/01/23 16:43:09  dan
  * Ooopps.  Removed unused variable.
  *
@@ -3192,17 +3195,14 @@ DLEXPORT void php3_ms_map_getAllLayerNames(INTERNAL_FUNCTION_PARAMETERS)
  **********************************************************************/
 
 /* {{{ proto int map.getAllGroupNames()
-   Return an array containing all the group names. */
+   Return an array containing all the group names.*/
 
 DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval        *pThis;
     mapObj      *self=NULL;
-    int         nCount = 0;
-    int         i, j = 0;
+    int         i = 0;
     char        **papszGroups = NULL;
-    int         nGroups = 0;
-    int         bFound = 0;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -3219,7 +3219,7 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    if (array_init(return_value) == FAILURE) 
+    if (array_init(return_value) == FAILURE)
     {
         RETURN_FALSE;
     }
@@ -3227,41 +3227,17 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
     if (self != NULL && self->numlayers > 0)
     {
-        nCount = self->numlayers;
-        nGroups = 0;
-        papszGroups = (char **)malloc(sizeof(char *)*nCount);
-        for (i=0; i<nCount; i++)
-            papszGroups[i] = NULL;
-        for (i=0; i<nCount; i++)
-        {
-            bFound = 0;
-            if (self->layers[i].group)
-            {
-                for (j=0; j<nGroups; j++)
-                {
-                    if (papszGroups[j] && 
-                        strcmp(self->layers[i].group, papszGroups[j]) == 0)
-                    {
-                        bFound = 1;
-                        break;
-                    }
-                }
-                if (!bFound)
-                {
-                    /* New group... add to the list of groups found */
-                    papszGroups[nGroups] = strdup(self->layers[i].group);
-                    nGroups++;
-                    /* Also add a copy of the group name to the PHP array */
-                    add_next_index_string(return_value,  
-                                          self->layers[i].group, 1);
-                }
-            }
-        }
-        for (j=0; j<nGroups; j++)
-        {
-            free(papszGroups[j]);
-        }
-        free(papszGroups);
+       int numTok;
+       papszGroups = msgetAllGroupNames(self, &numTok);
+       
+       for (i=0; i<numTok; i++)
+       {
+         /* add a copy of the group name to the PHP array */
+          add_next_index_string(return_value, papszGroups[i], 1);
+          
+          free(papszGroups[i]);
+       }
+       free(papszGroups);
     }
     else
     {

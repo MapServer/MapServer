@@ -1537,3 +1537,47 @@ pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point)
 /* ==================================================================== */
 
 
+char **msgetAllGroupNames(mapObj *map, int *numTok)
+{
+    char        **papszGroups = NULL;
+    int         bFound = 0;
+    int         nCount = 0;
+    int         i = 0, j = 0;
+
+    *numTok = 0;
+
+    if (map != NULL && map->numlayers > 0)
+    {
+        nCount = map->numlayers;
+        papszGroups = (char **)malloc(sizeof(char *)*nCount);
+       
+        for (i=0; i<nCount; i++)
+            papszGroups[i] = NULL;
+       
+        for (i=0; i<nCount; i++)
+        {
+            bFound = 0;
+            if (map->layers[i].group)
+            {
+                for (j=0; j<*numTok; j++)
+                {
+                    if (papszGroups[j] &&
+                        strcmp(map->layers[i].group, papszGroups[j]) == 0)
+                    {
+                        bFound = 1;
+                        break;
+                    }
+                }
+                if (!bFound)
+                {
+                    /* New group... add to the list of groups found */
+                    papszGroups[(*numTok)] = strdup(map->layers[i].group);
+                    (*numTok)++;
+                }
+            }
+        }
+
+    }
+   
+    return papszGroups;
+}
