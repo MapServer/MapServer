@@ -17,6 +17,8 @@
 %include "../../mapshape.h"
 
 %apply Pointer NONNULL { gdImagePtr img };
+%apply Pointer NONNULL { mapObj *map };
+%apply Pointer NONNULL { layerObj *layer };
 
 //
 // class extensions for mapObj
