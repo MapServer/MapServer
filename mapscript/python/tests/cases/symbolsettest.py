@@ -51,13 +51,13 @@ class SymbolSetTestCase(unittest.TestCase):
         
     def testConstructorFile(self):
         """SymbolSetTestCase.testConstructorFile: new instance of symbolSetObj from symbols.txt"""
-        symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
+        symbolset = mapscript.symbolSetObj('../../../../tests/symbols.txt')
         num = symbolset.numsymbols
         assert num == 4, num
 
     def testAddSymbolToNewSymbolSet(self):
         """SymbolSetTestCase.testAddSymbolToNewSymbolSet: add two new symbols to a SymbolSet"""
-        symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
+        symbolset = mapscript.symbolSetObj('../../../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
         symbolb = mapscript.symbolObj('testb')
         symbolset.appendSymbol(symbola) 
@@ -71,14 +71,14 @@ class SymbolSetTestCase(unittest.TestCase):
             
     def testRemoveSymbolFromNewSymbolSet(self):
         """SymbolSetTestCase.testRemoveSymbolFromNewSymbolSet: after removing a symbol, expect numsymbols -= 1"""
-        symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
+        symbolset = mapscript.symbolSetObj('../../../../tests/symbols.txt')
         symbolset.removeSymbol(1)
         num = symbolset.numsymbols
         assert num == 3, num
         
     def testSaveNewSymbolSet(self):
         """SymbolSetTestCase.testSaveNewSymbolSet: save a new SymbolSet to disk"""
-        symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
+        symbolset = mapscript.symbolSetObj('../../../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
         symbolb = mapscript.symbolObj('testb')
         symbolset.appendSymbol(symbola) 

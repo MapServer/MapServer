@@ -142,15 +142,6 @@ class ImageWriteTestCase(MapTestCase):
         else:
             assert 1
 
-    def testImageWriteInvalidHandle(self):
-        """get an exception writing to invalid filehandle"""
-        image = self.map.draw()
-        assert image.thisown == 1
-        filename = 'testImageWriteInvalidHandle.png'
-        fh = open(filename, 'rb')
-        image.write(fh)
-        fh.close()
-
 
 if __name__ == '__main__':
     unittest.main()

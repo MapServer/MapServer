@@ -43,7 +43,7 @@ import distutils.util
 import unittest
 
 # define the path to mapserver test data
-TESTS_PATH = '../../tests'
+TESTS_PATH = '../../../../tests'
 
 TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
 XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
@@ -52,26 +52,10 @@ TEST_IMAGE = os.path.join(TESTS_PATH, 'test.png')
 # Put local build directory on head of python path
 platformdir = '-'.join((distutils.util.get_platform(), 
                         '.'.join(map(str, sys.version_info[0:2]))))
-sys.path.insert(0, os.path.join('build', 'lib.' + platformdir))
+sys.path.insert(0, os.path.join('../../build', 'lib.' + platformdir))
 
 # import mapscript from the local build directory
 import mapscript
-
-# normalize names, allows testing of module that uses the experimental
-# next generation names
-classnames = [ 'mapObj', 'layerObj', 'classObj', 'styleObj', 'shapeObj',
-            'lineObj', 'pointObj', 'rectObj', 'outputFormatObj', 'symbolObj',
-            'symbolSetObj', 'colorObj', 'imageObj', 'shapefileObj',
-            'projectionObj', 'fontSetObj', 'hashTableObj' ]
-
-for name in classnames:
-    try:
-        new_name = name.replace('Obj', '')
-        new_name = new_name.capitalize()
-        new_object = getattr(mapscript, new_name)
-        setattr(mapscript, name, new_object)
-    except AttributeError:
-        pass
 
 # ==========================================================================
 # Base testing classes

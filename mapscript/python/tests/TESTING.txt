@@ -10,17 +10,19 @@ Authors: Sean Gillies, sgillies@frii.com
 Running the tests
 -----------------
 
-To run the tests, execute 
+To run all of the tests, change directory to cases and execute
+::
 
-   python tests/runtests.py -v
-
-from the mapscript/python directory of the mapserver distribution.  The
-tests cannot be run properly from another path.  By default, the unit
-test script will insert the local build directory produced by Python
-distutils into the head of the Python PATH.  This allows us to run the
-unit tests before installing the mapscript module.  The unit tests use a
-map config file, symbolset file, fontset file, and data located in the 
-'tests' directory of the mapserver distribution.
+    $ cd cases
+    $ python runalltests.py
+    
+This runs all tests found in every TestCase derived class defined in any
+module named "cases/*test.py".  The tests cannot be run properly from
+another path.  The unit test script will insert the local build directory
+produced by Python distutils into the head of the Python PATH.  This allows
+us to run the unit tests before installing the mapscript module.  The unit
+tests use a map config file, symbolset file, fontset file, and data located
+in the 'tests' directory of the mapserver distribution.
 
 If you encounter any errors, please create a new issue in the MapServer
 bug tracker
