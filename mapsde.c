@@ -172,12 +172,12 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     }
   } 
   
-  for(i=1; i<=layer->numitems; i++) {
+  for(i=0; i<layer->numitems; i++) {
     switch(sde->itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
-      status = SE_stream_get_smallint(sde->stream, i+skip, (short *) &longval);
+      status = SE_stream_get_smallint(sde->stream, i+skip+1, (short *) &longval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i].size+1);
 	sprintf(shape->values[i], "%ld", longval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
@@ -186,21 +186,21 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
 	return(MS_FAILURE);
       }      
     case SE_INTEGER_TYPE:
-      status = SE_stream_get_integer(sde->stream, i+skip, &longval);
+      status = SE_stream_get_integer(sde->stream, i+skip+1, &longval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i].size+1);
 	sprintf(shape->values[i], "%ld", longval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      } else {     
+      } else {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
 	return(MS_FAILURE);
       }      
       break;
     case SE_FLOAT_TYPE:
-      status = SE_stream_get_float(sde->stream, i+skip, (float *) &doubleval);
+      status = SE_stream_get_float(sde->stream, i+skip+1, (float *) &doubleval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i].size+1);
 	sprintf(shape->values[i], "%g", doubleval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
@@ -210,9 +210,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       }
       break;
     case SE_DOUBLE_TYPE:
-      status = SE_stream_get_double(sde->stream, i+skip, &doubleval);
+      status = SE_stream_get_double(sde->stream, i+skip+1, &doubleval);
       if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i].size+1);
 	sprintf(shape->values[i], "%g", doubleval);
       } else if(status == SE_NULL_VALUE) {
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
@@ -222,8 +222,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       }
       break;
     case SE_STRING_TYPE:
-      shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
-      status = SE_stream_get_string(sde->stream, i+skip, shape->values[i]);
+      shape->values[i] = (char *)malloc(sde->itemdefs[i].size+1);
+      status = SE_stream_get_string(sde->stream, i+skip+1, shape->values[i]);
       if(status != SE_SUCCESS) {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_string()");
 	return(MS_FAILURE);
@@ -234,7 +234,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       msSetError(MS_SDEERR, "Retrieval of BLOBs is not yet supported.", "sdeGetRecord()");
       break;
     case SE_DATE_TYPE:
-      status = SE_stream_get_date(sde->stream, i+skip, &dateval);
+      status = SE_stream_get_date(sde->stream, i+skip+1, &dateval);
       if(status == SE_SUCCESS) {
 	shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
 	strftime(shape->values[i], MS_SDE_TIMEFMTSIZE, MS_SDE_TIMEFMT, &dateval);
@@ -246,7 +246,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       }
       break;
     case SE_SHAPE_TYPE:
-      status = SE_stream_get_shape(sde->stream, i+skip, shapeval);
+      status = SE_stream_get_shape(sde->stream, i+skip+1, shapeval);
       if(status == SE_SUCCESS) {
 	shape->values[i] = strdup(MS_SDE_SHAPESTRING);
       } else if(status == SE_NULL_VALUE) {
@@ -290,6 +290,8 @@ int msSDELayerOpen(layerObj *layer) {
   SE_ERROR error;
 
   sdeLayerObj *sde;
+
+  msDebug("SDE, layer opening...\n");
 
   if(layer->sdelayer) return MS_SUCCESS; // layer already open
 
@@ -367,6 +369,8 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
+  msDebug("SDE, layer opened\n");
+
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
@@ -378,6 +382,8 @@ void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
   sdeLayerObj *sde=NULL;
 
+  msDebug("SDE, layer closing...\n");
+
   sde = layer->sdelayer;
   if (sde == NULL) return;  // Silently return if layer not opened.
 
@@ -386,6 +392,11 @@ void msSDELayerClose(layerObj *layer) {
   SE_layerinfo_free(sde->layerinfo);
   SE_coordref_free(sde->coordref);
   SE_connection_free(sde->connection);
+
+  free(layer->sdelayer);
+  layer->sdelayer = NULL;
+
+  msDebug("SDE, layer closed\n");
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
   return;
@@ -499,8 +510,8 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
   }
-  for(i=1; i<=layer->numitems; i++) { // column numbers start at one
-    status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i-1]));
+  for(i=0; i<layer->numitems; i++) { // column numbers start at one
+    status = SE_stream_describe_column(sde->stream, i+3, &(sde->itemdefs[i]));
     if(status != MS_SUCCESS) {
       sde_error(status, "msSDELayerWhichShapes()", "SE_stream_describe_column()");
       return(MS_FAILURE);
@@ -555,10 +566,13 @@ int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
 #ifdef USE_SDE
   int i;
   short n;
-  sdeLayerObj *sde=NULL;  
   long status;
 
+  sdeLayerObj *sde=NULL;
+
   sde = layer->sdelayer;
+
+  msDebug("SDE, getting item definitions...\n");
 
   status = SE_table_describe(sde->connection, sde->table, &n, &sde->itemdefs);
   if(status != SE_SUCCESS) {
@@ -566,14 +580,23 @@ int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
     return(MS_FAILURE);
   }
 
+  msDebug("\tran SE_table_describe...\n");
+
   *items = (char **)malloc(n*sizeof(char *));
   if(!(*items)) {
     msSetError(MS_MEMERR, "Error allocating layer items array.", "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
 
-  for(i=0; i<n; i++) *items[i] = strdup(sde->itemdefs[i].column_name);
+  msDebug("\tallocated memory for items (%d)...\n", n);
+
+  for(i=0; i<n; i++) {
+    msDebug("\titem=%s...\n", sde->itemdefs[i].column_name);
+    *items[i] = strdup(sde->itemdefs[i].column_name);
+  }
   *numitems = n;
+
+  msDebug("SDE, got item definitions\n");
 
   return(MS_SUCCESS);
 #else
@@ -608,8 +631,8 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
       msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerGetShape()");
       return(MS_FAILURE);
     }
-    for(i=1; i<=layer->numitems; i++) { // columns start at one
-      status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i-1]));
+    for(i=0; i<layer->numitems; i++) { // columns start at one
+      status = SE_stream_describe_column(sde->stream, i+1, &(sde->itemdefs[i]));
       if(status != MS_SUCCESS) {
 	sde_error(status, "msSDELayerGetShape()", "SE_stream_describe_column()");
 	return(MS_FAILURE);
