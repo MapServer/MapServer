@@ -464,7 +464,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
       if(status != MS_SUCCESS) return(status);
 
       // retrieve all the item names. (Note : there might be no attributs)
-      //status = msLayerGetItems(lp);
+      status = msLayerGetItems(lp);
       //if(status != MS_SUCCESS) return(status);
 
       for(j=0; j<lp->resultcache->numresults; j++) 
