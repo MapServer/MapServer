@@ -225,7 +225,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_STRING_TYPE:
       shape->values[i] = (char *)malloc(itemdefs[i].size+1);
       status = SE_stream_get_string(sde->stream, i+skip+1, shape->values[i]);
-      if(status != SE_SUCCESS) {
+      if(status == SE_NULL_VALUE)
+	shape->values[i][0] = '\0'; // empty string
+      else if(status != SE_SUCCESS) {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_string()");
 	return(MS_FAILURE);
       }
@@ -520,7 +522,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 
   sde = layer->sdelayer;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerNextShape()");
     return(MS_FAILURE);
   }
 
