@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/11/02 01:33:58  frank
+ * Added logic to reproject location back to map coordiantes before doing
+ * the distance or "in shape" tests.  This also ensures results are returned
+ * in map coordianates.
+ * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1021
+ *
  * Revision 1.11  2004/11/01 21:32:01  frank
  * Added pointer to raster query classification bug.
  *
@@ -439,6 +445,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     CPLErr      eErr;
     rasterLayerInfo *rlinfo;
     rectObj     searchrect;
+    int         needReproject = MS_FALSE;
 
     rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
@@ -450,7 +457,10 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 #ifdef USE_PROJ
     if(layer->project 
        && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    {
         msProjectRect(&(map->projection), &(layer->projection), &searchrect);
+        needReproject = MS_TRUE;
+    }
     else
         layer->project = MS_FALSE;
 #endif
@@ -611,6 +621,13 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
             sPixelLocation.y = 
                 GEO_TRANS(adfGeoTransform+3, 
                           iPixel + nWinXOff + 0.5, iLine + nWinYOff + 0.5 );
+
+            // If projections differ, convert this back into the map 
+            // projection for distance testing, and comprison to the 
+            // search shape. 
+            if( needReproject )
+                msProjectPoint( &(layer->projection), &(map->projection), 
+                                &sPixelLocation );
 
             if( rlinfo->searchshape != NULL
                 && msIntersectPointPolygon( &sPixelLocation, 
@@ -929,6 +946,13 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Setup target point information, at this point they are in       */
+/*      map coordinates.                                                */
+/* -------------------------------------------------------------------- */
+    rlinfo->range_dist = buffer * buffer;
+    rlinfo->target_point = p;
+
+/* -------------------------------------------------------------------- */
 /*      if we are in the MS_SINGLE mode, first try a query with zero    */
 /*      tolerance.  If this gets a raster pixel then we can be          */
 /*      reasonably assured that it is the closest to the query          */
@@ -944,9 +968,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
         pointRect.miny = p.y;
         pointRect.maxy = p.y;
 
-        rlinfo->range_dist = buffer * buffer;
         rlinfo->range_mode = MS_SINGLE;
-        rlinfo->target_point = p;
         result = msRasterQueryByRect( map, layer, pointRect );
 
         if( rlinfo->query_results > 0 )
@@ -962,9 +984,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     bufferRect.miny = p.y - buffer;
     bufferRect.maxy = p.y + buffer;
 
-    rlinfo->range_dist = buffer * buffer;
     rlinfo->range_mode = mode;
-    rlinfo->target_point = p;
     result = msRasterQueryByRect( map, layer, bufferRect );
 
     return result;
