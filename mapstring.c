@@ -404,7 +404,6 @@ char **split(const char *string, char ch, int *num_tokens)
   return(token);
 }
 
-
 char *msEncodeUrl(char *data)
 {
   char *hex = "0123456789ABCDEF";
@@ -439,5 +438,140 @@ char *msEncodeUrl(char *data)
   return code;
 }
 
+/* msEncodeHTMLEntities()
+**
+** Return a copy of string after replacing some problematic chars with their
+** HTML entity equivalents.
+**
+** The replacements performed are:
+**  '&' -> "&amp;", '"' -> "&quot;", '<' -> "&lt;" and '>' -> "&gt;"
+**/
+char *msEncodeHTMLEntities(const char *string) 
+{
+    int buflen, i;
+    char *newstring;
+    const char *c;
+
+    // Start with 100 extra chars for replacements... 
+    // should be good enough for most cases
+    buflen = strlen(string) + 100;
+    newstring = (char*)malloc(buflen+1*sizeof(char*));
+    if (newstring == NULL)
+    {
+        msSetError(MS_MEMERR, NULL, "msEncodeHTMLEntities()");
+        return NULL;
+    }
+
+    for(i=0, c=string; *c != '\0'; c++)
+    {
+        // Need to realloc buffer?
+        if (i+6 > buflen)
+        {
+            // If we had to realloc then this string must contain several
+            // entities... so let's go with twice the previous buffer size
+            buflen *= 2;
+            newstring = (char*)realloc(newstring, buflen+1*sizeof(char*));
+            if (newstring == NULL)
+            {
+                msSetError(MS_MEMERR, NULL, "msEncodeHTMLEntities()");
+                return NULL;
+            }
+        }
+
+        switch(*c)
+        {
+          case '&':
+            strcpy(newstring+i, "&amp;");
+            i += 5;
+            break;
+          case '"':
+            strcpy(newstring+i, "&quot;");
+            i += 6;
+            break;
+          case '<':
+            strcpy(newstring+i, "&lt;");
+            i += 4;
+            break;
+          case '>':
+            strcpy(newstring+i, "&gt;");
+            i += 4;
+            break;
+          default:
+            newstring[i++] = *c;
+        }
+    }
+
+    newstring[i++] = '\0';
+
+    return newstring;
+}
 
 
+/* msDecodeHTMLEntities()
+**
+** Modify the string to replace encoded characters by their true value
+**
+** The replacements performed are:
+**  "&amp;" -> '&', "&quot;" -> '"', "&lt;" -> '<' and "&gt;" -> '>'
+**/
+void msDecodeHTMLEntities(const char *string) 
+{
+    char *pszAmp=NULL, *pszSemiColon=NULL, *pszReplace=NULL, *pszEnd=NULL;
+    char *pszBuffer=NULL;
+
+    if(string == NULL)
+        return;
+    else
+        pszBuffer = (char*)string;
+
+    pszReplace = (char*) malloc(sizeof(char) * strlen(pszBuffer));
+    pszEnd = (char*) malloc(sizeof(char) * strlen(pszBuffer));
+
+    while((pszAmp = strchr(pszBuffer, '&')) != NULL)
+    {
+        // Get the &...;
+        strcpy(pszReplace, pszAmp);
+        pszSemiColon = strchr(pszReplace, ';');
+        if(pszSemiColon == NULL)
+            break;
+        else
+            pszSemiColon++;
+        pszReplace[pszSemiColon-pszReplace] = '\0';
+
+        // Get everything after the &...;
+        strcpy(pszEnd, pszSemiColon+1);
+
+        // Replace the &...;
+        if(strcasecmp(pszReplace, "&amp;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '&';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&quot;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '"';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&lt;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '<';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&gt;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '>';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+
+        pszBuffer = pszAmp + 1;
+    }
+
+    free(pszReplace);
+    free(pszEnd);
+
+    return;
+}

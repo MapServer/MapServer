@@ -958,6 +958,8 @@ int countChars(char *str, char ch);
 char *long2string(long value);
 char *double2string(double value);
 char *msEncodeUrl(char*);
+char *msEncodeHTMLEntities(const char *string);
+void msDecodeHTMLEntities(const char *string);
 
 #ifdef NEED_STRDUP
 char *strdup(char *s);

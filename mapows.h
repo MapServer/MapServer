@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.14  2003/01/10 06:39:06  sdlime
+ * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to mapstring.c so they can be used a bit more freely.
+ *
  * Revision 1.13  2002/12/19 06:30:59  dan
  * Enable caching WMS/WFS request using tmp filename built from URL
  *
@@ -130,8 +133,6 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
                            hashTableObj metadata );
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
                            const char *wmtver, hashTableObj metadata );
-char *msEncodeHTMLEntities(const char *string);
-void msDecodeHTMLEntities(const char *string);
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                          mapObj *map, int bCheckLocalCache);
