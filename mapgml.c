@@ -163,8 +163,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
       fprintf(stream, "%s\t\t\t\t", tab);
       for(j=0; j<shape->line[0].numpoints; j++)
 	fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
-      fprintf(stream, "\n");
-      fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+      //fprintf(stream, "\n");
+      // fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+      fprintf(stream, "</gml:coordinates>\n");
 
       fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
       fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
@@ -195,8 +196,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
         fprintf(stream, "%s\t\t\t\t", tab);
         for(j=0; j<shape->line[i].numpoints; j++)
 	  fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
-        fprintf(stream, "\n");
-        fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+        //fprintf(stream, "\n");
+        //fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+        fprintf(stream, "</gml:coordinates>\n");
 
         fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
         fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
@@ -210,8 +212,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
             fprintf(stream, "%s\t\t\t\t", tab);
             for(j=0; j<shape->line[k].numpoints; j++)
 	      fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
-            fprintf(stream, "\n");
-            fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+            //fprintf(stream, "\n");
+            //fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+            fprintf(stream, "</gml:coordinates>\n");
 
             fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
             fprintf(stream, "%s\t</gml:innerBoundaryIs>\n", tab);
@@ -239,8 +242,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
             fprintf(stream, "%s\t\t\t\t\t", tab);
             for(j=0; j<shape->line[i].numpoints; j++)
 	      fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
-            fprintf(stream, "\n");
-            fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
+            //fprintf(stream, "\n");
+            //fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
+            fprintf(stream, "</gml:coordinates>\n");
 
             fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
             fprintf(stream, "%s\t\t</gml:outerBoundaryIs>\n", tab);
@@ -254,8 +258,10 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
                 fprintf(stream, "%s\t\t\t\t\t", tab);
                 for(j=0; j<shape->line[k].numpoints; j++)
 	          fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
-                fprintf(stream, "\n");
-                fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
+                //fprintf(stream, "\n");
+                //fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
+                fprintf(stream, "</gml:coordinates>\n");
+
 
                 fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
                 fprintf(stream, "%s\t\t</gml:innerBoundaryIs>\n", tab);
