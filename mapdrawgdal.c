@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/09/30 13:08:57  frank
+ * ensure only 128 colors are normally used in greyscale mode
+ *
  * Revision 1.9  2003/02/28 20:58:41  frank
  * added preliminary support for the COLOR_MATCH_THRESHOLD
  *
@@ -445,11 +448,26 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           for( i = 0; i < 256; i++ )
           {
               GDALColorEntry sEntry;
-              
-              sEntry.c1 = i;
-              sEntry.c2 = i;
-              sEntry.c3 = i;
-              sEntry.c4 = 255;
+
+              if( truecolor )
+              {
+                  sEntry.c1 = i;
+                  sEntry.c2 = i;
+                  sEntry.c3 = i;
+                  sEntry.c4 = 255;
+              }
+              else
+              {
+                  /*
+                  ** This special calculation is intended to use only 128
+                  ** unique colors for greyscale in non-truecolor mode.
+                  */
+
+                  sEntry.c1 = i - i%2;
+                  sEntry.c2 = i - i%2;
+                  sEntry.c3 = i - i%2;
+                  sEntry.c4 = 255;
+              }
                   
               GDALSetColorEntry( hColorMap, i, &sEntry );
           }
