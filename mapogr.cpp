@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.72  2004/07/05 17:22:00  julien
+ * msOGRLayerGetAutoStyle: outlinecolor is only useful if the type is polygon
+ *
  * Revision 1.71  2004/06/22 20:55:20  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -2055,7 +2058,11 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               else
               {
                   // Single part symbology
-                  c->styles[0].outlinecolor = c->styles[0].color = oPenColor;
+                  if(layer->type == MS_LAYER_POLYGON)
+                      c->styles[0].outlinecolor = c->styles[0].color = 
+                          oPenColor;
+                  else
+                      c->styles[0].color = oPenColor;
                   c->styles[0].symbol = nPenSymbol;
                   c->styles[0].size = nPenSize;
                   c->numstyles = 1;
