@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.44  2002/02/20 19:49:22  frank
+ * fixed memory leak of OGRFeatures under some circumstanes
+ *
  * Revision 1.43  2002/02/08 21:29:18  frank
  * ensure 3D geometries supported as well as 2D geometries
  *
@@ -1157,7 +1160,7 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
-  OGRFeature *poFeature;
+  OGRFeature *poFeature = NULL;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
   {
@@ -1175,6 +1178,9 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
 
   while (shape->type == MS_SHAPE_NULL)
   {
+      if( poFeature )
+          delete poFeature;
+
       if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
       {
           return MS_DONE;  // No more features to read
@@ -1184,7 +1190,11 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
       {
           shape->values = msOGRGetValues(layer, poFeature);
           shape->numvalues = layer->numitems;
-          if(!shape->values) return(MS_FAILURE);
+          if(!shape->values)
+          {
+              delete poFeature;
+              return(MS_FAILURE);
+          }
       }
 
       if (msEvalExpression(&(layer->filter), layer->filteritemindex, 
