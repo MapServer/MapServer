@@ -407,7 +407,7 @@ static int loadProjection(projectionObj *p)
 	  sprintf(ms_error.message, "%s", pj_strerrno(pj_errno));
 	  return(-1);
 	}
-      }      
+      }
       return(0);
       break;    
     case(MS_STRING):

@@ -2031,13 +2031,13 @@ int main(int argc, char *argv[]) {
 
     case NQUERY:
     case NQUERYMAP:
-      
+
       if((i = msGetLayerIndex(Map, QueryLayer)) != -1) /* force the query layer on */
 	Map->layers[i].status = MS_ON;
 
       switch(QueryCoordSource) {
       case FROMIMGPNT:
-
+	
 	setCoordinate();
 
 	if(SearchMap) { // compute new extent, pan etc then search that extent
@@ -2099,7 +2099,6 @@ int main(int argc, char *argv[]) {
 	break;
 
       case FROMUSERPNT:
-
 	if(Buffer == 0) {
 	  if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_MULTIPLE, MapPnt, Buffer)) == NULL) writeError();
 	  setExtent();

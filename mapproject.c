@@ -49,30 +49,34 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
   prj_rect.minx = prj_rect.maxx = prj_point.x;
   prj_rect.miny = prj_rect.maxy = prj_point.y;
 
-  for(x=rect->minx+dx; x<=rect->maxx; x+=dx) {
-    prj_point.x = x;
-    prj_point.y = rect->miny;
-    msProjectPoint(in, out, &prj_point);
-    prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
-    prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
+  if(dx > 0) {
+    for(x=rect->minx+dx; x<=rect->maxx; x+=dx) {
+      prj_point.x = x;
+      prj_point.y = rect->miny;
+      msProjectPoint(in, out, &prj_point);
+      prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
+      prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
 
-    prj_point.y = rect->maxy;
-    msProjectPoint(in, out, &prj_point);
-    prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
-    prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
-  }
-  
-  for(y=rect->miny+dy; y<=rect->maxy; y+=dy) {
-    prj_point.y = y;
-    prj_point.x = rect->minx;    
-    msProjectPoint(in, out, &prj_point);
-    prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
-    prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
+      prj_point.y = rect->maxy;
+      msProjectPoint(in, out, &prj_point);
+      prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
+      prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
+    }
+  }  
 
-    prj_point.x = rect->maxx;
-    msProjectPoint(in, out, &prj_point);
-    prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
-    prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
+  if(dy > 0) {
+    for(y=rect->miny+dy; y<=rect->maxy; y+=dy) {
+      prj_point.y = y;
+      prj_point.x = rect->minx;    
+      msProjectPoint(in, out, &prj_point);
+      prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
+      prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
+
+      prj_point.x = rect->maxx;
+      msProjectPoint(in, out, &prj_point);
+      prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
+      prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
+    }
   }
 
   rect->minx = prj_rect.minx;
