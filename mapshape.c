@@ -218,12 +218,22 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   sprintf( pszFullname, "%s.shp", pszBasename );
   psSHP->fpSHP = fopen(pszFullname, pszAccess );
   if( psSHP->fpSHP == NULL )
+  {
+    msFree(pszBasename);
+    msFree(pszFullname);
+    msFree(psSHP);
     return( NULL );
+  }
   
   sprintf( pszFullname, "%s.shx", pszBasename );
   psSHP->fpSHX = fopen(pszFullname, pszAccess );
   if( psSHP->fpSHX == NULL )
+  {
+    msFree(pszBasename);
+    msFree(pszFullname);
+    msFree(psSHP);
     return( NULL );
+  }
   
   free( pszFullname );
   free( pszBasename ); 
