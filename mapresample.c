@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/01/29 18:10:16  frank
+ * msTransformMapToSource() improved to support using an internal grid if
+ * the outer edge has some failures.  Also, now grows the region if some points
+ * fail to account for the poor resolution of the grid.
+ * Also added LOAD_FULL_RES_IMAGE and LOAD_WHOLE_IMAGE processing directives
+ * when computing source image window and resolution.
+ *
  * Revision 1.43  2004/01/24 09:50:51  frank
  * Check pj_transform() return values for HUGE_VAL, and handle cases where
  * not all points transform successfully, but some do.
@@ -283,7 +290,9 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
              */
             if( x[nDstX] < 0.0 || y[nDstX] < 0.0
                 || nSrcX >= nSrcXSize || nSrcY >= nSrcYSize )
+            {
                 continue;
+            }
 
             if( MS_RENDERER_GD(psSrcImage->format) )
             {
@@ -729,30 +738,57 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                                    int nSrcXSize, int nSrcYSize, 
                                    double * adfInvSrcGeoTransform,
                                    projectionObj *psSrcProj,
-                                   rectObj *psSrcExtent )
+                                   rectObj *psSrcExtent,
+                                   int bUseGrid )
 
 {
 #define EDGE_STEPS    10
+#define MAX_SIZE      ((EDGE_STEPS+1)*(EDGE_STEPS+1))
 
     int		i, nSamples = 0, bOutInit = FALSE;
     double      dfRatio;
-    double	x[EDGE_STEPS*4+4], y[EDGE_STEPS*4+4], z[EDGE_STEPS*4+4];
+    double	x[MAX_SIZE], y[MAX_SIZE], z[MAX_SIZE];
 
-    /* Collect edges in map image pixel/line coordinates */
-    for( dfRatio = 0.0; dfRatio <= 0.999; dfRatio += (1.0/EDGE_STEPS) )
+/* -------------------------------------------------------------------- */
+/*      Collect edges in map image pixel/line coordinates               */
+/* -------------------------------------------------------------------- */
+    if( !bUseGrid )
     {
-        assert( nSamples <= EDGE_STEPS*4 );
-        x[nSamples  ] = dfRatio * nDstXSize;
-        y[nSamples++] = 0.0;
-        x[nSamples  ] = dfRatio * nDstXSize;
-        y[nSamples++] = nDstYSize;
-        x[nSamples  ] = 0.0;
-        y[nSamples++] = dfRatio * nDstYSize;
-        x[nSamples  ] = nDstXSize;
-        y[nSamples++] = dfRatio * nDstYSize;
+        for( dfRatio = 0.0; dfRatio <= 0.999; dfRatio += (1.0/EDGE_STEPS) )
+        {
+            assert( nSamples < MAX_SIZE );
+            x[nSamples  ] = dfRatio * nDstXSize;
+            y[nSamples++] = 0.0;
+            x[nSamples  ] = dfRatio * nDstXSize;
+            y[nSamples++] = nDstYSize;
+            x[nSamples  ] = 0.0;
+            y[nSamples++] = dfRatio * nDstYSize;
+            x[nSamples  ] = nDstXSize;
+            y[nSamples++] = dfRatio * nDstYSize;
+        }
     }
 
-    /* transform to map georeferenced units */
+/* -------------------------------------------------------------------- */
+/*      Collect a grid in the hopes of a more accurate region.          */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        double dfRatio2;
+
+        for( dfRatio = 0.0; dfRatio <= 0.999; dfRatio += (1.0/EDGE_STEPS) )
+        {
+            for( dfRatio2=0.0; dfRatio2 <= 0.999; dfRatio2 += (1.0/EDGE_STEPS))
+            {
+                assert( nSamples < MAX_SIZE );
+                x[nSamples  ] = dfRatio2 * nDstXSize;
+                y[nSamples++] = dfRatio * nDstYSize;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      transform to map georeferenced units                            */
+/* -------------------------------------------------------------------- */
     for( i = 0; i < nSamples; i++ )
     {
         double		x_out, y_out; 
@@ -765,6 +801,9 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
         z[i] = 0.0;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Transform to layer georeferenced coordinates.                   */
+/* -------------------------------------------------------------------- */
     if( pj_is_latlong(psDstProj->proj) )
     {
         for( i = 0; i < nSamples; i++ )
@@ -774,7 +813,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
         }
     }
 
-    /* transform to layer georeferenced coordinates. */
     if( pj_transform( psDstProj->proj, psSrcProj->proj,
                       nSamples, 1, x, y, z ) != 0 )
     {
@@ -793,13 +831,38 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
         }
     }
 
-    /* transform to layer raster coordinates, and collect bounds. */
+/* -------------------------------------------------------------------- */
+/*      If we just using the edges (not a grid) and we go some          */
+/*      errors, then we need to restart using a grid pattern.           */
+/* -------------------------------------------------------------------- */
+    if( !bUseGrid )
+    {
+        for( i = 0; i < nSamples; i++ )
+        {
+            if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+            {
+                return msTransformMapToSource( nDstXSize, nDstYSize, 
+                                               adfDstGeoTransform, psDstProj,
+                                               nSrcXSize, nSrcYSize, 
+                                               adfInvSrcGeoTransform,psSrcProj,
+                                               psSrcExtent, TRUE );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      transform to layer raster coordinates, and collect bounds.      */
+/* -------------------------------------------------------------------- */
+    int nFailures = 0;
     for( i = 0; i < nSamples; i++ )
     {
         double		x_out, y_out; 
 
         if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+        {
+            nFailures++;
             continue;
+        }
 
         x_out =      adfInvSrcGeoTransform[0]
             +   x[i]*adfInvSrcGeoTransform[1]
@@ -825,6 +888,23 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 
     if( !bOutInit )
         return MS_FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      If we had some failures, we need to expand the region to        */
+/*      represent our very coarse sampling grid.                        */
+/* -------------------------------------------------------------------- */
+    if( nFailures > 0 )
+    {
+        int nGrowAmountX = 
+            (psSrcExtent->maxx - psSrcExtent->minx)/EDGE_STEPS + 1;
+        int nGrowAmountY = 
+            (psSrcExtent->maxy - psSrcExtent->miny)/EDGE_STEPS + 1;
+
+        psSrcExtent->minx = MAX(psSrcExtent->minx - nGrowAmountX,0);
+        psSrcExtent->miny = MAX(psSrcExtent->miny - nGrowAmountY,0);
+        psSrcExtent->maxx = MIN(psSrcExtent->maxx + nGrowAmountX,nSrcXSize);
+        psSrcExtent->maxy = MIN(psSrcExtent->maxy + nGrowAmountY,nSrcYSize);
+    }
 
     return MS_TRUE;
 }
@@ -899,12 +979,15 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      collecting the extents of a region around the edge of the       */
 /*      destination chunk.                                              */
 /* -------------------------------------------------------------------- */
-    bSuccess = 
-        msTransformMapToSource( nDstXSize, nDstYSize, adfDstGeoTransform,
-                                &(map->projection),
-                                nSrcXSize, nSrcYSize, adfInvSrcGeoTransform,
-                                &(layer->projection),
-                                &sSrcExtent );
+    if( CSLFetchBoolean( layer->processing, "LOAD_WHOLE_IMAGE", FALSE ) )
+        bSuccess = FALSE;
+    else
+        bSuccess = 
+            msTransformMapToSource( nDstXSize, nDstYSize, adfDstGeoTransform,
+                                    &(map->projection),
+                                    nSrcXSize, nSrcYSize,adfInvSrcGeoTransform,
+                                    &(layer->projection),
+                                    &sSrcExtent, FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      If the transformation failed, it is likely that we have such    */
@@ -921,9 +1004,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
                      "pj_transform() failed.  Out of bounds?  Loading whole image.\n" );
 
         sSrcExtent.minx = 0;
-        sSrcExtent.maxx = nSrcXSize-1;
+        sSrcExtent.maxx = nSrcXSize;
         sSrcExtent.miny = 0;
-        sSrcExtent.maxy = nSrcYSize-1;
+        sSrcExtent.maxy = nSrcYSize;
     }
 
 /* -------------------------------------------------------------------- */
@@ -958,7 +1041,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         sqrt(adfSrcGeoTransform[1] * adfSrcGeoTransform[1]
              + adfSrcGeoTransform[2] * adfSrcGeoTransform[2]);
     
-    if( (sSrcExtent.maxx - sSrcExtent.minx) > RES_RATIO * nDstXSize )
+    if( (sSrcExtent.maxx - sSrcExtent.minx) > RES_RATIO * nDstXSize 
+        && !CSLFetchBoolean( layer->processing, "LOAD_FULL_RES_IMAGE", FALSE ))
         sDummyMap.cellsize = 
             (dfNominalCellSize * (sSrcExtent.maxx - sSrcExtent.minx))
             / (RES_RATIO * nDstXSize);
@@ -969,31 +1053,31 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
                         * (dfNominalCellSize / sDummyMap.cellsize));
     nLoadImgYSize = MAX(1,(sSrcExtent.maxy - sSrcExtent.miny) 
                         * (dfNominalCellSize / sDummyMap.cellsize));
-
+        
     if( layer->debug )
         msDebug( "msResampleGDALToMap in effect: cellsize = %f\n", 
                  sDummyMap.cellsize );
 
     adfSrcGeoTransform[0] += 
-            + adfSrcGeoTransform[1] * sSrcExtent.minx
-            + adfSrcGeoTransform[2] * sSrcExtent.miny;
+        + adfSrcGeoTransform[1] * sSrcExtent.minx
+        + adfSrcGeoTransform[2] * sSrcExtent.miny;
     adfSrcGeoTransform[1] *= (sDummyMap.cellsize / dfNominalCellSize);
     adfSrcGeoTransform[2] *= (sDummyMap.cellsize / dfNominalCellSize);
 
     adfSrcGeoTransform[3] += 
-            + adfSrcGeoTransform[4] * sSrcExtent.minx
-            + adfSrcGeoTransform[5] * sSrcExtent.miny;
+        + adfSrcGeoTransform[4] * sSrcExtent.minx
+        + adfSrcGeoTransform[5] * sSrcExtent.miny;
     adfSrcGeoTransform[4] *= (sDummyMap.cellsize / dfNominalCellSize);
     adfSrcGeoTransform[5] *= (sDummyMap.cellsize / dfNominalCellSize);
 
     papszAlteredProcessing = CSLDuplicate( layer->processing );
     papszAlteredProcessing = 
         CSLSetNameValue( papszAlteredProcessing, "RAW_WINDOW", 
-                      CPLSPrintf( "%d %d %d %d", 
-                                  (int) sSrcExtent.minx,
-                                  (int) sSrcExtent.miny, 
-                                  (int) (sSrcExtent.maxx - sSrcExtent.minx),
-                                  (int) (sSrcExtent.maxy - sSrcExtent.miny) ));
+                         CPLSPrintf( "%d %d %d %d", 
+                                     (int) sSrcExtent.minx,
+                                     (int) sSrcExtent.miny, 
+                                     (int) (sSrcExtent.maxx-sSrcExtent.minx),
+                                     (int) (sSrcExtent.maxy-sSrcExtent.miny)));
     
 /* -------------------------------------------------------------------- */
 /*      We clone this without referencing it knowing that the           */
