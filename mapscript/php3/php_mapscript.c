@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.100  2002/03/22 04:48:50  dan
+ * Fixed PHP4.1 problems: missing register_list_destructors() calls for
+ * legend and scalebar resources.  Also started the move away from PHP3.
+ *
  * Revision 1.99  2002/03/21 23:13:58  dan
  * Produce a fatal error in ms_newMapObj() if PHP is NOT configured as a CGI.
  *
@@ -187,9 +191,9 @@ DLEXPORT void php3_info_mapscript(void);
 DLEXPORT int  php3_init_mapscript(INIT_FUNC_ARGS);
 DLEXPORT int  php3_end_mapscript(SHUTDOWN_FUNC_ARGS);
 
-DLEXPORT void php3_ms_free_mapObj(mapObj *pMap);
+static void php_ms_free_map(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
-DLEXPORT void php3_ms_free_image(gdImagePtr im);
+static void php_ms_free_image(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 DLEXPORT void php3_ms_free_point(pointObj *pPoint);
 DLEXPORT void php3_ms_free_line(lineObj *pLine);
 DLEXPORT void php3_ms_free_shape(shapeObj *pShape);
@@ -478,7 +482,7 @@ php3_module_entry php3_ms_module_entry = {
     php3_info_mapscript,
 #endif
 #if ZEND_MODULE_API_NO >= 20010901
-    "ms_35, php4.1.1version",          /* extension version number (string) */
+    PHP3_MS_VERSION,          /* extension version number (string) */
 #endif
     STANDARD_MODULE_PROPERTIES 
 };
@@ -692,12 +696,16 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
     int const_flag = CONST_CS|CONST_PERSISTENT;
 
-    PHPMS_GLOBAL(le_msmap)  = register_list_destructors(php3_ms_free_mapObj,
-                                                        NULL);
-    PHPMS_GLOBAL(le_msimg)  = register_list_destructors(php3_ms_free_image,
-                                                        NULL);    
-    PHPMS_GLOBAL(le_mslayer)= register_list_destructors(php3_ms_free_stub,
-                                                        NULL);
+    PHPMS_GLOBAL(le_msmap)  = 
+        zend_register_list_destructors_ex(php_ms_free_map, NULL, 
+                                          "mapObj", module_number);
+    PHPMS_GLOBAL(le_msimg)  = 
+        zend_register_list_destructors_ex(php_ms_free_image, NULL,
+                                          "imageObj", module_number);
+    PHPMS_GLOBAL(le_mslayer)= 
+        zend_register_list_destructors_ex(NULL, NULL,
+                                          "layerObj", module_number);
+
     PHPMS_GLOBAL(le_msclass)= register_list_destructors(php3_ms_free_stub,
                                                         NULL);
     PHPMS_GLOBAL(le_mslabel)= register_list_destructors(php3_ms_free_stub,
@@ -729,6 +737,15 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                                                            NULL);
     PHPMS_GLOBAL(le_msprojection_new)= 
         register_list_destructors(php3_ms_free_projection, NULL);
+
+    PHPMS_GLOBAL(le_msscalebar)= 
+        zend_register_list_destructors_ex(NULL, NULL,
+                                          "scalebarObj", module_number);
+
+    PHPMS_GLOBAL(le_mslegend)= 
+        zend_register_list_destructors_ex(NULL, NULL,
+                                          "legendObj", module_number);
+
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -912,14 +929,14 @@ DLEXPORT int php3_end_mapscript(SHUTDOWN_FUNC_ARGS)
 /**********************************************************************
  *                     resource list destructors
  **********************************************************************/
-DLEXPORT void php3_ms_free_mapObj(mapObj *pMap) 
+static void php_ms_free_map(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
-    mapObj_destroy(pMap);
+    mapObj_destroy((mapObj*)rsrc->ptr);
 }
 
-DLEXPORT void php3_ms_free_image(gdImagePtr im) 
+static void php_ms_free_image(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
-    msFreeImage(im);
+    msFreeImage((gdImagePtr)rsrc->ptr);
 }
 
 DLEXPORT void php3_ms_free_rect(rectObj *pRect) 
