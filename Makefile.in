@@ -143,6 +143,7 @@ THREAD_LIB=@THREAD_LIB@
 #
 CXX=	@CXX@
 CC=     @CC@
+LD=     @CC@
 AR= ar rc
 RANLIB= @RANLIB@
 LEX=    @LEX@
@@ -210,43 +211,43 @@ libmap.a: map.h $(OBJS) map.h
 	$(RANLIB) libmap.a
 
 shp2pdf: libmap.a shp2pdf.o map.h
-	$(CC) $(CFLAGS) shp2pdf.o $(LDFLAGS) $(STATIC_LIBS) -o shp2pdf
+	$(LD) $(CFLAGS) shp2pdf.o $(LDFLAGS) $(STATIC_LIBS) -o shp2pdf
 
 shp2img: libmap.a  shp2img.o map.h
-	$(CC) $(CFLAGS) shp2img.o $(LDFLAGS) $(STATIC_LIBS) -o shp2img
+	$(LD) $(CFLAGS) shp2img.o $(LDFLAGS) $(STATIC_LIBS) -o shp2img
 
 sym2img: libmap.a   sym2img.o map.h
-	$(CC) $(CFLAGS) sym2img.o $(LDFLAGS) $(STATIC_LIBS) -o sym2img
+	$(LD) $(CFLAGS) sym2img.o $(LDFLAGS) $(STATIC_LIBS) -o sym2img
 
 legend: libmap.a  legend.o map.h
-	$(CC) $(CFLAGS) legend.o $(LDFLAGS) $(STATIC_LIBS) -o legend
+	$(LD) $(CFLAGS) legend.o $(LDFLAGS) $(STATIC_LIBS) -o legend
 
 scalebar: libmap.a  scalebar.o map.h
-	$(CC) $(CFLAGS) scalebar.o $(LDFLAGS) $(STATIC_LIBS) -o scalebar
+	$(LD) $(CFLAGS) scalebar.o $(LDFLAGS) $(STATIC_LIBS) -o scalebar
 
 mapserv: mapserv.h libmap.a  mapserv.o cgiutil.o map.h
-	$(CC) $(CFLAGS) mapserv.o cgiutil.o  $(LDFLAGS) $(STATIC_LIBS) -o mapserv
+	$(LD) $(CFLAGS) mapserv.o cgiutil.o  $(LDFLAGS) $(STATIC_LIBS) -o mapserv
 
 shpindex: libmap.a shpindex.o map.h
-	$(CC) $(CFLAGS) shpindex.o $(LDFLAGS) $(STATIC_LIBS) -o shpindex
+	$(LD) $(CFLAGS) shpindex.o $(LDFLAGS) $(STATIC_LIBS) -o shpindex
 
 shptree: libmap.a shptree.o map.h
-	$(CC) $(CFLAGS) shptree.o $(LDFLAGS) $(STATIC_LIBS) -o shptree
+	$(LD) $(CFLAGS) shptree.o $(LDFLAGS) $(STATIC_LIBS) -o shptree
 
 shptreevis: libmap.a shptreevis.o map.h
-	$(CC) $(CFLAGS) shptreevis.o $(LDFLAGS) $(STATIC_LIBS) -o shptreevis
+	$(LD) $(CFLAGS) shptreevis.o $(LDFLAGS) $(STATIC_LIBS) -o shptreevis
 
 shptreetst: libmap.a shptreetst.o map.h
-	$(CC) $(CFLAGS) shptreetst.o $(LDFLAGS) $(STATIC_LIBS) -o shptreetst
+	$(LD) $(CFLAGS) shptreetst.o $(LDFLAGS) $(STATIC_LIBS) -o shptreetst
 
 sortshp: sortshp.o
-	$(CC) $(CFLAGS) sortshp.o $(LDFLAGS) $(STATIC_LIBS) -o sortshp
+	$(LD) $(CFLAGS) sortshp.o $(LDFLAGS) $(STATIC_LIBS) -o sortshp
 
 tile4ms: tile4ms.o
-	$(CC) $(CFLAGS) tile4ms.o $(LDFLAGS) $(STATIC_LIBS) -o tile4ms
+	$(LD) $(CFLAGS) tile4ms.o $(LDFLAGS) $(STATIC_LIBS) -o tile4ms
 
 testexpr: testexpr.o mapparser.o maplexer.o
-	$(CC) $(CFLAGS) testexpr.o $(LDFLAGS) $(STATIC_LIBS) -o testexpr
+	$(LD) $(CFLAGS) testexpr.o $(LDFLAGS) $(STATIC_LIBS) -o testexpr
 
 perlvars:
 	touch perlvars
