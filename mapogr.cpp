@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.79  2004/11/17 20:40:55  dan
+ * Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all
+ * GML attributes are returned as strings to MapServer. (bug 1043)
+ *
  * Revision 1.78  2004/11/16 20:36:24  frank
  * msOGCWKT2ProjectionObj(): use SetFromUserInput() for addition capabilities
  *
@@ -814,6 +818,14 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   {
       OGRRegisterAll();
       CPLPushErrorHandler( CPLQuietErrorHandler );
+
+/* ------------------------------------------------------------------
+ * Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all
+ * GML attributes are returned as strings to MapServer. This is most efficient
+ * and prevents problems with autodetection of some attribute types.
+ * ------------------------------------------------------------------ */
+      CPLSetConfigOption("GML_FIELDTYPES","ALWAYS_STRING");
+
       bOGRDriversRegistered = MS_TRUE;
   }
 

@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all GML
+  attributes are returned as strings to MapServer. This is most efficient
+  and prevents problems with autodetection of some attribute types. (bug1043)
+
 - msOGCWKT2ProjectionObj() now uses the OGRSpatialReference::SetFromUserInput()
   method.  This allows various convenient setting options, including the 
   ability to handle ESRI WKT by prefixing the WKT string with "ESRI::". 
@@ -30,7 +34,6 @@ Version 4.4.0-beta3 ()
   almost everywhere for common metadata items shared by multiple OGC
   interfaces. (bug 568)
 
->>>>>>> 1.173
 - Added ows_service_onlineresource metadata for WMS/WFS to distinguish
   between service and GetMap/Capabilities onlineresources (bug 375)
 
