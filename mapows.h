@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.47  2004/11/25 06:19:05  dan
+ * Add trailing "?" or "&" to connection string when required in WFS
+ * client layers using GET method (bug 1082)
+ *
  * Revision 1.46  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -199,6 +203,7 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
+MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 

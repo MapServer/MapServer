@@ -14,6 +14,13 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.4.0-beta4?
 --------------------
+
+- Fixed encoding problem with WFS server when wfs_service_onlineresource 
+  was not explicitly specified (bug 1082)
+
+- Add trailing "?" or "&" to connection string when required in WFS
+  client layers using GET method (bug 1082)
+
 - Fixed : SLD rasters was failing when there was Spatial Filter (Bug 1087) 
 
 - Fixed mapwfslayer.c build error when WFS was not enabled (bug 1083)

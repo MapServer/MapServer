@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2004/11/25 06:19:05  dan
+ * Add trailing "?" or "&" to connection string when required in WFS
+ * client layers using GET method (bug 1082)
+ *
  * Revision 1.52  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -303,6 +307,47 @@ int msOWSMakeAllLayersUnique(mapObj *map)
 
 
 /*
+** msOWSTerminateOnlineResource()
+**
+** Append trailing "?" or "&" to an onlineresource URL if it doesn't have
+** one already. The returned string is then ready to append GET parameters
+** to it.
+**
+** Returns a newly allocated string that should be freed by the caller or
+** NULL in case of error.
+*/
+char * msOWSTerminateOnlineResource(const char *src_url)
+{
+    char *online_resource = NULL;
+
+    if (src_url == NULL) 
+        return NULL;
+
+    online_resource = (char*) malloc(strlen(src_url)+2);
+
+    if (online_resource == NULL)
+    {
+        msSetError(MS_MEMERR, NULL, "msOWSTerminateOnlineResource()");
+        return NULL;
+    }
+
+    strcpy(online_resource, src_url);
+
+    // Append trailing '?' or '&' if missing.
+    if (strchr(online_resource, '?') == NULL)
+        strcat(online_resource, "?");
+    else
+    {
+        char *c;
+        c = online_resource+strlen(online_resource)-1;
+        if (*c != '?' && *c != '&')
+            strcpy(c+1, "&");
+    }
+
+    return online_resource;
+}
+
+/*
 ** msOWSGetOnlineResource()
 **
 ** Return the online resource for this service.  First try to lookup 
@@ -324,19 +369,7 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
     //
     if ((value = msOWSLookupMetadata(&(map->web.metadata), namespaces, metadata_name))) 
     {
-        online_resource = (char*) malloc(strlen(value)+2);
-
-        // Append trailing '?' or '&' if missing.
-        strcpy(online_resource, value);
-        if (strchr(online_resource, '?') == NULL)
-            strcat(online_resource, "?");
-        else
-        {
-            char *c;
-            c = online_resource+strlen(online_resource)-1;
-            if (*c != '?' && *c != '&')
-                strcpy(c+1, "&");
-        }
+        online_resource = msOWSTerminateOnlineResource(value);
     }
     else 
     {
@@ -386,14 +419,14 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
         }
         else 
         {
-            msSetError(MS_CGIERR, "Impossible to establish server URL.  Please set \"%s\" metadata.", "msWMSCapabilities()", metadata_name);
+            msSetError(MS_CGIERR, "Impossible to establish server URL.  Please set \"%s\" metadata.", "msOWSGetOnlineResource()", metadata_name);
             return NULL;
         }
     }
 
     if (online_resource == NULL) 
     {
-        msSetError(MS_MEMERR, NULL, "msWMSCapabilities");
+        msSetError(MS_MEMERR, NULL, "msOWSGetOnlineResource()");
         return NULL;
     }
 

@@ -27,6 +27,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/11/25 06:19:05  dan
+ * Add trailing "?" or "&" to connection string when required in WFS
+ * client layers using GET method (bug 1082)
+ *
  * Revision 1.28  2004/11/23 23:16:29  dan
  * Fixed build error when WFS was not enabled (bug 1083)
  *
@@ -388,7 +392,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
                                    wfsParamsObj *psParams) 
 {
-    char *pszURL = NULL;
+    char *pszURL = NULL, *pszOnlineResource=NULL;
     const char *pszTmp; 
     char *pszVersion, *pszService, *pszTypename = NULL;
     int bVersionInConnection = 0, bServiceInConnection = 0;
@@ -506,7 +510,10 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 /* -------------------------------------------------------------------- */
 /*      build the URL,                                                  */
 /* -------------------------------------------------------------------- */
-    sprintf(pszURL, "%s", lp->connection);
+    // make sure connection ends with "&" or "?"
+    pszOnlineResource = msOWSTerminateOnlineResource(lp->connection);
+    sprintf(pszURL, "%s", pszOnlineResource);
+    msFree(pszOnlineResource);
 
     //REQUEST
     sprintf(pszURL + strlen(pszURL),  "&REQUEST=GetFeature");
