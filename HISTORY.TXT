@@ -12,8 +12,12 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.2.4 (2004-10-08)
+Version 4.2.4 (2004-10-10)
 --------------------------
+
+- Protect users from 3 potential sources of threading problems: parsing
+  expression strings outside of msLoadMap, evaluating mapserver logical
+  expressions, and loading symbol set files outside of msLoadMap (bug 339).
 
 - Various fixes allowing unit tests to run leak free under valgrind on 
   i686.  Memory is now properly freed when exiting from common error
