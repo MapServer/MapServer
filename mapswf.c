@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/11/12 21:43:59  assefa
+ * Remove warnings (Bug 912).
+ *
  * Revision 1.45  2004/11/05 16:33:56  assefa
  * set output to binary in saveimage (msIO_needBinaryStdout) : Bug 781.
  *
@@ -77,228 +80,232 @@ SWFMovie GetCurrentMovie(mapObj *map, imageObj *image);
 /*      bDestroyImage is set to 1.                                      */
 /*                                                                      */
 /************************************************************************/
+/* unused  
 gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset, 
                                   int sy, int fc, int bc, int oc, 
                                   double sz, int *bDestroyImage)
-{
-#ifdef undef
+*/
+// // {
+// // #ifdef undef
 
-    symbolObj   *symbol;
-    int         i;
-    gdPoint     oldpnt,newpnt;
-    gdPoint     sPoints[MS_MAXVECTORPOINTS];
-    gdImagePtr tile = NULL;
-    int         x,y;
-    int         tile_bg=-1, tile_fg=-1; /*colors (background and foreground)*/
+//     symbolObj   *symbol;
+//     int         i;
+//     gdPoint     oldpnt,newpnt;
+//     gdPoint     sPoints[MS_MAXVECTORPOINTS];
+//     gdImagePtr tile = NULL;
+//     int         x,y;
+//     int         tile_bg=-1, tile_fg=-1; /*colors (background and foreground)*/
   
-    double        scale=1.0;
+//     double        scale=1.0;
   
-    int         bbox[8];
-    rectObj     rect;
-    char        *font=NULL;
+//     int         bbox[8];
+//     rectObj     rect;
+//     char        *font=NULL;
 
-    colorObj    sFc;
-    colorObj    sBc;
-    colorObj    sOc;
-    colorObj    sColor0;
+//     colorObj    sFc;
+//     colorObj    sBc;
+//     colorObj    sOc;
+//     colorObj    sColor0;
 
-/* -------------------------------------------------------------------- */
-/*      validate params.                                                */
-/* -------------------------------------------------------------------- */
-    if (!map || !symbolset || sy > symbolset->numsymbols || sy < 0)
-        return NULL;
+// /* -------------------------------------------------------------------- */
+// /*      validate params.                                                */
+// /* -------------------------------------------------------------------- */
+//     if (!map || !symbolset || sy > symbolset->numsymbols || sy < 0)
+//         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      extract the colors.                                             */
-/* -------------------------------------------------------------------- */
-    getRgbColor(map, fc, &sFc.red, &sFc.green, &sFc.blue);
-    getRgbColor(map, bc, &sBc.red, &sBc.green, &sBc.blue);
-    getRgbColor(map, oc, &sOc.red, &sOc.green, &sOc.blue);
-    getRgbColor(map, 0, &sColor0.red, &sColor0.green, &sColor0.blue);
+// /* -------------------------------------------------------------------- */
+// /*      extract the colors.                                             */
+// /* -------------------------------------------------------------------- */
+//     getRgbColor(map, fc, &sFc.red, &sFc.green, &sFc.blue);
+//     getRgbColor(map, bc, &sBc.red, &sBc.green, &sBc.blue);
+//     getRgbColor(map, oc, &sOc.red, &sOc.green, &sOc.blue);
+//     getRgbColor(map, 0, &sColor0.red, &sColor0.green, &sColor0.blue);
      
-    symbol = &(symbolset->symbol[sy]);
-    switch(symbol->type) 
-    {
-      case(MS_SYMBOL_TRUETYPE):    
+//     symbol = &(symbolset->symbol[sy]);
+//     switch(symbol->type) 
+//     {
+//       case(MS_SYMBOL_TRUETYPE):    
     
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
-          font = msLookupHashTable(&(symbolset->fontset->fonts), 
-                                   symbolset->symbol[sy].font);
-          if(!font) 
-              return NULL;
+// #if defined (USE_GD_FT) || defined (USE_GD_TTF)
+//           font = msLookupHashTable(&(symbolset->fontset->fonts), 
+//                                    symbolset->symbol[sy].font);
+//           if(!font) 
+//               return NULL;
 
-          if(msGetCharacterSize(symbol->character, sz, font, &rect) != MS_SUCCESS) 
-              return NULL;
+//           if(msGetCharacterSize(symbol->character, sz, font, &rect) != MS_SUCCESS) 
+//               return NULL;
 
-          x = rect.maxx - rect.minx;
-          y = rect.maxy - rect.miny;
+//           x = rect.maxx - rect.minx;
+//           y = rect.maxy - rect.miny;
 
-          tile = gdImageCreate(x, y);
-          if(bc >= 0)
-              tile_bg = 
-                  gdImageColorAllocate(tile, sBc.red, sBc.green, sBc.blue);
+//           tile = gdImageCreate(x, y);
+//           if(bc >= 0)
+//               tile_bg = 
+//                   gdImageColorAllocate(tile, sBc.red, sBc.green, sBc.blue);
                
-          else 
-          {
-              tile_bg = gdImageColorAllocate(tile, sColor0.red, sColor0.green,
-                                             sColor0.blue);
-              gdImageColorTransparent(tile,0);
-          }    
-          tile_fg = gdImageColorAllocate(tile, sFc.red, sFc.green, sFc.blue);
+//           else 
+//           {
+//               tile_bg = gdImageColorAllocate(tile, sColor0.red, sColor0.green,
+//                                              sColor0.blue);
+//               gdImageColorTransparent(tile,0);
+//           }    
+//           tile_fg = gdImageColorAllocate(tile, sFc.red, sFc.green, sFc.blue);
     
-          x = -rect.minx;
-          y = -rect.miny;
+//           x = -rect.minx;
+//           y = -rect.miny;
 
-          gdImageStringFT(tile, bbox, 
-                          ((symbol->antialias)?(tile_fg):-(tile_fg)), 
-                          font, sz, 0, x, y, symbol->character);
+//           gdImageStringFT(tile, bbox, 
+//                           ((symbol->antialias)?(tile_fg):-(tile_fg)), 
+//                           font, sz, 0, x, y, symbol->character);
 
-#endif
-          if (bDestroyImage)
-              *bDestroyImage = 1;
+// #endif
+//           if (bDestroyImage)
+//               *bDestroyImage = 1;
 
-          break;
+//           break;
 
-      case(MS_SYMBOL_PIXMAP):
+//       case(MS_SYMBOL_PIXMAP):
 
-          tile = symbol->img;
-          if (bDestroyImage)
-              *bDestroyImage = 0;
+//           tile = symbol->img;
+//           if (bDestroyImage)
+//               *bDestroyImage = 0;
 
-          break;
+//           break;
 
-      case(MS_SYMBOL_ELLIPSE):    
+//       case(MS_SYMBOL_ELLIPSE):    
    
-          scale = sz/symbol->sizey; // sz ~ height in pixels
-          x = MS_NINT(symbol->sizex*scale)+1;
-          y = MS_NINT(symbol->sizey*scale)+1;
+//           scale = sz/symbol->sizey; // sz ~ height in pixels
+//           x = MS_NINT(symbol->sizex*scale)+1;
+//           y = MS_NINT(symbol->sizey*scale)+1;
 
-          if((x <= 1) && (y <= 1)) 
-          { /* No sense using a tile, just fill solid */
-              if (bDestroyImage)
-                  *bDestroyImage = 0;
-              tile = NULL;
-              break;
-          }
+//           if((x <= 1) && (y <= 1)) 
+//           { /* No sense using a tile, just fill solid */
+//               if (bDestroyImage)
+//                   *bDestroyImage = 0;
+//               tile = NULL;
+//               break;
+//           }
 
-          tile = gdImageCreate(x, y);
-          if(bc >= 0)
-              tile_bg = gdImageColorAllocate(tile, sBc.red, sBc.green, 
-                                             sBc.blue);
-          else 
-          {
-              tile_bg = gdImageColorAllocate(tile, sColor0.red, sColor0.green,
-                                             sColor0.blue);
-              gdImageColorTransparent(tile,0);
-          }    
-          tile_fg = gdImageColorAllocate(tile, sFc.red, sFc.green, sFc.blue);
+//           tile = gdImageCreate(x, y);
+//           if(bc >= 0)
+//               tile_bg = gdImageColorAllocate(tile, sBc.red, sBc.green, 
+//                                              sBc.blue);
+//           else 
+//           {
+//               tile_bg = gdImageColorAllocate(tile, sColor0.red, sColor0.green,
+//                                              sColor0.blue);
+//               gdImageColorTransparent(tile,0);
+//           }    
+//           tile_fg = gdImageColorAllocate(tile, sFc.red, sFc.green, sFc.blue);
     
-          x = MS_NINT(tile->sx/2);
-          y = MS_NINT(tile->sy/2);
+//           x = MS_NINT(tile->sx/2);
+//           y = MS_NINT(tile->sy/2);
 
-          /*
-          ** draw in the tile image
-          */
-          gdImageArc(tile, x, y, MS_NINT(scale*symbol->points[0].x), 
-                     MS_NINT(scale*symbol->points[0].y), 0, 360, tile_fg);
-          if(symbol->filled)
-              gdImageFillToBorder(tile, x, y, tile_fg, tile_fg);
+//           /*
+//           ** draw in the tile image
+//           */
+//           gdImageArc(tile, x, y, MS_NINT(scale*symbol->points[0].x), 
+//                      MS_NINT(scale*symbol->points[0].y), 0, 360, tile_fg);
+//           if(symbol->filled)
+//               gdImageFillToBorder(tile, x, y, tile_fg, tile_fg);
 
-          if (bDestroyImage)
-              *bDestroyImage = 1;
+//           if (bDestroyImage)
+//               *bDestroyImage = 1;
 
-          break;
+//           break;
 
-      case(MS_SYMBOL_VECTOR):
+//       case(MS_SYMBOL_VECTOR):
 
-          if(fc < 0)
-          {
-              if (bDestroyImage)
-                  *bDestroyImage = 0;
-              tile = NULL;
-              break;
-          }
+//           if(fc < 0)
+//           {
+//               if (bDestroyImage)
+//                   *bDestroyImage = 0;
+//               tile = NULL;
+//               break;
+//           }
 
-          scale = sz/symbol->sizey; // sz ~ height in pixels
-          x = MS_NINT(symbol->sizex*scale)+1;    
-          y = MS_NINT(symbol->sizey*scale)+1;
+//           scale = sz/symbol->sizey; // sz ~ height in pixels
+//           x = MS_NINT(symbol->sizex*scale)+1;    
+//           y = MS_NINT(symbol->sizey*scale)+1;
 
-          if((x <= 1) && (y <= 1)) 
-          { /* No sense using a tile, just fill solid */
-              if (bDestroyImage)
-                  *bDestroyImage = 0;
-              tile = NULL;
-              break;
-          }
+//           if((x <= 1) && (y <= 1)) 
+//           { /* No sense using a tile, just fill solid */
+//               if (bDestroyImage)
+//                   *bDestroyImage = 0;
+//               tile = NULL;
+//               break;
+//           }
 
-          /*
-          ** create tile image
-          */
-          tile = gdImageCreate(x, y);
-          if(bc >= 0)
-              tile_bg = gdImageColorAllocate(tile, sBc.red, sBc.green, 
-                                             sBc.blue);
-          else 
-          {
-              tile_bg = gdImageColorAllocate(tile, sColor0.red, sColor0.green,
-                                             sColor0.blue);
-              gdImageColorTransparent(tile,0);
-          }
-          tile_fg = gdImageColorAllocate(tile, sFc.red, sFc.green, sFc.blue);
+//           /*
+//           ** create tile image
+//           */
+//           tile = gdImageCreate(x, y);
+//           if(bc >= 0)
+//               tile_bg = gdImageColorAllocate(tile, sBc.red, sBc.green, 
+//                                              sBc.blue);
+//           else 
+//           {
+//               tile_bg = gdImageColorAllocate(tile, sColor0.red, sColor0.green,
+//                                              sColor0.blue);
+//               gdImageColorTransparent(tile,0);
+//           }
+//           tile_fg = gdImageColorAllocate(tile, sFc.red, sFc.green, sFc.blue);
    
-          /*
-          ** draw in the tile image
-          */
-          if(symbol->filled) 
-          {
-              for(i=0;i < symbol->numpoints;i++) 
-              {
-                  sPoints[i].x = MS_NINT(scale*symbol->points[i].x);
-                  sPoints[i].y = MS_NINT(scale*symbol->points[i].y);
-              }
-              gdImageFilledPolygon(tile, sPoints, symbol->numpoints, tile_fg); 
+//           /*
+//           ** draw in the tile image
+//           */
+//           if(symbol->filled) 
+//           {
+//               for(i=0;i < symbol->numpoints;i++) 
+//               {
+//                   sPoints[i].x = MS_NINT(scale*symbol->points[i].x);
+//                   sPoints[i].y = MS_NINT(scale*symbol->points[i].y);
+//               }
+//               gdImageFilledPolygon(tile, sPoints, symbol->numpoints, tile_fg); 
 
-          } 
-          else  
-          { /* shade is a vector drawing */
+//           } 
+//           else  
+//           { /* shade is a vector drawing */
       
-              oldpnt.x = MS_NINT(scale*symbol->points[0].x); /* convert first point in shade smbol */
-              oldpnt.y = MS_NINT(scale*symbol->points[0].y);
+//               oldpnt.x = MS_NINT(scale*symbol->points[0].x); /* convert first point in shade smbol */
+//               oldpnt.y = MS_NINT(scale*symbol->points[0].y);
 
-              /* step through the shade sy */
-              for(i=1;i < symbol->numpoints;i++) {
-                  if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) {
-                      oldpnt.x = MS_NINT(scale*symbol->points[i].x);
-                      oldpnt.y = MS_NINT(scale*symbol->points[i].y);
-                  } else {
-                      if((symbol->points[i-1].x < 0) && (symbol->points[i-1].y < 0)) { /* Last point was PENUP, now a new beginning */
-                          oldpnt.x = MS_NINT(scale*symbol->points[i].x);
-                          oldpnt.y = MS_NINT(scale*symbol->points[i].y);
-                      } else {
-                          newpnt.x = MS_NINT(scale*symbol->points[i].x);
-                          newpnt.y = MS_NINT(scale*symbol->points[i].y);
-                          gdImageLine(tile, oldpnt.x, oldpnt.y, newpnt.x, newpnt.y, tile_fg);
-                          oldpnt = newpnt;
-                      }
-                  }
-              } /* end for loop */
-          }
+//               /* step through the shade sy */
+//               for(i=1;i < symbol->numpoints;i++) {
+//                   if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) {
+//                       oldpnt.x = MS_NINT(scale*symbol->points[i].x);
+//                       oldpnt.y = MS_NINT(scale*symbol->points[i].y);
+//                   } else {
+//                       if((symbol->points[i-1].x < 0) && (symbol->points[i-1].y < 0)) { /* Last point was PENUP, now a new beginning */
+//                           oldpnt.x = MS_NINT(scale*symbol->points[i].x);
+//                           oldpnt.y = MS_NINT(scale*symbol->points[i].y);
+//                       } else {
+//                           newpnt.x = MS_NINT(scale*symbol->points[i].x);
+//                           newpnt.y = MS_NINT(scale*symbol->points[i].y);
+//                           gdImageLine(tile, oldpnt.x, oldpnt.y, newpnt.x, newpnt.y, tile_fg);
+//                           oldpnt = newpnt;
+//                       }
+//                   }
+//               } /* end for loop */
+//           }
 
-          if (bDestroyImage)
-              *bDestroyImage = 1;
+//           if (bDestroyImage)
+//               *bDestroyImage = 1;
 
-          break;
+//           break;
 
-      default:
-          break;
+//       default:
+//           break;
 
-    }
+//     }
 
-    return tile;
-#endif
+//     return tile;
+// #endif
 
-    return NULL;
-}
+//     return NULL;
+// }
+
+
 
 /************************************************************************/
 /*                          SWFShape bitmap2shape                       */
@@ -352,11 +359,11 @@ unsigned char *bitmap2dbl(unsigned char *data,int *size, int *bytesPerColor)
     dbldata[0] = 'D';
     dbldata[1] = 'B';
     dbldata[2] = 'l';
-    dbldata[3] = *bytesPerColor == 3 ? 1 : 2;
-    dbldata[4] = ((outsize+6) >> 24) & 0xFF;
-    dbldata[5] = ((outsize+6) >> 16) & 0xFF;
-    dbldata[6] = ((outsize+6) >>  8) & 0xFF;
-    dbldata[7] = ((outsize+6) >>  0) & 0xFF;
+    dbldata[3] = (unsigned char)(*bytesPerColor == 3 ? 1 : 2);
+    dbldata[4] = (unsigned char)(((outsize+6) >> 24) & 0xFF);
+    dbldata[5] = (unsigned char)(((outsize+6) >> 16) & 0xFF);
+    dbldata[6] = (unsigned char)(((outsize+6) >>  8) & 0xFF);
+    dbldata[7] = (unsigned char)(((outsize+6) >>  0) & 0xFF);
     for (i=8,j=0;i<14;i++,j++) {
         dbldata[i] = data[j];
     }
@@ -389,22 +396,22 @@ unsigned char *gd2bitmap(gdImagePtr img,int *size, int *bytesPerColor)
 
     p=data;
     *p++ = 3;
-    *p++ = (width>> 0) & 0xFF;
-    *p++ = (width >> 8) & 0xFF;
-    *p++ = (height >> 0) & 0xFF;
-    *p++ = (height >> 8) & 0xFF;
-    *p++ = img->colorsTotal - 1;
+    *p++ = (unsigned char)((width>> 0) & 0xFF);
+    *p++ = (unsigned char)((width >> 8) & 0xFF);
+    *p++ = (unsigned char)((height >> 0) & 0xFF);
+    *p++ = (unsigned char)((height >> 8) & 0xFF);
+    *p++ = (unsigned char)(img->colorsTotal - 1);
 
     for (i=0;i<img->colorsTotal;++i) {
         if (*bytesPerColor == 3) {
-            *p++ = img->red[i];
-            *p++ = img->green[i];
-            *p++ = img->blue[i];
+            *p++ = (unsigned char)(img->red[i]);
+            *p++ = (unsigned char)(img->green[i]);
+            *p++ = (unsigned char)(img->blue[i]);
         } else {
             if (i != img->transparent) {
-                *p++ = img->red[i];
-                *p++ = img->green[i];
-                *p++ = img->blue[i];
+                *p++ = (unsigned char)(img->red[i]);
+                *p++ = (unsigned char)(img->green[i]);
+                *p++ = (unsigned char)(img->blue[i]);
                 *p++ = 255;
             } else {
                 *p++ = 0;
@@ -458,7 +465,7 @@ SWFShape gdImage2Shape(gdImagePtr img)
 /*                                                                      */
 /*      Return a button object using a GD image.                        */
 /************************************************************************/
-SWFButton BuildButtonFromGD(gdImagePtr img, colorObj *psHighlightColor)
+SWFButton BuildButtonFromGD(gdImagePtr img)//, colorObj *psHighlightColor)
 {
     SWFShape oShape;
     SWFButton oButton;
@@ -1123,14 +1130,6 @@ void msDrawStartShapeUsingIdxSWF(mapObj *map, layerObj *layer, imageObj *image,
     }
 }
 
-void msDrawEndShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
-                       shapeObj *shape)
-{
-    if (image && MS_DRIVER_SWF(image->format) )
-    {
-        image->img.swf->nCurrentShapeIdx = -1;
-    }
-}
 
 
 
@@ -1215,7 +1214,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
     symbol = &(symbolset->symbol[style->symbol]);
     if(style->size == -1) {
-        size = msSymbolGetDefaultSize( symbol );
+        size = (int)msSymbolGetDefaultSize( symbol );
         size = MS_NINT(size*scalefactor);
     }
     else
@@ -1306,7 +1305,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             gdImageStringFT(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
                             font, size, 0, 1, 1, symbol->character);
             //oShape = gdImage2Shape(imgtmp);
-            oButton = BuildButtonFromGD(imgtmp, NULL);
+            oButton = BuildButtonFromGD(imgtmp);//, NULL);
             AddMouseActions(oButton, nLayerIndex, nShapeIndex);
             oDisplay = SWFMovie_add(GetCurrentMovie(map, image),
                                     oButton);
@@ -1324,7 +1323,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 offset_y = MS_NINT(p->y - .5*symbol->img->sy);
                 //gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, 
                 //           symbol->img->sx, symbol->img->sy);
-                oButton = BuildButtonFromGD(symbol->img, NULL);
+                oButton = BuildButtonFromGD(symbol->img);//, NULL);
                 AddMouseActions(oButton, nLayerIndex, nShapeIndex);
 
                 oDisplay = SWFMovie_add(GetCurrentMovie(map, image),
@@ -1351,7 +1350,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 /* And save the image  -- could also use gdImageJpeg */
                 //gdImageJpeg(imgtmp, out, 0);
 
-                oButton = BuildButtonFromGD(imgtmp, NULL);
+                oButton = BuildButtonFromGD(imgtmp);//, NULL);
                 AddMouseActions(oButton, nLayerIndex, nShapeIndex);
 
                 oDisplay = SWFMovie_add(GetCurrentMovie(map, image),
@@ -1671,7 +1670,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
     symbol = &(symbolset->symbol[style->symbol]);
     if(style->size == -1) {
-        size = msSymbolGetDefaultSize( symbol );
+        size = (int)msSymbolGetDefaultSize( symbol );
         size = MS_NINT(size*scalefactor);
     }
     else
@@ -1724,8 +1723,8 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     sColorHighlightObj.blue = 0;
 
     //For now just draw lines without symbols.
-    if(1)//sy == 0) 
-    { 
+    //if(sy == 0) 
+    //{ 
         // just draw a single width line
         if (nLayerIndex < 0 || nShapeIndex < 0)
         {
@@ -1742,7 +1741,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             
         }
         return;
-    }
+        //}
 
     //TODO : lines with symbols
 }
@@ -1792,8 +1791,8 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
     symbol = &(symbolset->symbol[style->symbol]);
     if(style->size == -1) {
-        size = msSymbolGetDefaultSize( symbol );
-        size = MS_NINT(size*scalefactor);
+      size = (int)msSymbolGetDefaultSize( symbol );
+      size = MS_NINT(size*scalefactor);
     }
     else
         size = MS_NINT(style->size*scalefactor);
@@ -2083,7 +2082,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
             SWFText_setFont(oText, oFont);
             //SWFText_addString(oText, string, NULL);
             dfWidth = 0.0;
-            dfWidth = (double)SWFText_getStringWidth(oText, string);
+            dfWidth = (double)SWFText_getStringWidth(oText, (unsigned char *)string);
         
             if (dfWidth <=0)
               return -1;
@@ -2161,7 +2160,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     
     int         nCurrentMovie = 0;
     int         bLayerOpen = 0;
-    imageObj    *imagetmp;
+    imageObj    *imagetmp = NULL;
     //int         nTmp = -1;
     SWFShape    oShape;
 
@@ -2171,7 +2170,8 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     if (!image || !MS_DRIVER_SWF(image->format))
         return -1;
 
-
+    marker_rect.minx = marker_rect.miny = marker_rect.maxx = marker_rect.maxy = 0;      
+    p.x = p.y = p.z = 0;
 /* -------------------------------------------------------------------- */
 /*      if the output is single (SWF file based on one raster that      */
 /*      will contain all  the rendering), draw the lables using the     */
