@@ -738,6 +738,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(!layer->resultcache || map->querymap.style == MS_NORMAL) // done
     return(msDrawLayer(map, layer, img));
 
+  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
+   return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
+
   if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS); // query only layers simply can't be drawn, not an error
 
   if(map->querymap.style == MS_HILITE) { // first, draw normally, but don't return
@@ -837,6 +840,9 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   rectObj searchrect;
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
+
+  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
+  return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
   if(layer->connectiontype == MS_WMS) return(msDrawWMSLayer(map, layer, img));
 
