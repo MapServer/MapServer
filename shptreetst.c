@@ -8,8 +8,6 @@
  */
 
 #include "map.h"
-#include "mapshape.h"
-#include "maptree.h"
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
