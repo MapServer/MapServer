@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.59  2004/09/20 12:31:08  julien
+ * Output parameters (SRS and DataURL) in order required by the spec. Bug 863
+ *
  * Revision 1.58  2004/09/06 16:06:43  julien
  * Cleanup code to separate parsing into different functions.
  *
@@ -1599,11 +1602,6 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                          "    <Abstract>%s</Abstract>\n", NULL);
   }
 
-  // DataURL
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
-                           NULL, "wms_dataurl", OWS_NOERR,
-                "    <DataURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </DataURL>\n", NULL);
-
   // LogoURL
   // The LogoURL have a width, height, format and an URL
   pszURL = msLookupHashTable(&(map->web.metadata), "wms_logourl_href");
@@ -1626,6 +1624,11 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                NULL);
       fprintf( stream, "    </LogoURL>\n");
   }
+
+  // DataURL
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), 
+                           NULL, "wms_dataurl", OWS_NOERR,
+                "    <DataURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </DataURL>\n", NULL);
 
   // DescriptionURL
   // The DescriptionURL have a width, height, format and an URL
@@ -1724,12 +1727,6 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                              "      <Abstract>%s</Abstract>\n", 
                              NULL);
 
-          // Layer SRS
-          pszValue = (char*)msGetEPSGProj(&(map->layers[i].projection), 
-                                          &(map->layers[i].metadata), MS_FALSE);
-          if(pszValue && (strcasecmp(pszValue, "(null)") != 0))
-              fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
-
           // DataURL
           if(nVersion <= OWS_0_1_4)
           {
@@ -1794,6 +1791,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                        NULL);
               fprintf( stream, "      </MetadataURL>\n");
           }
+
+          // Layer SRS
+          pszValue = (char*)msGetEPSGProj(&(map->layers[i].projection), 
+                                          &(map->layers[i].metadata), MS_FALSE);
+          if(pszValue && (strcasecmp(pszValue, "(null)") != 0))
+              fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
 
           // Format
           if(msLookupHashTable(&(map->layers[i].metadata),"wms_formatlist")==NULL)
