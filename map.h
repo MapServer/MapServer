@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.380  2004/11/22 03:43:54  sdlime
+ * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
+ *
  * Revision 1.379  2004/11/19 03:59:19  sean
  * Fix to msSymbolSetImageGD so that pixmap transparency is preserved.  Renamed
  * the msGDSetImage and GetImage to msSymbolSetImageGD and msSymbolGetImageGD each
@@ -1553,7 +1556,8 @@ MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pb
 /* ==================================================================== */
 // For mappdf
 MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
-MS_DLL_EXPORT int msEvalContext(mapObj *map, char *context);
+MS_DLL_EXPORT int msValidateContexts(mapObj *map);
+MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
 MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems);
 MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale);
 MS_DLL_EXPORT char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);

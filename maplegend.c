@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2004/11/22 03:43:54  sdlime
+ * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
+ *
  * Revision 1.49  2004/11/05 19:19:05  frank
  * avoid casting warning i msDrawLegendIcon call
  *
@@ -242,6 +245,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
       if(status != MS_SUCCESS) return(NULL);
   }
+
+  if(msValidateContexts(map) != MS_SUCCESS) return NULL; // make sure there are no recursive REQUIRES or LABELREQUIRES expressions
 
   /*
   ** allocate heights array

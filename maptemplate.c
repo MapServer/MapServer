@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2004/11/22 03:43:54  sdlime
+ * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
+ *
  * Revision 1.101  2004/11/12 21:53:39  dan
  * Free legHeaderHtml and legFooterHtml in generateLegendTemplate() (bug 1032)
  *
@@ -1710,6 +1713,8 @@ char *generateLegendTemplate(mapservObj *msObj)
     */
    fread(file, 1, length, stream);
    file[length] = '\0';
+
+   if(msValidateContexts(msObj->Map) != MS_SUCCESS) return NULL; // make sure there are no recursive REQUIRES or LABELREQUIRES expressions
 
    /*
     * Seperate header/footer, groups, layers and class

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2004/11/22 03:43:54  sdlime
+ * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
+ *
  * Revision 1.78  2004/11/03 20:01:19  dan
  * Protect msDebug() call with a if(msp->debug)
  *
@@ -151,6 +154,9 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     }
 
     msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
+
+    status = msValidateContexts(map); // make sure there are no recursive REQUIRES or LABELREQUIRES expressions
+    if(status != MS_SUCCESS) return NULL;
 
     if(!map->outputformat) {
         msSetError(MS_GDERR, "Map outputformat not set!", "msPrepareImage()");
@@ -672,7 +678,7 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_FALSE);
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);
-  if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_FALSE);
+  if(msEvalContext(map, layer, layer->requires) == MS_FALSE) return(MS_FALSE);
 
   if(map->scale > 0) {
     
@@ -831,7 +837,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 #endif
 
-  annotate = msEvalContext(map, layer->labelrequires);
+  annotate = msEvalContext(map, layer, layer->labelrequires);
   if(map->scale > 0) {
     if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale)) annotate = MS_FALSE;
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
@@ -987,8 +993,8 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
 
-  if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_SUCCESS);
-  annotate = msEvalContext(map, layer->labelrequires);
+  if(msEvalContext(map, layer, layer->requires) == MS_FALSE) return(MS_SUCCESS);
+  annotate = msEvalContext(map, layer, layer->labelrequires);
 
   if(map->scale > 0) {
     if((layer->maxscale > 0) && (map->scale > layer->maxscale)) return(MS_SUCCESS);

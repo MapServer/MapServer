@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.163  2004/11/22 03:43:54  sdlime
+ * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
+ *
  * Revision 1.162  2004/10/28 02:12:48  frank
  * Don't try and use msBuildPath() if filename is NULL (stdout) in msSaveImage().
  * This prevents "noise" calls to msSetError() by msBuildPath().
@@ -78,11 +81,73 @@ int getRgbColor(mapObj *map,int i,int *r,int *g,int *b) {
     return status;
 }
 
-int msEvalContext(mapObj *map, char *context)
+static int searchContextForTag(mapObj *map, char **ltags, char *tag, char *context, int requires)
+{
+  int i;
+
+  if(!context) return MS_FAILURE;
+
+  // printf("\tin searchContextForTag, searching %s for %s\n", context, tag);
+
+  if(strstr(context, tag) != NULL) return MS_SUCCESS; // found the tag
+
+  // check referenced layers for the tag too
+  for(i=0; i<map->numlayers; i++) {
+    if(strstr(context, ltags[i]) != NULL) { // need to check this layer
+      if(requires == MS_TRUE) {
+        if(searchContextForTag(map, ltags, tag, map->layers[i].requires, MS_TRUE) == MS_SUCCESS) return MS_SUCCESS;
+      } else {
+        if(searchContextForTag(map, ltags, tag, map->layers[i].labelrequires, MS_FALSE) == MS_SUCCESS) return MS_SUCCESS;      
+      }
+    }
+  }
+
+  return MS_FAILURE;
+}
+
+/*
+** Function to take a look at all layers with REQUIRES/LABELREQUIRES set to make sure there are no 
+** recursive context requirements set (e.g. layer1 requires layer2 and layer2 requires layer1). This
+** is bug 1059.
+*/
+int msValidateContexts(mapObj *map) 
+{
+  int i;
+  char **ltags;
+  int status = MS_SUCCESS;
+
+  ltags = (char **) malloc(map->numlayers*sizeof(char *));
+  for(i=0; i<map->numlayers; i++) {
+    ltags[i] = (char *) malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
+    sprintf(ltags[i], "[%s]", map->layers[i].name);
+  }
+
+  // check each layer's REQUIRES and LABELREQUIRES parameters
+  for(i=0; i<map->numlayers; i++) { 
+    // printf("working on layer %s, looking for references to %s\n", map->layers[i].name, ltags[i]);
+    if(searchContextForTag(map, ltags, ltags[i], map->layers[i].requires, MS_TRUE) == MS_SUCCESS) {
+      msSetError(MS_PARSEERR, "Recursion error found for REQUIRES parameter for layer %s.", "msValidateContexts", map->layers[i].name);
+      status = MS_FAILURE;
+      break;
+    }
+    if(searchContextForTag(map, ltags, ltags[i], map->layers[i].labelrequires, MS_FALSE) == MS_SUCCESS) {
+      msSetError(MS_PARSEERR, "Recursion error found for LABELREQUIRES parameter for layer %s.", "msValidateContexts", map->layers[i].name);
+      status = MS_FAILURE;
+      break;
+    }
+  }
+
+  // clean up
+  msFreeCharArray(ltags, map->numlayers);
+
+  return status;
+}
+
+int msEvalContext(mapObj *map, layerObj *layer, char *context)
 {
   int i, status;
   char *tmpstr1=NULL, *tmpstr2=NULL;
-  int raster=MS_FALSE;
+  int raster=MS_FALSE, visible;
   int expresult;       // result of expression parsing operation
 
   if(!context) return(MS_TRUE); // no context requirements
@@ -90,14 +155,17 @@ int msEvalContext(mapObj *map, char *context)
   tmpstr1 = strdup(context);
 
   for(i=0; i<map->numlayers; i++) { // step through all the layers
-    if(map->layers[i].type == MS_LAYER_RASTER && map->layers[i].status != MS_OFF)
+    if(layer->index == i) continue; // skip the layer in question
+    visible = msLayerIsVisible(map, &(map->layers[i]));
+
+    if(map->layers[i].type == MS_LAYER_RASTER && visible)
       raster = MS_TRUE; // there are raster layers ON/DEFAULT
 
     if(strstr(tmpstr1, map->layers[i].name)) {
       tmpstr2 = (char *)malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
       sprintf(tmpstr2, "[%s]", map->layers[i].name);
 
-      if(map->layers[i].status == MS_OFF)
+      if(!visible)
 	tmpstr1 = gsub(tmpstr1, tmpstr2, "0");
       else
 	tmpstr1 = gsub(tmpstr1, tmpstr2, "1");

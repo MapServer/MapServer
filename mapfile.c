@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.288  2004/11/22 03:43:54  sdlime
+ * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
+ *
  * Revision 1.287  2004/11/03 16:59:49  frank
  * handle raster layers in msCloseConnections
  *
@@ -4270,22 +4273,20 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       return(NULL);
     case(EXTENT):
     {
-        if(getDouble(&(map->extent.minx)) == -1) return(NULL);
-        if(getDouble(&(map->extent.miny)) == -1) return(NULL);
-        if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
-        if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
-        if (!MS_VALID_EXTENT(map->extent)) {
-    			msSetError(MS_MISCERR, "Given map extent is invalid.", "loadMapInternal()"); 
-      		return(NULL);
-    			}
+       if(getDouble(&(map->extent.minx)) == -1) return(NULL);
+       if(getDouble(&(map->extent.miny)) == -1) return(NULL);
+       if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
+       if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
+       if (!MS_VALID_EXTENT(map->extent)) {
+    	 msSetError(MS_MISCERR, "Given map extent is invalid.", "loadMapInternal()"); 
+      	 return(NULL);
+       }
     }
-	    break;
+    break;
     case(ANGLE):
     {
         double rotation_angle;
-
         if(getDouble(&(rotation_angle)) == -1) return(NULL);
-
         msMapSetRotation( map, rotation_angle );
     }
     break;
