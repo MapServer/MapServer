@@ -325,9 +325,8 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                     if (timedefault == NULL)
                     {
                         msSetError(MS_WMSERR, "No Time value was given, and no default time value defined.", "msWMSApplyTime");
-                        return MS_FALSE;
-                        //return msWMSException(map, version,
-                        //                         "MissingDimensionValue");
+                        return msWMSException(map, version,
+                                              "MissingDimensionValue");
                     }
                     else
                       //TODO verfiy if the default value is in the
