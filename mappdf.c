@@ -1173,7 +1173,7 @@ int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf, hashTableObj fontHash
 
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
-    shape.classindex = msShapeGetClass(layer, &shape);
+    shape.classindex = msShapeGetClass(layer, &shape, map->scale);
     if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
       msFreeShape(&shape);
       continue;
