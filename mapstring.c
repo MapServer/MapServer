@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/02/04 14:06:46  sdlime
+ * Fixed bug 1207, thread safety issue in mapstring.c
+ *
  * Revision 1.30  2004/11/19 19:28:13  hobu
  * check for null inputs in strncasecmp and strcasecmp
  *
@@ -181,14 +184,14 @@ int strcasecmp(const char *s1, const char *s2)
 #endif
 
 char *long2string(long value) {
-  static char buffer[256]; // plenty of space
+  char buffer[256]; // plenty of space
 
   sprintf(buffer, "%ld", value);
   return(strdup(buffer));
 }
 
 char *double2string(double value) {
-  static char buffer[256]; // plenty of space
+  char buffer[256]; // plenty of space
 
   sprintf(buffer, "%g", value);
   return(strdup(buffer));
