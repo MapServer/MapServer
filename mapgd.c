@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2005/01/27 05:33:29  sdlime
+ * Added width support to mapgd.c line drawing function. It takes effect in situations where single pixel lines are drawn, simple lines orvector brushes (for linework in the brush). Width is scalable. I had to revert to the original code for applying the scaling factor and size/width bounds. I have no idea why it was changed in the first place.
+ *
  * Revision 1.93  2004/12/16 21:30:42  sdlime
  * Updated mapgd.c to use GD filled ellipse and arc drawing routines. Also modified code for circular markers to respect a style's angle value. The allows for simple pie charts to used as markers.
  *
@@ -1165,9 +1168,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   if(!p) return;
 
-  printf("in msCircleDrawShadeSymbolGD()\n");
-  printf("%d %d %d %d\n", style->color.pen, style->color.red, style->color.green, style->color.blue);
-
   if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor)) { // use msDrawLineSymbolGD() instead (POLYLINE)
     msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
     return;
@@ -1543,6 +1543,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   int fc, bc;
   int brush_bc, brush_fc;
   double size, d;
+  int width;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
 
@@ -1557,20 +1558,24 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
+  width = style->width;
 
-  if(style->size == -1) {
-      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
-  }
+  if(style->size == -1)
+    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
   else
-      size = style->size;
+    size = style->size;
 
   // TODO: Don't get this modification, is it needed elsewhere?
-  if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
-  if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
-  size = MS_NINT(size*scalefactor);
+  // if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
+  // if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
 
-  //size = MS_MAX(size, style->minsize);
-  //size = MS_MIN(size, style->maxsize);
+  size = MS_NINT(size*scalefactor);
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
+
+  width = MS_NINT(width*scalefactor);
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
   if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; // nothing to do (color not required for a pixmap symbol)
@@ -1579,12 +1584,15 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   oy = (style->offsety == -99) ? -99 : (int)(style->offsety*scalefactor);
 
   if(style->symbol == 0) { // just draw a single width line
+    gdImageSetThickness(img, width);
     imagePolyline(img, p, fc, ox, oy);
+    gdImageSetThickness(img, 1);
     return;
   }
 
   switch(symbol->type) {
   case(MS_SYMBOL_SIMPLE):
+    gdImageSetThickness(img, width);
     if(bc == -1) bc = gdTransparent;
     break;
   case(MS_SYMBOL_TRUETYPE):
@@ -1639,6 +1647,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     // create the brush image
     if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
+      gdImageSetThickness(brush, width);
 
       k = 0; // point counter
       for(i=0;i < symbol->numpoints;i++) {
@@ -1653,6 +1662,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       }
       if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
 
+      gdImageSetThickness(brush, 1);
       symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
     }
 
@@ -1688,6 +1698,9 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     } else
       imagePolyline(img, p, gdBrushed, ox, oy);
   }
+
+  // clean up
+  gdImageSetThickness(brush, 1);
 
   return;
 }
