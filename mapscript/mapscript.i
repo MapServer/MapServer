@@ -469,6 +469,18 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   int setText(layerObj *layer, char *string) {
     return loadExpressionString(&self->text, string);
   }
+
+  char *getMetaData(char *name) {
+    return(msLookupHashTable(self->metadata, name));
+  }
+
+  int setMetaData(char *name, char *value) {
+    if (!self->metadata)
+        self->metadata = msCreateHashTable();
+    if (msInsertHashTable(self->metadata, name, value) == NULL)
+	return MS_FAILURE;
+    return MS_SUCCESS;
+  }
 }
 
 //
@@ -577,6 +589,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
 
     msInitShape(shape);
+    if(type >= 0) shape->type = type;
 
     return shape;
   }
