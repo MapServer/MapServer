@@ -176,6 +176,8 @@ imageObj *msDrawScalebar(mapObj *map)
   }
 
   msImageInitGD( image, &(map->scalebar.imagecolor));
+  
+  if (map->outputformat->imagemode == MS_IMAGEMODE_RGB || map->outputformat->imagemode == MS_IMAGEMODE_RGBA) gdImageAlphaBlending(image->img.gd, 1);
 
   ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); // center the computed scalebar
   oy = VMARGIN;
@@ -329,6 +331,9 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     map->layerorder[l] = l;
   }
 
+  // to resolve bug 490
+  map->layers[l].transparency = MS_GD_ALPHA;
+  
   map->layers[l].status = MS_ON;
 
   map->layers[l].class[0].numstyles = 1;
@@ -338,7 +343,9 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.size = MS_MEDIUM; // must set a size to have a valid label definition
 
   if(map->scalebar.postlabelcache) // add it directly to the image //TODO
+  {
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
+  }
   else
     msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0);
 

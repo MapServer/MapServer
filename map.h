@@ -152,6 +152,7 @@ extern "C" {
 
 #define MS_PEN_TRANSPARENT -1
 #define MS_PEN_UNSET     -4
+#define MS_GD_ALPHA 1000
 
 //#define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
 #define MS_VALID_EXTENT(rect)  (((rect.minx < rect.maxx && rect.miny < rect.maxy))?MS_TRUE:MS_FALSE)

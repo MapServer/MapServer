@@ -101,6 +101,7 @@ MAP
     PROJECTION
       "init=epsg:4326"
     END
+    TRANSPARENCY 1
     STATUS DEFAULT
     DATA "line"
     CLASSITEM "FNAME"
@@ -187,6 +188,7 @@ MAP
   LAYER
     NAME "INLINE-PIXMAP-RGBA"
     TYPE POINT
+    TRANSPARENCY ALPHA
     DEBUG ON
     PROJECTION
       "init=epsg:4326"
@@ -200,13 +202,17 @@ MAP
       STYLE
         SYMBOL 'xmarks-png'
       END
+      LABEL
+        COLOR 0 0 0
+      END
     END
   END
 
 LAYER
     NAME "INLINE-PIXMAP-PCT"
-    TYPE POINT
+    TYPE ANNOTATION
     DEBUG ON
+    TRANSPARENCY ALPHA
     PROJECTION
       "init=epsg:4326"
     END
@@ -218,6 +224,10 @@ LAYER
       NAME "0"
       STYLE
         SYMBOL 'home-png'
+      END
+      TEXT "."
+      LABEL
+        COLOR 0 0 0
       END
     END
   END

@@ -322,6 +322,7 @@ void lexer_cleanup() {
 <INITIAL>vector                                { return(MS_SYMBOL_VECTOR); }
 <INITIAL,VALUE_STRING>wfs		       { return(MS_WFS); }
 <INITIAL,VALUE_STRING>wms		       { return(MS_WMS); }
+<INITIAL,VALUE_STRING>alpha		       { return(MS_GD_ALPHA); }
 
 <OBJECT_STRING>[0-9]+                          {
                                                  msyynumber = atof(msyytext);

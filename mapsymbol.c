@@ -455,7 +455,6 @@ void msFreeSymbolSet(symbolSetObj *symbolset)
   int i;
 
   freeImageCache(symbolset->imagecache);
-
   for(i=1; i<symbolset->numsymbols; i++)
     freeSymbol(&(symbolset->symbol[i]));
 

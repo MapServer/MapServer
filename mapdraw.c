@@ -107,7 +107,8 @@ imageObj *msDrawMap(mapObj *map)
     imageObj *image = NULL;
     struct mstimeval mapstarttime, mapendtime;
     struct mstimeval starttime, endtime;
-
+    int oldAlphaBlending;  // allows toggling of gd alpha blending (bug 490)
+    
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
     int numOWSRequests=0;
@@ -344,8 +345,15 @@ imageObj *msDrawMap(mapObj *map)
       if( map->gt.need_geotransform )
           msMapRestoreRealExtent( map );
 
+      /* fix for bug 490 - turn on alpha blending for embedded scalebar */
+      oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+      gdImageAlphaBlending(image->img.gd, 1);
+      
       msEmbedScalebar(map, image->img.gd); //TODO  
 
+      /* restore original alpha blending */
+      gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
+      
       if( map->gt.need_geotransform )
           msMapSetFakedExtent( map );
   }
@@ -428,7 +436,18 @@ imageObj *msDrawMap(mapObj *map)
       msMapRestoreRealExtent( map );
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
-      msEmbedScalebar(map, image->img.gd); //TODO
+  {
+      //msEmbedScalebar(map, image->img.gd); //TODO
+
+      /* fix for bug 490 - turn on alpha blending for embedded scalebar */
+      oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+      gdImageAlphaBlending(image->img.gd, 1);
+      
+      msEmbedScalebar(map, image->img.gd); //TODO  
+
+      /* restore original alpha blending */
+      gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
+  }
 
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
       msEmbedLegend(map, image->img.gd); //TODO
@@ -580,6 +599,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   imageObj *image_draw = image;
   outputFormatObj *transFormat = NULL;
   int retcode=MS_SUCCESS;
+  int oldAlphaBlending=0;  // allow toggling of gd alpha blending (bug 490)
 
   if (!msLayerIsVisible(map, layer))
       return MS_SUCCESS;  // Nothing to do, layer is either turned off, out of
@@ -590,7 +610,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if ( MS_RENDERER_GD(image_draw->format) ) {
     // Create a temp image for this layer tranparency
-    if (layer->transparency > 0) {
+    if (layer->transparency > 0 && layer->transparency <= 100) {
       msApplyOutputFormat( &transFormat, image->format, 
                            MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
       /* really we need an image format with transparency enabled, right? */
@@ -605,6 +625,12 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       /* We really just do this because gdImageCopyMerge() needs it later */
       if( image_draw->format->imagemode == MS_IMAGEMODE_PC256 )
           gdImageColorTransparent(image_draw->img.gd, 0);
+    }
+
+    /* Bug 490 - switch alpha blending on for a layer that requires it */
+    else if (layer->transparency == MS_GD_ALPHA) {
+        oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+        gdImageAlphaBlending(image->img.gd, 1);
     }
   }
 
@@ -622,11 +648,14 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       retcode = msDrawRasterLayer(map, layer, image_draw);
   }
   //Must be a Vector layer
-  else
+  else {
       retcode = msDrawVectorLayer(map, layer, image_draw);
+  }
 
   // Destroy the temp image for this layer tranparency
-  if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 ) {
+  if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 
+      && layer->transparency <= 100 ) {
+
 #if GD2_VERS > 1 
     msImageCopyMerge(image->img.gd, image_draw->img.gd, 
                      0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
@@ -641,6 +670,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     // deref and possibly free temporary transparent output format. 
     msApplyOutputFormat( &transFormat, NULL, 
                          MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  }
+
+  /* restore original alpha blending */
+  else if (layer->transparency == MS_GD_ALPHA) {
+    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
   }
   else
   {

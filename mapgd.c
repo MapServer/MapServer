@@ -2484,7 +2484,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 {
   pointObj p;
   int i, j, l;
-
+  int oldAlphaBlending=0;
   rectObj r;
   
   labelCacheMemberObj *cachePtr=NULL;
@@ -2495,6 +2495,10 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
 
+  /* bug 490 - switch on alpha blending for label cache */
+  oldAlphaBlending = img->alphaBlendingFlag;
+  gdImageAlphaBlending( img, 1);
+  
   for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
     cachePtr = &(map->labelcache.labels[l]); // point to right spot in the label cache
@@ -2704,6 +2708,9 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
   } // next label
 
+  /* bug 490 - alpha blending back */
+  gdImageAlphaBlending( img, oldAlphaBlending);
+  
   return(0);
 }
 
@@ -2871,6 +2878,7 @@ static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src,  int dstX, int dst
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct)
 {
     int x, y;
+    int oldAlphaBlending=0;
 
     /* for most cases the GD copy is fine */
     if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) )
@@ -2880,7 +2888,11 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int s
     ** Turn off blending in output image to prevent it doing it's own attempt
     ** at blending instead of using our result. 
     */
+
+    oldAlphaBlending = dst->alphaBlendingFlag;
     gdImageAlphaBlending( dst, 0 );
+
+    //gdImageAlphaBlending( dst, 0 );
 
     for (y = 0; (y < h); y++)
     {
@@ -2928,5 +2940,6 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int s
     /*
     ** Restore original alpha blending flag. 
     */
-    gdImageAlphaBlending( dst, 0 );
+    //gdImageAlphaBlending( dst, 0 );
+    gdImageAlphaBlending( dst, oldAlphaBlending );
 }
