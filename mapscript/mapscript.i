@@ -188,10 +188,6 @@ static Tcl_Interp *SWIG_TCL_INTERP;
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 
-  void cleanPens() {
-    msClearPenValues(self);
-  }
-  
   imageObj *draw() {
     return msDrawMap(self);
   }
