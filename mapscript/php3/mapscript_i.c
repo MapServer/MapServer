@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.63  2003/05/27 19:30:03  assefa
+ * Call msFreeLabelCache instaed of loacl call for function
+ * labelCacheObj_freeCache.
+ *
  * Revision 1.62  2003/03/26 20:23:31  dan
  * msLoadWKTProjectionString() has been renamed msOGCWKT2ProjectionObj()
  *
@@ -1080,16 +1084,8 @@ void projectionObj_destroy(projectionObj *self) {
  * class extensions for labelCacheObj - TP mods
  **********************************************************************/
 void labelCacheObj_freeCache(labelCacheObj *self) {
-    int i;
-    for (i = 0; i < self->numlabels; i++) {
-        free(self->labels[i].string);
-        msFreeShape(self->labels[i].poly);
-    }   
-    self->numlabels = 0;
-    for (i = 0; i < self->nummarkers; i++) {
-        msFreeShape(self->markers[i].poly);
-    }
-    self->nummarkers = 0;
+  msFreeLabelCache(self);    
+  
   }
 
 /**********************************************************************
