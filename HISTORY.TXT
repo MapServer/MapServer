@@ -12,7 +12,7 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.2.4 
+Version 4.2.4 (2004-10-08)
 --------------------------
 
 - Various fixes allowing unit tests to run leak free under valgrind on 
