@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- Allow use of '=' inside HTML template tag parser. (Bug 978)
+
 - Use metadata ows_schema_location for WMS/WFS/WCS/SLD (Bug 999, 1013, 938)
 
 - Generate a RULE <Name> tag when generating an SLD. (Bug 1010)

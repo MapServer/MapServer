@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2004/11/01 15:42:53  julien
+ * Allow use of '=' in HTML template tag parser (Bug 978).
+ *
  * Revision 1.96  2004/10/28 18:16:17  dan
  * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
  * when requested layer was out of scale (bug 1006)
@@ -483,6 +486,13 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
                         while((pszQuoteStr = strchr(pszQuoteStart, ' ')))
                             pszQuoteStr[0] = '"';
 
+                        // Replace also the '=' to be able to use it in the
+                        // quoted argument. The '=' is replaced by ']' which
+                        // is illegal before here since this is the closing  
+                        // character of the whole tag.
+                        while((pszQuoteStr = strchr(pszQuoteStart, '=')))
+                            pszQuoteStr[0] = ']';
+
                         // Then remove the starting and ending quote
                         pszQuoteEnd[0] = '"';
                         for(i=(pszQuoteStart-pszArgs); i<nLength; i++)
@@ -513,7 +523,13 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
                {
                   papszVarVal = split(papszArgs[i], '=', &nDummy);
                
-                  msInsertHashTable(*ppoHashTable, papszVarVal[0], papszVarVal[1]);
+                  // ']' are in fact '=' (See above).
+                  if(strchr(papszVarVal[1],']'))
+                      while((pszQuoteStr = strchr(papszVarVal[1],']')))
+                          pszQuoteStr[0] = '=';
+
+                  msInsertHashTable(*ppoHashTable, papszVarVal[0], 
+                                    papszVarVal[1]);
                   free(papszVarVal[0]);
                   free(papszVarVal[1]);
                   free(papszVarVal);                  
@@ -921,6 +937,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize);
     } else if(projectionString) {
        projectionObj projection;
+       msInitProjection(&projection);
 
        status = msLoadProjectionString(&projection, projectionString);
        if(status != MS_SUCCESS) return MS_FAILURE;
