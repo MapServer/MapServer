@@ -71,6 +71,8 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
   test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
   test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
+  test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
   if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then 
       GD_INC=-I$GD_INCLUDE
