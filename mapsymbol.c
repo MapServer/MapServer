@@ -413,7 +413,11 @@ static int getCharacterSize(char *character, int size, char *font, rectObj *rect
   int bbox[8];
   char *error=NULL;
 
+#ifdef USE_GD_TTF
+  error = gdImageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, character);
+#else
   error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, character);
+#endif
   if(error) {
     msSetError(MS_TTFERR, error, "getCharacterSize()");
     return(-1);
@@ -500,8 +504,13 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int
     
     x = -rect.minx;
     y = -rect.miny;
+
+#ifdef USE_GD_TTF
+    gdImageStringTTF(tile, bbox, symbol->antialias*tile_fg, font, sz, 0, x, y, symbol->character);
+#else
     gdImageStringFT(tile, bbox, symbol->antialias*tile_fg, font, sz, 0, x, y, symbol->character);
-    
+#endif    
+
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
     if(oc>-1)
@@ -743,7 +752,12 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
     x = p->x - (rect.maxx - rect.minx)/2 - rect.minx;
     y = p->y - rect.maxy + (rect.maxy - rect.miny)/2;  
 
+#ifdef USE_GD_TTF
+    gdImageStringTTF(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character);
+#else
     gdImageStringFT(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character);
+#endif
+
 #endif
 
     break;

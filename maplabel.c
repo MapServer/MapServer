@@ -13,10 +13,6 @@
 
 #define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
-#ifdef GD_USE_TTF
-#define gdImageStringFT gdImageStringTTF // old versions of GD don't have the gdImageStringTTF function
-#endif
-
 int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj point, char *string, double featuresize)
 {
   int i;
@@ -166,7 +162,11 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
       return(-1);
     }
 
+#ifdef USE_GD_TTF
+    error = gdImageStringTTF(NULL, bbox, 0, font, label->sizescaled, 0, 0, 0, string);
+#else
     error = gdImageStringFT(NULL, bbox, 0, font, label->sizescaled, 0, 0, 0, string);
+#endif
     if(error) {
       msSetError(MS_TTFERR, error, "msGetLabelSize()");
       return(-1);
@@ -361,26 +361,46 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     }
 
     if(label->outlinecolor >= 0) { /* handle the outline color */
+#ifdef USE_GD_TTF
+      error = gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y-1, string);
+#else
       error = gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y-1, string);
+#endif
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
 	return(-1);
       }
+
+#ifdef USE_GD_TTF
+      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y+1, string);
+      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y+1, string);
+      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y-1, string);
+#else
       gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y+1, string);
       gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y+1, string);
       gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y-1, string);
+#endif      
+
     }
 
     if(label->shadowcolor >= 0) { /* handle the shadow color */
+#ifdef USE_GD_TTF
+      error = gdImageStringTTF(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, label->angle, x+label->shadowsizex, y+label->shadowsizey, string);
+#else
       error = gdImageStringFT(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, label->angle, x+label->shadowsizex, y+label->shadowsizey, string);
+#endif
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
 	return(-1);
       }
     }
 
+#ifdef USE_GD_TTF
+    gdImageStringTTF(img, bbox, label->antialias*label->color, font, label->sizescaled, label->angle, x, y, string);
+#else
     gdImageStringFT(img, bbox, label->antialias*label->color, font, label->sizescaled, label->angle, x, y, string);
-    
+#endif
+
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "draw_text()");
     return(-1);
