@@ -1625,7 +1625,7 @@ int main(int argc, char *argv[]) {
 	  }
 	  Map->layers[SelectLayerIndex].status = MS_ON;
 
-	  if(Mode == FEATUREQUERY || FEATUREQUERYMAP) {
+	  if(Mode == FEATUREQUERY || Mode == FEATUREQUERYMAP) {
 	    switch(QueryCoordSource) {
 	    case FROMIMGPNT:
 	      Map->extent = ImgExt; /* use the existing map extent */	
