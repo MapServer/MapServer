@@ -15,7 +15,9 @@
 #ifdef USE_MING_FLASH
 
 #include <assert.h>
+#if !defined(_WIN32)
 #include <zlib.h>
+#endif
 #include "map.h"
 
 static char gszFilename[128];
