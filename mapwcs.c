@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2004/10/26 15:20:19  julien
+ * msOWSPrintURLType: metadata:Link had a %s missing in it's format. (Bug 944)
+ *
  * Revision 1.53  2004/10/26 04:26:28  sdlime
  * Fixed bug 989, metadataLink for the CoverageOffering section of the WCS capabilities.
  *
@@ -347,11 +350,11 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version);
 
   // optional metadataLink
-  msOWSPrintURLType(stdout, &(map->web.metadata), "COM", "metadatalink",
-                    OWS_NOERR,
-                    "  <metadataLink%s%s%s xlink:type=\"simple\"%s/>",
-                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
-                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
+  msOWSPrintURLType(stdout, &(map->web.metadata), "COM", "metadatalink", 
+                    OWS_NOERR, 
+                    "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>", 
+                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,  
+                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE, 
                     MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
@@ -431,7 +434,12 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   msIO_printf("  <CoverageOfferingBrief>\n"); // is this tag right? (I hate schemas without ANY examples)
 
   // optional metadataLink
-  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "metadatalink_href", OWS_NOERR, "  <metadataLink metadataType=\"other\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);  
+  msOWSPrintURLType(stdout, &(layer->metadata), "COM", "metadatalink", 
+                    OWS_NOERR, 
+                    "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>", 
+                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,  
+                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE, 
+                    MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
 
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
@@ -605,7 +613,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   // optional metadataLink
   msOWSPrintURLType(stdout, &(layer->metadata), "COM", "metadatalink",
                     OWS_NOERR,
-                    "  <metadataLink%s%s%s xlink:type=\"simple\"%s/>",
+                    "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
                     NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
                     " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
                     MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
