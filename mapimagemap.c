@@ -10,7 +10,7 @@
 #include <io.h>
 #endif
 
-#define MYDEBUG 3
+#define MYDEBUG 0
 #define DEBUG if (MYDEBUG > 2) 
 
 //static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
@@ -176,12 +176,13 @@ DEBUG printf("msImageInitIM<BR>\n");
  //  
 imageObj *msImageLoadIM( const char *filename )
 {
-  FILE *stream;
+/*  FILE *stream;
   gdImagePtr img=NULL;
   const char *driver = NULL;
   char bytes[8];
-  imageObj      *image = NULL;
-DEBUG printf("msImageLoadIM<BR>\n");
+*/  imageObj      *image = NULL;
+
+  DEBUG printf("msImageLoadIM<BR>\n");
 /*
   image = (imageObj *)calloc(1,sizeof(imageObj));
   
@@ -259,10 +260,11 @@ DEBUG printf("msImageLoadIM<BR>\n");
 // TODO: might be a way to optimize this (halve the number of additions)
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
-  int i, j;
+/*  int i, j;
   double dx, dy;
   int ox=0, oy=0;
-DEBUG printf("imageOffsetPolyline\n<BR>");
+*/
+  DEBUG printf("imageOffsetPolyline\n<BR>");
 /*
   if(offsety == -99) { // old-style offset (version 3.3 and earlier)
     for (i = 0; i < p->numlines; i++) {
@@ -289,7 +291,7 @@ DEBUG printf("imageOffsetPolyline\n<BR>");
 
 static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
-  int i, j;
+//  int i, j;
   
 DEBUG printf("imagePolyline\n<BR>");
 /*
@@ -308,7 +310,7 @@ DEBUG printf("imagePolyline\n<BR>");
 // ---------------------------------------------------------------------------//
 void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
-  int i, j;
+/*  int i, j;
   symbolObj *symbol;
   int styleDashed[100];
   int x, y, ox, oy;
@@ -317,7 +319,8 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
   double size, d;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
-DEBUG printf("msCircleDrawLineSymbolIM\n<BR>");
+*/
+  DEBUG printf("msCircleDrawLineSymbolIM\n<BR>");
 /*  
   if(!p) return;
 
@@ -459,7 +462,7 @@ DEBUG printf("msCircleDrawLineSymbolIM\n<BR>");
 void msCircleDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, 
                                pointObj *p, double r, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol;
+/*  symbolObj *symbol;
   int i;
   gdPoint oldpnt,newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
@@ -473,7 +476,7 @@ void msCircleDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img,
   int bbox[8];
   rectObj rect;
   char *font=NULL;
-
+*/
 DEBUG printf("msCircleDrawShadeSymbolIM<BR>\n");
 /*
   if(!p) return;
@@ -671,22 +674,25 @@ DEBUG printf("msCircleDrawShadeSymbolIM<BR>\n");
 void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-  int offset_x, offset_y, x, y;
+/*  int offset_x, offset_y, x, y;
   int j;
   gdPoint oldpnt,newpnt;
   gdPoint mPoints[MS_MAXVECTORPOINTS];
 
   gdImagePtr tmp;
   int tmp_fc=-1, tmp_bc, tmp_oc=-1;
-  int fc, bc, oc;
-  double size,d;
+*/  int fc, bc, oc;
+/*  double d;
 
-  int ox, oy;
   
   int bbox[8];
   rectObj rect;
   char *font=NULL;
-//DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
+*/
+  int ox, oy;
+  double size;
+	
+	//DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 
 // skip this, we don't do text
 
@@ -859,20 +865,20 @@ DEBUG printf("V");
 // ------------------------------------------------------------------------------- //
 void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
-  int i, j;
+/*  int i, j;
   symbolObj *symbol;
   int styleDashed[100];
   int x, y;
-  int fc, bc;
   int brush_bc, brush_fc;
   double size, d;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
+  int fc, bc;
 //DEBUG printf("msDrawLineSymbolIM<BR>\n");
 
 // Lines are also of no interest to us
 
-/*
+
 
   if(!p) return;
   if(p->numlines <= 0) return;
@@ -1018,23 +1024,25 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
 // ------------------------------------------------------------------------------- //
 void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol;
-  int i,j,k,l;
+/*  symbolObj *symbol;
   gdPoint oldpnt, newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
   gdImagePtr tile;
   int x, y;
   int tile_bc=-1, tile_fc=-1; // colors (background and foreground) //
   int fc, bc, oc;
-  double size, d;
+  double d;
   int bbox[8];
   rectObj rect;
   char *font=NULL;
+  */
+  int i,j,k,l;
 int bsize = 100;
 char first = 1;
 char *buffer = (char *) malloc (bsize);
 char *fbuffer = (char *) malloc (bsize);
 int nchars = 0;
+double size;
 
 //DEBUG printf("msDrawShadeSymbolIM\n<BR>");
   if(!p) return;
@@ -1098,7 +1106,7 @@ int nchars = 0;
     return;
   }
 DEBUG printf ("d");
-  DEBUG printf("-%d-",symbol->type);
+//  DEBUG printf("-%d-",symbol->type);
 /*  
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE):    
@@ -1258,8 +1266,8 @@ DEBUG printf ("d");
 
 static void billboardIM(imageObj* img, shapeObj *shape, labelObj *label)
 {
-  int i;
-  shapeObj temp;
+//  int i;
+//  shapeObj temp;
 DEBUG printf("billboardIM<BR>\n");
 /*
   msInitShape(&temp);
@@ -1421,12 +1429,12 @@ int msDrawTextIM(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
   }
 */
-  return(0);
+  return;
 }
 
 int msDrawLabelCacheIM(char* img, mapObj *map)
 {
-  pointObj p;
+/*  pointObj p;
   int i, j, l;
   rectObj r;
   
@@ -1437,7 +1445,7 @@ int msDrawLabelCacheIM(char* img, mapObj *map)
   int marker_width, marker_height;
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
-
+*/
 DEBUG printf("msDrawLabelCacheIM\n<BR>");
 /*for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
