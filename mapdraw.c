@@ -167,11 +167,26 @@ imageObj *msDrawMap(mapObj *map)
                 continue;
 
             if (lp->connectiontype == MS_WMS) 
+            {
 #ifdef USE_WMS_LYR 
-                status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
-                                           map, lp, image);
+                if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
+                  status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
+                                             map, lp, image);
+
+#ifdef USE_MING_FLASH                
+                 else if( MS_RENDERER_SWF(image->format) )
+                   status = msDrawWMSLayerSWF(i, asOWSReqInfo, numOWSRequests,
+                                              map, lp, image);
+#endif
+#ifdef USE_PDF
+                 else if( MS_RENDERER_PDF(image->format) )
+                 {
+                     status = MS_FAILURE;
+                 }
+#endif
+            }        
 #else
-	        status = MS_FAILURE;
+            status = MS_FAILURE;
 #endif
             else 
                 status = msDrawLayer(map, lp, image);
@@ -180,8 +195,8 @@ imageObj *msDrawMap(mapObj *map)
     }
 
     
-  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
-    msEmbedScalebar(map, image->img.gd); //TODO  
+    if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
+      msEmbedScalebar(map, image->img.gd); //TODO  
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, image->img.gd); //TODO  
@@ -196,10 +211,26 @@ imageObj *msDrawMap(mapObj *map)
     if(!lp->postlabelcache)
       continue;
 
-    if (lp->connectiontype == MS_WMS)  
+    if (lp->connectiontype == MS_WMS) 
+    { 
 #ifdef USE_WMS_LYR 
+      if( MS_RENDERER_GD(image->format) ||  MS_RENDERER_RAWDATA(image->format))
         status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
                                    map, lp, image);
+
+#ifdef USE_MING_FLASH                
+      else if( MS_RENDERER_SWF(image->format) )
+        status = msDrawWMSLayerSWF(i, asOWSReqInfo, numOWSRequests, 
+                                   map, lp, image);
+#endif
+#ifdef USE_PDF
+      else if( MS_RENDERER_PDF(image->format) )
+      {
+          status = MS_FAILURE;
+      }
+#endif
+
+    }
 #else
 	status = MS_FAILURE;
 #endif
