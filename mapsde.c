@@ -2,6 +2,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.83  2004/10/19 16:51:00  hobu
+ * if no version is specified, do not set
+ * a default or do any versioned queries.
+ *
  * Revision 1.82  2004/10/15 18:13:02  hobu
  * sde->state_id was being used before it was initialized
  * sde->connection was being set to null *after* the sde
@@ -240,7 +244,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 
   SE_COLUMN_DEF *itemdefs;
   SE_SHAPE shapeval=0;
-
+  SE_BLOB_INFO blobval;
+ // blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO));
   msSDELayerInfo *sde;
 
   sde = layer->layerinfo;
@@ -337,10 +342,30 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }
       break;
     case SE_BLOB_TYPE:
-      shape->values[i] = strdup("<blob>");
+        status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
+        msDebug("SE_BLOB_TYPE: "
+              "Status code %d", status);
+        if(status == SE_SUCCESS) {
+          shape->values[i] = (char *)malloc(sizeof(char)*blobval.blob_length);
+          shape->values[i] = memcpy(shape->values[i],
+                                    blobval.blob_buffer, 
+                                    blobval.blob_length);
+          SE_blob_free(&blobval);
+        }
+        else if (status == SE_NULL_VALUE) {
+          shape->values[i] = strdup(MS_SDE_NULLSTRING);
+        }
+        else {
+          sde_error(status, "sdeGetRecord()", "SE_stream_get_blob()");
+          return(MS_FAILURE);
+        }
+    
+    
+    /*  shape->values[i] = strdup("<blob>");
       msSetError( MS_SDEERR, 
                   "Retrieval of BLOBs is not yet supported.", 
                   "sdeGetRecord()");
+*/
       break;
     case SE_DATE_TYPE:
       status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
@@ -384,6 +409,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   // clean up
   SE_shape_free(shapeval);
 
+  
   return(MS_SUCCESS);
 }
 #endif
@@ -504,38 +530,43 @@ int msSDELayerOpen(layerObj *layer) {
   sde->table = params[0]; 
   sde->column = params[1];
 
-  status = SE_versioninfo_create (&(version));
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerOpen()", "SE_versioninfo_create()");
-    return(MS_FAILURE);
-  }
+
   if (numparams < 3){ 
-    // User didn't specify a version, we'll use SDE.DEFAULT
-    if (layer->debug) 
-      msDebug("msSDELayerOpen(): Layer %s did not have a" 
-              "specified version.  Using SDE.DEFAULT.\n", layer->name);
-      status = SE_version_get_info(sde->connection, "SDE.DEFAULT", version);
+    // User didn't specify a version, we won't use one
+    if (layer->debug) {
+      msDebug("msSDELayerOpen(): Layer %s did not have a " 
+              "specified version.", layer->name);
+    }
+      sde->state_id = SE_DEFAULT_STATE_ID;
   } 
   else {
-    if (layer->debug) 
+    if (layer->debug) {
       msDebug("msSDELayerOpen(): Layer %s specified version %s.\n", 
               layer->name, 
               params[2]);
-    status = SE_version_get_info(sde->connection, params[2], version);
-  }
-   
-  if(status != SE_SUCCESS) {
-    if (status == SE_INVALID_RELEASE) {
-      // The user has incongruent versions of SDE, ie 8.2 client and 
-      // 8.3 server set the state_id to SE_DEFAULT_STATE_ID, which means 
-      // no version queries are done
-      sde->state_id = SE_DEFAULT_STATE_ID;
     }
-    else {
-      sde_error(status, "msSDELayerOpen()", "SE_version_get_info()");
+    status = SE_versioninfo_create (&(version));
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_versioninfo_create()");
       return(MS_FAILURE);
     }
-  } 
+    status = SE_version_get_info(sde->connection, params[2], version);
+  
+   
+    if(status != SE_SUCCESS) {
+       
+      if (status == SE_INVALID_RELEASE) {
+        // The user has incongruent versions of SDE, ie 8.2 client and 
+        // 8.3 server set the state_id to SE_DEFAULT_STATE_ID, which means 
+        // no version queries are done
+        sde->state_id = SE_DEFAULT_STATE_ID;
+      }
+      else {
+        sde_error(status, "msSDELayerOpen()", "SE_version_get_info()");
+        return(MS_FAILURE);
+      }
+    } 
+  }
   // Get the STATEID from the given version and set the stream to 
   // that if we didn't already set it to SE_DEFAULT_STATE_ID.  
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
@@ -544,6 +575,7 @@ int msSDELayerOpen(layerObj *layer) {
       sde_error(status, "msSDELayerOpen()", "SE_versioninfo_get_state_id()");
       return(MS_FAILURE);
     }
+    SE_versioninfo_free(version);
     status = SE_stateinfo_create (&state);
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_stateinfo_create()");
@@ -562,8 +594,10 @@ int msSDELayerOpen(layerObj *layer) {
       return(MS_FAILURE);
     }
     SE_stateinfo_free (state); 
-    SE_versioninfo_free(version);
+    
   } // if (!(sde->state_id == SE_DEFAULT_STATE_ID))
+  
+  
   
   status = SE_layerinfo_create(NULL, &(sde->layerinfo));
   if(status != SE_SUCCESS) {
