@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.37  2002/04/12 15:44:30  sacha
+ * Change msGetSymbolIdByName by msGetSymbolIndex.
+ *
  * Revision 1.36  2002/03/14 21:36:12  sacha
  * Add two mapscript function (in PHP and perl)
  * setSymbolSet(filename) that load a symbol file dynanictly
@@ -546,12 +549,12 @@ gdImagePtr classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *laye
 
 
 int classObj_setSymbolByName(classObj *self, mapObj *map, char* pszSymbolName) {
-    self->symbol = msGetSymbolIdByName(map, pszSymbolName);
+    self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName);
     return self->symbol;
 }
   
 int classObj_setOverlaySymbolByName(classObj *self, mapObj *map, char* pszOverlaySymbolName) {
-    self->overlaysymbol = msGetSymbolIdByName(map, pszOverlaySymbolName);
+    self->overlaysymbol = msGetSymbolIndex(&map->symbolset, pszOverlaySymbolName);
     return self->overlaysymbol;
   }
 
