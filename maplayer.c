@@ -132,7 +132,11 @@ int msLayerOpen(layerObj *layer)
 
     if(msSHPOpenFile(shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1) 
       if(msSHPOpenFile(shpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->data)) == -1)
-        return(MS_FAILURE);
+      {
+          free(layer->layerinfo);
+          layer->layerinfo = NULL;
+          return(MS_FAILURE);
+      }
    
     return(MS_SUCCESS);
     break;
