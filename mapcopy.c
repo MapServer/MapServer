@@ -29,17 +29,15 @@ char *copyStringProperty(char **dst, char *src) {
 
 int msCopyProjection(projectionObj *dst, projectionObj *src) {
   int i;
-  msInitProjection(dst);
+  if (msInitProjection(dst) != MS_SUCCESS) return(MS_FAILURE);
   copyProperty(&(dst->numargs), &(src->numargs), sizeof(int));
   for (i = 0; i < dst->numargs; i++) {
     dst->args[i] = strdup(src->args[i]);
-    //copyStringProperty(&(dst->args[i]), src->args[i]);
   }
-  //memcpy(&(dst->proj), &(src->proj), sizeof(projPJ));
   if (dst->numargs != 0)
-    msProcessProjection(dst);
+    if (msProcessProjection(dst) != MS_SUCCESS) return(MS_FAILURE);
 
-  return(0);
+  return(MS_SUCCESS);
 }
 
 int msCopyRect(rectObj *dst, rectObj *src) {
@@ -116,9 +114,12 @@ int msCopyHashTable(hashTableObj dst, hashTableObj src){
 
 int msCopyFontSet(fontSetObj *dst, fontSetObj *src) {
   copyStringProperty(&(dst->filename), src->filename);
-  //msCopyHashTable(&(dst->fonts), &(src->fonts));
-  memcpy(&(dst->fonts), &(src->fonts), sizeof(hashTableObj));
   copyProperty(&(dst->numfonts), &(src->numfonts), sizeof(int));
+  if (src->fonts) {
+    dst->fonts = msCreateHashTable();
+    msCopyHashTable((dst->fonts), (src->fonts));
+  }
+
   //copyProperty(&(dst->map), &map, sizeof(mapObj *));
 
   return(0);
@@ -137,29 +138,9 @@ int msCopyColor(colorObj *dst, colorObj *src) {
 int msCopyExpression(expressionObj *dst,
                      expressionObj *src)
 {
-  int i;
   copyStringProperty(&(dst->string), src->string);
   copyProperty(&(dst->type), &(src->type), sizeof(int));
-  //dst->numitems = 0;
-  //dst->items = NULL;
-  //dst->indexes = NULL;
-  
-  //copyProperty(&(dst->numitems), &(src->numitems), sizeof(int));
-  //for (i = 0; i < src->numitems; i++) {
-  //  copyProperty(&(dst->indexes[i]), &(src->indexes[i]), sizeof(int));
-  //  copyStringProperty(&(dst->items[i]), src->items[i]);
-  //}
-  //dst->regex = NULL;
   dst->compiled = MS_FALSE;
-  
-  // Compile Regex
-  /*if(regcomp(&(dst->regex), src->string, REG_EXTENDED|REG_NOSUB) != 0) {
-    msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msEvalRegex()", dst->string);   
-    dst->compiled = MS_FALSE;
-  }
-  else {
-    dst->compiled = MS_TRUE;
-  }*/
 
   return(0);
 }
@@ -185,7 +166,6 @@ int msCopyJoin(joinObj *dst, joinObj *src) {
   copyStringProperty(&(dst->_template), src->_template);
 #endif
   copyStringProperty(&(dst->footer), src->footer);
-  //copyStringProperty(&(dst->match), src->match);
   copyProperty(&(dst->type), &(src->type), sizeof(enum MS_JOIN_TYPE));
   copyStringProperty(&(dst->connection), src->connection);
   copyProperty(&(dst->connectiontype), &(src->connectiontype), sizeof(enum MS_JOIN_CONNECTION_TYPE));
@@ -196,7 +176,6 @@ int msCopyJoin(joinObj *dst, joinObj *src) {
 int msCopyOutputFormat(outputFormatObj *dst,
                        outputFormatObj *src)
 {
-  int i;
   copyStringProperty(&(dst->name), src->name);
   copyStringProperty(&(dst->mimetype), src->mimetype);
   copyStringProperty(&(dst->driver), src->driver);
@@ -204,17 +183,16 @@ int msCopyOutputFormat(outputFormatObj *dst,
   copyProperty(&(dst->renderer), &(src->renderer), sizeof(int));
   copyProperty(&(dst->imagemode), &(src->imagemode), sizeof(int));
   copyProperty(&(dst->transparent), &(src->transparent), sizeof(int));
-  copyProperty(&(dst->numformatoptions), &(src->numformatoptions), sizeof(int));
-
-  memcpy(&(dst->formatoptions), &(src->formatoptions), sizeof(char *)*dst->numformatoptions);
-
-  //for (i = 0; i < dst->numformatoptions; i++) {
-  //  memcpy(&(dst->formatoptions[i]), &(src->formatoptions[i]), );
-  //}
-
   copyProperty(&(dst->refcount), &(src->refcount), sizeof(int));
+  copyProperty(&(dst->numformatoptions), &(src->numformatoptions), sizeof(int));
+  if (dst->formatoptions > 0) {
+    dst->formatoptions = (char **)malloc(sizeof(char *)*dst->numformatoptions);
+    memcpy(&(dst->formatoptions), &(src->formatoptions), 
+           sizeof(char *)*dst->numformatoptions);
+  }
 
-  return(0);
+  if (!msOutputFormatValidate(dst)) return(MS_FAILURE);
+  else return(MS_SUCCESS);
 }
 
 int msCopyQueryMap(queryMapObj *dst, queryMapObj *src) {
@@ -274,7 +252,10 @@ int msCopyWeb(webObj *dst, webObj *src) {
   copyStringProperty(&(dst->footer), src->footer);
   copyStringProperty(&(dst->empty), src->empty);
   copyStringProperty(&(dst->error), src->error);
-  msCopyRect(&(dst->extent), &(src->extent));
+  if (msCopyRect(&(dst->extent), &(src->extent)) == MS_FAILURE) {
+    msSetError(MS_MEMERR, "Failed to copy extent.", "msCopyWeb()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->minscale), &(src->minscale), sizeof(double));
   copyProperty(&(dst->maxscale), &(src->maxscale), sizeof(double));
   copyStringProperty(&(dst->mintemplate), src->mintemplate);
@@ -285,7 +266,6 @@ int msCopyWeb(webObj *dst, webObj *src) {
     dst->metadata = msCreateHashTable();
     msCopyHashTable((dst->metadata), (src->metadata));
   }
-  //memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
 
   return(0);
 }
@@ -308,18 +288,30 @@ int msCopyStyle(styleObj *dst, styleObj *src) {
 
 int msCopyClass(classObj *dst, classObj *src, layerObj *layer) {
   int i;
-  msCopyExpression(&(dst->expression), &(src->expression));
+  if (msCopyExpression(&(dst->expression), &(src->expression)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy expression.", "msCopyClass()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->status), &(src->status), sizeof(int));
   memcpy(&(dst->status), &(src->status), sizeof(int));
 
   copyProperty(&(dst->numstyles), &(src->numstyles), sizeof(int));
   for (i = 0; i < dst->numstyles; i++) {
-    msCopyStyle(&(dst->styles[i]), &(src->styles[i]));
+    if (msCopyStyle(&(dst->styles[i]), &(src->styles[i])) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy style.", "msCopyClass()");
+      return(MS_FAILURE);
+    }
   }
-  msCopyLabel(&(dst->label), &(src->label));
+  if (msCopyLabel(&(dst->label), &(src->label)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy label.", "msCopyClass()");
+    return(MS_FAILURE);
+  }
   copyStringProperty(&(dst->name), src->name);
   copyStringProperty(&(dst->title), src->title);
-  msCopyExpression(&(dst->text), &(src->text));
+  if (msCopyExpression(&(dst->text), &(src->text)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy text.", "msCopyClass()");
+    return(MS_FAILURE);
+  }
 #ifndef __cplusplus
   copyStringProperty(&(dst->template), src->template);
 #else
@@ -332,7 +324,6 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer) {
     dst->metadata = msCreateHashTable();
     msCopyHashTable((dst->metadata), (src->metadata));
   }
-  //memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
 
   copyProperty(&(dst->minscale), &(src->minscale), sizeof(double));
   copyProperty(&(dst->maxscale), &(src->maxscale), sizeof(double));
@@ -411,29 +402,88 @@ int msCopyResultCache(resultCacheObj *dst, resultCacheObj *src) {
   return(0);
 }
 
+int msCopySymbol(symbolObj *dst, symbolObj *src) {
+  int i;
+  initSymbol(dst);
+  copyStringProperty(&(dst->name), src->name);
+  copyProperty(&(dst->type), &(src->type), sizeof(int));
+  copyProperty(&(dst->inmapfile), &(src->inmapfile), sizeof(int));
+  //struct map_obj *map;
+  copyProperty(&(dst->sizex), &(src->sizex), sizeof(double)),
+  copyProperty(&(dst->sizey), &(src->sizey), sizeof(double));
+  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
+    if (msCopyPoint(&(dst->points[i]), &(src->points[i])) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy point.", "msCopySymbol()");
+      return(MS_FAILURE);
+    }
+  }
+  copyProperty(&(dst->numpoints), &(src->numpoints), sizeof(int));
+  copyProperty(&(dst->filled), &(src->filled), sizeof(int));
+  copyProperty(&(dst->stylelength), &(src->stylelength), sizeof(int));  
+  copyProperty(&(dst->style), &(src->style), sizeof(int)*MS_MAXSTYLELENGTH);
+  
+  //gdImagePtr img;
+  if (src->img) {
+     if (dst->img) {
+       gdFree(dst->img);
+     }
+     dst->img = gdImageCreate(src->img->sx, src->img->sy);
+     gdImageCopy(dst->img, src->img, 0, 0, 0, 0, src->img->sx, src->img->sy);
+  }
+
+  copyStringProperty(&(dst->imagepath), src->imagepath);
+  copyProperty(&(dst->transparent), &(src->transparent), sizeof(int));
+  copyProperty(&(dst->transparentcolor), &(src->transparentcolor), sizeof(int));
+  copyStringProperty(&(dst->character), src->character);
+  copyProperty(&(dst->antialias), &(src->antialias), sizeof(int));
+  copyStringProperty(&(dst->font), src->font);
+  copyProperty(&(dst->gap), &(src->gap), sizeof(int));
+  copyProperty(&(dst->position), &(src->position), sizeof(int));
+  copyProperty(&(dst->linecap), &(src->linecap), sizeof(int));
+  copyProperty(&(dst->linejoin), &(src->linejoin), sizeof(int));
+  copyProperty(&(dst->linejoinmaxsize), &(src->linejoinmaxsize), sizeof(double));
+
+  return(0);
+} 
 
 int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src) {
   int i;
   copyStringProperty(&(dst->filename), src->filename);
   //copyProperty(&(dst->map), &map, sizeof(mapObj *));
-  copyProperty(&(dst->fontset), &(src->fontset), sizeof(fontSetObj *));
+  if (msCopyFontSet(dst->fontset, src->fontset) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopySymbolSet()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->numsymbols), &(src->numsymbols), sizeof(int));
   for (i = 0; i < dst->numsymbols; i++) {
-    memcpy(&(dst->symbol[i]), &(src->symbol[i]), sizeof(symbolObj));
+    if (msCopySymbol(&(dst->symbol[i]), &(src->symbol[i])) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy symbol.", "msCopySymbolSet()");
+      return(MS_FAILURE);
+    }
   }
-  copyProperty(&(dst->imagecache), &(src->imagecache), sizeof(struct imageCacheObj));
   copyProperty(&(dst->imagecachesize), &(src->imagecachesize), sizeof(int));
+  // The code below is not quite right
+  copyProperty(&(dst->imagecache), &(src->imagecache), sizeof(struct imageCacheObj));
 
   return(0);
 }
 
 int msCopyReferenceMap(referenceMapObj *dst, referenceMapObj *src) {
   initReferenceMap(dst);
-  msCopyRect(&(dst->extent), &(src->extent));
+  if (msCopyRect(&(dst->extent), &(src->extent)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy extent.", "msCopyReferenceMap()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->height), &(src->height), sizeof(int));
   copyProperty(&(dst->width), &(src->width), sizeof(int));
-  msCopyColor(&(dst->color), &(src->color));
-  msCopyColor(&(dst->outlinecolor), &(src->outlinecolor));
+  if (msCopyColor(&(dst->color), &(src->color)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy color.", "msCopyReferenceMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyColor(&(dst->outlinecolor), &(src->outlinecolor)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR,"Failed to copy outlinecolor.","msCopyReferenceMap()");
+    return(MS_FAILURE);
+  }
   copyStringProperty(&(dst->image), src->image);
   copyProperty(&(dst->status), &(src->status), sizeof(int));
   copyProperty(&(dst->marker), &(src->marker), sizeof(int));
@@ -448,15 +498,30 @@ int msCopyReferenceMap(referenceMapObj *dst, referenceMapObj *src) {
 
 int msCopyScalebar(scalebarObj *dst, scalebarObj *src) {
   initScalebar(dst);
-  msCopyColor(&(dst->imagecolor), &(src->imagecolor));
+  if (msCopyColor(&(dst->imagecolor), &(src->imagecolor)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy imagecolor.", "msCopyScalebar()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->height), &(src->height), sizeof(int));
   copyProperty(&(dst->width), &(src->width), sizeof(int));
   copyProperty(&(dst->style), &(src->style), sizeof(int));
   copyProperty(&(dst->intervals), &(src->intervals), sizeof(int));
-  msCopyLabel(&(dst->label), &(src->label));
-  msCopyColor(&(dst->color), &(src->color));
-  msCopyColor(&(dst->backgroundcolor), &(src->backgroundcolor));
-  msCopyColor(&(dst->outlinecolor), &(src->outlinecolor));
+  if (msCopyLabel(&(dst->label), &(src->label)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy label.", "msCopyScalebar()");
+    return(MS_FAILURE);
+  }
+  if (msCopyColor(&(dst->color), &(src->color)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy color.", "msCopyScalebar()");
+    return(MS_FAILURE);
+  }
+  if (msCopyColor(&(dst->backgroundcolor), &(src->backgroundcolor)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy backgroundcolor.", "msCopyScalebar()");
+    return(MS_FAILURE);
+  }
+  if (msCopyColor(&(dst->outlinecolor), &(src->outlinecolor)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy outlinecolor.", "msCopyScalebar()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->units), &(src->units), sizeof(int));
   copyProperty(&(dst->status), &(src->status), sizeof(int));
   copyProperty(&(dst->position), &(src->position), sizeof(int));
@@ -468,13 +533,22 @@ int msCopyScalebar(scalebarObj *dst, scalebarObj *src) {
 }
 
 int msCopyLegend(legendObj *dst, legendObj *src) {
-  msCopyColor(&(dst->imagecolor), &(src->imagecolor));
-  msCopyLabel(&(dst->label), &(src->label));
+  if (msCopyColor(&(dst->imagecolor), &(src->imagecolor)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy imagecolor.", "msCopyLegend()");
+    return(MS_FAILURE);
+  }
+  if (msCopyLabel(&(dst->label), &(src->label)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy label.", "msCopyLegend()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->keysizex), &(src->keysizex), sizeof(int));
   copyProperty(&(dst->keysizey), &(src->keysizey), sizeof(int));
   copyProperty(&(dst->keyspacingx), &(src->keyspacingx), sizeof(int));
   copyProperty(&(dst->keyspacingy), &(src->keyspacingy), sizeof(int));
-  msCopyColor(&(dst->outlinecolor), &(src->outlinecolor));
+  if (msCopyColor(&(dst->outlinecolor), &(src->outlinecolor)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy outlinecolor.", "msCopyLegend()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->status), &(src->status), sizeof(int));
   copyProperty(&(dst->height), &(src->height), sizeof(int));
   copyProperty(&(dst->width), &(src->width), sizeof(int));
@@ -503,10 +577,16 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
   for (i = 0; i < dst->numclasses; i++) {
 #ifndef __cplusplus
     initClass(&(dst->class[i]));
-    msCopyClass(&(dst->class[i]), &(src->class[i]), dst);
+    if (msCopyClass(&(dst->class[i]), &(src->class[i]), dst) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy class.", "msCopyLayer()");
+      return(MS_FAILURE);
+    }
 #else
     initClass(&(dst->_class[i]));
-    msCopyClass(&(dst->_class[i]), &(src->_class[i]), dst);
+    if (msCopyClass(&(dst->_class[i]), &(src->_class[i]), dst) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy _class.", "msCopyLayer()");
+      return(MS_FAILURE);
+    }
 #endif
   }
   copyStringProperty(&(dst->header), src->header);
@@ -516,7 +596,7 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
 #else
   copyStringProperty(&(dst->_template), src->_template);
 #endif
-  copyProperty(&(dst->resultcache), &(src->resultcache), sizeof(resultCacheObj *));
+  //copyProperty(&(dst->resultcache), &(src->resultcache), sizeof(resultCacheObj *));
   copyStringProperty(&(dst->name), src->name); 
   copyStringProperty(&(dst->group), src->group); 
   copyProperty(&(dst->status), &(src->status), sizeof(int)); 
@@ -533,7 +613,10 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
   copyProperty(&(dst->labelmaxscale), &(src->labelmaxscale), sizeof(double));
   copyProperty(&(dst->sizeunits), &(src->sizeunits), sizeof(int)); 
   copyProperty(&(dst->maxfeatures), &(src->maxfeatures), sizeof(int));
-  msCopyColor(&(dst->offsite), &(src->offsite));
+  if (msCopyColor(&(dst->offsite), &(src->offsite)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy offsite.", "msCopyLayer()");
+    return (MS_FAILURE);
+  }
   copyProperty(&(dst->transform), &(src->transform), sizeof(int)); 
   copyProperty(&(dst->labelcache), &(src->labelcache), sizeof(int));
   copyProperty(&(dst->postlabelcache), &(src->postlabelcache), sizeof(int)); 
@@ -546,7 +629,10 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
   copyStringProperty(&(dst->tileitem), src->tileitem);
   copyProperty(&(dst->tileitemindex), &(src->tileitemindex), sizeof(int));
   copyStringProperty(&(dst->tileindex), src->tileindex); 
-  msCopyProjection(&(dst->projection), &(src->projection));
+  if (msCopyProjection(&(dst->projection), &(src->projection)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy projection.", "msCopyLayer()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->project), &(src->project), sizeof(int)); 
   copyProperty(&(dst->units), &(src->units), sizeof(int)); 
 
@@ -573,7 +659,10 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
     copyStringProperty(&(dst->items[i]), src->items[i]);
   }
   copyProperty(&(dst->iteminfo), &(src->iteminfo), sizeof(void)); 
-  msCopyExpression(&(dst->filter), &(src->filter));
+  if (msCopyExpression(&(dst->filter), &(src->filter)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy filter.", "msCopyLayer()");
+    return(MS_FAILURE);
+  }
   copyStringProperty(&(dst->filteritem), src->filteritem);
   copyProperty(&(dst->filteritemindex), &(src->filteritemindex), sizeof(int));
   copyStringProperty(&(dst->styleitem), src->styleitem); 
@@ -586,7 +675,6 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
     dst->metadata = msCreateHashTable();
     msCopyHashTable((dst->metadata), (src->metadata));
   }
-  //memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
 
   copyProperty(&(dst->transparency), &(src->transparency), sizeof(int)); 
   copyProperty(&(dst->dump), &(src->dump), sizeof(int));
@@ -612,37 +700,80 @@ int msCopyMap(mapObj *dst, mapObj *src) {
   copyProperty(&(dst->numlayers), &(src->numlayers), sizeof(int)); 
   for (i = 0; i < dst->numlayers; i++) {
     initLayer(&(dst->layers[i]), dst);
-    msCopyLayer(&(dst->layers[i]), &(src->layers[i]));
+    if (msCopyLayer(&(dst->layers[i]), &(src->layers[i])) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy layer.", "msCopyMap()");
+      return(MS_FAILURE);
+    }
   }
-  msCopySymbolSet(&(dst->symbolset), &(src->symbolset));
-  msCopyFontSet(&(dst->fontset), &(src->fontset));
+  if (msCopySymbolSet(&(dst->symbolset), &(src->symbolset)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy symbolset.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyFontSet(&(dst->fontset), &(src->fontset)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
   //msCopyLabelCache(&(dst->labelcache), &(src->labelcache));
   copyProperty(&(dst->transparent), &(src->transparent), sizeof(int)); 
   copyProperty(&(dst->interlace), &(src->interlace), sizeof(int)); 
   copyProperty(&(dst->imagequality), &(src->imagequality), sizeof(int)); 
-  msCopyRect(&(dst->extent), &(src->extent));
+  if (msCopyRect(&(dst->extent), &(src->extent)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy extent.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->cellsize), &(src->cellsize), sizeof(double)); 
   copyProperty(&(dst->units), &(src->units), sizeof(enum MS_UNITS));
   copyProperty(&(dst->scale), &(src->scale), sizeof(double)); 
   copyProperty(&(dst->resolution), &(src->resolution), sizeof(int));
   copyStringProperty(&(dst->shapepath), src->shapepath); 
   copyStringProperty(&(dst->mappath), src->mappath); 
-  msCopyColor(&(dst->imagecolor), &(src->imagecolor));
+  if (msCopyColor(&(dst->imagecolor), &(src->imagecolor)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy imagecolor.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
   copyProperty(&(dst->numoutputformats), &(src->numoutputformats), sizeof(int));
 
-  msCopyOutputFormat(dst->outputformat, src->outputformat);
+  if (msCopyOutputFormat(dst->outputformat, src->outputformat) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy outputformat.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
   for (i = 0; i < src->numoutputformats; i++) {
-    msCopyOutputFormat(dst->outputformatlist[i], src->outputformatlist[i]);
+    if (msCopyOutputFormat(dst->outputformatlist[i], src->outputformatlist[i])
+            != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy outputformat.", "msCopyMap()");
+      return(MS_FAILURE);
+    }
   }
 
   copyStringProperty(&(dst->imagetype), src->imagetype); 
-  msCopyProjection(&(dst->projection), &(src->projection));
-  msCopyProjection(&(dst->latlon), &(src->latlon));
-  msCopyReferenceMap(&(dst->reference), &(src->reference));
-  msCopyScalebar(&(dst->scalebar), &(src->scalebar));
-  msCopyLegend(&(dst->legend), &(src->legend));
-  msCopyQueryMap(&(dst->querymap), &(src->querymap));
-  msCopyWeb(&(dst->web), &(src->web));
+  if (msCopyProjection(&(dst->projection), &(src->projection)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy projection.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyProjection(&(dst->latlon), &(src->latlon)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy latlon.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyReferenceMap(&(dst->reference), &(src->reference)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy reference.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyScalebar(&(dst->scalebar), &(src->scalebar)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy scalebar.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyLegend(&(dst->legend), &(src->legend)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy legend.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyQueryMap(&(dst->querymap), &(src->querymap)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy querymap.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
+  if (msCopyWeb(&(dst->web), &(src->web)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy web.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
   for (i = 0; i < dst->numlayers; i++) {
     copyProperty(&(dst->layerorder[i]), &(src->layerorder[i]), sizeof(int));
   }
@@ -656,7 +787,6 @@ int msCopyMap(mapObj *dst, mapObj *src) {
 #ifdef USE_MING_FLASH
 int msCopySWF(SWFObj *dst, SWFObj *src) {
   int i;
-  //copyProperty(&(dst->map), &map, sizeof(mapObj *));
   //msCopySWFMovie(&(dst->sMainMovie), &(src->sMainMovie), sizeof(SWFMovie));
   copyProperty(&(dst->nLayerMovies), &(src->nLayerMovies), sizeof(int));
   for (i = 0; i < dst->nLayerMovies; i++) {
@@ -673,7 +803,6 @@ int msCopySWF(SWFObj *dst, SWFObj *src) {
 
 #ifdef notdefUSE_PDF
 int msCopyPDF(PDFObj *dst, PDFObj *src) {
-  //copyProperty(&(dst->map), &map, sizeof(mapObj *));
   copyProperty(&(dst->pdf), &(src->pdf), sizeof(PDF));
 
   return(0);
