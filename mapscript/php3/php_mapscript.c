@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/08/16 21:43:18  dan
+ * Removed obsolete symbol type consts (MS_MARKERSET, etc) + added MS_QUERY
+ *
  * Revision 1.6  2000/07/14 19:09:43  dan
  * OOpps... same problem with pIndex in getshape() and gettransformed()
  *
@@ -419,6 +422,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_ANNOTATION", MS_ANNOTATION,  const_flag);
     REGISTER_LONG_CONSTANT("MS_NULL",       MS_NULL,        const_flag);
 
+    /* layer status constants (see also MS_ON, MS_OFF) */
+    REGISTER_LONG_CONSTANT("MS_QUERY",      MS_QUERY,       const_flag);
+
     /* font type constants*/
     REGISTER_LONG_CONSTANT("MS_TRUETYPE",   MS_TRUETYPE,    const_flag);
     REGISTER_LONG_CONSTANT("MS_BITMAP",     MS_BITMAP,      const_flag);
@@ -433,11 +439,6 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_UC",         MS_UC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_LC",         MS_LC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
-
-    /* symbol set type constants*/
-    REGISTER_LONG_CONSTANT("MS_MARKERSET",  MS_MARKERSET,   const_flag);
-    REGISTER_LONG_CONSTANT("MS_LINESET",    MS_LINESET,     const_flag);
-    REGISTER_LONG_CONSTANT("MS_SHADESET",   MS_SHADESET,    const_flag);
 
     /* shapefile type constants*/
     REGISTER_LONG_CONSTANT("MS_SHP_POINT",  MS_SHP_POINT,   const_flag);
