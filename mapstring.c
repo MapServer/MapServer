@@ -219,7 +219,7 @@ char *getPath(char *fn)
     }
   }
 
-#ifdef _WIN32  
+#if defined(_WIN32) && !defined(__CYGWIN__)  
   if(strcmp(str, fn) == 0)
     strcpy(str, ".\\");
 #else

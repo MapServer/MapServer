@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <direct.h>
 #include <memory.h>
 #include <malloc.h>
