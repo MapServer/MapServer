@@ -243,7 +243,9 @@ int msDBFJoinClose(joinObj *join)
 typedef struct {
   int fromindex, toindex;
   char *target;
-  int nextrecord;
+  char ***rows;
+  int numrows, numcols;
+  int nextrow;
 } msCSVJoinInfo;
 
 int msCSVJoinConnect(layerObj *layer, joinObj *join) 
@@ -252,6 +254,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
   msCSVJoinInfo *joininfo;
+  char *buffer;
 
   if(join->joininfo) return(MS_SUCCESS); // already open
     
@@ -264,7 +267,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
 
   // initialize any members that won't get set later on in this function
   joininfo->target = NULL;
-  joininfo->nextrecord = 0;
+  joininfo->nextrow = 0;
 
   join->joininfo = joininfo;
 
@@ -275,6 +278,8 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
       return(MS_FAILURE);
     }
   }
+
+  // load the rows
 
   // get "from" item index  
   for(i=0; i<layer->numitems; i++) {
@@ -311,7 +316,7 @@ int msCSVJoinPrepare(joinObj *join, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-  joininfo->nextrecord = 0; // starting with the first record
+  joininfo->nextrow = 0; // starting with the first record
 
   if(joininfo->target) free(joininfo->target); // clear last target
   joininfo->target = strdup(shape->values[joininfo->fromindex]);
