@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.38  2004/07/07 18:36:38  assefa
+ * Correct memeory leak in msWFSDispatch (Bug 758)
+ *
  * Revision 1.37  2004/06/22 20:55:21  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -1169,7 +1172,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
 {
 #ifdef USE_WFS_SVR
   int status;
-
+  int returnvalue = MS_DONE;
 
   //static char *wmtver = NULL, *request=NULL, *service=NULL;
   wfsParamsObj *paramsObj;
@@ -1184,12 +1187,23 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
   /* If SERVICE is specified then it MUST be "WFS" */
   if (paramsObj->pszService != NULL && 
       strcasecmp(paramsObj->pszService, "WFS") != 0)
+  {
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
       return MS_DONE;  /* Not a WFS request */
+  }
+
 
   /* If SERVICE, VERSION and REQUEST not included than this isn't a WFS req*/
   if (paramsObj->pszService == NULL && paramsObj->pszVersion==NULL && 
       paramsObj->pszRequest==NULL)
+  {
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
       return MS_DONE;  /* Not a WFS request */
+  }
 
   /* VERSION *and* REQUEST required by all WFS requests including 
    * GetCapabilities.
@@ -1199,7 +1213,12 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: VERSION parameter missing", 
                  "msWFSDispatch()");
-      return msWFSException(map, paramsObj->pszVersion);
+       
+      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
   }
 
   if (paramsObj->pszRequest==NULL)
@@ -1207,17 +1226,33 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: REQUEST parameter missing", 
                  "msWFSDispatch()");
-      return msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
   }
 
   if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
-      return msWFSException(map, paramsObj->pszVersion);
-
+  {
+      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
+  }
   /*
   ** Start dispatching requests
   */
   if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0 ) 
-      return msWFSGetCapabilities(map, paramsObj->pszVersion, requestobj);
+  {
+      returnvalue = 
+        msWFSGetCapabilities(map, paramsObj->pszVersion, requestobj);
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
+  }
 
   /*
   ** Validate VERSION against the versions that we support... we don't do this
@@ -1228,16 +1263,22 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       msSetError(MS_WFSERR, 
                  "WFS Server does not support VERSION %s.", 
                  "msWFSDispatch()", paramsObj->pszVersion);
-      return msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
+                                                                 
   }
 
+  returnvalue = MS_DONE;
   /* Continue dispatching... 
    */
   if (strcasecmp(paramsObj->pszRequest, "DescribeFeatureType") == 0)
-    return msWFSDescribeFeatureType(map, paramsObj);
+    returnvalue = msWFSDescribeFeatureType(map, paramsObj);
 
   else if (strcasecmp(paramsObj->pszRequest, "GetFeature") == 0)
-    return msWFSGetFeature(map, paramsObj, requestobj);
+    returnvalue = msWFSGetFeature(map, paramsObj, requestobj);
 
 
   else if (strcasecmp(paramsObj->pszRequest, "GetFeatureWithLock") == 0 ||
@@ -1247,18 +1288,21 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       // Unsupported WFS request
       msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
                  paramsObj->pszRequest);
-      return msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, paramsObj->pszVersion);
   }
   else if (strcasecmp(paramsObj->pszService, "WFS") == 0)
   {
       // Invalid WFS request
       msSetError(MS_WFSERR, "Invalid WFS request: %s", "msWFSDispatch()",
                  paramsObj->pszRequest);
-      return msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, paramsObj->pszVersion);
   }
 
   // This was not detected as a WFS request... let MapServer handle it
-  return MS_DONE;
+  msWFSFreeParamsObj(paramsObj);
+  free(paramsObj);
+  paramsObj = NULL;
+  return returnvalue;
 
 #else
   msSetError(MS_WFSERR, "WFS server support is not available.", 
