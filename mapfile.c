@@ -77,7 +77,7 @@ void msFreeCharArray(char **array, int num_items)
 
   for(i=0;i<num_items;i++)
     msFree(array[i]);
-  msFree(&array);
+  msFree(array);
 
   return;
 }
