@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.137  2004/11/03 17:07:13  frank
+ * Free mapServObj properly in mapserv.c in OWS dispatch case to fix minor
+ * memory leaks.
+ *
  * Revision 1.136  2004/11/02 21:01:00  assefa
  * Add a 2nd optional argument to msLoadMapContext function (Bug 1023).
  *
@@ -1132,9 +1136,7 @@ int main(int argc, char *argv[]) {
        * At this point any error has already been handled
        * as an XML exception by the OGC service.
        */
-      msFreeMap(msObj->Map);
-      msFreeCharArray(msObj->request->ParamNames, msObj->request->NumParams);
-      msFreeCharArray(msObj->request->ParamValues, msObj->request->NumParams);
+      msFreeMapServObj(msObj);
 
 #ifdef USE_FASTCGI
       /* FCGI_ --- return to top of loop */

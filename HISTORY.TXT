@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- free mapServObj properly in mapserv.c in OWS dispatch case to fix minor
+  memory leaks.
+
 - modified msCloseConnections() to also close raster layers so that 
   held raster query results will be freed. 
 
