@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.67  2004/02/03 23:45:11  assefa
+ * Add utility function msOGRGeometryToShape.
+ *
  * Revision 1.66  2004/01/06 21:18:02  julien
  * Make STYLEITEM AUTO work with an empty CLASS (Bug 531)
  *
@@ -519,6 +522,31 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
 
   return nStatus;
 }
+
+/**********************************************************************
+ *                     msOGRGeometryToShape()
+ *
+ * Utility function to convert from OGR geometry to a mapserver shape 
+ * object.
+ **********************************************************************/
+int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
+                         OGRwkbGeometryType nType)
+{
+    if (hGeometry && psShape && nType > 0)
+    {
+        if (nType == wkbPoint)
+          return ogrConvertGeometry((OGRGeometry *)hGeometry,
+                                    psShape,  MS_LAYER_POINT);
+        else if (nType == wkbLineString)
+          return ogrConvertGeometry((OGRGeometry *)hGeometry,
+                                    psShape,  MS_LAYER_LINE);
+        else if (nType == wkbPolygon)
+          return ogrConvertGeometry((OGRGeometry *)hGeometry,
+                                    psShape,  MS_LAYER_POLYGON);
+    }
+        return MS_FALSE;
+}
+
 
 /* ==================================================================
  * Attributes handling functions

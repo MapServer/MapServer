@@ -50,6 +50,10 @@
 #include "ming.h"
 #endif
 
+#ifdef USE_OGR
+#include "ogr_api.h"
+#endif
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define snprintf _snprintf
 #endif
@@ -1116,6 +1120,11 @@ void msOGRLayerFreeItemInfo(layerObj *layer);
 int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
+#ifdef USE_OGR
+int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
+                         OGRwkbGeometryType type);
+#endif
+
 
 int msPOSTGISLayerOpen(layerObj *layer); // in mappostgis.c
 void msPOSTGISLayerFreeItemInfo(layerObj *layer);
