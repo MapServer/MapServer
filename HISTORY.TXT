@@ -21,6 +21,8 @@ Version 4.2 ???
 
 - Mapscript: fixed the shape copy test in mapscript tests.
 
+- Mapscript: replaced bad PNG file in tests with one that reads on win32.
+
 Version 4.2-beta3 (2004-05-14)
 ------------------------------
 

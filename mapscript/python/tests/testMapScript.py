@@ -13,10 +13,13 @@ platformdir = '-'.join((distutils.util.get_platform(),
                        '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, 'build/lib.' + platformdir)
 
-# Our testing mapfile
-testMapfile = '../../tests/test.map'
-testNoFontSetMapfile = '../../tests/test_nofontset.map'
-test_image = '../../tests/test.png'
+# Set the variable below to the mapserver/tests path
+TESTS_PATH = '../../tests'
+
+testMapfile = os.path.join(TESTS_PATH, 'test.map')
+testNoFontSetMapfile = os.path.join(TESTS_PATH, 'test_nofontset.map')
+test_image = os.path.join(TESTS_PATH, 'test.png')
+xmarks_image = os.path.join(TESTS_PATH, 'xmarks.png')
 
 # Import all from mapscript
 import mapscript
@@ -242,7 +245,7 @@ class SymbolTestCase(MapPrimitivesTestCase):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
     def testConstructorImage(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
         assert symbol.name == 'xmarks'
         assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
     def testGetPoints(self):
@@ -322,7 +325,7 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
     def testDrawNewSymbol(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
         symbol_index = self.mapobj1.symbolset.appendSymbol(symbol)
         assert symbol_index == 2, symbol_index
         num = self.mapobj1.symbolset.numsymbols
