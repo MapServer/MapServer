@@ -1,0 +1,32 @@
+SYMBOLSET
+  SYMBOL # standard circular brush
+    NAME 'circle'
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+  END
+
+  SYMBOL # long dash pattern
+    NAME 'dash-long'
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+    STYLE 16 16 END
+  END
+
+  SYMBOL # short dash pattern
+    NAME 'dash-short'
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+    STYLE 8 8 END
+  END
+
+  SYMBOL # tracks
+    NAME 'tracks'
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+    STYLE 1 16 END
+  END
+END
