@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/12/07 16:56:31  dan
+ * Fixed build error introduced by adding msLayerIsOpen() (bug 1116)
+ *
  * Revision 1.14  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -410,7 +413,7 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 // Return MS_TRUE if layer is open, MS_FALSE otherwise.
 int msMYGISLayerIsOpen(layerObj *layer)
 {
-    if (getMYGISLayerInfo(layer))
+    if (getMyGISLayerInfo(layer))
         return MS_TRUE;
 
     return MS_FALSE;
