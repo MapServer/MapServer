@@ -387,7 +387,8 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
  */
 int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
 {
-   char *pszStart, *pszEnd,  *pszEndTag;
+   char *pszStart, *pszEnd=NULL,  *pszEndTag, *pszPatIn, *pszPatOut=NULL, *pszTmp;
+   int nInst=0;
    int nLength;
 
    *pszResult = NULL;
@@ -396,46 +397,70 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
      msSetError(MS_WEBERR, "Invalid pointer.", "getInlineTag()");
      return MS_FAILURE;
    }
-   
+
+   pszEndTag = (char*)malloc(strlen(pszTag) + 3);
+   strcpy(pszEndTag, "[/");
+   strcat(pszEndTag, pszTag);
+
    // find start tag
-   pszStart = findTag(pszInstr, pszTag);
+   pszPatIn  = findTag(pszInstr, pszTag);
+   pszPatOut = strstr(pszInstr, pszEndTag);      
+
+   pszStart = pszPatIn;
+
+   pszTmp = pszInstr;
+
+   if (pszPatIn)
+   {
+      do 
+      {
+         if (pszPatIn && pszPatIn < pszPatOut)
+         {
+            nInst++;
+         
+            pszTmp = pszPatIn;
+         }
+      
+         if (pszPatOut && ((pszPatIn == NULL) || pszPatOut < pszPatIn))
+         {
+            pszEnd = pszPatOut;
+            nInst--;
+         
+            pszTmp = pszPatOut;
+         }
+
+         pszPatIn  = findTag(pszTmp+1, pszTag);
+         pszPatOut = strstr(pszTmp+1, pszEndTag);
+      
+      }while (pszTmp != NULL && nInst > 0);
+   }
+
    
-   if (pszStart) {
+   if (pszStart && pszEnd) {
       // find end of start tag
       pszStart = strchr(pszStart, ']');
    
       if (pszStart) {
          pszStart++;
-   
-         pszEndTag = (char*)malloc(strlen(pszTag) + 3);
-         strcpy(pszEndTag, "[/");
-         strcat(pszEndTag, pszTag);
 
-         // find start of end tag
-         pszEnd = strstr(pszStart, pszEndTag);
-         
-         if (pszEnd) {
-            nLength = pszEnd - pszStart;
+         nLength = pszEnd - pszStart;
             
-            if (nLength > 0) {
-               *pszResult = (char*)malloc(nLength + 1);
+         if (nLength > 0) {
+            *pszResult = (char*)malloc(nLength + 1);
 
-               // copy string beetween start and end tag
-               strncpy(*pszResult, pszStart, nLength);
+            // copy string beetween start and end tag
+            strncpy(*pszResult, pszStart, nLength);
 
-               (*pszResult)[nLength] = '\0';
-               
-//               if (pszNextInstr)
-//                 *pszNextInstr = pszStart + nLength + strlen(pszTag) + 2;
-            }
-            return MS_SUCCESS;
+            (*pszResult)[nLength] = '\0';
          }
       }
+      else
+      {
+         msSetError(MS_WEBERR, "Malformed [%s] tag.", "getInlineTag()", pszTag);
+         return MS_FAILURE;
+      }
    }
-   
-   msSetError(MS_WEBERR, "Malformed [%s] tag.", "getInlineTag()", pszTag);
-   
-   return MS_FAILURE;
+   return MS_SUCCESS;
 }
 
 /*!
@@ -447,9 +472,11 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
 int processIf(char** pszInstr, hashTableObj ht)
 {
 //   char *pszNextInstr = pszInstr;
-   char *pszStart, *pszEnd;
+   char *pszStart, *pszEnd=NULL;
    char *pszName, *pszValue, *pszOperator, *pszThen=NULL;
    char *pszIfTag;
+   char *pszPatIn=NULL, *pszPatOut=NULL, *pszTmp;
+   int nInst = 0;
    int nLength;
 
    hashTableObj ifArgs=NULL;
@@ -460,10 +487,38 @@ int processIf(char** pszInstr, hashTableObj ht)
    }
 
    // find the if start tag
-   pszStart = findTag(*pszInstr, "if");
+   
+   pszStart  = findTag(*pszInstr, "if");
 
    while (pszStart)
-   {
+   {   
+      pszPatIn  = findTag(pszStart, "if");
+      pszPatOut = strstr(pszStart, "[/if]");
+      pszTmp = pszPatIn;
+      
+      do 
+      {
+         if (pszPatIn && pszPatIn < pszPatOut)
+         {
+            nInst++;
+         
+            pszTmp = pszPatIn;
+         }
+      
+         if (pszPatOut && ((pszPatIn == NULL) || pszPatOut < pszPatIn))
+         {
+            pszEnd = pszPatOut;
+            nInst--;
+         
+            pszTmp = pszPatOut;
+         
+         }
+
+         pszPatIn  = findTag(pszTmp+1, "if");
+         pszPatOut = strstr(pszTmp+1, "[/if]");
+      
+      }while (pszTmp != NULL && nInst > 0);
+
       // get the then string (if expression is true)
       if (getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS)
       {
@@ -483,19 +538,13 @@ int processIf(char** pszInstr, hashTableObj ht)
       pszOperator = msLookupHashTable(ifArgs, "oper");
 
       if (pszName && pszValue && msLookupHashTable(ht, pszName)) {
-         // set position at end of if start tag
-         pszEnd = strchr(pszStart, ']');
-         pszEnd++;
-            
          // build the complete if tag ([if all_args]then string[/if])
          // to replace if by then string if expression is true
          // or by a white space if not.
          nLength = pszEnd - pszStart;
-         pszIfTag = (char*)malloc(nLength + strlen(pszThen) + 6);
+         pszIfTag = (char*)malloc(nLength + 6);
          strncpy(pszIfTag, pszStart, nLength);
          pszIfTag[nLength] = '\0';
-            
-         strcat(pszIfTag, pszThen);
          strcat(pszIfTag, "[/if]");
 
          if (pszOperator) {
