@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
 void printAtts(mapObj *map, const char *title) {
     printf("\n%s Attributes\n----------------------\n", title);
     printf("Map Name: %s\n", map->name);
+    printf("Numlayers: %d\n", map->numlayers);
     printf("Map Fontset Filename: %s\n", map->fontset.filename);
     printf("Map Symbolset Filename: %s\n", map->symbolset.filename);
 }

@@ -87,6 +87,11 @@ Version 4.3 (CVS)
 
 - mapraster.c: fixed tile index corruption problem (bug 698)
 
+- Mladen Turk's map copying macros in mapcopy.h clean up map cloning and
+  allow for copying of fontset and symbolset.  Added cloning tests in
+  python/tests/testCloneMap.py and refactored testing suite (bugs 640 & 701).
+
+- Mapscript: removing obsolete python/setup_wnone.py file.
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------

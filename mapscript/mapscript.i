@@ -31,6 +31,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 #include "../../mapogcsld.h"
 #include "../../mapows.h"
 #include "../../cgiutil.h"
+#include "../../mapcopy.h"
 %}
 
 %include typemaps.i
@@ -673,7 +674,7 @@ memory.") const char * {
     int setPoints(lineObj *line) {
         int i;
         for (i=0; i<line->numpoints; i++) {
-            msCopyPoint(&(self->points[i]), &(line->point[i]));
+            MS_COPYPOINT(&(self->points[i]), &(line->point[i]));
         }
         self->numpoints = line->numpoints;
         return self->numpoints;

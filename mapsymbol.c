@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "mapfile.h"
+#include "mapcopy.h"
 
 extern int msyylex(); /* lexer globals */
 extern void msyyrestart();
@@ -721,26 +722,30 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
 
 int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   int i;
-  initSymbol(dst);
-  copyStringProperty(&(dst->name), src->name);
-  copyProperty(&(dst->type), &(src->type), sizeof(int));
-  copyProperty(&(dst->inmapfile), &(src->inmapfile), sizeof(int));
-  copyProperty(&(dst->map), &map, sizeof(mapObj *));
-  copyProperty(&(dst->sizex), &(src->sizex), sizeof(double)),
-  copyProperty(&(dst->sizey), &(src->sizey), sizeof(double));
-  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
-    if (msCopyPoint(&(dst->points[i]), &(src->points[i])) != MS_SUCCESS)
-    {
-      msSetError(MS_MEMERR, "Failed to copy point.", "msCopySymbol()");
-      return(MS_FAILURE);
-    }
-  }
-  copyProperty(&(dst->numpoints), &(src->numpoints), sizeof(int));
-  copyProperty(&(dst->filled), &(src->filled), sizeof(int));
-  copyProperty(&(dst->stylelength), &(src->stylelength), sizeof(int));
   
-  copyProperty(&(dst->style), &(src->style),
-               sizeof(int)*MS_MAXSTYLELENGTH);
+  initSymbol(dst);
+  
+  MS_COPYSTRING(dst->name, src->name);
+  MS_COPYSTELEM(type);
+  MS_COPYSTELEM(inmapfile);
+  
+  /* map is a special case */
+  dst->map = map;
+  
+  MS_COPYSTELEM(sizex);
+  MS_COPYSTELEM(sizey);
+  
+  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
+    MS_COPYPOINT(&(dst->points[i]), &(src->points[i]));
+  }
+  
+  MS_COPYSTELEM(numpoints);
+  MS_COPYSTELEM(filled);
+  MS_COPYSTELEM(stylelength);
+
+  for (i=0; i<MS_MAXSTYLELENGTH; i++) {
+      dst->style[i] = src->style[i];
+  }
   
   //gdImagePtr img;
   if (src->img) {
@@ -752,22 +757,17 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
                  src->img->sx, src->img->sy);
   }
 
-  copyStringProperty(&(dst->imagepath), src->imagepath);
-  copyProperty(&(dst->transparent), &(src->transparent),sizeof(int));
-  
-  copyProperty(&(dst->transparentcolor), &(src->transparentcolor),
-               sizeof(int));
-  
-  copyStringProperty(&(dst->character), src->character);
-  copyProperty(&(dst->antialias), &(src->antialias), sizeof(int));
-  copyStringProperty(&(dst->font), src->font);
-  copyProperty(&(dst->gap), &(src->gap), sizeof(int));
-  copyProperty(&(dst->position), &(src->position), sizeof(int));
-  copyProperty(&(dst->linecap), &(src->linecap), sizeof(int));
-  copyProperty(&(dst->linejoin), &(src->linejoin), sizeof(int));
-  
-  copyProperty(&(dst->linejoinmaxsize), &(src->linejoinmaxsize),
-               sizeof(double));
+  MS_COPYSTRING(dst->imagepath, src->imagepath);
+  MS_COPYSTELEM(transparent);
+  MS_COPYSTELEM(transparentcolor);
+  MS_COPYSTRING(dst->character, src->character);
+  MS_COPYSTELEM(antialias);
+  MS_COPYSTRING(dst->font, src->font);
+  MS_COPYSTELEM(gap);
+  MS_COPYSTELEM(position);
+  MS_COPYSTELEM(linecap);
+  MS_COPYSTELEM(linejoin);
+  MS_COPYSTELEM(linejoinmaxsize);
 
   return(MS_SUCCESS);
 } 
@@ -782,18 +782,14 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
 {
   int i, return_value;
   
-  copyStringProperty(&(dst->filename), src->filename);
-  copyProperty(&(dst->map), &map, sizeof(mapObj *));
-
+  MS_COPYSTRING(dst->filename, src->filename);
+  
+  dst->map = map;
   dst->fontset = &(map->fontset);
   
-  /*if (msCopyFontSet(dst->fontset, src->fontset, map) != MS_SUCCESS) {
-    msSetError(MS_MEMERR,"Failed to copy fontset.","msCopySymbolSet()");
-    return(MS_FAILURE);
-  }*/
-  
-  copyProperty(&(dst->numsymbols), &(src->numsymbols), sizeof(int));
-  
+  MS_COPYSTELEM(numsymbols);
+ 
+  /* Copy child symbols */
   for (i = 0; i < dst->numsymbols; i++) {
     return_value = msCopySymbol(&(dst->symbol[i]), &(src->symbol[i]), map);
     if (return_value != MS_SUCCESS) {
@@ -802,12 +798,12 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
     }
   }
 
-  copyProperty(&(dst->imagecachesize),
-               &(src->imagecachesize), sizeof(int));
+  MS_COPYSTELEM(imagecachesize);
   
   // I have a feeling that the code below is not quite right - Sean
-  copyProperty(&(dst->imagecache), &(src->imagecache),
+  /*copyProperty(&(dst->imagecache), &(src->imagecache),
                sizeof(struct imageCacheObj));
+   */
 
   return(MS_SUCCESS);
 }
