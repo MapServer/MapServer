@@ -83,8 +83,10 @@
        write()
 
        Write image data to an open file handle.  Intended to replace
-       saveToString.
+       saveToString.  See python/pyextend.i for the Python specific
+       version of this method.
     ====================================================================== */
+#ifndef SWIGPYTHON
     int write( FILE *file=NULL )
     {
         if ( MS_DRIVER_GD(self->format) )
@@ -96,11 +98,12 @@
             return MS_FAILURE;
         }
     }
-    
-    // Method saveToString renders the imageObj into image data and returns
-    // it as a string. Questions and comments to 
-    // Sean Gillies <sgillies@frii.com>
+#endif
 
+    /* -----------------------------------------------------------------------
+       saveToString is deprecated and no longer supported.  Users should use
+       the write() method instead.
+    ----------------------------------------------------------------------- */
 #if defined SWIGTCL8
 
     Tcl_Obj *saveToString() 

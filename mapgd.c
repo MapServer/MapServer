@@ -2751,10 +2751,9 @@ int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
 /* ===========================================================================
    msSaveImageStreamGD
 
-   Save image data to an open file handle, or to stdout if the handle
-   is NULL.
+   Save image data to an open file variable, or if this NULL, stdout.
    ======================================================================== */
-int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format )
+int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format)
 {
   FILE *stream;
   gdIOCtx *gd_ctx = NULL;
@@ -2763,11 +2762,13 @@ int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format )
     gdImageSaveAlpha( img, 1 );
   else if( format->imagemode == MS_IMAGEMODE_RGB )
     gdImageSaveAlpha( img, 0 );
- 
+
+  /* first, try output to file */
   if (file)
     stream = file;
+  /* else use standard output, or mapio's replacement for stdout */
   else 
-  { /* use stdout */
+  {
 
 #if defined(_WIN32) && !defined(USE_FASTCGI)
     /*
@@ -2861,6 +2862,71 @@ int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format )
       free( gd_ctx );
 
   return(MS_SUCCESS);
+}
+
+/* ===========================================================================
+   msSaveImageBufferGD
+
+   Save image data to a unsigned char * buffer.  In the future we should try
+   to merge this with msSaveImageStreamGD function.
+   ======================================================================== */
+
+unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatObj *format)
+{
+    unsigned char *imgbytes;
+    
+    if (format->imagemode == MS_IMAGEMODE_RGBA) 
+        gdImageSaveAlpha(img, 1);
+    else if (format->imagemode == MS_IMAGEMODE_RGB)
+        gdImageSaveAlpha(img, 0);
+
+    if (strcasecmp("ON", 
+        msGetOutputFormatOption(format, "INTERLACE", "ON" )) == 0) 
+        gdImageInterlace(img, 1);
+
+    if (format->transparent)
+        gdImageColorTransparent(img, 0);
+
+    if (strcasecmp(format->driver, "gd/gif") == 0) {
+#ifdef USE_GD_GIF
+        imgbytes = gdImageGifPtr(img, size_ptr);
+#else
+        msSetError(MS_IMGERR, "GIF output is not available.", 
+                   "msSaveImageBufferGD()");
+        return NULL;
+#endif
+    } else if (strcasecmp(format->driver, "gd/png") == 0) {
+#ifdef USE_GD_PNG
+        imgbytes = gdImagePngPtr(img, size_ptr);
+#else
+        msSetError(MS_IMGERR, "PNG output is not available.", 
+                   "msSaveImageBufferGD()");
+        return NULL;
+#endif
+    } else if (strcasecmp(format->driver, "gd/jpeg") == 0) {
+#ifdef USE_GD_JPEG
+        imgbytes = gdImageJpegPtr(img, size_ptr, 
+            atoi(msGetOutputFormatOption(format, "QUALITY", "75" )));
+#else
+        msSetError(MS_IMGERR, "JPEG output is not available.", 
+                   "msSaveImageBufferGD()");
+        return NULL;
+#endif
+    } else if (strcasecmp(format->driver, "gd/wbmp") == 0) {
+#ifdef USE_GD_WBMP
+        imgbytes = gdImageWBMPPtr(img, size_ptr, 1);
+#else
+        msSetError(MS_IMGERR, "WBMP output is not available.", 
+                  "msSaveImageBufferGD()");
+        return NULL;
+#endif
+    } else {
+        msSetError(MS_IMGERR, "Unknown output image type driver: %s.", 
+                   "msSaveImageBufferGD()", format->driver );
+        return NULL;
+    } 
+
+    return imgbytes;
 }
 
 

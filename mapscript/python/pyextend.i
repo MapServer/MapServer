@@ -177,70 +177,73 @@
             return NULL;
         }
     }
-   
+  
+    /* ======================================================================
+       write()
+
+       Write image data to an open Python file or file-like object.
+       Overrides extension method in mapscript/swiginc/image.i.
+       Intended to replace saveToString.
+    ====================================================================== */
+    int write( PyObject *file=Py_None )
+    {
+        FILE *stream;
+        unsigned char *imgbuffer;
+        int imgsize;
+        int res;
+        PyObject *noerr;
+       
+        /* Return immediately if image driver is not GD */
+        if ( !MS_DRIVER_GD(self->format) )
+        {
+            msSetError(MS_IMGERR, "Writing of %s format not implemented",
+                       "imageObj::write", self->format->driver);
+            return MS_FAILURE;
+        }
+
+        if (file == Py_None) /* write to stdout */
+        {
+            stream = NULL;
+            return msSaveImageStreamGD(self->img.gd, stream, self->format);
+        }
+        else if (PyFile_Check(file)) /* a Python (C) file */
+        {
+            stream = PyFile_AsFile(file);
+            return msSaveImageStreamGD(self->img.gd, stream, self->format);
+        }
+        else /* presume a Python gdIOCtx object */
+        {
+            imgbuffer = msSaveImageBufferGD(self->img.gd,&imgsize,self->format);
+            if (imgsize == 0)
+            {
+                msSetError(MS_IMGERR, "failed to get image buffer", "write()");
+                return NULL;
+            }
+                
+            noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer,
+                                        imgsize);
+            gdFree(imgbuffer);
+            if (noerr == NULL)
+                return MS_FAILURE;
+            else
+                Py_DECREF(noerr);
+        }
+
+        return MS_SUCCESS;
+    }
+
+    /* Deprecated */  
     PyObject *saveToString() {
+        int size=0;
         unsigned char *imgbytes;
-        int size;
         PyObject *imgstring; 
 
-%#if GD2_VERS > 1
-        if (self->format->imagemode == MS_IMAGEMODE_RGBA) {
-            gdImageSaveAlpha(self->img.gd, 1);
+        imgbytes = msSaveImageBufferGD(self->img.gd, &size, self->format);
+        if (size == 0)
+        {
+            msSetError(MS_IMGERR, "failed to get image buffer", "saveToString()");
+            return NULL;
         }
-        else if (self->format->imagemode == MS_IMAGEMODE_RGB) {
-            gdImageSaveAlpha(self->img.gd, 0);
-        }
-%#endif 
-
-        if (strcasecmp("ON", 
-            msGetOutputFormatOption(self->format, "INTERLACE", "ON" )) == 0) {
-            
-            gdImageInterlace(self->img.gd, 1);
-        }
-
-        if (self->format->transparent) {
-            gdImageColorTransparent(self->img.gd, 0);
-        }
-
-        if (strcasecmp(self->format->driver, "gd/gif") == 0) {
-%#ifdef USE_GD_GIF
-            imgbytes = gdImageGifPtr(self->img.gd, &size);
-%#else
-            msSetError(MS_IMGERR, "GIF output is not available.", 
-                       "saveToString()");
-            return NULL;
-%#endif
-        } else if (strcasecmp(self->format->driver, "gd/png") == 0) {
-%#ifdef USE_GD_PNG
-            imgbytes = gdImagePngPtr(self->img.gd, &size);
-%#else
-            msSetError(MS_IMGERR, "PNG output is not available.", 
-                       "saveToString()");
-            return NULL;
-%#endif
-        } else if (strcasecmp(self->format->driver, "gd/jpeg") == 0) {
-%#ifdef USE_GD_JPEG
-            imgbytes = gdImageJpegPtr(self->img.gd, &size, 
-                atoi(msGetOutputFormatOption(self->format, "QUALITY", "75" )));
-%#else
-            msSetError(MS_IMGERR, "JPEG output is not available.", 
-                       "saveToString()");
-            return NULL;
-%#endif
-        } else if (strcasecmp(self->format->driver, "gd/wbmp") == 0) {
-%#ifdef USE_GD_WBMP
-            imgbytes = gdImageWBMPPtr(self->img.gd, &size, 1);
-%#else
-            msSetError(MS_IMGERR, "WBMP output is not available.", 
-                      "saveToString()");
-            return NULL;
-%#endif
-        } else {
-            msSetError(MS_IMGERR, "Unknown output image type driver: %s.", 
-                       "saveToString()", self->format->driver );
-            return NULL;
-        } 
-        
         imgstring = PyString_FromStringAndSize(imgbytes, size); 
         gdFree(imgbytes);
         return imgstring;
