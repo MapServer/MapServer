@@ -1310,12 +1310,10 @@ memory.") const char * {
     msFreeImage(self);    
   }
 
-  void save(char *filename) {
-
-    // save image parameters ignored ... should be in outputFormatObj
-    // used to create the imageObj.
-    msSaveImage(NULL, self, filename );
-  }
+    /* saveGeo - see Bugzilla issue 549 */ 
+    void save(char *filename, mapObj *map=NULL) {
+        msSaveImage(map, self, filename );
+    }
 
   // Method saveToString renders the imageObj into image data and returns
   // it as a string. Questions and comments to Sean Gillies <sgillies@frii.com>
