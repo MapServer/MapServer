@@ -617,10 +617,11 @@ void msDecodeHTMLEntities(const char *string)
             break;
         else
             pszSemiColon++;
-        pszReplace[pszSemiColon-pszReplace] = '\0';
 
         // Get everything after the &...;
-        strcpy(pszEnd, pszSemiColon+1);
+        strcpy(pszEnd, pszSemiColon);
+
+        pszReplace[pszSemiColon-pszReplace] = '\0';
 
         // Replace the &...;
         if(strcasecmp(pszReplace, "&amp;") == 0)
