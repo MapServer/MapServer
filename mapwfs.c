@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2003/09/26 13:44:40  assefa
+ * Add support for gml box with 2 <coord> elements.
+ *
  * Revision 1.18  2003/09/22 22:53:20  assefa
  * Add ifdef USE_OGR where the MiniMXL Parser is used.
  *
@@ -606,8 +609,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     int numlayers = 0;
 
     char   *pszFilter = NULL;
-    int bFilterSet, bBBOXSet = 0;
+    int bFilterSet = 0;
+    int bBBOXSet = 0;
    
+    char *sttt = NULL;
+    int  nttt = 0;
+
+    //nttt = strlen(sttt);
 
     // Default filter is map extents
     bbox = map->extent;
@@ -758,7 +766,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
         rectObj sQueryRect = map->extent;
         projectionObj sProjTmp;
         char **paszFilter = NULL;
-
+        int bIsBBoxFilter =0;
 /* -------------------------------------------------------------------- */
 /*      Validate the parameters. When a FILTER parameter is given,      */
 /*      It needs the TYPENAME parameter for the layers. Also Filter     */
@@ -822,10 +830,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
             if (psNode)
             {
                 szExpression = FLTGetMapserverExpression(psNode);
-                szEPSG = FLTGetBBOX(psNode, &sQueryRect);
+                bIsBBoxFilter = FLTIsBBoxFilter(psNode);
+                if (bIsBBoxFilter)
+                  szEPSG = FLTGetBBOX(psNode, &sQueryRect);
             }
  
-            if (!szExpression && !szEPSG)
+            if (!szExpression && !szEPSG && !bIsBBoxFilter)
             {
                 msSetError(MS_WFSERR, 
                    "Invalid or Unsupported FILTER in GetFeature : %s", 
@@ -836,11 +846,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
             iLayerIndex = msGetLayerIndex(map, layers[i]);
             if (iLayerIndex > 0)
             {
+                lp = &(map->layers[iLayerIndex]);
                 if (szExpression)
                 {
                     szClassItem = FLTGetMapserverExpressionClassItem(psNode);
                 
-                    lp = &(map->layers[iLayerIndex]);
                     initClass(&(lp->class[0]));
 
                     lp->class[0].type = lp->type;
@@ -892,7 +902,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
                     }
 #endif
                 }
-                msQueryByRect(map, lp->index, sQueryRect);
+
+                if (szExpression || bIsBBoxFilter)
+                  msQueryByRect(map, lp->index, sQueryRect);
+                
+                if (szExpression)
+                  free(szExpression);
+                
             }
         }
         if (paszFilter)
@@ -1193,7 +1209,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
     if (request->postrequest)
     {
         CPLXMLNode *psRoot, *psQuery, *psFilter, *psTypeName = NULL;
-        CPLXMLNode *psGetFeature, *psGetCapabilities, *psDescribeFeature = NULL;
+        CPLXMLNode *psGetFeature = NULL;
+        CPLXMLNode  *psGetCapabilities = NULL;
+        CPLXMLNode *psDescribeFeature = NULL;
         CPLXMLNode *psOperation = NULL;
         char *pszValue, *pszSerializedFilter, *pszTmp = NULL;
         int bMultiLayer = 0;

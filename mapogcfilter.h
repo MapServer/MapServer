@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2003/09/26 13:44:40  assefa
+ * Add support for gml box with 2 <coord> elements.
+ *
  * Revision 1.2  2003/09/23 14:34:34  assefa
  * ifdef's for OGR use.
  *
@@ -98,8 +101,12 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
 FilterEncodingNode *FLTCreateFilterEncodingNode();
 
 void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
+
 int FLTValidFilterNode(FilterEncodingNode *psFilterNode);
 int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode);
+int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
+int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, 
+                          const char *szType);
 
 void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                             CPLXMLNode *psXMLNode);

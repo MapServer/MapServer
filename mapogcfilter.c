@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2003/09/26 13:44:40  assefa
+ * Add support for gml box with 2 <coord> elements.
+ *
  * Revision 1.4  2003/09/23 14:34:34  assefa
  * ifdef's for OGR use.
  *
@@ -78,7 +81,7 @@
 /************************************************************************/
 FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 {
-    CPLXMLNode *psRoot, *psChild, *psFilter, *psFilterStart = NULL;
+    CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL, *psFilterStart = NULL;
     FilterEncodingNode *psFilterNode = NULL;
 
     if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
@@ -147,6 +150,13 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 /*       - a Bbox is only acceptable with an AND logical operator       */
 /* -------------------------------------------------------------------- */
     if (!FLTValidForBBoxFilter(psFilterNode))
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      validate for the PropertyIsLike case :                          */
+/*       - only one PropertyIsLike filter is supported                  */
+/* -------------------------------------------------------------------- */
+    if (!FLTValidForPropertyIsLikeFilter(psFilterNode))
         return NULL;
 
 
@@ -311,92 +321,119 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /* -------------------------------------------------------------------- */
         else if (FLTIsSpatialFilterType(psXMLNode->pszValue))
         {
-            psFilterNode->eType = FILTER_NODE_TYPE_SPATIAL;
-            if (psXMLNode->psChild && psXMLNode->psChild->psNext &&
-                psXMLNode->psChild->psNext->psNext &&
-                strcasecmp(psXMLNode->psChild->pszValue, "srsName") == 0 &&
-                strcasecmp(psXMLNode->psChild->psNext->pszValue, "PropertyName") == 0 &&
-                (strcasecmp(psXMLNode->psChild->psNext->psNext->pszValue,"gml:Box") == 0 ||
-                 strcasecmp(psXMLNode->psChild->psNext->psNext->pszValue,"Box") == 0))
-            {
-                
-                psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+            char *pszSRS = NULL;
+            CPLXMLNode *psPropertyName = NULL;
+            CPLXMLNode *psBox = NULL;
+            CPLXMLNode *psCoordinates = NULL;
+            CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
+            CPLXMLNode *psX = NULL, *psY = NULL;
+            char **szCoords=NULL, **szMin=NULL, **szMax = NULL;
+            char  *szCoords1=NULL, *szCoords2 = NULL;
+            int nCoords = 0;
+            char *pszTmpCoord = NULL;
+            int bCoordinatesValid = 0;
 
+            psFilterNode->eType = FILTER_NODE_TYPE_SPATIAL;
+
+            pszSRS = (char *)CPLGetXMLValue(psXMLNode, "srsName", NULL);
+            psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
+            psBox = CPLGetXMLNode(psXMLNode, "Box");
+            if (psBox)
+            {
+                psCoordinates = CPLGetXMLNode(psBox, "coordinates");
+                if (psCoordinates && psCoordinates->psChild && 
+                    psCoordinates->psChild->pszValue)
+                {
+                    pszTmpCoord = psCoordinates->psChild->pszValue;
+                    szCoords = split(pszTmpCoord, ' ', &nCoords);
+                    if (szCoords && nCoords == 2)
+                    {
+                        szCoords1 = strdup(szCoords[0]);
+                        szCoords2 = strdup(szCoords[1]);
+                        szMin = split(szCoords1, ',', &nCoords);
+                        if (szMin && nCoords == 2)
+                          szMax = split(szCoords2, ',', &nCoords);
+                        if (szMax && nCoords == 2)
+                          bCoordinatesValid =1;
+
+                        free(szCoords1);        
+                        free(szCoords2);
+                    }
+                }
+                else
+                {
+                    psCoord1 = CPLGetXMLNode(psBox, "coord");
+                    if (psCoord1 && psCoord1->psNext && 
+                        psCoord1->psNext->pszValue && 
+                        strcmp(psCoord1->psNext->pszValue, "coord") ==0)
+                    {
+                        szMin = (char **)malloc(sizeof(char *)*2);
+                        szMax = (char **)malloc(sizeof(char *)*2);
+                        psCoord2 = psCoord1->psNext;
+                        psX =  CPLGetXMLNode(psCoord1, "X");
+                        psY =  CPLGetXMLNode(psCoord1, "Y");
+                        if (psX && psY && psX->psChild && psY->psChild &&
+                            psX->psChild->pszValue && psY->psChild->pszValue)
+                        {
+                            szMin[0] = psX->psChild->pszValue;
+                            szMin[1] = psY->psChild->pszValue;
+
+                            psX =  CPLGetXMLNode(psCoord2, "X");
+                            psY =  CPLGetXMLNode(psCoord2, "Y");
+                            if (psX && psY && psX->psChild && psY->psChild &&
+                            psX->psChild->pszValue && psY->psChild->pszValue)
+                            {
+                                szMax[0] = psX->psChild->pszValue;
+                                szMax[1] = psY->psChild->pszValue;
+                                bCoordinatesValid = 1;
+                            }
+                        }
+                    }
+                    
+                }
+            }
+            
+            if (psPropertyName == NULL || !bCoordinatesValid)
+              psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+
+            if (psPropertyName && bCoordinatesValid)
+            {
+                psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
                 //not really using the property name anywhere ?? Is is always
                 //Geometry ? 
-                if (psXMLNode->psChild->pszValue)
+                if (psPropertyName->psChild && psPropertyName->psChild->pszValue)
                 {
                     psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
                     psFilterNode->psLeftNode->pszValue = 
-                      strdup(psXMLNode->psChild->pszValue);
+                      strdup(psPropertyName->psChild->pszValue);
                 }
-
-                //extract SRS value and coordinates
                 
+                //srs and coordinates
                 psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
+                psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BBOX;
+                //srs might be empty
+                if (pszSRS)
+                  psFilterNode->psRightNode->pszValue = strdup(pszSRS);
 
-                if (psXMLNode->psChild->psChild && 
-                    psXMLNode->psChild->psChild->pszValue && //srs value
-                    psXMLNode->psChild->psNext->psNext->psChild)
-                {
-                    if ((strcasecmp(psXMLNode->psChild->psNext->psNext->psChild->pszValue, "gml:coordinates") == 0 ||
-                        strcasecmp(psXMLNode->psChild->psNext->psNext->psChild->pszValue, "coordinates") == 0) &&
-                        psXMLNode->psChild->psNext->psNext->psChild->psChild && //coordinates
-                        psXMLNode->psChild->psNext->psNext->psChild->psChild->pszValue)
-                    {
-                        char **szCoords, **szMin, **szMax = NULL;
-                        char  *szCoords1, *szCoords2 = NULL;
-                        int nCoords = 0;
-                        char *pszTmpCoord = NULL;
+                psFilterNode->psRightNode->pOther =     
+                  (rectObj *)malloc(sizeof(rectObj));
+                ((rectObj *)psFilterNode->psRightNode->pOther)->minx = 
+                  atof(szMin[0]);
+                ((rectObj *)psFilterNode->psRightNode->pOther)->miny = 
+                  atof(szMin[1]);
 
-                        psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BBOX;
-                        pszTmpCoord = 
-                          psXMLNode->psChild->psNext->psNext->psChild->psChild->pszValue;
-                        //keep the srs value in the node's pszValue
-                        psFilterNode->psRightNode->pszValue = 
-                          strdup(psXMLNode->psChild->psChild->pszValue);
-                        //keep th bbox in the pOther structure
-                        psFilterNode->psRightNode->pOther = (rectObj *)malloc(sizeof(rectObj));
-                        szCoords = split(pszTmpCoord, ' ', &nCoords);
-                        
-                        if (szCoords && nCoords == 2)
-                        {
-                            szCoords1 = strdup(szCoords[0]);
-                            szCoords2 = strdup(szCoords[1]);
+                ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = 
+                  atof(szMax[0]);
+                ((rectObj *)psFilterNode->psRightNode->pOther)->maxy = 
+                  atof(szMax[1]);
 
-                            nCoords = 0;
-                            szMin = split(szCoords1, ',', &nCoords);
-                            if (szMin && nCoords == 2)
-                            {
-                                ((rectObj *)psFilterNode->psRightNode->pOther)->minx = 
-                                  atof(szMin[0]);
-                                ((rectObj *)psFilterNode->psRightNode->pOther)->miny = 
-                                  atof(szMin[1]);
-                            }
-                            else
-                              psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_UNDEFINED;
-
-                            nCoords = 0;
-                            szMax = split(szCoords2, ',', &nCoords);
-                            if (szMax && nCoords == 2)
-                            {
-                                ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = 
-                                  atof(szMax[0]);
-                                ((rectObj *)psFilterNode->psRightNode->pOther)->maxy = 
-                                  atof(szMax[1]);
-                            }
-                            else
-                              psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_UNDEFINED;
-                        }
-                        else
-                          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_UNDEFINED;
-                    }     
-                            
-                }
-                
+                free(szMin);
+                free(szMax);
             }
-        
+
         }//end of is spatial
+
+
 /* -------------------------------------------------------------------- */
 /*      Comparison Filter                                               */
 /* -------------------------------------------------------------------- */
@@ -674,34 +711,55 @@ int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode)
 }
  
 /************************************************************************/
-/*                          FLTNumberOfBBoxFilter                       */
+/*                          FLTNumberOfFilterType                       */
 /*                                                                      */
-/*      Loop trhough the nodes and return the number of BBOX nodes.     */
+/*      Loop trhough the nodes and return the number of nodes of        */
+/*      specified value.                                                */
 /************************************************************************/
-int FLTNumberOfBBoxFilter(FilterEncodingNode *psFilterNode)
+int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, const char *szType)
 {
     int nCount = 0;
-    int nLeftNode, nRightNode = 0;
+    int nLeftNode=0 , nRightNode = 0;
 
-    if (!psFilterNode)
+    if (!psFilterNode || !szType || !psFilterNode->pszValue)
       return 0;
 
-    if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
+    if (strcasecmp(psFilterNode->pszValue, (char*)szType) == 0)
       nCount++;
 
     if (psFilterNode->psLeftNode)
-      nLeftNode = FLTNumberOfBBoxFilter(psFilterNode->psLeftNode);
+      nLeftNode = FLTNumberOfFilterType(psFilterNode->psLeftNode, szType);
 
     nCount += nLeftNode;
 
     if (psFilterNode->psRightNode)
-      nRightNode = FLTNumberOfBBoxFilter(psFilterNode->psRightNode);
+      nRightNode = FLTNumberOfFilterType(psFilterNode->psRightNode, szType);
     nCount += nRightNode;
    
     return nCount;
 }
     
-  
+
+/************************************************************************/
+/*                      FLTValidForPropertyIsLikeFilter                 */
+/*                                                                      */
+/*      Valdate if there is only one ProperyIsLike Filter.              */
+/************************************************************************/
+int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
+{
+    int nCount = 0;
+   
+    if (!psFilterNode)
+      return 1;
+
+    nCount = FLTNumberOfFilterType(psFilterNode, "PropertyIsLike");
+
+    if (nCount <= 1)
+      return 1;
+
+    return 0;
+}
+
 
 /************************************************************************/
 /*                          FLTValidForBBoxFilter                       */
@@ -738,19 +796,19 @@ int FLTNumberOfBBoxFilter(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
 {
-    int nCount;
+    int nCount = 0;
    
-    if (!psFilterNode)
+    if (!psFilterNode || !psFilterNode->pszValue)
       return 1;
 
-    nCount = FLTNumberOfBBoxFilter(psFilterNode);
+    nCount = FLTNumberOfFilterType(psFilterNode, "BBOX");
 
     if (nCount > 1)
       return 0;
     else if (nCount == 0)
       return 1;
 
-    
+    //nCount ==1 
     if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
       return 1;
 
@@ -762,7 +820,32 @@ int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
     return 0;
 }       
     
+   
+
+int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode)
+{
+    if (!psFilterNode || !psFilterNode->pszValue)
+      return 0;
+    
+    if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
+      return 1;
+
+    if (strcasecmp(psFilterNode->pszValue, "AND") &&
+        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0) ||
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)))
+      return 1;
+
+    return 0;
+}       
             
+
+/************************************************************************/
+/*                                FLTGetBBOX                            */
+/*                                                                      */
+/*      Loop through the nodes are return the coordinates of the        */
+/*      first bbox node found. The retrun value is the epsg code of     */
+/*      the bbox.                                                       */
+/************************************************************************/
 char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect)
 {
     char *pszReturn = NULL;
@@ -920,7 +1003,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 
     
 /* ==================================================================== */
-/*      specila case for BBOX node.                                     */
+/*      special case for BBOX node.                                     */
 /* ==================================================================== */
     if (psFilterNode->psLeftNode && psFilterNode->psRightNode &&
         ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") == 0) ||
@@ -928,6 +1011,27 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
     {
         strcat(szBuffer, " (");
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0)
+          pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
+        else
+          pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
+
+        if (!pszTmp)
+          return NULL;
+        strcat(szBuffer, pszTmp);
+        strcat(szBuffer, ") ");
+
+        return strdup(szBuffer);
+    }
+
+/* ==================================================================== */
+/*      special case for PropertyIsLike.                                */
+/* ==================================================================== */
+    if (psFilterNode->psLeftNode && psFilterNode->psRightNode &&
+        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") == 0) ||
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") == 0)))
+    {
+        strcat(szBuffer, " (");
+        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") != 0)
           pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
         else
           pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
@@ -989,7 +1093,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
 {
     char szBuffer[512];
-    int i, bString, nLenght = 0;
+    int i=0, bString=0, nLenght = 0;
 
     szBuffer[0] = '\0';
     if (!psFilterNode || !FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
@@ -1071,7 +1175,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
     char szBuffer[512];
     char **aszBounds = NULL;
     int nBounds = 0;
-    int i, bString, nLenght = 0;
+    int i=0, bString=0, nLenght = 0;
 
     szBuffer[0] = '\0';
     if (!psFilterNode ||
@@ -1179,7 +1283,8 @@ char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode)
     char *pszSingle = NULL;
     char *pszEscape = NULL;
     
-    int nLength, i, iBuffer = 0;
+    int nLength=0, i=0, iBuffer = 0;
+
     if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
         !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
       return NULL;
