@@ -1,0 +1,22 @@
+	Python MapScript
+	================
+
+To build Python mapscript support on Unix:
+
+
+Setup.py Changes:
+
+ o Set entries in 'define_macros' to match the overall build options in
+   the Mapserver makefile.  
+ o Add any necessary directories to 'include_dirs'
+ o Add *all* libraries that mapserver has to link against to 'libraries'.
+
+Then run 'python setup.py build' to build Python MapScript.  The command
+'python setup.py install' may properly install Python mapscript if run as
+root, but if not try adding the [mapserverroot]/mapscript/python/lib.* 
+directory to your PYTHONPATH. 
+ 
+Good luck!
+
+Frank Warmerdam (warmerdam@pobox.com)
+June 2002
