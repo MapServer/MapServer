@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.361  2004/10/22 04:03:31  dan
+ * Ready for 4.4.0-beta1
+ *
  * Revision 1.360  2004/10/21 19:19:44  assefa
  * Add utility function trimLeft.
  *
@@ -117,7 +120,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "4.3"
+#define MS_VERSION "4.4.0-beta1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
