@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.156  2003/04/22 04:02:17  assefa
+ * Add grid object and related functions inside the layer object.
+ *
  * Revision 1.155  2003/04/17 20:48:05  assefa
  * Update php object when a select output format is done.
  *
@@ -409,6 +412,9 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -454,6 +460,11 @@ static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
                                              HashTable *list, 
                                              pval *return_value);
 
+static long _phpms_build_grid_object(graticuleObj *pgrid, 
+                                     int parent_layer_id,
+                                     HashTable *list, 
+                                     pval *return_value TSRMLS_DC);
+
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
 /* ==================================================================== */
@@ -493,6 +504,7 @@ static int le_msscalebar;
 static int le_mslegend;
 static int le_msstyle;
 static int le_msoutputformat;
+static int le_msgrid;
 
 static char tmpId[128] = "ttt"; /* big enough for time + pid */
 static int  tmpCount = 0;
@@ -519,6 +531,7 @@ static zend_class_entry *scalebar_class_entry_ptr;
 static zend_class_entry *legend_class_entry_ptr;
 static zend_class_entry *style_class_entry_ptr;
 static zend_class_entry *outputformat_class_entry_ptr;
+static zend_class_entry *grid_class_entry_ptr;
 
 #endif
 
@@ -538,6 +551,7 @@ function_entry php3_ms_functions[] = {
     {"ms_newprojectionobj", php3_ms_projection_new, NULL},
     {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
     {"ms_newstyleobj",  php3_ms_style_new,      NULL},
+    {"ms_newgridobj",  php3_ms_grid_new,      NULL},
     {NULL, NULL, NULL}
 };
 
@@ -766,6 +780,11 @@ function_entry php_outputformat_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
+function_entry php_grid_class_functions[] = {
+    {"set",             php3_ms_grid_setProperty,        NULL},
+    {NULL, NULL, NULL}
+};
+
 PHP_MINFO_FUNCTION(mapscript)
 {
   php_info_print_table_start();
@@ -842,6 +861,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
     PHPMS_GLOBAL(le_msoutputformat)= register_list_destructors(php3_ms_free_stub,
                                                                NULL);
+
+    PHPMS_GLOBAL(le_msgrid)= register_list_destructors(php3_ms_free_stub,
+                                                       NULL);
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -1022,6 +1044,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
      INIT_CLASS_ENTRY(tmp_class_entry, "outputformat", php_outputformat_class_functions);
      outputformat_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
+     INIT_CLASS_ENTRY(tmp_class_entry, "grid", php_grid_class_functions);
+     grid_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 #endif
 
     return SUCCESS;
@@ -1199,9 +1224,7 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
                                    list,  new_obj_ptr);
     _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR);
 
-    #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_outputformat_object(pMap->outputformat, list, new_obj_ptr);
     _phpms_add_property_object(return_value, "outputformat", new_obj_ptr, E_ERROR);
     return map_id;
@@ -5154,7 +5177,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"cellsize",  self->cellsize, E_ERROR);
     _phpms_set_property_long(pThis,  "units",     self->units, E_ERROR);
     _phpms_set_property_double(pThis,"scale",     self->scale, E_ERROR);
-    _phpms_set_property_long(pThis,  "resolution",self->resolution, E_ERROR);
+    _phpms_set_property_double(pThis,  "resolution",self->resolution, E_ERROR);
     if(self->shapepath)
         _phpms_set_property_string(pThis, "shapepath",self->shapepath,E_ERROR);
 
@@ -5713,6 +5736,16 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     _phpms_build_color_object(&(player->offsite),list, new_obj_ptr);
     _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR);
 
+    if (player->connectiontype == MS_GRATICULE && 
+        player->layerinfo != NULL)
+    {
+        MAKE_STD_ZVAL(new_obj_ptr);
+         _phpms_build_grid_object((graticuleObj *)(player->layerinfo),
+                                  layer_id,
+                                  list, new_obj_ptr TSRMLS_CC);
+         _phpms_add_property_object(return_value, "grid", new_obj_ptr, E_ERROR);
+
+    }
     return layer_id;
 }
 
@@ -11012,6 +11045,151 @@ static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
 
     return outputformat_id;
 }
+
+
+/*=====================================================================
+ *                 PHP function wrappers - grid class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_grid_object()
+ **********************************************************************/
+static long _phpms_build_grid_object(graticuleObj *pgrid, 
+                                     int parent_layer_id, 
+                                     HashTable *list, 
+                                     pval *return_value TSRMLS_DC)
+{
+    int         grid_id;
+
+    if (pgrid == NULL)
+        return 0;
+
+    grid_id = 
+      php3_list_insert(pgrid, PHPMS_GLOBAL(le_msgrid));
+
+    _phpms_object_init(return_value, grid_id, 
+                       php_grid_class_functions,
+                       PHP4_CLASS_ENTRY(grid_class_entry_ptr));
+
+    add_property_resource(return_value, "_layer_handle_", parent_layer_id);
+    zend_list_addref(parent_layer_id);
+
+    add_property_double(return_value,  "minsubdivide", pgrid->minsubdivides);
+    add_property_double(return_value,  "maxsubdivide", pgrid->maxsubdivides);
+    add_property_double(return_value,  "minarcs", pgrid->minarcs);
+    add_property_double(return_value,  "maxarcs", pgrid->maxarcs);
+    add_property_double(return_value,  "minincrement", pgrid->minincrement);
+    add_property_double(return_value,  "maxincrement", pgrid->maxincrement);
+    PHPMS_ADD_PROP_STR(return_value, "labelformat", pgrid->labelformat);
+    
+    return grid_id;
+}
+
+
+DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pLayerObj;
+    layerObj *parent_class;
+    int layer_id;
+    HashTable   *list=NULL;
+    pval        *new_obj_ptr;
+
+    if (getParameters(ht, 1, &pLayerObj) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    parent_class = (layerObj*)_phpms_fetch_handle(pLayerObj, 
+                                                  PHPMS_GLOBAL(le_mslayer),
+                                                  list TSRMLS_CC);
+
+    layer_id = _phpms_fetch_property_resource(pLayerObj, "_handle_", E_ERROR);
+
+    if (parent_class == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        RETURN_FALSE;
+    }
+
+    parent_class->connectiontype = MS_GRATICULE;
+
+    /* Update layerObj members */
+    _phpms_set_property_long(pLayerObj, "connectiontype",
+                             parent_class->connectiontype, E_ERROR); 
+
+    if (parent_class->layerinfo != NULL)
+      free(parent_class->layerinfo);
+
+    parent_class->layerinfo = (graticuleObj *)malloc( sizeof( graticuleObj ) );
+    
+    MAKE_STD_ZVAL(new_obj_ptr);
+    _phpms_build_grid_object((graticuleObj *)(parent_class->layerinfo),
+                             layer_id,
+                             list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(pLayerObj, "grid", new_obj_ptr, E_ERROR);
+    
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        grid->set()
+ **********************************************************************/
+
+/* {{{ proto int grid.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    graticuleObj *self;
+    layerObj *parent_layer;
+    pval   *pPropertyName, *pNewValue, *pThis;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (graticuleObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msgrid),
+                                           list TSRMLS_CC);
+   
+    parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
+                                                       PHPMS_GLOBAL(le_mslayer),
+                                                       list TSRMLS_CC, E_ERROR);
+
+    if (self == NULL || parent_layer == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    if (parent_layer->connectiontype == MS_GRATICULE &&
+        parent_layer->layerinfo != NULL)
+    {
+        convert_to_string(pPropertyName);
+
+        IF_SET_DOUBLE(  "minsubdivide",             self->minsubdivides)
+        else IF_SET_DOUBLE(  "maxsubdivide",             self->maxsubdivides)
+        else IF_SET_DOUBLE(  "minarcs",             self->minarcs)
+        else IF_SET_DOUBLE(  "maxarcs",             self->maxarcs)
+        else IF_SET_DOUBLE(  "minincrement",             self->minincrement)
+        else IF_SET_DOUBLE(  "maxincrement",             self->maxincrement)
+        else IF_SET_STRING( "labelformat",   self->labelformat)
+        else
+        {
+            php3_error(E_ERROR,"Property '%s' does not exist in this object.",
+                   pPropertyName->value.str.val);
+            RETURN_LONG(-1);
+        }
+
+    }
+
+    RETURN_LONG(0);
+}
+/* }}} */
 
 /* ==================================================================== */
 /*      utility functions                                               */
