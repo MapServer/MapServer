@@ -29,6 +29,8 @@ MS_LIB_DLL  =	mapserver_i.lib
 # Uncomment the following to link mapserv.exe withh dll
 DLLBUILD=1
 
+# Set the following to point to the current directory. 
+MS_BASE = 	C:\projects\mapserver
 
 # Input raster format options:
 #
@@ -509,11 +511,14 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
 		 $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC)
 
-MS_CFLAGS=$(INCLUDES) $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
+MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
           $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) \
           $(GDAL)  \
           -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF) $(EGIS) \
         $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION)
+
+MS_CFLAGS=$(INCLUDES) $(MS_DEFS)
+
 
 
