@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.35  2004/05/11 01:25:16  assefa
+ * Remove unused metadata gml_uri : Bug 527.
+ *
  * Revision 1.34  2004/05/03 03:45:42  dan
  * Include map= param in default onlineresource of GetCapabilties if it
  * was explicitly set in QUERY_STRING (bug 643)
@@ -519,7 +522,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 {
     int i, numlayers=0;
     char **layers = NULL;
-    const char *myns_uri = NULL;
     char **tokens;
     int n=0;
     char *user_namespace_prefix = NULL;
@@ -590,9 +592,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
-    myns_uri = msLookupHashTable(map->web.metadata, "gml_uri");
-    if (myns_uri == NULL)
-        myns_uri = "http://www.ttt.org/myns";
 
     user_namespace_prefix =  
       msLookupHashTable(map->web.metadata, "wfs_namespace_prefix");
@@ -620,7 +619,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                "   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
                "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
                "   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
-               myns_uri, myns_uri); 
+               "http://www.ttt.org/myns", "http://www.ttt.org/myns"); 
     
 
     printf("\n"
@@ -736,7 +735,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   //const char *wmtver, char **names, char **values, int numentries)
 {
     int         i, maxfeatures=-1;
-    const char *typename="", *myns_uri;
+    const char *typename="";
     char       *script_url=NULL, *script_url_encoded;
     rectObj     bbox;
     const char  *pszOutputSRS = NULL;
@@ -1058,9 +1057,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     ** GetFeature response
     */
 
-    myns_uri = msLookupHashTable(map->web.metadata, "gml_uri");
-    if (myns_uri == NULL)
-        myns_uri = "http://www.ttt.org/myns";
 
     if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource",req)) ==NULL ||
         (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
@@ -1113,9 +1109,9 @@ ENAME=%s\">\n",
              "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
              "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
 ENAME=%s\">\n",
-           myns_uri, myns_uri,
+           "http://www.ttt.org/myns", "http://www.ttt.org/myns",
            msOWSGetSchemasLocation(map), paramsObj->pszVersion,
-           myns_uri, script_url_encoded, paramsObj->pszVersion, typename);
+           "http://www.ttt.org/myns", script_url_encoded, paramsObj->pszVersion, typename);
 
 
     /* __TODO__ WFS expects homogenous geometry types, but our layers can
