@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/11/18 21:17:24  frank
+ * Further work on last fix.  Now the transparent value on the temporary
+ * image is setup properly via imagecolor, and by forcing the transparent
+ * flag in a temporary outputFormatObj.  This ensures that msAddColorGD() will
+ * avoid returning the transparent color for any other purposes.
+ *
  * Revision 1.30  2002/11/18 15:36:54  frank
  * For pseudocolored GD images, avoid copying the destination colormap to
  * temporary imageObj.  Instead remap colors during resampling.  Also ensure
@@ -907,8 +913,35 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         + sSrcExtent.maxx * adfSrcGeoTransform[4]
         + sSrcExtent.miny * adfSrcGeoTransform[5];
 
-    sDummyMap.outputformat = map->outputformat;
+    sDummyMap.outputformat = NULL;
     
+/* -------------------------------------------------------------------- */
+/*      If we are working in 256 color GD mode, allocate 0 as the       */
+/*      transparent color on the temporary image so it will be          */
+/*      initialized to see-through.  We pick an arbitrary rgb tuple     */
+/*      as our transparent color, but ensure it is initalized in the    */
+/*      map so that normal transparent avoidance will apply.            */
+/*                                                                      */
+/*      In any event, ensure a referenced outputformat object is        */
+/*      assigned to the dummymap.                                       */
+/* -------------------------------------------------------------------- */
+    if( MS_RENDERER_GD(image->format)
+        && !gdImageTrueColor( image->img.gd ) )
+    {
+        msApplyOutputFormat( &(sDummyMap.outputformat), image->format,
+                             MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+
+        sDummyMap.imagecolor.red = 117;
+        sDummyMap.imagecolor.green = 17;
+        sDummyMap.imagecolor.blue = 191;
+
+    }
+    else
+    {
+        msApplyOutputFormat( &(sDummyMap.outputformat), image->format,
+                             MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Setup a dummy map object we can use to read from the source     */
 /*      raster, with the newly established extents, and resolution.     */
@@ -918,22 +951,21 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
                 sDummyMap.extent.minx)/sDummyMap.cellsize+0.01), 
         (int) ((sDummyMap.extent.maxy - 
                 sDummyMap.extent.miny)/sDummyMap.cellsize+0.01),
-        image->format, NULL, NULL );
+        sDummyMap.outputformat, NULL, NULL );
 
 /* -------------------------------------------------------------------- */
-/*      If we are working in 256 color GD mode, allocate 0 as the       */
-/*      transparent color on the temporary image so it will be          */
-/*      initialized to see-through.  We pick an arbitrary rgb tuple     */
-/*      as our transparent color, but ensure it is initalized in the    */
-/*      map so that normal transparent avoidance will apply.            */
+/*      If we have a colormapped GD temporary image we need to          */
+/*      allocate color cell zero as the transparent color.              */
 /* -------------------------------------------------------------------- */
     if( MS_RENDERER_GD(srcImage->format)
         && !gdImageTrueColor( srcImage->img.gd ) )
     {
         int nTrColor;
-
-        nTrColor = msAddColorGD( &sDummyMap, srcImage->img.gd, 117, 17, 103 );
-        gdImageColorTransparent( srcImage->img.gd, nTrColor );
+        
+        nTrColor = gdImageColorAllocate( srcImage->img.gd, 
+                                         sDummyMap.imagecolor.red,
+                                         sDummyMap.imagecolor.green,
+                                         sDummyMap.imagecolor.blue );
         assert( nTrColor == 0 );
     }
 
@@ -959,6 +991,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     result = drawGDAL( &sDummyMap, layer, srcImage, hDS );
     if( result )
     {
+        msApplyOutputFormat( &(sDummyMap.outputformat), NULL, 
+                             MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
         msFreeImage( srcImage );
         return result;
     }
@@ -972,17 +1006,16 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     {
         int  iColor, nColorCount;
 
+        anCMap[0] = -1; /* color zero is always transparent */
+
         nColorCount = gdImageColorsTotal( srcImage->img.gd );
-        for( iColor = 0; iColor < nColorCount; iColor++ )
+        for( iColor = 1; iColor < nColorCount; iColor++ )
         {
-            if( gdImageGetTransparent( srcImage->img.gd ) == iColor )
-                anCMap[iColor] = -1;
-            else
-                anCMap[iColor] = 
-                    msAddColorGD( map, image->img.gd, 
-                                  gdImageRed( srcImage->img.gd, iColor ),
-                                  gdImageGreen( srcImage->img.gd, iColor ),
-                                  gdImageBlue( srcImage->img.gd, iColor ) );
+            anCMap[iColor] = 
+                msAddColorGD( map, image->img.gd, 
+                              gdImageRed( srcImage->img.gd, iColor ),
+                              gdImageGreen( srcImage->img.gd, iColor ),
+                              gdImageBlue( srcImage->img.gd, iColor ) );
         }
         for( iColor = nColorCount; iColor < 256; iColor++ )
             anCMap[iColor] = -1;
@@ -1008,6 +1041,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     {
         if( layer->debug )
             msDebug( "msInitProjTransformer() returned NULL.\n" );
+
+        msApplyOutputFormat( &(sDummyMap.outputformat), NULL, 
+                             MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
         msFreeImage( srcImage );
         return MS_PROJERR;
     }
@@ -1034,6 +1070,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     msFreeProjTransformer( pTCBData );
     msFreeApproxTransformer( pACBData );
     
+    msApplyOutputFormat( &(sDummyMap.outputformat), NULL, 
+                         MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+
     return result;
 #endif
 }
