@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.47  2004/11/17 17:24:52  dan
+ * Fixed warnings introduced by last change
+ *
  * Revision 1.46  2004/11/17 15:59:57  assefa
  * replace lookup for wms_name to wms/ows_name (Bug  568).
  *
@@ -290,7 +293,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     int i, j, k, iClass;
     int bUseSpecificLayer = 0;
     int bSuccess =0;
-    char *pszTmp = NULL;
+    const char *pszTmp = NULL;
     int bFreeTemplate = 0;
     int nLayerStatus = 0;
 
@@ -308,7 +311,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
             }
 
             /* compare layer name to wms_name as well */
-            //pszTmp = msLookupHashTable(&(map->layers[i].metadata), "wms_name");
             pszTmp = msOWSLookupMetadata(&(map->layers[i].metadata), "MO", "name");
 
             for (j=0; j<nLayers; j++)
@@ -3600,7 +3602,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     char *pszFilter = NULL;
     char *pszFinalSLD = NULL;
     char *pszSLD = NULL;
-    char *pszTmp = NULL;
+    const char *pszTmp = NULL;
     double dfMinScale =-1, dfMaxScale = -1;
     const char *pszWfsFilter= NULL;
     char *pszEncoded = NULL, *pszWfsFilterEncoded=NULL;
@@ -3616,7 +3618,6 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
-        //pszTmp = msLookupHashTable(&(psLayer->metadata), "wms_name");
         pszTmp = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
         if (pszTmp)
         {
