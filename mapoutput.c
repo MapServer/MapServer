@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/11/18 20:55:38  frank
+ * In msOutputFormatValidate() we now ensure that GD/JPEG does not have
+ * alpha enabled, or transparent turned on.   Bug 1073.
+ *
  * Revision 1.29  2004/11/18 19:27:16  frank
  * Fixed formatting of debug message.
  *
@@ -924,6 +928,26 @@ int msOutputFormatValidate( outputFormatObj *format )
 
     format->bands = 
             atoi(msGetOutputFormatOption( format, "BAND_COUNT", "1" ));
+
+    /* Enforce the requirement that GD/JPEG be RGB and TRANSPARENT=OFF */
+    if( strcasecmp(format->driver,"GD/JPEG") == 0 && format->transparent )
+    {
+        msDebug( "GD/JPEG OUTPUTFORMAT %s has TRANSPARENT set ON, but this is not supported.\n"
+                 "It has been disabled.\n", 
+                 format->name );
+        format->transparent = MS_FALSE;
+        result = MS_FALSE;
+    }
+
+    if( strcasecmp(format->driver,"GD/JPEG") == 0 
+        && format->imagemode == MS_IMAGEMODE_RGBA )
+    {
+        msDebug( "GD/JPEG OUTPUTFORMAT %s has IMAGEMODE RGBA, but this is not supported.\n"
+                 "IMAGEMODE forced to RGB.\n", 
+                 format->name );
+        format->imagemode = MS_IMAGEMODE_RGB;
+        result = MS_FALSE;
+    }
 
     if( format->transparent && format->imagemode == MS_IMAGEMODE_RGB )
     {
