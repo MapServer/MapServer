@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2003/12/05 04:02:33  assefa
+ * Add generation of SLD for points and text.
+ *
  * Revision 1.8  2003/12/03 18:52:21  assefa
  * Add partly support for SLD generation.
  *
@@ -65,6 +68,7 @@
 
 
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
+#define SLD_LINE_SYMBOL_DASH_NAME "sld_line_symbol_dash"
 #define SLD_MARK_SYMBOL_SQUARE "sld_mark_symbol_square"
 #define SLD_MARK_SYMBOL_SQUARE_FILLED "sld_mark_symbol_square_filled"
 #define SLD_MARK_SYMBOL_CIRCLE "sld_mark_symbol_circle"
@@ -96,7 +100,8 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer)
     int status = 0;
     char *pszSLDbuf=NULL;
     FILE *fp = NULL;               
-
+    
+ 
     if (map && szURL)
     {
         pszSLDTmpFile = msTmpFile(map->web.imagepath, "sld.xml");
@@ -191,6 +196,14 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer)
                           free(map->layers[i].labelitem);
 
                         map->layers[i].labelitem = strdup(pasLayers[j].labelitem);
+                    }
+
+                    if (pasLayers[j].classitem)
+                    {
+                        if (map->layers[i].classitem)
+                          free(map->layers[i].classitem);
+
+                        map->layers[i].classitem = strdup(pasLayers[j].classitem);
                     }
 
                     break;
@@ -424,7 +437,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                             if (psNode)
                             {
-                              //TODO layer->classitem
                                 szExpression = FLTGetMapserverExpression(psNode);
                                 if (szExpression)
                                 {
@@ -811,7 +823,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
         //parse graphic fill or stroke
         //graphic fill and graphic stroke pare parsed the same way : 
         //TODO : It seems inconsistent to me since the only diffrence
-        //betewwn them seems to be fill (fill) or not fill (stroke). And
+        //between them seems to be fill (fill) or not fill (stroke). And
         //then again the fill parameter can be used inside both elements.
         psGraphicFill =  CPLGetXMLNode(psStroke, "GraphicFill");
         if (psGraphicFill)
@@ -1020,7 +1032,7 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
         
         //graphic fill and graphic stroke pare parsed the same way : 
         //TODO : It seems inconsistent to me since the only diffrence
-        //betewwn them seems to be fill (fill) or not fill (stroke). And
+        //between them seems to be fill (fill) or not fill (stroke). And
         //then again the fill parameter can be used inside both elements.
         psGraphicFill =  CPLGetXMLNode(psFill, "GraphicFill");
         if (psGraphicFill)
@@ -1094,10 +1106,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                      strcasecmp(pszSymbolName, "x") != 0))
                   pszSymbolName = strdup("square");
                     
-                //set the default color
-                psStyle->color.red = 128;
-                psStyle->color.green = 128;
-                psStyle->color.blue = 128;
+                
                 
                 //check if the symbol should be filled or not
                 psFill = CPLGetXMLNode(psMark, "Fill");
@@ -1109,6 +1118,30 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                       bFilled = 1;
                     else
                       bFilled = 0;
+
+                    //set the default color if not already set
+                    if (bFilled)
+                    {
+                        if (psStyle->color.red == -1 ||
+                            psStyle->color.green == -1 ||
+                            psStyle->color.blue == -1)
+                        {
+                            psStyle->color.red = 128;
+                            psStyle->color.green = 128;
+                            psStyle->color.blue = 128;
+                        }
+                    }
+                    else
+                    {
+                        if (psStyle->outlinecolor.red == -1 ||
+                            psStyle->outlinecolor.green == -1 ||
+                            psStyle->outlinecolor.blue == -1)
+                        {
+                            psStyle->outlinecolor.red = 128;
+                            psStyle->outlinecolor.green = 128;
+                            psStyle->outlinecolor.blue = 128;
+                        }
+                    }
 
                     psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
                     while (psCssParam && psCssParam->pszValue && 
@@ -1129,7 +1162,14 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                             {
                                 nLength = strlen(psColor);
                                 if (nLength == 7 && psColor[0] == '#')
-                                  msSLDSetColorObject(psColor,  &psStyle->color);
+                                {
+                                    if (bFilled)
+                                      msSLDSetColorObject(psColor,
+                                                          &psStyle->color);
+                                    else
+                                      msSLDSetColorObject(psColor,
+                                                          &psStyle->outlinecolor);
+                                }
                             }
                             break;
                         }
@@ -1238,7 +1278,7 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
     initSymbol(psSymbol);
     psSymbol->inmapfile = MS_TRUE;
 
-    psSymbol->name = strdup(SLD_LINE_SYMBOL_NAME);
+    psSymbol->name = strdup(SLD_LINE_SYMBOL_DASH_NAME);
     psSymbol->type = MS_SYMBOL_ELLIPSE;
     psSymbol->filled = MS_TRUE;
     psSymbol->points[psSymbol->numpoints].x = 1;
@@ -1683,6 +1723,17 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                     MS_SUCCESS)
                 {
                     psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName);
+
+                    //set the color parameter if not set. Does not make sense
+                    //for pixmap but mapserver needs it.
+                    if (psStyle->color.red == -1 || psStyle->color.green ||
+                        psStyle->color.blue)
+                    {
+                        psStyle->color.red = 0;
+                        psStyle->color.green = 0;
+                        psStyle->color.blue = 0;
+                    }
+                        
                 }
             }
         }
@@ -1985,6 +2036,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
             
             }//labelitem
         }
+        //TODO : support Halo parameter => shadow
     }
 }
 
@@ -2183,52 +2235,182 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
 }
 
 
-char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
+
+/************************************************************************/
+/*                            msSLDGetGraphicSLD                        */
+/*                                                                      */
+/*      Get an SLD dor a sytle containg a symbol (Mark or external).    */
+/************************************************************************/
+char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
 {
-    char szTmp[100];
     char *pszSLD = NULL;
-    char szHexColor[7];
-
-    sprintf(szTmp, "%s\n",  "<PolygonSymbolizer>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
-    //fill
-    if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
-        psStyle->color.blue != -1)
+    int nSymbol = -1;
+    symbolObj *psSymbol = NULL;
+    char szTmp[100];
+    char *pszURL = NULL;
+    char szFormat[4];
+    int i = 0, nLength = 0;
+    
+    if (psStyle && psLayer && psLayer->map)
     {
+        nSymbol = -1;
+        if (psStyle->symbol > 0)
+          nSymbol = psStyle->symbol;
+        else if (psStyle->symbolname)
+          nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
+                                     psStyle->symbolname);
 
-        sprintf(szTmp, "%s\n",  "<Fill>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
-        
-        sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
-                psStyle->color.green,psStyle->color.blue);
-                             
-        sprintf(szTmp, 
-                "<CssParameter name=\"fill\">#%s</CssParameter>\n", 
-                szHexColor);
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        if (nSymbol > 0 && psLayer->map->symbolset.numsymbols)
+        {
+            psSymbol =  &psLayer->map->symbolset.symbol[nSymbol];
+            if (psSymbol->type == MS_SYMBOL_VECTOR || 
+                psSymbol->type == MS_SYMBOL_ELLIPSE)
+            {
+                //Mark symbol
+                if (psSymbol->name &&
+                    (strcasecmp(psSymbol->name, "square") == 0 ||
+                     strcasecmp(psSymbol->name, "circle") == 0 ||
+                     strcasecmp(psSymbol->name, "triangle") == 0 ||
+                     strcasecmp(psSymbol->name, "star") == 0 ||
+                     strcasecmp(psSymbol->name, "cross") == 0 ||
+                     strcasecmp(psSymbol->name, "x") == 0))
+                {
+                    sprintf(szTmp, "%s\n", "<Graphic>");
+                    pszSLD = strcatalloc(pszSLD, szTmp);
 
-        sprintf(szTmp, "%s\n",  "<Fill>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
-    }
-    //stroke
-    if (psStyle->outlinecolor.red != -1 && 
-        psStyle->outlinecolor.green != -1 &&
-        psStyle->outlinecolor.blue != -1)
-    {
-        sprintf(szTmp, "%s\n",  "<Stroke>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+                    if (psStyle->size > 0)
+                      sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+                    pszSLD = strcatalloc(pszSLD, szTmp);
 
-        sprintf(szHexColor,"%02x%02x%02x",psStyle->outlinecolor.red,
-                psStyle->outlinecolor.green,
-                psStyle->outlinecolor.blue);
-        
-        sprintf(szTmp, 
-                "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
-                szHexColor);
-        pszSLD = strcatalloc(pszSLD, szTmp);
+                    sprintf(szTmp, "%s\n", "<Mark>");
+                    pszSLD = strcatalloc(pszSLD, szTmp);
 
-        sprintf(szTmp, "%s\n",  "<Stroke>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+                    sprintf(szTmp, "<WellKnownName>%s</WellKnownName>\n",
+                            psSymbol->name);
+                    pszSLD = strcatalloc(pszSLD, szTmp);
+
+                    if (psSymbol->filled && 
+                        psStyle->color.red != -1 && 
+                        psStyle->color.green != -1 &&
+                        psStyle->color.blue != -1)
+                      sprintf(szTmp, "%s\n", "<Fill>");
+                    else
+                      sprintf(szTmp, "%s\n", "<Stroke>");
+
+                    pszSLD = strcatalloc(pszSLD, szTmp);
+
+                    if (psStyle->color.red != -1 && 
+                        psStyle->color.green != -1 &&
+                        psStyle->color.blue != -1)
+                    {
+                        if (psSymbol->filled)
+                          sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
+                                   psStyle->color.red,
+                                  psStyle->color.green,
+                                   psStyle->color.blue);
+                        else
+                          sprintf(szTmp, "<CssParameter name=\"stroke\">#%02x%02x%02x</CssParameter>\n",
+                                   psStyle->color.red,
+                                  psStyle->color.green,
+                                   psStyle->color.blue);
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                    }
+                    else if (psStyle->outlinecolor.red != -1 && 
+                             psStyle->outlinecolor.green != -1 &&
+                             psStyle->outlinecolor.blue != -1)
+                    {
+                        if (psSymbol->filled)
+                          sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
+                                  psStyle->outlinecolor.red,
+                                  psStyle->outlinecolor.green,
+                                  psStyle->outlinecolor.blue);
+                        else
+                          sprintf(szTmp, "<CssParameter name=\"stroke\">#%02x%02x%02x</CssParameter>\n",
+                                  psStyle->outlinecolor.red,
+                                  psStyle->outlinecolor.green,
+                                  psStyle->outlinecolor.blue);
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                    }
+                    else
+                    {       
+                        //default color
+                        if (psSymbol->filled)
+                          sprintf(szTmp, 
+                                   "<CssParameter name=\"fill\">%s</CssParameter>\n",
+                                   "#808080");
+                        else
+                          sprintf(szTmp, 
+                                   "<CssParameter name=\"stroke\">%s</CssParameter>\n",
+                                   "#808080");
+
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                    }
+
+                    if (psSymbol->filled &&  
+                        psStyle->color.red != -1 && 
+                        psStyle->color.green != -1 &&
+                        psStyle->color.blue != -1)
+                      sprintf(szTmp, "%s\n", "</Fill>");
+                    else
+                      sprintf(szTmp, "%s\n", "</Stroke>");
+                    pszSLD = strcatalloc(pszSLD, szTmp);
+
+                    sprintf(szTmp, "%s\n%s\n", "</Mark>", "</Graphic>");
+                    pszSLD = strcatalloc(pszSLD, szTmp);
+                    
+                }
+            }
+            else if (psSymbol->type == MS_SYMBOL_PIXMAP)
+            {
+                if (psSymbol->name)
+                {
+                    pszURL = msLookupHashTable(psLayer->metadata, "WMS_SLD_SYMBOL_URL");
+                    if (!pszURL)
+                      pszURL = msLookupHashTable(psLayer->map->web.metadata, "WMS_SLD_SYMBOL_URL");
+
+                    if (pszURL)
+                    {
+                        sprintf(szTmp, "%s\n", "<Graphic>");
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+
+                        if (psStyle->size > 0)
+                          sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+
+                        sprintf(szTmp, "%s\n", "<ExternalGraphic>");
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        
+                        sprintf(szTmp, "<OnlineResource>%s%s</OnlineResource>\n", 
+                                pszURL,psSymbol->imagepath);
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        //TODO : extract format from symbol
+
+                        szFormat[0] = '\0';
+                        nLength = strlen(psSymbol->imagepath);
+                        if (nLength > 3)
+                        {
+                            for (i=0; i<=2; i++)
+                              szFormat[2-i] = psSymbol->imagepath[nLength-1-i];
+                            szFormat[3] = '\0';
+                        }
+                        if (strlen(szFormat) > 0 &&
+                            ((strcasecmp (szFormat, "GIF") == 0) ||
+                             (strcasecmp (szFormat, "PNG") == 0)))
+                        {
+                            sprintf(szTmp, "<Format>%s</Format>\n", szFormat);
+                        }
+                        else
+                          sprintf(szTmp, "<Format>%s</Format>\n", "GIF");
+                            
+                        pszSLD = strcatalloc(pszSLD, szTmp);  
+
+                        sprintf(szTmp, "%s\n%s\n",  "</ExternalGraphic>" , "</Graphic>");
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                    }
+                }
+                    
+            }
+        }
     }
 
     return pszSLD;
@@ -2236,6 +2418,12 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
 
 
 
+
+/************************************************************************/
+/*                           msSLDGenerateLineSLD                       */
+/*                                                                      */
+/*      Generate SLD for a Line layer.                                  */
+/************************************************************************/
 char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
 {
     char *pszSLD = NULL;
@@ -2245,8 +2433,9 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
     symbolObj *psSymbol = NULL;
     int i = 0;
     int nSize = 1;
-    char szDashArray[100];
-  
+    char *pszDashArray = NULL;
+    char *pszGraphicSLD = NULL;
+
     sprintf(szTmp, "%s\n",  "<LineSymbolizer>");
     pszSLD = strcatalloc(pszSLD, szTmp);
 
@@ -2293,17 +2482,32 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
         {
             for (i=0; i<psSymbol->stylelength; i++)
             {
-                szTmp[0] = '\0';
                 sprintf(szTmp, "%d ", psSymbol->style[i]);
-                strcat(szDashArray, szTmp);
+                pszDashArray = strcatalloc(pszDashArray, szTmp);
             }
             sprintf(szTmp, 
                     "<CssParameter name=\"stroke-dasharray\">%s</CssParameter>\n", 
-                    szDashArray);
+                    pszDashArray);
             pszSLD = strcatalloc(pszSLD, szTmp);
         }  
                                            
     }
+
+    //TODO : does not work (color is not picked)
+    //pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+    if (pszGraphicSLD)
+    {
+        sprintf(szTmp, "%s\n",  "<GraphicFill>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+        
+        pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+        sprintf(szTmp, "%s\n",  "</GraphicFill>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+             
+        free(pszGraphicSLD);
+        pszGraphicSLD = NULL;
+    }
+
     sprintf(szTmp, "%s\n",  "</Stroke>");
     pszSLD = strcatalloc(pszSLD, szTmp);
 
@@ -2314,6 +2518,347 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
 
 }
 
+
+/************************************************************************/
+/*                         msSLDGeneratePolygonSLD                      */
+/*                                                                      */
+/*       Generate SLD for a Polygon layer.                              */
+/************************************************************************/
+char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
+{
+    char szTmp[100];
+    char *pszSLD = NULL;
+    char szHexColor[7];
+    char *pszGraphicSLD = NULL;
+
+    sprintf(szTmp, "%s\n",  "<PolygonSymbolizer>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+    //fill
+    if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
+        psStyle->color.blue != -1)
+    {
+
+        sprintf(szTmp, "%s\n",  "<Fill>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+        
+        sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
+                psStyle->color.green,psStyle->color.blue);
+                             
+        sprintf(szTmp, 
+                "<CssParameter name=\"fill\">#%s</CssParameter>\n", 
+                szHexColor);
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+        if (pszGraphicSLD)
+        {
+             sprintf(szTmp, "%s\n",  "<GraphicFill>");
+             pszSLD = strcatalloc(pszSLD, szTmp);
+
+             pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+             sprintf(szTmp, "%s\n",  "</GraphicFill>");
+             pszSLD = strcatalloc(pszSLD, szTmp);
+             
+             free(pszGraphicSLD);
+             pszGraphicSLD = NULL;
+        }
+
+        sprintf(szTmp, "%s\n",  "</Fill>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+    }
+    //stroke
+    if (psStyle->outlinecolor.red != -1 && 
+        psStyle->outlinecolor.green != -1 &&
+        psStyle->outlinecolor.blue != -1)
+    {
+        sprintf(szTmp, "%s\n",  "<Stroke>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        sprintf(szHexColor,"%02x%02x%02x",psStyle->outlinecolor.red,
+                psStyle->outlinecolor.green,
+                psStyle->outlinecolor.blue);
+        
+        sprintf(szTmp, 
+                "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
+                szHexColor);
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        //If there is a symbol to be used for sroke, the color in the
+        //style sholud be set to -1. Else It won't apply here.
+        if (psStyle->color.red == -1 && psStyle->color.green == -1 &&
+            psStyle->color.blue == -1)
+        {
+            pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+            if (pszGraphicSLD)
+            {
+                sprintf(szTmp, "%s\n",  "<GraphicFill>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+
+                pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+                sprintf(szTmp, "%s\n",  "</GraphicFill>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+             
+                free(pszGraphicSLD);
+                pszGraphicSLD = NULL;
+            }
+        }
+        sprintf(szTmp, "%s\n",  "</Stroke>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+    }
+
+    sprintf(szTmp, "%s\n",  "</PolygonSymbolizer>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+
+    return pszSLD;
+}
+
+/************************************************************************/
+/*                          msSLDGeneratePointSLD                       */
+/*                                                                      */
+/*      Generate SLD for a Point layer.                                 */
+/************************************************************************/
+char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer)
+{
+    char *pszSLD = NULL;
+    char *pszGraphicSLD = NULL;
+     char szTmp[100];
+
+    sprintf(szTmp, "%s\n",  "<PointSymbolizer>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+
+    pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+    if (pszGraphicSLD)
+    {
+        pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+        free(pszGraphicSLD);
+    }
+    
+    sprintf(szTmp, "%s\n",  "</PointSymbolizer>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+
+    return pszSLD;
+}
+
+
+
+/************************************************************************/
+/*                           msSLDGenerateTextSLD                       */
+/*                                                                      */
+/*      Generate a TextSymboliser SLD xml based on the class's label    */
+/*      object.                                                         */
+/************************************************************************/
+char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
+{
+    char *pszSLD = NULL;
+    char *pszGraphicSLD = NULL;
+    char szTmp[100];
+    char **aszFontsParts = NULL;
+    int nFontParts = 0;
+    char szHexColor[7];
+    int nColorRed=-1, nColorGreen=-1, nColorBlue=-1;
+    double dfAnchorX = 0.5, dfAnchorY = 0.5;
+    int i = 0;
+
+    if (psClass && psLayer && psLayer->labelitem)
+    {
+        sprintf(szTmp, "%s\n",  "<TextSymbolizer>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        sprintf(szTmp, "<Label>%s</Label>\n",  psLayer->labelitem);
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+/* -------------------------------------------------------------------- */
+/*      only true type fonta are exported. Font name should be          */
+/*      something like arial-bold-italic. There are 3 parts to the      */
+/*      name font-family, font-style (italic, oblique, nomal),          */
+/*      font-weight (bold, normal). These 3 elements are separated      */
+/*      with -.                                                         */
+/* -------------------------------------------------------------------- */
+        if (psClass->label.type == MS_TRUETYPE && psClass->label.font)
+        {
+            aszFontsParts = split(psClass->label.font, '-', &nFontParts);
+            if (nFontParts > 0)
+            {
+                sprintf(szTmp, "%s\n",  "<Font>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+
+                //assuming first one is font-family
+                sprintf(szTmp, 
+                        "<CssParameter name=\"font-family\">%s</CssParameter>\n",
+                        aszFontsParts[0]);
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                for (i=1; i<nFontParts; i++)
+                {
+                    if (strcasecmp(aszFontsParts[i], "italic") == 0 ||
+                        strcasecmp(aszFontsParts[i], "oblique") == 0)
+                    {
+                        sprintf(szTmp, 
+                        "<CssParameter name=\"font-style\">%s</CssParameter>\n",
+                        aszFontsParts[i]);
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                    }
+                    else if (strcasecmp(aszFontsParts[i], "bold") == 0)
+                    {
+                        sprintf(szTmp, 
+                        "<CssParameter name=\"font-weight\">%s</CssParameter>\n",
+                        aszFontsParts[i]);
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                    }
+                }
+                //size
+                if (psClass->label.size > 0)
+                {
+                    sprintf(szTmp, 
+                            "<CssParameter name=\"font-size\">%d</CssParameter>\n",
+                            psClass->label.size);
+                    pszSLD = strcatalloc(pszSLD, szTmp);
+                }
+                sprintf(szTmp, "%s\n",  "</Font>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+
+                msFreeCharArray(aszFontsParts, nFontParts);
+            }
+        }
+        //color
+        if (psClass->label.color.red != -1 &&
+            psClass->label.color.green != -1 &&
+            psClass->label.color.blue != -1)
+        {
+            nColorRed = psClass->label.color.red;
+            nColorGreen = psClass->label.color.green;
+            nColorBlue = psClass->label.color.blue;
+        }
+        else if (psClass->label.outlinecolor.red != -1 &&
+                 psClass->label.outlinecolor.green != -1 &&
+                 psClass->label.outlinecolor.blue != -1)
+        {
+            nColorRed = psClass->label.outlinecolor.red;
+            nColorGreen = psClass->label.outlinecolor.green;
+            nColorBlue = psClass->label.outlinecolor.blue;
+        }
+        if (nColorRed >= 0 && nColorGreen >= 0  && nColorBlue >=0)
+        {
+            sprintf(szTmp, "%s\n",  "<Fill>");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+            
+            sprintf(szHexColor,"%02x%02x%02x",nColorRed,
+                    nColorGreen, nColorBlue);
+
+            sprintf(szTmp, 
+                    "<CssParameter name=\"fill\">#%s</CssParameter>\n", 
+                    szHexColor);
+            pszSLD = strcatalloc(pszSLD, szTmp);
+
+            sprintf(szTmp, "%s\n",  "</Fill>");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+        }
+        
+        //label placement
+        sprintf(szTmp, "%s\n%s\n",  "<LabelPlacement>", "<PointPlacement>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        sprintf(szTmp, "%s\n",  "<AnchorPoint>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        if (psClass->label.position == MS_LL)
+        {
+            dfAnchorX =0; 
+            dfAnchorY = 0;
+        }
+        else if (psClass->label.position == MS_CL)
+        {
+            dfAnchorX =0; 
+            dfAnchorY = 0.5;
+        }
+        else if (psClass->label.position == MS_UL)
+        {
+            dfAnchorX =0; 
+            dfAnchorY = 1;
+        }
+        
+        else if (psClass->label.position == MS_LC)
+        {
+            dfAnchorX =0.5; 
+            dfAnchorY = 0;
+        }
+        else if (psClass->label.position == MS_CC)
+        {
+            dfAnchorX =0.5; 
+            dfAnchorY = 0.5;
+        }
+        else if (psClass->label.position == MS_UC)
+        {
+            dfAnchorX =0.5; 
+            dfAnchorY = 1;
+        }
+        
+        else if (psClass->label.position == MS_LR)
+        {
+            dfAnchorX =1; 
+            dfAnchorY = 0;
+        }
+        else if (psClass->label.position == MS_CR)
+        {
+            dfAnchorX =1; 
+            dfAnchorY = 0.5;
+        }
+        else if (psClass->label.position == MS_UR)
+        {
+            dfAnchorX =1; 
+            dfAnchorY = 1;
+        }
+        sprintf(szTmp, "<AnchorPointX>%.1f</AnchorPointX>\n", dfAnchorX);
+        pszSLD = strcatalloc(pszSLD, szTmp);
+        sprintf(szTmp, "<AnchorPointY>%.1f</AnchorPointY>\n", dfAnchorY);
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        sprintf(szTmp, "%s\n",  "</AnchorPoint>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        //displacement
+        if (psClass->label.offsetx > 0 || psClass->label.offsety > 0)
+        {
+            sprintf(szTmp, "%s\n",  "<Displacement>");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+
+            if (psClass->label.offsetx > 0)
+            {
+                sprintf(szTmp, "<DisplacementX>%d</DisplacementX>\n", 
+                        psClass->label.offsetx);
+                pszSLD = strcatalloc(pszSLD, szTmp);
+            }
+            if (psClass->label.offsety > 0)
+            {
+                sprintf(szTmp, "<DisplacementY>%d</DisplacementY>\n", 
+                        psClass->label.offsety);
+                pszSLD = strcatalloc(pszSLD, szTmp);
+            }
+
+            sprintf(szTmp, "%s\n",  "</Displacement>");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+        }
+        //rotation
+        if (psClass->label.angle > 0)
+        {
+            sprintf(szTmp, "<Rotation>%.2f</Rotation>\n", 
+                        psClass->label.angle);
+            pszSLD = strcatalloc(pszSLD, szTmp);
+        }
+
+         //TODO : support Halo parameter => shadow
+
+        sprintf(szTmp, "%s\n%s\n",  "</PointPlacement>", "</LabelPlacement>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        
+        sprintf(szTmp, "%s\n",  "</TextSymbolizer>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+    }
+    return pszSLD;
+
+}
+
+
 /************************************************************************/
 /*                          msSLDGenerateSLDLayer                       */
 /*                                                                      */
@@ -2322,7 +2867,6 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
 char *msSLDGenerateSLDLayer(layerObj *psLayer)
 {
 #ifdef USE_OGR
-    char szBuffer[5000];
     char szTmp[100];
     int i, j;
     styleObj *psStyle = NULL;
@@ -2330,7 +2874,6 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     char *pszFinalSLD = NULL;
     char *pszSLD = NULL;
 
-    szBuffer[0] = '\0';
     if (psLayer)
     {
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
@@ -2349,58 +2892,92 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         {
             for (i=psLayer->numclasses-1; i>=0; i--)
             {
-                if (psLayer->class[i].numstyles > 0)
-                {
-                    sprintf(szTmp, "%s\n",  "<Rule>");
-                    pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                sprintf(szTmp, "%s\n",  "<Rule>");
+                pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
-/* -------------------------------------------------------------------- */
-/*      get the Filter if there is a class expression.                  */
-/* -------------------------------------------------------------------- */
-                    pszFilter = msSLDGetFilter(&psLayer->class[i]);
+                /* -------------------------------------------------------------------- */
+                /*      get the Filter if there is a class expression.                  */
+                /* -------------------------------------------------------------------- */
+                pszFilter = msSLDGetFilter(&psLayer->class[i]);
                     
-                    if (pszFilter)
+                if (pszFilter)
+                {
+                    pszFinalSLD = strcatalloc(pszFinalSLD, pszFilter);
+                    free(pszFilter);
+                }
+                /* -------------------------------------------------------------------- */
+                /*      Line symbolizer.                                                */
+                /*                                                                      */
+                /*      Right now only generates a stoke element containing css         */
+                /*      parameters.                                                     */
+                /*      Lines using symbols TODO (specially for dash lines)             */
+                /* -------------------------------------------------------------------- */
+                if (psLayer->type == MS_LAYER_LINE)
+                {
+                    for (j=0; j<psLayer->class[i].numstyles; j++)
                     {
-                        pszFinalSLD = strcatalloc(pszFinalSLD, pszFilter);
-                        free(pszFilter);
-                    }
-/* -------------------------------------------------------------------- */
-/*      Line symbolizer.                                                */
-/*                                                                      */
-/*      Right now only generates a stoke element containing css         */
-/*      parameters.                                                     */
-/*      Lines using symbols TODO (specially for dash lines)             */
-/* -------------------------------------------------------------------- */
-                    if (psLayer->type == MS_LAYER_LINE)
-                    {
-                        for (j=0; j<psLayer->class[i].numstyles; j++)
+                        psStyle = &psLayer->class[i].styles[j];
+                        pszSLD = msSLDGenerateLineSLD(psStyle, psLayer);
+                        if (pszSLD)
                         {
-                            psStyle = &psLayer->class[i].styles[j];
-                            pszSLD = msSLDGenerateLineSLD(psStyle, psLayer);
-                            if (pszSLD)
-                            {
-                                pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
-                                free(pszSLD);
-                            }
+                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            free(pszSLD);
                         }
                     }
-                    else if (psLayer->type == MS_LAYER_POLYGON)
-                    {
-                        for (j=0; j<psLayer->class[i].numstyles; j++)
-                        {
-                            psStyle = &psLayer->class[i].styles[j];
-                            pszSLD = msSLDGeneratePolygonSLD(psStyle, psLayer);
-                            if (pszSLD)
-                            {
-                                pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
-                                free(pszSLD);
-                            }
-                        } 
-                    }
-                
-                    sprintf(szTmp, "%s\n",  "</Rule>");
-                    pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                   
                 }
+                else if (psLayer->type == MS_LAYER_POLYGON)
+                {
+                    for (j=0; j<psLayer->class[i].numstyles; j++)
+                    {
+                        psStyle = &psLayer->class[i].styles[j];
+                        pszSLD = msSLDGeneratePolygonSLD(psStyle, psLayer);
+                        if (pszSLD)
+                        {
+                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            free(pszSLD);
+                        }
+                    } 
+                    
+                }
+                else if (psLayer->type == MS_LAYER_POINT)
+                {
+                    for (j=0; j<psLayer->class[i].numstyles; j++)
+                    {
+                        psStyle = &psLayer->class[i].styles[j];
+                        pszSLD = msSLDGeneratePointSLD(psStyle, psLayer);
+                        if (pszSLD)
+                        {
+                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            free(pszSLD);
+                        }
+                    } 
+                    
+                }
+                else if (psLayer->type == MS_LAYER_ANNOTATION)
+                {
+                    for (j=0; j<psLayer->class[i].numstyles; j++)
+                    {
+                        psStyle = &psLayer->class[i].styles[j];
+                        pszSLD = msSLDGeneratePointSLD(psStyle, psLayer);
+                        if (pszSLD)
+                        {
+                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            free(pszSLD);
+                        }
+                    } 
+                    
+                }
+                //label if it exists
+                pszSLD = msSLDGenerateTextSLD(&psLayer->class[i], psLayer);
+                if (pszSLD)
+                {
+                    pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                    free(pszSLD);
+                }
+                sprintf(szTmp, "%s\n",  "</Rule>");
+                pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                
             
             }
         }
@@ -2430,6 +3007,13 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 
 #ifdef USE_OGR
 
+
+/************************************************************************/
+/*             char *msSLDParseExpression(char *pszExpression)          */
+/*                                                                      */
+/*      Return an OGC filter for a mapserver locgical expression.       */
+/*      TODO : move function to mapogcfilter.c                          */
+/************************************************************************/
 char *msSLDParseExpression(char *pszExpression)
 {
     int nElements = 0;
@@ -2442,7 +3026,7 @@ char *msSLDParseExpression(char *pszExpression)
     int i=0, nLength=0, iAtt=0, iVal=0; 
     int bStartCopy=0, bSinglequote=0, bDoublequote=0;
     char *pszFilter = NULL;
-
+ 
     if (!pszExpression)
       return NULL;
 
@@ -2481,6 +3065,7 @@ char *msSLDParseExpression(char *pszExpression)
                             szFinalAtt[iAtt] = szAttribute[i];
                             iAtt++;
                         }
+                        szFinalAtt[iAtt] = '\0';
                     }
                 }
 
@@ -2500,6 +3085,8 @@ char *msSLDParseExpression(char *pszExpression)
                     {
                          for (i=1; i<nLength-1; i++)
                            szFinalValue[iVal++] = szValue[i];
+
+                         szFinalValue[iVal] = '\0';
                     }
                 }
             }
@@ -2517,6 +3104,14 @@ char *msSLDParseExpression(char *pszExpression)
                
     
     
+
+/************************************************************************/
+/*                              msSLDGetFilter                          */
+/*                                                                      */
+/*      Get the correspondinf ogc Filter based on the class             */
+/*      expression. TODO : move function to mapogcfilter.c when         */
+/*      finished.                                                       */
+/************************************************************************/
 char *msSLDGetFilter(classObj *psClass)
 {
     char *pszFilter = NULL;
@@ -2529,7 +3124,7 @@ char *msSLDGetFilter(classObj *psClass)
         {
             if (psClass->layer && psClass->layer->classitem)
             {
-                sprintf(szBuffer, "<Filter><PropertyIsEqualTo><PropertyName>%s</PropertyName><Literal>%s</Literal></PropertyIsEqualTo></Filter>", 
+                sprintf(szBuffer, "<Filter><PropertyIsEqualTo><PropertyName>%s</PropertyName><Literal>%s</Literal></PropertyIsEqualTo></Filter>\n", 
                         psClass->layer->classitem, psClass->expression.string);
                 pszFilter = strdup(szBuffer);
             }

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2003/12/05 04:02:34  assefa
+ * Add generation of SLD for points and text.
+ *
  * Revision 1.6  2003/12/03 18:52:21  assefa
  * Add partly support for SLD generation.
  *
@@ -106,6 +109,8 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer);
 char *msSLDGetFilter(classObj *psClass);
 char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer);
 char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer);
+char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer);
+char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer);
 
 
 #endif
