@@ -299,12 +299,7 @@ void msFreeSymbolSet(symbolSetObj *symbolset)
   for(i=1; i<symbolset->numsymbols; i++)
     freeSymbol(&(symbolset->symbol[i]));
 
-#ifdef USE_TTF
-  if(symbolset->fontset.filename) {
-    free(symbolset->fontset.filename);
-    msFreeHashTable(symbolset->fontset.fonts);
-  }
-#endif
+  /* no need to deal with fontset, it's a pointer */
 }
 
 void msInitSymbolSet(symbolSetObj *symbolset) 
@@ -314,11 +309,7 @@ void msInitSymbolSet(symbolSetObj *symbolset)
   symbolset->imagecache = NULL;
   symbolset->imagecachesize = 0; /* 0 symbols in the cache */
 
-#ifdef USE_TTF
-  symbolset->fontset.filename = NULL;
-  symbolset->fontset.numfonts = 0;  
-  symbolset->fontset.fonts = NULL;
-#endif
+  symbolset->fontset = NULL;
 }
 
 /*
@@ -364,12 +355,6 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
     case(EOF):      
       status = 0;
       break;
-    case(FONTSET):
-#ifdef USE_TTF
-      if((symbolset->fontset.filename = getString()) == NULL) return(-1);
-      if(msLoadFontSet(&(symbolset->fontset)) == -1) return(-1);
-#endif
-      break;    
     case(SYMBOL):
       if(symbolset->numsymbols == MS_MAXSYMBOLS) { 
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadSymbolSet()");
@@ -470,7 +455,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int
   case(MS_SYMBOL_TRUETYPE):    
     
 #ifdef USE_TTF
-    font = msLookupHashTable(symbolset->fontset.fonts, symbolset->symbol[sy].font);
+    font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[sy].font);
     if(!font) return;
 
     if(getCharacterSize(symbol->character, sz, font, &rect) == -1) return;
@@ -652,7 +637,7 @@ void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *
   case(MS_SYMBOL_TRUETYPE):
 
 #ifdef USE_TTF
-    font = msLookupHashTable(symbolset->fontset.fonts, symbolset->symbol[class->symbol].font);
+    font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[class->symbol].font);
     if(!font) return;
 
     if(getCharacterSize(symbolset->symbol[class->symbol].character, class->sizescaled, font, &rect) == -1) return;
@@ -723,7 +708,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
   case(MS_SYMBOL_TRUETYPE):
 
 #ifdef USE_TTF
-    font = msLookupHashTable(symbolset->fontset.fonts, symbol->font);
+    font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
     if(getCharacterSize(symbol->character, sz, font, &rect) == -1) return;
@@ -867,7 +852,7 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
     if(bc == -1) bc = gdTransparent;
     break;
   case(MS_SYMBOL_TRUETYPE):
-    msImageTruetypePolyline(img, p, symbol, fc, sz, &(symbolset->fontset));
+    msImageTruetypePolyline(img, p, symbol, fc, sz, symbolset->fontset);
     return;
     break;
   case(MS_SYMBOL_ELLIPSE):

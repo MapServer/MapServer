@@ -380,7 +380,7 @@ typedef struct {
 // SYMBOLSET OBJECT
 typedef struct {
   char *filename;
-  fontSetObj fontset;
+  fontSetObj *fontset; // a pointer to the main mapObj version
   int numsymbols;
   symbolObj symbol[MS_MAXSYMBOLS];
 
