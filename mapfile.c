@@ -2929,6 +2929,10 @@ static void writeWeb(webObj *web, FILE *stream)
   fprintf(stream, "  WEB\n");
   if(web->empty) fprintf(stream, "    EMPTY \"%s\"\n", web->empty);
   if(web->error) fprintf(stream, "    ERROR \"%s\"\n", web->error);
+
+  if(MS_VALID_EXTENT(web->extent.minx, web->extent.miny, web->extent.maxx, web->extent.maxy)) 
+    fprintf(stream, "  EXTENT %g %g %g %g\n", web->extent.minx, web->extent.miny, web->extent.maxx, web->extent.maxy);
+
   if(web->footer) fprintf(stream, "    FOOTER \"%s\"\n", web->footer);
   if(web->header) fprintf(stream, "    HEADER \"%s\"\n", web->header);
   if(web->imagepath) fprintf(stream, "    IMAGEPATH \"%s\"\n", web->imagepath);

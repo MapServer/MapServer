@@ -32,6 +32,7 @@ int msyyresult;
 %token <strval> REGEX
 %left OR
 %left AND
+%left NOT
 %left RE EQ NE LT GT LE GE IN
 %left LENGTH
 %left '+' '-'
@@ -73,6 +74,8 @@ logical_exp:
 			                 else
 			                   $$ = MS_FALSE;
 		                       }
+       | NOT logical_exp	       { $$ = !$2; }
+       | NOT math_exp	       	       { $$ = !$2; }
        | string_exp RE regular_exp     {
                                          regex_t re;
 
