@@ -397,22 +397,6 @@ typedef struct class_obj{
 
   int status;
 
-  int color;
-  int backgroundcolor;
-  int outlinecolor;
-  int overlaycolor;
-  int overlaybackgroundcolor;
-  int overlayoutlinecolor;
-
-  int symbol;
-  char *symbolname;
-  int overlaysymbol;
-  char *overlaysymbolname;
-
-  int size;
-  int sizescaled;
-  int minsize, maxsize;
-
   styleObj *styles;
   int numstyles;
 
@@ -1378,6 +1362,20 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 /* ==================================================================== */
 /*      End of prototypes for functions in mapoutput.c                  */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      prototypes for functions in mapcopy                             */
+/* ==================================================================== */
+  int msCopyMap(mapObj *dst, mapObj *src);
+int msCopyLayer(layerObj *dst, layerObj *src);
+
+/* ==================================================================== */
+/*      end prototypes for functions in mapcopy                         */
+/* ==================================================================== */
+
+
+
+
 
 /* ==================================================================== */
 /*      include definitions from mapows.h                               */
