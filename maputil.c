@@ -610,13 +610,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
   pointObj *pnt;
   double scalefactor=1;
 
-  /* Set clipping rectangle (used by certain layer types only) */
-  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
-      cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
-      cliprect.miny = map->extent.miny - 2*map->cellsize;
-      cliprect.maxx = map->extent.maxx + 2*map->cellsize;
-      cliprect.maxy = map->extent.maxy + 2*map->cellsize;
-  }
+  /* Set clipping rectangle */
+  cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
+  cliprect.miny = map->extent.miny - 2*map->cellsize;
+  cliprect.maxx = map->extent.maxx + 2*map->cellsize;
+  cliprect.maxy = map->extent.maxy + 2*map->cellsize;
 
   if((c = getClassIndex(layer, class_string)) == -1) return(0);
 
@@ -700,33 +698,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     }
     break;      
 
-  case MS_POLYLINE:
-    if(layer->transform) {      
-      msClipPolygonRect(shape, cliprect, shape);
-      if(shape->numlines == 0) return(0);
-      msTransformPolygon(map->extent, map->cellsize, shape);
-    }
-    msDrawLineSymbol(&map->lineset, img, shape, &layer->class[c]); 
-      
-    if(label_string) text = label_string;
-    else text = layer->class[c].text.string;
-    
-    if(text) {
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
-	if(layer->labelcache) {
-	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
-	} else {
-	  if(layer->class[c].color == -1)
-	    msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
-	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
-	}
-      }
-    }
-    break;
-
   case MS_LINE:
     if(layer->transform) {
-      msClipPolylineRect(shape, map->extent, shape);
+      msClipPolylineRect(shape, cliprect, shape);
       if(shape->numlines == 0) return(0);
       msTransformPolygon(map->extent, map->cellsize, shape);
     }
@@ -750,14 +724,19 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
       }
     }
     break;
-    
+
+  case MS_POLYLINE:    
   case MS_POLYGON: 
     if(layer->transform) {      
       msClipPolygonRect(shape, cliprect, shape);
       if(shape->numlines == 0) return(0);
       msTransformPolygon(map->extent, map->cellsize, shape);
     }
-    msDrawShadeSymbol(&map->shadeset, img, shape, &layer->class[c]); 
+
+    if(layer->type == MS_POLYGON)
+      msDrawShadeSymbol(&map->shadeset, img, shape, &layer->class[c]);
+    else
+      msDrawShadeSymbol(&map->lineset, img, shape, &layer->class[c]);
 
     if(label_string) text = label_string; 
     else text = layer->class[c].text.string;
@@ -918,42 +897,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
     }
     break;      
-
-  case MS_POLYLINE:    
-    for(fptr=layer->features; fptr; fptr=fptr->next) {
-
-      if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
-
-#ifdef USE_PROJ
-      if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(layer->projection.proj, map->projection.proj, &(fptr->shape));
-#endif
-      
-      if(layer->transform) {      
-	msClipPolygonRect(&fptr->shape, cliprect, &fptr->shape);
-	if(fptr->shape.numlines == 0) continue;
-	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
-      }
-      msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]); 
-      
-      if(annotate) {
-	if(fptr->text) text = fptr->text; 
-	else if(layer->class[c].text.string) text = layer->class[c].text.string;
-	else continue;
-
-	if(msPolygonLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
-	  if(layer->labelcache) {
-	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
-	  } else {
-	    if(layer->class[c].color == -1)
-	      msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
-	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
-	  }
-	}
-      }
-    }
-    break;
-    
+   
   case MS_LINE:
     for(fptr=layer->features; fptr; fptr=fptr->next) {
 
@@ -991,7 +935,8 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
     }   
     break;
-    
+
+  case MS_POLYLINE:
   case MS_POLYGON:
     for(fptr=layer->features; fptr; fptr=fptr->next) {
     
@@ -1007,8 +952,12 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	if(fptr->shape.numlines == 0) continue;
 	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
       }
-      msDrawShadeSymbol(&map->shadeset, img, &fptr->shape, &layer->class[c]);
-      
+
+      if(layer->type == MS_POLYGON)
+	msDrawShadeSymbol(&map->shadeset, img, &fptr->shape, &layer->class[c]);
+      else
+	msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]);
+
       if(annotate) {
 	if(fptr->text) text = fptr->text; 
 	else if(layer->class[c].text.string) text = layer->class[c].text.string;
@@ -1107,13 +1056,10 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     }
   }
 
-  /* Set clipping rectangle (used by certain layer types only) */
-  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
-    cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
-    cliprect.miny = map->extent.miny - 2*map->cellsize;
-    cliprect.maxx = map->extent.maxx + 2*map->cellsize;
-    cliprect.maxy = map->extent.maxy + 2*map->cellsize;
-  }
+  cliprect.minx = map->extent.minx - 2*map->cellsize; /* set clipping rectangle just a bit larger than the map extent */
+  cliprect.miny = map->extent.miny - 2*map->cellsize;
+  cliprect.maxx = map->extent.maxx + 2*map->cellsize;
+  cliprect.maxy = map->extent.maxy + 2*map->cellsize;
 
   classItemIndex = labelItemIndex = labelAngleItemIndex = labelSizeItemIndex = -1;
    
@@ -1125,7 +1071,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 #ifdef USE_PROJ 
     tileStatus = msWhichShapesProj(&tilefile, map->extent, &(layer->projection), &(map->projection)); /* Which tiles should be processed? */
 #else	    
-    tileStatus = msWhichShapes(&tilefile, map->extent); /* Which tiles should be processed? */
+    tileStatus = msWhichShapes(&tilefile, map->extent); /* which tiles should be processed? */
 #endif
     
     nTiles = tilefile.numshapes;
@@ -1276,7 +1222,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  if(layer->transform) {
 	    if(msRectContained(&shape.bounds, &map->extent) == MS_FALSE) {
 	      if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
-	      msClipPolylineRect(&shape, map->extent, &shape);
+	      msClipPolylineRect(&shape, cliprect, &shape);
 	      if(shape.numlines == 0) continue;
 	    }
 	    msTransformPolygon(map->extent, map->cellsize, &shape);	      
@@ -1331,7 +1277,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  if(layer->transform) {
 	    if(msRectContained(&shape.bounds, &map->extent) == MS_FALSE) {
 	      if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
-	      msClipPolygonRect(&shape, map->extent, &shape);
+	      msClipPolygonRect(&shape, cliprect, &shape);
 	      if(shape.numlines == 0) continue;
 	    }	      
 	    msTransformPolygon(map->extent, map->cellsize, &shape);	      
@@ -1383,8 +1329,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	SHPReadShape(shpfile.hSHP, i, &shape);	    
 #endif
 
-	if(annotate) annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
-
 	for(j=0; j<shape.numlines;j++) {
 	  for(k=0; k<shape.line[j].numpoints;k++) {
 
@@ -1399,7 +1343,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
 	    }
 	
-	    if(annotate && annotxt) {
+	    if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	      
 	      if(labelAngleItemIndex != -1)
 		layer->class[c].label.angle = DBFReadDoubleAttribute(shpfile.hDBF, i, labelAngleItemIndex)*MS_DEG_TO_RAD;
@@ -1425,60 +1369,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       }	
       
       break;
-      
-    case MS_POLYLINE:      
-
-      if((shpfile.type != MS_SHP_ARC) && (shpfile.type != MS_SHP_POLYGON)) { /* wrong shapefile type */
-	msSetError(MS_MISCERR, "POLYLINE layers must be ARC or POLYGON shapefiles.", "msDrawShapefileLayer()");
-	return(-1);
-      }
-      
-      for(i=start_feature;i<shpfile.numshapes;i++) {
-
-        if(!msGetBit(status,i)) continue; /* next shape */
-
-        if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
-
-#ifdef USE_PROJ
-	SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));
-#else
-	SHPReadShape(shpfile.hSHP, i, &shape);	    
-#endif
-
-	if(layer->transform) {
-	  if(!msRectContained(&shape.bounds, &cliprect)) {
-	    if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
-	    msClipPolygonRect(&shape, cliprect, &shape);
-	    if(shape.numlines == 0) continue;
-	  }
-	  msTransformPolygon(map->extent, map->cellsize, &shape);
-	}
-	msDrawLineSymbol(&map->lineset, img, &shape, &(layer->class[c]));
-	
-	if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
-	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
-	    if(labelAngleItemIndex != -1)
-	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
-	  
-	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	      layer->class[c].label.sizescaled = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*scalefactor;
-	      layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
-	      layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
-	    }	    
-	    
-	    if(layer->labelcache)
-	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
-	    else
-	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
-	    
-	    free(annotxt);
-	  }
-	}
-	
-	msFreeShape(&shape);
-      }	
-      break; /* next layer */
-      
+            
     case MS_LINE:
       if((shpfile.type != MS_SHP_ARC) && (shpfile.type != MS_SHP_POLYGON)) { /* wrong shapefile type */
 	msSetError(MS_MISCERR, "LINE layers must be ARC or POLYGON shapefiles.", "msDrawShapefileLayer()");
@@ -1500,7 +1391,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(layer->transform) {
 	  if(!msRectContained(&shape.bounds, &map->extent)) {
 	    if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
-	    msClipPolylineRect(&shape, map->extent, &shape);
+	    msClipPolylineRect(&shape, cliprect, &shape);
 	    if(shape.numlines == 0) continue;
 	  }
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
@@ -1535,7 +1426,8 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       }
       
       break;
-      
+
+    case MS_POLYLINE:      
     case MS_POLYGON:
       
       if(shpfile.type != MS_SHP_POLYGON) { /* wrong shapefile type */
@@ -1563,7 +1455,11 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  }
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
 	}
-	msDrawShadeSymbol(&map->shadeset, img, &shape, &(layer->class[c]));
+
+	if(layer->type == MS_POLYGON)
+	  msDrawShadeSymbol(&map->shadeset, img, &shape, &(layer->class[c]));
+	else
+	  msDrawLineSymbol(&map->lineset, img, &shape, &(layer->class[c]));
 
 	if(annotate  && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {

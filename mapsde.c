@@ -37,6 +37,57 @@ static int sdeRectContained(SE_ENVELOPE *a, SE_ENVELOPE *b)
   return(MS_FALSE);  
 }
 
+static int sdeTransformShapePoints(rectObj extent, double cellsize, SE_SHAPE inshp, shapeObj *outshp) 
+{
+  int i;
+  SE_POINT *points=NULL;
+  long type, status, numpoints;
+
+  lineObj line={0,NULL};
+
+  SE_shape_get_type(inshp, &type);
+
+  if(type == SG_NIL_SHAPE) return(0); // skip null shapes
+
+  SE_shape_get_num_points(inshp, 0, 0, &numpoints);
+
+  points = (SE_POINT *)malloc(numpoints*sizeof(SE_POINT));
+  if(!points) {
+    msSetError(MS_MEMERR, "Unable to allocate points array.", "sdeTransformShape()");
+    return(-1);
+  }
+
+  status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, NULL, NULL, points, NULL, NULL);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "sdeTransformShape()", "SE_shape_get_all_points()");
+    return(-1);
+  }
+
+  line.point = (pointObj *)malloc(sizeof(pointObj)*numpoints);
+  if(!line.point) {
+    msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeTransformShape()");
+    return(-1);
+  }
+   
+  line.numpoints = 0;
+  for(i=0; i<numpoints; i++) {
+    if(points[i].x < extent.minx) continue;
+    if(points[i].x > extent.maxx) continue;
+    if(points[i].y < extent.miny) continue;
+    if(points[i].y > extent.maxy) continue;
+    
+    line.point[line.numpoints].x = MS_NINT((points[i].x - extent.minx)/cellsize);
+    line.point[line.numpoints].y = MS_NINT((extent.maxy - points[i].y)/cellsize);
+    line.numpoints++;
+  }
+
+  msAddLine(outshp, &line);
+  free(line.point);
+  free(points);
+
+  return(0);
+}
+
 static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, shapeObj *outshp) {
   long numparts, numsubparts, numpoints;
   long *subparts=NULL;
@@ -53,8 +104,6 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
 
   SE_shape_get_num_points(inshp, 0, 0, &numpoints);
   SE_shape_get_num_parts(inshp, &numparts, &numsubparts);
-
-  printf("%ld %ld %ld\n", numpoints, numparts, numsubparts);
 
   if(numsubparts > 0) {
     subparts = (long *)malloc(numsubparts*sizeof(long));
@@ -85,17 +134,16 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
     else
       line.numpoints = subparts[i+1] - subparts[i];
 
-    printf("%ld (%d) ", subparts[i], line.numpoints);
-
     line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
     if(!line.point) {
       msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeTransformShape()");
       return(-1);
     }
      
-    line.point[0].x = MS_NINT((points[0].x - extent.minx)/cellsize);
-    line.point[0].y = MS_NINT((extent.maxy - points[0].y)/cellsize);
- 
+    line.point[0].x = MS_NINT((points[l].x - extent.minx)/cellsize);
+    line.point[0].y = MS_NINT((extent.maxy - points[l].y)/cellsize);
+    l++;
+
     for(j=1, k=1; j < line.numpoints; j++ ) {
       
       line.point[k].x = MS_NINT((points[l].x - extent.minx)/cellsize); 
@@ -124,8 +172,6 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
     free(line.point);
   }
 
-  printf("\n");
-
   free(subparts);
   free(points);
 
@@ -135,9 +181,10 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
 
 int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 #ifdef USE_SDE
-  int i;
+  int i,j;
 
   double scalefactor=1;
+  double angle, length;
 
   SE_CONNECTION connection=0;
   SE_STREAM stream=0;
@@ -154,8 +201,11 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   SE_SQL_CONSTRUCT *sql;
   SE_FILTER filter;
 
+  SE_COLUMN_DEF annotation_def;
   short annotate=MS_TRUE;
   char *annotation=NULL;
+  long annotation_long;
+  double annotation_double;
   short annotation_is_null;
 
   const char *columns[2]; // at most 2 - the shape, and optionally an annotation
@@ -165,7 +215,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   int numparams;
 
   shapeObj transformedshape={0,NULL,{-1,-1,-1,-1},MS_NULL};
-  pointObj annopnt;
+  pointObj annopnt, *pnt;
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
@@ -215,8 +265,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     return(-1);
   }
 
-  // fprintf(stderr, "SDE connection established...\n");
-
   msFreeCharArray(params, numparams);
 
   /*
@@ -264,8 +312,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   if(rect.miny > map->extent.maxy) return(0);
   if(rect.maxy < map->extent.miny) return(0);
 
-  // fprintf(stderr, "layer envelope: %g %g %g %g\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
-
   /*
   ** initialize a few shapes
   */
@@ -290,17 +336,10 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   /* 
   ** define the spatial filter, used with all classes
   */ 
-  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
-    rect.minx = MS_MAX(map->extent.minx - 2*map->cellsize, rect.minx); /* just a bit larger than the map extent */
-    rect.miny = MS_MAX(map->extent.miny - 2*map->cellsize, rect.miny);
-    rect.maxx = MS_MIN(map->extent.maxx + 2*map->cellsize, rect.maxx);
-    rect.maxy = MS_MIN(map->extent.maxy + 2*map->cellsize, rect.maxy);
-  } else {
-    rect.minx = MS_MAX(map->extent.minx, rect.minx);
-    rect.maxx = MS_MAX(map->extent.miny, rect.miny);
-    rect.miny = MS_MIN(map->extent.maxx, rect.maxx);
-    rect.maxy = MS_MIN(map->extent.maxy, rect.maxy);
-  }
+  rect.minx = MS_MAX(map->extent.minx - 2*map->cellsize, rect.minx); /* just a bit larger than the map extent */
+  rect.miny = MS_MAX(map->extent.miny - 2*map->cellsize, rect.miny);
+  rect.maxx = MS_MIN(map->extent.maxx + 2*map->cellsize, rect.maxx);
+  rect.maxy = MS_MIN(map->extent.maxy + 2*map->cellsize, rect.maxy);
 
   status = SE_shape_generate_rectangle(&rect, filtershape);
   if(status != SE_SUCCESS) {
@@ -343,28 +382,25 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   msFreeCharArray(params, numparams);
 
-  // for(i=0; i<numcolumns; i++)
-  // fprintf(stderr, "%d:%s\n", i+1, columns[i]);
-
   /*
   ** each class is a SQL statement, no expression means all features
   */
   for(i=0; i<layer->numclasses; i++) {
 
+    /*
+    ** should be able to move this outside the loop, but the
+    ** stream reset function doesn't want to work as advertised *sigh*
+    */
     status = SE_stream_create(connection, &stream);
     if(status != SE_SUCCESS) {
       sde_error(status, "msDrawSDELayer()", "SE_stream_create()");
       return(-1);
     }
     
-    // fprintf(stderr, "SDE stream created...\n");
-    
     if(!(layer->class[i].expression.string))
       sql->where = strdup("");
     else
       sql->where = strdup(layer->class[i].expression.string);
-
-    // fprintf(stderr, "class %d where: %s\n", i, sql->where);
 
     status = SE_stream_query(stream, numcolumns, columns, sql);
     if(status != SE_SUCCESS) {
@@ -372,15 +408,11 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
-    // fprintf(stderr, "attribute query set\n");
-
     status = SE_stream_set_spatial_constraints(stream, SE_SPATIAL_FIRST, FALSE, 1, &filter);
     if(status != SE_SUCCESS) {
       sde_error(status, "msDrawSDELayer()", "SE_stream_set_spatial_constraints()");
       return(-1);
     }
-
-    // fprintf(stderr, "spatial query set\n");
 
     status = SE_stream_bind_output_column(stream, 1, shape, &shape_is_null);
     if(status != SE_SUCCESS) {
@@ -388,8 +420,40 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
+    /*
+    ** bind the annotation column, and allocate memory
+    */
     if(numcolumns == 2) {
-      status = SE_stream_bind_output_column(stream, 2, annotation, &annotation_is_null);
+      status = SE_stream_describe_column(stream, 2, &annotation_def);
+      if(status != SE_SUCCESS) {
+    	sde_error(status, "msDrawSDELayer()", "SE_stream_describe_column()");
+    	return(-1);
+      }
+
+      // don't know if this makes sense for non-string columns but it seems to work
+      annotation = (char *)malloc(annotation_def.size);
+      if(!annotation) {
+	msSetError(MS_SDEERR, "Can only annotate with numeric or character types.", "msDrawSDELayer()");
+	return(-1);
+      }
+
+      switch(annotation_def.sde_type) {
+      case 1: // integers
+      case 2:
+	status = SE_stream_bind_output_column(stream, 2, &annotation_long, &annotation_is_null);
+	break;
+      case 3: // floats
+      case 4:
+	status = SE_stream_bind_output_column(stream, 2, &annotation_double, &annotation_is_null);
+	break;
+      case 5: // string
+	status = SE_stream_bind_output_column(stream, 2, annotation, &annotation_is_null);
+	break;
+      default:
+	msSetError(MS_SDEERR, "Can only annotate with numeric or character types.", "msDrawSDELayer()");
+	return(-1);
+	break;
+      }
       if(status != SE_SUCCESS) {
     	sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
     	return(-1);
@@ -402,17 +466,121 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
-    // fprintf(stderr, "search executed...\n");
-    
     switch(layer->type) {
     case MS_ANNOTATION:
+      msSetError(MS_SDEERR, "SDE annotation layers are not yet supported.", "msDrawSDELayer()");
+      return(-1);
       break;
     case MS_POINT:
+      while(status == SE_SUCCESS) {
+	status = SE_stream_fetch(stream);
+	if(status == SE_SUCCESS) {
+
+	  if(SE_shape_is_nil(shape)) continue;
+	  
+	  if(sdeTransformShapePoints(map->extent, map->cellsize, shape, &transformedshape) == -1) continue;
+
+	  for(j=0; j<transformedshape.line[0].numpoints; j++) {
+	    pnt = &(transformedshape.line[0].point[j]); /* point to the correct point */
+
+	    msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[i]);
+
+	    if(annotate) {	      
+	      if(numcolumns == 2) {
+		switch(annotation_def.sde_type) {
+		case 1: // integers
+		case 2:
+		  sprintf(annotation, "%ld", annotation_long);
+		  break;
+		case 3: // floats
+		case 4:
+		  sprintf(annotation, "%g", annotation_double);
+		  break;
+		default:	     
+		  break;
+		}
+	      } else {
+		annotation = layer->class[i].text.string;
+	      }
+
+	      if(annotation) {
+		if(layer->labelcache)
+		  msAddLabel(map, layer->index, i, -1, -1, *pnt, annotation, -1);
+		else
+		  msDrawLabel(img, map, *pnt, annotation, &(layer->class[i].label));
+	      }
+	    }
+	  }
+	  
+	  msFreeShape(&transformedshape);
+	} else {
+	  if(status != SE_FINISHED) {
+	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
+	    return(-1);
+          }
+	}
+      }
       break;
     case MS_LINE:
+      while(status == SE_SUCCESS) {
+	status = SE_stream_fetch(stream);
+	if(status == SE_SUCCESS) {
+
+	  if(SE_shape_is_nil(shape)) continue;
+
+	  status = SE_shape_clip(shape, &rect, clippedshape);
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msDrawSDELayer()", "SE_shape_clip()");
+	    return(-1);
+          }
+
+	  if(SE_shape_is_nil(clippedshape)) continue;
+	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
+
+	  msDrawLineSymbol(&map->lineset, img, &transformedshape, &(layer->class[i]));
+
+	  if(annotate) {
+	    if(msPolylineLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize, &angle, &length) != -1) {
+
+	      if(layer->class[i].label.autoangle)
+		layer->class[i].label.angle = angle;
+
+	      if(numcolumns == 2) {
+		switch(annotation_def.sde_type) {
+		case 1: // integers
+		case 2:
+		  sprintf(annotation, "%ld", annotation_long);
+		  break;
+		case 3: // floats
+		case 4:
+		  sprintf(annotation, "%g", annotation_double);
+		  break;
+		default:	     
+		  break;
+		}
+	      } else {
+		annotation = layer->class[i].text.string;
+	      }
+
+	      if(annotation) {
+		if(layer->labelcache)
+		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, length);
+		else
+		  msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+	      }
+	    }
+	  }
+	  
+	  msFreeShape(&transformedshape);
+	} else {
+	  if(status != SE_FINISHED) {
+	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
+	    return(-1);
+          }
+	}
+      }
       break;
     case MS_POLYLINE:
-      break;
     case MS_POLYGON:
       while(status == SE_SUCCESS) {
 	status = SE_stream_fetch(stream);
@@ -428,19 +596,37 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
 	  if(SE_shape_is_nil(clippedshape)) continue;
 	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
-	  
-	  msDrawShadeSymbol(&map->shadeset, img, &transformedshape, &(layer->class[i]));
-	  
+
+	  if(layer->type == MS_POLYGON)
+	    msDrawShadeSymbol(&map->shadeset, img, &transformedshape, &(layer->class[i]));
+	  else
+	    msDrawLineSymbol(&map->lineset, img, &transformedshape, &(layer->class[i]));
+
 	  if(annotate) {
 	    if(msPolygonLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
-	      
-	      if(!annotation)
+	      if(numcolumns == 2) {
+		switch(annotation_def.sde_type) {
+		case 1: // integers
+		case 2:
+		  sprintf(annotation, "%ld", annotation_long);
+		  break;
+		case 3: // floats
+		case 4:
+		  sprintf(annotation, "%g", annotation_double);
+		  break;
+		default:	     
+		  break;
+		}
+	      } else {
 		annotation = layer->class[i].text.string;
-	      
-	      if(layer->labelcache)
-		msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
-	      else
-		msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+	      }
+
+	      if(annotation) {
+		if(layer->labelcache)
+		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
+		else
+		  msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+	      }
 	    }
 	  }
 	  
@@ -451,13 +637,14 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	    return(-1);
           }
 	}
-      }      
+      }
       break;
     default:
       msSetError(MS_MISCERR, "Unknown or unsupported layer type.", "msDrawSDELayer()");
       return(-1);
-    }    
-    
+    }
+
+    if(annotate && numcolumns == 2) free(annotation);
     free(sql->where);
     SE_stream_free(stream);   
   }
@@ -466,6 +653,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   SE_shape_free(clippedshape);  
   SE_shape_free(filtershape);
   SE_connection_free(connection);
+
+  for(i=0; i<numcolumns; i++) free(columns[i]);
 
   return(0);
 #else
