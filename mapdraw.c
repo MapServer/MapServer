@@ -366,8 +366,8 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 {
   int i;
 
-  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->graticulelayerinfo)
-  return(MS_FALSE); // no data associated with this layer, not an error since layer may be used as a template from MapScript
+  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->layerinfo)
+    return(MS_FALSE); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
   if(layer->type == MS_LAYER_QUERY) return(MS_FALSE);
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);

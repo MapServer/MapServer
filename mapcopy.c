@@ -1028,14 +1028,9 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   msSHPOpenFile(&(dst->shpfile), "rb", src->data);
   msSHPOpenFile(&(dst->tileshpfile), "rb", src->tileindex);
 
+  copyProperty(&(dst->layerinfo), &(src->layerinfo), sizeof(void));
+
   copyProperty(&(dst->ogrlayerinfo),&(src->ogrlayerinfo),sizeof(void)); 
-  copyProperty(&(dst->sdelayerinfo),&(src->sdelayerinfo),sizeof(void)); 
-  copyProperty(&(dst->postgislayerinfo), &(src->postgislayerinfo),
-               sizeof(void)); 
-
-  copyProperty(&(dst->oraclespatiallayerinfo),
-               &(src->oraclespatiallayerinfo), sizeof(void));
-
   copyProperty(&(dst->wfslayerinfo), &(src->wfslayerinfo),
                sizeof(void)); 
 
