@@ -111,19 +111,6 @@ GDAL=-DUSE_GDAL
 #SDE_INC=-I../arcsde/include
 #SDE_LIB=../arcsde/lib/sde80.lib ../arcsde/lib/sg80.lib ../arcsde/lib/pe80.lib
 
-#
-# UofMN GIS/Image Processing Extension (very experimental)
-#
-#EGIS=-DUSE_EGIS
-
-#ERR_OBJ=./errLog/errLog.o
-#ERR_INC=-I./errLog
-#ERR_LIB=-L./errLog -lerrLog
-
-#IMGGEN_OBJ=./imgSrc/imgLib.o
-#IMGGEN_INC=-I./imgSrc
-#IMGGEN_LIB=-L./imgSrc -limgGEN
-
 #ECWDIR= C:\ProgFile\ECW_SDK
 #ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
 #        $(ECWDIR)\lib\NCSUtil.lib
@@ -196,12 +183,12 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
-		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB) \
+		$(PROJ_LIB) $(OGR_LIB) \
                 $(CURL_LIB) $(ECW_LIB) $(MING_LIB) $(PDF_LIB) \
                 $(WINSOCK_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
-		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC) \
+		$(PROJ_INC) $(REGEX_INC) $(OGR_INC) \
                 $(CURL_INC) $(MING_INC) $(PDF_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \

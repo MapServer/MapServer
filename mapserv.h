@@ -17,7 +17,6 @@
 #define NUMEXP "[-]?(([0-9]+)|([0-9]*[.][0-9]+)([eE][-+]?[0-9]+)?)"
 #define EXTENT_PADDING .05
 
-
 extern int enter_string;
 
 /*
@@ -26,12 +25,10 @@ extern int enter_string;
 #define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("https://", s, 8) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
 
 /*
-** Enumerated types (PROCESSING is a EGIS mode only), keep the query modes in sequence and at the end of the enumeration
+** Enumerated types, keep the query modes in sequence and at the end of the enumeration
 */
-int numModes = 27;
-
-static char *modeStrings[27] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","REFERENCE","SCALEBAR","COORDINATE","PROCESSING","QUERY","QUERYMAP","NQUERY","NQUERYMAP","ITEMQUERY","ITEMQUERYMAP","ITEMNQUERY","ITEMNQUERYMAP","FEATUREQUERY","FEATUREQUERYMAP","FEATURENQUERY","FEATURENQUERYMAP","ITEMFEATUREQUERY","ITEMFEATUREQUERYMAP","ITEMFEATURENQUERY","ITEMFEATURENQUERYMAP","INDEXQUERY","INDEXQUERYMAP"};
-
+int numModes = 26;
+static char *modeStrings[26] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","REFERENCE","SCALEBAR","COORDINATE","QUERY","QUERYMAP","NQUERY","NQUERYMAP","ITEMQUERY","ITEMQUERYMAP","ITEMNQUERY","ITEMNQUERYMAP","FEATUREQUERY","FEATUREQUERYMAP","FEATURENQUERY","FEATURENQUERYMAP","ITEMFEATUREQUERY","ITEMFEATUREQUERYMAP","ITEMFEATURENQUERY","ITEMFEATURENQUERYMAP","INDEXQUERY","INDEXQUERYMAP"};
 
 /*
 ** Global variables

@@ -11,12 +11,6 @@ extern int msyyresult; // result of parsing, true/false
 extern int msyystate;
 extern char *msyystring;
 
-#ifdef USE_EGIS
-#include <errLog.h>
-#include <imgLib.h>
-#include <sys/time.h>
-#endif
-
 #ifdef USE_TIFF
 #include <tiffio.h>
 #include <tiff.h>
@@ -47,12 +41,6 @@ extern char *msyystring;
 // FIX: need WBMP sig
 unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
-
-#ifdef USE_EGIS
-#define rasterDebug 0
-struct timeval stTime, endTime;
-double diffTime;
-#endif
 
 /*
 ** Function to evaluate a color (RGB+pen) against a class expression.
@@ -1231,210 +1219,6 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 #endif  
 }
 
-#ifdef USE_EGIS
-static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
-{
-  	int i,j; 		/* loop counters */
-  	double x,y;
-  	int cmap[MAXCOLORS];
-  	int w, h;
-
-  	int vv;
-  	double startx, starty; 	/* this is where we start out reading */
-
-  	double ulx, uly; 	/* upper left-hand coordinates */
-  	double skipx,skipy; 	/* skip factors (x and y) */  
-  	double cx,cy; 		/* cell sizes (x and y) */
-
-	char hName[256];
-	stRawImg stImgInfo;
-	char errLogMsg[80];
-	int status;
-	int length;
-	int maxPixels;
-	int bSize;
-	int nBands = 1;
-	int bNos[1];
-	int tmp = 1;
-
-	unsigned char *tImg;
-
-	// Initialize image header parameters
-
-	errLogMsg[0] = '\0';
-  	sprintf(errLogMsg, "From GEN: %s\n", filename); 
-	writeErrLog(errLogMsg);
-	
-	// It is assumed that filename extension is .img and .hdr for header
-	// Remove .img from filename 
-
-	length = strlen(filename);
-	strncpy(hName, filename, length-4);
-	hName[length-4] = '\0';
-
-	errLogMsg[0] = '\0';
-  	sprintf(errLogMsg, "From GEN: %s, %s\n", filename, hName); 
-  	writeErrLog(errLogMsg);
-
-	// Initialize timer just before opening the image
-        gettimeofday(&stTime, 0);
-
-        if ( (status = initImgInfo(hName, &stImgInfo) ) != 1 )
-        {
-		writeErrLog("In drawGEN - initImgInfo failed\n");
-                return -1;
-        }
-
-  	// stImgInfo.Bands = 1; 
-  	w = stImgInfo.Pixels; // = 1321; 
-  	h = stImgInfo.Lines; // = 964;
-
-	ulx = stImgInfo.ulx; // = 115400.0;
-	uly = stImgInfo.uly; // = 5547400.0;
-
-	cx = stImgInfo.pwidth; // = 1000.0;
-	cy = stImgInfo.pheight; // = 1000.0; 
-
-	if (rasterDebug)
-	{
-	errLogMsg[0] = '\0';
-  	sprintf(errLogMsg, "From GEN: %f %f %f %f\n",  ulx, uly, cx, cy); 
-  	writeErrLog(errLogMsg);
-	}
-
-  	skipx = map->cellsize/cx;
-  	skipy = map->cellsize/cy;
-  	startx = (map->extent.minx - ulx)/cx;
-  	starty = (int) (uly - map->extent.maxy)/cy;
-
-	if (rasterDebug)
-	{
-  	errLogMsg[0] = '\0';
-  	sprintf(errLogMsg, "skipx %f, skipy %f, startx %d, starty %d, w%d h%d\n",  
-			skipx, skipy, startx, starty, w, h); 
-	writeErrLog(errLogMsg);
-	}
-
-	// Read image and fill in the img structure
-
-	maxPixels = img->sx * (skipx +1);
-	if (maxPixels >=  stImgInfo.Pixels) maxPixels = stImgInfo.Pixels; 
-
-	bSize = w * skipx + 1; 
-	if (bSize < maxPixels) bSize = maxPixels + 1;
-
-	tImg = malloc( bSize * sizeof(char));
-	if (tImg == NULL)
-	{
-  		errLogMsg[0] = '\0';
-  		sprintf(errLogMsg, "Error allocating mem to hold a line\n");  
-		writeErrLog(errLogMsg);
-		return -1;
-	}
-
-	bNos[0] = 1;
-  	y = starty;
-
-	// Add code to do color mapping - For the time its b&w 
-
-    	for(i = 0; i < 255; i++) 
-	{
-      		if(i != layer->offsite)
-		{
-			j = (i * 16) / 255 * 17;
-			cmap[i] = msAddColorGD(map, img, 0, j, j, j); 
-		}
-		else
-			cmap[i] = -1;
-	}
-
-	if (tmp == 0)
-	{
-		writeErrLog("In drawGEN - not doing anything\n");
-		return (0);
-	}
-
-	// for each row 
-  	for(i = 0; i < img->sy; i++) 
-	{ 
-		/*
-		errLogMsg[0] = '\0';
-  		sprintf(errLogMsg, "Line %d - Y = %g\n",  i, y); 
-  		writeErrLog(errLogMsg);
-		*/
-
-    	   if((y >= 0) && (y < h)) 
-	   {
-      		x = startx;
-
-		// Read a line here
-
-		/*
-		if((x >= 0) && (x < w)) 
-		{
-		*/
-			
-		status = imgReadLine(&stImgInfo, (int)y, (int)x, 
-					maxPixels, nBands, bNos, tImg); 
-
-		/*
-  			errLogMsg[0] = '\0';
-  			sprintf(errLogMsg, "reading line %d pix %d mx %d\n",
-					 (int)y, (int)x, maxPixels);  
-			writeErrLog(errLogMsg);
-		}
-		*/
-
-		if (status != 1)
-		{
-
-  			errLogMsg[0] = '\0';
-  			sprintf(errLogMsg, "Err reading line %d pix %d mx %d\n",
-					 (int)y, (int)x, maxPixels);  
-			writeErrLog(errLogMsg);
-			// return -1;
-		}
-
-      		for(j = 0; j < img->sx; j++) 
-		{
-			if((x >= 0) && (x < w)) 
-			{
-				vv = (int) tImg[(int) (j * skipx)];
-	  			if(cmap[vv] != -1)
-	    				img->pixels[j][i] =  cmap[vv]; 
-			}
-			x += skipx;
-      		}
-
-		/*
-		errLogMsg[0] = '\0';
-  		sprintf(errLogMsg, "j = %d - x = %g\n", j, x); 
-  		writeErrLog(errLogMsg);
-		*/
-    	   }
-           y+=skipy;  
-  	}
-
-	// Stop timer and get total time
-        gettimeofday(&endTime, 0);
-
-        diffTime = endTime.tv_sec - stTime.tv_sec;
-        diffTime = diffTime + (endTime.tv_usec - stTime.tv_usec) / 1e6;
- 
-			errLogMsg[0] = '\0';
-      	sprintf(errLogMsg, "\ndrawGen Took %f Secs for L %d, P %d\n", 
-							diffTime, img->sy, maxPixels); 
-
-  	writeErrLog(errLogMsg);
-
-	errLogMsg[0] = '\0';
-  	sprintf(errLogMsg, "Image is generated\n"); 
-  	writeErrLog(errLogMsg);
-
-	return (0);
-}
-#endif
-
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
   /*
@@ -1456,10 +1240,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
   rectObj searchrect;
   gdImagePtr img;
-
-#ifdef USE_EGIS
-  char *ext; // OV -egis- temp variable
-#endif
 
   cwd[0] = '\0';
 
@@ -1609,24 +1389,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       continue;
     }
     
-#ifdef USE_EGIS
-    // OV - egis- Call Generic format function here
-    // Note : modify this to find elegent way of deciding its generic
-    // May be put any flag?
-    
-    ext = strstr(filename, ".img");
-    if (strcmp(ext, ".img") == 0) {
-      if(layer->transform && msProjectionsDiffer(&(map->projection, &(layer->projection))) {
-        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( EGIS )");
-        return(MS_FAILURE);
-      }
-      status = drawGEN(map, layer, img, filename);
-	
-      //ext = NULL;
-      return(status);
-    }
-#endif
-
 #ifdef USE_GDAL
     {
       GDALDatasetH  hDS;

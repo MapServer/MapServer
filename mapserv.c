@@ -1,23 +1,5 @@
 #include "mapserv.h"
 
-#ifdef USE_EGIS 
-#include <errLog.h>  	// egis - includes
-#include "egis.h"
-#include "globalStruct.h"
-#include "egisHTML.h"
-
-// template stuff
-//#include "maptemplate.c"
-
-//OV -egis- for local debugging, if set various message will be 
-// printed to /tmp/egisError.log
-
-#define myDebug 0 
-#define myDebugHtml 0
-
-char errLogMsg[80];	// egis - for storing and printing error messages
-#endif
-
 extern double inchesPerUnit[6];
 
 mapservObj* msObj;
@@ -711,21 +693,6 @@ void loadForm()
       continue;
     }
 
-#ifdef USE_EGIS
-
-    // OV - egis - additional token "none" is defined to create somewhat
-    // mutual exculsiveness between mapserver and egis
- 
-    if(strcasecmp(msObj->ParamNames[i],"egis") == 0)
-    {
-        if(strcasecmp(msObj->ParamValues[i],"none") != 0)
-        {
-                msObj->Mode = PROCESSING;
-        }
-        continue;
-    }
-#endif
-
     if(strcasecmp(msObj->ParamNames[i],"shapeindex") == 0) { // used for index queries
       ShapeIndex = getNumeric(re, msObj->ParamValues[i]);
       continue;
@@ -962,13 +929,6 @@ int main(int argc, char *argv[]) {
     int status;
 
     msObj = msAllocMapServObj();
-
-#ifdef USE_EGIS
-    // OV -egis- Initialize egis error log file here...
-    initErrLog("/export/home/tmp/msError.log");
-    writeErrLog("ErrorLogfile is initialized\n");
-    fflush(fpErrLog);
-#endif
 
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
       printf("%s\n", msGetVersion());
@@ -1394,49 +1354,6 @@ int main(int argc, char *argv[]) {
     } else if(msObj->Mode == COORDINATE) {
       setCoordinate(); // mouse click => map coord
       returnCoordinate(msObj->MapPnt);
-    } else if(msObj->Mode == PROCESSING) {
-#ifdef USE_EGIS
-      setExtent(msObj);
-      errLogMsg[0] = '\0';
-      sprintf(errLogMsg, "Map Coordinates: x %f, y %f\n", msObj->MapPnt.x, msObj->MapPnt.y);
-      writeErrLog(errLogMsg);
-      
-      status = egisl(msObj->Map, Entries, msObj->NumParams, msObj->CoordSource);
-      // printf("Numerical Window - %f %f\n", msObj->ImgPnt.x, msObj->ImgPnt.y);
-      fflush(stdout);
-      
-      if (status == 1) {
-	// write MIME header
-	printf("Content-type: text/html%c%c", 10, 10);
-	returnStatistics("numwin.html");
-      } else if(status == 2) {
-	writeErrLog("Calling returnSplot()\n");
-	fflush(fpErrLog);
-	
-	// write MIME header
-	printf("Content-type: text/html%c%c", 10, 10);
-	returnSplot("splot.html");
-      } else if(status == 3) {
-	writeErrLog("Calling returnHisto()\n");
-	fflush(fpErrLog);
-	
-	// write MIME header
-	printf("Content-type: text/html%c%c", 10, 10);
-	returnHisto("histo.html");
-      } else {
-	writeErrLog("Error status from egisl()\n");
-	fflush(fpErrLog);
-	
-	errLogMsg[0] = '\0';
-	sprintf(errLogMsg, "Select Image Layer\n");
-	
-	msSetError(MS_IOERR, "<br>eGIS Error: Choose Stack Image<br>", errLogMsg);
-	writeError();
-      }
-#else
-      msSetError(MS_MISCERR, "EGIS Support is not available.", "mapserv()");
-      writeError();
-#endif
     }
 
     writeLog(MS_FALSE);

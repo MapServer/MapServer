@@ -92,35 +92,25 @@ POSTGIS_LIB=  @POSTGIS_LIB@
 POSTGIS_INC=  @POSTGIS_INC@
 
 # Optional ORACLESPATIAL Support. Contact: cabral@cttmar.univali.br
-ORACLESPATIAL=      @ORACLESPATIAL_ENABLED@
-ORACLESPATIAL_LIB=  @ORACLESPATIAL_LIB@
-ORACLESPATIAL_INC=  @ORACLESPATIAL_INC@
+ORACLESPATIAL=@ORACLESPATIAL_ENABLED@
+ORACLESPATIAL_LIB=@ORACLESPATIAL_LIB@
+ORACLESPATIAL_INC=@ORACLESPATIAL_INC@
 
 # Optional MING/SWF/FLASH Support. Contact: assefa@dmsolutions.ca
-MING =	@MING_ENABLED@
+MING=@MING_ENABLED@
 MING_LIB=@MING_LIB@
 MING_INC=@MING_INC@
 
 # libcurl ... required for WMS/WFS Client Connections
-CURL_INC= @CURL_INC@
-CURL_LIB= @CURL_LIB@
+CURL_INC=@CURL_INC@
+CURL_LIB=@CURL_LIB@
 
 # OWS: OGC Web Services support
 # OGC WMS Server:  -DUSE_WMS_SVR (Requires PROJ4 support)
 # OGC WMS Client Connections:  -DUSE_WMS_LYR (Requires PROJ4 and libcurl)
 # OGC WFS Server: -DUSE_WFS_SVR (Requires OGR, PROJ4 recommended)
 # OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libcurl)
-
-OWS=	@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@
-
-#
-# UofMN GIS/Image Processing Extension (very experimental)
-#
-#EGIS=-DUSE_EGIS
-#EGIS_INC=-I./egis/errLog -I./egis/imgSrc -I./egis
-#EGIS_LIB=-L./egis/errLog -lerrLog -L./egis/imgSrc -limgGEN -L./egis -legis
-#MAKE_EGIS=egis
-#MAKE_EGIS_CLEAN=egis_clean
+OWS=@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@
 
 #
 # IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
@@ -128,8 +118,8 @@ OWS=	@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@
 # In order to compile the PHP_MAPSCRIPT module, we have to make MapServer
 # uses the same version of the REGEX library that PHP was compiled with:
 #
-REGEX_OBJ=	@PHP_REGEX_OBJ@
-REGEX_INC=	@PHP_REGEX_INC@
+REGEX_OBJ=@PHP_REGEX_OBJ@
+REGEX_INC=@PHP_REGEX_INC@
 
 #
 # Multithreading support.
@@ -155,13 +145,13 @@ CFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
         $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
 	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) \
 	$(POSTGIS) $(MPATROL) $(THREAD) \
-	$(GD_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
+	$(GD_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) \
 	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC) $(POSTGIS_INC) \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC)
 
 # Link flags and shared libs only
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
-          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
+          $(JPEG_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
 	  $(MING_LIB) $(POSTGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS)
 
@@ -178,14 +168,9 @@ OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplex
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: $(MAKE_GD) $(MAKE_EGIS) libmap.a shp2img shp2pdf legend \
+all: $(MAKE_GD) libmap.a shp2img shp2pdf legend \
 	mapserv shptree shptreevis shptreetst scalebar sortshp mapscriptvars \
 	tile4ms @MAKE_PHPMS@
-
-egis::
-	cd egis/errLog; make; cd ..
-	cd egis/imgSrc; make; cd ..
-	cd egis; make; cd ..
 
 php3_mapscript:: libmap.a
 	cd mapscript/php3; $(MAKE); cd ../..
@@ -256,11 +241,6 @@ mapscriptvars:
 	echo $(LDFLAGS) >> mapscriptvars
 	echo $(STATIC_LIBS) >> mapscriptvars
 
-egis_clean:
-	cd egis/errLog; $(MAKE) clean; cd ..
-	cd egis/imgSrc; $(MAKE) clean; cd ..
-	cd egis; $(MAKE) clean; cd ..
-
 php3_mapscript_clean::
 	cd mapscript/php3; $(MAKE) clean; cd ../..
 
@@ -268,7 +248,7 @@ install: libmap.a
 	cp -f libmap.a $(LIB_INSTALL)
 	cp -f map.h $(HEADER_INSTALL)
 
-clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
+clean: @MAKE_PHPMS_CLEAN@
 	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp mapscriptvars tile4ms testexpr
 
 distclean:
