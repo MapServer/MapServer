@@ -52,6 +52,20 @@ struct timeval stTime, endTime;
 double diffTime;
 #endif
 
+#define RED_LEVELS 5
+#define RED_DIV 52
+#define GREEN_LEVELS 7
+#define GREEN_DIV 37
+#define BLUE_LEVELS 5
+#define BLUE_DIV 52
+
+#define RGB_LEVEL_INDEX(r,g,b) ((r)*GREEN_LEVELS*BLUE_LEVELS + (g)*BLUE_LEVELS+(b))
+#define RGB_INDEX(r,g,b) RGB_LEVEL_INDEX(((r)/RED_DIV),((g)/GREEN_DIV),((b)/BLUE_DIV))
+
+                                         
+
+
+
 /* 
 ** NEED TO FIX THIS, SPECIAL FOR RASTERS!
 */
@@ -185,6 +199,36 @@ static int add_color(mapObj *map, gdImagePtr img, int r, int g, int b)
   return op; /* Return newly allocated color */  
 }
 
+/*
+** Allocate color table entries as best possible for a color cube.
+*/
+
+int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
+
+{
+    int	 r, g, b;
+
+    for( r = 0; r < RED_LEVELS; r++ )
+    {
+        for( g = 0; g < GREEN_LEVELS; g++ )
+        {
+            for( b = 0; b < BLUE_LEVELS; b++ )
+            {
+                int	red, green, blue;
+                
+                red = MIN(255,r * (255 / (RED_LEVELS-1)));
+                green = MIN(255,g * (255 / (GREEN_LEVELS-1)));
+                blue = MIN(255,b * (255 / (BLUE_LEVELS-1)));
+
+                panColorCube[RGB_LEVEL_INDEX(r,g,b)] = 
+                    add_color(map, img, red, green, blue );
+            }
+        }
+    }
+
+    return MS_SUCCESS;
+}
+
 #if defined(USE_GDAL)
 /*
 ** GDAL Support.
@@ -201,12 +245,14 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   double adfGeoTransform[6], adfInvGeoTransform[6];
   int	dst_xoff, dst_yoff, dst_xsize, dst_ysize;
   int	src_xoff, src_yoff, src_xsize, src_ysize;
+  int   anColorCube[256];
   double llx, lly, urx, ury;
   rectObj copyRect, mapRect;
-  unsigned char *pabyRaw;
+  unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3;
 
   GDALColorTableH hColorMap;
-  GDALRasterBandH hBand;
+  GDALRasterBandH hBand1, hBand2, hBand3, hBand4;
+
 
   /*
    * Compute the georeferenced window of overlap, and do nothing if there
@@ -269,21 +315,33 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       return 0;
 
   /*
-   * Fetch the band(s).  For now we just operate on the first band of
-   * the file. 
+   * Are we in a one band, RGB or RGBA situation?
    */
-  hBand = GDALGetRasterBand( hDS, 1 );
-  if( hBand == NULL )
-      return -1;
+  hBand1 = GDALGetRasterBand( hDS, 1 );
+  hBand2 = hBand3 = hBand4 = NULL;
 
+  if( GDALGetRasterCount( hDS ) >= 3
+      && GDALGetRasterColorTable( hBand1 ) == NULL 
+      && layer->numclasses == 0 )
+  {
+      hBand1 = GDALGetRasterBand( hDS, 1 );
+      hBand2 = GDALGetRasterBand( hDS, 2 );
+      hBand3 = GDALGetRasterBand( hDS, 3 );
+      if( hBand1 == NULL || hBand2 == NULL || hBand3 == NULL )
+          return -1;
+
+      /* add alpha support later */
+  }
+      
   /*
    * Get colormap for this image.  If there isn't one, create a greyscale
    * colormap. 
    */
-  hColorMap = GDALGetRasterColorTable( hBand );
+  hColorMap = GDALGetRasterColorTable( hBand1 );
   if( hColorMap != NULL )
       hColorMap = GDALCloneColorTable( hColorMap );
-  else
+
+  else if( hBand2 == NULL )
   {
       hColorMap = GDALCreateColorTable( GPI_RGB );
 
@@ -330,7 +388,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       } else
 	cmap[i] = -1;
     }
-  } else {
+  } else if( hColorMap != NULL ) {
     for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
         GDALColorEntry sEntry;
 
@@ -342,37 +400,89 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
             cmap[i] = -1;
     }
   }
+  else
+  {
+      allocColorCube( map, img, anColorCube );
+  }
 
   /*
    * Read the entire region of interest in one gulp.  GDAL will take
    * care of downsampling and window logic.  
    */
-  pabyRaw = (unsigned char *) malloc(dst_xsize * dst_ysize);
-  if( pabyRaw == NULL )
+  pabyRaw1 = (unsigned char *) malloc(dst_xsize * dst_ysize);
+  if( pabyRaw1 == NULL )
       return -1;
 
-  GDALRasterIO( hBand, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
-                pabyRaw, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+  GDALRasterIO( hBand1, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
+                pabyRaw1, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
 
-  k = 0;
-  for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+  /*
+  ** Process single band using the provided, or greyscale colormap
+  */
+  if( hBand2 == NULL )
   {
-      int	result;
-
-      for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+      k = 0;
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
       {
-          result = cmap[pabyRaw[k++]];
-          if( result != -1 )
+          int	result;
+          
+          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          {
+              result = cmap[pabyRaw1[k++]];
+              if( result != -1 )
 #ifndef USE_GD_1_2
-              img->pixels[i][j] = result;
+                  img->pixels[i][j] = result;
 #else
-              img->pixels[j][i] = result;
+                  img->pixels[j][i] = result;
 #endif
+          }
       }
   }
 
-  free( pabyRaw );
-  GDALDestroyColorTable( hColorMap );
+  /*
+  ** Otherwise read green and blue data, and process through the color cube.
+  */
+  else
+  {
+      pabyRaw2 = (unsigned char *) malloc(dst_xsize * dst_ysize);
+      if( pabyRaw2 == NULL )
+          return -1;
+      
+      GDALRasterIO( hBand2, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
+                    pabyRaw2, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+
+      pabyRaw3 = (unsigned char *) malloc(dst_xsize * dst_ysize);
+      if( pabyRaw3 == NULL )
+          return -1;
+      
+      GDALRasterIO( hBand3, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
+                    pabyRaw3, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+
+      k = 0;
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      {
+          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          {
+              int	cc_index;
+
+              cc_index = RGB_INDEX(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
+#ifndef USE_GD_1_2
+              img->pixels[i][j] = anColorCube[cc_index];
+#else
+              img->pixels[j][i] = anColorCube[cc_index];
+#endif
+
+              k++;
+          }
+      }
+
+      free( pabyRaw2 );
+      free( pabyRaw3 );
+  }
+
+  free( pabyRaw1 );
+  if( hColorMap != NULL )
+      GDALDestroyColorTable( hColorMap );
 
   return 0;
 }
@@ -1527,7 +1637,17 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   }
 
   getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
-  if(map->shapepath) chdir(map->shapepath);
+  if(map->shapepath)
+  {
+      int	error;
+      
+      error = chdir(map->shapepath);
+      if( error != 0 )
+      {
+          msSetError( MS_IOERR, "chdir(%s)", map->shapepath );
+          return -1;
+      }
+  }
 
   if(layer->tileindex) { /* we have in index file */
     if(msSHPOpenFile(&tilefile, "rb", map->shapepath, layer->tileindex) == -1) return(-1);    
