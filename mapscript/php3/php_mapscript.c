@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/09/29 16:47:07  dan
+ * Correct bug in function addColor. Convert user input parameters
+ * to long.
+ *
  * Revision 1.16  2000/09/22 13:39:46  dan
  * Add zoomscale function.
  *
@@ -1884,6 +1888,10 @@ DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
+    convert_to_long(pR);
+    convert_to_long(pG);
+    convert_to_long(pB);
+    
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
     if (self == NULL || 
         (nColorId = mapObj_addColor(self, pR->value.lval, 
@@ -2274,12 +2282,13 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
     if (self != NULL)
     {
         palette = self->palette;
-
+        
         if (pColorIndex->value.lval < palette.numcolors)
         {
             oColor.red = palette.colors[(int)pColorIndex->value.lval].red;
             oColor.green = palette.colors[(int)pColorIndex->value.lval].green;
             oColor.blue = palette.colors[(int)pColorIndex->value.lval].blue;
+
         }
         else
         {
