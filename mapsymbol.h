@@ -11,9 +11,20 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_S
 
 #define MS_IMAGECACHESIZE 6
 
+// COLOR OBJECT
+typedef struct {
+  int pen;
+  int red;
+  int green;
+  int blue;
+#if ALPHACOLOR_ENABLED
+  int alpha;
+#endif
+} colorObj;
+
 #ifndef SWIG
 struct imageCacheObj {
-  int color;
+  colorObj color;
   int symbol;
   int size;
   gdImagePtr img;

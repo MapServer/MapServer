@@ -25,20 +25,26 @@ int msImageSetPenGD(gdImagePtr img, colorObj *color)
   return(MS_SUCCESS);
 }
 
-static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) 
+int msCompareColors(colorObj *c1, colorObj *c2)
+{
+  if(c1->red != c2->red || c1->green != c2->green || c1->blue != c2->blue) return MS_FALSE;
+  return MS_TRUE;
+}
+
+static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, int size) 
 {
   struct imageCacheObj *icp;
 
   icp = ic;
   while(icp) {
-    if(icp->symbol == symbol && icp->color == color && icp->size == size) return(icp->img);
+    if(icp->symbol == style->symbol && msCompareColors(&icp->color, &style->color) == MS_TRUE && icp->size == size) return(icp->img);
     icp = icp->next;
   }
 
   return(NULL);
 }
 
-static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, int symbol, int color, int size, gdImagePtr img) 
+static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, styleObj *style, int size, gdImagePtr img) 
 {
   struct imageCacheObj *icp;
 
@@ -56,8 +62,8 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   }
   
   icp->img = img;
-  icp->color = color;
-  icp->symbol = symbol;
+  icp->color = style->color;
+  icp->symbol = style->symbol;
   icp->size = size;
   icp->next = ic; // insert at the beginning
  
@@ -725,7 +731,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { 
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create
 
       x = MS_NINT(brush->sx/2); // center the ellipse
@@ -736,7 +742,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       if(symbol->filled)
 	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
       
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -756,7 +762,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) {
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) {
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc);  // not in cache, create
 
       // draw in the brush image 
@@ -766,7 +772,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       }
       gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
 
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -1221,7 +1227,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { 
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
 
       x = MS_NINT(brush->sx/2); // center the ellipse
@@ -1232,7 +1238,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       if(symbol->filled)
         gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
       
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -1252,7 +1258,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { 
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
 
       // draw in the brush image 
@@ -1262,7 +1268,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       }
       gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
 
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);

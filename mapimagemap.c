@@ -55,7 +55,7 @@ static int matchdxfcolor(colorObj col)
 	return tcolor;
 }
 
-static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) {
+static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, int size) {
 //  struct imageCacheObj *icp;
 DEBUG printf("searchImageCache\n<BR>");
 /*
@@ -91,7 +91,7 @@ DEBUG printf("ImageStartLayerIM\n<BR>");
 	lastcolor = -1;
 }
 	
-static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, int symbol, int color, int size, gdImagePtr img) {
+static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, styleObj *style, int size, gdImagePtr img) {
   struct imageCacheObj *icp;
 DEBUG printf("addImageCache\n<BR>");
 
@@ -109,8 +109,8 @@ DEBUG printf("addImageCache\n<BR>");
   }
   
   icp->img = img;
-  icp->color = color;
-  icp->symbol = symbol;
+  icp->color = style->color;
+  icp->symbol = style->symbol;
   icp->size = size;
   icp->next = ic; // insert at the beginning
  
@@ -453,7 +453,7 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { // not in cache, create
       brush = gdImageCreate(x, y);
       brush_bc = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
       gdImageColorTransparent(brush,0);
@@ -467,7 +467,7 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
       if(symbol->filled)
 	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
       
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -487,7 +487,7 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { // not in cache, create
       brush = gdImageCreate(x, y);
       if(style->backgroundcolor.pen >= 0)
 	brush_bc = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
@@ -504,7 +504,7 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
       }
       gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
 
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -1063,7 +1063,7 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { // not in cache, create
       brush = gdImageCreate(x, y);
       brush_bc = gdImageColorAllocate(brush,gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
       gdImageColorTransparent(brush,0);
@@ -1077,7 +1077,7 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
       if(symbol->filled)
 	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
       
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -1097,7 +1097,7 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
+    if((brush = searchImageCache(symbolset->imagecache, style, fc, size)) == NULL) { // not in cache, create
       brush = gdImageCreate(x, y);
       if(bc >= 0)
 	brush_bc = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
@@ -1114,7 +1114,7 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
       }
       gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
 
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
