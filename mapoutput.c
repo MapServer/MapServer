@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/12/17 22:52:43  dan
+ * Update value of map->imagetype in msSelectOutputFormat()
+ *
  * Revision 1.9  2002/12/17 22:04:58  dan
  * Added PNG24 to the list of default output formats with GD2
  *
@@ -391,7 +394,14 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
         if( strcasecmp(imagetype,map->outputformatlist[i]->name) == 0 )
             format = map->outputformatlist[i];
     }
-        
+
+    if (format)
+    {
+        if (map->imagetype)
+            free(map->imagetype);
+        map->imagetype = strdup(map->outputformatlist[i]->name);
+    }
+
     return format;
 }
 
