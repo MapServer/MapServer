@@ -52,6 +52,9 @@ not yet been implemented for other languages.
  Classes
 =============================================================================
 
+References to sections below will be added here as the documentation grows.
+
+imageObj_
 
 -----------------------------------------------------------------------------
  imageObj
@@ -128,4 +131,3 @@ saveToString() : string
 
         s = StringIO()
         imgobj.save(s)
-
