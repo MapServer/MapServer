@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.68  2004/11/10 20:55:40  assefa
+ * Do not output <StyleList> if the metadata wms_stylelist is an empty
+ * string (Bug 595).
+ *
  * Revision 1.67  2004/11/02 21:01:00  assefa
  * Add a 2nd optional argument to msLoadMapContext function (Bug 1023).
  *
@@ -1901,9 +1905,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               if(papszFormats)
                   msFreeCharArray(papszFormats, numFormats);
           }
-
-          // Style
-          if(msLookupHashTable(&(map->layers[i].metadata),"wms_stylelist") ==NULL)
+          //
+          pszValue = msLookupHashTable(&(map->layers[i].metadata),"wms_stylelist");
+          if(pszValue == NULL || strlen(trimLeft(pszValue)) < 1)
           {
               pszURL = "";
               if(map->layers[i].connection)
