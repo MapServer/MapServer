@@ -1025,7 +1025,7 @@ void returnOneToManyJoin(int j)
 
 }
 
-char *processLine(char *instr, int escape, int mode) 
+char *processLine(char *instr, int mode) 
 {
   int i,j;
   char repstr[1024], substr[1024], *outstr; // repstr = replace string, substr = sub string
@@ -1073,10 +1073,8 @@ char *processLine(char *instr, int escape, int mode)
   for(i=0;i<NumLayers;i++)
     sprintf(repstr, "%s%s ", repstr, Layers[i]);
   trimBlanks(repstr);
-  if(escape) 
-    outstr = gsub(outstr, "[layers]", (char *)encode_url(repstr)); 
-  else 
-    outstr = gsub(outstr, "[layers]", repstr);
+  outstr = gsub(outstr, "[layers]", repstr);
+  outstr = gsub(outstr, "[layers_esc]", (char *)encode_url(repstr));   
 
   // HERE: NEED TO FINISH ESCAPING
 
@@ -1162,10 +1160,8 @@ char *processLine(char *instr, int escape, int mode)
   sprintf(repstr, "%f", Map->extent.maxy);
   outstr = gsub(outstr, "[maxy]", repstr);
   sprintf(repstr, "%f %f %f %f", Map->extent.minx, Map->extent.miny,  Map->extent.maxx, Map->extent.maxy);
-  if(escape) 
-    outstr = gsub(outstr, "[mapext]", (char *)encode_url(repstr)); 
-  else
-    outstr = gsub(outstr, "[mapext]", repstr);
+  outstr = gsub(outstr, "[mapext]", repstr);
+  outstr = gsub(outstr, "[mapext_esc]", (char *)encode_url(repstr));
   
   sprintf(repstr, "%f", RawExt.minx); // Individual raw extent elements for spatial query building
   outstr = gsub(outstr, "[rawminx]", repstr);
@@ -1176,11 +1172,9 @@ char *processLine(char *instr, int escape, int mode)
   sprintf(repstr, "%f", RawExt.maxy);
   outstr = gsub(outstr, "[rawmaxy]", repstr);
   sprintf(repstr, "%f %f %f %f", RawExt.minx, RawExt.miny,  RawExt.maxx, RawExt.maxy);
-  if(escape) 
-    outstr = gsub(outstr, "[rawext]", (char *)encode_url(repstr)); 
-  else
-    outstr = gsub(outstr, "[rawext]", repstr);
-  
+  outstr = gsub(outstr, "[rawext]", repstr);
+  outstr = gsub(outstr, "[rawext_esc]", (char *)encode_url(repstr)); 
+    
 #ifdef USE_PROJ
   if((strstr(outstr, "lat]") || strstr(outstr, "lon]")) && Map->projection.proj != NULL) {
     llextent=Map->extent;
@@ -1202,18 +1196,15 @@ char *processLine(char *instr, int escape, int mode)
     sprintf(repstr, "%f", llextent.maxy);
     outstr = gsub(outstr, "[maxlat]", repstr);    
     sprintf(repstr, "%f %f %f %f", llextent.minx, llextent.miny,  llextent.maxx, llextent.maxy);
-    if(escape) 
-      outstr = gsub(outstr, "[mapext_latlon]", (char *)encode_url(repstr)); 
-    else
-      outstr = gsub(outstr, "[mapext_latlon]", repstr);
+    outstr = gsub(outstr, "[mapext_latlon]", repstr);
+    outstr = gsub(outstr, "[mapext_latlon_esc]", (char *)encode_url(repstr)); 
   }
 #endif
 
   sprintf(repstr, "%d %d", Map->width, Map->height);
-  if(escape) 
-    outstr = gsub(outstr, "[mapsize]", (char *)encode_url(repstr)); 
-  else
-    outstr = gsub(outstr, "[mapsize]", repstr);
+  outstr = gsub(outstr, "[mapsize]", repstr);
+  outstr = gsub(outstr, "[mapsize]", (char *)encode_url(repstr));
+
   sprintf(repstr, "%d", Map->width);
   outstr = gsub(outstr, "[mapwidth]", repstr);
   sprintf(repstr, "%d", Map->height);
@@ -1271,14 +1262,15 @@ char *processLine(char *instr, int escape, int mode)
     sprintf(repstr, "%d", ShpIdx);
     outstr = gsub(outstr, "[shpidx]", repstr);
     
+    // FIX: the query section
+
     for(i=0;i<Query->numitems;i++) {	 
       sprintf(substr, "[%s]", Query->items[i]);
-      if(strstr(outstr, substr) != NULL) { /* do substitution */
-	if(escape) 
-	  outstr = gsub(outstr, substr, (char *)encode_url(Query->data[i])); 
-	else
-	  outstr = gsub(outstr, substr, Query->data[i]);
-      }
+      if(strstr(outstr, substr) != NULL)
+	outstr = gsub(outstr, substr, Query->data[i]);
+      sprintf(substr, "[%s_esc]", Query->items[i]);
+      if(strstr(outstr, substr) != NULL)
+	outstr = gsub(outstr, substr, (char *)encode_url(Query->data[i]));
     } /* next item */
     
     for(i=0; i<Query->numjoins; i++) {
@@ -1306,10 +1298,9 @@ char *processLine(char *instr, int escape, int mode)
   
   for(i=0;i<NumEntries;i++) { 
     sprintf(substr, "[%s]", Entries[i].name);
-    if(escape) 
-      outstr = gsub(outstr, substr, (char *)encode_url(Entries[i].val); 
-    else
-      outstr = gsub(outstr, substr, Entries[i].val); /* do substitution */
+    outstr = gsub(outstr, substr, Entries[i].val);
+    sprintf(substr, "[%s_esc]", Entries[i].name);
+    outstr = gsub(outstr, substr, (char *)encode_url(Entries[i].val);    
   }
 
   return(outstr);
@@ -1342,7 +1333,7 @@ void returnPage(char *html, int mode)
   while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the file */
 
     if(strchr(line, '[') != NULL) {
-      tmpline = processLine(line, MS_FALSE, mode);
+      tmpline = processLine(line, mode);
       printf("%s", tmpline);
       free(tmpline);
     } else
@@ -1363,7 +1354,7 @@ void returnURL(char *url, int mode)
     writeError();
   }
 
-  tmpurl = processLine(url, MS_TRUE, mode);
+  tmpurl = processLine(url, mode);
 
   printf("Status: 302 Found\n");
   printf("Uri: %s\n", tmpurl);
@@ -1374,6 +1365,9 @@ void returnURL(char *url, int mode)
   free(tmpurl);
 }
 
+// FIX: need to consider JOINS
+// FIX: need to consider 5% shape extent expansion
+
 void returnQuery()
 {
   int status;
@@ -1383,7 +1377,32 @@ void returnQuery()
   layerObj *lp;
   int item;
 
-  msInitShape(&ResultShape); // Shape is a global var define in mapserv.h
+  msInitShape(&ResultShape); // ResultShape is a global var define in mapserv.h
+
+  if((Mode == ITEMQUERY) || (Mode == QUERY)) { // may need to handle a URL result set
+
+    for(i=(Map->numlayers-1); i>=0; i--) {
+      lp = &(Map->layers[i]);
+
+      if(!lp->resultcache) continue;
+      if(!lp->resultcache->numresults == 0) continue;
+    }
+
+    if(TEMPLATE_TYPE(lp->class[lp->resultcache->results[0].classindex].template) == MS_URL) {
+      status = msLayerOpen(lp, Map->shapepath);
+      if(status != MS_SUCCESS) writeError();
+
+      status = msLayerGetShape(lp, Map->shapepath, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex, MS_ALLITEMS);
+      if(status != MS_SUCCESS) writeError();
+
+      returnURL(lp->class[lp->resultcache->results[0].classindex].template, QUERY);      
+      
+      msFreeShape(&ReturnShape);
+      msLayerClose(lp);
+
+      return;
+    }
+  }
 
   NR = NL = 0;
   for(i=0; i<Map->numlayers; i++) { // compute some totals
@@ -1395,166 +1414,49 @@ void returnQuery()
     NR += lp->resultcache->numresults;
   }
 
+  printf("Content-type: text/html%c%c", 10, 10); // write MIME header
+  printf("<!-- %s -->\n", msGetVersion());
+  fflush(stdout);
+  
+  if(Map->web.header) returnPage(Map->web.header, BROWSE);
+
+  RN = 1; // overall result number
   for(i=(Map->numlayers-1); i>=0; i--) {
     lp = &(Map->layers[i]);
 
-    if(!lp->resultcache) break;
-    if(!lp->resultcache->numresults == 0) break;
+    if(!lp->resultcache) continue;
+    if(!lp->resultcache->numresults == 0) continue;
+
+    NLR = lp->resultcache->numresults; 
+    CL = lp->name;
+    CD = lp->description;
+
+    if(lp->header) returnPage(lp->header, BROWSE);
 
     // open this layer
     status = msLayerOpen(lp, Map->shapepath);
     if(status != MS_SUCCESS) writeError();
 
-
+    LRN = 1; // layer result number
     for(j=0; j<lp->resultcache->numresults; j++) {
-
       status = msLayerGetShape(lp, Map->shapepath, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex, MS_ALLITEMS);
       if(status != MS_SUCCESS) writeError();
 
-    }
-  }
+      returnPage(lp->class[lp->resultcache->results[j].classindex].template, QUERY);      
 
-  // OLD CODE BELOOOOOOOOW
+      msFreeShape(&ReturnShape); // init too
 
-  if((Mode == ITEMQUERY) || (Mode == QUERY)) { // may need to handle a URL result set
-
-    Mode = QUERY; /* simplifies life */
-
-    for(i=(Map->numlayers-1); i>=0; i--)
-      if(Map->layers[i].resultcache && Map->layers[i].resultcache.numresults > 0) break;
-	  
-    if(TEMPLATE_TYPE(Query->template) == MS_URL) { 
-
-      if(msOpenSHPFile(&shp, "rb", Map->shapepath, Map->tile, Map->layers[i].data) == -1) writeError();
-
-#ifdef USE_PROJ
-      SHPReadShapeProj(shp.hSHP, j, &shape, &(Map->layers[i].projection), &(Map->projection));
-#else
-      SHPReadShape(shp.hSHP, j, &shape); /* get feature extent */
-#endif
-
-      dx = shape.bounds.maxx - shape.bounds.minx;
-      dy = shape.bounds.maxy - shape.bounds.miny;
-      ShpExt.minx = shape.bounds.minx - dx*EXTENT_PADDING/2.0;
-      ShpExt.maxx = shape.bounds.maxx + dx*EXTENT_PADDING/2.0;
-      ShpExt.miny = shape.bounds.miny - dy*EXTENT_PADDING/2.0;
-      ShpExt.maxy = shape.bounds.maxy + dy*EXTENT_PADDING/2.0;
-      ShpIdx = j;
-
-      Query->numitems = DBFGetFieldCount(shp.hDBF);
-      if((Query->items = msGetDBFItems(shp.hDBF)) == NULL) /* save items names */
-	writeError();
-      
-      if((Query->data = msGetDBFValues(shp.hDBF, j)) == NULL)
-	writeError();
-      
-      for(i=0; i<Query->numjoins; i++) {
-	if((item = msGetItemIndex(shp.hDBF, Query->joins[i].from)) == -1)
-	  writeError();
-	Query->joins[i].match = strdup(DBFReadStringAttribute(shp.hDBF, j, item));
-	if(msJoinDBFTables(&(Query->joins[i]), Map->shapepath, Map->tile) == -1)
-	  writeError();
-      }
-    
-      returnURL(Query->template);
-      
-      
-      msFreeShape(&shape);
-      msCloseSHPFile(&shp);
-
-      return;
-    }
-  }
-   
-  Mode = QUERY; /* simplifies life */
-  
-  NR = QueryResults->numresults;
-  NL = QueryResults->numquerylayers;
-
-  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
-  printf("<!-- %s -->\n", msGetVersion());
-  fflush(stdout);
-  
-  if(Map->web.header != NULL) {
-    Mode = BROWSE; returnPage(Map->web.header); Mode = QUERY;
-  }
-  
-  for(i=(QueryResults->numlayers-1); i>=0; i--) {
-
-    if(QueryResults->layers[i].numresults == 0) /* next query */
-      continue;
-
-    NLR = QueryResults->layers[i].numresults;
-    CL = Map->layers[i].name;
-    CD = Map->layers[i].description;
-
-    if(Map->layers[i].header != NULL) {
-      Mode = BROWSE; returnPage(Map->layers[i].header); Mode = QUERY;
-    }
-    
-    if(msOpenSHPFile(&shp, "rb", Map->shapepath, Map->tile, Map->layers[i].data) == -1) 
-      writeError();
-
-    for(j=0; j<shp.numshapes; j++) {      
-      
-      if(!msGetBit(QueryResults->layers[i].status,j))
-	continue;
-      
-#ifdef USE_PROJ
-      SHPReadShapeProj(shp.hSHP, j, &shape, &(Map->layers[i].projection), &(Map->projection));
-#else       
-      SHPReadShape(shp.hSHP, j, &shape); /* get feature extent */
-#endif
-      
-      dx = shape.bounds.maxx - shape.bounds.minx;
-      dy = shape.bounds.maxy - shape.bounds.miny;
-      ShpExt.minx = shape.bounds.minx - dx*EXTENT_PADDING/2.0;
-      ShpExt.maxx = shape.bounds.maxx + dx*EXTENT_PADDING/2.0;
-      ShpExt.miny = shape.bounds.miny - dy*EXTENT_PADDING/2.0;
-      ShpExt.maxy = shape.bounds.maxy + dy*EXTENT_PADDING/2.0;
-      ShpIdx = j;
-      
-      RN++;
-      LRN = j+1;
-      
-      Query = &(Map->layers[i].query[(int)QueryResults->layers[i].index[j]]);
-      
-      if(!Query->items) { /* only load once */
-	Query->numitems = DBFGetFieldCount(shp.hDBF);
-	Query->items = msGetDBFItems(shp.hDBF);
-	if(!Query->items)
-	  writeError();
-      }
-
-      if(Query->data) /* free old data */
-	msFreeCharArray(Query->data, Query->numitems);
-      Query->data = msGetDBFValues(shp.hDBF, j);
-      if(!Query->data)
-	writeError();
-      
-      for(k=0; k<Query->numjoins; k++) {
-	if((item = msGetItemIndex(shp.hDBF, Query->joins[k].from)) == -1)
-	  writeError();
-	Query->joins[k].match = strdup(DBFReadStringAttribute(shp.hDBF, j, item));
-	if(msJoinDBFTables(&(Query->joins[k]), Map->shapepath, Map->tile) == -1)
-	  writeError();
-      }
-      
-      returnPage(Query->template);
-      msFreeShape(&shape);
+      RN++; // increment counters
+      LRN++;
     }
 
-    if(Map->layers[i].footer) {
-      Mode = BROWSE; returnPage(Map->layers[i].footer); Mode = QUERY;
-    }
+    msLayerClose(lp);
 
-    msCloseSHPFile(&shp);
+    if(lp->footer) returnPage(lp->header, BROWSE);
   }
 
-  if(Map->web.footer) {      
-    Mode = BROWSE; returnPage(Map->web.footer); Mode = QUERY;
-  }
-  
+  if(Map->web.footer) returnPage(Map->web.footer, BROWSE);
+
   return;
 }
 
