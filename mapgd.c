@@ -985,6 +985,10 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x, y+1, symbol->character);
       gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y, symbol->character);
       gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y+1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y-1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y+1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y-1, symbol->character);
     }
     // END OF DHC MOD
 
@@ -2102,6 +2106,11 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y+1, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y, string);
+      
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);      
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
     }
 
     if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
@@ -2136,11 +2145,15 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 
       y -= fontPtr->h*num_tokens;
       for(t=0; t<num_tokens; t++) {
-	if(label->outlinecolor.pen >= 0) {
+	if(label->outlinecolor.pen >= 0) {	  
 	  gdImageString(img, fontPtr, x, y-1, token[t], label->outlinecolor.pen);
 	  gdImageString(img, fontPtr, x, y+1, token[t], label->outlinecolor.pen);
 	  gdImageString(img, fontPtr, x+1, y, token[t], label->outlinecolor.pen);
 	  gdImageString(img, fontPtr, x-1, y, token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x+1, y-1, token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x+1, y+1, token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x-1, y-1, token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x-1, y+1, token[t], label->outlinecolor.pen);
 	}
 
 	if(label->shadowcolor.pen >= 0)
@@ -2160,6 +2173,10 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 	gdImageString(img, fontPtr, x, y+1, string, label->outlinecolor.pen);
 	gdImageString(img, fontPtr, x+1, y, string, label->outlinecolor.pen);
 	gdImageString(img, fontPtr, x-1, y, string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x+1, y-1, string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x+1, y+1, string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x-1, y-1, string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x-1, y+1, string, label->outlinecolor.pen);
       }
 
       if(label->shadowcolor.pen >= 0)
