@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2003/09/30 15:58:16  assefa
+ * IsBetween filter can have a <literal> node before value.
+ *
  * Revision 1.10  2003/09/29 20:40:56  assefa
  * Remove brackets when It is a logical expression.
  *
@@ -505,12 +508,20 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /*      Eg of Filter :                                                  */
 /*      <PropertyIsBetween>                                             */
 /*         <PropertyName>DEPTH</PropertyName>                           */
+/*         <LowerBoundary><Literal>400</Literal></LowerBoundary>        */
+/*         <UpperBoundary><Literal>800</Literal></UpperBoundary>        */
+/*      </PropertyIsBetween>                                            */
+/*                                                                      */
+/*      Or                                                              */
+/*      <PropertyIsBetween>                                             */
+/*         <PropertyName>DEPTH</PropertyName>                           */
 /*         <LowerBoundary>400</LowerBoundary>                           */
 /*         <UpperBoundary>800</UpperBoundary>                           */
 /*      </PropertyIsBetween>                                            */
 /* -------------------------------------------------------------------- */
             else if (strcasecmp(psXMLNode->pszValue, "PropertyIsBetween") == 0)
             {
+                CPLXMLNode *psUpperNode = NULL, *psLowerNode = NULL;
                 if (psXMLNode->psChild &&
                     strcasecmp(psXMLNode->psChild->pszValue, 
                                "PropertyName") == 0 &&
@@ -537,22 +548,31 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                         psXMLNode->psChild->psNext->psChild->pszValue &&
                         psXMLNode->psChild->psNext->psNext->psChild->pszValue)
                     {
+                        //check if the <Literals> is there
                         psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BOUNDARY;
-                    
+                        if (psXMLNode->psChild->psNext->psChild->psChild)
+                          psLowerNode = psXMLNode->psChild->psNext->psChild->psChild;
+                        else
+                          psLowerNode = psXMLNode->psChild->psNext->psChild;
+
+                        if (psXMLNode->psChild->psNext->psNext->psChild->psChild)
+                          psUpperNode = psXMLNode->psChild->psNext->psNext->psChild->psChild;
+                        else
+                          psUpperNode = psXMLNode->psChild->psNext->psNext->psChild;
+
                         nStrLength = 
-                          strlen(psXMLNode->psChild->psNext->psChild->pszValue);
+                          strlen(psLowerNode->pszValue);
                         nStrLength +=
-                          strlen(psXMLNode->psChild->psNext->psNext->
-                                 psChild->pszValue);
+                          strlen(psUpperNode->pszValue);
 
                         nStrLength += 2; //adding a ; between bounary values
                          psFilterNode->psRightNode->pszValue = 
                            (char *)malloc(sizeof(char)*(nStrLength));
                          strcpy( psFilterNode->psRightNode->pszValue,
-                                 psXMLNode->psChild->psNext->psChild->pszValue);
+                                psLowerNode->pszValue);
                          strcat(psFilterNode->psRightNode->pszValue, ";");
                          strcat(psFilterNode->psRightNode->pszValue,
-                                psXMLNode->psChild->psNext->psNext->psChild->pszValue); 
+                                psUpperNode->pszValue); 
                          psFilterNode->psRightNode->pszValue[nStrLength-1]='\0';
                     }
                          
@@ -576,7 +596,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     psXMLNode->psChild->psNext &&
                     strcasecmp(psXMLNode->psChild->psNext->pszValue, "singleChar") == 0 &&
                     psXMLNode->psChild->psNext->psNext &&
-                    strcasecmp(psXMLNode->psChild->psNext->psNext->pszValue, "escapeChar") == 0 &&
+                    strcasecmp(psXMLNode->psChild->psNext->psNext->pszValue, "escape") == 0 &&
                     psXMLNode->psChild->psNext->psNext->psNext &&
                     strcasecmp(psXMLNode->psChild->psNext->psNext->psNext->pszValue, "PropertyName") == 0 &&
                     psXMLNode->psChild->psNext->psNext->psNext->psNext &&
@@ -594,7 +614,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     if (pszTmp)
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar = 
                         strdup(pszTmp);
-                    pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escapeChar", "");
+                    pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escape", "");
                     if (pszTmp)
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar = 
                         strdup(pszTmp);
@@ -1224,8 +1244,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
         nLenght = strlen(aszBounds[0]);
         for (i=0; i<nLenght; i++)
         {
-            if (aszBounds[0][i] < '0' ||
-                aszBounds[0][i] > '9')
+            if (!isdigit(aszBounds[0][i]) && aszBounds[0][i] != '.')
             {
                 bString = 1;
                 break;
@@ -1239,8 +1258,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
             nLenght = strlen(aszBounds[1]);
             for (i=0; i<nLenght; i++)
             {
-                if (aszBounds[1][i] < '0' ||
-                    aszBounds[1][i] > '9')
+                if (!isdigit(aszBounds[0][i]) && aszBounds[0][i] != '.')
                 {
                     bString = 1;
                     break;
@@ -1268,7 +1286,12 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
         
     
     strcat(szBuffer, " >= ");
+    if (bString)
+      strcat(szBuffer,"'");
     strcat(szBuffer, aszBounds[0]);
+    if (bString)
+      strcat(szBuffer,"'");
+
     strcat(szBuffer, " AND ");
 
     if (bString)
@@ -1285,7 +1308,11 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
       strcat(szBuffer, "] ");
     
     strcat(szBuffer, " <= ");
+    if (bString)
+      strcat(szBuffer,"'");
     strcat(szBuffer, aszBounds[1]);
+    if (bString)
+      strcat(szBuffer,"'");
     strcat(szBuffer, ")");
      
     
