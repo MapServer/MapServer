@@ -368,9 +368,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return; // map deconstructor takes care of it
   }
 
-  int open(char *path) {
+  int open() {
     int status;
-    status =  msLayerOpen(self, path);
+    status =  msLayerOpen(self);
     if (status == MS_SUCCESS) {
         return msLayerGetItems(self);
     }
