@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.20  2004/02/05 06:05:54  sdlime
+ * Added first WCS prototype to mapows.h
+ *
  * Revision 1.19  2003/10/30 22:37:01  assefa
  * Add function msWFSExecuteGetFeature on a wfs layer.
  *
@@ -243,6 +246,13 @@ char *msWFSExecuteGetFeature(layerObj *lp);
 int msWriteMapContext(mapObj *map, FILE *stream);
 int msSaveMapContext(mapObj *map, char *filename);
 int msLoadMapContext(mapObj *map, char *filename);
+
+
+/*====================================================================
+ *   mapwcs.c
+ *====================================================================*/
+
+int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj);
 
 #endif /* MAPOWS_H */
 
