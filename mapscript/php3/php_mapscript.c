@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.143  2003/02/04 15:39:43  julien
+ * Use MS_SUCCESS to validate success in load/save map context
+ *
  * Revision 1.142  2003/02/04 14:51:40  assefa
  * Add test on module name "cgi-fcgi".
  *
@@ -4719,7 +4722,7 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
        strlen(pParamFileName->value.str.val) > 0)
     {
         if ((retVal = mapObj_saveMapContext(self, 
-                                        pParamFileName->value.str.val)) != 0)
+                                pParamFileName->value.str.val)) != MS_SUCCESS)
         {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_WARNING, "Failed saving map context from %s",
@@ -4783,7 +4786,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
        strlen(pParamFileName->value.str.val) > 0)
     {
         if ((retVal = mapObj_loadMapContext(self, 
-                                        pParamFileName->value.str.val)) != 0)
+                                 pParamFileName->value.str.val)) != MS_SUCCESS)
         {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_WARNING, "Failed loading map context from %s",
