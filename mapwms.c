@@ -9,6 +9,8 @@
 
 #include "mapogcsld.h"
 
+#include "maptime.h"
+
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
@@ -125,6 +127,189 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
   }
 
   return MS_FAILURE; // so that we can call 'return msWMSException();' anywhere
+}
+
+int msValidateTimeValue(char *timestring, const char *timeextent)
+{
+    //char **atimeextent =  NULL;
+    //int numtimeextent = 0;
+    //struct tm *tm;
+
+    return MS_TRUE;
+
+    //TODO : do we need to validate the time passsed in the request
+    //against th time exten defines ? There is no mention of this in the
+    //wms specs
+    /*
+
+    if (!timestring || !timeextent)
+      return MS_FALSE;
+    
+    //parse time extent. Only supports one range (2004-09-21/2004-09-25)
+    atimeextent = split (timestring, '/', &numtimeextent);
+    if (atimeextent == NULL || numtimes != 2)
+    {
+        msFreeCharArray(atimeextent, numtimeextent);
+        return MS_FALSE;
+    }
+    //build time structure for the extents
+    msInitTime(&tmstart);
+    msInitTime(&tmend);
+    if (msParseTime(atimeextent[0], &tmstart) != MS_TRUE ||
+        msParseTime(atimeextent[1], &tmend) == MS_TRUE)
+    {
+         msFreeCharArray(atimeextent, numtimeextent);
+         return MS_FALSE;
+    }
+
+    //parse the time string. We support dicrete times (eg 2004-09-21), 
+    //multiple times (2004-09-21, 2004-09-22, ...)
+    //and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29)
+    if (strstr(timestring, ",") == NULL && 
+        strstr(timestring, "/") == NULL) //discrete time
+    {
+        msFreeCharArray(atimeextent, numtimeextent);
+        msInitTime(&tm);
+        if (msParseTime(timestring, &tm) == MS_TRUE)
+        {
+            if (msTimeCompare(&tmstart, &tm) < 0 &&
+                msTimeCompare(&tmend, &tm) > 0)
+              return MS_TRUE;
+        }
+    }
+    else 
+    {
+        atimes = split (timestring, ',', &numtimes);
+    }
+    return MS_FALSE;
+    */
+}
+
+void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
+{
+    char *time = NULL;
+    char **atimes, **tokens = NULL;
+    int numtimes, ntmp, i = 0;
+
+    if (timepatternstring && timestring)
+    {
+        //parse the time parameter to extract a distinct time. 
+        //time value can be dicrete times (eg 2004-09-21), 
+        //multiple times (2004-09-21, 2004-09-22, ...)
+        //and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29)
+        if (strstr(timestring, ",") == NULL && 
+            strstr(timestring, "/") == NULL) //discrete time
+        {
+            time = strdup(timestring);
+        }
+        else
+        {
+            atimes = split (timestring, ',', &numtimes);
+            if (numtimes >=1 && atimes)
+            {
+                tokens = split(atimes[0],  '/', &ntmp);
+                if (ntmp == 2 && tokens) //range
+                {
+                    time = strdup(tokens[0]);
+                }
+                else //multiple times
+                {
+                    time = strdup(atimes[0]);
+                }
+                msFreeCharArray(tokens, ntmp); 
+                msFreeCharArray(atimes, numtimes);
+            }
+        }
+        //get the pattern to use
+        if (time)
+        {
+            tokens = split(timepatternstring, ',', &ntmp);
+            if (tokens && ntmp >= 1)
+            {
+                for (i=0; i<ntmp; i++)
+                {
+                    if (msTimeMatchPattern(time, tokens[i]) >= 0)
+                    {
+                        msSetLimitedPattersToUse(tokens[i]);
+                        break;
+                    }
+                }
+                msFreeCharArray(tokens, ntmp);
+            }
+            free(time);
+        }
+     
+    }
+}
+
+/*
+** Apply the TIME parameter to layers that are time aware
+*/
+int msWMSApplyTime(mapObj *map, int version, char *time)
+{
+    int i=0;
+    layerObj *lp = NULL;
+    const char *timeextent, *timefield, *timedefault, *timpattern = NULL;
+
+    if (map)
+    {
+        //check to see if there is a list of possible patterns defined
+        //if it is the case, use it to set the time pattern to use
+        //for the request
+        
+        timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",     
+                                         "timeformat");
+        if (timpattern && time && strlen(time) > 0)
+          msWMSSetTimePattern(timpattern, time);
+
+        for (i=0; i<map->numlayers; i++)
+        {
+            lp = &(map->layers[i]);
+            //check if the layer is time aware
+            timeextent = msOWSLookupMetadata(&(lp->metadata), "MO",     
+                                             "timeextent");
+            timefield =  msOWSLookupMetadata(&(lp->metadata), "MO", 
+                                             "timeitem");
+            timedefault =  msOWSLookupMetadata(&(lp->metadata), "MO", 
+                                             "timedefault");
+            if (timeextent && timefield)
+            {
+                //check to see if the time value is given. If not
+                //use default time. If default time is not available
+                //send an exception
+                if (time == NULL || strlen(time) <=0)
+                {
+                    if (timedefault == NULL)
+                    {
+                        msSetError(MS_WMSERR, "No Time value was given, and no default time value defined.", "msWMSApplyTime");
+                        return MS_FALSE;
+                        //return msWMSException(map, version, 
+                        //                         "MissingDimensionValue");
+                    }
+                    else
+                      //TODO verfiy if the default value is in the 
+                      // time extent given.
+                       msLayerSetTimeFilter(lp, timedefault, timefield);
+                }
+                else
+                {
+                    //check if given time is in the range
+                    if (msValidateTimeValue(time, timeextent) == MS_FALSE)
+                    {
+                        msSetError(MS_WMSERR, "Time value(s) %s given is outside the time extent defined (%s).", "msWMSApplyTime", time, timeextent);
+                        return MS_FALSE;
+                        //return msWMSException(map, version, 
+                        //                    "InvalidTimeValue");
+                    }
+                    //build the time string
+                    msLayerSetTimeFilter(lp, time, timefield);
+                    timeextent= NULL;
+                }
+            }
+        }
+    }
+
+    return MS_TRUE;
 }
 
 
@@ -340,9 +525,18 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
 #endif
 
-  }
-
+    
   
+    //value of time can be empty. We should look for a default value
+    //see function msWMSApplyTime
+    else if (strcasecmp(names[i], "TIME") == 0)// &&  values[i])
+    {
+        if (msWMSApplyTime(map, nVersion, values[i]) == MS_FALSE)
+        {
+             return msWMSException(map, nVersion, "InvalidTimeRequest");
+        }
+    }
+  }
   /*
   ** Apply the selected output format (if one was selected), and override
   ** the transparency if needed.
@@ -594,6 +788,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    char *encoded;
    int n, i; 
    const char *projstring;
+   const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL;
 
    if (nVersion <= OWS_1_0_7)
    {
@@ -724,6 +919,21 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
            msOWSPrintBoundingBox(stdout,"        ", &(ext), &(map->projection),
                                   &(map->web.metadata) );
        }
+   }
+
+   //time support
+   pszWmsTimeExtent = msOWSLookupMetadata(&(lp->metadata), "MO", "timeextent");
+   if (pszWmsTimeExtent)
+   {
+       pszWmsTimeDefault = msOWSLookupMetadata(&(lp->metadata),  "MO", 
+                                               "timedefault");
+
+       fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\">\n");
+       if (pszWmsTimeDefault)
+         fprintf(stdout, "        <Extent name=\"time\" default=\"%s\" multipleValues=\"1\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeDefault, pszWmsTimeExtent);  
+       else
+           fprintf(stdout, "        <Extent name=\"time\" multipleValues=\"1\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);  
+              
    }
 
    msWMSPrintScaleHint("        ", lp->minscale, lp->maxscale, map->resolution);

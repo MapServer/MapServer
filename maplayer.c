@@ -272,6 +272,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   char **values=NULL;
   shapefileObj *shpfile;
 
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):    
     shpfile = layer->layerinfo;
@@ -1064,3 +1065,189 @@ int msLayerClearProcessing( layerObj *layer ) {
     return layer->numprocessing;
 }
 
+/**
+  set the filter parameter for a time filter
+**/
+
+int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
+                         const char *timefield) 
+{
+  
+    char **atimes, **tokens = NULL;
+    int numtimes,i, ntmp = 0;
+    char buffer[512];
+    int addtimebacktics = 0;
+
+    buffer[0] = '\0';
+
+    if (!lp || !timestring || !timefield)
+      return MS_FALSE;
+
+    //for shape and ogr files time expressions are
+    //delimited using backtics (ex `[TIME]` eq `2004-01-01`)
+    if (lp->connectiontype == MS_SHAPEFILE ||
+        lp->connectiontype == MS_OGR ||
+        lp->connectiontype == MS_TILED_SHAPEFILE)
+      addtimebacktics = 1;
+    else
+      addtimebacktics = 0;
+
+    
+    //parse the time string. We support dicrete times (eg 2004-09-21), 
+    //multiple times (2004-09-21, 2004-09-22, ...)
+    //and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29)
+
+    if (strstr(timestring, ",") == NULL && 
+        strstr(timestring, "/") == NULL) //discrete time
+    {
+        if(lp->filteritem) free(lp->filteritem);
+        lp->filteritem = strdup(timefield);
+        if (&lp->filter)
+          freeExpression(&lp->filter);
+        
+
+        strcat(buffer, "(");
+        if (addtimebacktics)
+          strcat(buffer,  "`");
+        strcat(buffer, "[");
+        strcat(buffer, timefield);
+        strcat(buffer, "]");
+        if (addtimebacktics)
+          strcat(buffer,  "`");
+
+        strcat(buffer, " eq ");
+        if (addtimebacktics)
+          strcat(buffer,  "`");
+        strcat(buffer, timestring);
+        if (addtimebacktics)
+          strcat(buffer,  "`");
+        strcat(buffer, ")");
+        
+        //loadExpressionString(&lp->filter, (char *)timestring);
+        loadExpressionString(&lp->filter, buffer);
+
+        return MS_TRUE;
+    }
+    
+    atimes = split (timestring, ',', &numtimes);
+    if (atimes == NULL || numtimes < 1)
+      return MS_FALSE;
+
+    if (numtimes >= 1)
+    {
+        
+        
+
+        //check to see if we have ranges by parsing the first entry
+        tokens = split(atimes[0],  '/', &ntmp);
+        if (ntmp == 2) //ranges
+        {
+                
+            msFreeCharArray(tokens, ntmp);
+             for (i=0; i<numtimes; i++)
+             {
+                 tokens = split(atimes[i],  '/', &ntmp);
+                 if (ntmp == 2)
+                 {
+                     if (strlen(buffer) > 0)
+                       strcat(buffer, " OR ");
+                     else
+                       strcat(buffer, "(");
+
+                     strcat(buffer, "(");
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+                     strcat(buffer, "[");
+                     strcat(buffer, timefield);
+                     strcat(buffer, "]");
+                     
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+
+                     strcat(buffer, " ge ");
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+                     strcat(buffer, tokens[0]);
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+                     strcat(buffer, " AND ");
+
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+                      strcat(buffer, "[");
+                     strcat(buffer, timefield);
+                      strcat(buffer, "]");
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+
+                     strcat(buffer, " le ");
+                     
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+                     strcat(buffer, tokens[1]);
+                     if (addtimebacktics)
+                       strcat(buffer,  "`");
+
+                     strcat(buffer, ")");
+                 }
+                 
+                  msFreeCharArray(tokens, ntmp);
+             }
+             if (strlen(buffer) > 0)
+               strcat(buffer, ")");
+        }
+        else if (ntmp == 1) //multiple times
+        {
+             msFreeCharArray(tokens, ntmp);
+             strcat(buffer, "(");
+             for (i=0; i<numtimes; i++)
+             {
+                 if (i > 0)
+                   strcat(buffer, " OR ");
+
+                  strcat(buffer, "(");
+                  if (addtimebacktics)
+                    strcat(buffer, "`");
+                  strcat(buffer, "[");
+                  strcat(buffer, timefield);
+                  strcat(buffer, "]");
+
+                  if (addtimebacktics)
+                       strcat(buffer, "`");
+
+                  strcat(buffer, " eq ");
+                  
+                  if (addtimebacktics)
+                    strcat(buffer, "`");
+                  strcat(buffer, atimes[i]);
+                  if (addtimebacktics)
+                       strcat(buffer,  "`");
+                  strcat(buffer, ")");
+             } 
+              strcat(buffer, ")");
+        }
+        else
+        {
+            msFreeCharArray(atimes, numtimes);
+            return MS_FALSE;
+        }
+
+        msFreeCharArray(atimes, numtimes);
+
+        //load the string to the filter
+        if (strlen(buffer) > 0)
+        {
+            if(lp->filteritem) 
+              free(lp->filteritem);
+            lp->filteritem = strdup(timefield);     
+            if (&lp->filter)
+              freeExpression(&lp->filter);
+            loadExpressionString(&lp->filter, buffer);
+        }
+
+        return MS_TRUE;
+                 
+    }
+    
+     return MS_FALSE;
+}   

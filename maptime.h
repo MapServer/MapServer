@@ -23,5 +23,8 @@ int msDateCompare(struct tm *time1, struct tm *time2);
 int msTimeCompare(struct tm *time1, struct tm *time2);
 char *msStrptime(const char *s, const char *format, struct tm *tm);
 int msParseTime(const char *string, struct tm *tm);
+int msTimeMatchPattern(char *timestring, char *pattern);
+void msSetLimitedPattersToUse(char *patternstring);
+void msUnsetLimitedPatternToUse();
 
 #endif /* MAPTIME_H */

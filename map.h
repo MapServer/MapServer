@@ -1197,6 +1197,9 @@ MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
 MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
 MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
 
+MS_DLL_EXPORT int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
+                                       const char *timefield);
+
 // maplayer.c
 MS_DLL_EXPORT int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);
 MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
@@ -1588,6 +1591,9 @@ MS_DLL_EXPORT const char *msGetBasename( const char *pszFullFilename );
 /*      include definitions from mapows.h                               */
 /* ==================================================================== */
 #include "mapows.h"
+
+
+
 
 #endif
 
