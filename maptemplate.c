@@ -847,6 +847,10 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     // no big deal to convert from file to image coordinates, but what are the image parameters
     if(projectionString && strcasecmp(projectionString,"image") ==0) {
       precision = 0;
+
+      // if necessary, project the shape to match the map 
+      if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+        msProjectShape(&layer->projection, &layer->map->projection, &tShape);
       
       switch(tShape.type) {
       case(MS_SHAPE_POINT):
