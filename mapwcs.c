@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/02/18 16:09:18  hobu
+ * patch up msvc errors related to the comment commit
+ *
  * Revision 1.64  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -171,10 +174,10 @@ static int msWCSException(mapObj *map, const char *version)
   /* TODO: see WCS specific exception schema (Appendix 6), this is a copy of Dan's for WFS */
 
   msIO_printf("<ServiceExceptionReport\n");
-  msIO_printf("xmlns=\"http:/* www.opengis.net/ogc\" "); */
-  msIO_printf("xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\" "); */
+  msIO_printf("xmlns=\"http:/* www.opengis.net/ogc\" "); 
+  msIO_printf("xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\" "); 
   pszEncodedVal = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-  msIO_printf("xsi:schemaLocation=\"http:/* www.opengis.net/ogc %s/wms/1.1.1/OGC-exception.xsd\">\n", */
+  msIO_printf("xsi:schemaLocation=\"http:/* www.opengis.net/ogc %s/wms/1.1.1/OGC-exception.xsd\">\n", 
               pszEncodedVal);
   msFree(pszEncodedVal);
   msIO_printf("  <ServiceException>\n");
@@ -475,11 +478,11 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
     msIO_printf("<Service\n"
            "   version=\"%s\" \n"
            "   updateSequence=\"0\" \n"
-           "   xmlns=\"http:/* www.opengis.net/wcs\" \n" */
-           "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" */
-           "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" */
-           "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" */
-           "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); */
+           "   xmlns=\"http:/* www.opengis.net/wcs\" \n" 
+           "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" 
+           "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" 
+           "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" 
+           "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
 
   /* optional metadataLink */
   msOWSPrintURLType(stdout, &(map->web.metadata), "COM", "metadatalink", 
@@ -523,11 +526,11 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
     msIO_printf("<Capability\n"
            "   version=\"%s\" \n"
            "   updateSequence=\"0\" \n"
-           "   xmlns=\"http:/* www.opengis.net/wcs\" \n" */
-           "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" */
-           "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" */
-           "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" */
-           "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); */
+           "   xmlns=\"http:/* www.opengis.net/wcs\" \n" 
+           "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" 
+           "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" 
+           "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" 
+           "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
 
   /* describe the types of requests the server can handle */
   msIO_printf("  <Request>\n");
@@ -605,11 +608,11 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
     msIO_printf("<ContentMetadata\n"
            "   version=\"%s\" \n"
            "   updateSequence=\"0\" \n"
-           "   xmlns=\"http:/* www.opengis.net/wcs\" \n" */
-           "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" */
-           "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" */
-           "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" */
-           "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); */
+           "   xmlns=\"http:/* www.opengis.net/wcs\" \n" 
+           "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" 
+           "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" 
+           "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" 
+           "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
 
   for(i=0; i<map->numlayers; i++)
     msWCSGetCapabilities_CoverageOfferingBrief(&(map->layers[i]), params);
@@ -633,11 +636,11 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   if(!params->section) msIO_printf("<WCS_Capabilities\n"
                               "   version=\"%s\" \n"
                               "   updateSequence=\"0\" \n"
-                              "   xmlns=\"http:/* www.opengis.net/wcs\" \n" */
-                              "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" */
-                              "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" */
-                              "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" */
-                              "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); */
+                              "   xmlns=\"http:/* www.opengis.net/wcs\" \n" 
+                              "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" 
+                              "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" 
+                              "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" 
+                              "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
          
   /* print the various capability sections */
   if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Service") == 0)
@@ -900,11 +903,11 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
   msIO_printf("<CoverageDescription\n"
          "   version=\"%s\" \n"
          "   updateSequence=\"0\" \n"
-         "   xmlns=\"http:/* www.opengis.net/wcs\" \n" */
-         "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" */
-         "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" */
-         "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" */
-         "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/describeCoverage.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); */
+         "   xmlns=\"http:/* www.opengis.net/wcs\" \n" 
+         "   xmlns:xlink=\"http:/* www.w3.org/1999/xlink\" \n" 
+         "   xmlns:gml=\"http:/* www.opengis.net/gml\" \n" 
+         "   xmlns:xsi=\"http:/* www.w3.org/2001/XMLSchema-instance\"\n" 
+         "   xsi:schemaLocation=\"http:/* www.opengis.net/wcs %s/wcs/%s/describeCoverage.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
   
   if(params->coverages) { /* use the list */
     for( j = 0; params->coverages[j]; j++ ) {
