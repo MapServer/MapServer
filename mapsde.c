@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2004/10/26 16:06:04  hobu
+ * check for the layer->layerinfo member
+ * in msSDELayerClose before freeing
+ *
  * Revision 1.86  2004/10/21 14:47:07  hobu
  * MSVC doesn't like it when you start
  * doing operations before you initialize
@@ -726,7 +730,7 @@ void msSDELayerClose(layerObj *layer) {
   if (sde->stream) SE_stream_free(sde->stream);
   msConnPoolRelease( layer, sde->connection );  
   sde->connection = NULL;
-  free(layer->layerinfo);
+  if (layer->layerinfo) free(layer->layerinfo);
   layer->layerinfo = NULL;
 #else
   msSetError( MS_MISCERR, 
