@@ -90,7 +90,7 @@ int msWMSException(mapObj *map, const char *wmtversion, const char *exception_co
       msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
-      printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
+      printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
 
       printf("<ServiceExceptionReport version=\"1.1.0\">\n");        
     }
@@ -281,6 +281,24 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       map->imagecolor.green = (c/0x100)&0xff;
       map->imagecolor.blue = c&0xff;
     }
+#ifdef USE_OGR
+/* -------------------------------------------------------------------- */
+/*      SLD support :                                                   */
+/*        - check if the SLD parameter is there. it is supposed to      */
+/*      refer a valid URL containing an SLD document.                   */
+/*        - check the SLD_BODY parameter that should contain the SLD    */
+/*      xml string.                                                     */
+/* -------------------------------------------------------------------- */
+    else if (strcasecmp(names[i], "SLD") == 0 && 
+             values[i] && strlen(values[i]) > 0) {
+          msSLDApplySLDURL(map, values[i], -1, NULL);
+    }
+    else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
+               values[i] && strlen(values[i]) > 0) {
+          msSLDApplySLD(map, values[i], -1, NULL);
+    }
+#endif
+
   }
 
 
@@ -948,37 +966,12 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
 int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, int numentries) 
 {
   imageObj *img;
-  int i = 0;
 
   // __TODO__ msDrawMap() will try to adjust the extent of the map
   // to match the width/height image ratio.
   // The spec states that this should not happen so that we can deliver
   // maps to devices with non-square pixels.
 
-#ifdef USE_OGR
-/* -------------------------------------------------------------------- */
-/*      SLD support :                                                   */
-/*        - check if the SLD parameter is there. it is supposed to      */
-/*      refer a valid URL containing an SLD document.                   */
-/*        - check the SLD_BODY parameter that should contain the SLD    */
-/*      xml string.                                                     */
-/* -------------------------------------------------------------------- */
-  for (i=0; i<numentries; i++) 
-  {
-      if (strcasecmp(names[i], "SLD") == 0 && 
-          values[i] && strlen(values[i]) > 0) 
-      {
-          msSLDApplySLDURL(map, values[i], -1, NULL);
-      }
-      else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
-               values[i] && strlen(values[i]) > 0)
-      {
-          msSLDApplySLD(map, values[i], -1, NULL);
-      }
-        
-  }
-
-#endif
 
   img = msDrawMap(map);
   if (img == NULL)
@@ -1257,6 +1250,121 @@ int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names,
 }
 
 
+int msWMSGetLegendGraphic(mapObj *map, const char *wmtver, char **names, 
+                       char **values, int numentries)
+{
+    char *pszLayer = NULL;
+    char *pszFormat = NULL;
+    int iLayerIndex = -1;
+    outputFormatObj *psFormat = NULL;
+    imageObj *img;
+    int i = 0;
+    int nWidth = -1, nHeight =-1;
+
+     for(i=0; map && i<numentries; i++)
+     {
+         if (strcasecmp(names[i], "LAYER") == 0) 
+         {
+             pszLayer = values[i];
+         }
+         else if (strcasecmp(names[i], "WIDTH") == 0)
+           nWidth = atoi(values[i]);
+         else if (strcasecmp(names[i], "HEIGHT") == 0)
+           nHeight = atoi(values[i]);
+         else if (strcasecmp(names[i], "FORMAT") == 0)
+           pszFormat = values[i];
+#ifdef USE_OGR
+/* -------------------------------------------------------------------- */
+/*      SLD support :                                                   */
+/*        - check if the SLD parameter is there. it is supposed to      */
+/*      refer a valid URL containing an SLD document.                   */
+/*        - check the SLD_BODY parameter that should contain the SLD    */
+/*      xml string.                                                     */
+/* -------------------------------------------------------------------- */
+         else if (strcasecmp(names[i], "SLD") == 0 && 
+                  values[i] && strlen(values[i]) > 0) 
+             msSLDApplySLDURL(map, values[i], -1, NULL);
+         else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
+                  values[i] && strlen(values[i]) > 0) 
+             msSLDApplySLD(map, values[i], -1, NULL);
+              
+#endif
+     }
+
+     if (!pszLayer)
+     {
+         msSetError(MS_WMSERR, "Mandatory LAYER parameter missing in GetLegendGraphic request.", "msWMSGetLegendGraphic()");
+         return msWMSException(map, wmtver, "LayerNotDefined");
+     }
+     if (!pszFormat)
+     {
+         msSetError(MS_WMSERR, "Mandatory FORMAT parameter missing in GetLegendGraphic request.", "msWMSGetLegendGraphic()");
+         return msWMSException(map, wmtver, "InvalidFormat");
+     }
+
+     //check if layer name is valid. We only test the layer name and not
+     //the group name.
+     for (i=0; i<map->numlayers; i++)
+     {
+         if (map->layers[i].name && 
+             strcasecmp(map->layers[i].name, pszLayer) == 0)
+         {
+             iLayerIndex = i;
+             break;
+         }
+     }
+    
+     if (iLayerIndex == -1)
+     {
+         msSetError(MS_WMSERR, "Invalid layer given in the LAYER parameter.",
+                 "msWMSGetLegendGraphic()");
+         return msWMSException(map, wmtver, "LayerNotDefined");
+     }
+       
+     //validate format
+     psFormat = msSelectOutputFormat( map, pszFormat);
+     if( psFormat == NULL ) 
+     {
+         msSetError(MS_IMGERR, 
+                    "Unsupported output format (%s).", 
+                    "msWMSGetLegendGraphic()",
+                    pszFormat);
+         return msWMSException(map, wmtver, "InvalidFormat");
+     }
+
+     //set the map legend parameters
+     if (nWidth < 0)
+     {
+         if (map->legend.keysizex > 0)
+           nWidth = map->legend.keysizex;
+         else
+           nWidth = 20; //default values : this in not defined in the specs
+     }
+     if (nHeight < 0)
+     {
+         if (map->legend.keysizey > 0)
+           nHeight = map->legend.keysizey;
+         else
+           nHeight = 20;
+     }
+
+     img = msCreateLegendIcon(map, &map->layers[iLayerIndex], NULL, 
+                              nWidth, nHeight);
+
+     if (img == NULL)
+      return msWMSException(map, wmtver, NULL);
+
+     printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+     if (msSaveImage(map, img, NULL) != MS_SUCCESS)
+       return msWMSException(map, wmtver, NULL);
+
+     msFreeImage(img);
+
+     return(MS_SUCCESS);
+}
+
+     
+
 #endif /* USE_WMS_SVR */
 
 
@@ -1383,6 +1491,9 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
 
   if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
       return msWMSException(map, wmtver, NULL);
+
+  if (strcasecmp(request, "GetLegendGraphic") == 0)
+    return msWMSGetLegendGraphic(map, wmtver, names, values, numentries);
 
   // getMap parameters are used by both getMap and getFeatureInfo
   status = msWMSLoadGetMapParams(map, wmtver, names, values, numentries);
