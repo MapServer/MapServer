@@ -214,8 +214,7 @@ int msGetLayerIndex(mapObj *map, char *name)
 {
   int i;
 
-  if(name == NULL)
-    return(-1);
+  if(!name) return(-1);
 
   for(i=0;i<map->numlayers; i++) {
     if(!map->layers[i].name) /* skip it */

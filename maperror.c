@@ -80,7 +80,7 @@ char *msGetVersion() {
 
   version = (char *)malloc(sizeof(char)*128);
 
-  strcpy(version, MS_VERSION);
+  sprintf(version, "MapServer version %s", MS_VERSION);
 
 #ifdef USE_GD_1_2
   strcat(version, " -GD_1_2");

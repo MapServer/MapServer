@@ -633,11 +633,13 @@ int msIntersectPolylines(shapeObj *line1, shapeObj *line2);
 
 int msSaveQuery(mapObj *map, char *filename); // in mapquery.c
 int msLoadQuery(mapObj *map, char *filename);
-int msQueryUsingItem(mapObj *map, char *layer, int mode, char *item, char *value);
-int msQueryByPoint(mapObj *map, char *layer, int mode, pointObj p, double buffer);
-int msQueryByRect(mapObj *map, char *layer, rectObj rect);
-int msQueryByFeatures(mapObj *map, char *layer);
-int msQueryByShape(mapObj *map, char *layer, shapeObj *search_shape);
+
+int msQueryByItem(mapObj *map, int qlayer, int mode, char *item, char *value);
+int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer);
+int msQueryByRect(mapObj *map, int qlayer, rectObj rect);
+int msQueryByFeatures(mapObj *map, int qlayer, int slayer);
+int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape);
+
 int msJoinDBFTables(joinObj *join, char *path, char *tile);
 
 void trimBlanks(char *string); // in mapstring.c

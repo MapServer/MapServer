@@ -105,8 +105,14 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     myfile = AddFileSuffix(argv[2],".shp");
 
+#ifdef MAPSERVER
+    hSHP = msSHPCreate ( myfile, SHPT_POLYGON );
+    hDBF = msDBFCreate (  AddFileSuffix(argv[2],".dbf") );
+#else    
     hSHP = SHPCreate ( myfile, SHPT_POLYGON );
     hDBF = DBFCreate (  AddFileSuffix(argv[2],".dbf") );
+#endif
+
     if ( (!hSHP) || (!hDBF) )
     {
       printf ("create error for %s    ... exiting \n", myfile);
@@ -114,9 +120,16 @@ int main( int argc, char ** argv )
     }
 
     /* add fields to dbf */
+#ifdef MAPSERVER
+    msDBFAddField ( hDBF, "ITEMS", FTInteger, 15,0 );
+    msDBFAddField ( hDBF, "SUBNODES", FTInteger, 15,0 );
+    msDBFAddField ( hDBF, "FACTOR", FTInteger, 15,0 );
+#else
     DBFAddField ( hDBF, "ITEMS", FTInteger, 15,0 );
     DBFAddField ( hDBF, "SUBNODES", FTInteger, 15,0 );
     DBFAddField ( hDBF, "FACTOR", FTInteger, 15,0 );
+#endif
+
 #ifndef MAPSERVER
     SHPClose ( hSHP );
     hSHP = SHPOpen ( myfile, "r+b" );
@@ -153,8 +166,13 @@ int main( int argc, char ** argv )
  */
 #endif
 
+#ifdef  MAPSERVER
+        msDBFWriteIntegerAttribute( hDBF, this_rec, 0, node->numshapes);
+        msDBFWriteIntegerAttribute( hDBF, this_rec, 1, node->numsubnodes);
+#else
         DBFWriteIntegerAttribute( hDBF, this_rec, 0, node->numshapes);
         DBFWriteIntegerAttribute( hDBF, this_rec, 1, node->numsubnodes);
+#endif
         factor = node->numshapes + node->numsubnodes;
         
 #ifdef  MAPSERVER
@@ -170,7 +188,7 @@ int main( int argc, char ** argv )
 	shape.line = &line[0];
 	shape.bounds = node->rect;
 	
-	result = SHPWriteShape ( hSHP, &shape );
+	result = msSHPWriteShape ( hSHP, &shape );
 	if ( result < 0 )
 	{ 
 	  printf ("unable to write shape \n");  
@@ -198,9 +216,15 @@ int main( int argc, char ** argv )
         else 
         { pos = 0; }
     }
-    
+
+#ifdef MAPSERVER   
+    msSHPClose( hSHP );
+    msDBFClose( hDBF );
+#else
     SHPClose( hSHP );
     DBFClose( hDBF );
+#endif
+
     msSHPDiskTreeClose (qix);    
     
     return(0);

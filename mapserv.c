@@ -20,8 +20,8 @@ static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 /*
 ** Various function prototypes
 */
-void returnPage(char *);
-void returnURL(char *);
+void returnPage(char *, int);
+void returnURL(char *, int);
 
 static void redirect(char *url)
 {
@@ -1273,11 +1273,9 @@ void returnURL(char *url, int mode)
 void returnQuery()
 {
   int status;
-  int i,j,k;
-  double dx,dy;
+  int i,j;
 
-  layerObj *lp;
-  int item;
+  layerObj *lp=NULL;
 
   msInitShape(&ResultShape); // ResultShape is a global var define in mapserv.h
 
@@ -1290,18 +1288,18 @@ void returnQuery()
       if(!lp->resultcache->numresults == 0) continue;
     }
 
-    ResultLayer = lp;
-
     if(TEMPLATE_TYPE(lp->class[(int)(lp->resultcache->results[0].classindex)].template) == MS_URL) {
+      ResultLayer = lp;
+
       status = msLayerOpen(lp, Map->shapepath);
       if(status != MS_SUCCESS) writeError();
 
-      status = msLayerGetShape(lp, Map->shapepath, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex, MS_ALLITEMS);
+      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex, MS_ALLITEMS);
       if(status != MS_SUCCESS) writeError();
 
       returnURL(lp->class[(int)(lp->resultcache->results[0].classindex)].template, QUERY);      
       
-      msFreeShape(&ReturnShape);
+      msFreeShape(&ResultShape);
       msLayerClose(lp);
       ResultLayer = NULL;
 
@@ -1327,13 +1325,12 @@ void returnQuery()
 
   RN = 1; // overall result number
   for(i=(Map->numlayers-1); i>=0; i--) {
-    lp = &(Map->layers[i]);
+    ResultLayer = lp = &(Map->layers[i]);
 
     if(!lp->resultcache) continue;
     if(!lp->resultcache->numresults == 0) continue;
 
     NLR = lp->resultcache->numresults; 
-    ResultLayer = lp;
 
     if(lp->header) returnPage(lp->header, BROWSE);
 
@@ -1343,12 +1340,12 @@ void returnQuery()
 
     LRN = 1; // layer result number
     for(j=0; j<lp->resultcache->numresults; j++) {
-      status = msLayerGetShape(lp, Map->shapepath, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex, MS_ALLITEMS);
+      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex, MS_ALLITEMS);
       if(status != MS_SUCCESS) writeError();
 
-      returnPage(lp->class[lp->resultcache->results[j].classindex].template, QUERY);      
+      returnPage(lp->class[(int)(lp->resultcache->results[j].classindex)].template, QUERY);      
 
-      msFreeShape(&ReturnShape); // init too
+      msFreeShape(&ResultShape); // init too
 
       RN++; // increment counters
       LRN++;
@@ -1433,14 +1430,12 @@ int main(int argc, char *argv[]) {
       Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
       Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
 
-      // FIX: need to consider QueryFiles here
       if((Map->scale < Map->web.minscale) && (Map->web.minscale > 0)) {
 	if(Map->web.mintemplate) { // use the template provided
 	  if(TEMPLATE_TYPE(Map->web.mintemplate) == MS_FILE)
 	    returnPage(Map->web.mintemplate, BROWSE);
 	  else
 	    returnURL(Map->web.mintemplate, BROWSE);
-	  break;
 	} else { /* force zoom = 1 (i.e. pan) */
 	  fZoom = Zoom = 1;
 	  ZoomDirection = 0;
@@ -1456,9 +1451,9 @@ int main(int argc, char *argv[]) {
       if((Map->scale > Map->web.maxscale) && (Map->web.maxscale > 0)) {
 	if(Map->web.maxtemplate) { // use the template provided
 	  if(TEMPLATE_TYPE(Map->web.maxtemplate) == MS_FILE)
-	    returnPage(Map->web.maxtemplate);
+	    returnPage(Map->web.maxtemplate, BROWSE);
 	  else
-	    returnURL(Map->web.maxtemplate);
+	    returnURL(Map->web.maxtemplate, BROWSE);
 	} else { /* force zoom = 1 (i.e. pan) */
 	  fZoom = Zoom = 1;
 	  ZoomDirection = 0;
@@ -1473,8 +1468,8 @@ int main(int argc, char *argv[]) {
       }
    
       if(Map->status == MS_ON) {
-	if(QueryResults)
-	  img = msDrawQueryMap(Map, QueryResults);
+	if(QueryFile)
+	  img = msDrawQueryMap(Map);
 	else
 	  img = msDrawMap(Map);
 	if(!img) writeError();
@@ -1530,13 +1525,13 @@ int main(int argc, char *argv[]) {
 	  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
 	  printf("<!-- %s -->\n", msGetVersion());
 	  fflush(stdout);
-	  returnPage(Map->web.template);
+	  returnPage(Map->web.template, BROWSE);
 	} else {	
-	  returnURL(Map->web.template);
+	  returnURL(Map->web.template, BROWSE);
 	} 
       }
 
-    } else if(Mode == MAP || Mode == SCALEBAR || Mode == LEGEND || Mode = REFERENCE) { // "image" only modes
+    } else if(Mode == MAP || Mode == SCALEBAR || Mode == LEGEND || Mode == REFERENCE) { // "image" only modes
       setExtent();
 	
       switch(Mode) {
@@ -1572,17 +1567,18 @@ int main(int argc, char *argv[]) {
       
       gdImageDestroy(img);
     } else if(Mode >= QUERY) { // query modes
-      if((i = msGetLayerIndex(Map, QueryLayer)) != -1) /* force the query layer on */
-	Map->layers[i].status = MS_ON;
+
+      if((QueryLayerIndex = msGetLayerIndex(Map, QueryLayer)) != -1) /* force the query layer on */
+	Map->layers[QueryLayerIndex].status = MS_ON;
 
       switch(Mode) {
       case FEATUREQUERY:
       case FEATURENQUERY:
-	if((i = msGetLayerIndex(Map, SelectLayer)) == -1) { /* force the selection layer on */
+	if((SelectLayerIndex = msGetLayerIndex(Map, SelectLayer)) == -1) { /* force the selection layer on */
 	  msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
 	  writeError();
 	} else
-	  Map->layers[i].status = MS_ON;
+	  Map->layers[SelectLayerIndex].status = MS_ON;
 
 	if(QueryCoordSource == NONE) { /* use item/value */
 
@@ -1592,9 +1588,9 @@ int main(int argc, char *argv[]) {
 	  }
 	  
 	  if(Mode == FEATUREQUERY) {
-	    if((QueryResults = msQueryUsingItem(Map, SelectLayer, MS_SINGLE, Item, Value)) == NULL) writeError();
+	    if((status = msQueryByItem(Map, SelectLayerIndex, MS_SINGLE, Item, Value)) != MS_SUCCESS) writeError();
 	  } else {
-	    if((QueryResults = msQueryUsingItem(Map, SelectLayer, MS_MULTIPLE, Item, Value)) == NULL) writeError();
+	    if((status = msQueryByItem(Map, SelectLayerIndex, MS_MULTIPLE, Item, Value)) != MS_SUCCESS) writeError();
 	  }
 	  
 	} else { /* use coordinates */
@@ -1604,14 +1600,14 @@ int main(int argc, char *argv[]) {
 	    case FROMIMGPNT:
 	      Map->extent = ImgExt; /* use the existing map extent */	
 	      setCoordinate();
-	      if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_SINGLE, MapPnt, 0)) == NULL) writeError();
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
 	      break;
 	    case FROMUSERPNT: /* only a buffer makes sense */
 	      if(Buffer == -1) {
 		msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
 		writeError();
 	      }
-	      if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_SINGLE, MapPnt, Buffer)) == NULL) writeError();
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
 	      break;
 	    default:
 	      msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
@@ -1623,22 +1619,21 @@ int main(int argc, char *argv[]) {
 	    case FROMIMGPNT:
 	      Map->extent = ImgExt; /* use the existing map extent */	
 	      setCoordinate();
-	      if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_MULTIPLE, MapPnt, 0)) == NULL) writeError();
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
 	      break;	 
 	    case FROMIMGBOX:
 	      break;
 	    case FROMUSERPNT: /* only a buffer makes sense */
-	      if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_MULTIPLE, MapPnt, Buffer)) == NULL) writeError();
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
 	    default:
 	      setExtent();
-	      if((QueryResults = msQueryUsingRect(Map, SelectLayer, &Map->extent)) == NULL) writeError();
+	      if((status = msQueryByRect(Map, SelectLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
 	      break;
 	    }
 	  } /* end switch */
 	} 
 	
-	if(msQueryUsingFeatures(Map, QueryLayer, QueryResults) == -1) /* now feature query */
-	  writeError();
+	if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
       
 	break;
       case ITEMQUERY:
@@ -1654,9 +1649,9 @@ int main(int argc, char *argv[]) {
 	  setExtent(); /* set user area of interest */
 	
 	if(Mode == ITEMQUERY) {
-	  if((QueryResults = msQueryUsingItem(Map, QueryLayer, MS_SINGLE, Item, Value)) == NULL) writeError();
+	  if((status = msQueryByItem(Map, QueryLayerIndex, MS_SINGLE, Item, Value)) != MS_SUCCESS) writeError();
 	} else {
-	  if((QueryResults = msQueryUsingItem(Map, QueryLayer, MS_MULTIPLE, Item, Value)) == NULL) writeError();
+	  if((status = msQueryByItem(Map, QueryLayerIndex, MS_MULTIPLE, Item, Value)) != MS_SUCCESS) writeError();
 	}
 	break;
       case NQUERY:
@@ -1669,13 +1664,13 @@ int main(int argc, char *argv[]) {
 	    setExtent();
 	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
 	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
-	    if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
+	    if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
 	  } else {
 	    Map->extent = ImgExt; // use the existing image parameters
 	    Map->width = ImgCols;
 	    Map->height = ImgRows;
 	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	 
-	    if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_MULTIPLE, MapPnt, 0)) == NULL) writeError();
+	    if((status = msQueryByPoint(Map, QueryLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
 	  }
 	  break;	  
 	case FROMIMGBOX:	  
@@ -1683,7 +1678,7 @@ int main(int argc, char *argv[]) {
 	    setExtent();
 	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
 	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	    if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
+	    if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
 	  } else {
 	    double cellx, celly;
 	    
@@ -1699,7 +1694,7 @@ int main(int argc, char *argv[]) {
 	    RawExt.miny = ImgExt.maxy - celly*ImgBox.maxy;
 	    RawExt.maxy = ImgExt.maxy - celly*ImgBox.miny;
 	    
-	    if((QueryResults = msQueryUsingRect(Map, QueryLayer, &RawExt)) == NULL) writeError();
+	    if((status = msQueryByRect(Map, QueryLayerIndex, RawExt)) != MS_SUCCESS) writeError();
 	  }
 	  break;
 	case FROMIMGSHAPE:
@@ -1717,24 +1712,24 @@ int main(int argc, char *argv[]) {
 	    }
 	  }
 	  
-	  if((QueryResults = msQueryUsingShape(Map, QueryLayer, &SelectShape)) == NULL) writeError();
+	  if((status = msQueryByShape(Map, QueryLayerIndex, &SelectShape)) != MS_SUCCESS) writeError();
 	  break;	  
 	case FROMUSERPNT:
 	  if(Buffer == 0) {
-	    if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_MULTIPLE, MapPnt, Buffer)) == NULL) writeError();
+	    if((status = msQueryByPoint(Map, QueryLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
 	    setExtent();
 	  } else {
 	    setExtent();
-	    if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
+	    if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
 	  }
 	  break;
 	case FROMUSERSHAPE:
 	  setExtent();
-	  if((QueryResults = msQueryUsingShape(Map, QueryLayer, &SelectShape)) == NULL) writeError();
+	  if((status = msQueryByShape(Map, QueryLayerIndex, &SelectShape)) != MS_SUCCESS) writeError();
 	  break;	  
 	default: // from an extent of some sort
 	  setExtent();
-	  if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
+	  if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
 	  break;
 	}      
 	break;
@@ -1748,12 +1743,12 @@ int main(int argc, char *argv[]) {
 	  Map->height = ImgRows;
 	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	 
 	  
-	  if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_SINGLE, MapPnt, 0)) == NULL) writeError();
+	  if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
 	  break;
 	  
 	case FROMUSERPNT: /* only a buffer makes sense, DOES IT? */	
 	  setExtent();	
-	  if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_SINGLE, MapPnt, Buffer)) == NULL) writeError();
+	  if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
 	  break;
 	  
 	default:
@@ -1766,10 +1761,10 @@ int main(int argc, char *argv[]) {
       } // end mode switch
       
       if(UseShapes)
-	setExtentFromShapes();      
+	setExtentFromShapes();
 
       if(Map->querymap.status) {
-	img = msDrawQueryMap(Map, QueryResults);
+	img = msDrawQueryMap(Map);
 	if(!img) writeError();
 	
 	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP || Mode == ITEMNQUERYMAP) { // just return the image
@@ -1779,9 +1774,8 @@ int main(int argc, char *argv[]) {
 #else
 	  status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 #endif	  
-	  if(status != MS_SUCCESS) writeError;
+	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
-	  break;
 	} else {
 	  sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
 #ifndef USE_GD_1_8
@@ -1789,47 +1783,47 @@ int main(int argc, char *argv[]) {
 #else
 	  status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 #endif
-	  if(status != MS_SUCCESS) writeError;
+	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
-	}
 	
-	if(Map->legend.status == MS_ON || UseShapes) {
-	  img = msDrawLegend(Map);
-	  if(!img) writeError();
-	  sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	  if(Map->legend.status == MS_ON || UseShapes) {
+	    img = msDrawLegend(Map);
+	    if(!img) writeError();
+	    sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
 #ifndef USE_GD_1_8
-	  status = msSaveImage(img, buffer, Map->legend.transparent, Map->legend.interlace);
+	    status = msSaveImage(img, buffer, Map->legend.transparent, Map->legend.interlace);
 #else
-	  status = msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality);
+	    status = msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality);
 #endif
-	  if(status != MS_SUCCESS) writeError;
-	  gdImageDestroy(img);
-	}
-	
-	if(Map->scalebar.status == MS_ON) {
-	  img = msDrawScalebar(Map);
-	  if(!img) writeError();
-	  sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	    if(status != MS_SUCCESS) writeError();
+	    gdImageDestroy(img);
+	  }
+	  
+	  if(Map->scalebar.status == MS_ON) {
+	    img = msDrawScalebar(Map);
+	    if(!img) writeError();
+	    sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
 #ifndef USE_GD_1_8
-	  status = msSaveImage(img, buffer, Map->scalebar.transparent, Map->scalebar.interlace);
+	    status = msSaveImage(img, buffer, Map->scalebar.transparent, Map->scalebar.interlace);
 #else
-	  status = msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality);
+	    status = msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality);
 #endif
-	  if(status != MS_SUCCESS) writeError;
-	  gdImageDestroy(img);
-	}
-	
-	if(Map->reference.status == MS_ON) {
-	  img = msDrawReferenceMap(Map);
-	  if(!img) writeError();
-	  sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	    if(status != MS_SUCCESS) writeError();
+	    gdImageDestroy(img);
+	  }
+	  
+	  if(Map->reference.status == MS_ON) {
+	    img = msDrawReferenceMap(Map);
+	    if(!img) writeError();
+	    sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
 #ifndef USE_GD_1_8
-	  status = msSaveImage(img, buffer, Map->transparent, Map->interlace);
+	    status = msSaveImage(img, buffer, Map->transparent, Map->interlace);
 #else
-	  status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
+	    status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 #endif
-	  if(status != MS_SUCCESS) writeError;
-	  gdImageDestroy(img);
+	    if(status != MS_SUCCESS) writeError();
+	    gdImageDestroy(img);
+	  }
 	}
       }
       
@@ -1843,77 +1837,50 @@ int main(int argc, char *argv[]) {
     } else if(Mode == COORDINATE) {
       setCoordinate(); // mouse click => map coord
       returnCoordinate(MapPnt);
-    }
-
-
-    // FIX: OLD CODE FROM HERE ON DOWN
-    switch(Mode) {
-
+    } else if(Mode == PROCESSING) {
 #ifdef USE_EGIS
-        // OV - Added this new section for processing capabilities
-        case PROCESSING:
-        {
-                setExtent();
-                errLogMsg[0] = '\0';
-                sprintf(errLogMsg, "Map Coordinates: x %f, y %f\n",
-                                                        MapPnt.x, MapPnt.y);
-                writeErrLog(errLogMsg);
- 
-                status = egisl(Map, Entries, NumEntries, CoordSource);
-                // printf("Numerical Window - %f %f\n", ImgPnt.x, ImgPnt.y);
-                fflush(stdout);
- 
-                if (status == 1) {
-		  // write MIME header
-		  printf("Content-type: text/html%c%c", 10, 10);
-		  returnStatistics("numwin.html");
-                } else if(status == 2) {
-		  writeErrLog("Calling returnSplot()\n");
-		  fflush(fpErrLog);
-		  
-		  // write MIME header
-		  printf("Content-type: text/html%c%c", 10, 10);
-		  returnSplot("splot.html");
-                } else if(status == 3) {
-		  writeErrLog("Calling returnHisto()\n");
-		  fflush(fpErrLog);
-		  
-		  // write MIME header
-		  printf("Content-type: text/html%c%c", 10, 10);
-		  returnHisto("histo.html");
-                } else {
-		  writeErrLog("Error status from egisl()\n");
-		  fflush(fpErrLog);
-		  
-		  errLogMsg[0] = '\0';
-		  sprintf(errLogMsg, "Select Image Layer\n");
-		  
-		  msSetError(MS_IOERR, "<br>eGIS Error: Choose Stack Image<br>", errLogMsg);
-		  writeError();
-                }
-        }
-        break; 
-#endif
-
-    case FEATUREQUERY:
-    case FEATURENQUERY:
-
-    case ITEMQUERY:
-    case ITEMNQUERY:
-    case ITEMQUERYMAP:
-    case ITEMNQUERYMAP:
+      setExtent();
+      errLogMsg[0] = '\0';
+      sprintf(errLogMsg, "Map Coordinates: x %f, y %f\n", MapPnt.x, MapPnt.y);
+      writeErrLog(errLogMsg);
       
-    case QUERY:
-    case QUERYMAP:
-
-    case NQUERY:
-    case NQUERYMAP:      
-                
-    case BROWSE:
-
-    default:
-
-    } /* end switch mode */
+      status = egisl(Map, Entries, NumEntries, CoordSource);
+      // printf("Numerical Window - %f %f\n", ImgPnt.x, ImgPnt.y);
+      fflush(stdout);
+      
+      if (status == 1) {
+	// write MIME header
+	printf("Content-type: text/html%c%c", 10, 10);
+	returnStatistics("numwin.html");
+      } else if(status == 2) {
+	writeErrLog("Calling returnSplot()\n");
+	fflush(fpErrLog);
+	
+	// write MIME header
+	printf("Content-type: text/html%c%c", 10, 10);
+	returnSplot("splot.html");
+      } else if(status == 3) {
+	writeErrLog("Calling returnHisto()\n");
+	fflush(fpErrLog);
+	
+	// write MIME header
+	printf("Content-type: text/html%c%c", 10, 10);
+	returnHisto("histo.html");
+      } else {
+	writeErrLog("Error status from egisl()\n");
+	fflush(fpErrLog);
+	
+	errLogMsg[0] = '\0';
+	sprintf(errLogMsg, "Select Image Layer\n");
+	
+	msSetError(MS_IOERR, "<br>eGIS Error: Choose Stack Image<br>", errLogMsg);
+	writeError();
+      }
+#else
+      msSetError(MS_MISCERR, "EGIS Support is not available.", "mapserv()");
+      writeError();
+#endif
+    }
 
     writeLog(MS_FALSE);
    
@@ -1930,6 +1897,7 @@ int main(int argc, char *argv[]) {
     free(Item);
     free(Value);      
     free(QueryLayer);
+    free(SelectLayer);
     free(QueryFile);
 
     for(i=0;i<NumLayers;i++) free(Layers[i]);

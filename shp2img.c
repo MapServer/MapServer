@@ -10,17 +10,22 @@ int main(int argc, char *argv[])
   char **layers=NULL;
   int num_layers=0;
 
-  char *outfile=NULL;
+  char *outfile=NULL; // no -o sends image to STDOUT
+
+  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+    printf("%s\n", msGetVersion());
+    exit(0);
+  }
 
   /* ---- check the number of arguments, return syntax if not correct ---- */
-  if( argc < 5 ) {
+  if( argc < 3 ) {
     fprintf(stdout,"Syntax: shp2img -m [mapfile] -o [image] -t -l [layers]\n" );
     exit(0);
   }
   
   for(i=1;i<argc;i++) { /* Step though the user arguments, 1st to find map file */
+ 
     if(strncmp(argv[i],"-m",2) == 0) {
-      
       map = msLoadMap(argv[i+1]);
       if(!map) {
 	msWriteError(stderr);

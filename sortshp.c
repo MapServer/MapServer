@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "maperror.h"
 #include "mapshape.h"
 
 typedef struct {
@@ -60,6 +61,10 @@ char *argv[];
   int i,j;
   int num_fields, num_records;
   
+  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+    printf("%s\n", msGetVersion());
+    exit(0);
+  }
 
   /* ------------------------------------------------------------------------------- */
   /*       Check the number of arguments, return syntax if not correct               */
@@ -72,28 +77,28 @@ char *argv[];
   /* ------------------------------------------------------------------------------- */
   /*       Open the shapefile                                                        */
   /* ------------------------------------------------------------------------------- */
-  inSHP = SHPOpen(argv[1], "rb" );
+  inSHP = msSHPOpen(argv[1], "rb" );
   if( !inSHP ) {
     fprintf(stderr,"Unable to open %s shapefile.\n",argv[1]);
     exit(0);
   }
-  SHPGetInfo(inSHP, &nShapes, &shpType);
+  msSHPGetInfo(inSHP, &nShapes, &shpType);
 
   /* ------------------------------------------------------------------------------- */
   /*       Open the dbf file                                                         */
   /* ------------------------------------------------------------------------------- */
   sprintf(buffer,"%s.dbf",argv[1]);
-  inDBF = DBFOpen(buffer,"rb");
+  inDBF = msDBFOpen(buffer,"rb");
   if( inDBF == NULL ) {
     fprintf(stderr,"Unable to open %s XBASE file.\n",buffer);
     exit(0);
   }
 
-  num_fields = DBFGetFieldCount(inDBF);
-  num_records = DBFGetRecordCount(inDBF);
+  num_fields = msDBFGetFieldCount(inDBF);
+  num_records = msDBFGetRecordCount(inDBF);
 
   for(i=0;i<num_fields;i++) {
-    DBFGetFieldInfo(inDBF,i,fName,NULL,NULL);
+    msDBFGetFieldInfo(inDBF,i,fName,NULL,NULL);
     if(strncasecmp(argv[3],fName,strlen(argv[3])) == 0) { /* ---- Found it ---- */
       fieldNumber = i;
       break;
@@ -114,11 +119,11 @@ char *argv[];
   /* ------------------------------------------------------------------------------- */
   /*       Load the array to be sorted                                               */
   /* ------------------------------------------------------------------------------- */
-  dbfField = DBFGetFieldInfo(inDBF,fieldNumber,NULL,NULL,NULL);
+  dbfField = msDBFGetFieldInfo(inDBF,fieldNumber,NULL,NULL,NULL);
   switch (dbfField) {
   case FTString:
     for(i=0;i<num_records;i++) {
-      strcpy(array[i].string, DBFReadStringAttribute( inDBF, i, fieldNumber));
+      strcpy(array[i].string, msDBFReadStringAttribute( inDBF, i, fieldNumber));
       array[i].index = i;
     }
 
@@ -130,7 +135,7 @@ char *argv[];
   case FTInteger:
   case FTDouble:
     for(i=0;i<num_records;i++) {
-      array[i].number = DBFReadDoubleAttribute( inDBF, i, fieldNumber);
+      array[i].number = msDBFReadDoubleAttribute( inDBF, i, fieldNumber);
       array[i].index = i;
     }
 
@@ -148,13 +153,13 @@ char *argv[];
   /* ------------------------------------------------------------------------------- */
   /*       Setup the output .shp/.shx and .dbf files                                 */
   /* ------------------------------------------------------------------------------- */
-  outSHP = SHPCreate(argv[2],shpType);
+  outSHP = msSHPCreate(argv[2],shpType);
   sprintf(buffer,"%s.dbf",argv[2]);
-  outDBF = DBFCreate(buffer);
+  outDBF = msDBFCreate(buffer);
 
   for(i=0;i<num_fields;i++) {
-    dbfField = DBFGetFieldInfo(inDBF,i,fName,&fWidth,&fnDecimals); /* ---- Get field info from in file ---- */
-    DBFAddField(outDBF,fName,dbfField,fWidth,fnDecimals);
+    dbfField = msDBFGetFieldInfo(inDBF,i,fName,&fWidth,&fnDecimals); /* ---- Get field info from in file ---- */
+    msDBFAddField(outDBF,fName,dbfField,fWidth,fnDecimals);
   }
 
   /* ------------------------------------------------------------------------------- */
@@ -164,17 +169,17 @@ char *argv[];
 
     for(j=0;j<num_fields;j++) { /* ---- For each .dbf field ---- */
 
-      dbfField = DBFGetFieldInfo(inDBF,j,fName,&fWidth,&fnDecimals); 
+      dbfField = msDBFGetFieldInfo(inDBF,j,fName,&fWidth,&fnDecimals); 
 
       switch (dbfField) {
       case FTInteger:
-	DBFWriteIntegerAttribute(outDBF, i, j, DBFReadIntegerAttribute( inDBF, array[i].index, j));
+	msDBFWriteIntegerAttribute(outDBF, i, j, msDBFReadIntegerAttribute( inDBF, array[i].index, j));
         break;
       case FTDouble:
-	DBFWriteDoubleAttribute(outDBF, i, j, DBFReadDoubleAttribute( inDBF, array[i].index, j));
+	msDBFWriteDoubleAttribute(outDBF, i, j, msDBFReadDoubleAttribute( inDBF, array[i].index, j));
 	break;
       case FTString:
-	DBFWriteStringAttribute(outDBF, i, j, DBFReadStringAttribute( inDBF, array[i].index, j));
+	msDBFWriteStringAttribute(outDBF, i, j, msDBFReadStringAttribute( inDBF, array[i].index, j));
 	break;
       default:
 	fprintf(stderr,"Unsupported data type for field: %s, exiting.\n",fName);
@@ -182,16 +187,16 @@ char *argv[];
       }
     }
     
-    SHPReadShape( inSHP, array[i].index, &shape );
-    SHPWriteShape( outSHP, &shape );
+    msSHPReadShape( inSHP, array[i].index, &shape );
+    msSHPWriteShape( outSHP, &shape );
   }
 
   free(array);
 
-  SHPClose(inSHP);
-  DBFClose(inDBF);
-  SHPClose(outSHP);
-  DBFClose(outDBF);
+  msSHPClose(inSHP);
+  msDBFClose(inDBF);
+  msSHPClose(outSHP);
+  msDBFClose(outDBF);
 
   return(0);
 }

@@ -57,6 +57,7 @@ int NumLayers=0; /* number of layers specfied by a user */
 
 char *QueryFile=NULL;
 char *QueryLayer=NULL, *SelectLayer=NULL;
+int QueryLayerIndex=-1, SelectLayerIndex=-1;
 char *Item=NULL, *Value=NULL;
 
 layerObj *ResultLayer=NULL;

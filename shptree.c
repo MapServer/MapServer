@@ -40,6 +40,11 @@ int main(int argc, char *argv[])
   int byte_order;
   int depth=0;
 
+  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+    printf("%s\n", msGetVersion());
+    exit(0);
+  }
+
   if(argc<2) {
    fprintf(stdout,"Syntax: shptree [shpfile] {depth} {N | L | M | NL | NM}\n" );
    fprintf(stdout,"     N:  Native byte order\n");
@@ -69,7 +74,7 @@ int main(int argc, char *argv[])
   else
   { byte_order = MS_NATIVE_ORDER; }
     
-  if(msOpenSHPFile(&shapefile, "rb", NULL, NULL, argv[1]) == -1) {
+  if(msSHPOpenFile(&shapefile, "rb", NULL, argv[1]) == -1) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
     exit(0);
   }
@@ -94,7 +99,7 @@ int main(int argc, char *argv[])
   /*
   ** Clean things up
   */
-  msCloseSHPFile(&shapefile);
+  msSHPCloseFile(&shapefile);
   free(filename);
 
   exit(0);

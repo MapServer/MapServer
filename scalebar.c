@@ -5,6 +5,11 @@ int main(int argc, char *argv[])
   mapObj *map=NULL;
   gdImagePtr img=NULL;
 
+  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+    printf("%s\n", msGetVersion());
+    exit(0);
+  }
+
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
       fprintf(stdout,"Syntax: scalebar [mapfile] [output image]\n" );

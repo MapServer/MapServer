@@ -250,13 +250,13 @@ int msLoadQuery(mapObj *map, char *filename) {
 }
 
 
-int msQueryByItem(mapObj *map, char *layer, int mode, char *item, char *value)
+int msQueryByItem(mapObj *map, int qlayer, int mode, char *item, char *value)
 {
   // FIX: NEED A GENERIC SOMETHING OR OTHER HERE
   return(MS_FAILURE);
 }
 
-int msQueryByRect(mapObj *map, char *layer, rectObj rect) 
+int msQueryByRect(mapObj *map, int qlayer, rectObj rect) 
 {
   int i,l; /* counters */
   int start, stop=0;
@@ -271,16 +271,10 @@ int msQueryByRect(mapObj *map, char *layer, rectObj rect)
 
   msRectToPolygon(rect, &search_shape);
 
-  if(layer) {
-    if((start = msGetLayerIndex(map, layer)) == -1) {
-      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
-      msSetError(MS_MISCERR, ms_error.message, "msQueryByRect()");
-      return(-1);
-    }
-    stop = start;
-  } else {
+  if(qlayer < 0 || qlayer >= map->numlayers)
+    start = stop = qlayer;
+  else
     start = map->numlayers-1;
-  }
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
@@ -380,7 +374,7 @@ int msQueryByRect(mapObj *map, char *layer, rectObj rect)
   return(MS_FAILURE);
 }
 
-int msQueryByPoint(mapObj *map, char *layer, int mode, pointObj p, double buffer)
+int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 {
   int i, l;
   int start, stop=0;
@@ -395,16 +389,10 @@ int msQueryByPoint(mapObj *map, char *layer, int mode, pointObj p, double buffer
 
   msInitShape(&shape);
 
-  if(layer) {
-    if((start = msGetLayerIndex(map, layer)) == -1) {
-      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
-      msSetError(MS_MISCERR, ms_error.message, "msQueryByPoint()");
-      return(-1);
-    }
-    stop = start;
-  } else {
+  if(qlayer < 0 || qlayer >= map->numlayers)
+    start = stop = qlayer;
+  else
     start = map->numlayers-1;
-  }
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
@@ -508,12 +496,12 @@ int msQueryByPoint(mapObj *map, char *layer, int mode, pointObj p, double buffer
   return(MS_FAILURE);
 }
 
-int msQueryByFeatures(mapObj *map, char *layer)
+int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 {
   return(MS_FAILURE);
 }
 
-int msQueryByShape(mapObj *map, char *layer, shapeObj *search_shape)
+int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
 {
   int start, stop=0, l;
   shapeObj shape;
@@ -522,20 +510,11 @@ int msQueryByShape(mapObj *map, char *layer, shapeObj *search_shape)
 
   // FIX: do some checking on search_shape here...
 
-  /*
-  ** Do we have query layer, if not we need to search all layers
-  */
-  if(layer) {
-    if((start = msGetLayerIndex(map, layer)) == -1) {
-      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
-      msSetError(MS_MISCERR, ms_error.message, "msQueryByShape()");
-      return(MS_FAILURE);
-    }
-    stop = start;
-  } else {
+  if(qlayer < 0 || qlayer >= map->numlayers) // set layers to search
+    start = stop = qlayer;
+  else
     start = map->numlayers-1;
-  }
-
+  
   msComputeBounds(search_shape); // make sure an accurate extent exists
  
   for(l=start; l>=stop; l--) { /* each layer */
