@@ -78,6 +78,8 @@ char *yystring=NULL;
 <INITIAL,OBJECT_STRING>class		       { return(CLASS); }
 <INITIAL,OBJECT_STRING>classitem               { return(CLASSITEM); }
 <INITIAL,OBJECT_STRING>color		       { return(COLOR); }
+<INITIAL,OBJECT_STRING>connection	       { return(CONNECTION); }
+<INITIAL,OBJECT_STRING>connectiontype	       { return(CONNECTIONTYPE); }
 <INITIAL,OBJECT_STRING>data		       { return(DATA); }
 <INITIAL,OBJECT_STRING>description             { return(DESCRIPTION); }
 <INITIAL,OBJECT_STRING>empty		       { return(EMPTY); }
@@ -187,6 +189,7 @@ char *yystring=NULL;
 <INITIAL,VALUE_STRING>lc                       { return(MS_LC); }
 <INITIAL,VALUE_STRING>line		       { return(MS_LINE); }
 <INITIAL,VALUE_STRING>ll                       { return(MS_LL); }
+<INITIAL,VALUE_STRING>local                    { return(MS_LOCAL); }
 <INITIAL,VALUE_STRING>lr                       { return(MS_LR); }
 <INITIAL,VALUE_STRING>medium		       { return(MS_MEDIUM); }
 <INITIAL,VALUE_STRING>meters		       { return(MS_METERS); }
@@ -201,6 +204,7 @@ char *yystring=NULL;
 <INITIAL,VALUE_STRING>polyline		       { return(MS_POLYLINE); }
 <INITIAL,VALUE_STRING>queryonly                { return(MS_QUERY); }
 <INITIAL,VALUE_STRING>raster		       { return(MS_RASTER); }
+<INITIAL,VALUE_STRING>sde		       { return(MS_SDE); }
 <INITIAL,VALUE_STRING>selected		       { return(MS_SELECTED); }
 <INITIAL,VALUE_STRING>single                   { return(MS_SINGLE); }
 <INITIAL,VALUE_STRING>small		       { return(MS_SMALL); }

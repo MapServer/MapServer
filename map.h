@@ -122,6 +122,7 @@ enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
 enum MS_SYMBOLFILE {MS_MARKERSET, MS_LINESET, MS_SHADESET};
+enum MS_CONNECTION_TYPE {MS_LOCAL, MS_SDE};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
@@ -454,6 +455,9 @@ typedef struct {
   projectionObj projection; /* projection information for the layer */
 
   struct featureObj *features; /* linked list so we don't need a counter */
+
+  char *connection;
+  enum MS_CONNECTION_TYPE connectiontype;
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application

@@ -22,6 +22,9 @@
 #define MS_NOTFOUND 18 /* empty search results */
 #define MS_SHPERR 19
 #define MS_PARSEERR 20
+#define MS_SDEERR 21
+
+#define MS_NUMERRORCODES 22
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

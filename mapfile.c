@@ -1193,6 +1193,9 @@ int initLayer(layerObj *layer)
 
   layer->features = NULL;
 
+  layer->connection = NULL;
+  layer->connectiontype = MS_LOCAL;
+
   return(0);
 }
 
@@ -1213,6 +1216,7 @@ void freeLayer(layerObj *layer) {
   free(layer->footer);
   free(layer->tileindex);
   free(layer->tileitem);
+  free(layer->connection);
 
   freeProjection(&(layer->projection));
 
@@ -1244,6 +1248,12 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(CLASSITEM):
       if((layer->classitem = getString()) == NULL) return(-1);
+      break;
+    case(CONNECTION):
+      if((layer->connection = getString()) == NULL) return(-1);
+      break;
+    case(CONNECTIONTYPE):
+      if((layer->connectiontype = getSymbol(2, MS_LOCAL, MS_SDE)) == -1) return(-1);
       break;
     case(DATA):
       if((layer->data = getString()) == NULL) return(-1);
