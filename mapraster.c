@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122  2004/11/05 03:08:23  frank
+ * Cleanup layer level leaks under various error conditions.
+ * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=713
+ *
  * Revision 1.121  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1220,6 +1224,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
   int force_gdal;
   char szPath[MS_MAXPATHLEN], cwd[MS_MAXPATHLEN];
+  int final_status = MS_SUCCESS;
 
   rectObj searchrect;
   gdImagePtr img;
@@ -1307,11 +1312,19 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       tlp = &(layer->map->layers[tilelayerindex]);
       
     status = msLayerOpen(tlp);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS)
+    {
+        final_status = status;
+        goto cleanup;
+    }
 
     // build item list (no annotation) since we may have to classify the shape, plus we want the tileitem
     status = msLayerWhichItems(tlp, MS_TRUE, MS_FALSE, layer->tileitem);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS)
+    {
+        final_status = status;
+        goto cleanup;
+    }
  
     // get the tileitem index
     for(i=0; i<tlp->numitems; i++) {
@@ -1321,8 +1334,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       }
     }
     if(i == tlp->numitems) { // didn't find it
-      msSetError(MS_MEMERR, "Could not find attribute %s in tileindex.", "msDrawRasterLayerLow()", layer->tileitem);
-      return(MS_FAILURE);
+        msSetError(MS_MEMERR, 
+                   "Could not find attribute %s in tileindex.", 
+                   "msDrawRasterLayerLow()", 
+                   layer->tileitem);
+        final_status = MS_FAILURE;
+        goto cleanup;
     }
  
     searchrect = map->extent;
@@ -1333,14 +1350,10 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     status = msLayerWhichShapes(tlp, searchrect);
     if (status != MS_SUCCESS) {
         // Can be either MS_DONE or MS_FAILURE
-        msLayerClose(tlp);
-        if(tilelayerindex == -1) {
-            freeLayer(tlp);  // cleanup temporary tile layer
-            free(tlp);
-        }
-        if (status == MS_DONE) 
-            return MS_SUCCESS;
-        return MS_FAILURE;
+        if (status != MS_DONE) 
+            final_status = status;
+
+        goto cleanup;
     }
   }
 
@@ -1348,7 +1361,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
   while(done != MS_TRUE) { 
     if(layer->tileindex) {
       status = msLayerNextShape(tlp, &tshp);
-      if(status == MS_FAILURE) return(MS_FAILURE);
+      if( status == MS_FAILURE)
+      {
+          final_status = MS_FAILURE;
+          break;
+      }
+
       if(status == MS_DONE) break; // no more tiles/images
        
       if(layer->data == NULL) // assume whole filename is in attribute field
@@ -1446,7 +1464,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
                                    szLongMsg);
 
                         msReleaseLock( TLOCK_GDAL );
-                        return(MS_FAILURE);
+                        final_status = MS_FAILURE;
+                        break;
                     }
                 }
             }
@@ -1485,7 +1504,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
             {
                 GDALClose( hDS );
                 msReleaseLock( TLOCK_GDAL );
-                return MS_FAILURE;
+                final_status = MS_FAILURE;
+                break;
             }
 
             GDALClose( hDS );
@@ -1509,7 +1529,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       if( layer->debug || map->debug )
           msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
 
-      return(MS_FAILURE);
+      final_status = MS_FAILURE;
+      break;
 #else
       if( layer->debug || map->debug )
           msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
@@ -1530,6 +1551,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     continue;
   } // next tile
 
+cleanup:
   if(layer->tileindex) { // tiling clean-up
     msLayerClose(tlp);
     if(tilelayerindex == -1) {
@@ -1538,7 +1560,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     }
   }
 
-  return MS_SUCCESS;
+  return final_status;
 }
 
 /************************************************************************/
