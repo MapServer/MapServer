@@ -446,7 +446,8 @@ Curl Support:
   Client and WFS client options to connect to remote servers via HTTP.
 
   LibCurl 7.10.1 or more recent is required with the current version 
-  of MapServer.
+  of MapServer.  It is strongly recommended that you use libcurl
+  7.10.7 or more recent which contains some important bug fixes.
 
   If libcurl is installed in the default system directories then it 
   should automatically be detected by configure.  Otherwise use the
