@@ -336,7 +336,7 @@ if (MYDEBUG)printf("New connection<BR>\n");
 	if (strcmp(DB_PASSWD, "none") == 0)
 		strcpy(DB_PASSWD, "");
 
-#if MYSQL_VERSION_ID >= 40100
+#if MYSQL_VERSION_ID >= 40000
     if (!(layerinfo->conn = mysql_real_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD,NULL, 0, NULL, 0)))
 #else
     if (!(layerinfo->conn = mysql_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD)))
