@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2001/10/09 22:02:00  assefa
+ * Use the non-preemptive mode : tested on windows.
+ *
  * Revision 1.7  2001/08/22 15:56:58  dan
  * Added wms_latlonboundingbox metadata to check if layer overlaps.
  *
@@ -88,7 +91,7 @@ static int tracer (const char * fmt, va_list pArgs)
 }
 
 
-#ifndef PREEMPTIVE_MODE
+#ifdef PREEMPTIVE_MODE
 
 /*
 **  We get called here from the event loop when we are done
@@ -200,6 +203,26 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
 static int terminate_handler (HTRequest * request, HTResponse * response,
                               void * param, int status)
 {
+
+    if (status != 200)
+    {
+        static char errmsg[100];
+        msDebug("HTTP GET request returned status %d\n", status);
+
+        sprintf(errmsg, "HTTP GET request failed with status %d", status);
+        msSetError(MS_WMSCONNERR, errmsg, "msGetImage()");
+    }
+
+    if (param) 
+        *((int*)param) = status;
+
+    HTEventList_stopLoop();
+    return 0;
+}
+
+static int terminate_handler2 (HTRequest * request, HTResponse * response,
+                              void * param, int status)
+{
     static char errmsg[100];
 
     /* Delete our request again */
@@ -228,6 +251,8 @@ static int terminate_handler (HTRequest * request, HTResponse * response,
 int msWMSGetImage(const char *geturl, const char *outputfile)
 {
     HTRequest *         request = NULL;
+    int                 nHTTPStatus = 0;
+    int                 nStatus = MS_SUCCESS;
 
     /* Initiate W3C Reference Library with a client profile */
     HTProfile_newNoCacheClient("MapServer WMS Client", "1.0");
@@ -242,7 +267,7 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
     HTTrace_setCallback(tracer);
 
     /* Add our own filter to terminate the application */
-    HTNet_addAfter(terminate_handler, NULL, NULL, HT_ALL, HT_FILTER_LAST);
+    HTNet_addAfter(terminate_handler, NULL, &nHTTPStatus, HT_ALL, HT_FILTER_LAST);
 
     /* Set the timeout for how long we are going to wait for a response */
     HTHost_setEventTimeout(25000);
@@ -267,8 +292,18 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
     /* Go into the event loop... */
     HTEventList_loop(request);
 
+    if (nHTTPStatus != 200)
+    {
+        // msSetError() already called in terminate_handler
+        nStatus = MS_FAILURE;
+    }
+
+    HTRequest_delete(request);                  /* Delete the request object */
+    HTProfile_delete();
+
     /* If load failed then msSetError() will have been called */
-   return (ms_error.code == 0) ? MS_SUCCESS : MS_FAILURE;
+    //return (ms_error.code == 0) ? MS_SUCCESS : MS_FAILURE;
+    return nStatus;
 }
 
 
@@ -544,9 +579,9 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     } 
 
     // We're done with the remote server's response... delete it.
-    unlink(lp->data);
+    //unlink(lp->data);
 
-    free(lp->data);
+    // free(lp->data);
     lp->data = NULL;
 
     free(pszEPSG);
