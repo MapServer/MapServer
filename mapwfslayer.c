@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2003/09/10 19:53:19  assefa
+ * Use local hash function instead of md5.
+ *
  * Revision 1.14  2003/09/10 03:52:53  assefa
  * The <Filter ...> and </Filter> is now generated here intstead of
  * comming from the wfs_filter metadata parameter.
@@ -76,7 +79,6 @@
 #include "map.h"
 #include "maperror.h"
 #include "mapows.h"
-#include "md5.h"
 
 #define WFS_V_0_0_14  14
 #define WFS_V_1_0_0  100
@@ -287,7 +289,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     int nTimeout;
     int nStatus = MS_SUCCESS;
     msWFSLayerInfo *psInfo = NULL;
-    char *pszMD5FileName = NULL;
+    char *pszHashFileName = NULL;
 
     if (lp->connectiontype != MS_WFS || lp->connection == NULL)
         return MS_FAILURE;
@@ -342,13 +344,13 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
     // We'll store the remote server's response to a tmp file.
     //Build the tmp name using the MD5 transformation algorithm
-    pszMD5FileName = MDString (pszURL);
+    pszHashFileName = msHashString(pszURL);
     pszURL = NULL;
     
     pasReqInfo[(*numRequests)].pszOutputFile =  
         msOWSBuildURLFilename(map->web.imagepath, 
-                              pszMD5FileName,".tmp.gml");
-    free(pszMD5FileName);
+                              pszHashFileName,".tmp.gml");
+    free(pszHashFileName);
     pasReqInfo[(*numRequests)].nStatus = 0;
     pasReqInfo[(*numRequests)].nTimeout = nTimeout;
     pasReqInfo[(*numRequests)].bbox = bbox;
