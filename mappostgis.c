@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.42  2004/11/05 19:26:05  frank
  * avoid type casting warnings
  *
@@ -288,6 +291,15 @@ int msPOSTGISLayerOpen(layerObj *layer)
         gBYTE_ORDER = BIG_ENDIAN;
 
     return MS_SUCCESS;
+}
+
+// Return MS_TRUE if layer is open, MS_FALSE otherwise.
+int msPOSTGISLayerIsOpen(layerObj *layer)
+{
+    if (getPostGISLayerInfo(layer))
+        return MS_TRUE;
+
+    return MS_FALSE;
 }
 
 
@@ -1738,6 +1750,13 @@ int msPOSTGISLayerOpen(layerObj *layer)
     msSetError(MS_QUERYERR, "msPOSTGISLayerOpen called but unimplemented!  (mapserver not compiled with postgis support)",
                "msPOSTGISLayerOpen()");
     return(MS_FAILURE);
+}
+
+int msPOSTGISLayerIsOpen(layerObj *layer)
+{
+    msSetError(MS_QUERYERR, "msPOSTGISIsLayerOpen called but unimplemented!  (mapserver not compiled with postgis support)",
+               "msPOSTGISLayerIsOpen()");
+    return(MS_FALSE);
 }
 
 void msPOSTGISLayerFreeItemInfo(layerObj *layer)

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.8  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -118,6 +121,18 @@ int msGraticuleLayerOpen(layerObj *layer)
 
 	return MS_SUCCESS;
 }
+
+/**********************************************************************************************************************
+ * Return MS_TRUE if layer is open, MS_FALSE otherwise.
+ */
+int msGraticuleLayerIsOpen(layerObj *layer)
+{
+    if (layer->layerinfo)
+        return MS_TRUE;
+
+    return MS_FALSE;
+}
+
 
 /**********************************************************************************************************************
  *

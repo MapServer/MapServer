@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.45  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.44  2004/11/02 21:01:00  assefa
  * Add a 2nd optional argument to msLoadMapContext function (Bug 1023).
  *
@@ -348,6 +351,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo);
 int msWFSLayerOpen(layerObj *lp, 
                    const char *pszGMLFilename, rectObj *defaultBBOX);
+int msWFSLayerIsOpen(layerObj *lp); 
 int msWFSLayerInitItemInfo(layerObj *layer);
 int msWFSLayerGetItems(layerObj *layer);
 int msWFSLayerWhichShapes(layerObj *layer, rectObj rect);

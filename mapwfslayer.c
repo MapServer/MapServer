@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.25  2004/11/12 17:05:01  assefa
  * Use %.17g instrad of %f when output bbox values (Bug 678)
  *
@@ -900,6 +903,31 @@ int msWFSLayerOpen(layerObj *lp,
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
              "msWFSLayerOpen()");
   return(MS_FAILURE);
+
+#endif /* USE_WFS_LYR */
+}
+
+/**********************************************************************
+ *                          msWFSLayerIsOpen()
+ *
+ * Returns MS_TRUE if layer is already open, MS_FALSE otherwise.
+ *
+ **********************************************************************/
+
+int msWFSLayerIsOpen(layerObj *lp) 
+{
+#ifdef USE_WFS_LYR
+    if (lp->wfslayerinfo != NULL)
+        return MS_TRUE;
+
+    return MS_FALSE;
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSLayerIsOpen()");
+  return(MS_FALSE);
 
 #endif /* USE_WFS_LYR */
 }

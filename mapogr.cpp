@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.77  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.76  2004/10/28 02:23:17  frank
  * disable direct error reporting from OGR
  *
@@ -1513,6 +1516,28 @@ int msOGRLayerClose(layerObj *layer)
 
   msSetError(MS_MISCERR, "OGR support is not available.", "msOGRLayerClose()");
   return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRLayerIsOpen()
+ **********************************************************************/
+int msOGRLayerIsOpen(layerObj *layer) 
+{
+#ifdef USE_OGR
+  if (layer->ogrlayerinfo)
+      return MS_TRUE;
+
+  return MS_FALSE;
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRLayerIsOpen()");
+  return(MS_FALSE);
 
 #endif /* USE_OGR */
 }

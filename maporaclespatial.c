@@ -882,6 +882,15 @@ int msOracleSpatialLayerOpen( layerObj *layer )
   return layer->layerinfo != NULL ? MS_SUCCESS : MS_FAILURE;
 }
 
+// Return MS_TRUE if layer is open, MS_FALSE otherwise.
+int msOracleSpatialLayerIsOpen(layerObj *layer)
+{
+    if (layer->layerinfo != NULL)
+        return MS_TRUE;
+
+    return MS_FALSE;
+}
+
 /* closes the layer, disconnecting from db if connected. layer->layerinfo is freed */
 int msOracleSpatialLayerClose( layerObj *layer )
 { 
@@ -1408,6 +1417,12 @@ int msOracleSpatialLayerOpen(layerObj *layer)
 { 
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerOpen()" );
   return MS_FAILURE; 
+}
+
+int msOracleSpatialLayerIsOpen(layerObj *layer)
+{ 
+  msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerIsOpen()" );
+  return MS_FALSE; 
 }
 
 int msOracleSpatialLayerClose(layerObj *layer)

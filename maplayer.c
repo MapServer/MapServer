@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.96  2004/10/21 10:54:17  assefa
  * Add postgis date_trunc support.
  *
@@ -219,6 +222,57 @@ int msLayerOpen(layerObj *layer)
   }
 
   return(MS_FAILURE);
+}
+
+/*
+** Returns MS_TRUE if layer has been opened using msLayerOpen(), MS_FALSE otherwise
+*/
+int msLayerIsOpen(layerObj *layer)
+{
+
+  switch(layer->connectiontype) {
+  case(MS_SHAPEFILE):
+  case(MS_TILED_SHAPEFILE):
+    if(layer->layerinfo)
+        return(MS_TRUE);
+    else
+        return(MS_FALSE);
+    break;
+  case(MS_INLINE):
+    if (layer->currentfeature)
+        return(MS_TRUE);
+    else
+        return(MS_FALSE);
+    break;
+  case(MS_OGR):
+    return(msOGRLayerIsOpen(layer));
+    break;
+  case(MS_WFS):
+    return(msWFSLayerIsOpen(layer));
+    break;
+  case(MS_POSTGIS):
+    return(msPOSTGISLayerIsOpen(layer));
+    break;
+  case(MS_MYGIS):
+    return(msMYGISLayerIsOpen(layer));
+    break;
+  case(MS_SDE):
+    return(msSDELayerIsOpen(layer));
+    break;
+  case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerIsOpen(layer));
+    break;
+  case(MS_GRATICULE):
+    return(msGraticuleLayerIsOpen(layer));
+    break;
+  case(MS_RASTER):
+    return(msRASTERLayerIsOpen(layer));
+    break;
+  default:
+    break;
+  }
+
+  return(MS_FALSE);
 }
 
 /*

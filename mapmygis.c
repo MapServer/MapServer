@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.13  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -403,6 +406,15 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 	return MS_SUCCESS;
 }
 
+
+// Return MS_TRUE if layer is open, MS_FALSE otherwise.
+int msMYGISLayerIsOpen(layerObj *layer)
+{
+    if (getMYGISLayerInfo(layer))
+        return MS_TRUE;
+
+    return MS_FALSE;
+}
 
 // Free the itemindexes array in a layer.
 void    msMYGISLayerFreeItemInfo(layerObj *layer)
@@ -1846,6 +1858,13 @@ int msMYGISLayerOpen(layerObj *layer)
 		msSetError(MS_QUERYERR, "msMYGISLayerOpen called but unimplemented!  (mapserver not compiled with MYGIS support)",
                  "msMYGISLayerOpen()");
 		return(MS_FAILURE);
+}
+
+int msMYGISLayerIsOpen(layerObj *layer)
+{
+    msSetError(MS_QUERYERR, "msMYGISIsLayerOpen called but unimplemented!  (mapserver not compiled with MYGIS support)",
+               "msMYGISLayerIsOpen()");
+    return(MS_FALSE);
 }
 
 void msMYGISLayerFreeItemInfo(layerObj *layer)

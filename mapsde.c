@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.90  2004/11/15 18:42:49  hobu
  * do not silently return a MS_SUCCESS in msSDELayerOpen.
  * Instead, depend on the connection/layer pooling stuff to cache
@@ -900,6 +903,27 @@ int msSDELayerOpen(layerObj *layer) {
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
   return(MS_FAILURE);
+#endif
+}
+
+
+/* -------------------------------------------------------------------- */
+/* msSDELayerIsOpen                                                     */
+/* -------------------------------------------------------------------- */
+/*     Returns MS_TRUE if layer is already opened, MS_FALSE otherwise   */
+/* -------------------------------------------------------------------- */
+int msSDELayerIsOpen(layerObj *layer) {
+#ifdef USE_SDE
+
+  if(layer->layerinfo) 
+      return(MS_TRUE); 
+
+  return MS_FALSE;
+
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.",
+             "msSDELayerIsOpen()");
+  return(MS_FALSE);
 #endif
 }
 

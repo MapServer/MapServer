@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.14  2004/11/03 16:40:24  frank
  * modified raster queries to properly set the classindex in the resultcache.
  *
@@ -1038,6 +1041,25 @@ int msRASTERLayerOpen(layerObj *layer)
         return MS_SUCCESS;
 #endif /* def USE_GDAL */
 }
+
+/************************************************************************/
+/*                         msRASTERIsLayerOpen()                        */
+/************************************************************************/
+
+int msRASTERLayerIsOpen(layerObj *layer) 
+{
+#ifndef USE_GDAL
+    msSetError( MS_IMGERR, 
+                "Rasters queries only supported with GDAL support enabled.",
+                "msRasterLayerIsOpen()" );
+    return MS_FALSE;
+#else
+    if (layer->layerinfo)
+        return MS_TRUE;
+    return MS_FALSE;
+#endif
+}
+
 
 /************************************************************************/
 /*                     msRASTERLayerFreeItemInfo()                      */

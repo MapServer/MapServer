@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.373  2004/11/15 20:35:02  dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
  * Revision 1.372  2004/11/12 20:23:16  frank
  * include z and m in formatted pointObj, fmt is const!
  *
@@ -1265,6 +1268,7 @@ MS_DLL_EXPORT void msSetBit(char *array, int index, int value);
 MS_DLL_EXPORT void msFlipBit(char *array, int index);
 
 MS_DLL_EXPORT int msLayerOpen(layerObj *layer); // in maplayer.c
+MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msLayerClose(layerObj *layer);
 MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect);
 MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata);
@@ -1300,6 +1304,7 @@ MS_DLL_EXPORT int msTiledSHPLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msTiledSHPLayerGetExtent(layerObj *layer, rectObj *extent);
 
 MS_DLL_EXPORT int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); // in mapogr.cpp
+MS_DLL_EXPORT int msOGRLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT int msOGRLayerClose(layerObj *layer);
 MS_DLL_EXPORT int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
 MS_DLL_EXPORT int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
@@ -1318,6 +1323,7 @@ MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
 MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename);
 
 MS_DLL_EXPORT int msPOSTGISLayerOpen(layerObj *layer); // in mappostgis.c
+MS_DLL_EXPORT int msPOSTGISLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msPOSTGISLayerFreeItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msPOSTGISLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect);
@@ -1330,6 +1336,7 @@ MS_DLL_EXPORT int msPOSTGISLayerGetItems(layerObj *layer);
 MS_DLL_EXPORT int msPOSTGISLayerResultClose(layerObj *layer);
 
 MS_DLL_EXPORT int msMYGISLayerOpen(layerObj *layer); // in mapmygis.c
+MS_DLL_EXPORT int msMYGISLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msMYGISLayerFreeItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msMYGISLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msMYGISLayerWhichShapes(layerObj *layer, rectObj rect);
@@ -1341,6 +1348,7 @@ MS_DLL_EXPORT int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, l
 MS_DLL_EXPORT int msMYGISLayerGetItems(layerObj *layer);
 
 MS_DLL_EXPORT int msSDELayerOpen(layerObj *layer); // in mapsde.c
+MS_DLL_EXPORT int msSDELayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msSDELayerClose(layerObj *layer);
 MS_DLL_EXPORT int msSDELayerWhichShapes(layerObj *layer, rectObj rect);
 MS_DLL_EXPORT int msSDELayerNextShape(layerObj *layer, shapeObj *shape);
@@ -1353,6 +1361,7 @@ MS_DLL_EXPORT char *msSDELayerGetSpatialColumn(layerObj *layer);
 MS_DLL_EXPORT char *msSDELayerGetRowIDColumn(layerObj *layer);
 
 MS_DLL_EXPORT int msOracleSpatialLayerOpen(layerObj *layer);
+MS_DLL_EXPORT int msOracleSpatialLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT int msOracleSpatialLayerClose(layerObj *layer);
 MS_DLL_EXPORT int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect);
 MS_DLL_EXPORT int msOracleSpatialLayerNextShape(layerObj *layer, shapeObj *shape);
@@ -1364,6 +1373,7 @@ MS_DLL_EXPORT void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);   
 
 MS_DLL_EXPORT int msGraticuleLayerOpen(layerObj *layer);   // in mapGraticule.cpp
+MS_DLL_EXPORT int msGraticuleLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT int msGraticuleLayerClose(layerObj *layer);
 MS_DLL_EXPORT int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect);
 MS_DLL_EXPORT int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape);
@@ -1374,7 +1384,8 @@ MS_DLL_EXPORT int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, int
 MS_DLL_EXPORT int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
-MS_DLL_EXPORT int msRASTERLayerOpen(layerObj *layer); // in mapmygis.c
+MS_DLL_EXPORT int msRASTERLayerOpen(layerObj *layer); // in maprasterquery.c
+MS_DLL_EXPORT int msRASTERLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msRASTERLayerFreeItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msRASTERLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect);
