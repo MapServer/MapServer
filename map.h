@@ -331,7 +331,10 @@ typedef struct {
   int overlayminsize, overlaymaxsize;
 
   labelObj label;
-  char *name; /* used for legend labeling */
+
+  char *name; // should be unique within a layer
+  char *title; // used for legend labeling
+
 #ifndef SWIG
   expressionObj text;
 #endif

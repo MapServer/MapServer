@@ -145,4 +145,6 @@
 
 #define DUMP 1125
 
+#define TITLE 1126
+
 #endif /* MAPFILE_H */

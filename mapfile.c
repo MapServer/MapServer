@@ -1155,6 +1155,7 @@ int initClass(classObj *class)
 
   initExpression(&(class->expression));
   class->name = NULL;
+  class->title = NULL;
   initExpression(&(class->text));
   class->color = -1; /* must explictly set a color */
   class->symbol = 0;
@@ -1199,6 +1200,7 @@ void freeClass(classObj *class)
   freeExpression(&(class->expression));
   freeExpression(&(class->text));
   msFree(class->name);
+  msFree(class->title);
   msFree(class->symbolname);
   msFree(class->overlaysymbolname);
   msFree(class->template);
@@ -1363,6 +1365,9 @@ int loadClass(classObj *class, mapObj *map)
 	return(-1);
       }
       break;
+    case(TITLE):
+      if((class->title = getString()) == NULL) return(-1);
+      break;
     case(TYPE):
       if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return(-1);
       break;
@@ -1445,6 +1450,10 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   case(TEXT):
     if(loadExpressionString(&(class->text), value) == -1) return;
     if((class->text.type != MS_STRING) && (class->text.type != MS_EXPRESSION)) msSetError(MS_MISCERR, "Text expressions support constant or replacement strings." , "loadClass()");
+  case(TITLE):
+    msFree(class->title);
+    class->title = strdup(value);
+    break;
   case(TYPE):
     msyystate = 2; msyystring = value;
     if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return;
@@ -1499,6 +1508,8 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
     writeExpression(&(class->text), stream);
     fprintf(stream, "\n");
   }  
+  if(class->title) 
+    fprintf(stream, "      TITLE \"%s\"\n", class->title);
   fprintf(stream, "    END\n");
 }
 
