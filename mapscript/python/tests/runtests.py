@@ -45,7 +45,7 @@ from cases.hashtest import LayerMetadataTestCase, ClassMetadataTestCase
 from cases.owstest import OWSRequestTestCase
 from cases.clonetest import MapCloningTestCase
 
-from cases.imagetest import ImageObjTestCase
+from cases.imagetest import ImageObjTestCase, ImageWriteTestCase
 from cases.imagetest import SaveToStringTestCase
 
 from cases.maptest import MapConstructorTestCase
@@ -103,7 +103,7 @@ suite.addTests([HashTableTestCase, WebMetadataTestCase,
 suite.addTests([MapCloningTestCase])
 suite.addTests([OWSRequestTestCase])
 
-suite.addTests([ImageObjTestCase,
+suite.addTests([ImageObjTestCase, ImageWriteTestCase,
                 SaveToStringTestCase])
 
 suite.addTests([MapConstructorTestCase,
