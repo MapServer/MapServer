@@ -90,6 +90,7 @@ MAP
     LABELITEM "FNAME"
     CLASS
       NAME "0"
+      EXPRESSION ("[FNAME]" == "Foo")
       LABEL
         TYPE BITMAP
         COLOR 0 0 0
