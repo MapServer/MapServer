@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.86  2002/02/08 18:51:11  dan
+ * Remove class and layer args to setSymbolByName()
+ *
  * Revision 1.85  2002/02/08 18:25:39  sacha
  * let mapserv add a new symbol when we use the classobj setproperty function
  * with "symbolname" and "overlaysymbolname" arg.
@@ -82,93 +85,6 @@
  *
  * Revision 1.70  2002/01/10 23:16:29  assefa
  * Correct a bug in php3_ms_map_getAllGroupNames.
- *
- * Revision 1.69  2001/12/19 03:46:02  assefa
- * Support of Measured shpe files.
- *
- * Revision 1.68  2001/11/27 15:39:33  dan
- * Added layer->template
- *
- * Revision 1.67  2001/11/05 18:25:46  dan
- * Added #ifdef USE_PROJ in map->setProjection()
- *
- * Revision 1.66  2001/11/01 21:10:09  assefa
- * Add getProjection on map and layer object.
- *
- * Revision 1.65  2001/11/01 02:47:06  dan
- * Added layerObj->getWMSFeatureInfoURL()
- *
- * Revision 1.64  2001/10/31 15:17:14  dan
- * Added missing ref. to php3_ms_lyr_setFilter in layerObj class
- *
- * Revision 1.63  2001/10/29 16:33:24  dan
- * Attempt at fixing the random map image problem with mod_php (bug67).
- *
- * Revision 1.62  2001/10/23 19:17:38  assefa
- * Use layerorder instead of panPrioList.
- *
- * Revision 1.61  2001/10/23 01:32:46  assefa
- * Add Drawing Priority support.
- *
- * Revision 1.60  2001/10/19 19:26:36  assefa
- * Bug:extents and unit in the php object where not set in
- * map->setprojection.
- *
- * Revision 1.59  2001/10/17 21:40:50  assefa
- * Add scalebar and legend objects.
- *
- * Revision 1.58  2001/10/17 13:14:50  assefa
- * Change setProjection to be able to set the map units and extents.
- *
- * Revision 1.57  2001/10/12 00:34:26  assefa
- * Add utility function getAllGroupNames and getAllLayerNames.
- *
- * Revision 1.56  2001/10/11 02:21:09  assefa
- * Add missing connection types constants.
- *
- * Revision 1.55  2001/10/10 16:06:28  dan
- * Added shapeObj->set()
- *
- * Revision 1.54  2001/10/04 18:13:07  dan
- * Fixed ms_NewLayerObj() to update $map->numlayers.
- *
- * Revision 1.53  2001/10/03 12:41:04  assefa
- * Add function getLayersIndexByGroup.
- *
- * Revision 1.52  2001/09/24 15:59:03  assefa
- * Modify GetDeltaExtentsUsingScale to fit with msCalculateScale (mapscale.c) :
- * this corrects the zoomscale bug (#46).
- *
- * Revision 1.51  2001/09/13 20:58:01  dan
- * Fixed handling of objects and refcounts vs PHP4.0.6... thanks to Zeev Suraski
- * for his help.  See bug#30 and #40.
- *
- * Revision 1.50  2001/09/10 15:37:24  assefa
- * Add error messages in the zoom functions when the extents given are
- * wrong.
- *
- * Revision 1.49  2001/08/29 14:36:06  dan
- * Changes to msCalculateScale() args.  Sync with mapscript.i v1.42
- *
- * Revision 1.48  2001/08/21 19:09:02  dan
- * Made map->draw() and drawQuery() produce only a PHP warning so that the map
- * rendering errors can be trapped by the scripts using the '@' operator.
- *
- * Revision 1.47  2001/08/01 13:52:59  dan
- * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
- * to getSymbolByName().
- *
- * Revision 1.46  2001/07/26 19:50:08  assefa
- * Add projection class and related functions.
- *
- * Revision 1.45  2001/07/23 19:11:56  dan
- * Added missing "background..." properties in label_setProperty().
- *
- * Revision 1.44  2001/07/20 13:50:27  dan
- * Call zend_list_addref() when creating resource member variables
- *
- * Revision 1.43  2001/04/19 15:11:34  dan
- * Sync with mapscript.i v.1.32
  *
  * ...
  *
@@ -5850,7 +5766,6 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     classObj *self;
     mapObj *parent_map;
-    layerObj *parent_layer;
     pval   *pPropertyName, *pNewValue, *pThis;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5871,15 +5786,11 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
                                            list);
    
-    parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
-                                                           PHPMS_GLOBAL(le_mslayer),
-                                                           list, E_ERROR);
-   
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
                                                        PHPMS_GLOBAL(le_msmap),
                                                        list, E_ERROR);
 
-    if (self == NULL || parent_map == NULL || parent_layer == NULL)
+    if (self == NULL || parent_map == NULL)
     {
         RETURN_LONG(-1);
     }
@@ -5917,18 +5828,23 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     {
         if (classObj_setSymbolByName(self,
                                      parent_map,
-                                     parent_layer,
-                                     self->symbolname) != 0)
+                                     self->symbolname) == -1)
+        {
             RETURN_LONG(-1);
+        }
+        _phpms_set_property_long(pThis,"symbol", self->symbol, E_ERROR); 
     }
     else
     if (strcmp(pPropertyName->value.str.val, "overlaysymbolname") == 0)
     {
         if (classObj_setOverlaySymbolByName(self,
                                             parent_map,
-                                            parent_layer,
-                                            self->overlaysymbolname) != 0)
+                                            self->overlaysymbolname) == -1)
+        {
             RETURN_LONG(-1);
+        }
+        _phpms_set_property_long(pThis,"overlaysymbol", 
+                                 self->overlaysymbol, E_ERROR); 
     }
 
     RETURN_LONG(0);

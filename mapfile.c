@@ -3086,7 +3086,7 @@ int msSaveMap(mapObj *map, char *filename)
  * Check if symbolname exist in symbolset, if not try
  * to add it.
 */
-int msGetSymbolIdByName(mapObj *map, classObj *myClass, layerObj *lp, char *pszSymbolName)
+int msGetSymbolIdByName(mapObj *map, char *pszSymbolName)
 {
    int nSymbolId = -1;
 
@@ -3166,7 +3166,7 @@ static mapObj *msLoadMapInternal(char *filename)
           for(j=0; j<map->layers[i].numclasses; j++)
           {
              if (map->layers[i].class[j].overlaysymbolname)
-                if ((map->layers[i].class[j].overlaysymbol = msGetSymbolIdByName(map, &(map->layers[i].class[j]), &(map->layers[i]), map->layers[i].class[j].overlaysymbolname)) == -1)
+                if ((map->layers[i].class[j].overlaysymbol = msGetSymbolIdByName(map, map->layers[i].class[j].overlaysymbolname)) == -1)
                  {
                     msSetError(MS_MISCERR,
                                "Undefined overlay symbol \"%s\" in class %d of layer %s.",
@@ -3178,7 +3178,7 @@ static mapObj *msLoadMapInternal(char *filename)
                  }
              
              if (map->layers[i].class[j].symbolname)
-                if ((map->layers[i].class[j].symbol = msGetSymbolIdByName(map, &(map->layers[i].class[j]), &(map->layers[i]), map->layers[i].class[j].symbolname)) == -1)
+                if ((map->layers[i].class[j].symbol = msGetSymbolIdByName(map, map->layers[i].class[j].symbolname)) == -1)
                  {
                     msSetError(MS_MISCERR,
                                "Undefined symbol \"%s\" in class %d of layer %s.",

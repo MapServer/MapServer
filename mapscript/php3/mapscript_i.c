@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.33  2002/02/08 18:51:11  dan
+ * Remove class and layer args to setSymbolByName()
+ *
  * Revision 1.32  2002/02/08 18:25:39  sacha
  * let mapserv add a new symbol when we use the classobj setproperty function
  * with "symbolname" and "overlaysymbolname" arg.
@@ -183,16 +186,6 @@ int *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname,
 
 int mapObj_addColor(mapObj* self, int r, int g, int b) {
     return msAddColor(self, r, g, b);
-  }
-
-int mapObj_getSymbolByName(mapObj* self, char *name) {
-    int symbol;
-
-    if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
-      if((symbol = msAddImageSymbol(&self->symbolset, name)) == -1)
-	return -1;
-
-    return symbol;
   }
 
 void mapObj_prepareQuery(mapObj* self) {
@@ -469,17 +462,20 @@ int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int wi
 
 gdImagePtr classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height) {
     return msCreateLegendIcon(map, layer, self, width, height);
-}
+  }
 
-int classObj_setSymbolByName(classObj *self, mapObj *map, layerObj *lp, char *pszSymbolName) {
-    self->symbol =  msGetSymbolIdByName(map, self, lp, pszSymbolName);
+
+int classObj_setSymbolByName(classObj *self, mapObj *map, char* pszSymbolName) {
+    self->symbol = msGetSymbolIdByName(map, pszSymbolName);
     return self->symbol;
 }
-
-int classObj_setOverlaySymbolByName(classObj *self, mapObj *map, layerObj *lp, char *pszOverlaySymbolName) {
-    self->overlaysymbol =  msGetSymbolIdByName(map, self, lp, pszOverlaySymbolName);
+  
+int classObj_setOverlaySymbolByName(classObj *self, mapObj *map, char* pszOverlaySymbolName) {
+    self->overlaysymbol = msGetSymbolIdByName(map, pszOverlaySymbolName);
     return self->overlaysymbol;
-}
+  }
+
+
 /**********************************************************************
  * class extensions for pointObj, useful many places
  **********************************************************************/

@@ -522,14 +522,14 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msCreateLegendIcon(map, layer, self, width, height);
   }
   
-  int setSymbolByName(mapObj *map, classObj* myClass, layerObj *lp, char* pszSymbolName) {
-    myClass->symbol = msGetSymbolIdByName(map, myClass, lp, pszSymbolName);
-    return myClass->symbol;
+  int setSymbolByName(mapObj *map, char* pszSymbolName) {
+    self->symbol = msGetSymbolIdByName(map, pszSymbolName);
+    return self->symbol;
   }
   
-  int setOverlaySymbolByName(mapObj *map, classObj* myClass, layerObj *lp, char* pszOverlaySymbolName) {
-    myClass->overlaysymbol = msGetSymbolIdByName(map, myClass, lp, pszOverlaySymbolName);
-    return myClass->overlaysymbol;
+  int setOverlaySymbolByName(mapObj *map, char* pszOverlaySymbolName) {
+    self->overlaysymbol = msGetSymbolIdByName(map, pszOverlaySymbolName);
+    return self->overlaysymbol;
   }
    
 }

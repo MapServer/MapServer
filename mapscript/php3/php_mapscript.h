@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/02/08 18:51:11  dan
+ * Remove class and layer args to setSymbolByName()
+ *
  * Revision 1.17  2002/02/08 18:25:40  sacha
  * let mapserv add a new symbol when we use the classobj setproperty function
  * with "symbolname" and "overlaysymbolname" arg.
@@ -187,11 +190,9 @@ gdImagePtr      classObj_createLegendIcon(classObj *self,
                                           int width, int height);
 int             classObj_setSymbolByName(classObj *self,
                                          mapObj *map,
-                                         layerObj *lp,
                                          char *pszSymbolName);
 int             classObj_setOverlaySymbolByName(classObj *self,
                                                 mapObj *map,
-                                                layerObj *lp,
                                                 char *pszOverlaySymbolName);
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);
