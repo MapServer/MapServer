@@ -565,6 +565,8 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
 {
    char *pszClassImg;
    int i;
+
+   *legGroupHtmlCopy = NULL;
    
    if (!pszGroupName || !pszGroupTemplate) {
      msSetError(MS_WEBERR, "Invalid pointer.", "generateGroupTemplate()");
@@ -615,7 +617,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    char *pszOptFlag;
    char *pszClassImg;
 
-   pszTemp = NULL;
+   *pszTemp = NULL;
    
    if (!pszLayerTemplate || 
        !map || 
@@ -900,7 +902,8 @@ char *generateLegendTemplate(mapObj *map)
             
          // concatenate it to final result
          pszResult = strcatalloc(pszResult, legGroupHtmlCopy);
-            
+
+/*         
          if (!pszResult)
          {
             if (pszResult)
@@ -908,7 +911,8 @@ char *generateLegendTemplate(mapObj *map)
             pszResult=NULL;
             goto error;
          }
-            
+*/
+         
          if (legGroupHtmlCopy)
          {
            free(legGroupHtmlCopy);
