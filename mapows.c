@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2004/11/28 02:51:02  frank
+ * blow an error if any WxS services are enabled without PROJ
+ *
  * Revision 1.53  2004/11/25 06:19:05  dan
  * Add trailing "?" or "&" to connection string when required in WFS
  * client layers using GET method (bug 1082)
@@ -218,6 +221,10 @@
 MS_CVSID("$Id$")
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
+
+#if !defined(USE_PROJ)
+#error "PROJ.4 is required for WMS, WFS and WCS Server Support."
+#endif
 
 /*
 ** msOWSDispatch() is the entry point for any OWS request (WMS, WFS, ...)
