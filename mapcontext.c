@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.27  2002/11/22 21:50:33  julien
+ * Fix SRS and LegendURL for 0.1.2
+ *
  * Revision 1.26  2002/11/22 17:42:52  julien
  * Support DataURL and LogoURL for 0.1.2 version
  *
@@ -351,7 +354,7 @@ int msLoadMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
   char *pszWholeText;
-  char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4;
+  char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4, *pszChar;
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
@@ -700,18 +703,24 @@ int msLoadMapContext(mapObj *map, char *filename)
                      strcasecmp(psSRS->pszValue, "SRS") == 0 )
                   {
                       pszValue = psSRS->psChild->pszValue;
+                      pszValue = (char*)CPLGetXMLValue(psLayer,"SRS",NULL);
 
                       if(nFirstSRS == 1)
                       {
-                          pszValue = (char*)CPLGetXMLValue(psLayer,"SRS",NULL);
                           if(pszValue != NULL)
                           {
-                              sprintf(szProj, "init=epsg:%s", pszValue+5);
+                              pszValue1 = strdup(pszValue);
+                              pszChar = strchr(pszValue1, ' ');
+                              if(pszChar)
+                                  pszValue1[pszChar-pszValue1] = '\0';
+
+                              sprintf(szProj, "init=epsg:%s", pszValue1+5);
 
                               msInitProjection(&layer->projection);
                               layer->projection.args[layer->projection.numargs] = strdup(szProj);
                               layer->projection.numargs++;
                               msProcessProjection(&layer->projection);
+                              free(pszValue1);
                           }
                           nFirstSRS = 0;
                       }
@@ -871,16 +880,23 @@ int msLoadMapContext(mapObj *map, char *filename)
                       else
                       {
                               psLegendURL = CPLGetXMLNode(psStyle,"LegendURL");
-                              psLegendURL = psLegendURL->psChild;
-                              while(psLegendURL != NULL && 
-                                    psLegendURL->eType != CXT_Text)
-                              {
-                                  psLegendURL = psLegendURL->psNext;
-                              }
                               if(psLegendURL != NULL)
-                                  pszValue = psLegendURL->pszValue;
+                              {
+                                  psLegendURL = psLegendURL->psChild;
+                                  while(psLegendURL != NULL && 
+                                        psLegendURL->eType != CXT_Text)
+                                  {
+                                      psLegendURL = psLegendURL->psNext;
+                                  }
+                                  if(psLegendURL != NULL)
+                                      pszValue = psLegendURL->pszValue;
+                                  else
+                                      pszValue = NULL;
+                              }
                               else
+                              {
                                   pszValue = NULL;
+                              }
                       }
                       if(pszValue != NULL)
                       {
