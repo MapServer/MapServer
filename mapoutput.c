@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/11/05 23:04:50  assefa
+ * Change a bit test in function msGetOutputFormatMimeListGD.
+ *
  * Revision 1.26  2004/11/05 16:29:40  assefa
  * add function msGetOutputFormatMimeListGD.
  *
@@ -861,8 +864,8 @@ void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime )
                 break;
         }
 
-        if( j == mime_count && 
-            map->outputformatlist[i]->renderer == MS_RENDER_WITH_GD)
+        if( j == mime_count && map->outputformatlist[i]->driver &&
+            strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0)
             mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
 
