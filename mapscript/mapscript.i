@@ -179,6 +179,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 
+  void cleanPens() {
+    msClearPenValues(self);
+  }
+  
   imageObj *draw() {
     return msDrawMap(self);
   }
@@ -885,7 +889,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   // Method saveToString renders the imageObj into image data and returns
-  // it as a string. Questions and comments to Sean Gillies <sgillies@i3.com>
+  // it as a string. Questions and comments to Sean Gillies <sgillies@frii.com>
 
 #if defined (SWIGPYTHON) || defined (SWIGTCL8)
 
@@ -925,7 +929,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 #ifdef USE_GD_GIF
       imgbytes = gdImageGifPtr(self->img.gd, &size);
 #else
-      msSetError(MS_MISCERR, "GIF output is not available.", "getImageGDString()");
+      msSetError(MS_MISCERR, "GIF output is not available.", "saveToString()");
       return(MS_FAILURE);
 #endif
 
@@ -934,7 +938,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 #ifdef USE_GD_PNG
       imgbytes = gdImagePngPtr(self->img.gd, &size);
 #else
-      msSetError(MS_MISCERR, "PNG output is not available.", "getImageGDString()");
+      msSetError(MS_MISCERR, "PNG output is not available.", "saveToString()");
       return(MS_FAILURE);
 #endif
 
@@ -943,7 +947,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 #ifdef USE_GD_JPEG
        imgbytes = gdImageJpegPtr(self->img.gd, &size, atoi(msGetOutputFormatOption(self->format, "QUALITY", "75" )));
 #else
-       msSetError(MS_MISCERR, "JPEG output is not available.", "getImageGDString()");
+       msSetError(MS_MISCERR, "JPEG output is not available.", "saveToString()");
        return(MS_FAILURE);
 #endif
 
@@ -952,12 +956,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 #ifdef USE_GD_WBMP
        imgbytes = gdImageWBMPPtr(self->img.gd, &size, 1);
 #else
-       msSetError(MS_MISCERR, "WBMP output is not available.", "getImageGDString()");
+       msSetError(MS_MISCERR, "WBMP output is not available.", "saveToString()");
        return(MS_FAILURE);
 #endif
         
     } else {
-       msSetError(MS_MISCERR, "Unknown output image type driver: %s.", "getImageGDString()", self->format->driver );
+       msSetError(MS_MISCERR, "Unknown output image type driver: %s.", "saveToString()", self->format->driver );
        return(MS_FAILURE);
     } 
 
