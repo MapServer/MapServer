@@ -63,6 +63,11 @@ Version 4.1 (CVS)
 - MapScript imageObj: added optional filename argument to the constructor
   which allows imageObj instances to be created from a file on disk (bug 530).
 
+- MapScript classObj and styleObj: added a new styleObj shadow class and
+  extended classObj with getStyle, insertStyle, and removeStyle methods.
+  MapScript now supports multiple styles for dynamically created classes
+  (bug 548).
+
 Version 4.0 (2003-08-01)
 ------------------------
 
