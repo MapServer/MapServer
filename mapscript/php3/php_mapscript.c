@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.227  2005/02/28 14:24:12  dan
+ * Use gdFree() instead of free in php3_ms_img_saveImage() (bug 1257)
+ *
  * Revision 1.226  2005/02/11 16:49:11  assefa
  * Add ifdef USE_SVG for specific case in saveImage.
  *
@@ -6024,7 +6027,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             php3_write(iptr, size);
 #endif
             retVal = size;
-            free(iptr);
+            gdFree(iptr);
         }
 
 #else  /* No gdImageGifPtr(): GD 1.2/1.3 */
