@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2004/11/11 05:42:07  sean
+ * use gd's gdioctx in msLoadImageSymbol (bug 1047)
+ *
  * Revision 1.76  2004/11/10 19:50:23  sean
  * Use gd's fileIOCtx in loadSymbol with gdImageCreate*Ctx instead of gdImageCreate*
  *
@@ -784,7 +787,8 @@ int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
 int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     FILE *stream;
     char bytes[8];
-
+    gdIOCtx *ctx;
+    
     if (!filename || strlen(filename) == 0) {
         msSetError(MS_SYMERR, "Invalid filename.", "msLoadImageSymbol()");
         return MS_FAILURE;
@@ -797,18 +801,25 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
 
     fread(bytes,8,1,stream); // read some bytes to try and identify the file
     rewind(stream); // reset the image for the readers
-    if (memcmp(bytes,"GIF8",4)==0) {
+    if (memcmp(bytes,"GIF8",4)==0) 
+    {
 #ifdef USE_GD_GIF
-        symbol->img = gdImageCreateFromGif(stream);
+        ctx = msNewGDFileCtx(stream);
+        symbol->img = gdImageCreateFromGifCtx(ctx);
+        ctx->gd_free(ctx);
 #else
         msSetError(MS_MISCERR, "Unable to load GIF symbol.",
                    "msLoadImageSymbol()");
         fclose(stream);
         return MS_FAILURE;
 #endif
-    } else if (memcmp(bytes,PNGsig,8)==0) {
+    } 
+    else if (memcmp(bytes,PNGsig,8)==0) 
+    {
 #ifdef USE_GD_PNG
-        symbol->img = gdImageCreateFromPng(stream);
+        ctx = msNewGDFileCtx(stream);
+        symbol->img = gdImageCreateFromPngCtx(ctx);
+        ctx->gd_free(ctx);
 #else
         msSetError(MS_MISCERR, "Unable to load PNG symbol.",
                    "msAddImageSymbol()");
