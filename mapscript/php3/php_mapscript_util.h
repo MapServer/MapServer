@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/08/15 20:47:56  dan
+ * Fixed IF_SET_DOUBLE and IF_SET_STRING macros to convert param type
+ *
  * Revision 1.6  2002/03/08 23:16:41  assefa
  * Add PHP4.1 support.
  *
@@ -80,6 +83,7 @@
 #define IF_SET_DOUBLE(php_name, internal_var)                   \
   if (strcmp(pPropertyName->value.str.val, php_name) == 0)      \
   {                                                             \
+    convert_to_double(pNewValue);                               \
     _phpms_set_property_double(pThis,php_name,pNewValue->value.dval,E_ERROR); \
     internal_var = pNewValue->value.dval;                       \
   }
@@ -87,6 +91,7 @@
 #define IF_SET_STRING(php_name, internal_var)                   \
   if (strcmp(pPropertyName->value.str.val, php_name) == 0)      \
   {                                                             \
+    convert_to_string(pNewValue);                               \
     _phpms_set_property_string(pThis,php_name,pNewValue->value.str.val,E_ERROR); \
     if (internal_var) free(internal_var);                       \
     internal_var = NULL;                                        \
