@@ -12,6 +12,11 @@ the CVS logs is updated daily at the following URL:
 
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
+Current Version (CVS)
+--------------------------
+
+- mappostgis.c: Applied patch from Frank K. for dangling pointers, bug 604
+
 
 Version 3.6.7 (2003-12-18)
 --------------------------
