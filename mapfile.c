@@ -3110,7 +3110,7 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
-static mapObj *msLoadMapInternal(char *filename)
+static mapObj *loadMapInternal(char *filename)
 {
   regex_t re;
   mapObj *map=NULL;
@@ -3315,6 +3315,9 @@ static mapObj *msLoadMapInternal(char *filename)
   } /* next token */
 }
 
+//
+// Wraps loadMapInternal
+//
 mapObj *msLoadMap(char *filename)
 {
     mapObj *map;
