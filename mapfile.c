@@ -77,7 +77,7 @@ void msFreeCharArray(char **array, int num_items)
 
   for(i=0;i<num_items;i++)
     free(array[i]);
-  msFree(array);
+  msFree(&array);
 
   return;
 }
@@ -122,16 +122,24 @@ static char *getToken() {
 
 
 /*
-** Load a string from the map file. A "string" is defined
-** in lexer.l.
+** Load a string from the map file. A "string" is defined in lexer.l.
 */
-char *getString() {
+int getString(char **s) {
   
-  if(msyylex() == MS_STRING)
-    return(strdup(msyytext));
+  if (*s) {
+    msSetError(MS_SYMERR, "Duplicate item (%s):(line %d)", "getString()", msyytext, msyylineno);
+    return(MS_FAILURE);
+  } else if(msyylex() == MS_STRING) {
+    *s = strdup(msyytext);
+    if (*s == NULL) {
+      msSetError(MS_MEMERR, NULL, "getString()");
+      return(MS_FAILURE);
+    }
+    return(MS_SUCCESS);
+  }
 
   msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getString()", msyytext, msyylineno);
-  return(NULL);
+  return(MS_FAILURE);
 }
 
 /*
@@ -364,7 +372,7 @@ int loadJoin(joinObj *join)
   for(;;) {
     switch(msyylex()) {
     case(CONNECTION):
-      if((join->connection = getString()) == NULL) return(-1);
+      if(getString(&join->connection) == MS_FAILURE) return(-1);
       break;
     case(CONNECTIONTYPE):
       if((join->connectiontype = getSymbol(5, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
@@ -383,25 +391,25 @@ int loadJoin(joinObj *join)
       }      
       return(0);
     case(FOOTER):
-      if((join->footer = getString()) == NULL) return(-1);
+      if(getString(&join->footer) == MS_FAILURE) return(-1);
       break;
     case(FROM):
-      if((join->from = getString()) == NULL) return(-1);
+      if(getString(&join->from) == MS_FAILURE) return(-1);
       break;      
     case(HEADER):
-      if((join->header = getString()) == NULL) return(-1);
+      if(getString(&join->header) == MS_FAILURE) return(-1);
       break;
     case(NAME):
-      if((join->name = getString()) == NULL) return(-1);
+      if(getString(&join->name) == MS_FAILURE) return(-1);
       break;
     case(TABLE):
-      if((join->table = getString()) == NULL) return(-1);
+      if(getString(&join->table) == MS_FAILURE) return(-1);
       break;
     case(TEMPLATE):
-      if((join->template = getString()) == NULL) return(-1);
+      if(getString(&join->template) == MS_FAILURE) return(-1);
       break;
     case(TO):
-      if((join->to = getString()) == NULL) return(-1);
+      if(getString(&join->to) == MS_FAILURE) return(-1);
       break;
     case(TYPE):
       if((join->type = getSymbol(2, MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY)) == -1) return(-1);
@@ -539,7 +547,7 @@ static int loadFeature(layerObj	*player, int type)
       points.numpoints = 0;
       break;
     case(TEXT):
-      if((shape.text = getString()) == NULL) return(-1);
+      if(getString(&shape.text) == MS_FAILURE) return(-1);
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()",
@@ -585,7 +593,7 @@ static int loadGrid( layerObj *pLayer )
 				return(0);
 
 			case( LABELFORMAT ):
-				if( (int) (((graticuleObj *)pLayer->layerinfo)->labelformat = getString()) == -1) 
+				if( getString(&((graticuleObj *)pLayer->layerinfo)->labelformat) == MS_FAILURE) 
 					return(-1);
 
 				break;
@@ -1060,7 +1068,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       return(-1);
     case(FONT):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
-      if((label->font = getString()) == NULL) return(-1);
+      if(getString(&label->font) == MS_FAILURE) return(-1);
 #else
       msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadlabel()");    
       return(-1);
@@ -1412,14 +1420,11 @@ int loadHashTable(hashTableObj *ptable)
       return(MS_SUCCESS);
     case(MS_STRING):
       key = strdup(msyytext);
-
-      data = getString();
-      if(!data) return(MS_FAILURE);
-      
+      if(getString(&data) == MS_FAILURE) return(MS_FAILURE);      
       msInsertHashTable(*ptable, key, data);
       
       free(key);
-      free(data);
+      free(data); data=NULL;
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()",
@@ -1663,7 +1668,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       if(loadExpression(&(class->expression)) == -1) return(-1);
       break;
     case(KEYIMAGE):
-      if((class->keyimage = getString()) == NULL) return(-1);
+      if(getString(&class->keyimage) == MS_FAILURE) return(-1);
       break;
     case(LABEL):
       class->label.sizescaled = class->label.size = MS_MEDIUM; // only set a default if the LABEL section is present
@@ -1679,7 +1684,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       if(getDouble(&(class->minscale)) == -1) return(-1);
       break;
     case(NAME):
-      if((class->name = getString()) == NULL) return(-1);
+      if(getString(&class->name) == MS_FAILURE) return(-1);
       break;         
     case(STATUS):
       if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -1693,7 +1698,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       class->numstyles++;
       break;
     case(TEMPLATE):
-      if((class->template = getString()) == NULL) return(-1);
+      if(getString(&class->template) == MS_FAILURE) return(-1);
       break;
     case(TEXT):
       if(loadExpression(&(class->text)) == -1) return(-1);
@@ -1703,7 +1708,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       }
       break;
     case(TITLE):
-      if((class->title = getString()) == NULL) return(-1);
+      if(getString(&class->title) == MS_FAILURE) return(-1);
       break;
     case(TYPE):
       if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return(-1);
@@ -2134,16 +2139,16 @@ int loadLayer(layerObj *layer, mapObj *map)
       c++;
       break;
     case(CLASSITEM):
-      if((layer->classitem = getString()) == NULL) return(-1);
+      if(getString(&layer->classitem) == MS_FAILURE) return(-1);
       break;
     case(CONNECTION):
-      if((layer->connection = getString()) == NULL) return(-1);
+      if(getString(&layer->connection) == MS_FAILURE) return(-1);
       break;
     case(CONNECTIONTYPE):
       if((layer->connectiontype = getSymbol(8, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS)) == -1) return(-1);
       break;
     case(DATA):
-      if((layer->data = getString()) == NULL) return(-1);
+      if(getString(&layer->data) == MS_FAILURE) return(-1);
       break;
     case(DEBUG):
       if((layer->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -2192,10 +2197,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(loadExpression(&(layer->filter)) == -1) return(-1);
       break;
     case(FILTERITEM):
-      if((layer->filteritem = getString()) == NULL) return(-1);
+      if(getString(&layer->filteritem) == MS_FAILURE) return(-1);
       break;
     case(FOOTER):
-      if((layer->footer = getString()) == NULL) return(-1);
+      if(getString(&layer->footer) == MS_FAILURE) return(-1);
       break;
     case(GRID):
       layer->connectiontype = MS_GRATICULE;
@@ -2208,23 +2213,23 @@ int loadLayer(layerObj *layer, mapObj *map)
       loadGrid(layer);
       break;
     case(GROUP):
-      if((layer->group = getString()) == NULL) return(-1);
+      if(getString(&layer->group) == MS_FAILURE) return(-1);
       break;
     case(HEADER):      
-      if((layer->header = getString()) == NULL) return(-1);
+      if(getString(&layer->header) == MS_FAILURE) return(-1);
       break;
     case(JOIN):
       if(loadJoin(&(layer->joins[layer->numjoins])) == -1) return(-1);
       layer->numjoins++;
       break;
     case(LABELANGLEITEM):
-      if((layer->labelangleitem = getString()) == NULL) return(-1);
+      if(getString(&layer->labelangleitem) == MS_FAILURE) return(-1);
       break;
     case(LABELCACHE):
       if((layer->labelcache = getSymbol(2, MS_ON, MS_OFF)) == -1) return(-1);
       break;
     case(LABELITEM):
-      if((layer->labelitem = getString()) == NULL) return(-1);
+      if(getString(&layer->labelitem) == MS_FAILURE) return(-1);
       break;
     case(LABELMAXSCALE):      
       if(getDouble(&(layer->labelmaxscale)) == -1) return(-1);
@@ -2233,10 +2238,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getDouble(&(layer->labelminscale)) == -1) return(-1);
       break;    
     case(LABELREQUIRES):
-      if((layer->labelrequires = getString()) == NULL) return(-1);
+      if(getString(&layer->labelrequires) == MS_FAILURE) return(-1);
       break;
     case(LABELSIZEITEM):
-      if((layer->labelsizeitem = getString()) == NULL) return(-1);
+      if(getString(&layer->labelsizeitem) == MS_FAILURE) return(-1);
       break;
     case(MAXFEATURES):
       if(getInteger(&(layer->maxfeatures)) == -1) return(-1);
@@ -2251,7 +2256,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getDouble(&(layer->minscale)) == -1) return(-1);
       break;
     case(NAME):
-      if((layer->name = getString()) == NULL) return(-1);
+      if(getString(&layer->name) == MS_FAILURE) return(-1);
       break;
     case(OFFSITE):
       if(loadColor(&(layer->offsite)) != MS_SUCCESS) return(-1);
@@ -2261,10 +2266,10 @@ int loadLayer(layerObj *layer, mapObj *map)
         /* NOTE: processing array maintained as size+1 with NULL terminator.
                  This ensure that CSL (GDAL string list) functions can be
                  used on the list for easy processing. */
-        char *value;
-        if((value = getString()) == NULL) return(-1);
-        msLayerAddProcessing( layer, value );
-        free( value );
+      char *value=NULL;
+      if(getString(&value) == MS_FAILURE) return(-1);
+      msLayerAddProcessing( layer, value );
+      free(value); value=NULL;
     }
     break;
     case(TRANSPARENCY):
@@ -2280,7 +2285,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       layer->project = MS_TRUE;
       break;
     case(REQUIRES):
-      if((layer->requires = getString()) == NULL) return(-1);
+      if(getString(&layer->requires) == MS_FAILURE) return(-1);
       break;
     case(SIZEUNITS):
       if((layer->sizeunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
@@ -2289,19 +2294,19 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return(-1);
       break;
     case(STYLEITEM):
-      if((layer->styleitem = getString()) == NULL) return(-1);
+      if(getString(&layer->styleitem) == MS_FAILURE) return(-1);
       break;
     case(SYMBOLSCALE):      
       if(getDouble(&(layer->symbolscale)) == -1) return(-1);
       break;
     case(TEMPLATE):
-      if((layer->template = getString()) == NULL) return(-1);
+      if(getString(&layer->template) == MS_FAILURE) return(-1);
       break;
     case(TILEINDEX):
-      if((layer->tileindex = getString()) == NULL) return(-1);
+      if(getString(&layer->tileindex) == MS_FAILURE) return(-1);
       break;
     case(TILEITEM):
-      if((layer->tileitem = getString()) == NULL) return(-1);
+      if(getString(&layer->tileitem) == MS_FAILURE) return(-1);
       break;
     case(TOLERANCE):
       if(getDouble(&(layer->tolerance)) == -1) return(-1);
@@ -2752,7 +2757,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       if(getDouble(&(ref->extent.maxy)) == -1) return(-1);
       break;  
     case(IMAGE):
-      if((ref->image = getString()) == NULL) return(-1);
+      if(getString(&ref->image) == MS_FAILURE) return(-1);
       break;
     case(OUTLINECOLOR):
       if(loadColor(&(ref->outlinecolor)) != MS_SUCCESS) return(-1);
@@ -2820,9 +2825,9 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     if(getDouble(&(ref->extent.maxy)) == -1) return;
     break;  
   case(IMAGE):
-    msFree(ref->image);
+    msFree(ref->image); ref->image = NULL;
     msyystate = 2; msyystring = value;
-    if((ref->image = getString()) == NULL) return;
+    if(getString(&ref->image) == MS_FAILURE) return;
     break;
   case(OUTLINECOLOR):
     msyystate = 2; msyystring = value;
@@ -2902,7 +2907,7 @@ static int loadOutputFormat(mapObj *map)
   int transparent = MS_NOOVERRIDE;
   char *formatoptions[MAX_FORMATOPTIONS];
   int  numformatoptions = 0;
-  char *value;
+  char *value = NULL;
 
   for(;;) {
     switch(msyylex()) {
@@ -2987,30 +2992,28 @@ static int loadOutputFormat(mapObj *map)
       if((name = getToken()) == NULL) return(-1);
       break;
     case(MIMETYPE):
-      msFree( mimetype );
-      if((mimetype = getString()) == NULL) return(-1);
+      if(getString(&mimetype) == MS_FAILURE) return(-1);
       break;
     case(DRIVER):
-      msFree( driver );
-      if((driver = getString()) == NULL) return(-1);
+      if(getString(&driver) == MS_FAILURE) return(-1);
       break;
     case(EXTENSION):
-      msFree( extension );
-      if((extension = getString()) == NULL) return(-1);
+      if(getString(&extension) == MS_FAILURE) return(-1);
       if( extension[0] == '.' )
       {
           char *temp = strdup(extension+1);
-          msFree( extension );
+          free( extension );
           extension = temp;
       }
       break;
     case(FORMATOPTION):
-      if((value = getString()) == NULL) return(-1);
+      if(getString(&value) == MS_FAILURE) return(-1);
       if( numformatoptions < MAX_FORMATOPTIONS )
-          formatoptions[numformatoptions++] = value;
+          formatoptions[numformatoptions++] = strdup(value);
+      free(value); value=NULL;
       break;
     case(IMAGEMODE):
-      if((value = getString()) == NULL) return(-1);
+      if(getString(&value) == MS_FAILURE) return(-1);
       if( strcasecmp(value,"PC256") == 0 )
           imagemode = MS_IMAGEMODE_PC256;
       else if( strcasecmp(value,"RGB") == 0 )
@@ -3030,7 +3033,7 @@ static int loadOutputFormat(mapObj *map)
                      msyytext, msyylineno);      
           return -1;
       }
-      msFree( value );
+      free(value); value=NULL;
       break;
     case(TRANSPARENT):
       if((transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -3179,7 +3182,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       if((legend->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
     case(TEMPLATE):
-      if((legend->template = getString()) == NULL) return(-1);
+      if(getString(&legend->template) == MS_FAILURE) return(-1);
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLegend()", msyytext, msyylineno);      
@@ -3602,7 +3605,7 @@ int loadWeb(webObj *web, mapObj *map)
   for(;;) {
     switch(msyylex()) {
     case(EMPTY):
-      if((web->empty = getString()) == NULL) return(-1);
+      if(getString(&web->empty) == MS_FAILURE) return(-1);
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadWeb()");
@@ -3611,7 +3614,7 @@ int loadWeb(webObj *web, mapObj *map)
       return(0);
       break;
     case(ERROR):
-      if((web->error = getString()) == NULL) return(-1);
+      if(getString(&web->error) == MS_FAILURE) return(-1);
       break;
     case(EXTENT):
       if(getDouble(&(web->extent.minx)) == -1) return(-1);
@@ -3620,27 +3623,27 @@ int loadWeb(webObj *web, mapObj *map)
       if(getDouble(&(web->extent.maxy)) == -1) return(-1);
       break;
     case(FOOTER):
-      if((web->footer = getString()) == NULL) return(-1);
+      if(getString(&web->footer) == MS_FAILURE) return(-1);
       break;
     case(HEADER):
-      if((web->header = getString()) == NULL) return(-1);
+      if(getString(&web->header) == MS_FAILURE) return(-1);
       break;
     case(IMAGEPATH):
-      free(web->imagepath); // there is a default
-      if((web->imagepath = getString()) == NULL) return(-1);
+      free(web->imagepath); web->imagepath = NULL; // there is a default
+      if(getString(&web->imagepath) == MS_FAILURE) return(-1);
       break;
     case(IMAGEURL):
-      free(web->imageurl); // there is a default
-      if((web->imageurl = getString()) == NULL) return(-1);
+      free(web->imageurl); web->imageurl = NULL; // there is a default
+      if(getString(&web->imageurl) == MS_FAILURE) return(-1);
       break;
     case(LOG):
-      if((web->log = getString()) == NULL) return(-1);
+      if(getString(&web->log) == MS_FAILURE) return(-1);
       break;
     case(MAXSCALE):
       if(getDouble(&web->maxscale) == -1) return(-1);
       break;
     case(MAXTEMPLATE):
-      if((web->maxtemplate = getString()) == NULL) return(-1);
+      if(getString(&web->maxtemplate) == MS_FAILURE) return(-1);
       break;
     case(METADATA):
       if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
@@ -3649,13 +3652,13 @@ int loadWeb(webObj *web, mapObj *map)
       if(getDouble(&web->minscale) == -1) return(-1);
       break;
     case(MINTEMPLATE):
-      if((web->mintemplate = getString()) == NULL) return(-1);
+      if(getString(&web->mintemplate) == MS_FAILURE) return(-1);
       break; 
     case(QUERYFORMAT):
-      if((web->queryformat = getString()) == NULL) return(-1);
+      if(getString(&web->queryformat) == MS_FAILURE) return(-1);
       break;   
     case(TEMPLATE):
-      if((web->template = getString()) == NULL) return(-1);
+      if(getString(&web->template) == MS_FAILURE) return(-1);
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadWeb()", msyytext, msyylineno);
@@ -3750,7 +3753,7 @@ int initMap(mapObj *map)
 
   map->debug = MS_OFF;
   map->status = MS_ON;
-  map->name = strdup("MS");;
+  map->name = strdup("MS");
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
 
   map->scale = -1.0;
@@ -4021,24 +4024,22 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 
     case(CONFIG):
     {
-        char *key, *value;
+        char *key=NULL, *value=NULL;
 
-        key = getString();
-        if( key == NULL )
+        if( getString(&key) == MS_FAILURE )
             return NULL;
 
-        value = getString();
-        if( value == NULL )
+        if( getString(&value) == MS_FAILURE )
             return NULL;
 
         msSetConfigOption( map, key, value );
-        free( key );
-        free( value );
+        free( key ); key=NULL;
+        free( value ); value=NULL;
     }
     break;
 
     case(DATAPATTERN):
-      if((map->datapattern = getString()) == NULL) return(NULL);
+      if(getString(&map->datapattern) == MS_FAILURE) return(NULL);
       break;
     case(DEBUG):
       if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
@@ -4100,10 +4101,10 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
     }
     break;
     case(TEMPLATEPATTERN):
-      if((map->templatepattern = getString()) == NULL) return(NULL);
+      if(getString(&map->templatepattern) == MS_FAILURE) return(NULL);
       break;
     case(FONTSET):
-      if((map->fontset.filename = getString()) == NULL) return(NULL);
+      if(getString(&map->fontset.filename) == MS_FAILURE) return(NULL);
       break;
     case(IMAGECOLOR):
       if(getInteger(&(map->imagecolor.red)) == -1) return(NULL);
@@ -4125,8 +4126,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       break;
     case(LAYER):
       if(map->numlayers == MS_MAXLAYERS) { 
-	msSetError(MS_IDENTERR, "Too many layers defined.", "msLoadMap()");
-	return(NULL);
+	    msSetError(MS_IDENTERR, "Too many layers defined.", "msLoadMap()");
+	    return(NULL);
       }
       if(loadLayer(&(map->layers[map->numlayers]), map) == -1) return(NULL);
       map->layers[map->numlayers].index = map->numlayers; /* save the index */
@@ -4146,8 +4147,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if(getInteger(&(map->maxsize)) == -1) return(NULL);
       break;
     case(NAME):
-      msFree(map->name); /* erase default */
-      if((map->name = getString()) == NULL) return(NULL);
+      free(map->name); map->name = NULL; /* erase default */
+      if(getString(&map->name) == MS_FAILURE) return(NULL);
       break;
     case(PROJECTION):
       if(loadProjection(&map->projection) == -1) return(NULL);
@@ -4168,7 +4169,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if(loadScalebar(&(map->scalebar), map) == -1) return(NULL);
       break;   
     case(SHAPEPATH):
-      if((map->shapepath = getString()) == NULL) return(NULL);
+      if(getString(&map->shapepath) == MS_FAILURE) return(NULL);
       break;
     case(SIZE):
       if(getInteger(&(map->width)) == -1) return(NULL);
@@ -4187,7 +4188,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       map->symbolset.numsymbols++;
       break;
     case(SYMBOLSET):
-      if((map->symbolset.filename = getString()) == NULL) return(NULL);
+      if(getString(&map->symbolset.filename) == MS_FAILURE) return(NULL);
       break;
     case(TRANSPARENT):
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
@@ -4239,15 +4240,13 @@ int msLoadMapString(mapObj *map, char *object, char *value)
   case(MAP):
     switch(msyylex()) {
     case(CONFIG): {
-        char *key, *value;
+        char *key=NULL, *value=NULL;
 
-        key = getString();
-        value = getString();
-        if( value != NULL && key != NULL )
+        if((getString(&key) != MS_FAILURE) && (getString(&value) != MS_FAILURE))
         {
             msSetConfigOption( map, key, value );
-            free( key );
-            free( value );
+            free( key ); key=NULL;
+            free( value ); value=NULL;
         }
       } break;
     case(EXTENT):

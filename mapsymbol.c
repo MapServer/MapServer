@@ -99,7 +99,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	return(-1);
       break;    
     case(CHARACTER):
-      if((s->character = getString()) == NULL) return(-1);
+      if(getString(&s->character) == MS_FAILURE) return(-1);
       break;
     case(END): /* do some error checking */
 
@@ -125,7 +125,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	return(-1);
       break;
     case(FONT):
-      if((s->font = getString()) == NULL) return(-1);
+      if(getString(&s->font) == MS_FAILURE) return(-1);
       break;  
     case(GAP):
       if((getInteger(&s->gap)) == -1) return(-1);
@@ -194,7 +194,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       if((getDouble(&s->linejoinmaxsize)) == -1) return(-1);
       break;
     case(NAME):
-      if((s->name = getString()) == NULL) return(-1);
+      if(getString(s->name) == MS_FAILURE) return(-1);
       break;
     case(POINTS):
       done = MS_FALSE;

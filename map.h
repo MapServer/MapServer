@@ -925,7 +925,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapsde.c
 ** helper functions not part of the general API but needed in
 ** a few other places (like mapscript)... found in mapfile.c
 */
-char *getString(void);
+int getString(char **s);
 int getDouble(double *d);
 int getInteger(int *i);
 int getSymbol(int n, ...);
