@@ -435,7 +435,7 @@ typedef struct class_obj{
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
 // Note: These are scriptable, but are read only.
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
 typedef struct {
   char *string;
@@ -477,7 +477,7 @@ typedef struct {
   char classindex;
 } resultCacheMemberObj;
 #ifdef SWIG
-%readwrite
+%mutable;
 #endif
 
 
@@ -489,32 +489,35 @@ typedef struct {
 #endif
 
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
   int numresults;
   rectObj bounds;
 #ifdef SWIG
-%readwrite
+%mutable;
 #endif
 
 } resultCacheObj;
 
 
 // SYMBOLSET OBJECT
-#ifndef SWIG
 typedef struct {
   char *filename;
-  struct map_obj *map;
-
-  fontSetObj *fontset; // a pointer to the main mapObj version
-
-  int numsymbols;
-  symbolObj symbol[MS_MAXSYMBOLS];
-
-  struct imageCacheObj *imagecache;
   int imagecachesize;
+#ifdef SWIG
+  %immutable;
+#endif // SWIG
+  int numsymbols;
+#ifdef SWIG
+  %mutable;
+#endif // SWIG
+  symbolObj symbol[MS_MAXSYMBOLS];
+#ifndef SWIG
+  struct map_obj *map;
+  fontSetObj *fontset; // a pointer to the main mapObj version
+  struct imageCacheObj *imagecache;
+#endif // SWIG
 } symbolSetObj;
-#endif
 
 // REFERENCE MAP OBJECT
 typedef struct {
@@ -615,11 +618,11 @@ typedef struct layer_obj {
 #endif
 
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
   int numclasses;
 #ifdef SWIG
-%readwrite
+%mutable;
 #endif
 
   char *header, *footer; // only used with multi result queries
@@ -741,15 +744,15 @@ typedef struct map_obj{ /* structure for a map */
   layerObj *layers;
 
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
   int numlayers; /* number of layers in mapfile */
 #ifdef SWIG
-%readwrite
+%mutable;
 #endif
 
-#ifndef SWIG
   symbolSetObj symbolset;
+#ifndef SWIG
   fontSetObj fontset;
 #endif
 
@@ -777,9 +780,16 @@ typedef struct map_obj{ /* structure for a map */
   outputFormatObj *outputformat;
 
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
   char *imagetype; /* name of current outputformat */
+#ifdef SWIG
+  %mutable;
+#endif // SWIG
+
+#ifdef SWIG
+%immutable;
+#endif
 
 #ifndef SWIG
   projectionObj projection; /* projection information for output map */
@@ -828,12 +838,12 @@ typedef struct {
 // IMAGE OBJECT - a wrapper for GD images
 typedef struct {
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
   int width, height;
   char *imagepath, *imageurl;
 #ifdef SWIG
-%readwrite
+%mutable;
 #endif
 
   outputFormatObj *format;
@@ -894,6 +904,15 @@ int loadExpressionString(expressionObj *exp, char *value);
 void freeExpression(expressionObj *exp);
 
 int getClassIndex(layerObj *layer, char *str);
+
+/*
+ * Functions used to copy maps
+ */
+
+void copyProperty(void *dst, void *src, int size);
+char *copyStringProperty(char **dst, char *src);
+int msCopyMap(mapObj *, mapObj *);
+int msCopyLayer(layerObj *, layerObj *);
 
 // For maplabel and mappdf
 int labelInImage(int width, int height, shapeObj *lpoly, int buffer);

@@ -11,6 +11,7 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_S
 
 #define MS_IMAGECACHESIZE 6
 
+#ifndef SWIG
 struct imageCacheObj {
   int color;
   int symbol;
@@ -18,23 +19,31 @@ struct imageCacheObj {
   gdImagePtr img;
   struct imageCacheObj *next;
 };
+#endif // SWIG
 
 typedef struct {
   char *name;
   int type;
+#ifndef SWIG
   int inmapfile; //boolean value for writing
 
   /*
   ** Pointer to his map
   */
   struct map_obj *map;
- 
+#endif // SWIG
   /*
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
   */
   double sizex, sizey;
   pointObj points[MS_MAXVECTORPOINTS];
+#ifdef SWIG
+  %immutable;
+#endif // SWIG
   int numpoints;
+#ifdef SWIG
+  %mutable;
+#endif // SWIG
   int filled;
 
   int stylelength;                      // Number of intervals (eg. dashes) in the style
@@ -43,7 +52,9 @@ typedef struct {
   /*
   ** MS_SYMBOL_PIXMAP options
   */
+#ifndef SWIG
   gdImagePtr img;
+#endif // SWIG
   char *imagepath;
   int transparent;
   int transparentcolor;
