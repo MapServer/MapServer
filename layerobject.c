@@ -112,3 +112,21 @@ int msLayerSetExtent( layerObj *layer,
       
     return(MS_SUCCESS);
 }
+
+char *msLayerGetFilterString(layerObj *layer)
+{
+    char exprstring[256];
+    switch (layer->filter.type) {
+        case (MS_REGEX):
+            snprintf(exprstring, 255, "/%s/", layer->filter.string);
+            return strdup(exprstring);
+        case (MS_STRING):
+            snprintf(exprstring, 255, "\"%s\"", layer->filter.string);
+            return strdup(exprstring);
+        case (MS_EXPRESSION):
+            snprintf(exprstring, 255, "(%s)", layer->filter.string);
+            return strdup(exprstring);
+    }
+    return NULL;
+}
+

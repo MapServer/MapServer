@@ -1166,6 +1166,7 @@ MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key,
                                             const char *value);
 MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
 MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
+MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
 
 // maplayer.c
 MS_DLL_EXPORT int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);

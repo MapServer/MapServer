@@ -216,19 +216,7 @@
     %newobject getFilterString;
     char *getFilterString() 
     {
-        char exprstring[256];
-        switch (self->filter.type) {
-            case (MS_REGEX):
-                snprintf(exprstring, 255, "/%s/", self->filter.string);
-                return strdup(exprstring);
-            case (MS_STRING):
-                snprintf(exprstring, 255, "\"%s\"", self->filter.string);
-                return strdup(exprstring);
-            case (MS_EXPRESSION):
-                snprintf(exprstring, 255, "(%s)", self->filter.string);
-                return strdup(exprstring);
-        }
-        return NULL;
+        return msLayerGetFilterString(self);
     }
 
     int setWKTProjection(char *string) 
