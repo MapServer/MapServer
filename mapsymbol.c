@@ -433,6 +433,7 @@ void msInitSymbolSet(symbolSetObj *symbolset)
 
   symbolset->fontset = NULL;
   symbolset->map = NULL;
+  memset( symbolset->symbol, 0, sizeof(symbolObj) );
 }
 
 /*
@@ -509,7 +510,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor)
 {  
   rectObj rect;
-  char *font=NULL;
+  const char *font=NULL;
   int size;
 
   *width = *height = 0; // set a starting value
@@ -533,7 +534,8 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
     font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[style->symbol].font);
     if(!font) return(MS_FAILURE);
 
-    if(msGetCharacterSize(symbolset->symbol[style->symbol].character, size, font, &rect) != MS_SUCCESS) 
+    if(msGetCharacterSize(symbolset->symbol[style->symbol].character, size, 
+                          (char *) font, &rect) != MS_SUCCESS) 
       return(MS_FAILURE);
 
     *width = MS_MAX(*width, rect.maxx - rect.minx);
@@ -607,7 +609,7 @@ int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
         return -1;
     }
     symbolset->numsymbols++;
-    msCopySymbol(&(symbolset->symbol[symbolset->numsymbols-1]), symbol);
+    msCopySymbol(&(symbolset->symbol[symbolset->numsymbols-1]), symbol, NULL);
     return symbolset->numsymbols;
 }
 
@@ -625,25 +627,13 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
     }
     else {
         symbol = (symbolObj *)malloc(sizeof(symbolObj));
-        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]));
+        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]), NULL);
         for (i=nSymbolIndex+1; i<symbolset->numsymbols; i++) {
             symbolset->symbol[i-1] = symbolset->symbol[i];
         }
         symbolset->numsymbols--;
         return symbol;
     }
-}
-
-int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
-    FILE *stream;
-    int retval;
-    if (!filename || strlen(filename) == 0) {
-        msSetError(MS_SYMERR, "Invalid filename.", "msSaveSymbolSet()");
-        return MS_FAILURE;
-    }
-    stream = fopen(filename, "w");
-    retval = msSaveSymbolSetStream(symbolset, stream);
-    return retval;
 }
 
 int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
@@ -660,10 +650,21 @@ int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
     return MS_SUCCESS;
 }
 
+int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
+    FILE *stream;
+    int retval;
+    if (!filename || strlen(filename) == 0) {
+        msSetError(MS_SYMERR, "Invalid filename.", "msSaveSymbolSet()");
+        return MS_FAILURE;
+    }
+    stream = fopen(filename, "w");
+    retval = msSaveSymbolSetStream(symbolset, stream);
+    return retval;
+}
+
 int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     FILE *stream;
-    int i;
-    char bytes[8], szPath[MS_MAXPATHLEN];
+    char bytes[8];
 
     if (!filename || strlen(filename) == 0) {
         msSetError(MS_SYMERR, "Invalid filename.", "msLoadImageSymbol()");
@@ -709,4 +710,101 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     return MS_SUCCESS;
 }
 
+/***********************************************************************
+ * msCopySymbol()                                                      *
+ *                                                                     *
+ * Copy a symbolObj, using mapfile.c:initSymbol(), msCopyPoint()       *
+ * gdImageCreate(), gdImageCopy()                                      *
+ **********************************************************************/
+
+int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
+  int i;
+  initSymbol(dst);
+  copyStringProperty(&(dst->name), src->name);
+  copyProperty(&(dst->type), &(src->type), sizeof(int));
+  copyProperty(&(dst->inmapfile), &(src->inmapfile), sizeof(int));
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
+  copyProperty(&(dst->sizex), &(src->sizex), sizeof(double)),
+  copyProperty(&(dst->sizey), &(src->sizey), sizeof(double));
+  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
+    if (msCopyPoint(&(dst->points[i]), &(src->points[i])) != MS_SUCCESS)
+    {
+      msSetError(MS_MEMERR, "Failed to copy point.", "msCopySymbol()");
+      return(MS_FAILURE);
+    }
+  }
+  copyProperty(&(dst->numpoints), &(src->numpoints), sizeof(int));
+  copyProperty(&(dst->filled), &(src->filled), sizeof(int));
+  copyProperty(&(dst->stylelength), &(src->stylelength), sizeof(int));
+  
+  copyProperty(&(dst->style), &(src->style),
+               sizeof(int)*MS_MAXSTYLELENGTH);
+  
+  //gdImagePtr img;
+  if (src->img) {
+     if (dst->img) {
+       gdFree(dst->img);
+     }
+     dst->img = gdImageCreate(src->img->sx, src->img->sy);
+     gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
+                 src->img->sx, src->img->sy);
+  }
+
+  copyStringProperty(&(dst->imagepath), src->imagepath);
+  copyProperty(&(dst->transparent), &(src->transparent),sizeof(int));
+  
+  copyProperty(&(dst->transparentcolor), &(src->transparentcolor),
+               sizeof(int));
+  
+  copyStringProperty(&(dst->character), src->character);
+  copyProperty(&(dst->antialias), &(src->antialias), sizeof(int));
+  copyStringProperty(&(dst->font), src->font);
+  copyProperty(&(dst->gap), &(src->gap), sizeof(int));
+  copyProperty(&(dst->position), &(src->position), sizeof(int));
+  copyProperty(&(dst->linecap), &(src->linecap), sizeof(int));
+  copyProperty(&(dst->linejoin), &(src->linejoin), sizeof(int));
+  
+  copyProperty(&(dst->linejoinmaxsize), &(src->linejoinmaxsize),
+               sizeof(double));
+
+  return(MS_SUCCESS);
+} 
+
+/***********************************************************************
+ * msCopySymbolSet()                                                   *
+ *                                                                     *
+ * Copy a symbolSetObj using msCopyFontSet(), msCopySymbol()           *
+ **********************************************************************/
+
+int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
+{
+  int i, return_value;
+  
+  copyStringProperty(&(dst->filename), src->filename);
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
+
+  if (msCopyFontSet(dst->fontset, src->fontset, map) != MS_SUCCESS) {
+    msSetError(MS_MEMERR,"Failed to copy fontset.","msCopySymbolSet()");
+    return(MS_FAILURE);
+  }
+  
+  copyProperty(&(dst->numsymbols), &(src->numsymbols), sizeof(int));
+  
+  for (i = 0; i < dst->numsymbols; i++) {
+    return_value = msCopySymbol(&(dst->symbol[i]), &(src->symbol[i]), map);
+    if (return_value != MS_SUCCESS) {
+      msSetError(MS_MEMERR,"Failed to copy symbol.","msCopySymbolSet()");
+      return(MS_FAILURE);
+    }
+  }
+
+  copyProperty(&(dst->imagecachesize),
+               &(src->imagecachesize), sizeof(int));
+  
+  // I have a feeling that the code below is not quite right - Sean
+  copyProperty(&(dst->imagecache), &(src->imagecache),
+               sizeof(struct imageCacheObj));
+
+  return(MS_SUCCESS);
+}
 
