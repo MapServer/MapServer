@@ -802,7 +802,7 @@ int msPOSTGISLayerClose(layerObj *layer);
 int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape);
 int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record);
 int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent);
-int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long record);
+int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
 int msPOSTGISLayerGetItems(layerObj *layer);
 
 int msSDELayerOpen(layerObj *layer); // in mapsde.c
