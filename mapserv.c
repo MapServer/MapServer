@@ -901,8 +901,6 @@ void returnCoordinate()
   writeError();
 }
 
-
-// FIX: need to consider JOINS
 // FIX: need to consider 5% shape extent expansion
 
 /*
@@ -963,10 +961,10 @@ int main(int argc, char *argv[]) {
     msObj->Map = loadMap();
 
     /*
-    ** Start by calling the WMS/WFS Dispatchers.  If they fail then we'll 
+    ** Start by calling the WMS/WFS/WCS Dispatchers.  If they fail then we'll 
     ** process this as a regular MapServer request.
     */
-#if defined(USE_WMS_SVR) || defined(USE_WFS_SVR)
+#if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR)
     if ((status = msOWSDispatch(msObj->Map, msObj->request)) != MS_DONE  ) 
     {
       /* This was a WMS/WFS request... cleanup and exit 
