@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26  2002/11/22 17:42:52  julien
+ * Support DataURL and LogoURL for 0.1.2 version
+ *
  * Revision 1.25  2002/11/22 15:12:51  julien
  * Fix the seg fault temporaly fixed on 2002/11/21 17:07:34
  *
@@ -517,30 +520,12 @@ int msLoadMapContext(mapObj *map, char *filename)
                               &(map->web.metadata), "wms_abstract");
 
   // LogoURL, DataURL
-  if(strcasecmp(pszVersion, "0.1.4") >= 0)
-  {
-      msGetMapContextXMLHashValueDecode(psMapContext, 
-                                  "General.DataURL.OnlineResource.xlink:href", 
+  msGetMapContextXMLHashValueDecode(psMapContext, 
+                                   "General.DataURL.OnlineResource.xlink:href",
                                    &(map->web.metadata), "wms_dataurl");
-  }
-  else
-  {
-      msGetMapContextXMLHashValueDecode(psMapContext, 
-                                        "General.DataURL.onlineResource", 
-                                   &(map->web.metadata), "wms_dataurl");
-  }
-  if(strcasecmp(pszVersion, "0.1.4") >= 0)
-  {
-      msGetMapContextXMLHashValueDecode(psMapContext, 
-                                  "General.LogoURL.OnlineResource.xlink:href", 
+  msGetMapContextXMLHashValueDecode(psMapContext, 
+                                   "General.LogoURL.OnlineResource.xlink:href",
                                    &(map->web.metadata), "wms_logourl");
-  }
-  else
-  {
-      msGetMapContextXMLHashValueDecode(psMapContext, 
-                                        "General.LogoURL.onlineResource", 
-                                   &(map->web.metadata), "wms_logourl");
-  }
 
   // Contact Info
   psContactInfo = CPLGetXMLNode(psMapContext, "General.ContactInformation");
