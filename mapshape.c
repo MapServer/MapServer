@@ -1370,7 +1370,8 @@ int msTiledSHPOpenFile(layerObj *layer)
     return(MS_SUCCESS); // found a template, ok to proceed
   }
 
-  msSetError(MS_SHPERR, "Unable to open a single tile to use as a template.", "msTiledSHPOpenFile()");
+  msSetError(MS_SHPERR, "Unable to open a single tile to use as a template in layer %s.", "msTiledSHPOpenFile()", layer->name?layer->name:"(null)");
+
   return(MS_FAILURE);
 }
 
