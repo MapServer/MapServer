@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/06/25 17:47:16  frank
+ * added linear approximator transformer
+ *
  * Revision 1.13  2001/05/22 18:02:59  frank
  * ensure MIN and MAX are defined
  *
@@ -209,6 +212,12 @@ int InvGeoTransform( double *gt_in, double *gt_out )
     return 1;
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*      PROJ.4 based transformer.					*/
+/* ==================================================================== */
+/************************************************************************/
+
 #ifdef USE_PROJ
 typedef struct 
 {
@@ -357,6 +366,145 @@ int msProjTransformer( void *pCBData, int nPoints,
 #endif /* def USE_PROJ */
 
 /************************************************************************/
+/* ==================================================================== */
+/*      Approximate transformer.                                        */
+/* ==================================================================== */
+/************************************************************************/
+
+typedef struct 
+{
+    SimpleTransformer pfnBaseTransformer;
+    void             *pBaseCBData;
+
+    double	      dfMaxError;
+} msApproxTransformInfo;
+
+/************************************************************************/
+/*                      msInitApproxTransformer()                       */
+/************************************************************************/
+
+static void *msInitApproxTransformer( SimpleTransformer pfnBaseTransformer, 
+                                      void *pBaseCBData,
+                                      double dfMaxError )
+
+{
+    msApproxTransformInfo	*psATInfo;
+
+    psATInfo = (msApproxTransformInfo *) malloc(sizeof(msApproxTransformInfo));
+    psATInfo->pfnBaseTransformer = pfnBaseTransformer;
+    psATInfo->pBaseCBData = pBaseCBData;
+    psATInfo->dfMaxError = dfMaxError;
+
+    return psATInfo;
+}
+
+/************************************************************************/
+/*                      msFreeApproxTransformer()                       */
+/************************************************************************/
+
+static void msFreeApproxTransformer( void * pCBData )
+
+{
+    free( pCBData );
+}
+
+/************************************************************************/
+/*                         msApproxTransformer                          */
+/************************************************************************/
+
+static int msApproxTransformer( void *pCBData, int nPoints, 
+                                double *x, double *y, int *panSuccess )
+
+{
+    msApproxTransformInfo *psATInfo = (msApproxTransformInfo *) pCBData;
+    double x2[3], y2[3], dfDeltaX, dfDeltaY, dfError, dfDist;
+    int nMiddle, anSuccess2[3], i, bSuccess;
+
+    nMiddle = (nPoints-1)/2;
+
+/* -------------------------------------------------------------------- */
+/*      Bail if our preconditions are not met, or if error is not       */
+/*      acceptable.                                                     */
+/* -------------------------------------------------------------------- */
+    if( y[0] != y[nPoints-1] || y[0] != y[nMiddle]
+        || x[0] == x[nPoints-1] || x[0] == x[nMiddle]
+        || psATInfo->dfMaxError == 0.0 || nPoints <= 5 )
+    {
+        return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, nPoints,
+                                             x, y, panSuccess );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transform first, last and middle point.                         */
+/* -------------------------------------------------------------------- */
+    x2[0] = x[0];
+    y2[0] = y[0];
+    x2[1] = x[nMiddle];
+    y2[1] = y[nMiddle];
+    x2[2] = x[nPoints-1];
+    y2[2] = y[nPoints-1];
+
+    bSuccess = 
+        psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, 3, x2, y2, 
+                                      anSuccess2 );
+    if( !bSuccess )
+        return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, nPoints,
+                                             x, y, panSuccess );
+    
+/* -------------------------------------------------------------------- */
+/*      Is the error at the middle acceptable relative to an            */
+/*      interpolation of the middle position?                           */
+/* -------------------------------------------------------------------- */
+    dfDeltaX = (x2[2] - x2[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaY = (y2[2] - y2[0]) / (x[nPoints-1] - x[0]);
+
+    dfError = fabs((x2[0] + dfDeltaX * (x[nMiddle] - x[0])) - x2[1])
+        + fabs((y2[0] + dfDeltaY * (x[nMiddle] - x[0])) - y2[1]);
+
+    if( dfError > psATInfo->dfMaxError )
+    {
+        bSuccess = 
+            psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, nMiddle, 
+                                          x, y, panSuccess );
+            
+        if( !bSuccess )
+        {
+            return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, 
+                                                 nPoints,
+                                                 x, y, panSuccess );
+        }
+
+        bSuccess = 
+            psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, 
+                                          nPoints - nMiddle, 
+                                          x+nMiddle, y+nMiddle, 
+                                          panSuccess+nMiddle );
+
+        if( !bSuccess )
+        {
+            return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, 
+                                                 nPoints,
+                                                 x, y, panSuccess );
+        }
+
+        return 1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Error is OK, linearly interpolate all points along line.        */
+/* -------------------------------------------------------------------- */
+    for( i = nPoints-1; i >= 0; i-- )
+    {
+        dfDist = (x[i] - x[0]);
+        y[i] = y2[0] + dfDeltaY * dfDist;
+        x[i] = x2[0] + dfDeltaX * dfDist;
+        panSuccess[i] = 1;
+    }
+    
+    return 1;
+}
+
+/************************************************************************/
 /*                       msTransformMapToSource()                       */
 /*                                                                      */
 /*      Compute the extents of the current map view if transformed      */
@@ -491,6 +639,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     mapObj	sDummyMap;
     gdImagePtr  srcImg;
     void	*pTCBData;
+    void	*pACBData;
 
 /* -------------------------------------------------------------------- */
 /*      We will require source and destination to have a valid          */
@@ -641,10 +790,16 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     }
 
 /* -------------------------------------------------------------------- */
+/*      It is cheaper to use linear approximations as long as our       */
+/*      error is modest (less than 0.333 pixels).                       */
+/* -------------------------------------------------------------------- */
+    pACBData = msInitApproxTransformer( msProjTransformer, pTCBData, 0.333 );
+
+/* -------------------------------------------------------------------- */
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
     result = msSimpleRasterResampler( srcImg, layer->offsite, img, 
-                                      msProjTransformer, pTCBData );
+                                      msApproxTransformer, pACBData );
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
@@ -661,6 +816,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     gdImageDestroy( srcImg );
 
     msFreeProjTransformer( pTCBData );
+    msFreeApproxTransformer( pACBData );
     
     return result;
 #endif
