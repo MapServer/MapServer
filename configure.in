@@ -1109,6 +1109,35 @@ AC_SUBST(ORACLESPATIAL_ENABLED,$ORACLESPATIAL_ENABLED)
 AC_SUBST(ORACLESPATIAL_INC,$ORACLESPATIAL_INC)
 AC_SUBST(ORACLESPATIAL_LIB,$ORACLESPATIAL_LIB)
 
+dnl ---------------------------------------------------------------------------
+dnl Try to find out if MING FLASH support requested.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if MING/Flash support requested)
+AC_ARG_WITH(ming,
+[  --with-ming[=ARG] Include MING/Flash Support (ARG=yes/path to Ming directory)],,)
+
+if test "$with_ming" = "no" -o "$with_ming" = ""; then
+  AC_MSG_RESULT([no])
+  MING_ENABLED=
+  MING_LIB=
+  MING_INC=
+elif test "$with_ming" = "yes"; then
+  AC_MSG_RESULT([yes])
+  MING_ENABLED=-DUSE_MING_FLASH
+  MING_LIB=-lming
+  MING_INC=
+else
+  AC_MSG_RESULT([yes, user supplied MING directory])
+  MING_ENABLED=-DUSE_MING_FLASH
+  MING_LIB=-L$with_ming -lming
+  MING_INC=-I$with_ming
+fi
+
+AC_SUBST(MING_ENABLED,$MING_ENABLED)
+AC_SUBST(MING_INC,$MING_INC)
+AC_SUBST(MING_LIB,$MING_LIB)
+
 dnl ---------------------------------------------------------------------
 dnl WMS Compatibility - Enabled by default if PROJ.4 is there.
 dnl Can be explicitly disabled using --without-wms
