@@ -408,6 +408,7 @@ and the MapServer Map File documentation at:
    int    connectiontype
    string filteritem
    string template
+   string styleitem
 
  Methods:
 

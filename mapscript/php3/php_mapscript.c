@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.106  2002/05/06 13:06:16  dan
+ * Added $layer->styleitem
+ *
  * Revision 1.105  2002/05/02 15:55:51  assefa
  * Adapt code to support imageObj.
  *
@@ -5074,6 +5077,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
     add_property_long(return_value,   "transparency",player->transparency);
+    PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
 
     return layer_id;
 }
@@ -5192,6 +5196,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "transparency", self->transparency)
+    else IF_SET_STRING("styleitem",  self->styleitem)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
