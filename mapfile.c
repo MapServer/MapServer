@@ -4074,14 +4074,14 @@ char **msTokenizeMap(char *filename, int *numtokens)
 */
 layerObj *msCheckConnection(layerObj * layer) {
   int i;
-  layerObj *l;
+  layerObj *lp;
 
   for (i=0;i<layer->index;i++) { 	//check all layers previous to this one
-    l = &(layer->map->layers[i]);
-    if (l == layer) continue;
-    if (l->connectiontype != layer->connectiontype) continue;
-    if (! l->connection) continue;
-    if (strcmp(l->connection, layer->connection)) continue;
+    lp = &(layer->map->layers[i]);
+    if (lp == layer) continue;
+    if (lp->connectiontype != layer->connectiontype) continue;
+    if (!lp->connection) continue;
+    if (strcmp(lp->connection, layer->connection)) continue;
 
     // If we reach here, we found a layer with the same connection type and string.
     // This either has a sameConnection pointing to itself (the first layer found
@@ -4090,8 +4090,8 @@ layerObj *msCheckConnection(layerObj * layer) {
     // the found layer's sameConnection and return a pointer to this
     // layer.  The database application should neither open nor close this
     // layer. It will not be closed by msCloseConnection at the end.
-    layer->sameConnection = l->sameConnection;
-    return (l->sameConnection);
+    layer->sameConnection = lp->sameConnection;
+    return (lp->sameConnection);
   }
 
   // If we reach here, no previous  connection was found.  Set this layer's
@@ -4104,24 +4104,24 @@ layerObj *msCheckConnection(layerObj * layer) {
 
 static void msCloseConnections(mapObj *map) {
   int i;
-  layerObj *l;
+  layerObj *lp;
 
   for (i=0;i<map->numlayers;i++) {
-    l = &(map->layers[i]);
+    lp = &(map->layers[i]);
 
     // Check if this layer has a sameConnection layer pointing to itself.
     // If so, call the close function provided for this database 
-    if (l->sameConnection  == l) {
-      switch (l->connectiontype) {
+    if (lp->sameConnection  == lp) {
+      switch (lp->connectiontype) {
       case MS_POSTGIS: 
-	l->sameConnection = NULL;
-	msPOSTGISLayerClose(l);
+	lp->sameConnection = NULL;
+	msPOSTGISLayerClose(lp);
 	break;
       case MS_ORACLESPATIAL:
-	msOracleSpatialLayerClose(l);
+	msOracleSpatialLayerClose(lp);
 	break;
       case MS_SDE:
-	msSDELayerClose(l);
+	msSDELayerClose(lp);
 	break;
       default:
         break;
