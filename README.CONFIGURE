@@ -51,6 +51,7 @@ Here is the list of available options as returned by "./configure --help":
   --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir).
   --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).
   --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config
+  --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
@@ -276,6 +277,28 @@ GDAL Support:
       ./configure --with-gdal --with-ogr
      or 
       ./configure --with-gdal=/usr/local/bin/gdal-config --with-ogr
+
+
+PostGIS Support:
+---------------
+
+  --with-postgis[=ARG]   Include PostGIS Support (ARG=yes/path to pg_config)
+
+  PostGIS support is optional, and it is not included by default. 
+
+  PostGIS support (http://postgis.refractions.net) allows Mapserver
+  to access geographic data stored in a PostgreSQL (http://www.postgresql.org)
+  database using the PostGIS server extensions. PostGIS is only supported
+  on PostgreSQL version 7.1.2 or better. PostGIS supports vector (point,
+  line, polygon) data only.
+
+  To access a PostGIS/PostgreSQL data-source, the machine on which 
+  Mapserver is running must have the PostgreSQL client libraries
+  (libpq) installed. To compile Mapserver with PostGIS/PostgreSQL support
+  the PostgreSQL header files must also be present. The 'pg_config' program
+  is included with the PostgreSQL distribution. If it is not already
+  in your path ('which pg_config'), then specify exactly where it can
+  be found.
 
 
 OGC WMS Compatibility:
