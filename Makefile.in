@@ -114,7 +114,8 @@ CURL_LIB=@CURL_LIB@
 # OGC WMS Client Connections:  -DUSE_WMS_LYR (Requires PROJ4 and libcurl)
 # OGC WFS Server: -DUSE_WFS_SVR (Requires OGR, PROJ4 recommended)
 # OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libcurl)
-OWS=@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@
+# OGC WCS Server: -DUSE_WCS_SVR (Requires GDAL and PROJ4)
+OWS=@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@ @WCS_SVR_ENABLED@
 
 #
 # IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
@@ -164,7 +165,7 @@ STATIC_LIBS= $(GD_STATIC)
 
 RM= /bin/rm -f
 
-OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.c cgiutil.o $(EPPL_OBJ) $(REGEX_OBJ)
+OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o cgiutil.o $(EPPL_OBJ) $(REGEX_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---
