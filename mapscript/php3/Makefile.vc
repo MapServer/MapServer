@@ -48,6 +48,17 @@ PHP_INSTALL_DIR =  \Apache\php4\extensions
 PHP_INSTALL_DIR =  \Apache\php3
 !endif
 
+#using ming flash library
+#MING=-DUSE_MING_FLASH
+#MING_INC=-I../../../ming-0.2a/src -I../../../ming-0.2a
+#MING_LIB= ../../../ming-0.2a/src/libming.lib
+
+#PDF Suuport
+#PDF_LIB=../../../pdflib-4.0.3/pdflib/pdflib.lib
+#PDF_INC=-I../../../pdflib-4.0.3/pdflib
+#PDF=-DUSE_PDF
+
+
 #
 # Set MapServer extensions parameters.  See main MapServer Makefile for 
 # more details... 
@@ -56,13 +67,30 @@ PHP_INSTALL_DIR =  \Apache\php3
 # MS_INCLUDE = -I../.. -I../../gd-1.2 -I../../gdft
 # MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
 #
-MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR
+MS_DEFINE = -DUSE_EPPL -DUSE_GD_GIF  -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DUSE_GD_TTF -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR -DUSE_GDAL -DIGNORE_MISSING_DATA  -DGD_HAS_GDIMAGEGIFPTR
 !ifdef PHP4
-MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -DPHP_NO_ALIASES -I../../gd-1.2 -I../../../proj/src
+MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -DPHP_NO_ALIASES -I../../../gd-1.8.4 -I../../../proj/src $(MING_INC) $(PDF_INC)
 !else
 MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../../gd-1.8.4 -I../../../proj/src
 !endif
 GDAL_DIR= ../../../gdal
+
+#LIBWWW libararies : incomment the following to build with libwww support
+#LIBWWW_LIB=../../../Libwww/bin/wwwcore.lib ../../../Libwww/bin/wwwapp.lib \
+#           ../../../Libwww/bin/wwwinit.lib  ../../../Libwww/bin/wwwutils.lib
+
+#ECW support
+#ECWDIR= C:\ProgFile\ECW_SDK
+#ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+#        $(ECWDIR)\lib\NCSUtil.lib
+
+#
+# If you want to ignore missing datafile errors uncomment the following
+# line. This is especially useful with large tiled datasets that may not
+# have complete data for each tile.
+#
+IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
+
 
 MS_LIBS = ../../mapserver.lib \
         ../../../gd-1.8.4/gd.lib \
@@ -72,10 +100,15 @@ MS_LIBS = ../../mapserver.lib \
         ../../../freetype/lib/freetype.lib \
 	../../../tiff-v3.5.4/libtiff/libtiff.lib \
         ../../../proj/src/proj.lib \
+        $(GDAL_DIR)/gdal.lib \
         $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib \
         $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib \
         $(GDAL_DIR)/ogr/ogr.lib \
-        $(GDAL_DIR)/ogr/../port/cpl.lib
+        $(GDAL_DIR)/ogr/../port/cpl.lib \
+        $(LIBWWW_LIB) \
+        $(ECW_LIB) \
+        $(MING_LIB) \
+        $(PDF_LIB)
                 
 
 
@@ -95,7 +128,7 @@ PHPMS_DLL =	php3_mapscript.dll
 
 PHPPROJ_DLL =	php_proj.dll
 
-CFLAGS = 	$(BASE_CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC) $(PRIOLIST)
+CFLAGS = 	$(BASE_CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC) $(MING) $(PDF)
 
 default: 	all
 
