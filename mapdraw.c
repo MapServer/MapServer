@@ -851,7 +851,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     shape.classindex = layer->resultcache->results[i].classindex;
-    if(layer->class[shape.classindex].status == MS_OFF) {
+    /* classindex may be -1 here if there was a template at the top level
+     * in this layer and the current shape selected even if it didn't
+     * match any class 
+     */
+    if(shape.classindex==-1 || layer->class[shape.classindex].status == MS_OFF) {
       msFreeShape(&shape);
       continue;
     }
