@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Fixed problem with raster dither support on windows (related to ascii 
+  encoding pointers).  (bug 722)
+
 - Moved PHP/SWIG MapScript layer->getExtent() logic down to msLayerGetExtent()
   to avoid code duplication (bug 1051)
 
