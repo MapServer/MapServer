@@ -199,7 +199,7 @@
   }
 
   int setProjection(char *string) {
-    return(loadProjectionString(&(self->projection), string));
+    return(msLoadProjectionString(&(self->projection), string));
   }
 
   int save(char *filename) {
@@ -297,7 +297,7 @@
   }
 
   int setProjection(char *string) {
-    return loadProjectionString(&(self->projection), string);
+    return msLoadProjectionString(&(self->projection), string);
   }
 
   int addFeature(shapeObj *shape) {
@@ -666,7 +666,7 @@
     if(!proj) return NULL;
     msInitProjection(proj);
 
-    status = loadProjectionString(proj, string);
+    status = msLoadProjectionString(proj, string);
     if(status == -1) {
       msFreeProjection(proj);
       free(proj);

@@ -613,7 +613,7 @@ void resetClassStyle(classObj *_class);
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 void freeFeatureList(featureListNodeObjPtr list);
 
-int loadProjectionString(projectionObj *p, char *value);
+int msLoadProjectionString(projectionObj *p, char *value);
 int loadExpressionString(expressionObj *exp, char *value);
 
 int getClassIndex(layerObj *layer, char *str);
