@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/04/07 13:46:46  frank
+ * added report of SVG support
+ *
  * Revision 1.64  2005/02/22 07:40:27  sdlime
  * A bunch of updates to GEOS integration. Can move many primatives between MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon). Added buffer method to mapscript (mapscript/shape.i).
  *
@@ -485,6 +488,9 @@ char *msGetVersion() {
 #endif
 #ifdef USE_MING_FLASH
   strcat(version, " OUTPUT=SWF");
+#endif
+#ifdef USE_SVG
+  strcat(version, " OUTPUT=SVG");
 #endif
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
