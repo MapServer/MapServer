@@ -176,6 +176,9 @@ ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
 # If you want antialiasing (note that It requires gd2)
 USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 
+# Enable if you want thread safe locking, not needed for simple CGI.
+#THREADS=-DUSE_THREAD
+
 # Use this flag to compile with WMS Server support.
 # To find out more about the OpenGIS Web Map Server Specification go to
 # http://www.opengis.org/
@@ -470,7 +473,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS)  -DWIN32 -D_WIN32 \
-          $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
+          $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(THREADS) \
           $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) $(ENABLE_STDERR_DEBUG) \
           $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
