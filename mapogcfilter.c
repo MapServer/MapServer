@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.46  2005/04/07 21:48:20  assefa
+ * Correction of Bug 1308 : Correction of SQL expression generated on wfs
+ * filters for postgis/oracle layers.
+ *
  * Revision 1.45  2005/03/29 22:53:14  assefa
  * Initial support to improve WFS filter performance for DB layers (Bug 1292).
  *
@@ -1033,9 +1037,7 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int *panResults = NULL;
     int nResults = 0;
     layerObj *psLayer = NULL;
-    char *sttt = NULL;
 
-    //strlen(sttt);
 /* ==================================================================== */
 /*      Check here to see if it is a simple filter and if that is       */
 /*      the case, we are going to use the FILTER element on             */
@@ -2404,10 +2406,29 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     char *pszTmp = NULL;
     szBuffer[0] = '\0';
 
+
+/* ==================================================================== */
+/*      special case for BBOX node.                                     */
+/* ==================================================================== */
+    if (psFilterNode->psLeftNode && psFilterNode->psRightNode &&
+        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") == 0) ||
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") == 0)))
+    {
+         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0)
+           pszTmp = FLTGetSQLExpression(psFilterNode->psLeftNode, connectiontype);
+         else
+           pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, connectiontype);
+           
+         if (!pszTmp)
+          return NULL;
+
+         sprintf(szBuffer, "%s", pszTmp);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      OR and AND                                                      */
 /* -------------------------------------------------------------------- */
-    if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
+    else if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
     {
         strcat(szBuffer, " (");
         pszTmp = FLTGetSQLExpression(psFilterNode->psLeftNode, connectiontype);
@@ -3111,7 +3132,7 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     szTmp[0] = pszEscape[0];
     szTmp[1] = '\0';
     strcat(szBuffer,  szTmp);
-    strcat(szBuffer,  "')");
+    strcat(szBuffer,  "') ");
     
     return strdup(szBuffer);
 }

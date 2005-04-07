@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1308: Correction of SQL expression generated on wfs filters for 
+            postgis/oracle layers.
+
 - Bug 1304: Avoid extra white space in gml:coordinates for gml:Box.
 
 - mapogr.c: Insure that tile index reading is restarted in 
