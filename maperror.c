@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/04/07 21:51:22  frank
+ * added SUPPORTS=THREADS to version info
+ *
  * Revision 1.66  2005/04/07 17:23:16  assefa
  * Remove #ifdef USE_SVG. It was added during development.
  *
@@ -470,7 +473,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 }
 
 char *msGetVersion() {
-  static char version[512];
+  static char version[1024];
 
   sprintf(version, "MapServer version %s", MS_VERSION);
 
@@ -516,6 +519,9 @@ char *msGetVersion() {
 #endif
 #ifdef USE_FASTCGI
   strcat(version, " SUPPORTS=FASTCGI");
+#endif
+#ifdef USE_THREAD
+  strcat(version, " SUPPORTS=THREADS");
 #endif
 #ifdef USE_GEOS
   strcat(version, " SUPPORTS=GEOS");
