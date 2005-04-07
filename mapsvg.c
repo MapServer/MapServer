@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/04/07 21:49:24  frank
+ * use MS_PI instead of M_PI, available everywhere
+ *
  * Revision 1.12  2005/04/07 17:23:16  assefa
  * Remove #ifdef USE_SVG. It was added during development.
  *
@@ -276,13 +279,13 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
             double e1;
             double f1;
 
-            aspect_d = (hp)/(wp/cos(plat*(M_PI/180.0)));
+            aspect_d = (hp)/(wp/cos(plat*(MS_PI/180.0)));
 	    
 	    if (aspect <= 1) {
 		hd=(360*2*r)/circle;
 		wd=hd/aspect_d;
 	    } else {
-		wd=(360*2*r)/(cos(plat*(M_PI/180.0))*circle);
+		wd=(360*2*r)/(cos(plat*(MS_PI/180.0))*circle);
 		hd=aspect_d*wd;
 	    }
 	    
@@ -296,7 +299,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
 	    d1=-(res/dy);
 	    f1=-d1*y1+hp;
 	    
-	    a1=cos(((y1+y2)/2)*(M_PI/180.0))*(res/dy);
+	    a1=cos(((y1+y2)/2)*(MS_PI/180.0))*(res/dy);
 	    e1= -a1*x1;
 
             msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "\n<!-- transform parameters using catersian transformation : svg:transform=\"matrix(%f, %f, %f, %f, %f, %f)\"  -->\n", a, b, c, d, e, f);
