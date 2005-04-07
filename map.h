@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.402  2005/04/07 17:23:16  assefa
+ * Remove #ifdef USE_SVG. It was added during development.
+ *
  * Revision 1.401  2005/03/25 05:43:20  frank
  * added msAddLineDirectly()
  *
@@ -1121,7 +1124,6 @@ typedef struct {
 } PDFObj; 
 #endif
 
-#ifdef USE_SVG
 typedef struct  {
   mapObj *map;
   FILE *stream;
@@ -1129,7 +1131,6 @@ typedef struct  {
   int streamclosed; /* track if a save image is done */
   int compressed; /*track if output is set to be svgz */
 } SVGObj;
-#endif
 
 /* IMAGE OBJECT - a wrapper for GD images */
 typedef struct {
@@ -1155,9 +1156,8 @@ typedef struct {
 #ifdef USE_PDF
     PDFObj *pdf;
 #endif
-#ifdef USE_SVG
+
     SVGObj *svg;
-#endif
 
     char *imagemap;
     short *raw_16bit;
@@ -1790,7 +1790,6 @@ MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *i
 /* ==================================================================== */
 /*      prototypes for functions in mapsvg.c                            */
 /* ==================================================================== */
-#ifdef USE_SVG
 
 MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height, 
                                          outputFormatObj *format, char *imagepath, 
@@ -1824,7 +1823,6 @@ MS_DLL_EXPORT void msDrawShadeSymbolSVG(symbolSetObj *symbolset,
                                         imageObj *image, shapeObj *p, 
                                         styleObj *style, double scalefactor);
 
-#endif
 
 /* ==================================================================== */
 /*      prototypes for functions in mapoutput.c                         */

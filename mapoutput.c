@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/04/07 17:23:16  assefa
+ * Remove #ifdef USE_SVG. It was added during development.
+ *
  * Revision 1.33  2005/03/08 19:53:25  frank
  * adjusted png24 mimetype per bug 1231
  *
@@ -352,7 +355,6 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = 0;
         format->renderer = MS_RENDER_WITH_IMAGEMAP;
     }
-#ifdef USE_SVG
     if( strcasecmp(driver,"svg") == 0 )
     {
         format = msAllocOutputFormat( map, "svg", driver );
@@ -361,7 +363,6 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->extension = strdup("svg");
         format->renderer = MS_RENDER_WITH_SVG;
     }
-#endif
     if( format != NULL )
         format->inmapfile = MS_FALSE;
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2005/04/07 17:23:16  assefa
+ * Remove #ifdef USE_SVG. It was added during development.
+ *
  * Revision 1.65  2005/04/07 13:46:46  frank
  * added report of SVG support
  *
@@ -489,9 +492,7 @@ char *msGetVersion() {
 #ifdef USE_MING_FLASH
   strcat(version, " OUTPUT=SWF");
 #endif
-#ifdef USE_SVG
   strcat(version, " OUTPUT=SVG");
-#endif
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
 #endif

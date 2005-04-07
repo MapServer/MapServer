@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.177  2005/04/07 17:23:16  assefa
+ * Remove #ifdef USE_SVG. It was added during development.
+ *
  * Revision 1.176  2005/02/18 05:07:26  frank
  * fixed return from msForceTmpFileBase
  *
@@ -536,7 +539,6 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
               nReturnVal = msSaveImagePDF(img, filename);
         }
 #endif
-#ifdef USE_SVG
         else if(MS_DRIVER_SVG(img->format) )
         {
             if (map != NULL && filename != NULL )
@@ -547,7 +549,6 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
               nReturnVal = msSaveImageSVG(img, filename);
         }
 
-#endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 
                        "msSaveImage()"); 
@@ -578,10 +579,8 @@ void msFreeImage(imageObj *image)
         else if( MS_RENDERER_PDF(image->format) )
             msFreeImagePDF(image);
 #endif
-#ifdef USE_SVG
         else if( MS_RENDERER_SVG(image->format) )
             msFreeImageSVG(image);
-#endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 
                        "msFreeImage()"); 
@@ -1216,7 +1215,6 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
         return;
     }
 #endif
-#ifdef USE_SVG
     if (image != NULL && MS_RENDERER_SVG(image->format) )
     {
         
@@ -1224,7 +1222,6 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 
         return;
     }
-#endif
 
     msTransformShapeToPixel(shape, extent, cellsize);
 }

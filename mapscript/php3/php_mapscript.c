@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.229  2005/04/07 17:25:27  assefa
+ * Remove #ifdef USE_SVG. It was added during development.
+ *
  * Revision 1.228  2005/03/07 23:17:42  assefa
  * Allow shape object's index value to be set (Bug 806)
  *
@@ -5919,6 +5922,10 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     int         retVal = 0;
     int         nArgs;
     mapObj      *poMap = NULL;
+    char        *pImagepath = NULL;
+    int         nBufSize, nTmpCount;
+    char        *pBuf = NULL;
+
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5948,7 +5955,8 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
 
     im = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
-
+    pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR TSRMLS_CC);
+    
     if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
         if (im == NULL ||
@@ -5986,11 +5994,21 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             iptr = im->img.imagemap;
 	    size = strlen(im->img.imagemap);
         }
-#ifdef USE_SVG
         else if (MS_DRIVER_SVG(im->format))
         {
             retVal = -1;
-            tmp = tmpfile(); 
+            /* Build a unique filename in the IMAGEPATH directory 
+             */ 
+            if (pImagepath)
+            {
+                nBufSize = (strlen(pImagepath)) + strlen(PHPMS_G(tmpId)) + 30;
+                pBuf = (char*)emalloc(nBufSize);
+                nTmpCount = ++(PHPMS_G(tmpCount));
+                sprintf(pBuf, "%s%s%d.svg", 
+                        pImagepath, PHPMS_G(tmpId), nTmpCount);
+                tmp = fopen(pBuf, "w");
+            }
+            //tmp = tmpfile(); 
             if (tmp == NULL) 
             {
                  _phpms_report_mapserver_error(E_WARNING);
@@ -5999,7 +6017,9 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             }
             if (msSaveImagetoFpSVG(im, tmp) == MS_SUCCESS)
             {
-                fseek(tmp, 0, SEEK_SET);
+                fclose(tmp);
+                tmp = fopen(pBuf, "r");
+                //fseek(tmp, 0, SEEK_SET);
                 while ((b = fread(buf, 1, sizeof(buf), tmp)) > 0) 
                 {
                     php_write(buf, b TSRMLS_CC);
@@ -6016,7 +6036,6 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
             RETURN_LONG(retVal);
         }   
-#endif    
         if (size == 0) {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed writing image to stdout");
@@ -6829,7 +6848,6 @@ DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     mapObj   *parent_map;
     rectObj *poRect=NULL;
     int      nStatus = MS_FAILURE;
-    
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif

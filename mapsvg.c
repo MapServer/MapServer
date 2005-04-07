@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/04/07 17:23:16  assefa
+ * Remove #ifdef USE_SVG. It was added during development.
+ *
  * Revision 1.11  2005/03/07 15:58:10  assefa
  * Use gzip function to output svgz.
  *
@@ -67,7 +70,6 @@
  *
  */
 
-#ifdef USE_SVG
 
 #include <assert.h>
 #ifdef USE_ZLIB
@@ -1870,4 +1872,3 @@ MS_DLL_EXPORT void msFreeImageSVG(imageObj *image)
 }
 
 
-#endif

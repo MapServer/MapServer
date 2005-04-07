@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2005/04/07 17:23:16  assefa
+ * Remove #ifdef USE_SVG. It was added during development.
+ *
  * Revision 1.87  2005/03/25 01:24:37  jerryp
  * Removed unit transformation for circle layers (bug 1294).
  *
@@ -221,14 +224,12 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
                                  map);
 	}
 #endif
-#ifdef USE_SVG
     else if( MS_RENDERER_SVG(map->outputformat) )
     {
         image = msImageCreateSVG(map->width, map->height, map->outputformat,
                                  map->web.imagepath, map->web.imageurl,
                                  map);
     }
-#endif
     else
     {
         image = NULL;
@@ -1185,10 +1186,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
         else if( MS_RENDERER_PDF(image->format) )
             return  msDrawRasterLayerPDF(map, layer, image);
 #endif
-#ifdef USE_SVG
         else if( MS_RENDERER_SVG(image->format) )
             return  msDrawRasterLayerSVG(map, layer, image);
-#endif
     }
 
     return MS_FAILURE;
@@ -1727,10 +1726,8 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
        else if( MS_RENDERER_PDF(image->format) )
            msDrawMarkerSymbolPDF(symbolset, image, p, style, scalefactor);
 #endif
-#ifdef USE_SVG            
        else if( MS_RENDERER_SVG(image->format) )
            msDrawMarkerSymbolSVG(symbolset, image, p, style, scalefactor);
-#endif
 
     }
 }
@@ -1752,10 +1749,8 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         else if( MS_RENDERER_PDF(image->format) )
             msDrawLineSymbolPDF(symbolset, image, p,  style, scalefactor);
 #endif
-#ifdef USE_SVG
         else if( MS_RENDERER_SVG(image->format) )
             msDrawLineSymbolSVG(symbolset, image, p,  style, scalefactor);
-#endif
 
     }
 }
@@ -1777,10 +1772,8 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
         else if( MS_RENDERER_PDF(image->format) )
             msDrawShadeSymbolPDF(symbolset, image, p, style, scalefactor);
 #endif
-#ifdef USE_SVG
         else if( MS_RENDERER_SVG(image->format) )
             msDrawShadeSymbolSVG(symbolset, image, p, style, scalefactor);
-#endif
     }
 }
 
@@ -1845,11 +1838,9 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
             nReturnVal = msDrawTextPDF(image, labelPnt, string, label, 
                                       fontset, scalefactor); 
 #endif
-#ifdef USE_SVG
         else if( MS_RENDERER_SVG(image->format) )
             nReturnVal = msDrawTextSVG(image, labelPnt, string, label, 
                                       fontset, scalefactor); 
-#endif
     }
 
     return nReturnVal;
@@ -1873,10 +1864,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
         else if( MS_RENDERER_PDF(image->format) )
             nReturnVal = msDrawLabelCachePDF(image, map);
 #endif
-#ifdef USE_SVG
         else if( MS_RENDERER_SVG(image->format) )
             nReturnVal = msDrawLabelCacheSVG(image, map);
-#endif
     }
 
     return nReturnVal;
@@ -1901,10 +1890,8 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
         if( MS_RENDERER_PDF(image->format) )
             msImageStartLayerPDF(map, layer, image); 
 #endif
-#ifdef USE_SVG
         if( MS_RENDERER_SVG(image->format) )
             msImageStartLayerSVG(map, layer, image);
-#endif
     }
 }
 
