@@ -8,6 +8,8 @@
         String  library = System.getProperty("mapserver.library.name", "mapscript");
 
         System.loadLibrary(library);
+        /* TODO Throw when return value not MS_SUCCESS? */
+        edu.umn.gis.mapscript.mapscript.msSetup();
     }
 %}
 
