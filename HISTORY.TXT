@@ -16,8 +16,13 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
-- Bug 1308: Correction of SQL expression generated on wfs filters for 
-            postgis/oracle layers.
+- MapScript: shapeObj allocates memory for 4 value strings, shapeObj.setValue()
+  lets users set values of a shapeObj.
+  
+- MapScript: imageObj.getBytes() replaces imageObj.write() (bugs 1176, 1064).
+
+- Bug 1308: Correction of SQL expression generated on wfs filters for
+  postgis/oracle layers.
 
 - Bug 1304: Avoid extra white space in gml:coordinates for gml:Box.
 
@@ -66,11 +71,10 @@ Version 4.5
   temporary file naming conventions.  Mainly intended to make writing 
   testscripts using mapserv easier. FrankW. 
 
-- maporaclespatil.c: Bug fix for: #1109, #1110, #1111, #1112, #1136,
-  #1210, #1211, #1212, #1213. 
-  Support for compound polygons, fixed internal sql to stay more accurate
-  for geodetic data, added the support for getextent function.
-  Added VERSION token for layer data string.
+- maporaclespatil.c: Bug fix for: #1109, #1110, #1111, #1112, #1136, #1210,
+  #1211, #1212, #1213.  Support for compound polygons, fixed internal sql to
+  stay more accurate for geodetic data, added the support for getextent
+  function.  Added VERSION token for layer data string.
 
 - mapimagemap.c: Preliminary implementation of support for emitting 
   MS_SYMBOL_VECTOR symbols in msDrawMarkerSymbolIM(). 
@@ -101,11 +105,9 @@ Version 4.5
 - Correct bug 1151 : generates twice a </Mark> tag when generating an SLD.
   This was happening the style did not have a size set.
 
-- Oracle Spatial:
-  Fixed problem with LayerClose function.
-  Added token NONE for DATA statement.
-  Thanks Valik with the hints about the LayerClose problem and Francois
-  with the hints about NONE token.  
+- Oracle Spatial.  Fixed problem with LayerClose function.  Added token NONE
+  for DATA statement.  Thanks Valik with the hints about the LayerClose problem
+  and Francois with the hints about NONE token.  
 
 - numpoints and stylelength memebers of the symbol object needs to be in sync
   with the low level values after calles to setpoints ans setstyle (Bug 1137).
