@@ -1709,7 +1709,7 @@ if test "$enable_debug" = "yes" ; then
   dnl also enable output of msDebug() calls to stderr.
   DEBUG_FLAGS="-DENABLE_STDERR_DEBUG"
 
-  if test -n $APACHE_VERSION -a `expr $APACHE_VERSION \>= "2000000"` = 1 ; then
+  if test -n "$APACHE_VERSION" -a `expr "$APACHE_VERSION" \>= "2000000"` = 1 ; then
     AC_MSG_RESULT([        You requested msDebug() output on a system apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030).])
     DEBUG_FLAGS="$DEBUG_FLAGS -DNEED_NONBLOCKING_STDERR"
   fi
@@ -1993,13 +1993,17 @@ dnl Check --enable-runpath to request including -Wl,-R for runtime
 dnl lib path in link command (disabled by default)
 dnl ---------------------------------------------------------------------
 
-AC_ARG_ENABLE(debug,
+AC_MSG_CHECKING([if --enable-runpath requested])
+AC_ARG_ENABLE(runpath,
 [  --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
   --disable-runpath       Do not link with runtime lib path (the default).],,)
 
 if test "$enable_runpath" != "yes" ; then
   RPATHS=""
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([yes ($RPATHS)])
 fi
 
 

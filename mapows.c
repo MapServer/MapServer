@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54.2.1  2005/02/25 21:34:23  frank
+ * fixed raster layer opening for extent bug (1118) in msOWSGetLayerExtent
+ *
  * Revision 1.54  2004/11/28 02:51:02  frank
  * blow an error if any WxS services are enabled without PROJ
  *
@@ -1358,7 +1361,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectO
     msFreeCharArray(tokens, n);
     return MS_SUCCESS;
   }
-  else
+  else if( lp->type != MS_LAYER_RASTER )
   {
       return msLayerGetExtent(lp, ext);
   }

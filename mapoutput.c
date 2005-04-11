@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30.2.1  2005/03/08 19:53:16  frank
+ * adjusted png24 mimetype per bug 1231
+ *
  * Revision 1.30  2004/11/18 20:55:38  frank
  * In msOutputFormatValidate() we now ensure that GD/JPEG does not have
  * alpha enabled, or transparent turned on.   Bug 1073.
@@ -267,7 +270,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"GD/PNG24") == 0 )
     {
         format = msAllocOutputFormat( map, "png24", "GD/PNG" );
-        format->mimetype = strdup("image/png");
+        format->mimetype = strdup("image/png; mode=24bit");
         format->imagemode = MS_IMAGEMODE_RGB;
         format->extension = strdup("png");
         format->renderer = MS_RENDER_WITH_GD;

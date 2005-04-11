@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39.2.1  2005/01/19 21:36:56  frank
+ * bug1168: when autoscaling, slightly extend scaling range
+ *
  * Revision 1.39  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -1698,8 +1701,9 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* -------------------------------------------------------------------- */
     else if( dfScaleMin == 0.0 && dfScaleMax == 0.0 )
     {
-        dfScaleMin = fDataMin;
-        dfScaleMax = fDataMax;
+        double dfEpsilon = (fDataMax - fDataMin) / (65536*2);
+        dfScaleMin = fDataMin - dfEpsilon;
+        dfScaleMax = fDataMax + dfEpsilon;
     }
 
 /* -------------------------------------------------------------------- */

@@ -333,6 +333,13 @@
         return imgstring;
     }
 
+// Extensions in Python
+%pythoncode {
+
+    def getBytes(self):
+        return self.saveToString()
+
 }
 
+}
 

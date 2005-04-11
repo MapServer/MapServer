@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.3  2005/03/25 18:26:34  sdlime
+ * Removed some debugging printf statements from mapgd.c. (bug 1293)
+ *
+ * Revision 1.90.2.2  2004/12/22 16:34:06  sdlime
+ * Fixed hatch symbol function so that the size is consistent regardless of angle.
+ *
  * Revision 1.90  2004/11/19 23:11:42  sean
  * in msImageLoadGD, call msImageLoadGDCtx with a const char string rather than a pointer
  *
@@ -608,6 +614,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     y1 = (int)clip->maxy-1; // height-1 
     x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
 
+    size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
+
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       x1+=size;
@@ -618,6 +626,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     y2 = (int)clip->maxy-1; // height-1
     y1 = (int)clip->miny; // 0
     x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
+
+    size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
 
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -630,6 +640,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->maxx-1; // width-1
     y2 = (int)(y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
 
+    size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
+
     while(y2 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       y1+=size;
@@ -640,6 +652,8 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     y2 = (int)clip->miny; // 0
     x1 = (int)clip->minx; // 0
     y1 = (int) (y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
+
+    size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
 
     while(y1 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -1171,9 +1185,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   if(!p) return;
 
-  printf("in msCircleDrawShadeSymbolGD()\n");
-  printf("%d %d %d %d\n", style->color.pen, style->color.red, style->color.green, style->color.blue);
-
   if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor)) { // use msDrawLineSymbolGD() instead (POLYLINE)
     msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
     return;
@@ -1205,8 +1216,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   if(fc < 0) return; // invalid color, -1 is valid
   if(size < 1) return; // size too small
 
-  printf("here (3)...\n");
-      
   if(style->symbol == 0) { // simply draw a single pixel of the specified color    
     imageFilledCircle(img, p, (int) r, fc);
     if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);

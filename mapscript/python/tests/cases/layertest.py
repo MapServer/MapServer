@@ -348,7 +348,58 @@ class LayerVisibilityTestCase(MapLayerTestCase):
         """expect false visibility after zooming out beyond maximum"""
         self.map.zoomScale(2500, mapscript.pointObj(100,100), 200, 200, self.map.extent, None)
         assert self.layer.isVisible() == mapscript.MS_FALSE
+       
+
+from random import random
+
+class InlineLayerTestCase(unittest.TestCase):
+
+    def setUp(self):
+        # Inline feature layer
+        self.ilayer = mapscript.layerObj()
+        self.ilayer.type = mapscript.MS_LAYER_POLYGON
+        self.ilayer.status = mapscript.MS_DEFAULT
+        self.ilayer.connectiontype = mapscript.MS_INLINE
+
+        cs = 'f7fcfd,e5f5f9,ccece6,99d8c9,66c2a4,41ae76,238b45,006d2c,00441b'
+        colors = ['#' + h for h in cs.split(',')]
+        #print colors
         
+        for i in range(9):
+            # Make a class for feature
+            ci = self.ilayer.insertClass(mapscript.classObj())
+            co = self.ilayer.getClass(ci)
+            si = co.insertStyle(mapscript.styleObj())
+            so = co.getStyle(si)
+            so.color.setHex(colors[i])
+            co.label.color.setHex('#000000')
+            co.label.outlinecolor.setHex('#FFFFFF')
+            co.label.type = mapscript.MS_BITMAP
+            co.label.size = mapscript.MS_SMALL
+            
+            # The shape to add is randomly generated
+            xc = 4.0*(random() - 0.5)
+            yc = 4.0*(random() - 0.5)
+            r = mapscript.rectObj(xc-0.25, yc-0.25, xc+0.25, yc+0.25)
+            s = r.toPolygon()
+            
+            # Classify
+            s.classindex = i
+            s.text = "F%d" % (i)
+            
+            # Add to inline feature layer
+            self.ilayer.addFeature(s)
+
+    def testExternalClassification(self):
+        mo = mapscript.mapObj()
+        mo.setSize(400, 400)
+        mo.setExtent(-2.5, -2.5, 2.5, 2.5)
+        mo.selectOutputFormat('image/png')
+        mo.insertLayer(self.ilayer)
+        im = mo.draw()
+        im.save('testExternalClassification.png')
+
+
 
 # ===========================================================================
 # Run the tests outside of the main suite

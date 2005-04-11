@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50.2.1  2005/02/22 14:56:29  sean
+ * turn on GD alpha blending for legend icon images if specified by the target layer (bugs 490, 1250)
+ *
  * Revision 1.50  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -106,7 +109,13 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
 
     /* 
     ** now draw the appropriate color/symbol/size combination 
-    */      
+    */     
+
+    /* Bugs 490,1250 - switch alpha blending on for a layer that requires it */
+    if (lp->transparency == MS_GD_ALPHA) {
+        gdImageAlphaBlending(img, 1);
+    }
+
     switch(type) {
     case MS_LAYER_ANNOTATION:
     case MS_LAYER_POINT:

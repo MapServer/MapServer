@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37.2.1  2005/03/08 18:10:17  frank
+ * fixed msProjectPoint() to return MS_FAILURE in missing case: bug 1273
+ *
  * Revision 1.37  2004/11/16 21:56:18  dan
  * msGetEPSGProj() obsolete, replaced by msOWSGetEPSGProj() (bug 568)
  *
@@ -131,6 +134,9 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
               p = pj_fwd(p, out->proj);
           }
       }
+
+      if( p.u == HUGE_VAL || p.v == HUGE_VAL )
+          return MS_FAILURE;
 
       point->x = p.u;
       point->y = p.v;

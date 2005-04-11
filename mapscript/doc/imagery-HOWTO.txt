@@ -127,7 +127,7 @@ An image can be dumped to an open filehandle using the 'write' method.  By
 default, the filehandle is 'stdout'::
 
     # Send an image to a web browser
-    print "Content-type: " + map_image.format.mimetype + "\n\n"
+    print 'Content-type: ' + map_image.format.mimetype + '\n'
     map_image.write()
 
 This method is not fully functional for all SWIG mapscript languages.  See the

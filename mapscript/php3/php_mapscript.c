@@ -30,6 +30,17 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.220.2.3  2005/02/28 14:27:19  dan
+ * Use gdFree() instead of free() in php3_ms_img_saveImage() (bug 1257)
+ *
+ * Revision 1.220.2.2  2004/12/19 22:17:59  assefa
+ * numpoints and stylelength memebers of the symbol object needs to be in sync
+ * with the low level values after calles to setpoints ans setstyle (Bug 1137).
+ *
+ * Revision 1.220.2.1  2004/12/17 21:07:29  assefa
+ * Use doubles instead of integers in function php3_ms_symbol_setPoints
+ * (Bug 1137).
+ *
  * Revision 1.220  2004/11/16 17:23:13  dan
  * Added map->setSize() to PHP MapScript (bug 1066)
  *
@@ -5964,7 +5975,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             php3_write(iptr, size);
 #endif
             retVal = size;
-            free(iptr);
+            gdFree(iptr);
         }
 
 #else  /* No gdImageGifPtr(): GD 1.2/1.3 */
@@ -13049,8 +13060,8 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
         {
             RETURN_FALSE;
         }
-        convert_to_long((*pValue));
-        self->points[iSymbol].x = (*pValue)->value.lval;
+        convert_to_double((*pValue));
+        self->points[iSymbol].x = (*pValue)->value.dval;
         i++;
 
          if (zend_hash_index_find(pPoints->value.ht, i, 
@@ -13058,14 +13069,15 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
         {
             RETURN_FALSE;
         }
-        convert_to_long((*pValue));
-        self->points[iSymbol].y = (*pValue)->value.lval;
+        convert_to_double((*pValue));
+        self->points[iSymbol].y = (*pValue)->value.dval;
         i++;
 
         iSymbol++;
     }
     
     self->numpoints = (nElements/2);
+    _phpms_set_property_long(pThis,"numpoints", self->numpoints , E_ERROR); 
 
     RETURN_TRUE;
 }
@@ -13208,6 +13220,8 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     self->stylelength = nElements;
+
+    _phpms_set_property_long(pThis,"stylelength", self->stylelength , E_ERROR); 
 
     RETURN_TRUE;
 }

@@ -25,11 +25,6 @@ See also the MapServer Wiki for links to more informations on this module:
 Currently supported classes, properties and methods:
 ====================================================
 
-For more information on each class, see also the MapScript documentation at:
-	http://mapserver.gis.umn.edu/doc/perlmapscript-reference.html
-and the MapServer Map File documentation at:
-	http://mapserver.gis.umn.edu/doc/mapfile-reference.html
-
   Very important notes:
   ---------------------
 
@@ -839,9 +834,9 @@ and the MapServer Map File documentation at:
        Delete the style specified by the style index. If there are any
        style that follow the deleted style, their index will decrease by 1.
 
-       NOTE : if you are using the numstyles parameter while using the deletestyle
-              function on the class object you need to refetch a new class
-              object. Example :
+       NOTE : if you are using the numstyles parameter while using the
+              deletestyle function on the class object you need to refetch
+              a new class object. Example :
               
                  //class has 2 styles
                 $class = $oLayer->getclass(0);
@@ -1298,7 +1293,8 @@ Constructor:
    an LCC projection :  
 
         $projInObj = ms_newprojectionobj("proj=latlong");
-        $projOutObj = ms_newprojectionobj("proj=lcc,ellps=GRS80,lat_0=49,lon_0=-95,lat_1=49,lat_2=77");
+        $projOutObj = ms_newprojectionobj("proj=lcc,ellps=GRS80,lat_0=49,".
+                                          "lon_0=-95,lat_1=49,lat_2=77");
         $poPoint = ms_newpointobj();
         $poPoint->setXY(-92.0, 62.0);         
         $poPoint->project($projInObj, $projOutObj);

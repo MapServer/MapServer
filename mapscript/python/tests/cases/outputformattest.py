@@ -85,10 +85,11 @@ class MapOutputFormatTestCase(MapTestCase):
     def testBuiltInPNG24Format(self):
         """test built in PNG RGB format"""
         self.map.selectOutputFormat('PNG24')
-        assert self.map.outputformat.mimetype == 'image/png'
+        assert self.map.outputformat.mimetype == 'image/png; mode=24bit',\
+               self.map.outputformat.mimetype
         self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         img = self.map.draw()
-        assert img.format.mimetype == 'image/png'
+        assert img.format.mimetype == 'image/png; mode=24bit'
         filename = 'testBuiltInPNG24Format.png'
         img.save(filename)
 
@@ -108,6 +109,14 @@ class MapOutputFormatTestCase(MapTestCase):
         assert self.map.outputformat.mimetype == 'image/jpeg'
 
 
+class UnsupportedFormatTestCase(unittest.TestCase):
+    """I (Sean) don't ever configure for PDF, so this is the unsupported
+    format."""
+
+    def testCreateUnsupported(self):
+        self.assertRaises(mapscript.MapServerError, mapscript.outputFormatObj, 'PDF')
+
+        
 # ===========================================================================
 # Run the tests outside of the main suite
 

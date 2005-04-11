@@ -29,6 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.79.2.2  2005/04/06 21:43:55  frank
+ * ensure msOGRLayerInitItemInfo restarts read to get template feature
+ *
+ * Revision 1.79.2.1  2005/04/06 21:39:55  frank
+ * use proper polygon for spatial filter
+ *
  * Revision 1.79  2004/11/17 20:40:55  dan
  * Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all
  * GML attributes are returned as strings to MapServer. (bug 1043)
@@ -1077,14 +1083,17 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
  * region and matches the layer's FILTER expression, but there is currently
  * no _efficient_ way to do that with OGR.
  * ------------------------------------------------------------------ */
-  OGRLinearRing oSpatialFilter;
+  OGRPolygon oSpatialFilter;
+  OGRLinearRing oRing;
 
-  oSpatialFilter.setNumPoints(5);
-  oSpatialFilter.setPoint(0, rect.minx, rect.miny);
-  oSpatialFilter.setPoint(1, rect.maxx, rect.miny);
-  oSpatialFilter.setPoint(2, rect.maxx, rect.maxy);
-  oSpatialFilter.setPoint(3, rect.minx, rect.maxy);
-  oSpatialFilter.setPoint(4, rect.minx, rect.miny);
+  oRing.setNumPoints(5);
+  oRing.setPoint(0, rect.minx, rect.miny);
+  oRing.setPoint(1, rect.maxx, rect.miny);
+  oRing.setPoint(2, rect.maxx, rect.maxy);
+  oRing.setPoint(3, rect.minx, rect.maxy);
+  oRing.setPoint(4, rect.minx, rect.miny);
+
+  oSpatialFilter.addRing( &oRing );
 
   psInfo->poLayer->SetSpatialFilter( &oSpatialFilter );
 
@@ -1313,6 +1322,16 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
     }
 
 /* -------------------------------------------------------------------- */
+/*      If -2 is passed, then seek reset reading of the tileindex.      */
+/*      We want to start from the beginning even if this file is        */
+/*      shared between layers or renders.                               */
+/* -------------------------------------------------------------------- */
+    if( targetTile == -2 )
+    {
+        psInfo->poLayer->ResetReading();
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Get the name (connection string really) of the next tile.       */
 /* -------------------------------------------------------------------- */
     OGRFeature *poFeature;
@@ -1324,7 +1343,7 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
   NextFile:
 #endif
     
-    if( targetTile == -1 )
+    if( targetTile < 0 )
         poFeature = psInfo->poLayer->GetNextFeature();
     
     else
@@ -1670,7 +1689,7 @@ int msOGRLayerInitItemInfo(layerObj *layer)
   if( layer->tileindex != NULL )
   {
       if( psInfo->poCurTile == NULL 
-          && msOGRFileReadTile( layer, psInfo ) != MS_SUCCESS )
+          && msOGRFileReadTile( layer, psInfo, -2 ) != MS_SUCCESS )
           return MS_FAILURE;
       
       psInfo = psInfo->poCurTile;
