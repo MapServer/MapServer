@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.47  2005/04/12 23:44:41  assefa
+ * Add a class object when doing SQL expressions (Bug 1308).
+ *
  * Revision 1.46  2005/04/07 21:48:20  assefa
  * Correction of Bug 1308 : Correction of SQL expression generated on wfs
  * filters for postgis/oracle layers.
@@ -943,7 +946,10 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     }
     */
 
-    lp->numclasses = 0; /*set classes to 0*/
+    lp->numclasses = 1; /* set 1 so the query would work */
+    initClass(&(lp->class[0]));
+    lp->class[0].type = lp->type;
+    lp->class[0].template = strdup("ttt.html");
 
     szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
 
@@ -952,6 +958,7 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
         msLoadExpressionString(&lp->filter, szExpression);
         free(szExpression);
     }
+
     msQueryByRect(map, lp->index, sQueryRect);
  
 }
