@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/04/12 23:13:20  sean
+ * use non static strings for temp values in msOWSGetLayerExtent() and msOWSGetEPSGProj() (bug 1311).
+ *
  * Revision 1.57  2005/02/25 21:32:12  frank
  * fix msOWSGetLayerExtent() for bug 1118
  *
@@ -1351,7 +1354,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 */
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectObj *ext)
 {
-  static const char *value;
+  const char *value;
 
   if ((value = msOWSLookupMetadata(&(lp->metadata), namespaces, "extent")) != NULL)
   {
@@ -1548,7 +1551,7 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
 const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne)
 {
   static char epsgCode[20] ="";
-  static char *value;
+  char *value;
 
   /* metadata value should already be in format "EPSG:n" or "AUTO:..." */
   if (metadata && ((value = (char *) msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
