@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.178  2005/04/12 23:56:44  sean
+ * change tmpId string to be non static in msTmpFile() (bug 1312).
+ *
  * Revision 1.177  2005/04/07 17:23:16  assefa
  * Remove #ifdef USE_SVG. It was added during development.
  *
@@ -1057,7 +1060,7 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     char *tmpFname;
     char szPath[MS_MAXPATHLEN];
     const char *fullFname;
-    static char tmpId[128]; /* big enough for time + pid + ext */
+    char tmpId[128]; /* big enough for time + pid + ext */
 
     if( ForcedTmpBase != NULL )
     {
