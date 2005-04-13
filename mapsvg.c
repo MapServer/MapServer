@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/04/13 15:55:55  dan
+ * Added missing include stdarg.h (bug 1315)
+ *
  * Revision 1.13  2005/04/07 21:49:24  frank
  * use MS_PI instead of M_PI, available everywhere
  *
@@ -74,13 +77,11 @@
  */
 
 
+#include <stdarg.h>
+
 #include <assert.h>
 #ifdef USE_ZLIB
 #include "zlib.h"
-/*
-#if !defined(_WIN32)
-#include <zlib.h>
-*/
 #endif
 #include "map.h"
 
