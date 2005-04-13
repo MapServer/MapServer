@@ -122,7 +122,7 @@ GD and Support Libraries:
 
 
   The GD library is the only component that is not optional.  
-  Version 2.0.12 or more recent is required, see http://www.boutell.com/gd/ .
+  Version 2.0.16 or more recent is required, see http://www.boutell.com/gd/ .
 
   By default, configure tries to locate it on your system and uses the
   system copy if found.   

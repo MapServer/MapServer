@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1225: MapServer now requires GD 2.0.16 or more recent
+
 - MapScript: shapeObj allocates memory for 4 value strings, shapeObj.setValue()
   lets users set values of a shapeObj.
   

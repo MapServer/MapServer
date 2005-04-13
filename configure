@@ -5471,10 +5471,10 @@ unset ac_cv_lib_c_gdImageWBMP
 unset ac_cv_lib_c_gdImageStringFT
 unset ac_cv_lib_c_gdImageGifPtr
 unset ac_cv_lib_c_gdFontGetTiny
-unset ac_cv_lib_gd_gdImageSetAntiAliased
+unset ac_cv_lib_gd_gdFontCacheSetup
 
-{ echo "$as_me:$LINENO: checking for GD 2.0.12 or higher..." >&5
-echo "$as_me: checking for GD 2.0.12 or higher..." >&6;}
+{ echo "$as_me:$LINENO: checking for GD 2.0.16 or higher..." >&5
+echo "$as_me: checking for GD 2.0.16 or higher..." >&6;}
 
 # Check whether --with-gd or --without-gd was given.
 if test "${with_gd+set}" = set; then
@@ -5519,9 +5519,9 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
 
-    echo "$as_me:$LINENO: checking for gdImageSetAntiAliased in -lgd" >&5
-echo $ECHO_N "checking for gdImageSetAntiAliased in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdImageSetAntiAliased+set}" = set; then
+    echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
+echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -5539,11 +5539,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdImageSetAntiAliased ();
+char gdFontCacheSetup ();
 int
 main ()
 {
-gdImageSetAntiAliased ();
+gdFontCacheSetup ();
   ;
   return 0;
 }
@@ -5570,31 +5570,31 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdImageSetAntiAliased=yes
+  ac_cv_lib_gd_gdFontCacheSetup=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdImageSetAntiAliased=no
+ac_cv_lib_gd_gdFontCacheSetup=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageSetAntiAliased" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdImageSetAntiAliased" >&6
-if test $ac_cv_lib_gd_gdImageSetAntiAliased = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
+if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
   IS_GD2="true"
 fi
 
 
   if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-        unset ac_cv_lib_gd_gdImageSetAntiAliased
+        unset ac_cv_lib_gd_gdFontCacheSetup
     { echo "$as_me:$LINENO: checking whether GD needs libiconv..." >&5
 echo "$as_me: checking whether GD needs libiconv..." >&6;}
-    echo "$as_me:$LINENO: checking for gdImageSetAntiAliased in -lgd" >&5
-echo $ECHO_N "checking for gdImageSetAntiAliased in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdImageSetAntiAliased+set}" = set; then
+    echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
+echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -5612,11 +5612,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdImageSetAntiAliased ();
+char gdFontCacheSetup ();
 int
 main ()
 {
-gdImageSetAntiAliased ();
+gdFontCacheSetup ();
   ;
   return 0;
 }
@@ -5643,20 +5643,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdImageSetAntiAliased=yes
+  ac_cv_lib_gd_gdFontCacheSetup=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdImageSetAntiAliased=no
+ac_cv_lib_gd_gdFontCacheSetup=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageSetAntiAliased" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdImageSetAntiAliased" >&6
-if test $ac_cv_lib_gd_gdImageSetAntiAliased = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
+if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
   IS_GD2="true"
 fi
 
@@ -5667,8 +5667,8 @@ fi
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      echo "$as_me:$LINENO: result:         using libgd 2.0.12 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&5
-echo "${ECHO_T}        using libgd 2.0.12 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&6
+      echo "$as_me:$LINENO: result:         using libgd 2.0.16 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&5
+echo "${ECHO_T}        using libgd 2.0.16 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&6
 
   if test ""$GD_LIBDIR"" != "/usr/lib"; then
 
@@ -5692,8 +5692,8 @@ echo "${ECHO_T}        using libgd 2.0.12 (or higher) from $GD_LIB $GD_XTRA_LIBS
   fi
 
   else
-      { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
-echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
+      { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
+echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
@@ -5706,9 +5706,9 @@ else
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
 
-        echo "$as_me:$LINENO: checking for gdImageSetAntiAliased in -lgd" >&5
-echo $ECHO_N "checking for gdImageSetAntiAliased in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdImageSetAntiAliased+set}" = set; then
+        echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
+echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -5726,11 +5726,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdImageSetAntiAliased ();
+char gdFontCacheSetup ();
 int
 main ()
 {
-gdImageSetAntiAliased ();
+gdFontCacheSetup ();
   ;
   return 0;
 }
@@ -5757,20 +5757,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdImageSetAntiAliased=yes
+  ac_cv_lib_gd_gdFontCacheSetup=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdImageSetAntiAliased=no
+ac_cv_lib_gd_gdFontCacheSetup=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageSetAntiAliased" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdImageSetAntiAliased" >&6
-if test $ac_cv_lib_gd_gdImageSetAntiAliased = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
+if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
   IS_GD2="true"
 fi
 
@@ -5778,10 +5778,10 @@ fi
     if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
             { echo "$as_me:$LINENO: checking whether GD needs libiconv..." >&5
 echo "$as_me: checking whether GD needs libiconv..." >&6;}
-      unset ac_cv_lib_gd_gdImageSetAntiAliased
-      echo "$as_me:$LINENO: checking for gdImageSetAntiAliased in -lgd" >&5
-echo $ECHO_N "checking for gdImageSetAntiAliased in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdImageSetAntiAliased+set}" = set; then
+      unset ac_cv_lib_gd_gdFontCacheSetup
+      echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
+echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -5799,11 +5799,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdImageSetAntiAliased ();
+char gdFontCacheSetup ();
 int
 main ()
 {
-gdImageSetAntiAliased ();
+gdFontCacheSetup ();
   ;
   return 0;
 }
@@ -5830,20 +5830,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdImageSetAntiAliased=yes
+  ac_cv_lib_gd_gdFontCacheSetup=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdImageSetAntiAliased=no
+ac_cv_lib_gd_gdFontCacheSetup=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageSetAntiAliased" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdImageSetAntiAliased" >&6
-if test $ac_cv_lib_gd_gdImageSetAntiAliased = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
+if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
   IS_GD2="true"
 fi
 
@@ -5854,8 +5854,8 @@ fi
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      echo "$as_me:$LINENO: result:         using libgd 2.0.12 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&5
-echo "${ECHO_T}        using libgd 2.0.12 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&6
+      echo "$as_me:$LINENO: result:         using libgd 2.0.16 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&5
+echo "${ECHO_T}        using libgd 2.0.16 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&6
 
   if test ""$GD_LIBDIR"" != "/usr/lib"; then
 
@@ -5884,8 +5884,8 @@ echo "${ECHO_T}        using libgd 2.0.12 (or higher) from system libs ($GD_LIB 
   done
 
   if test "$FOUND_GD" = "false" ; then
-    { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
-echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
+    { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
+echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
    { (exit 1); exit 1; }; }
   fi
 fi
@@ -7614,76 +7614,6 @@ else
   PJ_TRANSFORM=no
 fi
 
-  echo "$as_me:$LINENO: checking for pj_latlong_from_proj in -lproj" >&5
-echo $ECHO_N "checking for pj_latlong_from_proj in -lproj... $ECHO_C" >&6
-if test "${ac_cv_lib_proj_pj_latlong_from_proj+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char pj_latlong_from_proj ();
-int
-main ()
-{
-pj_latlong_from_proj ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_proj_pj_latlong_from_proj=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_proj_pj_latlong_from_proj=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_proj_pj_latlong_from_proj" >&5
-echo "${ECHO_T}$ac_cv_lib_proj_pj_latlong_from_proj" >&6
-if test $ac_cv_lib_proj_pj_latlong_from_proj = yes; then
-  PROJ_API=yes
-else
-  PROJ_API=no
-fi
-
 
   if test -n "$PROJ_ENABLED" -a "$PJ_TRANSFORM" = "no"; then
       { { echo "$as_me:$LINENO: error: This version of PROJ is too old.  PROJ4.4.2 or later is required." >&5
@@ -7823,76 +7753,6 @@ else
   PJ_TRANSFORM=no
 fi
 
-  echo "$as_me:$LINENO: checking for pj_latlong_from_proj in -lproj" >&5
-echo $ECHO_N "checking for pj_latlong_from_proj in -lproj... $ECHO_C" >&6
-if test "${ac_cv_lib_proj_pj_latlong_from_proj+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj $PROJ_LIB $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char pj_latlong_from_proj ();
-int
-main ()
-{
-pj_latlong_from_proj ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_proj_pj_latlong_from_proj=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_proj_pj_latlong_from_proj=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_proj_pj_latlong_from_proj" >&5
-echo "${ECHO_T}$ac_cv_lib_proj_pj_latlong_from_proj" >&6
-if test $ac_cv_lib_proj_pj_latlong_from_proj = yes; then
-  PROJ_API=yes
-else
-  PROJ_API=no
-fi
-
   if test "$PJ_TRANSFORM" = "no"; then
       { { echo "$as_me:$LINENO: error: This version of PROJ is too old.  PROJ4.4.2 or later is required." >&5
 echo "$as_me: error: This version of PROJ is too old.  PROJ4.4.2 or later is required." >&2;}
@@ -7907,10 +7767,6 @@ else
 
   echo "$as_me:$LINENO: result:         PROJ.4 support not requested." >&5
 echo "${ECHO_T}        PROJ.4 support not requested." >&6
-fi
-
-if test "x$PROJ_API" = "xyes" ; then
-  PROJ_ENABLED="$PROJ_ENABLED -DUSE_PROJ_API_H"
 fi
 
 PROJ_ENABLED=$PROJ_ENABLED
