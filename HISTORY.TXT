@@ -13,6 +13,16 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.4.3
+--------------------------
+
+- Bug 1156: Added missing OFFSET value when writing STYLE objects in saveMap
+
+- Bug 1231: Added quotes around string values when writing OUTFPUTFORMAT
+  object in saveMap (problem introduced by the new "image/png; mode=24bits"
+  MIME type)
+
+
 Version 4.4.2 (2005-04-11)
 --------------------------
 
