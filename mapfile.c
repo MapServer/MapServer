@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.295  2005/04/13 13:19:04  dan
+ * Added missing OFFSET in writeStyle() (bug 1156) and added quotes around
+ * string values in writeOutputformatobject() (bug 1231)
+ *
  * Revision 1.294  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -1728,6 +1732,8 @@ void writeStyle(styleObj *style, FILE *stream) {
   else
     fprintf(stream, "        SYMBOL %d\n", style->symbol);
   if(style->width > 1) fprintf(stream, "        SIZE %d\n", style->width);
+  if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
+
   fprintf(stream, "      END\n");
 }
 
@@ -3266,22 +3272,22 @@ static void writeOutputformatobject(outputFormatObj *outputformat,
     if (outputformat)
     {
         fprintf(stream, "  OUTPUTFORMAT\n");
-        fprintf(stream, "    NAME %s\n", outputformat->name);
-        fprintf(stream, "    MIMETYPE %s\n", outputformat->mimetype);
-        fprintf(stream, "    DRIVER %s\n", outputformat->driver);
-        fprintf(stream, "    EXTENSION %s\n", outputformat->extension);
+        fprintf(stream, "    NAME \"%s\"\n", outputformat->name);
+        fprintf(stream, "    MIMETYPE \"%s\"\n", outputformat->mimetype);
+        fprintf(stream, "    DRIVER \"%s\"\n", outputformat->driver);
+        fprintf(stream, "    EXTENSION \"%s\"\n", outputformat->extension);
         if (outputformat->imagemode == MS_IMAGEMODE_PC256)
-          fprintf(stream, "    IMAGEMODE %s\n", "PC256");
+          fprintf(stream, "    IMAGEMODE \"%s\"\n", "PC256");
         else if (outputformat->imagemode == MS_IMAGEMODE_RGB)
-           fprintf(stream, "    IMAGEMODE %s\n", "RGB");
+           fprintf(stream, "    IMAGEMODE \"%s\"\n", "RGB");
         else if (outputformat->imagemode == MS_IMAGEMODE_RGBA)
-           fprintf(stream, "    IMAGEMODE %s\n", "RGBA");
+           fprintf(stream, "    IMAGEMODE \"%s\"\n", "RGBA");
         else if (outputformat->imagemode == MS_IMAGEMODE_INT16)
-           fprintf(stream, "    IMAGEMODE %s\n", "INT16");
+           fprintf(stream, "    IMAGEMODE \"%s\"\n", "INT16");
          else if (outputformat->imagemode == MS_IMAGEMODE_FLOAT32)
-           fprintf(stream, "    IMAGEMODE %s\n", "FLOAT32");
+           fprintf(stream, "    IMAGEMODE \"%s\"\n", "FLOAT32");
          else if (outputformat->imagemode == MS_IMAGEMODE_BYTE)
-           fprintf(stream, "    IMAGEMODE %s\n", "BYTE");
+           fprintf(stream, "    IMAGEMODE \"%s\"\n", "BYTE");
 
         fprintf(stream, "    TRANSPARENT %s\n", 
                 msTrueFalse[outputformat->transparent]);
