@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/04/14 16:51:07  frank
+ * Removed unused tab in printf.
+ *
  * Revision 1.52  2005/04/01 23:02:45  frank
  * Avoid emitting extra whitespace in the gml:coordinates for the gml:Box.
  * Related to bug 1304.
@@ -98,7 +101,7 @@ static int gmlWriteBounds_GML2(FILE *stream, rectObj *rect, const char *srsname,
 
   msIO_fprintf(stream, "%s\t\t<gml:coordinates>", tab);  
   msIO_fprintf(stream, "%.6f,%.6f %.6f,%.6f", rect->minx, rect->miny, rect->maxx, rect->maxy );   
-  msIO_fprintf(stream, "</gml:coordinates>\n", tab);
+  msIO_fprintf(stream, "</gml:coordinates>\n");
   msIO_fprintf(stream, "%s\t</gml:Box>\n", tab);
   msIO_fprintf(stream, "%s</gml:boundedBy>\n", tab);
 
