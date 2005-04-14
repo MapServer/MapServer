@@ -317,7 +317,7 @@ mapscriptvars:	Makefile
 	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
 	echo $(EXE_LDFLAGS) >> mapscriptvars
 	echo $(STATIC_LIBS) >> mapscriptvars
-	grep MS_VERSION map.h >> mapscriptvars
+	grep '#define MS_VERSION' map.h >> mapscriptvars
 
 php3_mapscript_clean::
 	cd mapscript/php3; $(MAKE) clean; cd ../..
