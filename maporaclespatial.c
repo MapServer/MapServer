@@ -779,9 +779,13 @@ static int msOCIGet2DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
 
 static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *obj, int s, int e, pointObj *pt )
 {
-    double x, y, z;
+    double x, y;
     int i, n, success = 1;
-    boolean exists, numnull;
+    boolean exists;
+#ifdef USE_SHAPE_Z_M
+    double z;
+    boolean numnull;
+#endif /* USE_SHAPE_Z_M */
     OCINumber *oci_number;
 
     for( i=s, n=0; i < e && success; i+=3, n++ ) 
@@ -794,9 +798,12 @@ static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
           OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+1, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
                && TRY( hand,
           OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&y ) )
-               && TRY( hand,            
 #ifdef USE_SHAPE_Z_M
-          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+2, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) );
+               && TRY( hand,            
+          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+2, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
+#endif /* USE_SHAPE_Z_M */
+            ;
+#ifdef USE_SHAPE_Z_M
         if (success)
         {   
             success = TRY(hand, OCINumberIsZero( hand->errhp, oci_number, (boolean *)&numnull));
@@ -938,7 +945,10 @@ static double osCalculateArcRadius(pointObj *pnt)
 static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape)
 {    
     double length, ctrl, angle;  
-    double divbas, plusbas, cosbas, sinbas, zrange = 0;
+    double divbas, plusbas, cosbas, sinbas = 0;
+#ifdef USE_SHAPE_Z_M
+    double zrange = 0;
+#endif /* USE_SHAPE_Z_M */
     int i = 0;  
     
     if ( npoints > 0 )
@@ -1006,7 +1016,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
 #ifdef USE_SHAPE_Z_M
                          if (data3d)
                              arcline.point[i].z = pnt[0].z;
-#ifdef /* USE_SHAPE_Z_M */
+#endif /* USE_SHAPE_Z_M */
                     }
                 }      
                 angle += plusbas;
@@ -1347,7 +1357,10 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
     int elem, ord_start, ord_end;
     boolean exists;
     OCINumber *oci_number;
-    double x, y, z;
+    double x, y;
+#ifdef USE_SHAPE_Z_M
+    double z;
+#endif /* USE_SHAPE_Z_M */
     int success;
     lineObj points = {0, NULL};
     pointObj point5[5]; /* for quick access */
