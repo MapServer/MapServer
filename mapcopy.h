@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/04/14 15:17:14  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.3  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -53,12 +56,20 @@
         (_dst)->maxy = (_src)->maxy;  \
     MS_MACROEND
 
+#ifdef USE_SHAPE_Z_M
 #define MS_COPYPOINT(_dst, _src)      \
     MS_MACROBEGIN                     \
         (_dst)->x = (_src)->x;        \
         (_dst)->y = (_src)->y;        \
         (_dst)->m = (_src)->m;        \
     MS_MACROEND
+#else
+#define MS_COPYPOINT(_dst, _src)      \
+    MS_MACROBEGIN                     \
+        (_dst)->x = (_src)->x;        \
+        (_dst)->y = (_src)->y;        \
+    MS_MACROEND
+#endif
 
 #define MS_COPYCOLOR(_dst, _src)      \
     MS_MACROBEGIN                     \

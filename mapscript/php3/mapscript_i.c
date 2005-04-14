@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.91  2005/04/14 15:17:15  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.90  2004/11/12 18:43:01  assefa
  * rectObj memebers are initialized ot -1 (Bug 788).
  *
@@ -788,7 +791,9 @@ int lineObj_add(lineObj *self, pointObj *p) {
 
     self->point[self->numpoints].x = p->x;
     self->point[self->numpoints].y = p->y;
+#ifdef USE_SHAPE_Z_M
     self->point[self->numpoints].m = p->m;
+#endif
     self->numpoints++;
 
     return 0;

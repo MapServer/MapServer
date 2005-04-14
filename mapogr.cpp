@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.85  2005/04/14 15:17:14  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.84  2005/03/29 17:56:40  frank
  * Insure that tile index reading is restarted in msOGRLayerInitItemInfo()
  * or else fastcgi repeat requests for a layer may fail on subsequent
@@ -245,8 +248,10 @@ static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
 
     line->point[line->numpoints].x = dX;
     line->point[line->numpoints].y = dY;
+#ifdef USE_SHAPE_Z_M
     line->point[line->numpoints].z = 0.0;
     line->point[line->numpoints].m = 0.0;
+#endif
     line->numpoints++;
 }
 

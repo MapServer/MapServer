@@ -1687,6 +1687,21 @@ if test "$enable_ignore_missing_data" != "no" ; then
 fi
 AC_SUBST(IGNORE_MISSING_DATA, $IGNORE_MISSING_DATA)
 
+dnl ---------------------------------------------------------------------
+dnl Check USE_SHAPE_Z_M option (OFF by default)
+dnl ---------------------------------------------------------------------
+
+AC_ARG_ENABLE(shape-z-m,
+[  --enable-shape-z-m      Use shape Z and M parameters (disabled by default).
+  --disable-shape-z-m     Disable support for shape Z and M parameters.],,)
+if test "$enable_shape_z_m" == "yes" ; then
+
+  USE_SHAPE_Z_M="-DUSE_SHAPE_Z_M"
+
+  AC_MSG_RESULT([Compiling with -DUSE_SHAPE_Z_M.])
+fi
+AC_SUBST(USE_SHAPE_Z_M, $USE_SHAPE_Z_M)
+
 
 dnl ---------------------------------------------------------------------
 dnl Check for warning flags. 

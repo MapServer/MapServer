@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/04/14 15:17:14  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.15  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -54,8 +57,10 @@ typedef struct {
 typedef struct {
   double x;
   double y;
+#ifdef USE_SHAPE_Z_M
   double z;  
   double m;  
+#endif
 } pointObj;
 
 typedef struct {

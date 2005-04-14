@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/04/14 15:17:14  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.39  2005/03/08 18:08:01  frank
  * fixed msProjectPoint() to return MS_FAILURE in missing case: bug 1273
  *
@@ -214,8 +217,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 
   prj_point.x = rect->minx;
   prj_point.y = rect->miny;
+#ifdef USE_SHAPE_Z_M
   prj_point.z = 0.0;
   prj_point.m = 0.0;
+#endif /* USE_SHAPE_Z_M */
 
   msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
                     &failure);

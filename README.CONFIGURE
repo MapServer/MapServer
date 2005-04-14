@@ -80,6 +80,8 @@ Here is the list of available options as returned by "./configure --help":
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.
+  --enable-shape-z-m      Use shape Z and M parameters (disabled by default).
+  --disable-shape-z-m     Disable support for shape Z and M parameters.
   --enable-debug          Include -g in CFLAGS for debugging and enable
                           msDebug() output to stderr (i.e. server log file).
   --disable-debug         Do not include -g in CFLAGS and disable msDebug()

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/04/14 15:17:14  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.16  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -1187,7 +1190,9 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
         
         point.x = rlinfo->qc_x[record];
         point.y = rlinfo->qc_y[record];
+#ifdef USE_SHAPE_Z_M
         point.m = 0.0;
+#endif
 
         msAddLine( shape, &line );
     }

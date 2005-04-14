@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/04/14 15:17:14  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.47  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -2175,7 +2178,11 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         return -1;
 
     marker_rect.minx = marker_rect.miny = marker_rect.maxx = marker_rect.maxy = 0;      
+#ifdef USE_SHAPE_Z_M
     p.x = p.y = p.z = 0;
+#else
+    p.x = p.y = 0;
+#endif
 /* -------------------------------------------------------------------- */
 /*      if the output is single (SWF file based on one raster that      */
 /*      will contain all  the rendering), draw the lables using the     */

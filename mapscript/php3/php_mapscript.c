@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.230  2005/04/14 15:17:15  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.229  2005/04/07 17:25:27  assefa
  * Remove #ifdef USE_SVG. It was added during development.
  *
@@ -9102,8 +9105,10 @@ static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
     /* editable properties */
     add_property_double(return_value,   "x",   ppoint->x);
     add_property_double(return_value,   "y",   ppoint->y);
+#ifdef USE_SHAPE_Z_M
     add_property_double(return_value,   "z",   ppoint->z);
     add_property_double(return_value,   "m",   ppoint->m);
+#endif
 
     return point_id;
 }
@@ -9192,6 +9197,7 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     self->x = pX->value.dval;
     self->y = pY->value.dval;
 
+#ifdef USE_SHAPE_Z_M
     if (nArgs == 3)
     {
         convert_to_double(pM); 
@@ -9199,10 +9205,13 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     }
     else
       self->m = 0.0; 
+#endif
 
     _phpms_set_property_double(pThis, "x", self->x, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis, "y", self->y, E_ERROR TSRMLS_CC);
+#ifdef USE_SHAPE_Z_M
     _phpms_set_property_double(pThis, "m", self->y, E_ERROR TSRMLS_CC);
+#endif
 
 
     RETURN_LONG(0);
@@ -9262,6 +9271,7 @@ DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS)
 
     self->x = pX->value.dval;
     self->y = pY->value.dval;
+#ifdef USE_SHAPE_Z_M
     self->z = pZ->value.dval;
 
     if (nArgs == 4)
@@ -9271,11 +9281,14 @@ DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS)
     }
     else
       self->m = 0.0; 
+#endif
 
     _phpms_set_property_double(pThis, "x", self->x, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis, "y", self->y, E_ERROR TSRMLS_CC);
+#ifdef USE_SHAPE_Z_M
     _phpms_set_property_double(pThis, "z", self->z, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis, "m", self->m, E_ERROR TSRMLS_CC);
+#endif
 
 
     RETURN_LONG(0);
@@ -9803,6 +9816,8 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
 
     oPoint.x = pX->value.dval;
     oPoint.y = pY->value.dval;
+
+#ifdef USE_SHAPE_Z_M
     oPoint.z = 0.0;
 
     if (nArgs == 3)
@@ -9812,6 +9827,7 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
     }
     else
       oPoint.m = 0.0;
+#endif
  
     self = (lineObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msline_ref),
@@ -9874,6 +9890,7 @@ DLEXPORT void php3_ms_line_addXYZ(INTERNAL_FUNCTION_PARAMETERS)
 
     oPoint.x = pX->value.dval;
     oPoint.y = pY->value.dval;
+#ifdef USE_SHAPE_Z_M
     oPoint.z = pY->value.dval;
 
     if (nArgs == 4)
@@ -9883,6 +9900,7 @@ DLEXPORT void php3_ms_line_addXYZ(INTERNAL_FUNCTION_PARAMETERS)
     }
     else
       oPoint.m = 0.0;
+#endif
  
     self = (lineObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msline_ref),

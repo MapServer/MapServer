@@ -41,8 +41,10 @@
         if (!p) return NULL;
         p->x = x;
         p->y = y;
+#ifdef USE_SHAPE_Z_M
     	p->z = z;
         p->m = m;
+#endif /* USE_SHAPE_Z_M */
         return p;
     }
 #endif
@@ -82,8 +84,10 @@
     {
         self->x = x;
         self->y = y;
+#ifdef USE_SHAPE_Z_M
 	self->z = 0.0;
         self->m = m;
+#endif /* USE_SHAPE_Z_M */
 	
         return MS_SUCCESS;
     }
@@ -92,8 +96,10 @@
     {
         self->x = x;
         self->y = y;
+#ifdef USE_SHAPE_Z_M
 	self->z = z;
         self->m = m;
+#endif /* USE_SHAPE_Z_M */
         return MS_SUCCESS;
     }
 
@@ -101,8 +107,10 @@
     {
         self->x = x;
         self->y = y;
+#ifdef USE_SHAPE_Z_M
 	self->z = z;
 	self->m = m;
+#endif /* USE_SHAPE_Z_M */
         return MS_SUCCESS;
     }
 
@@ -112,10 +120,14 @@
         char buffer[256];
         const char *fmt;
 
+#ifdef USE_SHAPE_Z_M
 	if( self->m < -1e38 )
 	    fmt = "{ 'x': %.16g , 'y': %.16g, 'z': %.16g }";
 	else
 	    fmt = "{ 'x': %.16g , 'y': %.16g, 'z': %.16g, 'm': %.16g }";
+#else
+        fmt = "{ 'x': %.16g , 'y': %.16g }";
+#endif /* USE_SHAPE_Z_M */
 	
         msPointToFormattedString(self, fmt, (char *) &buffer, 256);
         return strdup(buffer);

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/04/14 15:17:14  julien
+ * Bug 1244: Remove Z and M from point by default to gain performance.
+ *
  * Revision 1.49  2005/03/25 05:42:58  frank
  * added msAddLineDirectly(), msAddLine() uses memcpy()
  *
@@ -1082,6 +1085,10 @@ void msRectToFormattedString(rectObj *rect, char *format, char *buffer,
 void msPointToFormattedString(pointObj *point, const char *format, 
                               char *buffer, int buffer_length) 
 {
+#ifdef USE_SHAPE_Z_M
     snprintf(buffer, buffer_length, format, point->x, point->y, point->z, point->m);
+#else
+    snprintf(buffer, buffer_length, format, point->x, point->y);
+#endif
 }
 

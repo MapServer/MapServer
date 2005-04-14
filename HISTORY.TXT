@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1244: Removing Z and M parameter from pointObj by default. A new 
+  compilation option is available to active those option --enable-shape-z-m.
+  This gives an overall performance gain around 7 to 10%.
+
 - Bug 1225: MapServer now requires GD 2.0.16 or more recent
 
 - MapScript: shapeObj allocates memory for 4 value strings, shapeObj.setValue()
