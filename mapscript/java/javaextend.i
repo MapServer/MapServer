@@ -32,8 +32,10 @@ imageObj
         if (!p) return NULL;
         p->x = x;
         p->y = y;
+#ifdef USE_SHAPE_Z_M
 	    p->z = z;
         p->m = m;
+#endif
         return p;
     }
 
@@ -44,8 +46,10 @@ imageObj
         if (!p) return NULL;
         p->x = x;
         p->y = y;
+#ifdef USE_SHAPE_Z_M
         p->z = z;
         p->m = -2e38;
+#endif
         return p;
     }
 
