@@ -60,7 +60,7 @@ $(MS_OBJS):	$(MS_HDRS)
 $(MS_LIB):	$(MS_OBJS)
 	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
 	lib /out:$(MS_LIB) $(MS_OBJS)
-	link /dll /debug \
+	link /dll $(LDEBUG) \
 	   $(MS_OBJS) $(EXTERNAL_LIBS) /def:mapserver.def \
 	   /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
 
