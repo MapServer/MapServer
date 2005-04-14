@@ -59,7 +59,8 @@ class PointObjTestCase(MapscriptTestCase):
         p.setXY(1.0, 1.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 1.0)
-        self.assertAlmostEqual(p.m, -2e38)
+        if hasattr(p, 'm'):
+            self.assertAlmostEqual(p.m, -2e38)
     
     def testSetXYM(self):
         """point can have its x and y reset (with m value)"""
@@ -67,7 +68,8 @@ class PointObjTestCase(MapscriptTestCase):
         p.setXY(1.0, 1.0, 1.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 1.0)
-        self.assertAlmostEqual(p.m, 1.0)
+        if hasattr(p, 'm'):
+            self.assertAlmostEqual(p.m, 1.0)
 
     def testSetXYZ(self):
         """point can have its x, y, z reset (with m value)"""
@@ -75,18 +77,29 @@ class PointObjTestCase(MapscriptTestCase):
         p.setXYZ(1.0, 2.0, 3.0, 4.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 2.0)
-        self.assertAlmostEqual(p.z, 3.0)
-        self.assertAlmostEqual(p.m, 4.0)
+        if hasattr(p, 'z') and hasattr(p, 'm'):
+            self.assertAlmostEqual(p.z, 3.0)
+            self.assertAlmostEqual(p.m, 4.0)
 
     def testPoint__str__(self):
         """return properly formatted string"""
         p = mapscript.pointObj(1.0, 1.0)
-        assert str(p) == "{ 'x': 1 , 'y': 1, 'z': 0 }", str(p)
+        if hasattr(p, 'z'):
+            p_str = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g }" % (p.x, p.y, p.z)
+        else:
+            p_str = "{ 'x': %.16g, 'y': %.16g }" % (p.x, p.y)
+        assert str(p) == p_str, str(p)
  
     def testPointToString(self):
         """return properly formatted string in toString()"""
         p = mapscript.pointObj(1.0, 1.0, 0.002, 15.0)
-        assert p.toString() == "{ 'x': 1 , 'y': 1, 'z': 0.002, 'm': 15 }", p.toString()
+        if hasattr(p, 'z') and hasattr(p, 'm'):
+            p_str = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g, 'm': %.16g }" \
+                  % (p.x, p.y, p.z, p.m)
+        else:
+            p_str = "{ 'x': %.16g, 'y': %.16g }" % (p.x, p.y)
+
+        assert p.toString() == p_str, p.toString()
 
 
 
