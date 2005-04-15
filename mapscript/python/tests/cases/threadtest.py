@@ -36,19 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, MapTestCase, TESTMAPFILE
-
-class MultipleLayerAdditionTestCase(MapTestCase):
-
-    def testAdd2Layers(self):
-        """add two layers to map"""
-        layer_a = mapscript.layerObj(self.map)
-        layer_a.name = 'a'
-        layer_b = mapscript.layerObj(self.map)
-        layer_b.name = 'b'
-        assert self.map.numlayers == 9
-        assert self.map.getLayerByName('a') != None
-        assert self.map.getLayerByName('b') != None
+from testing import mapscript, TESTMAPFILE
 
 def make_map(i):
     print "making map in thread %d" % (i)
