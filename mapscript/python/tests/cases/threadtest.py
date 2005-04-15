@@ -50,7 +50,8 @@ class MultipleLayerAdditionTestCase(MapTestCase):
         assert self.map.getLayerByName('a') != None
         assert self.map.getLayerByName('b') != None
 
-def make_map():
+def make_map(i):
+    print "making map in thread %d" % (i)
     mo = mapscript.mapObj(TESTMAPFILE)
     im = mo.draw()
 
@@ -62,8 +63,9 @@ class MultipleThreadsTestCase(unittest.TestCase):
         import threading
         
         for i in range(10):
-            thread = threading.Thread(target=make_map)
+            thread = threading.Thread(target=make_map(i))
             thread.start()
+         
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
