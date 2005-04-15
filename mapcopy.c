@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/04/15 17:50:20  sdlime
+ * Updated style copy function to handle the new gradient parameters (bug 1305).
+ *
  * Revision 1.36  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -364,11 +367,13 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYCOLOR(&(dst->outlinecolor),&(src->outlinecolor));
     MS_COPYCOLOR(&(dst->backgroundcolor), &(src->backgroundcolor));
    
+    MS_COPYCOLOR(&(dst->mincolor), &(src->mincolor));
+    MS_COPYCOLOR(&(dst->maxcolor), &(src->maxcolor));
+
     /* The macro should protect us but it isn't in this case */
     if (src->symbolname) {
         MS_COPYSTRING(dst->symbolname, src->symbolname);
     }
-
 
     MS_COPYSTELEM(symbol);
     MS_COPYSTELEM(size);
@@ -382,9 +387,12 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(antialias);
     MS_COPYSTELEM(isachild);
     MS_COPYSTELEM(angle);
+    MS_COPYSTELEM(minvalue);
+    MS_COPYSTELEM(maxvalue);
 
     if (src->angleitem) MS_COPYSTRING(dst->angleitem, src->angleitem);
     if (src->sizeitem) MS_COPYSTRING(dst->sizeitem, src->sizeitem);
+    if (src->gradientitem) MS_COPYSTRING(dst->gradientitem, src->gradientitem);
 
     return MS_SUCCESS;
 }
