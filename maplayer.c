@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2005/04/15 17:10:36  sdlime
+ * Applied Bill Benko's patch for bug 1305, gradient support.
+ *
  * Revision 1.102  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -870,6 +873,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
       for(j=0; j<layer->class[i].numstyles; j++) {
         if(layer->class[i].styles[j].angleitem) nt++;
 	if(layer->class[i].styles[j].sizeitem) nt++;
+	if(layer->class[i].styles[j].gradientitem) nt++;
       }
     }
 
@@ -970,6 +974,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 	for(j=0; j<layer->class[i].numstyles; j++) {
 	  if(layer->class[i].styles[j].angleitem) layer->class[i].styles[j].angleitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].angleitem);
 	  if(layer->class[i].styles[j].sizeitem) layer->class[i].styles[j].sizeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].sizeitem); 
+	  if(layer->class[i].styles[j].gradientitem) layer->class[i].styles[j].gradientitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].gradientitem); 
 	}
       }
 

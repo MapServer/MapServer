@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.296  2005/04/15 17:10:36  sdlime
+ * Applied Bill Benko's patch for bug 1305, gradient support.
+ *
  * Revision 1.295  2005/04/13 13:19:04  dan
  * Added missing OFFSET in writeStyle() (bug 1156) and added quotes around
  * string values in writeOutputformatobject() (bug 1231)
@@ -1599,7 +1602,14 @@ int initStyle(styleObj *style) {
   MS_INIT_COLOR(style->color, -1,-1,-1); /* must explictly set colors */
   MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1);
   MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
-  style->symbol = 0; /* there is always a default symbol */
+  /* New Gradient fields*/
+  MS_INIT_COLOR(style->mincolor, -1,-1,-1);
+  MS_INIT_COLOR(style->maxcolor, -1,-1,-1);
+  style->minvalue = 0.0;
+  style->maxvalue = 1.0;
+  style->gradientitem = NULL;
+  /* End Gradient fields*/
+  style->symbol = 0; /* there is always a default symbol*/
   style->symbolname = NULL;
   style->size = -1; /* in SIZEUNITS (layerObj) */
   style->minsize = MS_MINSYMBOLSIZE;
@@ -1623,6 +1633,23 @@ int loadStyle(styleObj *style) {
 
   for(;;) {
     switch(msyylex()) {
+  /* New Gradient fields*/
+    case (MINCOLOR):
+      if(loadColor(&(style->mincolor)) != MS_SUCCESS) return(MS_FAILURE);
+      break;
+    case (MAXCOLOR):
+      if(loadColor(&(style->maxcolor)) != MS_SUCCESS) return(MS_FAILURE);
+      break;
+    case(MINVALUE):
+      if(getDouble(&(style->minvalue)) == -1) return(-1);
+      break;
+    case(MAXVALUE):
+      if(getDouble(&(style->maxvalue)) == -1) return(-1);
+      break;
+    case(GRADIENTITEM):
+      if(getString(&style->gradientitem) == MS_FAILURE) return(-1);
+      break;
+  /* End Gradient fields*/
     case(ANGLE):
       if(getDouble(&(style->angle)) == -1) return(MS_FAILURE);
       break;
@@ -1642,6 +1669,12 @@ int loadStyle(styleObj *style) {
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
       if(loadColorWithAlpha(&(style->color)) != MS_SUCCESS) return(MS_FAILURE);
+      break;
+    case (ALPHAMINCOLOR):
+      if(loadColorWithAlpha(&(style->mincolor)) != MS_SUCCESS) return(MS_FAILURE);
+      break;
+    case (ALPHAMAXCOLOR):
+      if(loadColorWithAlpha(&(style->maxcolor)) != MS_SUCCESS) return(MS_FAILURE);
       break;
 #endif
     case(EOF):

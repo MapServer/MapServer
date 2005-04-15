@@ -120,6 +120,14 @@ void lexer_cleanup(void) {
 
 <EXPRESSION_STRING>length                      { return(LENGTH); }
 
+<INITIAL,OBJECT_STRING>mincolor 	       { return(MINCOLOR); }
+<INITIAL,OBJECT_STRING>maxcolor 	       { return(MAXCOLOR); }
+<INITIAL,OBJECT_STRING>alphamincolor	       { return(ALPHAMAXCOLOR); }
+<INITIAL,OBJECT_STRING>alphamaxcolor 	       { return(ALPHAMAXCOLOR); }
+<INITIAL,OBJECT_STRING>minvalue                { return(MINVALUE); }
+<INITIAL,OBJECT_STRING>maxvalue                { return(MAXVALUE); }
+<INITIAL,OBJECT_STRING>gradientitem            { return(GRADIENTITEM); }
+
 <INITIAL,OBJECT_STRING>alphacolor		       { return(ALPHACOLOR); }
 <INITIAL,OBJECT_STRING>angle                   { return(ANGLE); }
 <INITIAL,OBJECT_STRING>angleitem               { return(ANGLEITEM); }

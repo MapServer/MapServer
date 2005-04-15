@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.403  2005/04/15 17:10:36  sdlime
+ * Applied Bill Benko's patch for bug 1305, gradient support.
+ *
  * Revision 1.402  2005/04/07 17:23:16  assefa
  * Remove #ifdef USE_SVG. It was added during development.
  *
@@ -638,6 +641,14 @@ typedef struct {
   colorObj backgroundcolor;
   colorObj outlinecolor;
 
+  /* Stuff to handle Gradient Styles */
+  colorObj mincolor;
+  colorObj maxcolor;
+  double minvalue;
+  double maxvalue;
+  char *gradientitem;
+  int gradientitemindex;
+  
   int symbol;
   char *symbolname;
 
@@ -1581,6 +1592,9 @@ MS_DLL_EXPORT int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style);
 MS_DLL_EXPORT int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
+  /*Gradient Support*/
+MS_DLL_EXPORT int msMapGradient(styleObj *style, shapeObj *shape);
+
 MS_DLL_EXPORT void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style, double scalefactor);
@@ -1907,5 +1921,8 @@ MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
 #ifdef __cplusplus
 }
 #endif
+
+#define MAX(a,b)      ((a>b) ? a : b)
+#define MIN(a,b)      ((a<b) ? a : b)
 
 #endif /* MAP_H */

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2005/04/15 17:10:36  sdlime
+ * Applied Bill Benko's patch for bug 1305, gradient support.
+ *
  * Revision 1.88  2005/04/07 17:23:16  assefa
  * Remove #ifdef USE_SVG. It was added during development.
  *
@@ -1294,6 +1297,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   c = shape->classindex;
 
+/* Before we do anything else, we will check for a gradientitem.
+   If its there, we need to change the style's color to map
+   the gradient to the shape */
+  for(s=0; s<layer->class[c].numstyles; s++)
+    {
+      if (layer->class[c].styles[s].gradientitem !=  NULL)
+	msMapGradient(&(layer->class[c].styles[s]), shape);
+    }
+  
   /* changed when Tomas added CARTOLINE symbols */
   if(layer->class[c].styles[0].size == -1)
       csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c].styles[0].symbol]))) * layer->scalefactor) / 2.0);
@@ -1938,4 +1950,44 @@ void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
                     shapeObj *shape)
 {
 }
+/**
+ * take the value from the shape and use it to change the 
+ * color in the style to match the gradient map
+ */
+int msMapGradient(styleObj *style, shapeObj *shape)
+{
+  double fieldVal;
+  double range;
+  double scaledVal;
+  char* fieldStr;
 
+  /*first, get the value of the gradientitem, which should*/
+  /*evaluate to a double*/
+  fieldStr = shape->values[style->gradientitemindex];
+  if (fieldStr == NULL) /*if there's not value, bail*/
+    {
+      return MS_FAILURE;
+    }
+  fieldVal = 0.0;
+
+  fieldVal = atof(fieldStr); /*faith that it's ok -- */
+  /*should switch to strtod*/
+  range = style->maxvalue - style->minvalue;
+  scaledVal = (fieldVal - style->minvalue)/range;
+  
+  /*At this point, we know where on the gradient we need to be*/
+  /*However, we don't know how to map it yet, since RGB(A) can */
+  /*Go up or down*/
+  style->color.red = (int)(MAX(0,(MIN(255, (style->mincolor.red + ((style->maxcolor.red - style->mincolor.red) * scaledVal))))));
+  style->color.green = (int)(MAX(0,(MIN(255,(style->mincolor.green + ((style->maxcolor.green - style->mincolor.green) * scaledVal))))));
+  style->color.blue = (int)(MAX(0,(MIN(255,(style->mincolor.blue + ((style->maxcolor.blue - style->mincolor.blue) * scaledVal))))));
+  style->color.pen = MS_PEN_UNSET; /*so it will recalculate pen*/
+
+  /*( "msMapGradient(): %i %i %i", style->color.red , style->color.green, style->color.blue);*/
+
+#if ALPHACOLOR_ENABLED
+  /*NO ALPHA GRADIENT YET  style->color.alpha = style->mincolor.alpha + ((style->maxcolor.alpha - style->mincolor.alpha) * scaledVal);*/
+#endif
+
+  return MS_SUCCESS;
+}

@@ -208,4 +208,13 @@
 #define MINWIDTH 1164
 #define MAXWIDTH 1165
 
+ /* Gradient support */
+#define MINCOLOR 1170
+#define MAXCOLOR 1171
+#define ALPHAMINCOLOR 1172
+#define ALPHAMAXCOLOR 1173
+#define MINVALUE 1174
+#define MAXVALUE 1175
+#define GRADIENTITEM 1176
+
 #endif /* MAPFILE_H */
