@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.297  2005/04/15 17:52:47  sdlime
+ * Updated freeStyle to free the gradientitem if set.
+ *
  * Revision 1.296  2005/04/15 17:10:36  sdlime
  * Applied Bill Benko's patch for bug 1305, gradient support.
  *
@@ -1738,6 +1741,7 @@ void freeStyle(styleObj *style) {
   msFree(style->symbolname);
   msFree(style->angleitem);
   msFree(style->sizeitem);
+  msFree(style->gradientitem);
 }
 
 void writeStyle(styleObj *style, FILE *stream) {
