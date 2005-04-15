@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.299  2005/04/15 19:32:33  julien
+ * Bug 1103: Set the default tolerance value based on the layer type.
+ *
  * Revision 1.298  2005/04/15 18:52:01  sdlime
  * Added write support for the gradient parameters to writeStyle. Parameters are only written if a gradientitem is set.
  *
@@ -2214,7 +2217,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->annotate = MS_FALSE;
 
   layer->toleranceunits = MS_PIXELS;
-  layer->tolerance = 0; /* perhaps this should have a different value based on type */
+  layer->tolerance = -1; /* perhaps this should have a different value based on type */
 
   layer->symbolscale = -1.0; /* -1 means nothing is set */
   layer->scalefactor = 1.0;
@@ -2927,7 +2930,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
     if(layer->tileitem) fprintf(stream, "    TILEITEM \"%s\"\n", layer->tileitem);
   } 
 
-  fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
+  if(layer->tolerance != -1) fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
   if(layer->transparency > 0) fprintf(stream, "    TRANSPARENCY %d\n", layer->transparency);

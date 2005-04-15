@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/04/15 19:32:33  julien
+ * Bug 1103: Set the default tolerance value based on the layer type.
+ *
  * Revision 1.17  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -938,6 +941,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     return MS_FAILURE;
 #else
     int result;
+    double layer_tolerance;
     rectObj bufferRect;
     rasterLayerInfo *rlinfo = NULL;
 
@@ -954,11 +958,23 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
 /*      underlying pixels.                                              */
 /* -------------------------------------------------------------------- */
     if(buffer <= 0) { /* use layer tolerance */
+
+        /* Get the layer tolerance
+           default is 3 for point and line layers, 0 for others */
+        if(layer->tolerance == -1)
+            if(layer->status == MS_LAYER_POINT || 
+               layer->status == MS_LAYER_LINE)
+                layer_tolerance = 3;
+            else
+                layer_tolerance = 0;
+        else
+            layer_tolerance = layer->tolerance;
+
         if(layer->toleranceunits == MS_PIXELS)
-            buffer = layer->tolerance 
+            buffer = layer_tolerance 
                 * msAdjustExtent(&(map->extent), map->width, map->height);
         else
-            buffer = layer->tolerance 
+            buffer = layer_tolerance 
                 * (msInchesPerUnit(layer->toleranceunits,0)
                    / msInchesPerUnit(map->units,0));
     }

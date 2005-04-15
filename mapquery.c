@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2005/04/15 19:32:33  julien
+ * Bug 1103: Set the default tolerance value based on the layer type.
+ *
  * Revision 1.84  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -572,7 +575,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   layerObj *lp, *slp;
   char status;
 
-  double distance, tolerance;
+  double distance, tolerance, layer_tolerance;
 
   rectObj searchrect;
   shapeObj shape, selectshape;
@@ -621,11 +624,21 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
+
+    /* Get the layer tolerance
+       default is 3 for point and line layers, 0 for others */
+    if(lp->tolerance == -1)
+        if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
+            layer_tolerance = 3;
+        else
+            layer_tolerance = 0;
+    else
+        layer_tolerance = lp->tolerance;
   
     if(lp->toleranceunits == MS_PIXELS)
-      tolerance = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+      tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
     else
-      tolerance = lp->tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
+      tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
    
     /* open this layer */
     status = msLayerOpen(lp);
@@ -792,6 +805,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   int start, stop=0;
 
   double d, t;
+  double layer_tolerance;
 
   layerObj *lp;
 
@@ -833,11 +847,21 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
         continue;
     }
 
+    /* Get the layer tolerance
+       default is 3 for point and line layers, 0 for others */
+    if(lp->tolerance == -1)
+        if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
+            layer_tolerance = 3;
+        else
+            layer_tolerance = 0;
+    else
+        layer_tolerance = lp->tolerance;
+
     if(buffer <= 0) { /* use layer tolerance */
       if(lp->toleranceunits == MS_PIXELS)
-	t = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+	t = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
       else
-	t = lp->tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
+	t = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
     } else /* use buffer distance */
       t = buffer;
 
@@ -939,7 +963,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
   shapeObj shape;
   layerObj *lp;
   char status;
-  double distance, tolerance;
+  double distance, tolerance, layer_tolerance;
   rectObj searchrect;
 
   /* FIX: do some checking on selectshape here... */
@@ -983,10 +1007,20 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
         continue;
     }
 
-    if(lp->toleranceunits == MS_PIXELS)
-      tolerance = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+    /* Get the layer tolerance
+       default is 3 for point and line layers, 0 for others */
+    if(lp->tolerance == -1)
+        if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
+            layer_tolerance = 3;
+        else
+            layer_tolerance = 0;
     else
-      tolerance = lp->tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
+        layer_tolerance = lp->tolerance;
+
+    if(lp->toleranceunits == MS_PIXELS)
+      tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+    else
+      tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
    
     /* open this layer */
     status = msLayerOpen(lp);
