@@ -231,6 +231,9 @@ EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
 all: $(MAKE_GD) libmap.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
 
 php3_mapscript:: $(LIBMAP_STATIC)
@@ -245,12 +248,6 @@ mapparser.o: mapparser.c map.h
 
 mapparser.c: mapparser.y
 	$(YACC) -p msyy -d -omapparser.c mapparser.y
-
-mapogr.o: mapogr.cpp
-	$(CXX) -c $(CXXFLAGS) mapogr.cpp -o mapogr.o
-
-mapgeos.o: mapgeos.cpp
-	$(CXX) -c $(CXXFLAGS) mapgeos.cpp -o mapgeos.o
 
 lib:    $(LIBMAP_STATIC)
 libmap: $(LIBMAP_STATIC)
