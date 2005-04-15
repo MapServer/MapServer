@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/04/15 18:44:31  sdlime
+ * Updated msCopyStyle to account for the various item indexes.
+ *
  * Revision 1.37  2005/04/15 17:50:20  sdlime
  * Updated style copy function to handle the new gradient parameters (bug 1305).
  *
@@ -393,6 +396,10 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     if (src->angleitem) MS_COPYSTRING(dst->angleitem, src->angleitem);
     if (src->sizeitem) MS_COPYSTRING(dst->sizeitem, src->sizeitem);
     if (src->gradientitem) MS_COPYSTRING(dst->gradientitem, src->gradientitem);
+
+    MS_COPYSTELEM(angleitemindex);
+    MS_COPYSTELEM(sizeitemindex);
+    MS_COPYSTELEM(gradientitemindex);
 
     return MS_SUCCESS;
 }
