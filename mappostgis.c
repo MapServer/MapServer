@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/04/15 21:10:59  pramsey
+ * Applied patch for bug 1306
+ *
  * Revision 1.51  2005/03/08 19:39:51  assefa
  * Corrected memeory leak introduced in revision 1.50.
  * Changes in Revison 1.50 were necessary due to portability issue : the
@@ -447,24 +450,36 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
 
     sprintf(box3d, "'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D", rect.minx, rect.miny, rect.maxx, rect.maxy);
 
-    /* substitute token '!BOX!' in geom_table with the box3d - do at most 1 substitution */
+    /* substitute token '!BOX!' in geom_table with the box3d - do an unlimited # of subs */
+    /* to not undo the work here, we need to make sure that data_source is malloc'd here */
 
-    if(!strstr(geom_table, "!BOX!")) {
-        data_source = (char *) malloc(strlen(geom_table) + 1);
-        strcpy(data_source, geom_table);
-    } else {
-        /* need to do a substition */
-        char    *start, *end;
-
-        start = strstr(geom_table, "!BOX!");
-        end = start + 5;
-
-        data_source = (char *) malloc((start - geom_table) + strlen(box3d) + strlen(end) + 1);
-
-        strncpy(data_source, geom_table, start - geom_table);
-        strcpy(data_source + (start - geom_table), box3d);
-        strcat(data_source, end);
-    }
+     if(!strstr(geom_table, "!BOX!")) {
+         data_source = (char *) malloc(strlen(geom_table) + 1);
+         strcpy(data_source, geom_table);
+     } else {
+       char* result = NULL;
+       while (strstr(geom_table,"!BOX!"))
+	 {
+	   /* need to do a substition */
+	   char    *start, *end;
+	   char    *oldresult = result;
+	   start = strstr(geom_table,"!BOX!");
+	   end = start+5;
+	   
+	   result = (char *)malloc((start - geom_table) + strlen(box3d) + strlen(end) +1);
+	   
+	   strncpy(result, geom_table, start - geom_table);
+	   strcpy(result + (start - geom_table), box3d);
+	   strcat(result, end);
+	   
+	   geom_table= result;
+	   if (oldresult != NULL)
+	     free(oldresult);
+	 }
+       /* if we're here, this will be a malloc'd string, so no need to 
+	  copy it */
+       data_source = geom_table;
+     }
 
     /* Allocate buffer to fit the largest query string */
     query_string_0_6 = (char *) malloc(113 + 42 + strlen(columns_wanted) + strlen(data_source) + (layer->filter.string ? strlen(layer->filter.string) : 0) + 2 * strlen(geom_column) + strlen(box3d) + strlen(f_table_name) + strlen(user_srid) + 1);
