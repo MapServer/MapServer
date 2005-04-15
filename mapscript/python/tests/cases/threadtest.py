@@ -40,8 +40,9 @@ from testing import mapscript, TESTMAPFILE
 
 def make_map(i):
     print "making map in thread %d" % (i)
-    mo = mapscript.mapObj(TESTMAPFILE)
-    im = mo.draw()
+    print mapscript.MS_ON
+    po = mapscript.pointObj(1,1)
+    print po
 
 class MultipleThreadsTestCase(unittest.TestCase):
     
@@ -50,11 +51,17 @@ class MultipleThreadsTestCase(unittest.TestCase):
 
         import threading
         
+        workers = []
         for i in range(10):
-            thread = threading.Thread(target=make_map(i))
+            thread = threading.Thread(target=make_map, args=(i,))
+            workers.append(thread)
             thread.start()
          
-
+        for thread in workers:
+            print "waiting ... " + str(thread)
+            thread.join()
+            print str(thread) + " done."
+        
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     unittest.main()
