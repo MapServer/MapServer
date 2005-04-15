@@ -52,68 +52,7 @@ class MultipleLayerAdditionTestCase(MapTestCase):
 
 def make_map():
     mo = mapscript.mapObj(TESTMAPFILE)
-    #mo.setSize(200, 200)
-    #mo.setExtent(view.ul.x, view.lr.y, view.lr.x, view.ul.y)
-    #mo.setImageType(format)
-    #mo.imagecolor.setHex(bgcolor)
-    #mo.setProjection('init=%s' % view.srs)
-    #mo.setSymbolSet(self.symbolset)
-    #mo.setFontSet(self.fontset)
-            
-    lo = None
-    co = None
-    so = None
-
-    for i in range(2):
-        lo = mapscript.layerObj(mo)
-        lo.name = str(i)
-        lo.status = mapscript.MS_OFF
-        co = mapscript.classObj(lo)
-        so = mapscript.styleObj(co)
-            
-        #lo = mapscript.layerObj(mo)
-        #lo.name = str(layer)
-        #lo.type = eval('mapscript.MS_LAYER_%s' % (layer.geometrytype))
-        #lo.data = layer.datastore.path
-        #lo.setProjection('init=%s' % layer.srs)
-        #lo.status = mapscript.MS_ON
-          
-        #    if ruling:
-        #        for rule, symbolizers in ruling:
-        #            co = mapscript.classObj(lo)
-        #        
-        #            if symbolizers:
-        #                for symbolizer in symbolizers:
-        #                    if isinstance(symbolizer, mapping.TextSymbolizer):
-        #                        _labelize(co, lo, symbolizer)
-        #                    else:
-        #                        so = mapscript.styleObj(co)
-        #                        _stylize(so, lo, mo, symbolizer, lock)
-        #            else:
-        #                so = mapscript.styleObj(co)
-        #                _stylize(so, lo, mo, None, None)
-        #    else:
-        #        co = mapscript.classObj(lo)
-        #        so = mapscript.styleObj(co)
-        #        _stylize(so, lo, mo, None, None)
-        #        
-        #    # render layer
-        #    #self._lock.acquire()
-        #    #try:
-        #    #lo.draw(mo, im)
-        #    #finally:
-        #    #    self._lock.release()
-                
-        #self._lock.acquire()
-        #try:
-        #mo.drawLabelCache(im)
     im = mo.draw()
-        
-    del lo
-    del co
-    del so
-    del mo
-    
 
 class MultipleThreadsTestCase(unittest.TestCase):
     
