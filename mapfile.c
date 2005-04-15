@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.298  2005/04/15 18:52:01  sdlime
+ * Added write support for the gradient parameters to writeStyle. Parameters are only written if a gradientitem is set.
+ *
  * Revision 1.297  2005/04/15 17:52:47  sdlime
  * Updated freeStyle to free the gradientitem if set.
  *
@@ -1760,7 +1763,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->maxsize != MS_MAXSYMBOLSIZE) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
   if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %d\n", style->minsize);
   if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %d\n", style->maxwidth);
-  if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);
+  if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);  
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
   if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
   if(style->sizeitem) fprintf(stream, "        SIZEITEM %s\n", style->sizeitem);
@@ -1770,6 +1773,14 @@ void writeStyle(styleObj *style, FILE *stream) {
     fprintf(stream, "        SYMBOL %d\n", style->symbol);
   if(style->width > 1) fprintf(stream, "        SIZE %d\n", style->width);
   if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
+
+  if(style->gradientitem) {
+    fprintf(stream, "        GRADIENTITEM %s\n", style->gradientitem);
+    writeColor(&(style->maxcolor), stream, "MAXCOLOR", "        ");
+    writeColor(&(style->mincolor), stream, "MINCOLOR", "        ");
+    fprintf(stream, "        MAXVALUE %g\n", style->maxvalue);
+    fprintf(stream, "        MINVALUE %g\n", style->minvalue);
+  }
 
   fprintf(stream, "      END\n");
 }
