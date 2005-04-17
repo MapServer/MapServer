@@ -34,34 +34,75 @@
 
 import os, sys
 import unittest
+import threading
 
 # the testing module helps us import the pre-installed mapscript
 from testing import mapscript, TESTMAPFILE
 
-def make_map(i):
-    print "making map in thread %d" % (i)
-    print mapscript.MS_ON
-    po = mapscript.pointObj(1,1)
-    print po
+def draw_map(name, save=0):
+    #print "making map in thread %s" % (name)
+    mo = mapscript.mapObj(TESTMAPFILE)
+    im = mo.draw()
+    if save:
+        im.save('threadtest_%s.png' % (name))
+
+def trigger_exception(name):
+    #print "triggering exception in thread %s" % (name)
+    mo = mapscript.mapObj(TESTMAPFILE)
+    try:
+        mo.setExtent(1, 50, -1, 51)
+        raise Exception, "We expected a MapServer exception"
+    except mapscript.MapServerError:
+        pass
 
 class MultipleThreadsTestCase(unittest.TestCase):
     
-    def testLayerAdditionMultiThreads(self):
-        """mapscripting in multiple threads"""
+    def testDrawMultiThreads(self):
+        """map drawing with multiple threads"""
 
-        import threading
-        
         workers = []
         for i in range(10):
-            thread = threading.Thread(target=make_map, args=(i,))
+            name = 'd%d' % (i)
+            thread = threading.Thread(target=draw_map, name=name, args=(name,1))
             workers.append(thread)
             thread.start()
          
-        for thread in workers:
-            print "waiting ... " + str(thread)
-            thread.join()
-            print str(thread) + " done."
+    def testExceptionsMultiThreads(self):
+        """mapserver exceptions behave with multiple threads"""
         
+        workers = []
+        for i in range(10):
+            name = 'e%d' % (i)
+            thread = threading.Thread(target=trigger_exception, name=name,
+                                      args=(name,))
+            workers.append(thread)
+            thread.start()
+         
+    def testExceptionContainmentMultiThreads(self):
+        """mapserver exceptions should be contained to a thread"""
+        
+        num = 100
+        workers = []
+
+        # Trigger an exception in the first started thread
+        for i in range(0, 1):
+            name = 'c%d' % (i)
+            thread = threading.Thread(target=trigger_exception, name=name,
+                                      args=(name,))
+            workers.append(thread)
+        
+        # Draw normally
+        for i in range(1, num):
+            name = 'c%d' % (i)
+            thread = threading.Thread(target=draw_map, name=name,
+                                      args=(name,))
+            workers.append(thread)
+        
+        # Start all threads
+        for i in range(num):
+            workers[i].start()
+
+    
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     unittest.main()
