@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/04/18 14:37:32  frank
+ * Bug 1319: Fixed win32 mutex creation in mapthread.c
+ *
  * Revision 1.10  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -295,7 +298,7 @@ void msThreadInit()
     WaitForSingleObject( core_lock, INFINITE );
 
     for( ; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++ )
-        mutex_locks[mutexes_initialized] = CreateMutex( NULL, TRUE, NULL );
+        mutex_locks[mutexes_initialized] = CreateMutex( NULL, FALSE, NULL );
 
     ReleaseMutex( core_lock );
 }

@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1319: Fixed mutex creation (was creator-owned) in mapthread.c. win32
+  issue only.
+
 - Bug 1103: Set the default tolerance value based on the layer type.
   The default is now 3 for point and line layers and 0 for all the others.
 
