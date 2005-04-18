@@ -15,7 +15,9 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.4.3
 --------------------------
-
+- Bug 1319: Fixed mutex creation (was creator-owned) in mapthread.c. win32
+  issue only.
+  
 - Bug 1156: Added missing OFFSET value when writing STYLE objects in saveMap
 
 - Bug 1231: Added quotes around string values when writing OUTFPUTFORMAT

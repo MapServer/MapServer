@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8.2.1  2005/04/18 14:47:51  hobu
+ * backport of Bug 1319
+ *
  * Revision 1.8  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -289,7 +292,7 @@ void msThreadInit()
     WaitForSingleObject( core_lock, INFINITE );
 
     for( ; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++ )
-        mutex_locks[mutexes_initialized] = CreateMutex( NULL, TRUE, NULL );
+        mutex_locks[mutexes_initialized] = CreateMutex( NULL, FALSE, NULL );
 
     ReleaseMutex( core_lock );
 }
