@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/04/20 21:40:44  sdlime
+ * Bug 950 transformations now apply to WMS output as well. You must explicitly request that items be exposed or set gml_include_items 'all'.
+ *
  * Revision 1.53  2005/04/14 16:51:07  frank
  * Removed unused tab in printf.
  *
@@ -870,6 +873,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   char szPath[MS_MAXPATHLEN];
   char *value;
 
+  gmlGroupListObj *groupList=NULL;
+  gmlItemListObj *itemList=NULL;
+  gmlItemObj *item=NULL;
+
   msInitShape(&shape);
 
   if(filename && strlen(filename) > 0) { /* deal with the filename if present */
@@ -882,25 +889,18 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
   /* charset encoding: lookup "gml_encoding" metadata first, then  */
   /* "wms_encoding", and if not found then use "ISO-8859-1" as default. */
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "encoding", 
-                      OWS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", "ISO-8859-1");
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "encoding", OWS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", "ISO-8859-1");
+  msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname", OWS_NOERR, "<%s ", "msGMLOutput");
 
-  msOWSPrintValidateMetadata(stream, &(map->web.metadata),namespaces, "rootname",
-                      OWS_NOERR, "<%s ", "msGMLOutput");
-
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "uri", 
-                      OWS_NOERR, "xmlns=\"%s\"", NULL);
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "uri", OWS_NOERR, "xmlns=\"%s\"", NULL);
   msIO_fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
   msIO_fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
   msIO_fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "schema", 
-                      OWS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "schema", OWS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
   msIO_fprintf(stream, ">\n");
 
   /* a schema *should* be required */
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, 
-                           "description", OWS_NOERR, 
-                           "\t<gml:description>%s</gml:description>\n", NULL);
+  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "description", OWS_NOERR, "\t<gml:description>%s</gml:description>\n", NULL);
 
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
@@ -909,12 +909,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
 
       /* start this collection (layer) */
-      /* if no layer name provided  */
-      /* fall back on the layer name + "Layer" */
+      /* if no layer name provided fall back on the layer name + "_layer" */
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
-      msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
-                                 "layername", OWS_NOERR, "\t<%s>\n", value);
+      msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, "layername", OWS_NOERR, "\t<%s>\n", value);
       msFree(value);
 
       /* actually open the layer */
@@ -924,6 +922,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       /* retrieve all the item names */
       status = msLayerGetItems(lp);
       if(status != MS_SUCCESS) return(status);
+
+      /* populate item and group metadata structures */
+      itemList = msGMLGetItems(lp);
+      groupList = msGMLGetGroups(lp);
 
       for(j=0; j<lp->resultcache->numresults; j++) {
 	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -936,30 +938,12 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 #endif
 
 	/* start this feature */
-        /* specify a feature name, if nothing provided  */
-        /* fall back on the layer name + "Feature" */
+        /* specify a feature name, if nothing provided fall back on the layer name + "_feature" */
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
-        msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
-                                   "featurename", OWS_NOERR, 
-                                   "\t\t<%s>\n", value);
+        msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, "featurename", OWS_NOERR, "\t\t<%s>\n", value);
         msFree(value);
-
-	/* write the item/values */
-	for(k=0; k<lp->numitems; k++)	
-        {
-          char *encoded_val;
-
-          if(msIsXMLTagValid(lp->items[k]) == MS_FALSE)
-              msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a "
-                      "XML tag context. -->\n", lp->items[k]);
-
-          encoded_val = msEncodeHTMLEntities(shape.values[k]);
-	  msIO_fprintf(stream, "\t\t\t<%s>%s</%s>\n", lp->items[k], encoded_val, 
-                  lp->items[k]);
-          free(encoded_val);
-        }
-
+	
 	/* write the bounding box */
 #ifdef USE_PROJ
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) /* use the map projection first */
@@ -980,43 +964,50 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 	gmlWriteGeometry(stream,  OWS_GML2, &(shape), NULL, "\t\t\t");
 #endif
 
+	/* write the item/values */
+	for(k=0; k<lp->numitems; k++) {
+          item = &(itemList->items[k]);  
+          if(msItemInGroups(item, groupList) == MS_FALSE) 
+	    msGMLWriteItem(stream, item, shape.values[k], "", "\t\t\t");
+        }
+
+	for(k=0; k<groupList->numgroups; k++)
+	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, "", "\t\t\t");
+
 	/* end this feature */
         /* specify a feature name if nothing provided */
         /* fall back on the layer name + "Feature" */
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
-        msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
-                                   "featurename", OWS_NOERR, 
-                                   "\t\t</%s>\n", value);
+        msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, "featurename", OWS_NOERR, "\t\t</%s>\n", value);
         msFree(value);
 
 	msFreeShape(&shape); /* init too */
       }
 
       /* end this collection (layer) */
-      /* if no layer name provided  */
-      /* fall back on the layer name + "Layer" */
+      /* if no layer name provided fall back on the layer name + "_layer" */
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
-      msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
-                                 "layername", OWS_NOERR, "\t</%s>\n", value);
+      msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, "layername", OWS_NOERR, "\t</%s>\n", value);
       msFree(value);
+
+      msGMLFreeGroups(groupList);
+      msGMLFreeItems(itemList);
 
       msLayerClose(lp);
     }
   } /* next layer */
 
   /* end this document */
-  msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname",
-                             OWS_NOERR, "</%s>\n", "msGMLOutput");
+  msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname", OWS_NOERR, "</%s>\n", "msGMLOutput");
 
   if(filename && strlen(filename) > 0) fclose(stream);
 
   return(MS_SUCCESS);
 
 #else /* Stub for mapscript */
-    msSetError(MS_MISCERR, "WMS server support not enabled",
-               "msGMLWriteQuery()");
+    msSetError(MS_MISCERR, "WMS server support not enabled", "msGMLWriteQuery()");
     return MS_FAILURE;
 #endif
 }
