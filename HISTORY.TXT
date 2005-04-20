@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1325 : php mapscript function $class->settext needs only 1 argument.
+
 - Bug 1319: Fixed mutex creation (was creator-owned) in mapthread.c. win32
   issue only.
 
