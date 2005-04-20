@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.231  2005/04/20 19:07:45  assefa
+ * Correct Bug 1325 : class->settext function needs only 1 argument.
+ *
  * Revision 1.230  2005/04/14 15:17:15  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -8635,6 +8638,7 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS)
     classObj    *self=NULL;
     layerObj    *parent_layer;
     int         nStatus=-1;
+    int         nArgs;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -8646,20 +8650,27 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
-    if (pThis == NULL ||
-        getParameters(ht, 2, &pLayerObj, &pString) == FAILURE)
-    {
-        WRONG_PARAM_COUNT;
-    }
+    nArgs = ARG_COUNT(ht);
+    if ((nArgs != 1 && nArgs != 2) || pThis == NULL)
+      WRONG_PARAM_COUNT;
+
+    if (nArgs == 1)
+      getParameters(ht, 1, &pString);
+    else
+      getParameters(ht, 2, &pLayerObj, &pString);
+
 
     convert_to_string(pString);
 
     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
                                            list TSRMLS_CC);
 
-    parent_layer = (layerObj*)_phpms_fetch_handle(pLayerObj, 
-                                                  PHPMS_GLOBAL(le_mslayer),
-                                                  list TSRMLS_CC);
+    parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
+                                                           PHPMS_GLOBAL(le_mslayer),
+                                                           list TSRMLS_CC, E_ERROR);
+    //parent_layer = (layerObj*)_phpms_fetch_handle(pLayerObj, 
+    //                                             PHPMS_GLOBAL(le_mslayer),
+    //                                              list TSRMLS_CC);
 
     if (self == NULL || parent_layer == NULL ||
         (nStatus = classObj_setText(self, parent_layer, pString->value.str.val)) != 0)
