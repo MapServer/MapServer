@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/04/21 23:35:29  assefa
+ * Add support style's width parameter for line and polygon layers : Bug 1328.
+ *
  * Revision 1.50  2005/04/21 15:09:28  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *
@@ -618,7 +621,7 @@ SWFButton BuildEllipseButton(int nX, int nY, int nWidth, int nHeight,
 /*      Build a polygon shape.                                          */
 /************************************************************************/
 SWFShape BuildPolygonShape(shapeObj *p, colorObj *psFillColor, 
-                           colorObj *psOutlineColor)
+                           colorObj *psOutlineColor, int width)
 {
     int i, j;
     SWFShape oShape;
@@ -627,7 +630,7 @@ SWFShape BuildPolygonShape(shapeObj *p, colorObj *psFillColor,
     {
         oShape = newSWFShape();
         if (psOutlineColor)
-            SWFShape_setLine(oShape, 0, (byte)psOutlineColor->red, 
+            SWFShape_setLine(oShape, width, (byte)psOutlineColor->red, 
                              (byte)psOutlineColor->green, (byte)psOutlineColor->blue, 0xff);
         if (psFillColor)
             SWFShape_setRightFill(oShape,
@@ -1498,15 +1501,21 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*                                                                      */
 /*      Draws a simple line using the color passed as argument.         */
 /************************************************************************/
-SWFShape DrawShapePolyline(shapeObj *p, colorObj *psColor)
+SWFShape DrawShapePolyline(shapeObj *p, colorObj *psColor, int pixwidth)
 {
     int i, j;
     SWFShape oShape = NULL;
+    int width = 0;
+
+    /*the flash specification indicates a scale of twenty units per pixel
+    but it does not to work like that at least when loading the swf
+    in a browser. So for now just set the width value, It */
+    width = pixwidth;/* 20 */
 
     if (p && psColor && p->numlines > 0)
     {
         oShape = newSWFShape();
-        SWFShape_setLine(oShape, 0, (byte)psColor->red, 
+        SWFShape_setLine(oShape, width, (byte)psColor->red, 
                          (byte)psColor->green, (byte)psColor->blue, 0xff);
         
         
@@ -1533,9 +1542,9 @@ SWFShape DrawShapePolyline(shapeObj *p, colorObj *psColor)
 /*      Draws a filled polygon using the fill and outline color.        */
 /************************************************************************/
 SWFShape DrawShapeFilledPolygon(shapeObj *p, colorObj *psFillColor, 
-                                colorObj *psOutlineColor)
+                                colorObj *psOutlineColor, int width)
 {
-    return BuildPolygonShape(p, psFillColor, psOutlineColor);
+    return BuildPolygonShape(p, psFillColor, psOutlineColor, width);
 }
  
 
@@ -1548,22 +1557,24 @@ SWFShape DrawShapeFilledPolygon(shapeObj *p, colorObj *psFillColor,
 SWFButton DrawButtonFilledPolygon(shapeObj *p, colorObj *psFillColor, 
                                   colorObj *psOutlineColor, 
                                   colorObj *psHighlightColor, int nLayerIndex,
-                                  int nShapeIndex)
+                                  int nShapeIndex, int width)
 {
     SWFButton b;
     
     b = newSWFButton();
 
-    SWFButton_addShape(b, BuildPolygonShape(p, psFillColor, psOutlineColor),
+    SWFButton_addShape(b, BuildPolygonShape(p, psFillColor, psOutlineColor, width),
                        SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN);
 
     if (psHighlightColor)
     {
         if(psFillColor)
-            SWFButton_addShape(b, BuildPolygonShape(p, psHighlightColor, NULL), 
+            SWFButton_addShape(b, BuildPolygonShape(p, psHighlightColor, NULL,
+                                                    width), 
                                SWFBUTTON_OVER);
         else if (psOutlineColor)
-             SWFButton_addShape(b, BuildPolygonShape(p, NULL, psHighlightColor), 
+             SWFButton_addShape(b, BuildPolygonShape(p, NULL, psHighlightColor, 
+                                                     width), 
                                 SWFBUTTON_OVER);
     }
 
@@ -1582,18 +1593,18 @@ SWFButton DrawButtonFilledPolygon(shapeObj *p, colorObj *psFillColor,
 
 SWFButton DrawButtonPolyline(shapeObj *p, colorObj *psColor, 
                              colorObj *psHighlightColor, int nLayerIndex,
-                             int nShapeIndex)
+                             int nShapeIndex, int width)
 {
     SWFButton b;
     
     b = newSWFButton();
 
-    SWFButton_addShape(b, DrawShapePolyline(p, psColor),
+    SWFButton_addShape(b, DrawShapePolyline(p, psColor, width),
                        SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN);
 
     if (psHighlightColor)
     {
-        SWFButton_addShape(b, DrawShapePolyline(p, psHighlightColor),
+        SWFButton_addShape(b, DrawShapePolyline(p, psHighlightColor, width),
                            SWFBUTTON_OVER);
     }
 
@@ -1671,6 +1682,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     layerObj    *psLayerTmp = NULL;
     int         size = 0;
     symbolObj *symbol;
+    int width;
 
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
@@ -1688,8 +1700,17 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     }
     else
         size = MS_NINT(style->size*scalefactor);
+
+    /* TODO: Don't get this modification, is it needed elsewhere? */
+    if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
+    if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
+    size = MS_NINT(size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
+
+    width = MS_NINT(style->width*scalefactor);
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
       return;
@@ -1741,14 +1762,14 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         /* just draw a single width line */
         if (nLayerIndex < 0 || nShapeIndex < 0)
         {
-            oShape = DrawShapePolyline(p, &sFc);
+            oShape = DrawShapePolyline(p, &sFc, width);
             SWFMovie_add(GetCurrentMovie(map, image), oShape);
             /* destroySWFShape(oShape); */
         }
         else
         {
             oButton = DrawButtonPolyline(p, &sFc, &sColorHighlightObj, nLayerIndex, 
-                                         nShapeIndex);
+                                         nShapeIndex, width);
             SWFMovie_add(GetCurrentMovie(map, image), oButton);
             /* destroySWFButton(oButton); */
             
@@ -1792,6 +1813,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     int         nLayerIndex = -1;
     int         nShapeIndex = -1;
     symbolObj   *symbol;
+    int         width;
 
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
@@ -1811,6 +1833,11 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         size = MS_NINT(style->size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
+
+
+    width = MS_NINT(style->width*scalefactor);
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
         return;
@@ -1871,14 +1898,15 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     {
         if (nLayerIndex < 0 ||  nShapeIndex < 0)
         {
-            oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor);
+            oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor, 
+                                            width);
             SWFMovie_add(GetCurrentMovie(map, image), oShape);
         }
         else
         {
             oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
                                               &sColorHighlightObj, nLayerIndex, 
-                                              nShapeIndex);
+                                              nShapeIndex, width);
             SWFMovie_add(GetCurrentMovie(map, image), oButton);
         }
 
@@ -1915,14 +1943,15 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         {
             if (nLayerIndex < 0 ||  nShapeIndex < 0)
             {
-                oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor);
+                oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor,
+                                                width);
                 SWFMovie_add(GetCurrentMovie(map, image), oShape);
             }
             else
             {
                 oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
                                                   &sColorHighlightObj, nLayerIndex, 
-                                                  nShapeIndex);
+                                                  nShapeIndex, width);
                 SWFMovie_add(GetCurrentMovie(map, image), oButton);
             }
         }
