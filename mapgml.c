@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/04/21 04:46:35  sdlime
+ * Fixed a small problem with last commit.
+ *
  * Revision 1.54  2005/04/20 21:40:44  sdlime
  * Bug 950 transformations now apply to WMS output as well. You must explicitly request that items be exposed or set gml_include_items 'all'.
  *
@@ -968,11 +971,11 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 	for(k=0; k<lp->numitems; k++) {
           item = &(itemList->items[k]);  
           if(msItemInGroups(item, groupList) == MS_FALSE) 
-	    msGMLWriteItem(stream, item, shape.values[k], "", "\t\t\t");
+	    msGMLWriteItem(stream, item, shape.values[k], NULL, "\t\t\t");
         }
 
 	for(k=0; k<groupList->numgroups; k++)
-	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, "", "\t\t\t");
+	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, NULL, "\t\t\t");
 
 	/* end this feature */
         /* specify a feature name if nothing provided */
