@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.54  2005/04/21 23:46:07  assefa
+ * Apply sld named layer on all layers of the same group : Bug 1329.
+ *
  * Revision 1.53  2005/03/29 22:53:14  assefa
  * Initial support to improve WFS filter performance for DB layers (Bug 1292).
  *
@@ -342,8 +345,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 /*              - layer's labelitem                                     */
 /* -------------------------------------------------------------------- */
                 if ((pszStyleLayerName == NULL && 
-                     (strcasecmp(map->layers[i].name, pasLayers[j].name) == 0 ||
-                      (pszTmp && strcasecmp(pszTmp, pasLayers[j].name) == 0))) ||
+                     ((strcasecmp(map->layers[i].name, pasLayers[j].name) == 0 ||
+                      (pszTmp && strcasecmp(pszTmp, pasLayers[j].name) == 0))||
+                     (map->layers[i].group && 
+                       strcasecmp(map->layers[i].group, pasLayers[j].name) == 0))) ||
                     (bUseSpecificLayer && pszStyleLayerName && 
                      strcasecmp(pasLayers[j].name, pszStyleLayerName) == 0))
                 {
