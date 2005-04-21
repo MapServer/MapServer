@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/04/21 15:09:27  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.17  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -758,14 +761,14 @@ static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, l
 	line.point = (pointObj *) malloc ((type == ETYPE_POINT ? 1 : 2) * ngeoms * sizeof(pointObj));
 	line.point[0].x = atof(row[3]);
 	line.point[0].y = atof(row[4]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 	line.point[0].m = 0;
 #endif
 	if (type != ETYPE_POINT){		/* if this geometry is not really a point */
 		points++;
 		line.point[1].x = atof(row[5]);
 		line.point[1].y = atof(row[6]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 		line.point[1].m = 0;
 #endif
 	}
@@ -779,14 +782,14 @@ static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, l
 		points++;
 		line.point[points].x = atof(row[3]);
 		line.point[points].y = atof(row[4]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 		line.point[points].m = 0;
 #endif
 		if (type != ETYPE_POINT){		/* if this geometry is not really a point */
 			points++;
 			line.point[points].x = atof(row[3]);
 			line.point[points].y = atof(row[4]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 			line.point[points].m = 0;
 #endif
 		}
@@ -836,12 +839,12 @@ static int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, lo
 			
 		line.point[points].x = atof(row[3]);
 		line.point[points].y = atof(row[4]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 		line.point[points].m = 0;
 #endif
 		line.point[points+1].x = atof(row[5]);
 		line.point[points+1].y = atof(row[6]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 		line.point[points+1].m = 0;
 #endif
 		shape->type = MS_SHAPE_LINE;
@@ -901,12 +904,12 @@ static int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape,
 			
 			line.point[points].x = atof(row[3]);
 			line.point[points].y = atof(row[4]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 			line.point[points].m = 0;
 #endif
 			line.point[points+1].x = atof(row[5]);
 			line.point[points+1].y = atof(row[6]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 			line.point[points+1].m = 0;
 #endif
 			points+=2;

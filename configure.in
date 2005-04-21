@@ -1688,19 +1688,19 @@ fi
 AC_SUBST(IGNORE_MISSING_DATA, $IGNORE_MISSING_DATA)
 
 dnl ---------------------------------------------------------------------
-dnl Check USE_SHAPE_Z_M option (OFF by default)
+dnl Check USE_POINT_Z_M option (OFF by default)
 dnl ---------------------------------------------------------------------
 
-AC_ARG_ENABLE(shape-z-m,
-[  --enable-shape-z-m      Use shape Z and M parameters (disabled by default).
-  --disable-shape-z-m     Disable support for shape Z and M parameters.],,)
-if test "$enable_shape_z_m" == "yes" ; then
+AC_ARG_ENABLE(point-z-m,
+[  --enable-point-z-m      Use point Z and M parameters (disabled by default).
+  --disable-point-z-m     Disable support for point Z and M parameters.],,)
+if test "$enable_point_z_m" == "yes" ; then
 
-  USE_SHAPE_Z_M="-DUSE_SHAPE_Z_M"
+  USE_POINT_Z_M="-DUSE_POINT_Z_M"
 
-  AC_MSG_RESULT([Compiling with -DUSE_SHAPE_Z_M.])
+  AC_MSG_RESULT([Compiling with -DUSE_POINT_Z_M.])
 fi
-AC_SUBST(USE_SHAPE_Z_M, $USE_SHAPE_Z_M)
+AC_SUBST(USE_POINT_Z_M, $USE_POINT_Z_M)
 
 
 dnl ---------------------------------------------------------------------

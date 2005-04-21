@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.16  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -57,7 +60,7 @@ typedef struct {
 typedef struct {
   double x;
   double y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
   double z;  
   double m;  
 #endif

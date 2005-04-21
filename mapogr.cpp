@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.86  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.85  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -248,7 +251,7 @@ static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
 
     line->point[line->numpoints].x = dX;
     line->point[line->numpoints].y = dY;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     line->point[line->numpoints].z = 0.0;
     line->point[line->numpoints].m = 0.0;
 #endif

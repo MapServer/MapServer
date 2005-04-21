@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.65  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -660,7 +663,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   int nRecordOffset, i, j, k, nRecordSize=0;
   uchar	*pabyRec;
   int32	i32, nPoints, nParts;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
   double dfMMin, dfMMax = 0;
 #endif
   psSHP->bUpdated = MS_TRUE;
@@ -744,7 +747,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 /* -------------------------------------------------------------------- */
 /*      Polygon. Arc with Z                                             */
 /* -------------------------------------------------------------------- */
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     if (psSHP->nShapeType == SHP_POLYGONZ || psSHP->nShapeType == SHP_ARCZ)
     {
         dfMMin = shape->line[0].point[0].z;
@@ -804,7 +807,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
         }
     }
     else
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
       nRecordSize = 44 + 4*t_nParts + 16 * t_nPoints;
   }
   
@@ -833,7 +836,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       }
     }
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     if (psSHP->nShapeType == SHP_MULTIPOINTZ)
     {
         nRecordSize = 48 + 16 * t_nPoints;
@@ -882,7 +885,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
         }
     }
     else
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
       nRecordSize = 40 + 16 * t_nPoints;
   }
   
@@ -899,7 +902,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       SwapWord( 8, pabyRec + 20 );
     }
     
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     if (psSHP->nShapeType == SHP_POINTZ)
     {
         nRecordSize = 28;
@@ -923,7 +926,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       nRecordSize = 20;
 #else
     nRecordSize = 20;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
   }
   
   /* -------------------------------------------------------------------- */
@@ -957,7 +960,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   if( psSHP->nRecords == 1 ) {
     psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = shape->line[0].point[0].x;
     psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = shape->line[0].point[0].y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = shape->line[0].point[0].z;
     psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = shape->line[0].point[0].m;
 #endif
@@ -967,13 +970,13 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
     for( j=0; j<shape->line[i].numpoints; j++ ) {
       psSHP->adBoundsMin[0] = MS_MIN(psSHP->adBoundsMin[0], shape->line[i].point[j].x);
       psSHP->adBoundsMin[1] = MS_MIN(psSHP->adBoundsMin[1], shape->line[i].point[j].y);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
       psSHP->adBoundsMin[2] = MS_MIN(psSHP->adBoundsMin[2], shape->line[i].point[j].z);
       psSHP->adBoundsMin[3] = MS_MIN(psSHP->adBoundsMin[3], shape->line[i].point[j].m);
 #endif
       psSHP->adBoundsMax[0] = MS_MAX(psSHP->adBoundsMax[0], shape->line[i].point[j].x);
       psSHP->adBoundsMax[1] = MS_MAX(psSHP->adBoundsMax[1], shape->line[i].point[j].y);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
       psSHP->adBoundsMax[2] = MS_MAX(psSHP->adBoundsMax[2], shape->line[i].point[j].z);
       psSHP->adBoundsMax[3] = MS_MAX(psSHP->adBoundsMax[3], shape->line[i].point[j].m);
 #endif
@@ -1041,7 +1044,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 {
     int	       		i, j, k;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     int nOffset = 0;
 #endif
 
@@ -1152,7 +1155,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	    SwapWord( 8, &(shape->line[i].point[j].y) );
 	  }
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 /* -------------------------------------------------------------------- */
 /*      Polygon, Arc with Z values.                                     */
 /* -------------------------------------------------------------------- */
@@ -1183,7 +1186,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
                        SwapWord( 8, &(shape->line[i].point[j].m) );
               }   
           }
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
 	  k++;
 	}
       }
@@ -1240,7 +1243,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	  SwapWord( 8, &(shape->line[0].point[i].y) );
 	}
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 /* -------------------------------------------------------------------- */
 /*      MulipointZ                                                      */
 /* -------------------------------------------------------------------- */
@@ -1263,7 +1266,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
             if( bBigEndian ) 
               SwapWord( 8, &(shape->line[0].point[i].m));
         }
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
       }
 
       shape->type = MS_SHAPE_POINT;
@@ -1296,7 +1299,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	SwapWord( 8, &(shape->line[0].point[0].y));
       }
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 /* -------------------------------------------------------------------- */
 /*      PointZ                                                          */
 /* -------------------------------------------------------------------- */
@@ -1327,7 +1330,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
                 SwapWord( 8, &(shape->line[0].point[0].m));
           }
       }
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
       /* set the bounding box to the point */
       shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
       shape->bounds.miny = shape->bounds.maxy = shape->line[0].point[0].y;

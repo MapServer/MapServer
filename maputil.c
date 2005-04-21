@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.180  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.179  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -665,7 +668,7 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
 /************************************************************************/
 pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
 {
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     pointObj    *point = NULL;
     lineObj     line;
     double      dfMin = 0;
@@ -759,7 +762,7 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
                "The \"m\" parameter for points is unavailable in your build.",
                "msGetPointUsingMeasure()");
     return NULL;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
 }
 
 
@@ -877,7 +880,7 @@ pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
             result->x = a->x + r*(b->x - a->x);
             result->y = a->y + r*(b->y - a->y);
         }
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         result->m = 0;
 #endif
     }
@@ -922,13 +925,13 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
                 {
                     oFirst.x = line.point[j].x;
                     oFirst.y = line.point[j].y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                     oFirst.m = line.point[j].m;
 #endif
                     
                     oSecond.x =  line.point[j+1].x;
                     oSecond.y =  line.point[j+1].y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                     oSecond.m =  line.point[j+1].m;
 #endif
 
@@ -954,7 +957,7 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 
             dfFactor = dfDistToIntersection / dfDistTotal;
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
             poIntersectionPt->m = oFirst.m + (oSecond.m - oFirst.m)*dfFactor;
 #endif
 

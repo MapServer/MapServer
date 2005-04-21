@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.232  2005/04/21 15:09:29  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.231  2005/04/20 19:07:45  assefa
  * Correct Bug 1325 : class->settext function needs only 1 argument.
  *
@@ -9116,7 +9119,7 @@ static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
     /* editable properties */
     add_property_double(return_value,   "x",   ppoint->x);
     add_property_double(return_value,   "y",   ppoint->y);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     add_property_double(return_value,   "z",   ppoint->z);
     add_property_double(return_value,   "m",   ppoint->m);
 #endif
@@ -9208,7 +9211,7 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     self->x = pX->value.dval;
     self->y = pY->value.dval;
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     if (nArgs == 3)
     {
         convert_to_double(pM); 
@@ -9220,7 +9223,7 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_set_property_double(pThis, "x", self->x, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis, "y", self->y, E_ERROR TSRMLS_CC);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     _phpms_set_property_double(pThis, "m", self->y, E_ERROR TSRMLS_CC);
 #endif
 
@@ -9282,7 +9285,7 @@ DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS)
 
     self->x = pX->value.dval;
     self->y = pY->value.dval;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     self->z = pZ->value.dval;
 
     if (nArgs == 4)
@@ -9296,7 +9299,7 @@ DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_set_property_double(pThis, "x", self->x, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis, "y", self->y, E_ERROR TSRMLS_CC);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     _phpms_set_property_double(pThis, "z", self->z, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis, "m", self->m, E_ERROR TSRMLS_CC);
 #endif
@@ -9828,7 +9831,7 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
     oPoint.x = pX->value.dval;
     oPoint.y = pY->value.dval;
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     oPoint.z = 0.0;
 
     if (nArgs == 3)
@@ -9901,7 +9904,7 @@ DLEXPORT void php3_ms_line_addXYZ(INTERNAL_FUNCTION_PARAMETERS)
 
     oPoint.x = pX->value.dval;
     oPoint.y = pY->value.dval;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     oPoint.z = pY->value.dval;
 
     if (nArgs == 4)

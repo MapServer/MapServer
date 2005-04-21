@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.18  2005/04/15 19:32:33  julien
  * Bug 1103: Set the default tolerance value based on the layer type.
  *
@@ -1206,7 +1209,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
         
         point.x = rlinfo->qc_x[record];
         point.y = rlinfo->qc_y[record];
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         point.m = 0.0;
 #endif
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.50  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -1085,7 +1088,7 @@ void msRectToFormattedString(rectObj *rect, char *format, char *buffer,
 void msPointToFormattedString(pointObj *point, const char *format, 
                               char *buffer, int buffer_length) 
 {
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     snprintf(buffer, buffer_length, format, point->x, point->y, point->z, point->m);
 #else
     snprintf(buffer, buffer_length, format, point->x, point->y);

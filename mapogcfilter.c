@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.49  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.48  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -491,7 +494,7 @@ int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
                 line.point = (pointObj *)malloc(sizeof(pointObj));
                 line.point[0].x = atof(szCoords[0]);
                 line.point[0].y =  atof(szCoords[1]);
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                 line.point[0].m = 0;
 #endif
 

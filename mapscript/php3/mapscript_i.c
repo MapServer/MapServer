@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.92  2005/04/21 15:09:29  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.91  2005/04/14 15:17:15  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -791,7 +794,7 @@ int lineObj_add(lineObj *self, pointObj *p) {
 
     self->point[self->numpoints].x = p->x;
     self->point[self->numpoints].y = p->y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     self->point[self->numpoints].m = p->m;
 #endif
     self->numpoints++;

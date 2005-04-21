@@ -146,9 +146,9 @@ typedef
     {
         OCINumber x;
         OCINumber y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         OCINumber z;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
     } SDOPointObj;
 
 typedef
@@ -782,10 +782,10 @@ static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
     double x, y;
     int i, n, success = 1;
     boolean exists;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     double z;
     boolean numnull;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
     OCINumber *oci_number;
 
     for( i=s, n=0; i < e && success; i+=3, n++ ) 
@@ -798,12 +798,12 @@ static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
           OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+1, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
                && TRY( hand,
           OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&y ) )
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                && TRY( hand,            
           OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+2, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
             ;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         if (success)
         {   
             success = TRY(hand, OCINumberIsZero( hand->errhp, oci_number, (boolean *)&numnull));
@@ -819,14 +819,14 @@ static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
                 success = 1;                
             }
         }
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
         if (success) 
         {
             pt[n].x = x;
             pt[n].y = y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
             pt[n].z = z;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
         }    
     }
     
@@ -946,9 +946,9 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
 {    
     double length, ctrl, angle;  
     double divbas, plusbas, cosbas, sinbas = 0;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     double zrange = 0;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
     int i = 0;  
     
     if ( npoints > 0 )
@@ -956,7 +956,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
         length = sqrt(((pnt[1].x-pnt[0].x)*(pnt[1].x-pnt[0].x))+((pnt[1].y-pnt[0].y)*(pnt[1].y-pnt[0].y)));        
         ctrl = length/(2*radius);
         
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         if (data3d)
         {
             zrange = labs(pnt[0].z-pnt[1].z)/npoints;            
@@ -969,7 +969,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
             else if ((pnt[0].z < pnt[1].z) && side != 1)
                     zrange = zrange;
         }
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
     
         if( ctrl <= 1 )
         {
@@ -982,10 +982,10 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
             arcline.point = (pointObj *)malloc(sizeof(pointObj)*(npoints+1));  
             arcline.point[0].x = pnt[0].x;
             arcline.point[0].y = pnt[0].y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
             if (data3d)
                 arcline.point[0].z = pnt[0].z;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
   
             for (i = 1; i <= npoints; i++)
             {
@@ -993,10 +993,10 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
                 {
                     arcline.point[i].x = pnt[3].x + radius * ((cosbas*cos(angle))-(sinbas*sin(angle)));
                     arcline.point[i].y = pnt[3].y + radius * ((sinbas*cos(angle))+(cosbas*sin(angle)));
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                     if (data3d)
                         arcline.point[i].z = pnt[0].z + (zrange*i);
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
                 }
                 else
                 {
@@ -1004,19 +1004,19 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
                     {
                         arcline.point[i].x = pnt[3].x + radius * ((cosbas*cos(angle))+(sinbas*sin(angle)));
                         arcline.point[i].y = pnt[3].y + radius * ((sinbas*cos(angle))-(cosbas*sin(angle)));
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                         if (data3d)
                             arcline.point[i].z = pnt[0].z + (zrange*i);
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
                     }
                     else
                     {
                          arcline.point[i].x = pnt[0].x;
                          arcline.point[i].y = pnt[0].y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                          if (data3d)
                              arcline.point[i].z = pnt[0].z;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
                     }
                 }      
                 angle += plusbas;
@@ -1035,13 +1035,13 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
         arcline.point[1].x = pnt[1].x;
         arcline.point[1].y = pnt[1].y;
         
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         if(data3d)
         {
             arcline.point[0].z = pnt[0].z;
             arcline.point[1].z = pnt[1].z;
         }
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
         
         arcline.numpoints = 2;
         
@@ -1127,13 +1127,13 @@ static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int 
         arcline.point[1].x = points.point[i+2].x; 
         arcline.point[1].y = points.point[i+2].y;        
         
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         if (data3d)
         {
             arcline.point[0].z = points.point[i].z;
             arcline.point[1].z = points.point[i+2].z;
         }        
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
         
         arcline.numpoints = 2;
         
@@ -1191,10 +1191,10 @@ static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d)
         {
             shapeline.point[g].x = shape->line[i].point[f].x;
             shapeline.point[g].y = shape->line[i].point[f].y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
             if (data3d)
                 shapeline.point[g].z = shape->line[i].point[f].z;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
         }
     }  
     
@@ -1290,13 +1290,13 @@ static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeomet
         pnt[3].x = pnt[2].x;
         pnt[3].y = pnt[0].y;
         pnt[4] = pnt[0]; 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
         if (data3d)
         {
             pnt[1].z = pnt[0].z;         
             pnt[3].z = pnt[2].z;
         }
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
 
         msAddLine( shape, &points );
     }
@@ -1358,9 +1358,9 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
     boolean exists;
     OCINumber *oci_number;
     double x, y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     double z;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
     int success;
     lineObj points = {0, NULL};
     pointObj point5[5]; /* for quick access */
@@ -1407,7 +1407,7 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
                 points.point = point5;
                 point5[0].x = x;
                 point5[0].y = y;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
                 if (data3d)
                 {
                     if (ind->point.z == OCI_IND_NOTNULL)
@@ -1421,7 +1421,7 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
                     else                        
                         point5[0].z = 0;
                 }            
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
                 msAddLine( shape, &points );
                 return MS_SUCCESS;
                 /*continue;*/ /* jump to end of big-while below */

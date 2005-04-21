@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/04/21 15:09:27  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.4  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -56,7 +59,7 @@
         (_dst)->maxy = (_src)->maxy;  \
     MS_MACROEND
 
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
 #define MS_COPYPOINT(_dst, _src)      \
     MS_MACROBEGIN                     \
         (_dst)->x = (_src)->x;        \

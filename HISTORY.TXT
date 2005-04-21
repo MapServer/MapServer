@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1244: Replacing --enable-shape-z-m by --enable-point-z-m and replacing 
+  USE_SHAPE_Z_M by USE_POINT_Z_M. The new name makes more sense.
+
 - Bug 564: Fixed old problem with labels occasionally drawn upside down
 
 - Bug 1325: php mapscript function $class->settext needs only 1 argument.

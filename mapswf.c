@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.49  2005/04/21 04:34:03  dan
  * Fixed old problem with labels occasionally drawn upside down (bug 564)
  *
@@ -2181,7 +2184,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         return -1;
 
     marker_rect.minx = marker_rect.miny = marker_rect.maxx = marker_rect.maxy = 0;      
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
     p.x = p.y = p.z = 0;
 #else
     p.x = p.y = 0;

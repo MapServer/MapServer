@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/04/21 15:09:28  julien
+ * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
+ *
  * Revision 1.40  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -217,10 +220,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 
   prj_point.x = rect->minx;
   prj_point.y = rect->miny;
-#ifdef USE_SHAPE_Z_M
+#ifdef USE_POINT_Z_M
   prj_point.z = 0.0;
   prj_point.m = 0.0;
-#endif /* USE_SHAPE_Z_M */
+#endif /* USE_POINT_Z_M */
 
   msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
                     &failure);
