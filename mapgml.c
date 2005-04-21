@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/04/21 21:10:38  sdlime
+ * Adjusted WFS support to allow for a new output format (GML3).
+ *
  * Revision 1.55  2005/04/21 04:46:35  sdlime
  * Fixed a small problem with last commit.
  *
@@ -1021,7 +1024,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
 
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_namespace)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_namespace, int outputformat)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -1039,7 +1042,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 
   /* Need to start with BBOX of the whole resultset */
   if (msGetQueryResultBounds(map, &resultBounds) > 0)
-    gmlWriteBounds(stream, OWS_GML2, &resultBounds, msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "      ");
+    gmlWriteBounds(stream, outputformat, &resultBounds, msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "      ");
 
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
@@ -1091,11 +1094,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) // use the map projection first
 
 #ifdef USE_PROJ
-	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
+	  gmlWriteBounds(stream, outputformat, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
 	else /* then use the layer projection and/or metadata */
-	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");
+	  gmlWriteBounds(stream, outputformat, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");
 #else
-	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "        "); /* no projection information */
+	  gmlWriteBounds(stream, outputformat, &(shape.bounds), NULL, "        "); /* no projection information */
 #endif
         
         msIO_fprintf(stream, "        <gml:%s>\n", geom_name); 
@@ -1103,11 +1106,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 	/* write the feature geometry */
 #ifdef USE_PROJ
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first */
-	  gmlWriteGeometry(stream, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "          ");
+	  gmlWriteGeometry(stream, outputformat, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "          ");
         else /* then use the layer projection and/or metadata */
-	  gmlWriteGeometry(stream, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "          ");      
+	  gmlWriteGeometry(stream, outputformat, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "          ");      
 #else
-	gmlWriteGeometry(stream, OWS_GML2, &(shape), NULL, "          ");
+	gmlWriteGeometry(stream, outputformat, &(shape), NULL, "          ");
 #endif
 
         msIO_fprintf(stream, "        </gml:%s>\n", geom_name); 

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.60  2005/04/21 21:10:38  sdlime
+ * Adjusted WFS support to allow for a new output format (GML3).
+ *
  * Revision 1.59  2005/02/18 03:06:48  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -561,7 +564,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, 
                        "SchemaDescriptionLanguage", "XMLSCHEMA", NULL);
   msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, 
-                       "ResultFormat", "GML2", NULL);
+                       "ResultFormat", "GML2", "GML3", NULL);
   msIO_printf("  </Request>\n");
   msIO_printf("</Capability>\n\n");
 
@@ -878,6 +881,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     char *encoded, *encoded_typename, *encoded_schema;
     const char *tmpmaxfeatures = NULL;
 
+    int outputformat = OWS_GML2; /* default output is GML 2.1 */
+
     /* Default filter is map extents */
     bbox = map->extent;
 
@@ -1018,18 +1023,22 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
             }
         }
     }
+
     /* Validate outputformat */
     if (paramsObj->pszOutputFormat)
     {
-        /* We support only GML2 for now.
-         */
-        if (strcasecmp(paramsObj->pszOutputFormat, "GML2") != 0)
-        {
-            msSetError(MS_WFSERR, 
-                       "Unsupported GetFeature outputFormat (%s). Only GML2 is supported.", 
-                       "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
-            return msWFSException(map, paramsObj->pszVersion);
-        }
+      /* We support only GML2 and GML3 for now.
+       */
+      if(strcasecmp(paramsObj->pszOutputFormat, "GML2") == 0)
+	outputformat = OWS_GML2;
+      else if(strcasecmp(paramsObj->pszOutputFormat, "GML3") == 0)
+	outputformat = OWS_GML3;
+      else {
+	msSetError(MS_WFSERR, 
+		   "Unsupported GetFeature outputFormat (%s). Only GML2 and GML3 are supported.", 
+		   "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
+	return msWFSException(map, paramsObj->pszVersion);
+      }
     }
     /* else if (strcasecmp(names[i], "PROPERTYNAME") == 0) */
     /* { */
@@ -1288,7 +1297,7 @@ ENAME=%s\">\n",
     /* __TODO__ WFS expects homogenous geometry types, but our layers can
     **          contain mixed geometry types... how to deal with that???
     */
-    msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace);
+    msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
     
     /* if no results where written  */
     for(i=0; i<map->numlayers; i++) 
@@ -1303,12 +1312,11 @@ ENAME=%s\">\n",
         msIO_printf("      <gml:null>missing</gml:null>\n");
         msIO_printf("   </gml:boundedBy>\n"); 
     }
+
+    msIO_printf("</wfs:FeatureCollection>\n\n");
     /*
     ** Done!
     */
-    
-
-    msIO_printf("</wfs:FeatureCollection>\n\n");
 
     free(script_url);
     free(script_url_encoded);

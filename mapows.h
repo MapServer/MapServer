@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.50  2005/04/21 21:10:38  sdlime
+ * Adjusted WFS support to allow for a new output format (GML3).
+ *
  * Revision 1.49  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -318,7 +321,7 @@ MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *names
 #endif
 
 #ifdef USE_WFS_SVR
-MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
+MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_namespace, int outputformat);
 #endif
 
 
