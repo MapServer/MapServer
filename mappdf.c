@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/04/21 04:34:03  dan
+ * Fixed old problem with labels occasionally drawn upside down (bug 564)
+ *
  * Revision 1.32  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -511,7 +514,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
 
                     if(j == 1)
                     {
-                        if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
+                        if(fabs(cos(labelPtr->angle*MS_DEG_TO_RAD)) < LINE_VERT_THRESHOLD)
                             labelPtr->angle += 180.0;
                         else
                             position = MS_LC;

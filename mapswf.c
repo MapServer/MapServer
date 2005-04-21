@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/04/21 04:34:03  dan
+ * Fixed old problem with labels occasionally drawn upside down (bug 564)
+ *
  * Revision 1.48  2005/04/14 15:17:14  julien
  * Bug 1244: Remove Z and M from point by default to gain performance.
  *
@@ -2298,7 +2301,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
                     if(j == 1) {
-                        if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
+                        if(fabs(cos(labelPtr->angle*MS_DEG_TO_RAD)) < LINE_VERT_THRESHOLD)
                             labelPtr->angle += 180.0;
                         else
                             position = MS_LC;

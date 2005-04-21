@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2005/04/21 04:34:03  dan
+ * Fixed old problem with labels occasionally drawn upside down (bug 564)
+ *
  * Revision 1.98  2005/02/28 14:17:49  dan
  * Added a comment to msSaveImageBufferGD() to remind that the returned buffer
  * should be freed by gdFree() (bug 1257)
@@ -2869,7 +2872,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
 	  if(j == 1) {
-	    if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
+	    if(fabs(cos(labelPtr->angle*MS_DEG_TO_RAD)) < LINE_VERT_THRESHOLD)
 	      labelPtr->angle += 180.0;
 	    else
 	      position = MS_LC;
