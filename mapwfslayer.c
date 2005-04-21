@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/04/21 14:39:47  dan
+ * Fixed typo in error messages (bug 1302)
+ *
  * Revision 1.32  2005/02/18 03:06:48  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -454,7 +457,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
       if ((pszTmp = strstr(lp->connection, "SERVICE=")) == NULL &&
           (pszTmp = strstr(lp->connection, "service=")) == NULL )
       {
-        msSetError(MS_WFSCONNERR, "Metadata wfs_service must be set in the layare", "msBuildWFSLayerGetURL()");
+        msSetError(MS_WFSCONNERR, "Metadata wfs_service must be set in the layer", "msBuildWFSLayerGetURL()");
         return NULL;
       }
       pszService = strchr(pszTmp, '=')+1;
@@ -481,7 +484,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
       if ((pszTmp = strstr(lp->connection, "TYPENAME=")) == NULL &&
           (pszTmp = strstr(lp->connection, "typename=")) == NULL )
       {
-        msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layare", "msBuildWFSLayerGetURL()");
+        msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layer", "msBuildWFSLayerGetURL()");
         return NULL;
       }
       bTypenameInConnection = 1;
