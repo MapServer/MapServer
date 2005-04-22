@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 791: initialize some fields in msDBFCreate() - avoids crashes in
+  some circumstances.
+
 - Bug 1329 : Apply sld named layer on all layers of the same group
 
 - Bug 1328 : support style's width parameter for line and polygon layers.

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/04/22 14:11:30  frank
+ * Bug 791: initialize some fields in msDBFCreate()
+ *
  * Revision 1.20  2005/02/18 03:06:48  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -356,7 +359,11 @@ DBFHandle msDBFCreate( const char * pszFilename )
     psDBF->bCurrentRecordModified = MS_FALSE;
     psDBF->pszCurrentRecord = NULL;
 
+    psDBF->pszStringField = NULL;
+    psDBF->nStringFieldLen = 0;    
+
     psDBF->bNoHeader = MS_TRUE;
+    psDBF->bUpdated = MS_FALSE;
 
     return( psDBF );
 }
