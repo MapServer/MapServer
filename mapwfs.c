@@ -29,6 +29,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.61  2005/04/22 15:50:46  assefa
+ * Bug 1262 : the SERVICE parameter is now required for wms and wfs
+ * GetCapbilities request. It is not required for other WMS requests.
+ * It is required for all WFS requests.
+ *
  * Revision 1.60  2005/04/21 21:10:38  sdlime
  * Adjusted WFS support to allow for a new output format (GML3).
  *
@@ -1377,7 +1382,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       return MS_DONE;  /* Not a WFS request */
   }
 
-  /* VERSION *and* REQUEST required by all WFS requests including 
+  /* VERSION *and* REQUEST *and* SERVICE required by all WFS requests including 
    * GetCapabilities.
    */
   if (paramsObj->pszVersion==NULL)
@@ -1398,6 +1403,19 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: REQUEST parameter missing", 
                  "msWFSDispatch()");
+      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
+  }
+
+  if (paramsObj->pszService==NULL)
+  {
+      msSetError(MS_WFSERR, 
+                 "Incomplete WFS request: SERVICE parameter missing", 
+                 "msWFSDispatch()");
+       
       returnvalue = msWFSException(map, paramsObj->pszVersion);
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);

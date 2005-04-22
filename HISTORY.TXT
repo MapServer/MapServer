@@ -16,7 +16,11 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
-- Bug 1302: the wfs/ows_service parameter is not used any more. The
+- Bug 1262 : the SERVICE parameter is now required for wms and wfs 
+  GetCapbilities request. It is not required for other WMS requests.
+  It is required for all WFS requests.
+
+- Bug 1302 : the wfs/ows_service parameter is not used any more. The
   service is always set to WFS for WFS layers.
 
 - Bug 791: initialize some fields in msDBFCreate() - avoids crashes in
