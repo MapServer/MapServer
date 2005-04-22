@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1302: the wfs/ows_service parameter is not used any more. The
+  service is always set to WFS for WFS layers.
+
 - Bug 791: initialize some fields in msDBFCreate() - avoids crashes in
   some circumstances.
 

@@ -27,6 +27,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/04/22 15:47:10  assefa
+ * Bug 1302: the wfs/ows_service parameter is not used any more. The
+ * service is always set to WFS for WFS layers.
+ *
  * Revision 1.33  2005/04/21 14:39:47  dan
  * Fixed typo in error messages (bug 1302)
  *
@@ -174,7 +178,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     rectObj bbox;
     const char *pszTmp; 
     int nLength, i = 0;
-    char *pszVersion, *pszService, *pszTypeName = NULL;
+    char *pszVersion, *pszTypeName = NULL;
 
     if (!map || !lp || !bbox_ret)
       return NULL;
@@ -201,7 +205,10 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
         }
     }
 
+    /*the service is always set to WFS : see bug 1302 */
+    psParams->pszService = strdup("WFS");
 
+    /*
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "service");
     if (pszTmp)
       psParams->pszService = strdup(pszTmp);
@@ -217,7 +224,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
               psParams->pszService = strdup("WFS");
         }
     }
-
+    */
 
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "typename");
     if (pszTmp)
@@ -334,12 +341,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
         return NULL;
     }
 
-    if (psParams->pszService == NULL ||
-        strncmp(psParams->pszService, "WFS", 3) != 0)
-    {
-        msSetError(MS_WFSCONNERR, "Metadata wfs_service must be set in the layer", "msBuildWFSLayerPostRequest()");
-        return NULL;
-    }
+    
 
     if (psParams->pszTypeName == NULL)
     {
@@ -446,32 +448,12 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Find out the service. Look first for the wfs_service            */
-/*      metadata. If not available try to find out if the CONNECTION    */
-/*      string contains it. This last test is done for                  */
-/*      backward compatiblity but is depericated.                       */
+/*      Find out the service. It is always set to WFS in function       */
+/*      msBuildRequestParms  (check Bug 1302 for details).              */
 /* -------------------------------------------------------------------- */
     pszService = psParams->pszService;
-    if (!pszService)
-    {
-      if ((pszTmp = strstr(lp->connection, "SERVICE=")) == NULL &&
-          (pszTmp = strstr(lp->connection, "service=")) == NULL )
-      {
-        msSetError(MS_WFSCONNERR, "Metadata wfs_service must be set in the layer", "msBuildWFSLayerGetURL()");
-        return NULL;
-      }
-      pszService = strchr(pszTmp, '=')+1;
-      bServiceInConnection = 1;
-    }
     
    
-    if (strncmp(pszService, "WFS", 3))
-    {
-        msSetError(MS_WFSCONNERR, "MapServer supports only WFS as a SERVICE (pease verify the service metadata wfs_service).", "msBuildWFSLayerGetURL()");
-        return NULL;
-    }
-    pszService = strdup("WFS");
-
 /* -------------------------------------------------------------------- */
 /*      Find out the typename. Look first for the wfs_tyename           */
 /*      metadata. If not available try to find out if the CONNECTION    */
