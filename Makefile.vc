@@ -57,14 +57,20 @@ all:		$(MS_LIB) $(MS_EXE) mapscriptvars
 
 $(MS_OBJS):	$(MS_HDRS)
 
-$(MS_LIB):	$(MS_OBJS)
-	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
-	lib /out:$(MS_LIB) $(MS_OBJS)
+$(MS_DLL) $(MS_LIB_DLL):	$(MS_LIB)
 	link /dll $(LDEBUG) \
 	   $(MS_OBJS) $(EXTERNAL_LIBS) /def:mapserver.def \
 	   /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
+	
+$(MS_LIB):	$(MS_OBJS)
+	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
+	lib /out:$(MS_LIB) $(MS_OBJS)
 
+!IFDEF DLLBUILD
+$(MS_EXE):	$(MS_DLL) $(MS_LIB_DLL)
+!ELSE
 $(MS_EXE):	$(MS_LIB)
+!ENDIF
 
 gd::
 	cd gd-1.2
@@ -84,11 +90,6 @@ gd::
 !ELSE
         $(LINK) $(LDFLAGS) $*.obj $(LIBS)
 !ENDIF
-
-.cpp.exe:
-	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
-	$(LINK) $(LDFLAGS) $*.obj $(LIBS)
-
 
 clean:
 	del *.obj
@@ -111,5 +112,5 @@ mapscriptvars: makefile.vc nmake.opt
 	echo $(INCLUDES) >> mapscriptvars
 	echo $(LIBS_DLL) >> mapscriptvars
 	echo $(LIBS) >> mapscriptvars
-    findstr MS_VERSION map.h || findstr define >> mapscriptvars
+	findstr MS_VERSION map.h | findstr define >> mapscriptvars
 
