@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/04/25 06:41:55  sdlime
+ * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
+ *
  * Revision 1.38  2005/04/15 18:44:31  sdlime
  * Updated msCopyStyle to account for the various item indexes.
  *
@@ -395,11 +398,11 @@ int msCopyStyle(styleObj *dst, styleObj *src)
 
     if (src->angleitem) MS_COPYSTRING(dst->angleitem, src->angleitem);
     if (src->sizeitem) MS_COPYSTRING(dst->sizeitem, src->sizeitem);
-    if (src->gradientitem) MS_COPYSTRING(dst->gradientitem, src->gradientitem);
+    if (src->rangeitem) MS_COPYSTRING(dst->rangeitem, src->rangeitem);
 
     MS_COPYSTELEM(angleitemindex);
     MS_COPYSTELEM(sizeitemindex);
-    MS_COPYSTELEM(gradientitemindex);
+    MS_COPYSTELEM(rangeitemindex);
 
     return MS_SUCCESS;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.404  2005/04/25 06:41:55  sdlime
+ * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
+ *
  * Revision 1.403  2005/04/15 17:10:36  sdlime
  * Applied Bill Benko's patch for bug 1305, gradient support.
  *
@@ -641,13 +644,13 @@ typedef struct {
   colorObj backgroundcolor;
   colorObj outlinecolor;
 
-  /* Stuff to handle Gradient Styles */
+  /* Stuff to handle Color Range Styles */
   colorObj mincolor;
   colorObj maxcolor;
   double minvalue;
   double maxvalue;
-  char *gradientitem;
-  int gradientitemindex;
+  char *rangeitem;
+  int rangeitemindex;
   
   int symbol;
   char *symbolname;
@@ -1592,8 +1595,9 @@ MS_DLL_EXPORT int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style);
 MS_DLL_EXPORT int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
-  /*Gradient Support*/
-MS_DLL_EXPORT int msMapGradient(styleObj *style, shapeObj *shape);
+  /*Range Support*/
+MS_DLL_EXPORT int msShapeToRange(styleObj *style, shapeObj *shape);
+MS_DLL_EXPORT int msValueToRange(styleObj *style, double fieldVal);
 
 MS_DLL_EXPORT void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);

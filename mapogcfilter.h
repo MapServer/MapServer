@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2005/04/25 06:41:56  sdlime
+ * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
+ *
  * Revision 1.9  2005/03/29 22:53:14  assefa
  * Initial support to improve WFS filter performance for DB layers (Bug 1292).
  *
@@ -163,7 +166,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode);
 int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 
 
-//SQL expressions related functions.
+/*SQL expressions related functions.*/
 void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex);
 

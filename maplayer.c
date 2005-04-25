@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2005/04/25 06:41:56  sdlime
+ * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
+ *
  * Revision 1.103  2005/04/15 17:10:36  sdlime
  * Applied Bill Benko's patch for bug 1305, gradient support.
  *
@@ -873,7 +876,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
       for(j=0; j<layer->class[i].numstyles; j++) {
         if(layer->class[i].styles[j].angleitem) nt++;
 	if(layer->class[i].styles[j].sizeitem) nt++;
-	if(layer->class[i].styles[j].gradientitem) nt++;
+	if(layer->class[i].styles[j].rangeitem) nt++;
       }
     }
 
@@ -974,7 +977,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 	for(j=0; j<layer->class[i].numstyles; j++) {
 	  if(layer->class[i].styles[j].angleitem) layer->class[i].styles[j].angleitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].angleitem);
 	  if(layer->class[i].styles[j].sizeitem) layer->class[i].styles[j].sizeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].sizeitem); 
-	  if(layer->class[i].styles[j].gradientitem) layer->class[i].styles[j].gradientitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].gradientitem); 
+	  if(layer->class[i].styles[j].rangeitem) layer->class[i].styles[j].rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].rangeitem); 
 	}
       }
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.300  2005/04/25 06:41:55  sdlime
+ * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
+ *
  * Revision 1.299  2005/04/15 19:32:33  julien
  * Bug 1103: Set the default tolerance value based on the layer type.
  *
@@ -423,6 +426,12 @@ int loadColorWithAlpha(colorObj *color) {
 static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
   if(MS_VALID_COLOR(*color))
     fprintf(stream, "  %s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
+}
+
+static void writeColorRange(colorObj *mincolor,colorObj *maxcolor, FILE *stream, char *name, char *tab) {
+  if(MS_VALID_COLOR(*mincolor) && MS_VALID_COLOR(*maxcolor))
+    fprintf(stream, "  %s%s %d %d %d  %d %d %d\n", tab, name, mincolor->red, mincolor->green, mincolor->blue,
+	    maxcolor->red, maxcolor->green, maxcolor->blue);
 }
 
 #if ALPHACOLOR_ENABLED
@@ -1611,13 +1620,13 @@ int initStyle(styleObj *style) {
   MS_INIT_COLOR(style->color, -1,-1,-1); /* must explictly set colors */
   MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1);
   MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
-  /* New Gradient fields*/
+  /* New Color Range fields*/
   MS_INIT_COLOR(style->mincolor, -1,-1,-1);
   MS_INIT_COLOR(style->maxcolor, -1,-1,-1);
   style->minvalue = 0.0;
   style->maxvalue = 1.0;
-  style->gradientitem = NULL;
-  /* End Gradient fields*/
+  style->rangeitem = NULL;
+  /* End Color Range fields*/
   style->symbol = 0; /* there is always a default symbol*/
   style->symbolname = NULL;
   style->size = -1; /* in SIZEUNITS (layerObj) */
@@ -1642,23 +1651,21 @@ int loadStyle(styleObj *style) {
 
   for(;;) {
     switch(msyylex()) {
-  /* New Gradient fields*/
-    case (MINCOLOR):
+  /* New Color Range fields*/
+    case (COLORRANGE):
+      /*These are both in one line now*/
       if(loadColor(&(style->mincolor)) != MS_SUCCESS) return(MS_FAILURE);
-      break;
-    case (MAXCOLOR):
       if(loadColor(&(style->maxcolor)) != MS_SUCCESS) return(MS_FAILURE);
       break;
-    case(MINVALUE):
+    case(DATARANGE):
+      /*These are both in one line now*/
       if(getDouble(&(style->minvalue)) == -1) return(-1);
-      break;
-    case(MAXVALUE):
       if(getDouble(&(style->maxvalue)) == -1) return(-1);
       break;
-    case(GRADIENTITEM):
-      if(getString(&style->gradientitem) == MS_FAILURE) return(-1);
+    case(RANGEITEM):
+      if(getString(&style->rangeitem) == MS_FAILURE) return(-1);
       break;
-  /* End Gradient fields*/
+  /* End Range fields*/
     case(ANGLE):
       if(getDouble(&(style->angle)) == -1) return(MS_FAILURE);
       break;
@@ -1679,10 +1686,9 @@ int loadStyle(styleObj *style) {
     case(ALPHACOLOR):
       if(loadColorWithAlpha(&(style->color)) != MS_SUCCESS) return(MS_FAILURE);
       break;
-    case (ALPHAMINCOLOR):
+    case (ALPHACOLORRANGE):
+      /*These will load together*/
       if(loadColorWithAlpha(&(style->mincolor)) != MS_SUCCESS) return(MS_FAILURE);
-      break;
-    case (ALPHAMAXCOLOR):
       if(loadColorWithAlpha(&(style->maxcolor)) != MS_SUCCESS) return(MS_FAILURE);
       break;
 #endif
@@ -1747,7 +1753,7 @@ void freeStyle(styleObj *style) {
   msFree(style->symbolname);
   msFree(style->angleitem);
   msFree(style->sizeitem);
-  msFree(style->gradientitem);
+  msFree(style->rangeitem);
 }
 
 void writeStyle(styleObj *style, FILE *stream) {
@@ -1777,12 +1783,10 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->width > 1) fprintf(stream, "        SIZE %d\n", style->width);
   if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
 
-  if(style->gradientitem) {
-    fprintf(stream, "        GRADIENTITEM %s\n", style->gradientitem);
-    writeColor(&(style->maxcolor), stream, "MAXCOLOR", "        ");
-    writeColor(&(style->mincolor), stream, "MINCOLOR", "        ");
-    fprintf(stream, "        MAXVALUE %g\n", style->maxvalue);
-    fprintf(stream, "        MINVALUE %g\n", style->minvalue);
+  if(style->rangeitem) {
+    fprintf(stream, "        RANGEITEM %s\n", style->rangeitem);
+    writeColorRange(&(style->mincolor),&(style->maxcolor), stream, "COLORRANGE", "        ");
+    fprintf(stream, "        DATARANGE %g %g\n", style->minvalue, style->maxvalue);
   }
 
   fprintf(stream, "      END\n");

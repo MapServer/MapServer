@@ -120,13 +120,11 @@ void lexer_cleanup(void) {
 
 <EXPRESSION_STRING>length                      { return(LENGTH); }
 
-<INITIAL,OBJECT_STRING>mincolor 	       { return(MINCOLOR); }
-<INITIAL,OBJECT_STRING>maxcolor 	       { return(MAXCOLOR); }
-<INITIAL,OBJECT_STRING>alphamincolor	       { return(ALPHAMAXCOLOR); }
-<INITIAL,OBJECT_STRING>alphamaxcolor 	       { return(ALPHAMAXCOLOR); }
-<INITIAL,OBJECT_STRING>minvalue                { return(MINVALUE); }
-<INITIAL,OBJECT_STRING>maxvalue                { return(MAXVALUE); }
-<INITIAL,OBJECT_STRING>gradientitem            { return(GRADIENTITEM); }
+
+<INITIAL,OBJECT_STRING>colorrange              { return(COLORRANGE); }
+<INITIAL,OBJECT_STRING>alphacolorrange	       { return(ALPHACOLORRANGE); }
+<INITIAL,OBJECT_STRING>datarange               { return(DATARANGE); }
+<INITIAL,OBJECT_STRING>rangeitem               { return(RANGEITEM); }
 
 <INITIAL,OBJECT_STRING>alphacolor		       { return(ALPHACOLOR); }
 <INITIAL,OBJECT_STRING>angle                   { return(ANGLE); }
@@ -370,7 +368,7 @@ void lexer_cleanup(void) {
 			                         msyytext[strlen(msyytext)-1] = '\0';
                                                  msTimeInit(&msyylval.tmval);
                                                  msParseTime(msyytext, &msyylval.tmval);
-                                                 // TODO: need to trap bad date formats somehow, should return a parse error (need an error token in mapparser.y)
+                                                 /* TODO: need to trap bad date formats somehow, should return a parse error (need an error token in mapparser.y)*/
                                                  return(TIME);
                                                }
 
