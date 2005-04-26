@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/04/26 03:37:50  frank
+ * Fixed setting of this_rec from hDBF->nRecords, was screwing up dbf file.
+ * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1332
+ *
  * Revision 1.12  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -183,14 +187,7 @@ int main( int argc, char ** argv )
       if (node )
       {
 
-#ifdef MAPSERVER
-        this_rec = hDBF->nRecords - 1;
-#else
-        this_rec = hDBF->nRecords;	
-/*      Shapelib currently works this way
- *      Map server is based on an old version of shapelib      
- */
-#endif
+        this_rec = hDBF->nRecords;
 
 #ifdef  MAPSERVER
         msDBFWriteIntegerAttribute( hDBF, this_rec, 0, node->numshapes);
