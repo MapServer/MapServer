@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Buf 1332 - shptreevis.c: fixed setting of this_rec, as the output dbf
+  file was not getting any records at all.
+
 - Fixed Makefile.vc to make .exe files depend on the DLL, so if the DLL
   fails to build, things will stop.  Avoids the need for unnecessary
   cleans on win32.  Also fixed the rule for MS_VERSION for mapscriptvars.
