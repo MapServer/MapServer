@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/04/26 03:32:46  frank
+ * Avoid casting warning.
+ *
  * Revision 1.52  2005/04/15 21:10:59  pramsey
  * Applied patch for bug 1306
  *
@@ -478,7 +481,7 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
 	 }
        /* if we're here, this will be a malloc'd string, so no need to 
 	  copy it */
-       data_source = geom_table;
+       data_source = (char *)geom_table;
      }
 
     /* Allocate buffer to fit the largest query string */
