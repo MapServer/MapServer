@@ -13,8 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.5
------------
+Version 4.6.0-beta1 (2005-04-26)
+--------------------------------
 
 - Buf 1332 - shptreevis.c: fixed setting of this_rec, as the output dbf
   file was not getting any records at all.

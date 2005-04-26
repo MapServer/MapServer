@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.405  2005/04/26 23:01:36  dan
+ * Updated for 4.6.0-beta1 release
+ *
  * Revision 1.404  2005/04/25 06:41:55  sdlime
  * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
  *
@@ -271,7 +274,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.5"
+#define MS_VERSION "4.6.0-beta1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
