@@ -33,6 +33,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/04/27 15:30:15  assefa
+ * Correct Bug 804 : Make sure that the layer index is consistent when saving
+ * movies if some of the layers are not drawn (because the status if off or
+ * out of scale ...).
+ *
  * Revision 1.51  2005/04/21 23:35:29  assefa
  * Add support style's width parameter for line and polygon layers : Bug 1328.
  *
@@ -2687,6 +2692,23 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     return 0;
 }
 
+static int SWFIsInArray(int *panArray, int nSize, int nValue)
+{
+    int i = 0;
+    if (panArray && nSize > 0)
+    {
+        for (i=0; i<nSize; i++)
+        {
+            if (panArray[i] == nValue)
+              return MS_TRUE;
+            if (panArray[i] > nValue)
+              return MS_FALSE;
+        }
+    }
+
+    return MS_FALSE;
+}
+    
 /************************************************************************/
 /*                            int msSaveImageSWF                        */
 /*                                                                      */
@@ -2694,7 +2716,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /************************************************************************/
 int msSaveImageSWF(imageObj *image, char *filename)
 {
-    int         i, j, k, nLayers = 0;
+    int         i=0, j=0, k=0, nLayers=0, iMovie= 0;
     char        szBase[100];
     char        szExt[5];
     char        szTmp[20];
@@ -2709,9 +2731,9 @@ int msSaveImageSWF(imageObj *image, char *filename)
     int         bFileIsTemporary = MS_FALSE;
     const char *pszExtension = NULL;
     
-    FILE *fp; 
+    FILE        *fp; 
     unsigned char block[4000];
-        int bytes_read;
+    int         bytes_read;
 
     if (image && MS_DRIVER_SWF(image->format))/* && filename) */
     {
@@ -2850,7 +2872,6 @@ int msSaveImageSWF(imageObj *image, char *filename)
         SWFMovie_add(image->img.swf->sMainMovie, oAction);
 
         
-        nLayers = image->img.swf->nLayerMovies;
         
 /* -------------------------------------------------------------------- */
 /*      extract the name of the file to save and use it to save the     */
@@ -2877,86 +2898,110 @@ int msSaveImageSWF(imageObj *image, char *filename)
         } 
         
 
+/* ==================================================================== */
+/*      For layers that have not be drawn for some reason (status       */
+/*      off, out of scale ...), It will output AS layer objects         */
+/*      where the full name and relative name are set to "undefined"    */
+/*      (See Bug 804 for more details).                                 */
+/* ==================================================================== */
+        nLayers = map->numlayers; /*image->img.swf->nLayerMovies;*/
+
 /* -------------------------------------------------------------------- */
 /*      save layers.                                                    */
 /* -------------------------------------------------------------------- */
+        iMovie = -1;
         for (i=0; i<nLayers; i++)
         {
-/* -------------------------------------------------------------------- */
-/*      build full filename.                                            */
-/* -------------------------------------------------------------------- */
-            sprintf(szTmp, "%s%d", "_layer_", i);
-            gszFilename[0] = '\0';
-            sprintf(gszFilename, szBase);
-            strcat(gszFilename, szTmp);
-            strcat(gszFilename, ".");
-            strcat(gszFilename, szExt);
-/* -------------------------------------------------------------------- */
-/*      build relative name.                                            */
-/* -------------------------------------------------------------------- */
-            nLength = strlen(gszFilename);
-            iSlashPos = -1;
-            for (j=nLength-1; j>=0; j--)
+            if (SWFIsInArray(image->img.swf->panLayerIndex,
+                             image->img.swf->nLayerMovies, i))
             {
-                if (gszFilename[j] == '/' || gszFilename[j] == '\\')
+                iMovie++;
+                /* -------------------------------------------------------------------- */
+                /*      build full filename.                                            */
+                /* -------------------------------------------------------------------- */
+                sprintf(szTmp, "%s%d", "_layer_", i);
+                gszFilename[0] = '\0';
+                sprintf(gszFilename, szBase);
+                strcat(gszFilename, szTmp);
+                strcat(gszFilename, ".");
+                strcat(gszFilename, szExt);
+                /* -------------------------------------------------------------------- */
+                /*      build relative name.                                            */
+                /* -------------------------------------------------------------------- */
+                nLength = strlen(gszFilename);
+                iSlashPos = -1;
+                for (j=nLength-1; j>=0; j--)
                 {
-                    iSlashPos = j;
-                    break;
+                    if (gszFilename[j] == '/' || gszFilename[j] == '\\')
+                    {
+                        iSlashPos = j;
+                        break;
+                    }
                 }
-            }
-            if (iSlashPos >=0)
-            {
-                gszTmp[0]='\0';
-                k = 0;
-                for (j=iSlashPos+1; j<nLength; j++)
+                if (iSlashPos >=0)
                 {
-                    gszTmp[k] = gszFilename[j];
-                    k++;
+                    gszTmp[0]='\0';
+                    k = 0;
+                    for (j=iSlashPos+1; j<nLength; j++)
+                    {
+                        gszTmp[k] = gszFilename[j];
+                        k++;
+                    }
+                    gszTmp[k] = '\0';
+                    pszRelativeName = gszTmp;
                 }
-                 gszTmp[k] = '\0';
-                 pszRelativeName = gszTmp;
-            }
-            else
-              pszRelativeName = gszFilename;
+                else
+                  pszRelativeName = gszFilename;
 
-            /* test */
-            /* sprintf(gszFilename, "%s%d.swf", "c:/tmp/ms_tmp/layer_", i); */
+                /* test */
+                /* sprintf(gszFilename, "%s%d.swf", "c:/tmp/ms_tmp/layer_", i); */
 
-            SWFMovie_setBackground(image->img.swf->pasMovies[i], 
-                                   0xff, 0xff, 0xff);
+                SWFMovie_setBackground(image->img.swf->pasMovies[iMovie], 
+                                       0xff, 0xff, 0xff);
             
 #ifdef MING_VERSION_03
-            SWFMovie_save(image->img.swf->pasMovies[i], gszFilename, -1);  
+                SWFMovie_save(image->img.swf->pasMovies[iMovie], gszFilename, -1);  
 #else
-             SWFMovie_save(image->img.swf->pasMovies[i], gszFilename);
+                SWFMovie_save(image->img.swf->pasMovies[iMovie], gszFilename);
 #endif
 
-            /* test */
-            /* sprintf(gszFilename, "%s%d.swf", "layer_", i); */
+                /* test */
+                /* sprintf(gszFilename, "%s%d.swf", "layer_", i); */
             
-            /* sprintf(szAction, "mapObj.layers[%d]=\"%s\";", i, gszFilename); */
-            sprintf(szAction, "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"%s\",\"%s\");", i, 
-                    map->layers[i].name, map->layers[i].type, gszFilename,
-                    pszRelativeName);
+                /* sprintf(szAction, "mapObj.layers[%d]=\"%s\";", i, gszFilename); */
+                sprintf(szAction, "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"%s\",\"%s\");", i, 
+                        map->layers[i].name, map->layers[i].type, gszFilename,
+                        pszRelativeName);
             
-            oAction = compileSWFActionCode(szAction);
-            SWFMovie_add(image->img.swf->sMainMovie, oAction);
+                oAction = compileSWFActionCode(szAction);
+                SWFMovie_add(image->img.swf->sMainMovie, oAction);
 
-/* ==================================================================== */
-/*      when we have a temporary file, we are assuming that the         */
-/*      intention is to send the swf to the browser. So we use          */
-/*      output the URL for the loadMovieNum. Else we output only the    */
-/*      name of the file.                                               */
-/* ==================================================================== */
-            /* sprintf(szAction, "loadMovie(\"%s\",%d);", gszFilename, i+1); */
-            if( bFileIsTemporary )
-              sprintf(szAction, "loadMovieNum(\"%s%s\",%d);", map->web.imageurl, 
-                      pszRelativeName, i+1);
-            else
-              sprintf(szAction, "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
+                /* ==================================================================== */
+                /*      when we have a temporary file, we are assuming that the         */
+                /*      intention is to send the swf to the browser. So we use          */
+                /*      output the URL for the loadMovieNum. Else we output only the    */
+                /*      name of the file.                                               */
+                /* ==================================================================== */
+                /* sprintf(szAction, "loadMovie(\"%s\",%d);", gszFilename, i+1); */
+                if( bFileIsTemporary )
+                  sprintf(szAction, "loadMovieNum(\"%s%s\",%d);", map->web.imageurl, 
+                          pszRelativeName, i+1);
+                else
+                  sprintf(szAction, "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
 
-            oAction = compileSWFActionCode(szAction);
-            SWFMovie_add(image->img.swf->sMainMovie, oAction);
+                oAction = compileSWFActionCode(szAction);
+                SWFMovie_add(image->img.swf->sMainMovie, oAction);
+            } 
+            else /*layer which was not drawn */
+            {
+                sprintf(szAction, 
+                        "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"undefined\",\"undefined\");", i, 
+                        map->layers[i].name);
+            
+                oAction = compileSWFActionCode(szAction);
+                SWFMovie_add(image->img.swf->sMainMovie, oAction);
+            }
+
         }
         sprintf(szAction, "stop();");
         oAction = compileSWFActionCode(szAction);
