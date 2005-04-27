@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-beta1 (2005-04-26)
 --------------------------------
 
+- Bug 1335 : missing call to msInitShape in function msQueryByShape
+
 - Bug 804 : SWF output : Make sure that the layer index is consistent 
  when saving movies if some of the layers are not drawn (because the status 
  is off or out of scale ...)
