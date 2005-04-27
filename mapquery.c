@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83.2.1  2005/04/27 18:36:48  assefa
+ * Bug 1335 : missing call to msInitShape in function msQueryByShape.
+ *
  * Revision 1.83  2004/11/11 19:06:36  sdlime
  * Applied patch for bug 1003 (mapshape and projected layers).
  *
@@ -938,6 +941,8 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
   char status;
   double distance, tolerance;
   rectObj searchrect;
+
+  msInitShape(&shape);
 
   // FIX: do some checking on selectshape here...
   if(selectshape->type != MS_SHAPE_POLYGON) {
