@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2005/04/27 16:52:35  assefa
+ * Bug 1335 : missing call to msInitShape in function msQueryByShape.
+ *
  * Revision 1.85  2005/04/15 19:32:33  julien
  * Bug 1103: Set the default tolerance value based on the layer type.
  *
@@ -965,6 +968,8 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
   char status;
   double distance, tolerance, layer_tolerance;
   rectObj searchrect;
+
+   msInitShape(&shape);
 
   /* FIX: do some checking on selectshape here... */
   if(selectshape->type != MS_SHAPE_POLYGON) {
