@@ -4,7 +4,7 @@
  *  Authors: Fernando Simon (fsimon@univali.br)                              * 
  *           Rodrigo Becke Cabral (cabral@univali.br)                        *
  *  Collaborator: Adriana Gomes Alves                                        *
- *  MapServer: MapServer 4.5 (cvs)                                           *
+ *  MapServer: MapServer 4.6 (cvs)                                           *
  *  Oracle: Oracle 9.2 Spatial Cartridge 9.2 release 9.0.1                   *
  *                                                                           *
  *****************************************************************************
@@ -17,6 +17,10 @@
  = and FUNCITEC (www.funcitec.rct-sc.br) under process FCTP1523-031.
  *****************************************************************************
  * $Id$
+ *
+ * Revision 1.26        $Date$
+ * and Revision 1.25    2005/04/21 15:09:28 [CVS-TIME] julien
+ * Bug fix: #1244
  *
  * Revision 1.22        $Date$
  * and Revision 1.21    2005/02/21 14:08:43 [CVS-TIME]
@@ -146,9 +150,7 @@ typedef
     {
         OCINumber x;
         OCINumber y;
-#ifdef USE_POINT_Z_M
         OCINumber z;
-#endif /* USE_POINT_Z_M */
     } SDOPointObj;
 
 typedef
@@ -478,14 +480,12 @@ static int msSplitData( char *data, char *geometry_column_name, char *table_name
             }
             
             /*parsing VERSION token when user defined one function*/
-            /*I need to do this with another way!!!! Alien code.... :] */
             for( ;*src && isspace( *src ); src++ );
             for( ;*src && *tok_version && tolower(*src)==*tok_version; src++, tok_version++ );                        
         }
         else
         {   
             /*Terrible*/
-            /*I'm not good today*/
             for(tgt = "VERSION";*tgt && *tok_version && toupper(*tgt)==toupper(*tok_version); tgt++, tok_version++ );
             *function = FUNCTION_FILTER;
         }        
@@ -812,7 +812,7 @@ static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
                 success = TRY( hand, OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&z ) );
             }
             else
-            { /* This way can be wrong, but I believe that it's the best way now*/
+            {
                 last_oci_call_ms_status = MS_SUCCESS;
                 strcpy( last_oci_call_ms_error, "Retrieve z value, but NULL value for z. Setting z to 0." );
                 z = 0;
