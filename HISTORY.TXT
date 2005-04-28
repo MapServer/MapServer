@@ -13,6 +13,10 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.6.0-beta2
+--------------------------------
+
+
 Version 4.6.0-beta1 (2005-04-26)
 --------------------------------
 
@@ -43,9 +47,6 @@ Version 4.6.0-beta1 (2005-04-26)
 
 - Bug 1328 : support style's width parameter for line and polygon layers.
 
-- Bug 1244: Replacing --enable-shape-z-m by --enable-point-z-m and replacing 
-  USE_SHAPE_Z_M by USE_POINT_Z_M. The new name makes more sense.
-
 - Bug 564: Fixed old problem with labels occasionally drawn upside down
 
 - Bug 1325: php mapscript function $class->settext needs only 1 argument.
@@ -57,7 +58,7 @@ Version 4.6.0-beta1 (2005-04-26)
   The default is now 3 for point and line layers and 0 for all the others.
 
 - Bug 1244: Removing Z and M parameter from pointObj by default. A new 
-  compilation option is available to active those option --enable-shape-z-m.
+  compilation option is available to active those option --enable-point-z-m.
   This gives an overall performance gain around 7 to 10%.
 
 - Bug 1225: MapServer now requires GD 2.0.16 or more recent
