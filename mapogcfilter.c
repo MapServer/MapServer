@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.50  2005/04/28 20:39:45  assefa
+ * Bug 1336 : Retreive distance value for DWithin filter request done with
+ * line and polygon shape.
+ *
  * Revision 1.49  2005/04/21 15:09:28  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *
@@ -291,7 +295,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (FLTIsLineFilter(psNode) || FLTIsPolygonFilter(psNode))
     {
         bShapeQuery = 1;
-        psQueryShape = FLTGetShape(psNode, NULL);
+        psQueryShape = FLTGetShape(psNode, &dfDistance);
     }
 
     if (!szExpression && !szEPSG && !bIsBBoxFilter 
