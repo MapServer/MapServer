@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2005/05/01 15:05:09  sean
+ * Moved prototypes for 3 functions outside the #ifdef USE_OGR block to allow builds without GDAL/OGR (bug 1337)
+ *
  * Revision 1.11  2004/07/29 21:50:19  assefa
  * Use wfs_filter metedata when generating an SLD (Bug 782)
  *
@@ -68,9 +71,17 @@
  *
  **********************************************************************/
 
+#include "map.h"
+
+MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer);
+MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer, 
+                     char *pszStyleLayerName);
+MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
+                  char *pszStyleLayerName);
+
+
 #ifdef USE_OGR
 
-#include "map.h"
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
@@ -78,11 +89,6 @@
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer, 
-                     char *pszStyleLayerName);
-MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
-                  char *pszStyleLayerName);
-
 layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers);
 void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
 void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer);
@@ -119,7 +125,6 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
 void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
 void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 
-MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer);
 char *msSLDGenerateSLDLayer(layerObj *psLayer);
 
 char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter);
