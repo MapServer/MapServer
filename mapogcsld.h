@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2005/05/01 15:15:47  sean
+ * Previous commit mangled revision 1.12, now repaired (bug 1337)
+ *
  * Revision 1.12  2005/05/01 15:05:09  sean
  * Moved prototypes for 3 functions outside the #ifdef USE_OGR block to allow builds without GDAL/OGR (bug 1337)
  *
@@ -74,11 +77,10 @@
 #include "map.h"
 
 MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer);
-MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer, 
-                     char *pszStyleLayerName);
+MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
+                                   char *pszStyleLayerName);
 MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
-                  char *pszStyleLayerName);
-
+                                char *pszStyleLayerName);
 
 #ifdef USE_OGR
 
