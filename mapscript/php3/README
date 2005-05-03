@@ -1428,6 +1428,9 @@ outputformatObj Class
         
   Methods related to the output format :
 
+   int set(string property_name, new_value)
+        Set object property to a new value.
+
    void setOption(string property_name, string new_value)
         Add or Modify the format option list. return true on success.
 
