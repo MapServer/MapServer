@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/05/06 17:29:30  sdlime
+ * Removed debuging statement from last fix.
+ *
  * Revision 1.43  2005/05/06 17:19:05  frank
  * bug 985/1015 - dont classify rasters without expressions
  *
@@ -403,8 +406,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           break;
       }
   }
-
-  printf( "Classes=%d, classified=%d\n", layer->numclasses, classified );
 
   /*
    * Set up the band selection.  We look for a BANDS directive in the 
