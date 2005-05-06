@@ -19,6 +19,9 @@ Version 4.6.0-beta2
 - Bug 1336 : Retreive distance value for DWithin filter request 
   done with line and polygon shapes/
 
+- Bug 985 / 1015: Don't render raster layers as classified if none of
+  the classes has an expression set (gdal renderer only). 
+
 Version 4.6.0-beta1 (2005-04-26)
 --------------------------------
 

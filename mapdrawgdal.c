@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/05/06 17:19:05  frank
+ * bug 985/1015 - dont classify rasters without expressions
+ *
  * Revision 1.42  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -210,7 +213,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   rectObj copyRect, mapRect;
   unsigned char *pabyRaw1=NULL, *pabyRaw2=NULL, *pabyRaw3=NULL, 
                 *pabyRawAlpha = NULL;
-  int truecolor = FALSE;
+  int truecolor = FALSE, classified = FALSE;
   int red_band=0, green_band=0, blue_band=0, alpha_band=0, cmt=0;
   gdImagePtr gdImg = NULL;
   GDALDatasetH hDS = hDSVoid;
@@ -387,6 +390,21 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           src_xoff, src_yoff, src_xsize, src_ysize, 
           dst_xoff, dst_yoff, dst_xsize, dst_ysize );
   }
+  
+  /*
+   * Is this image classified?  We consider it classified if there are
+   * classes with an expression string.  
+   */
+  for( i = 0; i < layer->numclasses; i++ )
+  {
+      if( layer->class[i].expression.string != NULL )
+      {
+          classified = TRUE;
+          break;
+      }
+  }
+
+  printf( "Classes=%d, classified=%d\n", layer->numclasses, classified );
 
   /*
    * Set up the band selection.  We look for a BANDS directive in the 
@@ -415,7 +433,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           alpha_band = 2;
       
       hBand1 = GDALGetRasterBand( hDS, red_band );
-      if( layer->numclasses != 0 
+      if( classified 
           || GDALGetRasterColorTable( hBand1 ) != NULL )
       {
           alpha_band = 0;
@@ -498,7 +516,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    * is sufficiently different than the normal mechanism of loading
    * into an 8bit buffer, that we isolate it into it's own subfunction.
    */
-  if(layer->numclasses > 0 && gdImg 
+  if( classified && gdImg 
      && hBand1 != NULL && GDALGetRasterDataType( hBand1 ) != GDT_Byte ) 
   {
       return msDrawRasterLayerGDAL_16BitClassification( 
@@ -578,7 +596,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    * class colors are provided by the MAP file, or where we use the native
    * color table.
    */
-  if(layer->numclasses > 0 && gdImg ) {
+  if( classified && gdImg ) {
     int c, color_count;
 
     cmap_set = TRUE;
