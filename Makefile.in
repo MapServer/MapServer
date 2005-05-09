@@ -279,10 +279,6 @@ scalebar: $(LIBMAP_STATIC)  scalebar.o map.h
 mapserv: mapserv.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o map.h
 	$(LD) $(CFLAGS) mapserv.o cgiutil.o  $(EXE_LDFLAGS) -o mapserv
 
-mapserv.fcgi: mapserv.h $(LIBMAP_STATIC)  mapserv_fcgi.o cgiutil.o map.h
-	$(LD) $(CFLAGS) mapserv_fcgi.o cgiutil.o  \
-		$(EXE_LDFLAGS) -lfcgi -o mapserv.fcgi
-
 shpindex: $(LIBMAP_STATIC) shpindex.o map.h
 	$(LD) $(CFLAGS) shpindex.o $(EXE_LDFLAGS) -o shpindex
 
