@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2005/05/10 13:18:25  dan
+ * Fixed several issues with writeSymbol() (bug 1344)
+ *
  * Revision 1.81  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -80,6 +83,12 @@ extern FILE *msyyin;
 extern unsigned char PNGsig[8];
 extern unsigned char JPEGsig[3];
 
+/*
+** Symbol to string static arrays needed for writing map files.
+** Must be kept in sync with enumerations and defines found in map.h.
+*/
+extern char *msLabelPositions[]; /* Defined in mapfile.c */
+static char *msCapsJoinsCorners[7]={"NONE", "BEVEL", "BUTT", "MITER", "ROUND", "SQUARE", "TRIANGLE"};
 
 void freeImageCache(struct imageCacheObj *ic)
 {
@@ -395,21 +404,21 @@ void writeSymbol(symbolObj *s, FILE *stream)
     break;
   case(MS_SYMBOL_PIXMAP):
     fprintf(stream, "    TYPE PIXMAP\n");
-    if(s->imagepath != NULL) fprintf(stream, "    IMAGE %s\n", s->imagepath);
+    if(s->imagepath != NULL) fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
     fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
     break;
   case(MS_SYMBOL_TRUETYPE):
     fprintf(stream, "    TYPE TRUETYPE\n");
     if(s->antialias == MS_TRUE) fprintf(stream, "    ANTIALIAS TRUE\n");
-    fprintf(stream, "    CHARACTER %s\n", s->character);
+    if (s->character != NULL) fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
     fprintf(stream, "    GAP %d\n", s->gap);
-    fprintf(stream, "    FONT %s\n", s->font);
-    fprintf(stream, "    POSITION %d\n", s->position);
+    if (s->font != NULL) fprintf(stream, "    FONT \"%s\"\n", s->font);
+    fprintf(stream, "    POSITION %s\n", msLabelPositions[s->position]);
     break;
   case(MS_SYMBOL_CARTOLINE):
     fprintf(stream, "    TYPE CARTOLINE\n");
-    fprintf(stream, "    LINECAP %d\n", s->linecap);
-    fprintf(stream, "    LINEJOIN %d\n", s->linejoin);
+    fprintf(stream, "    LINECAP %s\n", msCapsJoinsCorners[s->linecap]);
+    fprintf(stream, "    LINEJOIN %s\n", msCapsJoinsCorners[s->linejoin]);
     fprintf(stream, "    LINEJOINMAXSIZE %g\n", s->linejoinmaxsize);
     break;
   case(MS_SYMBOL_SIMPLE):

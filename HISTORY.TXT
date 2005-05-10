@@ -22,6 +22,12 @@ Version 4.6.0-beta2
 - Bug 985 / 1015: Don't render raster layers as classified if none of
   the classes has an expression set (gdal renderer only). 
 
+- Bug 1344: Fixed several issues in writing of inline SYMBOLS when saving
+  mapfile (missing quotes around CHARACTER and other string members of SYMBOL
+  object, check for NULLs, and write correct identifiers for POSITION, 
+  LINECAP and LINEJOIN).
+
+
 Version 4.6.0-beta1 (2005-04-26)
 --------------------------------
 

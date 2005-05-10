@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.301  2005/05/10 13:18:25  dan
+ * Fixed several issues with writeSymbol() (bug 1344)
+ *
  * Revision 1.300  2005/04/25 06:41:55  sdlime
  * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
  *
@@ -116,7 +119,8 @@ static int loadGrid( layerObj *pLayer );
 */
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
 static char *msLayerTypes[8]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX"};
-static char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
+/* msLabelPositions[] also used in mapsymbols.c (not static) */
+char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
 static char *msStatus[5]={"OFF", "ON", "DEFAULT", "EMBED"};
