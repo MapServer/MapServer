@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.288.2.3  2005/05/10 13:19:34  dan
+ * Fixed several issues with writeSymbol() (bug 1344)
+ *
  * Revision 1.288.2.2  2005/04/13 13:19:42  dan
  * Added missing OFFSET in writeStyle() (bug 1156) and added quotes around
  * string values in writeOutputformatobject() (bug 1231)
@@ -86,7 +89,8 @@ static int loadGrid( layerObj *pLayer );
 */
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
 static char *msLayerTypes[8]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX"};
-static char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
+/* msLabelPositions[] also used in mapsymbols.c (not static) */
+char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
 static char *msStatus[5]={"OFF", "ON", "DEFAULT", "EMBED"};

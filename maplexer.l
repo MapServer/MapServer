@@ -305,6 +305,7 @@ void lexer_cleanup() {
 <INITIAL,VALUE_STRING>miter		       { return(MS_CJC_MITER); }
 <INITIAL,VALUE_STRING>multiple                 { return(MS_MULTIPLE); }
 
+<INITIAL>none                                  { return(MS_CJC_NONE); }
 <INITIAL,VALUE_STRING>normal                   { return(MS_NORMAL); }
 <INITIAL,VALUE_STRING>off		       { return(MS_OFF); }
 <INITIAL,VALUE_STRING>ogr		       { return(MS_OGR); }
