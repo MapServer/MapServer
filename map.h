@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.406  2005/05/10 15:00:19  sean
+ * fonts hash now properly exposed in mapscript (bug 1345)
+ *
  * Revision 1.405  2005/04/26 23:01:36  dan
  * Updated for 4.6.0-beta1 release
  *
@@ -479,8 +482,8 @@ extern "C" {
 #ifdef SWIG
         %mutable;
 #endif
-#ifndef SWIG
         hashTableObj fonts;
+#ifndef SWIG
         struct map_obj *map;
 #endif
     } fontSetObj;

@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-beta2
 --------------------------------
 
+- fontset.fonts hash now exposed in mapscript (bug 1345).
+
 - Bug 1336 : Retreive distance value for DWithin filter request 
   done with line and polygon shapes/
 

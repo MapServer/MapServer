@@ -30,6 +30,10 @@ MAP
     END
   END
 
+  LEGEND
+    IMAGECOLOR 255 255 255
+  END
+  
   WEB
     METADATA
       "key1" "value1"
