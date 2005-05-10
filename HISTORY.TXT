@@ -31,6 +31,8 @@ Version 4.6.0-beta2
 Version 4.6.0-beta1 (2005-04-26)
 --------------------------------
 
+- Bug 1305: Added support for gradient coloring in class styles
+
 - Bug 1335 : missing call to msInitShape in function msQueryByShape
 
 - Bug 804 : SWF output : Make sure that the layer index is consistent 
