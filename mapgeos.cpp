@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/05/11 07:10:21  sdlime
+ * Finished the rest of the wrapper funtions for initial GEOS support which basically ammounts to buffer and convex hull creation from MapScript at the moment. There are likely a number of memory leaks associated with the implementation at the moment.
+ *
  * Revision 1.7  2005/02/23 05:16:50  sdlime
  * Added GEOS=>shape conversion for GEOS_MULTILINE geometries.
  *
@@ -98,6 +101,30 @@ static Geometry *msGEOSShape2Geometry_point(pointObj *point)
   }
 }
 
+static Geometry *msGEOSShape2Geometry_multipoint(lineObj *multipoint)
+{
+  try {
+    int i;
+    vector<Geometry *> *parts=NULL;
+
+    parts = new vector<Geometry *>(multipoint->numpoints);
+    for(i=0; i<multipoint->numpoints; i++)
+      (*parts)[i] = msGEOSShape2Geometry_point(&(multipoint->point[i]));
+
+    GeometryFactory *gf = new GeometryFactory();
+    Geometry *g = gf->createMultiPoint(parts);
+    /* delete parts; */
+
+    return g;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSShape2Geometry_multiline()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+}
+
 static Geometry *msGEOSShape2Geometry_line(lineObj *line)
 {
   try {
@@ -115,8 +142,142 @@ static Geometry *msGEOSShape2Geometry_line(lineObj *line)
 
     GeometryFactory *gf = new GeometryFactory();
     Geometry *g = gf->createLineString(coords);
-    // delete coords;
+    /* delete coords; */
 
+    return g;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSShape2Geometry_line()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+}
+
+static Geometry *msGEOSShape2Geometry_multiline(shapeObj *multiline)
+{
+  try {
+    int i;
+    vector<Geometry *> *parts=NULL;
+
+    parts = new vector<Geometry *>(multiline->numlines);
+    for(i=0; i<multiline->numlines; i++)
+      (*parts)[i] = msGEOSShape2Geometry_line(&(multiline->line[i]));
+
+    GeometryFactory *gf = new GeometryFactory();
+    Geometry *g = gf->createMultiLineString(parts);
+
+    return g;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSShape2Geometry_multiline()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+}
+
+static Geometry *msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *outerList)
+{
+  try {
+    int i, j, k;
+    Coordinate c;
+    LinearRing *outerRing, *innerRing;
+    vector<Geometry *> *innerRings=NULL;
+    int numInnerRings=0, *innerList;
+    
+    GeometryFactory *gf = new GeometryFactory();
+    
+    /* build the outer ring */
+    DefaultCoordinateSequence *coords = new DefaultCoordinateSequence(shape->line[r].numpoints);
+    
+    c.z = DoubleNotANumber; /* same for all points in the line (TODO: support z) */
+    for(i=0; i<shape->line[r].numpoints; i++) {
+      c.x = shape->line[r].point[i].x;
+      c.y = shape->line[r].point[i].y;
+      coords->setAt(c, i);
+    }
+    
+    outerRing = (LinearRing *) gf->createLinearRing(coords);
+    
+    /* build the inner rings */
+    innerList = msGetInnerList(shape, r, outerList);    
+    for(j=0; j<shape->numlines; j++)
+      if(innerList[j] == MS_TRUE) numInnerRings++;
+
+    /* printf("\tnumber of inner rings=%d\n", numInnerRings); */
+
+    if(numInnerRings > 0) {
+      k = 0; /* inner ring counter */
+      innerRings = new vector<Geometry *>(numInnerRings);
+      for(j=0; j<shape->numlines; j++) {
+	if(innerList[j] == MS_FALSE) continue;
+	
+	DefaultCoordinateSequence *coords = new DefaultCoordinateSequence(shape->line[j].numpoints);
+	
+	c.z = DoubleNotANumber; /* same for all points in the line (TODO: support z) */
+	for(i=0; i<shape->line[j].numpoints; i++) {
+	  c.x = shape->line[j].point[i].x;
+	  c.y = shape->line[j].point[i].y;
+	  coords->setAt(c, i);
+	}
+
+	innerRing = (LinearRing *) gf->createLinearRing(coords);
+	(*innerRings)[k] = innerRing;
+	k++;
+      }
+    }
+
+    Geometry *g = gf->createPolygon(outerRing, innerRings);
+
+    free(innerList); /* clean up */
+   
+    return g;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSShape2Geometry_simplepolygon()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+}
+
+static Geometry *msGEOSShape2Geometry_polygon(shapeObj *shape)
+{
+  try {
+    int i, j;
+    vector<Geometry *> *parts=NULL;
+    int *outerList, numOuterRings=0, lastOuterRing=0;
+    Geometry *g=NULL;
+
+    outerList = msGetOuterList(shape);
+    for(i=0; i<shape->numlines; i++) {
+      if(outerList[i] == MS_TRUE) {
+	numOuterRings++;
+	lastOuterRing = i; /* save for the simple case */
+      }
+    }
+
+    /* printf("number of outer rings=%d\n", numOuterRings); */
+
+    if(numOuterRings == 1) { 
+      g = msGEOSShape2Geometry_simplepolygon(shape, lastOuterRing, outerList);
+    } else { /* a true multipolygon */
+      parts = new vector<Geometry *>(numOuterRings);
+
+      j = 0; /* part counter */
+      for(i=0; i<shape->numlines; i++) {
+	if(outerList[i] == MS_FALSE) continue;
+	/* printf("working on ring, id=%d (part %d)\n", i, j); */
+	(*parts)[j] = msGEOSShape2Geometry_simplepolygon(shape, i, outerList); /* TODO: account for NULL return values */
+	j++;
+      }
+
+      GeometryFactory *gf = new GeometryFactory();
+      g = gf->createMultiPolygon(parts);
+    }
+
+    free(outerList);
     return g;
   } catch (GEOSException *ge) {
     msSetError(MS_GEOSERR, "%s", "msGEOSShape2Geometry_line()", (char *) ge->toString().c_str());
@@ -140,7 +301,7 @@ Geometry *msGEOSShape2Geometry(shapeObj *shape)
     if(shape->line[0].numpoints == 1) /* simple point */
       return msGEOSShape2Geometry_point(&(shape->line[0].point[0]));
     else /* multi-point */
-      return NULL;
+      return msGEOSShape2Geometry_multipoint(&(shape->line[0]));
     break;
   case MS_SHAPE_LINE:
     if(shape->numlines == 0 || shape->line[0].numpoints < 2) /* not enough info for a line */
@@ -149,14 +310,13 @@ Geometry *msGEOSShape2Geometry(shapeObj *shape)
     if(shape->numlines == 1) /* simple line */
       return msGEOSShape2Geometry_line(&(shape->line[0]));
     else /* multi-line */
-      return NULL;
+      return msGEOSShape2Geometry_multiline(shape);
     break;
   case MS_SHAPE_POLYGON:
     if(shape->numlines == 0 || shape->line[0].numpoints < 4) /* not enough info for a polygon (first=last) */
       return NULL;
 
-    /* this gets nasty, just have one wrapper function */
-
+    return msGEOSShape2Geometry_polygon(shape); /* simple and multipolygon cases are addressed */
     break;
   default:
     break;
@@ -382,6 +542,54 @@ static shapeObj *msGEOSGeometry2Shape_polygon(Polygon *g)
   }
 }
 
+static shapeObj *msGEOSGeometry2Shape_multipolygon(MultiPolygon *g)
+{
+  try {
+    shapeObj *shape=NULL;
+    lineObj line;
+    int numPoints, numRings=g->getNumGeometries();
+    int i, j;
+
+    Coordinate c;
+    const CoordinateSequence *coords;
+    const LineString *ring;
+
+    shape = (shapeObj *) malloc(sizeof(shapeObj));
+    msInitShape(shape);
+
+    shape->type = MS_SHAPE_POLYGON;
+    shape->line = (lineObj *) malloc(sizeof(lineObj)*numRings);
+    shape->numlines = numRings;
+
+    for(j=0; j<numRings; j++) {
+      ring = (LineString *) g->getGeometryN(j);
+      coords = ring->getCoordinatesRO();
+      numPoints = ring->getNumPoints();
+
+      line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
+      line.numpoints = numPoints;
+
+      for(i=0; i<numPoints; i++) {
+        c = coords->getAt(i);
+
+        line.point[i].x = c.x;
+        line.point[i].y = c.y;
+        /* line.point[i].z = c.z; */
+      }
+      msAddLine(shape, &line);
+      free(line.point);
+    }
+
+    return shape;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSGeometry2Shape_multipolygon()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+}
+
 shapeObj *msGEOSGeometry2Shape(Geometry *g)
 {
   if(!g) 
@@ -405,10 +613,10 @@ shapeObj *msGEOSGeometry2Shape(Geometry *g)
       return msGEOSGeometry2Shape_polygon((Polygon *)g);
       break;
     case GEOS_MULTIPOLYGON:
-      return NULL;
+      return msGEOSGeometry2Shape_multipolygon((MultiPolygon *)g);
       break;
     default:
-      msSetError(MS_GEOSERR, "Unsupported GEOS geometry type.", "msGEOSGeometry2Shape()");
+      msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", g->getGeometryTypeId());
       return NULL;
     }
   } catch (GEOSException *ge) {
