@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-beta2 (2005-05-11)
 --------------------------------
 
+- Bug 179 :  add a small buffer around the cliping rectangle to
+  avoid lines around the edges.
+
 - Finished code to convert back and forth between GEOS geometries. Buffer and
   convex hull operations are exposed in mapscript.
 
