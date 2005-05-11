@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-beta2
 --------------------------------
 
+- Finished code to convert back and forth between GEOS geometries. Buffer and
+  convex hull operations are exposed in mapscript.
+
 - fontset.fonts hash now exposed in mapscript (bug 1345).
 
 - Bug 1336 : Retreive distance value for DWithin filter request 
