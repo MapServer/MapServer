@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.6.0-beta2
+Version 4.6.0-beta2 (2005-05-11)
 --------------------------------
 
 - Finished code to convert back and forth between GEOS geometries. Buffer and
@@ -41,8 +41,8 @@ Version 4.6.0-beta1 (2005-04-26)
 - Bug 1335 : missing call to msInitShape in function msQueryByShape
 
 - Bug 804 : SWF output : Make sure that the layer index is consistent 
- when saving movies if some of the layers are not drawn (because the status 
- is off or out of scale ...)
+  when saving movies if some of the layers are not drawn (because the
+  status is off or out of scale ...)
 
 - Bug 1332 - shptreevis.c: fixed setting of this_rec, as the output dbf
   file was not getting any records at all.

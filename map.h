@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.407  2005/05/11 14:15:16  dan
+ * Updated version to 4.6.0-beta2
+ *
  * Revision 1.406  2005/05/10 15:00:19  sean
  * fonts hash now properly exposed in mapscript (bug 1345)
  *
@@ -277,7 +280,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.6.0-beta1"
+#define MS_VERSION "4.6.0-beta2"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
