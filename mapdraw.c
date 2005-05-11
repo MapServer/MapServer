@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2005/05/11 21:45:18  assefa
+ * add a small buffer around the cliping rectangle to avoid lines around
+ * the edges : Bug 179.
+ *
  * Revision 1.90  2005/04/25 06:41:55  sdlime
  * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
  *
@@ -1287,7 +1291,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   pointObj center; /* circle origin */
   double r; /* circle radius */
   int csz; /* clip over size */
-
+  double buffer;
 
 /* Steve's original code
   cliprect.minx = map->extent.minx - 2*map->cellsize; // set clipping rectangle just a bit larger than the map extent
@@ -1585,6 +1589,17 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 #endif
 
     if(layer->transform) {
+      /*
+       * add a small buffer around the cliping rectangle to
+       * avoid lines around the edges : Bug 179
+       */
+      buffer = (map->extent.maxx -  map->extent.minx)/map->width;
+      buffer = buffer *2;
+      cliprect.minx -= buffer;
+      cliprect.miny -= buffer;
+      cliprect.maxx += buffer;
+      cliprect.maxy  += buffer;
+
       msClipPolygonRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
       msTransformShape(shape, map->extent, map->cellsize, image);
