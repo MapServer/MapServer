@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2005/05/12 18:14:52  frank
+ * another missing WCS exception - if msSaveImage() fails
+ *
  * Revision 1.67  2005/05/12 17:41:49  frank
  * If msDrawRasterLayerLow() fails, ensure that the error message is posted as a WCS exception.
  *
@@ -1202,6 +1205,14 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
   /* Emit back to client. */
   msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
   status = msSaveImage(map, image, NULL);
+
+  if( status != MS_SUCCESS )
+  {
+      /* unfortunately, the image content type will have already been sent
+         but that is hard for us to avoid.  The main error that could happen
+         here is a misconfigured tmp directory or running out of space. */
+      return msWCSException(map, params->version);
+  }
 
   /* Cleanup */
   msFreeImage(image);
