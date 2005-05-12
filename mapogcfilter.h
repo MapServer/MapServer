@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2005/05/12 17:38:54  assefa
+ * prototype for FLTGetShape changed : Now parsing unit value.
+ *
  * Revision 1.10  2005/04/25 06:41:56  sdlime
  * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
  *
@@ -157,7 +160,8 @@ char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
 char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode);
 char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
 
-shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance);
+shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
+                      int *pnUnit);
 
 char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
