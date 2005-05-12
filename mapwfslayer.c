@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/05/12 18:41:54  assefa
+ * Use %f instead of %lf for bbox output : Bug 1239.
+ *
  * Revision 1.34  2005/04/22 15:47:10  assefa
  * Bug 1302: the wfs/ows_service parameter is not used any more. The
  * service is always set to WFS for WFS layers.
@@ -360,7 +363,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 "<BBOX>\n"
 "<PropertyName>Geometry</PropertyName>\n"
 "<Box>\n"
-"<coordinates>%lf,%lf %lf,%lf</coordinates>\n"
+"<coordinates>%f,%f %f,%f</coordinates>\n"
 "</Box>\n"
 "</BBOX>\n"
 "</Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
