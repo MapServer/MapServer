@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/05/12 17:41:49  frank
+ * If msDrawRasterLayerLow() fails, ensure that the error message is posted as a WCS exception.
+ *
  * Revision 1.66  2005/02/18 18:14:11  dan
  * New patch to fix url strings broken by previous patch to bug 1238
  *
@@ -1193,7 +1196,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
   /* Actually produce the "grid". */
   status = msDrawRasterLayerLow( map, lp, image );
   if( status != MS_SUCCESS ) {
-    return MS_FAILURE;
+    return msWCSException(map, params->version);
   }
     
   /* Emit back to client. */
