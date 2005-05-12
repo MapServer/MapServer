@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.52  2005/05/12 21:13:09  assefa
+ * Support of multiple logical operators (Bug 1277).
+ *
  * Revision 1.51  2005/05/12 16:23:09  assefa
  * Parse the unit string for DWithin (Bug 1342)
  * Set it the  tolernace and tolernaceunits using the distance and unit values
@@ -1310,7 +1313,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 {
     int nStrLength = 0;
     char *pszTmp = NULL;
-
+    FilterEncodingNode *psCurFilNode= NULL;
+    CPLXMLNode *psCurXMLNode = NULL;
+    
     if (psFilterNode && psXMLNode && psXMLNode->pszValue)
     {
         psFilterNode->pszValue = strdup(psXMLNode->pszValue);
@@ -1341,12 +1346,54 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             {
                 if (psXMLNode->psChild && psXMLNode->psChild->psNext)
                 {
-                    psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
-                    FLTInsertElementInNode(psFilterNode->psLeftNode, 
-                                        psXMLNode->psChild);
-                    psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
-                    FLTInsertElementInNode(psFilterNode->psRightNode, 
-                                        psXMLNode->psChild->psNext);
+                    /*2 operators */
+                    if (psXMLNode->psChild->psNext->psNext == NULL)
+                    {
+                        psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+                        FLTInsertElementInNode(psFilterNode->psLeftNode, 
+                                               psXMLNode->psChild);
+                        psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
+                        FLTInsertElementInNode(psFilterNode->psRightNode, 
+                                               psXMLNode->psChild->psNext);
+                    }
+                    else
+                    {
+                        psCurXMLNode =  psXMLNode->psChild;
+                        psCurFilNode = psFilterNode;
+                        while(psCurXMLNode)
+                        {
+                            if (psCurXMLNode->psNext && psCurXMLNode->psNext->psNext)
+                            {
+                                psCurFilNode->psLeftNode = 
+                                  FLTCreateFilterEncodingNode();
+                                FLTInsertElementInNode(psCurFilNode->psLeftNode,
+                                                       psCurXMLNode);
+                                psCurFilNode->psRightNode = 
+                                  FLTCreateFilterEncodingNode();
+                                psCurFilNode->psRightNode->eType = 
+                                  FILTER_NODE_TYPE_LOGICAL;
+                                psCurFilNode->psRightNode->pszValue = 
+                                  strdup(psFilterNode->pszValue);
+                                
+                                psCurFilNode = psCurFilNode->psRightNode;
+                                psCurXMLNode = psCurXMLNode->psNext;
+                            }
+                            else if (psCurXMLNode->psNext)/*last 2 operators*/
+                            {
+                                psCurFilNode->psLeftNode = 
+                                  FLTCreateFilterEncodingNode();
+                                FLTInsertElementInNode(psCurFilNode->psLeftNode,
+                                                       psCurXMLNode);
+
+                                psCurFilNode->psRightNode = 
+                                  FLTCreateFilterEncodingNode();
+                                FLTInsertElementInNode(psCurFilNode->psRightNode,
+                                                       psCurXMLNode->psNext);
+                                psCurXMLNode = psCurXMLNode->psNext->psNext;
+                                
+                            }
+                        }
+                    }
                 }
             }
             else if (strcasecmp(psFilterNode->pszValue, "NOT") == 0)
