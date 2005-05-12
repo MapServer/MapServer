@@ -29,6 +29,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.51  2005/05/12 16:23:09  assefa
+ * Parse the unit string for DWithin (Bug 1342)
+ * Set it the  tolernace and tolernaceunits using the distance and unit values
+ * (Bug 1341)
+ *
  * Revision 1.50  2005/04/28 20:39:45  assefa
  * Bug 1336 : Retreive distance value for DWithin filter request done with
  * line and polygon shape.
@@ -277,6 +282,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     shapeObj *psQueryShape = NULL;
     double dfDistance = -1;
     double dfCurrentTolerance = 0;
+    int nUnit = -1;
 
     if (!psNode || !map || iLayerIndex < 0 ||
         iLayerIndex > map->numlayers-1)
@@ -290,12 +296,12 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
       szEPSG = FLTGetBBOX(psNode, &sQueryRect);
     else if ((bPointQuery = FLTIsPointFilter(psNode)))
     {
-        psQueryShape = FLTGetShape(psNode, &dfDistance);
+        psQueryShape = FLTGetShape(psNode, &dfDistance, &nUnit);
     }
     else if (FLTIsLineFilter(psNode) || FLTIsPolygonFilter(psNode))
     {
         bShapeQuery = 1;
-        psQueryShape = FLTGetShape(psNode, &dfDistance);
+        psQueryShape = FLTGetShape(psNode, &dfDistance, &nUnit);
     }
 
     if (!szExpression && !szEPSG && !bIsBBoxFilter 
@@ -432,17 +438,35 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
       msQueryByRect(map, lp->index, sQueryRect);
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0 && dfDistance >=0)
-      msQueryByPoint(map, lp->index, MS_MULTIPLE, 
-                     psQueryShape->line[0].point[0], dfDistance);
+    {
+        //Set the tolerance to the distance value or 0 is invalid
+        // set the the unit if unit is valid.
+        //Bug 1342 for details
+        lp->tolerance = 0;
+        if (dfDistance > 0)
+        {
+            lp->tolerance = dfDistance;
+            if (nUnit >=0)
+              lp->toleranceunits = nUnit;
+        }
+
+        msQueryByPoint(map, lp->index, MS_MULTIPLE, 
+                       psQueryShape->line[0].point[0], 0);
+    }
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0)
     {
-        /* disable any tolerance value already set for the layerm (Bug 768) */
+        /* disable any tolerance value already set for the layer (Bug 768) */
+        //Set the tolerance to the distance value or 0 is invalid
+        // set the the unit if unit is valid.
+        //Bug 1342 for details
         dfCurrentTolerance = lp->tolerance;
         lp->tolerance = 0;
         if (dfDistance > 0)
         {
             lp->tolerance = dfDistance;
+            if (nUnit >=0)
+              lp->toleranceunits = nUnit;
         }
         msQueryByShape(map, lp->index,  psQueryShape);
       
@@ -1522,7 +1546,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             {
                 shapeObj *psShape = NULL;
                 int bPoint = 0, bLine = 0, bPolygon = 0;
-
+                char *pszUnits = NULL;
+                
                 
                 CPLXMLNode *psGMLElement = NULL, *psDistance=NULL;
 
@@ -1549,6 +1574,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 if (psGMLElement && psDistance && psDistance->psChild &&  
                     psDistance->psChild->psNext && psDistance->psChild->psNext->pszValue)
                 {
+                    pszUnits = (char *)CPLGetXMLValue(psDistance, "units", NULL);
                     psShape = (shapeObj *)malloc(sizeof(shapeObj));
                     msInitShape(psShape);
                     if (FLTShapeFromGMLTree(psGMLElement, psShape))
@@ -1569,8 +1595,14 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                         else if (bPolygon)
                           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POLYGON;
                         psFilterNode->psRightNode->pOther = (shapeObj *)psShape;
+                        //the value will be distance;units
                         psFilterNode->psRightNode->pszValue = 
                           strdup(psDistance->psChild->psNext->pszValue);
+                        if (pszUnits)
+                        {
+                            strcat(psFilterNode->psRightNode->pszValue, ";");
+                            strcat(psFilterNode->psRightNode->pszValue, pszUnits);
+                        }
                     }
                 }
                 else
@@ -2179,9 +2211,15 @@ int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode)
     return 0;
 }       
 
-shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance)
+shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
+                      int *pnUnit)
 {
+    char **tokens = NULL;
+    int nTokens = 0;
     FilterEncodingNode *psNode = psFilterNode;
+    char *szUnitStr = NULL;
+    char *szUnit = NULL;
+
     if (psNode)
     {
         if (psNode->eType == FILTER_NODE_TYPE_SPATIAL && psNode->psRightNode)
@@ -2191,8 +2229,49 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance)
             psNode->eType == FILTER_NODE_TYPE_GEOMETRY_LINE ||
             psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON)
         {
+            
             if (psNode->pszValue && pdfDistance)
-              *pdfDistance = atof(psNode->pszValue);
+            {
+                //sytnax expected is "distance;unit" or just "distance"
+                //if unit is there syntax is "URI#unit" (eg http://..../#m)
+                //or just "unit"
+                tokens = split(psNode->pszValue,';', &nTokens);
+                if (tokens && nTokens >= 1)
+                {
+                    *pdfDistance = atof(tokens[0]);
+                
+                    if (nTokens == 2 && pnUnit)
+                    {
+                        szUnitStr = strdup(tokens[1]);
+                        msFreeCharArray(tokens, nTokens);
+                        nTokens = 0;
+                        tokens = split(szUnitStr,'#', &nTokens);
+                        if (tokens && nTokens >= 1)
+                        {
+                            if (nTokens ==1)
+                              szUnit = tokens[0];
+                            else
+                              szUnit = tokens[1];
+
+                            if (strcasecmp(szUnit,"m") == 0)
+                              *pnUnit = MS_METERS;
+                            else if (strcasecmp(szUnit,"km") == 0)
+                              *pnUnit = MS_KILOMETERS;
+                            else if (strcasecmp(szUnit,"mi") == 0)
+                              *pnUnit = MS_MILES;
+                           else if (strcasecmp(szUnit,"in") == 0)
+                              *pnUnit = MS_INCHES;
+                           else if (strcasecmp(szUnit,"deg") == 0)
+                              *pnUnit = MS_DD;
+                             else if (strcasecmp(szUnit,"px") == 0)
+                              *pnUnit = MS_PIXELS;
+                            
+                             msFreeCharArray(tokens, nTokens);
+                        }
+                    }
+                }       
+                           
+            }
 
             return (shapeObj *)psNode->pOther;
         }
