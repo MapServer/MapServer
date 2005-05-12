@@ -13,6 +13,10 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+- Bug 1341, 1342 : Parse the unit parameter for DWithin filter request.
+  Set the layer tolerance and toleranceunit with paramaters parsed.
+
+
 Version 4.6.0-beta2 (2005-05-11)
 --------------------------------
 
