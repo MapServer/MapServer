@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2005/05/13 13:15:02  frank
+ * Use MS_MAX an d MS_MIN
+ *
  * Revision 1.91  2005/05/11 21:45:18  assefa
  * add a small buffer around the cliping rectangle to avoid lines around
  * the edges : Bug 179.
@@ -2006,9 +2009,9 @@ int msValueToRange(styleObj *style, double fieldVal)
   /*At this point, we know where on the range we need to be*/
   /*However, we don't know how to map it yet, since RGB(A) can */
   /*Go up or down*/
-  style->color.red = (int)(MAX(0,(MIN(255, (style->mincolor.red + ((style->maxcolor.red - style->mincolor.red) * scaledVal))))));
-  style->color.green = (int)(MAX(0,(MIN(255,(style->mincolor.green + ((style->maxcolor.green - style->mincolor.green) * scaledVal))))));
-  style->color.blue = (int)(MAX(0,(MIN(255,(style->mincolor.blue + ((style->maxcolor.blue - style->mincolor.blue) * scaledVal))))));
+  style->color.red = (int)(MS_MAX(0,(MS_MIN(255, (style->mincolor.red + ((style->maxcolor.red - style->mincolor.red) * scaledVal))))));
+  style->color.green = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.green + ((style->maxcolor.green - style->mincolor.green) * scaledVal))))));
+  style->color.blue = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.blue + ((style->maxcolor.blue - style->mincolor.blue) * scaledVal))))));
   style->color.pen = MS_PEN_UNSET; /*so it will recalculate pen*/
 
   /*( "msMapRange(): %i %i %i", style->color.red , style->color.green, style->color.blue);*/
