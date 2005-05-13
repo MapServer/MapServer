@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.408  2005/05/13 13:14:47  frank
+ * remove MAX/MIN macros, using MS_MAX/MS_MIN
+ *
  * Revision 1.407  2005/05/11 14:15:16  dan
  * Updated version to 4.6.0-beta2
  *
@@ -1934,8 +1937,5 @@ MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
 #ifdef __cplusplus
 }
 #endif
-
-#define MAX(a,b)      ((a>b) ? a : b)
-#define MIN(a,b)      ((a<b) ? a : b)
 
 #endif /* MAP_H */
