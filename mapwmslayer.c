@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.76  2005/05/13 17:23:34  dan
+ * First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
+ * layers. Still needs some work. (bug 1246)
+ *
  * Revision 1.75  2005/02/18 03:06:48  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -728,10 +732,15 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         else
             pszRequestParam = "map";
 
-        if (nVersion >= OWS_1_1_0)
-            pszExceptionsParam = "application/vnd.ogc.se_inimage";
-        else
-            pszExceptionsParam = "INIMAGE";
+        pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata), 
+                                                 "MO", "exceptions_format");
+        if (pszExceptionsParam == NULL)
+        {
+            if (nVersion >= OWS_1_1_0)
+                pszExceptionsParam = "application/vnd.ogc.se_inimage";
+            else
+                pszExceptionsParam = "INIMAGE";
+        }
 
         msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
         msSetWMSParamInt(   psWMSParams, "WIDTH",   map->width);
@@ -1089,6 +1098,58 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
         return MS_SUCCESS;
     }
+
+/* ------------------------------------------------------------------
+ * Check the content-type of the response to see if we got an exception,
+ * if yes then try to parse it and pass the info to msSetError().
+ * We log an error but we still return SUCCESS here so that the layer 
+ * is only skipped intead of aborting the whole draw map.
+ * ------------------------------------------------------------------ */
+    if (pasReqInfo[iReq].pszContentType &&
+        (strcmp(pasReqInfo[iReq].pszContentType, "text/xml") == 0 ||
+         strcmp(pasReqInfo[iReq].pszContentType, "application/vnd.ogc.se_xml") == 0))
+    {
+        FILE *fp;
+        char szBuf[MS_BUFFER_LENGTH];
+
+        fp = fopen(pasReqInfo[iReq].pszOutputFile, "r");
+        if (fp)
+        {
+            /* TODO: For now we'll only read the first chunk and return it
+             * via msSetError()... we should really try to parse the XML
+             * and extract the exception code/message though
+             */
+             size_t nSize;
+
+            nSize = fread(szBuf, sizeof(char), MS_BUFFER_LENGTH-1, fp);
+            if (nSize >= 0 && nSize < MS_BUFFER_LENGTH)
+                szBuf[nSize] = '\0';
+            else
+                strcpy(szBuf, "(!!!)"); /* This should never happen */
+
+            fclose(fp);
+
+            /* We're done with the remote server's response... delete it. */
+            if (!lp->debug)
+                unlink(pasReqInfo[iReq].pszOutputFile);
+        }
+        else
+        {
+            strcpy(szBuf, "(Failed to open exception response)");
+        }
+
+        if (lp->debug)
+            msDebug("WMS GetMap request got XML exception for layer '%s': %s.",
+                    (lp->name?lp->name:"(null)"), szBuf );
+
+        msSetError(MS_WMSERR, 
+                   "WMS GetMap request got XML exception for layer '%s': %s.",
+                   "msDrawWMSLayerLow()", 
+                   (lp->name?lp->name:"(null)"), szBuf );
+
+        return MS_SUCCESS;
+    }
+        
 
 /* ------------------------------------------------------------------
  * Prepare layer for drawing, reprojecting the image received from the

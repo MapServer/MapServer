@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.51  2005/05/13 17:23:34  dan
+ * First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
+ * layers. Still needs some work. (bug 1246)
+ *
  * Revision 1.50  2005/04/21 21:10:38  sdlime
  * Adjusted WFS support to allow for a new output format (GML3).
  *
@@ -154,7 +158,7 @@ typedef struct http_request_info
     int         nTimeout;
     rectObj     bbox;
     int         nStatus;       /* 200=success, value < 0 if request failed */
-    char      * pszContentType;
+    char      * pszContentType;/* Content-Type of the response */
     char      * pszErrBuf;     /* Buffer where curl can write errors */
     char        *pszPostRequest;     /* post request content (NULL for GET) */
     char        *pszPostContentType; /* post request MIME type */

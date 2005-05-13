@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2005/05/13 17:23:34  dan
+ * First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
+ * layers. Still needs some work. (bug 1246)
+ *
  * Revision 1.18  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -547,7 +551,18 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             curl_easy_getinfo(http_handle,
                               CURLINFO_HTTP_CODE, &lVal) == CURLE_OK)
         {
+            char *pszContentType = NULL;
+
             psReq->nStatus = lVal;
+
+            /* Fetch content type of response */
+            if (curl_easy_getinfo(http_handle, 
+                                  CURLINFO_CONTENT_TYPE, 
+                                  &pszContentType) == CURLE_OK &&
+                pszContentType != NULL)
+            {
+                psReq->pszContentType = strdup(pszContentType);
+            }
         }
 
         if (!MS_HTTP_SUCCESS(psReq->nStatus))
