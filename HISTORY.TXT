@@ -28,6 +28,9 @@ Version 4.6.0-beta3
 - mapwcs.c: If msDrawRasterLayerLow() fails, ensure that the error message
   is posted as a WCS exception.
 
+- Added experimental support for "labelcache_map_edge_buffer" metadata to
+  define a buffer area with no labels around the edge of a map (bug 1353)
+
 
 Version 4.6.0-beta2 (2005-05-11)
 --------------------------------

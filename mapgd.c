@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2005/05/17 03:17:23  dan
+ * Added experimental support for "labelcache_map_edge_buffer" metadata to
+ * define a buffer area with no labels around the edge of a map (bug 1353)
+ *
  * Revision 1.99  2005/04/21 04:34:03  dan
  * Fixed old problem with labels occasionally drawn upside down (bug 564)
  *
@@ -2824,7 +2828,21 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
   int marker_width, marker_height;
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
+  int map_edge_buffer=0;
+  const char *value;
 
+  /* Look for labelcache_map_edge_buffer map metadata
+   * If set then the value defines a buffer (in pixels) along the edge of the
+   * map image where labels can't fall
+   */
+  if ((value = msLookupHashTable(&(map->web.metadata),
+                                 "labelcache_map_edge_buffer")) != NULL)
+  {
+      map_edge_buffer = atoi(value);
+      if (map->debug)
+          msDebug("msDrawLabelCacheGD(): labelcache_map_edge_buffer = %d\n", map_edge_buffer);
+  }
+ 
   /* bug 490 - switch on alpha blending for label cache */
   oldAlphaBlending = img->alphaBlendingFlag;
   gdImageAlphaBlending( img, 1);
@@ -2884,7 +2902,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
 	  if(!labelPtr->partials) { /* check against image first */
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
+	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer+map_edge_buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
 	      continue; /* next angle */
 	    }
@@ -2934,7 +2952,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
 	  if(!labelPtr->partials) { /* check against image first */
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
+	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer+map_edge_buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
 	      continue; /* next position */
 	    }
@@ -2988,7 +3006,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       if(!labelPtr->force) { /* no need to check anything else */
 
 	if(!labelPtr->partials) {
-	  if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
+	  if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer+map_edge_buffer) == MS_FALSE)
 	    cachePtr->status = MS_FALSE;
 	}
 
