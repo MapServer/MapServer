@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2005/05/17 04:48:30  sdlime
+ * Removed the LINE_VERT_THRESHOLD test from mapgd.c. I really have no idea what the hell I was thinking at that time. (bug 564)
+ *
  * Revision 1.100  2005/05/17 03:17:23  dan
  * Added experimental support for "labelcache_map_edge_buffer" metadata to
  * define a buffer area with no labels around the edge of a map (bug 1353)
@@ -2888,13 +2891,6 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-	  if(j == 1) {
-	    if(fabs(cos(labelPtr->angle*MS_DEG_TO_RAD)) < LINE_VERT_THRESHOLD)
-	      labelPtr->angle += 180.0;
-	    else
-	      position = MS_LC;
-	  }
 
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
