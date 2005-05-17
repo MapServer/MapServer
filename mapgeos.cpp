@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/05/17 13:59:57  sdlime
+ * More GEOS interface improvements (global GeometryFactory).
+ *
  * Revision 1.8  2005/05/11 07:10:21  sdlime
  * Finished the rest of the wrapper funtions for initial GEOS support which basically ammounts to buffer and convex hull creation from MapScript at the moment. There are likely a number of memory leaks associated with the implementation at the moment.
  *
@@ -66,6 +69,17 @@ MS_CVSID("$Id$")
 using namespace geos;
 
 /*
+** Global variables: only the read-only GeometryFactory.
+*/
+GeometryFactory *gf=NULL;
+
+static void msGEOSCreateGeometryFactory() 
+{
+  if(!gf) 
+    gf = new GeometryFactory();
+}
+
+/*
 ** Geometry management functions
 */
 static void msGEOSDeleteGeometry(Geometry *g)
@@ -86,9 +100,7 @@ static void msGEOSDeleteGeometry(Geometry *g)
 static Geometry *msGEOSShape2Geometry_point(pointObj *point)
 {
   try {
-    Coordinate *c;
-    c = new Coordinate(point->x, point->y);
-    GeometryFactory *gf = new GeometryFactory();
+    Coordinate *c = new Coordinate(point->x, point->y);
     Geometry *g = gf->createPoint(*c);
     delete c;
     return g;
@@ -111,9 +123,7 @@ static Geometry *msGEOSShape2Geometry_multipoint(lineObj *multipoint)
     for(i=0; i<multipoint->numpoints; i++)
       (*parts)[i] = msGEOSShape2Geometry_point(&(multipoint->point[i]));
 
-    GeometryFactory *gf = new GeometryFactory();
     Geometry *g = gf->createMultiPoint(parts);
-    /* delete parts; */
 
     return g;
   } catch (GEOSException *ge) {
@@ -140,9 +150,7 @@ static Geometry *msGEOSShape2Geometry_line(lineObj *line)
       coords->setAt(c, i);
     }
 
-    GeometryFactory *gf = new GeometryFactory();
     Geometry *g = gf->createLineString(coords);
-    /* delete coords; */
 
     return g;
   } catch (GEOSException *ge) {
@@ -164,7 +172,6 @@ static Geometry *msGEOSShape2Geometry_multiline(shapeObj *multiline)
     for(i=0; i<multiline->numlines; i++)
       (*parts)[i] = msGEOSShape2Geometry_line(&(multiline->line[i]));
 
-    GeometryFactory *gf = new GeometryFactory();
     Geometry *g = gf->createMultiLineString(parts);
 
     return g;
@@ -185,8 +192,6 @@ static Geometry *msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int 
     LinearRing *outerRing, *innerRing;
     vector<Geometry *> *innerRings=NULL;
     int numInnerRings=0, *innerList;
-    
-    GeometryFactory *gf = new GeometryFactory();
     
     /* build the outer ring */
     DefaultCoordinateSequence *coords = new DefaultCoordinateSequence(shape->line[r].numpoints);
@@ -273,7 +278,6 @@ static Geometry *msGEOSShape2Geometry_polygon(shapeObj *shape)
 	j++;
       }
 
-      GeometryFactory *gf = new GeometryFactory();
       g = gf->createMultiPolygon(parts);
     }
 
@@ -292,6 +296,10 @@ Geometry *msGEOSShape2Geometry(shapeObj *shape)
 {
   if(!shape)
     return NULL; /* a NULL shape generates a NULL geometry */
+
+  /* if there is not an instance of a GeometeryFactory, create one */
+  if(!gf) 
+    msGEOSCreateGeometryFactory();
 
   switch(shape->type) {
   case MS_SHAPE_POINT:
