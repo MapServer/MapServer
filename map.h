@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.409  2005/05/19 04:09:34  sdlime
+ * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
+ *
  * Revision 1.408  2005/05/13 13:14:47  frank
  * remove MAX/MIN macros, using MS_MAX/MS_MIN
  *
@@ -443,9 +446,6 @@ extern "C" {
 /* this version of MS_MAP2IMAGE takes 1/cellsize and is much faster */
 #define MS_MAP2IMAGE_X_IC(x,minx,icx) (MS_NINT((x - minx)*icx))
 #define MS_MAP2IMAGE_Y_IC(y,maxy,icy) (MS_NINT((maxy - y)*icy))
-
-/* For maplabel and mappdf */
-#define LINE_VERT_THRESHOLD .17 /* max absolute value of cos of line angle, the closer to zero the more vertical the line must be */
 
 /* For CARTO symbols */
 #define MS_PI    3.14159265358979323846

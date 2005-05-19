@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/05/19 04:09:35  sdlime
+ * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
+ *
  * Revision 1.52  2005/04/27 15:30:15  assefa
  * Correct Bug 804 : Make sure that the layer index is consistent when saving
  * movies if some of the layers are not drawn (because the status if off or
@@ -2336,13 +2339,6 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
                     msFreeShape(cachePtr->poly);
                     cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-                    if(j == 1) {
-                        if(fabs(cos(labelPtr->angle*MS_DEG_TO_RAD)) < LINE_VERT_THRESHOLD)
-                            labelPtr->angle += 180.0;
-                        else
-                            position = MS_LC;
-                    }
 
                     p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 

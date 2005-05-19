@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/05/19 04:09:34  sdlime
+ * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
+ *
  * Revision 1.15  2005/04/21 04:34:03  dan
  * Fixed old problem with labels occasionally drawn upside down (bug 564)
  *
@@ -1197,13 +1200,6 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-	  if(j == 1) {
-	    if(fabs(cos(labelPtr->angle*MS_DEG_TO_RAD)) < LINE_VERT_THRESHOLD)
-	      labelPtr->angle += 180.0;
-	    else
-	      position = MS_LC;
-	  }
 
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 

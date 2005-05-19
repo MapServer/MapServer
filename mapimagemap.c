@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/05/19 04:09:34  sdlime
+ * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
+ *
  * Revision 1.21  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -1891,13 +1894,6 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-	  if(j == 1) {
-	    if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
-	      labelPtr->angle += 180.0;
-	    else
-	      position = MS_LC;
-	  }
 
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
