@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.410  2005/05/19 05:57:08  sdlime
+ * Added prototype for msGEOSFreeGeometry.
+ *
  * Revision 1.409  2005/05/19 04:09:34  sdlime
  * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
  *
@@ -1929,6 +1932,7 @@ MS_DLL_EXPORT const char *msGetBasename( const char *pszFullFilename );
 /* ==================================================================== */
 /*      prototypes for functions in mapgeos.cpp                         */
 /* ==================================================================== */
+MS_DLL_EXPORT void msGEOSFreeGeometry(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
 
