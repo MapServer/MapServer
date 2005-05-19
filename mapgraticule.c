@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2005/05/19 05:57:08  sdlime
+ * Added explicit DD format for grid labeling. Only shows the number of degrees, nothing more (bug 1256).
+ *
  * Revision 1.11  2005/05/19 05:32:00  sdlime
  * Changed default format for graticule labels to %5.2g from %5.2f which should remove trailing zeros. Partially addresses bug 1256.
  *
@@ -73,6 +76,7 @@ typedef enum
 	lpDefault	= 0,
 	lpDDMMSS	= 1,
 	lpDDMM,
+	lpDD
 } msLabelProcessingType;
 
 void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc );
@@ -84,48 +88,48 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
 #define MAPGRATICULE_FORMAT_STRING_DEFAULT		"%5.2g"
 #define MAPGRATICULE_FORMAT_STRING_DDMMSS		"%3d %02d %02d"
 #define MAPGRATICULE_FORMAT_STRING_DDMM			"%3d %02d"
+#define MAPGRATICULE_FORMAT_STRING_DD                   "%3d"
 
 /**********************************************************************************************************************
  *
  */
 int msGraticuleLayerOpen(layerObj *layer) 
 {
-	graticuleObj 		*pInfo	= (graticuleObj *) layer->layerinfo;
-
-	if( pInfo == NULL )
-		return MS_FAILURE;
-
-	pInfo->dincrementlatitude	=   15.0;
-	pInfo->dincrementlongitude	=   15.0;
-	pInfo->dwhichlatitude		=  -90.0;
-	pInfo->dwhichlongitude		= -180.0;
-	pInfo->bvertical			=    1;
-
-	if( layer->class->label.size == -1 )
-		pInfo->blabelaxes		= 0;
-	else
-		pInfo->blabelaxes		= 1;
-
-	if( pInfo->labelformat == NULL )
-	{
-		pInfo->labelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DEFAULT ) + 1 );
-		pInfo->ilabeltype		= (int)    lpDefault;
-		strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DEFAULT );
-	}
-	else if( strcmp( pInfo->labelformat, "DDMMSS" )	== 0 )
-	{
-		pInfo->labelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
-		pInfo->ilabeltype		= (int)    lpDDMMSS;
-		strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMMSS );
-	}
-	else if( strcmp( pInfo->labelformat, "DDMM" )	== 0 )
-	{
-		pInfo->labelformat	= (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
-		pInfo->ilabeltype		= (int)    lpDDMM;
-		strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
-	}
-
-	return MS_SUCCESS;
+  graticuleObj *pInfo = (graticuleObj *) layer->layerinfo;
+  
+  if( pInfo == NULL )
+    return MS_FAILURE;
+  
+  pInfo->dincrementlatitude = 15.0;
+  pInfo->dincrementlongitude = 15.0;
+  pInfo->dwhichlatitude = -90.0;
+  pInfo->dwhichlongitude = -180.0;
+  pInfo->bvertical = 1;
+  
+  if( layer->class->label.size == -1 )
+    pInfo->blabelaxes = 0;
+  else
+    pInfo->blabelaxes = 1;
+  
+  if( pInfo->labelformat == NULL ) {
+    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DEFAULT ) + 1 );
+    pInfo->ilabeltype = (int) lpDefault;
+    strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DEFAULT );
+  } else if( strcmp( pInfo->labelformat, "DDMMSS" ) == 0 ) {
+    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
+    pInfo->ilabeltype = (int) lpDDMMSS;
+    strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMMSS );
+  } else if( strcmp( pInfo->labelformat, "DDMM" )	== 0 ) {
+    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
+    pInfo->ilabeltype = (int) lpDDMM;
+    strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
+  } else if( strcmp( pInfo->labelformat, "DDMM" )   == 0 ) {
+    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DD ) + 1 );
+    pInfo->ilabeltype = (int) lpDD;
+    strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DD );
+  }
+  
+  return MS_SUCCESS;
 }
 
 /**********************************************************************************************************************
@@ -133,10 +137,10 @@ int msGraticuleLayerOpen(layerObj *layer)
  */
 int msGraticuleLayerIsOpen(layerObj *layer)
 {
-    if (layer->layerinfo)
-        return MS_TRUE;
-
-    return MS_FALSE;
+  if (layer->layerinfo)
+    return MS_TRUE;
+  
+  return MS_FALSE;
 }
 
 
@@ -145,27 +149,24 @@ int msGraticuleLayerIsOpen(layerObj *layer)
  */
 int msGraticuleLayerClose(layerObj *layer)
 {
-	graticuleObj 		*pInfo			= (graticuleObj *) layer->layerinfo;
+  graticuleObj *pInfo = (graticuleObj *) layer->layerinfo;
+  
+  if( pInfo->labelformat ) {
+    free( pInfo->labelformat );
+    pInfo->labelformat = NULL;
+  }
+	
+  if( pInfo->pboundingpoints ) {
+    free( pInfo->pboundingpoints );
+    pInfo->pboundingpoints = NULL;
+  }
 
-	if( pInfo->labelformat )
-	{
-		free( pInfo->labelformat );
-		pInfo->labelformat			= NULL;
-	}
-
-	if( pInfo->pboundingpoints )
-	{
-		free( pInfo->pboundingpoints );
-		pInfo->pboundingpoints			= NULL;
-	}
-
-	if( pInfo->pboundinglines )
-	{
-		free( pInfo->pboundinglines );
-		pInfo->pboundinglines			= NULL;
-	}
-
-	return MS_SUCCESS;
+  if( pInfo->pboundinglines ) {
+    free( pInfo->pboundinglines );
+    pInfo->pboundinglines = NULL;
+  }
+  
+  return MS_SUCCESS;
 }
 
 /**********************************************************************************************************************
@@ -569,35 +570,33 @@ int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int 
  */
 static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToFormat )
 {
-	graticuleObj 		*pInfo	= (graticuleObj  *) pLayer->layerinfo;
-	char				cBuffer[32];
-	int					iDegrees, iMinutes;
+  graticuleObj *pInfo = (graticuleObj  *) pLayer->layerinfo;
+  char cBuffer[32];
+  int iDegrees, iMinutes;
 	
-	switch( pInfo->ilabeltype )
-	{
-		case lpDDMMSS:
-			iDegrees		= (int) dDataToFormat;
-			dDataToFormat	= fabs( dDataToFormat - (double) iDegrees );
-			
-			iMinutes		= (int) (dDataToFormat * 60.0);
-			dDataToFormat	= dDataToFormat - (((double) iMinutes) / 60.0);
-			
-			sprintf( cBuffer, pInfo->labelformat, iDegrees, iMinutes, (int) (dDataToFormat * 3600.0) );
-			break;
-			
-		case lpDDMM:
-			iDegrees		= (int) dDataToFormat;
-			dDataToFormat	= fabs( dDataToFormat - (double) iDegrees );
-			
-			sprintf( cBuffer, pInfo->labelformat, iDegrees, (int) (dDataToFormat * 60.0) );
-			break;
-
-		case lpDefault:
-		default:
-			sprintf( cBuffer, pInfo->labelformat, dDataToFormat );
-	}
+  switch( pInfo->ilabeltype ) {
+  case lpDDMMSS:
+    iDegrees = (int) dDataToFormat;
+    dDataToFormat = fabs( dDataToFormat - (double) iDegrees );    
+    iMinutes = (int) (dDataToFormat * 60.0);
+    dDataToFormat = dDataToFormat - (((double) iMinutes) / 60.0);    
+    sprintf( cBuffer, pInfo->labelformat, iDegrees, iMinutes, (int) (dDataToFormat * 3600.0) );
+    break;
+  case lpDDMM:
+    iDegrees = (int) dDataToFormat;
+    dDataToFormat = fabs( dDataToFormat - (double) iDegrees );    
+    sprintf( cBuffer, pInfo->labelformat, iDegrees, (int) (dDataToFormat * 60.0) );
+    break;
+  case lpDD:
+    iDegrees = (int) dDataToFormat;
+    sprintf( cBuffer, pInfo->labelformat, iDegrees);
+    break;  
+  case lpDefault:
+  default:
+    sprintf( cBuffer, pInfo->labelformat, dDataToFormat );
+  }
 	
-	pShape->text			= strdup( cBuffer );
+  pShape->text = strdup( cBuffer );
 }
 
 /**********************************************************************************************************************
