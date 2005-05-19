@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2005/05/19 05:32:00  sdlime
+ * Changed default format for graticule labels to %5.2g from %5.2f which should remove trailing zeros. Partially addresses bug 1256.
+ *
  * Revision 1.10  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -78,7 +81,7 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
 
 #define MAPGRATICULE_ARC_SUBDIVISION_DEFAULT	(256)
 #define MAPGRATICULE_ARC_MINIMUM				 (16)
-#define MAPGRATICULE_FORMAT_STRING_DEFAULT		"%5.2f"
+#define MAPGRATICULE_FORMAT_STRING_DEFAULT		"%5.2g"
 #define MAPGRATICULE_FORMAT_STRING_DDMMSS		"%3d %02d %02d"
 #define MAPGRATICULE_FORMAT_STRING_DDMM			"%3d %02d"
 
