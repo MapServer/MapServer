@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/05/19 05:57:08  sdlime
+ * Added GEOS geometry clean up code to msFreeShape...
+ *
  * Revision 1.51  2005/04/21 15:09:28  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *
@@ -104,7 +107,6 @@ void msInitShape(shapeObj *shape)
   shape->numvalues = 0;
 
 #ifdef USE_GEOS
-  /* GEOS geometry */
   shape->geometry = NULL;
 #endif
 
@@ -144,6 +146,8 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
     to->numvalues = from->numvalues;
   }
 
+  /* TODO add GEOS copy, or at least initialize to->geometry to NULL */
+
   return(0);
 }
 
@@ -158,6 +162,10 @@ void msFreeShape(shapeObj *shape)
   if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
   if(shape->text) free(shape->text);
   
+#ifdef USE_GEOS
+  msGEOSFreeGeometry(shape);
+#endif
+
   msInitShape(shape); /* now reset */
 }
 
