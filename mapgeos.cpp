@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/05/19 05:57:08  sdlime
+ * More interface clean up, added msGEOSFreeGeometry and updated geometry2shape code to so the new shapeObj contains a reference to the geometry used to create it.
+ *
  * Revision 1.9  2005/05/17 13:59:57  sdlime
  * More GEOS interface improvements (global GeometryFactory).
  *
@@ -77,21 +80,6 @@ static void msGEOSCreateGeometryFactory()
 {
   if(!gf) 
     gf = new GeometryFactory();
-}
-
-/*
-** Geometry management functions
-*/
-static void msGEOSDeleteGeometry(Geometry *g)
-{
-  try {
-    delete g;
-  } catch (GEOSException *ge) {
-    msSetError(MS_GEOSERR, "%s", "msGEOSDeleteGeometry()", (char *) ge->toString().c_str());
-    delete ge;
-  } catch(...) {
-    // do nothing!
-  }
 }
 
 /*
@@ -347,6 +335,7 @@ static shapeObj *msGEOSGeometry2Shape_point(Geometry *g)
     shape->numlines = 1;
     shape->line[0].point = (pointObj *) malloc(sizeof(pointObj));
     shape->line[0].numpoints = 1;
+    shape->geometry = g;
 
     shape->line[0].point[0].x = c->x;
     shape->line[0].point[0].y = c->y;  
@@ -379,6 +368,7 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(Geometry *g)
     shape->numlines = 1;
     shape->line[0].point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     shape->line[0].numpoints = numPoints;
+    shape->geometry = g;
 
     for(i=0; i<numPoints; i++) {
       c = coords->getAt(i);
@@ -417,6 +407,7 @@ static shapeObj *msGEOSGeometry2Shape_line(LineString *g)
     shape->numlines = 1;
     shape->line[0].point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     shape->line[0].numpoints = numPoints;
+    shape->geometry = g;
 
     for(i=0; i<numPoints; i++) {
       c = coords->getAt(i);
@@ -454,6 +445,7 @@ static shapeObj *msGEOSGeometry2Shape_multiline(MultiLineString *g)
     shape->type = MS_SHAPE_LINE;
     shape->line = (lineObj *) malloc(sizeof(lineObj)*numLines);
     shape->numlines = numLines;
+    shape->geometry = g;
 
     for(j=0; j<numLines; j++) {
       lineString = (LineString *) g->getGeometryN(j);
@@ -499,6 +491,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(Polygon *g)
     shape = (shapeObj *) malloc(sizeof(shapeObj));
     msInitShape(shape);
     shape->type = MS_SHAPE_POLYGON;
+    shape->geometry = g;
 
     /* exterior ring */
     ring = g->getExteriorRing();
@@ -568,6 +561,7 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(MultiPolygon *g)
     shape->type = MS_SHAPE_POLYGON;
     shape->line = (lineObj *) malloc(sizeof(lineObj)*numRings);
     shape->numlines = numRings;
+    shape->geometry = g;
 
     for(j=0; j<numRings; j++) {
       ring = (LineString *) g->getGeometryN(j);
@@ -638,7 +632,33 @@ shapeObj *msGEOSGeometry2Shape(Geometry *g)
 #endif
 
 /*
-** Analytical functions, these are exposed via MapServer/MapScript.
+** Maintenence functions exposed to MapServer/MapScript.
+*/
+
+void msGEOSFreeGeometry(shapeObj *shape)
+{
+#ifdef USE_GEOS
+  if(!shape || !shape->geometry || !gf) 
+    return;
+
+  try {
+    Geometry *g = (Geometry *) shape->geometry;
+    gf->destroyGeometry(g);
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSDeleteGeometry()", (char *) ge->toString().c_str());
+    delete ge;
+    return;
+  } catch (...) {
+    return;
+  }
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSFreeGeometry()");
+  return;
+#endif
+}
+
+/*
+** Analytical functions exposed to MapServer/MapScript.
 */
 
 shapeObj *msGEOSBuffer(shapeObj *shape, double width)
@@ -650,7 +670,7 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
   if(!shape->geometry) /* if no geometry for the shape then build one */
     shape->geometry = msGEOSShape2Geometry(shape);
   Geometry *g = (Geometry *) shape->geometry;
-  if(!g)
+  if(!g) 
     return NULL;
 
   try {
