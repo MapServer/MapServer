@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.52  2005/05/23 17:31:27  sdlime
+ * Move GML metadata structures and functions prototypes to mapows.h since they will be needed by mapwfs.c as well.
+ *
  * Revision 1.51  2005/05/13 17:23:34  dan
  * First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
  * layers. Still needs some work. (bug 1246)
@@ -318,6 +321,38 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
  *====================================================================*/
 #define OWS_GML2 0 /* Supported GML formats */
 #define OWS_GML3 1
+
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
+typedef struct {
+  char *name;     /* name of the item */
+  char *alias;    /* is the item aliased for presentation? (NULL if not) */
+  char *type;     /* raw type for thes item (NULL for a "string") (TODO: should this be a lookup table instead?) */
+  int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
+  int visible;    /* should this item be output, default is MS_FALSE */  
+} gmlItemObj;
+
+typedef struct {
+  gmlItemObj *items;
+  int numitems;
+} gmlItemListObj;
+
+typedef struct {
+  char *name;          /* name of the group */
+  char **items;        /* list of items in the group */
+  int numitems;        /* number of items */
+} gmlGroupObj;
+
+typedef struct {
+  gmlGroupObj *groups;
+  int numgroups;
+} gmlGroupListObj;
+
+MS_DLL_EXPORT int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList);
+MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer);
+MS_DLL_EXPORT void msGMLFreeItems(gmlItemListObj *itemList);
+MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer);
+MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
+#endif
 
 #ifdef USE_WMS_SVR
 /* export to fix bug 851 */

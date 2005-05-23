@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/05/23 17:31:27  sdlime
+ * Move GML metadata structures and functions prototypes to mapows.h since they will be needed by mapwfs.c as well.
+ *
  * Revision 1.57  2005/04/25 06:41:56  sdlime
  * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
  *
@@ -589,31 +592,11 @@ static int gmlWriteGeometry(FILE *stream, int format, shapeObj *shape, const cha
  return(MS_FAILURE);
 }
 
-typedef struct {
-  char *name;     /* name of the item */
-  char *alias;    /* is the item aliased for presentation? (NULL if not) */
-  char *type;     /* raw type for thes item (NULL for a "string") (TODO: should this be a lookup table instead?) */
-  int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
-  int visible;    /* should this item be output, default is MS_FALSE */
-} gmlItemObj;
-
-typedef struct {
-  gmlItemObj *items;
-  int numitems;
-} gmlItemListObj;
-
-typedef struct {
-  char *name;          /* name of the group */
-  char **items;        /* list of items in the group */
-  int numitems;        /* number of items */
-} gmlGroupObj;
-
-typedef struct {
-  gmlGroupObj *groups;
-  int numgroups;
-} gmlGroupListObj;
-
-int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList) {
+/*
+** GML specific metadata handling functions.
+*/ 
+int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList) 
+{
   int i, j;
   gmlGroupObj *group;
 
@@ -712,9 +695,9 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
       item->type = strdup(value);
   }
 
-  msFreeCharArray(xmlitems, numxmlitems);
   msFreeCharArray(incitems, numincitems);
   msFreeCharArray(excitems, numexcitems);
+  msFreeCharArray(xmlitems, numxmlitems);
 
   return itemList;
 }
@@ -734,10 +717,10 @@ void msGMLFreeItems(gmlItemListObj *itemList)
   free(itemList);
 }
 
-void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *namespace, const char *tab) 
+static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *namespace, const char *tab) 
 {
   char *encoded_value, *tag_name;
-  int add_namespace = MS_TRUE;
+  int add_namespace = MS_TRUE;  
 
   if(!stream || !item) return;
   if(!item->visible) return;
@@ -748,8 +731,8 @@ void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *nam
     encoded_value = msEncodeHTMLEntities(value);
   else
     encoded_value = strdup(value);  
-
-  /* build from pieces - set tag name and need for a namespace */
+  
+  
   if(item->alias) {
     tag_name = item->alias;
     if(strchr(item->alias, ':') != NULL) add_namespace = MS_FALSE;
@@ -826,7 +809,7 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
   free(groupList);
 }
 
-void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, gmlItemListObj *itemList, const char *namespace, const char *tab)
+static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, gmlItemListObj *itemList, const char *namespace, const char *tab)
 {
   int i,j;
   int add_namespace;
