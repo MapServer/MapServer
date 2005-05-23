@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.53  2005/05/23 17:41:37  sdlime
+ * Added constants for the 2 types of schemas WFS servers will support. A default schema that references GML 2.1 geometries, and another for schemas complient with the GML profile for simple feature exchange document recently published (formerly known as GML3L0).
+ *
  * Revision 1.52  2005/05/23 17:31:27  sdlime
  * Move GML metadata structures and functions prototypes to mapows.h since they will be needed by mapwfs.c as well.
  *
@@ -394,6 +397,11 @@ MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
 /*====================================================================
  *   mapwfs.c
  *====================================================================*/
+
+/* Supported DescribeFeature formats */
+#define OWS_DEFAULT_SCHEMA 0 /* basically a GML 2.1 schema */
+#define OWS_SFE_SCHEMA 1 /* GML for simple feature exchange (formerly GML3L0) */
+
 int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj);
 void msWFSParseRequest(cgiRequestObj *, wfsParamsObj *);
 wfsParamsObj *msWFSCreateParamsObj(void);
