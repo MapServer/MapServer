@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-beta3
 -------------------
 
+- Bug 1149: From WMS 1.1.1, SRS are given in individual tags in root Layer
+  element.
+
 - First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
   layers. Still needs some work. (bug 1246)
 

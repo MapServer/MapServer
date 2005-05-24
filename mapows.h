@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.54  2005/05/24 18:52:45  julien
+ * Bug 1149: From WMS 1.1.1, SRS are given in individual tags.
+ *
  * Revision 1.53  2005/05/23 17:41:37  sdlime
  * Added constants for the 2 types of schemas WFS servers will support. A default schema that references GML 2.1 geometries, and another for schemas complient with the GML profile for simple feature exchange document recently published (formerly known as GML3L0).
  *
@@ -298,6 +301,11 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
                                  const char *startTag, 
                                  const char *endTag, const char *itemFormat,
                                  const char *default_value);
+int msOWSPrintEncodeParamList(FILE *stream, const char *name, 
+                              const char *value, int action_if_not_found, 
+                              char delimiter, const char *startTag, 
+                              const char *endTag, const char *format, 
+                              const char *default_value);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj,
                                  int nService);

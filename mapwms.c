@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.163  2005/05/24 18:52:45  julien
+ * Bug 1149: From WMS 1.1.1, SRS are given in individual tags.
+ *
  * Revision 1.162  2005/04/22 15:50:46  assefa
  * Bug 1262 : the SERVICE parameter is now required for wms and wfs
  * GetCapbilities request. It is not required for other WMS requests.
@@ -1152,10 +1155,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 {
    rectObj ext;
    const char *value;
-   char **tokens;
-   char *encoded;
-   int n, i;
-   const char *projstring;
    const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL, *pszStyle=NULL;
    const char *pszLegendURL=NULL;
    char *pszMetadataName=NULL, *mimetype=NULL;
@@ -1220,28 +1219,16 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    if (msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),
                         "MO", MS_FALSE) == NULL)
    {
+       /* starting 1.1.1 SRS are given in individual tags */
        if (nVersion > OWS_1_1_0)
-       {
-           projstring = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
-                                         "MO", MS_FALSE);
-           if (!projstring)
-             msIO_fprintf(stdout, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata");
-           else
-           {
-               tokens = split(projstring, ' ', &n);
-               if (tokens && n > 0)
-               {
-                   for(i=0; i<n; i++)
-                   {
-                       encoded = msEncodeHTMLEntities(tokens[i]);
-                       msIO_fprintf(stdout, "        <SRS>%s</SRS>\n", encoded);
-                       msFree(encoded);
-                   }
-
-                    msFreeCharArray(tokens, n);
-               }
-           }
-       }
+           msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                     "MAP.PROJECTION, LAYER.PROJECTION "
+                                     "or wms_srs metadata", 
+                                     msOWSGetEPSGProj(&(lp->projection), 
+                                                      &(lp->metadata),
+                                                      "MO", MS_FALSE),
+                                     OWS_WARN, ' ', NULL, NULL, 
+                                     "        <SRS>%s</SRS>\n", NULL);
        else
          /* If map has no proj then every layer MUST have one or produce a warning */
          msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, "
@@ -1254,25 +1241,14 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    {
        /* starting 1.1.1 SRS are given in individual tags */
        if (nVersion > OWS_1_1_0)
-       {
-           projstring = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
-                                         "MO", MS_FALSE);
-           if (projstring)
-           {
-               tokens = split(projstring, ' ', &n);
-               if (tokens && n > 0)
-               {
-                   for(i=0; i<n; i++)
-                   {
-                       encoded = msEncodeHTMLEntities(tokens[i]);
-                       msIO_fprintf(stdout, "        <SRS>%s</SRS>\n", encoded);
-                       msFree(encoded);
-                   }
-
-                    msFreeCharArray(tokens, n);
-               }
-           }
-       }
+           msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                     "MAP.PROJECTION, LAYER.PROJECTION "
+                                     "or wms_srs metadata", 
+                                     msOWSGetEPSGProj(&(lp->projection), 
+                                                      &(lp->metadata),
+                                                      "MO", MS_FALSE),
+                                     OWS_WARN, ' ', NULL, NULL, 
+                                     "        <SRS>%s</SRS>\n", NULL);
        else
        /* No warning required in this case since there's at least a map proj. */
          msOWSPrintEncodeParam(stdout,
@@ -1872,10 +1848,23 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   /* According to normative comments in the 1.0.7 DTD, the root layer's SRS tag */
   /* is REQUIRED.  It also suggests that we use an empty SRS element if there */
   /* is no common SRS. */
-  msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
-             msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
-                              "MO", MS_FALSE),
-                        OWS_WARN, "    <SRS>%s</SRS>\n", "");
+  if (nVersion > OWS_1_1_0)
+      /* starting 1.1.1 SRS are given in individual tags */
+      msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                "MAP.PROJECTION, LAYER.PROJECTION "
+                                "or wms_srs metadata", 
+                                msOWSGetEPSGProj(&(map->projection), 
+                                                 &(map->web.metadata),
+                                                 "MO", MS_FALSE),
+                                OWS_WARN, ' ', NULL, NULL, 
+                                "    <SRS>%s</SRS>\n", "");
+  else
+      /* If map has no proj then every layer MUST have one or produce a warning */
+      msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
+                            msOWSGetEPSGProj(&(map->projection), 
+                                             &(map->web.metadata),
+                                             "MO", MS_FALSE),
+                            OWS_WARN, "    <SRS>%s</SRS>\n", "");
 
   msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent),
                               &(map->projection), OWS_WMS);

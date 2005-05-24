@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/05/24 18:52:45  julien
+ * Bug 1149: From WMS 1.1.1, SRS are given in individual tags.
+ *
  * Revision 1.58  2005/04/12 23:13:20  sean
  * use non static strings for temp values in msOWSGetLayerExtent() and msOWSGetEPSGProj() (bug 1311).
  *
@@ -1127,6 +1130,51 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
       return MS_TRUE;
     }
     return MS_FALSE;
+}
+
+/* msOWSPrintEncodeParamList()
+**
+** Same as msOWSPrintEncodeMetadataList() but applied to mapfile parameters.
+**/
+int msOWSPrintEncodeParamList(FILE *stream, const char *name, 
+                              const char *value, int action_if_not_found, 
+                              char delimiter, const char *startTag, 
+                              const char *endTag, const char *format, 
+                              const char *default_value) 
+{
+    int status = MS_NOERR;
+    char *encoded;
+    char **items = NULL;
+    int numitems = 0, i;
+
+    if(value && strlen(value) > 0)
+        items = split(value, delimiter, &numitems);
+    else
+    {
+        if (action_if_not_found == OWS_WARN)
+        {
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", name);
+            status = action_if_not_found;
+        }
+
+        if (default_value)
+            items = split(default_value, delimiter, &numitems);
+    }
+
+    if(items && numitems > 0)
+    {
+        if(startTag) msIO_fprintf(stream, "%s", startTag);
+        for(i=0; i<numitems; i++)
+        {
+            encoded = msEncodeHTMLEntities(items[i]);
+            msIO_fprintf(stream, format, encoded);
+            msFree(encoded);
+        }
+        if(endTag) msIO_fprintf(stream, "%s", endTag);
+        msFreeCharArray(items, numitems);
+    }
+
+    return status;
 }
 
 /*
