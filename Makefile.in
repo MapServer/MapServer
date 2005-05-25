@@ -156,9 +156,9 @@ OWS=@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@ @WCS
 # In order to compile the PHP_MAPSCRIPT module, we have to make MapServer
 # uses the same version of the REGEX library that PHP was compiled with:
 #
-PHP_REGEX=@USE_PHP_REGEX@
-REGEX_OBJ=@PHP_REGEX_OBJ@
-REGEX_INC=@PHP_REGEX_INC@
+CGI_REGEX_OBJ=@CGI_REGEX_OBJ@
+PHP_REGEX_OBJ=@PHP_REGEX_OBJ@
+PHP_REGEX_INC=@PHP_REGEX_INC@
 
 #
 # Multithreading support.
@@ -220,7 +220,7 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmap $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o $(EPPL_OBJ) $(REGEX_OBJ)
+OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o $(EPPL_OBJ) $(CGI_REGEX_OBJ)
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms
@@ -277,7 +277,7 @@ scalebar: $(LIBMAP_STATIC)  scalebar.o map.h
 	$(LD) $(CFLAGS) scalebar.o $(EXE_LDFLAGS) -o scalebar
 
 mapserv: mapserv.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o map.h
-	$(LD) $(CFLAGS) mapserv.o cgiutil.o  $(EXE_LDFLAGS) -o mapserv
+	$(LD) $(CFLAGS) mapserv.o cgiutil.o $(EXE_LDFLAGS) -o mapserv
 
 shpindex: $(LIBMAP_STATIC) shpindex.o map.h
 	$(LD) $(CFLAGS) shpindex.o $(EXE_LDFLAGS) -o shpindex

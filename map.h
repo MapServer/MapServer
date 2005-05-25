@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.411  2005/05/25 21:02:05  dan
+ * Added a regex wrapper, allowing MapServer to build with PHP compiled
+ * with its builtin regex (bug 1354)
+ *
  * Revision 1.410  2005/05/19 05:57:08  sdlime
  * Added prototype for msGEOSFreeGeometry.
  *
@@ -265,7 +269,7 @@ static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid );
  * be separated here. We separate here via its directory location.
  */
 #ifdef USE_PHP_REGEX
-#include "regex/regex.h"
+#include "mapregex.h"
 #else
 #include <regex.h>
 #endif
@@ -1935,6 +1939,7 @@ MS_DLL_EXPORT const char *msGetBasename( const char *pszFullFilename );
 MS_DLL_EXPORT void msGEOSFreeGeometry(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
+
 
 #endif
 

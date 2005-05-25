@@ -48,6 +48,16 @@ PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl -I$(PHP_SRC_DIR)/main \
 	  -I$(PHP_SRC_DIR)/TSRM @APACHE_INC@
 
 #
+# IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
+#
+# In order to compile the PHP_MAPSCRIPT module, we have to make MapServer
+# uses the same version of the REGEX library that PHP was compiled with:
+#
+PHP_REGEX_OBJ=@PHP_REGEX_OBJ@
+PHP_REGEX_INC=@PHP_REGEX_INC@
+
+
+#
 # Set MapServer extensions parameters.  See main MapServer Makefile for 
 # more details... 
 # Common defaults are:
@@ -65,13 +75,13 @@ MS_LIBS =   $(RUNPATHS) @MS_LIB@ @ALL_LIB@ @XTRALIBS@ $(MS_STATIC)
 # The rest of the file should not have to be edited...
 #
 
-CFLAGS112 = $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
+CFLAGS112 = $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC) $(PHP_REGEX_INC)
 
 all: php_mapscript.so
 
-PHPMS_OBJS =  php_mapscript_util.o php_mapscript.o mapscript_i.o
+PHPMS_OBJS =  php_mapscript_util.o php_mapscript.o mapscript_i.o $(PHP_REGEX_OBJ)
 
-PHPPROJ_OBJS = php_mapscript_util.o php_proj.o
+PHPPROJ_OBJS = php_mapscript_util.o php_proj.o $(PHP_REGEX_OBJ)
 
 
 php_mapscript.so: $(PHPMS_OBJS) ../../libmap.a

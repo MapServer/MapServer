@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/05/25 21:02:06  dan
+ * Added a regex wrapper, allowing MapServer to build with PHP compiled
+ * with its builtin regex (bug 1354)
+ *
  * Revision 1.47  2004/11/02 21:03:36  assefa
  * Add a 2nd optional argument to LoadMapContext function (Bug 1023).
  *
@@ -80,6 +84,28 @@
 
 #ifndef _PHP_MAPSCRIPT_H_INCLUDED_
 #define _PHP_MAPSCRIPT_H_INCLUDED_
+
+#ifdef USE_PHP_REGEX
+
+#define BUILDING_REGEX_PROXY 1
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <direct.h>
+#include <memory.h>
+#include <malloc.h>
+#else
+#include <unistd.h>
+#endif
+
+#include "regex/regex.h"
+#include "regex/regex_extra.h"
+
+#endif /* USE_PHP_REGEX */
 
 //#include "map.h"
 #include "maptemplate.h"

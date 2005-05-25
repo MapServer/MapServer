@@ -1915,7 +1915,6 @@ if test -n "$with_php" -a -d "$with_php" ; then
       dnl
       dnl found it!
       dnl
-
       USE_PHP_REGEX="-DUSE_PHP_REGEX"
       PHP_REGEX_INC="-I$PHP_REGEX_DIR/.."
       PHP_REGEX_OBJ="$PHP_REGEX_DIR/regcomp.o $PHP_REGEX_DIR/regerror.o \
@@ -1924,7 +1923,20 @@ if test -n "$with_php" -a -d "$with_php" ; then
 
       AC_MSG_RESULT([        using PHP regex source from $PHP_REGEX_DIR])
     else
-       AC_MSG_ERROR([
+       	dnl We'll check for regex_extra.h - that might let use build
+	dnl without the source using libphp_common.so
+	  test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
+	  if test -n "$PHP_NO_SOURCE" ; then
+	  dnl Found regex_extra.h
+      	    USE_PHP_REGEX="-DUSE_PHP_REGEX"
+	    CGI_REGEX_OBJ=mapregex.o
+	    PHP_REGEX_OBJ=php_regex.o
+	    AC_SUBST(PHP_REGEX_INC,$PHP_REGEX_INC)
+	    AC_SUBST(CGI_REGEX_OBJ,$CGI_REGEX_OBJ)
+	    AC_SUBST(PHP_REGEX_OBJ,$PHP_REGEX_OBJ)
+	    AC_MSG_RESULT([        found regex_extra.h - trying to build without PHP source])	
+	  else
+	    AC_MSG_ERROR([
 !!! You PHP was compiled with PHP's bundled regex library.               !!!
 !!! In this case MapServer and PHP MapScript must also be compiled       !!!
 !!! using the same copy of regex.                                        !!!
@@ -1942,6 +1954,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
 !!!    --with-httpd options). So if you configured your PHP using        !!!
 !!!    --with-regex=system and still get this error then make sure you   !!!
 !!!    configured PHP as a CGI.                                          !!!])
+	fi
     fi
 
   else
