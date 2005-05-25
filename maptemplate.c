@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.110  2005/05/25 14:29:46  dan
+ * Bug 1364: HTML legend templates: support [if] tests on "group_name" in
+ * leg_group_html blocks, and for "class_name" in leg_class_html blocks.
+ *
  * Revision 1.109  2005/05/18 18:11:30  sdlime
  * Moved layer query header parsing to AFTER the layer items and joins have been done.
  *
@@ -1354,6 +1358,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
          sprintf(pszStatus, "%d", map->layers[map->layerorder[j]].status);
          msInsertHashTable(myHashTable, "layer_status", pszStatus);
          msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[map->layerorder[j]]))?"1":"0" );
+         msInsertHashTable(myHashTable, "group_name", pszGroupName);
 
          if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
@@ -1623,6 +1628,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
    msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[nIdxLayer]))?"1":"0" );
+   msInsertHashTable(myHashTable, "class_name", map->layers[nIdxLayer].class[nIdxClass].name);
 
    if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;

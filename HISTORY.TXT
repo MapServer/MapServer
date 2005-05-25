@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-beta3
 -------------------
 
+- Bug 1364: HTML legend templates: support [if] tests on "group_name" in 
+  leg_group_html blocks, and for "class_name" in leg_class_html blocks.
+
 - Bug 1149: From WMS 1.1.1, SRS are given in individual tags in root Layer
   element.
 
