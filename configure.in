@@ -1804,7 +1804,8 @@ AC_ARG_WITH(php,
                           module.],,)
 
 AC_ARG_WITH(php-regex-dir,
-[  --with-php-regex-dir=DIR  Specify directory where the PHP4 bundled REGEX
+[  --with-php-regex-dir=DIR  (deprecated in version 4.6+)
+                          Specify directory where the PHP4 bundled REGEX
                           object files (regex/*.o) are available. Required in
                           order to compile the PHP/MapScript module with PHP 
                           configured as a DSO.],,)
