@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.164  2005/05/26 21:12:11  assefa
+ * Add attribution element output : Bug 1298.
+ *
  * Revision 1.163  2005/05/24 18:52:45  julien
  * Bug 1149: From WMS 1.1.1, SRS are given in individual tags.
  *
@@ -1113,6 +1116,63 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
 
 
 
+void msWMSPrintAttribution(FILE *stream, const char *tabspace, 
+                           hashTableObj *metadata,
+                           const char *namespaces)
+{
+    const char *title, *onlineres, *logourl;
+    char * pszEncodedValue=NULL;
+
+    if (stream && metadata)
+    {
+        title = msOWSLookupMetadata(metadata, "MO", 
+                                  "attribution_title");
+        onlineres = msOWSLookupMetadata(metadata, "MO", 
+                                  "attribution_onlineresource");
+        logourl = msOWSLookupMetadata(metadata, "MO", 
+                                  "attribution_logourl_width");
+
+        if (title || onlineres || logourl)
+        {
+            msIO_printf("%s<Attribution>\n",tabspace);
+            if (title)
+            {
+                pszEncodedValue = msEncodeHTMLEntities(title);
+                msIO_fprintf(stream, "%s%s<Title>%s</Title>\n", tabspace,
+                             tabspace, pszEncodedValue);
+                free(pszEncodedValue);
+            }
+
+            if (onlineres)
+            {
+                pszEncodedValue = msEncodeHTMLEntities(onlineres);
+                msIO_fprintf(stream, "%s%s<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", tabspace, tabspace,
+                             pszEncodedValue);
+                free(pszEncodedValue);
+            }
+         
+            if (logourl)
+            {
+                msOWSPrintURLType(stream, metadata, "MO","attribution_logourl",
+                                  OWS_NOERR, NULL, "LogoURL", NULL,
+                                  " width=\"%s\"", " height=\"%s\"",
+                                  ">\n             <Format>%s</Format",
+                                  "\n             <OnlineResource "
+                                  "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                  " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                                  "          ",
+                                  MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE,
+                                  NULL, NULL, NULL, NULL, NULL, "        ");
+
+                
+            }
+            msIO_printf("%s</Attribution>\n", tabspace);
+
+        }
+    }
+}
+          
+
 /*
 ** msWMSPrintScaleHint()
 **
@@ -1614,7 +1674,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   char szVersionBuf[OWS_VERSION_MAXLEN];
   char *schemalocation = NULL;
 
-
    schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
   if (nVersion < 0)
@@ -1860,7 +1919,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                 "    <SRS>%s</SRS>\n", "");
   else
       /* If map has no proj then every layer MUST have one or produce a warning */
-      msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
+    msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
                             msOWSGetEPSGProj(&(map->projection), 
                                              &(map->web.metadata),
                                              "MO", MS_FALSE),
@@ -1870,6 +1929,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                               &(map->projection), OWS_WMS);
   msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
                          &(map->web.metadata), "MO" );
+
+  msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
+
   msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale,
                       map->resolution);
 
