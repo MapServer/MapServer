@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-beta3
 -------------------
 
+- Bug 1298 : enable Attribution element in wms Capabilities XML
+
 - Bug 1354: Added a regex wrapper, allowing MapServer to build with PHP
   compiled with its builtin regex
 
