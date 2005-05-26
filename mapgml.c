@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/05/26 21:19:05  sdlime
+ * Fixed problem with GML outout when gml_geometry_name is not set.
+ *
  * Revision 1.59  2005/05/26 16:09:15  sdlime
  * Updated mapwfs.c to produce schema compliant with the GML for Simple Feature Exchange proposed standard. Changes are relatively minor with the exception of naming the geometry container and handling of mixed geometry types. The previous version defaulted to a GML type. We need more control for application specific schema. We now package the GML geometry in an element named by default geometry, users can override using gml_geometry_name metadata. We also advertise a *very* generic GMLPropertyType by default again which can be overriden using gml_geometry_type. That metadata *can* contain a list of valid types which are offered as a xsd:choice.
  *
@@ -1040,8 +1043,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
       const char *geom_name = "geometry"; /* what should the default be? (in mapwfs.c too) */
       char *layer_name;
-      
-      geom_name = msLookupHashTable(&(lp->metadata), "gml_geometry_name");
+      const char *value;
+
+      value = msLookupHashTable(&(lp->metadata), "gml_geometry_name");
+      if(value) geom_name = value;
       /* geom_name = msWFSGetGeomElementName(map, lp); */
 
       /* actually open the layer */
