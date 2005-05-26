@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/05/26 16:09:15  sdlime
+ * Updated mapwfs.c to produce schema compliant with the GML for Simple Feature Exchange proposed standard. Changes are relatively minor with the exception of naming the geometry container and handling of mixed geometry types. The previous version defaulted to a GML type. We need more control for application specific schema. We now package the GML geometry in an element named by default geometry, users can override using gml_geometry_name metadata. We also advertise a *very* generic GMLPropertyType by default again which can be overriden using gml_geometry_type. That metadata *can* contain a list of valid types which are offered as a xsd:choice.
+ *
  * Revision 1.58  2005/05/23 17:31:27  sdlime
  * Move GML metadata structures and functions prototypes to mapows.h since they will be needed by mapwfs.c as well.
  *
@@ -717,7 +720,7 @@ void msGMLFreeItems(gmlItemListObj *itemList)
   free(itemList);
 }
 
-static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *namespace, const char *tab) 
+static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *namespace, const char *tab)
 {
   char *encoded_value, *tag_name;
   int add_namespace = MS_TRUE;  
@@ -812,7 +815,7 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
 static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, gmlItemListObj *itemList, const char *namespace, const char *tab)
 {
   int i,j;
-  int add_namespace;
+  int add_namespace = MS_TRUE;
   char *itemtab;
 
   gmlItemObj *item=NULL;
@@ -823,8 +826,7 @@ static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, g
   itemtab = (char *) malloc(sizeof(char)*strlen(tab)+3);
   if(!itemtab) return;
   sprintf(itemtab, "%s  ", tab);
-    
-  add_namespace = MS_TRUE;
+     
   if(!namespace || strchr(group->name, ':') != NULL) add_namespace = MS_FALSE;
 
   /* start the group */
@@ -1036,9 +1038,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
     lp = &(map->layers[i]);
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
-      const char *geom_name;
+      const char *geom_name = "geometry"; /* what should the default be? (in mapwfs.c too) */
       char *layer_name;
-      geom_name = msWFSGetGeomElementName(map, lp);
+      
+      geom_name = msLookupHashTable(&(lp->metadata), "gml_geometry_name");
+      /* geom_name = msWFSGetGeomElementName(map, lp); */
 
       /* actually open the layer */
       status = msLayerOpen(lp);
@@ -1086,8 +1090,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 #else
 	  gmlWriteBounds(stream, outputformat, &(shape.bounds), NULL, "        "); /* no projection information */
 #endif
-        
-        msIO_fprintf(stream, "        <gml:%s>\n", geom_name); 
+
+	if(wfs_namespace)  
+          msIO_fprintf(stream, "        <%s:%s>\n", wfs_namespace, geom_name); 
+	else
+	  msIO_fprintf(stream, "        <%s>\n", geom_name); 
                     
 	/* write the feature geometry */
 #ifdef USE_PROJ
@@ -1098,8 +1105,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 #else
 	gmlWriteGeometry(stream, outputformat, &(shape), NULL, "          ");
 #endif
-
-        msIO_fprintf(stream, "        </gml:%s>\n", geom_name); 
+        
+	if(wfs_namespace)  
+          msIO_fprintf(stream, "        </%s:%s>\n", wfs_namespace, geom_name); 
+	else
+	  msIO_fprintf(stream, "        </%s>\n", geom_name); 
 
 	/* write the item/values */
 	for(k=0; k<lp->numitems; k++) {
