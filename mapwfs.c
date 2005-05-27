@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.63  2005/05/27 17:24:56  sdlime
+ * Changed WFS layer type name from [layer name]_Type to [layer name]Type in keeping with schema convension.
+ *
  * Revision 1.62  2005/05/26 16:09:15  sdlime
  * Updated mapwfs.c to produce schema compliant with the GML for Simple Feature Exchange proposed standard. Changes are relatively minor with the exception of naming the geometry container and handling of mixed geometry types. The previous version defaulted to a GML type. We need more control for application specific schema. We now package the GML geometry in an element named by default geometry, users can override using gml_geometry_name metadata. We also advertise a *very* generic GMLPropertyType by default again which can be overriden using gml_geometry_type. That metadata *can* contain a list of valid types which are offered as a xsd:choice.
  *
@@ -914,17 +917,17 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       if (user_namespace_prefix)
 	msIO_printf("\n"
 		    "  <element name=\"%s\" \n"
-		    "           type=\"%s:%s_Type\" \n"
+		    "           type=\"%s:%sType\" \n"
 		    "           substitutionGroup=\"gml:_Feature\" />\n\n",
 		    encoded_name, user_namespace_prefix, encoded_name);
       else
 	msIO_printf("\n"
 		    "  <element name=\"%s\" \n"
-		    "           type=\"myns:%s_Type\" \n"
+		    "           type=\"myns:%sType\" \n"
 		    "           substitutionGroup=\"gml:_Feature\" />\n\n",
 		    encoded_name, encoded_name);
       
-      msIO_printf("  <complexType name=\"%s_Type\">\n", encoded_name);
+      msIO_printf("  <complexType name=\"%sType\">\n", encoded_name);
       msIO_printf("    <complexContent>\n");
       msIO_printf("      <extension base=\"gml:AbstractFeatureType\">\n");
       msIO_printf("        <sequence>\n");
