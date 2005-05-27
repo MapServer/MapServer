@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.413  2005/05/27 21:19:12  dan
+ * Ready for 4.6.0-beta3
+ *
  * Revision 1.412  2005/05/27 15:00:12  dan
  * New regex wrappers to solve issues with previous version (bug 1354)
  *
@@ -292,7 +295,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.6.0-beta2"
+#define MS_VERSION "4.6.0-beta3"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

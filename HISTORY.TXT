@@ -12,8 +12,9 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.6.0-beta3
--------------------
+
+Version 4.6.0-beta3 (2005-05-27)
+--------------------------------
 
 - Bug 1298 : enable Attribution element in wms Capabilities XML
 
