@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/05/27 17:50:33  assefa
+ * Add a define to fix build on windows (Bug 1354).
+ *
  * Revision 1.2  2005/05/27 15:00:12  dan
  * New regex wrappers to solve issues with previous version (bug 1354)
  *
@@ -50,6 +53,10 @@
 
 /*Need to specify this so that mapregex.h doesn't defined constants and
   doesn't #define away our ms_*/
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define off_t	_off_t
+#endif
 
 #include "mapregex.h"
 #include <regex.h>
