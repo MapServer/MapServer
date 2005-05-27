@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.127  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
  * Revision 1.126  2005/03/08 18:24:50  frank
  * lock parser for evaluating parser expressions
  *
@@ -156,7 +159,7 @@ int msGetClass(layerObj *layer, colorObj *color)
       break;
     case(MS_REGEX):
       if(!layer->class[i].expression.compiled) {
-	if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { /* compile the expression  */
+	if(ms_regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression  */
 	  msSetError(MS_REGEXERR, "Invalid regular expression.", "msGetClass()");
 	  return(-1);
 	}
@@ -164,9 +167,9 @@ int msGetClass(layerObj *layer, colorObj *color)
       }
 
       sprintf(tmpstr2, "%d %d %d", color->red, color->green, color->blue);
-      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
+      if(ms_regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
       sprintf(tmpstr2, "%d", color->pen);
-      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
+      if(ms_regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
       break;
     case(MS_EXPRESSION):
       tmpstr1 = strdup(layer->class[i].expression.string);
@@ -226,7 +229,7 @@ int msGetClass_Float(layerObj *layer, float fValue)
 
           case(MS_REGEX):
             if(!layer->class[i].expression.compiled) {
-                if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { /* compile the expression  */
+                if(ms_regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression  */
                     msSetError(MS_REGEXERR, "Invalid regular expression.", "msGetClass()");
                     return(-1);
                 }
@@ -234,7 +237,7 @@ int msGetClass_Float(layerObj *layer, float fValue)
             }
 
             sprintf(tmpstr2, "%18g", fValue );
-            if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
+            if(ms_regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
             break;
 
           case(MS_EXPRESSION):

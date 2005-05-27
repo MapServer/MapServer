@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.181  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
  * Revision 1.180  2005/04/21 15:09:28  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *
@@ -321,14 +324,14 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     }
 
     if(!expression->compiled) {
-      if(regcomp(&(expression->regex), expression->string, REG_EXTENDED|REG_NOSUB) != 0) { /* compile the expression */
+      if(ms_regcomp(&(expression->regex), expression->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression */
         msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
         return(MS_FALSE);
       }
       expression->compiled = MS_TRUE;
     }
 
-    if(regexec(&(expression->regex), items[itemindex], 0, NULL, 0) == 0) return(MS_TRUE); /* got a match */
+    if(ms_regexec(&(expression->regex), items[itemindex], 0, NULL, 0) == 0) return(MS_TRUE); /* got a match */
     break;
   }
 

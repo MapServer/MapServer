@@ -1930,10 +1930,8 @@ if test -n "$with_php" -a -d "$with_php" ; then
 	  if test -n "$PHP_NO_SOURCE" ; then
 	  dnl Found regex_extra.h
       	    USE_PHP_REGEX="-DUSE_PHP_REGEX"
-	    CGI_REGEX_OBJ=mapregex.o
 	    PHP_REGEX_OBJ=php_regex.o
 	    AC_SUBST(PHP_REGEX_INC,$PHP_REGEX_INC)
-	    AC_SUBST(CGI_REGEX_OBJ,$CGI_REGEX_OBJ)
 	    AC_SUBST(PHP_REGEX_OBJ,$PHP_REGEX_OBJ)
 	    AC_MSG_RESULT([        found regex_extra.h - trying to build without PHP source])	
 	  else

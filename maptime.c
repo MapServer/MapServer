@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
  * Revision 1.15  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -50,7 +53,7 @@ MS_CVSID("$Id$")
 
 typedef struct {
   char pattern[64];
-  regex_t *regex;
+  ms_regex_t *regex;
   char  format[32];  
   char userformat[32];
   MS_TIME_RESOLUTION resolution;
@@ -181,11 +184,11 @@ int msTimeMatchPattern(char *timestring, char *timeformat)
     {
         if(!ms_timeFormats[i].regex)
         {
-            ms_timeFormats[i].regex = (regex_t *) malloc(sizeof(regex_t));
-            regcomp(ms_timeFormats[i].regex, 
-                    ms_timeFormats[i].pattern, REG_EXTENDED|REG_NOSUB);
+            ms_timeFormats[i].regex = (ms_regex_t *) malloc(sizeof(ms_regex_t));
+            ms_regcomp(ms_timeFormats[i].regex, 
+                    ms_timeFormats[i].pattern, MS_REG_EXTENDED|MS_REG_NOSUB);
         }
-        if (regexec(ms_timeFormats[i].regex, timestring, 0,NULL, 0) == 0)
+        if (ms_regexec(ms_timeFormats[i].regex, timestring, 0,NULL, 0) == 0)
           return MS_TRUE;
         
     }
@@ -267,15 +270,15 @@ int msParseTime(const char *string, struct tm *tm) {
         indice = i;
 
       if(!ms_timeFormats[indice].regex) { /* compile the expression */
-      ms_timeFormats[indice].regex = (regex_t *) malloc(sizeof(regex_t)); 
-      if(regcomp(ms_timeFormats[indice].regex, ms_timeFormats[indice].pattern, REG_EXTENDED|REG_NOSUB) != 0) {
+      ms_timeFormats[indice].regex = (ms_regex_t *) malloc(sizeof(ms_regex_t)); 
+      if(ms_regcomp(ms_timeFormats[indice].regex, ms_timeFormats[indice].pattern, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
 	msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[indice].pattern);
 	return(MS_FALSE);
       }
     }  
 
     /* test the expression against the string */
-    if(regexec(ms_timeFormats[indice].regex, string, 0, NULL, 0) == 0) 
+    if(ms_regexec(ms_timeFormats[indice].regex, string, 0, NULL, 0) == 0) 
     { /* match    */
         msStrptime(string, ms_timeFormats[indice].format, tm);
         return(MS_TRUE);
@@ -300,16 +303,16 @@ int msTimeGetResolution(const char *timestring)
      {
          if(!ms_timeFormats[i].regex) 
          {
-             ms_timeFormats[i].regex = (regex_t *) malloc(sizeof(regex_t));                
-             if(regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern, 
-                        REG_EXTENDED|REG_NOSUB) != 0) 
+             ms_timeFormats[i].regex = (ms_regex_t *) malloc(sizeof(ms_regex_t));                
+             if(ms_regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern, 
+                        MS_REG_EXTENDED|MS_REG_NOSUB) != 0) 
              {
                  msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[i].pattern);
                  return -1;
              }
          }
          /* test the expression against the string */
-         if(regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0) == 0) 
+         if(ms_regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0) == 0) 
          { /* match    */
              return ms_timeFormats[i].resolution;
          }

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.302  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
  * Revision 1.301  2005/05/10 13:18:25  dan
  * Fixed several issues with writeSymbol() (bug 1344)
  *
@@ -130,21 +133,21 @@ static char *msTrueFalse[2]={"FALSE", "TRUE"};
 static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"};
 
 int msEvalRegex(char *e, char *s) {
-  regex_t re;
+  ms_regex_t re;
 
   if(!e || !s) return(MS_FALSE);
 
-  if(regcomp(&re, e, REG_EXTENDED|REG_NOSUB) != 0) {
+  if(ms_regcomp(&re, e, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
     msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msEvalRegex()", e);   
     return(MS_FALSE);
   }
   
-  if(regexec(&re, s, 0, NULL, 0) != 0) { /* no match */
-    regfree(&re);
+  if(ms_regexec(&re, s, 0, NULL, 0) != 0) { /* no match */
+    ms_regfree(&re);
     msSetError(MS_REGEXERR, "String (%s) failed expression test.", "msEvalRegex()", s);
     return(MS_FALSE);
   }
-  regfree(&re);
+  ms_regfree(&re);
 
   return(MS_TRUE);
 }
@@ -1478,7 +1481,7 @@ void freeExpression(expressionObj *exp)
   if(!exp) return;
 
   msFree(exp->string);
-  if(exp->type == MS_REGEX && exp->compiled) regfree(&(exp->regex));
+  if(exp->type == MS_REGEX && exp->compiled) ms_regfree(&(exp->regex));
   if(exp->type == MS_EXPRESSION && exp->numitems > 0) msFreeCharArray(exp->items, exp->numitems);
   msFree(exp->indexes);
 
@@ -1491,7 +1494,7 @@ int loadExpression(expressionObj *exp)
   exp->string = strdup(msyytext);
   
   /* if(exp->type == MS_REGEX) { */
-  /* if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression  */
+  /* if(ms_regcomp(&(exp->regex), exp->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { // compile the expression  */
   /* sprintf(ms_error.message, "Parsing error near (%s):(line %d)", exp->string, msyylineno); */
   /* msSetError(MS_REGEXERR, ms_error.message, "loadExpression()"); */
   /* return(-1); */
@@ -1543,7 +1546,7 @@ int loadExpressionString(expressionObj *exp, char *value)
     exp->string = strdup(msyytext);
     
   /* if(exp->type == MS_REGEX) { */
-  /* if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression  */
+  /* if(ms_regcomp(&(exp->regex), exp->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { // compile the expression  */
   /* sprintf(ms_error.message, "Parsing error near (%s):(line %d)", exp->string, msyylineno); */
   /* msSetError(MS_REGEXERR, ms_error.message, "loadExpression()"); */
   /* return(-1); */

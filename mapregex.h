@@ -1,3 +1,38 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  MapServer
+ * Purpose:  Regex wrapper
+ * Author:   Bill Binko
+ *
+ ******************************************************************************
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies of this Software or works derived from this Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.2  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
+ */
+
 #ifndef MAP_REGEX_H
 #define MAP_REGEX_H
 
@@ -31,55 +66,46 @@ extern "C" {
 
 #ifndef BUILDING_REGEX_PROXY
 
-#define regcomp ms_regcomp
-#define regerror ms_regerror
-#define regexec ms_regexec
-#define regfree ms_regfree
-
-#define regex_t ms_regex_t
-#define regmatch_t ms_regmatch_t
-#define regoff_t ms_regoff_t
-
   /* === regcomp.c === */
-#define	REG_BASIC	0000
-#define	REG_EXTENDED	0001
-#define	REG_ICASE	0002
-#define	REG_NOSUB	0004
-#define	REG_NEWLINE	0010
-#define	REG_NOSPEC	0020
-#define	REG_PEND	0040
-#define	REG_DUMP	0200
+#define	MS_REG_BASIC	0000
+#define	MS_REG_EXTENDED	0001
+#define	MS_REG_ICASE	0002
+#define	MS_REG_NOSUB	0004
+#define	MS_REG_NEWLINE	0010
+#define	MS_REG_NOSPEC	0020
+#define	MS_REG_PEND	0040
+#define	MS_REG_DUMP	0200
 
 
 /* === regerror.c === */
-#define	REG_OKAY	 0
-#define	REG_NOMATCH	 1
-#define	REG_BADPAT	 2
-#define	REG_ECOLLATE	 3
-#define	REG_ECTYPE	 4
-#define	REG_EESCAPE	 5
-#define	REG_ESUBREG	 6
-#define	REG_EBRACK	 7
-#define	REG_EPAREN	 8
-#define	REG_EBRACE	 9
-#define	REG_BADBR	10
-#define	REG_ERANGE	11
-#define	REG_ESPACE	12
-#define	REG_BADRPT	13
-#define	REG_EMPTY	14
-#define	REG_ASSERT	15
-#define	REG_INVARG	16
-#define	REG_ATOI	255	/* convert name to number (!) */
-#define	REG_ITOA	0400	/* convert number to name (!) */
+#define	MS_REG_OKAY	 0
+#define	MS_REG_NOMATCH	 1
+#define	MS_REG_BADPAT	 2
+#define	MS_REG_ECOLLATE	 3
+#define	MS_REG_ECTYPE	 4
+#define	MS_REG_EESCAPE	 5
+#define	MS_REG_ESUBREG	 6
+#define	MS_REG_EBRACK	 7
+#define	MS_REG_EPAREN	 8
+#define	MS_REG_EBRACE	 9
+#define	MS_REG_BADBR	10
+#define	MS_REG_ERANGE	11
+#define	MS_REG_ESPACE	12
+#define	MS_REG_BADRPT	13
+#define	MS_REG_EMPTY	14
+#define	MS_REG_ASSERT	15
+#define	MS_REG_INVARG	16
+#define	MS_REG_ATOI	255	/* convert name to number (!) */
+#define	MS_REG_ITOA	0400	/* convert number to name (!) */
 
 
 /* === regexec.c === */
-#define	REG_NOTBOL	00001
-#define	REG_NOTEOL	00002
-#define	REG_STARTEND	00004
-#define	REG_TRACE	00400	/* tracing of execution */
-#define	REG_LARGE	01000	/* force large representation */
-#define	REG_BACKR	02000	/* force use of backref code */
+#define	MS_REG_NOTBOL	00001
+#define	MS_REG_NOTEOL	00002
+#define	MS_REG_STARTEND	00004
+#define	MS_REG_TRACE	00400	/* tracing of execution */
+#define	MS_REG_LARGE	01000	/* force large representation */
+#define	MS_REG_BACKR	02000	/* force use of backref code */
 
 #endif
 

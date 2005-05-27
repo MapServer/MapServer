@@ -138,17 +138,17 @@ logical_exp:
        | NOT logical_exp	       { $$ = !$2; }
        | NOT math_exp	       	       { $$ = !$2; }
        | string_exp RE regular_exp     {
-                                         regex_t re;
+                                         ms_regex_t re;
 
-                                         if(regcomp(&re, $3, REG_EXTENDED|REG_NOSUB) != 0) 
+                                         if(ms_regcomp(&re, $3, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) 
                                            $$ = MS_FALSE;
 
-                                         if(regexec(&re, $1, 0, NULL, 0) == 0)
+                                         if(ms_regexec(&re, $1, 0, NULL, 0) == 0)
                                   	   $$ = MS_TRUE;
 			                 else
 			                   $$ = MS_FALSE;
 
-                                         regfree(&re);
+                                         ms_regfree(&re);
                                        }
        | math_exp EQ math_exp          {
 	                                 if($1 == $3)

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
  * Revision 1.48  2005/05/25 21:02:06  dan
  * Added a regex wrapper, allowing MapServer to build with PHP compiled
  * with its builtin regex (bug 1354)
@@ -86,9 +89,6 @@
 #define _PHP_MAPSCRIPT_H_INCLUDED_
 
 #ifdef USE_PHP_REGEX
-
-#define BUILDING_REGEX_PROXY 1
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -102,12 +102,11 @@
 #include <unistd.h>
 #endif
 
-#include "regex/regex.h"
-#include "regex/regex_extra.h"
-
+#include "map.h"
+#include "mapregex.h"
 #endif /* USE_PHP_REGEX */
 
-//#include "map.h"
+
 #include "maptemplate.h"
 #include "mapogcsld.h"
 

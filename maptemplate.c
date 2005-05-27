@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.111  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
  * Revision 1.110  2005/05/25 14:29:46  dan
  * Bug 1364: HTML legend templates: support [if] tests on "group_name" in
  * leg_group_html blocks, and for "class_name" in leg_class_html blocks.
@@ -1697,22 +1700,22 @@ char *generateLegendTemplate(mapservObj *msObj)
    hashTableObj *layerArgs = NULL;
    hashTableObj *classArgs = NULL;     
 
-   regex_t re; /* compiled regular expression to be matched */ 
+   ms_regex_t re; /* compiled regular expression to be matched */ 
 
    int  *panCurrentDrawingOrder = NULL;
    char szPath[MS_MAXPATHLEN];
 
-   if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
+   if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
       msSetError(MS_IOERR, "Error regcomp.", "generateLegendTemplate()");      
       return NULL;
    }
 
-   if(regexec(&re, msObj->Map->legend.template, 0, NULL, 0) != 0) { /* no match */
+   if(ms_regexec(&re, msObj->Map->legend.template, 0, NULL, 0) != 0) { /* no match */
       msSetError(MS_IOERR, "Invalid template file name.", "generateLegendTemplate()");      
-     regfree(&re);
+     ms_regfree(&re);
      return NULL;
    }
-   regfree(&re);
+   ms_regfree(&re);
 
 /* -------------------------------------------------------------------- */
 /*      Save the current drawing order. The drawing order is reset      */
@@ -2741,20 +2744,20 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
   int   nCurrentSize = 0;
   int   nExpandBuffer = 0;
 
-  regex_t re; /* compiled regular expression to be matched */ 
+  ms_regex_t re; /* compiled regular expression to be matched */ 
   char szPath[MS_MAXPATHLEN];
 
-  if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
+  if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
     msSetError(MS_REGEXERR, NULL, "msReturnPage()");
     return MS_FAILURE;
   }
 
-  if(regexec(&re, html, 0, NULL, 0) != 0) { /* no match */
-    regfree(&re);
+  if(ms_regexec(&re, html, 0, NULL, 0) != 0) { /* no match */
+    ms_regfree(&re);
     msSetError(MS_WEBERR, "Malformed template name.", "msReturnPage()");
     return MS_FAILURE;
   }
-  regfree(&re);
+  ms_regfree(&re);
 
   if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, html), "r")) == NULL) {
     msSetError(MS_IOERR, html, "msReturnPage()");

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.412  2005/05/27 15:00:12  dan
+ * New regex wrappers to solve issues with previous version (bug 1354)
+ *
  * Revision 1.411  2005/05/25 21:02:05  dan
  * Added a regex wrapper, allowing MapServer to build with PHP compiled
  * with its builtin regex (bug 1354)
@@ -268,11 +271,7 @@ static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid );
 /* The regex lib from the system and the regex lib from PHP needs to
  * be separated here. We separate here via its directory location.
  */
-#ifdef USE_PHP_REGEX
 #include "mapregex.h"
-#else
-#include <regex.h>
-#endif
 
 #ifdef USE_MING
 #include "ming.h"
@@ -533,7 +532,7 @@ extern "C" {
         int numitems;
 
         /* regular expression options */
-        regex_t regex; /* compiled regular expression to be matched */
+        ms_regex_t regex; /* compiled regular expression to be matched */
         int compiled;
     } expressionObj;
 #endif
