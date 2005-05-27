@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2005/05/27 17:49:14  sdlime
+ * Changed dimension to srsDimension for posList in GML3 writer.
+ *
  * Revision 1.60  2005/05/26 21:19:05  sdlime
  * Fixed problem with GML outout when gml_geometry_name is not set.
  *
@@ -411,7 +414,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
       else
         msIO_fprintf(stream, "%s<gml:LineString>\n", tab);
 
-      msIO_fprintf(stream, "%s\t<gml:posList dimension=\"2\">", tab);
+      msIO_fprintf(stream, "%s\t<gml:posList srsDimension=\"2\">", tab);
       for(i=0; i<shape->line[0].numpoints; i++)  /* was numpoints-1? */
         msIO_fprintf(stream, "%f %f ", shape->line[0].point[i].x, shape->line[0].point[i].y);
       msIO_fprintf(stream, "</gml:posList>\n");
@@ -427,7 +430,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
       for(j=0; j<shape->numlines; j++) {
         msIO_fprintf(stream, "%s\t\t<gml:LineString>\n", tab); /* no srsname at this point */
 
-        msIO_fprintf(stream, "%s\t\t\t<gml:posList dimension=\"2\">", tab);
+        msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
         for(i=0; i<shape->line[j].numpoints; i++)
 	  msIO_fprintf(stream, "%f %f ", shape->line[j].point[i].x, shape->line[j].point[i].y);
         msIO_fprintf(stream, "</gml:posList>\n");
@@ -448,7 +451,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "%s\t<gml:exterior>\n", tab);
       msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-      msIO_fprintf(stream, "%s\t\t\t<gml:posList dimension=\"2\">", tab);
+      msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
       for(j=0; j<shape->line[0].numpoints; j++)
 	msIO_fprintf(stream, "%f %f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
       msIO_fprintf(stream, "</gml:posList>\n");
@@ -478,7 +481,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
         msIO_fprintf(stream, "%s\t<gml:exterior>\n", tab);
         msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-        msIO_fprintf(stream, "%s\t\t\t<gml:posList dimension=\"2\">", tab);
+        msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
         for(j=0; j<shape->line[i].numpoints; j++)
 	  msIO_fprintf(stream, "%f %f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
         msIO_fprintf(stream, "</gml:posList>\n");
@@ -491,7 +494,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
 	    msIO_fprintf(stream, "%s\t<gml:interior>\n", tab);
             msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-            msIO_fprintf(stream, "%s\t\t\t<gml:posList dimension=\"2\">", tab);
+            msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
             for(j=0; j<shape->line[k].numpoints; j++)
 	      msIO_fprintf(stream, "%f %f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
             msIO_fprintf(stream, "</gml:posList>\n");
@@ -519,7 +522,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
             msIO_fprintf(stream, "%s\t\t\t<gml:exterior>\n", tab);
             msIO_fprintf(stream, "%s\t\t\t\t<gml:LinearRing>\n", tab);
 
-            msIO_fprintf(stream, "%s\t\t\t\t\t<gml:posList dimension=\"2\">", tab);
+            msIO_fprintf(stream, "%s\t\t\t\t\t<gml:posList srsDimension=\"2\">", tab);
             for(j=0; j<shape->line[i].numpoints; j++)
 	      msIO_fprintf(stream, "%f %f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
             msIO_fprintf(stream, "</gml:posList>\n");
@@ -532,7 +535,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
 	        msIO_fprintf(stream, "%s\t\t\t<gml:interior>\n", tab);
                 msIO_fprintf(stream, "%s\t\t\t\t<gml:LinearRing>\n", tab);
 
-                msIO_fprintf(stream, "%s\t\t\t\t\t<gml:posList dimension=\"2\">", tab);
+                msIO_fprintf(stream, "%s\t\t\t\t\t<gml:posList srsDimension=\"2\">", tab);
                 for(j=0; j<shape->line[k].numpoints; j++)
 	          msIO_fprintf(stream, "%f %f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
                 msIO_fprintf(stream, "</gml:posList>\n");
