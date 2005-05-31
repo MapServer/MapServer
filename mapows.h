@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.56  2005/05/31 05:49:31  sdlime
+ * Added geometry metadata processing functions to mapgml.c.
+ *
  * Revision 1.55  2005/05/31 05:21:17  sdlime
  * Added couple structures for managing GML/WFS geometry types.
  *
@@ -335,6 +338,8 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
  *====================================================================*/
 #define OWS_GML2 0 /* Supported GML formats */
 #define OWS_GML3 1
+
+#define OWS_GML_OCCUR_UNBOUNDED -1
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 typedef struct {

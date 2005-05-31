@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2005/05/31 05:49:31  sdlime
+ * Added geometry metadata processing functions to mapgml.c.
+ *
  * Revision 1.61  2005/05/27 17:49:14  sdlime
  * Changed dimension to srsDimension for posList in GML3 writer.
  *
@@ -619,6 +622,79 @@ int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList)
   }
 
   return MS_FALSE;
+}
+
+gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
+{
+  int i;
+
+  const char *value=NULL;
+  char tag[64];
+
+  char **names=NULL;
+  int numnames=0;
+
+  gmlGeometryListObj *geometryList=NULL;
+  gmlGeometryObj *geometry=NULL;
+
+  /* allocate memory and iinitialize the item collection */
+  geometryList = (gmlGeometryListObj *) malloc(sizeof(gmlGeometryListObj));
+  geometryList->geometries = NULL;
+  geometryList->numgeometries = 0;
+
+  if((value = msLookupHashTable(&(layer->metadata), "gml_geometries")) != NULL) {
+    names = split(value, ',', &numnames);
+
+    /* allocation an array of gmlGeometryObj's */
+    geometryList->numgeometries = numnames;
+    geometryList->geometries = (gmlGeometryObj *) malloc(sizeof(gmlGeometryObj)*geometryList->numgeometries);
+
+    for(i=0; i<geometryList->numgeometries; i++) {
+      geometry = &(geometryList->geometries[i]);
+
+      geometry->name = strdup(names[i]); /* initialize a few things */
+      geometry->type = NULL;
+      geometry->occurmin = 0;
+      geometry->occurmax = 1;      
+
+      snprintf(tag, 64, "gml_%s_type", names[i]);
+      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL)
+	geometry->type = strdup(value); /* TODO: validate input value */
+
+      snprintf(tag, 64, "gml_%s_occurances", names[i]);
+      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) {
+	char **occur;
+	int numoccur;
+
+        occur = split(value, ',', &numoccur);
+	if(numoccur == 2) { /* continue (TODO: throw an error if != 2) */
+	  geometry->occurmin = atof(occur[0]);
+	  if(strcasecmp(occur[1], "UNBOUNDED") == 0)
+	    geometry->occurmax = OWS_GML_OCCUR_UNBOUNDED;
+	  else
+	    geometry->occurmax = atof(occur[1]);
+	}
+      }
+    }
+
+    msFreeCharArray(names, numnames);
+  }
+
+  return geometryList;
+}
+
+void msGMLFreeGeometries(gmlGeometryListObj *geometryList)
+{
+  int i;
+
+  if(!geometryList) return;
+
+  for(i=0; i<geometryList->numgeometries; i++) {
+    msFree(geometryList->geometries[i].name);
+    msFree(geometryList->geometries[i].type);
+  }
+
+  free(geometryList);
 }
 
 gmlItemListObj *msGMLGetItems(layerObj *layer) 
