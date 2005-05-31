@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.57  2005/05/31 18:24:49  sdlime
+ * Updated GML3 writer to use the new gmlGeometryListObj. This allows you to package geometries from WFS in a pretty flexible manner. Will port GML2 writer once testing on GML3 code is complete.
+ *
  * Revision 1.56  2005/05/31 05:49:31  sdlime
  * Added geometry metadata processing functions to mapgml.c.
  *
@@ -339,6 +342,7 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 #define OWS_GML2 0 /* Supported GML formats */
 #define OWS_GML3 1
 
+#define OWS_GML_DEFAULT_GEOMETRY_NAME "msGeometry"
 #define OWS_GML_OCCUR_UNBOUNDED -1
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)

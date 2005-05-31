@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/05/31 18:24:49  sdlime
+ * Updated GML3 writer to use the new gmlGeometryListObj. This allows you to package geometries from WFS in a pretty flexible manner. Will port GML2 writer once testing on GML3 code is complete.
+ *
  * Revision 1.62  2005/05/31 05:49:31  sdlime
  * Added geometry metadata processing functions to mapgml.c.
  *
@@ -105,6 +108,8 @@ MS_CVSID("$Id$")
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
+static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, char *type);
+
 /*
 ** Functions that write the feature boundary geometry (i.e. a rectObj).
 */
@@ -160,6 +165,30 @@ static int gmlWriteBounds_GML3(FILE *stream, rectObj *rect, const char *srsname,
 
   return MS_SUCCESS;
 }
+
+static void gmlStartGeometryContainer(FILE *stream, char *name, char *namespace, const char *tab)
+{
+  const char *tag_name=OWS_GML_DEFAULT_GEOMETRY_NAME;
+
+  if(name) tag_name = name;
+
+  if(namespace)
+    msIO_fprintf(stream, "%s<%s:%s>\n", tab, namespace, tag_name);
+  else
+    msIO_fprintf(stream, "%s<%s>\n", tab, tag_name);
+}  
+
+static void gmlEndGeometryContainer(FILE *stream, char *name, char *namespace, const char *tab)
+{
+  const char *tag_name=OWS_GML_DEFAULT_GEOMETRY_NAME;
+
+  if(name) tag_name = name;
+
+  if(namespace)
+    msIO_fprintf(stream, "%s</%s:%s>\n", tab, namespace, tag_name);
+  else
+    msIO_fprintf(stream, "%s</%s>\n", tab, tag_name);
+} 
 
 /* GML 2.1.2 */
 static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsname, char *tab) 
@@ -364,11 +393,14 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
 }
 
 /* GML 3.1 (MapServer limits GML encoding to the level 0 profile) */
-static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsname, char *tab) 
+static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList, shapeObj *shape, const char *srsname, char *namespace, char *tab) 
 {
   int i, j, k;
   int *innerlist, *outerlist, numouters;
   char *srsname_encoded = NULL;
+
+  int geometry_aggregate_index;
+  int geometry_simple_index;
 
   if(!stream) return(MS_FAILURE);
   if(!shape) return(MS_FAILURE);
@@ -379,185 +411,223 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
   if(srsname)
     srsname_encoded = msEncodeHTMLEntities(srsname);
 
-  /* TODO: What about ID's? */
-
   /* feature geometry */
   switch(shape->type) {
   case(MS_SHAPE_POINT):
-    if(shape->line[0].numpoints == 1) { /* write a Point */
-      if(srsname_encoded)
-        msIO_fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
-      else
-        msIO_fprintf(stream, "%s<gml:Point>\n", tab);
+    geometry_simple_index = msGMLGeometryLookup(geometryList, "point");
+    geometry_aggregate_index = msGMLGeometryLookup(geometryList, "multipoint");
 
-      msIO_fprintf(stream, "%s\t<gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[0].x, shape->line[0].point[0].y);
-
-      msIO_fprintf(stream, "%s</gml:Point>\n", tab);
-    } else { /* write a MultiPoint */
-      if(srsname_encoded)
-        msIO_fprintf(stream, "%s<gml:MultiPoint srsName=\"%s\">\n", tab, srsname_encoded);
-      else
-        msIO_fprintf(stream, "%s<gml:MultiPoint>\n", tab);
-
-      msIO_fprintf(stream, "%s\t<gml:pointMembers>\n", tab);
+    if((geometry_simple_index != -1 && shape->line[0].numpoints == 1) ||
+       (geometry_simple_index != -1 && geometry_aggregate_index == -1)) { /* write a Point(s) */
       for(i=0; i<shape->line[0].numpoints; i++) {
-        msIO_fprintf(stream, "%s\t\t<gml:Point>\n", tab);
-        msIO_fprintf(stream, "%s\t\t\t<gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);
-        msIO_fprintf(stream, "%s\t\t</gml:Point>\n", tab);
-      }
-      msIO_fprintf(stream, "%s\t</gml:pointMembers>\n", tab);
+	gmlStartGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	
+	/* Point */
+	if(srsname_encoded)
+	  msIO_fprintf(stream, "%s  <gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
+	else
+	  msIO_fprintf(stream, "%s  <gml:Point>\n", tab);
+	msIO_fprintf(stream, "%s    <gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);	
+	msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
 
-      msIO_fprintf(stream, "%s</gml:MultiPoint>\n", tab);
+	gmlEndGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+      }
+    } else if(geometry_aggregate_index != -1) { /* write a MultiPoint */
+      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+      
+      /* MultiPoint */
+      if(srsname_encoded)
+        msIO_fprintf(stream, "%s  <gml:MultiPoint srsName=\"%s\">\n", tab, srsname_encoded);
+      else
+        msIO_fprintf(stream, "%s  <gml:MultiPoint>\n", tab);
+
+      msIO_fprintf(stream, "%s    <gml:pointMembers>\n", tab);
+      for(i=0; i<shape->line[0].numpoints; i++) {
+        msIO_fprintf(stream, "%s      <gml:Point>\n", tab);
+        msIO_fprintf(stream, "%s        <gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);
+        msIO_fprintf(stream, "%s      </gml:Point>\n", tab);
+      }
+      msIO_fprintf(stream, "%s    </gml:pointMembers>\n", tab);
+
+      msIO_fprintf(stream, "%s  </gml:MultiPoint>\n", tab);
+
+      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+    } else {
+      msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no point/multipoint geometry defined. -->\n");
     }
+ 
     break;
-  case(MS_SHAPE_LINE):
-    if(shape->numlines == 1) { /* write a LineString */
-      if(srsname_encoded)
-        msIO_fprintf(stream, "%s<gml:LineString srsName=\"%s\">\n", tab, srsname_encoded);
-      else
-        msIO_fprintf(stream, "%s<gml:LineString>\n", tab);
+  case(MS_SHAPE_LINE):    
+    geometry_simple_index = msGMLGeometryLookup(geometryList, "line");
+    geometry_aggregate_index = msGMLGeometryLookup(geometryList, "multiline");
 
-      msIO_fprintf(stream, "%s\t<gml:posList srsDimension=\"2\">", tab);
-      for(i=0; i<shape->line[0].numpoints; i++)  /* was numpoints-1? */
-        msIO_fprintf(stream, "%f %f ", shape->line[0].point[i].x, shape->line[0].point[i].y);
-      msIO_fprintf(stream, "</gml:posList>\n");
+    if((geometry_simple_index != -1 && shape->numlines == 1) ||
+       (geometry_simple_index != -1 && geometry_aggregate_index == -1)) { /* write a LineStrings(s) */
+      for(i=0; i<shape->numlines; i++) {
+	gmlStartGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	
+	/* LineString (should be Curve?) */
+	if(srsname_encoded)
+	  msIO_fprintf(stream, "%s  <gml:LineString srsName=\"%s\">\n", tab, srsname_encoded);
+	else
+	  msIO_fprintf(stream, "%s  <gml:LineString>\n", tab);
 
-      msIO_fprintf(stream, "%s</gml:LineString>\n", tab);
-    } else { /* write a MultiCurve (MultiLineString is depricated in GML3) */
-      if(srsname_encoded)
-        msIO_fprintf(stream, "%s<gml:MultiCurve srsName=\"%s\">\n", tab, srsname_encoded);
-      else
-        msIO_fprintf(stream, "%s<gml:MultiCurve>\n", tab);
+	msIO_fprintf(stream, "%s    <gml:posList srsDimension=\"2\">", tab);
+	for(j=0; j<shape->line[i].numpoints; j++)
+	  msIO_fprintf(stream, "%f %f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
+	msIO_fprintf(stream, "</gml:posList>\n");
 
-      msIO_fprintf(stream, "%s\t<gml:curveMembers>\n", tab);
-      for(j=0; j<shape->numlines; j++) {
-        msIO_fprintf(stream, "%s\t\t<gml:LineString>\n", tab); /* no srsname at this point */
+	msIO_fprintf(stream, "%s  </gml:LineString>\n", tab);	
 
-        msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
-        for(i=0; i<shape->line[j].numpoints; i++)
-	  msIO_fprintf(stream, "%f %f ", shape->line[j].point[i].x, shape->line[j].point[i].y);
-        msIO_fprintf(stream, "</gml:posList>\n");
-        msIO_fprintf(stream, "%s\t\t</gml:LineString>\n", tab);
+	gmlEndGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);	
       }
-      msIO_fprintf(stream, "%s\t</gml:curveMembers>\n", tab);
+    } else if(geometry_aggregate_index != -1) { /* write a MultiCurce */
+      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+
+      /* MultiCurve */
+      if(srsname_encoded)
+        msIO_fprintf(stream, "%s  <gml:MultiCurve srsName=\"%s\">\n", tab, srsname_encoded);
+      else 
+        msIO_fprintf(stream, "%s  <gml:MultiCurve>\n", tab);
+
+      msIO_fprintf(stream, "%s    <gml:curveMembers>\n", tab);
+      for(i=0; i<shape->numlines; i++) {
+        msIO_fprintf(stream, "%s      <gml:LineString>\n", tab); /* no srsname at this point */
+
+        msIO_fprintf(stream, "%s        <gml:posList srsDimension=\"2\">", tab);
+        for(j=0; j<shape->line[i].numpoints; j++)
+	  msIO_fprintf(stream, "%f %f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
+        msIO_fprintf(stream, "</gml:posList>\n");
+        msIO_fprintf(stream, "%s      </gml:LineString>\n", tab);
+      }
+      msIO_fprintf(stream, "%s    </gml:curveMembers>\n", tab);
   
-      msIO_fprintf(stream, "%s</gml:MultiCurve>\n", tab);
+      msIO_fprintf(stream, "%s  </gml:MultiCurve>\n", tab);
+
+      gmlEndGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);      
+    } else {
+      msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no line/multiline geometry defined. -->\n");
     }
+
     break;
   case(MS_SHAPE_POLYGON): /* this gets nasty, since our shapes are so flexible */
-    if(shape->numlines == 1) { /* write a basic polygon (no interior rings) */
-      if(srsname_encoded)
-        msIO_fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, srsname_encoded);
-      else
-        msIO_fprintf(stream, "%s<gml:Polygon>\n", tab);
+    geometry_simple_index = msGMLGeometryLookup(geometryList, "polygon");
+    geometry_aggregate_index = msGMLGeometryLookup(geometryList, "multipolygon");
 
-      msIO_fprintf(stream, "%s\t<gml:exterior>\n", tab);
-      msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
+    /* get a list of outter rings for this polygon */
+    outerlist = msGetOuterList(shape);
 
-      msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
-      for(j=0; j<shape->line[0].numpoints; j++)
-	msIO_fprintf(stream, "%f %f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
-      msIO_fprintf(stream, "</gml:posList>\n");
+    numouters = 0;
+    for(i=0; i<shape->numlines; i++)
+      if(outerlist[i] == MS_TRUE) numouters++;
 
-      msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
-      msIO_fprintf(stream, "%s\t</gml:exterior>\n", tab);
+    if((geometry_simple_index != -1 && numouters == 1) ||
+       (geometry_simple_index != -1 && geometry_aggregate_index == -1)) { /* write a Polygon(s) */
+      for(i=0; i<shape->numlines; i++) {
+	if(outerlist[i] == MS_FALSE) break; /* skip non-outer rings, each outer ring is a new polygon */
 
-      msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
-    } else { /* need to test for inner and outer rings */
-      outerlist = msGetOuterList(shape);
-
-      numouters = 0;
-      for(i=0; i<shape->numlines; i++)
-        if(outerlist[i] == MS_TRUE) numouters++;
-
-      if(numouters == 1) { /* write a Polygon (with interior rings) */
-	for(i=0; i<shape->numlines; i++) /* find the outer ring */
-          if(outerlist[i] == MS_TRUE) break;
-
+	/* get a list of inner rings for this polygon */
 	innerlist = msGetInnerList(shape, i, outerlist);
 
+	gmlStartGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	
+	/* Polygon (should be Surface?) */			
 	if(srsname_encoded)
-          msIO_fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, srsname_encoded);
+          msIO_fprintf(stream, "%s  <gml:Polygon srsName=\"%s\">\n", tab, srsname_encoded);
         else
-          msIO_fprintf(stream, "%s<gml:Polygon>\n", tab);
+          msIO_fprintf(stream, "%s  <gml:Polygon>\n", tab);
 
-        msIO_fprintf(stream, "%s\t<gml:exterior>\n", tab);
-        msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
+        msIO_fprintf(stream, "%s    <gml:exterior>\n", tab);
+        msIO_fprintf(stream, "%s      <gml:LinearRing>\n", tab);
 
-        msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
+        msIO_fprintf(stream, "%s        <gml:posList srsDimension=\"2\">", tab);
         for(j=0; j<shape->line[i].numpoints; j++)
 	  msIO_fprintf(stream, "%f %f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
         msIO_fprintf(stream, "</gml:posList>\n");
 
-        msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
-        msIO_fprintf(stream, "%s\t</gml:exterior>\n", tab);
+        msIO_fprintf(stream, "%s      </gml:LinearRing>\n", tab);
+        msIO_fprintf(stream, "%s    </gml:exterior>\n", tab);
 
 	for(k=0; k<shape->numlines; k++) { /* now step through all the inner rings */
 	  if(innerlist[k] == MS_TRUE) {
-	    msIO_fprintf(stream, "%s\t<gml:interior>\n", tab);
-            msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
+	    msIO_fprintf(stream, "%s    <gml:interior>\n", tab);
+            msIO_fprintf(stream, "%s      <gml:LinearRing>\n", tab);
 
-            msIO_fprintf(stream, "%s\t\t\t<gml:posList srsDimension=\"2\">", tab);
+            msIO_fprintf(stream, "%s        <gml:posList srsDimension=\"2\">", tab);
             for(j=0; j<shape->line[k].numpoints; j++)
 	      msIO_fprintf(stream, "%f %f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
             msIO_fprintf(stream, "</gml:posList>\n");
 
-            msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
-            msIO_fprintf(stream, "%s\t</gml:interior>\n", tab);
+            msIO_fprintf(stream, "%s      </gml:LinearRing>\n", tab);
+            msIO_fprintf(stream, "%s    </gml:interior>\n", tab);
           }
         }
 
-        msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
+        msIO_fprintf(stream, "%s  </gml:Polygon>\n", tab);
 	free(innerlist);
-      } else {  /* write a MultiSurface (MultiPolygon is depricated in GML3) */
-	if(srsname_encoded)
-          msIO_fprintf(stream, "%s<gml:MultiSurface srsName=\"%s\">\n", tab, srsname_encoded);
-        else
-          msIO_fprintf(stream, "%s<gml:MultiSurface>\n", tab);
 
-        msIO_fprintf(stream, "%s\t<gml:surfaceMembers>\n", tab);
-	for(i=0; i<shape->numlines; i++) { /* step through the outer rings */
-          if(outerlist[i] == MS_TRUE) {
-  	    innerlist = msGetInnerList(shape, i, outerlist);            
-
-            msIO_fprintf(stream, "%s\t\t<gml:Polygon>\n", tab);
-
-            msIO_fprintf(stream, "%s\t\t\t<gml:exterior>\n", tab);
-            msIO_fprintf(stream, "%s\t\t\t\t<gml:LinearRing>\n", tab);
-
-            msIO_fprintf(stream, "%s\t\t\t\t\t<gml:posList srsDimension=\"2\">", tab);
-            for(j=0; j<shape->line[i].numpoints; j++)
-	      msIO_fprintf(stream, "%f %f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
-            msIO_fprintf(stream, "</gml:posList>\n");
-
-            msIO_fprintf(stream, "%s\t\t\t\t</gml:LinearRing>\n", tab);
-            msIO_fprintf(stream, "%s\t\t\t</gml:exterior>\n", tab);
-
-	    for(k=0; k<shape->numlines; k++) { /* now step through all the inner rings */
-	      if(innerlist[k] == MS_TRUE) {
-	        msIO_fprintf(stream, "%s\t\t\t<gml:interior>\n", tab);
-                msIO_fprintf(stream, "%s\t\t\t\t<gml:LinearRing>\n", tab);
-
-                msIO_fprintf(stream, "%s\t\t\t\t\t<gml:posList srsDimension=\"2\">", tab);
-                for(j=0; j<shape->line[k].numpoints; j++)
-	          msIO_fprintf(stream, "%f %f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
-                msIO_fprintf(stream, "</gml:posList>\n");
-
-                msIO_fprintf(stream, "%s\t\t\t\t</gml:LinearRing>\n", tab);
-                msIO_fprintf(stream, "%s\t\t\t</gml:interior>\n", tab);
-              }
-            }
-
-            msIO_fprintf(stream, "%s\t\t</gml:Polygon>\n", tab);           
-	
-	    free(innerlist);
-          }
-        }
-	msIO_fprintf(stream, "%s\t</gml:surfaceMembers>\n", tab);
-        msIO_fprintf(stream, "%s</gml:MultiSurface>\n", tab);
-      }
+	gmlEndGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+      }      
       free(outerlist);
+    } else if(geometry_aggregate_index != -1) { /* write a MultiSurface */
+      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+
+      /* MultiSurface */
+      if(srsname_encoded)
+	msIO_fprintf(stream, "%s  <gml:MultiSurface srsName=\"%s\">\n", tab, srsname_encoded);
+      else
+	msIO_fprintf(stream, "%s  <gml:MultiSurface>\n", tab);
+
+      msIO_fprintf(stream, "%s    <gml:surfaceMembers>\n", tab);
+      for(i=0; i<shape->numlines; i++) { /* step through the outer rings */
+	if(outerlist[i] == MS_TRUE) {
+
+	  /* get a list of inner rings for this polygon */
+	  innerlist = msGetInnerList(shape, i, outerlist);            
+	  
+	  msIO_fprintf(stream, "%s      <gml:Polygon>\n", tab);
+	  
+	  msIO_fprintf(stream, "%s        <gml:exterior>\n", tab);
+	  msIO_fprintf(stream, "%s          <gml:LinearRing>\n", tab);
+	  
+	  msIO_fprintf(stream, "%s            <gml:posList srsDimension=\"2\">", tab);
+	  for(j=0; j<shape->line[i].numpoints; j++)
+	    msIO_fprintf(stream, "%f %f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
+	  msIO_fprintf(stream, "</gml:posList>\n");
+	  
+	  msIO_fprintf(stream, "%s          </gml:LinearRing>\n", tab);
+	  msIO_fprintf(stream, "%s        </gml:exterior>\n", tab);
+	  
+	  for(k=0; k<shape->numlines; k++) { /* now step through all the inner rings */
+	    if(innerlist[k] == MS_TRUE) {
+	      msIO_fprintf(stream, "%s        <gml:interior>\n", tab);
+	      msIO_fprintf(stream, "%s          <gml:LinearRing>\n", tab);
+	      
+	      msIO_fprintf(stream, "%s            <gml:posList srsDimension=\"2\">", tab);
+	      for(j=0; j<shape->line[k].numpoints; j++)
+		msIO_fprintf(stream, "%f %f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
+	      msIO_fprintf(stream, "</gml:posList>\n");
+	      
+	      msIO_fprintf(stream, "%s          </gml:LinearRing>\n", tab);
+	      msIO_fprintf(stream, "%s        </gml:interior>\n", tab);
+	    }
+	  }
+	  
+	  msIO_fprintf(stream, "%s      </gml:Polygon>\n", tab);           
+	  
+	  free(innerlist);
+	}	
+      }
+      msIO_fprintf(stream, "%s    </gml:surfaceMembers>\n", tab);
+      msIO_fprintf(stream, "%s  </gml:MultiSurface>\n", tab);
+
+      free(outerlist);
+
+      gmlEndGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);      
+    } else {
+      msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no polygon/multipolygon geometry defined. -->\n");
     }
+
     break;
   default:
     break;
@@ -588,14 +658,14 @@ static int gmlWriteBounds(FILE *stream, int format, rectObj *rect, const char *s
  return(MS_FAILURE);
 }
 
-static int gmlWriteGeometry(FILE *stream, int format, shapeObj *shape, const char *srsname, char *tab)
+static int gmlWriteGeometry(FILE *stream, gmlGeometryListObj *geometryList, int format, shapeObj *shape, const char *srsname, char *namespace, char *tab)
 {
   switch(format) {
   case(OWS_GML2):
     return gmlWriteGeometry_GML2(stream, shape, srsname, tab);
     break;
   case(OWS_GML3):
-    return gmlWriteGeometry_GML3(stream, shape, srsname, tab);
+    return gmlWriteGeometry_GML3(stream, geometryList, shape, srsname, namespace, tab);
     break;
   default:
     msSetError(MS_IOERR, "Unsupported GML format.", "gmlWriteGeometry()");
@@ -622,6 +692,19 @@ int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList)
   }
 
   return MS_FALSE;
+}
+
+static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, char *type)
+{
+  int i;
+
+  if(!geometryList || !type) return -1; /* nothing to look for */
+
+  for(i=0; i<geometryList->numgeometries; i++)    
+    if(geometryList->geometries[i].type && (strcasecmp(geometryList->geometries[i].type, type) == 0))
+      return i;
+
+  return -1; /* not found */
 }
 
 gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
@@ -951,6 +1034,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
+  gmlGeometryListObj *geometryList=NULL;
   gmlItemObj *item=NULL;
 
   msInitShape(&shape);
@@ -1002,6 +1086,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       /* populate item and group metadata structures */
       itemList = msGMLGetItems(lp);
       groupList = msGMLGetGroups(lp);
+      geometryList = msGMLGetGeometries(lp);
 
       for(j=0; j<lp->resultcache->numresults; j++) {
 	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -1033,11 +1118,11 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 	/* write the feature geometry */
 #ifdef USE_PROJ
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) /* use the map projection first */
-	  gmlWriteGeometry(stream,  OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
+	  gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
         else /* then use the layer projection and/or metadata */
-	  gmlWriteGeometry(stream,  OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), "\t\t\t");      
+	  gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
 #else
-	gmlWriteGeometry(stream,  OWS_GML2, &(shape), NULL, "\t\t\t");
+	gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), NULL, NULL, "\t\t\t");
 #endif
 
 	/* write the item/values */
@@ -1070,6 +1155,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
       msGMLFreeGroups(groupList);
       msGMLFreeItems(itemList);
+      msGMLFreeGeometries(geometryList);
 
       msLayerClose(lp);
     }
@@ -1106,6 +1192,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
   
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
+  gmlGeometryListObj *geometryList=NULL;
   gmlItemObj *item=NULL;
 
   msInitShape(&shape);
@@ -1139,6 +1226,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       /* populate item and group metadata structures */
       itemList = msGMLGetItems(lp);
       groupList = msGMLGetGroups(lp);
+      geometryList = msGMLGetGeometries(lp);
 
       for(j=0; j<lp->resultcache->numresults; j++) {
 	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -1157,7 +1245,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
         } else
 	  layer_name = strdup(lp->name);
 
-
 	msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layer_name) == MS_FALSE)
             msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layer_name);
@@ -1174,26 +1261,16 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 #else
 	  gmlWriteBounds(stream, outputformat, &(shape.bounds), NULL, "        "); /* no projection information */
 #endif
-
-	if(wfs_namespace)  
-          msIO_fprintf(stream, "        <%s:%s>\n", wfs_namespace, geom_name); 
-	else
-	  msIO_fprintf(stream, "        <%s>\n", geom_name); 
                     
 	/* write the feature geometry */
 #ifdef USE_PROJ
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first */
-	  gmlWriteGeometry(stream, outputformat, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "          ");
+	  gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), wfs_namespace, "        ");
         else /* then use the layer projection and/or metadata */
-	  gmlWriteGeometry(stream, outputformat, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "          ");      
+	  gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), wfs_namespace, "        ");
 #else
-	gmlWriteGeometry(stream, outputformat, &(shape), NULL, "          ");
+	gmlWriteGeometry(stream, geometryList, outputformat, &(shape), NULL, wfs_namespace, "        ");
 #endif
-        
-	if(wfs_namespace)  
-          msIO_fprintf(stream, "        </%s:%s>\n", wfs_namespace, geom_name); 
-	else
-	  msIO_fprintf(stream, "        </%s>\n", geom_name); 
 
 	/* write the item/values */
 	for(k=0; k<lp->numitems; k++) {
@@ -1223,6 +1300,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 
       msGMLFreeGroups(groupList);
       msGMLFreeItems(itemList);
+      msGMLFreeGeometries(geometryList);
 
       msLayerClose(lp);
     }

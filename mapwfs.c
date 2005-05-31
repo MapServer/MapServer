@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.64  2005/05/31 18:24:49  sdlime
+ * Updated GML3 writer to use the new gmlGeometryListObj. This allows you to package geometries from WFS in a pretty flexible manner. Will port GML2 writer once testing on GML3 code is complete.
+ *
  * Revision 1.63  2005/05/27 17:24:56  sdlime
  * Changed WFS layer type name from [layer name]_Type to [layer name]Type in keeping with schema convension.
  *
@@ -645,7 +648,10 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
 ** Helper functions for producing XML schema.
 */
 
-static const char *msWFSGetGeometryType(char *type, int outputformat) {
+static const char *msWFSGetGeometryType(char *type, int outputformat) 
+{
+  if(!type) return "???undefined???";
+  
   if(strcasecmp(type, "point") == 0) {
     switch(outputformat) {
     case OWS_GML2:
@@ -691,40 +697,38 @@ static const char *msWFSGetGeometryType(char *type, int outputformat) {
   return "???unkown???";
 }
 
-static void msWFSWriteGeometryElement(FILE *stream, hashTableObj *metadata, int outputformat, const char *tab)
+static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometryList, int outputformat, const char *tab)
 { 
   int i;
-  const char *value = NULL;
-  char **types;
-  int numtypes;
+  gmlGeometryObj *geometry=NULL;
 
-  const char *element_name = "geometry";
-  char *encoded_element_name = NULL;
+  if(!stream || !tab) return;
 
-  if(!stream || !tab || !metadata) return;
-
-  value = msLookupHashTable(metadata, "gml_geometry_name");
-  if(value) element_name = value;
-  encoded_element_name = msEncodeHTMLEntities(element_name);
-
-  value = msLookupHashTable(metadata, "gml_geometry_type");
-  if(!value) { /* write a default */
-    msIO_printf("%s<element name=\"%s\" type=\"gml:GeometryPropertyType\" minOccurs=\"0\" maxOccurs=\"1\"/>\n", tab, element_name); 
+  if(!geometryList || geometryList->numgeometries == 0) { /* write a default container */
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"gml:GeometryPropertyType\" minOccurs=\"0\" maxOccurs=\"1\"/>\n", tab, OWS_GML_DEFAULT_GEOMETRY_NAME);
+    return;
   } else {
-    types = split(value, ',', &numtypes);
-
-    if(numtypes == 1) { /* write the simple case */ 
-      
-      msIO_printf("%s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"0\" maxOccurs=\"1\"/>\n", tab, element_name, msWFSGetGeometryType(types[0], outputformat));
-    } else { /* write a choice of types */
-      msIO_printf("%s<choice>\n", tab);
-      for(i=0; i<numtypes; i++)
-	msIO_printf("%s  <element name=\"%s\" type=\"gml:%s\" minOccurs=\"0\" maxOccurs=\"1\"/>\n", tab, element_name, msWFSGetGeometryType(types[i], outputformat));
-      msIO_printf("%s</choice>\n", tab);
+    if(geometryList->numgeometries == 1) {
+      geometry = &(geometryList->geometries[0]);
+      msIO_fprintf(stream, "%s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
+      if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
+	msIO_fprintf(stream, " maxOccurs=\"UNBOUNDED\"/>\n");
+      else
+	msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);
+    } else {
+      msIO_fprintf(stream, "%s<choice>\n", tab);
+      for(i=0; i<geometryList->numgeometries; i++) {
+	geometry = &(geometryList->geometries[i]);
+	
+	msIO_fprintf(stream, "  %s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
+	if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
+	  msIO_fprintf(stream, " maxOccurs=\"UNBOUNDED\"/>\n");
+	else
+	  msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);	
+      }
+      msIO_fprintf(stream, "%s</choice>\n", tab);
     }
   }
-
-  free(encoded_element_name);
 
   return;
 }
@@ -932,55 +936,35 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       msIO_printf("      <extension base=\"gml:AbstractFeatureType\">\n");
       msIO_printf("        <sequence>\n");
       
- 
-      msWFSWriteGeometryElement(stdout, &(lp->metadata), outputformat, "          ");
-
-      /* 
-	encoded = msEncodeHTMLEntities( msWFSGetGeomElementName(map, lp) );
-	msIO_printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n", encoded);
-	msFree(encoded); 
-      */
-
-      /*
-	msIO_printf("          <element name=\"%s\" \n"
-	"                   type=\"gml:%s\" \n"
-	"                   nillable=\"false\" />\n",
-	msWFSGetGeomElementName(map, lp),
-	msWFSGetGeomType(lp) );
-      */
-
       if (msLayerOpen(lp) == MS_SUCCESS) {
 	if (msLayerGetItems(lp) == MS_SUCCESS) {	  
 	  int k;
 	  gmlGroupListObj *groupList=NULL;
 	  gmlItemListObj *itemList=NULL;
+	  gmlGeometryListObj *geometryList=NULL;
 	  gmlItemObj *item=NULL;
 
 	  itemList = msGMLGetItems(lp); /* GML-related metadata */
 	  groupList = msGMLGetGroups(lp);
+	  geometryList = msGMLGetGeometries(lp);
 
-	  /* name_gml = msOWSLookupMetadata(&(lp->metadata), "FO", "gml_name_item"); */
-	  /* description_gml = msOWSLookupMetadata(&(lp->metadata), "FO", "gml_description_item"); */
+	  /* write the geometry schema element(s) */
+	  msWFSWriteGeometryElement(stdout, geometryList, outputformat, "          ");
+
 	  for(k=0; k<lp->numitems; k++) {
 	    item = &(itemList->items[k]);  
 	    if(msItemInGroups(item, groupList) == MS_FALSE) 
 	      msWFSWriteElement(stdout, item, "          ");
-
-	    /*
-            if (name_gml && strcmp(name_gml,  lp->items[k]) == 0)
-	      continue;
-	    if (description_gml && strcmp(description_gml,  lp->items[k]) == 0)
-	      continue;
-	    encoded = msEncodeHTMLEntities( lp->items[k] );
-	    msIO_printf("          <element name=\"%s\" type=\"string\" />\n", encoded );
-	    msFree(encoded); 
-            */
 	  }
 
 	  for(k=0; k<groupList->numgroups; k++)
 	    msWFSWriteComplexElement(stdout, &(groupList->groups[k]), itemList, "          ");
+
+	  msGMLFreeItems(itemList);
+	  msGMLFreeGroups(groupList);
+	  msGMLFreeGeometries(geometryList);
 	}
-	
+
 	msLayerClose(lp);
       } else {
 	msIO_printf("\n\n<!-- ERROR: Failed openinig layer %s -->\n\n", encoded_name);
@@ -989,8 +973,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       msIO_printf("        </sequence>\n");
       msIO_printf("      </extension>\n");
       msIO_printf("    </complexContent>\n");
-      msIO_printf("  </complexType>\n");
-      
+      msIO_printf("  </complexType>\n");      
     }
   }
   
