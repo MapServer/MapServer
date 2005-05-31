@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.55  2005/05/31 05:21:17  sdlime
+ * Added couple structures for managing GML/WFS geometry types.
+ *
  * Revision 1.54  2005/05/24 18:52:45  julien
  * Bug 1149: From WMS 1.1.1, SRS are given in individual tags.
  *
@@ -337,7 +340,7 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 typedef struct {
   char *name;     /* name of the item */
   char *alias;    /* is the item aliased for presentation? (NULL if not) */
-  char *type;     /* raw type for thes item (NULL for a "string") (TODO: should this be a lookup table instead?) */
+  char *type;     /* raw type for these item (NULL for a "string") (TODO: should this be a lookup table instead?) */
   int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
   int visible;    /* should this item be output, default is MS_FALSE */  
 } gmlItemObj;
@@ -348,9 +351,20 @@ typedef struct {
 } gmlItemListObj;
 
 typedef struct {
-  char *name;          /* name of the group */
-  char **items;        /* list of items in the group */
-  int numitems;        /* number of items */
+  char *name;     /* name of the geometry (type of GML property) */
+  char *type;     /* raw type for these geometries (point|multipoint|line|multiline|polygon|multipolygon */
+  int occurmin, occurmax;   /* number of occurances (default 0,1) */
+} gmlGeometryObj;
+
+typedef struct {
+  gmlGeometryObj *geometries;
+  int numgeometries;
+} gmlGeometryListObj;
+
+typedef struct {
+  char *name;     /* name of the group */
+  char **items;   /* list of items in the group */
+  int numitems;   /* number of items */
 } gmlGroupObj;
 
 typedef struct {
@@ -361,6 +375,8 @@ typedef struct {
 MS_DLL_EXPORT int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList);
 MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer);
 MS_DLL_EXPORT void msGMLFreeItems(gmlItemListObj *itemList);
+MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer);
+MS_DLL_EXPORT void msGMLFreeGeometries(gmlGeometryListObj *geometryList);
 MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer);
 MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
 #endif
