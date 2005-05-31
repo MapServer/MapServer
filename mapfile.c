@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.303  2005/05/31 06:01:03  sdlime
+ * Updated parsing of grid object to recognize DD as a label format.
+ *
  * Revision 1.302  2005/05/27 15:00:12  dan
  * New regex wrappers to solve issues with previous version (bug 1354)
  *
@@ -203,19 +206,14 @@ int getSymbol(int n, ...) {
 ** supports symbols. 
 */
 static char *getToken(void) {
-
-    msyylex();
-
-    return strdup(msyytext);
+  msyylex();  
+  return strdup(msyytext);
 }
-
-
 
 /*
 ** Load a string from the map file. A "string" is defined in lexer.l.
 */
 int getString(char **s) {
-
   if (*s) {
     msSetError(MS_SYMERR, "Duplicate item (%s):(line %d)", "getString()", msyytext, msyylineno);
     return(MS_FAILURE);
@@ -236,7 +234,6 @@ int getString(char **s) {
 ** Load a floating point number from the map file. (see lexer.l)
 */
 int getDouble(double *d) {
-
   if(msyylex() == MS_NUMBER) {
     *d = msyynumber;
     return(0); /* success */
@@ -250,7 +247,6 @@ int getDouble(double *d) {
 ** Load a integer from the map file. (see lexer.l)
 */
 int getInteger(int *i) {
-
   if(msyylex() == MS_NUMBER) {
     *i = (int)msyynumber;
     return(0); /* success */
@@ -707,70 +703,55 @@ static void writeFeature(shapeObj *shape, FILE *stream)
 
 void initGrid( graticuleObj *pGraticule )
 {
-	memset( pGraticule, 0, sizeof( graticuleObj ) );
+  memset( pGraticule, 0, sizeof( graticuleObj ) );
 }
 
 static int loadGrid( layerObj *pLayer )
 {
-	for(;;) 
-	{
-		switch(msyylex()) 
-		{
-			case(EOF):
-				msSetError(MS_EOFERR, NULL, "loadGrid()");     
-				return(-1);
-
-			case(END):
-				return(0);
-
-			case( LABELFORMAT ):
-				if( getString(&((graticuleObj *)pLayer->layerinfo)->labelformat) == MS_FAILURE) 
-					return(-1);
-
-				break;
-
-			case( MINARCS ):
-				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->minarcs) == -1) 
-					return(-1);
-
-				break;
-				
-			case( MAXARCS ):
-				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->maxarcs) == -1) 
-					return(-1);
-
-				break;
-				
-			case( MININTERVAL ):
-				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->minincrement) == -1) 
-					return(-1);
-
-				break;
-				
-			case( MAXINTERVAL ):
-				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->maxincrement) == -1) 
-					return(-1);
-
-				break;
-				
-			case( MINSUBDIVIDE ):
-				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->minsubdivides) == -1) 
-					return(-1);
-
-				break;
-				
-			case( MAXSUBDIVIDE ):
-				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->maxsubdivides) == -1) 
-					return(-1);
-
-				break;
-				
-				
-			default:
-				msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadGrid()", msyytext, msyylineno);          
-				return(-1);      
-		}
-	}
+  for(;;) {
+    switch(msyylex()) {
+    case(EOF):
+      msSetError(MS_EOFERR, NULL, "loadGrid()");     
+      return(-1);      
+    case(END):
+      return(0);      
+    case( LABELFORMAT ):
+      if(getString(&((graticuleObj *)pLayer->layerinfo)->labelformat) == MS_FAILURE) {
+	if(strcasecmp(msyytext, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */
+	  ((graticuleObj *)pLayer->layerinfo)->labelformat = strdup("DD");
+        else
+	  return(-1);
+      }
+      break;
+    case( MINARCS ):
+      if(getDouble(&((graticuleObj *)pLayer->layerinfo)->minarcs) == -1) 
+	return(-1);      
+      break;      
+    case( MAXARCS ):
+      if(getDouble(&((graticuleObj *)pLayer->layerinfo)->maxarcs) == -1) 
+	return(-1);      
+      break;
+    case( MININTERVAL ):
+      if(getDouble(&((graticuleObj *)pLayer->layerinfo)->minincrement) == -1) 
+	return(-1);      
+      break;      
+    case( MAXINTERVAL ):
+      if(getDouble(&((graticuleObj *)pLayer->layerinfo)->maxincrement) == -1) 
+	return(-1);      
+      break;
+    case( MINSUBDIVIDE ):
+      if(getDouble(&((graticuleObj *)pLayer->layerinfo)->minsubdivides) == -1) 
+	return(-1);      
+      break;      
+    case( MAXSUBDIVIDE ):
+      if(getDouble(&((graticuleObj *)pLayer->layerinfo)->maxsubdivides) == -1) 
+	return(-1);
+      break;				
+    default:
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadGrid()", msyytext, msyylineno);          
+      return(-1);      
+    }
+  }
 }
 
 static void writeGrid( graticuleObj *pGraticule, FILE *stream) 
