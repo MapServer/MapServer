@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/06/01 19:51:12  sdlime
+ * Updated GML output to produce features in a default container (msGeometry) if no geometry metadata is supplied.
+ *
  * Revision 1.63  2005/05/31 18:24:49  sdlime
  * Updated GML3 writer to use the new gmlGeometryListObj. This allows you to package geometries from WFS in a pretty flexible manner. Will port GML2 writer once testing on GML3 code is complete.
  *
@@ -399,12 +402,13 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
   int *innerlist, *outerlist, numouters;
   char *srsname_encoded = NULL;
 
-  int geometry_aggregate_index;
-  int geometry_simple_index;
+  int geometry_aggregate_index, geometry_simple_index;
+  char *geometry_aggregate_name = NULL, *geometry_simple_name = NULL;
 
   if(!stream) return(MS_FAILURE);
   if(!shape) return(MS_FAILURE);
   if(!tab) return(MS_FAILURE);
+  if(!geometryList) return(MS_FAILURE);
 
   if(shape->numlines <= 0) return(MS_SUCCESS); /* empty shape, nothing to output */
 
@@ -416,11 +420,14 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
   case(MS_SHAPE_POINT):
     geometry_simple_index = msGMLGeometryLookup(geometryList, "point");
     geometry_aggregate_index = msGMLGeometryLookup(geometryList, "multipoint");
+    if(geometry_simple_index >= 0) geometry_simple_name = geometryList->geometries[geometry_simple_index].name;
+    if(geometry_aggregate_index >= 0) geometry_aggregate_name = geometryList->geometries[geometry_aggregate_index].name;
 
     if((geometry_simple_index != -1 && shape->line[0].numpoints == 1) ||
-       (geometry_simple_index != -1 && geometry_aggregate_index == -1)) { /* write a Point(s) */
+       (geometry_simple_index != -1 && geometry_aggregate_index == -1) ||
+       (geometryList->numgeometries == 0 && shape->line[0].numpoints == 1)) { /* write a Point(s) */
       for(i=0; i<shape->line[0].numpoints; i++) {
-	gmlStartGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	gmlStartGeometryContainer(stream, geometry_simple_name, namespace, tab);
 	
 	/* Point */
 	if(srsname_encoded)
@@ -430,10 +437,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 	msIO_fprintf(stream, "%s    <gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);	
 	msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
 
-	gmlEndGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
       }
-    } else if(geometry_aggregate_index != -1) { /* write a MultiPoint */
-      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+    } else if((geometry_aggregate_index != -1) || (geometryList->numgeometries == 0)) { /* write a MultiPoint */      
+      gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
       
       /* MultiPoint */
       if(srsname_encoded)
@@ -451,7 +458,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 
       msIO_fprintf(stream, "%s  </gml:MultiPoint>\n", tab);
 
-      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+      gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
     } else {
       msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no point/multipoint geometry defined. -->\n");
     }
@@ -460,11 +467,14 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
   case(MS_SHAPE_LINE):    
     geometry_simple_index = msGMLGeometryLookup(geometryList, "line");
     geometry_aggregate_index = msGMLGeometryLookup(geometryList, "multiline");
+    if(geometry_simple_index >= 0) geometry_simple_name = geometryList->geometries[geometry_simple_index].name;
+    if(geometry_aggregate_index >= 0) geometry_aggregate_name = geometryList->geometries[geometry_aggregate_index].name;
 
     if((geometry_simple_index != -1 && shape->numlines == 1) ||
-       (geometry_simple_index != -1 && geometry_aggregate_index == -1)) { /* write a LineStrings(s) */
+       (geometry_simple_index != -1 && geometry_aggregate_index == -1) ||
+       (geometryList->numgeometries == 0 && shape->numlines == 1)) { /* write a LineStrings(s) */
       for(i=0; i<shape->numlines; i++) {
-	gmlStartGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	gmlStartGeometryContainer(stream, geometry_simple_name, namespace, tab);
 	
 	/* LineString (should be Curve?) */
 	if(srsname_encoded)
@@ -479,10 +489,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 
 	msIO_fprintf(stream, "%s  </gml:LineString>\n", tab);	
 
-	gmlEndGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);	
+	gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);	
       }
-    } else if(geometry_aggregate_index != -1) { /* write a MultiCurce */
-      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+    } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiCurce */      
+      gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
 
       /* MultiCurve */
       if(srsname_encoded)
@@ -504,7 +514,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
   
       msIO_fprintf(stream, "%s  </gml:MultiCurve>\n", tab);
 
-      gmlEndGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);      
+      gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);      
     } else {
       msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no line/multiline geometry defined. -->\n");
     }
@@ -513,6 +523,8 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
   case(MS_SHAPE_POLYGON): /* this gets nasty, since our shapes are so flexible */
     geometry_simple_index = msGMLGeometryLookup(geometryList, "polygon");
     geometry_aggregate_index = msGMLGeometryLookup(geometryList, "multipolygon");
+    if(geometry_simple_index >= 0) geometry_simple_name = geometryList->geometries[geometry_simple_index].name;
+    if(geometry_aggregate_index >= 0) geometry_aggregate_name = geometryList->geometries[geometry_aggregate_index].name;
 
     /* get a list of outter rings for this polygon */
     outerlist = msGetOuterList(shape);
@@ -522,14 +534,15 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
       if(outerlist[i] == MS_TRUE) numouters++;
 
     if((geometry_simple_index != -1 && numouters == 1) ||
-       (geometry_simple_index != -1 && geometry_aggregate_index == -1)) { /* write a Polygon(s) */
+       (geometry_simple_index != -1 && geometry_aggregate_index == -1) ||
+       (geometryList->numgeometries == 0 && shape->numlines == 1)) { /* write a Polygon(s) */
       for(i=0; i<shape->numlines; i++) {
 	if(outerlist[i] == MS_FALSE) break; /* skip non-outer rings, each outer ring is a new polygon */
 
 	/* get a list of inner rings for this polygon */
 	innerlist = msGetInnerList(shape, i, outerlist);
 
-	gmlStartGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	gmlStartGeometryContainer(stream, geometry_simple_name, namespace, tab);
 	
 	/* Polygon (should be Surface?) */			
 	if(srsname_encoded)
@@ -566,11 +579,11 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s  </gml:Polygon>\n", tab);
 	free(innerlist);
 
-	gmlEndGeometryContainer(stream, geometryList->geometries[geometry_simple_index].name, namespace, tab);
+	gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
       }      
       free(outerlist);
-    } else if(geometry_aggregate_index != -1) { /* write a MultiSurface */
-      gmlStartGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);
+    } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiSurface */
+      gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
 
       /* MultiSurface */
       if(srsname_encoded)
@@ -623,7 +636,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 
       free(outerlist);
 
-      gmlEndGeometryContainer(stream, geometryList->geometries[geometry_aggregate_index].name, namespace, tab);      
+      gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);      
     } else {
       msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no polygon/multipolygon geometry defined. -->\n");
     }
@@ -1083,7 +1096,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       status = msLayerGetItems(lp);
       if(status != MS_SUCCESS) return(status);
 
-      /* populate item and group metadata structures */
+      /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
       itemList = msGMLGetItems(lp);
       groupList = msGMLGetGroups(lp);
       geometryList = msGMLGetGeometries(lp);
@@ -1223,7 +1236,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       status = msLayerGetItems(lp);
       /* if(status != MS_SUCCESS) return(status); */
 
-      /* populate item and group metadata structures */
+      /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
       itemList = msGMLGetItems(lp);
       groupList = msGMLGetGroups(lp);
       geometryList = msGMLGetGeometries(lp);
