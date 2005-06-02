@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.67  2005/06/02 20:42:14  sdlime
+ * Fixed a small initialization problem when no namespace metadata supplied.
+ *
  * Revision 1.66  2005/06/02 20:32:01  sdlime
  * Changed metadata reference from ...getfeature_collection to ...feature_collection.
  *
@@ -872,11 +875,9 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 			   "ISO-8859-1");
 
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
-  if(value != NULL) {
-    user_namespace_uri = value;
-    user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
-  }
-  
+  if(value) user_namespace_uri = value;
+  user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
+
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
   if(value) user_namespace_prefix = value;  
   if(user_namespace_prefix != NULL && msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
@@ -1358,10 +1359,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                              "ISO-8859-1");
 
     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
-    if(value != NULL) {
-      user_namespace_uri = value;
-      user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
-    }
+    if(value) user_namespace_uri = value;
+    user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
 
     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
     if(value) user_namespace_prefix = value;
