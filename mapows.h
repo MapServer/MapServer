@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.59  2005/06/02 20:32:01  sdlime
+ * Changed metadata reference from ...getfeature_collection to ...feature_collection.
+ *
  * Revision 1.58  2005/06/02 20:25:04  sdlime
  * Updated WFS output to not use wfs:FeatureCollection as the main container for GML3 output. A default container of msFeatureCollection is provided or the user may define one explicitly.
  *
@@ -345,7 +348,7 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 #define OWS_GML2 0 /* Supported GML formats */
 #define OWS_GML3 1
 
-#define OWS_WFS_GETFEATURE_COLLECTION_NAME "msFeatureCollection"
+#define OWS_WFS_FEATURE_COLLECTION_NAME "msFeatureCollection"
 #define OWS_GML_DEFAULT_GEOMETRY_NAME "msGeometry"
 #define OWS_GML_OCCUR_UNBOUNDED -1
 

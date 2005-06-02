@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.66  2005/06/02 20:32:01  sdlime
+ * Changed metadata reference from ...getfeature_collection to ...feature_collection.
+ *
  * Revision 1.65  2005/06/02 20:25:04  sdlime
  * Updated WFS output to not use wfs:FeatureCollection as the main container for GML3 output. A default container of msFeatureCollection is provided or the user may define one explicitly.
  *
@@ -805,7 +808,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   const char *user_namespace_prefix = "myns";
   const char *user_namespace_uri = "http://www.ttt.org/myns";
   char *user_namespace_uri_encoded = NULL;
-  const char *collection_name = OWS_WFS_GETFEATURE_COLLECTION_NAME;
+  const char *collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
   char *encoded_name = NULL, *encoded;
   
   int outputformat = OWS_DEFAULT_SCHEMA; /* default output is GML 2.1 compliant schema*/
@@ -900,7 +903,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 
   /* output definition for the default feature container, can't use wfs:FeatureCollection with GML3 */
   if(outputformat == OWS_SFE_SCHEMA) {
-    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "getfeature_collection");
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "feature_collection");
     if(value) collection_name = value;
     
     msIO_printf("  <element name=\"%s\" type=\"%s:%sType\" substitutionGroup=\"gml:FeatureCollection\"/>\n", collection_name, user_namespace_prefix, collection_name);
@@ -1031,7 +1034,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   const char *user_namespace_prefix = "myns";
   const char *user_namespace_uri = "http://www.ttt.org/myns";
   char *user_namespace_uri_encoded = NULL;
-  const char *collection_name = OWS_WFS_GETFEATURE_COLLECTION_NAME;
+  const char *collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
   char *encoded, *encoded_typename, *encoded_schema;
   const char *tmpmaxfeatures = NULL;
 
@@ -1368,7 +1371,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     pszNameSpace = strdup(user_namespace_prefix);
 
-    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "getfeature_collection");
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "feature_collection");
     if(value) collection_name = value;
 
     encoded = msEncodeHTMLEntities( paramsObj->pszVersion );
