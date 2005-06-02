@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.65  2005/06/02 20:25:04  sdlime
+ * Updated WFS output to not use wfs:FeatureCollection as the main container for GML3 output. A default container of msFeatureCollection is provided or the user may define one explicitly.
+ *
  * Revision 1.64  2005/05/31 18:24:49  sdlime
  * Updated GML3 writer to use the new gmlGeometryListObj. This allows you to package geometries from WFS in a pretty flexible manner. Will port GML2 writer once testing on GML3 code is complete.
  *
@@ -797,8 +800,12 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   char **layers = NULL;
   char **tokens;
   int n=0;
-  const char *user_namespace_prefix = NULL;
-  char *user_namespace_uri = NULL;
+
+  const char *value;
+  const char *user_namespace_prefix = "myns";
+  const char *user_namespace_uri = "http://www.ttt.org/myns";
+  char *user_namespace_uri_encoded = NULL;
+  const char *collection_name = OWS_WFS_GETFEATURE_COLLECTION_NAME;
   char *encoded_name = NULL, *encoded;
   
   int outputformat = OWS_DEFAULT_SCHEMA; /* default output is GML 2.1 compliant schema*/
@@ -860,36 +867,29 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
 			   "<?xml version='1.0' encoding=\"%s\" ?>\n",
 			   "ISO-8859-1");
-  
-  user_namespace_prefix = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
-  if(user_namespace_prefix &&  msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
-    msIO_printf("<!-- WARNING: The value '%s' is not valid XML namespace. -->\n", user_namespace_prefix);
 
-  user_namespace_uri = msEncodeHTMLEntities(msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri") );
+  value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
+  if(value != NULL) {
+    user_namespace_uri = value;
+    user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
+  }
+  
+  value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+  if(value) user_namespace_prefix = value;  
+  if(user_namespace_prefix != NULL && msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
+    msIO_printf("<!-- WARNING: The value '%s' is not valid XML namespace. -->\n", user_namespace_prefix);
     
-  if (user_namespace_prefix && user_namespace_uri) {
-    msIO_printf("<schema\n"
+  msIO_printf("<schema\n"
 		"   targetNamespace=\"%s\" \n"
 		"   xmlns:%s=\"%s\" \n"
-		"   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
-		"   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
-               "   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
-		"   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-		"   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
-		user_namespace_uri, user_namespace_prefix,  user_namespace_uri);
-  } else
-    msIO_printf("<schema\n"
-		"   targetNamespace=\"%s\" \n"
-		"   xmlns:myns=\"%s\" \n"
 		"   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
 		"   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
 		"   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
 		"   xmlns:gml=\"http://www.opengis.net/gml\"\n"
 		"   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
-		"http://www.ttt.org/myns", "http://www.ttt.org/myns");
-    
-  encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
+		user_namespace_uri_encoded, user_namespace_prefix,  user_namespace_uri_encoded);
 
+  encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
   if(outputformat == OWS_SFE_SCHEMA) /* reference GML 3.1.0 schema */
     msIO_printf("\n  <import namespace=\"http://www.opengis.net/gml\"\n"
 		"          schemaLocation=\"%s/gml/3.1.0/base/feature.xsd\" />\n", encoded);
@@ -897,6 +897,21 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     msIO_printf("\n  <import namespace=\"http://www.opengis.net/gml\"\n"
 	      "          schemaLocation=\"%s/gml/2.1.2/feature.xsd\" />\n", encoded);
   msFree(encoded);
+
+  /* output definition for the default feature container, can't use wfs:FeatureCollection with GML3 */
+  if(outputformat == OWS_SFE_SCHEMA) {
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "getfeature_collection");
+    if(value) collection_name = value;
+    
+    msIO_printf("  <element name=\"%s\" type=\"%s:%sType\" substitutionGroup=\"gml:FeatureCollection\"/>\n", collection_name, user_namespace_prefix, collection_name);
+    msIO_printf("  <complexType name=\"%sType\">\n", collection_name);
+    msIO_printf("    <complexContent>\n");
+    msIO_printf("      <extension base=\"gml:AbstractFeatureCollectionType\">\n");
+    msIO_printf("        <attribute name=\"version\" type=\"string\" use=\"required\" fixed=\"1.0.0\"/>\n");
+    msIO_printf("      </extension>\n");
+    msIO_printf("    </complexContent>\n");
+    msIO_printf("  </complexType>\n");
+  } 
 
   /*
   ** loop through layers 
@@ -983,7 +998,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   msIO_printf("\n</schema>\n");
   
   msFree(encoded_name);
-  msFree(user_namespace_uri);
+  msFree(user_namespace_uri_encoded);
   
   if (layers)
     msFreeCharArray(layers, numlayers);
@@ -1012,9 +1027,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int bFilterSet = 0;
   int bBBOXSet = 0;
   char *pszNameSpace = NULL;
-  const char *user_namespace_prefix = NULL;
-  const char *user_namespace_uri = NULL;
+  const char *value;
+  const char *user_namespace_prefix = "myns";
+  const char *user_namespace_uri = "http://www.ttt.org/myns";
   char *user_namespace_uri_encoded = NULL;
+  const char *collection_name = OWS_WFS_GETFEATURE_COLLECTION_NAME;
   char *encoded, *encoded_typename, *encoded_schema;
   const char *tmpmaxfeatures = NULL;
 
@@ -1337,27 +1354,27 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                              "<?xml version='1.0' encoding=\"%s\" ?>\n",
                              "ISO-8859-1");
 
-    user_namespace_uri = msOWSLookupMetadata(&(map->web.metadata), 
-                                             "FO", "namespace_uri");
-    if(user_namespace_uri != NULL)
-        user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
+    if(value != NULL) {
+      user_namespace_uri = value;
+      user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
+    }
 
-    user_namespace_prefix = msOWSLookupMetadata(&(map->web.metadata), 
-                                                "FO", "namespace_prefix");
-    if(user_namespace_prefix != NULL &&
-       msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
-        msIO_printf("<!-- WARNING: The value '%s' is not valid XML "
-                     "namespace. -->\n", user_namespace_prefix);
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+    if(value) user_namespace_prefix = value;
 
-    if (user_namespace_prefix && user_namespace_uri_encoded)
-      pszNameSpace = strdup(user_namespace_prefix);
-    /* else */
-    /* pszNameSpace = strdup("myns"); */
-   
+    if(user_namespace_prefix != NULL && msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
+      msIO_printf("<!-- WARNING: The value '%s' is not valid XML namespace. -->\n", user_namespace_prefix);
+
+    pszNameSpace = strdup(user_namespace_prefix);
+
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "getfeature_collection");
+    if(value) collection_name = value;
+
     encoded = msEncodeHTMLEntities( paramsObj->pszVersion );
     encoded_typename = msEncodeHTMLEntities( typename );
     encoded_schema = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    if (user_namespace_prefix && user_namespace_uri_encoded)
+    if(outputformat == OWS_GML2) /* use a wfs:FeatureCollection */
       msIO_printf("<wfs:FeatureCollection\n"
 		  "   xmlns:%s=\"%s\"\n"  
 		  "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
@@ -1369,30 +1386,24 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 		  user_namespace_prefix, user_namespace_uri_encoded,
 		  encoded_schema, encoded, user_namespace_uri_encoded, 
 		  script_url_encoded, encoded, encoded_typename, output_schema_format);
-    else
-      msIO_printf("<wfs:FeatureCollection\n"
-             "   xmlns=\"%s\"\n"
-             "   xmlns:myns=\"%s\"\n"
-             "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
-             "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-             "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
-             "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-             "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
-             "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
-           "http://www.ttt.org/myns", "http://www.ttt.org/myns",
-            encoded_schema, encoded, "http://www.ttt.org/myns",
-            script_url_encoded, encoded, encoded_typename, output_schema_format);
+    else 
+      msIO_printf("<%s:%s\n"
+		  "   xmlns:%s=\"%s\"\n"  
+		  "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+		  "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+		  "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+		  "   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
+		  user_namespace_prefix, collection_name,
+		  user_namespace_prefix, user_namespace_uri_encoded,
+		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
 
     msFree(encoded);
     msFree(encoded_schema);
     msFree(encoded_typename);
 
-    /* __TODO__ WFS expects homogenous geometry types, but our layers can
-    **          contain mixed geometry types... how to deal with that???
-    */
     msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
     
-    /* if no results where written  */
+    /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
     for(i=0; i<map->numlayers; i++) {
       if (map->layers[i].resultcache && map->layers[i].resultcache->numresults > 0)
 	break;
@@ -1402,8 +1413,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       msIO_printf("      <gml:null>missing</gml:null>\n");
       msIO_printf("   </gml:boundedBy>\n"); 
     }
-    
-    msIO_printf("</wfs:FeatureCollection>\n\n");
+
+    if(outputformat == OWS_GML2)
+      msIO_printf("</wfs:FeatureCollection>\n\n");
+    else
+      msIO_printf("</%s:%s>\n\n", user_namespace_prefix, collection_name);
 
     /*
     ** Done! Now a bit of clean-up.

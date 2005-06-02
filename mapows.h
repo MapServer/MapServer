@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.58  2005/06/02 20:25:04  sdlime
+ * Updated WFS output to not use wfs:FeatureCollection as the main container for GML3 output. A default container of msFeatureCollection is provided or the user may define one explicitly.
+ *
  * Revision 1.57  2005/05/31 18:24:49  sdlime
  * Updated GML3 writer to use the new gmlGeometryListObj. This allows you to package geometries from WFS in a pretty flexible manner. Will port GML2 writer once testing on GML3 code is complete.
  *
@@ -342,6 +345,7 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 #define OWS_GML2 0 /* Supported GML formats */
 #define OWS_GML3 1
 
+#define OWS_WFS_GETFEATURE_COLLECTION_NAME "msFeatureCollection"
 #define OWS_GML_DEFAULT_GEOMETRY_NAME "msGeometry"
 #define OWS_GML_OCCUR_UNBOUNDED -1
 
