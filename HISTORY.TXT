@@ -13,6 +13,14 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.6.0-rc1 
+--------------------------------
+
+- Bug 1367: Fixed PHP MapScript's symbolObj->setPoints() to correctly 
+  set symbolObj->sizex/sizey
+
+
+
 Version 4.6.0-beta3 (2005-05-27)
 --------------------------------
 

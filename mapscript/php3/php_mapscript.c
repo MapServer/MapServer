@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.233  2005/06/06 04:36:32  dan
+ * Fixed PHP MapScript's symbolObj->setPoints() to correctly set
+ * symbolObj->sizex/sizey (bug 1367)
+ *
  * Revision 1.232  2005/04/21 15:09:29  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *
@@ -13167,6 +13171,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
         }
         convert_to_double((*pValue));
         self->points[iSymbol].x = (*pValue)->value.dval;
+        self->sizex = MS_MAX(self->sizex, self->points[iSymbol].x);
         i++;
 
          if (zend_hash_index_find(pPoints->value.ht, i, 
@@ -13176,6 +13181,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
         }
         convert_to_double((*pValue));
         self->points[iSymbol].y = (*pValue)->value.dval;
+        self->sizey = MS_MAX(self->sizey, self->points[iSymbol].y);
         i++;
 
         iSymbol++;
