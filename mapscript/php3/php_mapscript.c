@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.234  2005/06/06 05:48:20  dan
+ * Added $layerObj->removeClass() (was already in SWIG MapScript)
+ * Added $layerObj->removeClass() to PHP MapScript (was already in SWIG
+ * MapScript, bug 1373)
+ *
  * Revision 1.233  2005/06/06 04:36:32  dan
  * Fixed PHP MapScript's symbolObj->setPoints() to correctly set
  * symbolObj->sizex/sizey (bug 1367)
@@ -539,6 +544,7 @@ DLEXPORT void php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_moveClassUp(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_removeClass(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
@@ -1029,8 +1035,9 @@ function_entry php_layer_class_functions[] = {
     {"applysld",        php3_ms_lyr_applySLD,           NULL},
     {"applysldurl",     php3_ms_lyr_applySLDURL,        NULL},
     {"generatesld",     php3_ms_lyr_generateSLD,        NULL},
-    {"moveclassup",     php3_ms_lyr_moveClassUp,        NULL},   
-    {"moveclassdown",   php3_ms_lyr_moveClassDown,      NULL},   
+    {"moveclassup",     php3_ms_lyr_moveClassUp,        NULL},
+    {"moveclassdown",   php3_ms_lyr_moveClassDown,      NULL},
+    {"removeclass",     php3_ms_lyr_removeClass,        NULL},
     {"isvisible",       php3_ms_lyr_isVisible,          NULL},
     {NULL, NULL, NULL}
 };
@@ -8148,6 +8155,54 @@ DLEXPORT void  php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS)
 
      RETURN_LONG(nStatus);
 }
+
+DLEXPORT void  php3_ms_lyr_removeClass(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pClassIdx;
+     layerObj      *self=NULL;
+     HashTable   *list=NULL;
+     classObj    *pOldClassObj = NULL;
+     int layer_id, map_id;
+
+
+     pThis = getThis();
+
+     if (pThis == NULL ||
+        getParameters(ht, 1, &pClassIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+     convert_to_long(pClassIdx);
+
+     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
+                                            list TSRMLS_CC);
+
+    /* We will store a reference to the parent_layer object id inside
+     * the class obj.
+     */
+    layer_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
+
+    /* We will store a reference to the parent_map object id inside
+     * the class obj.
+     */
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR TSRMLS_CC);
+
+
+     if (self != NULL)
+     {
+         pOldClassObj = layerObj_removeClass(self, pClassIdx->value.lval);
+
+        /* Update number of classes within the layer object */
+        _phpms_set_property_long(pThis, "numclasses",
+                             self->numclasses, E_ERROR TSRMLS_CC);
+     }
+
+     /* Return a copy of the class object just removed */
+     _phpms_build_class_object(pOldClassObj, map_id, layer_id, list, 
+                              return_value TSRMLS_CC);
+}
+
 /* }}} */
 
 

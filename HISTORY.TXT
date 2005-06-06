@@ -19,6 +19,8 @@ Version 4.6.0-rc1
 - Bug 1367: Fixed PHP MapScript's symbolObj->setPoints() to correctly 
   set symbolObj->sizex/sizey
 
+- Bug 1373: Added $layerObj->removeClass() to PHP MapScript (was already
+  in SWIG MapScript)
 
 
 Version 4.6.0-beta3 (2005-05-27)

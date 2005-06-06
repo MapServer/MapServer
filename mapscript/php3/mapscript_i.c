@@ -7,6 +7,11 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.93  2005/06/06 05:48:20  dan
+ * Added $layerObj->removeClass() (was already in SWIG MapScript)
+ * Added $layerObj->removeClass() to PHP MapScript (was already in SWIG
+ * MapScript, bug 1373)
+ *
  * Revision 1.92  2005/04/21 15:09:29  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *
@@ -599,6 +604,10 @@ int layerObj_moveClassDown(layerObj *self, int index)
     return msMoveClassDown(self, index);
 }
 
+classObj *layerObj_removeClass(layerObj *self, int index)
+{
+    return msRemoveClass(self, index);
+}
 
 /**********************************************************************
  * class extensions for classObj, always within the context of a layer

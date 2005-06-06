@@ -750,18 +750,24 @@ Currently supported classes, properties and methods:
         Returns an SLD XML string based on all the classes found in the layers.
 
   int moveclassup(int index)
-       The class specified by the class index will be moved up into
-       the array of layers. Returns MS_SUCCESS or MS_FAILURE.
-       ex layer->moveclassup(1) will have the effect of moving class 1
-          up to postion 0, and the class at position 0 will be moved
-          to position 1.
+        The class specified by the class index will be moved up into
+        the array of layers. Returns MS_SUCCESS or MS_FAILURE.
+        ex layer->moveclassup(1) will have the effect of moving class 1
+           up to postion 0, and the class at position 0 will be moved
+           to position 1.
 
   int moveclassdown(int index)
-       The class specified by the class index will be moved down into
-       the array of layers. Returns MS_SUCCESS or MS_FAILURE.
-       ex layer->moveclassdown(0) will have the effect of moving class 0
-          up to postion 1, and the class at position 1 will be moved
-          to position 0.
+        The class specified by the class index will be moved down into
+        the array of layers. Returns MS_SUCCESS or MS_FAILURE.
+        ex layer->moveclassdown(0) will have the effect of moving class 0
+           up to postion 1, and the class at position 1 will be moved
+           to position 0.
+
+  classObj removeClass(int index)
+        Removes the class indicated and returns a copy, or NULL in the case
+        of a failure.  Note that subsequent classes will be renumbered by
+        this operation. The numclasses field contains the number of classes
+        available.
 
   boolean isVisible()
        Returns MS_TRUE/MS_FALSE depending on whether the layer is 

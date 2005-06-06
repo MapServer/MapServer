@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/06/06 05:48:20  dan
+ * Added $layerObj->removeClass() (was already in SWIG MapScript)
+ * Added $layerObj->removeClass() to PHP MapScript (was already in SWIG
+ * MapScript, bug 1373)
+ *
  * Revision 1.49  2005/05/27 15:00:12  dan
  * New regex wrappers to solve issues with previous version (bug 1354)
  *
@@ -219,6 +224,7 @@ int             layerObj_applySLDURL(layerObj *self, char *sld, char *stylelayer
 char            *layerObj_generateSLD(layerObj *self);
 int             layerObj_moveClassUp(layerObj *self, int index);
 int             layerObj_moveClassDown(layerObj *self, int index);
+classObj        *layerObj_removeClass(layerObj *self, int index);
 
 
 classObj       *classObj_new(layerObj *layer, classObj *class);
