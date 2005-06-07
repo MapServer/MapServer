@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.0-rc1 
 --------------------------------
 
+- Bug 1375: Fixed seg fault in mapscript caused by the USE_POINT_Z_M flag.
+  This flag was not carried to the mapscript Makefile(s).
+
 - Bug 1367: Fixed PHP MapScript's symbolObj->setPoints() to correctly 
   set symbolObj->sizex/sizey
 

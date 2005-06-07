@@ -9938,6 +9938,7 @@ echo "${ECHO_T}Compiling with -DUSE_POINT_Z_M." >&6
 fi
 USE_POINT_Z_M=$USE_POINT_Z_M
 
+ALL_ENABLED="$USE_POINT_Z_M $ALL_ENABLED"
 
 
 

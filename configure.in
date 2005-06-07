@@ -1701,6 +1701,7 @@ if test "$enable_point_z_m" == "yes" ; then
   AC_MSG_RESULT([Compiling with -DUSE_POINT_Z_M.])
 fi
 AC_SUBST(USE_POINT_Z_M, $USE_POINT_Z_M)
+ALL_ENABLED="$USE_POINT_Z_M $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
