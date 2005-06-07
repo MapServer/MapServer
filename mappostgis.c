@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/06/07 01:38:50  jerryp
+ * Field length call in msPOSTGISLayerRetrievePK was using wrong pqsql function.
+ *
  * Revision 1.53  2005/04/26 03:32:46  frank
  * Avoid casting warning.
  *
@@ -1771,7 +1774,7 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       return MS_FAILURE;
     }
 
-    tmpint = (int)PQgetvalue(query_result, 0, 0);
+    tmpint = PQgetlength(query_result, 0, 0);
     msDebug("msPOSTGISLayerRetrievePK: field length = $i", tmpint);
     *urid_name = (char *)malloc(tmpint + 1);
     strcpy(*urid_name, PQgetvalue(query_result, 0, 0));
