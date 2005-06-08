@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2005/06/08 23:57:43  dan
+ * Propagate msGetlabelSize() errors in msGraticuleLayerNextShape() (part of
+ * bug 828)
+ *
  * Revision 1.12  2005/05/19 05:57:08  sdlime
  * Added explicit DD format for grid labeling. Only shows the number of degrees, nothing more (bug 1256).
  *
@@ -80,7 +84,7 @@ typedef enum
 } msLabelProcessingType;
 
 void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc );
-static void _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticulePosition ePosition );
+static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticulePosition ePosition );
 static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToFormat );
 
 #define MAPGRATICULE_ARC_SUBDIVISION_DEFAULT	(256)
@@ -337,7 +341,8 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				shape->line->point[1].y			= dStartY + dArcDelta;
 
 				_FormatLabel( layer, shape, shape->line->point[0].x );
-				_AdjustLabelPosition( layer, shape, posBottom );
+				if (_AdjustLabelPosition( layer, shape, posBottom ) != MS_SUCCESS)
+                                    return MS_FAILURE;
 
 				pInfo->ilabelstate++;
 				return MS_SUCCESS;
@@ -361,7 +366,8 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				shape->line->point[1].y			= dStartY;
 
 				_FormatLabel( layer, shape, shape->line->point[0].x );
-				_AdjustLabelPosition( layer, shape, posTop );
+				if (_AdjustLabelPosition( layer, shape, posTop ) != MS_SUCCESS)
+                                    return MS_FAILURE;
 
 				pInfo->ilabelstate++;
 				return MS_SUCCESS;
@@ -418,7 +424,8 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				shape->line->point[1].y			= pInfo->dwhichlatitude;
 
 				_FormatLabel( layer, shape, shape->line->point[0].y );
-				_AdjustLabelPosition( layer, shape, posLeft );
+				if (_AdjustLabelPosition( layer, shape, posLeft ) != MS_SUCCESS)
+                                    return MS_FAILURE;
 
 				pInfo->ilabelstate++;
 				return MS_SUCCESS;
@@ -442,7 +449,8 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				shape->line->point[1].y			= pInfo->dwhichlatitude;
 
 				_FormatLabel( layer, shape, shape->line->point[0].y );
-				_AdjustLabelPosition( layer, shape, posRight );
+				if (_AdjustLabelPosition( layer, shape, posRight ) != MS_SUCCESS)
+                                    return MS_FAILURE;
 
 				pInfo->ilabelstate++;
 				return MS_SUCCESS;
@@ -603,15 +611,17 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
  *
  *  Move label position into display area by adjusting underlying shape line.
  */
-static void _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticulePosition ePosition )
+static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticulePosition ePosition )
 {
 	graticuleObj 		*pInfo	= (graticuleObj  *) pLayer->layerinfo;
 	rectObj				 rectLabel;
 	pointObj			 ptPoint;
 
-	if( pInfo == NULL
-	  || pShape == NULL )
-		return;
+	if( pInfo == NULL || pShape == NULL )
+    {
+        msSetError(MS_MISCERR, "Assertion failed: Null shape or layerinfo!, ", "_AdjustLabelPosition()");
+		return MS_FAILURE;
+    }
 	
 	ptPoint			= pShape->line->point[0];
 
@@ -624,7 +634,8 @@ static void _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticul
     if( pLayer->transform ) 
 		msTransformShapeToPixel( pShape, pLayer->map->extent, pLayer->map->cellsize );
 
-	msGetLabelSize( pShape->text, &pLayer->class[0].label, &rectLabel, &pLayer->map->fontset, 1.0 );
+	if (msGetLabelSize( pShape->text, &pLayer->class[0].label, &rectLabel, &pLayer->map->fontset, 1.0 ) != 0)
+        return MS_FAILURE;  /* msSetError already called */
 
 	switch( ePosition )
 	{
@@ -672,6 +683,8 @@ static void _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticul
 			pShape->line->point[0].y = ptPoint.y;
 			break;
 	}
+
+    return MS_SUCCESS;
 }
 
 /**********************************************************************************************************************
