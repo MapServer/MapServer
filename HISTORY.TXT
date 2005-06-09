@@ -13,8 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.6.0-rc1 
---------------------------------
+Version 4.6.0-rc1 (2005-06-09)
+------------------------------
 
 - Bug 1375: Fixed seg fault in mapscript caused by the USE_POINT_Z_M flag.
   This flag was not carried to the mapscript Makefile(s).
