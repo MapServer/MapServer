@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.53  2005/06/10 22:14:40  assefa
+ * Filter Encoding spatial operator is Intersects and not Intersect : Bug 1163.
+ *
  * Revision 1.52  2005/05/12 21:13:09  assefa
  * Support of multiple logical operators (Bug 1277).
  *
@@ -1007,7 +1010,8 @@ int FLTIsSimpleFilter(FilterEncodingNode *psNode)
     if (FLTValidForBBoxFilter(psNode))
     {
         if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
-            FLTNumberOfFilterType(psNode, "Intersect") == 0)
+            FLTNumberOfFilterType(psNode, "Intersect") == 0 &&
+            FLTNumberOfFilterType(psNode, "Intersects") == 0)
             
           return TRUE;
     }
@@ -1655,7 +1659,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 else
                   psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
             }
-            else if (strcasecmp(psXMLNode->pszValue, "Intersect") == 0)
+            else if (strcasecmp(psXMLNode->pszValue, "Intersect") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Intersects") == 0)
             {
                 shapeObj *psShape = NULL;
                 int  bLine = 0, bPolygon = 0;
@@ -1989,7 +1994,8 @@ int FLTIsSpatialFilterType(char *pszValue)
     {
         if ( strcasecmp(pszValue, "BBOX") == 0 ||
              strcasecmp(pszValue, "DWithin") == 0 ||
-             strcasecmp(pszValue, "Intersect") == 0)
+             strcasecmp(pszValue, "Intersect") == 0 ||
+             strcasecmp(pszValue, "Intersects") == 0)
           return MS_TRUE;
     }
 
@@ -2634,12 +2640,13 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
          (strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") == 0) ||
          (strcasecmp(psFilterNode->psRightNode->pszValue, "DWithin") == 0) ||
          (strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") == 0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "Intersect") == 0)))
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "Intersects") == 0)))
     {
         strcat(szBuffer, " (");
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0 &&
             strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") != 0 &&
-            strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") != 0)
+            (strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") != 0 ||
+             strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersects") != 0))
           pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
         else
           pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
