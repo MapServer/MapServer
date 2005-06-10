@@ -13,6 +13,10 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+- Bug 1163 : Filter Encoding spatial operator is Intersects 
+  and not Intersect.
+ 
+
 Version 4.6.0-rc1 (2005-06-09)
 ------------------------------
 
