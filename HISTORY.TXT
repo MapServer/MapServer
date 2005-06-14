@@ -19,6 +19,8 @@ Version 4.6.0 (final?)
 - Bug 1163 : Filter Encoding spatial operator is Intersects 
   and not Intersect.
  
+- Fixed GEOS to shapeObj for multipolgon geometries.
+
 
 Version 4.6.0-rc1 (2005-06-09)
 ------------------------------
