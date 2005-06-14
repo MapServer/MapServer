@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/06/14 04:28:44  sdlime
+ * Fixed GEOS to shapeObj for multipolgon geometries.
+ *
  * Revision 1.10  2005/05/19 05:57:08  sdlime
  * More interface clean up, added msGEOSFreeGeometry and updated geometry2shape code to so the new shapeObj contains a reference to the geometry used to create it.
  *
@@ -546,25 +549,27 @@ static shapeObj *msGEOSGeometry2Shape_polygon(Polygon *g)
 static shapeObj *msGEOSGeometry2Shape_multipolygon(MultiPolygon *g)
 {
   try {
+    int i, j, k;
     shapeObj *shape=NULL;
     lineObj line;
-    int numPoints, numRings=g->getNumGeometries();
-    int i, j;
+    int numPoints, numRings, numPolygons=g->getNumGeometries();
 
     Coordinate c;
     const CoordinateSequence *coords;
     const LineString *ring;
+    const Polygon *polygon;
 
     shape = (shapeObj *) malloc(sizeof(shapeObj));
     msInitShape(shape);
 
     shape->type = MS_SHAPE_POLYGON;
-    shape->line = (lineObj *) malloc(sizeof(lineObj)*numRings);
-    shape->numlines = numRings;
     shape->geometry = g;
 
-    for(j=0; j<numRings; j++) {
-      ring = (LineString *) g->getGeometryN(j);
+    for(k=0; k<numPolygons; k++) { /* for each polygon */
+      polygon = (Polygon *) g->getGeometryN(k);
+
+      /* exterior ring */
+      ring = polygon->getExteriorRing();
       coords = ring->getCoordinatesRO();
       numPoints = ring->getNumPoints();
 
@@ -572,15 +577,37 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(MultiPolygon *g)
       line.numpoints = numPoints;
 
       for(i=0; i<numPoints; i++) {
-        c = coords->getAt(i);
+	c = coords->getAt(i);
 
-        line.point[i].x = c.x;
-        line.point[i].y = c.y;
-        /* line.point[i].z = c.z; */
+	line.point[i].x = c.x;
+	line.point[i].y = c.y;
+	/* line.point[i].z = c.z; */
       }
       msAddLine(shape, &line);
       free(line.point);
-    }
+
+      /* interior rings */
+      numRings = polygon->getNumInteriorRing();
+      for(j=0; j<numRings; j++) {
+	ring = polygon->getInteriorRingN(j);
+	coords = ring->getCoordinatesRO();
+	numPoints = ring->getNumPoints();
+
+	line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
+	line.numpoints = numPoints;
+
+	for(i=0; i<numPoints; i++) {
+	  c = coords->getAt(i);
+
+	  line.point[i].x = c.x;
+	  line.point[i].y = c.y;
+	  /* line.point[i].z = 0;
+	     line.point[i].m = 0; */
+	}
+	msAddLine(shape, &line);
+	free(line.point);
+      }
+    } /* next polygon */
 
     return shape;
   } catch (GEOSException *ge) {
