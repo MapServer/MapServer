@@ -5,7 +5,7 @@
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/06/14 16:03:34  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.32  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *

@@ -5,7 +5,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/06/14 16:03:34  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.59  2005/05/24 18:52:45  julien
  * Bug 1149: From WMS 1.1.1, SRS are given in individual tags.
  *

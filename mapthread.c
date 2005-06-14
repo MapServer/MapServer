@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/06/14 16:03:35  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.11  2005/04/18 14:37:32  frank
  * Bug 1319: Fixed win32 mutex creation in mapthread.c
  *

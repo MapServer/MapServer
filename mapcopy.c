@@ -17,7 +17,7 @@
  * I just find Python to be very handy for unit testing, that's all.
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/06/14 16:03:33  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.39  2005/04/25 06:41:55  sdlime
  * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
  *

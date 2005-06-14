@@ -9,7 +9,7 @@
  *
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/06/14 16:03:34  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.16  2005/05/19 04:09:34  sdlime
  * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
  *

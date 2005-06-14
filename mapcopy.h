@@ -10,7 +10,7 @@
  *   http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=701
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/06/14 16:03:33  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.5  2005/04/21 15:09:27  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *

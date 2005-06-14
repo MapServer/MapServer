@@ -6,7 +6,7 @@
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/06/14 16:03:33  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.32  2005/01/07 18:51:09  sdlime
  * Added MS_GMLERR code.
  *

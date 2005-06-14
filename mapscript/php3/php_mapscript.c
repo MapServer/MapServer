@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000-2004, DM Solutions Group
+ * Copyright (c) 2000-2005, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.235  2005/06/14 16:03:35  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.234  2005/06/06 05:48:20  dan
  * Added $layerObj->removeClass() (was already in SWIG MapScript)
  * Added $layerObj->removeClass() to PHP MapScript (was already in SWIG

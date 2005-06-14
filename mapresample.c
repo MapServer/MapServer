@@ -5,7 +5,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1996-2001 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/06/14 16:03:34  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.53  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *

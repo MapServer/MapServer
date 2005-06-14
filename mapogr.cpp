@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2000-2003, Daniel Morissette, DM Solutions Group Inc
+ * Copyright (c) 2000-2005, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.87  2005/06/14 16:03:33  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.86  2005/04/21 15:09:28  julien
  * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
  *

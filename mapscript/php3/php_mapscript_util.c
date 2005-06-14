@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000-2003, DM Solutions Group
+ * Copyright (c) 2000-2005, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/06/14 16:03:36  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.22  2005/01/04 22:55:27  assefa
  * Add PHP5 support for windows (Bug 1100).
  *

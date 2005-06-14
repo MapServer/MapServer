@@ -7,7 +7,7 @@
  * Derived from shapelib, and relicensed with permission.
  *
  ******************************************************************************
- * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/06/14 16:03:35  dan
+ * Updated copyright date to 2005
+ *
  * Revision 1.21  2005/04/22 14:11:30  frank
  * Bug 791: initialize some fields in msDBFCreate()
  *
