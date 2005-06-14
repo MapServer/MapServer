@@ -20,7 +20,7 @@ For the impatient:
 To build the "mapserv" CGI program with the default options, go to the
 directory where you extracted the MapServer source code package and...
 
- $ cd mapserver-4.4.x
+ $ cd mapserver-4.6.x
  $ ./configure
  $ make
 
@@ -62,7 +62,9 @@ Here is the list of available options as returned by "./configure --help":
   --with-threads[=linkopt]Include thread safe support
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).
+  --with-sderaster        Include experimental ESRI SDE raster support.
   --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir).
+  --with-geos=PATH        Include GEOS support (PATH is path to geos-config)
   --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).
   --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
@@ -224,11 +226,23 @@ ESRI SDE Support:
 -----------------
 
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
+  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).
+  --with-sderaster        Include experimental ESRI SDE raster support.
 
   ESRI SDE support is optional, and is not included by default.  
 
   You have to use the --with-sde=DIR option to enable ESRI SDE support and
   specify where ESRI SDE is installed.
+
+
+GEOS Support:
+-------------
+
+  --with-geos=PATH        Include GEOS support (PATH is path to geos-config)
+
+  GEOS support is optional, and is not included by default.
+
+  The GEOS library can be found at http://geos.refractions.net/
 
 
 OGR Support:
@@ -544,6 +558,14 @@ PHP/MapScript module:
   versions of these libs will lead to potential crashes at runtime.  In most
   cases it is safe to have both PHP and MapServer compiled with the same 
   libraries (e.g. GD, regex, etc.) as long as they are of the same versions.
+
+  The --with-php-regex-dir=DIR used to be required in order to compile
+  php_mapscript.so with PHP's bundled regex.  This configure option has
+  been deprecated in v4.6.0 and will be removed in future releases.
+  Since version 4.6.0, it is no longer required to use this option: the
+  configure script and a set or wrappers in MapServer will automatically
+  use the system regex for the command-line and CGI executables, and PHP's
+  built-in regex (if applicable) for php_mapscript.so
 
 
 Perl MapScript Module:
