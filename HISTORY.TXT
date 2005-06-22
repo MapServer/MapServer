@@ -14,6 +14,8 @@ the CVS logs is updated daily at the following URL:
 
 
 
+- Bug 1390 : Fix svg output for multipolygons.
+
 Version 4.6.0 (2005-06-14)
 --------------------------
 
