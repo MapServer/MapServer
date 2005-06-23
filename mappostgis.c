@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/06/23 05:11:38  jerryp
+ * Fixed a buffer overflow (bug 1392).
+ *
  * Revision 1.57  2005/06/23 04:45:19  jerryp
  * Fixed yet another buffer overflow (still bug 1391).
  *
@@ -1618,11 +1621,11 @@ PGresult   *query_result;
 
 int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int *minor, int *point) {
     PGresult *query_result;
-    char sql[75];
+    char *sql;
     msPOSTGISLayerInfo *layerinfo;
     char *tmp;
 
-    strcpy(sql, "select substring(version() from 12 for (position('on' in version()) - 13))");
+    sql = "select substring(version() from 12 for (position('on' in version()) - 13))";
 
     if(debug) {
         msDebug("msPOSTGISLayerRetrievePGVersion(): query = %s\n", sql);
@@ -1631,18 +1634,19 @@ int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int 
     layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 
     if(layerinfo->conn == NULL) {
-        char tmp1[42] = "Layer does not have a postgis connection.";
+        char *tmp1 = "Layer does not have a postgis connection.";
         msSetError(MS_QUERYERR, tmp1, "msPOSTGISLayerRetrievePGVersion()\n");
         return(MS_FAILURE);
     }
 
     query_result = PQexec(layerinfo->conn, sql);
     if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) {
-        char tmp1[63]; 
+        char *tmp1;
         char *tmp2 = NULL;
-        strcat(tmp1, "Error executing POSTGIS statement (msPOSTGISLayerRetrievePGVersion():");
-        tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql)));
-        strcat(tmp2, tmp1);
+
+        tmp1 = "Error executing POSTGIS statement (msPOSTGISLayerRetrievePGVersion():";
+        tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
+        strcpy(tmp2, tmp1);
         strcat(tmp2, sql);
         msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePGVersion()");
         if(debug) {
