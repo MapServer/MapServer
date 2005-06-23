@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/06/23 04:34:18  jerryp
+ * Fixed a buffer overflow (bug 1391).
+ *
  * Revision 1.55  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -1748,8 +1751,8 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       char tmp1[63]; 
       char *tmp2 = NULL;
       strcat(tmp1, "Error executing POSTGIS statement (msPOSTGISLayerRetrievePK():");
-      tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql)));
-      strcat(tmp2, tmp1);
+      tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
+      strcpy(tmp2, tmp1);
       strcat(tmp2, sql);
       msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
       free(tmp2);
