@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55.2.1  2005/06/23 04:48:12  jerryp
+ * Fixed a buffer overflow (bug 1391).
+ *
  * Revision 1.55  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -1745,11 +1748,12 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
     query_result = PQexec(layerinfo->conn, sql);
     if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) 
     {
-      char tmp1[63]; 
+      char *tmp1;
       char *tmp2 = NULL;
-      strcat(tmp1, "Error executing POSTGIS statement (msPOSTGISLayerRetrievePK():");
-      tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql)));
-      strcat(tmp2, tmp1);
+
+      tmp1 = "Error executing POSTGIS statement (msPOSTGISLayerRetrievePK():";
+      tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
+      strcpy(tmp2, tmp1);
       strcat(tmp2, sql);
       msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
       free(tmp2);
