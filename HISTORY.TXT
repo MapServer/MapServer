@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.1 (CVS)
 --------------------------
 
+- Bug 1312 : Problems with string initialization when building tmp
+             files. It was cuasing a problem for wms client layers.
+
 - Bug 1390 : Fix svg output for multipolygons.
 
 
