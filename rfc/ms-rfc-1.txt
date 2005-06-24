@@ -117,4 +117,5 @@ Suggested changes:
    with commit privledges". 
  o Add a "0" don't care vote indicating "no problem" but not actively in 
    support or against.
+ o note that anyone can submit a proposal, not just committee members.
 
