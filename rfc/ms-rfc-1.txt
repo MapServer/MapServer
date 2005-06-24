@@ -106,3 +106,15 @@ Steve Lime is declared initial Chair of the Technical Steering Committee.
 Steve Lime, Daniel Morissette, Frank Warmerdam, Sean Gilles, Assefa
 Yewondwossen, Howard Butler and Perry Nacionales are declared to be the 
 founding Technical Steering Committee.
+
+
+===
+
+Suggested changes:
+ o Make "veto override votes" a second round vote, not automatic on the
+   first vote.
+ o Make membership clear - likely remove note about "primarily developers
+   with commit privledges". 
+ o Add a "0" don't care vote indicating "no problem" but not actively in 
+   support or against.
+
