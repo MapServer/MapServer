@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.183  2005/06/24 13:32:32  assefa
+ * in function msTmpFile : reinitialize always the sting tmpId. There was
+ * a problem with this string not being initialized when the function was
+ * call more than once : Bug 1312.
+ *
  * Revision 1.182  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -1093,12 +1098,10 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     {
         strncpy( tmpId, ForcedTmpBase, sizeof(tmpId) );
     }
-    else if (tmpCount == -1)
-    {
-        /* We'll use tmpId and tmpCount to generate unique filenames */
-        sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
-        tmpCount = 0;
-    }
+    /* We'll use tmpId and tmpCount to generate unique filenames */
+    sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
+    tmpCount = 0;
+
 
     if (ext == NULL)  ext = "";
     tmpFname = (char*)malloc(strlen(tmpId) + 4  + strlen(ext) + 1);
