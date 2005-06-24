@@ -51,7 +51,7 @@ Detailed Process
 
  9) Upon completion of discussion and voting the proposer should announce
     whether they are proceeding (proposal accepted) or are withdrawing their 
-    proposal (vetod). 
+    proposal (vetoed). 
 
 10) The Chair gets a vote.
 
@@ -116,6 +116,8 @@ Suggested changes:
  o Make membership clear - likely remove note about "primarily developers
    with commit privledges". 
  o Add a "0" don't care vote indicating "no problem" but not actively in 
+   support or against. "+0" means a positive opinion, but not actively in
+   support or against.  "-0" means a negative opinion, but not actively in
    support or against.
  o note that anyone can submit a proposal, not just committee members.
  o Be specific that the override is >50% of all members (not just voters).
