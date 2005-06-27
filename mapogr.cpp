@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.88  2005/06/27 19:52:22  frank
+ * Avoid leak of "0 length" point arrays in geometry.
+ *
  * Revision 1.87  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -373,7 +376,7 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
  * ------------------------------------------------------------------ */
   lineObj *line = outshp->line + outshp->numlines-1;
 
-  if( line->numpoints == 0 )
+  if( line->point == NULL )
       line->point = (pointObj *) malloc(sizeof(pointObj) * numpoints);
   else
       line->point = (pointObj *) 
