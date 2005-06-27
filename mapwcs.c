@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2005/06/27 19:58:30  frank
+ * Fixed some small WCS params related memory leaks.
+ *
  * Revision 1.69  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -1235,15 +1238,27 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   /* populate the service parameters */
   params = msWCSCreateParams();
   if( msWCSParseRequest(request, params, map) == MS_FAILURE )
+  {
+      msWCSFreeParams(params); /* clean up */
+      free(params);
       return MS_FAILURE;
+  }
 
   /* If SERVICE is specified then it MUST be "WCS" */
   if(params->service && strcasecmp(params->service, "WCS") != 0)
-    return MS_DONE;
+  {
+      msWCSFreeParams(params); /* clean up */
+      free(params);
+      return MS_DONE;
+  }
 
   /* If SERVICE and REQUEST not included then not a WCS request */
   if(!params->service && !params->request)
-    return MS_DONE;
+  {
+      msWCSFreeParams(params); /* clean up */
+      free(params);
+      return MS_DONE;
+  }
 
   /*
   ** ok, it's a WCS request, check what we can at a global level and then dispatch to the various request handlers
