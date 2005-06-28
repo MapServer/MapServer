@@ -13,6 +13,10 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+CVS HEAD
+--------
+
+- Fixed copying of processing directives within copy of a layer (bug 1399).
 
 - Bug 1312 : Problems with string initialization.
 
