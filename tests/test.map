@@ -54,6 +54,7 @@ MAP
       "init=epsg:4326"
     END
     DATA "raster.tif"
+    PROCESSING "BANDS=1"
     STATUS DEFAULT
   END
   

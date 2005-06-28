@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/06/28 16:33:23  sean
+ * Fixed copy of layer processing directives with use of msLayerGetProcessing and msLayerAddProcessing (bug 1399). Also caught error in the upper bounds of looping over layer joins.
+ *
  * Revision 1.40  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -830,15 +833,17 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTELEM(transparency);
     MS_COPYSTELEM(dump);
     MS_COPYSTELEM(debug);
-    MS_COPYSTELEM(numprocessing);
 
-    for (i = 0; i < dst->numprocessing; i++) {
-        MS_COPYSTRING(dst->processing[i], src->processing[i]);
+    /* No need to copy the numprocessing member, as it is incremented by
+       msLayerAddProcessing */
+    for (i = 0; i < src->numprocessing; i++) 
+    {
+        msLayerAddProcessing(dst, msLayerGetProcessing(src, i));
     }
 
     MS_COPYSTELEM(numjoins);
 
-    for (i = 0; i < dst->numprocessing; i++) {
+    for (i = 0; i < dst->numjoins; i++) {
         return_value = msCopyJoin(&(dst->joins[i]), &(src->joins[i]));
         if (return_value != MS_SUCCESS)
             return MS_FAILURE;
