@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40.2.2  2005/06/29 14:30:29  sean
+ * no longer copying layer and join items, as these will be initialized on opening of layer and joining of data (bug 1403)
+ *
  * Revision 1.40.2.1  2005/06/28 17:01:51  sean
  * Fixed copy of layer processing directives with use of msLayerGetProcessing and msLayerAddProcessing (bug 1399). Also caught error in the upper bounds of looping over layer joins.
  *
@@ -231,16 +234,10 @@ int msCopyExpression(expressionObj *dst, expressionObj *src)
 
 int msCopyJoin(joinObj *dst, joinObj *src)
 {
-    int i;
     MS_COPYSTRING(dst->name, src->name);
 
-    /* not sure it makes sense to copy the values (or the items for that matter) since */
-    /* since they are runtime additions to the mapfile, probably should be NULL with numitems=0 */
-    MS_COPYSTELEM(numitems);
-    for (i = 0; i < dst->numitems; i++) {
-        MS_COPYSTRING(dst->items[i], src->items[i]);
-        MS_COPYSTRING(dst->values[i], src->values[i]);  
-    }
+    /* makes no sense to copy the values or items since
+       they are runtime additions to the mapfile */
 
     MS_COPYSTRING(dst->table, src->table);
     MS_COPYSTRING(dst->from, src->from);
@@ -800,16 +797,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTELEM(connectiontype);
     MS_COPYSTELEM(sameconnection);
 
-    /* MS_COPYSTELEM(layerinfo); */
-    /* MS_COPYSTELEM(ogrlayerinfo);  */
-    /* MS_COPYSTELEM(wfslayerinfo); */
-    MS_COPYSTELEM(numitems);
-
-    for (i = 0; i < dst->numitems; i++) {
-        MS_COPYSTRING(dst->items[i], src->items[i]);
-    }
-
-    MS_COPYSTELEM(iteminfo);
+    /* layerinfo, items, and iteminfo are not copied. these are set when the
+       copied layer is opened */
 
     return_value = msCopyExpression(&(dst->filter), &(src->filter));
     if (return_value != MS_SUCCESS) {
@@ -848,7 +837,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
             return MS_FAILURE;
     }
 
-		MS_COPYRECT(&(dst->extent), &(src->extent));
+    MS_COPYRECT(&(dst->extent), &(src->extent));
     
     return MS_SUCCESS;
 }
