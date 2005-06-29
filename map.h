@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.417  2005/06/29 14:11:50  dan
+ * Set MS_VERSION to 4.7
+ *
  * Revision 1.416  2005/06/14 18:09:52  dan
  * Ready for 4.6.0 release
  *
@@ -304,7 +307,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.6.0"
+#define MS_VERSION "4.7"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
