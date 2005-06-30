@@ -95,7 +95,12 @@ OUTPUT_JPEG=-DUSE_GD_JPEG
 OUTPUT_PNG=-DUSE_GD_PNG
 
 #PNG_DIR=c:/projects/libpng-1.2.7
+
 #ZLIB_DIR=c:/projects/zlib-1.2.1
+
+#flag to indicate the use of zlib library. It is used intially in SVG
+#output to compressed files.
+#ZLIB=-DUSE_ZLIB
 
 # If you wish to allow Windows BMP output maps, uncomment the following flag.
 OUTPUT_WBMP=-DUSE_GD_WBMP
