@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/07/05 14:36:33  assefa
+ * Correct a bug : using msFree on a wrong pointer : Bug 1406.
+ *
  * Revision 1.18  2005/06/22 15:16:25  assefa
  * Correct problems with multipolygons (Bug 1390).
  * Remove unecessary spaces when generating the SVG.
@@ -1893,7 +1896,7 @@ int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
         msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "\n<image xlink:href=\"%s\" x=\"0\" y=\"0\" width=\"%d\" height=\"%d\"/>\n", pszURL, map->width, map->height);
 
          msFreeImage(imagetmp);
-         msFree(tmpfile);
+         msFree(pszTmpfile);
          msFree(pszURL);
 
          /* TODO : should we keep track of the file and delete it ? */
