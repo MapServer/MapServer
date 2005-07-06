@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/07/06 15:18:17  dan
+ * Fixed missing space in GML MultiLineString output (bug 1408)
+ *
  * Revision 1.66  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -307,7 +310,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
 	
         msIO_fprintf(stream, "%s    <gml:coordinates>", tab);
         for(i=0; i<shape->line[j].numpoints; i++)
-	  msIO_fprintf(stream, "%f,%f", shape->line[j].point[i].x, shape->line[j].point[i].y);
+	  msIO_fprintf(stream, "%f,%f ", shape->line[j].point[i].x, shape->line[j].point[i].y);
         msIO_fprintf(stream, "</gml:coordinates>\n");
         msIO_fprintf(stream, "%s  </gml:LineString>\n", tab);
       }
