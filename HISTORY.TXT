@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.1 (CVS)
 --------------------------
 
+- Fixed missing space in GML MultiLineString output (bug 1408)
+
 - Fixed copy of processing directives within a layer copy (bug 1399).
 
 - Bug 1312 : Problems with string initialization when building tmp
