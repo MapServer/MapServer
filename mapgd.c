@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2005/07/06 19:53:48  sdlime
+ * Ellipse rendering is directly into the main image instead of a temporary tile. Should be faster.
+ *
  * Revision 1.103  2005/07/06 19:41:53  sdlime
  * Fixed ellipse symbols so that just a point is drawn when they degenerate enough.
  *
@@ -1476,52 +1479,36 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       gdImageCopyResampled(img, symbol->img, offset_x, offset_y, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);
     }
     break;
-  case(MS_SYMBOL_ELLIPSE): /* TODO: Need to leverage the image cache! */
-    w = MS_NINT((size*symbol->sizex/symbol->sizey));
+  case(MS_SYMBOL_ELLIPSE):
+    w = MS_NINT((size*symbol->sizex/symbol->sizey)); /* ellipse size */
     h = MS_NINT(size);
+
+    x = MS_NINT(p->x - .5*w + ox); /* center the ellipse */
+    y = MS_NINT(p->y - .5*h + oy);
 
     /* check for trivial case - single pixel */
     if(w==1 && h==1) {
-      gdImageSetPixel(img, (int)(p->x + ox), (int)(p->y + oy), fc);
+      gdImageSetPixel(img, x, y, fc);
       return;
     }
 
-    /* create temporary image and allocate a few colors */
-    tmp = gdImageCreate(h, w);
-    tmp_bc = gdImageColorAllocate(tmp, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-    gdImageColorTransparent(tmp, 0);
-    if(fc >= 0)
-      tmp_fc = gdImageColorAllocate(tmp, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
-    if(oc >= 0)
-      tmp_oc = gdImageColorAllocate(tmp, gdImageRed(img, oc), gdImageGreen(img, oc), gdImageBlue(img, oc));
-
-    x = MS_NINT(tmp->sx/2); /* center of the image */
-    y = MS_NINT(tmp->sy/2);
-
     /* for a circle interpret the style angle as the size of the arc (for drawing pies) */
-    if(symbol->points[0].x == symbol->points[0].y && style->angle != 360) {
-      if(symbol->filled && tmp_fc >= 0) {
-        gdImageFilledArc(tmp, x, y, w, h, 0, style->angle, tmp_fc, gdEdged|gdPie);
-        if(tmp_oc >= 0) gdImageFilledArc(tmp, x, y, w, h, 0, style->angle, tmp_oc, gdEdged|gdNoFill);
-      } else if(!symbol->filled && tmp_fc >= 0) {
-        gdImageFilledArc(tmp, x, y, w, h, 0, style->angle, tmp_fc, gdEdged|gdNoFill);
+    if(w == h && style->angle != 360) {
+      if(symbol->filled && fc >= 0) {
+        gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdPie);
+        if(oc >= 0) gdImageFilledArc(img, x, y, w, h, 0, style->angle, oc, gdEdged|gdNoFill);
+      } else if(!symbol->filled && fc >= 0) {
+        gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdNoFill);
       }
     } else {
-      if(symbol->filled && tmp_fc >= 0) {
-	gdImageFilledEllipse(tmp, x, y, w, h, tmp_fc);        
-        if(tmp_oc >= 0) gdImageArc(tmp, x, y, w, h, 0, 360, tmp_oc);
-      } else if(!symbol->filled && tmp_fc >= 0) {
-        gdImageArc(tmp, x, y, w, h, 0, 360, tmp_fc);
+      if(symbol->filled && fc >= 0) {
+	gdImageFilledEllipse(img, x, y, w, h, fc);        
+        if(oc >= 0) gdImageArc(img, x, y, w, h, 0, 360, oc);
+      } else if(!symbol->filled && fc >= 0) {
+        gdImageArc(img, x, y, w, h, 0, 360, fc);
       }      
     }
     
-    /* paste the tmp image in the main image */
-    offset_x = MS_NINT(p->x - .5*tmp->sx + ox);
-    offset_y = MS_NINT(p->y - .5*tmp->sy + oy);
-    msFixedImageCopy(img, tmp, offset_x, offset_y, 0, 0, tmp->sx, tmp->sy);
-
-    gdImageDestroy(tmp);
-
     break;
   case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
     d = size/symbol->sizey;
