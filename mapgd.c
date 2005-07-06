@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2005/07/06 19:41:53  sdlime
+ * Fixed ellipse symbols so that just a point is drawn when they degenerate enough.
+ *
  * Revision 1.102  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -1374,7 +1377,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-  int offset_x, offset_y, x, y;
+  int offset_x, offset_y, x, y, w, h;
   int j, k;
   gdPoint oldpnt,newpnt;
   gdPoint mPoints[MS_MAXVECTORPOINTS];
@@ -1426,7 +1429,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     return;
   }  
 
-  switch(symbol->type) {  
+  switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE): /* TODO: Need to leverage the image cache! */
 
 #ifdef USE_GD_FT
@@ -1474,12 +1477,17 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     }
     break;
   case(MS_SYMBOL_ELLIPSE): /* TODO: Need to leverage the image cache! */
-    d = size/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d)+1;
-    y = MS_NINT(symbol->sizey*d)+1;
+    w = MS_NINT((size*symbol->sizex/symbol->sizey));
+    h = MS_NINT(size);
+
+    /* check for trivial case - single pixel */
+    if(w==1 && h==1) {
+      gdImageSetPixel(img, (int)(p->x + ox), (int)(p->y + oy), fc);
+      return;
+    }
 
     /* create temporary image and allocate a few colors */
-    tmp = gdImageCreate(x, y);
+    tmp = gdImageCreate(h, w);
     tmp_bc = gdImageColorAllocate(tmp, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
     gdImageColorTransparent(tmp, 0);
     if(fc >= 0)
@@ -1487,23 +1495,29 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     if(oc >= 0)
       tmp_oc = gdImageColorAllocate(tmp, gdImageRed(img, oc), gdImageGreen(img, oc), gdImageBlue(img, oc));
 
-    x = MS_NINT(tmp->sx/2);
+    x = MS_NINT(tmp->sx/2); /* center of the image */
     y = MS_NINT(tmp->sy/2);
 
     /* for a circle interpret the style angle as the size of the arc (for drawing pies) */
     if(symbol->points[0].x == symbol->points[0].y && style->angle != 360) {
-      if(symbol->filled && tmp_fc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_fc, gdEdged|gdPie);
-      if(!symbol->filled && tmp_fc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_fc, gdEdged|gdNoFill);
-      if(tmp_oc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_oc, gdEdged|gdNoFill);
+      if(symbol->filled && tmp_fc >= 0) {
+        gdImageFilledArc(tmp, x, y, w, h, 0, style->angle, tmp_fc, gdEdged|gdPie);
+        if(tmp_oc >= 0) gdImageFilledArc(tmp, x, y, w, h, 0, style->angle, tmp_oc, gdEdged|gdNoFill);
+      } else if(!symbol->filled && tmp_fc >= 0) {
+        gdImageFilledArc(tmp, x, y, w, h, 0, style->angle, tmp_fc, gdEdged|gdNoFill);
+      }
     } else {
-      if(symbol->filled && tmp_fc >= 0) gdImageFilledEllipse(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), tmp_fc);
-      if(!symbol->filled && tmp_fc >= 0) gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_fc);
-      if(tmp_oc >= 0) gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_oc);
+      if(symbol->filled && tmp_fc >= 0) {
+	gdImageFilledEllipse(tmp, x, y, w, h, tmp_fc);        
+        if(tmp_oc >= 0) gdImageArc(tmp, x, y, w, h, 0, 360, tmp_oc);
+      } else if(!symbol->filled && tmp_fc >= 0) {
+        gdImageArc(tmp, x, y, w, h, 0, 360, tmp_fc);
+      }      
     }
     
     /* paste the tmp image in the main image */
     offset_x = MS_NINT(p->x - .5*tmp->sx + ox);
-    offset_y = MS_NINT(p->y - .5*tmp->sx + oy);
+    offset_y = MS_NINT(p->y - .5*tmp->sy + oy);
     msFixedImageCopy(img, tmp, offset_x, offset_y, 0, 0, tmp->sx, tmp->sy);
 
     gdImageDestroy(tmp);
@@ -1544,12 +1558,12 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       if(fc < 0) fc = oc; /* try the outline color (reference maps sometimes do this when combining a box and a custom vector marker */
       if(fc < 0) return;
       
-      oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); /* convert first point in marker s */
+      oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); /* convert first point in marker */
       oldpnt.y = MS_NINT(d*symbol->points[0].y + offset_y);
 
       gdImageSetThickness(img, width);
       
-      for(j=1;j < symbol->numpoints;j++) { /* step through the marker s */
+      for(j=1;j < symbol->numpoints;j++) { /* step through the marker */
 	if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
 	  oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
 	  oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
@@ -1566,7 +1580,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 	}
       } /* end for loop */   
 
-        gdImageSetThickness(img, 1);
+      gdImageSetThickness(img, 1); /* restore thinkness */
     } /* end if-then-else */
     break;
   default:
