@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2005/07/07 15:03:33  hobu
+ * put thread locking around static data members
+ * used in the lcache (msSDELCacheAdd)
+ *
  * Revision 1.95  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -120,6 +124,7 @@
 #include "map.h"
 #include "maperror.h"
 #include "maptime.h"
+#include "mapthread.h"
 
 #ifdef USE_SDE
 #include <sdetype.h> /* ESRI SDE Client Includes */
@@ -161,6 +166,7 @@ typedef struct {
 /*
  * Layer ID caching section.
  */
+ 
 static int lcacheCount = 0;
 static int lcacheMax = 0;
 static layerId *lcache = NULL;
@@ -232,8 +238,11 @@ long msSDELCacheAdd( layerObj *layer,
                      char *columnName,
                      char *connectionString) 
 {
+  
   layerId *lid = NULL;
   int status = 0;
+  
+  msAcquireLock( TLOCK_SDE );
   
   if (layer->debug){
     msDebug( "%s: Caching id for %s, %s, %s\n", "msSDELCacheAdd()", 
@@ -248,6 +257,7 @@ long msSDELCacheAdd( layerObj *layer,
     lcache = (layerId *)realloc(lcache, sizeof(layerId) * lcacheMax);
     if(lcache == NULL)
     {
+      msReleaseLock( TLOCK_SDE );
       msSetError(MS_MEMERR, NULL, "msSDELCacheAdd()");
       return (MS_FAILURE);
     }
@@ -262,12 +272,15 @@ long msSDELCacheAdd( layerObj *layer,
   status = SE_layerinfo_get_id(layerinfo, &lid->layerId);
   if(status != SE_SUCCESS)
   {
+        msReleaseLock( TLOCK_SDE );
         sde_error(status, "msSDELCacheAdd()", "SE_layerinfo_get_id()");
         return(MS_FAILURE);
   }
   lid->table = strdup(tableName);
   lid->column = strdup(columnName);
   lid->connection = strdup(connectionString);
+  
+  msReleaseLock( TLOCK_SDE );
   return (MS_SUCCESS);
 }
 
