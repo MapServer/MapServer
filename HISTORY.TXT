@@ -16,9 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.1 (CVS)
 --------------------------
 
-- Fixed missing space in GML MultiLineString output (bug 1408)
+- bug 1402: fixed mappool.c so that any thread can release a connection,
+  not just it's allocator. 
 
-- Fixed copy of processing directives within a layer copy (bug 1399).
+- Bug 1408: Fixed missing space in GML MultiLineString output
+
+- Bug 1399: Fixed copy of processing directives within a layer copy.
 
 - Bug 1312 : Problems with string initialization when building tmp
              files. It was cuasing a problem for wms client layers.
