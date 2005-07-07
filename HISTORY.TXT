@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- mapthread.c/h: Added TLOCK_SDE and TLOCK_ORACLE - not used yet.
+
 - Fixed copying of layer and join items (bug 1403).
 
 - Fixed copying of processing directives within copy of a layer (bug 1399).

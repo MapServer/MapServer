@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/07/07 14:38:00  frank
+ * added TLOCK_ORACLE and TLOCK_SDE definitions
+ *
  * Revision 1.12  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -182,7 +185,8 @@ MS_CVSID("$Id$")
 static int thread_debug = 0;
 
 static char *lock_names[] = 
-{ NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", NULL };
+{ NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", "SDE", 
+  "ORACLE", NULL };
 #endif
 
 /************************************************************************/
