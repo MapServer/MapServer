@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/07/07 14:51:25  frank
+ * bug1402: any thread can release a connection
+ *
  * Revision 1.10  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -429,25 +432,9 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
         connectionObj *conn = connections + i;
 
         if( layer->connectiontype == conn->connectiontype
-            && strcasecmp( layer->connection, conn->connection ) == 0 )
+            && strcasecmp( layer->connection, conn->connection ) == 0 
+            && conn->conn_handle == conn_handle )
         {
-            if( conn->conn_handle != conn_handle )
-            {
-                msDebug( "%s: Handle confusion on layer %s, passed in %p, but expected %p.\n", 
-                         "msConnPoolRelease()",
-                         layer->name,
-                         conn_handle, 
-                         conn->conn_handle );
-
-                msSetError( MS_MISCERR, 
-                            "Handle confusion on layer %s.", 
-                            "msConnPoolRelease()",
-                            layer->name );
-
-                msReleaseLock( TLOCK_POOL );
-                return;
-            }
-
             conn->ref_count--;
             conn->last_used = time(NULL);
 

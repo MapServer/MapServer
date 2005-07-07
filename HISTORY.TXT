@@ -16,11 +16,14 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- bug 1402: fixed mappool.c so that any thread can release a connection,
+  not just it's allocator. 
+
 - mapthread.c/h: Added TLOCK_SDE and TLOCK_ORACLE - not used yet.
 
-- Fixed copying of layer and join items (bug 1403).
+- Bug 1403: Fixed copying of layer and join items.
 
-- Fixed copying of processing directives within copy of a layer (bug 1399).
+- Bug 1399: Fixed copying of processing directives within copy of a layer.
 
 - Bug 1312 : Problems with string initialization.
 
