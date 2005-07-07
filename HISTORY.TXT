@@ -15,6 +15,7 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD
 --------
+- mapsde.c: add thread locking in msSDELCacheAdd
 
 - bug 1402: fixed mappool.c so that any thread can release a connection,
   not just it's allocator. 
