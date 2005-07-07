@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2005/07/07 05:32:12  sdlime
+ * More ehancements to ellipse markers. Changed code to let GD center the ellipse. Added second trivial case for 2x2 circles since GD does not handle these properly. Will file a bug the GD folks.
+ *
  * Revision 1.104  2005/07/06 19:53:48  sdlime
  * Ellipse rendering is directly into the main image instead of a temporary tile. Should be faster.
  *
@@ -1386,8 +1389,6 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   gdPoint mPoints[MS_MAXVECTORPOINTS];
   char *error=NULL;
 
-  gdImagePtr tmp;
-  int tmp_fc=-1, tmp_bc, tmp_oc=-1;
   int fc, bc, oc;
   double size,d;
   int width;
@@ -1483,12 +1484,20 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     w = MS_NINT((size*symbol->sizex/symbol->sizey)); /* ellipse size */
     h = MS_NINT(size);
 
-    x = MS_NINT(p->x - .5*w + ox); /* center the ellipse */
-    y = MS_NINT(p->y - .5*h + oy);
+    x = MS_NINT(p->x + ox); /* GD will center the ellipse on x,y */
+    y = MS_NINT(p->y + oy);
 
-    /* check for trivial case - single pixel */
+    /* check for trivial cases - 1x1 and 2x2, GD does not do these well */
     if(w==1 && h==1) {
       gdImageSetPixel(img, x, y, fc);
+      return;
+    }
+
+    if(w==2 && h==2) {
+      gdImageSetPixel(img, x, y, fc);
+      gdImageSetPixel(img, x, y+1, fc);
+      gdImageSetPixel(img, x+1, y, fc);
+      gdImageSetPixel(img, x+1, y+1, fc);
       return;
     }
 
