@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.418  2005/07/13 19:35:08  julien
+ * Bug 1381: Support for case-insensitive Expression
+ *
  * Revision 1.417  2005/06/29 14:11:50  dan
  * Set MS_VERSION to 4.7
  *
@@ -383,6 +386,11 @@ extern "C" {
 #define MS_STRING 2002
 #define MS_NUMBER 2003
 #define MS_COMMENT 2004
+#define MS_IREGEX 2005
+#define MS_ISTRING 2006
+
+/* boolean options for the expression object. */
+#define MS_EXP_INSENSITIVE 1
 
 /* General macro definitions */
 #define MS_MIN(a,b) (((a)<(b))?(a):(b))
@@ -540,6 +548,9 @@ extern "C" {
     typedef struct {
         char *string;
         int type;
+        /* container for expression options such as case-insensitiveness */
+        /* This is a boolean container. */
+        int flags;
 
         /* logical expression options */
         char **items;

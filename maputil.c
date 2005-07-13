@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.184  2005/07/13 19:35:08  julien
+ * Bug 1381: Support for case-insensitive Expression
+ *
  * Revision 1.183  2005/06/24 13:32:32  assefa
  * in function msTmpFile : reinitialize always the sting tmpId. There was
  * a problem with this string not being initialized when the function was
@@ -295,7 +298,14 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
       return(MS_FALSE);
     }
-    if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
+    if(expression->flags & MS_EXP_INSENSITIVE)
+    {
+      if(strcasecmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
+    }
+    else
+    {
+      if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
+    }
     break;
   case(MS_EXPRESSION):
     tmpstr = strdup(expression->string);
@@ -332,9 +342,19 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     }
 
     if(!expression->compiled) {
-      if(ms_regcomp(&(expression->regex), expression->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression */
-        msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
-        return(MS_FALSE);
+      if(expression->flags & MS_EXP_INSENSITIVE)
+      {
+        if(ms_regcomp(&(expression->regex), expression->string, MS_REG_EXTENDED|MS_REG_NOSUB|MS_REG_ICASE) != 0) { /* compile the expression */
+          msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
+          return(MS_FALSE);
+        }
+      }
+      else
+      {
+        if(ms_regcomp(&(expression->regex), expression->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression */
+          msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
+          return(MS_FALSE);
+        }
       }
       expression->compiled = MS_TRUE;
     }

@@ -30,12 +30,14 @@ int msyyresult;
 
 %token <dblval> NUMBER
 %token <strval> STRING
+%token <strval> ISTRING
 %token <tmval> TIME
 %token <strval> REGEX
+%token <strval> IREGEX
 %left OR
 %left AND
 %left NOT
-%left RE EQ NE LT GT LE GE IN
+%left RE EQ NE LT GT LE GE IN IEQ
 %left LENGTH
 %left '+' '-'
 %left '*' '/'
@@ -297,6 +299,24 @@ logical_exp:
 					 if($1 == atof(bufferp)) // is this test necessary?
 					   $$ = MS_TRUE;
 				       }
+       | math_exp IEQ math_exp         {
+	                                 if($1 == $3)
+	 		                   $$ = MS_TRUE;
+			                 else
+			                   $$ = MS_FALSE;
+		                       }
+       | string_exp IEQ string_exp     {
+                                         if(strcasecmp($1, $3) == 0)
+					   $$ = MS_TRUE;
+					 else
+					   $$ = MS_FALSE;
+				       }
+       | time_exp IEQ time_exp     {
+                                     if(msTimeCompare(&($1), &($3)) == 0)
+				       $$ = MS_TRUE;
+				     else
+				       $$ = MS_FALSE;
+				   }
 ;
 
 math_exp: NUMBER

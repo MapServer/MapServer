@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.305  2005/07/13 19:35:08  julien
+ * Bug 1381: Support for case-insensitive Expression
+ *
  * Revision 1.304  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -1458,6 +1461,7 @@ void initExpression(expressionObj *exp)
   exp->indexes = NULL;
   exp->numitems = 0;
   exp->compiled = MS_FALSE;
+  exp->flags = 0;
 }
 
 void freeExpression(expressionObj *exp)
@@ -1465,7 +1469,7 @@ void freeExpression(expressionObj *exp)
   if(!exp) return;
 
   msFree(exp->string);
-  if(exp->type == MS_REGEX && exp->compiled) ms_regfree(&(exp->regex));
+  if((exp->type == MS_REGEX) && exp->compiled) ms_regfree(&(exp->regex));
   if(exp->type == MS_EXPRESSION && exp->numitems > 0) msFreeCharArray(exp->items, exp->numitems);
   msFree(exp->indexes);
 
@@ -1474,8 +1478,19 @@ void freeExpression(expressionObj *exp)
 
 int loadExpression(expressionObj *exp)
 {
-  if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
+  if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX)) == -1) return(-1);
   exp->string = strdup(msyytext);
+
+  if(exp->type == MS_ISTRING)
+  {
+      exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+      exp->type = MS_STRING;
+  }
+  else if(exp->type == MS_IREGEX)
+  {
+      exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+      exp->type = MS_REGEX;
+  }
   
   /* if(exp->type == MS_REGEX) { */
   /* if(ms_regcomp(&(exp->regex), exp->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { // compile the expression  */
@@ -1518,7 +1533,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); /* we're totally replacing the old expression so free then init to start over */
   /* initExpression(exp); */
 
-  if((exp->type = getSymbol(2, MS_EXPRESSION,MS_REGEX)) == -1) {
+  if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) == -1) {
     msResetErrorList(); /* failure above is not really an error, so reset the stack */
 
     exp->type = MS_STRING;
@@ -1527,7 +1542,20 @@ int loadExpressionString(expressionObj *exp, char *value)
     else
       exp->string = strdup(value); /* use the whole value */
   } else
+    {
     exp->string = strdup(msyytext);
+
+    if(exp->type == MS_ISTRING)
+    {
+        exp->type = MS_STRING;
+        exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+    }
+    else if(exp->type == MS_IREGEX)
+    {
+        exp->type = MS_REGEX;
+        exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+    }
+  }
     
   /* if(exp->type == MS_REGEX) { */
   /* if(ms_regcomp(&(exp->regex), exp->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { // compile the expression  */
@@ -1553,6 +1581,9 @@ static void writeExpression(expressionObj *exp, FILE *stream)
     fprintf(stream, "(%s)", exp->string);
     break;
   }
+  if((exp->type == MS_STRING || exp->type == MS_REGEX) && 
+     (exp->flags & MS_EXP_INSENSITIVE))
+      fprintf(stream, "i");
 }
 
 int loadHashTable(hashTableObj *ptable)

@@ -119,6 +119,7 @@ void lexer_cleanup(void) {
 <EXPRESSION_STRING>not|!                       { return(NOT); }
 
 <EXPRESSION_STRING>length                      { return(LENGTH); }
+<EXPRESSION_STRING>ieq                         { return(IEQ); }
 
 
 <INITIAL,OBJECT_STRING>colorrange              { return(COLORRANGE); }
@@ -373,6 +374,19 @@ void lexer_cleanup(void) {
                                                  return(TIME);
                                                }
 
+<INITIAL,VALUE_STRING>\/[^\/]*\/i              {
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-2] = '\0';
+			                         return(MS_IREGEX);
+			                       }
+
+<EXPRESSION_STRING>\/[^\/]*\/i                 {
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-2] = '\0';
+                                                 msyylval.strval = strdup(msyytext);
+			                         return(IREGEX);
+			                       }
+
 <INITIAL,VALUE_STRING>\/[^\/]*\/               {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
@@ -392,6 +406,18 @@ void lexer_cleanup(void) {
 			                         return(MS_EXPRESSION);
 			                       }
 
+<INITIAL,VALUE_STRING>\"[^\"]*\"i	       {
+			                         msyytext++;
+			                         msyytext[strlen(msyytext)-2] = '\0';
+     			                         return(MS_ISTRING);
+			                       }
+
+<INITIAL,VALUE_STRING>\'[^\']*\'i	       {                                                 
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-2] = '\0';
+       			                         return(MS_ISTRING);
+			                       }
+
 <INITIAL,VALUE_STRING>\"[^\"]*\"	       {
 			                         msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
@@ -403,6 +429,22 @@ void lexer_cleanup(void) {
 			                         msyytext[strlen(msyytext)-1] = '\0';
        			                         return(MS_STRING);
 			                       }
+
+<EXPRESSION_STRING>\"[^\"]*\"i	               {
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-2] = '\0';
+			                         /* msyylval.strval = strdup(msyytext);*/
+			                         msyylval.strval = msyytext;
+			                         return(ISTRING);
+			                       }
+
+<EXPRESSION_STRING>\'[^\']*\'i	               {
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-2] = '\0';
+			                         /* msyylval.strval = strdup(msyytext);*/
+			                         msyylval.strval = msyytext;
+			                         return(ISTRING);
+                                               }
 
 <EXPRESSION_STRING>\"[^\"]*\"	               {
                                                  msyytext++;
