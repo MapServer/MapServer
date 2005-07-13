@@ -1,0 +1,56 @@
+===============================================================
+  MS RFC 2: Creating line features and/or shapes using WKT
+===============================================================
+
+:Date: 2005/07/13 
+:Author: Steve Lime
+:Contact: steve.lime@DNR.STATE.MN.US
+:Last Edited: $Date$
+:Status: Proposed
+
+Description: Developing inline features or shapes within MapScript can be a 
+bit cumbersome.  One alternative would be to allow users to define feature 
+using the Well-Known Text format.  The proposed solution would allow users 
+to use this format:
+
+1) within a mapfile
+2) via URL
+3) via MapScript
+
+Instead of writing a new WKT parser I would provide access to underlying GEOS 
+functionality to do this and leverage the Geometry <=> shapeObj wrapper code 
+that is already available.
+
+Files affected
+~~~~~~~~~~~~~~~~~
+
+- mapfile.h => new constant
+- maplexer.l => recognize the new constant
+- mapfile.c => process new mapfile parameter with FEATURE block (WKT), and 
+  update URL parsing in a similar manner
+- mapgeos.cpp => wrap GEOS WKT reading code
+- mapscript/swiginc/shape.i => update constructor to pass a WKT string
+
+Backwards compatabilty issues
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+N/A, new functionality
+
+Implementation Issues
+~~~~~~~~~~~~~~~~~~~~~~
+
+Biggest problem may lie with MapScript and how to integrate into the shapeObj 
+code. Ideally one would just create an overloaded shapeObj constuctor. It's 
+not clear how cross-language that would be although both Perl and Python 
+support that via SWIG. Not sure about other SWIGed languages or PHP.  Could 
+also consider adding a method like .addWKT. to the layer object.
+
+Bug ID
+~~~~~~~~
+
+unassigned
+
+Voting history
+~~~~~~~~~~~~~~~~~
+
+None
