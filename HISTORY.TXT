@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD
 --------
+- bug 1417: fixed msHTTPInit() not ever being called which prevented
+  msHTTPCleanup() from properly cleaning up cUrl with curl_global_cleanup().
+  
 - mapsde.c: add thread locking in msSDELCacheAdd
 
 - bug 1402: fixed mappool.c so that any thread can release a connection,

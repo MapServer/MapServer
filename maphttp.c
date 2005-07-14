@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2005/07/14 21:43:26  hobu
+ * Fix bug 1417 msHTTPInit() not ever called
+ *
  * Revision 1.19  2005/05/13 17:23:34  dan
  * First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
  * layers. Still needs some work. (bug 1246)
@@ -98,6 +101,7 @@
 #include "map.h"
 #include "maperror.h"
 #include "mapows.h"
+#include "mapthread.h"
 
 MS_CVSID("$Id$")
 
@@ -135,9 +139,12 @@ int msHTTPInit()
      * many threads or libcurl sessions that'll be used) by every
      * application that uses libcurl.
      */
+     
+    msAcquireLock(TLOCK_OWS);
     if (!gbCurlInitialized && 
         curl_global_init(CURL_GLOBAL_ALL) != 0)
     {
+        msReleaseLock(TLOCK_OWS);
         msSetError(MS_HTTPERR, "Libcurl initialization failed.", 
                    "msHTTPInit()");
         return MS_FAILURE;
@@ -145,6 +152,7 @@ int msHTTPInit()
 
     gbCurlInitialized = MS_TRUE;
 
+    msReleaseLock(TLOCK_OWS);
     return MS_SUCCESS;
 }
 
@@ -157,8 +165,10 @@ void msHTTPCleanup()
 {
     if (gbCurlInitialized)
         curl_global_cleanup();
-
+        
+    msAcquireLock(TLOCK_OWS);
     gbCurlInitialized = MS_FALSE;
+    msReleaseLock(TLOCK_OWS);
 }
 
 
@@ -177,6 +187,9 @@ void msHTTPCleanup()
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests) 
 {
     int i;
+    if (!gbCurlInitialized)
+        msHTTPInit();
+  
     for(i=0; i<numRequests; i++)
     {
         pasReqInfo[i].pszGetUrl = NULL;
