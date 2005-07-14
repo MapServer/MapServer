@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/07/14 21:20:44  hobu
+ * added TLOCK_OWS definition
+ *
  * Revision 1.8  2005/07/07 14:38:00  frank
  * added TLOCK_ORACLE and TLOCK_SDE definitions
  *
@@ -71,6 +74,7 @@ void msReleaseLock(int);
 #define TLOCK_POOL      6
 #define TLOCK_SDE       7
 #define TLOCK_ORACLE    8
+#define TLOCK_OWS       9
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100
