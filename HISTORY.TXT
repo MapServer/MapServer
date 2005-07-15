@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.1 (CVS)
 --------------------------
 
+- bug 1418: Fixed sortshp.c to free shapes after processing to avoid major
+  memory leak.
+
 - bug 1402: fixed mappool.c so that any thread can release a connection,
   not just it's allocator. 
 
