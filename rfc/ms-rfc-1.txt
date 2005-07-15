@@ -6,7 +6,7 @@
 :Author: Frank Warmerdam, Independent
 :Contact: warmerdam@pobox.com
 :Last Edited: $Date$
-:Status: Proposed
+:Status: Adopted
 
 
 Summary
