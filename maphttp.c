@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2005/07/15 13:37:47  frank
+ * Acquire TLOCK_OWS around whole func in msHTTPCleanup().
+ *
  * Revision 1.20  2005/07/14 21:43:26  hobu
  * Fix bug 1417 msHTTPInit() not ever called
  *
@@ -163,10 +166,10 @@ int msHTTPInit()
  **********************************************************************/
 void msHTTPCleanup()
 {
+    msAcquireLock(TLOCK_OWS);
     if (gbCurlInitialized)
         curl_global_cleanup();
         
-    msAcquireLock(TLOCK_OWS);
     gbCurlInitialized = MS_FALSE;
     msReleaseLock(TLOCK_OWS);
 }
