@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/07/15 13:36:46  frank
+ * Added comment on lock_names[] in mapthread.c.
+ *
  * Revision 1.9  2005/07/14 21:20:44  hobu
  * added TLOCK_OWS definition
  *
@@ -65,6 +68,11 @@ void msReleaseLock(int);
 #define msAcquireLock(x)
 #define msReleaseLock(x)
 #endif
+
+/*
+** lock ids - note there is a corresponding lock_names[] array in 
+** mapthread.c that needs to be extended when new ids are added.
+*/
 
 #define TLOCK_PARSER	1
 #define TLOCK_GDAL	2
