@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/07/15 13:57:50  frank
+ * bug 1418: fixed memory leak of shapes
+ *
  * Revision 1.5  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -228,6 +231,7 @@ int main(int argc, char *argv[])
     
     msSHPReadShape( inSHP, array[i].index, &shape );
     msSHPWriteShape( outSHP, &shape );
+    msFreeShape( &shape );
   }
 
   free(array);
