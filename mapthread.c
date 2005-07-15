@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/07/15 13:37:07  frank
+ * Added OWS lock name.
+ *
  * Revision 1.13  2005/07/07 14:38:00  frank
  * added TLOCK_ORACLE and TLOCK_SDE definitions
  *
@@ -186,7 +189,7 @@ static int thread_debug = 0;
 
 static char *lock_names[] = 
 { NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", "SDE", 
-  "ORACLE", NULL };
+  "ORACLE", "OWS", NULL };
 #endif
 
 /************************************************************************/
