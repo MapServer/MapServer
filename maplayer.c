@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.106  2005/07/16 19:07:38  jerryp
+ * Bug 1420: PostGIS connector no longer needs two layer close functions.
+ *
  * Revision 1.105  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -576,11 +579,7 @@ void msLayerClose(layerObj *layer)
     msWFSLayerClose(layer);
     break;
   case(MS_POSTGIS):
-    /*
-     * Due to connection sharing, we need to close the results
-     * and free the cursor, but not close the connection.
-     */
-    msPOSTGISLayerResultClose(layer);
+    msPOSTGISLayerClose(layer);
     break;
   case(MS_MYGIS):
     msMYGISLayerClose(layer);

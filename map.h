@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.419  2005/07/16 19:07:38  jerryp
+ * Bug 1420: PostGIS connector no longer needs two layer close functions.
+ *
  * Revision 1.418  2005/07/13 19:35:08  julien
  * Bug 1381: Support for case-insensitive Expression
  *
@@ -1553,7 +1556,6 @@ MS_DLL_EXPORT int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long 
 MS_DLL_EXPORT int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
 MS_DLL_EXPORT int msPOSTGISLayerGetItems(layerObj *layer);
-MS_DLL_EXPORT int msPOSTGISLayerResultClose(layerObj *layer);
 
 MS_DLL_EXPORT int msMYGISLayerOpen(layerObj *layer); /* in mapmygis.c */
 MS_DLL_EXPORT int msMYGISLayerIsOpen(layerObj *layer);

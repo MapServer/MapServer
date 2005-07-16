@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/07/16 19:07:39  jerryp
+ * Bug 1420: PostGIS connector no longer needs two layer close functions.
+ *
  * Revision 1.58  2005/06/23 05:11:38  jerryp
  * Fixed a buffer overflow (bug 1392).
  *
@@ -211,12 +214,10 @@ char *strstrIgnoreCase(const char *haystack, const char *needle)
 
 static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug);
 
-#ifndef USE_THREAD
 static void msPOSTGISCloseConnection(void *conn_handle)
 {
     PQfinish((PGconn*) conn_handle);
 }
-#endif
 
 static int gBYTE_ORDER = 0;
 
@@ -256,9 +257,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
     layerinfo->user_srid = NULL;
     layerinfo->conn = NULL;
 
-#ifndef USE_THREAD
     layerinfo->conn = (PGconn *) msConnPoolRequest(layer);
-#endif
     if(!layerinfo->conn) {
         if(layer->debug) {
             msDebug("MSPOSTGISLayerOpen -- shared connection not available.\n");
@@ -287,9 +286,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
             return MS_FAILURE;
         }
 
-#ifndef USE_THREAD
         msConnPoolRegister(layer, layerinfo->conn, msPOSTGISCloseConnection);
-#endif
 
         PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER, (void *) layer);
     }
@@ -685,32 +682,6 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
     return MS_SUCCESS;
 }
 
-/* Releases the cursor and closes the results of the given layer */
-int msPOSTGISLayerResultClose(layerObj *layer)
-{
-    msPOSTGISLayerInfo  *layerinfo;
-    PGresult            *res;
-
-    if (layer->debug) {
-        /* TODO Can layer->data be NULL? */
-        msDebug("msPOSTGISLayerResultClose: %s\n", layer->data);
-    }
-
-    layerinfo = getPostGISLayerInfo(layer);
-    if(layerinfo) {
-        res = PQexec(layerinfo->conn, "COMMIT");
-        if(res) {
-            PQclear(res);
-        }
-        if(layerinfo->query_result) {
-            PQclear(layerinfo->query_result);
-        }
-        layerinfo->query_result = NULL;
-    }
-
-    return MS_SUCCESS;
-}
-
 /* Close the postgis record set and connection */
 int msPOSTGISLayerClose(layerObj *layer)
 {
@@ -737,13 +708,7 @@ int msPOSTGISLayerClose(layerObj *layer)
             msDebug("msPOSTGISLayerClose -- query_result is NULL\n");
         }
 
-#ifndef USE_THREAD
         msConnPoolRelease(layer, layerinfo->conn);
-#else
-        if(layerinfo->conn) {
-            PQfinish(layerinfo->conn);
-        }
-#endif
         layerinfo->conn = NULL;
 
         if(layerinfo->urid_name) {
@@ -1935,12 +1900,6 @@ int msPOSTGISLayerInitItemInfo(layerObj *layer)
 int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 {
     msSetError(MS_QUERYERR, "msPOSTGISLayerWhichShapes called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerWhichShapes()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerResultClose(layerObj *layer)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerResultClose called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerResultClose()");
     return MS_FAILURE;
 }
 
