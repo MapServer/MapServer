@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/07/16 21:12:59  jerryp
+ * Fixed memory leaks.
+ *
  * Revision 1.59  2005/07/16 19:07:39  jerryp
  * Bug 1420: PostGIS connector no longer needs two layer close functions.
  *
@@ -1656,9 +1659,9 @@ int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int 
 
 int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name, int debug) 
 {
-    PGresult   *query_result;
-    char        *sql;
-    msPOSTGISLayerInfo *layerinfo;
+    PGresult   *query_result = 0;
+    char        *sql = 0;
+    msPOSTGISLayerInfo *layerinfo = 0;
     int major, minor, point, tmpint;
     
     if(msPOSTGISLayerRetrievePGVersion(layer, debug, &major, &minor, &point) == MS_FAILURE) 
@@ -1714,6 +1717,7 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
     {
       char tmp1[42] = "Layer does not have a postgis connection.";
       msSetError(MS_QUERYERR, tmp1, "msPOSTGISLayerRetrievePK()");
+      free(sql);
       return(MS_FAILURE);
     }
 
@@ -1729,6 +1733,7 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       strcat(tmp2, sql);
       msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
       free(tmp2);
+      free(sql);
       return(MS_FAILURE);
 
     }
@@ -1740,6 +1745,7 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
         msDebug("msPOSTGISLayerRetrievePK: No results found.\n");
       }
       PQclear(query_result);
+      free(sql);
       return MS_FAILURE;
     }
 
@@ -1750,15 +1756,16 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
         msDebug("msPOSTGISLayerRetrievePK: Null result returned.\n");
       }
       PQclear(query_result);
+      free(sql);
       return MS_FAILURE;
     }
 
     tmpint = PQgetlength(query_result, 0, 0);
-    msDebug("msPOSTGISLayerRetrievePK: field length = $i", tmpint);
     *urid_name = (char *)malloc(tmpint + 1);
     strcpy(*urid_name, PQgetvalue(query_result, 0, 0));
 
     PQclear(query_result);
+    free(sql);
     return MS_SUCCESS;
 }
 
@@ -1769,11 +1776,10 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
 
 static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug)
 {
-    char    *pos_opt, *pos_scn, *tmp, *pos_srid, *data;
-    int     slength, urid_found;
+    char    *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_urid, *data;
+    int     slength;
 
     data = layer->data;
-    urid_found = 0;
 
     /* given a string of the from 'geom from ctivalues' or 'geom from () as foo'
      * return geom_column_name as 'geom'
@@ -1781,23 +1787,17 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
      */
 
     /* First look for the optional ' using unique ID' string */
-    pos_opt = strstrIgnoreCase(data, " using unique ");
+    pos_urid = strstrIgnoreCase(data, " using unique ");
 
-    if(!pos_opt) {
-        /* No user specified unique id so we will use the Postgesql OID */
-        *urid_name = (char *) malloc(4);
-        strcpy(*urid_name, "OID");
-    } else {
+    if(pos_urid) {
         /* CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33' */
-        tmp = strstr(pos_opt + 14, " ");
+        tmp = strstr(pos_urid + 14, " ");
         if(!tmp) {
-            tmp = pos_opt + strlen(pos_opt);
+            tmp = pos_urid + strlen(pos_urid);
         }
-        *urid_name = (char *) malloc((tmp - (pos_opt + 14)) + 1);
-        strncpy(*urid_name, pos_opt + 14, tmp - (pos_opt + 14));
-        (*urid_name)[tmp - (pos_opt + 14)] = 0;
-
-        urid_found = 1;
+        *urid_name = (char *) malloc((tmp - (pos_urid + 14)) + 1);
+        strncpy(*urid_name, pos_urid + 14, tmp - (pos_urid + 14));
+        (*urid_name)[tmp - (pos_urid + 14)] = 0;
     }
 
     /* Find the srid */
@@ -1821,16 +1821,7 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
 
     /* this is a little hack so the rest of the code works.  If the ' using SRID=' comes before */
     /* the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts! */
-
-    if(!pos_opt) {
-        pos_opt = pos_srid;
-    } else {
-        if(pos_srid) {
-            if(pos_opt > pos_srid) {
-                pos_opt = pos_srid;
-            }
-        }
-    }
+    pos_opt = (pos_srid > pos_urid) ? pos_srid : pos_urid;
 
     /* Scan for the table or sub-select clause */
     pos_scn = strstrIgnoreCase(data, " from ");
@@ -1859,9 +1850,14 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
         return MS_FAILURE;
     }
 
-    if(!urid_found) {
-      msPOSTGISLayerRetrievePK(layer, urid_name, *table_name, debug);
+    if( !pos_urid ) {
+        if( msPOSTGISLayerRetrievePK(layer, urid_name, *table_name, debug) != MS_SUCCESS ) {
+            /* No user specified unique id so we will use the Postgesql OID */
+            *urid_name = (char *) malloc(4);
+            strcpy(*urid_name, "OID");
+        }
     }
+
 
     if(debug) {
         msDebug("msPOSTGISLayerParseData: unique column = %s, srid='%s', geom_column_name = %s, table_name=%s\n", *urid_name, *user_srid, *geom_column_name, *table_name);
