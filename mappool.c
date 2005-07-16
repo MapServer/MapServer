@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/07/16 21:18:34  jerryp
+ * msConnPoolClose now only copies connections when needed.
+ *
  * Revision 1.11  2005/07/07 14:51:25  frank
  * bug1402: any thread can release a connection
  *
@@ -337,20 +340,20 @@ static void msConnPoolClose( int conn_index )
     /* free malloced() stuff in this connection */
     free( conn->connection );
 
-    /* move the last connection in place of our now closed one */
-    memcpy( connections + conn_index, 
-            connections + connectionCount - 1, 
-            sizeof(connectionObj) );
-    
     connectionCount--;
-
-    /* if there are no connections left we will "cleanup".  */
-
     if( connectionCount == 0 )
     {
+        /* if there are no connections left we will "cleanup".  */
         connectionMax = 0;
         free( connections );
         connections = NULL;
+    }
+    else
+    {
+        /* move the last connection in place of our now closed one */
+        memcpy( connections + conn_index, 
+                connections + connectionCount, 
+                sizeof(connectionObj) );
     }
 }
 
