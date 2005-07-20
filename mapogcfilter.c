@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.54  2005/07/20 13:35:38  assefa
+ * Add support for attribute matchCase on PropertyIsequal and PropertyIsLike
+ * (bug 1416, 1381).
+ *
  * Revision 1.53  2005/06/10 22:14:40  assefa
  * Filter Encoding spatial operator is Intersects and not Intersect : Bug 1163.
  *
@@ -445,9 +449,9 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0 && dfDistance >=0)
     {
-        //Set the tolerance to the distance value or 0 is invalid
-        // set the the unit if unit is valid.
-        //Bug 1342 for details
+        /*Set the tolerance to the distance value or 0 is invalid
+         set the the unit if unit is valid.
+        Bug 1342 for details*/
         lp->tolerance = 0;
         if (dfDistance > 0)
         {
@@ -462,10 +466,11 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0)
     {
-        /* disable any tolerance value already set for the layer (Bug 768) */
-        //Set the tolerance to the distance value or 0 is invalid
-        // set the the unit if unit is valid.
-        //Bug 1342 for details
+        /* disable any tolerance value already set for the layer (Bug 768)
+        Set the tolerance to the distance value or 0 is invalid
+         set the the unit if unit is valid.
+        Bug 1342 for details */
+
         dfCurrentTolerance = lp->tolerance;
         lp->tolerance = 0;
         if (dfDistance > 0)
@@ -1305,6 +1310,18 @@ FilterEncodingNode *FLTCreateFilterEncodingNode(void)
     return psFilterNode;
 }
 
+FilterEncodingNode *FLTCreateBinaryCompFilterEncodingNode(void)
+{
+    FilterEncodingNode *psFilterNode = NULL;
+    
+    psFilterNode = FLTCreateFilterEncodingNode();
+    /* used to store case sensitivity flag. Default is 0 meaning the 
+       comparing is case snetitive */
+    psFilterNode->pOther = (int *)malloc(sizeof(int));
+    (*(int *)(psFilterNode->pOther)) = 0;
+
+    return psFilterNode;
+}
 
 /************************************************************************/
 /*                           FLTInsertElementInNode                     */
@@ -1319,7 +1336,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     char *pszTmp = NULL;
     FilterEncodingNode *psCurFilNode= NULL;
     CPLXMLNode *psCurXMLNode = NULL;
-    
+
+    CPLXMLNode *psTmpNode = NULL;
+
     if (psFilterNode && psXMLNode && psXMLNode->pszValue)
     {
         psFilterNode->pszValue = strdup(psXMLNode->pszValue);
@@ -1646,7 +1665,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                         else if (bPolygon)
                           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POLYGON;
                         psFilterNode->psRightNode->pOther = (shapeObj *)psShape;
-                        //the value will be distance;units
+                        /*the value will be distance;units*/
                         psFilterNode->psRightNode->pszValue = 
                           strdup(psDistance->psChild->psNext->pszValue);
                         if (pszUnits)
@@ -1729,14 +1748,43 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /* -------------------------------------------------------------------- */
             if (FLTIsBinaryComparisonFilterType(psXMLNode->pszValue))
             {
-                if (psXMLNode->psChild && psXMLNode->psChild->psNext &&
-                    psXMLNode->psChild->pszValue &&
-                    psXMLNode->psChild->psNext->pszValue &&
-                    strcasecmp(psXMLNode->psChild->pszValue, "PropertyName") == 0 &&
-                    strcasecmp(psXMLNode->psChild->psNext->pszValue,"Literal") == 0)
+                psTmpNode = CPLSearchXMLNode(psXMLNode,  "PropertyName");
+                if (psTmpNode &&  psXMLNode->psChild && 
+                    psTmpNode->psChild->pszValue && 
+                    strlen(psTmpNode->psChild->pszValue) > 0)
                 {
                     psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+                    psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+                    psFilterNode->psLeftNode->pszValue = 
+                      strdup(psTmpNode->psChild->pszValue);
+                    
+                    psTmpNode = CPLSearchXMLNode(psXMLNode,  "Literal");
+                    if (psTmpNode &&  psXMLNode->psChild && 
+                    psTmpNode->psChild->pszValue && 
+                    strlen(psTmpNode->psChild->pszValue) > 0)
+                    {
+                        psFilterNode->psRightNode = FLTCreateBinaryCompFilterEncodingNode();
+                
+                        psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
+                        psFilterNode->psRightNode->pszValue = 
+                          strdup(psTmpNode->psChild->pszValue);
 
+                        /*check if the matchCase attribute is set*/
+                        if (psXMLNode->psChild && 
+                            psXMLNode->psChild->eType == CXT_Attribute  &&
+                            psXMLNode->psChild->pszValue && 
+                            strcasecmp(psXMLNode->psChild->pszValue, "matchCase") == 0 &&
+                            psXMLNode->psChild->psChild &&  
+                            psXMLNode->psChild->psChild->pszValue &&
+                            strcasecmp( psXMLNode->psChild->psChild->pszValue, "false") == 0)
+                        {
+                            (*(int *)psFilterNode->psRightNode->pOther) = 1;
+                        }
+                        
+                    }
+                }
+            }
+                            /*
                     if (psXMLNode->psChild->psChild &&
                         psXMLNode->psChild->psChild->pszValue &&
                         strlen(psXMLNode->psChild->psChild->pszValue) > 0)
@@ -1748,10 +1796,11 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
                     psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
 
-                  
+                            */
                     /* special case where the user puts an empty value */
                     /* for the Literal so it can end up as an empty  */
                     /* string query in the expression */
+            /*
                     psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
                     if (psXMLNode->psChild->psNext->psChild &&
                         psXMLNode->psChild->psNext->psChild->pszValue &&
@@ -1766,7 +1815,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 }
                 else
                   psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+                        
             }
+            */
 /* -------------------------------------------------------------------- */
 /*      PropertyIsBetween filter : extract property name and boudary    */
 /*      values. The boundary  values are stored in the right            */
@@ -1860,7 +1911,13 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /* -------------------------------------------------------------------- */
             else if (strcasecmp(psXMLNode->pszValue, "PropertyIsLike") == 0)
             {
-                if (psXMLNode->psChild &&  
+                if (CPLSearchXMLNode(psXMLNode,  "Literal") &&
+                    CPLSearchXMLNode(psXMLNode,  "PropertyName") &&
+                    CPLGetXMLValue(psXMLNode, "wildCard", "") &&
+                    CPLGetXMLValue(psXMLNode, "singleChar", "") &&
+                    CPLGetXMLValue(psXMLNode, "escape", ""))
+                  /*
+                    psXMLNode->psChild &&  
                     strcasecmp(psXMLNode->psChild->pszValue, "wildCard") == 0 &&
                     psXMLNode->psChild->psNext &&
                     strcasecmp(psXMLNode->psChild->psNext->pszValue, "singleChar") == 0 &&
@@ -1870,11 +1927,15 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     strcasecmp(psXMLNode->psChild->psNext->psNext->psNext->pszValue, "PropertyName") == 0 &&
                     psXMLNode->psChild->psNext->psNext->psNext->psNext &&
                     strcasecmp(psXMLNode->psChild->psNext->psNext->psNext->psNext->pszValue, "Literal") == 0)
+                  */
                 {
 /* -------------------------------------------------------------------- */
 /*      Get the wildCard, the singleChar and the escapeChar used.       */
 /* -------------------------------------------------------------------- */
                     psFilterNode->pOther = (FEPropertyIsLike *)malloc(sizeof(FEPropertyIsLike));
+                    /*default is case sensitive*/
+                    ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive = 0;
+
                     pszTmp = (char *)CPLGetXMLValue(psXMLNode, "wildCard", "");
                     if (pszTmp)
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard = 
@@ -1887,28 +1948,56 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     if (pszTmp)
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar = 
                         strdup(pszTmp);
+
+                    pszTmp = (char *)CPLGetXMLValue(psXMLNode, "matchCase", "");
+                    if (pszTmp && strlen(pszTmp) > 0 && 
+                        strcasecmp(pszTmp, "false") == 0)
+                    {
+                      ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive =1;
+                    }
 /* -------------------------------------------------------------------- */
 /*      Create left and right node for the attribute and the value.     */
 /* -------------------------------------------------------------------- */
                     psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
 
+                    psTmpNode = CPLSearchXMLNode(psXMLNode,  "PropertyName");
+                    if (psTmpNode &&  psXMLNode->psChild && 
+                        psTmpNode->psChild->pszValue && 
+                        strlen(psTmpNode->psChild->pszValue) > 0)
                     
-                    
+                    {
+                        /*
                     if (psXMLNode->psChild->psNext->psNext->psNext->psChild &&
                         psXMLNode->psChild->psNext->psNext->psNext->psChild->pszValue)
                     {
-                        psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
                         psFilterNode->psLeftNode->pszValue = 
                           strdup(psXMLNode->psChild->psNext->psNext->psNext->psChild->pszValue);
+                        */
+                        psFilterNode->psLeftNode->pszValue = 
+                          strdup(psTmpNode->psChild->pszValue);
+                        psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+                        
                     }
 
                     psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
 
+                    
+                    psTmpNode = CPLSearchXMLNode(psXMLNode,  "Literal");
+                    if (psTmpNode &&  psXMLNode->psChild && 
+                        psTmpNode->psChild->pszValue && 
+                        strlen(psTmpNode->psChild->pszValue) > 0)
+                    {
+                        /*
                     if (psXMLNode->psChild->psNext->psNext->psNext->psNext->psChild &&
                         psXMLNode->psChild->psNext->psNext->psNext->psNext->psChild->pszValue)
                     {
+                        
                         psFilterNode->psRightNode->pszValue = 
                           strdup(psXMLNode->psChild->psNext->psNext->psNext->psNext->psChild->pszValue);        
+                        */
+                        psFilterNode->psRightNode->pszValue = 
+                          strdup(psTmpNode->psChild->pszValue);
+
                         psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
                     }
                 }
@@ -2285,9 +2374,11 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
             
             if (psNode->pszValue && pdfDistance)
             {
-                //sytnax expected is "distance;unit" or just "distance"
-                //if unit is there syntax is "URI#unit" (eg http://..../#m)
-                //or just "unit"
+                /*
+                sytnax expected is "distance;unit" or just "distance"
+                if unit is there syntax is "URI#unit" (eg http://..../#m)
+                or just "unit"
+                */
                 tokens = split(psNode->pszValue,';', &nTokens);
                 if (tokens && nTokens >= 1)
                 {
@@ -2779,7 +2870,16 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
     /* logical operator */
     if (strcasecmp(psFilterNode->pszValue, 
                    "PropertyIsEqualTo") == 0)
-      strcat(szBuffer, "=");
+    {
+        /*case insensitive set ? */
+        if (psFilterNode->psRightNode->pOther && 
+            (*(int *)psFilterNode->psRightNode->pOther) == 1)
+        {
+            strcat(szBuffer, "IEQ");
+        }
+        else
+          strcat(szBuffer, "=");
+    }
     else if (strcasecmp(psFilterNode->pszValue, 
                         "PropertyIsNotEqualTo") == 0)
       strcat(szBuffer, "!="); 
@@ -2807,6 +2907,7 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
 
     if (bString)
       strcat(szBuffer, "\"");
+    
     strcat(szBuffer, ") ");
 
     return strdup(szBuffer);
@@ -2823,6 +2924,7 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 {
     char szBuffer[512];
     int i=0, bString=0, nLenght = 0;
+    char szTmp[100];
 
     szBuffer[0] = '\0';
     if (!psFilterNode || !
@@ -2859,7 +2961,18 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
     strcat(szBuffer, " (");
 
     /* attribute */
-    strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
+    /*case insensitive set ? */
+    if (bString &&
+        strcasecmp(psFilterNode->pszValue, 
+                   "PropertyIsEqualTo") == 0 &&
+        psFilterNode->psRightNode->pOther && 
+        (*(int *)psFilterNode->psRightNode->pOther) == 1)
+    {
+        sprintf(szTmp, "lower(%s) ",  psFilterNode->psLeftNode->pszValue);
+        strcat(szBuffer, szTmp);
+    }
+    else
+      strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
 
     
 
@@ -2886,17 +2999,30 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
     strcat(szBuffer, " ");
     
     /* value */
-    if (bString)
-      strcat(szBuffer, "'");
+
+    if (bString && 
+        psFilterNode->psRightNode->pszValue &&
+        strcasecmp(psFilterNode->pszValue, 
+                   "PropertyIsEqualTo") == 0 &&
+        psFilterNode->psRightNode->pOther && 
+        (*(int *)psFilterNode->psRightNode->pOther) == 1)
+    {
+        sprintf(szTmp, "lower('%s') ",  psFilterNode->psRightNode->pszValue);
+        strcat(szBuffer, szTmp);
+    }
+    else
+    {
+        if (bString)
+          strcat(szBuffer, "'");
     
-    if (psFilterNode->psRightNode->pszValue)
-      strcat(szBuffer, psFilterNode->psRightNode->pszValue);
+        if (psFilterNode->psRightNode->pszValue)
+          strcat(szBuffer, psFilterNode->psRightNode->pszValue);
 
-    if (bString)
-      strcat(szBuffer, "'");
+        if (bString)
+          strcat(szBuffer, "'");
 
-
-    /*losing bracket*/
+    }
+    /*closing bracket*/
     strcat(szBuffer, ") ");
 
     return strdup(szBuffer);
@@ -3124,8 +3250,10 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
     char *pszWild = NULL;
     char *pszSingle = NULL;
     char *pszEscape = NULL;
-    
+    int  bCaseInsensitive = 0;
+
     int nLength=0, i=0, iBuffer = 0;
+
 
     if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
         !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
@@ -3134,6 +3262,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
     pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
     pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
     pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
+    bCaseInsensitive = ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive;
 
     if (!pszWild || strlen(pszWild) == 0 ||
         !pszSingle || strlen(pszSingle) == 0 || 
@@ -3146,12 +3275,20 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 /*      regular expresssion. The left node will be used to build the    */
 /*      classitem.                                                      */
 /* -------------------------------------------------------------------- */
-    szBuffer[0] = '/';
-    szBuffer[1] = '\0';
+    iBuffer = 0;
+    szBuffer[iBuffer++] = '/';
+    szBuffer[iBuffer] = '\0';
     /*szBuffer[1] = '^';*/
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
-    iBuffer = 1;
+    
+    if (nLength > 0 && pszValue[0] != pszWild[0] && 
+        pszValue[0] != pszSingle[0] &&
+        pszValue[0] != pszEscape[0])
+    {
+        szBuffer[iBuffer++] = '^';
+        szBuffer[iBuffer] = '\0';
+    }
     for (i=0; i<nLength; i++)
     {
         if (pszValue[i] != pszWild[0] && 
@@ -3173,13 +3310,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
             szBuffer[iBuffer] = '\\';
             iBuffer++;
             szBuffer[iBuffer] = '\0';
-            /*if (i<nLength-1)
-            {
-                szBuffer[iBuffer] = pszValue[i+1];
-                iBuffer++;
-                szBuffer[iBuffer] = '\0';
-            }
-            */
+
         }
         else if (pszValue[i] == pszWild[0])
         {
@@ -3191,7 +3322,11 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
         }
     }   
     szBuffer[iBuffer] = '/';
-    szBuffer[iBuffer+1] = '\0';
+    if (bCaseInsensitive == 1)
+    {
+      szBuffer[++iBuffer] = 'i';
+    } 
+    szBuffer[++iBuffer] = '\0';
     
         
     return strdup(szBuffer);
@@ -3214,7 +3349,7 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     char szTmp[2];
 
     int nLength=0, i=0, iBuffer = 0;
-
+    int  bCaseInsensitive = 0;
 
     if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
         !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
@@ -3223,6 +3358,7 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
     pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
     pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
+    bCaseInsensitive = ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive;
 
     if (!pszWild || strlen(pszWild) == 0 ||
         !pszSingle || strlen(pszSingle) == 0 || 
@@ -3237,7 +3373,10 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
 
     /* attribute name */
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
-    strcat(szBuffer, " like '");
+    if (bCaseInsensitive == 1)
+      strcat(szBuffer, " ilike '");
+    else
+      strcat(szBuffer, " like '");
         
    
     pszValue = psFilterNode->psRightNode->pszValue;
