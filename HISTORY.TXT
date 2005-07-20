@@ -15,6 +15,10 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD
 --------
+
+- bug 1416: Add support in OGC FE for matchCase attribute on 
+  PropertyIsEqual and PropertyIsLike  
+
 - bug 1418: Fixed sortshp.c to free shapes after processing to avoid major
   memory leak.
 
