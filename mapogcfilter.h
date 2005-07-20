@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2005/07/20 13:55:34  assefa
+ * Added support of case insensitive matChase attribute.
+ *
  * Revision 1.11  2005/05/12 17:38:54  assefa
  * prototype for FLTGetShape changed : Now parsing unit value.
  *
@@ -117,9 +120,10 @@ typedef struct _FilterNode
 
 typedef struct
 {
-    char *pszWildCard;
-    char *pszSingleChar;
-    char *pszEscapeChar;
+      char *pszWildCard;
+      char *pszSingleChar;
+      char *pszEscapeChar;
+      int  bCaseInsensitive;
 }FEPropertyIsLike;
 
 /* -------------------------------------------------------------------- */
