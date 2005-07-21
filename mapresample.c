@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/07/21 22:18:16  frank
+ * Bug 1372: ensure that raw buffers support multiple bands
+ *
  * Revision 1.54  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -304,7 +307,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
         for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
         {
             int		nSrcX, nSrcY;
-            int		nValue;
+            int		nValue = 0;
 
             if( !panSuccess[nDstX] )
             {
@@ -360,51 +363,66 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
             {
-                if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
+                int band;
+
+                for( band = 0; band < psSrcImage->format->bands; band++ )
                 {
-                    int	nValue;
+                    if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
+                    {
+                        int	nValue;
 
-                    nValue = psSrcImage->img.raw_16bit[
-                        nSrcX + nSrcY * psSrcImage->width];
+                        nValue = psSrcImage->img.raw_16bit[
+                            nSrcX + nSrcY * psSrcImage->width 
+                            + band*psSrcImage->width*psSrcImage->height];
 
-                    if( nValue == offsite.red )
-                        continue;
+                        if( nValue == offsite.red )
+                            continue;
                     
-                    nSetPoints++;
-                    psDstImage->img.raw_16bit[
-                        nDstX + nDstY * psDstImage->width] = nValue;
-                }
-                else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
-                {
-                    float fValue;
+                        nSetPoints++;
+                        psDstImage->img.raw_16bit[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = nValue;
+                    }
+                    else if( psSrcImage->format->imagemode 
+                             == MS_IMAGEMODE_FLOAT32)
+                    {
+                        float fValue;
 
-                    fValue = psSrcImage->img.raw_float[
-                        nSrcX + nSrcY * psSrcImage->width];
+                        fValue = psSrcImage->img.raw_float[
+                            nSrcX + nSrcY * psSrcImage->width 
+                            + band*psSrcImage->width*psSrcImage->height];
 
-                    if( fValue == offsite.red )
-                        continue;
+                        if( fValue == offsite.red )
+                            continue;
                     
-                    nSetPoints++;
-                    psDstImage->img.raw_float[
-                        nDstX + nDstY * psDstImage->width] = fValue;
-                }
-                else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE)
-                {
-                    int nValue;
+                        nSetPoints++;
+                        psDstImage->img.raw_float[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = nValue;
+                    }
+                    else if(psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE)
+                    {
+                        int nValue;
 
-                    nValue = psSrcImage->img.raw_byte[
-                        nSrcX + nSrcY * psSrcImage->width];
+                        nValue = psSrcImage->img.raw_byte[
+                            nSrcX + nSrcY * psSrcImage->width 
+                            + band*psSrcImage->width*psSrcImage->height];
 
-                    if( nValue == offsite.red )
-                        continue;
+                        if( nValue == offsite.red )
+                            continue;
                     
-                    nSetPoints++;
-                    psDstImage->img.raw_byte[nDstX + nDstY * psDstImage->width]
-                        = (unsigned char) nValue;
-                }
-                else
-                {
-                    assert( 0 );
+                        nSetPoints++;
+                        psDstImage->img.raw_byte[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height]
+                            = (unsigned char) nValue;
+                    }
+                    else
+                    {
+                        assert( 0 );
+                    }
                 }
             }
         }
