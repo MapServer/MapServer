@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- bug 1372: mapresample.c - ensure that multi-band raw results can be
+  resampled.
+
 - bug 1416: Add support in OGC FE for matchCase attribute on 
   PropertyIsEqual and PropertyIsLike  
 
