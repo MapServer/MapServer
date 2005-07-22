@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/07/22 17:26:11  frank
+ * bug 1259: fixed POST support in fastcgi mode
+ *
  * Revision 1.6  2004/11/04 21:13:02  frank
  * ensure we include io.h on win32
  *
@@ -261,6 +264,22 @@ int msIO_fwrite( const void *data, size_t size, size_t nmemb, FILE *fp )
         return fwrite( data, size, nmemb, fp );
     else
         return msIO_contextWrite( context, data, size * nmemb ) / size;
+}
+
+/************************************************************************/
+/*                            msIO_fread()                              */
+/************************************************************************/
+
+int msIO_fread( void *data, size_t size, size_t nmemb, FILE *fp )
+
+{
+    msIOContext *context;
+
+    context = msIO_getHandler( fp );
+    if( context == NULL )
+        return fread( data, size, nmemb, fp );
+    else
+        return msIO_contextRead( context, data, size * nmemb ) / size;
 }
 
 /* ==================================================================== */

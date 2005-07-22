@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/07/22 17:26:11  frank
+ * bug 1259: fixed POST support in fastcgi mode
+ *
  * Revision 1.21  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -71,7 +74,7 @@ static char *readPostBody( cgiRequestObj *request )
             exit( 1 );
         }
 
-        if ( (int) fread(data, 1, data_max, stdin) < data_max ) {
+        if ( (int) msIO_fread(data, 1, data_max, stdin) < data_max ) {
             msIO_printf("Content-type: text/html%c%c",10,10);
             msIO_printf("POST body is short\n");
             exit(1);
@@ -87,12 +90,9 @@ static char *readPostBody( cgiRequestObj *request )
     data_len = 0;
     data = (char *) malloc(data_max+1);
 
-    while( !feof(stdin) )
+    while( (chunk_size = msIO_fread( data + data_len, 1, 
+                                     data_max-data_len, stdin )) > 0 )
     {
-        chunk_size = fread( data + data_len, 1, data_max - data_len, stdin );
-        if( chunk_size <= 0 )
-            break;
-
         data_len += chunk_size;
 
         if( data_len == data_max )
@@ -109,9 +109,9 @@ static char *readPostBody( cgiRequestObj *request )
         }
     }
 
-   data[data_len] = '\0';
-
-   return data;
+    data[data_len] = '\0';
+    
+    return data;
 }
 
 

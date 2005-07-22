@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/07/22 17:26:11  frank
+ * bug 1259: fixed POST support in fastcgi mode
+ *
  * Revision 1.3  2004/11/04 21:06:09  frank
  * centralize 'stdout binary mode setting' for win32, add for gdal output
  *
@@ -61,6 +64,7 @@
 int MS_DLL_EXPORT msIO_printf( const char *format, ... );
 int MS_DLL_EXPORT msIO_fprintf( FILE *stream, const char *format, ... );
 int MS_DLL_EXPORT msIO_fwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream );
+int MS_DLL_EXPORT msIO_fread( void *ptr, size_t size, size_t nmemb, FILE *stream );
 int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
 
 #else
@@ -68,6 +72,7 @@ int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
 #define msIO_printf   printf
 #define msIO_fprintf  fprintf
 #define msIO_fwrite   fwrite
+#define msIO_fread    fread
 #define msIO_vfprintf vfprintf
 
 #endif
