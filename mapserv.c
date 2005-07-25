@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.148  2005/07/25 14:24:04  frank
+ * Removed unnecessary strdup() calls for QUERY_STRING commandline arg.
+ *
  * Revision 1.147  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -1134,11 +1137,8 @@ int main(int argc, char *argv[]) {
         }
         else if ( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0) {
             /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
-            char *buf;
-            buf = strdup("REQUEST_METHOD=GET");
-            putenv(buf);
-            buf = strdup(argv[1]);
-            putenv(buf);
+            putenv( "REQUEST_METHOD=GET" );
+            putenv( argv[1] );
         }
         else
         {
