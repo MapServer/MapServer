@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/07/25 20:56:00  frank
+ * Undef msIO_fread() too.
+ *
  * Revision 1.7  2005/07/22 17:26:11  frank
  * bug 1259: fixed POST support in fastcgi mode
  *
@@ -77,6 +80,7 @@ static void msIO_Initialize( void );
 #  undef msIO_printf
 #  undef msIO_fprintf
 #  undef msIO_fwrite
+#  undef msIO_fread
 #  undef msIO_vfprintf
 #endif
 
