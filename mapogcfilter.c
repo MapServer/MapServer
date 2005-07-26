@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.55  2005/07/26 15:02:53  assefa
+ * Added support for OGR layers to use SQL type filers (Bug 1292)
+ *
  * Revision 1.54  2005/07/20 13:35:38  assefa
  * Add support for attribute matchCase on PropertyIsequal and PropertyIsLike
  * (bug 1416, 1381).
@@ -928,7 +931,7 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     int nTokens = 0, nEpsgTmp = 0;
     projectionObj sProjTmp;
 
-    /*char szBuffer[512];*/
+    char szBuffer[1024];
 
     lp = &(map->layers[iLayerIndex]);
 
@@ -979,30 +982,30 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     }
 
 
-    /*
+    
     if (lp->connectiontype == MS_OGR)
     {
         szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
         if (szExpression)
           sprintf(szBuffer, "WHERE %s", szExpression);
     }
-    else if (lp->connectiontype == MS_POSTGIS)
+    else //POSTGIS OR ORACLE if (lp->connectiontype == MS_POSTGIS)
     {
          szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
          sprintf(szBuffer, "%s", szExpression);
     }
-    */
+    
 
     lp->numclasses = 1; /* set 1 so the query would work */
     initClass(&(lp->class[0]));
     lp->class[0].type = lp->type;
     lp->class[0].template = strdup("ttt.html");
 
-    szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
+    //szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
 
     if (szExpression)
     {
-        msLoadExpressionString(&lp->filter, szExpression);
+        msLoadExpressionString(&lp->filter, szBuffer);
         free(szExpression);
     }
 
@@ -1093,6 +1096,7 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int nResults = 0;
     layerObj *psLayer = NULL;
 
+
 /* ==================================================================== */
 /*      Check here to see if it is a simple filter and if that is       */
 /*      the case, we are going to use the FILTER element on             */
@@ -1100,8 +1104,10 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /* ==================================================================== */
     psLayer = &(map->layers[iLayerIndex]);
     if (!bOnlySpatialFilter && 
-        FLTIsSimpleFilter(psNode) && (psLayer->connectiontype == MS_POSTGIS ||
-                                      psLayer->connectiontype == MS_ORACLESPATIAL))
+        FLTIsSimpleFilter(psNode) && 
+        (psLayer->connectiontype == MS_POSTGIS ||
+         psLayer->connectiontype == MS_ORACLESPATIAL ||
+         psLayer->connectiontype == MS_OGR))
     {
         FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
                                              
