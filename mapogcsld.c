@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.55  2005/07/26 16:23:20  assefa
+ * SLD external graphic symbol format tests now for mime type
+ * like image/gif instead of just GIF (Bug 1430).
+ *
  * Revision 1.54  2005/04/21 23:46:07  assefa
  * Apply sld named layer on all layers of the same group : Bug 1329.
  *
@@ -256,6 +260,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     char *pszSLDbuf=NULL;
     FILE *fp = NULL;               
     int nStatus = MS_FAILURE;
+
 
     if (map && szURL)
     {
@@ -2114,7 +2119,9 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
         /* supports GIF and PNG */
         if (pszFormat && 
             (strcasecmp(pszFormat, "GIF") == 0 ||
-             strcasecmp(pszFormat, "PNG") == 0))
+             strcasecmp(pszFormat, "image/gif") == 0 || 
+             strcasecmp(pszFormat, "PNG") == 0 ||
+             strcasecmp(pszFormat, "image/png") == 0))
         {
           
           /* <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/> */
@@ -2132,7 +2139,8 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                 {
                     pszURL = (char*)psTmp->psChild->pszValue;
 
-                    if (strcasecmp(pszFormat, "GIF") == 0)
+                    if (strcasecmp(pszFormat, "GIF") == 0 || 
+                        strcasecmp(pszFormat, "image/gif") == 0)
                       pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "gif");
                     else
                       pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "png");
@@ -3072,10 +3080,13 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                             ((strcasecmp (szFormat, "GIF") == 0) ||
                              (strcasecmp (szFormat, "PNG") == 0)))
                         {
-                            sprintf(szTmp, "<Format>%s</Format>\n", szFormat);
+                            if (strcasecmp (szFormat, "GIF") == 0)
+                              sprintf(szTmp, "<Format>image/gif</Format>\n");
+                            else
+                              sprintf(szTmp, "<Format>image/png</Format>\n");
                         }
                         else
-                          sprintf(szTmp, "<Format>%s</Format>\n", "GIF");
+                          sprintf(szTmp, "<Format>%s</Format>\n", "image/gif");
                             
                         pszSLD = strcatalloc(pszSLD, szTmp);  
 

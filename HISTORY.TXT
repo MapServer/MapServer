@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- bug 1430 : SLD external graphic symbol format tests now for mime type
+  like image/gif instead of just GIF.
+
 - bug 1292 : Added support for OGR layers to use SQL type filers
 
 - bug 1259: mapio/cgiutil - fixed POST support in fastcgi mode.
