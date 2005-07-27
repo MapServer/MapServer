@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.185  2005/07/27 15:01:32  frank
+ * Fixes in msTmpFile() to ensure counter actually increments and that
+ * forced basenames work again.  Bug 1312.
+ *
  * Revision 1.184  2005/07/13 19:35:08  julien
  * Bug 1381: Support for case-insensitive Expression
  *
@@ -1067,7 +1071,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
 /*                         msForceTmpFileBase()                         */
 /************************************************************************/
 
-static int tmpCount = -1;
+static int tmpCount = 0;
 static char *ForcedTmpBase = NULL;
 
 void msForceTmpFileBase( const char *new_base )
@@ -1118,10 +1122,11 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     {
         strncpy( tmpId, ForcedTmpBase, sizeof(tmpId) );
     }
-    /* We'll use tmpId and tmpCount to generate unique filenames */
-    sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
-    tmpCount = 0;
-
+    else 
+    {
+        /* We'll use tmpId and tmpCount to generate unique filenames */
+        sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
+    }
 
     if (ext == NULL)  ext = "";
     tmpFname = (char*)malloc(strlen(tmpId) + 4  + strlen(ext) + 1);
