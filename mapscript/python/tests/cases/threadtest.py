@@ -63,7 +63,9 @@ class MultipleThreadsTestCase(unittest.TestCase):
         workers = []
         for i in range(10):
             name = 'd%d' % (i)
-            thread = threading.Thread(target=draw_map, name=name, args=(name,1))
+            save = (i == 9)
+            thread = threading.Thread(target=draw_map, name=name,
+                                      args=(name,save))
             workers.append(thread)
             thread.start()
          
@@ -144,6 +146,8 @@ def draw_map_wfs(name, save=0):
 
     if not mo.web.imagepath:
         mo.web.imagepath = os.environ.get('TEMP', None) or INCOMING
+    mo.setExtent(-2.0, 50.5, 1.0, 52.5)
+    mo.setSize(300, 200)
     mo.debug = mapscript.MS_ON
     im = mo.draw()
     if save:
@@ -166,6 +170,7 @@ def draw_map_wms(name, save=0):
     lo.metadata.set('wms_format', 'image/jpeg')
     lo.type = mapscript.MS_LAYER_RASTER
     lo.status = mapscript.MS_DEFAULT
+    lo.debug = mapscript.MS_ON
     mo.insertLayer(lo)
 
     if not mo.web.imagepath:
@@ -178,16 +183,17 @@ def draw_map_wms(name, save=0):
 
 class OWSRequestTestCase(unittest.TestCase):
 
-    #def testDrawWFS(self):
-    #    """map drawing with multiple threads"""
-    #
-    #    workers = []
-    #    for i in range(10):
-    #        name = 'd%d' % (i)
-    #        thread = threading.Thread(target=draw_map_wfs, name=name, 
-    #                                  args=(name,1))
-    #        workers.append(thread)
-    #        thread.start()
+    def testDrawWFS(self):
+        """map drawing with multiple threads"""
+    
+        workers = []
+        for i in range(10):
+            name = 'd%d' % (i)
+            save = (i == 9)
+            thread = threading.Thread(target=draw_map_wfs, name=name, 
+                                      args=(name,save))
+            workers.append(thread)
+            thread.start()
     
     def testDrawWMS(self):
         """map drawing with multiple threads"""
@@ -195,8 +201,9 @@ class OWSRequestTestCase(unittest.TestCase):
         workers = []
         for i in range(10):
             name = 'd%d' % (i)
+            save = (i == 9)
             thread = threading.Thread(target=draw_map_wms, name=name, 
-                                      args=(name,1))
+                                      args=(name,save))
             workers.append(thread)
             thread.start()
     
