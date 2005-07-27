@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- bug 1312: msTmpFile: ensure counter is incremented to avoid duplicate
+  temporary filenames.
+
 - bug 1430 : SLD external graphic symbol format tests now for mime type
   like image/gif instead of just GIF.
 
