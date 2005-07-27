@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/07/27 18:21:58  frank
+ * bug 1432: optimized msAddLine() to use realloc()
+ *
  * Revision 1.53  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -253,38 +256,20 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
 
 int msAddLine(shapeObj *p, lineObj *new_line)
 {
-  int c;
-  lineObj *extended_line;
+    lineObj lineCopy;
 
-  /* Create an extended line array */
-  if((extended_line = (lineObj *)malloc((p->numlines + 1) * sizeof(lineObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msAddLine()");
-    return(MS_FAILURE);
-  }
+    lineCopy.numpoints = new_line->numpoints;
+    lineCopy.point = (pointObj *) malloc(new_line->numpoints*sizeof(pointObj));
+    if( lineCopy.point == NULL )
+    {
+        msSetError(MS_MEMERR, NULL, "msAddLine()");
+        return(MS_FAILURE);
+    }
+    
+    memcpy( lineCopy.point, new_line->point, 
+            sizeof(pointObj) * new_line->numpoints );
 
-  /* Copy the old line into the extended line array */
-  for (c= 0; c < p->numlines; c++)
-    extended_line[c]= p->line[c];
-
-  /* Copy the new line onto the end of the extended line array */
-  c= p->numlines;
-  extended_line[c].numpoints = new_line->numpoints;  
-  if((extended_line[c].point = (pointObj *)malloc(new_line->numpoints * sizeof(pointObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msAddLine()");
-    return(MS_FAILURE);
-  }
-
-  memcpy( extended_line[c].point, new_line->point, 
-          sizeof(pointObj) * new_line->numpoints );
-
-  /* Dispose of the old line */
-  if(p->line) free(p->line);
-
-  /* Update the polygon information */
-  p->numlines++;
-  p->line = extended_line;
-
-  return(MS_SUCCESS);
+    return msAddLineDirectly( p, &lineCopy );
 }
 
 /*
@@ -294,33 +279,23 @@ int msAddLine(shapeObj *p, lineObj *new_line)
 int msAddLineDirectly(shapeObj *p, lineObj *new_line)
 {
   int c;
-  lineObj *extended_line;
 
-  /* Create an extended line array */
-  if((extended_line = (lineObj *)malloc((p->numlines + 1) * sizeof(lineObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msAddLine()");
-    return(MS_FAILURE);
-  }
-
-  /* Copy the old line into the extended line array */
-  for (c= 0; c < p->numlines; c++)
-    extended_line[c]= p->line[c];
-
+  if( p->numlines == 0 )
+      p->line = (lineObj *) malloc(sizeof(lineObj));
+  else
+      p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
+  
   /* Copy the new line onto the end of the extended line array */
   c= p->numlines;
-  extended_line[c].numpoints = new_line->numpoints;  
-  extended_line[c].point = new_line->point;
+  p->line[c].numpoints = new_line->numpoints;  
+  p->line[c].point = new_line->point;
 
   /* strip points reference off the passed in lineObj */
   new_line->point = NULL;
   new_line->numpoints = 0;
 
-  /* Dispose of the old line */
-  if(p->line) free(p->line);
-
   /* Update the polygon information */
   p->numlines++;
-  p->line = extended_line;
 
   return(MS_SUCCESS);
 }
