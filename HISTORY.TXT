@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- bug 1432: maputil.c/msAddLine(): rewrite msAddLine() to call 
+  msAddLineDirectly, and use realloc() in msAddLineDirectly() to optimize
+  growth of shapeObjs. 
+
 - bug 1312: msTmpFile: ensure counter is incremented to avoid duplicate
   temporary filenames.
 
