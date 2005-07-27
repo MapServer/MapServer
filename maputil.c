@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.182.2.2  2005/07/27 19:01:10  sean
+ * Fixes in msTmpFile() to ensure counter actually increments and that forced basenames work again (bug 1312)
+ *
  * Revision 1.182.2.1  2005/06/24 13:39:45  assefa
  * in function msTmpFile : reinitialize always the sting tmpId. There was
  * a problem with this string not being initialized when the function was
@@ -1098,13 +1101,14 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     {
         strncpy( tmpId, ForcedTmpBase, sizeof(tmpId) );
     }
-    /* We'll use tmpId and tmpCount to generate unique filenames */
-    sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
-    tmpCount = 0;
-
+    else 
+    {
+        /* We'll use tmpId and tmpCount to generate unique filenames */
+        sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
+    }
 
     if (ext == NULL)  ext = "";
-    tmpFname = (char*)malloc(strlen(tmpId) + 4  + strlen(ext) + 1);
+    tmpFname = (char*)malloc(strlen(tmpId) + 10  + strlen(ext) + 1);
 
     sprintf(tmpFname, "%s%d.%s", tmpId, tmpCount++, ext);
 
