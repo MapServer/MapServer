@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.186  2005/07/27 15:33:11  frank
+ * Make sure we have room for big counters in temp file names.
+ *
  * Revision 1.185  2005/07/27 15:01:32  frank
  * Fixes in msTmpFile() to ensure counter actually increments and that
  * forced basenames work again.  Bug 1312.
@@ -1129,7 +1132,7 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     }
 
     if (ext == NULL)  ext = "";
-    tmpFname = (char*)malloc(strlen(tmpId) + 4  + strlen(ext) + 1);
+    tmpFname = (char*)malloc(strlen(tmpId) + 10  + strlen(ext) + 1);
 
     sprintf(tmpFname, "%s%d.%s", tmpId, tmpCount++, ext);
 
