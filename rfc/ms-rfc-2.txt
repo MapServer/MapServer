@@ -54,3 +54,73 @@ Voting history
 ~~~~~~~~~~~~~~~~~
 
 None
+
+
+
+=== WORKING NOTES ===
+
+WKT <-> shapeObj Mapping
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Random Notes
+------------
+
+ - WKT is geometry only.  The attributes, index, tileindex, classindex,
+   and text fields do not exist in WKT and will have to be set "elsewhere". 
+
+ - There is no widely supported, or standardized approach to "measure" 
+   values in WKT though Refractions does support it in "EWKT".  For now it
+   is assumed that measure values will not be preserved from WKT.
+
+ - There is a well defined way of including Z coordinates and these should
+   be carried through if MapServer is built with Z and M support enabled.
+
+
+Transformations shapeObj to WKT
+-------------------------------
+
+ - MS_SHAPE_POINT: If numlines and numpoints are one, then this is converted
+   to a POINT object in WKT.  If there are more points, this is converted
+   to a MULTIPOINT object.
+
+ - MS_SHAPE_LINE: if numlines is 1 then this will be translated to a LINESTRING
+   otherwise it will be translated to a MULTILINESTRING.
+
+ - MS_SHAPE_POLYGON: MapServer does not keep track of interior and exterior
+   rings in a shape, since the scanline rasterization mechanism of GD 
+   does not require this information.  However, when converting to WKT we
+   need to know whether we have a single polygon with holes, or multiple
+   polygons (more than one exterior ring).   If numlines is 1, we can directly
+   translate to POLYGON(), otherwise the rings will need to be analysed to 
+   identify outer rings, and to associate inner rings with their outher ring.
+   If more than one outer ring exist, a MULTIPOLYGON will be produced, 
+   otherwise a POLYGON will be produced.
+
+ - MS_SHAPE_NULL: This results in an empty WKT string.  
+
+
+Transformations WKT to shapeObj
+-------------------------------
+
+ - POINT: Translates to an MS_SHAPE_POINT object with one point and one line.
+
+ - LINESTRING: Translates to an MS_SHAPE_LINE object with one line. 
+
+ - POLYGON: Translates to an MS_SHAPE_POLYGON object with one line for the
+   outer ring and one line for each inner ring.
+
+ - MULTIPOINT: Translates to an MS_SHAPE_POINT object with one line, and one
+   point for each line. 
+
+ - MULTILINESTRING: Translates to an MS_SHAPE_LINE object with one line for
+   each linestring in the container. 
+
+ - MULTIPOLYGON: Translates into an MS_SHAPE_POLYGON with each ring of each
+   polygon being a line in the resulting polygon object. 
+
+ - GEOMETRYCOLLECTION: Treat as MULTIPOINT, MULTILINESTRING or MULTIPOLYGON if
+   the contents are all compatible, otherwise throw an exception. 
+
+
+
+
