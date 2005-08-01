@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66.2.2  2005/08/01 16:36:14  sdlime
+ * Fixed a problem with the GML writer not properly closing the geometry container for MultiPoints. (bug 1409).
+ *
  * Revision 1.66.2.1  2005/07/06 15:18:09  dan
  * Fixed missing space in GML MultiLineString output (bug 1408)
  *
@@ -263,7 +266,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
 
       msIO_fprintf(stream, "%s</gml:MultiPoint>\n", tab);
 
-      gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
+      gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
     } else {
       msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no point/multipoint geometry defined. -->\n");
     }
@@ -519,7 +522,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 
       msIO_fprintf(stream, "%s  </gml:MultiPoint>\n", tab);
 
-      gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
+      gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
     } else {
       msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no point/multipoint geometry defined. -->\n");
     }
