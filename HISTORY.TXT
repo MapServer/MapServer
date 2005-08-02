@@ -53,9 +53,11 @@ CVS HEAD
 
 - Bug 1399: Fixed copying of processing directives within copy of a layer.
 
-- Bug 1312 : Problems with string initialization.
+- Bug 1312: Problems with string initialization.
 
-- Bug 1390 : Fix svg output for multipolygons.
+- Bug 1390: Fix svg output for multipolygons.
+
+- Bug 535: Added querymapObj to PHP MapScript
 
 Version 4.6.0 (2005-06-14)
 --------------------------
