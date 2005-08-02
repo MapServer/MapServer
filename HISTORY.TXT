@@ -29,10 +29,12 @@ Version 4.6.1 (CVS)
 
 - Bug 1399: Fixed copy of processing directives within a layer copy.
 
-- Bug 1312 : Problems with string initialization when building tmp
-             files. It was cuasing a problem for wms client layers.
+- Bug 1312: Problems with string initialization when building tmp
+            files. It was cuasing a problem for wms client layers.
 
-- Bug 1390 : Fix svg output for multipolygons.
+- Bug 1390: Fix svg output for multipolygons.
+
+- Bug 1141: Fixed problem with GetLegendGraphic on layers with status=off
 
 
 Version 4.6.0 (2005-06-14)
