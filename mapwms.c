@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.166  2005/08/02 13:47:11  dan
+ * Fixed problem with GetLegendGraphic on layers with status=off (bug 1141)
+ *
  * Revision 1.165  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -2607,14 +2610,14 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
                   values[i] && strlen(values[i]) > 0)
              msSLDApplySLD(map, values[i], -1, NULL);
-		     else if (strcasecmp(names[i], "RULE") == 0)
-				 {
+         else if (strcasecmp(names[i], "RULE") == 0)
+         {
              psRule = values[i];
-				 }
-		     else if (strcasecmp(names[i], "SCALE") == 0)
-				 {
+         }
+         else if (strcasecmp(names[i], "SCALE") == 0)
+         {
              psScale = values[i];
-				 }
+         }
 
 #endif
      }
@@ -2665,14 +2668,13 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
 
      if ( psRule == NULL )
      {
-         /* turn off all other layers */
+         /* turn this layer on and all other layers off, required for msDrawLegend() */
          for (i=0; i<map->numlayers; i++)
          {
-             if (map->layers[i].name &&
-                 strcasecmp(map->layers[i].name, pszLayer) != 0)
-             {
+             if (i == iLayerIndex)
+                 map->layers[i].status = MS_ON;
+             else
                  map->layers[i].status = MS_OFF;
-             }
          }
 
          /* if SCALE was provided in request, calculate an extent and use a default width and height */
