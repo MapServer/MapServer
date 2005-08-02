@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.236  2005/08/02 18:00:21  dan
+ * Added querymapObj (bug 535)
+ *
  * Revision 1.235  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -652,6 +655,8 @@ DLEXPORT void php3_ms_symbol_getPoints(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_querymap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+
 
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value  TSRMLS_DC);
@@ -714,6 +719,9 @@ static long _phpms_build_symbol_object(symbolObj *psSymbol,
 
 DLEXPORT void php_ms_labelcache_free(INTERNAL_FUNCTION_PARAMETERS);
 
+static long _phpms_build_querymap_object(queryMapObj *pquerymap,
+                                      HashTable *list, pval *return_value TSRMLS_DC);
+
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -760,6 +768,7 @@ static int le_msgrid;
 static int le_mserror_ref;
 static int le_mslabelcache;
 static int le_mssymbol;
+static int le_msquerymap;
 
 /* 
  * Declare any global variables you may need between the BEGIN
@@ -822,6 +831,7 @@ static zend_class_entry *grid_class_entry_ptr;
 static zend_class_entry *error_class_entry_ptr;
 static zend_class_entry *labelcache_class_entry_ptr;
 static zend_class_entry *symbol_class_entry_ptr;
+static zend_class_entry *querymap_class_entry_ptr;
 
 #ifdef ZEND_ENGINE_2  // PHP5
 ZEND_BEGIN_ARG_INFO(one_arg_force_ref, 0)
@@ -1160,6 +1170,13 @@ function_entry php_symbol_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
+
+function_entry php_querymap_class_functions[] = {
+    {"set",             php3_ms_querymap_setProperty,   NULL},
+    {NULL, NULL, NULL}
+};
+
+
 PHP_MINFO_FUNCTION(mapscript)
 {
   php_info_print_table_start();
@@ -1255,8 +1272,12 @@ PHP_MINIT_FUNCTION(phpms)
     PHPMS_GLOBAL(le_mssymbol)= register_list_destructors(php3_ms_free_stub,
                                                          NULL);
 
-    PHPMS_GLOBAL(le_mslabelcache)= 
-      register_list_destructors(php3_ms_free_stub, NULL);
+    PHPMS_GLOBAL(le_mslabelcache)= register_list_destructors(php3_ms_free_stub,
+                                                             NULL);
+
+    PHPMS_GLOBAL(le_msquerymap)= register_list_destructors(php3_ms_free_stub, 
+                                                           NULL);
+
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -1516,6 +1537,10 @@ PHP_MINIT_FUNCTION(phpms)
                       php_symbol_class_functions);
      symbol_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_querymap_obj", 
+                      php_querymap_class_functions);
+     querymap_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
     return SUCCESS;
 }
 
@@ -1587,6 +1612,8 @@ DLEXPORT void php3_ms_free_projection(projectionObj *pProj)
     projectionObj_destroy(pProj);
 }
 
+
+
 /*=====================================================================
  *                 PHP function wrappers
  *====================================================================*/
@@ -1642,9 +1669,7 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     PHPMS_ADD_PROP_STR(return_value,  "imagetype", pMap->imagetype);
     add_property_long(return_value,  "imagequality", pMap->imagequality);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_rect_object(&(pMap->extent), PHPMS_GLOBAL(le_msrect_ref),
                              list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR TSRMLS_CC);
@@ -1665,40 +1690,28 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
                                                   pMap->fontset.filename);
     PHPMS_ADD_PROP_STR(return_value, "mappath",      pMap->mappath);
     
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_color_object(&(pMap->imagecolor),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_web_object(&(pMap->web), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "web", new_obj_ptr, E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_referenceMap_object(&(pMap->reference), list, 
                                      new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "reference", new_obj_ptr,E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_scalebar_object(&(pMap->scalebar), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "scalebar", new_obj_ptr, E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_legend_object(&(pMap->legend), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "legend", new_obj_ptr, E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_projection_object(&(pMap->latlon), PHPMS_GLOBAL(le_msprojection_ref),
                                    list,  new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR TSRMLS_CC);
@@ -1710,6 +1723,10 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_labelcache_object(&(pMap->labelcache), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "labelcache", new_obj_ptr, E_ERROR TSRMLS_CC);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_querymap_object(&(pMap->querymap), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "querymap", new_obj_ptr, E_ERROR TSRMLS_CC);	
 
     return map_id;
 }
@@ -13394,6 +13411,92 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_TRUE;
 }
+
+
+
+/*=====================================================================
+ *                 PHP function wrappers - queryMapObj class
+ *====================================================================*/
+
+/**********************************************************************
+ *                     _phpms_build_querymap_object()
+ **********************************************************************/
+static long _phpms_build_querymap_object(queryMapObj *pquerymap,
+                                      HashTable *list, pval *return_value TSRMLS_DC)
+{
+    pval *new_obj_ptr;
+    int querymap_id;
+
+    if (pquerymap == NULL)
+      return 0;
+
+    querymap_id = php3_list_insert(pquerymap, PHPMS_GLOBAL(le_msquerymap));
+
+    _phpms_object_init(return_value, querymap_id, php_querymap_class_functions,
+                       PHP4_CLASS_ENTRY(querymap_class_entry_ptr) TSRMLS_CC);
+
+    /* editable properties */
+    add_property_long(return_value,   "width",    pquerymap->width);
+    add_property_long(return_value,   "height",   pquerymap->height);
+    add_property_long(return_value,   "style",	  pquerymap->style);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(pquerymap->color), list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "color", new_obj_ptr, E_ERROR TSRMLS_CC);
+
+    return querymap_id;
+}
+
+
+/**********************************************************************
+ *                        querymap->set()
+ **********************************************************************/
+
+/* {{{ proto int querymap.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+DLEXPORT void php3_ms_querymap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    queryMapObj *self;
+    pval *pPropertyName, *pNewValue;
+    pval *pThis;
+
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) != 2)
+    {
+        WRONG_PARAM_COUNT;
+    }else
+    {
+        if (getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+            WRONG_PARAM_COUNT;
+    }
+
+
+    self = (queryMapObj *)_phpms_fetch_handle(pThis, le_msquerymap, list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    IF_SET_LONG(      "width",      self->width)
+    else IF_SET_LONG( "height",     self->height)
+    else IF_SET_LONG( "style",      self->style)
+    else
+    {
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
+                            pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }
+
+    RETURN_LONG(0);
+}
+/* }}} */
+
 
 
 /* ==================================================================== */

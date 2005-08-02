@@ -1314,8 +1314,8 @@ Constructor:
         $poPoint->project($projInObj, $projOutObj);
 
 
- scalebarObj Class
- -----------
+ ScalebarObj Class:
+ ------------------
 
  Constructor:
 
@@ -1348,8 +1348,8 @@ Constructor:
         Sets the imagecolor propery (baclground) of the object.
         Returns false on error.  
 
- legendObj Class
- -----------
+ LegendObj Class:
+ ----------------
 
  Constructor:
 
@@ -1357,30 +1357,50 @@ Constructor:
 
  Members:
 
-   int height;
-   int width;
-   int keysizex;      
-   int keysizey;
-   int keyspacingx;
-   int keyspacingy;
-   colorObj outlinecolor; //Color of outline of box, -1 for no outline
-   int status; //MS_ON, MS_OFF, MS_EMBED
-   int position; //for embeded legends, MS_UL, MS_UC, ...
-   int transparent;
-   int interlace;
-   int postlabelcache; //MS_TRUE, MS_FALSE
-   labelObj label;
-   colorObj imagecolor;
-   string   template
+    int height;
+    int width;
+    int keysizex;      
+    int keysizey;
+    int keyspacingx;
+    int keyspacingy;
+    colorObj outlinecolor; //Color of outline of box, -1 for no outline
+    int status; //MS_ON, MS_OFF, MS_EMBED
+    int position; //for embeded legends, MS_UL, MS_UC, ...
+    int transparent;
+    int interlace;
+    int postlabelcache; //MS_TRUE, MS_FALSE
+    labelObj label;
+    colorObj imagecolor;
+    string   template
      
  Methods:
 
-      int set(string property_name, new_value)
+    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
 
 
-styleObj Class
- -----------
+ QuerymapObj Class:
+ ------------------
+
+ Constructor:
+
+    Instances of querymapObj are always are always embedded inside the mapObj.
+
+ Members:
+
+    int width
+    int height
+    int style   (MS_NORMAL, MS_HILITE, MS_SELECTED)
+    colorObj color
+     
+ Methods:
+
+    int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+
+ StyleObj Class:
+ ---------------
 
  Constructor:
 
@@ -1412,8 +1432,8 @@ styleObj Class
    styleObj clone()
      Returns a cloned copy of the style.  
 
-outputformatObj Class
--------------------
+ OutputformatObj Class:
+ ----------------------
 
  Constructor :
 
@@ -1454,8 +1474,8 @@ outputformatObj Class
         Deprecated. See getOption().
 
 
-gridObj
---------
+ GridObj Class:
+ --------------
 
  Constructor :
 
@@ -1489,37 +1509,37 @@ gridObj
         Set object property to a new value.
 
 
-errorObj
---------
+ ErrorObj Class:
+ ---------------
 
    Instances of errorObj are created internally by MapServer as errors
    happen.  Errors are managed as a chained list with the first item being
    the most recent error.  The head of the list can be fetched using 
    ms_GetErrorObj(), and the list can be cleared using ms_ResetErrorList()
 
- Functions:
+  Functions:
 
-   errorObj ms_GetErrorObj()
+    errorObj ms_GetErrorObj()
         Returns a reference to the head of the list of errorObj.
 
-   void ms_ResetErrorList()
+    void ms_ResetErrorList()
         Clear the current error list.  
         Note that clearing the list invalidates any errorObj handles obtained 
         via the $error->next() method.
 
- Members:
+  Members:
 
-   int      code      /* See error code constants above */
-   string   routine
-   string   message
+    int      code      /* See error code constants above */
+    string   routine
+    string   message
 
- Method:
+  Method:
 
-   errorObj next()
+    errorObj next()
         Returns the next errorObj in the list, or NULL if we reached the end
         of the list.
 
- Example:
+  Example:
    This example draws a map and reports all errors generated during
    the draw() call, errors can potentially come from multiple layers.
 
@@ -1534,25 +1554,25 @@ errorObj
 
 
 
-labelcacheObj
-------------
+ LabelcacheObj Class:
+ --------------------
 
-Accessible only through the map object (map->labelcache). This object
-is only used to give the possiblity to free the label cache 
-(map->labelcache->free())
+  Accessible only through the map object (map->labelcache). This object
+  is only used to give the possiblity to free the label cache 
+  (map->labelcache->free())
 
 
-Method:
+  Method:
 
-   boolean free()
+    boolean free()
         Free the label cache. Returns true on success or false if an error
         occurs.
         Ex : (map->labelcache->free();
 
 
 
-symbolObj class
----------------
+ SymbolObj Class:
+ ----------------
 
   Constructor:
         
@@ -1565,7 +1585,7 @@ symbolObj class
   To get a symbol object, you need to use a method on the map object:
         $oSymbol = $map->getSymbolObjectById($nId);
 
-  Members
+  Members:
 
     string name;
     type name;  //Please refer to symbol type constants
@@ -1577,7 +1597,7 @@ symbolObj class
     int filled;
     int stylelength;
 
-  Functions
+  Methods:
 
      int set(string property_name, new_value)
         Set object property to a new value.
