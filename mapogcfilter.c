@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.56  2005/08/03 17:28:44  assefa
+ * use always "like" instead of "ilike" when generating an SQL statement
+ * for OGR layers.
+ *
  * Revision 1.55  2005/07/26 15:02:53  assefa
  * Added support for OGR layers to use SQL type filers (Bug 1292)
  *
@@ -3379,7 +3383,7 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
 
     /* attribute name */
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
-    if (bCaseInsensitive == 1)
+    if (bCaseInsensitive == 1 && connectiontype != MS_OGR)
       strcat(szBuffer, " ilike '");
     else
       strcat(szBuffer, " like '");
