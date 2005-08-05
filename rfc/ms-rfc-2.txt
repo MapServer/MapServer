@@ -16,20 +16,31 @@ to use this format:
 1) within a mapfile
 2) via URL
 3) via MapScript
+4) via MapServer query template
 
-Instead of writing a new WKT parser I would provide access to underlying GEOS 
-functionality to do this and leverage the Geometry <=> shapeObj wrapper code 
-that is already available.
+Instead of writing a new WKT parser we would provide access to underlying GEOS 
+or OGR functionality to do this. Notes about conversion between WKT and shapeObj's
+are included at the end of this document.
 
 Files affected
 ~~~~~~~~~~~~~~~~~
 
-- mapfile.h => new constant
+- mapfile.h => new constant, WKT
 - maplexer.l => recognize the new constant
 - mapfile.c => process new mapfile parameter with FEATURE block (WKT), and 
   update URL parsing in a similar manner
-- mapgeos.cpp => wrap GEOS WKT reading code
-- mapscript/swiginc/shape.i => update constructor to pass a WKT string
+- mapgeos.cpp => wrap GEOS WKT reading/writing code
+- mapogr.cpp => wrap OGR WKT reading/writing code
+- mapprimitive.c => wrap the GEOS and OGR WKT writer/reading code, this would 
+  be the "public" interface 
+- maptemplate.c => update the shpxy tag with a "-wkt" option so it would output
+  the WKT version of a shape. Placing here would allow us to take advantage of
+  the projection support already in place, plus any future options (thining, buffers
+  and so on).
+- mapscript/swiginc/shape.i => update constructor to pass a WKT string and to
+  define a "toString" method that would output a WKT string. Similar modifications
+  would have to be made within PHP/MapScript, patterned after the SWIG-based
+  interface.
 
 Backwards compatabilty issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
