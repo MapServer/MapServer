@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2005/08/05 18:45:07  sdlime
+ * Added code to apply sizeitem and angleitem to points.
+ *
  * Revision 1.93  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -1497,8 +1500,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
 	}
 
-	for(s=0; s<layer->class[c].numstyles; s++)
+	for(s=0; s<layer->class[c].numstyles; s++) {
+	  if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
+	  if(layer->class[c].styles[s].sizeitemindex != -1) layer->class[c].styles[s].size = atoi(shape->values[layer->class[c].styles[s].sizeitemindex]);      
   	  msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
+	}
 
 	if(shape->text) {
           labelObj label;
