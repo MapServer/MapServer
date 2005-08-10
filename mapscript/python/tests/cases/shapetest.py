@@ -108,6 +108,40 @@ class ShapeValuesTestCase(unittest.TestCase):
         assert so.getValue(0) == 'Foo'
         assert so.getValue(1) == ''
         
+# New class for testing the WKT stuff of RFC-2       
+class ShapeWKTTestCase(unittest.TestCase):
+    
+    # define a pair of coords, and WKT as class data
+    point_xy = (-105.5, 40.0)
+    point_wkt = 'POINT (-105.5 40.0)'
+    
+    def testSetPointWKT(self):
+        # Create new instance and set/init from WKT
+        so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
+        so.setWKT(self.point_wkt)
         
+        # expect one line with one point
+        self.assert_(so.numlines == 1, so.numlines)
+        self.assert_(so.get(0).numpoints == 1, so.get(0).numpoints)
+        
+        # expect shape's x and y values to be correct
+        po = so.get(0).get(0)
+        self.assertAlmostEqual(po.x, self.point_xy[0])
+        self.assertAlmostEqual(po.y, self.point_xy[1])
+
+    def testGetPointWKT(self):
+        # Create new instance from class data
+        po = mapscript.pointObj(self.point_xy[0], self.point_xy[1])
+        lo = mapscript.lineObj()
+        lo.add(po)
+        so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
+        so.add(lo)
+
+        # test output WKT
+        wkt = so.toWKT()
+        self.assert_(wkt == self.point_wkt, wkt)
+        
+
+# ============================================================================
 if __name__ == '__main__':
     unittest.main()
