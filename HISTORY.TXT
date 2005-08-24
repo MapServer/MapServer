@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- bug 1307: Enable -DUSE_ZLIB via configure for compressed SVG output.
+
 - bug 1432: maputil.c/msAddLine(): rewrite msAddLine() to call 
   msAddLineDirectly, and use realloc() in msAddLineDirectly() to optimize
   growth of shapeObjs. 

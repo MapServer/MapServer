@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB SDERASTER_ENABLED MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_REGEX_INC PHP_REGEX_OBJ PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB SDERASTER_ENABLED MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_REGEX_INC PHP_REGEX_OBJ PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -834,8 +834,8 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
                               path to freetype-config program or install dir).
-  --with-zlib=DIR         GD: Specify where zlib is installed (DIR is path to
-                              zlib install dir).
+  --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
+                              to zlib install dir).
   --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
                               PNG install dir).
   --with-jpeg=DIR       Include JPEG support (DIR is LibJPEG's install dir).
@@ -4438,15 +4438,48 @@ fi;
 echo "$as_me: checking where Zlib is installed..." >&6;}
 ZL_LIB=''
 
+test -f $ZL_DIR/include/zlib.h && ZL_INCDIR="$ZL_DIR/include"
+
 test -f $ZL_DIR/lib/libz.a -o -f $ZL_DIR/lib/libz.so -o -f $ZL_DIR/lib/libz.sl && ZL_LIBDIR="$ZL_DIR/lib"
 test -f $ZL_DIR/lib64/libz.a -o -f $ZL_DIR/lib64/libz.so -o -f $ZL_DIR/lib64/libz.sl && ZL_LIBDIR="$ZL_DIR/lib64"
 test -f $ZL_DIR/libz.a -o -f $ZL_DIR/libz.so -o -f $ZL_DIR/libz.sl && ZL_LIBDIR="$ZL_DIR"
 
-if test -n "$ZL_LIBDIR" ; then
 
+if test -n "$ZL_LIBDIR" -a -n "$ZL_INCDIR" ; then
+
+        ZL_ENABLED="-DUSE_ZLIB"
+  ZL_INC="-I$ZL_INCDIR"
   ZL_LIB="-L$ZL_LIBDIR -lz"
-  echo "$as_me:$LINENO: result:         using libz from $ZL_LIB" >&5
-echo "${ECHO_T}        using libz from $ZL_LIB" >&6
+  echo "$as_me:$LINENO: result:         using libz from $ZL_LIB ($ZL_ENABLED)" >&5
+echo "${ECHO_T}        using libz from $ZL_LIB ($ZL_ENABLED)" >&6
+
+  if test ""$ZL_DIR"" != "/usr/lib"; then
+
+  if test -z ""$ZL_DIR"" || echo ""$ZL_DIR"" | grep '^/' >/dev/null ; then
+    ai_p=""$ZL_DIR""
+  else
+    ai_p="`pwd`/"$ZL_DIR""
+  fi
+
+
+  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
+  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
+  if test -n "$unique" && test "`eval $cmd`" = "" ; then
+    eval "LIBPATH$unique=set"
+
+      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
+        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
+
+  fi
+
+  fi
+
+
+elif test -n "$ZL_LIBDIR" ; then
+
+        ZL_LIB="-L$ZL_LIBDIR -lz"
+  echo "$as_me:$LINENO: result:         using runtime libz from $ZL_LIB" >&5
+echo "${ECHO_T}        using runtime libz from $ZL_LIB" >&6
 
   if test ""$ZL_DIR"" != "/usr/lib"; then
 
@@ -4543,8 +4576,9 @@ fi
 
 
   if test -n "$ZL_LIB" ; then
-    echo "$as_me:$LINENO: result:         using libz from system libs." >&5
-echo "${ECHO_T}        using libz from system libs." >&6
+    ZL_ENABLED="-DUSE_ZLIB"
+    echo "$as_me:$LINENO: result:         using libz from system libs ($ZL_ENABLED)." >&5
+echo "${ECHO_T}        using libz from system libs ($ZL_ENABLED)." >&6
   else
     echo "$as_me:$LINENO: result:         Zlib (libz) library cannot be found, possibly needed for GD" >&5
 echo "${ECHO_T}        Zlib (libz) library cannot be found, possibly needed for GD" >&6
@@ -4552,6 +4586,17 @@ echo "${ECHO_T}        Zlib (libz) library cannot be found, possibly needed for 
 
 fi
 
+
+ZLIB_ENABLED=$ZL_ENABLED
+
+ZLIB_INC=$ZL_INC
+
+ZLIB_LIB=$ZL_LIB
+
+
+ALL_ENABLED="$ZL_ENABLED $ALL_ENABLED"
+ALL_INC="$ZL_INC $ALL_INC"
+ALL_LIB="$ZL_LIB $ALL_LIB"
 
 
 unset ac_cv_lib_png_png_init_io
@@ -7426,8 +7471,6 @@ PDF_ENABLED=$PDF_ENABLED
 PDF_INC=$PDF_INC
 
 PDF_LIB=$PDF_LIB
-
-PDF_OBJ=$PDF_OBJ
 
 
 ALL_ENABLED="$PDF_ENABLED $ALL_ENABLED"
@@ -11205,6 +11248,9 @@ s,@C_PIC@,$C_PIC,;t t
 s,@STRINGS@,$STRINGS,;t t
 s,@MS_VERSION@,$MS_VERSION,;t t
 s,@FT_BIN@,$FT_BIN,;t t
+s,@ZLIB_ENABLED@,$ZLIB_ENABLED,;t t
+s,@ZLIB_INC@,$ZLIB_INC,;t t
+s,@ZLIB_LIB@,$ZLIB_LIB,;t t
 s,@JPEG_ENABLED@,$JPEG_ENABLED,;t t
 s,@JPEG_INC@,$JPEG_INC,;t t
 s,@JPEG_LIB@,$JPEG_LIB,;t t
@@ -11220,7 +11266,6 @@ s,@MAKE_GD_CLEAN@,$MAKE_GD_CLEAN,;t t
 s,@PDF_ENABLED@,$PDF_ENABLED,;t t
 s,@PDF_INC@,$PDF_INC,;t t
 s,@PDF_LIB@,$PDF_LIB,;t t
-s,@PDF_OBJ@,$PDF_OBJ,;t t
 s,@EPPL_ENABLED@,$EPPL_ENABLED,;t t
 s,@EPPL_OBJ@,$EPPL_OBJ,;t t
 s,@PROJ_ENABLED@,$PROJ_ENABLED,;t t
