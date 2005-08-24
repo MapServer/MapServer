@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Typemaps for C# to enable imageObj.getBytes() method (bug 1389).
+
 - bug 1307: Enable -DUSE_ZLIB via configure for compressed SVG output.
 
 - bug 1432: maputil.c/msAddLine(): rewrite msAddLine() to call 
