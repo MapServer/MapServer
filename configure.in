@@ -121,28 +121,45 @@ fi
 
 
 dnl ---------------------------------------------------------------------
-dnl Check where zlib is installed
+dnl Check where zlib is installed (used by libpng and by ZVG compressed output)
 dnl ---------------------------------------------------------------------
 
 unset ac_cv_lib_z_zlibVersion
 
 AC_ARG_WITH(zlib,
-[  --with-zlib=DIR         GD: Specify where zlib is installed (DIR is path to
-                              zlib install dir).],
+[  --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
+                              to zlib install dir).],
     ZL_DIR=$withval,ZL_DIR='')
 
 AC_EXPAND_PATH($ZL_DIR, ZL_DIR)
 AC_CHECKING(where Zlib is installed)
 ZL_LIB=''
 
+test -f $ZL_DIR/include/zlib.h && ZL_INCDIR="$ZL_DIR/include"
+
 test -f $ZL_DIR/lib/libz.a -o -f $ZL_DIR/lib/libz.so -o -f $ZL_DIR/lib/libz.sl && ZL_LIBDIR="$ZL_DIR/lib"
 test -f $ZL_DIR/lib64/libz.a -o -f $ZL_DIR/lib64/libz.so -o -f $ZL_DIR/lib64/libz.sl && ZL_LIBDIR="$ZL_DIR/lib64"
 test -f $ZL_DIR/libz.a -o -f $ZL_DIR/libz.so -o -f $ZL_DIR/libz.sl && ZL_LIBDIR="$ZL_DIR"
 
-if test -n "$ZL_LIBDIR" ; then
 
+if test -n "$ZL_LIBDIR" -a -n "$ZL_INCDIR" ; then
+
+  dnl
+  dnl Found libz runtime and headers. Enable USE_ZLIB (SVG compressed output)
+  dnl
+  ZL_ENABLED="-DUSE_ZLIB"
+  ZL_INC="-I$ZL_INCDIR"
   ZL_LIB="-L$ZL_LIBDIR -lz"
-  AC_MSG_RESULT([        using libz from $ZL_LIB])
+  AC_MSG_RESULT([        using libz from $ZL_LIB ($ZL_ENABLED)])
+  AC_ADD_RUNPATH("$ZL_DIR")
+
+elif test -n "$ZL_LIBDIR" ; then
+
+  dnl
+  dnl Found only runtime but no headers (good only for libpng)
+  dnl
+  ZL_LIB="-L$ZL_LIBDIR -lz"
+  AC_MSG_RESULT([        using runtime libz from $ZL_LIB])
   AC_ADD_RUNPATH("$ZL_DIR")
 
 else
@@ -152,13 +169,25 @@ else
   AC_CHECK_LIB(z, zlibVersion, ZL_LIB="-lz",,)
 
   if test -n "$ZL_LIB" ; then
-    AC_MSG_RESULT([        using libz from system libs.])
+    ZL_ENABLED="-DUSE_ZLIB"
+    AC_MSG_RESULT([        using libz from system libs ($ZL_ENABLED).])
   else
     AC_MSG_RESULT([        Zlib (libz) library cannot be found, possibly needed for GD])
   fi
 
 fi
 
+dnl If we found ZLIB headers then enable it by default since SVG output
+dnl is enabled by default and will take advantage of it, otherwise the 
+dnl PNG code below will take care of including the runtime lib only.
+
+AC_SUBST(ZLIB_ENABLED,$ZL_ENABLED)
+AC_SUBST(ZLIB_INC,    $ZL_INC)
+AC_SUBST(ZLIB_LIB,    $ZL_LIB)
+
+ALL_ENABLED="$ZL_ENABLED $ALL_ENABLED"
+ALL_INC="$ZL_INC $ALL_INC"
+ALL_LIB="$ZL_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl Check where PNG is installed
@@ -684,7 +713,6 @@ PDF_LIB="$PDF_LIB"
 AC_SUBST(PDF_ENABLED,$PDF_ENABLED)
 AC_SUBST(PDF_INC,    $PDF_INC)
 AC_SUBST(PDF_LIB,    $PDF_LIB)
-AC_SUBST(PDF_OBJ,    $PDF_OBJ)
 
 ALL_ENABLED="$PDF_ENABLED $ALL_ENABLED"
 ALL_INC="$PDF_INC $ALL_INC"
