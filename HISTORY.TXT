@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.1 (CVS)
 --------------------------
 
+- Typemaps for C# to enable the imageObj.getBytes() method (bug 1389).
+
 - bug 1307: Enable -DUSE_ZLIB via configure for compressed SVG output.
 
 - bug 1372: mapresample.c - ensure that multi-band raw results can be
