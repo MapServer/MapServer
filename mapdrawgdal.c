@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/08/25 22:01:50  frank
+ * fix problem with ungeorerenced files (eg augsignals)
+ *
  * Revision 1.45  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -1408,9 +1411,20 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 
 /* -------------------------------------------------------------------- */
 /*      We didn't find any info ... use the default.                    */
+/*      Reset our default geotransform.  GDALGetGeoTransform() may      */
+/*      have altered it even if GDALGetGeoTransform() failed.           */
 /* -------------------------------------------------------------------- */
     else
+    {
+        padfGeoTransform[0] = 0.0;
+        padfGeoTransform[1] = 1.0;
+        padfGeoTransform[2] = 0.0;
+        padfGeoTransform[3] = GDALGetRasterYSize(hDS);
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = -1.0;
+
         return MS_FAILURE;
+    }
 }
 
 /************************************************************************/

@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Fix in msGetGDALGetTransform() to use default geotransform even if
+  GDALGetGeoTransform() fails but alters the geotransform array.
+
 - Typemaps for C# to enable imageObj.getBytes() method (bug 1389).
 
 - bug 1307: Enable -DUSE_ZLIB via configure for compressed SVG output.
