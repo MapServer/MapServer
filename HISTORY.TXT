@@ -12,6 +12,12 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.6.2 (???)
+-------------------
+
+- Fix in msGetGDALGetTransform() to use default geotransform even if
+  GDALGetGeoTransform() fails but alters the geotransform array.
+
 
 Version 4.6.1 (2005-08-26)
 --------------------------
