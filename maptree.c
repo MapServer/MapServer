@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/08/25 14:20:16  sdlime
+ * Applied patch for bug 1440.
+ *
  * Revision 1.16  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -378,7 +381,7 @@ static int treeNodeAddShapeId( treeNodeObj *node, int id, rectObj rect, int maxd
 /* -------------------------------------------------------------------- */
     node->numshapes++;
 
-    node->ids = SfRealloc( node->ids, sizeof(int) * node->numshapes );
+    node->ids = SfRealloc( node->ids, sizeof(ms_int32) * node->numshapes );
     node->ids[node->numshapes-1] = id;
 
     return MS_TRUE;
@@ -466,8 +469,8 @@ void msTreeTrim(treeObj *tree)
 static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, char *status) 
 {
   int i;
-  long offset;
-  int numshapes, numsubnodes;
+  ms_int32 offset;
+  ms_int32 numshapes, numsubnodes;
   rectObj rect;
 
   int *ids=NULL;
@@ -485,14 +488,14 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, char *status
   if ( disktree->needswap ) SwapWord ( 4, &numshapes );
 
   if(!msRectOverlap(&rect, &aoi)) { /* skip rest of this node and sub-nodes */
-    offset += numshapes*sizeof(int) + sizeof(int);
+    offset += numshapes*sizeof(ms_int32) + sizeof(ms_int32);
     fseek(disktree->fp, offset, SEEK_CUR);
     return;
   }
   if(numshapes > 0) {
-    ids = (int *)malloc(numshapes*sizeof(int));
+    ids = (int *)malloc(numshapes*sizeof(ms_int32));
 
-    fread( ids, numshapes*sizeof(int), 1, disktree->fp );
+    fread( ids, numshapes*sizeof(ms_int32), 1, disktree->fp );
     if (disktree->needswap )
     {
       for( i=0; i<numshapes; i++ )
@@ -548,7 +551,7 @@ char *msSearchDiskTree(char *filename, rectObj aoi, int debug)
 treeNodeObj *readTreeNode( SHPTreeHandle disktree ) 
 {
   int i,res;
-  long offset;
+  ms_int32 offset;
   treeNodeObj *node;
 
   node = (treeNodeObj *) malloc(sizeof(treeNodeObj));
@@ -569,7 +572,7 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
   fread( &node->numshapes, 4, 1, disktree->fp );
   if ( disktree->needswap ) SwapWord ( 4, &node->numshapes );
   if( node->numshapes > 0 )
-    node->ids = (int *)malloc(sizeof(int)*node->numshapes);
+    node->ids = (ms_int32 *)malloc(sizeof(ms_int32)*node->numshapes);
   fread( node->ids, node->numshapes*4, 1, disktree->fp );
   for( i=0; i < node->numshapes; i++ )
   {
@@ -607,10 +610,10 @@ treeObj *msReadTree(char *filename, int debug)
   return(tree);
 }
 
-static long getSubNodeOffset(treeNodeObj *node) 
+static ms_int32 getSubNodeOffset(treeNodeObj *node) 
 {
   int i;
-  long offset=0;
+  ms_int32 offset=0;
 
   for(i=0; i<node->numsubnodes; i++ ) {
     if(node->subnode[i]) {
@@ -635,24 +638,24 @@ static long getSubNodeOffset(treeNodeObj *node)
 static void writeTreeNode(SHPTreeHandle disktree, treeNodeObj *node) 
 {
   int i,j;
-  long offset;
+  ms_int32 offset;
   char *pabyRec = NULL;
 
   offset = getSubNodeOffset(node);
   
-  pabyRec = malloc(sizeof(rectObj) + (3 * sizeof(int)) + (node->numshapes * sizeof(int)) );
+  pabyRec = malloc(sizeof(rectObj) + (3 * sizeof(ms_int32)) + (node->numshapes * sizeof(ms_int32)) );
 
   memcpy( pabyRec, &offset, 4);
   if( disktree->needswap ) SwapWord( 4, pabyRec );
     
-  memcpy( pabyRec+4, &node->rect, sizeof(rectObj));
+   memcpy( pabyRec+4, &node->rect, sizeof(rectObj));
   for (i=0; i < 4; i++)
     if( disktree->needswap ) SwapWord( 8, pabyRec+4+(8*i) );
 
   memcpy( pabyRec+36, &node->numshapes, 4);
   if( disktree->needswap ) SwapWord( 4, pabyRec+36 );
 
-  j = node->numshapes*sizeof(int);
+  j = node->numshapes*sizeof(ms_int32);
   memcpy( pabyRec+40, node->ids, j);
   for (i=0; i<node->numshapes; i++)
     if( disktree->needswap ) SwapWord( 4, pabyRec+40+(4*i));

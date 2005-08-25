@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.420  2005/08/25 14:20:16  sdlime
+ * Applied patch for bug 1440.
+ *
  * Revision 1.419  2005/07/16 19:07:38  jerryp
  * Bug 1420: PostGIS connector no longer needs two layer close functions.
  *
@@ -261,6 +264,13 @@ static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid );
 #else
 #define  MS_DLL_EXPORT
 #endif
+
+#if UINT_MAX == 65535
+typedef long ms_int32;
+#else
+typedef int ms_int32;
+#endif
+    
 
 #ifdef USE_MPATROL
 #include "mpatrol.h"

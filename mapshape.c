@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2005/08/25 14:20:16  sdlime
+ * Applied patch for bug 1440.
+ *
  * Revision 1.67  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -57,11 +60,6 @@
 
 MS_CVSID("$Id$")
 
-#if UINT_MAX == 65535
-typedef long          int32;
-#else
-typedef int           int32;
-#endif
 
 #define ByteCopy( a, b, c )     memcpy( b, a, c )
 
@@ -109,9 +107,9 @@ static void writeHeader( SHPHandle psSHP )
 {
   uchar     	abyHeader[100];
   int		i;
-  int32	i32;
+  ms_int32	i32;
   double	dValue;
-  int32	*panSHX;
+  ms_int32	*panSHX;
   
   /* -------------------------------------------------------------------- */
   /*      Prepare header block for .shp file.                             */
@@ -176,7 +174,7 @@ static void writeHeader( SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   /*      Prepare, and write .shx file header.                            */
   /* -------------------------------------------------------------------- */
-  i32 = (psSHP->nRecords * 2 * sizeof(int32) + 100)/2;   /* file size */
+  i32 = (psSHP->nRecords * 2 * sizeof(ms_int32) + 100)/2;   /* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
   if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
   
@@ -186,7 +184,7 @@ static void writeHeader( SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   /*      Write out the .shx contents.                                    */
   /* -------------------------------------------------------------------- */
-  panSHX = (int32 *) malloc(sizeof(int32) * 2 * psSHP->nRecords);
+  panSHX = (ms_int32 *) malloc(sizeof(ms_int32) * 2 * psSHP->nRecords);
   
   for( i = 0; i < psSHP->nRecords; i++ ) {
     panSHX[i*2  ] = psSHP->panRecOffset[i]/2;
@@ -195,7 +193,7 @@ static void writeHeader( SHPHandle psSHP )
     if( !bBigEndian ) SwapWord( 4, panSHX+i*2+1 );
   }
   
-  fwrite( panSHX, sizeof(int32) * 2, psSHP->nRecords, psSHP->fpSHX );
+  fwrite( panSHX, sizeof(ms_int32) * 2, psSHP->nRecords, psSHP->fpSHX );
   
   free( panSHX );
 }
@@ -368,7 +366,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX );
   
   for( i = 0; i < psSHP->nRecords; i++ ) {
-    int32 nOffset, nLength;
+    ms_int32 nOffset, nLength;
     
     memcpy( &nOffset, pabyBuf + i * 8, 4 );
     if( !bBigEndian ) SwapWord( 4, &nOffset );
@@ -438,7 +436,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   int		i;
   FILE	*fpSHP, *fpSHX;
   uchar     	abyHeader[100];
-  int32	i32;
+  ms_int32	i32;
   double	dValue;
   
   /* -------------------------------------------------------------------- */
@@ -574,7 +572,7 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
 {
   int nRecordOffset, nRecordSize=0;
   uchar	*pabyRec;
-  int32	i32, nPoints, nParts;
+  ms_int32	i32, nPoints, nParts;
   
   if( psSHP->nShapeType != SHP_POINT) return(-1);
 
@@ -665,7 +663,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 {
   int nRecordOffset, i, j, k, nRecordSize=0;
   uchar	*pabyRec;
-  int32	i32, nPoints, nParts;
+  ms_int32	i32, nPoints, nParts;
 #ifdef USE_POINT_Z_M
   double dfMMin, dfMMax = 0;
 #endif
@@ -707,7 +705,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   if(psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC ||
      psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM ||
      psSHP->nShapeType == SHP_ARCZ ||  psSHP->nShapeType == SHP_POLYGONZ) {
-    int32 t_nParts, t_nPoints, partSize;
+    ms_int32 t_nParts, t_nPoints, partSize;
     
     t_nParts = nParts;
     t_nPoints = nPoints;
@@ -820,7 +818,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   else if( psSHP->nShapeType == SHP_MULTIPOINT ||
            psSHP->nShapeType == SHP_MULTIPOINTM ||
            psSHP->nShapeType == SHP_MULTIPOINTZ) {
-    int32 t_nPoints;
+    ms_int32 t_nPoints;
     
     t_nPoints = nPoints;
     
@@ -1087,7 +1085,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM ||
         psSHP->nShapeType == SHP_POLYGONZ || psSHP->nShapeType == SHP_ARCZ)
     {
-      int32		nPoints, nParts;      
+      ms_int32		nPoints, nParts;      
 
       /* copy the bounding box */
       memcpy( &shape->bounds.minx, psSHP->pabyRec + 8 + 4, 8 );
@@ -1207,7 +1205,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     else if( psSHP->nShapeType == SHP_MULTIPOINT || psSHP->nShapeType == SHP_MULTIPOINTM ||
              psSHP->nShapeType == SHP_MULTIPOINTZ)
     {
-      int32		nPoints;
+      ms_int32		nPoints;
 
       /* copy the bounding box */
       memcpy( &shape->bounds.minx, psSHP->pabyRec + 8 + 4, 8 );

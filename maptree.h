@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/08/25 14:20:16  sdlime
+ * Applied patch for bug 1440.
+ *
  * Revision 1.9  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -48,22 +51,22 @@ extern "C" {
 
 /* this can be 2 or 4 for binary or quad tree */
 #define MAX_SUBNODES 4
-
+   
 typedef struct shape_tree_node {
   /* area covered by this node */
   rectObj rect;
   
   /* list of shapes stored at this node. */
-  int numshapes;
-  int *ids;
+  ms_int32 numshapes;
+  ms_int32 *ids;
   
   int numsubnodes;
   struct shape_tree_node *subnode[MAX_SUBNODES];
 } treeNodeObj;
 
 typedef struct {
-  int numshapes;
-  int maxdepth;
+  ms_int32 numshapes;
+  ms_int32 maxdepth;
   treeNodeObj *root;
 } treeObj;
 
@@ -77,8 +80,8 @@ typedef struct
     char	version;
     char	flags[3];
 
-    int         nShapes;
-    int         nDepth;
+    ms_int32        nShapes;
+    ms_int32        nDepth;
 } SHPTreeInfo;
 typedef SHPTreeInfo * SHPTreeHandle;
 
