@@ -96,19 +96,22 @@
     %newobject toHex;
     char *toHex() 
     {
-        char hexcolor[7];
+        char hexcolor[8] = "";
 
-        if (!self) {
+        if (!self) 
+        {
             msSetError(MS_MISCERR, "Can't express NULL color as hex",
                        "toHex()");
             return NULL;
         }
-        if (self->red < 0 || self->green < 0 || self->blue < 0) {
+        if (self->red < 0 || self->green < 0 || self->blue < 0) 
+        {
             msSetError(MS_MISCERR, "Can't express invalid color as hex",
                        "toHex()");
             return NULL;
         }
-        sprintf(hexcolor, "#%02x%02x%02x", self->red, self->green, self->blue);
+        snprintf(hexcolor, 8, "#%02x%02x%02x",
+                 self->red, self->green, self->blue);
         return strdup(hexcolor);
     }
 

@@ -46,8 +46,8 @@ Here is the list of available options as returned by "./configure --help":
                           install dir).
   --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is path
                               to freetype-config program or install dir).
-  --with-zlib=DIR         GD: Specify where zlib is installed (DIR is path to
-                              zlib install dir).
+  --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
+                              to zlib install dir).
   --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
                               PNG install dir).
   --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the 
@@ -145,8 +145,8 @@ GD and Support Libraries:
                               libiconv install dir).
   --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is path
                               to freetype-config program or install dir).
-  --with-zlib=DIR         GD: Specify where zlib is installed (DIR is path to
-                              zlib install dir).
+  --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
+                              to zlib install dir).
   --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
                               PNG install dir).
   --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the 
@@ -160,7 +160,6 @@ GD and Support Libraries:
   Note:  If libraries required by GD are not found, it may cause configure
   to not accurately detect which image formats are supported by GD, and may
   cause configure and building to fail.
-
 
 
 TIFF Support:

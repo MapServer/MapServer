@@ -184,6 +184,11 @@ typedef struct {
 ============================================================================
 */
 
+/* C# */
+#ifdef SWIGCSHARP
+%include "csmodule.i"
+#endif
+
 /* Java */
 #ifdef SWIGJAVA
 %include "javamodule.i"
