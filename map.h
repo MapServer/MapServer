@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.416.2.1  2005/08/25 21:07:43  dan
+ * Ready for 4.6.1 release
+ *
  * Revision 1.416  2005/06/14 18:09:52  dan
  * Ready for 4.6.0 release
  *
@@ -304,7 +307,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.6.0"
+#define MS_VERSION "4.6.1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

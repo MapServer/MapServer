@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.6.1 (CVS)
+Version 4.6.1 (2005-08-26)
 --------------------------
 
 - Typemaps for C# to enable the imageObj.getBytes() method (bug 1389).
