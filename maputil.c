@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.187  2005/08/27 04:57:25  sdlime
+ * Fixed a recursion problem in context evaluation function msEvalContext(). Had to disable the [raster] option though and will try to implement some other way. (bug 1283)
+ *
  * Revision 1.186  2005/07/27 15:33:11  frank
  * Make sure we have room for big counters in temp file names.
  *
@@ -162,7 +165,7 @@ static int searchContextForTag(mapObj *map, char **ltags, char *tag, char *conte
 
   if(!context) return MS_FAILURE;
 
-  /* printf("\tin searchContextForTag, searching %s for %s\n", context, tag); */
+  /*  printf("\tin searchContextForTag, searching %s for %s\n", context, tag); */
 
   if(strstr(context, tag) != NULL) return MS_SUCCESS; /* found the tag */
 
@@ -214,6 +217,7 @@ int msValidateContexts(mapObj *map)
       status = MS_FAILURE;
       break;
     }
+    /* printf("done layer %s\n", map->layers[i].name); */
   }
 
   /* clean up */
@@ -226,55 +230,42 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 {
   int i, status;
   char *tmpstr1=NULL, *tmpstr2=NULL;
-  int raster=MS_FALSE, visible;
-  int expresult;       /* result of expression parsing operation */
+  int result;       /* result of expression parsing operation */
 
   if(!context) return(MS_TRUE); /* no context requirements */
 
   tmpstr1 = strdup(context);
 
   for(i=0; i<map->numlayers; i++) { /* step through all the layers */
-    if(layer->index == i) continue; /* skip the layer in question */
-    /* Layer without name cannot be used in contexts */
-    if (map->layers[i].name == NULL) continue;
-    visible = msLayerIsVisible(map, &(map->layers[i]));
+    if(layer->index == i) continue; /* skip the layer in question */    
+    if (map->layers[i].name == NULL) continue; /* Layer without name cannot be used in contexts */
 
-    if(map->layers[i].type == MS_LAYER_RASTER && visible)
-      raster = MS_TRUE; /* there are raster layers ON/DEFAULT */
+    tmpstr2 = (char *)malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
+    sprintf(tmpstr2, "[%s]", map->layers[i].name);
 
-    if(strstr(tmpstr1, map->layers[i].name)) {
-      tmpstr2 = (char *)malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
-      sprintf(tmpstr2, "[%s]", map->layers[i].name);
-
-      if(!visible)
-	tmpstr1 = gsub(tmpstr1, tmpstr2, "0");
-      else
+    if(strstr(tmpstr1, tmpstr2)) {
+      if(msLayerIsVisible(map, &(map->layers[i])))
 	tmpstr1 = gsub(tmpstr1, tmpstr2, "1");
-
-      free(tmpstr2);
+      else
+	tmpstr1 = gsub(tmpstr1, tmpstr2, "0");
     }
-  }
 
-  /* special option to catch raster (i.e. background) layers, easier than having to list all layers individually */
-  if(raster == MS_TRUE)
-    tmpstr1 = gsub(tmpstr1, "[raster]", "1");
-  else
-    tmpstr1 = gsub(tmpstr1, "[raster]", "0");
+    free(tmpstr2);
+  }
 
   msAcquireLock( TLOCK_PARSER );
   msyystate = 4; msyystring = tmpstr1;
   status = msyyparse();
-  expresult = msyyresult;
+  result = msyyresult;
   msReleaseLock( TLOCK_PARSER );
   free(tmpstr1);
 
-  if (status != 0)
-  {
-    msSetError(MS_PARSEERR, "Failed to parse context",
-                            "msEvalContext");
+  if (status != 0) {
+    msSetError(MS_PARSEERR, "Failed to parse context", "msEvalContext");
     return MS_FALSE; /* error in parse */
   }
-  return expresult;
+
+  return result;
 }
 
 /* msEvalExpression()
