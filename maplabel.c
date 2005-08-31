@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2005/08/31 18:30:03  sdlime
+ * Applied patch suggested to adjust TTF baselines (bug 1449).
+ *
  * Revision 1.77  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -313,6 +316,10 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     rect->miny = bbox[5];
     rect->maxx = bbox[2];
     rect->maxy = bbox[1];
+
+    // bug 1449 fix (adjust baseline)
+    label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
+    label->offsetx += MS_NINT(bbox[0] / 2); // optional?
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
     return(-1);
