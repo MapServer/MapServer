@@ -19,8 +19,8 @@ to use this format:
 4) via MapServer query template
 
 Instead of writing a new WKT parser we would provide access to underlying GEOS 
-or OGR functionality to do this. Notes about conversion between WKT and shapeObj's
-are included at the end of this document.
+or OGR functionality to do this. Notes about the actual implementation are
+included below.
 
 Files affected
 ~~~~~~~~~~~~~~~~~
@@ -47,48 +47,40 @@ Backwards compatabilty issues
 
 N/A, new functionality
 
-Implementation Issues
+Implementation Details
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Biggest problem may lie with MapScript and how to integrate into the shapeObj 
-code. Ideally one would just create an overloaded shapeObj constuctor. It's 
-not clear how cross-language that would be although both Perl and Python 
-support that via SWIG. Not sure about other SWIGed languages or PHP.  Could 
-also consider adding a method like .addWKT. to the layer object.
+ - The C API will take the form:
 
-Bug ID
-~~~~~~~~
+  shapeObj *msShapeFromWKT( const char * );
+  char *msShapeToWKT( shapeObj * ); 
 
-unassigned
+  These are contrary to some of the older code (e.g. msLayerNextShape()). However there 
+  are 2 places the WKT APIs will be used: 1) MapScript and 2) creating inline features 
+  via URL or MapFiles. In both cases the above functions would be prefered.
 
-Voting history
-~~~~~~~~~~~~~~~~~
+ - In MapScript, creating a shape will take the form of an overloaded constructor, e.g.:
 
-None
+   $shape = new shapeObj($mapscript::MS_SHAPE_LINE);  OR
+   $shape = new shapeObj('LINESTRING(0 0,1 1,1 2)');
 
-
-
-=== WORKING NOTES ===
-
-WKT <-> shapeObj Mapping
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Random Notes
-------------
+ - In MapScript, a toWKT() method will be added to shapeObj object. 
 
  - WKT is geometry only.  The attributes, index, tileindex, classindex,
-   and text fields do not exist in WKT and will have to be set "elsewhere". 
+   and text fields do not exist in WKT and will have to be set "elsewhere".
 
- - There is no widely supported, or standardized approach to "measure" 
+ - There is no widely supported, or standardized approach to "measure"
    values in WKT though Refractions does support it in "EWKT".  For now it
    is assumed that measure values will not be preserved from WKT.
 
  - There is a well defined way of including Z coordinates and these should
    be carried through if MapServer is built with Z and M support enabled.
 
+ - Development will be accompanied by a set of tests. Sean Gillies has already created
+   a test case or two.
 
-Transformations shapeObj to WKT
--------------------------------
+ Transformations shapeObj to WKT
+ -------------------------------
 
  - MS_SHAPE_POINT: If numlines and numpoints are one, then this is converted
    to a POINT object in WKT.  If there are more points, this is converted
@@ -109,9 +101,8 @@ Transformations shapeObj to WKT
 
  - MS_SHAPE_NULL: This results in an empty WKT string.  
 
-
-Transformations WKT to shapeObj
--------------------------------
+ Transformations WKT to shapeObj
+ -------------------------------
 
  - POINT: Translates to an MS_SHAPE_POINT object with one point and one line.
 
@@ -132,6 +123,14 @@ Transformations WKT to shapeObj
  - GEOMETRYCOLLECTION: Treat as MULTIPOINT, MULTILINESTRING or MULTIPOLYGON if
    the contents are all compatible, otherwise throw an exception. 
 
+Bug ID
+~~~~~~~~
 
+unassigned
+
+Voting history
+~~~~~~~~~~~~~~~~~
+
+None
 
 
