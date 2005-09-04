@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/09/04 20:20:28  sdlime
+ * GML writes now support multiple ways of defining a multipoint. 1) one line string with multiple points and 2) multiplle line strings with one point each. (bug 1490)
+ *
  * Revision 1.68  2005/08/01 16:34:28  sdlime
  * Fixed a problem with the GML writer not properly closing the geometry container for MultiPoints. (bug 1409).
  *
@@ -233,21 +236,24 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
     if(geometry_simple_index >= 0) geometry_simple_name = geometryList->geometries[geometry_simple_index].name;
     if(geometry_aggregate_index >= 0) geometry_aggregate_name = geometryList->geometries[geometry_aggregate_index].name;
 
-    if((geometry_simple_index != -1 && shape->line[0].numpoints == 1) ||
+    if((geometry_simple_index != -1 && shape->line[0].numpoints == 1 && shape->numlines == 1) ||
        (geometry_simple_index != -1 && geometry_aggregate_index == -1) ||
-       (geometryList->numgeometries == 0 && shape->line[0].numpoints == 1)) { /* write a Point(s) */
-      for(i=0; i<shape->line[0].numpoints; i++) {
-        gmlStartGeometryContainer(stream, geometry_simple_name, namespace, tab);
+       (geometryList->numgeometries == 0 && shape->line[0].numpoints == 1 && shape->numlines == 1)) { /* write a Point(s) */
 
-        /* Point */
-        if(srsname_encoded)
-          msIO_fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
-        else
-          msIO_fprintf(stream, "%s<gml:Point>\n", tab);
-        msIO_fprintf(stream, "%s  <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);
-        msIO_fprintf(stream, "%s</gml:Point>\n", tab);
+      for(i=0; i<shape->numlines; i++) {
+	for(j=0; j<shape->line[i].numpoints; j++) {
+	  gmlStartGeometryContainer(stream, geometry_simple_name, namespace, tab);
 
-        gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
+	  /* Point */
+	  if(srsname_encoded)
+	    msIO_fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
+	  else
+	    msIO_fprintf(stream, "%s<gml:Point>\n", tab);
+	  msIO_fprintf(stream, "%s  <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
+	  msIO_fprintf(stream, "%s</gml:Point>\n", tab);
+	  
+	  gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
+	}
       }
     } else if((geometry_aggregate_index != -1) || (geometryList->numgeometries == 0)) { /* write a MultiPoint */
       gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
@@ -257,15 +263,17 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s<gml:MultiPoint srsName=\"%s\">\n", tab, srsname_encoded);
       else
         msIO_fprintf(stream, "%s<gml:MultiPoint>\n", tab);
-     
-      for(i=0; i<shape->line[0].numpoints; i++) {
-        msIO_fprintf(stream, "%s  <gml:Point>\n", tab);
-        msIO_fprintf(stream, "%s    <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);
-        msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
+
+      for(i=0; i<shape->numlines; i++) {
+        for(j=0; j<shape->line[i].numpoints; j++) {
+	  msIO_fprintf(stream, "%s  <gml:Point>\n", tab);
+	  msIO_fprintf(stream, "%s    <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
+	  msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
+	}
       }
-
+	
       msIO_fprintf(stream, "%s</gml:MultiPoint>\n", tab);
-
+	
       gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
     } else {
       msIO_fprintf(stream, "<!-- Warning: Cannot write geometry- no point/multipoint geometry defined. -->\n");
@@ -487,21 +495,24 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
     if(geometry_simple_index >= 0) geometry_simple_name = geometryList->geometries[geometry_simple_index].name;
     if(geometry_aggregate_index >= 0) geometry_aggregate_name = geometryList->geometries[geometry_aggregate_index].name;
 
-    if((geometry_simple_index != -1 && shape->line[0].numpoints == 1) ||
+    if((geometry_simple_index != -1 && shape->line[0].numpoints == 1 && shape->numlines == 1) ||
        (geometry_simple_index != -1 && geometry_aggregate_index == -1) ||
-       (geometryList->numgeometries == 0 && shape->line[0].numpoints == 1)) { /* write a Point(s) */
-      for(i=0; i<shape->line[0].numpoints; i++) {
-	gmlStartGeometryContainer(stream, geometry_simple_name, namespace, tab);
-	
-	/* Point */
-	if(srsname_encoded)
-	  msIO_fprintf(stream, "%s  <gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
-	else
-	  msIO_fprintf(stream, "%s  <gml:Point>\n", tab);
-	msIO_fprintf(stream, "%s    <gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);	
-	msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
+       (geometryList->numgeometries == 0 && shape->line[0].numpoints == 1 && shape->numlines == 1)) { /* write a Point(s) */
 
-	gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
+      for(i=0; i<shape->numlines; i++) {
+	for(j=0; j<shape->line[i].numpoints; j++) {
+	  gmlStartGeometryContainer(stream, geometry_simple_name, namespace, tab);
+	  
+	  /* Point */
+	  if(srsname_encoded)
+	    msIO_fprintf(stream, "%s  <gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
+	  else
+	    msIO_fprintf(stream, "%s  <gml:Point>\n", tab);
+	  msIO_fprintf(stream, "%s    <gml:pos>%f %f</gml:pos>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);	
+	  msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
+	  
+	  gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
+	}
       }
     } else if((geometry_aggregate_index != -1) || (geometryList->numgeometries == 0)) { /* write a MultiPoint */      
       gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
@@ -513,13 +524,15 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s  <gml:MultiPoint>\n", tab);
 
       msIO_fprintf(stream, "%s    <gml:pointMembers>\n", tab);
-      for(i=0; i<shape->line[0].numpoints; i++) {
-        msIO_fprintf(stream, "%s      <gml:Point>\n", tab);
-        msIO_fprintf(stream, "%s        <gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);
-        msIO_fprintf(stream, "%s      </gml:Point>\n", tab);
+      for(i=0; i<shape->numlines; i++) {
+	for(j=0; j<shape->line[i].numpoints; j++) {
+	  msIO_fprintf(stream, "%s      <gml:Point>\n", tab);
+	  msIO_fprintf(stream, "%s        <gml:pos>%f %f</gml:pos>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
+	  msIO_fprintf(stream, "%s      </gml:Point>\n", tab);
+	}
       }
       msIO_fprintf(stream, "%s    </gml:pointMembers>\n", tab);
-
+      
       msIO_fprintf(stream, "%s  </gml:MultiPoint>\n", tab);
 
       gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
