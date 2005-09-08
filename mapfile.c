@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.304.2.1  2005/09/08 18:16:30  dan
+ * Fixed writing of WIDTH in writeStyle() (was written as SIZE, bug 1462)
+ *
  * Revision 1.304  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -1771,7 +1774,7 @@ void writeStyle(styleObj *style, FILE *stream) {
     fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
   else
     fprintf(stream, "        SYMBOL %d\n", style->symbol);
-  if(style->width > 1) fprintf(stream, "        SIZE %d\n", style->width);
+  if(style->width > 1) fprintf(stream, "        WIDTH %d\n", style->width);
   if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
 
   if(style->rangeitem) {

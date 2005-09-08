@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.6.2 (???)
 -------------------
 
+- Fixed writing of STYLE WIDTH in saveMap(). WIDTH used to be written
+  out as SIZE. (bug 1462)
+
 - Fix in msGetGDALGetTransform() to use default geotransform even if
   GDALGetGeoTransform() fails but alters the geotransform array.
 
