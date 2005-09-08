@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.68  2005/09/08 20:57:50  assefa
+ * Changed default namespace used (Bug 1461).
+ *
  * Revision 1.67  2005/06/02 20:42:14  sdlime
  * Fixed a small initialization problem when no namespace metadata supplied.
  *
@@ -808,8 +811,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   int n=0;
 
   const char *value;
-  const char *user_namespace_prefix = "myns";
-  const char *user_namespace_uri = "http://www.ttt.org/myns";
+  const char *user_namespace_prefix = "ms";
+  const char *user_namespace_uri = "http://mapserver.gis.umn.edu/mapserver";
   char *user_namespace_uri_encoded = NULL;
   const char *collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
   char *encoded_name = NULL, *encoded;
@@ -946,7 +949,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       else
 	msIO_printf("\n"
 		    "  <element name=\"%s\" \n"
-		    "           type=\"myns:%sType\" \n"
+		    "           type=\"ms:%sType\" \n"
 		    "           substitutionGroup=\"gml:_Feature\" />\n\n",
 		    encoded_name, encoded_name);
       
@@ -1032,8 +1035,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int bBBOXSet = 0;
   char *pszNameSpace = NULL;
   const char *value;
-  const char *user_namespace_prefix = "myns";
-  const char *user_namespace_uri = "http://www.ttt.org/myns";
+  const char *user_namespace_prefix = "ms";
+  const char *user_namespace_uri = "http://mapserver.gis.umn.edu/mapserver";
   char *user_namespace_uri_encoded = NULL;
   const char *collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
   char *encoded, *encoded_typename, *encoded_schema;
