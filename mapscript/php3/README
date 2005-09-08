@@ -1187,6 +1187,16 @@ Constructor:
    string getvalue(layerObj layer, string filedname)
         Returns the value for a given field name.
  
+   shapeobj buffer(width)
+        Returns a shape object that has a buffer around the current
+        shape object. Only available if php/mapscript is built with GEOS 
+        library.
+
+   shapeobj convexhull()
+        Returns a shape object representing the convex hull of the current
+        shape object. Only available if php/mapscript is built with GEOS 
+        library.
+
  RectObj Class:
  --------------
 
