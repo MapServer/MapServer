@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/09/08 19:24:50  assefa
+ * Expose GEOS operations through PHP Mapscript (Bug 1327).
+ * Initially only functions buffer and convexhull on a shape object
+ * are available.
+ *
  * Revision 1.51  2005/06/14 16:03:36  dan
  * Updated copyright date to 2005
  *
@@ -291,6 +296,8 @@ int             shapeObj_contains(shapeObj *self, pointObj *point);
 int             shapeObj_intersects(shapeObj *self, shapeObj *shape);
 pointObj        *shapeObj_getpointusingmeasure(shapeObj *self, double m);
 pointObj        *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point);
+shapeObj        *shapeObj_buffer(shapeObj *self, double width);
+shapeObj        *shapeObj_convexHull(shapeObj *self);
 
 rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);

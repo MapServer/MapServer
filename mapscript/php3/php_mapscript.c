@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.237  2005/09/08 19:24:50  assefa
+ * Expose GEOS operations through PHP Mapscript (Bug 1327).
+ * Initially only functions buffer and convexhull on a shape object
+ * are available.
+ *
  * Revision 1.236  2005/08/02 18:00:21  dan
  * Added querymapObj (bug 535)
  *
@@ -607,6 +612,8 @@ DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS);
@@ -1108,6 +1115,8 @@ function_entry php_shape_class_functions[] = {
     {"getvalue",        php3_ms_shape_getvalue,         NULL},
     {"getpointusingmeasure", php3_ms_shape_getpointusingmeasure, NULL},
     {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
+    {"buffer", php3_ms_shape_buffer, NULL},
+    {"convexhull", php3_ms_shape_convexhull, NULL},
     {"free",            php3_ms_shape_free,             NULL},
     {NULL, NULL, NULL}
 };
@@ -10735,7 +10744,88 @@ DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS)
                               PHPMS_GLOBAL(le_mspoint_ref), 
                               list, return_value TSRMLS_CC);
 }
-     
+ 
+
+
+/**********************************************************************
+ *                        shape->buffer(width)
+ **********************************************************************/
+/* {{{ proto int shape.buffer(double width)
+   Given a shape and a width, return a shape object with a buffer using
+   underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pWidth;
+    shapeObj     *self = NULL;
+    shapeObj    *return_shape = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pWidth) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_double(pWidth);
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    return_shape = shapeObj_buffer(self, pWidth->value.dval);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new), NULL,
+                              list, return_value TSRMLS_CC);
+}
+ 
+
+/**********************************************************************
+ *                        shape->buffer(width)
+ **********************************************************************/
+/* {{{ proto int shape.convexhull()
+   Given a shape, return a shape representing the convex hull using
+   underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    shapeObj     *self = NULL;
+    shapeObj    *return_shape = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+      WRONG_PARAM_COUNT;
+    
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    return_shape = shapeObj_convexHull(self);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new),  NULL,
+                              list, return_value TSRMLS_CC);
+}
+   
+ 
 /**********************************************************************
  *                        shape->free()
  **********************************************************************/

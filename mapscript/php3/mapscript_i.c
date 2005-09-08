@@ -7,6 +7,11 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.94  2005/09/08 19:24:50  assefa
+ * Expose GEOS operations through PHP Mapscript (Bug 1327).
+ * Initially only functions buffer and convexhull on a shape object
+ * are available.
+ *
  * Revision 1.93  2005/06/06 05:48:20  dan
  * Added $layerObj->removeClass() (was already in SWIG MapScript)
  * Added $layerObj->removeClass() to PHP MapScript (was already in SWIG
@@ -920,6 +925,17 @@ pointObj *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point)
    return NULL;
 }
 
+
+shapeObj *shapeObj_buffer(shapeObj *self, double width)
+{
+    return msGEOSBuffer(self, width);
+}
+
+ 
+shapeObj *shapeObj_convexHull(shapeObj *self)
+{
+    return msGEOSConvexHull(self);
+}
 /**********************************************************************
  * class extensions for rectObj
  **********************************************************************/
