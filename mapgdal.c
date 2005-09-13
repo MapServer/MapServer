@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/09/13 23:51:04  frank
+ * Pop all outstanding error handler in msGDALCleanup()
+ *
  * Revision 1.28  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -162,9 +165,12 @@ void msGDALCleanup( void )
 {
     if( bGDALInitialized )
     {
+        int iRepeat = 5;
+
         msAcquireLock( TLOCK_GDAL );
-        
-        CPLPopErrorHandler();
+
+        while( iRepeat-- )
+            CPLPopErrorHandler();
 
 #if GDAL_RELEASE_DATE > 20021001
         GDALDestroyDriverManager();
