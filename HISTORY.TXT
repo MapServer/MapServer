@@ -16,6 +16,11 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- msGDALCleanup(): better error handler cleanup.
+
+- Modified msResetErrorList() to free the last error link too, to ensure
+  msCleanup() scrubs all error related memory. 
+
 - Fix in msGetGDALGetTransform() to use default geotransform even if
   GDALGetGeoTransform() fails but alters the geotransform array.
 
