@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/09/13 23:43:31  frank
+ * fix leak in threaded case of error object
+ *
  * Revision 1.68  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -140,9 +143,10 @@ typedef struct te_info
     errorObj        ms_error;
 } te_info_t;
 
+static te_info_t *error_list = NULL;
+
 errorObj *msGetErrorObj()
 {
-    static te_info_t *error_list = NULL;
     te_info_t *link;
     int        thread_id;
     errorObj   *ret_obj;
@@ -269,6 +273,42 @@ void msResetErrorList()
   ms_error->code = MS_NOERR;
   ms_error->routine[0] = '\0';
   ms_error->message[0] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup our entry in the thread list.  This is mainly           */
+/*      imprortant when msCleanup() calls msResetErrorList().           */
+/* -------------------------------------------------------------------- */
+#ifdef USE_THREAD
+  {
+      int  thread_id = msGetThreadId();
+      te_info_t *link;
+
+      msAcquireLock( TLOCK_ERROROBJ );
+      
+      /* find link for this thread */
+    
+      for( link = error_list; 
+           link != NULL && link->thread_id != thread_id
+               && link->next != NULL && link->next->thread_id != thread_id;
+           link = link->next ) {}
+      
+      if( link->thread_id == thread_id )
+      { 
+          /* presumably link is at head of list.  */
+          if( error_list == link )
+              error_list = link->next;
+
+          free( link );
+      }
+      else if( link->next != NULL && link->next->thread_id == thread_id )
+      {
+          te_info_t *next_link = link->next;
+          link->next = link->next->next;
+          free( next_link );
+      }
+      msReleaseLock( TLOCK_ERROROBJ );
+  }
+#endif
 }
 
 char *msGetErrorCodeString(int code) {
