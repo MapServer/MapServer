@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/09/14 00:11:35  frank
+ * fixed leak of imageObj when embedding legends
+ *
  * Revision 1.54  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -400,8 +403,15 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
       gdImageDestroy(map->symbolset.symbol[s].img);
   }
   
+  /* render the legend. */
   image = msDrawLegend(map, MS_FALSE);
-  map->symbolset.symbol[s].img = image->img.gd; /* TODO  */
+
+  /* steal the gdImage and free the rest of the imageObj */
+  map->symbolset.symbol[s].img = image->img.gd; 
+  image->img.gd = NULL;
+  msFreeImage( image );
+
+
   if(!map->symbolset.symbol[s].img) return(-1); /* something went wrong creating scalebar */
 
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; /* intialize a few things */
