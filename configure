@@ -4422,43 +4422,43 @@ unset ac_cv_lib_z_zlibVersion
 # Check whether --with-zlib or --without-zlib was given.
 if test "${with_zlib+set}" = set; then
   withval="$with_zlib"
-  ZL_DIR=$withval
+  ZLIB_DIR=$withval
 else
-  ZL_DIR=''
+  ZLIB_DIR=''
 fi;
 
 
-  if test -z "$ZL_DIR" || echo "$ZL_DIR" | grep '^/' >/dev/null ; then
-    ZL_DIR="$ZL_DIR"
+  if test -z "$ZLIB_DIR" || echo "$ZLIB_DIR" | grep '^/' >/dev/null ; then
+    ZLIB_DIR="$ZLIB_DIR"
   else
-    ZL_DIR="`pwd`/$ZL_DIR"
+    ZLIB_DIR="`pwd`/$ZLIB_DIR"
   fi
 
 { echo "$as_me:$LINENO: checking where Zlib is installed..." >&5
 echo "$as_me: checking where Zlib is installed..." >&6;}
-ZL_LIB=''
+ZLIB_LIB=''
 
-test -f $ZL_DIR/include/zlib.h && ZL_INCDIR="$ZL_DIR/include"
+test -f $ZLIB_DIR/include/zlib.h && ZLIB_INCDIR="$ZLIB_DIR/include"
 
-test -f $ZL_DIR/lib/libz.a -o -f $ZL_DIR/lib/libz.so -o -f $ZL_DIR/lib/libz.sl && ZL_LIBDIR="$ZL_DIR/lib"
-test -f $ZL_DIR/lib64/libz.a -o -f $ZL_DIR/lib64/libz.so -o -f $ZL_DIR/lib64/libz.sl && ZL_LIBDIR="$ZL_DIR/lib64"
-test -f $ZL_DIR/libz.a -o -f $ZL_DIR/libz.so -o -f $ZL_DIR/libz.sl && ZL_LIBDIR="$ZL_DIR"
+test -f $ZLIB_DIR/lib/libz.a -o -f $ZLIB_DIR/lib/libz.so -o -f $ZLIB_DIR/lib/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib"
+test -f $ZLIB_DIR/lib64/libz.a -o -f $ZLIB_DIR/lib64/libz.so -o -f $ZLIB_DIR/lib64/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib64"
+test -f $ZLIB_DIR/libz.a -o -f $ZLIB_DIR/libz.so -o -f $ZLIB_DIR/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR"
 
 
-if test -n "$ZL_LIBDIR" -a -n "$ZL_INCDIR" ; then
+if test -n "$ZLIB_LIBDIR" -a -n "$ZLIB_INCDIR" ; then
 
-        ZL_ENABLED="-DUSE_ZLIB"
-  ZL_INC="-I$ZL_INCDIR"
-  ZL_LIB="-L$ZL_LIBDIR -lz"
-  echo "$as_me:$LINENO: result:         using libz from $ZL_LIB ($ZL_ENABLED)" >&5
-echo "${ECHO_T}        using libz from $ZL_LIB ($ZL_ENABLED)" >&6
+        ZLIB_ENABLED="-DUSE_ZLIB"
+  ZLIB_INC="-I$ZLIB_INCDIR"
+  ZLIB_LIB="-L$ZLIB_LIBDIR -lz"
+  echo "$as_me:$LINENO: result:         using libz from $ZLIB_LIB ($ZLIB_ENABLED)" >&5
+echo "${ECHO_T}        using libz from $ZLIB_LIB ($ZLIB_ENABLED)" >&6
 
-  if test ""$ZL_DIR"" != "/usr/lib"; then
+  if test ""$ZLIB_DIR"" != "/usr/lib"; then
 
-  if test -z ""$ZL_DIR"" || echo ""$ZL_DIR"" | grep '^/' >/dev/null ; then
-    ai_p=""$ZL_DIR""
+  if test -z ""$ZLIB_DIR"" || echo ""$ZLIB_DIR"" | grep '^/' >/dev/null ; then
+    ai_p=""$ZLIB_DIR""
   else
-    ai_p="`pwd`/"$ZL_DIR""
+    ai_p="`pwd`/"$ZLIB_DIR""
   fi
 
 
@@ -4475,18 +4475,18 @@ echo "${ECHO_T}        using libz from $ZL_LIB ($ZL_ENABLED)" >&6
   fi
 
 
-elif test -n "$ZL_LIBDIR" ; then
+elif test -n "$ZLIB_LIBDIR" ; then
 
-        ZL_LIB="-L$ZL_LIBDIR -lz"
-  echo "$as_me:$LINENO: result:         using runtime libz from $ZL_LIB" >&5
-echo "${ECHO_T}        using runtime libz from $ZL_LIB" >&6
+        ZLIB_LIB="-L$ZLIB_LIBDIR -lz"
+  echo "$as_me:$LINENO: result:         using runtime libz from $ZLIB_LIB" >&5
+echo "${ECHO_T}        using runtime libz from $ZLIB_LIB" >&6
 
-  if test ""$ZL_DIR"" != "/usr/lib"; then
+  if test ""$ZLIB_DIR"" != "/usr/lib"; then
 
-  if test -z ""$ZL_DIR"" || echo ""$ZL_DIR"" | grep '^/' >/dev/null ; then
-    ai_p=""$ZL_DIR""
+  if test -z ""$ZLIB_DIR"" || echo ""$ZLIB_DIR"" | grep '^/' >/dev/null ; then
+    ai_p=""$ZLIB_DIR""
   else
-    ai_p="`pwd`/"$ZL_DIR""
+    ai_p="`pwd`/"$ZLIB_DIR""
   fi
 
 
@@ -4571,14 +4571,14 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_z_zlibVersion" >&5
 echo "${ECHO_T}$ac_cv_lib_z_zlibVersion" >&6
 if test $ac_cv_lib_z_zlibVersion = yes; then
-  ZL_LIB="-lz"
+  ZLIB_LIB="-lz"
 fi
 
 
-  if test -n "$ZL_LIB" ; then
-    ZL_ENABLED="-DUSE_ZLIB"
-    echo "$as_me:$LINENO: result:         using libz from system libs ($ZL_ENABLED)." >&5
-echo "${ECHO_T}        using libz from system libs ($ZL_ENABLED)." >&6
+  if test -n "$ZLIB_LIB" ; then
+    ZLIB_ENABLED="-DUSE_ZLIB"
+    echo "$as_me:$LINENO: result:         using libz from system libs ($ZLIB_ENABLED)." >&5
+echo "${ECHO_T}        using libz from system libs ($ZLIB_ENABLED)." >&6
   else
     echo "$as_me:$LINENO: result:         Zlib (libz) library cannot be found, possibly needed for GD" >&5
 echo "${ECHO_T}        Zlib (libz) library cannot be found, possibly needed for GD" >&6
@@ -4587,16 +4587,16 @@ echo "${ECHO_T}        Zlib (libz) library cannot be found, possibly needed for 
 fi
 
 
-ZLIB_ENABLED=$ZL_ENABLED
+ZLIB_ENABLED=$ZLIB_ENABLED
 
-ZLIB_INC=$ZL_INC
+ZLIB_INC=$ZLIB_INC
 
-ZLIB_LIB=$ZL_LIB
+ZLIB_LIB=$ZLIB_LIB
 
 
-ALL_ENABLED="$ZL_ENABLED $ALL_ENABLED"
-ALL_INC="$ZL_INC $ALL_INC"
-ALL_LIB="$ZL_LIB $ALL_LIB"
+ALL_ENABLED="$ZLIB_ENABLED $ALL_ENABLED"
+ALL_INC="$ZLIB_INC $ALL_INC"
+ALL_LIB="$ZLIB_LIB $ALL_LIB"
 
 
 unset ac_cv_lib_png_png_init_io
@@ -4662,7 +4662,7 @@ if test "${ac_cv_lib_png_png_init_io+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpng $ZL_LIB $LIBS"
+LIBS="-lpng $ZLIB_LIB $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5124,7 +5124,7 @@ echo "${ECHO_T}        XPM (libXpm) library cannot be found, possibly needed for
 fi
 
 
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
+GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZLIB_LIB $XPM_LIB"
 
 
 

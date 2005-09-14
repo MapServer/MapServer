@@ -129,48 +129,48 @@ unset ac_cv_lib_z_zlibVersion
 AC_ARG_WITH(zlib,
 [  --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
                               to zlib install dir).],
-    ZL_DIR=$withval,ZL_DIR='')
+    ZLIB_DIR=$withval,ZLIB_DIR='')
 
-AC_EXPAND_PATH($ZL_DIR, ZL_DIR)
+AC_EXPAND_PATH($ZLIB_DIR, ZLIB_DIR)
 AC_CHECKING(where Zlib is installed)
-ZL_LIB=''
+ZLIB_LIB=''
 
-test -f $ZL_DIR/include/zlib.h && ZL_INCDIR="$ZL_DIR/include"
+test -f $ZLIB_DIR/include/zlib.h && ZLIB_INCDIR="$ZLIB_DIR/include"
 
-test -f $ZL_DIR/lib/libz.a -o -f $ZL_DIR/lib/libz.so -o -f $ZL_DIR/lib/libz.sl && ZL_LIBDIR="$ZL_DIR/lib"
-test -f $ZL_DIR/lib64/libz.a -o -f $ZL_DIR/lib64/libz.so -o -f $ZL_DIR/lib64/libz.sl && ZL_LIBDIR="$ZL_DIR/lib64"
-test -f $ZL_DIR/libz.a -o -f $ZL_DIR/libz.so -o -f $ZL_DIR/libz.sl && ZL_LIBDIR="$ZL_DIR"
+test -f $ZLIB_DIR/lib/libz.a -o -f $ZLIB_DIR/lib/libz.so -o -f $ZLIB_DIR/lib/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib"
+test -f $ZLIB_DIR/lib64/libz.a -o -f $ZLIB_DIR/lib64/libz.so -o -f $ZLIB_DIR/lib64/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib64"
+test -f $ZLIB_DIR/libz.a -o -f $ZLIB_DIR/libz.so -o -f $ZLIB_DIR/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR"
 
 
-if test -n "$ZL_LIBDIR" -a -n "$ZL_INCDIR" ; then
+if test -n "$ZLIB_LIBDIR" -a -n "$ZLIB_INCDIR" ; then
 
   dnl
   dnl Found libz runtime and headers. Enable USE_ZLIB (SVG compressed output)
   dnl
-  ZL_ENABLED="-DUSE_ZLIB"
-  ZL_INC="-I$ZL_INCDIR"
-  ZL_LIB="-L$ZL_LIBDIR -lz"
-  AC_MSG_RESULT([        using libz from $ZL_LIB ($ZL_ENABLED)])
-  AC_ADD_RUNPATH("$ZL_DIR")
+  ZLIB_ENABLED="-DUSE_ZLIB"
+  ZLIB_INC="-I$ZLIB_INCDIR"
+  ZLIB_LIB="-L$ZLIB_LIBDIR -lz"
+  AC_MSG_RESULT([        using libz from $ZLIB_LIB ($ZLIB_ENABLED)])
+  AC_ADD_RUNPATH("$ZLIB_DIR")
 
-elif test -n "$ZL_LIBDIR" ; then
+elif test -n "$ZLIB_LIBDIR" ; then
 
   dnl
   dnl Found only runtime but no headers (good only for libpng)
   dnl
-  ZL_LIB="-L$ZL_LIBDIR -lz"
-  AC_MSG_RESULT([        using runtime libz from $ZL_LIB])
-  AC_ADD_RUNPATH("$ZL_DIR")
+  ZLIB_LIB="-L$ZLIB_LIBDIR -lz"
+  AC_MSG_RESULT([        using runtime libz from $ZLIB_LIB])
+  AC_ADD_RUNPATH("$ZLIB_DIR")
 
 else
 
   dnl check for lib in system libs
 
-  AC_CHECK_LIB(z, zlibVersion, ZL_LIB="-lz",,)
+  AC_CHECK_LIB(z, zlibVersion, ZLIB_LIB="-lz",,)
 
-  if test -n "$ZL_LIB" ; then
-    ZL_ENABLED="-DUSE_ZLIB"
-    AC_MSG_RESULT([        using libz from system libs ($ZL_ENABLED).])
+  if test -n "$ZLIB_LIB" ; then
+    ZLIB_ENABLED="-DUSE_ZLIB"
+    AC_MSG_RESULT([        using libz from system libs ($ZLIB_ENABLED).])
   else
     AC_MSG_RESULT([        Zlib (libz) library cannot be found, possibly needed for GD])
   fi
@@ -181,13 +181,13 @@ dnl If we found ZLIB headers then enable it by default since SVG output
 dnl is enabled by default and will take advantage of it, otherwise the 
 dnl PNG code below will take care of including the runtime lib only.
 
-AC_SUBST(ZLIB_ENABLED,$ZL_ENABLED)
-AC_SUBST(ZLIB_INC,    $ZL_INC)
-AC_SUBST(ZLIB_LIB,    $ZL_LIB)
+AC_SUBST(ZLIB_ENABLED,$ZLIB_ENABLED)
+AC_SUBST(ZLIB_INC,    $ZLIB_INC)
+AC_SUBST(ZLIB_LIB,    $ZLIB_LIB)
 
-ALL_ENABLED="$ZL_ENABLED $ALL_ENABLED"
-ALL_INC="$ZL_INC $ALL_INC"
-ALL_LIB="$ZL_LIB $ALL_LIB"
+ALL_ENABLED="$ZLIB_ENABLED $ALL_ENABLED"
+ALL_INC="$ZLIB_INC $ALL_INC"
+ALL_LIB="$ZLIB_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl Check where PNG is installed
@@ -218,7 +218,7 @@ else
 
   dnl check for lib in system libs
 
-  AC_CHECK_LIB(png, png_init_io, PNG_LIB="-lpng",, $ZL_LIB)
+  AC_CHECK_LIB(png, png_init_io, PNG_LIB="-lpng",, $ZLIB_LIB)
 
   if test -n "$PNG_LIB" ; then
     AC_MSG_RESULT([        using libpng from system libs.])
@@ -350,7 +350,7 @@ fi
 dnl Note: don't include iconv by default in GD_XTRA_LIBS as it may not
 dnl       be required by GD.
 
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
+GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZLIB_LIB $XPM_LIB"
 
 
 dnl ---------------------------------------------------------------------
