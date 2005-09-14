@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- maplegend.c: fixed leak of imageObj when embedding legends.
+
 - msGDALCleanup(): better error handler cleanup.
 
 - Modified msResetErrorList() to free the last error link too, to ensure
