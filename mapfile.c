@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.307  2005/09/15 20:08:27  frank
+ * Avoid tail recursion in freeFeatureList().
+ *
  * Revision 1.306  2005/09/08 18:16:07  dan
  * Fixed writing of WIDTH in writeStyle() (was written as SIZE, bug 1462)
  *
@@ -607,12 +610,14 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *s
 
 void freeFeatureList(featureListNodeObjPtr list)
 {
-  if(list) {
-    freeFeatureList(list->next); /* free any children */
-    msFreeShape(&(list->shape));
-    msFree(list);
-  }
-  return;
+    featureListNodeObjPtr listNext = NULL;
+    while (list!=NULL)
+    {
+        listNext = list->next;
+        msFreeShape(&(list->shape));
+        msFree(list);
+        list = listNext;
+    }
 }
 
 /* lineObj = multipointObj */
