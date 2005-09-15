@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2005/09/15 20:25:39  pramsey
+ * Added cases to allow the connector to use both the FILTERITEM and FILTER tags, if present.
+ *
  * Revision 1.60  2005/07/16 21:12:59  jerryp
  * Fixed memory leaks.
  *
@@ -509,10 +512,18 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
             sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )", columns_wanted, data_source, geom_column, box3d, user_srid);
         }
     } else {
-        if(!strlen(user_srid)) {
-            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
+        if(layer->filteritem) {
+            if(!strlen(user_srid)) {
+                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s = '%s') and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filteritem, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
+            } else {
+                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s = '%s') and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filteritem, layer->filter.string, geom_column, box3d, user_srid);
+            }
         } else {
-            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid);
+            if(!strlen(user_srid)) {
+                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
+            } else {
+                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid);
+            }
         }
     }
 
