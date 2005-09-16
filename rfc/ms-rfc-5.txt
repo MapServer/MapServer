@@ -30,29 +30,29 @@ preserve a reduced geometry approximating the portion that can be transformed.
 Point Features
 --------------
 
- o Point features will be handled as they are now.  The either transform
+ * Point features will be handled as they are now.  The either transform
    successfully or not.  Those that fail to transform are dropped. 
 
 
 Line Features
 -------------
 
- o Line strings would potentially be split into multiple line strings, if
+ * Line strings would potentially be split into multiple line strings, if
    there were more than one discontiguous portion of a line string that 
    transforms. 
 
- o Interpolated (horizon) points would be computed by transforming points
+ * Interpolated (horizon) points would be computed by transforming points
    along the line segment between the last successful point and the first 
    unsuccessful point.  A binary search algorithm will be used to find the
    closest point within our tolerance distance. 
 
- o Line strings where no vertices transform successfully will still be dropped.
+ * Line strings where no vertices transform successfully will still be dropped.
 
 
 Area Features
 -------------
 
- o Each ring will be treated distinctly, without regard to the other rings. 
+ * Each ring will be treated distinctly, without regard to the other rings. 
    This means no there is no assurance that an inner ring will remain 
    completely within the outer ring after clipping.  In particular, where
    the horizon passes through an area and a hole in the area, it is likely 
@@ -61,10 +61,10 @@ Area Features
    simple scanline rasterization (winding number based) technique is used. 
    So polygon "correctness" is not paramount.  
 
- o A similar technique to that for lines is used to interpolate the edge
+ * A similar technique to that for lines is used to interpolate the edge
    vertices when clipping is to be applied. 
 
- o For polygons there will be two (or possibly 4, 6, 8...) interpolated
+ * For polygons there will be two (or possibly 4, 6, 8...) interpolated
    horizon points.  These will be connected with a straight line segment. 
    For very large polygons spanning a significant portion of the horizon
    (ie. dozens of degrees of arc of the horizon) this will result in part of
