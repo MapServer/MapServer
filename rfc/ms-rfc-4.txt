@@ -18,24 +18,27 @@ raster resampler code including "averaging", "bilinear" and "cubic".
 Technical Details
 -----------------
 
- o The new resampling options will be implemented in mapresample.c and will
+ * The new resampling options will be implemented in mapresample.c and will
    only be accessable for datasets processing through that mechanism (ie. 
    GDAL raster formats, requires coordinate system information defined). 
 
- o The resampling kernel to use will be selected with one of the following.
+ * The resampling kernel to use will be selected with one of the following.
    The default will be RESAMPLE=NEAREST, the current behavior. 
+
+   ::
+
      PROCESSING "RESAMPLE=NEAREST"
      PROCESSING "RESAMPLE=AVERAGE"
      PROCESSING "RESAMPLE=BILINEAR"
      PROCESSING "RESAMPLE=BICUBIC"
 
- o The mapraster.c code currently decides whether to invoke the "simple" 
+ * The mapraster.c code currently decides whether to invoke the "simple" 
    GDAL renderer or the "resampling" GDAL renderer based on whether the
    projection seems to differ.  It will also now check for the RESAMPLE 
    processing option, and force use of mapresample.c if the resampling 
    kernel select is other than NEAREST.
 
- o Note that resampling kernels other than NEAREST can have a substantial 
+ * Note that resampling kernels other than NEAREST can have a substantial 
    effect on rendering performance.   For this reason NEAREST will remain
    the default. 
 
