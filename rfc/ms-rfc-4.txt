@@ -27,7 +27,7 @@ Technical Details
      PROCESSING "RESAMPLE=NEAREST"
      PROCESSING "RESAMPLE=AVERAGE"
      PROCESSING "RESAMPLE=BILINEAR"
-     PROCESSING "RESAMPLE=CUBIC"
+     PROCESSING "RESAMPLE=BICUBIC"
 
  o The mapraster.c code currently decides whether to invoke the "simple" 
    GDAL renderer or the "resampling" GDAL renderer based on whether the
