@@ -1,12 +1,12 @@
 ==============================================
-MS RFC 3: Layer Plug-in Architecture
+MS RFC 3: Feature Layer Plug-in Architecture
 ==============================================
 
 :Date:  2005/08/22
 :Author: Jani Averbach
 :Contact: javerbach@extendthereach.com
 :Last Edited: $Date$
-:Status: draft
+:Status: proposed
 
 
 
@@ -16,10 +16,10 @@ Abstract Solution
 
 Implement a virtual table structure for ``layerObj``. This structure
 will contain function pointers for all layer specific operations.
-This structure will be populated when the layer is created or when it
-is opened. After that all back-end format specific layer operations
-will happen through this vtable which is cached in the ``layerObj``
-struct.
+This structure will be populated when the layer is opened or first
+time accessed.  After that all back-end format specific layer
+operations will happen through this vtable which is cached in the
+``layerObj`` struct.
 
 
 Technical Solution
@@ -33,15 +33,10 @@ code.
 
 2. Add the virtual table architecture
 
-   The vtable will be initialized when the layerObj is created and
-   parsed, this will happen in the function (mapfile.c):
-
-   ::
-
-      int loadLayer(layerObj *layer, mapObj *map)
-
+   The vtable will be initialized when the layer is accessed at the
+   first time. 
    The vtable will be populated with dummies when it is created and
-   these dummies will implement feasible default actions if there are
+   these dummies will implement feasible default actions if there is
    any (e.g. do nothing) or return error by default.
 
 
@@ -52,6 +47,7 @@ code.
                ::
 
                  int (*LayerInitItemInfo)(layerObj *layer);
+
                              
         2.1.2. FreeItemInfo
 
@@ -94,7 +90,7 @@ code.
                ::
 
                   int (*LayerWhichShapes)(layerObj *layer, 
-                                            rectObj rect);
+                                          rectObj rect);
 
         2.1.6. NextShape
 
@@ -108,7 +104,7 @@ code.
                ::
 
                   int (*LayerGetShape)(layerObj *layer, shapeObj *shape, 
-                                         int tile, long record);
+                                       int tile, long record);
 
 
         2.1.8. LayerClose
@@ -130,7 +126,7 @@ code.
                 ::
 
                    int (*LayerGetExtent)(layerObj *layer, 
-                                           rectObj *extent);
+                                         rectObj *extent);
 
 
         2.1.11. GetAutoStyle
@@ -138,8 +134,8 @@ code.
                 ::
 
                    int (*LayerGetAutoStyle)(mapObj *map, layerObj *layer,
-                                              classObj *c, int tile, 
-                                              long record);
+                                            classObj *c, int tile, 
+                                            long record);
                 
 
 
@@ -212,8 +208,8 @@ code.
                 ::
 
                    int (*LayerSetTimeFilter)(layerObj *lp, 
-                                               const char *timestring, 
-                                               const char *timefield);
+                                             const char *timestring, 
+                                             const char *timefield);
 
 
 
@@ -259,10 +255,42 @@ code.
 
    2.4. Interface functions for internal layers
 
-        We have to add at least some new interface functions for
-        internal layers, e.g. ``msXXXInitializeLayerVirtualTable``,
-        where ``XXX`` is the layer's name.
-        
+        We have to add some new interface functions to access layers.
+
+        2.4.1 Function interface to initialize internal layer type
+
+              We need a per layer type a function which will be called
+              when the layer's vtable has to be initialized. These
+              functions will be
+
+              ::
+                 
+                 int msXXXInitializeLayerVirtualTable(layerObj *)
+
+              where XXX will be name of the layer. This function is
+              called anytime when the vtable isn't initialized and the
+              layer is accessed at the first time.
+
+
+        2.4.2 Function interface to change the connectiontype of layer
+              
+              To change the connection type of layer, it has to be
+              done by function interface. Accessing directly
+              ``connectiontype`` field is not supported anymore.
+
+              To change the connectiontype and to connect to the new
+              layer, there will be following interface function
+
+              ::
+
+                 int msConnectLayer(int connectiontype,
+                                    const char *library_str)
+
+              where ``connectiontype`` is the type of new layer, and
+              ``library_str`` is the name of library which will
+              prodive functionality for this new layer.  For internal
+              layer types this second argument is ignored.
+
 
 
 3. Remove unwanted interfaces
@@ -304,8 +332,6 @@ This proposal will affect at least following files and objects:
 
 * ``mapfile.c``
 
-  * mapfile writing will change slightly, no more ``if-else``
-    structure for connectiontype strings.
   * Cleaning of  ``msCheckConnection``
   * Vtable for ``msCloseConnection``
 
@@ -329,8 +355,13 @@ Backwards compatibility issues
 
 This is binary and source code level backward incompatible change. The
 proposal will remove some previously public functions, and add new
-field(s) to the ``layerObj`` struct.  The proposal is ``MAP``-file
-backward compatible.
+field(s) to the ``layerObj`` struct. 
+
+This proposal is not MapScript backward compatible, it will break
+scripts which change directly ``connectiontype`` field in
+``layerObj``.
+
+The proposal is MAP-file backward compatible.
 
 
 Implementation Issues
@@ -365,9 +396,6 @@ None
 
 Open questions
 --------------
-
-* MapScript. What is the impact of this change to the MapServer's
-  MapScript Interface?
 
 * How do we like to expose layer's virtual table to the layers. We
   have at least two different routes to go:
