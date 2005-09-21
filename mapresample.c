@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/09/21 01:18:10  frank
+ * Preliminary RFC4 (alternate resampling kernals) support
+ *
  * Revision 1.55  2005/07/21 22:18:16  frank
  * Bug 1372: ensure that raw buffers support multiple bands
  *
@@ -81,8 +84,9 @@
  * fixed bug with asymmetric rounding around zero
  *
  * Revision 1.39  2003/02/24 21:22:52  frank
- * Restructured the source window quite a bit so that input images with a rotated
- * (or sheared) geotransform would work properly.  Pass RAW_WINDOW to draw func.
+ * Restructured the source window quite a bit so that input images with a 
+ * rotated (or sheared) geotransform would work properly.  Pass RAW_WINDOW to 
+ * draw func.
  *
  * Revision 1.38  2003/01/21 04:25:44  frank
  * moved InvGeoTransform to top to predeclare
@@ -92,126 +96,6 @@
  *
  * Revision 1.36  2003/01/21 04:15:13  frank
  * shift USE_PROJ ifdefs to avoid build warnings without PROJ.4
- *
- * Revision 1.35  2002/11/27 00:07:25  dan
- * Return -1 if srcImage cannot be created in msResampleGDALToMap()
- *
- * Revision 1.34  2002/11/19 18:32:00  frank
- * fixed alpha blending if target has alpha zero
- *
- * Revision 1.33  2002/11/19 04:50:09  frank
- * fixed x/y transpose bug with alpha blending for RGBA imagemode
- *
- * Revision 1.32  2002/11/18 22:32:52  frank
- * additional work to make transparency work properly for RGB or RGBA GD modes
- *
- * Revision 1.31  2002/11/18 21:17:24  frank
- * Further work on last fix.  Now the transparent value on the temporary
- * image is setup properly via imagecolor, and by forcing the transparent
- * flag in a temporary outputFormatObj.  This ensures that msAddColorGD() will
- * avoid returning the transparent color for any other purposes.
- *
- * Revision 1.30  2002/11/18 15:36:54  frank
- * For pseudocolored GD images, avoid copying the destination colormap to
- * temporary imageObj.  Instead remap colors during resampling.  Also ensure
- * source image has a transparent color.
- * Unrelated fixes made to resamping code for RGBA GD buffers so that alpha
- * blending is done.  Previously alpha issues were being ignored during overlay.
- *
- * Revision 1.28  2002/11/14 04:06:48  dan
- * Fixed test for !gdImageTrueColor() in msResampleGDALToMap() to copy
- * palette of GD image after the call to drawGDAL()
- *
- * Revision 1.27  2002/10/29 16:40:40  frank
- * Fixed bug in propagating colormap into 8bit gdImg'es.  Added some debug
- * calls ... all now controlled by layer debug flag.
- *
- * Revision 1.26  2002/08/16 20:50:50  julien
- * Fixed a MS_INIT_COLOR call
- *
- * Revision 1.25  2002/08/14 14:10:07  frank
- * changes for 'colorObj' offsite values
- *
- * Revision 1.24  2002/06/21 18:32:48  frank
- * Added support for IMAGEMODE INT16 and FLOAT.
- * Added support for resampling truecolor images.
- *
- * Revision 1.23  2002/05/15 14:49:31  dan
- * Placed gdImagePaletteCopy() patch inside #ifdef (doesn't fully work yet)
- *
- * Revision 1.22  2002/05/14 17:49:39  frank
- * tentative fix for gdImagePaletteCopy() bug
- *
- * Revision 1.21  2001/11/02 22:41:57  dan
- * Test for nSrcX or nSrcY < 0 in msSimpleRasterResampler() to prevent crash
- * when accessing pixels buffer.
- *
- * Revision 1.20  2001/11/02 16:13:00  frank
- * fixed degree/radian conversion bug in msProjTransformer
- *
- * Revision 1.19  2001/09/10 13:33:18  frank
- * modified to avoid using layer->data since it may be NULL
- *
- * Revision 1.18  2001/09/05 13:24:47  frank
- * fixed last fix related to Z coordinate handling
- *
- * Revision 1.17  2001/09/04 13:20:52  frank
- * ensure Z is passed to pj_transform for datum shifts
- *
- * Revision 1.16  2001/08/22 04:33:01  dan
- * Try calling GDALReadWorldFile() if GDALGetGeoTransform() fails.
- * When resampling layers with an offsite then init temporary image BG
- * using the offsite color.
- *
- * Revision 1.15  2001/06/28 18:22:07  frank
- * improve debug message
- *
- * Revision 1.14  2001/06/25 17:47:16  frank
- * added linear approximator transformer
- *
- * Revision 1.13  2001/05/22 18:02:59  frank
- * ensure MIN and MAX are defined
- *
- * Revision 1.12  2001/05/22 02:47:09  frank
- * ifdef out transformer func if no USE_PROJ
- *
- * Revision 1.11  2001/05/03 16:25:18  frank
- * map->extents are for center of pixel
- *
- * Revision 1.10  2001/05/02 19:46:32  frank
- * Fixed bug 7, dealing with map extents that fail to reproject
- *
- * Revision 1.9  2001/04/26 15:08:21  dan
- * Return MS_FALSE instead of FALSE (undefined if gdal.h not included).
- *
- * Revision 1.8  2001/04/09 13:27:34  frank
- * implemented limited support for rotated GDAL data sources
- *
- * Revision 1.7  2001/04/07 17:32:38  frank
- * Fixed up quirk in sizing of srcImg.
- * Added true inverse geotransform support, and support for rotated source.
- * May still be problems with cellsize selection for very rotated source
- * images.
- *
- * Revision 1.6  2001/04/06 01:17:31  frank
- * use proj_api.h if available (PROJ.4.4.3)
- *
- * Revision 1.5  2001/03/30 01:13:53  dan
- * Take cellsize into account when calculating temporary buffer size in
- * msResampleGDALToMap().
- *
- * Revision 1.4  2001/03/21 04:02:56  frank
- * use pj_is_latlong
- *
- * Revision 1.3  2001/03/16 15:11:17  frank
- * fixed bugs for geographic, don't write interim.png
- *
- * Revision 1.2  2001/03/14 17:55:36  frank
- * fixed bug in non-GDAL case
- *
- * Revision 1.1  2001/03/14 17:39:16  frank
- * New
- *
  */
 
 #include <assert.h>
@@ -267,14 +151,14 @@ int InvGeoTransform( double *gt_in, double *gt_out )
 #ifdef USE_PROJ
 
 /************************************************************************/
-/*                       msSimpleRasterResample()                       */
+/*                      msNearestRasterResample()                       */
 /************************************************************************/
 
 static int 
-msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
-                         imageObj *psDstImage, int *panCMap,
-                         SimpleTransformer pfnTransform, void *pCBData,
-                         int debug )
+msNearestRasterResampler( imageObj *psSrcImage, colorObj offsite,
+                          imageObj *psDstImage, int *panCMap,
+                          SimpleTransformer pfnTransform, void *pCBData,
+                          int debug )
 
 {
     double	*x, *y; 
@@ -295,7 +179,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
     panSuccess = (int *) malloc( sizeof(int) * nDstXSize );
 
     for( nDstY = 0; nDstY < nDstYSize; nDstY++ )
-    {
+    {        
         for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
         {
             x[nDstX] = nDstX + 0.5;
@@ -440,7 +324,470 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
         char	szMsg[256];
         
         sprintf( szMsg, 
-                 "msSimpleRasterResampler: "
+                 "msNearestRasterResampler: "
+                 "%d failed to transform, %d actually set.\n", 
+                 nFailedPoints, nSetPoints );
+        msDebug( szMsg );
+    }
+
+    return 0;
+}
+
+/************************************************************************/
+/*                            msSourceSample()                          */
+/************************************************************************/
+
+static void msSourceSample( imageObj *psSrcImage, int iSrcX, int iSrcY,
+                            double *padfPixelSum,
+                            double dfWeight, double *pdfWeightSum,
+                            colorObj *offsite )
+
+{
+    if( MS_RENDERER_GD(psSrcImage->format) )
+    {
+        if( !gdImageTrueColor(psSrcImage->img.gd) )
+        {
+            padfPixelSum[0] += 
+                (dfWeight * psSrcImage->img.gd->pixels[iSrcY][iSrcX]);
+            *pdfWeightSum += dfWeight;
+        }
+        else
+        {
+            int nValue = psSrcImage->img.gd->tpixels[iSrcY][iSrcX];
+
+            padfPixelSum[0] += dfWeight * gdTrueColorGetRed(nValue);
+            padfPixelSum[1] += dfWeight * gdTrueColorGetGreen(nValue);
+            padfPixelSum[2] += dfWeight * gdTrueColorGetBlue(nValue);
+
+            *pdfWeightSum += dfWeight;
+        }
+    }
+    else
+    {
+        int band;
+
+        for( band = 0; band < psSrcImage->format->bands; band++ )
+        {
+            if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
+            {
+                int	nValue;
+
+                nValue = psSrcImage->img.raw_16bit[
+                    iSrcX + iSrcY * psSrcImage->width 
+                    + band*psSrcImage->width*psSrcImage->height];
+
+                /* if band 1 is nodata, skip the rest */
+                if( band == 0 && nValue == offsite->red ) 
+                    return;
+
+                padfPixelSum[band] += dfWeight * nValue;
+            }
+            else if( psSrcImage->format->imagemode 
+                     == MS_IMAGEMODE_FLOAT32)
+            {
+                float fValue;
+
+                fValue = psSrcImage->img.raw_float[
+                    iSrcX + iSrcY * psSrcImage->width 
+                    + band*psSrcImage->width*psSrcImage->height];
+
+                if( band == 0 && fValue == offsite->red )
+                    return;
+                    
+                padfPixelSum[band] += fValue * dfWeight;
+            }
+            else if(psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE)
+            {
+                int nValue;
+
+                nValue = psSrcImage->img.raw_byte[
+                    iSrcX + iSrcY * psSrcImage->width 
+                    + band*psSrcImage->width*psSrcImage->height];
+
+                if( band == 0 && nValue == offsite->red )
+                    continue;
+                    
+                padfPixelSum[band] += nValue * dfWeight;
+            }
+            else
+            {
+                assert( 0 );
+                return;
+            }
+        }
+        *pdfWeightSum += dfWeight;
+    }
+}
+
+/************************************************************************/
+/*                      msBilinearRasterResample()                      */
+/************************************************************************/
+
+static int 
+msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
+                           imageObj *psDstImage, int *panCMap,
+                           SimpleTransformer pfnTransform, void *pCBData,
+                           int debug )
+
+{
+    double	*x, *y; 
+    int		nDstX, nDstY;
+    int         *panSuccess;
+    int		nDstXSize = psDstImage->width;
+    int		nDstYSize = psDstImage->height;
+    int		nSrcXSize = psSrcImage->width;
+    int		nSrcYSize = psSrcImage->height;
+    int		nFailedPoints = 0, nSetPoints = 0;
+    double     *padfPixelSum;
+    gdImagePtr  srcImg, dstImg;
+
+    padfPixelSum = (double *) malloc(sizeof(double) * 4);
+    
+    srcImg = psSrcImage->img.gd;
+    dstImg = psDstImage->img.gd;
+
+    x = (double *) malloc( sizeof(double) * nDstXSize );
+    y = (double *) malloc( sizeof(double) * nDstXSize );
+    panSuccess = (int *) malloc( sizeof(int) * nDstXSize );
+
+    for( nDstY = 0; nDstY < nDstYSize; nDstY++ )
+    {        
+        for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
+        {
+            x[nDstX] = nDstX + 0.5;
+            y[nDstX] = nDstY + 0.5;
+        }
+
+        pfnTransform( pCBData, nDstXSize, x, y, panSuccess );
+        
+        for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
+        {
+            int		nSrcX, nSrcY, nSrcX2, nSrcY2;
+            double      dfRatioX2, dfRatioY2, dfWeightSum = 0.0;
+
+            if( !panSuccess[nDstX] )
+            {
+                nFailedPoints++;
+                continue;
+            }
+
+            /* 
+            ** Offset to treat TL pixel corners as pixel location instead
+            ** of the center. 
+            */
+            x[nDstX] -= 0.5; 
+            y[nDstX] -= 0.5;
+
+            nSrcX = (int) floor(x[nDstX]);
+            nSrcY = (int) floor(y[nDstX]);
+
+            nSrcX2 = nSrcX+1;
+            nSrcY2 = nSrcY+1;
+            
+            dfRatioX2 = x[nDstX] - nSrcX;
+            dfRatioY2 = y[nDstX] - nSrcY;
+
+            /* If we are right off the source, skip this pixel */
+            if( nSrcX2 < 0 || nSrcX >= nSrcXSize
+                || nSrcY2 < 0 || nSrcY >= nSrcYSize )
+                continue;
+
+            /* Trim in stuff one pixel off the edge */
+            nSrcX = MAX(nSrcX,0);
+            nSrcY = MAX(nSrcY,0);
+            nSrcX2 = MIN(nSrcX2,nSrcXSize-1);
+            nSrcY2 = MIN(nSrcY2,nSrcYSize-1);
+
+            memset( padfPixelSum, 0, sizeof(double) * 4);
+
+            msSourceSample( psSrcImage, nSrcX, nSrcY, padfPixelSum, 
+                            (1.0 - dfRatioX2) * (1.0 - dfRatioY2),
+                            &dfWeightSum, &offsite );
+            
+            msSourceSample( psSrcImage, nSrcX2, nSrcY, padfPixelSum, 
+                            (dfRatioX2) * (1.0 - dfRatioY2),
+                            &dfWeightSum, &offsite );
+            
+            msSourceSample( psSrcImage, nSrcX, nSrcY2, padfPixelSum, 
+                            (1.0 - dfRatioX2) * (dfRatioY2),
+                            &dfWeightSum, &offsite );
+            
+            msSourceSample( psSrcImage, nSrcX2, nSrcY2, padfPixelSum, 
+                            (dfRatioX2) * (dfRatioY2),
+                            &dfWeightSum, &offsite );
+
+            if( dfWeightSum == 0.0 )
+                continue;
+
+            if( MS_RENDERER_GD(psSrcImage->format) )
+            {
+                if( !gdImageTrueColor(psSrcImage->img.gd) )
+                {
+                    int nResult = panCMap[
+                        (int) (padfPixelSum[0] / dfWeightSum)];
+                    if( nResult != -1 )
+                    {                        
+                        nSetPoints++;
+                        dstImg->pixels[nDstY][nDstX] = nResult;
+                    }
+                }
+                else
+                {
+                    nSetPoints++;
+                    dstImg->tpixels[nDstY][nDstX] = 
+                        gdTrueColor( (int) (padfPixelSum[0] / dfWeightSum), 
+                                     (int) (padfPixelSum[1] / dfWeightSum), 
+                                     (int) (padfPixelSum[2] / dfWeightSum) );
+                }
+            }
+            else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
+            {
+                int band;
+
+                for( band = 0; band < psSrcImage->format->bands; band++ )
+                {
+                    if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
+                    {
+                        psDstImage->img.raw_16bit[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (GInt16) (padfPixelSum[0] / dfWeightSum);
+                    }
+                    else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
+                    {
+                        psDstImage->img.raw_float[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (float) (padfPixelSum[0] / dfWeightSum);
+                    }
+                    else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE )
+                    {
+                        psDstImage->img.raw_byte[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (GByte) (padfPixelSum[0] / dfWeightSum);
+                    }
+                }
+            }
+        }
+    }
+
+    free( padfPixelSum );
+    free( panSuccess );
+    free( x );
+    free( y );
+
+/* -------------------------------------------------------------------- */
+/*      Some debugging output.                                          */
+/* -------------------------------------------------------------------- */
+    if( nFailedPoints > 0 && debug )
+    {
+        char	szMsg[256];
+        
+        sprintf( szMsg, 
+                 "msNearestRasterResampler: "
+                 "%d failed to transform, %d actually set.\n", 
+                 nFailedPoints, nSetPoints );
+        msDebug( szMsg );
+    }
+
+    return 0;
+}
+
+/************************************************************************/
+/*                          msAverageSample()                           */
+/************************************************************************/
+
+static int
+msAverageSample( imageObj *psSrcImage, 
+                 double dfXMin, double dfYMin, double dfXMax, double dfYMax,
+                 colorObj *offsite, double *padfPixelSum )
+
+{
+    int nXMin, nXMax, nYMin, nYMax, iX, iY;
+    double dfWeightSum = 0.0;
+
+    nXMin = (int) dfXMin;
+    nYMin = (int) dfYMin;
+    nXMax = (int) ceil(dfXMax);
+    nYMax = (int) ceil(dfYMax);
+
+    memset( padfPixelSum, 0, sizeof(double)*4 );
+
+    for( iY = nYMin; iY < nYMax; iY++ )
+    {
+        double dfYCellMin, dfYCellMax;
+        
+        dfYCellMin = MAX(iY,dfYMin);
+        dfYCellMax = MIN(iY+1,dfYMax);
+
+        for( iX = nXMin; iX < nXMax; iX++ )
+        {
+            double dfXCellMin, dfXCellMax, dfWeight;
+
+            dfXCellMin = MAX(iX,dfXMin);
+            dfXCellMax = MIN(iX+1,dfXMax);
+
+            dfWeight = (dfXCellMax-dfXCellMin) * (dfYCellMax-dfYCellMin);
+
+            msSourceSample( psSrcImage, iX, iY, padfPixelSum, 
+                            dfWeight, &dfWeightSum, offsite );
+        }
+    }
+
+    if( dfWeightSum == 0.0 )
+        return FALSE;
+
+    for( iX = 0; iX < 4; iX++ )
+        padfPixelSum[iX] /= dfWeightSum;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                      msAverageRasterResample()                       */
+/************************************************************************/
+
+static int 
+msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
+                          imageObj *psDstImage, int *panCMap,
+                          SimpleTransformer pfnTransform, void *pCBData,
+                          int debug )
+
+{
+    double	*x1, *y1, *x2, *y2; 
+    int		nDstX, nDstY;
+    int         *panSuccess1, *panSuccess2;
+    int		nDstXSize = psDstImage->width;
+    int		nDstYSize = psDstImage->height;
+    int		nFailedPoints = 0, nSetPoints = 0;
+    double     *padfPixelSum;
+    gdImagePtr  srcImg, dstImg;
+
+    padfPixelSum = (double *) malloc(sizeof(double) * 4);
+    
+    srcImg = psSrcImage->img.gd;
+    dstImg = psDstImage->img.gd;
+
+    x1 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
+    y1 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
+    x2 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
+    y2 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
+    panSuccess1 = (int *) malloc( sizeof(int) * (nDstXSize+1) );
+    panSuccess2 = (int *) malloc( sizeof(int) * (nDstXSize+1) );
+
+    for( nDstY = 0; nDstY < nDstYSize; nDstY++ )
+    {        
+        for( nDstX = 0; nDstX <= nDstXSize; nDstX++ )
+        {
+            x1[nDstX] = nDstX;
+            y1[nDstX] = nDstY;
+            x2[nDstX] = nDstX;
+            y2[nDstX] = nDstY+1;
+        }
+
+        pfnTransform( pCBData, nDstXSize+1, x1, y1, panSuccess1 );
+        pfnTransform( pCBData, nDstXSize+1, x2, y2, panSuccess2 );
+        
+        for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
+        {
+            double  dfXMin, dfYMin, dfXMax, dfYMax;
+
+            /* Do not generate a pixel unless all four corners transformed */
+            if( !panSuccess1[nDstX] || !panSuccess1[nDstX+1]
+                || !panSuccess2[nDstX] || !panSuccess2[nDstX+1] )
+            {
+                nFailedPoints++;
+                continue;
+            }
+            
+            dfXMin = MIN(MIN(x1[nDstX],x1[nDstX+1]),
+                         MIN(x2[nDstX],x2[nDstX+1]));
+            dfYMin = MIN(MIN(y1[nDstX],y1[nDstX+1]),
+                         MIN(y2[nDstX],y2[nDstX+1]));
+            dfXMax = MAX(MAX(x1[nDstX],x1[nDstX+1]),
+                         MAX(x2[nDstX],x2[nDstX+1]));
+            dfYMax = MAX(MAX(y1[nDstX],y1[nDstX+1]),
+                         MAX(y2[nDstX],y2[nDstX+1]));
+
+            dfXMin = MAX(dfXMin,0);
+            dfYMin = MAX(dfYMin,0);
+            dfXMax = MIN(dfXMax,psSrcImage->width);
+            dfYMax = MIN(dfYMax,psSrcImage->height);
+                
+            if( !msAverageSample( psSrcImage, dfXMin, dfYMin, dfXMax, dfYMax,
+                                  &offsite, padfPixelSum ) )
+                continue;
+
+            if( MS_RENDERER_GD(psSrcImage->format) )
+            {
+                if( !gdImageTrueColor(psSrcImage->img.gd) )
+                {
+                    int nResult = panCMap[(int) padfPixelSum[0]];
+                    if( nResult != -1 )
+                    {                        
+                        nSetPoints++;
+                        dstImg->pixels[nDstY][nDstX] = nResult;
+                    }
+                }
+                else
+                {
+                    nSetPoints++;
+                    dstImg->tpixels[nDstY][nDstX] = 
+                        gdTrueColor( (int) padfPixelSum[0], 
+                                     (int) padfPixelSum[1], 
+                                     (int) padfPixelSum[2] );
+                }
+            }
+            else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
+            {
+                int band;
+
+                for( band = 0; band < psSrcImage->format->bands; band++ )
+                {
+                    if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
+                    {
+                        psDstImage->img.raw_16bit[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (GInt16) padfPixelSum[0];
+                    }
+                    else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
+                    {
+                        psDstImage->img.raw_float[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (float) padfPixelSum[0];
+                    }
+                    else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE )
+                    {
+                        psDstImage->img.raw_byte[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (GByte) padfPixelSum[0];
+                    }
+                }
+            }
+        }
+    }
+
+    free( padfPixelSum );
+    free( panSuccess1 );
+    free( x1 );
+    free( y1 );
+    free( panSuccess2 );
+    free( x2 );
+    free( y2 );
+
+/* -------------------------------------------------------------------- */
+/*      Some debugging output.                                          */
+/* -------------------------------------------------------------------- */
+    if( nFailedPoints > 0 && debug )
+    {
+        char	szMsg[256];
+        
+        sprintf( szMsg, 
+                 "msNearestRasterResampler: "
                  "%d failed to transform, %d actually set.\n", 
                  nFailedPoints, nSetPoints );
         msDebug( szMsg );
@@ -466,6 +813,8 @@ typedef struct
     projPJ psDstProj;
     int bDstIsGeographic;
     double adfDstGeoTransform[6];
+
+    int  bUseProj;
 } msProjTransformInfo;
 
 /************************************************************************/
@@ -480,7 +829,15 @@ void *msInitProjTransformer( projectionObj *psSrc,
 {
     msProjTransformInfo	*psPTInfo;
 
-    psPTInfo = (msProjTransformInfo *) malloc(sizeof(msProjTransformInfo));
+    psPTInfo = (msProjTransformInfo *) calloc(1,sizeof(msProjTransformInfo));
+
+/* -------------------------------------------------------------------- */
+/*      We won't even use PROJ.4 if either coordinate system is         */
+/*      NULL.                                                           */
+/* -------------------------------------------------------------------- */
+    psPTInfo->bUseProj = 
+        (psSrc->proj != NULL && psDst->proj != NULL
+         && msProjectionsDiffer( psSrc, psDst ) );
 
 /* -------------------------------------------------------------------- */
 /*      Record source image information.  We invert the source          */
@@ -488,7 +845,10 @@ void *msInitProjTransformer( projectionObj *psSrc,
 /*      the transformer.                                                */
 /* -------------------------------------------------------------------- */
     psPTInfo->psSrcProj = psSrc->proj;
-    psPTInfo->bSrcIsGeographic = pj_is_latlong(psSrc->proj);
+    if( psPTInfo->bUseProj )
+        psPTInfo->bSrcIsGeographic = pj_is_latlong(psSrc->proj);
+    else
+        psPTInfo->bSrcIsGeographic = FALSE;
     
     if( !InvGeoTransform(padfSrcGeoTransform, 
                          psPTInfo->adfInvSrcGeoTransform) )
@@ -498,11 +858,12 @@ void *msInitProjTransformer( projectionObj *psSrc,
 /*      Record destination image information.                           */
 /* -------------------------------------------------------------------- */
     psPTInfo->psDstProj = psDst->proj;
-    psPTInfo->bDstIsGeographic = pj_is_latlong(psDst->proj);
+    if( psPTInfo->bUseProj )
+        psPTInfo->bDstIsGeographic = pj_is_latlong(psDst->proj);
+    else
+        psPTInfo->bDstIsGeographic = FALSE;
     memcpy( psPTInfo->adfDstGeoTransform, padfDstGeoTransform, 
             sizeof(double) * 6 );
-
-
 
     return psPTInfo;
 }
@@ -560,8 +921,7 @@ int msProjTransformer( void *pCBData, int nPoints,
 /* -------------------------------------------------------------------- */
 /*      Transform back to source projection space.                      */
 /* -------------------------------------------------------------------- */
-    if( psPTInfo->psDstProj != NULL
-        && psPTInfo->psSrcProj != NULL )
+    if( psPTInfo->bUseProj )
     {
         double *z;
         
@@ -576,14 +936,14 @@ int msProjTransformer( void *pCBData, int nPoints,
             return MS_FALSE;
         }
         free( z );
+
+        for( i = 0; i < nPoints; i++ )
+        {
+            if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+                panSuccess[i] = 0;
+        }
     }
     
-    for( i = 0; i < nPoints; i++ )
-    {
-        if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
-            panSuccess[i] = 0;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Transform back to degrees if source is geographic.              */
 /* -------------------------------------------------------------------- */
@@ -849,29 +1209,32 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 /* -------------------------------------------------------------------- */
 /*      Transform to layer georeferenced coordinates.                   */
 /* -------------------------------------------------------------------- */
-    if( pj_is_latlong(psDstProj->proj) )
+    if( psDstProj->proj && psSrcProj->proj )
     {
-        for( i = 0; i < nSamples; i++ )
+        if( pj_is_latlong(psDstProj->proj) )
         {
-            x[i] = x[i] * DEG_TO_RAD;
-            y[i] = y[i] * DEG_TO_RAD;
-        }
-    }
-
-    if( pj_transform( psDstProj->proj, psSrcProj->proj,
-                      nSamples, 1, x, y, z ) != 0 )
-    {
-        return MS_FALSE;
-    }
-
-    if( pj_is_latlong(psSrcProj->proj) )
-    {
-        for( i = 0; i < nSamples; i++ )
-        {
-            if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
+            for( i = 0; i < nSamples; i++ )
             {
-                x[i] = x[i] * RAD_TO_DEG;
-                y[i] = y[i] * RAD_TO_DEG;
+                x[i] = x[i] * DEG_TO_RAD;
+                y[i] = y[i] * DEG_TO_RAD;
+            }
+        }
+        
+        if( pj_transform( psDstProj->proj, psSrcProj->proj,
+                          nSamples, 1, x, y, z ) != 0 )
+        {
+            return MS_FALSE;
+        }
+        
+        if( pj_is_latlong(psSrcProj->proj) )
+        {
+            for( i = 0; i < nSamples; i++ )
+            {
+                if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
+                {
+                    x[i] = x[i] * RAD_TO_DEG;
+                    y[i] = y[i] * RAD_TO_DEG;
+                }
             }
         }
     }
@@ -983,6 +1346,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     int         anCMap[256];
     char       **papszAlteredProcessing = NULL;
     int        nLoadImgXSize, nLoadImgYSize;
+    const char *resampleMode = CSLFetchNameValue( layer->processing, 
+                                                  "RESAMPLE" );
+
+    if( resampleMode == NULL )
+        resampleMode = "NEAREST";
 
 /* -------------------------------------------------------------------- */
 /*      We will require source and destination to have a valid          */
@@ -993,8 +1361,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     {
         if( layer->debug )
             msDebug( "msResampleGDALToMap(): "
-                     "Either map or layer projection is NULL.\n" );
-        return MS_PROJERR;
+                     "Either map or layer projection is NULL, assuming compatible.\n" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1249,8 +1616,19 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
-
-    result = msSimpleRasterResampler( srcImage, layer->offsite, image,
+    if( EQUAL(resampleMode,"AVERAGE") )
+        result = 
+            msAverageRasterResampler( srcImage, layer->offsite, image,
+                                      anCMap, msApproxTransformer, pACBData,
+                                      layer->debug );
+    else if( EQUAL(resampleMode,"BILINEAR") )
+        result = 
+            msBilinearRasterResampler( srcImage, layer->offsite, image,
+                                       anCMap, msApproxTransformer, pACBData,
+                                       layer->debug );
+    else
+        result = 
+            msNearestRasterResampler( srcImage, layer->offsite, image,
                                       anCMap, msApproxTransformer, pACBData,
                                       layer->debug );
 
