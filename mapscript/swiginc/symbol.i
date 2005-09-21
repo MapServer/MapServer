@@ -61,6 +61,10 @@
         free(self);
     }
 
+    int setImagepath(const char *imagefile) {
+	return msLoadImageSymbol(self, imagefile);
+    }
+
     int setPoints(lineObj *line) {
         int i;
         for (i=0; i<line->numpoints; i++) {
