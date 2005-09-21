@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/09/21 01:26:03  frank
+ * fixed problem with nearest resampling of float data
+ *
  * Revision 1.56  2005/09/21 01:18:10  frank
  * Preliminary RFC4 (alternate resampling kernals) support
  *
@@ -284,12 +287,10 @@ msNearestRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_float[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = nValue;
+                            = fValue;
                     }
                     else if(psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE)
                     {
-                        int nValue;
-
                         nValue = psSrcImage->img.raw_byte[
                             nSrcX + nSrcY * psSrcImage->width 
                             + band*psSrcImage->width*psSrcImage->height];
