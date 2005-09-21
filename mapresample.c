@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/09/21 20:01:50  frank
+ * Fixed bug with RGB offsite support in bilinear/average resampling.
+ *
  * Revision 1.57  2005/09/21 01:26:03  frank
  * fixed problem with nearest resampling of float data
  *
@@ -355,12 +358,16 @@ static void msSourceSample( imageObj *psSrcImage, int iSrcX, int iSrcY,
         else
         {
             int nValue = psSrcImage->img.gd->tpixels[iSrcY][iSrcX];
+            int gd_alpha = gdTrueColorGetAlpha(nValue);
 
-            padfPixelSum[0] += dfWeight * gdTrueColorGetRed(nValue);
-            padfPixelSum[1] += dfWeight * gdTrueColorGetGreen(nValue);
-            padfPixelSum[2] += dfWeight * gdTrueColorGetBlue(nValue);
-
-            *pdfWeightSum += dfWeight;
+            if( gd_alpha != 127 )
+            {
+                padfPixelSum[0] += dfWeight * gdTrueColorGetRed(nValue);
+                padfPixelSum[1] += dfWeight * gdTrueColorGetGreen(nValue);
+                padfPixelSum[2] += dfWeight * gdTrueColorGetBlue(nValue);
+                
+                *pdfWeightSum += dfWeight;
+            }
         }
     }
     else
@@ -441,8 +448,9 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
     int		nFailedPoints = 0, nSetPoints = 0;
     double     *padfPixelSum;
     gdImagePtr  srcImg, dstImg;
+    int         bandCount = MAX(4,psSrcImage->format->bands);
 
-    padfPixelSum = (double *) malloc(sizeof(double) * 4);
+    padfPixelSum = (double *) malloc(sizeof(double) * bandCount);
     
     srcImg = psSrcImage->img.gd;
     dstImg = psDstImage->img.gd;
@@ -499,7 +507,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
             nSrcX2 = MIN(nSrcX2,nSrcXSize-1);
             nSrcY2 = MIN(nSrcY2,nSrcYSize-1);
 
-            memset( padfPixelSum, 0, sizeof(double) * 4);
+            memset( padfPixelSum, 0, sizeof(double) * bandCount);
 
             msSourceSample( psSrcImage, nSrcX, nSrcY, padfPixelSum, 
                             (1.0 - dfRatioX2) * (1.0 - dfRatioY2),
@@ -586,7 +594,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
         char	szMsg[256];
         
         sprintf( szMsg, 
-                 "msNearestRasterResampler: "
+                 "msBilinearRasterResampler: "
                  "%d failed to transform, %d actually set.\n", 
                  nFailedPoints, nSetPoints );
         msDebug( szMsg );
@@ -594,6 +602,190 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
 
     return 0;
 }
+
+#ifdef notdef
+/************************************************************************/
+/*                        msCubicRasterResample()                       */
+/************************************************************************/
+
+#define CubicConvolution(distance1,distance2,distance3,f0,f1,f2,f3) \
+   (  (   -f0 +     f1 - f2 + f3) * distance3 \
+    + (2.0*(f0 - f1) + f2 - f3) * distance2 \
+    + (   -f0          + f2     ) * distance1 \
+    +               f1                         )
+
+static int 
+msCubicRasterResampler( imageObj *psSrcImage, colorObj offsite,
+                        imageObj *psDstImage, int *panCMap,
+                        SimpleTransformer pfnTransform, void *pCBData,
+                        int debug )
+
+{
+    double	*x, *y; 
+    int		nDstX, nDstY;
+    int         *panSuccess;
+    int		nDstXSize = psDstImage->width;
+    int		nDstYSize = psDstImage->height;
+    int		nSrcXSize = psSrcImage->width;
+    int		nSrcYSize = psSrcImage->height;
+    int		nFailedPoints = 0, nSetPoints = 0;
+    double     *padfPixelSum;
+    gdImagePtr  srcImg, dstImg;
+    int         bandCount = MAX(4,psSrcImage->format->bands);
+
+    padfPixelSum = (double *) malloc(sizeof(double) * bandCount);
+    
+    srcImg = psSrcImage->img.gd;
+    dstImg = psDstImage->img.gd;
+
+    x = (double *) malloc( sizeof(double) * nDstXSize );
+    y = (double *) malloc( sizeof(double) * nDstXSize );
+    panSuccess = (int *) malloc( sizeof(int) * nDstXSize );
+
+    for( nDstY = 0; nDstY < nDstYSize; nDstY++ )
+    {        
+        for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
+        {
+            x[nDstX] = nDstX + 0.5;
+            y[nDstX] = nDstY + 0.5;
+        }
+
+        pfnTransform( pCBData, nDstXSize, x, y, panSuccess );
+        
+        for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
+        {
+            int		nSrcX, nSrcY, nSrcX2, nSrcY2;
+            double      dfRatioX2, dfRatioY2, dfWeightSum = 0.0;
+
+            if( !panSuccess[nDstX] )
+            {
+                nFailedPoints++;
+                continue;
+            }
+
+            /* 
+            ** Offset to treat TL pixel corners as pixel location instead
+            ** of the center. 
+            */
+            x[nDstX] -= 0.5; 
+            y[nDstX] -= 0.5;
+
+            nSrcX = (int) floor(x[nDstX]);
+            nSrcY = (int) floor(y[nDstX]);
+
+            nSrcX2 = nSrcX+1;
+            nSrcY2 = nSrcY+1;
+            
+            dfRatioX2 = x[nDstX] - nSrcX;
+            dfRatioY2 = y[nDstX] - nSrcY;
+
+            /* If we are right off the source, skip this pixel */
+            if( nSrcX2 < 0 || nSrcX >= nSrcXSize
+                || nSrcY2 < 0 || nSrcY >= nSrcYSize )
+                continue;
+
+            /* Trim in stuff one pixel off the edge */
+            nSrcX = MAX(nSrcX,0);
+            nSrcY = MAX(nSrcY,0);
+            nSrcX2 = MIN(nSrcX2,nSrcXSize-1);
+            nSrcY2 = MIN(nSrcY2,nSrcYSize-1);
+
+            memset( padfPixelSum, 0, sizeof(double) * bandCount);
+
+            msSourceSample( psSrcImage, nSrcX, nSrcY, padfPixelSum, 
+                            (1.0 - dfRatioX2) * (1.0 - dfRatioY2),
+                            &dfWeightSum, &offsite );
+            
+            msSourceSample( psSrcImage, nSrcX2, nSrcY, padfPixelSum, 
+                            (dfRatioX2) * (1.0 - dfRatioY2),
+                            &dfWeightSum, &offsite );
+            
+            msSourceSample( psSrcImage, nSrcX, nSrcY2, padfPixelSum, 
+                            (1.0 - dfRatioX2) * (dfRatioY2),
+                            &dfWeightSum, &offsite );
+            
+            msSourceSample( psSrcImage, nSrcX2, nSrcY2, padfPixelSum, 
+                            (dfRatioX2) * (dfRatioY2),
+                            &dfWeightSum, &offsite );
+
+            if( dfWeightSum == 0.0 )
+                continue;
+
+            if( MS_RENDERER_GD(psSrcImage->format) )
+            {
+                if( !gdImageTrueColor(psSrcImage->img.gd) )
+                {
+                    int nResult = panCMap[
+                        (int) (padfPixelSum[0] / dfWeightSum)];
+                    if( nResult != -1 )
+                    {                        
+                        nSetPoints++;
+                        dstImg->pixels[nDstY][nDstX] = nResult;
+                    }
+                }
+                else
+                {
+                    nSetPoints++;
+                    dstImg->tpixels[nDstY][nDstX] = 
+                        gdTrueColor( (int) (padfPixelSum[0] / dfWeightSum), 
+                                     (int) (padfPixelSum[1] / dfWeightSum), 
+                                     (int) (padfPixelSum[2] / dfWeightSum) );
+                }
+            }
+            else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
+            {
+                int band;
+
+                for( band = 0; band < psSrcImage->format->bands; band++ )
+                {
+                    if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
+                    {
+                        psDstImage->img.raw_16bit[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (GInt16) (padfPixelSum[0] / dfWeightSum);
+                    }
+                    else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
+                    {
+                        psDstImage->img.raw_float[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (float) (padfPixelSum[0] / dfWeightSum);
+                    }
+                    else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE )
+                    {
+                        psDstImage->img.raw_byte[
+                            nDstX + nDstY * psDstImage->width
+                            + band*psDstImage->width*psDstImage->height] 
+                            = (GByte) (padfPixelSum[0] / dfWeightSum);
+                    }
+                }
+            }
+        }
+    }
+
+    free( padfPixelSum );
+    free( panSuccess );
+    free( x );
+    free( y );
+
+/* -------------------------------------------------------------------- */
+/*      Some debugging output.                                          */
+/* -------------------------------------------------------------------- */
+    if( nFailedPoints > 0 && debug )
+    {
+        char	szMsg[256];
+        
+        sprintf( szMsg, 
+                 "msCubicRasterResampler: "
+                 "%d failed to transform, %d actually set.\n", 
+                 nFailedPoints, nSetPoints );
+        msDebug( szMsg );
+    }
+
+    return 0;
+}
+#endif
 
 /************************************************************************/
 /*                          msAverageSample()                           */
@@ -612,8 +804,6 @@ msAverageSample( imageObj *psSrcImage,
     nYMin = (int) dfYMin;
     nXMax = (int) ceil(dfXMax);
     nYMax = (int) ceil(dfYMax);
-
-    memset( padfPixelSum, 0, sizeof(double)*4 );
 
     for( iY = nYMin; iY < nYMax; iY++ )
     {
@@ -664,8 +854,9 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
     int		nFailedPoints = 0, nSetPoints = 0;
     double     *padfPixelSum;
     gdImagePtr  srcImg, dstImg;
+    int         bandCount = MAX(4,psSrcImage->format->bands);
 
-    padfPixelSum = (double *) malloc(sizeof(double) * 4);
+    padfPixelSum = (double *) malloc(sizeof(double) * bandCount);
     
     srcImg = psSrcImage->img.gd;
     dstImg = psDstImage->img.gd;
@@ -716,6 +907,8 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
             dfXMax = MIN(dfXMax,psSrcImage->width);
             dfYMax = MIN(dfYMax,psSrcImage->height);
                 
+            memset( padfPixelSum, 0, sizeof(double)*bandCount );
+    
             if( !msAverageSample( psSrcImage, dfXMin, dfYMin, dfXMax, dfYMax,
                                   &offsite, padfPixelSum ) )
                 continue;
@@ -788,7 +981,7 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
         char	szMsg[256];
         
         sprintf( szMsg, 
-                 "msNearestRasterResampler: "
+                 "msAverageRasterResampler: "
                  "%d failed to transform, %d actually set.\n", 
                  nFailedPoints, nSetPoints );
         msDebug( szMsg );
