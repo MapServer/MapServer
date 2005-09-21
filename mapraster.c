@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.129  2005/09/21 01:18:33  frank
+ * use mapresample.c if RESAMPLE is set
+ *
  * Revision 1.128  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -1525,7 +1528,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
                  && map->projection.proj != NULL 
                  && layer->projection.proj != NULL)
                 || msProjectionsDiffer( &(map->projection), 
-                                        &(layer->projection) ) )
+                                        &(layer->projection) ) 
+                || CSLFetchNameValue( layer->processing, "RESAMPLE" ) != NULL )
             {
                 status = msResampleGDALToMap( map, layer, image, hDS );
             }
