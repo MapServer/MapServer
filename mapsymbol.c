@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.84  2005/09/21 04:23:27  sdlime
+ * Updated msLoadImageSymbol() to clean-up any previously allocated values for imagepath and img. (bug 1472)
+ *
  * Revision 1.83  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -825,6 +828,11 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
           msSetError(MS_IOERR, "Error opening image file %s.", "msLoadImageSymbol()");
           return MS_FAILURE;
     }
+
+    if(symbol->imagepath) free(symbol->imagepath);
+    symbol->imagepath = strdup(filename);
+
+    if(symbol->img) gdImageDestroy(symbol->img);
 
     fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
     rewind(stream); /* reset the image for the readers */
