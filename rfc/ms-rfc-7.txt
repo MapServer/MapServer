@@ -1,0 +1,79 @@
+=========================================
+MS RFC 7: MapServer CVS Commit Management
+=========================================
+
+:Date:  2005/09/22
+:Author: Frank Warmerdam
+:Contact: warmerdam@pobox.com
+:Last Edited: $Date$
+:Status: draft
+
+
+Purpose
+-------
+
+To formalize CVS commit access, and specify some guidelines for CVS 
+committers.
+
+
+Election to CVS Commit Access
+-----------------------------
+
+Permission for CVS commit access shall be provided to new developers only
+if accepted by the MapServer Technical Steering Committee.   A proposal
+should be written to the TSC for new committers and voted on normally.  It
+is not necessary to write an RFC document for these votes ... email to 
+mapserver-dev is sufficient.
+
+Removal of CVS commit access should be handled by the same process.  
+
+
+Committer Tracking
+------------------
+
+A list of all project committers will be kept in the main mapserver 
+directory (called COMMITTERS) listing for each CVS committer:
+
+ * Userid: the id that will appear in the CVS logs for this person.
+
+ * Full name: the users actual name. 
+
+ * Email address: A current email address at which the committer can be
+   reached.  It may be altered in normal ways to make it harder to 
+   auto-harvest. 
+
+ * A brief indication of areas of responsibility.  
+
+
+CVS Administrator
+-----------------
+
+One member of the Technical Steering Committee will be designed the CVS
+Administrator.  That person will be responsible for giving CVS commit
+access to folks, updating the COMMITTERS file, and other CVS related 
+management.  That person will need login access on the CVS server of course.
+Initially Steve Lime will be the CVS Adminstrator. 
+
+
+CVS Commit Practices
+--------------------
+
+The following are considered good CVS commit practices for the MapServer
+project. 
+
+ * Use meaningful descriptions for CVS commit log entries. 
+
+ * Prefix CVS commit log entries with "Bug 1232: " when committing fixes for
+   bugs in Bugzilla.  
+
+ * Include an entry in the HISTORY file for any non-trivial changes committed
+   in the main MapServer source tree.  Make sure it is placed under the
+   correct version heading and include bug numbers in these messages too.
+
+ * Changes should not be committed in stable branches without a corresponding
+   bug id and HISTORY entry.  Any change worth pushing into the stable 
+   version is worth a bugzilla bug and good HISTORY notations. 
+
+ * Do not create new branches without the approval of the TSC.  Release
+   managers are assumed to have permission to create a branch. 
+
