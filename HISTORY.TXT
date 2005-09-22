@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- mapresample.c: added BILINEAR/AVERAGE resampling options. 
+
 - mapfile.c: avoid tail recursion in freeFeatureList().
 
 - maplegend.c: fixed leak of imageObj when embedding legends.
