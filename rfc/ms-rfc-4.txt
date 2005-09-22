@@ -6,7 +6,7 @@ MS RFC 4: MapServer Raster Resampling
 :Author: Frank Warmerdam
 :Contact: warmerdam@pobox.com
 :Last Edited: $Date$
-:Status: proposed
+:Status: adopted
 
 Overview
 --------
