@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/09/23 21:18:58  assefa
+ * Remove call to ming.h inside map.h (Bug 1479)
+ *
  * Revision 1.54  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -77,6 +80,7 @@
 #include <zlib.h>
 #endif
 #include "map.h"
+#include "mapswf.h"
 
 MS_CVSID("$Id$")
 
@@ -912,22 +916,22 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     }
 
     image->img.swf = (SWFObj *)malloc(sizeof(SWFObj));    
-    image->img.swf->map = map;
+    ((SWFObj *)image->img.swf)->map = map;
 
-    image->img.swf->nCurrentLayerIdx = -1;
-    image->img.swf->nCurrentShapeIdx = -1;
+    ((SWFObj *)image->img.swf)->nCurrentLayerIdx = -1;
+     ((SWFObj *)image->img.swf)->nCurrentShapeIdx = -1;
 
-    image->img.swf->nLayerMovies = 0;
-    image->img.swf->pasMovies = NULL;
-    image->img.swf->nCurrentMovie = -1;
+    ((SWFObj *)image->img.swf)->nLayerMovies = 0;
+    ((SWFObj *)image->img.swf)->pasMovies = NULL;
+    ((SWFObj *)image->img.swf)->nCurrentMovie = -1;
 
-    image->img.swf->panLayerIndex = NULL;
+    ((SWFObj *)image->img.swf)->panLayerIndex = NULL;
 
     /* initalize main movie */
-    image->img.swf->sMainMovie = newSWFMovie();
-    SWFMovie_setDimension(image->img.swf->sMainMovie, (float)width, 
+    ((SWFObj *)image->img.swf)->sMainMovie = newSWFMovie();
+    SWFMovie_setDimension(((SWFObj *)image->img.swf)->sMainMovie, (float)width, 
                           (float)height);
-    SWFMovie_setBackground(image->img.swf->sMainMovie, map->imagecolor.red,
+    SWFMovie_setBackground(((SWFObj *)image->img.swf)->sMainMovie, map->imagecolor.red,
                            map->imagecolor.green, map->imagecolor.blue);
 /* -------------------------------------------------------------------- */
 /*      if the output is a single movie, we crate a GD image that       */
@@ -936,7 +940,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",""), 
                    "MULTIPLE") == 0)
     {
-        image->img.swf->imagetmp = NULL;
+      ((SWFObj *)image->img.swf)->imagetmp = NULL;
     }
     else
     {
@@ -960,7 +964,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
 #endif
 #endif
      
-        image->img.swf->imagetmp = (imageObj *) 
+        ((SWFObj *)image->img.swf)->imagetmp = (imageObj *) 
           msImageCreateGD(map->width, map->height,  
                           msCreateDefaultOutputFormat(map, driver),
                           map->web.imagepath, map->web.imageurl);
@@ -994,38 +998,38 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
                        "MULTIPLE") != 0)
           return;
 
-        image->img.swf->nLayerMovies++;
-        nTmp = image->img.swf->nLayerMovies;
-        if (!image->img.swf->pasMovies)
+        ((SWFObj *)image->img.swf)->nLayerMovies++;
+        nTmp = ((SWFObj *)image->img.swf)->nLayerMovies;
+        if (!((SWFObj *)image->img.swf)->pasMovies)
         {
-            image->img.swf->pasMovies = 
+            ((SWFObj *)image->img.swf)->pasMovies = 
                 (SWFMovie *)malloc(sizeof(SWFMovie)*nTmp);
-            image->img.swf->panLayerIndex = 
+            ((SWFObj *)image->img.swf)->panLayerIndex = 
                 (int *)malloc(sizeof(int)*nTmp);
             
         }
         else
         {
-            image->img.swf->pasMovies = 
-                (SWFMovie *)realloc(image->img.swf->pasMovies,
+            ((SWFObj *)image->img.swf)->pasMovies = 
+                (SWFMovie *)realloc(((SWFObj *)image->img.swf)->pasMovies,
                                     sizeof(SWFMovie)*nTmp);
-            image->img.swf->panLayerIndex = 
-                (int *)realloc(image->img.swf->panLayerIndex,
+            ((SWFObj *)image->img.swf)->panLayerIndex = 
+                (int *)realloc(((SWFObj *)image->img.swf)->panLayerIndex,
                                     sizeof(int)*nTmp);
         }
 
-        image->img.swf->nCurrentMovie = nTmp -1;
-        image->img.swf->pasMovies[nTmp -1] = newSWFMovie();
+        ((SWFObj *)image->img.swf)->nCurrentMovie = nTmp -1;
+        ((SWFObj *)image->img.swf)->pasMovies[nTmp -1] = newSWFMovie();
     
         /* keeps the layer index for each movie so we can use */
         /* it to get a movie index based on the layer index. */
-        image->img.swf->panLayerIndex[nTmp -1] = layer->index;
+        ((SWFObj *)image->img.swf)->panLayerIndex[nTmp -1] = layer->index;
 
-        SWFMovie_setDimension(image->img.swf->pasMovies[nTmp -1], 
+        SWFMovie_setDimension(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], 
                               (float)image->width, (float)image->height);
-         SWFMovie_setBackground(image->img.swf->pasMovies[nTmp -1], map->imagecolor.red,
+         SWFMovie_setBackground(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], map->imagecolor.red,
                            map->imagecolor.green, map->imagecolor.blue);
-        image->img.swf->nCurrentLayerIdx = layer->index;
+        ((SWFObj *)image->img.swf)->nCurrentLayerIdx = layer->index;
         /* msLayerGetItems(layer); */
 
 /* -------------------------------------------------------------------- */
@@ -1040,22 +1044,22 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
             {
                 sprintf(gszAction, "nAttributes=%d;", n);
                 oAction = compileSWFActionCode(gszAction);
-                SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+                SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
 
                 sprintf(gszAction, "%s", "Attributes=new Array();");
                 oAction = compileSWFActionCode(gszAction);
-                SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+                SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
                 
                 for (i=0; i<n; i++)
                 {
                     sprintf(gszAction, "Attributes[%d]=\"%s\";", i, tokens[i]);
                     oAction = compileSWFActionCode(gszAction);
-                    SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+                    SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
                 }
                 
                 sprintf(szAction, "%s", "Element=new Array();");
                 oAction = compileSWFActionCode(szAction);
-                SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+                SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
             }
         }
     }
@@ -1081,9 +1085,9 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
     
     if (image &&  MS_DRIVER_SWF(image->format))
     {
-        image->img.swf->nCurrentShapeIdx = shape->index;
+        ((SWFObj *)image->img.swf)->nCurrentShapeIdx = shape->index;
 
-        /* nTmp = image->img.swf->nCurrentMovie; */
+        /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
 
 /* -------------------------------------------------------------------- */
 /*      get an array of indexes corresponding to the attributes. We     */
@@ -1125,7 +1129,7 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
         {
             sprintf(gszAction, "Element[%d]=new Array();", (int)shape->index);
             oAction = compileSWFActionCode(gszAction);
-            /* SWFMovie_add(image->img.swf->pasMovies[nTmp], oAction); */
+            /* SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp], oAction); */
             SWFMovie_add(GetCurrentMovie(map, image), oAction);
 
             for (i=0; i<iIndex; i++)
@@ -1133,14 +1137,14 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
                 sprintf(gszAction, "Element[%d][%d]=\"%s\";", (int)shape->index,
                         i, shape->values[panIndex[i]]);
                 oAction = compileSWFActionCode(gszAction);
-                /* SWFMovie_add(image->img.swf->pasMovies[nTmp], oAction); */
+                /* SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp], oAction); */
                 SWFMovie_add(GetCurrentMovie(map, image), oAction);
                 
             }
         }
     }
     else
-        image->img.swf->nCurrentShapeIdx = -1;   
+        ((SWFObj *)image->img.swf)->nCurrentShapeIdx = -1;   
 }
 
 
@@ -1262,7 +1266,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
-    map = image->img.swf->map;
+    map = ((SWFObj *)image->img.swf)->map;
     sFc.red = style->color.red;
     sFc.green = style->color.green;
     sFc.blue = style->color.blue;
@@ -1291,12 +1295,12 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
+      &(((SWFObj *)image->img.swf)->map->layers[((SWFObj *)image->img.swf)->nCurrentLayerIdx]);
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
-        nLayerIndex = image->img.swf->nCurrentLayerIdx;
-        nShapeIndex = image->img.swf->nCurrentShapeIdx;
+        nLayerIndex = ((SWFObj *)image->img.swf)->nCurrentLayerIdx;
+        nShapeIndex = ((SWFObj *)image->img.swf)->nCurrentShapeIdx;
     }
     
 /* -------------------------------------------------------------------- */
@@ -1304,7 +1308,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
     /* symbol = &(symbolset->symbol[sy]); */
 
-    /* nTmp = image->img.swf->nCurrentMovie; */
+    /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
 
     switch(symbol->type) 
     {  
@@ -1733,7 +1737,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
-    map = image->img.swf->map;
+    map = ((SWFObj *)image->img.swf)->map;
 
     sFc.red = style->color.red;
     sFc.green = style->color.green;
@@ -1744,7 +1748,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     sBc.blue = style->backgroundcolor.blue;
 
 
-    /* nTmp = image->img.swf->nCurrentMovie; */
+    /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
 
 /* -------------------------------------------------------------------- */
 /*      the layer index and shape index will be set if the layer has    */
@@ -1754,12 +1758,12 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
+      &(((SWFObj *)image->img.swf)->map->layers[((SWFObj *)image->img.swf)->nCurrentLayerIdx]);
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
-        nLayerIndex = image->img.swf->nCurrentLayerIdx;
-        nShapeIndex = image->img.swf->nCurrentShapeIdx;
+        nLayerIndex = ((SWFObj *)image->img.swf)->nCurrentLayerIdx;
+        nShapeIndex = ((SWFObj *)image->img.swf)->nCurrentShapeIdx;
     }
 
     /* TODO : this should come from the map file. */
@@ -1867,18 +1871,18 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
+      &(((SWFObj *)image->img.swf)->map->layers[((SWFObj *)image->img.swf)->nCurrentLayerIdx]);
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
-        nLayerIndex = image->img.swf->nCurrentLayerIdx;
-        nShapeIndex = image->img.swf->nCurrentShapeIdx;
+        nLayerIndex = ((SWFObj *)image->img.swf)->nCurrentLayerIdx;
+        nShapeIndex = ((SWFObj *)image->img.swf)->nCurrentShapeIdx;
     }
  
 /* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
-    map = image->img.swf->map;
+    map = ((SWFObj *)image->img.swf)->map;
 
     sFc.red = style->color.red;
     sFc.green = style->color.green;
@@ -1903,7 +1907,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     if (MS_VALID_COLOR(sOc))
         psOutlineColor = &sOc;
 
-    /* nTmp = image->img.swf->nCurrentMovie; */
+    /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
     
     if (size == 0)
     {
@@ -2041,7 +2045,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 /* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
-    map = image->img.swf->map;
+    map = ((SWFObj *)image->img.swf)->map;
     sColor.red = 0;
     sColor.green = 0;
     sColor.blue = 0;
@@ -2080,7 +2084,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     if (oText)
     {
          SWFDisplayItem oDisplay; 
-        /* nTmp = image->img.swf->nCurrentMovie; */
+        /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oText);
         SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
         SWFDisplayItem_rotate(oDisplay, (float)label->angle);
@@ -2238,18 +2242,18 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                                           "OUTPUT_MOVIE",""), 
                   "SINGLE") == 0)
     {
-        imagetmp = (imageObj *)image->img.swf->imagetmp;
+        imagetmp = (imageObj *)((SWFObj *)image->img.swf)->imagetmp;
         msImageInitGD( imagetmp, &map->imagecolor);
         msDrawLabelCacheGD(imagetmp->img.gd, map);
         oShape = gdImage2Shape(imagetmp->img.gd);
-        /* nTmp = image->img.swf->nCurrentMovie; */
+        /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         return 0;
     }
 /* -------------------------------------------------------------------- */
 /*      keep the current layer index.                                   */
 /* -------------------------------------------------------------------- */
-    nCurrentMovie = image->img.swf->nCurrentMovie;
+    nCurrentMovie = ((SWFObj *)image->img.swf)->nCurrentMovie;
 
     for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
@@ -2263,16 +2267,16 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 /* ==================================================================== */
         
 
-        image->img.swf->nCurrentMovie = 
-          msSWFGetMovieIndex(image->img.swf->panLayerIndex, 
-                             image->img.swf->nLayerMovies,
+        ((SWFObj *)image->img.swf)->nCurrentMovie = 
+          msSWFGetMovieIndex(((SWFObj *)image->img.swf)->panLayerIndex, 
+                             ((SWFObj *)image->img.swf)->nLayerMovies,
                              cachePtr->layerindex);
 
-        if (image->img.swf->nCurrentMovie < 0)
+        if (((SWFObj *)image->img.swf)->nCurrentMovie < 0)
           continue;
         
         /* msImageStartLayerSWF(map, layerPtr, image); */
-        image->img.swf->nCurrentLayerIdx = cachePtr->layerindex;
+        ((SWFObj *)image->img.swf)->nCurrentLayerIdx = cachePtr->layerindex;
 /* ==================================================================== */
 /*      at this point the layer (at the shape level is closed). So      */
 /*      we will open it if necessary.                                   */
@@ -2289,7 +2293,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         }
         
         
-        /* image->img.swf->nCurrentShapeIdx = cachePtr->shapeidx; */
+        /* ((SWFObj *)image->img.swf)->nCurrentShapeIdx = cachePtr->shapeidx; */
         msDrawStartShapeUsingIdxSWF(map, layerPtr, image,  cachePtr->shapeindex);
            
         
@@ -2514,7 +2518,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     } /* next in cache */
 
     
-    image->img.swf->nCurrentMovie = nCurrentMovie;
+    ((SWFObj *)image->img.swf)->nCurrentMovie = nCurrentMovie;
 
     return(0);
 }
@@ -2613,7 +2617,7 @@ int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo,
         bFreeImage = 1;
     }
     else
-      image_tmp = (imageObj *)image->img.swf->imagetmp;
+      image_tmp = (imageObj *)((SWFObj *)image->img.swf)->imagetmp;
 
 
     
@@ -2628,7 +2632,7 @@ int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo,
                           image_tmp) != -1)
     {
         oShape = gdImage2Shape(image_tmp->img.gd);
-        /* nTmp = image->img.swf->nCurrentMovie; */
+        /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         
         if (bFreeImage)
@@ -2674,7 +2678,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
            bFreeImage = 1;
        }
        else
-         image_tmp = (imageObj *)image->img.swf->imagetmp;
+         image_tmp = (imageObj *)((SWFObj *)image->img.swf)->imagetmp;
 
     if( image_tmp == NULL )
       return -1;
@@ -2682,7 +2686,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
     {
         oShape = gdImage2Shape(image_tmp->img.gd);
-        /* nTmp = image->img.swf->nCurrentMovie; */
+        /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         if (bFreeImage)
           msFreeImage( image_tmp );
@@ -2734,9 +2738,10 @@ int msSaveImageSWF(imageObj *image, char *filename)
     unsigned char block[4000];
     int         bytes_read;
 
+
     if (image && MS_DRIVER_SWF(image->format))/* && filename) */
     {
-         map = image->img.swf->map;
+         map = ((SWFObj *)image->img.swf)->map;
 
 /* -------------------------------------------------------------------- */
 /*      We will need to write the output to a temporary file.           */
@@ -2767,9 +2772,9 @@ int msSaveImageSWF(imageObj *image, char *filename)
         {
 
 #ifdef MING_VERSION_03
-            iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename, -1);
+            iSaveResult = SWFMovie_save(((SWFObj *)image->img.swf)->sMainMovie, filename, -1);
 #else
-            iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename);
+            iSaveResult = SWFMovie_save(((SWFObj *)image->img.swf)->sMainMovie, filename);
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -2830,45 +2835,45 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /* -------------------------------------------------------------------- */
         sprintf(szAction, "%s", "mapObj=new Object();");
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
-        sprintf(szAction, "mapObj.name=\"%s\";", image->img.swf->map->name);
+        sprintf(szAction, "mapObj.name=\"%s\";", ((SWFObj *)image->img.swf)->map->name);
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
-        sprintf(szAction, "mapObj.width=%d;", image->img.swf->map->width);
+        sprintf(szAction, "mapObj.width=%d;", ((SWFObj *)image->img.swf)->map->width);
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
         sprintf(szAction, "mapObj.height=%d;", 
-                image->img.swf->map->height);
+                ((SWFObj *)image->img.swf)->map->height);
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
         sprintf(szAction, "mapObj.extent=\"%f,%f,%f,%f\";", 
-                image->img.swf->map->extent.minx,
-                image->img.swf->map->extent.miny,
-                image->img.swf->map->extent.maxx,
-                image->img.swf->map->extent.maxy);
+                ((SWFObj *)image->img.swf)->map->extent.minx,
+                ((SWFObj *)image->img.swf)->map->extent.miny,
+                ((SWFObj *)image->img.swf)->map->extent.maxx,
+                ((SWFObj *)image->img.swf)->map->extent.maxy);
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
         sprintf(szAction, "mapObj.numlayers=%d;", 
-                image->img.swf->map->numlayers);
+                ((SWFObj *)image->img.swf)->map->numlayers);
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
         
         sprintf(szAction, "%s", "mapObj.layers=new Array();"); 
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
 /* -------------------------------------------------------------------- */
 /*      Write class for layer object.                                   */
 /* -------------------------------------------------------------------- */
         sprintf(szAction, "%s", "function LayerObj(name, type, fullname, relativename){ this.name=name; this.type=type; this.fullname=fullname; this.relativename=relativename;}"); 
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
         
         
@@ -2903,7 +2908,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /*      where the full name and relative name are set to "undefined"    */
 /*      (See Bug 804 for more details).                                 */
 /* ==================================================================== */
-        nLayers = map->numlayers; /*image->img.swf->nLayerMovies;*/
+        nLayers = map->numlayers; /*((SWFObj *)image->img.swf)->nLayerMovies;*/
 
 /* -------------------------------------------------------------------- */
 /*      save layers.                                                    */
@@ -2911,8 +2916,8 @@ int msSaveImageSWF(imageObj *image, char *filename)
         iMovie = -1;
         for (i=0; i<nLayers; i++)
         {
-            if (SWFIsInArray(image->img.swf->panLayerIndex,
-                             image->img.swf->nLayerMovies, i))
+            if (SWFIsInArray(((SWFObj *)image->img.swf)->panLayerIndex,
+                             ((SWFObj *)image->img.swf)->nLayerMovies, i))
             {
                 iMovie++;
                 /* -------------------------------------------------------------------- */
@@ -2955,13 +2960,13 @@ int msSaveImageSWF(imageObj *image, char *filename)
                 /* test */
                 /* sprintf(gszFilename, "%s%d.swf", "c:/tmp/ms_tmp/layer_", i); */
 
-                SWFMovie_setBackground(image->img.swf->pasMovies[iMovie], 
+                SWFMovie_setBackground(((SWFObj *)image->img.swf)->pasMovies[iMovie], 
                                        0xff, 0xff, 0xff);
             
 #ifdef MING_VERSION_03
-                SWFMovie_save(image->img.swf->pasMovies[iMovie], gszFilename, -1);  
+                SWFMovie_save(((SWFObj *)image->img.swf)->pasMovies[iMovie], gszFilename, -1);  
 #else
-                SWFMovie_save(image->img.swf->pasMovies[iMovie], gszFilename);
+                SWFMovie_save(((SWFObj *)image->img.swf)->pasMovies[iMovie], gszFilename);
 #endif
 
                 /* test */
@@ -2973,7 +2978,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
                         pszRelativeName);
             
                 oAction = compileSWFActionCode(szAction);
-                SWFMovie_add(image->img.swf->sMainMovie, oAction);
+                SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
                 /* ==================================================================== */
                 /*      when we have a temporary file, we are assuming that the         */
@@ -2989,7 +2994,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
                   sprintf(szAction, "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
 
                 oAction = compileSWFActionCode(szAction);
-                SWFMovie_add(image->img.swf->sMainMovie, oAction);
+                SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
             } 
             else /*layer which was not drawn */
             {
@@ -2998,21 +3003,21 @@ int msSaveImageSWF(imageObj *image, char *filename)
                         map->layers[i].name);
             
                 oAction = compileSWFActionCode(szAction);
-                SWFMovie_add(image->img.swf->sMainMovie, oAction);
+                SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
             }
 
         }
         sprintf(szAction, "stop();");
         oAction = compileSWFActionCode(szAction);
-        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
 #ifdef MING_VERSION_03
-        SWFMovie_save(image->img.swf->sMainMovie, filename, -1); 
+        SWFMovie_save(((SWFObj *)image->img.swf)->sMainMovie, filename, -1); 
 #else
-        SWFMovie_save(image->img.swf->sMainMovie, filename); 
+        SWFMovie_save(((SWFObj *)image->img.swf)->sMainMovie, filename); 
 #endif
         /* test */
-        /* SWFMovie_save(image->img.swf->sMainMovie, "c:/tmp/ms_tmp/main.swf");   */
+        /* SWFMovie_save(((SWFObj *)image->img.swf)->sMainMovie, "c:/tmp/ms_tmp/main.swf");   */
   
         if( bFileIsTemporary )
         {
@@ -3064,13 +3069,13 @@ void msFreeImageSWF(imageObj *image)
     int i = 0;
     if (image && MS_DRIVER_SWF(image->format) )
     {
-        destroySWFMovie(image->img.swf->sMainMovie);
-        for (i=0; i<image->img.swf->nLayerMovies; i++)
-            destroySWFMovie(image->img.swf->pasMovies[i]);
+        destroySWFMovie(((SWFObj *)image->img.swf)->sMainMovie);
+        for (i=0; i<((SWFObj *)image->img.swf)->nLayerMovies; i++)
+            destroySWFMovie(((SWFObj *)image->img.swf)->pasMovies[i]);
 
-        image->img.swf->nLayerMovies = 0;
-        image->img.swf->nCurrentMovie = -1;
-        image->img.swf->map = NULL;
+        ((SWFObj *)image->img.swf)->nLayerMovies = 0;
+        ((SWFObj *)image->img.swf)->nCurrentMovie = -1;
+        ((SWFObj *)image->img.swf)->map = NULL;
     }
 }
 
@@ -3152,7 +3157,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
         bFreeImage = 1;
     }
     else
-      imagetmp = (imageObj *)image->img.swf->imagetmp;
+      imagetmp = (imageObj *)((SWFObj *)image->img.swf)->imagetmp;
 
     if (imagetmp)
     {
@@ -3161,7 +3166,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
         msDrawVectorLayer(map, layer, imagetmp);
         
         oShape = gdImage2Shape(imagetmp->img.gd);
-        /* nTmp = image->img.swf->nCurrentMovie; */
+        /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         
         if (bFreeImage)
@@ -3190,13 +3195,13 @@ SWFMovie GetCurrentMovie(mapObj *map, imageObj *image)
       return NULL;
 
     if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",""), 
-                   "MULTIPLE") == 0 && image->img.swf->nCurrentMovie >=0)
+                   "MULTIPLE") == 0 && ((SWFObj *)image->img.swf)->nCurrentMovie >=0)
     {
-        nTmp = image->img.swf->nCurrentMovie;
-        return image->img.swf->pasMovies[nTmp];
+        nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie;
+        return ((SWFObj *)image->img.swf)->pasMovies[nTmp];
     }
     else
-      return image->img.swf->sMainMovie;
+      return ((SWFObj *)image->img.swf)->sMainMovie;
 }
 
 #endif

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.421  2005/09/23 21:18:58  assefa
+ * Remove call to ming.h inside map.h (Bug 1479)
+ *
  * Revision 1.420  2005/08/25 14:20:16  sdlime
  * Applied patch for bug 1440.
  *
@@ -293,9 +296,6 @@ typedef int ms_int32;
 #include <pdflib.h>
 #endif
 
-#ifdef USE_MING_FLASH
-#include "ming.h"
-#endif
 
 #include <sys/types.h> /* regular expression support */
 
@@ -304,9 +304,6 @@ typedef int ms_int32;
  */
 #include "mapregex.h"
 
-#ifdef USE_MING
-#include "ming.h"
-#endif
 
 #ifdef USE_OGR
 #include "ogr_api.h"
@@ -1169,21 +1166,6 @@ typedef struct map_obj{ /* structure for a map */
   hashTableObj configoptions;
 } mapObj;
 
-/* SWF Object structure */
-#ifdef USE_MING_FLASH
-typedef struct  {
-  mapObj *map;
-  SWFMovie sMainMovie;
-  int nLayerMovies;
-  SWFMovie *pasMovies;
-  int nCurrentMovie;
-  int nCurrentLayerIdx;
-  int nCurrentShapeIdx;
-  void    *imagetmp;  /*used when the output format is SINGLE */
-                      /*(one movie for the whole map)*/
-  int *panLayerIndex; /* keeps the layer index for every movie created. */
-} SWFObj;
-#endif
 
 
 /* PDF Object structure */
@@ -1222,7 +1204,7 @@ typedef struct {
   union {
     gdImagePtr gd;
 #ifdef USE_MING_FLASH
-    SWFObj *swf;
+    void *swf;
 #endif
 #ifdef USE_PDF
     PDFObj *pdf;
