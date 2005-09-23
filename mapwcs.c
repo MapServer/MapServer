@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2005/09/23 04:37:32  frank
+ * added preliminary WCS INTERPOLATION support
+ *
  * Revision 1.70  2005/06/27 19:58:30  frank
  * Fixed some small WCS params related memory leaks.
  *
@@ -127,6 +130,7 @@ typedef struct {
   char *time;
   long width, height, depth;	/* image dimensions */
   double resx, resy, resz;      /* resolution */
+  char *interpolation;          /* interpolationMethod */
   char *format;
   char *exceptions;		/* exception MIME type, (default application=vnd.ogc.se_xml) */
 } wcsParamsObj;
@@ -148,6 +152,9 @@ static int msWCSValidateRangeSetParam(hashTableObj *metadata, char *name, const 
   return MS_SUCCESS; /* take their word for it at the moment */
 }
 
+/************************************************************************/
+/*                    msWCSConvertRangeSetToString()                    */
+/************************************************************************/
 static char *msWCSConvertRangeSetToString(const char *value) {
   char **tokens;
   int numtokens;
@@ -180,6 +187,9 @@ static char *msWCSConvertRangeSetToString(const char *value) {
     return strdup(value);
 }
 
+/************************************************************************/
+/*                           msWCSException()                           */
+/************************************************************************/
 static int msWCSException(mapObj *map, const char *version) 
 {
   char *pszEncodedVal = NULL;
@@ -203,6 +213,10 @@ static int msWCSException(mapObj *map, const char *version)
   return MS_FAILURE;
 }
 
+/************************************************************************/
+/*                    msWCSPrintRequestCapability()                     */
+/************************************************************************/
+
 static void msWCSPrintRequestCapability(const char *version, const char *request_tag, const char *script_url)
 {
   msIO_printf("    <%s>\n", request_tag);
@@ -221,6 +235,9 @@ static void msWCSPrintRequestCapability(const char *version, const char *request
   msIO_printf("    </%s>\n", request_tag);
 }
 
+/************************************************************************/
+/*                         msWCSCreateParams()                          */
+/************************************************************************/
 static wcsParamsObj *msWCSCreateParams()
 {
   wcsParamsObj *params;
@@ -233,6 +250,9 @@ static wcsParamsObj *msWCSCreateParams()
   return params;
 }
 
+/************************************************************************/
+/*                          msWCSFreeParams()                           */
+/************************************************************************/
 static void msWCSFreeParams(wcsParamsObj *params)
 {
   if(params) {
@@ -246,8 +266,13 @@ static void msWCSFreeParams(wcsParamsObj *params)
     if(params->format) free(params->format);
     if(params->exceptions) free(params->exceptions);
     if(params->time) free(params->time);
+    if(params->interpolation) free(params->interpolation);
   }
 }
+
+/************************************************************************/
+/*                       msWCSIsLayerSupported()                        */
+/************************************************************************/
 
 static int msWCSIsLayerSupported(layerObj *layer)
 {
@@ -256,6 +281,10 @@ static int msWCSIsLayerSupported(layerObj *layer)
 
     return MS_FALSE;
 }
+
+/************************************************************************/
+/*                      msWCSGetRequestParameter()                      */
+/************************************************************************/
 
 static const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name) {
   int i;
@@ -272,6 +301,10 @@ static const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name) 
 
   return NULL;
 }
+
+/************************************************************************/
+/*                  msWCSSetDefaultBandsRangeSetInfo()                  */
+/************************************************************************/
 
 static void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
                                               coverageMetadataObj *cm,
@@ -325,6 +358,10 @@ static void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
     free( bandlist );
 }    
 
+/************************************************************************/
+/*                         msWCSParseRequest()                          */
+/************************************************************************/
+
 static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapObj *map)
 {
   int i;
@@ -339,6 +376,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
 	     params->version = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "REQUEST") == 0)
 	     params->request = strdup(request->ParamValues[i]);
+       else if(strcasecmp(request->ParamNames[i], "INTERPOLATION") == 0)
+	     params->interpolation = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
 	     params->service = strdup(request->ParamValues[i]);
 	   else if(strcasecmp(request->ParamNames[i], "SECTION") == 0)
@@ -387,6 +426,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
   /* we are not dealing with an XML encoded request at this point */
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*           msWCSGetCapabilities_Service_ResponsibleParty()            */
+/************************************************************************/
 
 static void msWCSGetCapabilities_Service_ResponsibleParty(mapObj *map)
 {
@@ -484,6 +527,10 @@ static void msWCSGetCapabilities_Service_ResponsibleParty(mapObj *map)
   return;
 }
 
+/************************************************************************/
+/*                    msWCSGetCapabilities_Service()                    */
+/************************************************************************/
+
 static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 {
   /* start the Service section, only need the full start tag if this is the only section requested */
@@ -524,6 +571,10 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                  msWCSGetCapabilities_Capability()                   */
+/************************************************************************/
 
 static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
 {
@@ -570,6 +621,10 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   return MS_SUCCESS;
 }
 
+/************************************************************************/
+/*             msWCSGetCapabilities_CoverageOfferingBrief()             */
+/************************************************************************/
+
 static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params) 
 {
   coverageMetadataObj cm;
@@ -611,6 +666,10 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   return MS_SUCCESS;
 }
 
+/************************************************************************/
+/*                msWCSGetCapabilities_ContentMetadata()                */
+/************************************************************************/
+
 static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params)
 {
   int i;
@@ -637,6 +696,10 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                        msWCSGetCapabilities()                        */
+/************************************************************************/
 
 static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
 {
@@ -675,6 +738,10 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*               msWCSDescribeCoverage_AxisDescription()                */
+/************************************************************************/
 
 static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
 {
@@ -742,6 +809,10 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*               msWCSDescribeCoverage_CoverageOffering()               */
+/************************************************************************/
 
 static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params) 
 {
@@ -896,13 +967,22 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "formats", OWS_NOERR, "      <formats>%s</formats>\n", NULL);
   msIO_printf("    </supportedFormats>\n");
   
-  /* TODO: add SupportedInterpolations (optional) */
+  msIO_printf("    <supportedInterpolations default=\"nearest neighbour\">\n");
+  msIO_printf("      <interpolationMethod>nearest neighbor</interpolationMethod>\n" );
+  msIO_printf("      <interpolationMethod>bilinear</interpolationMethod>\n" );
+/*  msIO_printf("      <interpolationMethod>bicubic</interpolationMethod>\n" ); */
+  msIO_printf("    </supportedInterpolations>\n");
+  
 
   /* done */
   msIO_printf("  </CoverageOffering>\n");
 
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                       msWCSDescribeCoverage()                        */
+/************************************************************************/
 
 static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 {
@@ -941,7 +1021,12 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
   return MS_SUCCESS;
 }
 
-static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *params)
+/************************************************************************/
+/*                          msWCSGetCoverage()                          */
+/************************************************************************/
+
+static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, 
+                            wcsParamsObj *params)
 {
   imageObj   *image;
   layerObj   *lp;
@@ -964,7 +1049,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
                 "msWCSGetCoverage()");
     return msWCSException(map, params->version);
   }
-
+  
   /* find the layer we are working with.  */
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
@@ -1152,6 +1237,25 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
       if( map->debug )
           msDebug( "RESX and RESY don't match.  Using geotransform/resample.");
   }
+
+  /* Do we have a specified interpolation method */
+  if( params->interpolation != NULL )
+  {
+      if( strncasecmp(params->interpolation,"NEAREST",7) == 0 )
+          msLayerSetProcessingKey(lp, "RESAMPLE", "NEAREST");
+      else if( strcasecmp(params->interpolation,"BILINEAR") == 0 )
+          msLayerSetProcessingKey(lp, "RESAMPLE", "BILINEAR");
+      else if( strcasecmp(params->interpolation,"AVERAGE") == 0 )
+          msLayerSetProcessingKey(lp, "RESAMPLE", "AVERAGE");
+      else
+      {
+          msSetError( MS_WCSERR, 
+                      "INTERPOLATION=%s specifies an unsupported interpolation method.",
+                      "msWCSGetCoverage()",
+                      params->interpolation );
+          return msWCSException(map, params->version);
+      }
+  }
    
   /* apply region and size to map object.  */
   map->width = params->width;
@@ -1229,7 +1333,12 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
 }
 #endif /* def USE_WCS_SVR */
 
-/* Entry point for WCS requests */
+/************************************************************************/
+/*                           msWCSDispatch()                            */
+/*                                                                      */
+/*      Entry point for WCS requests                                    */
+/************************************************************************/
+
 int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 {
 #ifdef USE_WCS_SVR
