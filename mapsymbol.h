@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/09/23 03:47:56  sdlime
+ * Made symbol->imagepath readonly within SWIG-based scripts. Use setImagepath instead. (bug 1472)
+ *
  * Revision 1.19  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -114,7 +117,15 @@ typedef struct {
 #ifndef SWIG
   gdImagePtr img;
 #endif /* SWIG */
+
+#ifdef SWIG
+  %immutable;
+#endif /* SWIG */
   char *imagepath;
+#ifdef SWIG
+  %mutable;
+#endif /* SWIG */
+
   int transparent;
   int transparentcolor;
 
