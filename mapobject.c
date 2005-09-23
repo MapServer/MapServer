@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/09/23 16:20:44  hobu
+ * add meatier error message for invalid extents
+ *
  * Revision 1.21  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -285,7 +288,8 @@ int msMapSetExtent( mapObj *map,
     map->extent.maxy = maxy;
     
     if (!MS_VALID_EXTENT(map->extent)) {
-        msSetError(MS_MISCERR, "Given map extent is invalid.", "setExtent()"); 
+        msSetError(MS_MISCERR, "Given map extent is invalid. Check that it " \
+        "is in the form: minx, miny, maxx, maxy", "setExtent()"); 
         return MS_FAILURE;
     }
       
