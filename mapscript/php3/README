@@ -1631,8 +1631,12 @@ Constructor:
       array getstylearray()  
         Returns an array containing the style.
             
-        
-    Example of usage : crete a symbol to be used as a dah line
+      int setimagepath(char filename)
+        Loads a pixmap symbol specified by the filename. 
+        The file should be of either  Gif or Png format.
+
+  
+    Example of usage : crete a symbol to be used as a dash line
 
         $nId = ms_newsymbolobj($gpoMap, "mydash");
         $oSymbol = $gpoMap->getsymbolobjectbyid($nId);
@@ -1654,4 +1658,5 @@ Constructor:
         $style->set("symbolname", "mydash");
 
 
+      
                      --------------------------

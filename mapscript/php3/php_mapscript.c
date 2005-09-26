@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.239  2005/09/26 17:55:17  assefa
+ * Add setimagepth function to the symbolobject (Bug 1472)
+ *
  * Revision 1.238  2005/09/26 15:11:03  assefa
  * Add keyimage as part of the class object (Bug 1464)
  *
@@ -664,6 +667,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_getPoints(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_querymap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -1179,6 +1183,7 @@ function_entry php_symbol_class_functions[] = {
     {"getpointsarray",  php3_ms_symbol_getPoints,       NULL},    
     {"setstyle",        php3_ms_symbol_setStyle,        NULL},    
     {"getstylearray",   php3_ms_symbol_getStyle,        NULL},    
+    {"setimagepath",   php3_ms_symbol_setImagepath,        NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -13507,6 +13512,48 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_TRUE;
 }
+
+
+/**********************************************************************
+ *                        symbol->setimagepath()
+ **********************************************************************/
+
+/* {{{ proto int symbol.setimagepath(char *imagefile)
+   loads a new symbol image  ) */ 
+
+DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS)
+{
+    symbolObj *self;
+    pval   *pFile, *pThis;
+    HashTable   *list=NULL;
+    pval        **pValue = NULL;
+ 
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pFile) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (symbolObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mssymbol),
+                                            list TSRMLS_CC);
+    
+    if (self == NULL)
+      RETURN_FALSE;
+
+    convert_to_string(pFile);
+    
+
+    if (msLoadImageSymbol(self, pFile->value.str.val) == MS_SUCCESS)
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE;
+}
+
 
 
 
