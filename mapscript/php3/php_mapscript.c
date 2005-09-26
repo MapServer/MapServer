@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.238  2005/09/26 15:11:03  assefa
+ * Add keyimage as part of the class object (Bug 1464)
+ *
  * Revision 1.237  2005/09/08 19:24:50  assefa
  * Expose GEOS operations through PHP Mapscript (Bug 1327).
  * Initially only functions buffer and convexhull on a shape object
@@ -8482,6 +8485,8 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     add_property_double(return_value,  "minscale", pclass->minscale);
     add_property_double(return_value,  "maxscale", pclass->maxscale);
     
+    PHPMS_ADD_PROP_STR(return_value,  "keyimage",   pclass->template);
+    
     return class_id;
 }
 
@@ -8605,6 +8610,7 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("minscale", self->minscale)
     else IF_SET_DOUBLE("maxscale", self->maxscale)
     else IF_SET_STRING("template",      self->template)
+    else IF_SET_STRING("keyimage",      self->keyimage)       
     else if (strcmp( "numstyles", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
