@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.309  2005/09/26 20:47:42  sdlime
+ * Trivial change to the color writer to not pad the output with 2 spaces. Results in cleaner saved mapfiles.
+ *
  * Revision 1.308  2005/09/23 16:00:55  hobu
  * add meatier error message for invalid extents
  *
@@ -443,19 +446,19 @@ int loadColorWithAlpha(colorObj *color) {
 
 static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
   if(MS_VALID_COLOR(*color))
-    fprintf(stream, "  %s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
+    fprintf(stream, "%s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
 }
 
 static void writeColorRange(colorObj *mincolor,colorObj *maxcolor, FILE *stream, char *name, char *tab) {
   if(MS_VALID_COLOR(*mincolor) && MS_VALID_COLOR(*maxcolor))
-    fprintf(stream, "  %s%s %d %d %d  %d %d %d\n", tab, name, mincolor->red, mincolor->green, mincolor->blue,
+    fprintf(stream, "%s%s %d %d %d  %d %d %d\n", tab, name, mincolor->red, mincolor->green, mincolor->blue,
 	    maxcolor->red, maxcolor->green, maxcolor->blue);
 }
 
 #if ALPHACOLOR_ENABLED
 static void writeColorWithAlpha(colorObj *color, FILE *stream, char *name, char *tab) {
   if(MS_VALID_COLOR(*color))
-    fprintf(stream, "  %s%s %d %d %d %d\n", tab, name, color->red, color->green, color->blue, color->alpha);
+    fprintf(stream, "%s%s %d %d %d %d\n", tab, name, color->red, color->green, color->blue, color->alpha);
 }
 #endif
 
@@ -1435,16 +1438,16 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sTYPE TRUETYPE\n", tab);
   }  
 
-  writeColor(&(label->backgroundcolor), stream, "BACKGROUNDCOLOR", tab);
-  writeColor(&(label->backgroundshadowcolor), stream, "BACKGROUNDSHADOWCOLOR", tab);
+  writeColor(&(label->backgroundcolor), stream, "  BACKGROUNDCOLOR", tab);
+  writeColor(&(label->backgroundshadowcolor), stream, "  BACKGROUNDSHADOWCOLOR", tab);
   if(label->backgroundshadowsizex != 1 && label->backgroundshadowsizey != 1) fprintf(stream, "  %sBACKGROUNDSHADOWSIZE %d %d\n", tab, label->backgroundshadowsizex, label->backgroundshadowsizey);  
   fprintf(stream, "  %sBUFFER %d\n", tab, label->buffer);
 #if ALPHACOLOR_ENABLED
   if( label->color.alpha )
-	writeColorWithAlpha(&(label->color), stream, "ALPHACOLOR", tab);
+	writeColorWithAlpha(&(label->color), stream, "  ALPHACOLOR", tab);
   else
 #endif
-	writeColor(&(label->color), stream, "COLOR", tab);
+	writeColor(&(label->color), stream, "  COLOR", tab);
   if(label->encoding) fprintf(stream, "  %sENCODING \"%s\"\n", tab, label->encoding);
   fprintf(stream, "  %sFORCE %s\n", tab, msTrueFalse[label->force]);
   fprintf(stream, "  %sMINDISTANCE %d\n", tab, label->mindistance);
@@ -1453,11 +1456,11 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   else
     fprintf(stream, "  %sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
-  writeColor(&(label->outlinecolor), stream, "OUTLINECOLOR", tab);  
+  writeColor(&(label->outlinecolor), stream, "  OUTLINECOLOR", tab);  
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   if (label->position != MS_XY)   /* MS_XY is an internal value used only for legend labels... never write it */
     fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
-  writeColor(&(label->shadowcolor), stream, "SHADOWCOLOR", tab);
+  writeColor(&(label->shadowcolor), stream, "  SHADOWCOLOR", tab);
   if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   if(label->wrap) fprintf(stream, "  %sWRAP '%c'\n", tab, label->wrap);
 
