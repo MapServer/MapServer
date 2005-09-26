@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.77  2005/09/26 18:55:20  assefa
+ * use transparency set at the layer level on wms client layers  (Bug 1458).
+ *
  * Revision 1.76  2005/05/13 17:23:34  dan
  * First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
  * layers. Still needs some work. (bug 1246)
@@ -1213,7 +1216,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
             fclose(fp);
 
             /* GDAL should be called to reproject automatically. */
-            if (msDrawRasterLayerLow(map, lp, img) != 0)
+            if (msDrawLayer(map, lp, img) != 0)
                 status = MS_FAILURE;
 
             if (!lp->debug)

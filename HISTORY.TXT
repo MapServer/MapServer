@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- mapwmslayer.c : use transparency set at the layer level on wms client 
+                  layers  (Bug 1458) 
+
 - mapresample.c: added BILINEAR/AVERAGE resampling options. 
 
 - mapfile.c: avoid tail recursion in freeFeatureList().
