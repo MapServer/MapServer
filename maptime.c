@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/09/26 14:51:40  assefa
+ * Correct typo in  ms_timeFormats (Bug 1478).
+ *
  * Revision 1.17  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -77,7 +80,7 @@ timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
   {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
   {"^[0-9]{4}", NULL, "%Y", "YYYY",TIME_RESOLUTION_YEAR},
   {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SSZ", TIME_RESOLUTION_SECOND},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND},
 };
 
 int *ms_limited_pattern = NULL;
