@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/09/26 19:47:14  assefa
+ * Correct typo bugs when outputing symbols (Bug 1407)
+ *
  * Revision 1.19  2005/07/05 14:36:33  assefa
  * Correct a bug : using msFree on a wrong pointer : Bug 1406.
  *
@@ -466,13 +469,14 @@ void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
 
     bUseGeoCoord= 0;
     
-    /* if (strcasecmp(msGetOutputFormatOption(image->format, "USE_GEOGRAPHICAL_COORDINATES",""),  */
-    /* "TRUE") == 0) */
-    /* bUseGeoCoord = 1; */
+    /* if (strcasecmp(msGetOutputFormatOption(image->format, 
+                                           "USE_GEOGRAPHICAL_COORDINATES",""),
+                                           "TRUE") == 0) */
+    /* bUseGeoCoord = 1;*/
 
     /* if it is full resolution and we want geographical output */
     /* just return, no transformations needed. */
-    if (bFullRes && bUseGeoCoord)
+     if (bFullRes && bUseGeoCoord)
       return;
 
     /* low resolution and pixel output */
@@ -1616,14 +1620,14 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                 k = 0; /* point counter */
                 for(j=0;j < symbol->numpoints;j++) 
                 {
-                    if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) 
+                    if((symbol->points[j].x < 0) && (symbol->points[j].y < 0)) 
                     { /* new polygon (PENUP) */
                         if(k>2) 
                         {
                             
                             msIO_fprintfgz(image->img.svg->stream, 
                                            image->img.svg->compressed,  
-                                         "<polygon %s %s stroke-width=\"%d\" %s points=\"", 
+                                         "<polygon %s %s stroke-width=\"%d\" points=\"", 
                                          pszFill, pszStroke, width);
                             
                             for (i=0; i<k;i++)
@@ -1650,7 +1654,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 
                 msIO_fprintfgz(image->img.svg->stream, 
                                image->img.svg->compressed,  
-                             "<polygon %s %s stroke-width=\"%d\" %s points=\"", 
+                             "<polygon %s %s stroke-width=\"%d\" points=\"", 
                              pszFill, pszStroke, width);
                             
                 for (i=0; i<k;i++)
@@ -1672,7 +1676,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                 oldpnt.y = MS_NINT(d*symbol->points[0].y + offset_y);
       
                 for(j=1;j < symbol->numpoints;j++) { /* step through the marker s */
-                    if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
+                    if((symbol->points[j].x < 0) && (symbol->points[j].y < 0)) {
                         oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
                         oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
                     } else {
