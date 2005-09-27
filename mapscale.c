@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/09/27 15:27:18  sean
+ * Fixed typo to prevent extra scalebar layer creation (bug 1480)
+ *
  * Revision 1.48  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -364,7 +367,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     break;
   }
 
-  l = msGetLayerIndex(map, "__embed_scalebar");
+  l = msGetLayerIndex(map, "__embed__scalebar");
   if(l == -1) {
     l = map->numlayers;
     map->numlayers++;

@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Extra scalebar layer creation is prevented with a typo fix in mapscale.c. 
+  Good catch, Tamas (bug 1480).
+  
 - mapwmslayer.c : use transparency set at the layer level on wms client 
                   layers  (Bug 1458) 
 
