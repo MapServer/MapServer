@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.310  2005/09/27 20:11:42  sdlime
+ * Fixed LABEL writing problem. (bug 1481)
+ *
  * Revision 1.309  2005/09/26 20:47:42  sdlime
  * Trivial change to the color writer to not pad the output with 2 spaces. Results in cleaner saved mapfiles.
  *
@@ -1431,7 +1434,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     else
       fprintf(stream, "  %sANGLE %f\n", tab, label->angle);
     if(label->antialias) fprintf(stream, "  %sANTIALIAS TRUE\n", tab);
-    fprintf(stream, "  %sFONT %s\n", tab, label->font);
+    fprintf(stream, "  %sFONT \"%s\"\n", tab, label->font);
     fprintf(stream, "  %sMAXSIZE %d\n", tab, label->maxsize);
     fprintf(stream, "  %sMINSIZE %d\n", tab, label->minsize);
     fprintf(stream, "  %sSIZE %d\n", tab, label->size);
