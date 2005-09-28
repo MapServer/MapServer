@@ -6,7 +6,7 @@ MS RFC 7: MapServer CVS Commit Management
 :Author: Frank Warmerdam
 :Contact: warmerdam@pobox.com
 :Last Edited: $Date$
-:Status: draft
+:Status: proposed
 
 
 Purpose
@@ -26,6 +26,21 @@ is not necessary to write an RFC document for these votes ... email to
 mapserver-dev is sufficient.
 
 Removal of CVS commit access should be handled by the same process.  
+
+The new committer should have demonstrated commitment to MapServer and
+knowledge of the MapServer source code and processes to the committee's
+satisfaction, usually by reporting bugs, submitting patches, and/or
+actively participating in the various MapServer forums.
+
+The new committer should also be prepared to support any new feature or
+changes that he/she commits to the MapServer source tree in future
+releases, or to find someone to which to delegate responsibility for
+them if he/she stops being available to support the portions of code
+that he/she is responsible for.
+
+All committers should also be a member of mapserver-dev mailing list
+so they can stay informed on policies, technical developments and 
+release preparation.
 
 
 Committer Tracking
@@ -63,73 +78,33 @@ project.
 
  * Use meaningful descriptions for CVS commit log entries. 
 
- * Prefix CVS commit log entries with "Bug 1232: " when committing fixes for
-   bugs in Bugzilla.  
+ * Add a bug reference like "(bug 1232)" at the end of CVS commit log entries
+   when committing changes related to a bug in bugzilla.
 
- * Include an entry in the HISTORY file for any non-trivial changes committed
-   in the main MapServer source tree.  Make sure it is placed under the
-   correct version heading and include bug numbers in these messages too.
+ * Include an entry in the HISTORY file for any significant change or bug fix
+   committed in the main MapServer source tree.  Make sure it is placed under 
+   the correct version heading and include bug numbers in these messages too.
 
  * Changes should not be committed in stable branches without a corresponding
    bug id and HISTORY entry.  Any change worth pushing into the stable 
    version is worth a bugzilla bug and good HISTORY notations. 
 
+ * Never commit new features to a stable branch: only critical fixes. New
+   features can only go in the main development trunk.
+
+ * Only bug fixes should be committed to the code during pre-release
+   code freeze.  
+
+ * Significant changes to the main development version should be
+   discussed on the -dev list before you make them, and larger changes will
+   require a RFC approved by the TSC.
+
  * Do not create new branches without the approval of the TSC.  Release
    managers are assumed to have permission to create a branch. 
 
-
-----
-
-Other notes to add? 
-
- o commit only with bug id when in release freeze.
- o committers must be subscribed to mapserver-dev
- o committed code should be in Unix text format. 
+ * All source code in CVS should be in Unix text format as opposed to DOS
+   text mode. 
 
 
-A few more notes about the proposal:
-
-In the "Election to CVS Commit Access", I would like to see something
-along the following lines:
-
-"The new committer should have demonstrated commitment to MapServer and
-knowledge of the MapServer source code and processes to the committee's
-satisfaction, usually by reporting bugs, submitting patches, and/or
-actively participating in the various MapServer forums.
-
-The new committer should also be prepared to support any new feature or
-changes that he/she commits to the MapServer source tree in future
-releases, or to find someone to which to delegate responsibility for
-them if he/she stops being available to support the portions of code
-that he/she is responsible for.
-
-In the event that portions of code become orphan and none of the other
-committers wants to take ownership of them, then they may be removed
-from the source tree in future releases."
-
-Under CVS Commit practices, you wrote:
-
-> * Prefix CVS commit log entries with "Bug 1232: " when committing fixes for bugs in Bugzilla.
->
-> * Include an entry in the HISTORY file for any non-trivial changes committed in the main MapServer source tree. Make sure it is placed under the correct version heading and include bug numbers in these messages too.
 
 
-I have been using "(bug 1232)" at the end of the change comment before
-(instead of the "Bug 1232:" prefix). I guess either way works, it's just
-a matter of picking one and sticking to it, but I think Sean Gillies
-wrote before that the "Bug 1232:" prefix breaks ReStructured Text
-formatting so the "(bug 1232)" suffix would be preferable.
-
-Other items for the CVS Commit practices:
-
-* The rule for the HISTORY.TXT in the development trunk is a bit more
-flexible: we include mention of every important change or bug fix in
-HISTORY.TXT, but minor fixes are not always listed in the dev trunk,
-otherwise the list would just become too long and useless.
-
-* Never commit new features to a stable branch: only critical fixes. New
-features can only go in the main development trunk.
-
-* Significant changes to the main development version should be
-discussed on the -dev list before you make them, and larger changes will
-require a RFC approved by the TSC.
