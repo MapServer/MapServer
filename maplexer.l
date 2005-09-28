@@ -278,7 +278,8 @@ void lexer_cleanup(void) {
 <INITIAL,OBJECT_STRING>type		       { return(TYPE); }
 <INITIAL,OBJECT_STRING>units		       { return(UNITS); }
 <INITIAL,OBJECT_STRING>web		       { return(WEB); }
-<INITIAL,OBJECT_STRING>width                    { return(WIDTH); }
+<INITIAL,OBJECT_STRING>width                   { return(WIDTH); }
+<INITIAL,OBJECT_STRING>wkt                     { return(WKT); }
 <INITIAL,OBJECT_STRING>wrap                    { return(WRAP); }
 
 <INITIAL,VALUE_STRING>annotation	       { return(MS_LAYER_ANNOTATION); }
@@ -292,7 +293,7 @@ void lexer_cleanup(void) {
 <INITIAL,VALUE_STRING>cl                       { return(MS_CL); }
 <INITIAL,VALUE_STRING>cr                       { return(MS_CR); }
 <INITIAL,VALUE_STRING>csv                      { return(MS_DB_CSV); }
-<INITIAL,VALUE_STRING>mysql                      { return(MS_DB_MYSQL); }
+<INITIAL,VALUE_STRING>mysql                    { return(MS_DB_MYSQL); }
 <INITIAL,VALUE_STRING>default		       { return(MS_DEFAULT); }
 <INITIAL,VALUE_STRING>dd                       { return(MS_DD); }
 <INITIAL>ellipse                               { return(MS_SYMBOL_ELLIPSE); }

@@ -214,4 +214,7 @@
 #define DATARANGE 1172
 #define RANGEITEM 1173
 
+/* WKT support (bug 1466) */
+#define WKT 1180
+
 #endif /* MAPFILE_H */
