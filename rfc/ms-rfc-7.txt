@@ -105,6 +105,14 @@ project.
  * All source code in CVS should be in Unix text format as opposed to DOS
    text mode. 
 
+ * When committing new features or significant changes to existing source
+   code, the committer should take reasonable measures to insure that the
+   source code continues to build and work on the most commonly supported
+   platforms (currently Linux and Windows), either by testing on those
+   platforms directly, or by getting help from other developers working on
+   those platforms. If new files or library dependencies are added, then
+   the configure.in, Makefile.in, Makefile.vc and related documentations
+   should be kept up to date.
 
 
 
