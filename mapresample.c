@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/10/03 14:39:42  frank
+ * use alpha blending for nodata antialiasing in bil/aver RGBA case
+ *
  * Revision 1.59  2005/09/21 20:12:21  frank
  * Removed prototype bicubic code.
  *
@@ -442,7 +445,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
 
 {
     double	*x, *y; 
-    int		nDstX, nDstY;
+    int		nDstX, nDstY, i;
     int         *panSuccess;
     int		nDstXSize = psDstImage->width;
     int		nDstYSize = psDstImage->height;
@@ -531,12 +534,14 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
             if( dfWeightSum == 0.0 )
                 continue;
 
+            for( i = 0; i < bandCount; i++ )
+                padfPixelSum[i] /= dfWeightSum;
+
             if( MS_RENDERER_GD(psSrcImage->format) )
             {
                 if( !gdImageTrueColor(psSrcImage->img.gd) )
                 {
-                    int nResult = panCMap[
-                        (int) (padfPixelSum[0] / dfWeightSum)];
+                    int nResult = panCMap[(int) padfPixelSum[0]];
                     if( nResult != -1 )
                     {                        
                         nSetPoints++;
@@ -546,10 +551,27 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                 else
                 {
                     nSetPoints++;
-                    dstImg->tpixels[nDstY][nDstX] = 
-                        gdTrueColor( (int) (padfPixelSum[0] / dfWeightSum), 
-                                     (int) (padfPixelSum[1] / dfWeightSum), 
-                                     (int) (padfPixelSum[2] / dfWeightSum) );
+                    if( dfWeightSum > 0.99 )
+                        dstImg->tpixels[nDstY][nDstX] = 
+                            gdTrueColor( (int) padfPixelSum[0], 
+                                         (int) padfPixelSum[1], 
+                                         (int) padfPixelSum[2] );
+                    else
+                    {
+                        int gd_color;
+                        int gd_alpha = 127 - 127.9 * dfWeightSum;
+
+                        gd_alpha = MAX(0,MIN(127,gd_alpha));
+                        gd_color = gdTrueColorAlpha(
+                            (int) padfPixelSum[0], 
+                            (int) padfPixelSum[1], 
+                            (int) padfPixelSum[2], 
+                            gd_alpha );
+                        
+                        dstImg->tpixels[nDstY][nDstX] = 
+                            msAlphaBlend( dstImg->tpixels[nDstY][nDstX],
+                                          gd_color );
+                    }
                 }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
@@ -563,21 +585,21 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_16bit[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (GInt16) (padfPixelSum[0] / dfWeightSum);
+                            = (GInt16) padfPixelSum[0];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
                     {
                         psDstImage->img.raw_float[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (float) (padfPixelSum[0] / dfWeightSum);
+                            = (float) padfPixelSum[0];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE )
                     {
                         psDstImage->img.raw_byte[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (GByte) (padfPixelSum[0] / dfWeightSum);
+                            = (GByte) padfPixelSum[0];
                     }
                 }
             }
@@ -613,16 +635,20 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
 static int
 msAverageSample( imageObj *psSrcImage, 
                  double dfXMin, double dfYMin, double dfXMax, double dfYMax,
-                 colorObj *offsite, double *padfPixelSum )
+                 colorObj *offsite, double *padfPixelSum, 
+                 double *pdfAlpha01 )
 
 {
     int nXMin, nXMax, nYMin, nYMax, iX, iY;
     double dfWeightSum = 0.0;
+    double dfMaxWeight = 0.0;
 
     nXMin = (int) dfXMin;
     nYMin = (int) dfYMin;
     nXMax = (int) ceil(dfXMax);
     nYMax = (int) ceil(dfYMax);
+
+    *pdfAlpha01 = 0.0;
 
     for( iY = nYMin; iY < nYMax; iY++ )
     {
@@ -642,6 +668,7 @@ msAverageSample( imageObj *psSrcImage,
 
             msSourceSample( psSrcImage, iX, iY, padfPixelSum, 
                             dfWeight, &dfWeightSum, offsite );
+            dfMaxWeight += dfWeight;
         }
     }
 
@@ -650,6 +677,8 @@ msAverageSample( imageObj *psSrcImage,
 
     for( iX = 0; iX < 4; iX++ )
         padfPixelSum[iX] /= dfWeightSum;
+
+    *pdfAlpha01 = dfWeightSum / dfMaxWeight;
 
     return TRUE;
 }
@@ -703,6 +732,7 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
         for( nDstX = 0; nDstX < nDstXSize; nDstX++ )
         {
             double  dfXMin, dfYMin, dfXMax, dfYMax;
+            double  dfAlpha01;
 
             /* Do not generate a pixel unless all four corners transformed */
             if( !panSuccess1[nDstX] || !panSuccess1[nDstX+1]
@@ -729,7 +759,7 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
             memset( padfPixelSum, 0, sizeof(double)*bandCount );
     
             if( !msAverageSample( psSrcImage, dfXMin, dfYMin, dfXMax, dfYMax,
-                                  &offsite, padfPixelSum ) )
+                                  &offsite, padfPixelSum, &dfAlpha01 ) )
                 continue;
 
             if( MS_RENDERER_GD(psSrcImage->format) )
@@ -746,10 +776,28 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                 else
                 {
                     nSetPoints++;
-                    dstImg->tpixels[nDstY][nDstX] = 
-                        gdTrueColor( (int) padfPixelSum[0], 
-                                     (int) padfPixelSum[1], 
-                                     (int) padfPixelSum[2] );
+                    if( dfAlpha01 > 0.99 )
+                        dstImg->tpixels[nDstY][nDstX] = 
+                            gdTrueColor( (int) padfPixelSum[0], 
+                                         (int) padfPixelSum[1], 
+                                         (int) padfPixelSum[2] );
+                    else
+                    {
+                        int gd_color;
+                        int gd_alpha = 127 - 127.9 * dfAlpha01;
+
+                        gd_alpha = MAX(0,MIN(127,gd_alpha));
+                        gd_color = gdTrueColorAlpha(
+                            (int) padfPixelSum[0], 
+                            (int) padfPixelSum[1], 
+                            (int) padfPixelSum[2], 
+                            gd_alpha );
+                        
+                        dstImg->tpixels[nDstY][nDstX] = 
+                            msAlphaBlend( dstImg->tpixels[nDstY][nDstX],
+                                          gd_color );
+                        
+                    }
                 }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
