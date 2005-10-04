@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- mapogcfiler.c : bug 1490. Crash when size of sld filters was huge.
+
 - Fixed --enable-point-z-m fix in configure.in (== -> =) (bug 1485).
 
 - Extra scalebar layer creation is prevented with a typo fix in mapscale.c. 

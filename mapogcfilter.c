@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.57  2005/10/04 20:41:14  assefa
+ * Crash when size of sld filters was huge (bug 1490).
+ *
  * Revision 1.56  2005/08/03 17:28:44  assefa
  * use always "like" instead of "ilike" when generating an SQL statement
  * for OGR layers.
@@ -2654,7 +2657,7 @@ char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode)
 char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
                                             int connectiontype)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     char *pszTmp = NULL;
     szBuffer[0] = '\0';
 
@@ -2724,7 +2727,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 /************************************************************************/
 char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     char *pszTmp = NULL;
     szBuffer[0] = '\0';
 
@@ -2831,7 +2834,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     int i=0, bString=0, nLenght = 0;
 
     szBuffer[0] = '\0';
@@ -2932,7 +2935,7 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     int i=0, bString=0, nLenght = 0;
     char szTmp[100];
 
@@ -3046,7 +3049,7 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     char **aszBounds = NULL;
     int nBounds = 0;
     int i=0, bString=0, nLenght = 0;
@@ -3142,7 +3145,7 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     char **aszBounds = NULL;
     int nBounds = 0;
     int i=0, bString=0, nLenght = 0;
@@ -3254,7 +3257,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     char *pszValue = NULL;
     
     char *pszWild = NULL;
@@ -3350,7 +3353,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
                                           int connectiontype)
 {
-    char szBuffer[512];
+    char szBuffer[1024];
     char *pszValue = NULL;
     
     char *pszWild = NULL;
