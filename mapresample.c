@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2005/10/07 16:34:53  frank
+ * added OVERSAMPLE_RATIO PROCESSING directive
+ *
  * Revision 1.60  2005/10/03 14:39:42  frank
  * use alpha blending for nodata antialiasing in bil/aver RGBA case
  *
@@ -114,9 +117,6 @@
 #include "mapresample.h"
 
 MS_CVSID("$Id$")
-
-/* The amount of "extra" resolution we will load for our resampling source */
-#define RES_RATIO	2.0
 
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
@@ -1406,7 +1406,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     void	*pACBData;
     int         anCMap[256];
     char       **papszAlteredProcessing = NULL;
-    int        nLoadImgXSize, nLoadImgYSize;
+    int         nLoadImgXSize, nLoadImgYSize;
+    double      dfOversampleRatio;
     const char *resampleMode = CSLFetchNameValue( layer->processing, 
                                                   "RESAMPLE" );
 
@@ -1499,6 +1500,18 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     }
     
 /* -------------------------------------------------------------------- */
+/*      Determine desired oversampling ratio.  Default to 2.0 if not    */
+/*      otherwise set.                                                  */
+/* -------------------------------------------------------------------- */
+    dfOversampleRatio = 2.0;
+
+    if( CSLFetchNameValue( layer->processing, "OVERSAMPLE_RATIO" ) != NULL )
+    {
+        dfOversampleRatio = 
+            atof(CSLFetchNameValue( layer->processing, "OVERSAMPLE_RATIO" ));
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Decide on a resolution to read from the source image at.  We    */
 /*      will operate from full resolution data, if we are requesting    */
 /*      at near to full resolution.  Otherwise we will read the data    */
@@ -1508,11 +1521,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         sqrt(adfSrcGeoTransform[1] * adfSrcGeoTransform[1]
              + adfSrcGeoTransform[2] * adfSrcGeoTransform[2]);
     
-    if( (sSrcExtent.maxx - sSrcExtent.minx) > RES_RATIO * nDstXSize 
+    if( (sSrcExtent.maxx - sSrcExtent.minx) > dfOversampleRatio * nDstXSize 
         && !CSLFetchBoolean( layer->processing, "LOAD_FULL_RES_IMAGE", FALSE ))
         sDummyMap.cellsize = 
             (dfNominalCellSize * (sSrcExtent.maxx - sSrcExtent.minx))
-            / (RES_RATIO * nDstXSize);
+            / (dfOversampleRatio * nDstXSize);
     else
         sDummyMap.cellsize = dfNominalCellSize;
 
