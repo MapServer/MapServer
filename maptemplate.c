@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2005/10/10 23:18:51  sdlime
+ * Update the shpxy tag processor to avoid outputing degenerate shapes (or parts). That is, don't output a polygon with less than 3 vertices or a line with less than 2. Should only really affect image map production.
+ *
  * Revision 1.112  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -998,6 +1001,12 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     /* build the coordinate string */
     if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
     for(i=0; i<tShape.numlines; i++) { /* e.g. part */
+
+      /* skip degenerate parts, really should only happen with pixel output */ 
+      if((tShape.type == MS_SHAPE_LINE && tShape.line[i].numpoints < 2) ||
+	 (tShape.type == MS_SHAPE_POLYGON && tShape.line[i].numpoints < 3))
+	continue;
+
       if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
       for(j=0; j<tShape.line[i].numpoints-1; j++) {
         snprintf(point, 128, pointFormat1, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
