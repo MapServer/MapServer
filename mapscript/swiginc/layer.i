@@ -138,6 +138,34 @@
         return status;
     }
 
+    int whichShapes(rectObj rect)
+    {
+        /* 
+        ** We assume folks use this like a simple query so retrieve all items with each shape.
+        */
+        msLayerGetItems(self);
+        return msLayerWhichShapes(self, rect);
+    }	
+
+    %newobject nextShape;
+    shapeObj *nextShape() 
+    {
+       int status;
+       shapeObj *shape;
+
+       shape = (shapeObj *)malloc(sizeof(shapeObj));
+       if (!shape) return NULL;
+       msInitShape(shape);
+
+       status = msLayerNextShape(self, shape);
+       if(status != MS_SUCCESS) {
+         msFreeShape(shape);
+	 free(shape);
+	 return NULL;
+       } else
+         return shape;
+    }
+
     void close() 
     {
         msLayerClose(self);
