@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Expose msLayerWhichShapes and msLayerNextShape in MapScript. (bug 1481) 
+
+- Added support to MapScript to change images in a previously defined symbol. (bug 1471)
+
 - mapogcfiler.c : bug 1490. Crash when size of sld filters was huge.
 
 - Fixed --enable-point-z-m fix in configure.in (== -> =) (bug 1485).
