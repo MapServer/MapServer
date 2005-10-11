@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.69  2005/10/11 17:48:35  sdlime
+ * Fixed complex type writer to create set the type name when writing a schema. I think we may need more control though (e.g. group types). Also trimmed the revision history to a cover only the more recent mods.
+ *
  * Revision 1.68  2005/09/08 20:57:50  assefa
  * Changed default namespace used (Bug 1461).
  *
@@ -57,206 +60,6 @@
  *
  * Revision 1.60  2005/04/21 21:10:38  sdlime
  * Adjusted WFS support to allow for a new output format (GML3).
- *
- * Revision 1.59  2005/02/18 03:06:48  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.58  2005/01/05 19:43:33  assefa
- * Remove debug code.
- *
- * Revision 1.57  2004/11/25 05:32:02  dan
- * Fixed problem with wfs_onlineresource used unencoded when
- * wfs_service_onlineresource was not defined (bug 1082)
- *
- * Revision 1.56  2004/11/16 21:57:49  dan
- * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
- * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
- *
- * Revision 1.55  2004/11/16 20:19:39  dan
- * First pass at supporting "ows_*" metadata names in WMS/WFS (bug 568)
- *
- * Revision 1.54  2004/11/16 18:49:44  dan
- * Added ows_service_onlineresource metadata for WMS/WFS to distinguish between
- * service onlineresource and GetMap/Capabilities onlineresource (bug 375)
- *
- * Revision 1.53  2004/11/10 22:49:23  assefa
- * Send warning for "invalid" layers in the capabilities document (Bug 646).
- *
- * Revision 1.52  2004/11/10 16:10:19  assefa
- * DescribeFeatureType returns now in the exception only the typename that is
- * invalid instead of the whole typename passed in the request (Bug 442).
- *
- * Revision 1.51  2004/10/29 22:18:54  assefa
- * Use ows_schama_location metadata. The default value if metadata is not found
- * is http://schemas.opengeospatial.net
- *
- * Revision 1.50  2004/10/26 13:41:48  assefa
- * Change gml outut to "missing" instead of "inaplicable" when no features
- * are found after a query (Bug 597).
- *
- * Revision 1.49  2004/10/25 18:35:07  assefa
- * Use wfs_maxfeatures metadata (Bug 798).
- *
- * Revision 1.48  2004/10/25 17:30:38  julien
- * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
- *
- * Revision 1.47  2004/10/21 04:30:56  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- * Revision 1.46  2004/10/04 18:52:24  julien
- * Do not free user_namespace_prefix.
- *
- * Revision 1.45  2004/10/01 21:51:47  frank
- * Use msIO_ API.
- *
- * Revision 1.44  2004/09/29 17:50:18  frank
- * Ifdef out unused msWFSGetGeomType() function to avoid warnings.
- *
- * Revision 1.43  2004/09/25 23:33:38  frank
- * Quick fix to two compile problems presumably committed recently by Julien.
- * My fixes seem obvious, but I haven't tested them.  Will refer Julien to
- * review.
- *
- * Revision 1.42  2004/09/25 17:16:31  julien
- * Don't encode XML tag (Bug 897)
- * Don't compile mapgml.c function if not necessary (Bug 896)
- *
- * Revision 1.41  2004/09/23 19:18:10  julien
- * Encode all metadata and parameter printed in an XML document (Bug 802)
- *
- * Revision 1.40  2004/08/18 12:53:51  dan
- * Produce an exception if typename specified in request doesn't exist or
- * cannot be served as a WFS layer (bug 824)
- *
- * Revision 1.39  2004/07/28 22:16:17  assefa
- * Add support for spatial filters inside an SLD. (Bug 782).
- *
- * Revision 1.38  2004/07/07 18:36:38  assefa
- * Correct memeory leak in msWFSDispatch (Bug 758)
- *
- * Revision 1.37  2004/06/22 20:55:21  sean
- * Towards resolving issue 737 changed hashTableObj to a structure which 
- * contains a hashObj **items.  Changed all hash table access functions to
- * operate on the target table by reference.  msFreeHashTable should not be
- * used on the hashTableObj type members of mapserver structures, use
- * msFreeHashItems instead.
- *
- * Revision 1.36  2004/06/04 14:10:06  assefa
- * Changes schema location for DescribeFeature
- *
- * Revision 1.35  2004/05/11 01:25:16  assefa
- * Remove unused metadata gml_uri : Bug 527.
- *
- * Revision 1.34  2004/05/03 03:45:42  dan
- * Include map= param in default onlineresource of GetCapabilties if it
- * was explicitly set in QUERY_STRING (bug 643)
- *
- * Revision 1.33  2004/04/14 05:14:54  dan
- * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
- *
- * Revision 1.32  2004/04/14 04:54:30  dan
- * Created msOWSLookupMetadata() and added namespaces lookup in all
- * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
- * that calls those functions for now to avoid breaking something just
- * before the release. (bug 615, 568)
- *
- * Revision 1.31  2004/02/23 21:24:44  assefa
- * Name sapce missing for DescribeFeatureType request.
- *
- * Revision 1.30  2004/02/12 23:29:12  assefa
- * Ordrer was incorrect for element Keyword and Fees.
- *
- * Revision 1.29  2004/02/04 19:46:24  assefa
- * Add support for multiple spatial opertaors inside one filter.
- * Add support for opeartors DWithin and Intersect.
- *
- * Revision 1.28  2003/10/13 15:50:01  assefa
- * myns namespace is the default.
- *
- * Revision 1.27  2003/10/08 14:01:50  assefa
- * Write properly the geomelement.
- *
- * Revision 1.26  2003/10/08 13:10:17  assefa
- * Modify msWFSGetGeomElementName to return the gml propertytype.
- *
- * Revision 1.25  2003/10/08 00:01:35  assefa
- * Correct IsLikePropery with an OR.
- * Use of namespace if given in metadata.
- *
- * Revision 1.24  2003/10/06 13:03:19  assefa
- * Use of namespace. Correct execption return.
- *
- * Revision 1.23  2003/09/30 15:56:40  assefa
- * Typenames may have namespaces.
- *
- * Revision 1.22  2003/09/30 03:15:31  assefa
- * Add namespace ogc in Filter capabilities.
- *
- * Revision 1.21  2003/09/29 20:43:09  assefa
- * Query all layers only when filter is not set.
- *
- * Revision 1.20  2003/09/29 14:18:20  assefa
- * Support a diffrent was of giving the srs value for the gml Box element.
- *
- * Revision 1.19  2003/09/26 13:44:40  assefa
- * Add support for gml box with 2 <coord> elements.
- *
- * Revision 1.18  2003/09/22 22:53:20  assefa
- * Add ifdef USE_OGR where the MiniMXL Parser is used.
- *
- * Revision 1.17  2003/09/19 21:54:19  assefa
- * Add support fot the Post request.
- *
- * Revision 1.16  2003/09/10 19:58:24  assefa
- * Rename filterencoding.h file.
- *
- * Revision 1.15  2003/09/10 03:51:25  assefa
- * Add Filters in the Capabilities.
- *
- * Revision 1.14  2003/09/04 17:47:15  assefa
- * Add filterencoding tests.
- *
- * Revision 1.13  2003/02/05 04:40:11  sdlime
- * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The shapefile opening routine now expects just a filename. So, you must use msBuildPath or msBuildPath3 to create a full qualified filename. Relatively simple change, but required lots of changes. Demo still works...
- *
- * Revision 1.12  2002/12/19 05:17:09  dan
- * Report WFS exceptions, and do not fail on WFS requests returning 0 features
- *
- * Revision 1.11  2002/12/18 22:36:22  dan
- * Sorted out projection handling in GetCapabilities and Getfeature
- *
- * Revision 1.10  2002/12/18 16:45:49  dan
- * Fixed WFS capabilities to validate against schema
- *
- * Revision 1.9  2002/12/17 04:50:43  dan
- * Fixed a few WFS XML validation issues
- *
- * Revision 1.8  2002/11/20 21:22:32  dan
- * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
- *
- * Revision 1.7  2002/10/28 20:31:21  dan
- * New support for WMS Map Context (from Julien)
- *
- * Revision 1.2  2002/10/22 20:03:57  julien
- * Add the mapcontext support
- *
- * Revision 1.6  2002/10/28 15:26:42  dan
- * Fixed typo in DescribeFeatureType schemaLocation
- *
- * Revision 1.5  2002/10/09 02:29:03  dan
- * Initial implementation of WFS client support.
- *
- * Revision 1.4  2002/10/08 05:05:14  dan
- * Encode HTML entities in schema url in GML output
- *
- * Revision 1.3  2002/10/08 02:40:08  dan
- * Added WFS DescribeFeatureType
- *
- * Revision 1.2  2002/10/04 21:29:41  dan
- * WFS: Added GetCapabilities and basic GetFeature (still some work to do)
- *
- * Revision 1.1  2002/09/03 03:19:51  dan
- * Set the bases for WFS Server support + moved some WMS/WFS stuff to mapows.c
  *
  **********************************************************************/
 
@@ -778,8 +581,8 @@ static void msWFSWriteComplexElement(FILE *stream, gmlGroupObj *group, gmlItemLi
   if(!element_tab) return;
   sprintf(element_tab, "%s      ", tab);
 
-  msIO_fprintf(stream, "%s<element name=\"%s\">\n", tab, group->name);
-  msIO_fprintf(stream, "%s  <complexType>\n", tab);
+  msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%sType\">\n", tab, group->name, group->name);
+  msIO_fprintf(stream, "%s  <complexType name=\"%sType\">\n", tab, group->name);
   msIO_fprintf(stream, "%s    <sequence>\n", tab);
 
   /* now the items/elements in the group */ 
