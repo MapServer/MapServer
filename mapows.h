@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.60  2005/10/12 15:34:27  sdlime
+ * Updated the gmlGroupObj to allow you to set the group type. This impacts schema location. If not set the complex type written by the schema generator is 'groupnameType' and via metadata you can override that (e.g. gml_groupname_type 'MynameType').
+ *
  * Revision 1.59  2005/06/02 20:32:01  sdlime
  * Changed metadata reference from ...getfeature_collection to ...feature_collection.
  *
@@ -381,6 +384,7 @@ typedef struct {
   char *name;     /* name of the group */
   char **items;   /* list of items in the group */
   int numitems;   /* number of items */
+  char *type;     /* name of the complex type */
 } gmlGroupObj;
 
 typedef struct {

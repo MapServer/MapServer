@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.70  2005/10/12 15:34:27  sdlime
+ * Updated the gmlGroupObj to allow you to set the group type. This impacts schema location. If not set the complex type written by the schema generator is 'groupnameType' and via metadata you can override that (e.g. gml_groupname_type 'MynameType').
+ *
  * Revision 1.69  2005/10/11 17:48:35  sdlime
  * Fixed complex type writer to create set the type name when writing a schema. I think we may need more control though (e.g. group types). Also trimmed the revision history to a cover only the more recent mods.
  *
@@ -581,8 +584,14 @@ static void msWFSWriteComplexElement(FILE *stream, gmlGroupObj *group, gmlItemLi
   if(!element_tab) return;
   sprintf(element_tab, "%s      ", tab);
 
-  msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%sType\">\n", tab, group->name, group->name);
-  msIO_fprintf(stream, "%s  <complexType name=\"%sType\">\n", tab, group->name);
+  if(group->type) {
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s\">\n", tab, group->name, group->type);
+    msIO_fprintf(stream, "%s  <complexType name=\"%s\">\n", tab, group->type);
+  } else {
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%sType\">\n", tab, group->name, group->name);     
+    msIO_fprintf(stream, "%s  <complexType name=\"%sType\">\n", tab, group->name);
+  }
+  
   msIO_fprintf(stream, "%s    <sequence>\n", tab);
 
   /* now the items/elements in the group */ 

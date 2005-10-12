@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2005/10/12 15:34:27  sdlime
+ * Updated the gmlGroupObj to allow you to set the group type. This impacts schema location. If not set the complex type written by the schema generator is 'groupnameType' and via metadata you can override that (e.g. gml_groupname_type 'MynameType').
+ *
  * Revision 1.69  2005/09/04 20:20:28  sdlime
  * GML writes now support multiple ways of defining a multipoint. 1) one line string with multiple points and 2) multiplle line strings with one point each. (bug 1490)
  *
@@ -810,7 +813,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
   gmlGeometryListObj *geometryList=NULL;
   gmlGeometryObj *geometry=NULL;
 
-  /* allocate memory and iinitialize the item collection */
+  /* allocate memory and initialize the item collection */
   geometryList = (gmlGeometryListObj *) malloc(sizeof(gmlGeometryListObj));
   geometryList->geometries = NULL;
   geometryList->numgeometries = 0;
@@ -1041,10 +1044,15 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
       group->name = strdup(names[i]); /* initialize a few things */
       group->items = NULL;
       group->numitems = 0;
-      
+      group->type = NULL;
+
       snprintf(tag, 64, "gml_%s_group", group->name);
       if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL)
 	group->items = split(value, ',', &group->numitems);
+
+      snprintf(tag, 64, "gml_%s_type", group->name);
+      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) 
+      group->type = strdup(value);
     }
 
     msFreeCharArray(names, numnames);
@@ -1062,6 +1070,7 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
   for(i=0; i<groupList->numgroups; i++) {
     msFree(groupList->groups[i].name);
     msFreeCharArray(groupList->groups[i].items, groupList->groups[i].numitems);
+    msFree(groupList->groups[i].type);
   }
 
   free(groupList);
