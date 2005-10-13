@@ -504,6 +504,20 @@ Currently supported classes, properties and methods:
         Returns an SLD XML string based on all the classes found in all 
         the layers.
 
+  string getconfigoption(string key)
+        Returns the config value associated with the key.
+        Returns an empty sting if key not found.
+
+  int  setconfigoption(string key, string value)
+        Sets a config parameter using the key and the value passed
+
+  int applyconfigoptions()
+        Applies the config options set in the map file. For example
+        seeting the PROJ_LIB using the setconfigoption only modifies
+        the value in the map object. applyconfigoptions will actually
+        change the PROJ_LIB  value that will be used when dealing with
+        projection.
+
 
  LayerObj Class:
  ---------------
@@ -665,6 +679,33 @@ Currently supported classes, properties and methods:
    int open()
         Open the layer for use with getShape().  
         Returns MS_SUCCESS/MS_FAILURE.
+
+   int whichshapes(rectobj)
+        Performs a spatial, and optionally an attribute based feature search. 
+        The function basically prepares things so that candidate features can be 
+        accessed by query or drawing functions (eg using nextshape function).
+        Returns MS_SUCCESS or MS_FAILURE.
+
+   shpeobj nextShape()
+       Called after msWhichShapes has been called to actually retrieve shapes 
+       within a given area           
+       returns a shape object or MS_FALSE
+
+
+        example of usage :
+
+        $map = ms_newmapobj("d:/msapps/gmap-ms40/htdocs/gmap75.map");
+        $layer = $map->getLayerByName('road');
+        $status = $layer->open();
+        $status = $layer->whichShapes($map->extent);
+        while ($shape = $layer->nextShape()) 
+        {
+           echo $shape->index ."<br>\n";
+        }
+        $layer->close();
+
+
+
 
    void close()
         Close layer previously opened with open().

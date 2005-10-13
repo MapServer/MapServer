@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.95  2005/10/13 16:00:36  assefa
+ * Add support for whichshape and nextshape (Bug 1491)
+ * Adsd support for config setting/getting at the map level (Bug 1487).
+ *
  * Revision 1.94  2005/09/08 19:24:50  assefa
  * Expose GEOS operations through PHP Mapscript (Bug 1327).
  * Initially only functions buffer and convexhull on a shape object
@@ -426,6 +430,30 @@ void layerObj_destroy(layerObj *self) {
 int layerObj_open(layerObj *self) {
     return msLayerOpen(self);
   }
+
+
+int layerObj_whichShapes(layerObj *self, rectObj *poRect) {
+  msLayerGetItems(self);
+  return msLayerWhichShapes(self, *poRect);
+}
+
+
+shapeObj *layerObj_nextShape(layerObj *self) {
+  int status;
+  shapeObj *shape;
+
+  shape = (shapeObj *)malloc(sizeof(shapeObj));
+  if (!shape) return NULL;
+  msInitShape(shape);
+
+  status = msLayerNextShape(self, shape);
+  if(status != MS_SUCCESS) {
+    msFreeShape(shape);
+    free(shape);
+    return NULL;
+  } else
+    return shape;
+}
 
 void layerObj_close(layerObj *self) {
     msLayerClose(self);

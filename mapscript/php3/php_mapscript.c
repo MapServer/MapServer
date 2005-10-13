@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.240  2005/10/13 16:00:36  assefa
+ * Add support for whichshape and nextshape (Bug 1491)
+ * Adsd support for config setting/getting at the map level (Bug 1487).
+ *
  * Revision 1.239  2005/09/26 17:55:17  assefa
  * Add setimagepth function to the symbolobject (Bug 1472)
  *
@@ -519,6 +523,10 @@ DLEXPORT void  php3_ms_map_applySLD(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_map_applySLDURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_map_getConfigOption(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setConfigOption(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_applyConfigOptions(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -542,6 +550,8 @@ DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_whichShapes(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_nextShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getExtent(INTERNAL_FUNCTION_PARAMETERS);
@@ -981,6 +991,9 @@ function_entry php_map_class_functions[] = {
     {"applysld",         php3_ms_map_applySLD,           NULL},
     {"applysldurl",         php3_ms_map_applySLDURL,           NULL},
     {"generatesld",      php3_ms_map_generateSLD,           NULL},
+    {"getconfigoption",      php3_ms_map_getConfigOption,           NULL},
+    {"setconfigoption",      php3_ms_map_setConfigOption,           NULL},
+    {"applyconfigoptions",   php3_ms_map_applyConfigOptions,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1045,6 +1058,8 @@ function_entry php_layer_class_functions[] = {
     {"getnumresults",   php3_ms_lyr_getNumResults,      NULL},
     {"getresult",       php3_ms_lyr_getResult,          NULL},
     {"open",            php3_ms_lyr_open,               NULL},
+    {"whichshapes",     php3_ms_lyr_whichShapes,               NULL},
+    {"nextshape",       php3_ms_lyr_nextShape,               NULL},
     {"close",           php3_ms_lyr_close,              NULL},
     {"getshape",        php3_ms_lyr_getShape,           NULL},
     {"getextent",       php3_ms_lyr_getExtent,          NULL},
@@ -5923,6 +5938,118 @@ DLEXPORT void php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
     }
 }
 
+
+
+/************************************************************************/
+/*                       php3_ms_map_getConfigOption                    */
+/*                                                                      */
+/*      returns the configuation value associated with the key          */
+/*      passed as argument. Returns an empty string on error.           */
+/*      prototype : value = $map->getconfigoption(key)                  */
+/************************************************************************/
+DLEXPORT void php3_ms_map_getConfigOption(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     pval        *pKey;
+     mapObj      *self=NULL;
+     HashTable   *list=NULL;
+     char       *pszValue = NULL;
+ 
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    if (getParameters(ht,1,&pKey) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pKey);
+
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    
+    if (self == NULL || 
+        (pszValue = (char *)msGetConfigOption(self,pKey->value.str.val )) == NULL)
+    {
+        RETURN_STRING("", 1);
+    }
+    else
+    {
+        RETURN_STRING(pszValue, 1);
+    }
+}
+
+
+
+DLEXPORT void php3_ms_map_setConfigOption(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     pval        *pKey;
+     pval        *pConfig;
+     mapObj      *self=NULL;
+     HashTable   *list=NULL;
+ 
+     pThis = getThis();
+
+     if (pThis == NULL)
+     {
+         RETURN_LONG(MS_FAILURE);
+     }
+
+     if (getParameters(ht,2,&pKey, &pConfig) == FAILURE)
+     {
+         WRONG_PARAM_COUNT;
+     }
+
+     convert_to_string(pKey);
+     convert_to_string(pConfig);
+
+
+     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                          list TSRMLS_CC);
+     if (self != NULL)
+     {
+         msSetConfigOption(self,pKey->value.str.val,pConfig->value.str.val);
+    
+         RETURN_LONG(MS_SUCCESS);
+     }
+   
+     RETURN_LONG(MS_FAILURE);
+}
+
+
+
+DLEXPORT void php3_ms_map_applyConfigOptions(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     mapObj      *self=NULL;
+     HashTable   *list=NULL;
+ 
+     pThis = getThis();
+
+     if (pThis == NULL)
+     {
+         RETURN_LONG(MS_FAILURE);
+     }
+
+     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+     if (self != NULL)
+     {
+         msApplyMapConfigOptions(self);
+         RETURN_LONG(MS_SUCCESS);
+     }
+   
+     RETURN_LONG(MS_FAILURE);
+}
+
+
 /* }}} */
 
 
@@ -7449,6 +7576,97 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(nStatus);
 }
 /* }}} */
+
+
+/**********************************************************************
+ *                        layer->whichshapes()
+ **********************************************************************/
+
+/* {{{ proto int layer.whichshapes() Returns MS_SUCCESS/MS_FAILURE. */
+/*
+** Performs a spatial, and optionally an attribute based feature search. The function basically
+** prepares things so that candidate features can be accessed by query or drawing functions. For
+** OGR and shapefiles this sets an internal bit vector that indicates whether a particular feature
+** is to processed. For SDE it executes an SQL statement on the SDE server. Once run the msLayerNextShape
+** function should be called to actually access the shapes.
+**
+** Note that for shapefiles we apply any maxfeatures constraint at this point. That may be the only
+** connection type where this is feasible.
+*/
+
+DLEXPORT void php3_ms_lyr_whichShapes(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis, *pExtent;
+    layerObj    *self=NULL;
+    HashTable   *list=NULL;
+    int         nArgs = ARG_COUNT(ht);
+    rectObj     *poGeorefExt = NULL;
+    int         nStatus = MS_FAILURE;
+
+    pThis = getThis();
+
+    if (pThis == NULL || nArgs != 1)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (getParameters(ht, nArgs, &pExtent) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+
+    poGeorefExt = (rectObj *)_phpms_fetch_handle2(pExtent, 
+                                                  PHPMS_GLOBAL(le_msrect_ref),
+                                                  PHPMS_GLOBAL(le_msrect_new),
+                                                  list TSRMLS_CC);
+    
+    if (self && poGeorefExt)
+      nStatus = layerObj_whichShapes(self, poGeorefExt);
+    
+
+    RETURN_LONG(nStatus);
+
+}
+
+
+/**********************************************************************
+ *                        layer->nextshape()
+ **********************************************************************/
+
+/* {{{ proto int layer.nextshape() Returns a shape or MS_FAILURE. */
+DLEXPORT void php3_ms_lyr_nextShape(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis;
+    layerObj *self=NULL;
+    HashTable   *list=NULL;
+    shapeObj    *poShape = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+    if (self)
+      poShape = layerObj_nextShape(self);
+
+    if (!poShape)
+       RETURN_FALSE; 
+
+    /* Return valid object */
+    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), self,
+                              list, return_value TSRMLS_CC);
+
+}
+
 
 /**********************************************************************
  *                        layer->close()
