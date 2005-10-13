@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.59  2005/10/13 15:12:45  assefa
+ * Correct bug 1496 : error when allocation temporary array.
+ *
  * Revision 1.58  2005/10/05 16:53:25  assefa
  * Use dynamic allocation to deal with large number of logical operators
  * (Bug 1490).
@@ -3397,7 +3400,7 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     char *pszWild = NULL;
     char *pszSingle = NULL;
     char *pszEscape = NULL;
-    char szTmp[2];
+    char szTmp[3];
 
     int nLength=0, i=0, iBuffer = 0;
     int  bCaseInsensitive = 0;
