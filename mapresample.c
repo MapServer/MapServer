@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2005/10/13 04:02:28  frank
+ * Better computation of sDummyMap.cellsize (bug 1493)
+ *
  * Revision 1.61  2005/10/07 16:34:53  frank
  * added OVERSAMPLE_RATIO PROCESSING directive
  *
@@ -1399,7 +1402,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     int		result, bSuccess;
     double	adfSrcGeoTransform[6], adfDstGeoTransform[6];
     double      adfInvSrcGeoTransform[6], dfNominalCellSize;
-    rectObj	sSrcExtent;
+    rectObj	sSrcExtent, sOrigSrcExtent;
     mapObj	sDummyMap;
     imageObj   *srcImage;
     void	*pTCBData;
@@ -1481,6 +1484,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      Project desired extents out by 2 pixels, and then strip to      */
 /*      available data.                                                 */
 /* -------------------------------------------------------------------- */
+    memcpy( &sOrigSrcExtent, &sSrcExtent, sizeof(sSrcExtent) );
+
     sSrcExtent.minx = floor(sSrcExtent.minx-1.0);
     sSrcExtent.maxx = ceil (sSrcExtent.maxx+1.0);
     sSrcExtent.miny = floor(sSrcExtent.miny-1.0);
@@ -1521,10 +1526,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         sqrt(adfSrcGeoTransform[1] * adfSrcGeoTransform[1]
              + adfSrcGeoTransform[2] * adfSrcGeoTransform[2]);
     
-    if( (sSrcExtent.maxx - sSrcExtent.minx) > dfOversampleRatio * nDstXSize 
+    if( (sOrigSrcExtent.maxx - sOrigSrcExtent.minx) > dfOversampleRatio * nDstXSize 
         && !CSLFetchBoolean( layer->processing, "LOAD_FULL_RES_IMAGE", FALSE ))
         sDummyMap.cellsize = 
-            (dfNominalCellSize * (sSrcExtent.maxx - sSrcExtent.minx))
+            (dfNominalCellSize * (sOrigSrcExtent.maxx - sOrigSrcExtent.minx))
             / (dfOversampleRatio * nDstXSize);
     else
         sDummyMap.cellsize = dfNominalCellSize;
