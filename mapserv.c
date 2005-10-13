@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.149  2005/10/13 18:28:52  assefa
+ * Added variable substitution capability for layer's tileindex (Bug 1497).
+ *
  * Revision 1.148  2005/07/25 14:24:04  frank
  * Removed unnecessary strdup() calls for QUERY_STRING commandline arg.
  *
@@ -283,6 +286,7 @@ mapObj *loadMap(void)
     
     for(j=0; j<map->numlayers; j++) {
       if(map->layers[j].data && (strstr(map->layers[j].data, tmpstr) != NULL)) map->layers[j].data = gsub(map->layers[j].data, tmpstr, msObj->request->ParamValues[i]);
+      if(map->layers[j].tileindex && (strstr(map->layers[j].tileindex, tmpstr) != NULL)) map->layers[j].tileindex = gsub(map->layers[j].tileindex, tmpstr, msObj->request->ParamValues[i]);
       if(map->layers[j].connection && (strstr(map->layers[j].connection, tmpstr) != NULL)) map->layers[j].connection = gsub(map->layers[j].connection, tmpstr, msObj->request->ParamValues[i]);
       if(map->layers[j].filter.string && (strstr(map->layers[j].filter.string, tmpstr) != NULL)) map->layers[j].filter.string = gsub(map->layers[j].filter.string, tmpstr, msObj->request->ParamValues[i]);
       for(k=0; k<map->layers[j].numclasses; k++)
