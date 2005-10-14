@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/10/14 05:05:19  sdlime
+ * Added MS_MAXPATTERNSIZE.
+ *
  * Revision 1.20  2005/09/23 03:47:56  sdlime
  * Made symbol->imagepath readonly within SWIG-based scripts. Use setImagepath instead. (bug 1472)
  *
@@ -52,6 +55,7 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_S
 #define MS_MAXSYMBOLS 64            /* maximum number of symbols in a symbol file */
 #define MS_MAXVECTORPOINTS 100      /* shade, marker and line symbol parameters */
 #define MS_MAXSTYLELENGTH 10
+#define MS_MAXPATTERNSIZE 100
 
 #define MS_IMAGECACHESIZE 6
 
