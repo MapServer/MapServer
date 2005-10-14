@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2005/10/14 05:04:12  sdlime
+ * Added msRotateSymbol(), changed freeSymbol to a public function called msFreeSymbol() in mapsymbol.c. Added to map.h as well.
+ *
  * Revision 1.84  2005/09/21 04:23:27  sdlime
  * Updated msLoadImageSymbol() to clean-up any previously allocated values for imagepath and img. (bug 1472)
  *
@@ -188,7 +191,7 @@ void initSymbol(symbolObj *s)
   s->linejoinmaxsize = 3;
 }
 
-static void freeSymbol(symbolObj *s) {
+void msFreeSymbol(symbolObj *s) {
   if(!s) return;
   if(s->name) free(s->name);
   if(s->img) gdImageDestroy(s->img);
@@ -545,7 +548,7 @@ void msFreeSymbolSet(symbolSetObj *symbolset)
 
   freeImageCache(symbolset->imagecache);
   for(i=1; i<symbolset->numsymbols; i++)
-    freeSymbol(&(symbolset->symbol[i]));
+    msFreeSymbol(&(symbolset->symbol[i]));
 
   /* no need to deal with fontset, it's a pointer */
 }
@@ -923,25 +926,24 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
 
   /* Copy the actual symbol imagery */
   if (src->img) {
-     if (dst->img) {
-       gdFree(dst->img);
-     }
-     
-     if (gdImageTrueColor(src->img)) {
-        dst->img = gdImageCreateTrueColor(gdImageSX(src->img),
-                                          gdImageSY(src->img));
-        gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
-        gdImageAlphaBlending(dst->img, 0);
-        gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
-                    gdImageSX(src->img), gdImageSY(src->img));
-     }
-     else {
-        dst->img = gdImageCreate(gdImageSX(src->img), gdImageSY(src->img));
-        gdImageAlphaBlending(dst->img, 0);
-        gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
-        gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
-                    gdImageSX(src->img), gdImageSY(src->img));
-     }
+    if (dst->img) {
+      gdFree(dst->img);
+    }
+    
+    if (gdImageTrueColor(src->img)) {
+      dst->img = gdImageCreateTrueColor(gdImageSX(src->img),
+					gdImageSY(src->img));
+      gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
+      gdImageAlphaBlending(dst->img, 0);
+      gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
+		  gdImageSX(src->img), gdImageSY(src->img));
+    } else {
+      dst->img = gdImageCreate(gdImageSX(src->img), gdImageSY(src->img));
+      gdImageAlphaBlending(dst->img, 0);
+      gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
+      gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
+		  gdImageSX(src->img), gdImageSY(src->img));
+    }
   }
 
   return(MS_SUCCESS);
@@ -1101,4 +1103,134 @@ int msSymbolSetImageGD(symbolObj *symbol, imageObj *image)
     return MS_SUCCESS;
 }
 
+static void get_bbox(pointObj *poiList, int numpoints, double *minx, double *miny, double *maxx, double *maxy) {
+  int j;
 
+  *minx = *maxx = poiList[0].x;
+  *miny = *maxy = poiList[0].y;
+  for(j=1; j<numpoints; j++) {
+    if ((poiList[j].x==-99.0) || (poiList[j].y==-99.0)) continue;
+    *minx = MS_MIN(*minx, poiList[j].x);
+    *maxx = MS_MAX(*maxx, poiList[j].x);
+    *miny = MS_MIN(*miny, poiList[j].y);
+    *maxy = MS_MAX(*maxy, poiList[j].y);
+  }
+
+  return;
+}
+
+/*
+** msRotateSymbol - Clockwise rotation of a symbol definition. Contributed
+** by MapMedia, with clean up by SDL. Currently only type VECTOR and PIXMAP 
+** symbols are handled.
+*/
+symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
+{
+  double angle_rad=0.0;
+  double cos_a, sin_a;
+  double minx=0.0, miny=0.0, maxx=0.0, maxy=0.0;
+  symbolObj *newSymbol = NULL;
+
+  /* use freeSymbol(symbolObj *s); to delete symbol that is not longer used */  
+  newSymbol = (symbolObj *) malloc(sizeof(symbolObj));
+  msCopySymbol(newSymbol, symbol, NULL);
+
+  angle_rad = (MS_DEG_TO_RAD*angle);
+  switch(symbol->type) {
+  case(MS_SYMBOL_ELLIPSE):
+    /* We have no coordinates here, only two radius values and could only rotate the brush after it was created. */
+    return symbol;
+    break;
+  case(MS_SYMBOL_VECTOR):
+    {
+      double dp_x, dp_y, xcor, ycor;
+      double TOL=0.00000000001;
+      int i;
+
+      sin_a = sin(angle_rad);
+      cos_a = cos(angle_rad);
+
+      dp_x = symbol->sizex * .5; /* get the shift vector at 0,0 */
+      dp_y = symbol->sizey * .5;
+
+      /* center at 0,0 and rotate; then move back */
+      for( i=0;i < symbol->numpoints;i++) {
+	/* don't rotate PENUP commands (TODO: should use a constant here) */
+	if ((symbol->points[i].x == -99.0) || (symbol->points[i].x == -99.0) ) {
+	  newSymbol->points[i].x = -99.0;
+	  newSymbol->points[i].y = -99.0;
+	  continue;
+	}
+            
+	newSymbol->points[i].x = dp_x + ((symbol->points[i].x-dp_x)*cos_a - (symbol->points[i].y-dp_y)*sin_a);
+	newSymbol->points[i].y = dp_y + ((symbol->points[i].x-dp_x)*sin_a + (symbol->points[i].y-dp_y)*cos_a);
+      }
+	
+      /* get the new bbox of the symbol, because we need it to get the new dimensions of the new symbol */
+      get_bbox(newSymbol->points, newSymbol->numpoints, &minx, &miny, &maxx, &maxy);
+      if ( (fabs(minx)>TOL) || (fabs(miny)>TOL) ) {
+	xcor = minx*-1.0; /* symbols always start at 0,0 so get the shift vector */
+	ycor = miny*-1.0;
+	for( i=0;i < newSymbol->numpoints;i++) {
+	  if ((newSymbol->points[i].x == -99.0) || (newSymbol->points[i].x == -99.0))
+	    continue;
+	  newSymbol->points[i].x = newSymbol->points[i].x + xcor;
+	  newSymbol->points[i].y = newSymbol->points[i].y + ycor;
+	}
+	
+	/* update the bbox to get the final dimension values for the symbol */
+	get_bbox(newSymbol->points, newSymbol->numpoints, &minx, &miny, &maxx, &maxy);
+      }
+
+      newSymbol->sizex = maxx;
+      newSymbol->sizey = maxy;
+      return newSymbol;
+      break;
+    }
+  case(MS_SYMBOL_PIXMAP):
+    {
+      double cos_a, sin_a;
+
+      double x1 = 0.0, y1 = 0.0; /* destination rectangle */
+      double x2 = 0.0, y2 = 0.0;
+      double x3 = 0.0, y3 = 0.0;
+      double x4 = 0.0, y4 = 0.0;
+
+      long minx, miny, maxx, maxy;
+
+      int width=0, height=0;
+
+      sin_a = sin(angle_rad);
+      cos_a = cos(angle_rad);
+
+      /* compute distination rectangle (x1,y1 is known) */
+      x1 = 0 ; y1 = 0 ;
+      x2 = symbol->img->sy * sin_a;
+      y2 = -symbol->img->sy * cos_a;
+      x3 = (symbol->img->sx * cos_a) + (symbol->img->sy * sin_a);
+      y3 = (symbol->img->sx * sin_a) - (symbol->img->sy * cos_a);
+      x4 = (symbol->img->sx * cos_a);
+      y4 = (symbol->img->sx * sin_a);
+		
+      minx = (long) MS_MIN(x1,MS_MIN(x2,MS_MIN(x3,x4)));
+      miny = (long) MS_MIN(y1,MS_MIN(y2,MS_MIN(y3,y4)));
+      maxx = (long) MS_MAX(x1,MS_MAX(x2,MS_MAX(x3,x4)));
+      maxy = (long) MS_MAX(y1,MS_MAX(y2,MS_MAX(y3,y4)));
+
+      width = (int)ceil(maxx-minx);
+      height = (int)ceil(maxy-miny);
+      gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
+
+      return newSymbol;
+      break;
+    }
+  case(MS_SYMBOL_TRUETYPE):
+    {
+      return symbol; /* nothing to do, handled in code elsewhere */
+      break;
+    }
+  default:
+    return symbol;
+    break;
+  } /* end symbol type switch */
+}

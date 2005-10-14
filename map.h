@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.422  2005/10/14 05:04:12  sdlime
+ * Added msRotateSymbol(), changed freeSymbol to a public function called msFreeSymbol() in mapsymbol.c. Added to map.h as well.
+ *
  * Revision 1.421  2005/09/23 21:18:58  assefa
  * Remove call to ming.h inside map.h (Bug 1479)
  *
@@ -1428,11 +1431,13 @@ MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *
 MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
 MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 MS_DLL_EXPORT void msFreeSymbolSet(symbolSetObj *symbolset);
+MS_DLL_EXPORT void msFreeSymbol(symbolObj *symbol);
 MS_DLL_EXPORT int msAddNewSymbol(mapObj *map, char *name);
 MS_DLL_EXPORT int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol);
 MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);
 MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename);
 MS_DLL_EXPORT int msLoadImageSymbol(symbolObj *symbol, const char *filename);
+MS_DLL_EXPORT symbolObj *msRotateSymbol(symbolObj *symbol, double angle);
 
 MS_DLL_EXPORT imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *format);
 MS_DLL_EXPORT int msSymbolSetImageGD(symbolObj *symbol, imageObj *image);
