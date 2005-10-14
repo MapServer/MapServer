@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.106  2005/10/14 05:06:49  sdlime
+ * Initial integration of MapMedia's symbol rotation code.
+ *
  * Revision 1.105  2005/07/07 05:32:12  sdlime
  * More ehancements to ellipse markers. Changed code to let GD center the ellipse. Added second trivial case for 2x2 circles since GD does not handle these properly. Will file a bug the GD folks.
  *
@@ -837,6 +840,7 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
         ox=0; oy=0;
         dx = (int)(p->line[i].point[j].x - p->line[i].point[j-1].x);
         dy = (int)(p->line[i].point[j].y - p->line[i].point[j-1].y);
+
         /* offset setting - quick approximation, may be changed with goniometric functions */
         if(dx==0) { /* vertical line */
           if(dy==0) continue; /* checking unique points */
@@ -854,6 +858,7 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
           }
           q = p->line[i].point[j-1].y+oy - k*(p->line[i].point[j-1].x+ox);
         }
+
         /* offset line points computation */
         if(first==1) { /* first point */
           first = 0;
@@ -904,7 +909,7 @@ static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, i
 {
   int i, j;
   
-  if(offsetx != 0 || offsetx != 0) 
+  if(offsetx != 0 || offsety != 0) 
     imageOffsetPolyline(img, p, color, offsetx, offsety);
   else {
     for (i = 0; i < p->numlines; i++)
@@ -1049,12 +1054,12 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
 void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
   int i, j;
-  symbolObj *symbol;
-  int styleDashed[100];
+  symbolObj *symbol, *oldsymbol=NULL;
+  int styleDashed[MS_MAXPATTERNSIZE];
   int x, y, ox, oy;
   int bc, fc;
   int brush_bc, brush_fc;
-  double size, d;
+  double size, max_size, d, angle;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
   
@@ -1195,7 +1200,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
 void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
                                pointObj *p, double r, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol;
+  symbolObj *symbol, *oldsymbol=NULL;
   int i;
   gdPoint oldpnt,newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
@@ -1204,7 +1209,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   int fc, bc, oc;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
-  double size, d;  
+  double size, max_size, d, angle;  
   int width;
 
   int bbox[8];
@@ -1382,7 +1387,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 /* ------------------------------------------------------------------------------- */
 void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol;
+  symbolObj *symbol, *oldsymbol=NULL;
   int offset_x, offset_y, x, y, w, h;
   int j, k;
   gdPoint oldpnt,newpnt;
@@ -1390,7 +1395,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   char *error=NULL;
 
   int fc, bc, oc;
-  double size,d;
+  double size, max_size, d, angle, angle_radians;
   int width;
 
   int ox, oy;
@@ -1424,6 +1429,9 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   width = MS_MAX(width, style->minwidth);
   width = MS_MIN(width, style->maxwidth);
 
+  angle = (style->angle) ? style->angle : 0.0;
+  angle_radians = angle*MS_DEG_TO_RAD;
+
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc<0 && oc<0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
   if(size < 1) return; /* size too small */
@@ -1445,38 +1453,42 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     x = (int)(p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx);
     y = (int)(p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2);
 
-    /* ============== MOD BY DHC MAR 14, 2003 -- Can we get outline color (and rotation) for truetype symbols? */
     if( oc >= 0 ) {
-      error = gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x, y-1, symbol->character);
+      error = gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x, y-1, symbol->character);
       if(error) {
 	msSetError(MS_TTFERR, error, "msDrawMarkerSymbolGD()");
 	return;
       }
 
-      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x, y+1, symbol->character);
-      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y, symbol->character);
-      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y, symbol->character);
-      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y+1, symbol->character);
-      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y-1, symbol->character);
-      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y+1, symbol->character);
-      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y-1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x, y+1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x+1, y, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x-1, y, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x+1, y+1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x+1, y-1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x-1, y+1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x-1, y-1, symbol->character);
     }
-    /* END OF DHC MOD */
 
-    gdImageStringFT(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
+    gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(fc):-(fc)), font, size, angle_radians, x, y, symbol->character);
 #endif
 
     break;
   case(MS_SYMBOL_PIXMAP):
+    if (angle != 0.0 && angle != 360.0) {
+      /* rotate the symbol creating a new symbol object */
+      oldsymbol = symbol;
+      symbol = msRotateSymbol(symbol, style->angle);
+    }
+
     if(size == 1) { /* don't scale */
       offset_x = MS_NINT(p->x - .5*symbol->img->sx + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
       gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
     } else {
-      d = size/symbol->img->sy;
+      max_size = MS_MAX(symbol->sizex, symbol->sizey);
+      d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
       offset_x = MS_NINT(p->x - .5*symbol->img->sx*d + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy*d + oy);
-      /* gdImageCopyResized(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy); */
       gdImageCopyResampled(img, symbol->img, offset_x, offset_y, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);
     }
     break;
@@ -1520,11 +1532,17 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     
     break;
   case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
-    d = size/symbol->sizey;
+    if (angle != 0.0 && angle != 360.0) {
+      /* rotate the symbol creating a new symbol object */
+      oldsymbol = symbol;
+      symbol = msRotateSymbol(symbol, style->angle);
+    }
+
+    max_size = MS_MAX(symbol->sizex, symbol->sizey);
+    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
     offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
     offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
     
-        
     if(symbol->filled) { /* if filled */
       
       k = 0; /* point counter */
@@ -1592,16 +1610,17 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
   int i, j, k;
-  symbolObj *symbol;
-  int styleDashed[100];
+  symbolObj *symbol, *oldsymbol=NULL;
+  int styleDashed[MS_MAXPATTERNSIZE]; /* todo: should be dynamically allocated */
   int x, y;
   int ox, oy;
   int fc, bc;
   int brush_bc, brush_fc;
-  double size, d;
+  double size, max_size, d, angle;
   int width;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
+  gdPoint oldpnt, newpnt;
 
   if(!p) return;
   if(p->numlines <= 0) return;
@@ -1633,13 +1652,15 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   width = MS_MAX(width, style->minwidth);
   width = MS_MIN(width, style->maxwidth);
 
+  angle = (style->angle) ? style->angle : 0.0;
+
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
   if(size < 1) return; /* size too small */
   ox = MS_NINT(style->offsetx*scalefactor);
-  oy = (style->offsety == -99) ? -99 : (int)(style->offsety*scalefactor);
+  oy = (style->offsety < -90) ? style->offsety : (int)(style->offsety*scalefactor);
 
-  if(style->symbol == 0) { /* just draw a single width lin */
+  if(style->symbol == 0) { /* just draw a single width line */
     gdImageSetThickness(img, width);
     imagePolyline(img, p, fc, ox, oy);
     gdImageSetThickness(img, 1);
@@ -1662,10 +1683,14 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   case(MS_SYMBOL_ELLIPSE):
     bc = gdTransparent;
 
-    d = (size)/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d);    
-    y = MS_NINT(symbol->sizey*d);
-    
+    max_size = MS_MAX(symbol->sizex, symbol->sizey);
+    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
+
+    x = MS_NINT(symbol->sizex*d)+1;
+    y = MS_NINT(symbol->sizey*d)+1;
+    if (x < (symbol->sizex*d)) x += 1;
+    if (y < (symbol->sizey*d)) y += 1;    
+
     if((x < 2) && (y < 2)) break;
     
     /* create the brush image */
@@ -1688,15 +1713,26 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     fc = 1; bc = 0;
     break;
   case(MS_SYMBOL_PIXMAP):
+    /* todo: add scaling, offset and rotation */
     gdImageSetBrush(img, symbol->img);
     fc = 1; bc = 0;
     break;
   case(MS_SYMBOL_VECTOR):
     if(bc == -1) bc = gdTransparent;
+    
+    if(angle != 0.0 && angle != 360.0) {
+      /* rotate the symbol creating a new symbol object */
+      oldsymbol = symbol;
+      symbol = msRotateSymbol(symbol, angle);
+    }
 
-    d = size/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d);    
-    y = MS_NINT(symbol->sizey*d);
+    max_size = MS_MAX(symbol->sizex, symbol->sizey);
+    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
+
+    x = MS_NINT(symbol->sizex*d)+1;
+    y = MS_NINT(symbol->sizey*d)+1;
+    if (x < (symbol->sizex*d)) x += 1;
+    if (y < (symbol->sizey*d)) y += 1;
 
     if((x < 2) && (y < 2)) break;
 
@@ -1704,18 +1740,42 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); /* not in cache, create it */
 
-      k = 0; /* point counter */
-      for(i=0;i < symbol->numpoints;i++) {
-        if((symbol->points[i].x < 0) && (symbol->points[i].x < 0)) { /* new polygon (PENUP) */
-          if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
-          k = 0; /* reset point counter */
-        } else {
-          points[k].x = MS_NINT(d*symbol->points[i].x);
-          points[k].y = MS_NINT(d*symbol->points[i].y);
-          k++;
-        }
+      if (symbol->filled) {
+	k = 0; /* point counter */
+	for(i=0;i < symbol->numpoints;i++) {
+	  if((symbol->points[i].x < 0) && (symbol->points[i].x < 0)) { /* new polygon (PENUP) */
+	    if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
+	    k = 0; /* reset point counter */
+	  } else {
+	    points[k].x = MS_NINT(d*symbol->points[i].x);
+	    points[k].y = MS_NINT(d*symbol->points[i].y);
+	    k++;
+	  }
+	}
+	if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
+      } else {
+	oldpnt.x = MS_NINT(symbol->points[0].x*d); /* convert first point in symbol */
+	oldpnt.y = MS_NINT(symbol->points[0].y*d);
+	
+	/* draw in the brush image */
+	for (i=1;i < symbol->numpoints;i++) {
+	  if((symbol->points[i].x == -99.) && (symbol->points[i].y == -99.)) {
+	    oldpnt.x = MS_NINT(symbol->points[i].x*d);
+	    oldpnt.y = MS_NINT(symbol->points[i].y*d);
+	  } else {
+	    if ((symbol->points[i-1].x == -99.) && (symbol->points[i-1].y == -99.)) {
+	      /* Last point was PENUP, now a new beginning */
+	      oldpnt.x = MS_NINT(symbol->points[i].x*d);
+	      oldpnt.y = MS_NINT(symbol->points[i].y*d);
+	    } else {
+	      newpnt.x = MS_NINT(symbol->points[i].x*d);
+	      newpnt.y = MS_NINT(symbol->points[i].y*d);
+	      gdImageLine(brush, oldpnt.x, oldpnt.y, newpnt.x, newpnt.y, brush_fc);
+	      oldpnt = newpnt;
+	    }
+	  }
+	}
       }
-      if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
 
       symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
     }
@@ -1729,8 +1789,11 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     int k=0, sc;
    
     sc = fc; /* start with foreground color */
+
+    /* todo: 1) scale the style/pattern and 2) compute actual style array size */
     for(i=0; i<symbol->stylelength; i++) {      
       for(j=0; j<symbol->style[i]; j++) {
+	if(k == MS_MAXPATTERNSIZE) break; /* avoid breaking things is too large a style is defined, should log an error */
         styleDashed[k] = sc;
         k++;
       } 
@@ -1755,6 +1818,10 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 
   /* clean up */
   gdImageSetThickness(img, 1);
+  if(oldsymbol) {
+    msFreeSymbol(symbol); /* delete rotated version */
+    symbol = oldsymbol;
+  }
 
   return;
 }
@@ -1764,7 +1831,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 /* ------------------------------------------------------------------------------- */
 void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol;
+  symbolObj *symbol, *oldsymbol=NULL;
   int i, k;
   gdPoint oldpnt, newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
@@ -1772,7 +1839,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   int x, y, ox, oy;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
-  double size, d;
+  double size, max_size, d, angle;
   int width;
   
   int bbox[8];
@@ -3440,10 +3507,9 @@ gdIOCtx *msNewGDFileCtx (FILE * f)
   fileIOCtx *ctx;
 
   ctx = (fileIOCtx *) malloc (sizeof (fileIOCtx));
-  if (ctx == NULL)
-    {
-      return NULL;
-    }
+  if (ctx == NULL) {
+    return NULL;
+  }
 
   ctx->f = f;
 
@@ -3461,25 +3527,20 @@ gdIOCtx *msNewGDFileCtx (FILE * f)
   return (gdIOCtx *) ctx;
 }
 
-static void
-msFreeFileCtx (gdIOCtx * ctx)
+static void msFreeFileCtx (gdIOCtx * ctx)
 {
   free(ctx);
 }
 
-
-static int
-filePutbuf (gdIOCtx * ctx, const void *buf, int size)
+static int filePutbuf (gdIOCtx * ctx, const void *buf, int size)
 {
   fileIOCtx *fctx;
   fctx = (fileIOCtx *) ctx;
 
   return fwrite (buf, 1, size, fctx->f);
-
 }
 
-static int
-fileGetbuf (gdIOCtx * ctx, void *buf, int size)
+static int fileGetbuf (gdIOCtx * ctx, void *buf, int size)
 {
   fileIOCtx *fctx;
   fctx = (fileIOCtx *) ctx;
@@ -3488,8 +3549,7 @@ fileGetbuf (gdIOCtx * ctx, void *buf, int size)
 
 }
 
-static void
-filePutchar (gdIOCtx * ctx, int a)
+static void filePutchar (gdIOCtx * ctx, int a)
 {
   unsigned char b;
   fileIOCtx *fctx;
@@ -3500,8 +3560,7 @@ filePutchar (gdIOCtx * ctx, int a)
   putc (b, fctx->f);
 }
 
-static int
-fileGetchar (gdIOCtx * ctx)
+static int fileGetchar (gdIOCtx * ctx)
 {
   fileIOCtx *fctx;
   fctx = (fileIOCtx *) ctx;
@@ -3510,19 +3569,18 @@ fileGetchar (gdIOCtx * ctx)
 }
 
 
-static int
-fileSeek (struct gdIOCtx *ctx, const int pos)
+static int fileSeek (struct gdIOCtx *ctx, const int pos)
 {
   fileIOCtx *fctx;
   fctx = (fileIOCtx *) ctx;
   return (fseek (fctx->f, pos, SEEK_SET) == 0);
 }
 
-static long
-fileTell (struct gdIOCtx *ctx)
+static long fileTell (struct gdIOCtx *ctx)
 {
   fileIOCtx *fctx;
   fctx = (fileIOCtx *) ctx;
 
   return ftell (fctx->f);
 }
+
