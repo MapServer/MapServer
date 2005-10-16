@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114  2005/10/16 04:20:01  frank
+ * Avoid warnings on gcc4.
+ *
  * Revision 1.113  2005/10/10 23:18:51  sdlime
  * Update the shpxy tag processor to avoid outputing degenerate shapes (or parts). That is, don't output a polygon with less than 3 vertices or a line with less than 2. Should only really affect image map production.
  *
@@ -1779,7 +1782,9 @@ char *generateLegendTemplate(mapservObj *msObj)
 
            }
            snprintf(pszPrefix, nLen, "%s_%ld_%ld", 
-                    msObj->Map->name, tmpStat.st_size, tmpStat.st_mtime);
+                    msObj->Map->name,
+                    (long) tmpStat.st_size, 
+                    (long) tmpStat.st_mtime);
            pszPrefix[nLen] = '\0';
        }
    
