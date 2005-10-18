@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/10/18 03:10:45  frank
+ * added msShapeDeleteLine
+ *
  * Revision 1.54  2005/07/27 18:21:58  frank
  * bug 1432: optimized msAddLine() to use realloc()
  *
@@ -73,6 +76,7 @@
 
 #include "map.h"
 #include "mapprimitive.h"
+#include <assert.h>
 
 MS_CVSID("$Id$")
 
@@ -173,6 +177,25 @@ void msFreeShape(shapeObj *shape)
 #endif
 
   msInitShape(shape); /* now reset */
+}
+
+void msShapeDeleteLine( shapeObj *shape, int line )
+
+{
+    if( line < 0 || line >= shape->numlines )
+    {
+        assert( 0 );
+        return;
+    }
+
+    free( shape->line[line].point );
+    if( line < shape->numlines - 1 )
+    {
+        memmove( shape->line + line, 
+                 shape->line + line + 1, 
+                 sizeof(lineObj) * shape->numlines - line - 1 );
+    }
+    shape->numlines--;
 }
 
 void msComputeBounds(shapeObj *shape)

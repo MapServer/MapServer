@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.423  2005/10/18 03:10:45  frank
+ * added msShapeDeleteLine
+ *
  * Revision 1.422  2005/10/14 05:04:12  sdlime
  * Added msRotateSymbol(), changed freeSymbol to a public function called msFreeSymbol() in mapsymbol.c. Added to map.h as well.
  *
@@ -1465,6 +1468,7 @@ MS_DLL_EXPORT int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, 
 
 MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimative.c */
 MS_DLL_EXPORT void msInitShape(shapeObj *shape);
+MS_DLL_EXPORT void msShapeDeleteLine( shapeObj *shape, int line );
 MS_DLL_EXPORT int msCopyShape(shapeObj *from, shapeObj *to);
 MS_DLL_EXPORT int *msGetOuterList(shapeObj *shape);
 MS_DLL_EXPORT int *msGetInnerList(shapeObj *shape, int r, int *outerlist);
