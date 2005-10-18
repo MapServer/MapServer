@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/10/18 03:12:53  frank
+ * delete unprojectable lines, NULL empty shapes (bug 411)
+ *
  * Revision 1.42  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -203,6 +206,10 @@ static void msProjectGrowRect(projectionObj *in, projectionObj *out,
 }
 #endif /* def USE_PROJ */
 
+/************************************************************************/
+/*                           msProjectRect()                            */
+/************************************************************************/
+
 #define NUMBER_OF_SAMPLE_POINTS 100
 
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) 
@@ -318,23 +325,40 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #endif
 }
 
+
+
+/************************************************************************/
+/*                           msProjectShape()                           */
+/************************************************************************/
 int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 {
 #ifdef USE_PROJ
   int i;
 
-  for(i=0; i<shape->numlines; i++)
+  for(i=shape->numlines; i >= 0; i-- )
   {
       if( msProjectLine(in, out, shape->line+i ) == MS_FAILURE )
-          return MS_FAILURE;
+      {
+          msShapeDeleteLine( shape, i );
+      }
   }
 
-  return(MS_SUCCESS);
+  if( shape->numlines == 0 )
+  {
+      msFreeShape( shape );
+      return MS_FAILURE;
+  }
+  else
+      return(MS_SUCCESS);
 #else
   msSetError(MS_PROJERR, "Projection support is not available.", "msProjectShape()");
   return(MS_FAILURE);
 #endif
 }
+
+/************************************************************************/
+/*                           msProjectLine()                            */
+/************************************************************************/
 
 int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 {
@@ -436,6 +460,9 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
     return MS_FALSE;
 }
 
+/************************************************************************/
+/*                           msTestNeedWrap()                           */
+/************************************************************************/
 /*
 
 Frank Warmerdam, Nov, 2001. 
@@ -538,6 +565,9 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 }
 #endif /* def USE_PROJ */
 
+/************************************************************************/
+/*                            msProjFinder()                            */
+/************************************************************************/
 static char *ms_proj_lib = NULL;
 static char *last_filename = NULL;
 
@@ -559,6 +589,9 @@ static const char *msProjFinder( const char *filename)
     return last_filename;
 }
 
+/************************************************************************/
+/*                           msSetPROJ_LIB()                            */
+/************************************************************************/
 void msSetPROJ_LIB( const char *proj_lib )
 
 {
@@ -588,9 +621,12 @@ void msSetPROJ_LIB( const char *proj_lib )
 #endif
 }
 
-/*
-** Return the projection string. 
-*/
+/************************************************************************/
+/*                       msGetProjectionString()                        */
+/*                                                                      */
+/*      Return the projection string.                                   */
+/************************************************************************/
+
 char *msGetProjectionString(projectionObj *proj)
 {
     char        *pszProjString = NULL;
