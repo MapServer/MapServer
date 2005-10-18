@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.241  2005/10/18 20:46:53  assefa
+ * Sync scale and celllsize in preparequery function (Bug 1334).
+ *
  * Revision 1.240  2005/10/13 16:00:36  assefa
  * Add support for whichshape and nextshape (Bug 1491)
  * Adsd support for config setting/getting at the map level (Bug 1487).
@@ -3483,7 +3486,13 @@ DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self != NULL)
-      mapObj_prepareQuery(self);
+    {
+        mapObj_prepareQuery(self);
+
+        _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
+                                 E_ERROR TSRMLS_CC); 
+        _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+    }
     
 }
 /**********************************************************************
