@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/10/18 03:20:44  frank
+ * fixed use of memmove in msShapeDeleteLine()
+ *
  * Revision 1.55  2005/10/18 03:10:45  frank
  * added msShapeDeleteLine
  *
@@ -193,7 +196,7 @@ void msShapeDeleteLine( shapeObj *shape, int line )
     {
         memmove( shape->line + line, 
                  shape->line + line + 1, 
-                 sizeof(lineObj) * shape->numlines - line - 1 );
+                 sizeof(lineObj) * (shape->numlines - line - 1) );
     }
     shape->numlines--;
 }
