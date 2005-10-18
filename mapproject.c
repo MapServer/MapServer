@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/10/18 03:21:15  frank
+ * fixed iteration in msProjectShape()
+ *
  * Revision 1.43  2005/10/18 03:12:53  frank
  * delete unprojectable lines, NULL empty shapes (bug 411)
  *
@@ -179,6 +182,9 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 #endif
 }
 
+/************************************************************************/
+/*                         msProjectGrowRect()                          */
+/************************************************************************/
 #ifdef USE_PROJ
 static void msProjectGrowRect(projectionObj *in, projectionObj *out, 
                               rectObj *prj_rect, int *rect_initialized, 
@@ -335,7 +341,7 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #ifdef USE_PROJ
   int i;
 
-  for(i=shape->numlines; i >= 0; i-- )
+  for( i = shape->numlines-1; i >= 0; i-- )
   {
       if( msProjectLine(in, out, shape->line+i ) == MS_FAILURE )
       {
