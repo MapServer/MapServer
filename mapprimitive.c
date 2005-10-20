@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/10/20 19:37:03  frank
+ * added msAddPointToLine
+ *
  * Revision 1.56  2005/10/18 03:20:44  frank
  * fixed use of memmove in msShapeDeleteLine()
  *
@@ -278,6 +281,27 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
   }
 
   return(list);
+}
+
+/*
+** Add point to a line object.
+**
+** Note that reallocating the point array larger for each point can
+** be pretty inefficient, so use this function sparingly.  Mostly 
+** geometries creators should create their own working lineObj and 
+** then call msAddLine() to add it to a shape.
+*/
+
+int msAddPointToLine(lineObj *line, pointObj *point )
+{
+    line->numpoints += 1;
+    
+    line->point = (pointObj *) 
+        realloc(line->point, sizeof(pointObj) * line->numpoints);
+
+    line->point[line->numpoints-1] = *point;
+
+    return MS_SUCCESS;
 }
 
 int msAddLine(shapeObj *p, lineObj *new_line)

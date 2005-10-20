@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.424  2005/10/20 19:37:03  frank
+ * added msAddPointToLine
+ *
  * Revision 1.423  2005/10/18 03:10:45  frank
  * added msShapeDeleteLine
  *
@@ -1484,6 +1487,7 @@ MS_DLL_EXPORT int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length
 MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
+MS_DLL_EXPORT int msAddPointToLine(lineObj *line, pointObj *point );
 
 MS_DLL_EXPORT int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image); /* in mapraster.c */
 MS_DLL_EXPORT imageObj *msDrawReferenceMap(mapObj *map);
