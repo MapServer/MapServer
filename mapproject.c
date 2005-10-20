@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/10/20 19:37:19  frank
+ * ensure reprojected polygons are closed
+ *
  * Revision 1.45  2005/10/20 16:43:04  frank
  * msProjectShapeLine() implements RFC 5 line/polygon clipping at horizon
  *
@@ -579,6 +582,18 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
         }
 
         lastPoint = thisPoint;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Make sure that polygons are closed, even if the trip over       */
+/*      the horizon left them unclosed.                                 */
+/* -------------------------------------------------------------------- */
+    if( shape->type == MS_SHAPE_POLYGON 
+        && line_out->numpoints > 2 
+        && (line_out->point[0].x != line_out->point[line_out->numpoints-1].x
+            || line_out->point[0].y != line_out->point[line_out->numpoints-1].y) )
+    {
+        msAddPointToLine( line_out, line_out->point + 0 );
     }
 
     return(MS_SUCCESS);
