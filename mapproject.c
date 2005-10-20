@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/10/20 16:43:04  frank
+ * msProjectShapeLine() implements RFC 5 line/polygon clipping at horizon
+ *
  * Revision 1.44  2005/10/18 03:21:15  frank
  * fixed iteration in msProjectShape()
  *
@@ -61,6 +64,7 @@
 
 #include "map.h"
 #include "mapproject.h"
+#include <assert.h>
 
 MS_CVSID("$Id$")
 
@@ -331,7 +335,258 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #endif
 }
 
+/************************************************************************/
+/*                          msProjectSegment()                          */
+/*                                                                      */
+/*      Interpolate along a line segment for which one end              */
+/*      reprojects and the other end does not.  Finds the horizon.      */
+/************************************************************************/
 
+static int msProjectSegment( projectionObj *in, projectionObj *out, 
+                             pointObj *start, pointObj *end )
+
+{
+    pointObj testPoint, subStart, subEnd;
+
+/* -------------------------------------------------------------------- */
+/*      Without loss of generality we assume the first point            */
+/*      reprojects, and the second doesn't.  If that is not the case    */
+/*      then re-call with the points reversed.                          */
+/* -------------------------------------------------------------------- */
+    testPoint = *start;
+    if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE )
+    {
+        testPoint = *end;
+        if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE )
+            return MS_FAILURE;
+        else
+            return msProjectSegment( in, out, end, start );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We will apply a binary search till we are within out            */
+/*      tolerance.                                                      */
+/* -------------------------------------------------------------------- */
+    subStart = *start;
+    subEnd = *end;
+
+#define TOLERANCE 0.01
+    
+    while( fabs(subStart.x - subEnd.x) 
+           + fabs(subStart.y - subEnd.y) > TOLERANCE )
+    {
+        pointObj midPoint;
+
+        midPoint.x = (subStart.x + subEnd.x) * 0.5;
+        midPoint.y = (subStart.y + subEnd.y) * 0.5;
+        
+        testPoint = midPoint;
+        
+        if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE )
+            subEnd = midPoint;
+        else
+            subStart = midPoint;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now reproject the end points and return.                        */
+/* -------------------------------------------------------------------- */
+    *end = subStart;
+    
+    if( msProjectPoint( in, out, end ) == MS_FAILURE
+        || msProjectPoint( in, out, start ) == MS_FAILURE )
+        return MS_FAILURE;
+    else
+        return MS_SUCCESS;
+}
+
+/************************************************************************/
+/*                         msProjectShapeLine()                         */
+/*                                                                      */
+/*      Reproject a single linestring, potentially splitting into       */
+/*      more than one line string if there are over the horizon         */
+/*      portions.                                                       */
+/*                                                                      */
+/*      For polygons, no splitting takes place, but over the horizon    */
+/*      points are clipped, and one segment is run from the fall        */
+/*      over the horizon point to the come back over the horizon point. */
+/************************************************************************/
+
+static int 
+msProjectShapeLine(projectionObj *in, projectionObj *out, 
+                   shapeObj *shape, int line_index)
+
+{
+#ifdef USE_PROJ
+    int i;
+    pointObj	lastPoint, thisPoint, wrkPoint, firstPoint;
+    lineObj *line = shape->line + line_index;
+    lineObj *line_out = line;
+    int valid_flag = 0; /* 1=true, -1=false, 0=unknown */
+    int numpoints_in = line->numpoints;
+    int line_alloc = numpoints_in;
+    int wrap_test;
+
+    wrap_test = out->proj != NULL && pj_is_latlong(out->proj)
+        && !pj_is_latlong(in->proj);
+
+    line->numpoints = 0;
+
+    if( numpoints_in > 0 )
+        firstPoint = line->point[0];
+
+/* -------------------------------------------------------------------- */
+/*      Loop over all input points in linestring.                       */
+/* -------------------------------------------------------------------- */
+    for( i=0; i < numpoints_in; i++ )
+    {
+        int ms_err;
+        wrkPoint = thisPoint = line->point[i];
+
+        ms_err = msProjectPoint(in, out, &wrkPoint );
+
+/* -------------------------------------------------------------------- */
+/*      Apply wrap logic.                                               */
+/* -------------------------------------------------------------------- */
+        if( wrap_test && i > 0 && ms_err != MS_FAILURE )
+        {
+            double dist;
+            pointObj pt1Geo;
+
+            if( line_out->numpoints > 0 )
+                pt1Geo = line_out->point[0];
+            else
+                pt1Geo = wrkPoint; /* this is a cop out */
+
+            dist = wrkPoint.x - pt1Geo.x;
+            if( fabs(dist) > 180.0 
+                && msTestNeedWrap( thisPoint, firstPoint, 
+                                   pt1Geo, in, out ) )
+            {
+                if( dist > 0.0 )
+                    wrkPoint.x -= 360.0;
+                else if( dist < 0.0 )
+                    wrkPoint.x += 360.0;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Put result into output line with appropriate logic for          */
+/*      failure breaking lines, etc.                                    */
+/* -------------------------------------------------------------------- */
+        if( ms_err == MS_FAILURE ) 
+        {
+            /* We have started out invalid */
+            if( i == 0 )
+            {
+                valid_flag = -1;
+            }
+            
+            /* valid data has ended, we need to work out the horizon */
+            else if( valid_flag == 1 )
+            {
+                pointObj startPoint, endPoint;
+                
+                startPoint = lastPoint;
+                endPoint = thisPoint;
+                if( msProjectSegment( in, out, &startPoint, &endPoint ) 
+                    == MS_SUCCESS )
+                {
+                    line_out->point[line_out->numpoints++] = endPoint;
+                }
+                valid_flag = -1;
+            }
+
+            /* Still invalid ... */
+            else if( valid_flag == -1 )
+            {
+                /* do nothing */
+            }
+        }
+
+        else
+        {
+            /* starting out valid. */
+            if( i == 0 )
+            {
+                line_out->point[line_out->numpoints++] = wrkPoint;
+                valid_flag = 1;
+            }
+            
+            /* Still valid, nothing special */
+            else if( valid_flag == 1 )
+            {
+                line_out->point[line_out->numpoints++] = wrkPoint;
+            }
+            
+            /* we have come over the horizon, figure out where, start newline*/
+            else
+            {
+                pointObj startPoint, endPoint;
+                
+                startPoint = lastPoint;
+                endPoint = thisPoint;
+                if( msProjectSegment( in, out, &endPoint, &startPoint ) 
+                    == MS_SUCCESS )
+                {
+                    lineObj newLine;
+
+                    /* force pre-allocation of lots of points room */
+                    if( line_out->numpoints > 0 
+                        && shape->type == MS_SHAPE_LINE )
+                    {
+                        newLine.numpoints = numpoints_in - i + 1;
+                        newLine.point = line->point;
+                        msAddLine( shape, &newLine );
+
+                        /* new line is now lineout, but start without any points */
+                        line_out = shape->line + shape->numlines-1;
+
+                        line_out->numpoints = 0;
+
+                        /* the shape->line array is realloc, refetch "line" */
+                        line = shape->line + line_index;
+                    }
+                    else if( line_out == line
+                             && line->numpoints >= i-2 )
+                    {
+                        newLine.numpoints = line->numpoints;
+                        newLine.point = line->point;
+                        msAddLine( shape, &newLine );
+
+                        line = shape->line + line_index;
+
+                        line_out = shape->line + shape->numlines-1;
+                        line_out->numpoints = line->numpoints;
+                        line->numpoints = 0;
+                        
+                        /*
+                         * Now realloc this array large enough to hold all
+                         * the points we could possibly need to add. 
+                         */
+                        line_alloc = line_alloc * 2;
+
+                        line_out->point = (pointObj *) 
+                            realloc(line_out->point, 
+                                    sizeof(pointObj) * line_alloc);
+                    }
+                     
+                    line_out->point[line_out->numpoints++] = startPoint;
+                }
+                line_out->point[line_out->numpoints++] = wrkPoint;
+                valid_flag = 1;
+            }
+        }
+
+        lastPoint = thisPoint;
+    }
+
+    return(MS_SUCCESS);
+#else
+    msSetError(MS_PROJERR, "Projection support is not available.", "msProjectLine()");
+    return(MS_FAILURE);
+#endif
+}
 
 /************************************************************************/
 /*                           msProjectShape()                           */
@@ -343,7 +598,12 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 
   for( i = shape->numlines-1; i >= 0; i-- )
   {
-      if( msProjectLine(in, out, shape->line+i ) == MS_FAILURE )
+      if( shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON )
+      {
+          if( msProjectShapeLine( in, out, shape, i ) == MS_FAILURE )
+              msShapeDeleteLine( shape, i );
+      }
+      else if( msProjectLine(in, out, shape->line+i ) == MS_FAILURE )
       {
           msShapeDeleteLine( shape, i );
       }
@@ -364,6 +624,10 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 
 /************************************************************************/
 /*                           msProjectLine()                            */
+/*                                                                      */
+/*      This function is now normally only used for point data.         */
+/*      msProjectShapeLine() is used for lines and polygons and has     */
+/*      lots of logic to handle horizon crossing.                       */
 /************************************************************************/
 
 int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
@@ -429,6 +693,10 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
   return(MS_FAILURE);
 #endif
 }
+
+/************************************************************************/
+/*                        msProjectionsDiffer()                         */
+/************************************************************************/
 
 /*
 ** Compare two projections, and return MS_TRUE if they differ. 
@@ -547,9 +815,10 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
     middle.x = (pt1.x + pt2.x) * 0.5;
     middle.y = (pt1.y + pt2.y) * 0.5;
     
-    msProjectPoint( in, out, &pt1 );
-    msProjectPoint( in, out, &pt2 );
-    msProjectPoint( in, out, &middle );
+    if( msProjectPoint( in, out, &pt1 ) == MS_FAILURE 
+        || msProjectPoint( in, out, &pt2 ) == MS_FAILURE
+        || msProjectPoint( in, out, &middle ) == MS_FAILURE )
+        return 0;
 
     /* 
      * If the last point was moved, then we are considered due for a
