@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.167  2005/10/21 13:32:28  assefa
+ * Support wms_attribution element for LAYER's : Bug 1502.
+ *
  * Revision 1.166  2005/08/02 13:47:11  dan
  * Fixed problem with GetLegendGraphic on layers with status=off (bug 1141)
  *
@@ -1357,6 +1360,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
            msIO_fprintf(stdout, "        <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);
 
    }
+
+   msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
 
    if(nVersion >= OWS_1_1_0)
        msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl", 
