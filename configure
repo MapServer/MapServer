@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB SDERASTER_ENABLED MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_REGEX_INC PHP_REGEX_OBJ PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB SDERASTER_ENABLED MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -880,11 +880,6 @@ Optional Packages:
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
-  --with-php-regex-dir=DIR  (deprecated in version 4.6+)
-                          Specify directory where the PHP4 bundled REGEX
-                          object files (regex/*.o) are available. Required in
-                          order to compile the PHP/MapScript module with PHP
-                          configured as a DSO.
   --with-apxs=FILE      (CURRENTLY DISABLED)
                           Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
@@ -10087,13 +10082,6 @@ if test "${with_php+set}" = set; then
 
 fi;
 
-
-# Check whether --with-php-regex-dir or --without-php-regex-dir was given.
-if test "${with_php_regex_dir+set}" = set; then
-  withval="$with_php_regex_dir"
-
-fi;
-
 # Check whether --enable-internal-ld-detect or --disable-internal-ld-detect was given.
 if test "${enable_internal_ld_detect+set}" = set; then
   enableval="$enable_internal_ld_detect"
@@ -10342,81 +10330,21 @@ echo $ECHO_N "checking whether we should use PHP's regex... $ECHO_C" >&6
     echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 
-    if test -n "$with_php_regex_dir" -a -d "$with_php_regex_dir" ; then
-
-  if test -z "$with_php_regex_dir" || echo "$with_php_regex_dir" | grep '^/' >/dev/null ; then
-    WITH_PHP_REGEX_DIR="$with_php_regex_dir"
-  else
-    WITH_PHP_REGEX_DIR="`pwd`/$with_php_regex_dir"
-  fi
-
-
-      test -f $WITH_PHP_REGEX_DIR/regcomp.o &&  PHP_REGEX_DIR="$WITH_PHP_REGEX_DIR"
-      test -z "$PHP_REGEX_DIR" -a -f $WITH_PHP_REGEX_DIR/regex/regcomp.c &&  PHP_REGEX_DIR="$WITH_PHP_REGEX_DIR/regex"
-    else
-                        test -f $PHP_SRC_DIR/regex/regcomp.o && PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
-    fi
-
-    if test -n "$PHP_REGEX_DIR" ; then
-                        USE_PHP_REGEX="-DUSE_PHP_REGEX"
-      PHP_REGEX_INC="-I$PHP_REGEX_DIR/.."
-      PHP_REGEX_OBJ="$PHP_REGEX_DIR/regcomp.o $PHP_REGEX_DIR/regerror.o \
-                     $PHP_REGEX_DIR/regexec.o $PHP_REGEX_DIR/regfree.o"
-      ALL_INC="$PHP_REGEX_INC $ALL_INC"
-
-      echo "$as_me:$LINENO: result:         using PHP regex source from $PHP_REGEX_DIR" >&5
-echo "${ECHO_T}        using PHP regex source from $PHP_REGEX_DIR" >&6
-    else
-       			  test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
-	  if test -n "$PHP_NO_SOURCE" ; then
-	        	    USE_PHP_REGEX="-DUSE_PHP_REGEX"
-	    PHP_REGEX_OBJ=php_regex.o
-	    PHP_REGEX_INC=$PHP_REGEX_INC
-
-	    PHP_REGEX_OBJ=$PHP_REGEX_OBJ
-
-	    echo "$as_me:$LINENO: result:         found regex_extra.h - trying to build without PHP source" >&5
-echo "${ECHO_T}        found regex_extra.h - trying to build without PHP source" >&6
-	  else
-	    { { echo "$as_me:$LINENO: error:
-!!! You PHP was compiled with PHP's bundled regex library.               !!!
-!!! In this case MapServer and PHP MapScript must also be compiled       !!!
-!!! using the same copy of regex.                                        !!!
-!!! There are two possible ways to get rid of this error:                !!!
-!!! 1- Download/extract and build the PHP source on your system (no need !!!
-!!!    to 'make install') and use the --with-php-regex-dir=DIR configure !!!
-!!!    option to specifiy the location of the PHP source tree where the  !!!
-!!!    regex/*.o files are located.  This is the only way to build       !!!
-!!!    PHP MapScript in an environment where PHP is configured as an     !!!
-!!!    Apache DSO.                                                       !!!
-!!! 2- Try to re-configure and re-compile PHP4 using --with-regex=system !!!
-!!!    and then re-configure and re-compile MapServer.                   !!!
-!!!    Note that PHP's --with-regex=system works only when PHP is        !!!
-!!!    is configured as a CGI (that is without the --with-apxs and       !!!
-!!!    --with-httpd options). So if you configured your PHP using        !!!
-!!!    --with-regex=system and still get this error then make sure you   !!!
-!!!    configured PHP as a CGI.                                          !!!" >&5
+            test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
+        if test -n "$PHP_NO_SOURCE" ; then
+                    USE_PHP_REGEX="-DUSE_PHP_REGEX"
+          PHP_REGEX_OBJ=php_regex.o
+          echo "$as_me:$LINENO: result:         found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&5
+echo "${ECHO_T}        found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&6
+        else
+          { { echo "$as_me:$LINENO: error:
+!!! PHP uses its bundled regex library but regex/regex_extra.h cannot be !!!
+!!! found.                                                               !!!" >&5
 echo "$as_me: error:
-!!! You PHP was compiled with PHP's bundled regex library.               !!!
-!!! In this case MapServer and PHP MapScript must also be compiled       !!!
-!!! using the same copy of regex.                                        !!!
-!!! There are two possible ways to get rid of this error:                !!!
-!!! 1- Download/extract and build the PHP source on your system (no need !!!
-!!!    to 'make install') and use the --with-php-regex-dir=DIR configure !!!
-!!!    option to specifiy the location of the PHP source tree where the  !!!
-!!!    regex/*.o files are located.  This is the only way to build       !!!
-!!!    PHP MapScript in an environment where PHP is configured as an     !!!
-!!!    Apache DSO.                                                       !!!
-!!! 2- Try to re-configure and re-compile PHP4 using --with-regex=system !!!
-!!!    and then re-configure and re-compile MapServer.                   !!!
-!!!    Note that PHP's --with-regex=system works only when PHP is        !!!
-!!!    is configured as a CGI (that is without the --with-apxs and       !!!
-!!!    --with-httpd options). So if you configured your PHP using        !!!
-!!!    --with-regex=system and still get this error then make sure you   !!!
-!!!    configured PHP as a CGI.                                          !!!" >&2;}
+!!! PHP uses its bundled regex library but regex/regex_extra.h cannot be !!!
+!!! found.                                                               !!!" >&2;}
    { (exit 1); exit 1; }; }
 	fi
-    fi
 
   else
     echo "$as_me:$LINENO: result: no" >&5
@@ -11325,12 +11253,12 @@ s,@USE_POINT_Z_M@,$USE_POINT_Z_M,;t t
 s,@DEBUG_FLAGS@,$DEBUG_FLAGS,;t t
 s,@LD_SHARED@,$LD_SHARED,;t t
 s,@SO_EXT@,$SO_EXT,;t t
-s,@PHP_REGEX_INC@,$PHP_REGEX_INC,;t t
-s,@PHP_REGEX_OBJ@,$PHP_REGEX_OBJ,;t t
 s,@PHP_VERSION_FLAG@,$PHP_VERSION_FLAG,;t t
 s,@PHP_SRC_DIR@,$PHP_SRC_DIR,;t t
 s,@PHP_CC@,$PHP_CC,;t t
 s,@PHP_LD@,$PHP_LD,;t t
+s,@PHP_REGEX_INC@,$PHP_REGEX_INC,;t t
+s,@PHP_REGEX_OBJ@,$PHP_REGEX_OBJ,;t t
 s,@USE_PHP_REGEX@,$USE_PHP_REGEX,;t t
 s,@MAKE_PHPMS@,$MAKE_PHPMS,;t t
 s,@MAKE_PHPMS_CLEAN@,$MAKE_PHPMS_CLEAN,;t t

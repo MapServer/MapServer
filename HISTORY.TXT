@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Removed deprecated --with-php-regex-dir switch (bug 1468)
+
 - support wms_attribution element for LAYER's (Bug 1502)
 
 - Correct php/mapscript bug : initialization of scale happens when

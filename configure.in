@@ -1832,13 +1832,6 @@ AC_ARG_WITH(php,
                           Required in order to compile the PHP/MapScript 
                           module.],,)
 
-AC_ARG_WITH(php-regex-dir,
-[  --with-php-regex-dir=DIR  (deprecated in version 4.6+)
-                          Specify directory where the PHP4 bundled REGEX
-                          object files (regex/*.o) are available. Required in
-                          order to compile the PHP/MapScript module with PHP 
-                          configured as a DSO.],,)
-
 AC_ARG_ENABLE(internal-ld-detect,
 [  --enable-perlv-ld-detect (applies to --with-php only) 
                           Use perl -V output to figure the command to use to 
@@ -1926,64 +1919,19 @@ if test -n "$with_php" -a -d "$with_php" ; then
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     AC_MSG_RESULT(yes)
 
-    if test -n "$with_php_regex_dir" -a -d "$with_php_regex_dir" ; then
-      dnl
-      dnl try to locate regex source under the --with-regex-dir=value
-      dnl
-      AC_EXPAND_PATH($with_php_regex_dir, WITH_PHP_REGEX_DIR)
-
-      test -f $WITH_PHP_REGEX_DIR/regcomp.o &&  PHP_REGEX_DIR="$WITH_PHP_REGEX_DIR"
-      test -z "$PHP_REGEX_DIR" -a -f $WITH_PHP_REGEX_DIR/regex/regcomp.c &&  PHP_REGEX_DIR="$WITH_PHP_REGEX_DIR/regex"
-    else
-      dnl
-      dnl try to locate regex source under the PHP directory
-      dnl
-      test -f $PHP_SRC_DIR/regex/regcomp.o && PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
-    fi
-
-    if test -n "$PHP_REGEX_DIR" ; then
-      dnl
-      dnl found it!
-      dnl
-      USE_PHP_REGEX="-DUSE_PHP_REGEX"
-      PHP_REGEX_INC="-I$PHP_REGEX_DIR/.."
-      PHP_REGEX_OBJ="$PHP_REGEX_DIR/regcomp.o $PHP_REGEX_DIR/regerror.o \
-                     $PHP_REGEX_DIR/regexec.o $PHP_REGEX_DIR/regfree.o"
-      ALL_INC="$PHP_REGEX_INC $ALL_INC"
-
-      AC_MSG_RESULT([        using PHP regex source from $PHP_REGEX_DIR])
-    else
-       	dnl We'll check for regex_extra.h - that might let use build
-	dnl without the source using libphp_common.so
-	  test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
-	  if test -n "$PHP_NO_SOURCE" ; then
-	  dnl Found regex_extra.h
-      	    USE_PHP_REGEX="-DUSE_PHP_REGEX"
-	    PHP_REGEX_OBJ=php_regex.o
-	    AC_SUBST(PHP_REGEX_INC,$PHP_REGEX_INC)
-	    AC_SUBST(PHP_REGEX_OBJ,$PHP_REGEX_OBJ)
-	    AC_MSG_RESULT([        found regex_extra.h - trying to build without PHP source])	
-	  else
-	    AC_MSG_ERROR([
-!!! You PHP was compiled with PHP's bundled regex library.               !!!
-!!! In this case MapServer and PHP MapScript must also be compiled       !!!
-!!! using the same copy of regex.                                        !!!
-!!! There are two possible ways to get rid of this error:                !!!
-!!! 1- Download/extract and build the PHP source on your system (no need !!!
-!!!    to 'make install') and use the --with-php-regex-dir=DIR configure !!!
-!!!    option to specifiy the location of the PHP source tree where the  !!!
-!!!    regex/*.o files are located.  This is the only way to build       !!!
-!!!    PHP MapScript in an environment where PHP is configured as an     !!!
-!!!    Apache DSO.                                                       !!!
-!!! 2- Try to re-configure and re-compile PHP4 using --with-regex=system !!!
-!!!    and then re-configure and re-compile MapServer.                   !!!
-!!!    Note that PHP's --with-regex=system works only when PHP is        !!!
-!!!    is configured as a CGI (that is without the --with-apxs and       !!!
-!!!    --with-httpd options). So if you configured your PHP using        !!!
-!!!    --with-regex=system and still get this error then make sure you   !!!
-!!!    configured PHP as a CGI.                                          !!!])
+    dnl We'll check for regex_extra.h - that might let use build
+    dnl without the source using libphp_common.so
+    test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
+        if test -n "$PHP_NO_SOURCE" ; then
+          dnl Found regex_extra.h
+          USE_PHP_REGEX="-DUSE_PHP_REGEX"
+          PHP_REGEX_OBJ=php_regex.o
+          AC_MSG_RESULT([        found regex_extra.h - building PHP MapScript with PHP's bundled regex ])
+        else
+          AC_MSG_ERROR([
+!!! PHP uses its bundled regex library but regex/regex_extra.h cannot be !!!
+!!! found.                                                               !!!])
 	fi
-    fi
 
   else
     AC_MSG_RESULT(no)

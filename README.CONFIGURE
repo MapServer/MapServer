@@ -92,11 +92,6 @@ Here is the list of available options as returned by "./configure --help":
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
-  --with-php-regex-dir=DIR  (deprecated in 4.6)
-                          Specify directory where the PHP4 bundled REGEX
-                          object files (regex/*.o) are available. Required in
-                          order to compile the PHP/MapScript module with PHP
-                          configured as a DSO.
   --enable-perlv-ld-detect (applies to --with-php only) 
                           Use perl -V output to figure the command to use to 
                           link php_mapscript.so.  Try this only if the default
@@ -524,11 +519,6 @@ PHP/MapScript module:
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
-  --with-php-regex-dir=DIR  (deprecated in 4.6)
-                          Specify directory where the PHP4 bundled REGEX
-                          object files (regex/*.o) are available. Required in
-                          order to compile the PHP/MapScript module with PHP
-                          configured as a DSO.
   --enable-perlv-ld-detect (applies to --with-php only) 
                           Use perl -V output to figure the command to use to 
                           link php_mapscript.so.  Try this only if the default
@@ -557,14 +547,6 @@ PHP/MapScript module:
   versions of these libs will lead to potential crashes at runtime.  In most
   cases it is safe to have both PHP and MapServer compiled with the same 
   libraries (e.g. GD, regex, etc.) as long as they are of the same versions.
-
-  The --with-php-regex-dir=DIR used to be required in order to compile
-  php_mapscript.so with PHP's bundled regex.  This configure option has
-  been deprecated in v4.6.0 and will be removed in future releases.
-  Since version 4.6.0, it is no longer required to use this option: the
-  configure script and a set or wrappers in MapServer will automatically
-  use the system regex for the command-line and CGI executables, and PHP's
-  built-in regex (if applicable) for php_mapscript.so
 
 
 Perl MapScript Module:
