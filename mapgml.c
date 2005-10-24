@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2005/10/24 20:52:46  sdlime
+ * Moved code to generate the layer_name outside of the feature loop. It was being executed for each feature when it only needed to be run once per layer.
+ *
  * Revision 1.71  2005/10/24 20:46:46  sdlime
  * Updated GML transformation metadata handling to use the msOWSLookupMetadata functions with prefixes OWS_, WFS_ and GML_. Previously only the GML_ prefix was supported.
  *
@@ -1330,6 +1333,12 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       groupList = msGMLGetGroups(lp);
       geometryList = msGMLGetGeometries(lp);
 
+      if (wfs_namespace) {
+	layer_name = (char *) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
+	sprintf(layer_name, "%s:%s", wfs_namespace, lp->name);
+      } else
+	layer_name = strdup(lp->name);
+
       for(j=0; j<lp->resultcache->numresults; j++) {
 	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
         if(status != MS_SUCCESS) return(status);
@@ -1340,18 +1349,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
           msProjectShape(&lp->projection, &map->projection, &shape);
 #endif
         
-	/* start this feature */
-        if (wfs_namespace) {
-	  layer_name = (char *) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
-	  sprintf(layer_name, "%s:%s", wfs_namespace, lp->name);
-        } else
-	  layer_name = strdup(lp->name);
+	/* 
+	** start this feature 
+	*/        
 
 	msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layer_name) == MS_FALSE)
             msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layer_name);
         msIO_fprintf(stream, "      <%s>\n", layer_name);
-
 
 	/* write the bounding box */
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first*/
@@ -1386,19 +1391,17 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 
 	/* end this feature */
         msIO_fprintf(stream, "      </%s>\n", layer_name);
-
 	msIO_fprintf(stream, "    </gml:featureMember>\n");
 
-        msFree(layer_name);
-
-	msFreeShape(&shape); /* init too */
+  	msFreeShape(&shape); /* init too */
 
          features++;
          if (maxfeatures > 0 && features == maxfeatures)
-           break;
-         
-         /* end this layer */
-      }
+           break; 
+      }      
+
+      /* done with this layer, do a little clean-up */      
+      msFree(layer_name);
 
       msGMLFreeGroups(groupList);
       msGMLFreeItems(itemList);
