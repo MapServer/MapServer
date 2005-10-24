@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2005/10/24 20:46:46  sdlime
+ * Updated GML transformation metadata handling to use the msOWSLookupMetadata functions with prefixes OWS_, WFS_ and GML_. Previously only the GML_ prefix was supported.
+ *
  * Revision 1.70  2005/10/12 15:34:27  sdlime
  * Updated the gmlGroupObj to allow you to set the group type. This impacts schema location. If not set the complex type written by the schema generator is 'groupnameType' and via metadata you can override that (e.g. gml_groupname_type 'MynameType').
  *
@@ -818,7 +821,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
   geometryList->geometries = NULL;
   geometryList->numgeometries = 0;
 
-  if((value = msLookupHashTable(&(layer->metadata), "gml_geometries")) != NULL) {
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "geometries")) != NULL) {
     names = split(value, ',', &numnames);
 
     /* allocation an array of gmlGeometryObj's */
@@ -833,12 +836,12 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
       geometry->occurmin = 0;
       geometry->occurmax = 1;      
 
-      snprintf(tag, 64, "gml_%s_type", names[i]);
-      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL)
+      snprintf(tag, 64, "%s_type", names[i]);
+      if((value =  msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL)
 	geometry->type = strdup(value); /* TODO: validate input value */
 
-      snprintf(tag, 64, "gml_%s_occurances", names[i]);
-      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) {
+      snprintf(tag, 64, "%s_occurances", names[i]);
+      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) {
 	char **occur;
 	int numoccur;
 
@@ -893,15 +896,15 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
   gmlItemObj *item=NULL;
 
   /* get a list of items that should be included in output */
-  if((value = msLookupHashTable(&(layer->metadata), "gml_include_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "include_items")) != NULL)  
     incitems = split(value, ',', &numincitems);
 
   /* get a list of items that should be excluded in output */
-  if((value = msLookupHashTable(&(layer->metadata), "gml_exclude_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "exclude_items")) != NULL)  
     excitems = split(value, ',', &numexcitems);
 
   /* get a list of items that need don't get encoded */
-  if((value = msLookupHashTable(&(layer->metadata), "gml_xml_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "xml_items")) != NULL)  
     xmlitems = split(value, ',', &numxmlitems);
 
   /* allocate memory and iinitialize the item collection */
@@ -947,12 +950,12 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
 	item->encode = MS_FALSE;
     }
 
-    snprintf(tag, 64, "gml_%s_alias", layer->items[i]);
-    if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) 
+    snprintf(tag, 64, "%s_alias", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
       item->alias = strdup(value);
 
-    snprintf(tag, 64, "gml_%s_type", layer->items[i]);
-    if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) 
+    snprintf(tag, 64, "%s_type", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
       item->type = strdup(value);
   }
 
@@ -1031,7 +1034,7 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
   groupList->numgroups = 0;
 
   /* list of groups (TODO: make this automatic by parsing metadata) */
-  if((value = msLookupHashTable(&(layer->metadata), "gml_groups")) != NULL) {
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "groups")) != NULL) {
     names = split(value, ',', &numnames);
 
     /* allocation an array of gmlGroupObj's */
@@ -1046,12 +1049,12 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
       group->numitems = 0;
       group->type = NULL;
 
-      snprintf(tag, 64, "gml_%s_group", group->name);
-      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL)
+      snprintf(tag, 64, "%s_group", group->name);
+      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL)
 	group->items = split(value, ',', &group->numitems);
 
-      snprintf(tag, 64, "gml_%s_type", group->name);
-      if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL) 
+      snprintf(tag, 64, "%s_type", group->name);
+      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
       group->type = strdup(value);
     }
 
@@ -1310,7 +1313,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       char *layer_name;
       const char *value;
 
-      value = msLookupHashTable(&(lp->metadata), "gml_geometry_name");
+      value = msOWSLookupMetadata(&(lp->metadata), "OFG", "geometry_name");
       if(value) geom_name = value;
       /* geom_name = msWFSGetGeomElementName(map, lp); */
 
