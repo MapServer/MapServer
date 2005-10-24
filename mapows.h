@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.61  2005/10/24 23:49:55  sdlime
+ * Added gmlConstantObj and gmlConstantListObj to mapows.h. These create a mechanism to output constant values as part of GML outout (and schema creation) without defining new attributes in the source data.
+ *
  * Revision 1.60  2005/10/12 15:34:27  sdlime
  * Updated the gmlGroupObj to allow you to set the group type. This impacts schema location. If not set the complex type written by the schema generator is 'groupnameType' and via metadata you can override that (e.g. gml_groupname_type 'MynameType').
  *
@@ -368,6 +371,17 @@ typedef struct {
   gmlItemObj *items;
   int numitems;
 } gmlItemListObj;
+
+typedef struct {
+  char *name;
+  char *type;
+  char *value;
+} gmlConstantObj;
+
+typedef struct {
+  gmlConstantObj *constants;
+  int numconstants;
+} gmlConstantListObj;
 
 typedef struct {
   char *name;     /* name of the geometry (type of GML property) */
