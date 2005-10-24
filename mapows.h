@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.62  2005/10/24 23:53:47  sdlime
+ * A few comment fixes.
+ *
  * Revision 1.61  2005/10/24 23:49:55  sdlime
  * Added gmlConstantObj and gmlConstantListObj to mapows.h. These create a mechanism to output constant values as part of GML outout (and schema creation) without defining new attributes in the source data.
  *
@@ -362,7 +365,7 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 typedef struct {
   char *name;     /* name of the item */
   char *alias;    /* is the item aliased for presentation? (NULL if not) */
-  char *type;     /* raw type for these item (NULL for a "string") (TODO: should this be a lookup table instead?) */
+  char *type;     /* raw type for this item (NULL for a "string") (TODO: should this be a lookup table instead?) */
   int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
   int visible;    /* should this item be output, default is MS_FALSE */  
 } gmlItemObj;
@@ -373,9 +376,9 @@ typedef struct {
 } gmlItemListObj;
 
 typedef struct {
-  char *name;
-  char *type;
-  char *value;
+  char *name;     /* name of the constant */
+  char *type;     /* raw type for this item (NULL for a "string") */
+  char *value;    /* output value for this constant (output will look like: <name>value</name>) */
 } gmlConstantObj;
 
 typedef struct {
