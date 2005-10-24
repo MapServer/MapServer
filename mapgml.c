@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2005/10/24 21:03:03  sdlime
+ * Removed unused variable geom_name from WFS GML writer.
+ *
  * Revision 1.72  2005/10/24 20:52:46  sdlime
  * Moved code to generate the layer_name outside of the feature loop. It was being executed for each feature when it only needed to be run once per layer.
  *
@@ -1312,13 +1315,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
     lp = &(map->layers[i]);
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
-      const char *geom_name = "geometry"; /* what should the default be? (in mapwfs.c too) */
-      char *layer_name;
-      const char *value;
-
-      value = msOWSLookupMetadata(&(lp->metadata), "OFG", "geometry_name");
-      if(value) geom_name = value;
-      /* geom_name = msWFSGetGeomElementName(map, lp); */
+      char *layerName;
+      /* const char *value; */
 
       /* actually open the layer */
       status = msLayerOpen(lp);
@@ -1333,11 +1331,12 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       groupList = msGMLGetGroups(lp);
       geometryList = msGMLGetGeometries(lp);
 
+      /* set the layer name */
       if (wfs_namespace) {
-	layer_name = (char *) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
-	sprintf(layer_name, "%s:%s", wfs_namespace, lp->name);
+	layerName = (char *) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
+	sprintf(layerName, "%s:%s", wfs_namespace, lp->name);
       } else
-	layer_name = strdup(lp->name);
+	layerName = strdup(lp->name);
 
       for(j=0; j<lp->resultcache->numresults; j++) {
 	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -1354,9 +1353,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 	*/        
 
 	msIO_fprintf(stream, "    <gml:featureMember>\n");
-        if(msIsXMLTagValid(layer_name) == MS_FALSE)
-            msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layer_name);
-        msIO_fprintf(stream, "      <%s>\n", layer_name);
+        if(msIsXMLTagValid(layerName) == MS_FALSE)
+            msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
+        msIO_fprintf(stream, "      <%s>\n", layerName);
 
 	/* write the bounding box */
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first*/
@@ -1390,7 +1389,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, wfs_namespace, "        ");
 
 	/* end this feature */
-        msIO_fprintf(stream, "      </%s>\n", layer_name);
+        msIO_fprintf(stream, "      </%s>\n", layerName);
 	msIO_fprintf(stream, "    </gml:featureMember>\n");
 
   	msFreeShape(&shape); /* init too */
@@ -1401,7 +1400,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       }      
 
       /* done with this layer, do a little clean-up */      
-      msFree(layer_name);
+      msFree(layerName);
 
       msGMLFreeGroups(groupList);
       msGMLFreeItems(itemList);
