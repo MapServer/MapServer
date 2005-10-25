@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.63  2005/10/25 20:29:52  sdlime
+ * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can havespecific types (default is string). Constants are NOT queryable so their use should be limited untilsome extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
+ *
  * Revision 1.62  2005/10/24 23:53:47  sdlime
  * A few comment fixes.
  *
@@ -409,9 +412,11 @@ typedef struct {
   int numgroups;
 } gmlGroupListObj;
 
-MS_DLL_EXPORT int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList);
+MS_DLL_EXPORT int msItemInGroups(char *name, gmlGroupListObj *groupList);
 MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer);
 MS_DLL_EXPORT void msGMLFreeItems(gmlItemListObj *itemList);
+MS_DLL_EXPORT gmlConstantListObj *msGMLGetConstants(layerObj *layer);
+MS_DLL_EXPORT void msGMLFreeConstants(gmlConstantListObj *constantList);
 MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer);
 MS_DLL_EXPORT void msGMLFreeGeometries(gmlGeometryListObj *geometryList);
 MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer);

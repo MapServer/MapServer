@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.71  2005/10/25 20:29:52  sdlime
+ * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can havespecific types (default is string). Constants are NOT queryable so their use should be limited untilsome extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
+ *
  * Revision 1.70  2005/10/12 15:34:27  sdlime
  * Updated the gmlGroupObj to allow you to set the group type. This impacts schema location. If not set the complex type written by the schema generator is 'groupnameType' and via metadata you can override that (e.g. gml_groupname_type 'MynameType').
  *
@@ -551,7 +554,7 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
   return;
 }
 
-static void msWFSWriteElement(FILE *stream, gmlItemObj *item, const char *tab)
+static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *tab)
 {
   char *element_name;
   char *element_type = "string";
@@ -572,12 +575,27 @@ static void msWFSWriteElement(FILE *stream, gmlItemObj *item, const char *tab)
   return;
 }
 
-static void msWFSWriteComplexElement(FILE *stream, gmlGroupObj *group, gmlItemListObj *itemList, const char *tab)
+static void msWFSWriteConstantElement(FILE *stream, gmlConstantObj *constant, const char *tab)
+{
+  char *element_type = "string";
+
+  if(!stream || !constant || !tab) return;
+
+  if(constant->type)
+    element_type = constant->type;
+
+  msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s\"/>\n", tab, constant->name, element_type);
+
+  return;
+}
+
+static void msWFSWriteGroupElement(FILE *stream, gmlGroupObj *group, gmlItemListObj *itemList, gmlConstantListObj *constantList, const char *tab)
 {
   int i, j;
   char *element_tab;
 
   gmlItemObj *item=NULL;
+  gmlConstantObj *constant=NULL;
 
   /* setup the element tab */
   element_tab = (char *) malloc(sizeof(char)*strlen(tab)+3);
@@ -594,12 +612,20 @@ static void msWFSWriteComplexElement(FILE *stream, gmlGroupObj *group, gmlItemLi
   
   msIO_fprintf(stream, "%s    <sequence>\n", tab);
 
-  /* now the items/elements in the group */ 
+  /* now the items/constants (e.g. elements) in the group */ 
   for(i=0; i<group->numitems; i++) {
+    for(j=0; j<constantList->numconstants; j++) { /* find the right gmlConstantObj */
+      constant = &(constantList->constants[j]);
+      if(strcasecmp(constant->name, group->items[i]) == 0) { 
+	msWFSWriteConstantElement(stream, constant, element_tab);
+	break;
+      }
+    }
+    if(j != constantList->numconstants) continue; /* found this item */
     for(j=0; j<itemList->numitems; j++) { /* find the right gmlItemObj */
       item = &(itemList->items[j]);
       if(strcasecmp(item->name, group->items[i]) == 0) { 
-	msWFSWriteElement(stream, item, element_tab);
+	msWFSWriteItemElement(stream, item, element_tab);
 	break;
       }
     }
@@ -751,6 +777,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       /*
       ** OK, describe this layer
       */
+      /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername"); */      
       encoded_name = msEncodeHTMLEntities( lp->name );
       if (user_namespace_prefix)
 	msIO_printf("\n"
@@ -775,26 +802,38 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 	  int k;
 	  gmlGroupListObj *groupList=NULL;
 	  gmlItemListObj *itemList=NULL;
+          gmlConstantListObj *constantList=NULL;
 	  gmlGeometryListObj *geometryList=NULL;
 	  gmlItemObj *item=NULL;
+	  gmlConstantObj *constant=NULL;
 
 	  itemList = msGMLGetItems(lp); /* GML-related metadata */
+	  constantList = msGMLGetConstants(lp);
 	  groupList = msGMLGetGroups(lp);
 	  geometryList = msGMLGetGeometries(lp);
 
 	  /* write the geometry schema element(s) */
 	  msWFSWriteGeometryElement(stdout, geometryList, outputformat, "          ");
 
-	  for(k=0; k<lp->numitems; k++) {
+	  /* write the constant-based schema elements */
+	  for(k=0; k<constantList->numconstants; k++) {
+	    constant = &(constantList->constants[k]);  
+	    if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
+	      msWFSWriteConstantElement(stdout, constant, "          ");
+	  }
+
+	  /* write the item-based schema elements */
+	  for(k=0; k<itemList->numitems; k++) {
 	    item = &(itemList->items[k]);  
-	    if(msItemInGroups(item, groupList) == MS_FALSE) 
-	      msWFSWriteElement(stdout, item, "          ");
+	    if(msItemInGroups(item->name, groupList) == MS_FALSE) 
+	      msWFSWriteItemElement(stdout, item, "          ");
 	  }
 
 	  for(k=0; k<groupList->numgroups; k++)
-	    msWFSWriteComplexElement(stdout, &(groupList->groups[k]), itemList, "          ");
+	    msWFSWriteGroupElement(stdout, &(groupList->groups[k]), itemList, constantList, "          ");
 
 	  msGMLFreeItems(itemList);
+	  msGMLFreeConstants(constantList);
 	  msGMLFreeGroups(groupList);
 	  msGMLFreeGeometries(geometryList);
 	}

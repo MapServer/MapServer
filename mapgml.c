@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2005/10/25 20:29:52  sdlime
+ * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can havespecific types (default is string). Constants are NOT queryable so their use should be limited untilsome extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
+ *
  * Revision 1.73  2005/10/24 21:03:03  sdlime
  * Removed unused variable geom_name from WFS GML writer.
  *
@@ -779,7 +782,8 @@ static int gmlWriteGeometry(FILE *stream, gmlGeometryListObj *geometryList, int 
 /*
 ** GML specific metadata handling functions.
 */ 
-int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList) 
+
+int msItemInGroups(char *name, gmlGroupListObj *groupList) 
 {
   int i, j;
   gmlGroupObj *group;
@@ -789,7 +793,7 @@ int msItemInGroups(gmlItemObj *item, gmlGroupListObj *groupList)
   for(i=0; i<groupList->numgroups; i++) {
     group = &(groupList->groups[i]);
     for(j=0; j<group->numitems; j++) {
-      if(strcasecmp(item->name, group->items[j]) == 0) return MS_TRUE;
+      if(strcasecmp(name, group->items[j]) == 0) return MS_TRUE;
     }
   }
 
@@ -1022,6 +1026,89 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   return;
 }
 
+gmlConstantListObj *msGMLGetConstants(layerObj *layer)
+{
+  int i;
+  const char *value=NULL;
+  char tag[64];
+
+  char **names=NULL;
+  int numnames=0;
+
+  gmlConstantListObj *constantList=NULL;
+  gmlConstantObj *constant=NULL;
+
+    /* allocate the collection */
+  constantList = (gmlConstantListObj *) malloc(sizeof(gmlConstantListObj)); 
+  constantList->constants = NULL;
+  constantList->numconstants = 0;
+
+  /* list of constants (TODO: make this automatic by parsing metadata) */
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "constants")) != NULL) {
+    names = split(value, ',', &numnames);
+
+    /* allocation an array of gmlConstantObj's */
+    constantList->numconstants = numnames;
+    constantList->constants = (gmlConstantObj *) malloc(sizeof(gmlConstantObj)*constantList->numconstants);
+
+    for(i=0; i<constantList->numconstants; i++) {
+      constant = &(constantList->constants[i]);
+
+      constant->name = strdup(names[i]); /* initialize a few things */      
+      constant->value = NULL;
+      constant->type = NULL;
+
+      snprintf(tag, 64, "%s_value", constant->name);
+      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+      constant->value = strdup(value);
+
+      snprintf(tag, 64, "%s_type", constant->name);
+      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+      constant->type = strdup(value);
+    }
+
+    msFreeCharArray(names, numnames);
+  } 
+  
+  return constantList;
+}
+
+void msGMLFreeConstants(gmlConstantListObj *constantList)
+{
+  int i;
+
+  if(!constantList) return;
+
+  for(i=0; i<constantList->numconstants; i++) {
+    msFree(constantList->constants[i].name);
+    msFree(constantList->constants[i].value);
+    msFree(constantList->constants[i].type);
+  }
+
+  free(constantList);
+}
+
+static void msGMLWriteConstant(FILE *stream, gmlConstantObj *constant, const char *namespace, const char *tab)
+{
+  int add_namespace = MS_TRUE;  
+
+  if(!stream || !constant) return;
+  if(!constant->value) return;
+
+  if(!namespace) add_namespace = MS_FALSE;
+  if(strchr(constant->name, ':') != NULL) add_namespace = MS_FALSE;
+  
+  if(add_namespace == MS_TRUE && msIsXMLTagValid(constant->name) == MS_FALSE)
+    msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", constant->name);
+  
+  if(add_namespace == MS_TRUE)
+    msIO_fprintf(stream, "%s<%s:%s>%s</%s:%s>\n", tab, namespace, constant->name, constant->value, namespace, constant->name);
+  else
+    msIO_fprintf(stream, "%s<%s>%s</%s>\n", tab, constant->name, constant->value, constant->name);
+
+  return;
+}
+
 gmlGroupListObj *msGMLGetGroups(layerObj *layer)
 {
   int i;
@@ -1085,17 +1172,18 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
   free(groupList);
 }
 
-static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, gmlItemListObj *itemList, const char *namespace, const char *tab)
+static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, gmlItemListObj *itemList, gmlConstantListObj *constantList, const char *namespace, const char *tab)
 {
   int i,j;
   int add_namespace = MS_TRUE;
   char *itemtab;
 
   gmlItemObj *item=NULL;
+  gmlConstantObj *constant=NULL;
 
   if(!stream || !group) return;
 
-  /* setup the item tab */
+  /* setup the item/constant tab */
   itemtab = (char *) malloc(sizeof(char)*strlen(tab)+3);
   if(!itemtab) return;
   sprintf(itemtab, "%s  ", tab);
@@ -1108,11 +1196,20 @@ static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, g
   else
     msIO_fprintf(stream, "%s<%s>\n", tab, group->name);
   
-  /* now the items in the group */
-  for(i=0; i<group->numitems; i++) {
-    for(j=0; j<shape->numvalues; j++) {
+  /* now the items/constants in the group */  
+  for(i=0; i<group->numitems; i++) {    
+    for(j=0; j<constantList->numconstants; j++) {
+      constant = &(constantList->constants[j]);
+      if(strcasecmp(constant->name, group->items[i]) == 0) { 
+	msGMLWriteConstant(stream, constant, namespace, itemtab);
+	break;
+      }
+    }
+    if(j != constantList->numconstants) continue; /* found this one */
+    for(j=0; j<itemList->numitems; j++) {
       item = &(itemList->items[j]);
       if(strcasecmp(item->name, group->items[i]) == 0) { 
+	/* the number of items matches the number of values exactly */
 	msGMLWriteItem(stream, item, shape->values[j], namespace, itemtab);
 	break;
       }
@@ -1142,8 +1239,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
+  gmlConstantListObj *constantList=NULL;
   gmlGeometryListObj *geometryList=NULL;
   gmlItemObj *item=NULL;
+  gmlConstantObj *constant=NULL;
 
   msInitShape(&shape);
 
@@ -1193,7 +1292,8 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
       itemList = msGMLGetItems(lp);
-      groupList = msGMLGetGroups(lp);
+      constantList = msGMLGetConstants(lp);
+      groupList = msGMLGetGroups(lp);      
       geometryList = msGMLGetGeometries(lp);
 
       for(j=0; j<lp->resultcache->numresults; j++) {
@@ -1234,14 +1334,22 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 #endif
 
 	/* write the item/values */
-	for(k=0; k<lp->numitems; k++) {
+	for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);  
-          if(msItemInGroups(item, groupList) == MS_FALSE) 
+          if(msItemInGroups(item->name, groupList) == MS_FALSE) 
 	    msGMLWriteItem(stream, item, shape.values[k], NULL, "\t\t\t");
         }
 
+	/* write the constants */
+	for(k=0; k<constantList->numconstants; k++) {
+          constant = &(constantList->constants[k]);  
+          if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
+	    msGMLWriteConstant(stream, constant, NULL, "\t\t\t");
+        }
+
+	/* write the groups */
 	for(k=0; k<groupList->numgroups; k++)
-	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, NULL, "\t\t\t");
+	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, NULL, "\t\t\t");
 
 	/* end this feature */
         /* specify a feature name if nothing provided */
@@ -1262,6 +1370,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       msFree(value);
 
       msGMLFreeGroups(groupList);
+      msGMLFreeConstants(constantList);
       msGMLFreeItems(itemList);
       msGMLFreeGeometries(geometryList);
 
@@ -1300,8 +1409,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
   
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
+  gmlConstantListObj *constantList=NULL;
   gmlGeometryListObj *geometryList=NULL;
   gmlItemObj *item=NULL;
+  gmlConstantObj *constant=NULL;
 
   msInitShape(&shape);
 
@@ -1328,15 +1439,19 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
       itemList = msGMLGetItems(lp);
+      constantList = msGMLGetConstants(lp);
       groupList = msGMLGetGroups(lp);
       geometryList = msGMLGetGeometries(lp);
 
       /* set the layer name */
-      if (wfs_namespace) {
+      /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername");
+	 if(!value) value = lp->name; */
+      if (wfs_namespace) {	
 	layerName = (char *) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
 	sprintf(layerName, "%s:%s", wfs_namespace, lp->name);
-      } else
+      } else {	
 	layerName = strdup(lp->name);
+      }
 
       for(j=0; j<lp->resultcache->numresults; j++) {
 	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -1379,14 +1494,22 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 #endif
 
 	/* write the item/values */
-	for(k=0; k<lp->numitems; k++) {
+	for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);  
-          if(msItemInGroups(item, groupList) == MS_FALSE) 
+          if(msItemInGroups(item->name, groupList) == MS_FALSE) 
 	    msGMLWriteItem(stream, item, shape.values[k], wfs_namespace, "        ");
         }
 
+        /* write the constants */
+	for(k=0; k<constantList->numconstants; k++) {
+          constant = &(constantList->constants[k]);  
+          if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
+	    msGMLWriteConstant(stream, constant, wfs_namespace, "        ");
+        }
+
+	/* write the groups */
 	for(k=0; k<groupList->numgroups; k++)
-	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, wfs_namespace, "        ");
+	  msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, wfs_namespace, "        ");
 
 	/* end this feature */
         msIO_fprintf(stream, "      </%s>\n", layerName);
@@ -1403,6 +1526,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       msFree(layerName);
 
       msGMLFreeGroups(groupList);
+      msGMLFreeConstants(constantList);
       msGMLFreeItems(itemList);
       msGMLFreeGeometries(geometryList);
 
