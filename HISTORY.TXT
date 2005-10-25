@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- WMS TIME : Add suuport for multiple interval extents (Bug  1498)
+
 - Removed deprecated --with-php-regex-dir switch (bug 1468)
 
 - support wms_attribution element for LAYER's (Bug 1502)
