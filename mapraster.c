@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.130  2005/10/25 16:16:02  assefa
+ * Copy the filteritem and filter into the temporary layer
+ * created when handling tileindex rasters. (Bug 1506).
+ *
  * Revision 1.129  2005/09/21 01:18:33  frank
  * use mapresample.c if RESAMPLE is set
  *
@@ -1261,6 +1265,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
   rectObj searchrect;
   gdImagePtr img;
+  char *pszTmp = NULL;
 
   cwd[0] = '\0';
 
@@ -1341,6 +1346,33 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       tlp->name = strdup("TILE");
       tlp->type = MS_LAYER_TILEINDEX;
       tlp->data = strdup(layer->tileindex);
+      if (layer->filteritem)
+        tlp->filteritem = strdup(layer->filteritem);
+      if (layer->filter.string)
+      {
+          if (layer->filter.type == MS_EXPRESSION)
+          {
+              pszTmp = 
+                (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+              sprintf(pszTmp,"(%s)",layer->filter.string);
+              msLoadExpressionString(&tlp->filter, pszTmp);
+              free(pszTmp);
+          }
+          else if (layer->filter.type == MS_REGEX || 
+                   layer->filter.type == MS_REGEX == MS_IREGEX)
+          {
+              pszTmp = 
+                (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+              sprintf(pszTmp,"/%s/",layer->filter.string);
+              msLoadExpressionString(&tlp->filter, pszTmp);
+              free(pszTmp);
+          }
+          else
+            msLoadExpressionString(&tlp->filter, layer->filter.string);
+                   
+          tlp->filter.type = layer->filter.type;
+      }
+
     } else
       tlp = &(layer->map->layers[tilelayerindex]);
       

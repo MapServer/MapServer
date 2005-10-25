@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- wms time : correct a problem when hadling wms times with tile
+  index rasters (bug 1506).
+
 - WMS TIME : Add suuport for multiple interval extents (Bug  1498)
 
 - Removed deprecated --with-php-regex-dir switch (bug 1468)
