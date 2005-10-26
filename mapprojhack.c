@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/10/26 18:03:22  frank
+ * don't include ConvertProj func without USE_PROJ
+ *
  * Revision 1.7  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -80,6 +83,7 @@ enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD,
 /*      unit passed as argument.                                        */
 /*       Please refer to ./src/pj_units.c file in the Proj.4 module.    */
 /************************************************************************/
+#ifdef USE_PROJ 
 static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 {
     if (strcmp(pszProjUnit, "m") ==0)
@@ -105,6 +109,7 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
     
     return -1;              
 }
+#endif /* def USE_PROJ */
 
 /************************************************************************/
 /*       pj_units[] copy.  It is safer for win32 builds to include a    */
