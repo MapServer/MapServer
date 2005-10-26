@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2005/10/26 17:44:28  frank
+ * avoid warning when building without WMS and WFS.
+ *
  * Revision 1.94  2005/08/05 18:45:07  sdlime
  * Added code to apply sizeitem and angleitem to points.
  *
@@ -341,13 +344,13 @@ imageObj *msDrawMap(mapObj *map)
     int i;
     layerObj *lp=NULL;
     int status = MS_FAILURE;
-    enum MS_CONNECTION_TYPE lastconnectiontype;
     imageObj *image = NULL;
     struct mstimeval mapstarttime, mapendtime;
     struct mstimeval starttime, endtime;
     int oldAlphaBlending;  /* allows toggling of gd alpha blending (bug 490) */
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+    enum MS_CONNECTION_TYPE lastconnectiontype;
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
     int numOWSRequests=0;
     wmsParamsObj sLastWMSParams;
