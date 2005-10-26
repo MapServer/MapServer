@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/10/26 17:53:57  frank
+ * Avoid warning about unused function.
+ *
  * Revision 1.20  2005/09/26 19:47:14  assefa
  * Correct typo bugs when outputing symbols (Bug 1407)
  *
@@ -817,6 +820,8 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 #define Tcl_UniChar int
 #define TCL_UTF_MAX 3
 /*comes from gd source code (ggdft.c).*/
+
+#ifdef notdef /* disabled since not currently used */
 static int gdTcl_UtfToUniChar (char *str, Tcl_UniChar * chPtr)
 {
   int byte;
@@ -912,6 +917,7 @@ static int gdTcl_UtfToUniChar (char *str, Tcl_UniChar * chPtr)
   *chPtr = (Tcl_UniChar) byte;
   return 1;
 }
+#endif /* def notdef */
 
 static void drawSVGText(FILE *fp, int bCompressed, int x, int y, 
                         char *string, double size, 
