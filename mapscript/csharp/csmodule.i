@@ -3,7 +3,7 @@
 %typemap(imtype) gdBuffer  %{void%}
 %typemap(cstype) gdBuffer %{byte[]%}
 
-%typemap(out) gdBuffer
+%typemap(out, null="") gdBuffer
 %{ SWIG_csharp_bytearray_callback($1.data, $1.size);
 	gdFree($1.data); %}
 
