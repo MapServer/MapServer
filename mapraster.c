@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.131  2005/10/26 17:50:54  frank
+ * Avoid type punning warnings in readGEOTiff().
+ *
  * Revision 1.130  2005/10/25 16:16:02  assefa
  * Copy the filteritem and filter into the temporary layer
  * created when handling tileindex rasters. (Bug 1506).
@@ -460,7 +463,8 @@ static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, d
 static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *cy)
 {
   short entries;
-  int i,fpos,swap,tiepos,cellpos;
+  int i,fpos,swap;
+  uint32 tiepos, cellpos;
   double tie[6],cell[6];
   TIFFDirEntry tdir;
   FILE *f;
@@ -478,11 +482,11 @@ static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *
     if (swap) TIFFSwabShort(&tdir.tdir_tag);
     if (tdir.tdir_tag==0x8482) {  /* geoTIFF tie point */
       tiepos=tdir.tdir_offset;
-      if (swap) TIFFSwabLong((long *)&tiepos);
+      if (swap) TIFFSwabLong(&tiepos);
       }
     if (tdir.tdir_tag==0x830e) {  /* geoTIFF cell size */
       cellpos=tdir.tdir_offset;
-      if (swap) TIFFSwabLong((long *)&cellpos);
+      if (swap) TIFFSwabLong(&cellpos);
       }
     }
   if (tiepos==0 || cellpos==0) {
