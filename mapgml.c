@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2005/10/26 21:07:35  sdlime
+ * WFS GML output includes an option to set a gml:id for each feature. The default is no id (current behavior), but this can be overidden using the metadata value gml_featureid, which takes an item name to use to create the id or the special value '_index' to use the shape->index. This partially addresses bug 1413.
+ *
  * Revision 1.74  2005/10/25 20:29:52  sdlime
  * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can havespecific types (default is string). Constants are NOT queryable so their use should be limited untilsome extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
  *
@@ -1404,6 +1407,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
   int i,j,k;
   layerObj *lp=NULL;
   shapeObj shape;
+  char *id=NULL;
   rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
   int features = 0;
   
@@ -1426,8 +1430,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
     lp = &(map->layers[i]);
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
-      char *layerName;
-      /* const char *value; */
+      char *layerName;      
+      const char *value;
+      int featureIdIndex=-2; /* no feature id */
 
       /* actually open the layer */
       status = msLayerOpen(lp);
@@ -1436,6 +1441,19 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       /* retrieve all the item names. (Note : there might be no attributes) */
       status = msLayerGetItems(lp);
       /* if(status != MS_SUCCESS) return(status); */
+      
+      value = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
+      if(value) { /* find the featureid amongst the items for this layer */
+	if(strcasecmp("_index", value) == 0)
+	 featureIdIndex = -1; /* use the shape index */
+        else
+  	  for(j=0; j<lp->numitems; j++) {
+	    if(strcasecmp(lp->items[j], value) == 0) { /* found it */
+	      featureIdIndex = j;
+	      break;
+	    } 
+	  }
+      }
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
       itemList = msGMLGetItems(lp);
@@ -1467,10 +1485,24 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 	** start this feature 
 	*/        
 
+	/* set the ID */
+	if(featureIdIndex > 0)
+	  id = strdup(shape.values[featureIdIndex]);
+	else if(featureIdIndex == -1) { /* use the shape index */
+	  id = (char *) malloc(255+1);
+	  snprintf(id, 255, "%ld", shape.index);   
+        }
+
 	msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layerName) == MS_FALSE)
             msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
-        msIO_fprintf(stream, "      <%s>\n", layerName);
+        if(featureIdIndex != -2)
+          msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, id);	  
+        else
+	  msIO_fprintf(stream, "      <%s>\n", layerName);
+
+	/* done with the ID */
+	msFree(id);
 
 	/* write the bounding box */
 	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first*/
@@ -1546,4 +1578,3 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
     return MS_FAILURE;
 #endif /* USE_WFS_SVR */
 }
-
