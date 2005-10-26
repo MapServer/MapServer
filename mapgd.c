@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.107  2005/10/26 05:14:36  sdlime
+ * Changed where computation of the scaling factor happens (on unrotated symbol now) so that the size of unrotated and rotated symbols are identical.
+ *
  * Revision 1.106  2005/10/14 05:06:49  sdlime
  * Initial integration of MapMedia's symbol rotation code.
  *
@@ -1532,14 +1535,17 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     
     break;
   case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
+
+    /* compute the scaling factor (d) on the unrotated symbol */
+    max_size = MS_MAX(symbol->sizex, symbol->sizey);
+    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
+
     if (angle != 0.0 && angle != 360.0) {
       /* rotate the symbol creating a new symbol object */
       oldsymbol = symbol;
       symbol = msRotateSymbol(symbol, style->angle);
     }
 
-    max_size = MS_MAX(symbol->sizex, symbol->sizey);
-    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
     offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
     offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
     
@@ -1720,14 +1726,15 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   case(MS_SYMBOL_VECTOR):
     if(bc == -1) bc = gdTransparent;
     
+    /* compute the scaling factor (d) on the unrotated symbol */
+    max_size = MS_MAX(symbol->sizex, symbol->sizey);
+    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
+
     if(angle != 0.0 && angle != 360.0) {
       /* rotate the symbol creating a new symbol object */
       oldsymbol = symbol;
       symbol = msRotateSymbol(symbol, angle);
     }
-
-    max_size = MS_MAX(symbol->sizex, symbol->sizey);
-    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
 
     x = MS_NINT(symbol->sizex*d)+1;
     y = MS_NINT(symbol->sizey*d)+1;
