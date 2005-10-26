@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.78  2005/10/26 17:51:28  frank
+ * avoid warnings about unused functions
+ *
  * Revision 1.77  2005/09/26 18:55:20  assefa
  * use transparency set at the layer level on wms client layers  (Bug 1458).
  *
@@ -158,6 +161,8 @@ void msFreeWmsParamsObj(wmsParamsObj *wmsparams)
  *                          msSetWMSParamString()
  *
  **********************************************************************/
+
+#ifdef USE_WMS_LYR
 static int msSetWMSParamString(wmsParamsObj *psWMSParams, 
                                const char *name, const char * value,
                                int urlencode) 
@@ -177,11 +182,14 @@ static int msSetWMSParamString(wmsParamsObj *psWMSParams,
 
     return MS_SUCCESS;
 }
+#endif /* def USE_WMS_LYR */
 
 /**********************************************************************
  *                          msSetWMSParamInt()
  *
  **********************************************************************/
+
+#ifdef USE_WMS_LYR
 static int msSetWMSParamInt(wmsParamsObj *wmsparams, 
                             const char *name, int value) 
 {
@@ -193,6 +201,7 @@ static int msSetWMSParamInt(wmsParamsObj *wmsparams,
 
     return MS_SUCCESS;
 }
+#endif /* def USE_WMS_LYR */
 
 /**********************************************************************
  *                          msBuildWMSParamsUrl()
