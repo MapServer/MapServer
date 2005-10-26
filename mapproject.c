@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/10/26 17:42:10  frank
+ * Avoid warnings if USE_PROJ not defined.
+ *
  * Revision 1.46  2005/10/20 19:37:19  frank
  * ensure reprojected polygons are closed
  *
@@ -415,12 +418,12 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
 /*      over the horizon point to the come back over the horizon point. */
 /************************************************************************/
 
+#ifdef USE_PROJ
 static int 
 msProjectShapeLine(projectionObj *in, projectionObj *out, 
                    shapeObj *shape, int line_index)
 
 {
-#ifdef USE_PROJ
     int i;
     pointObj	lastPoint, thisPoint, wrkPoint, firstPoint;
     lineObj *line = shape->line + line_index;
@@ -597,11 +600,8 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
     }
 
     return(MS_SUCCESS);
-#else
-    msSetError(MS_PROJERR, "Projection support is not available.", "msProjectLine()");
-    return(MS_FAILURE);
-#endif
 }
+#endif
 
 /************************************************************************/
 /*                           msProjectShape()                           */
@@ -858,6 +858,7 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 /************************************************************************/
 /*                            msProjFinder()                            */
 /************************************************************************/
+#ifdef USE_PROJ
 static char *ms_proj_lib = NULL;
 static char *last_filename = NULL;
 
@@ -878,6 +879,7 @@ static const char *msProjFinder( const char *filename)
 
     return last_filename;
 }
+#endif /* def USE_PROJ */
 
 /************************************************************************/
 /*                           msSetPROJ_LIB()                            */
