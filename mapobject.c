@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/26 17:40:03  frank
+ * Avoid unused variable warning.
+ *
  * Revision 1.22  2005/09/23 16:20:44  hobu
  * add meatier error message for invalid extents
  *
@@ -721,8 +724,9 @@ int msSetLayersdrawingOrder(mapObj *self, int *panIndexes)
 int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
                            const char *wmtver)
 {
-    int version;
 #ifdef USE_WMS_SVR
+    int version;
+
     version = msOWSParseVersionString(wmtver);
     return msWMSLoadGetMapParams(map, version, request->ParamNames,
                                  request->ParamValues, request->NumParams);
