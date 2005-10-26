@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/10/26 18:02:37  frank
+ * No point in compiling in resampling functions without USE_GDAL.
+ *
  * Revision 1.62  2005/10/13 04:02:28  frank
  * Better computation of sDummyMap.cellsize (bug 1493)
  *
@@ -163,7 +166,7 @@ int InvGeoTransform( double *gt_in, double *gt_out )
     return 1;
 }
 
-#ifdef USE_PROJ
+#if defined(USE_PROJ) && defined(USE_GDAL)
 
 /************************************************************************/
 /*                      msNearestRasterResample()                       */
@@ -588,7 +591,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_16bit[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (GInt16) padfPixelSum[0];
+                            = (short) padfPixelSum[0];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
                     {
@@ -602,7 +605,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_byte[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (GByte) padfPixelSum[0];
+                            = (unsigned char) padfPixelSum[0];
                     }
                 }
             }
@@ -676,14 +679,14 @@ msAverageSample( imageObj *psSrcImage,
     }
 
     if( dfWeightSum == 0.0 )
-        return FALSE;
+        return MS_FALSE;
 
     for( iX = 0; iX < 4; iX++ )
         padfPixelSum[iX] /= dfWeightSum;
 
     *pdfAlpha01 = dfWeightSum / dfMaxWeight;
 
-    return TRUE;
+    return MS_TRUE;
 }
 
 /************************************************************************/
@@ -814,7 +817,7 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_16bit[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (GInt16) padfPixelSum[0];
+                            = (short) padfPixelSum[0];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
                     {
@@ -828,7 +831,7 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_byte[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (GByte) padfPixelSum[0];
+                            = (unsigned char) padfPixelSum[0];
                     }
                 }
             }
@@ -912,7 +915,7 @@ void *msInitProjTransformer( projectionObj *psSrc,
     if( psPTInfo->bUseProj )
         psPTInfo->bSrcIsGeographic = pj_is_latlong(psSrc->proj);
     else
-        psPTInfo->bSrcIsGeographic = FALSE;
+        psPTInfo->bSrcIsGeographic = MS_FALSE;
     
     if( !InvGeoTransform(padfSrcGeoTransform, 
                          psPTInfo->adfInvSrcGeoTransform) )
@@ -925,7 +928,7 @@ void *msInitProjTransformer( projectionObj *psSrc,
     if( psPTInfo->bUseProj )
         psPTInfo->bDstIsGeographic = pj_is_latlong(psDst->proj);
     else
-        psPTInfo->bDstIsGeographic = FALSE;
+        psPTInfo->bDstIsGeographic = MS_FALSE;
     memcpy( psPTInfo->adfDstGeoTransform, padfDstGeoTransform, 
             sizeof(double) * 6 );
 
