@@ -6,7 +6,7 @@ MS RFC 3: Feature Layer Plug-in Architecture
 :Author: Jani Averbach
 :Contact: javerbach@extendthereach.com
 :Last Edited: $Date$
-:Status: proposed
+:Status: Adopted
 
 
 
@@ -383,15 +383,22 @@ Implementation Issues
 Bug ID
 ------
 
-unassigned
+Bug 1477_
+ 
+.. _1477: http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1477
 
 
 
 Voting history
 --------------
 
-None
+Vote proposed by Jani Averbach on 9/19/2005, result was +4
+(3 non-voting members).
 
+Voting +1: Howard Butler, Frank Warmerdam, Yewondwossen Assefa, 
+           Daniel Morissette
+
+Proposal passes and will move forward.
 
 
 Open questions
