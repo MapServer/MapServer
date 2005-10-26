@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.108  2005/10/26 17:47:44  frank
+ * Removed unused msFixedImageCopy(), and some unused variables.
+ *
  * Revision 1.107  2005/10/26 05:14:36  sdlime
  * Changed where computation of the scaling factor happens (on unrotated symbol now) so that the size of unrotated and rotated symbols are identical.
  *
@@ -162,8 +165,6 @@
 #endif
 
 MS_CVSID("$Id$")
-
-static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h);
 
 static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
 static unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
@@ -1057,12 +1058,12 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
 void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
   int i, j;
-  symbolObj *symbol, *oldsymbol=NULL;
+  symbolObj *symbol;
   int styleDashed[MS_MAXPATTERNSIZE];
   int x, y, ox, oy;
   int bc, fc;
   int brush_bc, brush_fc;
-  double size, max_size, d, angle;
+  double size, d;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
   
@@ -1203,7 +1204,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
 void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
                                pointObj *p, double r, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol, *oldsymbol=NULL;
+  symbolObj *symbol;
   int i;
   gdPoint oldpnt,newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
@@ -1212,7 +1213,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   int fc, bc, oc;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
-  double size, max_size, d, angle;  
+  double size, d;  
   int width;
 
   int bbox[8];
@@ -1838,7 +1839,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 /* ------------------------------------------------------------------------------- */
 void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol, *oldsymbol=NULL;
+  symbolObj *symbol;
   int i, k;
   gdPoint oldpnt, newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
@@ -1846,7 +1847,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   int x, y, ox, oy;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
-  double size, max_size, d, angle;
+  double size, d;
   int width;
   
   int bbox[8];
@@ -3343,44 +3344,6 @@ unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr,
 void msFreeImageGD(gdImagePtr img)
 {
   gdImageDestroy(img);
-}
-
-static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src,  int dstX, int dstY, int srcX, int srcY, int w, int h)
-{
-    int x, y;
-
-    /* for most cases the GD copy is fine */
-    if( !gdImageTrueColor(dst) || gdImageTrueColor(src) )
-    {
-        gdImageCopy( dst, src, dstX, dstY, srcX, srcY, w, h );
-        return;
-    }
-
-    /* But for copying 8bit to 24bit the GD 2.0.1 copy has a bug with
-       transparency */
-
-    for (y = 0; (y < h); y++)
-    {
-        for (x = 0; (x < w); x++)
-        {
-            int c_8 = gdImageGetPixel (src, srcX + x, srcY + y);
-
-            if (c_8 != src->transparent)
-            {
-                int c;
-
-                c = gdTrueColorAlpha (src->red[c_8], 
-                                      src->green[c_8], 
-                                      src->blue[c_8],
-                                      gdAlphaOpaque );
-                gdImageSetPixel (dst,
-                                 dstX + x,
-                                 dstY + y,
-                                 c);
-            }
-        }
-    }
-    return;
 }
 
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct)
