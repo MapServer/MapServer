@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.109  2005/10/27 18:07:02  sdlime
+ * Fixed a problem with 1x1 ellipse symbol drawing in msDrawLineSymbolGD().
+ *
  * Revision 1.108  2005/10/26 17:47:44  frank
  * Removed unused msFixedImageCopy(), and some unused variables.
  *
@@ -1651,6 +1654,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   /* if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size; */
   /* if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size; */
 
+  
   size = MS_NINT(size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
@@ -1691,12 +1695,10 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     bc = gdTransparent;
 
     max_size = MS_MAX(symbol->sizex, symbol->sizey);
-    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
-
-    x = MS_NINT(symbol->sizex*d)+1;
-    y = MS_NINT(symbol->sizey*d)+1;
-    if (x < (symbol->sizex*d)) x += 1;
-    if (y < (symbol->sizey*d)) y += 1;    
+    d = max_size != 0 ? size/max_size : 1.0;
+    
+    x = MS_NINT(symbol->sizex*d);    
+    y = MS_NINT(symbol->sizey*d);
 
     if((x < 2) && (y < 2)) break;
     
@@ -1818,8 +1820,9 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       if(style->antialias==MS_TRUE) {       
         gdImageSetAntiAliased(img, fc);
         imagePolyline(img, p, gdAntiAliased, ox, oy);
-      } else
+      } else {	
         imagePolyline(img, p, fc, ox, oy);
+      }
     } else
       imagePolyline(img, p, gdBrushed, ox, oy);
   }
