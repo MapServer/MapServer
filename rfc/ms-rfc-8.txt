@@ -28,10 +28,27 @@ bind it to the running mapserver by layer's virtual table.
 Technical Solution
 -------------------
 
-* New MAP-file keyword ``PLUGINLIB`` with string argument.  This
+* New ``CONFIG`` option ``MS_PLUGIN_DIR`` which, if set, tells the base
+  path for plugins
+
+* New MAP-file keyword ``PLUGIN`` with string argument.  This
   keywords tells which library dynamically to load for this layer.
 
-* New connection type ``CUSTOM``
+  The plugins are loaded based on the following algorithm:
+
+  * If plugin string is missing ``.so`` or ``.dll`` extension, append
+    it to the plugin string
+
+  * If ``MS_PLUGIN_DIR`` is set and plugin string is not an absolute
+    path, prefix plugin string with ``MS_PLUGIN_DIR``
+  
+  * otherwise use plugin string directly
+
+  In general, the dynamic library loader will use system paths to seek
+  appropriate plugin to load, if the path is not absolute.
+  
+
+* New connection type ``PLUGIN``
 
 * New field ``char* plugin_library`` in layerObj structure, this is
   the name of library to load for this layer.
@@ -99,6 +116,8 @@ mapservers.
 Implementation Issues
 ---------------------
 
+None
+
 
 Bug ID
 ------
@@ -119,11 +138,14 @@ None
 Open questions
 --------------
 
+None
+
 
 =============
 Working Notes
 =============
 
+None
 
 
 .. 
