@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.61  2005/10/28 02:07:52  frank
+ * corrected a few problems from last change
+ *
  * Revision 1.60  2005/10/28 01:09:41  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1106,6 +1109,8 @@ int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex, int bOnlySpatialFilter)
 {
+    layerObj *layer = map->layers + iLayerIndex;
+
     if ( ! layer->vtable) {
         int rv =  msInitializeVirtualTable(layer);
         if (rv != MS_SUCCESS)
@@ -1113,7 +1118,7 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     }
     return layer->vtable->LayerApplyFilterToLayer(psNode, map, 
                                                   iLayerIndex, 
-                                                  bOblySpatialFilter);
+                                                  bOnlySpatialFilter);
 }
 
 /************************************************************************/
@@ -1135,7 +1140,7 @@ int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
         return MS_SUCCESS;
     }        
     
-    return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex, bOblySpatialFilter);
+    return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex, bOnlySpatialFilter);
 }
 
 /************************************************************************/
@@ -1149,8 +1154,6 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int *panResults = NULL;
     int nResults = 0;
     layerObj *psLayer = NULL;
-
-    char *sttt = NULL;
 
     psLayer = &(map->layers[iLayerIndex]);
     panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
