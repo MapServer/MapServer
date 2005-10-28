@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.426  2005/10/28 02:08:14  frank
+ * a few mapogr.cpp funcs used from WFS code, exposed in map.h
+ *
  * Revision 1.425  2005/10/28 01:09:41  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1948,6 +1951,13 @@ MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 /* ==================================================================== */
 /*      End of prototypes for functions in mapoutput.c                  */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      Public prototype for mapogr.cpp functions.                      */
+/* ==================================================================== */
+int MS_DLL_EXPORT msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
+int MS_DLL_EXPORT msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); /* in mapogr.cpp */
+int MS_DLL_EXPORT msOGRLayerClose(layerObj *layer);
 
 /* ==================================================================== */
 /*      prototypes for functions in mapcopy                             */

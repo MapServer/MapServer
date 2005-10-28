@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.90  2005/10/28 02:08:14  frank
+ * a few mapogr.cpp funcs used from WFS code, exposed in map.h
+ *
  * Revision 1.89  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -228,10 +231,7 @@ typedef struct ms_ogr_file_info_t
 
 } msOGRFileInfo;
 
-int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); /* in mapogr.cpp */
 int msOGRLayerIsOpen(layerObj *layer);
-int msOGRLayerClose(layerObj *layer);
-int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
 int msOGRLayerInitItemInfo(layerObj *layer);
 int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
