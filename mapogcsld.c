@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.56  2005/10/28 16:36:01  assefa
+ * Syntax error when auto generating external symbols (Bug 1508),
+ *
  * Revision 1.55  2005/07/26 16:23:20  assefa
  * SLD external graphic symbol format tests now for mime type
  * like image/gif instead of just GIF (Bug 1430).
@@ -260,7 +263,6 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     char *pszSLDbuf=NULL;
     FILE *fp = NULL;               
     int nStatus = MS_FAILURE;
-
 
     if (map && szURL)
     {
@@ -2870,7 +2872,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
     char *pszSLD = NULL;
     int nSymbol = -1;
     symbolObj *psSymbol = NULL;
-    char szTmp[100];
+    char szTmp[512];
     char *pszURL = NULL;
     char szFormat[4];
     int i = 0, nLength = 0;
@@ -3063,7 +3065,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         sprintf(szTmp, "%s\n", "<ExternalGraphic>");
                         pszSLD = strcatalloc(pszSLD, szTmp);
                         
-                        sprintf(szTmp, "<OnlineResource>%s%s</OnlineResource>\n", 
+                        sprintf(szTmp, "<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s%s\"/>\n", 
                                 pszURL,psSymbol->imagepath);
                         pszSLD = strcatalloc(pszSLD, szTmp);
                         /* TODO : extract format from symbol */

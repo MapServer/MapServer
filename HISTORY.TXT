@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- SLD : syntax error when auto generating external symbols 
+  (Bug 1508).
+
 - MS RFC 3: Layer vtable architecture (bug 1477)
 
 - wms time : correct a problem when hadling wms times with tile
