@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2005/10/28 01:09:42  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.12  2005/07/20 13:55:34  assefa
  * Added support of case insensitive matChase attribute.
  *
@@ -89,34 +92,6 @@
 #include "cpl_minixml.h"
 
 
-typedef enum 
-{
-    FILTER_NODE_TYPE_UNDEFINED = -1,
-    FILTER_NODE_TYPE_LOGICAL = 0,
-    FILTER_NODE_TYPE_SPATIAL = 1,
-    FILTER_NODE_TYPE_COMPARISON = 2,
-    FILTER_NODE_TYPE_PROPERTYNAME = 3,
-    FILTER_NODE_TYPE_BBOX = 4,
-    FILTER_NODE_TYPE_LITERAL = 5,
-    FILTER_NODE_TYPE_BOUNDARY = 6,
-    FILTER_NODE_TYPE_GEOMETRY_POINT = 7,
-    FILTER_NODE_TYPE_GEOMETRY_LINE = 8,
-    FILTER_NODE_TYPE_GEOMETRY_POLYGON = 9
-} FilterNodeType;
-
-
-typedef struct _FilterNode
-{
-    FilterNodeType      eType;
-    char                *pszValue;
-    void                *pOther;
-
-    struct _FilterNode  *psLeftNode;
-    struct _FilterNode  *psRightNode;
-
-      
-}FilterEncodingNode;
-
 
 typedef struct
 {
@@ -133,6 +108,12 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
 FilterEncodingNode *FLTCreateFilterEncodingNode(void);
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                          int iLayerIndex, int bOnlySpatialFilter);
+
+int FLTLayerApplyCondSQLFilteToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                     int iLayerIndex, int bOnlySpatialFilter);
+int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                   int iLayerIndex, int bOnlySpatialFilter);
+
 int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                                  int iLayerIndex);
 

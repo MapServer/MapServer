@@ -124,6 +124,7 @@
  *****************************************************************************/
 
 #include "map.h"
+#include <assert.h>
 
 MS_CVSID("$Id$")
 
@@ -2479,3 +2480,43 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
 }
 
 #endif
+
+int
+msOracleSpatialLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
+{
+    return msOracleSpatialLayerGetShape(layer, shape, record);
+}
+
+
+int
+msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msOracleSpatialLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msOracleSpatialLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msOracleSpatialLayerOpen;
+    layer->vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
+    layer->vtable->LayerNextShape = msOracleSpatialLayerNextShape;
+    layer->vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
+
+    layer->vtable->LayerClose = msOracleSpatialLayerClose;
+    layer->vtable->LayerGetItems = msOracleSpatialLayerGetItems;
+    layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
+
+    /* layer->vtable->LayerGetAutoStyle, use default */
+    
+    layer->vtable->LayerCloseConnection = msOracleSpatialLayerClose;
+
+    layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+
+    layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+
+    return MS_SUCCESS;
+}
+

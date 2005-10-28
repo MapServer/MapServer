@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.60  2005/10/28 01:09:41  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.59  2005/10/13 15:12:45  assefa
  * Correct bug 1496 : error when allocation temporary array.
  *
@@ -1103,53 +1106,73 @@ int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex, int bOnlySpatialFilter)
 {
+    if ( ! layer->vtable) {
+        int rv =  msInitializeVirtualTable(layer);
+        if (rv != MS_SUCCESS)
+            return rv;
+    }
+    return layer->vtable->LayerApplyFilterToLayer(psNode, map, 
+                                                  iLayerIndex, 
+                                                  bOblySpatialFilter);
+}
+
+/************************************************************************/
+/*               FLTLayerApplyCondSQLFilteToLayer                       */
+/*                                                                      */
+/* Helper function for layer virtual table architecture                 */
+/************************************************************************/
+int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                      int iLayerIndex, int bOnlySpatialFilter)
+{
+/* ==================================================================== */
+/*      Check here to see if it is a simple filter and if that is       */
+/*      the case, we are going to use the FILTER element on             */
+/*      the layer.                                                      */
+/* ==================================================================== */
+    if (!bOnlySpatialFilter && FLTIsSimpleFilter(psNode))
+    {
+        FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
+        return MS_SUCCESS;
+    }        
+    
+    return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex, bOblySpatialFilter);
+}
+
+/************************************************************************/
+/*                   FLTLayerApplyPlainFilterToLayer                    */
+/*                                                                      */
+/* Helper function for layer virtual table architecture                 */
+/************************************************************************/
+int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                    int iLayerIndex, int bOnlySpatialFilter)
+{
     int *panResults = NULL;
     int nResults = 0;
     layerObj *psLayer = NULL;
 
     char *sttt = NULL;
 
-    //strlen(sttt);
-
-/* ==================================================================== */
-/*      Check here to see if it is a simple filter and if that is       */
-/*      the case, we are going to use the FILTER element on             */
-/*      the layer.                                                      */
-/* ==================================================================== */
     psLayer = &(map->layers[iLayerIndex]);
-    if (!bOnlySpatialFilter && 
-        FLTIsSimpleFilter(psNode) && 
-        (psLayer->connectiontype == MS_POSTGIS ||
-         psLayer->connectiontype == MS_ORACLESPATIAL ||
-         psLayer->connectiontype == MS_OGR))
+    panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
+                                    &nResults, bOnlySpatialFilter);
+    if (panResults) 
+        FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
+    /* clear the cache if the results is NULL to make sure there aren't */
+    /* any left over from intermediate queries. */
+    else 
     {
-        FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
-                                             
-    }        
-    else
-    {
-        panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
-                                        &nResults, bOnlySpatialFilter);
-        if (panResults)
-          FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
-        /* clear the cache if the results is NULL to make sure there aren't */
-        /* any left over from intermediate queries. */
-        else 
+        if (psLayer && psLayer->resultcache)
         {
-            if (psLayer && psLayer->resultcache)
-            {
-                if (psLayer->resultcache->results)
-                  free (psLayer->resultcache->results);
-                free(psLayer->resultcache);
+            if (psLayer->resultcache->results)
+                free (psLayer->resultcache->results);
+            free(psLayer->resultcache);
             
-                psLayer->resultcache = NULL;
-            }
+            psLayer->resultcache = NULL;
         }
-    
-
-        if (panResults)
-          free(panResults);
     }
+
+    if (panResults)
+        free(panResults);
 
     return MS_SUCCESS;
 }

@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- MS RFC 3: Layer vtable architecture (bug 1477)
+
 - wms time : correct a problem when hadling wms times with tile
   index rasters (bug 1506).
 

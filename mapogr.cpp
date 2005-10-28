@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.89  2005/10/28 01:09:42  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.88  2005/06/27 19:52:22  frank
  * Avoid leak of "0 length" point arrays in geometry.
  *
@@ -193,6 +196,7 @@
  *
  **********************************************************************/
 
+#include <assert.h>
 #include "map.h"
 #include "mapproject.h"
 
@@ -223,6 +227,13 @@ typedef struct ms_ogr_file_info_t
   rectObj     rect;                     /* set by WhichShapes */
 
 } msOGRFileInfo;
+
+int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); /* in mapogr.cpp */
+int msOGRLayerIsOpen(layerObj *layer);
+int msOGRLayerClose(layerObj *layer);
+int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
+int msOGRLayerInitItemInfo(layerObj *layer);
+int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
 // Undefine this if you are using a very old GDAL without OpenShared(). 
 #define USE_SHARED_ACCESS  
@@ -1631,6 +1642,15 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
 }
 
 /**********************************************************************
+ *                     msOGRLayerOpenVT()
+ *
+ * Overloaded version of msOGRLayerOpen for virtual table architecture
+ **********************************************************************/
+int msOGRLayerOpenVT(layerObj *layer) 
+{
+	return msOGRLayerOpen(layer, NULL);
+}
+/**********************************************************************
  *                     msOGRLayerClose()
  **********************************************************************/
 int msOGRLayerClose(layerObj *layer) 
@@ -2385,5 +2405,36 @@ void msOGRCleanup( void )
         bOGRDriversRegistered = MS_FALSE;
     }
 #endif
+}
+
+int
+msOGRLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msOGRLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msOGRLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msOGRLayerOpenVT;
+    layer->vtable->LayerIsOpen = msOGRLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msOGRLayerWhichShapes;
+    layer->vtable->LayerNextShape = msOGRLayerNextShape;
+    layer->vtable->LayerGetShape = msOGRLayerGetShape;
+
+    layer->vtable->LayerClose = msOGRLayerClose;
+    layer->vtable->LayerGetItems = msOGRLayerGetItems;
+    layer->vtable->LayerGetExtent = msOGRLayerGetExtent;
+    layer->vtable->LayerGetAutoStyle = msOGRLayerGetAutoStyle;
+
+    /* layer->vtable->LayerCloseConnection, use default */
+
+    layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+    
+    layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+
+    return MS_SUCCESS;
 }
 

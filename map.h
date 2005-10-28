@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.425  2005/10/28 01:09:41  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.424  2005/10/20 19:37:03  frank
  * added msAddPointToLine
  *
@@ -524,7 +527,37 @@ extern "C" {
 
 
 #define MS_FILE_DEFAULT MS_FILE_MAP   
-   
+
+
+/* Filter object */    
+typedef enum 
+{
+    FILTER_NODE_TYPE_UNDEFINED = -1,
+    FILTER_NODE_TYPE_LOGICAL = 0,
+    FILTER_NODE_TYPE_SPATIAL = 1,
+    FILTER_NODE_TYPE_COMPARISON = 2,
+    FILTER_NODE_TYPE_PROPERTYNAME = 3,
+    FILTER_NODE_TYPE_BBOX = 4,
+    FILTER_NODE_TYPE_LITERAL = 5,
+    FILTER_NODE_TYPE_BOUNDARY = 6,
+    FILTER_NODE_TYPE_GEOMETRY_POINT = 7,
+    FILTER_NODE_TYPE_GEOMETRY_LINE = 8,
+    FILTER_NODE_TYPE_GEOMETRY_POLYGON = 9
+} FilterNodeType;
+
+
+typedef struct _FilterNode
+{
+    FilterNodeType      eType;
+    char                *pszValue;
+    void                *pOther;
+
+    struct _FilterNode  *psLeftNode;
+    struct _FilterNode  *psRightNode;
+
+      
+}FilterEncodingNode;
+
 
 /* FONTSET OBJECT - used to hold aliases for TRUETYPE fonts */
     typedef struct {
@@ -957,6 +990,10 @@ typedef struct
   char    *labelformat;
 } graticuleObj;
 
+
+struct layerVTable;
+typedef struct layerVTable layerVTableObj;
+
 /* LAYER OBJECT - basic unit of a map */
 typedef struct layer_obj {
 
@@ -1037,7 +1074,9 @@ typedef struct layer_obj {
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
- 
+
+  layerVTableObj *vtable;
+
 #ifndef SWIG
   struct layer_obj *sameconnection;
   /* SDL has converted OracleSpatial, SDE, Graticules, MyGIS */
@@ -1095,6 +1134,7 @@ typedef struct layer_obj {
 %mutable;
 #endif /* SWIG */
 } layerObj;
+
 
 /* MAP OBJECT - encompasses everything used in an Internet mapping application */
 typedef struct map_obj{ /* structure for a map */
@@ -1228,6 +1268,40 @@ typedef struct {
   } img;
 #endif
 } imageObj;
+
+
+/* LAYER_VTABLE, contains function pointers to the layer operations 
+ * If you add new functions to here, remember to update
+ * populateVirtualTable in maplayer.c
+ */
+struct layerVTable {
+    int (*LayerInitItemInfo)(layerObj *layer);
+    void (*LayerFreeItemInfo)(layerObj *layer);
+    int (*LayerOpen)(layerObj *layer);
+    int (*LayerIsOpen)(layerObj *layer);
+    int (*LayerWhichShapes)(layerObj *layer, rectObj rect);
+    int (*LayerNextShape)(layerObj *layer, shapeObj *shape);
+    int (*LayerGetShape)(layerObj *layer, shapeObj *shape, 
+                         int tile, long record);
+    int (*LayerClose)(layerObj *layer);
+    int (*LayerGetItems)(layerObj *layer);
+    int (*LayerGetExtent)(layerObj *layer, rectObj *extent);
+    int (*LayerGetAutoStyle)(mapObj *map, layerObj *layer, classObj *c, 
+                             int tile, long record);
+
+    int (*LayerCloseConnection)(layerObj *layer);
+
+    int (*LayerSetTimeFilter)(layerObj *layer, 
+                              const char *timestring, 
+                              const char *timefield);
+
+    int (*LayerApplyFilterToLayer)(FilterEncodingNode *psNode, mapObj *map,
+                                   int iLayerIndex, 
+                                   int bOnlySpatialFilter);
+
+    int (*LayerCreateItems)(layerObj *layer, int nt);
+    int (*LayerGetNumFeatures)(layerObj *layer);
+};
 
 
 /* Function prototypes, wrapable */
@@ -1498,6 +1572,9 @@ MS_DLL_EXPORT int msGetBit(char *array, int index);
 MS_DLL_EXPORT void msSetBit(char *array, int index, int value);
 MS_DLL_EXPORT void msFlipBit(char *array, int index);
 
+MS_DLL_EXPORT int msLayerInitItemInfo(layerObj *layer);
+MS_DLL_EXPORT void msLayerFreeItemInfo(layerObj *layer); 
+
 MS_DLL_EXPORT int msLayerOpen(layerObj *layer); /* in maplayer.c */
 MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msLayerClose(layerObj *layer);
@@ -1520,108 +1597,52 @@ MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
 
 MS_DLL_EXPORT int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
                                        const char *timefield);
+/* Helper functions for layers */ 
+MS_DLL_EXPORT int msLayerMakeBackticsTimeFilter(layerObj *lp, const char *timestring, 
+                                                 const char *timefield);
+
+MS_DLL_EXPORT int msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring, 
+                                             const char *timefield);
+
+MS_DLL_EXPORT int msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                                   int iLayerIndex, int bOnlySpatialFilter);
+
+MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                                 int iLayerIndex, int bOnlySpatialFilter);
+
 
 /* maplayer.c */
-MS_DLL_EXPORT int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);
 MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
 
-MS_DLL_EXPORT int msTiledSHPOpenFile(layerObj *layer); /* in mapshape.c */
-MS_DLL_EXPORT int msTiledSHPWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msTiledSHPNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
-MS_DLL_EXPORT void msTiledSHPClose(layerObj *layer);
-MS_DLL_EXPORT int msTiledSHPLayerGetItems(layerObj *layer);
-MS_DLL_EXPORT int msTiledSHPLayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msTiledSHPLayerGetExtent(layerObj *layer, rectObj *extent);
+/* These are special because SWF is using these */
+int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
+int msOGRLayerGetItems(layerObj *layer);
+void msOGRLayerFreeItemInfo(layerObj *layer);
+int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 
-MS_DLL_EXPORT int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); /* in mapogr.cpp */
-MS_DLL_EXPORT int msOGRLayerIsOpen(layerObj *layer);
-MS_DLL_EXPORT int msOGRLayerClose(layerObj *layer);
-MS_DLL_EXPORT int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msOGRLayerGetItems(layerObj *layer);
-MS_DLL_EXPORT int msOGRLayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT void msOGRLayerFreeItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
-MS_DLL_EXPORT int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
-MS_DLL_EXPORT int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 #ifdef USE_OGR
 MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
                          OGRwkbGeometryType type);
 #endif /* USE_OGR */
 
-MS_DLL_EXPORT int msPOSTGISLayerOpen(layerObj *layer); /* in mappostgis.c */
-MS_DLL_EXPORT int msPOSTGISLayerIsOpen(layerObj *layer);
-MS_DLL_EXPORT void msPOSTGISLayerFreeItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msPOSTGISLayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msPOSTGISLayerClose(layerObj *layer);
-MS_DLL_EXPORT int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record);
-MS_DLL_EXPORT int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
-MS_DLL_EXPORT int msPOSTGISLayerGetItems(layerObj *layer);
-
-MS_DLL_EXPORT int msMYGISLayerOpen(layerObj *layer); /* in mapmygis.c */
-MS_DLL_EXPORT int msMYGISLayerIsOpen(layerObj *layer);
-MS_DLL_EXPORT void msMYGISLayerFreeItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msMYGISLayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msMYGISLayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msMYGISLayerClose(layerObj *layer);
-MS_DLL_EXPORT int msMYGISLayerNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record);
-MS_DLL_EXPORT int msMYGISLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
-MS_DLL_EXPORT int msMYGISLayerGetItems(layerObj *layer);
-
-MS_DLL_EXPORT int msSDELayerOpen(layerObj *layer); /* in mapsde.c */
-MS_DLL_EXPORT int msSDELayerIsOpen(layerObj *layer);
-MS_DLL_EXPORT void msSDELayerClose(layerObj *layer);
-MS_DLL_EXPORT int msSDELayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msSDELayerNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msSDELayerGetItems(layerObj *layer);
-MS_DLL_EXPORT int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record);
-MS_DLL_EXPORT int msSDELayerGetExtent(layerObj *layer, rectObj *extent);
-MS_DLL_EXPORT int msSDELayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT void msSDELayerFreeItemInfo(layerObj *layer);
-MS_DLL_EXPORT char *msSDELayerGetSpatialColumn(layerObj *layer);
-MS_DLL_EXPORT char *msSDELayerGetRowIDColumn(layerObj *layer);
 MS_DLL_EXPORT int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img);
 
-MS_DLL_EXPORT int msOracleSpatialLayerOpen(layerObj *layer);
-MS_DLL_EXPORT int msOracleSpatialLayerIsOpen(layerObj *layer);
-MS_DLL_EXPORT int msOracleSpatialLayerClose(layerObj *layer);
-MS_DLL_EXPORT int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msOracleSpatialLayerNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msOracleSpatialLayerGetItems(layerObj *layer);
-MS_DLL_EXPORT int msOracleSpatialLayerGetShape(layerObj *layer, shapeObj *shape, long record);
-MS_DLL_EXPORT int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent);
-MS_DLL_EXPORT int msOracleSpatialLayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);   
+MS_DLL_EXPORT int msInitializeVirtualTable(layerObj *layer);
 
-MS_DLL_EXPORT int msGraticuleLayerOpen(layerObj *layer);   /* in mapGraticule.cpp */
-MS_DLL_EXPORT int msGraticuleLayerIsOpen(layerObj *layer);
-MS_DLL_EXPORT int msGraticuleLayerClose(layerObj *layer);
-MS_DLL_EXPORT int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msGraticuleLayerGetItems(layerObj *layer);
-MS_DLL_EXPORT int msGraticuleLayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT void msGraticuleLayerFreeItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
-MS_DLL_EXPORT int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent);
-MS_DLL_EXPORT int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
-
-MS_DLL_EXPORT int msRASTERLayerOpen(layerObj *layer); /* in maprasterquery.c */
-MS_DLL_EXPORT int msRASTERLayerIsOpen(layerObj *layer);
-MS_DLL_EXPORT void msRASTERLayerFreeItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msRASTERLayerInitItemInfo(layerObj *layer);
-MS_DLL_EXPORT int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msRASTERLayerClose(layerObj *layer);
-MS_DLL_EXPORT int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape);
-MS_DLL_EXPORT int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
-MS_DLL_EXPORT int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent);
-MS_DLL_EXPORT int msRASTERLayerGetItems(layerObj *layer);
+MS_DLL_EXPORT int msINLINELayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msShapeFileLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msTiledSHPLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msSDELayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msOGRLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msPOSTGISLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msWFSLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msMYGISLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
 
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */

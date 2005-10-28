@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.311  2005/10/28 01:09:41  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.310  2005/09/27 20:11:42  sdlime
  * Fixed LABEL writing problem. (bug 1481)
  *
@@ -2304,6 +2307,8 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->connection = NULL;
   layer->connectiontype = MS_SHAPEFILE;
+  layer->vtable = NULL;
+
 
   layer->layerinfo = NULL;
   layer->ogrlayerinfo = NULL;
@@ -2366,6 +2371,7 @@ void freeLayer(layerObj *layer) {
   msFree(layer->tileitem);
   msFree(layer->bandsitem);
   msFree(layer->connection);
+  msFree(layer->vtable);
 
 
   msFreeProjection(&(layer->projection));
@@ -4841,20 +4847,11 @@ int msCheckConnection(layerObj * layer) {
 
     /* check to make sure lp even has an open connection (database types only) */
     switch (lp->connectiontype) {
-    case MS_POSTGIS: 
-      if(!lp->layerinfo) continue;
-      break;
-    case MS_ORACLESPATIAL:
-      break;
-      if(!lp->layerinfo) continue;
-    case MS_SDE:
-      if(!lp->layerinfo) continue;
-      break;
     case MS_MYGIS:
       if(!lp->layerinfo) continue;
       break;
     default:
-      continue; /* not a database layer, skip it */
+      continue; /* not a database layer or uses new connection pool API -> skip it */
       break;
     }
 
@@ -4877,25 +4874,11 @@ void msCloseConnections(mapObj *map) {
 
   for (i=0;i<map->numlayers;i++) {
     lp = &(map->layers[i]);
-    
-    switch (lp->connectiontype) {
-    case MS_POSTGIS:	
-      msPOSTGISLayerClose(lp);
-      break;
-    case MS_ORACLESPATIAL:
-      msOracleSpatialLayerClose(lp);
-      break;
-    case MS_SDE:
-      msSDELayerClose(lp);
-      break;
-    case MS_MYGIS:
-      msMYGISLayerClose(lp);
-      break;
-    case MS_RASTER:
-      msRASTERLayerClose(lp);
-      break;
-    default:
-      break;
+
+    /* If the vtable is null, then the layer is never accessed or used -> skip it
+     */
+    if (lp->vtable) {
+        lp->vtable->LayerCloseConnection(lp);
     }
   }
 }

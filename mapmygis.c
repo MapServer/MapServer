@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/10/28 01:09:41  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.19  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -52,6 +55,7 @@
 
 #include "map.h"
 
+#include <assert.h>
 #include <sys/types.h>
 
 #if !defined(_WIN32)
@@ -1668,8 +1672,6 @@ printf("msMYGISLayerGetShape: shape->values[%i] has value '%s'<br>\n",t,shape->v
 }
 
 
-
-
 /* query the DB for info about the requested table */
 /*  */
 /* CHEAT: dont look in the system tables, get query optimization infomation */
@@ -1947,7 +1949,7 @@ int msMYGISLayerGetExtent(layerObj *layer, rectObj *extent)
 int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 {
 		msSetError(MS_QUERYERR, "msMYGISLayerGetShapeRandom called but unimplemented!(mapserver not compiled with MYGIS support)",
-                 "msMYGISLayerGetShapeRandom()");
+				   "msMYGISLayerGetShapeRandom()");
 		return(MS_FAILURE);
 }
 
@@ -1959,3 +1961,42 @@ int msMYGISLayerGetItems(layerObj *layer)
 }
 
 #endif	/* use_mygis */
+
+int 
+msMYGISLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
+{
+    return msMYGISLayerGetShape(layer, shape, record);
+}
+
+int
+msMYGISLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msMYGISLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msMYGISLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msMYGISLayerOpen;
+    layer->vtable->LayerIsOpen = msMYGISLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msMYGISLayerWhichShapes;
+    layer->vtable->LayerNextShape = msMYGISLayerNextShape;
+    layer->vtable->LayerGetShape = msMYGISLayerGetShapeVT;
+
+    layer->vtable->LayerClose = msMYGISLayerClose;
+    layer->vtable->LayerGetItems = msMYGISLayerGetItems;
+    layer->vtable->LayerGetExtent = msMYGISLayerGetExtent;
+
+    /* layer->vtable->LayerGetAutoStyle, use default */
+
+    layer->vtable->LayerCloseConnection = msMYGISLayerClose;
+    
+    layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+
+    return MS_SUCCESS;
+}
+

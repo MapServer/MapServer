@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/10/28 01:09:42  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.68  2005/08/25 14:20:16  sdlime
  * Applied patch for bug 1440.
  *
@@ -56,6 +59,7 @@
  */
 
 #include <limits.h>
+#include <assert.h>
 #include "map.h"
 
 MS_CVSID("$Id$")
@@ -1938,6 +1942,17 @@ void msTiledSHPClose(layerObj *layer)
   }
   layer->layerinfo = NULL;
 }
+/************************************************************************/
+/*                              msTiledSHPClose()                       */
+/* Overloaded version of msTiledSHPClose for virtual table architecture */
+/************************************************************************/
+int
+msTiledSHPCloseVT(layerObj *layer) 
+{
+	msTiledSHPClose(layer);
+	return MS_SUCCESS;
+}
+
 
 int msTiledSHPLayerInitItemInfo(layerObj *layer)
 {
@@ -1984,4 +1999,281 @@ int msTiledSHPLayerGetExtent(layerObj *layer, rectObj *extent)
 
   *extent = tSHP->tileshpfile->bounds;
   return(MS_SUCCESS);
+}
+
+void msTiledSHPLayerFreeItemInfo(layerObj *layer)
+{
+	if(layer->iteminfo) {
+		free(layer->iteminfo);
+		layer->iteminfo = NULL;
+	}
+}
+
+int msTiledSHPLayerIsOpen(layerObj *layer)
+{
+	if(layer->layerinfo)
+		return(MS_TRUE);
+	else
+		return(MS_FALSE);
+}
+
+int
+msTiledSHPLayerInitializeVirtualTable(layerObj *layer)
+{
+	assert(layer != NULL);
+	assert(layer->vtable != NULL);
+
+	layer->vtable->LayerInitItemInfo = msTiledSHPLayerInitItemInfo;
+	layer->vtable->LayerFreeItemInfo = msTiledSHPLayerFreeItemInfo;
+	layer->vtable->LayerOpen = msTiledSHPOpenFile;
+
+	layer->vtable->LayerIsOpen = msTiledSHPLayerIsOpen;
+	layer->vtable->LayerWhichShapes = msTiledSHPWhichShapes;
+	layer->vtable->LayerNextShape = msTiledSHPNextShape;
+	layer->vtable->LayerGetShape = msTiledSHPGetShape;
+
+	layer->vtable->LayerClose = msTiledSHPCloseVT;
+	layer->vtable->LayerGetItems = msTiledSHPLayerGetItems;
+	layer->vtable->LayerGetExtent = msTiledSHPLayerGetExtent;
+
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+
+	/* layer->vtable->LayerGetAutoStyle, use default */
+	/* layer->vtable->LayerCloseConnection, use default */;
+
+	layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+	/* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+
+	return MS_SUCCESS;
+}
+/* SHAPEFILE Layer virtual table functions */
+
+int msShapeFileLayerInitItemInfo(layerObj *layer) 
+{
+    shapefileObj *shpfile = shpfile = layer->layerinfo;
+    if( ! shpfile) {
+      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msShapeFileLayerInitItemInfo()");
+      return(MS_FAILURE);
+    }
+
+    /* iteminfo needs to be a bit more complex, a list of indexes plus the length of the list */
+    layer->iteminfo = (int *) msDBFGetItemIndexes(shpfile->hDBF, layer->items, layer->numitems);
+    if( ! layer->iteminfo) {
+        return(MS_FAILURE);
+    }
+    return(MS_SUCCESS);
+}
+
+
+void msShapeFileLayerFreeItemInfo(layerObj *layer) 
+{ 
+    if(layer->iteminfo) {
+        free(layer->iteminfo);
+        layer->iteminfo = NULL;
+    }
+}
+
+
+int msShapeFileLayerOpen(layerObj *layer)
+{
+    char szPath[MS_MAXPATHLEN];
+    shapefileObj *shpfile;
+
+    if(layer->layerinfo) {
+         /* layer already open */
+        return(MS_SUCCESS);
+    }
+
+    /* allocate space for a shapefileObj using layer->layerinfo  */
+    shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+    if( ! shpfile) {
+        msSetError(MS_MEMERR, "Error allocating shapefileObj structure.", "msLayerOpen()");
+        return(MS_FAILURE);
+    }
+
+    layer->layerinfo = shpfile;
+
+    if(msSHPOpenFile(shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1) {
+        if(msSHPOpenFile(shpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->data)) == -1) {
+            layer->layerinfo = NULL;
+            free(shpfile);
+            return(MS_FAILURE);
+        }
+    }
+    return(MS_SUCCESS);
+}
+
+int msShapeFileLayerIsOpen(layerObj *layer)
+{
+    if(layer->layerinfo)
+        return(MS_TRUE);
+    else
+        return(MS_FALSE);
+}
+
+int msShapeFileLayerWhichShapes(layerObj *layer, rectObj rect)
+{
+    int i, n1=0, n2=0;
+    int status;
+    shapefileObj *shpfile;
+
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+        msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerWhichShapes()");
+        return(MS_FAILURE);
+    }
+
+    status = msSHPWhichShapes(shpfile, rect, layer->debug);
+    if(status != MS_SUCCESS) {
+        return(status);
+    }
+
+    /* now apply the maxshapes criteria (NOTE: this ignores the filter so you could get less than maxfeatures) */
+    if(layer->maxfeatures > 0) {
+        for(i=0; i<shpfile->numshapes; i++) {
+            n1 += msGetBit(shpfile->status,i);
+        }
+        if(n1 > layer->maxfeatures) {
+            for(i=0; i<shpfile->numshapes; i++) {
+                if(msGetBit(shpfile->status,i) && (n2 < (n1 - layer->maxfeatures))) {
+                    msSetBit(shpfile->status,i,0);
+                    n2++;
+                }
+            }
+        }
+    }
+    return(MS_SUCCESS);
+}
+
+int msShapeFileLayerNextShape(layerObj *layer, shapeObj *shape) 
+{
+    int i, filter_passed;
+    char **values=NULL;
+    shapefileObj *shpfile;
+
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+        msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerNextShape()");
+        return(MS_FAILURE);
+    }
+
+    do {
+        i = shpfile->lastshape + 1;
+        while(i<shpfile->numshapes && !msGetBit(shpfile->status,i)) i++; /* next "in" shape */
+        shpfile->lastshape = i;
+
+        if(i == shpfile->numshapes) return(MS_DONE); /* nothing else to read */
+
+        filter_passed = MS_TRUE;  /* By default accept ANY shape */
+        if(layer->numitems > 0 && layer->iteminfo) {
+            values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+            if(!values) return(MS_FAILURE);
+            if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
+                msFreeCharArray(values, layer->numitems);
+                values = NULL;
+            }
+        }
+    } while(!filter_passed);  /* Loop until both spatial and attribute filters match */
+
+    msSHPReadShape(shpfile->hSHP, i, shape); /* ok to read the data now */
+
+    /* skip NULL shapes (apparently valid for shapefiles, at least ArcView doesn't care) */
+    if(shape->type == MS_SHAPE_NULL) return(msLayerNextShape(layer, shape));
+
+    shape->values = values;
+    shape->numvalues = layer->numitems;
+    return(MS_SUCCESS);
+}
+
+int msShapeFileLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
+{
+    shapefileObj *shpfile;
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+        msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerGetShape()");
+        return(MS_FAILURE);
+    }
+
+    /* msSHPReadShape *should* return success or failure so we don't have to test here */
+    if(record < 0 || record >= shpfile->numshapes) {
+        msSetError(MS_MISCERR, "Invalid feature id.", "msLayerGetShape()");
+        return(MS_FAILURE);
+    }
+
+    msSHPReadShape(shpfile->hSHP, record, shape);
+    if(layer->numitems > 0 && layer->iteminfo) {
+        shape->numvalues = layer->numitems;
+        shape->values = msDBFGetValueList(shpfile->hDBF, record, layer->iteminfo, layer->numitems);
+        if(!shape->values) return(MS_FAILURE);
+    }
+    return(MS_SUCCESS);
+}
+
+int msShapeFileLayerClose(layerObj *layer) 
+{
+    shapefileObj *shpfile;
+    shpfile = layer->layerinfo;
+    if(!shpfile) {
+        /* nothing to do */
+        return MS_SUCCESS; 
+    }
+
+    msSHPCloseFile(shpfile);
+    free(layer->layerinfo);
+    layer->layerinfo = NULL;
+    return(MS_SUCCESS); 
+}
+
+int msShapeFileLayerGetItems(layerObj *layer) 
+{
+    shapefileObj *shpfile;
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+        msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerGetItems()");
+        return(MS_FAILURE);
+    }
+
+    layer->numitems = msDBFGetFieldCount(shpfile->hDBF);
+    layer->items = msDBFGetItems(shpfile->hDBF);    
+    if(!layer->items) return(MS_FAILURE);
+
+    return msLayerInitItemInfo(layer);
+}
+
+int msShapeFileLayerGetExtent(layerObj *layer, rectObj *extent) 
+{
+    *extent = ((shapefileObj*)layer->layerinfo)->bounds;
+    return MS_SUCCESS;
+}
+
+int
+msShapeFileLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msShapeFileLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msShapeFileLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msShapeFileLayerOpen;
+    layer->vtable->LayerIsOpen = msShapeFileLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msShapeFileLayerWhichShapes;
+    layer->vtable->LayerNextShape = msShapeFileLayerNextShape;
+    layer->vtable->LayerGetShape = msShapeFileLayerGetShape;
+    layer->vtable->LayerClose = msShapeFileLayerClose;
+    layer->vtable->LayerGetItems = msShapeFileLayerGetItems;
+    layer->vtable->LayerGetExtent = msShapeFileLayerGetExtent;
+    /* layer->vtable->LayerGetAutoStyle, use default */
+    /* layer->vtable->LayerCloseConnection, use default */
+    layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+    
+    return MS_SUCCESS;
 }

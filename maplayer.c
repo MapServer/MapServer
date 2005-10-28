@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.107  2005/10/28 01:09:41  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.106  2005/07/16 19:07:38  jerryp
  * Bug 1420: PostGIS connector no longer needs two layer close functions.
  *
@@ -67,8 +70,14 @@
 
 #include "map.h"
 #include "maptime.h"
+#include "mapogcfilter.h"
 
+#include <assert.h>
 MS_CVSID("$Id$")
+
+
+static int populateVirtualTable(layerVTableObj *vtable);
+
 
 /*
 ** Iteminfo is a layer parameter that holds information necessary to retrieve an individual item for
@@ -78,99 +87,24 @@ MS_CVSID("$Id$")
 ** helper functions below initialize and free that structure member which is used locally by layer
 ** specific functions.
 */
-static int layerInitItemInfo(layerObj *layer) 
+int msLayerInitItemInfo(layerObj *layer) 
 {
-  shapefileObj *shpfile=NULL;
-
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):    
-    shpfile = layer->layerinfo;
-
-    if(!shpfile) {
-      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "layerInitItemInfo()");
-      return(MS_FAILURE);
+    if ( ! layer->vtable) {
+        int rv =  msInitializeVirtualTable(layer);
+        if (rv != MS_SUCCESS)
+            return rv;
     }
-
-    /* iteminfo needs to be a bit more complex, a list of indexes plus the length of the list */
-    layer->iteminfo = (int *) msDBFGetItemIndexes(shpfile->hDBF, layer->items, layer->numitems);
-    if(!layer->iteminfo) return(MS_FAILURE);
-    return(MS_SUCCESS);
-    break;
-  case(MS_TILED_SHAPEFILE):
-    /* iteminfo needs to be a bit more complex, a list of indexes plus the length of the list */
-    return(msTiledSHPLayerInitItemInfo(layer));
-    break;
-  case(MS_INLINE):
-    return(MS_SUCCESS); /* inline shapes have no items */
-    break;
-  case(MS_OGR):
-    return(msOGRLayerInitItemInfo(layer));
-    break;
-  case(MS_WFS):
-    return(msWFSLayerInitItemInfo(layer));
-    break;
-  case(MS_POSTGIS):
-    return(msPOSTGISLayerInitItemInfo(layer));
-    break;
-  case(MS_MYGIS):
-    return(msMYGISLayerInitItemInfo(layer));
-    break;
-  case(MS_SDE):
-    return(msSDELayerInitItemInfo(layer));
-    break;
-  case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerInitItemInfo(layer));
-    break;
-  case(MS_GRATICULE):
-    return(msGraticuleLayerInitItemInfo(layer));
-    break;
-  case(MS_RASTER):
-    return(msRASTERLayerInitItemInfo(layer));
-    break;
-  default:
-    break;
-  }
-
-  return(MS_FAILURE);
+    return layer->vtable->LayerInitItemInfo(layer);
 }
 
-static void layerFreeItemInfo(layerObj *layer) 
+void msLayerFreeItemInfo(layerObj *layer) 
 {
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-  case(MS_TILED_SHAPEFILE):
-    if(layer->iteminfo) free(layer->iteminfo);
-    layer->iteminfo = NULL;
-    break;
-  case(MS_INLINE):
-    break;
-  case(MS_OGR):
-  case(MS_WFS):
-    msOGRLayerFreeItemInfo(layer);
-    break;
-  case(MS_POSTGIS):
-    msPOSTGISLayerFreeItemInfo(layer);
-    break;
-  case(MS_MYGIS):
-    msMYGISLayerFreeItemInfo(layer);
-    break;
-  case(MS_SDE):
-    msSDELayerFreeItemInfo(layer);
-    break;
-  case(MS_ORACLESPATIAL):
-    msOracleSpatialLayerFreeItemInfo(layer);
-    break;
-  case(MS_GRATICULE):
-    msGraticuleLayerFreeItemInfo(layer);
-    break;
-  case(MS_RASTER):
-    msRASTERLayerFreeItemInfo(layer);
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return;
   }
-
-  return;
+  layer->vtable->LayerFreeItemInfo(layer);
 }
 
 /*
@@ -178,9 +112,6 @@ static void layerFreeItemInfo(layerObj *layer)
 */
 int msLayerOpen(layerObj *layer)
 {
-  char szPath[MS_MAXPATHLEN];
-  shapefileObj *shpfile;
-
   if(layer->features && layer->connectiontype != MS_GRATICULE ) 
     layer->connectiontype = MS_INLINE;
 
@@ -190,65 +121,12 @@ int msLayerOpen(layerObj *layer)
   if(layer->type == MS_LAYER_RASTER )
     layer->connectiontype = MS_RASTER;
 
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-    if(layer->layerinfo) return(MS_SUCCESS); /* layer already open */
-
-    /* allocate space for a shapefileObj using layer->layerinfo	 */
-    shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
-    if(!shpfile) {
-      msSetError(MS_MEMERR, "Error allocating shapefileObj structure.", "msLayerOpen()");
-      return(MS_FAILURE);
-    }
-
-    layer->layerinfo = shpfile;
-
-    if(msSHPOpenFile(shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1)
-      if(msSHPOpenFile(shpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->data)) == -1)
-      {
-          layer->layerinfo = NULL;
-          free(shpfile);
-          return(MS_FAILURE);
-      }
-   
-    return(MS_SUCCESS);
-    break;
-  case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPOpenFile(layer));
-    break;
-  case(MS_INLINE):
-    layer->currentfeature = layer->features; /* point to the begining of the feature list */
-    return(MS_SUCCESS);
-    break;
-  case(MS_OGR):
-    return(msOGRLayerOpen(layer,NULL));
-    break;
-  case(MS_WFS):
-    return(msWFSLayerOpen(layer, NULL, NULL));
-    break;
-  case(MS_POSTGIS):
-    return(msPOSTGISLayerOpen(layer));
-    break;
-  case(MS_MYGIS):
-    return(msMYGISLayerOpen(layer));
-    break;
-  case(MS_SDE):
-    return(msSDELayerOpen(layer));
-    break;
-  case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerOpen(layer));
-    break;
-  case(MS_GRATICULE):
-    return(msGraticuleLayerOpen(layer));
-    break;
-  case(MS_RASTER):
-    return(msRASTERLayerOpen(layer));
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return rv;
   }
-
-  return(MS_FAILURE);
+  return layer->vtable->LayerOpen(layer);
 }
 
 /*
@@ -256,50 +134,12 @@ int msLayerOpen(layerObj *layer)
 */
 int msLayerIsOpen(layerObj *layer)
 {
-
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-  case(MS_TILED_SHAPEFILE):
-    if(layer->layerinfo)
-        return(MS_TRUE);
-    else
-        return(MS_FALSE);
-    break;
-  case(MS_INLINE):
-    if (layer->currentfeature)
-        return(MS_TRUE);
-    else
-        return(MS_FALSE);
-    break;
-  case(MS_OGR):
-    return(msOGRLayerIsOpen(layer));
-    break;
-  case(MS_WFS):
-    return(msWFSLayerIsOpen(layer));
-    break;
-  case(MS_POSTGIS):
-    return(msPOSTGISLayerIsOpen(layer));
-    break;
-  case(MS_MYGIS):
-    return(msMYGISLayerIsOpen(layer));
-    break;
-  case(MS_SDE):
-    return(msSDELayerIsOpen(layer));
-    break;
-  case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerIsOpen(layer));
-    break;
-  case(MS_GRATICULE):
-    return(msGraticuleLayerIsOpen(layer));
-    break;
-  case(MS_RASTER):
-    return(msRASTERLayerIsOpen(layer));
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return rv;
   }
-
-  return(MS_FALSE);
+  return layer->vtable->LayerIsOpen(layer);
 }
 
 /*
@@ -314,74 +154,12 @@ int msLayerIsOpen(layerObj *layer)
 */
 int msLayerWhichShapes(layerObj *layer, rectObj rect)
 {
-  int i, n1=0, n2=0;
-  int status;
-  shapefileObj *shpfile;
-
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):    
-    shpfile = layer->layerinfo;
-
-    if(!shpfile) {
-      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerWhichShapes()");
-      return(MS_FAILURE);
-    }
-
-    status = msSHPWhichShapes(shpfile, rect, layer->debug);
-    if(status != MS_SUCCESS) return(status);
-
-    /* now apply the maxshapes criteria (NOTE: this ignores the filter so you could get less than maxfeatures) */
-    if(layer->maxfeatures > 0) {
-      for(i=0; i<shpfile->numshapes; i++)
-        n1 += msGetBit(shpfile->status,i);
-    
-      if(n1 > layer->maxfeatures) {
-        for(i=0; i<shpfile->numshapes; i++) {
-          if(msGetBit(shpfile->status,i) && (n2 < (n1 - layer->maxfeatures))) {
-	    msSetBit(shpfile->status,i,0);
-	    n2++;
-          }
-        }
-      }
-    }
-
-    return(MS_SUCCESS);
-    break;
-  case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPWhichShapes(layer, rect));
-    break;
-  case(MS_INLINE):
-    return(MS_SUCCESS);
-    break;
-  case(MS_OGR):
-    return(msOGRLayerWhichShapes(layer, rect));
-    break;
-  case(MS_WFS):
-    return(msWFSLayerWhichShapes(layer, rect));
-    break;
-  case(MS_POSTGIS):
-    return(msPOSTGISLayerWhichShapes(layer, rect));
-    break;
-  case(MS_MYGIS):
-    return(msMYGISLayerWhichShapes(layer, rect));
-    break;
-  case(MS_SDE):
-    return(msSDELayerWhichShapes(layer, rect));
-    break;
-  case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerWhichShapes(layer, rect));
-    break;
-  case(MS_GRATICULE):
-    return(msGraticuleLayerWhichShapes(layer, rect));
-    break;
-  case(MS_RASTER):
-    return(msRASTERLayerWhichShapes(layer, rect));
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return rv;
   }
-
-  return(MS_FAILURE);
+  return layer->vtable->LayerWhichShapes(layer, rect);
 }
 
 /*
@@ -392,86 +170,20 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
 */
 int msLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
-  int i, filter_passed;
-  char **values=NULL;
-  shapefileObj *shpfile;
-
-
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):    
-    shpfile = layer->layerinfo;
-
-    if(!shpfile) {
-      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerNextShape()");
-      return(MS_FAILURE);
-    }
-
-    do {
-      i = shpfile->lastshape + 1;
-      while(i<shpfile->numshapes && !msGetBit(shpfile->status,i)) i++; /* next "in" shape */
-      shpfile->lastshape = i;
-
-      if(i == shpfile->numshapes) return(MS_DONE); /* nothing else to read */
-
-      filter_passed = MS_TRUE;  /* By default accept ANY shape */
-      if(layer->numitems > 0 && layer->iteminfo) {
-        values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
-        if(!values) return(MS_FAILURE);
-        if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
-            msFreeCharArray(values, layer->numitems);
-            values = NULL;
-        }
-      }
-    } while(!filter_passed);  /* Loop until both spatial and attribute filters match */
-
-    msSHPReadShape(shpfile->hSHP, i, shape); /* ok to read the data now */
-
-    /* skip NULL shapes (apparently valid for shapefiles, at least ArcView doesn't care) */
-    if(shape->type == MS_SHAPE_NULL) return(msLayerNextShape(layer, shape));
-
-    shape->values = values;
-    shape->numvalues = layer->numitems;
-    return(MS_SUCCESS);
-    break;
-  case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPNextShape(layer, shape));
-  case(MS_INLINE):
-    if(!(layer->currentfeature)) return(MS_DONE); /* out of features     */
-    msCopyShape(&(layer->currentfeature->shape), shape);
-    layer->currentfeature = layer->currentfeature->next;
-    return(MS_SUCCESS);
-    break;
-  case(MS_OGR):
-  case(MS_WFS):
-    return(msOGRLayerNextShape(layer, shape));
-    break;
-  case(MS_POSTGIS):
-    return(msPOSTGISLayerNextShape(layer, shape));
-    break;
-  case(MS_MYGIS):
-    return(msMYGISLayerNextShape(layer, shape));
-    break;
-  case(MS_SDE):
-    return(msSDELayerNextShape(layer, shape));
-    break;
-  case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerNextShape(layer, shape));
-    break;
-  case(MS_GRATICULE):
-    return(msGraticuleLayerNextShape(layer, shape));
-    break;
-  case(MS_RASTER):
-    return(msRASTERLayerNextShape(layer, shape));
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return rv;
   }
 
+  /* At the end of switch case (default -> break; -> return MS_FAILURE), 
+   * was following TODO ITEM:
+   */
   /* TO DO! This is where dynamic joins will happen. Joined attributes will be */
   /* tagged on to the main attributes with the naming scheme [join name].[item name]. */
   /* We need to leverage the iteminfo (I think) at this point */
 
-  return(MS_FAILURE);
+  return layer->vtable->LayerNextShape(layer, shape);
 }
 
 /*
@@ -480,68 +192,19 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 */
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
-  shapefileObj *shpfile;
-
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):    
-    shpfile = layer->layerinfo;
-
-    if(!shpfile) {
-      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerGetShape()");
-      return(MS_FAILURE);
-    }
-
-    /* msSHPReadShape *should* return success or failure so we don't have to test here */
-    if(record < 0 || record >= shpfile->numshapes) {
-      msSetError(MS_MISCERR, "Invalid feature id.", "msLayerGetShape()");
-      return(MS_FAILURE);
-    }
-
-    msSHPReadShape(shpfile->hSHP, record, shape);
-    if(layer->numitems > 0 && layer->iteminfo) {
-      shape->numvalues = layer->numitems;
-      shape->values = msDBFGetValueList(shpfile->hDBF, record, layer->iteminfo, layer->numitems);
-      if(!shape->values) return(MS_FAILURE);
-    }
-    return(MS_SUCCESS);
-    break;
-  case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPGetShape(layer, shape, tile, record));
-  case(MS_INLINE):
-    return msINLINELayerGetShape(layer, shape, record);
-    /* msSetError(MS_MISCERR, "Cannot retrieve inline shapes randomly.", "msLayerGetShape()"); */
-    /* return(MS_FAILURE); */
-    break;
-  case(MS_OGR):
-  case(MS_WFS):
-    return(msOGRLayerGetShape(layer, shape, tile, record));
-    break;
-  case(MS_POSTGIS):
-    return(msPOSTGISLayerGetShape(layer, shape, record));
-    break;
-  case(MS_MYGIS):
-    return(msMYGISLayerGetShape(layer, shape, record));
-    break;
-  case(MS_SDE):
-    return(msSDELayerGetShape(layer, shape, record));
-    break;
-  case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerGetShape(layer, shape, record));
-    break;
-  case(MS_GRATICULE):
-    return(msGraticuleLayerGetShape(layer, shape, tile, record));
-    break;
-  case(MS_RASTER):
-    return(msRASTERLayerGetShape(layer, shape, tile, record));
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return rv;
   }
 
+  /* At the end of switch case (default -> break; -> return MS_FAILURE), 
+   * was following TODO ITEM:
+   */
   /* TO DO! This is where dynamic joins will happen. Joined attributes will be */
   /* tagged on to the main attributes with the naming scheme [join name].[item name]. */
 
-  return(MS_FAILURE);
+  return layer->vtable->LayerGetShape(layer, shape, tile, record);
 }
 
 /*
@@ -549,56 +212,16 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 */
 void msLayerClose(layerObj *layer) 
 {
-  shapefileObj *shpfile;
-
   /* no need for items once the layer is closed */
-  layerFreeItemInfo(layer);
+  msLayerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
     layer->items = NULL;
     layer->numitems = 0;
   }
 
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-    shpfile = layer->layerinfo;
-    if(!shpfile) return; /* nothing to do */
-    msSHPCloseFile(shpfile);
-    free(layer->layerinfo);
-    layer->layerinfo = NULL;
-    break;
-  case(MS_TILED_SHAPEFILE):
-    msTiledSHPClose(layer);
-    break;
-  case(MS_INLINE):
-    break;
-  case(MS_OGR):
-    msOGRLayerClose(layer);
-    break;
-  case(MS_WFS):
-    msWFSLayerClose(layer);
-    break;
-  case(MS_POSTGIS):
-    msPOSTGISLayerClose(layer);
-    break;
-  case(MS_MYGIS):
-    msMYGISLayerClose(layer);
-    break;
-  case(MS_SDE):
-    /* using pooled connections for SDE, closed when map file is closed */
-    /* msSDELayerClose(layer);  */
-    break;
-  case(MS_ORACLESPATIAL):
-    msOracleSpatialLayerClose(layer);
-    break;
-  case(MS_GRATICULE):
-    msGraticuleLayerClose(layer);
-    break;
-  case(MS_RASTER):
-    msRASTERLayerClose(layer);
-    break;
-  default:
-    break;
+  if (layer->vtable) {
+    layer->vtable->LayerClose(layer);
   }
 }
 
@@ -609,68 +232,25 @@ void msLayerClose(layerObj *layer)
 */
 int msLayerGetItems(layerObj *layer) 
 {
-  shapefileObj *shpfile;
-
   /* clean up any previously allocated instances */
-  layerFreeItemInfo(layer);
+  msLayerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
     layer->items = NULL;
     layer->numitems = 0;
   }
 
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-    shpfile = layer->layerinfo;
-
-    if(!shpfile) {
-      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerGetItems()");
-      return(MS_FAILURE);
-    }
-
-    layer->numitems = msDBFGetFieldCount(shpfile->hDBF);
-    layer->items = msDBFGetItems(shpfile->hDBF);    
-    if(!layer->items) return(MS_FAILURE);
-    layerInitItemInfo(layer);
-    return(MS_SUCCESS);
-    break;
-  case(MS_TILED_SHAPEFILE):    
-    return(msTiledSHPLayerGetItems(layer));
-    break;
-  case(MS_INLINE):
-    return(MS_SUCCESS); /* inline shapes have no items */
-    break;
-  case(MS_OGR):
-    return(msOGRLayerGetItems(layer));
-    break;
-  case(MS_WFS):
-    return(msWFSLayerGetItems(layer));
-    break;
-  case(MS_POSTGIS):
-    return(msPOSTGISLayerGetItems(layer));
-    break;
-  case(MS_MYGIS):
-    return(msMYGISLayerGetItems(layer));
-    break;
-  case(MS_SDE):
-    return(msSDELayerGetItems(layer));
-    break;
-  case(MS_ORACLESPATIAL):
-    return(msOracleSpatialLayerGetItems(layer));
-    break;
-  case(MS_GRATICULE):
-    return(msGraticuleLayerGetItems(layer));
-    break;
-  case(MS_RASTER):
-    return(msRASTERLayerGetItems(layer));
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return rv;
   }
 
+  /* At the end of switch case (default -> break; -> return MS_FAILURE), 
+   * was following TODO ITEM:
+   */
   /* TO DO! Need to add any joined itemd on to the core layer items, one long list!  */
-
-  return(MS_FAILURE);
+  return layer->vtable->LayerGetItems(layer);
 }
 
 /*
@@ -701,43 +281,15 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
       need_to_close = MS_TRUE;
   }
 
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-    *extent = ((shapefileObj*)layer->layerinfo)->bounds;
-    status = MS_SUCCESS;
-    break;
-  case(MS_TILED_SHAPEFILE):
-    status = msTiledSHPLayerGetExtent(layer, extent);
-    break;
-  case(MS_INLINE):
-    /* __TODO__ need to compute extents */
-    status = MS_FAILURE;
-    break;
-  case(MS_OGR):
-  case(MS_WFS):
-    status = msOGRLayerGetExtent(layer, extent);
-    break;
-  case(MS_POSTGIS):
-    status = msPOSTGISLayerGetExtent(layer, extent);
-    break;
-  case(MS_MYGIS):
-    status = msMYGISLayerGetExtent(layer, extent);
-    break;
-  case(MS_SDE):
-    status = msSDELayerGetExtent(layer, extent);
-    break;
-  case(MS_ORACLESPATIAL):
-    status = msOracleSpatialLayerGetExtent(layer, extent);
-    break;
-  case(MS_GRATICULE):
-    status = msGraticuleLayerGetExtent(layer, extent);
-    break;
-  case(MS_RASTER):
-    status = msRASTERLayerGetExtent(layer, extent);
-    break;
-  default:
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS) {
+        if (need_to_close)
+            msLayerClose(layer);
+            return rv;
+      }
   }
+  status = layer->vtable->LayerGetExtent(layer, extent);
 
   if (need_to_close)
       msLayerClose(layer);
@@ -848,9 +400,16 @@ int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *meta
 */
 int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata) 
 {
-  int i, j;
+  int i, j, rv;
   int nt=0, ne=0;
-  
+
+  if ( ! layer->vtable) {
+      rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS) {
+            return rv;
+      }
+  }
+
   /*  */
   /* TO DO! I have a better algorithm. */
   /*  */
@@ -863,7 +422,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   /*  */
 
   /* Cleanup any previous item selection */
-  layerFreeItemInfo(layer);
+  msLayerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
     layer->items = NULL;
@@ -948,26 +507,9 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     }
   }
 
-  /* TODO: it would be nice to move this into the SDE code itself, feels wrong here... */
-  if(layer->connectiontype == MS_SDE) {
-    layer->items = (char **)calloc(nt+2, sizeof(char *)); /* should be more than enough space, SDE always needs a couple of additional items */
-    if(!layer->items) {
-      msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-      return(MS_FAILURE);
-    }
-    layer->items[0] = msSDELayerGetRowIDColumn(layer); /* row id */
-    layer->items[1] = msSDELayerGetSpatialColumn(layer);
-    layer->numitems = 2;
-  } else {
-    /* if(nt == 0) return(MS_SUCCESS); */
-    if(nt > 0) {
-      layer->items = (char **)calloc(nt, sizeof(char *)); /* should be more than enough space */
-      if(!layer->items) {
-        msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-        return(MS_FAILURE);
-      }
-      layer->numitems = 0;
-    }
+  rv = layer->vtable->LayerCreateItems(layer, nt);
+  if (rv != MS_SUCCESS) {
+      return rv;
   }
 
   if(nt > 0) {
@@ -1028,7 +570,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   if(layer->numitems == 0)
     return(MS_SUCCESS);
 
-  return(layerInitItemInfo(layer));
+  return(msLayerInitItemInfo(layer));
 }
 
 /*
@@ -1039,7 +581,7 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 {
   int i;
   /* Cleanup any previous item selection */
-  layerFreeItemInfo(layer);
+  msLayerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
     layer->items = NULL;
@@ -1058,7 +600,7 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
   layer->numitems = numitems;
 
   /* populate the iteminfo array */
-  return(layerInitItemInfo(layer));
+  return(msLayerInitItemInfo(layer));
 
   return(MS_SUCCESS);
 }
@@ -1071,72 +613,29 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 ** twice.
 ** 
 */
-int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record)
+int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
+                        int tile, long record)
 {
-  switch(layer->connectiontype) {
-  case(MS_OGR):
-    return(msOGRLayerGetAutoStyle(map, layer, c, tile, record));
-    break;
-  case(MS_SHAPEFILE):
-  case(MS_TILED_SHAPEFILE):
-  case(MS_INLINE):
-  case(MS_POSTGIS):
-  case(MS_MYGIS):
-  case(MS_SDE):
-  case(MS_ORACLESPATIAL):
-  case(MS_WFS):
-  case(MS_GRATICULE):
-  case(MS_RASTER):
-  default:
-    msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
-    return(MS_FAILURE);    
-    break;
+  if ( ! layer->vtable) {
+      int rv =  msInitializeVirtualTable(layer);
+      if (rv != MS_SUCCESS)
+          return rv;
   }
-
-  return(MS_FAILURE);
+  return layer->vtable->LayerGetAutoStyle(map, layer, c, tile, record);
 }
 
-/* Author: Cristoph Spoerri and Sean Gillies */
-int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex) {
-    int i=0;
-    featureListNodeObjPtr current;
-
-    current = layer->features;
-    while (current!=NULL && i!=shapeindex) {
-        i++;
-        current = current->next;
-    }
-    if (current == NULL) {
-        msSetError(MS_SHPERR, "No inline feature with this index.",
-                   "msINLINELayerGetShape()");
-        return MS_FAILURE;
-    } 
-    
-    if (msCopyShape(&(current->shape), shape) != MS_SUCCESS) {
-        msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msLayerGetShape()");
-        return MS_FAILURE;
-    }
-    return MS_SUCCESS;
-}
 
 /*
 Returns the number of inline feature of a layer
 */
-int msLayerGetNumFeatures(layerObj *layer) {
-    int i = 0;
-    featureListNodeObjPtr current;
-    if (layer->connectiontype==MS_INLINE) {
-        current = layer->features;
-        while (current!=NULL) {
-            i++;
-            current = current->next;
-        }
+int msLayerGetNumFeatures(layerObj *layer) 
+{
+    if ( ! layer->vtable) {
+        int rv =  msInitializeVirtualTable(layer);
+        if (rv != MS_SUCCESS)
+            return rv;
     }
-    else {
-        msSetError(MS_SHPERR, "Not an inline layer", "msLayerGetNumFeatures()");
-        return MS_FAILURE;
-    }
-    return i;
+    return layer->vtable->LayerGetNumFeatures(layer);
 }
 
 void 
@@ -1213,422 +712,23 @@ int msLayerClearProcessing( layerObj *layer ) {
     return layer->numprocessing;
 }
 
-int msPOSTGISLayerSetTimeFilter(layerObj *lp, 
-                                const char *timestring, 
-                                const char *timefield)
-{
-    char *tmpstimestring = NULL;
-    char *timeresolution = NULL;
-    int timesresol = -1;
-    char **atimes, **tokens = NULL;
-    int numtimes=0,i=0,ntmp=0,nlength=0;
-    char buffer[512];
 
-    buffer[0] = '\0';
-
-    if (!lp || !timestring || !timefield)
-      return MS_FALSE;
-
-    if (strstr(timestring, ",") == NULL && 
-        strstr(timestring, "/") == NULL) /* discrete time */
-      tmpstimestring = strdup(timestring);
-    else
-    {
-        atimes = split (timestring, ',', &numtimes);
-        if (atimes == NULL || numtimes < 1)
-          return MS_FALSE;
-
-        if (numtimes >= 1)
-        {
-            tokens = split(atimes[0],  '/', &ntmp);
-            if (ntmp == 2) /* ranges */
-            {
-                tmpstimestring = strdup(tokens[0]);
-                msFreeCharArray(tokens, ntmp);
-            }
-            else if (ntmp == 1) /* multiple times */
-            {
-                tmpstimestring = strdup(atimes[0]);
-            }
-        }
-        msFreeCharArray(atimes, numtimes);
-    }
-    if (!tmpstimestring)
-      return MS_FALSE;
-        
-    timesresol = msTimeGetResolution((const char*)tmpstimestring);
-    if (timesresol < 0)
-      return MS_FALSE;
-
-    free(tmpstimestring);
-
-    switch (timesresol)
-    {
-        case (TIME_RESOLUTION_SECOND):
-          timeresolution = strdup("second");
-          break;
-
-        case (TIME_RESOLUTION_MINUTE):
-          timeresolution = strdup("minute");
-          break;
-
-        case (TIME_RESOLUTION_HOUR):
-          timeresolution = strdup("hour");
-          break;
-
-        case (TIME_RESOLUTION_DAY):
-          timeresolution = strdup("day");
-          break;
-
-        case (TIME_RESOLUTION_MONTH):
-          timeresolution = strdup("month");
-          break;
-
-        case (TIME_RESOLUTION_YEAR):
-          timeresolution = strdup("year");
-          break;
-
-        default:
-          break;
-    }
-
-    if (!timeresolution)
-      return MS_FALSE;
-
-    /* where date_trunc('month', _cwctstamp) = '2004-08-01' */
-    if (strstr(timestring, ",") == NULL && 
-        strstr(timestring, "/") == NULL) /* discrete time */
-    {
-        if(lp->filteritem) free(lp->filteritem);
-        lp->filteritem = strdup(timefield);
-        if (&lp->filter)
-          freeExpression(&lp->filter);
-        
-
-        strcat(buffer, "(");
-
-        strcat(buffer, "date_trunc('");
-        strcat(buffer, timeresolution);
-        strcat(buffer, "', ");        
-        strcat(buffer, timefield);
-        strcat(buffer, ")");        
-        
-         
-        strcat(buffer, " = ");
-        strcat(buffer,  "'");
-        strcat(buffer, timestring);
-        /* make sure that the timestring is complete and acceptable */
-        /* to the date_trunc function : */
-        /* - if the resolution is year (2004) or month (2004-01),  */
-        /* a complete string for time would be 2004-01-01 */
-        /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-        /* complete time is 2004-01-01 15:00:00 */
-        if (strcasecmp(timeresolution, "year")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != '-')
-              strcat(buffer,"-01-01");
-            else
-              strcat(buffer,"01-01");
-        }            
-        else if (strcasecmp(timeresolution, "month")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != '-')
-              strcat(buffer,"-01");
-            else
-              strcat(buffer,"01");
-        }            
-        else if (strcasecmp(timeresolution, "hour")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != ':')
-              strcat(buffer,":00:00");
-            else
-              strcat(buffer,"00:00");
-        }            
-        else if (strcasecmp(timeresolution, "minute")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != ':')
-              strcat(buffer,":00");
-            else
-              strcat(buffer,"00");
-        }            
-        
-
-        strcat(buffer,  "'");
-
-        strcat(buffer, ")");
-        
-        /* loadExpressionString(&lp->filter, (char *)timestring); */
-        loadExpressionString(&lp->filter, buffer);
-
-        free(timeresolution);
-        return MS_TRUE;
-    }
-    
-    atimes = split (timestring, ',', &numtimes);
-    if (atimes == NULL || numtimes < 1)
-      return MS_FALSE;
-
-    if (numtimes >= 1)
-    {
-        /* check to see if we have ranges by parsing the first entry */
-        tokens = split(atimes[0],  '/', &ntmp);
-        if (ntmp == 2) /* ranges */
-        {
-            msFreeCharArray(tokens, ntmp);
-            for (i=0; i<numtimes; i++)
-            {
-                tokens = split(atimes[i],  '/', &ntmp);
-                if (ntmp == 2)
-                {
-                    if (strlen(buffer) > 0)
-                      strcat(buffer, " OR ");
-                    else
-                      strcat(buffer, "(");
-
-                    strcat(buffer, "(");
-                    
-                    strcat(buffer, "date_trunc('");
-                    strcat(buffer, timeresolution);
-                    strcat(buffer, "', ");        
-                    strcat(buffer, timefield);
-                    strcat(buffer, ")");        
- 
-                    strcat(buffer, " >= ");
-                    
-                    strcat(buffer,  "'");
-
-                    strcat(buffer, tokens[0]);
-                    /* - if the resolution is year (2004) or month (2004-01),  */
-                    /* a complete string for time would be 2004-01-01 */
-                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-                    /* complete time is 2004-01-01 15:00:00 */
-                    if (strcasecmp(timeresolution, "year")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != '-')
-                          strcat(buffer,"-01-01");
-                        else
-                          strcat(buffer,"01-01");
-                    }            
-                    else if (strcasecmp(timeresolution, "month")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != '-')
-                          strcat(buffer,"-01");
-                        else
-                          strcat(buffer,"01");
-                    }            
-                    else if (strcasecmp(timeresolution, "hour")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != ':')
-                          strcat(buffer,":00:00");
-                        else
-                          strcat(buffer,"00:00");
-                    }            
-                    else if (strcasecmp(timeresolution, "minute")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != ':')
-                          strcat(buffer,":00");
-                        else
-                          strcat(buffer,"00");
-                    }            
-
-                    strcat(buffer,  "'");
-                    strcat(buffer, " AND ");
-
-                    
-                    strcat(buffer, "date_trunc('");
-                    strcat(buffer, timeresolution);
-                    strcat(buffer, "', ");        
-                    strcat(buffer, timefield);
-                    strcat(buffer, ")");  
-
-                    strcat(buffer, " <= ");
-                    
-                    strcat(buffer,  "'");
-                    strcat(buffer, tokens[1]);
-
-                    /* - if the resolution is year (2004) or month (2004-01),  */
-                    /* a complete string for time would be 2004-01-01 */
-                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-                    /* complete time is 2004-01-01 15:00:00 */
-                    if (strcasecmp(timeresolution, "year")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != '-')
-                          strcat(buffer,"-01-01");
-                        else
-                          strcat(buffer,"01-01");
-                    }            
-                    else if (strcasecmp(timeresolution, "month")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != '-')
-                          strcat(buffer,"-01");
-                        else
-                          strcat(buffer,"01");
-                    }            
-                    else if (strcasecmp(timeresolution, "hour")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != ':')
-                          strcat(buffer,":00:00");
-                        else
-                          strcat(buffer,"00:00");
-                    }            
-                    else if (strcasecmp(timeresolution, "minute")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != ':')
-                          strcat(buffer,":00");
-                        else
-                          strcat(buffer,"00");
-                    }            
-
-                    strcat(buffer,  "'");
-                    strcat(buffer, ")");
-                }
-                 
-                msFreeCharArray(tokens, ntmp);
-            }
-            if (strlen(buffer) > 0)
-              strcat(buffer, ")");
-        }
-        else if (ntmp == 1) /* multiple times */
-        {
-            msFreeCharArray(tokens, ntmp);
-            strcat(buffer, "(");
-            for (i=0; i<numtimes; i++)
-            {
-                if (i > 0)
-                  strcat(buffer, " OR ");
-
-                strcat(buffer, "(");
-                  
-                strcat(buffer, "date_trunc('");
-                strcat(buffer, timeresolution);
-                strcat(buffer, "', ");        
-                strcat(buffer, timefield);
-                strcat(buffer, ")");   
-
-                strcat(buffer, " = ");
-                  
-                strcat(buffer,  "'");
-
-                strcat(buffer, atimes[i]);
-                
-                /* make sure that the timestring is complete and acceptable */
-                /* to the date_trunc function : */
-                /* - if the resolution is year (2004) or month (2004-01),  */
-                /* a complete string for time would be 2004-01-01 */
-                /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-                /* complete time is 2004-01-01 15:00:00 */
-                if (strcasecmp(timeresolution, "year")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != '-')
-                      strcat(buffer,"-01-01");
-                    else
-                      strcat(buffer,"01-01");
-                }            
-                else if (strcasecmp(timeresolution, "month")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != '-')
-                      strcat(buffer,"-01");
-                    else
-                      strcat(buffer,"01");
-                }            
-                else if (strcasecmp(timeresolution, "hour")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != ':')
-                      strcat(buffer,":00:00");
-                    else
-                      strcat(buffer,"00:00");
-                }            
-                else if (strcasecmp(timeresolution, "minute")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != ':')
-                      strcat(buffer,":00");
-                    else
-                      strcat(buffer,"00");
-                }            
-
-                strcat(buffer,  "'");
-                strcat(buffer, ")");
-            } 
-            strcat(buffer, ")");
-        }
-        else
-        {
-            msFreeCharArray(atimes, numtimes);
-            return MS_FALSE;
-        }
-
-        msFreeCharArray(atimes, numtimes);
-
-        /* load the string to the filter */
-        if (strlen(buffer) > 0)
-        {
-            if(lp->filteritem) 
-              free(lp->filteritem);
-            lp->filteritem = strdup(timefield);     
-            if (&lp->filter)
-              freeExpression(&lp->filter);
-            loadExpressionString(&lp->filter, buffer);
-        }
-
-        free(timeresolution);
-        return MS_TRUE;
-                 
-    }
-    
-    return MS_FALSE;
-}
-     
-/**
-  set the filter parameter for a time filter
-**/
-
-int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
-                         const char *timefield) 
+int 
+makeTimeFilter(layerObj *lp, 
+               const char *timestring, 
+               const char *timefield,
+               const int addtimebacktics)
 {
   
     char **atimes, **tokens = NULL;
     int numtimes,i, ntmp = 0;
     char buffer[512];
-    int addtimebacktics = 0;
-
 
     buffer[0] = '\0';
 
     if (!lp || !timestring || !timefield)
       return MS_FALSE;
 
-    if (lp->connectiontype == MS_POSTGIS)
-    {
-        return msPOSTGISLayerSetTimeFilter(lp,timestring, timefield);
-    }
-
-    /* for shape and ogr files time expressions are */
-    /* delimited using backtics (ex `[TIME]` eq `2004-01-01`) */
-    if (lp->connectiontype == MS_SHAPEFILE ||
-        lp->connectiontype == MS_OGR ||
-        lp->connectiontype == MS_TILED_SHAPEFILE ||
-        lp->connectiontype == MS_INLINE)
-      addtimebacktics = 1;
-    else
-      addtimebacktics = 0;
-
-    
     /* parse the time string. We support dicrete times (eg 2004-09-21),  */
     /* multiple times (2004-09-21, 2004-09-22, ...) */
     /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
@@ -1814,4 +914,384 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
     }
     
      return MS_FALSE;
+}
+
+/**
+  set the filter parameter for a time filter
+**/
+
+int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
+                         const char *timefield) 
+{
+  if ( ! lp->vtable) {
+      int rv =  msInitializeVirtualTable(lp);
+      if (rv != MS_SUCCESS)
+          return rv;
+  }
+  return lp->vtable->LayerSetTimeFilter(lp, timestring, timefield);
 }   
+
+int 
+msLayerMakeBackticsTimeFilter(layerObj *lp, const char *timestring, 
+                              const char *timefield) 
+{
+    return makeTimeFilter(lp, timestring, timefield, MS_TRUE);
+}
+
+int 
+msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring, 
+                              const char *timefield) 
+{
+    return makeTimeFilter(lp, timestring, timefield, MS_FALSE);
+}
+
+
+/*
+ * Dummies / default actions for layers
+ */
+int 
+LayerDefaultInitItemInfo(layerObj *layer)
+{
+    return MS_SUCCESS;
+}
+
+void 
+LayerDefaultFreeItemInfo(layerObj *layer)
+{
+    return;
+}
+
+int LayerDefaultOpen(layerObj *layer)
+{
+    return MS_FAILURE;
+}
+
+int 
+LayerDefaultIsOpen(layerObj *layer)
+{
+    return MS_FALSE;
+}
+
+int 
+LayerDefaultWhichShapes(layerObj *layer, rectObj rect)
+{
+    return MS_SUCCESS;
+}
+
+int 
+LayerDefaultNextShape(layerObj *layer, shapeObj *shape)
+{
+    return MS_FAILURE;
+}
+
+
+int 
+LayerDefaultGetShape(layerObj *layer, shapeObj *shape, 
+                     int tile, long record)
+{
+    return MS_FAILURE;
+}
+
+int 
+LayerDefaultClose(layerObj *layer)
+{
+    return MS_SUCCESS;
+}
+
+int 
+LayerDefaultGetItems(layerObj *layer)
+{
+    return MS_FAILURE;
+}
+
+int 
+msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                 int iLayerIndex, int bOnlySpatialFilter)
+{
+#if USE_OGR
+    return FLTLayerApplyCondSQLFilterToLayer(psNode, map, iLayerIndex, 
+                                             bOnlySpatialFilter); 
+#else
+    return MS_FAILURE;
+#endif
+}
+
+int 
+msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                               int iLayerIndex, int bOnlySpatialFilter)
+{
+#if USE_OGR
+    return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex, 
+                                           bOnlySpatialFilter); 
+#else
+    return MS_FAILURE;
+#endif
+}
+
+int 
+LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
+{
+    return MS_FAILURE;
+}
+
+int 
+LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
+                         int tile, long record)
+{
+    msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
+    return MS_FAILURE; 
+}
+
+int 
+LayerDefaultCloseConnection(layerObj *layer)
+{
+    return MS_SUCCESS;
+}
+
+
+int 
+LayerDefaultCreateItems(layerObj *layer,
+                      const int nt)
+{
+    if (nt > 0) {
+        layer->items = (char **)calloc(nt, sizeof(char *)); /* should be more than enough space */
+        if(!layer->items) {
+            msSetError(MS_MEMERR, NULL, "LayerDefaultCreateItems()");
+            return(MS_FAILURE);
+        }
+        layer->numitems = 0;
+    }
+    return MS_SUCCESS;
+}
+
+int 
+LayerDefaultGetNumFeatures(layerObj *layer)
+{
+    msSetError(MS_SHPERR, "Not an inline layer", "msLayerGetNumFeatures()");
+    return MS_FAILURE;
+}
+
+/*
+ * msConnectLayer
+ *
+ * This will connect layer object to the new layer type.
+ * Caller is responsible to close previous layer correctly.
+ * For Internal types the library_str is ignored, for PLUGIN it's
+ * define what plugin to use. Returns MS_FAILURE or MS_SUCCESS.
+ */
+int msConnectLayer(layerObj *layer,
+                   int connectiontype,
+                   const char *library_str)
+{
+    /* For internal types, library_str is ignored */
+    layer->connectiontype = connectiontype;
+    return populateVirtualTable(layer->vtable);
+}
+
+static int
+populateVirtualTable(layerVTableObj *vtable)
+{
+    assert(vtable != NULL);
+
+    vtable->LayerInitItemInfo = LayerDefaultInitItemInfo;
+    vtable->LayerFreeItemInfo = LayerDefaultFreeItemInfo;
+    vtable->LayerOpen = LayerDefaultOpen;
+    vtable->LayerIsOpen = LayerDefaultIsOpen;
+    vtable->LayerWhichShapes = LayerDefaultWhichShapes;
+
+    vtable->LayerNextShape = LayerDefaultNextShape;
+    vtable->LayerGetShape = LayerDefaultGetShape;
+    vtable->LayerClose = LayerDefaultClose;
+    vtable->LayerGetItems = LayerDefaultGetItems;
+    vtable->LayerGetExtent = LayerDefaultGetExtent;
+
+    vtable->LayerGetAutoStyle = LayerDefaultGetAutoStyle;
+    vtable->LayerCloseConnection = LayerDefaultCloseConnection;
+    vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+
+    vtable->LayerApplyFilterToLayer = msLayerApplyPlainFilterToLayer;
+
+    vtable->LayerCreateItems = LayerDefaultCreateItems;
+    
+    vtable->LayerGetNumFeatures = LayerDefaultGetNumFeatures;
+
+    return MS_SUCCESS;
+}
+
+static int
+createVirtualTable(layerVTableObj **vtable)
+{
+    *vtable = malloc(sizeof(**vtable));
+    if ( ! vtable) {
+        return MS_FAILURE;
+    }
+    return populateVirtualTable(*vtable);
+}
+
+static int
+destroyVirtualTable(layerVTableObj **vtable)
+{
+    memset(*vtable, 0, sizeof(**vtable));
+    msFree(*vtable);
+    *vtable = NULL;
+    return MS_SUCCESS;
+}
+
+int
+msInitializeVirtualTable(layerObj *layer)
+{
+    if (layer->vtable) {
+        destroyVirtualTable(&layer->vtable);
+    }
+    createVirtualTable(&layer->vtable);
+
+    switch(layer->connectiontype) {
+        case(MS_INLINE):
+            return(msINLINELayerInitializeVirtualTable(layer));
+            break;
+        case(MS_SHAPEFILE):
+            return(msShapeFileLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_TILED_SHAPEFILE):
+            return(msTiledSHPLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_SDE):
+            return(msSDELayerInitializeVirtualTable(layer));
+            break;
+        case(MS_OGR):
+            return(msOGRLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_POSTGIS):
+            return(msPOSTGISLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_WMS):
+              /* WMS isn't a public layer type, it isn't used anywhere */
+              return MS_FAILURE;
+              break;
+        case(MS_ORACLESPATIAL):
+            return(msOracleSpatialLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_WFS):
+            return(msWFSLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_GRATICULE):
+            return(msGraticuleLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_MYGIS):
+            return(msMYGISLayerInitializeVirtualTable(layer));
+            break;         
+        case(MS_RASTER):
+            return(msRASTERLayerInitializeVirtualTable(layer));
+            break;
+        default:
+            msSetError(MS_MISCERR, 
+                       "Unknown connectiontype, it was %d", 
+                       "msInitializeVirtualTable()", layer->connectiontype);
+            return MS_FAILURE;
+            break;
+    }
+    /* not reached */
+    return MS_FAILURE;
+}
+
+/* 
+ * INLINE: Virtual table functions 
+ */
+
+int msINLINELayerIsOpen(layerObj *layer)
+{
+    if (layer->currentfeature)
+        return(MS_TRUE);
+    else
+        return(MS_FALSE);
+}
+
+
+int msINLINELayerOpen(layerObj *layer)
+{
+    layer->currentfeature = layer->features; /* point to the begining of the feature list */
+    return(MS_SUCCESS);
+}
+
+/* Author: Cristoph Spoerri and Sean Gillies */
+int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int tile, long shapeindex) 
+{
+    int i=0;
+    featureListNodeObjPtr current;
+
+    tile; /* Not used */
+    current = layer->features;
+    while (current!=NULL && i!=shapeindex) {
+        i++;
+        current = current->next;
+    }
+    if (current == NULL) {
+        msSetError(MS_SHPERR, "No inline feature with this index.",
+                   "msINLINELayerGetShape()");
+        return MS_FAILURE;
+    } 
+    
+    if (msCopyShape(&(current->shape), shape) != MS_SUCCESS) {
+        msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msLayerGetShape()");
+        return MS_FAILURE;
+    }
+    return MS_SUCCESS;
+}
+
+int msINLINELayerNextShape(layerObj *layer, shapeObj *shape) 
+{
+    if( ! (layer->currentfeature)) {
+        /* out of features     */
+        return(MS_DONE); 
+    }
+    msCopyShape(&(layer->currentfeature->shape), shape);
+    layer->currentfeature = layer->currentfeature->next;
+    return(MS_SUCCESS);
+}
+
+int msINLINELayerGetNumFeatures(layerObj *layer)
+{
+    int i = 0;
+    featureListNodeObjPtr current;
+
+    current = layer->features;
+    while (current != NULL) {
+        i++;
+        current = current->next;
+    }
+    return i;
+}
+
+int
+msINLINELayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    /* layer->vtable->LayerInitItemInfo, use default */
+    /* layer->vtable->LayerFreeItemInfo, use default */
+    layer->vtable->LayerOpen = msINLINELayerOpen;
+    layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
+    /* layer->vtable->LayerWhichShapes, use default */
+    layer->vtable->LayerNextShape = msINLINELayerNextShape;
+    layer->vtable->LayerGetShape = msINLINELayerGetShape;
+    /* layer->vtable->LayerClose, use default */
+    /* layer->vtable->LayerGetItems, use default */
+
+    /* 
+     * Original code contained following 
+     * TODO: need to compute extents
+     */
+    /* layer->vtable->LayerGetExtent, use default */
+
+    /* layer->vtable->LayerGetAutoStyle, use default */
+    /* layer->vtable->LayerCloseConnection, use default */
+    layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+
+    /* layer->vtable->LayerCreateItems, use default */
+    layer->vtable->LayerGetNumFeatures = msINLINELayerGetNumFeatures;
+
+    return MS_SUCCESS;
+}

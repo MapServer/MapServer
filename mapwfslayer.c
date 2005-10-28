@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/10/28 01:09:42  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.35  2005/05/12 18:41:54  assefa
  * Use %f instead of %lf for bbox output : Bug 1239.
  *
@@ -145,6 +148,7 @@
 #include "mapows.h"
 
 #include <time.h>
+#include <assert.h>
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <process.h>
@@ -919,6 +923,17 @@ int msWFSLayerOpen(layerObj *lp,
 }
 
 /**********************************************************************
+ *                          msWFSLayerOpenVT()
+ *
+ * Overloaded version of msWFSLayerOpen for virtual table architecture
+ **********************************************************************/
+int 
+msWFSLayerOpenVT(layerObj *lp)
+{
+	return msWFSLayerOpen(lp, NULL, NULL);
+}
+
+/**********************************************************************
  *                          msWFSLayerIsOpen()
  *
  * Returns MS_TRUE if layer is already open, MS_FALSE otherwise.
@@ -1218,5 +1233,35 @@ char *msWFSExecuteGetFeature(layerObj *lp)
 
 #endif /* USE_WFS_LYR */
 
+}
+
+int
+msWFSLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msWFSLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msOGRLayerFreeItemInfo; /* yes, OGR */
+    layer->vtable->LayerOpen = msWFSLayerOpenVT;
+    layer->vtable->LayerIsOpen = msWFSLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msWFSLayerWhichShapes;
+    layer->vtable->LayerNextShape = msOGRLayerNextShape; /* yes, OGR */
+    layer->vtable->LayerGetShape = msOGRLayerGetShape; /* yes, OGR */
+
+    layer->vtable->LayerClose = msWFSLayerClose;
+    layer->vtable->LayerGetItems = msWFSLayerGetItems;
+    layer->vtable->LayerGetExtent = msOGRLayerGetExtent; /* yes, OGR */
+    /* layer->vtable->LayerGetAutoStyle, use default */
+
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+
+    /* layer->vtable->LayerCloseConnection, use default */
+
+    layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+    return MS_SUCCESS;
 }
 

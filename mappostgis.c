@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2005/10/28 01:09:42  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.61  2005/09/15 20:25:39  pramsey
  * Added cases to allow the connector to use both the FILTERITEM and FILTER tags, if present.
  *
@@ -92,7 +95,9 @@
  */
 
 /* $Id$ */
+#include <assert.h>
 #include "map.h"
+#include "maptime.h"
 
 #ifndef FLT_MAX
 #define FLT_MAX 25000000.0
@@ -1949,3 +1954,424 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 
 /* end above's #ifdef USE_POSTGIS */
 #endif
+
+int msPOSTGISLayerSetTimeFilter(layerObj *lp, 
+                                const char *timestring, 
+                                const char *timefield)
+{
+    char *tmpstimestring = NULL;
+    char *timeresolution = NULL;
+    int timesresol = -1;
+    char **atimes, **tokens = NULL;
+    int numtimes=0,i=0,ntmp=0,nlength=0;
+    char buffer[512];
+
+    buffer[0] = '\0';
+
+    if (!lp || !timestring || !timefield)
+      return MS_FALSE;
+
+    if (strstr(timestring, ",") == NULL && 
+        strstr(timestring, "/") == NULL) /* discrete time */
+      tmpstimestring = strdup(timestring);
+    else
+    {
+        atimes = split (timestring, ',', &numtimes);
+        if (atimes == NULL || numtimes < 1)
+          return MS_FALSE;
+
+        if (numtimes >= 1)
+        {
+            tokens = split(atimes[0],  '/', &ntmp);
+            if (ntmp == 2) /* ranges */
+            {
+                tmpstimestring = strdup(tokens[0]);
+                msFreeCharArray(tokens, ntmp);
+            }
+            else if (ntmp == 1) /* multiple times */
+            {
+                tmpstimestring = strdup(atimes[0]);
+            }
+        }
+        msFreeCharArray(atimes, numtimes);
+    }
+    if (!tmpstimestring)
+      return MS_FALSE;
+        
+    timesresol = msTimeGetResolution((const char*)tmpstimestring);
+    if (timesresol < 0)
+      return MS_FALSE;
+
+    free(tmpstimestring);
+
+    switch (timesresol)
+    {
+        case (TIME_RESOLUTION_SECOND):
+          timeresolution = strdup("second");
+          break;
+
+        case (TIME_RESOLUTION_MINUTE):
+          timeresolution = strdup("minute");
+          break;
+
+        case (TIME_RESOLUTION_HOUR):
+          timeresolution = strdup("hour");
+          break;
+
+        case (TIME_RESOLUTION_DAY):
+          timeresolution = strdup("day");
+          break;
+
+        case (TIME_RESOLUTION_MONTH):
+          timeresolution = strdup("month");
+          break;
+
+        case (TIME_RESOLUTION_YEAR):
+          timeresolution = strdup("year");
+          break;
+
+        default:
+          break;
+    }
+
+    if (!timeresolution)
+      return MS_FALSE;
+
+    /* where date_trunc('month', _cwctstamp) = '2004-08-01' */
+    if (strstr(timestring, ",") == NULL && 
+        strstr(timestring, "/") == NULL) /* discrete time */
+    {
+        if(lp->filteritem) free(lp->filteritem);
+        lp->filteritem = strdup(timefield);
+        if (&lp->filter)
+          freeExpression(&lp->filter);
+        
+
+        strcat(buffer, "(");
+
+        strcat(buffer, "date_trunc('");
+        strcat(buffer, timeresolution);
+        strcat(buffer, "', ");        
+        strcat(buffer, timefield);
+        strcat(buffer, ")");        
+        
+         
+        strcat(buffer, " = ");
+        strcat(buffer,  "'");
+        strcat(buffer, timestring);
+        /* make sure that the timestring is complete and acceptable */
+        /* to the date_trunc function : */
+        /* - if the resolution is year (2004) or month (2004-01),  */
+        /* a complete string for time would be 2004-01-01 */
+        /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+        /* complete time is 2004-01-01 15:00:00 */
+        if (strcasecmp(timeresolution, "year")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != '-')
+              strcat(buffer,"-01-01");
+            else
+              strcat(buffer,"01-01");
+        }            
+        else if (strcasecmp(timeresolution, "month")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != '-')
+              strcat(buffer,"-01");
+            else
+              strcat(buffer,"01");
+        }            
+        else if (strcasecmp(timeresolution, "hour")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != ':')
+              strcat(buffer,":00:00");
+            else
+              strcat(buffer,"00:00");
+        }            
+        else if (strcasecmp(timeresolution, "minute")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != ':')
+              strcat(buffer,":00");
+            else
+              strcat(buffer,"00");
+        }            
+        
+
+        strcat(buffer,  "'");
+
+        strcat(buffer, ")");
+        
+        /* loadExpressionString(&lp->filter, (char *)timestring); */
+        loadExpressionString(&lp->filter, buffer);
+
+        free(timeresolution);
+        return MS_TRUE;
+    }
+    
+    atimes = split (timestring, ',', &numtimes);
+    if (atimes == NULL || numtimes < 1)
+      return MS_FALSE;
+
+    if (numtimes >= 1)
+    {
+        /* check to see if we have ranges by parsing the first entry */
+        tokens = split(atimes[0],  '/', &ntmp);
+        if (ntmp == 2) /* ranges */
+        {
+            msFreeCharArray(tokens, ntmp);
+            for (i=0; i<numtimes; i++)
+            {
+                tokens = split(atimes[i],  '/', &ntmp);
+                if (ntmp == 2)
+                {
+                    if (strlen(buffer) > 0)
+                      strcat(buffer, " OR ");
+                    else
+                      strcat(buffer, "(");
+
+                    strcat(buffer, "(");
+                    
+                    strcat(buffer, "date_trunc('");
+                    strcat(buffer, timeresolution);
+                    strcat(buffer, "', ");        
+                    strcat(buffer, timefield);
+                    strcat(buffer, ")");        
+ 
+                    strcat(buffer, " >= ");
+                    
+                    strcat(buffer,  "'");
+
+                    strcat(buffer, tokens[0]);
+                    /* - if the resolution is year (2004) or month (2004-01),  */
+                    /* a complete string for time would be 2004-01-01 */
+                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+                    /* complete time is 2004-01-01 15:00:00 */
+                    if (strcasecmp(timeresolution, "year")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != '-')
+                          strcat(buffer,"-01-01");
+                        else
+                          strcat(buffer,"01-01");
+                    }            
+                    else if (strcasecmp(timeresolution, "month")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != '-')
+                          strcat(buffer,"-01");
+                        else
+                          strcat(buffer,"01");
+                    }            
+                    else if (strcasecmp(timeresolution, "hour")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != ':')
+                          strcat(buffer,":00:00");
+                        else
+                          strcat(buffer,"00:00");
+                    }            
+                    else if (strcasecmp(timeresolution, "minute")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != ':')
+                          strcat(buffer,":00");
+                        else
+                          strcat(buffer,"00");
+                    }            
+
+                    strcat(buffer,  "'");
+                    strcat(buffer, " AND ");
+
+                    
+                    strcat(buffer, "date_trunc('");
+                    strcat(buffer, timeresolution);
+                    strcat(buffer, "', ");        
+                    strcat(buffer, timefield);
+                    strcat(buffer, ")");  
+
+                    strcat(buffer, " <= ");
+                    
+                    strcat(buffer,  "'");
+                    strcat(buffer, tokens[1]);
+
+                    /* - if the resolution is year (2004) or month (2004-01),  */
+                    /* a complete string for time would be 2004-01-01 */
+                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+                    /* complete time is 2004-01-01 15:00:00 */
+                    if (strcasecmp(timeresolution, "year")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != '-')
+                          strcat(buffer,"-01-01");
+                        else
+                          strcat(buffer,"01-01");
+                    }            
+                    else if (strcasecmp(timeresolution, "month")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != '-')
+                          strcat(buffer,"-01");
+                        else
+                          strcat(buffer,"01");
+                    }            
+                    else if (strcasecmp(timeresolution, "hour")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != ':')
+                          strcat(buffer,":00:00");
+                        else
+                          strcat(buffer,"00:00");
+                    }            
+                    else if (strcasecmp(timeresolution, "minute")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != ':')
+                          strcat(buffer,":00");
+                        else
+                          strcat(buffer,"00");
+                    }            
+
+                    strcat(buffer,  "'");
+                    strcat(buffer, ")");
+                }
+                 
+                msFreeCharArray(tokens, ntmp);
+            }
+            if (strlen(buffer) > 0)
+              strcat(buffer, ")");
+        }
+        else if (ntmp == 1) /* multiple times */
+        {
+            msFreeCharArray(tokens, ntmp);
+            strcat(buffer, "(");
+            for (i=0; i<numtimes; i++)
+            {
+                if (i > 0)
+                  strcat(buffer, " OR ");
+
+                strcat(buffer, "(");
+                  
+                strcat(buffer, "date_trunc('");
+                strcat(buffer, timeresolution);
+                strcat(buffer, "', ");        
+                strcat(buffer, timefield);
+                strcat(buffer, ")");   
+
+                strcat(buffer, " = ");
+                  
+                strcat(buffer,  "'");
+
+                strcat(buffer, atimes[i]);
+                
+                /* make sure that the timestring is complete and acceptable */
+                /* to the date_trunc function : */
+                /* - if the resolution is year (2004) or month (2004-01),  */
+                /* a complete string for time would be 2004-01-01 */
+                /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+                /* complete time is 2004-01-01 15:00:00 */
+                if (strcasecmp(timeresolution, "year")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != '-')
+                      strcat(buffer,"-01-01");
+                    else
+                      strcat(buffer,"01-01");
+                }            
+                else if (strcasecmp(timeresolution, "month")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != '-')
+                      strcat(buffer,"-01");
+                    else
+                      strcat(buffer,"01");
+                }            
+                else if (strcasecmp(timeresolution, "hour")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != ':')
+                      strcat(buffer,":00:00");
+                    else
+                      strcat(buffer,"00:00");
+                }            
+                else if (strcasecmp(timeresolution, "minute")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != ':')
+                      strcat(buffer,":00");
+                    else
+                      strcat(buffer,"00");
+                }            
+
+                strcat(buffer,  "'");
+                strcat(buffer, ")");
+            } 
+            strcat(buffer, ")");
+        }
+        else
+        {
+            msFreeCharArray(atimes, numtimes);
+            return MS_FALSE;
+        }
+
+        msFreeCharArray(atimes, numtimes);
+
+        /* load the string to the filter */
+        if (strlen(buffer) > 0)
+        {
+            if(lp->filteritem) 
+              free(lp->filteritem);
+            lp->filteritem = strdup(timefield);     
+            if (&lp->filter)
+              freeExpression(&lp->filter);
+            loadExpressionString(&lp->filter, buffer);
+        }
+
+        free(timeresolution);
+        return MS_TRUE;
+                 
+    }
+    
+    return MS_FALSE;
+}
+
+int 
+msPOSTGISLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
+{
+    return msPOSTGISLayerGetShape(layer, shape, record);
+}
+
+
+int
+msPOSTGISLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msPOSTGISLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msPOSTGISLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msPOSTGISLayerOpen;
+    layer->vtable->LayerIsOpen = msPOSTGISLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msPOSTGISLayerWhichShapes;
+    layer->vtable->LayerNextShape = msPOSTGISLayerNextShape;
+    layer->vtable->LayerGetShape = msPOSTGISLayerGetShapeVT;
+
+    layer->vtable->LayerClose = msPOSTGISLayerClose;
+
+    layer->vtable->LayerGetItems = msPOSTGISLayerGetItems;
+    layer->vtable->LayerGetExtent = msPOSTGISLayerGetExtent;
+
+    layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+
+    /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
+    layer->vtable->LayerCloseConnection = msPOSTGISLayerClose;
+    
+    layer->vtable->LayerSetTimeFilter = msPOSTGISLayerSetTimeFilter;
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+
+    return MS_SUCCESS;
+}
+

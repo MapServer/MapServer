@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/10/28 01:09:42  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.20  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -100,6 +103,9 @@
 #include "mapthread.h"
 
 MS_CVSID("$Id$")
+
+int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
+                          long record);
 
 #ifdef USE_GDAL
 
@@ -1337,3 +1343,36 @@ int msRASTERLayerGetItems(layerObj *layer)
     return msRASTERLayerInitItemInfo(layer);
 #endif /* def USE_GDAL */
 }
+
+
+int
+msRASTERLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msRASTERLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msRASTERLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msRASTERLayerOpen;
+    layer->vtable->LayerIsOpen = msRASTERLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msRASTERLayerWhichShapes;
+    layer->vtable->LayerNextShape = msRASTERLayerNextShape;
+    layer->vtable->LayerGetShape = msRASTERLayerGetShape;
+
+    layer->vtable->LayerClose = msRASTERLayerClose;
+    layer->vtable->LayerGetItems = msRASTERLayerGetItems;
+    layer->vtable->LayerGetExtent = msRASTERLayerGetExtent;
+
+    /* layer->vtable->LayerGetAutoStyle, use default */
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+
+    layer->vtable->LayerCloseConnection = msRASTERLayerClose;
+
+    layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+
+    return MS_SUCCESS;
+}
+

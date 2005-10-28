@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2005/10/28 01:09:42  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.96  2005/07/07 15:03:33  hobu
  * put thread locking around static data members
  * used in the lcache (msSDELCacheAdd)
@@ -120,6 +123,7 @@
 */
 
 #include <time.h>
+#include <assert.h>
 
 #include "map.h"
 #include "maperror.h"
@@ -997,6 +1001,27 @@ void msSDELayerClose(layerObj *layer) {
 }
 
 /* -------------------------------------------------------------------- */
+/* msSDELayerNoOpClose                                                  */
+/* -------------------------------------------------------------------- */
+/* No-Op function for virtual table interface                           */
+/* -------------------------------------------------------------------- */
+int msSDELayerNoOpClose(layerObj *layer) 
+{
+	/* no-op because of connection pooling */
+	return MS_SUCCESS;
+}
+
+/* -------------------------------------------------------------------- */
+/* msSDELayerCloseConnection                                            */
+/* -------------------------------------------------------------------- */
+/* Virtual table function                                               */
+/* -------------------------------------------------------------------- */
+int msSDELayerCloseConnection(layerObj *layer) 
+{
+	msSDELayerClose(layer);
+	return MS_SUCCESS;
+}
+/* -------------------------------------------------------------------- */
 /* msSDELayerWhichShapes                                                */
 /* -------------------------------------------------------------------- */
 /*     starts a stream query using spatial filter.  Also limits the     */
@@ -1411,6 +1436,15 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
               "msSDELayerGetShape()");
   return(MS_FAILURE);
 #endif
+}
+
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetShapeVT                                                 */
+/* -------------------------------------------------------------------- */
+/* Overloaded version for virtual table                                 */
+/* -------------------------------------------------------------------- */
+int msSDELayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record) {
+	return msSDELayerGetShape(layer, shape, record);
 }
 
 /* -------------------------------------------------------------------- */
@@ -2077,3 +2111,57 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   return(-1);
 #endif
 }
+
+/* -------------------------------------------------------------------- */
+/* msSDELayerCreateItems                                                */
+/* -------------------------------------------------------------------- */
+/* Special item allocator for SDE                                       */
+/* -------------------------------------------------------------------- */
+int
+msSDELayerCreateItems(layerObj *layer,
+                      int nt) 
+{
+    /* should be more than enough space, 
+     * SDE always needs a couple of additional items 
+     */
+    layer->items = (char **)calloc(nt+2, sizeof(char *)); 
+    if( ! layer->items) {
+        msSetError(MS_MEMERR, NULL, "msSDELayerCreateItems()");
+        return(MS_FAILURE);
+    }
+    layer->items[0] = msSDELayerGetRowIDColumn(layer); /* row id */
+    layer->items[1] = msSDELayerGetSpatialColumn(layer);
+    layer->numitems = 2;
+    return MS_SUCCESS;
+}
+
+int
+msSDELayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msSDELayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msSDELayerFreeItemInfo;
+    layer->vtable->LayerOpen = msSDELayerOpen;
+    layer->vtable->LayerIsOpen = msSDELayerIsOpen;
+    layer->vtable->LayerWhichShapes = msSDELayerWhichShapes;
+    layer->vtable->LayerNextShape = msSDELayerNextShape;
+    layer->vtable->LayerGetShape = msSDELayerGetShapeVT;
+    layer->vtable->LayerClose = msSDELayerNoOpClose;
+    layer->vtable->LayerGetItems = msSDELayerGetItems;
+    layer->vtable->LayerGetExtent = msSDELayerGetExtent;
+
+    /* layer->vtable->LayerGetAutoStyle, use default */
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+
+    /* SDE uses pooled connections, close from msCloseConnections */
+    layer->vtable->LayerCloseConnection = msSDELayerCloseConnection;
+
+    layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+    layer->vtable->LayerCreateItems = msSDELayerCreateItems;
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+    return MS_SUCCESS;
+}
+

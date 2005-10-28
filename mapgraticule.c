@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2005/10/28 01:09:41  jani
+ * MS RFC 3: Layer vtable architecture (bug 1477)
+ *
  * Revision 1.13  2005/06/08 23:57:43  dan
  * Propagate msGetlabelSize() errors in msGraticuleLayerNextShape() (part of
  * bug 828)
@@ -60,6 +63,7 @@
  **********************************************************************/
 
 #include "map.h"
+#include <assert.h>
 #include "mapproject.h"
 
 MS_CVSID("$Id$")
@@ -86,6 +90,8 @@ typedef enum
 void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc );
 static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticulePosition ePosition );
 static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToFormat );
+
+int msGraticuleLayerInitItemInfo(layerObj *layer);
 
 #define MAPGRATICULE_ARC_SUBDIVISION_DEFAULT	(256)
 #define MAPGRATICULE_ARC_MINIMUM				 (16)
@@ -571,6 +577,37 @@ int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent)
 int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record)
 {
 	return MS_SUCCESS;
+}
+
+/**********************************************************************************************************************
+ *
+ */
+int
+msGraticuleLayerInitializeVirtualTable(layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(layer->vtable != NULL);
+
+    layer->vtable->LayerInitItemInfo = msGraticuleLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msGraticuleLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msGraticuleLayerOpen;
+    layer->vtable->LayerIsOpen = msGraticuleLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msGraticuleLayerWhichShapes;
+    layer->vtable->LayerNextShape = msGraticuleLayerNextShape;
+    layer->vtable->LayerGetShape = msGraticuleLayerGetShape;
+
+    layer->vtable->LayerClose = msGraticuleLayerClose;
+    layer->vtable->LayerGetItems = msGraticuleLayerGetItems;
+    layer->vtable->LayerGetExtent = msGraticuleLayerGetExtent;
+    layer->vtable->LayerGetAutoStyle = msGraticuleLayerGetAutoStyle;
+
+    /* layer->vtable->LayerCloseConnection, use default */;
+    layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+    /* layer->vtable->LayerCreateItems, use default */
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+    return MS_SUCCESS;
 }
 
 /**********************************************************************************************************************
