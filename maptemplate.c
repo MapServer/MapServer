@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.115  2005/10/28 14:28:29  sdlime
+ * Altered default coordinate output for the shpxy template tag to match imagemap specs. Added centroid option to shpxy tag to output a single point for line and polygon shapes. Should more closely match the label point, but isn't perfect.
+ *
  * Revision 1.114  2005/10/16 04:20:01  frank
  * Avoid warnings on gcc4.
  *
@@ -882,12 +885,13 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
   int pointFormatLength;
 
   /* h = header, f=footer, s=seperator */
-  char *xh="", *xf=" ";
+  char *xh="", *xf=",";
   char *yh="", *yf="";
-  char *cs=","; /* coordinate */
+  char *cs=" "; /* coordinate */
   char *ph="", *pf="", *ps=""; /* part */
   char *sh="", *sf=""; /* shape */
 
+  int centroid=MS_FALSE; /* output just the centroid */
   int precision=0;
 
   shapeObj tShape;
@@ -946,6 +950,10 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
 
+       argValue = msLookupHashTable(tagArgs, "centroid");
+      if(argValue) 
+        if(strcasecmp(argValue,"true") == 0) centroid = MS_TRUE;
+
       argValue = msLookupHashTable(tagArgs, "proj");
       if(argValue) projectionString = argValue;
     }
@@ -957,11 +965,26 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     pointFormat2 = (char *) malloc(pointFormatLength); 
     snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
  
-    /* make a copy of the shape */
+    /* make a copy of the original shape or compute a centroid if necessary */
     msInitShape(&tShape);
-    status = msCopyShape(shape, &tShape);
-    if(status != 0) return(MS_FAILURE); /* copy failed */
-    
+    if(centroid == MS_TRUE) {
+      pointObj p;
+
+      p.x = (shape->bounds.minx + shape->bounds.maxx)/2;
+      p.y = (shape->bounds.miny + shape->bounds.maxy)/2;
+
+      tShape.type = MS_SHAPE_POINT;
+      tShape.line = (lineObj *) malloc(sizeof(lineObj));
+      tShape.numlines = 1;
+      tShape.line[0].point = NULL; /* initialize the line */
+      tShape.line[0].numpoints = 0;
+
+      msAddPointToLine(&(tShape.line[0]), &p);      
+    } else {
+      status = msCopyShape(shape, &tShape);
+      if(status != 0) return(MS_FAILURE); /* copy failed */
+    }
+
     /* no big deal to convert from file to image coordinates, but what are the image parameters */
     if(projectionString && strcasecmp(projectionString,"image") ==0) {
       precision = 0;
