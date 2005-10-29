@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.108  2005/10/29 02:03:43  jani
+ * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
+ *
  * Revision 1.107  2005/10/28 01:09:41  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1080,12 +1083,25 @@ LayerDefaultGetNumFeatures(layerObj *layer)
  * define what plugin to use. Returns MS_FAILURE or MS_SUCCESS.
  */
 int msConnectLayer(layerObj *layer,
-                   int connectiontype,
+                   const int connectiontype,
                    const char *library_str)
 {
-    /* For internal types, library_str is ignored */
     layer->connectiontype = connectiontype;
-    return populateVirtualTable(layer->vtable);
+    /* For internal types, library_str is ignored */
+    if (connectiontype == MS_PLUGIN) {
+        int rv;
+        msFree(layer->plugin_library);
+        msFree(layer->plugin_library_original);
+
+        layer->plugin_library_original = strdup(library_str);
+        rv = msBuildPluginLibraryPath(&layer->plugin_library, 
+                                      layer->plugin_library_original, 
+                                      layer->map);
+        if (rv != MS_SUCCESS) {
+            return rv;
+        }
+    }
+    return msInitializeVirtualTable(layer) ;   
 }
 
 static int
@@ -1182,6 +1198,9 @@ msInitializeVirtualTable(layerObj *layer)
             break;         
         case(MS_RASTER):
             return(msRASTERLayerInitializeVirtualTable(layer));
+            break;
+        case(MS_PLUGIN):
+            return(msPluginLayerInitializeVirtualTable(layer));
             break;
         default:
             msSetError(MS_MISCERR, 

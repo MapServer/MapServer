@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2005/10/29 02:03:43  jani
+ * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
+ *
  * Revision 1.13  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -109,7 +112,7 @@ FilterEncodingNode *FLTCreateFilterEncodingNode(void);
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                          int iLayerIndex, int bOnlySpatialFilter);
 
-int FLTLayerApplyCondSQLFilteToLayer(FilterEncodingNode *psNode, mapObj *map, 
+int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                                      int iLayerIndex, int bOnlySpatialFilter);
 int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                                    int iLayerIndex, int bOnlySpatialFilter);

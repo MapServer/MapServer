@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.427  2005/10/29 02:03:43  jani
+ * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
+ *
  * Revision 1.426  2005/10/28 02:08:14  frank
  * a few mapogr.cpp funcs used from WFS code, exposed in map.h
  *
@@ -248,6 +251,7 @@
  * Added standardized headers.  Added MS_CVSID().
  *
  */
+
 
 #ifndef MAP_H
 #define MAP_H
@@ -518,7 +522,7 @@ extern "C" {
     enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement, don't change it */
     enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
     enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-    enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER };
+    enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER, MS_PLUGIN };
     enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
     enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
@@ -1076,6 +1080,8 @@ typedef struct layer_obj {
 #endif /* SWIG */
 
   char *connection;
+  char *plugin_library;
+  char *plugin_library_original; /* this is needed for mapfile writing */
   enum MS_CONNECTION_TYPE connectiontype;
 
   layerVTableObj *vtable;
@@ -1327,6 +1333,9 @@ int getDouble(double *d);
 int getInteger(int *i);
 int getSymbol(int n, ...);
 int getCharacter(char *c);
+
+int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map);
+
 MS_DLL_EXPORT int  hex2int(char *hex);
 
 MS_DLL_EXPORT void initSymbol(symbolObj *s);
@@ -1634,6 +1643,8 @@ MS_DLL_EXPORT int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, l
 MS_DLL_EXPORT int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img);
 
 MS_DLL_EXPORT int msInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msConnectLayer(layerObj *layer, const int connectiontype, 
+                                 const char *library_str);
 
 MS_DLL_EXPORT int msINLINELayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msShapeFileLayerInitializeVirtualTable(layerObj *layer);
@@ -1646,6 +1657,7 @@ MS_DLL_EXPORT int msWFSLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msMYGISLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
 
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
@@ -1990,6 +2002,8 @@ MS_DLL_EXPORT void msConnPoolFinalCleanup( void );
 /*      prototypes for functions in mapcpl.c                            */
 /* ==================================================================== */
 MS_DLL_EXPORT const char *msGetBasename( const char *pszFullFilename );
+MS_DLL_EXPORT void *msGetSymbol(const char *pszLibrary, 
+                                const char *pszEntryPoint);
 
 /* ==================================================================== */
 /*      include definitions from mapows.h                               */

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.62  2005/10/29 02:03:43  jani
+ * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
+ *
  * Revision 1.61  2005/10/28 02:07:52  frank
  * corrected a few problems from last change
  *
@@ -1122,7 +1125,7 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 }
 
 /************************************************************************/
-/*               FLTLayerApplyCondSQLFilteToLayer                       */
+/*               FLTLayerApplyCondSQLFilterToLayer                       */
 /*                                                                      */
 /* Helper function for layer virtual table architecture                 */
 /************************************************************************/

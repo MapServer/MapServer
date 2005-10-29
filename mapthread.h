@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/10/29 02:03:43  jani
+ * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
+ *
  * Revision 1.10  2005/07/15 13:36:46  frank
  * Added comment on lock_names[] in mapthread.c.
  *
@@ -83,6 +86,7 @@ void msReleaseLock(int);
 #define TLOCK_SDE       7
 #define TLOCK_ORACLE    8
 #define TLOCK_OWS       9
+#define TLOCK_LAYER_VTABLE 10
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100

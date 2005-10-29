@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/10/29 02:03:43  jani
+ * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
+ *
  * Revision 1.4  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -118,3 +121,156 @@ const char *msGetBasename( const char *pszFullFilename )
 
     return szStaticResult;
 }
+
+/* Id: GDAL/port/cplgetsymbol.cpp,v 1.14 2004/11/11 20:40:38 fwarmerdam Exp */
+/* ==================================================================== */
+/*                  Unix Implementation                                 */
+/* ==================================================================== */
+#if defined(HAVE_DLFCN_H)
+
+#define GOT_GETSYMBOL
+
+#include <dlfcn.h>
+
+/************************************************************************/
+/*                            msGetSymbol()                            */
+/************************************************************************/
+
+/**
+ * Fetch a function pointer from a shared library / DLL.
+ *
+ * This function is meant to abstract access to shared libraries and
+ * DLLs and performs functions similar to dlopen()/dlsym() on Unix and
+ * LoadLibrary() / GetProcAddress() on Windows.
+ *
+ * If no support for loading entry points from a shared library is available
+ * this function will always return NULL.   Rules on when this function
+ * issues a msError() or not are not currently well defined, and will have
+ * to be resolved in the future.
+ *
+ * Currently msGetSymbol() doesn't try to:
+ * <ul>
+ *  <li> prevent the reference count on the library from going up
+ *    for every request, or given any opportunity to unload      
+ *    the library.                                            
+ *  <li> Attempt to look for the library in non-standard         
+ *    locations.                                              
+ *  <li> Attempt to try variations on the symbol name, like      
+ *    pre-prending or post-pending an underscore.
+ * </ul>
+ * 
+ * Some of these issues may be worked on in the future.
+ *
+ * @param pszLibrary the name of the shared library or DLL containing
+ * the function.  May contain path to file.  If not system supplies search
+ * paths will be used.
+ * @param pszSymbolName the name of the function to fetch a pointer to.
+ * @return A pointer to the function if found, or NULL if the function isn't
+ * found, or the shared library can't be loaded.
+ */
+
+void *msGetSymbol( const char * pszLibrary, const char * pszSymbolName )
+{
+    void        *pLibrary;
+    void        *pSymbol;
+
+    pLibrary = dlopen(pszLibrary, RTLD_LAZY);
+    if( pLibrary == NULL )
+    {
+        msSetError(MS_MISCERR, 
+                   "Dynamic loading failed: %s",
+                   "msGetSymbol()", dlerror());
+        return NULL;
+    }
+
+    pSymbol = dlsym( pLibrary, pszSymbolName );
+
+#if (defined(__APPLE__) && defined(__MACH__))
+    /* On mach-o systems, C symbols have a leading underscore and depending
+     * on how dlcompat is configured it may or may not add the leading
+     * underscore.  So if dlsym() fails add an underscore and try again.
+     */
+    if( pSymbol == NULL )
+    {
+        char withUnder[strlen(pszSymbolName) + 2];
+        withUnder[0] = '_'; withUnder[1] = 0;
+        strcat(withUnder, pszSymbolName);
+        pSymbol = dlsym( pLibrary, withUnder );
+    }
+#endif
+
+    if( pSymbol == NULL )
+    {
+        msSetError(MS_MISCERR, 
+                   "Dynamic loading failed: %s",
+                   "msGetSymbol()", dlerror());
+        return NULL;
+    }
+    
+    return( pSymbol );
+}
+
+#endif /* def __unix__ && defined(HAVE_DLFCN_H) */
+
+/* ==================================================================== */
+/*                 Windows Implementation                               */
+/* ==================================================================== */
+#ifdef WIN32
+
+#define GOT_GETSYMBOL
+
+#include <windows.h>
+
+/************************************************************************/
+/*                            msGetSymbol()                            */
+/************************************************************************/
+
+void *msGetSymbol( const char * pszLibrary, const char * pszSymbolName )
+{
+    void        *pLibrary;
+    void        *pSymbol;
+
+    pLibrary = LoadLibrary(pszLibrary);
+    if( pLibrary == NULL )
+    {
+        msSetError(MS_MISCERR, 
+                  "Can't load requested dynamic library: %s", 
+                   "msGetSymbol()", pszLibrary);
+        return NULL;
+    }
+
+    pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
+
+    if( pSymbol == NULL )
+    {
+        msSetError(MS_MISCERR, 
+            "Can't find requested entry point: %s in lib %s",
+                   "msGetSymbol()", pszSymbolName, pLibrary);
+        return NULL;
+    }
+    
+    return( pSymbol );
+}
+
+#endif /* def _WIN32 */
+
+/* ==================================================================== */
+/*      Dummy implementation.                                           */
+/* ==================================================================== */
+
+#ifndef GOT_GETSYMBOL
+
+/************************************************************************/
+/*                            msGetSymbol()                            */
+/*                                                                      */
+/*      Dummy implementation.                                           */
+/************************************************************************/
+
+void *msGetSymbol(const char *pszLibrary, const char *pszEntryPoint)
+{
+    msSetError(MS_MISCERR, 
+               "msGetSymbol(%s,%s) called.  Failed as this is stub implementation.",  
+               "msGetSymbol()", pszLibrary, pszEntryPoint);
+    return NULL;
+}
+#endif

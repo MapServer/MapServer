@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.312  2005/10/29 02:03:43  jani
+ * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
+ *
  * Revision 1.311  2005/10/28 01:09:41  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -324,6 +327,35 @@ int getIntegerOrSymbol(int *i, int n, ...)
 }
 
 
+/*
+** msBuildPluginLibraryPath
+**
+** This function builds a path to be used dynamically to load plugin library.
+*/
+int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
+{
+    char szLibPath[MS_MAXPATHLEN + 1] = { '\0' };
+    char szLibPathExt[MS_MAXPATHLEN + 1] = { '\0' };
+    const char *plugin_dir = msLookupHashTable( &(map->configoptions), "MS_PLUGIN_DIR");
+
+    /* do nothing on windows, filename without .dll will be loaded by default*/
+#if !defined(_WIN32)
+    if (lib_str) {
+        size_t len = strlen(lib_str);
+        if (3 < len && strcmp(lib_str + len-3, ".so")) {
+            strncpy(szLibPathExt, lib_str, MS_MAXPATHLEN);
+            strlcat(szLibPathExt, ".so", MS_MAXPATHLEN);
+            lib_str = szLibPathExt;
+        }
+    }
+#endif /* !defined(_WIN32) */
+    if (NULL == msBuildPath(szLibPath, plugin_dir, lib_str)) {
+        return MS_FAILURE;
+    }
+    *dest = strdup(szLibPath);
+
+    return MS_SUCCESS;
+}
 
 /*
 ** Returns the index of specified symbol or -1 if not found.
@@ -2306,6 +2338,8 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->currentfeature = layer->features = NULL;
 
   layer->connection = NULL;
+  layer->plugin_library = NULL;
+  layer->plugin_library_original = NULL;
   layer->connectiontype = MS_SHAPEFILE;
   layer->vtable = NULL;
 
@@ -2370,6 +2404,8 @@ void freeLayer(layerObj *layer) {
   msFree(layer->tileindex);
   msFree(layer->tileitem);
   msFree(layer->bandsitem);
+  msFree(layer->plugin_library);
+  msFree(layer->plugin_library_original);
   msFree(layer->connection);
   msFree(layer->vtable);
 
@@ -2434,7 +2470,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getString(&layer->connection) == MS_FAILURE) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(8, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS)) == -1) return(-1);
+      if((layer->connectiontype = getSymbol(9, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_PLUGIN)) == -1) return(-1);
       break;
     case(DATA):
       if(getString(&layer->data) == MS_FAILURE) return(-1);
@@ -2567,6 +2603,16 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(OFFSITE):
       if(loadColor(&(layer->offsite)) != MS_SUCCESS) return(-1);
       break;
+    case(MS_PLUGIN): 
+    {
+        int rv;
+        if(getString(&layer->plugin_library_original) == MS_FAILURE) return(-1);
+        rv = msBuildPluginLibraryPath(&layer->plugin_library, 
+                                      layer->plugin_library_original, 
+                                      map);
+        if (rv == MS_FAILURE) return(-1);
+    }
+    break;
     case(PROCESSING):
     {
         /* NOTE: processing array maintained as size+1 with NULL terminator.
@@ -2933,7 +2979,13 @@ static void writeLayer(layerObj *layer, FILE *stream)
       fprintf(stream, "    CONNECTIONTYPE ORACLESPATIAL\n");
     else if(layer->connectiontype == MS_WFS)
       fprintf(stream, "    CONNECTIONTYPE WFS\n");
+    else if(layer->connectiontype == MS_PLUGIN)
+      fprintf(stream, "    CONNECTIONTYPE PLUGIN\n");
   }
+  if(layer->connectiontype == MS_PLUGIN) {
+      fprintf(stream, "    PLUGIN  \"%s\"\n", layer->plugin_library_original);
+  }
+
   if(layer->data) fprintf(stream, "    DATA \"%s\"\n", layer->data);
   if(layer->debug) fprintf(stream, "    DEBUG ON\n");
   if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
