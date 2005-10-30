@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.428  2005/10/30 05:05:07  sdlime
+ * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
+ *
  * Revision 1.427  2005/10/29 02:03:43  jani
  * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
  *
@@ -1556,6 +1559,8 @@ MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr im
 MS_DLL_EXPORT int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
 MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimative.c */
+MS_DLL_EXPORT shapeObj *msShapeFromWKT(const char *string);
+MS_DLL_EXPORT char *msShapeToWKT(shapeObj *shape);
 MS_DLL_EXPORT void msInitShape(shapeObj *shape);
 MS_DLL_EXPORT void msShapeDeleteLine( shapeObj *shape, int line );
 MS_DLL_EXPORT int msCopyShape(shapeObj *from, shapeObj *to);
@@ -2014,6 +2019,8 @@ MS_DLL_EXPORT void *msGetSymbol(const char *pszLibrary,
 /*      prototypes for functions in mapgeos.cpp                         */
 /* ==================================================================== */
 MS_DLL_EXPORT void msGEOSFreeGeometry(shapeObj *shape);
+MS_DLL_EXPORT shapeObj *msGEOSShapeFromWKT(const char *string);
+MS_DLL_EXPORT char *msGEOSShapeToWKT(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
 

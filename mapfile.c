@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.313  2005/10/30 05:05:07  sdlime
+ * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
+ *
  * Revision 1.312  2005/10/29 02:03:43  jani
  * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
  *
@@ -734,9 +737,28 @@ static int loadFeature(layerObj	*player, int type)
     case(TEXT):
       if(getString(&shape.text) == MS_FAILURE) return(-1);
       break;
+    case(WKT):
+      {
+	char *string=NULL;
+	shapeObj *pShape=NULL;
+	
+	if(getString(&string) == MS_FAILURE) return(-1);
+	
+	pShape = msShapeFromWKT(string);
+	free(string);
+	
+	if(insertFeatureList(list, pShape) == NULL) {
+	  msFreeShape(pShape);
+	  free(pShape);
+	  return(-1);
+	}
+	
+	msFreeShape(pShape);
+	free(pShape);
+	break;
+      }
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()",
-                 msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */  

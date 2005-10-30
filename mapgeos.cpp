@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/10/30 05:05:07  sdlime
+ * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
+ *
  * Revision 1.12  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -684,6 +687,48 @@ void msGEOSFreeGeometry(shapeObj *shape)
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSFreeGeometry()");
   return;
+#endif
+}
+
+/*
+** WKT input and output functions
+*/
+shapeObj *msGEOSShapeFromWKT(const char *string)
+{
+#ifdef USE_GEOS
+  if(!string) 
+    return NULL;
+
+  /* if there is not an instance of a GeometeryFactory, create one */
+  if(!gf) 
+    msGEOSCreateGeometryFactory();
+  
+  WKTReader *r = new WKTReader(gf);
+  Geometry *g = r->read(string);
+
+  return msGEOSGeometry2Shape(g);
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSShapeFromWKT()");
+  return NULL;
+#endif
+}
+
+char *msGEOSShapeToWKT(shapeObj *shape)
+{
+#ifdef USE_GEOS
+  if(!shape) 
+    return NULL;
+
+  if(!shape->geometry) /* if no geometry for the shape then build one */
+    shape->geometry = msGEOSShape2Geometry(shape);
+  Geometry *g = (Geometry *) shape->geometry;
+  if(!g) 
+    return NULL;
+
+  return (char *) g->toString().c_str();
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSShapeToWKT()");
+  return NULL;
 #endif
 }
 

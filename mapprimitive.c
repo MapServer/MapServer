@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/10/30 05:05:07  sdlime
+ * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
+ *
  * Revision 1.57  2005/10/20 19:37:03  frank
  * added msAddPointToLine
  *
@@ -107,6 +110,26 @@ void msPrintShape(shapeObj *p)
       msDebug("\t\t%d: (%f, %f)\n", j, p->line[i].point[j].x, p->line[i].point[j].y);
     }
   }
+}
+
+shapeObj *msShapeFromWKT(const char *string)
+{
+#ifdef USE_GEOS
+  return msGEOSShapeFromWKT(string);
+#else
+  msSetError(MS_MISCERR, "WKT support is not available, please compile MapServer with GEOS or OGR support.", "msShapeFromWKT()");
+  return NULL;
+#endif
+}
+
+char *msShapeToWKT(shapeObj *shape)
+{
+#ifdef USE_GEOS
+  return msGEOSShapeToWKT(shape);
+#else
+  msSetError(MS_MISCERR, "WKT support is not available, please compile MapServer with GEOS or OGR support.", "msShapeToWKT()");
+  return NULL;
+#endif
 }
 
 void msInitShape(shapeObj *shape)
