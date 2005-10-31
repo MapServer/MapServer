@@ -32,16 +32,22 @@
 %extend shapeObj 
 {
   
-    shapeObj(int type) 
+    shapeObj(int type=MS_SHAPE_NULL, char *wkt=NULL) 
     {
         int i;
         shapeObj *shape;
-        shape = (shapeObj *)malloc(sizeof(shapeObj));
-        if (!shape)
-            return NULL;
 
-        msInitShape(shape);
-        if (type >= 0) shape->type = type;
+	/* check for WKT string first */
+	if(wkt)
+	    shape = msShapeFromWKT(wkt);
+	else {
+            shape = (shapeObj *)malloc(sizeof(shapeObj));
+            if (!shape)
+                return NULL;
+
+            msInitShape(shape);
+            if(type >= 0) shape->type = type;
+        }
 
         /* Allocate memory for 4 values */
         if ((shape->values = (char **)malloc(sizeof(char *)*4)) == NULL)
@@ -112,6 +118,11 @@
     int copy(shapeObj *dest) 
     {
         return(msCopyShape(self, dest));
+    }
+
+    char *toWKT()
+    {
+        return msShapeToWKT(self);
     }
 
     %newobject buffer;
