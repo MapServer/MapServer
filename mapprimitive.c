@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/10/31 04:58:14  sdlime
+ * Added a check in msFreeShape() to make sure the incoming shapeObj is not NULL.
+ *
  * Revision 1.58  2005/10/30 05:05:07  sdlime
  * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
  *
@@ -193,6 +196,8 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
 void msFreeShape(shapeObj *shape)
 {
   int c;
+
+  if(!shape) return; /* for safety */
 
   for (c= 0; c < shape->numlines; c++)
     free(shape->line[c].point);
