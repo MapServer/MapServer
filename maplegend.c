@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/10/31 06:03:26  sdlime
+ * Updated msDrawLegend() to consider layer order. (bug 1484)
+ *
  * Revision 1.55  2005/09/14 00:11:35  frank
  * fixed leak of imageObj when embedding legends
  *
@@ -258,7 +261,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   int maxwidth=0, maxheight=0, n=0;
   int *heights;
   rectObj rect;
-  imageObj      *image = NULL;
+  imageObj *image = NULL;
   outputFormatObj *format = NULL;
 
   if (!scale_independent) {
@@ -273,11 +276,13 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   ** allocate heights array
   */
   for(i=0; i<map->numlayers; i++) {
-    if((map->layers[i].status == MS_OFF) || (map->layers[i].type == MS_LAYER_QUERY)) /* skip it */
+    lp = &(map->layers[map->layerorder[i]]);
+
+    if((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
       continue;
 
-    for(j=0;j<map->layers[i].numclasses;j++) {
-      if(!map->layers[i].class[j].name)
+    for(j=0;j<lp->numclasses;j++) {
+      if(!lp->class[j].name)
 	continue; /* skip it */
       n++;
     }
@@ -293,20 +298,22 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   */
   n=0;
   for(i=0; i<map->numlayers; i++) { /* Need to find the longest legend label string */
-    if((map->layers[i].status == MS_OFF) || (map->layers[i].type == MS_LAYER_QUERY)) /* skip it */
+    lp = &(map->layers[map->layerorder[i]]);
+
+    if((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
       continue;
 
-   if(!scale_independent && map->scale > 0) {
-      if((map->layers[i].maxscale > 0) && (map->scale > map->layers[i].maxscale))
+    if(!scale_independent && map->scale > 0) {
+      if((lp->maxscale > 0) && (map->scale > lp->maxscale))
 	continue;
-      if((map->layers[i].minscale > 0) && (map->scale <= map->layers[i].minscale))
+      if((lp->minscale > 0) && (map->scale <= lp->minscale))
 	continue;
     }
  
-    for(j=0;j<map->layers[i].numclasses;j++) {
-      if(!map->layers[i].class[j].name)
+    for(j=0;j<lp->numclasses;j++) {
+      if(!lp->class[j].name)
 	continue; /* skip it */
-      if(msGetLabelSize(map->layers[i].class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0) != 0)
+      if(msGetLabelSize(lp->class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0) != 0)
 	return(NULL); /* something bad happened */
       maxheight = MS_MAX(maxheight, MS_NINT(rect.maxy - rect.miny));
       maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
@@ -349,8 +356,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     
   /* for(i=0; i<map->numlayers; i++) { */
   for(i=map->numlayers-1; i>=0; i--) {
-
-    lp = &(map->layers[i]); /* assign for brevity */
+    lp = &(map->layers[map->layerorder[i]]); /* for brevity */
 
     if((lp->numclasses == 0) || (lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY))
       continue; /* skip this layer */
