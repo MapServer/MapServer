@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/10/31 15:58:11  frank
+ * ensure TLOCK_GDAL released on error exits
+ *
  * Revision 1.29  2005/09/13 23:51:04  frank
  * Pop all outstanding error handler in msGDALCleanup()
  *
@@ -274,6 +277,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     hMemDriver = GDALGetDriverByName( "MEM" );
     if( hMemDriver == NULL )
     {
+        msReleaseLock( TLOCK_GDAL );
         msSetError( MS_MISCERR, "Failed to find MEM driver.",
                     "msSaveImageGDAL()" );
         return MS_FAILURE;
@@ -284,6 +288,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
                          eDataType, NULL );
     if( hMemDS == NULL )
     {
+        msReleaseLock( TLOCK_GDAL );
         msSetError( MS_MISCERR, "Failed to create MEM dataset.",
                     "msSaveImageGDAL()" );
         return MS_FAILURE;
@@ -454,6 +459,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     if( hOutputDriver == NULL )
     {
         GDALClose( hMemDS );
+        msReleaseLock( TLOCK_GDAL );
         msSetError( MS_MISCERR, "Failed to find %s driver.",
                     "msSaveImageGDAL()", format->driver+5 );
         return MS_FAILURE;
@@ -471,6 +477,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     if( hOutputDS == NULL )
     {
         GDALClose( hMemDS );
+        msReleaseLock( TLOCK_GDAL );
         msSetError( MS_MISCERR, "Failed to create output %s file.\n%s",
                     "msSaveImageGDAL()", format->driver+5, 
                     CPLGetLastErrorMsg() );
