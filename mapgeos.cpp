@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/10/31 04:59:43  sdlime
+ * Now catching exceptions when reading WKT strings.
+ *
  * Revision 1.13  2005/10/30 05:05:07  sdlime
  * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
  *
@@ -466,7 +469,7 @@ static shapeObj *msGEOSGeometry2Shape_multiline(MultiLineString *g)
 
       for(i=0; i<numPoints; i++) {
 	c = coords->getAt(i);
-	
+
 	line.point[i].x = c.x;
 	line.point[i].y = c.y;
 	/* line.point[i].z = c.z; */	
@@ -587,7 +590,8 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(MultiPolygon *g)
 
 	line.point[i].x = c.x;
 	line.point[i].y = c.y;
-	/* line.point[i].z = c.z; */
+	/* line.point[i].z = c.z;
+	   line.point[i].m = 0; */
       }
       msAddLine(shape, &line);
       free(line.point);
@@ -702,11 +706,19 @@ shapeObj *msGEOSShapeFromWKT(const char *string)
   /* if there is not an instance of a GeometeryFactory, create one */
   if(!gf) 
     msGEOSCreateGeometryFactory();
-  
-  WKTReader *r = new WKTReader(gf);
-  Geometry *g = r->read(string);
 
-  return msGEOSGeometry2Shape(g);
+  try {
+    WKTReader *r = new WKTReader(gf);
+    Geometry *g = r->read(string);
+    return msGEOSGeometry2Shape(g);
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSShapeFromWKT()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSShapeFromWKT()");
   return NULL;
