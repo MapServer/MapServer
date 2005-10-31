@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.314  2005/10/31 05:08:17  sdlime
+ * Cleaned up mapfile and url-based dynamic feature creation via WKT. Also simplified the url-based interface for creating dynamic features. It is no longer necessary to do something like map_layer_feature=new before sending the coordinates. If you send new text (that is, map_layer_feature_text=some+text) if affects the last feature placed in the list. Either the old points-based syntax or WKT is supported. WKT has the advantage of handling mulipart features.
+ *
  * Revision 1.313  2005/10/30 05:05:07  sdlime
  * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
  *
@@ -667,6 +670,16 @@ void freeFeatureList(featureListNodeObjPtr list)
     }
 }
 
+static featureListNodeObjPtr getLastListNode(featureListNodeObjPtr list)
+{
+  while (list != NULL) {
+    if(list->next == NULL) return list; /* the last node */
+    list = list->next;
+  }
+
+  return NULL; /* empty list */
+}
+
 /* lineObj = multipointObj */
 static int loadFeaturePoints(lineObj *points)
 {
@@ -674,7 +687,7 @@ static int loadFeaturePoints(lineObj *points)
 
   if((points->point = (pointObj *)malloc(sizeof(pointObj)*MS_FEATUREINITSIZE)) == NULL) {
     msSetError(MS_MEMERR, NULL, "loadFeaturePoints()");
-    return(-1);
+    return(MS_FAILURE);
   }
   points->numpoints = 0;
   buffer_size = MS_FEATUREINITSIZE;
@@ -683,83 +696,86 @@ static int loadFeaturePoints(lineObj *points)
     switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadFeaturePoints()");      
-      return(-1);
+      return(MS_FAILURE);
     case(END):
-      return(0);
+      return(MS_SUCCESS);
     case(MS_NUMBER):
       if(points->numpoints == buffer_size) { /* just add it to the end */
 	points->point = (pointObj *) realloc(points->point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));    
 	if(points->point == NULL) {
 	  msSetError(MS_MEMERR, "Realloc() error.", "loadFeaturePoints()");
-	  return(-1);
+	  return(MS_FAILURE);
 	}   
 	buffer_size+=MS_FEATUREINCREMENT;
       }
 
       points->point[points->numpoints].x = atof(msyytext);
-      if(getDouble(&(points->point[points->numpoints].y)) == -1) return(-1);
+      if(getDouble(&(points->point[points->numpoints].y)) == -1) return(MS_FAILURE);
 
       points->numpoints++;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadFeaturePoints()", 
-                 msyytext, msyylineno );          
-      return(-1);      
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadFeaturePoints()",  msyytext, msyylineno );
+      return(MS_FAILURE);
     }
   }
 }
 
 static int loadFeature(layerObj	*player, int type)
 {
-
+  int status=MS_SUCCESS;
   featureListNodeObjPtr *list = &(player->features);
   multipointObj points={0,NULL};
-  shapeObj shape;
+  shapeObj *shape=NULL;
 
-  msInitShape(&shape);
-  shape.type = type;
+  if((shape = (shapeObj *) malloc(sizeof(shapeObj))) == NULL)
+    return(MS_FAILURE);
+  msInitShape(shape);
+  shape->type = type;
 
   for(;;) {
     switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
-      return(-1);
+      return(MS_FAILURE);
     case(END):
-      if(insertFeatureList(list, &shape) == NULL) return(-1);
-      msFreeShape(&shape);
-      return(0);
+      if(insertFeatureList(list, shape) == NULL) 
+	status = MS_FAILURE;
+
+      msFreeShape(shape); /* clean up */
+      msFree(shape);
+
+      return(status);
     case(POINTS):
-      if(loadFeaturePoints(&points) == -1) return(-1);
-      if(msAddLine(&shape, &points) == -1) return(-1);
-      msFree(points.point); /* reset */
+      if(loadFeaturePoints(&points) == MS_FAILURE) return(MS_FAILURE); /* no clean up necessary, just return */
+      status = msAddLine(shape, &points);
+
+      msFree(points.point); /* clean up */
       points.numpoints = 0;
+
+      if(status == MS_FAILURE) return(MS_FAILURE);
       break;
     case(TEXT):
-      if(getString(&shape.text) == MS_FAILURE) return(-1);
+      if(getString(&shape->text) == MS_FAILURE) return(MS_FAILURE);
       break;
     case(WKT):
       {
 	char *string=NULL;
-	shapeObj *pShape=NULL;
+
+	/* todo, what do we do with multiple WKT property occurances? */
 	
-	if(getString(&string) == MS_FAILURE) return(-1);
-	
-	pShape = msShapeFromWKT(string);
-	free(string);
-	
-	if(insertFeatureList(list, pShape) == NULL) {
-	  msFreeShape(pShape);
-	  free(pShape);
-	  return(-1);
-	}
-	
-	msFreeShape(pShape);
-	free(pShape);
+	if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+	if((shape = msShapeFromWKT(string)) == NULL)
+	  status = MS_FAILURE;
+
+	msFree(string); /* clean up */
+
+	if(status == MS_FAILURE) return(MS_FAILURE);
 	break;
       }
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()", msyytext, msyylineno);
-      return(-1);
+      return(MS_FAILURE);
     }
   } /* next token */  
 }
@@ -2537,8 +2553,8 @@ int loadLayer(layerObj *layer, mapObj *map)
     }
     case(FEATURE):
       if(layer->type == -1) {
-				msSetError(MS_MISCERR, "Layer type must be set before defining inline features.", "loadLayer()");      
-				return(-1);
+	msSetError(MS_MISCERR, "Layer type must be set before defining inline features.", "loadLayer()");      
+	return(-1);
       }
 
       if(layer->type == MS_LAYER_POLYGON)
@@ -2550,7 +2566,7 @@ int loadLayer(layerObj *layer, mapObj *map)
 	  
       layer->connectiontype = MS_INLINE;
 
-      if(loadFeature(layer, type) == -1) return(-1);      
+      if(loadFeature(layer, type) == MS_FAILURE) return(-1);      
       break;
     case(FILTER):
       if(loadExpression(&(layer->filter)) == -1) return(-1);
@@ -2711,12 +2727,7 @@ int loadLayer(layerObj *layer, mapObj *map)
 
 static void loadLayerString(mapObj *map, layerObj *layer, char *value)
 {
-  int i=0,buffer_size=0;
-  multipointObj points={0,NULL};
-  int done=0, type;
-
-  static featureListNodeObjPtr current=NULL;
-  shapeObj shape;
+  int i=0;
 
   switch(msyylex()) {
   case(CLASS):
@@ -2736,69 +2747,94 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msFree(layer->data);
     layer->data = strdup(value);
     break;
-  case(FEATURE):    
-    if(layer->type == MS_LAYER_POLYGON)
-      type = MS_SHAPE_POLYGON;
-    else if(layer->type == MS_LAYER_LINE)
-      type = MS_SHAPE_LINE;
-    else
-      type = MS_SHAPE_POINT;
+  case(FEATURE):
+    {    
+      shapeObj *shape=NULL;
+      int done=0, type, buffer_size=0;
+      featureListNodeObjPtr node;
 
-    switch(msyylex()) {      
-    case(POINTS):
-      msyystate = 2; msyystring = value;
+      if(layer->type == MS_LAYER_POLYGON)
+	type = MS_SHAPE_POLYGON;
+      else if(layer->type == MS_LAYER_LINE)
+	type = MS_SHAPE_LINE;
+      else
+	type = MS_SHAPE_POINT;
 
-      if(layer->features == NULL) {
-	msInitShape(&shape);
-	shape.type = type;
-	if((current = insertFeatureList(&(layer->features), &shape)) == NULL) return; /* create initial feature */
+      switch(msyylex()) {      
+      case(POINTS):
+	msyystate = 2; msyystring = value;
+	
+	/* 
+	** create a new shape from the supplied points and add it to the feature list 
+	*/
+	shape = (shapeObj *) malloc(sizeof(shapeObj));
+	msInitShape(shape);
+	shape->type = type;
+
+	shape->line = (lineObj *) malloc(sizeof(lineObj)*1); /* one line, set of points or polygon */
+	shape->numlines = 1;
+
+	if((shape->line[0].point = (pointObj *) malloc(sizeof(pointObj)*MS_FEATUREINITSIZE)) == NULL) {
+	  msSetError(MS_MEMERR, NULL, "loadLayerString()");
+	  return;
+	}
+	shape->line[0].numpoints = 0;
+	buffer_size = MS_FEATUREINITSIZE;
+	
+	while(!done) {
+	  switch(msyylex()) {	  
+	  case(MS_NUMBER): /* x */
+	    if(shape->line[0].numpoints == buffer_size) { /* grow the buffer */
+	      shape->line[0].point = (pointObj *) realloc(shape->line[0].point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));    
+	      if(!shape->line[0].point) {
+		msSetError(MS_MEMERR, "Realloc() error.", "loadlayerString()");
+		return;
+	      }   
+	      buffer_size+=MS_FEATUREINCREMENT;
+	    }
+	    
+	    shape->line[0].point[shape->line[0].numpoints].x = atof(msyytext);	    
+	    if(getDouble(&(shape->line[0].point[shape->line[0].numpoints].y)) == -1) return;
+	    
+	    shape->line[0].numpoints++;
+	    break;
+	  default: /* \0 */
+	    done=1;
+	    break;
+	  }	
+	}
+	
+	insertFeatureList(&(layer->features), shape);
+	
+	msFreeShape(shape);
+	msFree(shape);
+	break;
+      case(TEXT):
+	if((node = getLastListNode(layer->features)) != NULL) {
+	  msFree(node->shape.text); /* clear any previous value */
+	  node->shape.text = strdup(value); /* update the text property of the last feature in the list */
+	}
+	break;
+      case(WKT):
+	/* 
+	** create a new shape from the supplied points and add it to the feature list 
+	*/		  
+	shape = msShapeFromWKT(value);	
+	if(shape)
+	  insertFeatureList(&(layer->features), shape);
+	
+	msFreeShape(shape);
+	msFree(shape);
+	break;
+      default:
+	/* msInitShape(&shape);
+	   shape.type = type;
+	   if((current = insertFeatureList(&(layer->features), &shape)) == NULL) return; */
+	break;
       }
 
-      if((points.point = (pointObj *)malloc(sizeof(pointObj)*MS_FEATUREINITSIZE)) == NULL) {
-	msSetError(MS_MEMERR, NULL, "loadLayerString()");
-	return;
-      }
-      points.numpoints = 0;
-      buffer_size = MS_FEATUREINITSIZE;
-            
-      while(!done) {
-	switch(msyylex()) {	  
-	case(MS_NUMBER):
-	  if(points.numpoints == buffer_size) { /* just add it to the end */
-	    points.point = (pointObj *) realloc(points.point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));    
-	    if(!points.point) {
-	      msSetError(MS_MEMERR, "Realloc() error.", "loadlayerString()");
-	      return;
-	    }   
-	    buffer_size+=MS_FEATUREINCREMENT;
-	  }
-	  
-	  points.point[points.numpoints].x = atof(msyytext);
-	  if(getDouble(&(points.point[points.numpoints].y)) == -1) return;
-	  
-	  points.numpoints++;	  
-	  break;
-	default: /* \0 */
-	  done=1;
-	  break;
-	}	
-      }
-
-      if(msAddLine(&(current->shape), &points) == -1) break;
-      
-      break;
-
-    case(TEXT):
-      current->shape.text = strdup(value);
-      break;
-    default:
-      msInitShape(&shape);
-      shape.type = type;
-      if((current = insertFeatureList(&(layer->features), &shape)) == NULL) return;
       break;
     }
-
-    break;
   case(FILTER):    
     loadExpressionString(&(layer->filter), value);
     break;
