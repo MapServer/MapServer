@@ -15,9 +15,11 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD
 --------
+- MS RFC 2: added OGR based shape<->WKT implementation.
+
 - mapgdal.c: fixed some mutex lock release issues on error conditions.
 
-- MS RCF 8: External plugin layer providers (bug 1477)
+- MS RFC 8: External plugin layer providers (bug 1477)
 
 - SLD : syntax error when auto generating external symbols 
   (Bug 1508).

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/11/01 05:35:50  frank
+ * added preliminary implementation of OGR based WKT translation, still untested
+ *
  * Revision 1.59  2005/10/31 04:58:14  sdlime
  * Added a check in msFreeShape() to make sure the incoming shapeObj is not NULL.
  *
@@ -119,6 +122,8 @@ shapeObj *msShapeFromWKT(const char *string)
 {
 #ifdef USE_GEOS
   return msGEOSShapeFromWKT(string);
+#elif defined(USE_OGR)
+  return msOGRShapeFromWKT(string);
 #else
   msSetError(MS_MISCERR, "WKT support is not available, please compile MapServer with GEOS or OGR support.", "msShapeFromWKT()");
   return NULL;
@@ -129,6 +134,8 @@ char *msShapeToWKT(shapeObj *shape)
 {
 #ifdef USE_GEOS
   return msGEOSShapeToWKT(shape);
+#elif defined(USE_OGR)
+  return msOGRShapeToWKT(shape);
 #else
   msSetError(MS_MISCERR, "WKT support is not available, please compile MapServer with GEOS or OGR support.", "msShapeToWKT()");
   return NULL;

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.92  2005/11/01 05:35:50  frank
+ * added preliminary implementation of OGR based WKT translation, still untested
+ *
  * Revision 1.91  2005/11/01 02:34:24  frank
  * Make a few things static, trim log.
  *
@@ -2365,3 +2368,110 @@ msOGRLayerInitializeVirtualTable(layerObj *layer)
 
     return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                         msOGRShapeFromWKT()                          */
+/************************************************************************/
+shapeObj *msOGRShapeFromWKT(const char *string)
+{
+#ifdef USE_OGR
+    OGRGeometryH hGeom = NULL;
+    shapeObj *shape=NULL;
+    
+    if(!string) 
+        return NULL;
+    
+    if( OGR_G_CreateFromWkt( (char **)&string, NULL, &hGeom ) != OGRERR_NONE )
+    {
+        msSetError(MS_OGRERR, "Failed to parse WKT string.", 
+                   "msOGRShapeFromWKT()" );
+        return NULL;
+    }
+
+    /* Initialize a corresponding shapeObj */
+
+    shape = (shapeObj *) malloc(sizeof(shapeObj));
+    msInitShape(shape);
+
+    /* translate WKT into an OGRGeometry. */
+  
+    if( msOGRGeometryToShape( hGeom, shape, 
+                              wkbFlatten(OGR_G_GetGeometryType(hGeom)) )
+                              == MS_FALSE )
+    {
+        free( shape );
+        return NULL;
+    }
+
+    OGR_G_DestroyGeometry( hGeom );
+
+    return shape;
+#else
+  msSetError(MS_OGRERR, "OGR support is not available.","msOGRShapeFromWKT()");
+  return NULL;
+#endif
+}
+
+/************************************************************************/
+/*                          msOGRShapeToWKT()                           */
+/************************************************************************/
+char *msOGRShapeToWKT(shapeObj *shape)
+{
+#ifdef USE_OGR
+    OGRGeometryH hGeom = NULL;
+    int          i;
+
+    if(!shape) 
+        return NULL;
+
+    if( shape->type == MS_SHAPE_POINT && shape->numlines == 1
+        && shape->line[0].numpoints == 1 )
+    {
+        hGeom = OGR_G_CreateGeometry( wkbPoint );
+        OGR_G_SetPoint_2D( hGeom, 0, 
+                           shape->line[0].point[0].x, 
+                           shape->line[0].point[0].y );
+    }
+    else if( shape->type == MS_SHAPE_LINE && shape->numlines == 1 )
+    {
+        hGeom = OGR_G_CreateGeometry( wkbLineString );
+        for( i = 0; i < shape->line[0].numpoints; i++ )
+            OGR_G_AddPoint_2D( hGeom, 
+                               shape->line[0].point[i].x, 
+                               shape->line[0].point[i].y );
+    }
+    else if( shape->type == MS_SHAPE_POLYGON )
+    {
+        int iLine;
+
+        /* actually, it is pretty hard to be sure rings 1+ are interior */
+        hGeom = OGR_G_CreateGeometry( wkbPolygon );
+        for( iLine = 0; iLine < shape->numlines; iLine++ )
+        {
+            OGRGeometryH hRing;
+            hRing = OGR_G_CreateGeometry( wkbLinearRing );
+            
+            for( i = 0; i < shape->line[iLine].numpoints; i++ )
+                OGR_G_AddPoint_2D( hRing, 
+                                   shape->line[iLine].point[i].x, 
+                                   shape->line[iLine].point[i].y );
+            OGR_G_AddGeometryDirectly( hGeom, hRing );
+        }
+    }
+    else
+    {
+        msSetError(MS_OGRERR, "OGR support is not available.", "msOGRShapeToWKT()");
+    }
+
+    if( hGeom != NULL )
+    {
+        
+    }
+
+    return NULL;
+#else
+    msSetError(MS_OGRERR, "OGR support is not available.", "msOGRShapeToWKT()");
+    return NULL;
+#endif
+}
+

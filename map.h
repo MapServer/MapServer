@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.429  2005/11/01 05:35:50  frank
+ * added preliminary implementation of OGR based WKT translation, still untested
+ *
  * Revision 1.428  2005/10/30 05:05:07  sdlime
  * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
  *
@@ -1975,6 +1978,9 @@ MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 int MS_DLL_EXPORT msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
 int MS_DLL_EXPORT msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); /* in mapogr.cpp */
 int MS_DLL_EXPORT msOGRLayerClose(layerObj *layer);
+
+char MS_DLL_EXPORT *msOGRShapeToWKT(shapeObj *shape);
+shapeObj MS_DLL_EXPORT *msOGRShapeFromWKT(const char *string);
 
 /* ==================================================================== */
 /*      prototypes for functions in mapcopy                             */
