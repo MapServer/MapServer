@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.91  2005/11/01 02:34:24  frank
+ * Make a few things static, trim log.
+ *
  * Revision 1.90  2005/10/28 02:08:14  frank
  * a few mapogr.cpp funcs used from WFS code, exposed in map.h
  *
@@ -111,87 +114,6 @@
  * Revision 1.66  2004/01/06 21:18:02  julien
  * Make STYLEITEM AUTO work with an empty CLASS (Bug 531)
  *
- * Revision 1.65  2003/11/09 20:19:09  frank
- * fixed support for 3D multipoint datasets
- *
- * Revision 1.64  2003/10/17 18:51:25  dan
- * Open OGR files relative to shapepath first, then try relative to mapfile
- * path if not found. (bug 295)
- *
- * Revision 1.63  2003/10/03 13:38:53  frank
- * fix support for wkbLineString25D in ogrGeomLine()
- *
- * Revision 1.62  2003/05/25 18:48:06  dan
- * Fixed test on connection value in msOGRFileOpen()
- *
- * Revision 1.61  2003/03/26 17:04:34  frank
- * check layer->debug before reporting debug output
- *
- * Revision 1.60  2003/03/25 17:43:57  dan
- * Handle ogr-brush-1 (no fill) properly with STYLEITEM AUTO
- *
- * Revision 1.59  2003/03/05 16:13:05  frank
- * added support for layers derived from ExecuteSQL()
- *
- * Revision 1.58  2002/12/13 00:57:31  dan
- * Modified WFS implementation to behave more as a real vector data source
- *
- * Revision 1.57  2002/11/17 17:47:51  frank
- * use msTryBuildPath() for open statement
- *
- * Revision 1.56  2002/09/23 13:33:26  julien
- * Swapped map_path for mappath for consistency.
- *
- * Revision 1.55  2002/09/17 13:08:28  julien
- * Remove all chdir() function and replace them with the new msBuildPath function.
- * This have been done to make MapServer thread safe. (Bug 152)
- *
- * Revision 1.54  2002/08/16 20:50:10  julien
- * Fixed for new styleObj except for styleitem auto
- *
- * Revision 1.53  2002/08/14 17:30:44  dan
- * Fixed problem with numeric labels with STYLEITEM AUTO (bug 185)
- *
- * Revision 1.52  2002/07/11 18:38:57  frank
- * allow layer names as well as layer indexes in connection string.
- *
- * Revision 1.51  2002/04/26 18:00:35  julien
- * Enabled OGRMultiPoint in ogrGeomLine and ogrGeomPoint
- *
- * Revision 1.50  2002/04/04 19:05:41  frank
- * improve error reporting
- *
- * Revision 1.49  2002/03/26 21:00:04  frank
- * Set the tileindex value in shapeObjs.  Support fetching based on tile+recordid.
- * Support refetching features for autostyling in tiled layers.
- *
- * Revision 1.48  2002/03/26 16:53:12  dan
- * Fixed msDebug() format string in msOGRFileClose()
- *
- * Revision 1.47  2002/03/18 20:40:14  frank
- * initial pass on tiled ogr support
- *
- * Revision 1.46  2002/02/22 22:56:26  dan
- * Avoid filling an object with a pen and no brush in layers of type POLYGON
- * when using auto styling.
- *
- * Revision 1.45  2002/02/20 22:28:23  frank
- * fixed some problems with 3D geometry support
- *
- * Revision 1.44  2002/02/20 19:49:22  frank
- * fixed memory leak of OGRFeatures under some circumstanes
- *
- * Revision 1.43  2002/02/08 21:29:18  frank
- * ensure 3D geometries supported as well as 2D geometries
- *
- * Revision 1.42  2002/01/15 01:00:51  dan
- * Attempt at fixing thick polygon outline problem (bug 92).  Also rewrote
- * the symbol mapping for brushes and pens at the same time to use the same
- * rules as point symbols.
- *
- * Revision 1.41  2002/01/09 05:10:28  frank
- * avoid use of ms_error global
- *
  * ...
  *
  * Revision 1.1  2000/08/25 18:41:05  dan
@@ -231,9 +153,10 @@ typedef struct ms_ogr_file_info_t
 
 } msOGRFileInfo;
 
-int msOGRLayerIsOpen(layerObj *layer);
-int msOGRLayerInitItemInfo(layerObj *layer);
-int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
+static int msOGRLayerIsOpen(layerObj *layer);
+static int msOGRLayerInitItemInfo(layerObj *layer);
+static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
+                                  int tile, long record);
 
 // Undefine this if you are using a very old GDAL without OpenShared(). 
 #define USE_SHARED_ACCESS  
@@ -796,8 +719,8 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
-                                  projectionObj *proj, int debug_flag )
+static int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
+                                         projectionObj *proj, int debug_flag )
 {
 #ifdef USE_PROJ
   // First flush the "auto" name from the projargs[]... 
@@ -1646,10 +1569,11 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
  *
  * Overloaded version of msOGRLayerOpen for virtual table architecture
  **********************************************************************/
-int msOGRLayerOpenVT(layerObj *layer) 
+static int msOGRLayerOpenVT(layerObj *layer) 
 {
 	return msOGRLayerOpen(layer, NULL);
 }
+
 /**********************************************************************
  *                     msOGRLayerClose()
  **********************************************************************/
@@ -1683,7 +1607,7 @@ int msOGRLayerClose(layerObj *layer)
 /**********************************************************************
  *                     msOGRLayerIsOpen()
  **********************************************************************/
-int msOGRLayerIsOpen(layerObj *layer) 
+static int msOGRLayerIsOpen(layerObj *layer) 
 {
 #ifdef USE_OGR
   if (layer->ogrlayerinfo)
@@ -1793,7 +1717,7 @@ int msOGRLayerGetItems(layerObj *layer)
  *
  * Init the itemindexes array after items[] has been reset in a layer.
  **********************************************************************/
-int msOGRLayerInitItemInfo(layerObj *layer)
+static int msOGRLayerInitItemInfo(layerObj *layer)
 {
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
@@ -1961,7 +1885,8 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
+int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
+                       long record)
 {
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
@@ -2101,8 +2026,8 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
  * The returned classObj is a ref. to a static structure valid only until
  * the next call and that shouldn't be freed by the caller.
  **********************************************************************/
-int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
-                           int tile, long record)
+static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
+                                  int tile, long record)
 {
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
@@ -2407,6 +2332,9 @@ void msOGRCleanup( void )
 #endif
 }
 
+/************************************************************************/
+/*                  msOGRLayerInitializeVirtualTable()                  */
+/************************************************************************/
 int
 msOGRLayerInitializeVirtualTable(layerObj *layer)
 {
@@ -2437,4 +2365,3 @@ msOGRLayerInitializeVirtualTable(layerObj *layer)
 
     return MS_SUCCESS;
 }
-
