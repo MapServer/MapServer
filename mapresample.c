@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/11/01 16:53:40  frank
+ * fixed MapToSource calculation: bug 1509
+ *
  * Revision 1.63  2005/10/26 18:02:37  frank
  * No point in compiling in resampling functions without USE_GDAL.
  *
@@ -1221,7 +1224,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 /* -------------------------------------------------------------------- */
     if( !bUseGrid )
     {
-        for( dfRatio = 0.0; dfRatio <= 0.999; dfRatio += (1.0/EDGE_STEPS) )
+        for( dfRatio = 0.0; dfRatio <= 1.001; dfRatio += (1.0/EDGE_STEPS) )
         {
             assert( nSamples < MAX_SIZE );
             x[nSamples  ] = dfRatio * nDstXSize;
@@ -1242,9 +1245,9 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     {
         double dfRatio2;
 
-        for( dfRatio = 0.0; dfRatio <= 0.999; dfRatio += (1.0/EDGE_STEPS) )
+        for( dfRatio = 0.0; dfRatio <= 1.001; dfRatio += (1.0/EDGE_STEPS) )
         {
-            for( dfRatio2=0.0; dfRatio2 <= 0.999; dfRatio2 += (1.0/EDGE_STEPS))
+            for( dfRatio2=0.0; dfRatio2 <= 1.001; dfRatio2 += (1.0/EDGE_STEPS))
             {
                 assert( nSamples < MAX_SIZE );
                 x[nSamples  ] = dfRatio2 * nDstXSize;

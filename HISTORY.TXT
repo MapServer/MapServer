@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD
 --------
+- Bug 1509: Fixed bounding box calculation in mapresample.c.  The bottom
+  right corner was being missed in the calculation.
+
 - MS RFC 2: added OGR based shape<->WKT implementation.
 
 - mapgdal.c: fixed some mutex lock release issues on error conditions.
