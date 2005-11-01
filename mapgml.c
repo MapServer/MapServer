@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2005/11/01 16:55:18  sdlime
+ * Updated the layer loops in the GML writers to repsect layer order.
+ *
  * Revision 1.76  2005/10/26 21:22:04  sdlime
  * I changed my mind and removed the option to use the shape index as an ID. I think it is better practice to use a more stable key item. This should also make supporting featureid requests easier since it's just a shortcut for a filter. Normal filter processing does not support index queries.
  *
@@ -1277,7 +1280,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[i]);
+    lp = &(map->layers[map->layerorder[i]]);
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
 
@@ -1429,7 +1432,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
 
-    lp = &(map->layers[i]);
+    lp = &(map->layers[map->layerorder[i]]);
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
       char *layerName;      
