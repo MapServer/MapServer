@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.93  2005/11/01 19:38:13  frank
+ * Avoid using _2D geometry API if built with old GDAL/OGR.
+ *
  * Revision 1.92  2005/11/01 05:35:50  frank
  * added preliminary implementation of OGR based WKT translation, still untested
  *
@@ -130,6 +133,7 @@
 
 #if defined(USE_OGR) || defined(USE_GDAL)
 #  include "ogr_spatialref.h"
+#  include "gdal_version.h"
 #  include "cpl_conv.h"
 #  include "cpl_string.h"
 #endif
@@ -2428,17 +2432,33 @@ char *msOGRShapeToWKT(shapeObj *shape)
         && shape->line[0].numpoints == 1 )
     {
         hGeom = OGR_G_CreateGeometry( wkbPoint );
+#if GDAL_VERSION_NUM >= 1310
         OGR_G_SetPoint_2D( hGeom, 0, 
                            shape->line[0].point[0].x, 
                            shape->line[0].point[0].y );
+#else
+        OGR_G_SetPoint( hGeom, 0, 
+                        shape->line[0].point[0].x, 
+                        shape->line[0].point[0].y,
+                        0.0 );
+#endif
     }
     else if( shape->type == MS_SHAPE_LINE && shape->numlines == 1 )
     {
         hGeom = OGR_G_CreateGeometry( wkbLineString );
         for( i = 0; i < shape->line[0].numpoints; i++ )
+        {
+#if GDAL_VERSION_NUM >= 1310
             OGR_G_AddPoint_2D( hGeom, 
                                shape->line[0].point[i].x, 
                                shape->line[0].point[i].y );
+#else
+            OGR_G_AddPoint( hGeom, 
+                            shape->line[0].point[i].x, 
+                            shape->line[0].point[i].y,
+                            0.0 );
+#endif
+        }
     }
     else if( shape->type == MS_SHAPE_POLYGON )
     {
@@ -2452,9 +2472,18 @@ char *msOGRShapeToWKT(shapeObj *shape)
             hRing = OGR_G_CreateGeometry( wkbLinearRing );
             
             for( i = 0; i < shape->line[iLine].numpoints; i++ )
+            {
+#if GDAL_VERSION_NUM >= 1310
                 OGR_G_AddPoint_2D( hRing, 
                                    shape->line[iLine].point[i].x, 
                                    shape->line[iLine].point[i].y );
+#else
+                OGR_G_AddPoint( hRing, 
+                                shape->line[iLine].point[i].x, 
+                                shape->line[iLine].point[i].y, 
+                                0.0 );
+#endif
+            }
             OGR_G_AddGeometryDirectly( hGeom, hRing );
         }
     }
