@@ -15,6 +15,10 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD
 --------
+
+Version 4.8.0-beta1 (2005-11-04)
+--------------------------------
+
 - Bug 1509: Fixed bounding box calculation in mapresample.c.  The bottom
   right corner was being missed in the calculation.
 
@@ -47,7 +51,8 @@ CVS HEAD
 
 - Expose msLayerWhichShapes and msLayerNextShape in MapScript. (bug 1481) 
 
-- Added support to MapScript to change images in a previously defined symbol. (bug 1471)
+- Added support to MapScript to change images in a previously defined
+  symbol. (bug 1471)
 
 - mapogcfiler.c : bug 1490. Crash when size of sld filters was huge.
 
@@ -75,50 +80,51 @@ CVS HEAD
 
 - Typemaps for C# to enable imageObj.getBytes() method (bug 1389).
 
-- bug 1307: Enable -DUSE_ZLIB via configure for compressed SVG output.
+- Enable -DUSE_ZLIB via configure for compressed SVG output (bug 1307).
 
-- bug 1432: maputil.c/msAddLine(): rewrite msAddLine() to call 
+- maputil.c/msAddLine(): rewrite msAddLine() to call 
   msAddLineDirectly, and use realloc() in msAddLineDirectly() to optimize
-  growth of shapeObjs. 
+  growth of shapeObjs. (bug 1432)
 
-- bug 1312: msTmpFile: ensure counter is incremented to avoid duplicate
-  temporary filenames.
+- msTmpFile: ensure counter is incremented to avoid duplicate
+  temporary filenames. (bug 1312)
 
-- bug 1430 : SLD external graphic symbol format tests now for mime type
-  like image/gif instead of just GIF.
+- SLD external graphic symbol format tests now for mime type
+  like image/gif instead of just GIF. (bug 1430)
 
-- bug 1292 : Added support for OGR layers to use SQL type filers
+- Added support for OGR layers to use SQL type filers (bug 1292)
 
-- bug 1259: mapio/cgiutil - fixed POST support in fastcgi mode.
+- mapio/cgiutil - fixed POST support in fastcgi mode. (bug 1259)
 
-- bug 1372: mapresample.c - ensure that multi-band raw results can be
-  resampled.
+- mapresample.c - ensure that multi-band raw results can be
+  resampled. (bug 1372)
 
-- bug 1416: Add support in OGC FE for matchCase attribute on 
-  PropertyIsEqual and PropertyIsLike  
+- Add support in OGC FE for matchCase attribute on 
+  PropertyIsEqual and PropertyIsLike  (bug 1416)
 
-- bug 1418: Fixed sortshp.c to free shapes after processing to avoid major
-  memory leak.
+- Fixed sortshp.c to free shapes after processing to avoid major
+  memory leak. (bug 1418)
 
-- bug 1417: fixed msHTTPInit() not ever being called which prevented
-  msHTTPCleanup() from properly cleaning up cUrl with curl_global_cleanup().
+- fixed msHTTPInit() not ever being called which prevented msHTTPCleanup()
+  from properly cleaning up cUrl with curl_global_cleanup(). (bug 1417)
   
 - mapsde.c: add thread locking in msSDELCacheAdd
 
-- bug 1402: fixed mappool.c so that any thread can release a connection,
-  not just it's allocator. 
+- fixed mappool.c so that any thread can release a connection,
+  not just it's allocator. (bug 1402)
 
 - mapthread.c/h: Added TLOCK_SDE and TLOCK_ORACLE - not used yet.
 
-- Bug 1403: Fixed copying of layer and join items.
+- Fixed copying of layer and join items. (bug 1403)
 
-- Bug 1399: Fixed copying of processing directives within copy of a layer.
+- Fixed copying of processing directives within copy of a layer. (bug 1399)
 
-- Bug 1312: Problems with string initialization.
+- Problems with string initialization. (bug 1312)
 
-- Bug 1390: Fix svg output for multipolygons.
+- Fix svg output for multipolygons. (bug 1390)
 
-- Bug 535: Added querymapObj to PHP MapScript
+- Added querymapObj to PHP MapScript (bug 535)
+
 
 Version 4.6.0 (2005-06-14)
 --------------------------
