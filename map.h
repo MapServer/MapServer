@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.430  2005/11/04 20:58:35  dan
+ * Updated MS_VERSION to 4.8.0-beta1
+ *
  * Revision 1.429  2005/11/01 05:35:50  frank
  * added preliminary implementation of OGR based WKT translation, still untested
  *
@@ -345,7 +348,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.7"
+#define MS_VERSION "4.8.0-beta1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
