@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2005/11/05 05:34:41  sdlime
+ * Removed misplaced closing of msyyin in loadSymbol(). (bug 178)
+ *
  * Revision 1.85  2005/10/14 05:04:12  sdlime
  * Added msRotateSymbol(), changed freeSymbol to a public function called msFreeSymbol() in mapsymbol.c. Added to map.h as well.
  *
@@ -255,7 +258,6 @@ int loadSymbol(symbolObj *s, char *symbolpath)
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
 	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyylineno);
-	fclose(msyyin);
 	return(-1);
       }
       
@@ -263,46 +265,43 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       {
 	msSetError(MS_IOERR, "Parsing error near (%s):(line %d)", "loadSymbol()", 
                    msyytext, msyylineno);
-	fclose(msyyin);
 	return(-1);
       }
       
       /* Set imagepath */
       s->imagepath = strdup(msyytext);
 
-          
       fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
       rewind(stream); /* reset the image for the readers */
       if (memcmp(bytes,"GIF8",4)==0) 
       {
 #ifdef USE_GD_GIF
         ctx = msNewGDFileCtx(stream);
-	    s->img = gdImageCreateFromGifCtx(ctx);
+	s->img = gdImageCreateFromGifCtx(ctx);
         ctx->gd_free(ctx);
 #else
-	    msSetError(MS_MISCERR, "Unable to load GIF symbol.", "loadSymbol()");
-	    fclose(stream);
-	    return(-1);
+	msSetError(MS_MISCERR, "Unable to load GIF symbol.", "loadSymbol()");
+	fclose(stream);
+	return(-1);
 #endif
       } 
       else if (memcmp(bytes,PNGsig,8)==0) 
       {
 #ifdef USE_GD_PNG
         ctx = msNewGDFileCtx(stream);
-	    s->img = gdImageCreateFromPngCtx(ctx);
+	s->img = gdImageCreateFromPngCtx(ctx);
         ctx->gd_free(ctx);
 #else
-	    msSetError(MS_MISCERR, "Unable to load PNG symbol.", "loadSymbol()");
-	    fclose(stream);
-	    return(-1);
+	msSetError(MS_MISCERR, "Unable to load PNG symbol.", "loadSymbol()");
+	fclose(stream);
+	return(-1);
 #endif
       }
 
       fclose(stream);
       
       if(s->img == NULL) {
-	msSetError(MS_GDERR, NULL, "loadSymbol()");
-	fclose(msyyin);
+	msSetError(MS_GDERR, NULL, "loadSymbol()");	
 	return(-1);
       }
       break;
@@ -335,9 +334,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	  s->numpoints++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()",  
-                     msyytext, msyylineno); 	  
-	  fclose(msyyin);
+	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
 	  return(-1);
 	}
 
@@ -365,9 +362,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	  s->stylelength++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", 
-                     msyytext, msyylineno); 	  
-	  fclose(msyyin);
+	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
 	  return(-1);
 	}
 	if(done == MS_TRUE)
@@ -390,9 +385,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	s->type = MS_SYMBOL_TRUETYPE;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbol()",
-                 msyytext, msyylineno);
-      fclose(msyyin);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
       return(-1);
     } /* end switch */
   } /* end for */
@@ -637,9 +630,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
     case(SYMBOLSET):
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)",
-                              "loadSymbolSet()",
-                 msyytext, msyylineno);      
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbolSet()", msyytext, msyylineno);
       status = -1;
     } /* end switch */
 
@@ -1136,6 +1127,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
   msCopySymbol(newSymbol, symbol, NULL);
 
   angle_rad = (MS_DEG_TO_RAD*angle);
+
   switch(symbol->type) {
   case(MS_SYMBOL_ELLIPSE):
     /* We have no coordinates here, only two radius values and could only rotate the brush after it was created. */
