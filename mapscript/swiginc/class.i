@@ -112,13 +112,13 @@
         return new_class;
     }
 
-    int setExpression(char *expression) 
-    {
-      if (!expression || strlen(expression) == 0) {
-          freeExpression(&self->expression);
-          return MS_SUCCESS;
-      }
-      else return msLoadExpressionString(&self->expression, expression);
+  int setExpression(char *expression) 
+  {
+    if (!expression || strlen(expression) == 0) {
+       freeExpression(&self->expression);
+       return MS_SUCCESS;
+    }
+    else return msLoadExpressionString(&self->expression, expression);
   }
 
   %newobject getExpressionString;
@@ -140,7 +140,28 @@
 
   /* Should be deprecated!  Completely bogus layer argument.  SG. */
   int setText(layerObj *layer, char *text) {
-    return msLoadExpressionString(&self->text, text);
+    if (!text || strlen(text) == 0) {
+      freeExpression(&self->text);
+      return MS_SUCCESS;
+    }	
+    else return msLoadExpressionString(&self->text, text);
+  }
+
+  %newobject getText;
+  char *getText() {
+    char exprstring[256];
+    switch(self->text.type) {
+    case(MS_REGEX):
+      snprintf(exprstring, 255, "/%s/", self->text.string);
+      return strdup(exprstring);
+    case(MS_STRING):
+      snprintf(exprstring, 255, "\"%s\"", self->text.string);
+      return strdup(exprstring);
+    case(MS_EXPRESSION):
+      snprintf(exprstring, 255, "(%s)", self->text.string);
+      return strdup(exprstring);
+    }
+    return NULL;
   }
 
   char *getMetaData(char *name) {
