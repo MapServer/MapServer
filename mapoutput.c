@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/11/10 15:41:16  frank
+ * Added missing function header.
+ *
  * Revision 1.34  2005/04/07 17:23:16  assefa
  * Remove #ifdef USE_SVG. It was added during development.
  *
@@ -905,6 +908,10 @@ void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime )
         mime_list[mime_count] = NULL;
 }
 
+
+/************************************************************************/
+/*                  msGetOutputFormatMimeListRaster()                   */
+/************************************************************************/
 
 void msGetOutputFormatMimeListRaster( mapObj *map, char **mime_list, int max_mime )
 
