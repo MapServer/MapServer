@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/11/15 18:59:01  frank
+ * fixed hang on small rects in msProjectRect() - bug 1526
+ *
  * Revision 1.47  2005/10/26 17:42:10  frank
  * Avoid warnings if USE_PROJ not defined.
  *
@@ -234,6 +237,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   pointObj prj_point;
   rectObj prj_rect;
   int	  rect_initialized = MS_FALSE, failure=0;
+  int     ix, iy;
 
   double dx, dy;
   double x, y;
@@ -256,7 +260,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 
   /* sample along top and bottom */
   if(dx > 0) {
-    for(x=rect->minx; x<=rect->maxx; x+=dx) {
+    for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ )
+    {
+      x = rect->minx + ix * dx;
+
       prj_point.x = x;
       prj_point.y = rect->miny;
       msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
@@ -271,7 +278,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 
   /* sample along left and right */
   if(dy > 0) {
-    for(y=rect->miny; y<=rect->maxy; y+=dy) {
+    for(iy = 0; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ )
+    {
+      y = rect->miny + iy * dy;
+
       prj_point.y = y;
       prj_point.x = rect->minx;    
       msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
@@ -291,8 +301,14 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   if( failure > 0 )
   {
       failure = 0;
-      for(x=rect->minx + dx; x<=rect->maxx; x+=dx) {
-          for(y=rect->miny + dy; y<=rect->maxy; y+=dy) {
+      for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ )
+      {
+          x = rect->minx + ix * dx;
+
+          for(iy = 0; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ )
+          {
+              y = rect->miny + iy * dy;
+
               prj_point.x = x;
               prj_point.y = y;
               msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
