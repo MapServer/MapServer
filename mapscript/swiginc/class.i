@@ -138,8 +138,7 @@
     return NULL;
   }
 
-  /* Should be deprecated!  Completely bogus layer argument.  SG. */
-  int setText(layerObj *layer, char *text) {
+  int setText(char *text) {
     if (!text || strlen(text) == 0) {
       freeExpression(&self->text);
       return MS_SUCCESS;
@@ -147,8 +146,8 @@
     else return msLoadExpressionString(&self->text, text);
   }
 
-  %newobject getText;
-  char *getText() {
+  %newobject getTextString;
+  char *getTextString() {
     char exprstring[256];
     switch(self->text.type) {
     case(MS_REGEX):
