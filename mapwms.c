@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.169  2005/11/17 15:47:33  assefa
+ * Add test on time striing length. Remove unused variables. (Bug 1517).
+ *
  * Revision 1.168  2005/10/25 15:45:28  assefa
  * WMS Time : extend spported formats for time extents.
  *
@@ -339,6 +342,10 @@ int _msValidateTime(char *timestring,  const char *timeextent)
 
     if (!timestring || !timeextent)
       return MS_FALSE;
+
+    if (strlen(timestring) <= 0 || 
+        strlen(timeextent) <= 0)
+       return MS_FALSE;
   
 
     /* we first need to parse the timesting that is passed
@@ -443,9 +450,8 @@ int _msValidateTime(char *timestring,  const char *timeextent)
 
 int msValidateTimeValue(char *timestring, const char *timeextent)
 {
-    char **atimeextent, **atimes, **tokens =  NULL;
-    int numtimeextent, i, numtimes, ntmp = 0;
-    struct tm tm, tmstart, tmend;
+    char **atimes, **tokens =  NULL;
+    int i, numtimes, ntmp = 0;
 
     /* we need to validate the time passsed in the request */
     /* against the time extent defined */
@@ -471,7 +477,7 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
             tokens = split(atimes[0],  '/', &ntmp);
             if (ntmp == 1) /* multiple descrete times */
             {
-                msFreeCharArray(tokens, ntmp);
+              /*msFreeCharArray(tokens, ntmp);*/
                 for (i=0; i<numtimes; i++)
                 {
                     if (_msValidateTime(atimes[i], timeextent) == MS_FALSE)
@@ -487,7 +493,7 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
             {
                 for (i=0; i<numtimes; i++)
                 {
-                    msFreeCharArray(tokens, ntmp);
+                  /*msFreeCharArray(tokens, ntmp);*/
                     if (_msValidateTime(atimes[i], timeextent) == MS_FALSE)
                     {
                         msFreeCharArray(atimes, numtimes);
