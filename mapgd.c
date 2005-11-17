@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.110  2005/11/17 06:36:55  sdlime
+ * Fixed bugs in marker drawing code for ELLIPSE symbols. Filled symbols will render if only an outline color is provided (only the outline will show). For non-filled symbols either the color or outlinecolor can be used. If both are present then color takes precedence.
+ *
  * Revision 1.109  2005/10/27 18:07:02  sdlime
  * Fixed a problem with 1x1 ellipse symbol drawing in msDrawLineSymbolGD().
  *
@@ -1204,8 +1207,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
 /* ------------------------------------------------------------------------------- */
 /*       Fill a circle with a shade symbol of the specified size and color       */
 /* ------------------------------------------------------------------------------- */
-void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
-                               pointObj *p, double r, styleObj *style, double scalefactor)
+void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
   int i;
@@ -1522,19 +1524,23 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 
     /* for a circle interpret the style angle as the size of the arc (for drawing pies) */
     if(w == h && style->angle != 360) {
-      if(symbol->filled && fc >= 0) {
-        gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdPie);
+      if(symbol->filled) {
+        if(fc >= 0) gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdPie);
         if(oc >= 0) gdImageFilledArc(img, x, y, w, h, 0, style->angle, oc, gdEdged|gdNoFill);
-      } else if(!symbol->filled && fc >= 0) {
+      } else if(!symbol->filled) {
+	if(fc < 0) fc = oc; /* try the outline color */
+        if(fc < 0) return;
         gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdNoFill);
       }
     } else {
-      if(symbol->filled && fc >= 0) {
-	gdImageFilledEllipse(img, x, y, w, h, fc);        
+      if(symbol->filled) {
+	if(fc >= 0) gdImageFilledEllipse(img, x, y, w, h, fc);        
         if(oc >= 0) gdImageArc(img, x, y, w, h, 0, 360, oc);
-      } else if(!symbol->filled && fc >= 0) {
+      } else if(!symbol->filled) {
+	if(fc < 0) fc = oc; /* try the outline color */
+	if(fc < 0) return;
         gdImageArc(img, x, y, w, h, 0, 360, fc);
-      }      
+      }
     }
     
     break;
@@ -1701,7 +1707,14 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     y = MS_NINT(symbol->sizey*d);
 
     if((x < 2) && (y < 2)) break;
-    
+
+    /* if(x == y) {
+         gdImageSetThickness(img, x);
+         break;
+     } */
+
+    /* user wants a true ellipse brush */
+
     /* create the brush image */
     if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); /* not in cache, create it */
