@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2005/11/17 14:38:21  assefa
+ * Correct function msGetVersion to indicate if mapserver was build with
+ * MYGIS support.
+ *
  * Revision 1.69  2005/09/13 23:43:31  frank
  * fix leak in threaded case of error object
  *
@@ -592,6 +596,9 @@ char *msGetVersion() {
 #endif
 #ifdef USE_GDAL
   strcat(version, " INPUT=GDAL");
+#endif
+#ifdef USE_MYGIS
+  strcat(version, " INPUT=MYGIS");
 #endif
   strcat(version, " INPUT=SHAPEFILE");
 #ifdef ENABLE_STDERR_DEBUG
