@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2005/11/17 06:13:23  sdlime
+ * Fixed symbol set copying so that the image cache is not copied and the destination symbol set cache is initialized properly. (bug 1521)
+ *
  * Revision 1.86  2005/11/05 05:34:41  sdlime
  * Removed misplaced closing of msyyin in loadSymbol(). (bug 178)
  *
@@ -966,12 +969,15 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
     }
   }
 
-  MS_COPYSTELEM(imagecachesize);
+  /* MS_COPYSTELEM(imagecachesize); */
   
   /* I have a feeling that the code below is not quite right - Sean */
   /*copyProperty(&(dst->imagecache), &(src->imagecache),
                sizeof(struct imageCacheObj));
    */
+
+  dst->imagecachesize = 0; /* since we are not copying the cache set the cache  to NUNLL and the size to 0 (bug 1521) */
+  dst->imagecache = NULL;
 
   return(MS_SUCCESS);
 }
