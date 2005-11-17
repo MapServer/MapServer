@@ -756,6 +756,11 @@ getStyle( int index ) : styleObj_
 
     See the styleObj_ section for more details on multiple class styles.
 
+getTextString() : string
+    Return a string representation of the text enclosed in the quote
+    characters appropriate to the text expression type (logical or 
+    simple string).
+
 insertStyle( styleObj_ style [, int index=-1 ] ) : int
     Insert a **copy** of *style* into the styles array at index *index*.
     Default is -1, or the end of the array.  Returns the index at which the 
@@ -781,6 +786,14 @@ setMetaData( string key, string value ) : int
 
 .. note:: setMetaData() is deprecated and will be removed in a future
           version.  Replaced by direct metadata access, see hashTableObj_.
+
+setText( string text ) : int
+    Set text string where *text* is a MapServer text expression. Returns 
+    MS_SUCCESS or MS_FAILUIRE.
+
+.. note:: Older versions of MapScript (pre-4.8) featured the an undocumented
+          setText() method that required a layerObj be passed as the first 
+          argument. That argument was completely bogus and has been removed.    
 
 -----------------------------------------------------------------------------
  colorObj
