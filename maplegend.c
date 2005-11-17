@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/11/17 05:56:30  sdlime
+ * Updated msDrawLegend to respect class min/max scale values. (bug 1524)
+ *
  * Revision 1.56  2005/10/31 06:03:26  sdlime
  * Updated msDrawLegend() to consider layer order. (bug 1484)
  *
@@ -313,6 +316,14 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     for(j=0;j<lp->numclasses;j++) {
       if(!lp->class[j].name)
 	continue; /* skip it */
+
+      if(!scale_independent && map->scale > 0) {  /* verify class scale here */
+	if((lp->class[j].maxscale > 0) && (map->scale > lp->class[j].maxscale))
+	  continue;
+	if((lp->class[j].minscale > 0) && (map->scale <= lp->class[j].minscale))
+	  continue;
+      }
+
       if(msGetLabelSize(lp->class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0) != 0)
 	return(NULL); /* something bad happened */
       maxheight = MS_MAX(maxheight, MS_NINT(rect.maxy - rect.miny));
@@ -371,7 +382,14 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     for(j=0; j<lp->numclasses; j++) { /* always at least 1 class */
 
       if(!lp->class[j].name) continue; /* skip it */
-      
+     
+      if(!scale_independent && map->scale > 0) {  /* verify class scale here */
+        if((lp->class[j].maxscale > 0) && (map->scale > lp->class[j].maxscale))
+          continue;
+        if((lp->class[j].minscale > 0) && (map->scale <= lp->class[j].minscale))
+          continue;
+      }
+ 
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
       /* TODO */
