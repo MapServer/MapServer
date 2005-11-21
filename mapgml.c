@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2005/11/21 23:22:15  sdlime
+ * Trivial comment fixes.
+ *
  * Revision 1.77  2005/11/01 16:55:18  sdlime
  * Updated the layer loops in the GML writers to repsect layer order.
  *
@@ -37,7 +40,7 @@
  * WFS GML output includes an option to set a gml:id for each feature. The default is no id (current behavior), but this can be overidden using the metadata value gml_featureid, which takes an item name to use to create the id or the special value '_index' to use the shape->index. This partially addresses bug 1413.
  *
  * Revision 1.74  2005/10/25 20:29:52  sdlime
- * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can havespecific types (default is string). Constants are NOT queryable so their use should be limited untilsome extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
+ * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can haves pecific types (default is string). Constants are NOT queryable so their use should be limited until some extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
  *
  * Revision 1.73  2005/10/24 21:03:03  sdlime
  * Removed unused variable geom_name from WFS GML writer.
