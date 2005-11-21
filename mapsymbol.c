@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83.2.1  2005/11/21 23:26:38  sdlime
+ * Backported the fix for bug 1521.
+ *
  * Revision 1.83  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -965,12 +968,13 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
     }
   }
 
-  MS_COPYSTELEM(imagecachesize);
-  
   /* I have a feeling that the code below is not quite right - Sean */
   /*copyProperty(&(dst->imagecache), &(src->imagecache),
                sizeof(struct imageCacheObj));
    */
+
+  dst->imagecachesize = 0; /* do not copy the image cache (bug 1521) */
+  dst->imagecache = NULL;
 
   return(MS_SUCCESS);
 }
