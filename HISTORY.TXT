@@ -16,16 +16,24 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Fix Tcl mapscript's getBytes method (bug 1533).
+
+- Use mapscript.i in-place when building Ruby mapscript, copying not necessary
+  (bug 1528).
+
+- Expose maximum lengths of layer, class, and style arrays in mapscript (bug
+  1522).
+
 - correct msGetVersion to indicate if mapserver was build with MYGIS support.
 
 - Fixed hang in msProjectRect() for very small rectangles due to round off
-  problems. (Bug 1526).
+  problems (bug 1526).
 
 Version 4.8.0-beta1 (2005-11-04)
 --------------------------------
 
-- Bug 1509: Fixed bounding box calculation in mapresample.c.  The bottom
-  right corner was being missed in the calculation.
+- Bug 1509: Fixed bounding box calculation in mapresample.c. The bottom right
+  corner was being missed in the calculation.
 
 - MS RFC 2: added OGR based shape<->WKT implementation.
 
@@ -33,13 +41,12 @@ Version 4.8.0-beta1 (2005-11-04)
 
 - MS RFC 8: External plugin layer providers (bug 1477)
 
-- SLD : syntax error when auto generating external symbols 
-  (Bug 1508).
+- SLD : syntax error when auto generating external symbols (Bug 1508).
 
 - MS RFC 3: Layer vtable architecture (bug 1477)
 
-- wms time : correct a problem when hadling wms times with tile
-  index rasters (bug 1506).
+- wms time : correct a problem when hadling wms times with tile index rasters
+  (bug 1506).
 
 - WMS TIME : Add suuport for multiple interval extents (Bug  1498)
 
