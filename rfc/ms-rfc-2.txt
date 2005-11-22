@@ -53,8 +53,10 @@ Implementation Details
 
  - The C API will take the form:
 
-  shapeObj *msShapeFromWKT( const char * );
-  char *msShapeToWKT( shapeObj * ); 
+  ::
+  
+    shapeObj *msShapeFromWKT( const char * );
+    char *msShapeToWKT( shapeObj * ); 
 
   These are contrary to some of the older code (e.g. msLayerNextShape()). However there 
   are 2 places the WKT APIs will be used: 1) MapScript and 2) creating inline features 
@@ -80,8 +82,8 @@ Implementation Details
  - Development will be accompanied by a set of tests. Sean Gillies has already created
    a test case or two.
 
- Transformations shapeObj to WKT
- -------------------------------
+Transformations shapeObj to WKT
+-------------------------------
 
  - MS_SHAPE_POINT: If numlines and numpoints are one, then this is converted
    to a POINT object in WKT.  If there are more points, this is converted
@@ -102,8 +104,8 @@ Implementation Details
 
  - MS_SHAPE_NULL: This results in an empty WKT string.  
 
- Transformations WKT to shapeObj
- -------------------------------
+Transformations WKT to shapeObj
+-------------------------------
 
  - POINT: Translates to an MS_SHAPE_POINT object with one point and one line.
 
