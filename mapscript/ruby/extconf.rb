@@ -31,7 +31,7 @@ end
 #if cmake
   create_makefile("mapscript")
 	make_file = File.open("Makefile", "a")
-	make_file << "mapscript_wrap.c: mapscript.i\n\tswig -ruby mapscript.i"
+	make_file << "mapscript_wrap.c: ../mapscript.i\n\tswig -ruby -o mapscript_wrap.c ../mapscript.i"
 	make_file.close
 	exit 0
 #end
