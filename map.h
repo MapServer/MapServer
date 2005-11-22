@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.431  2005/11/22 22:14:43  sean
+ * expose maximum length of layer, class, and style arrays in mapscript (bug 1522)
+ *
  * Revision 1.430  2005/11/04 20:58:35  dan
  * Updated MS_VERSION to 4.8.0-beta1
  *
@@ -367,6 +370,12 @@ extern "C" {
    with RGB map images */
 #define MS_GD_ALPHA 1000
 
+/* Bounds on the lengths of layer, class, and style arrays are now exposed
+   to mapscript (bug 1522) */
+#define MS_MAXCLASSES 250
+#define MS_MAXSTYLES 5
+#define MS_MAXLAYERS 200
+
 /* General defines, not wrapable */
 #ifndef SWIG
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
@@ -390,10 +399,7 @@ extern "C" {
 
 #define MS_MAXIMAGESIZE_DEFAULT 2048
 
-#define MS_MAXCLASSES 250
-#define MS_MAXSTYLES 5
 #define MS_MAXPROJARGS 20
-#define MS_MAXLAYERS 200 /* maximum number of layers in a map file */
 #define MS_MAXJOINS 20
 #define MS_ITEMNAMELEN 32
 #define MS_NAMELEN 20
