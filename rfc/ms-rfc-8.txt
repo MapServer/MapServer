@@ -7,7 +7,7 @@ MS RFC 8: Pluggable External Feature Layer Providers
 :Contact: javerbach@extendthereach.com
 :Last Edited: $Date$
 :Status: adopted
-
+:Version: MapServer 4.8
 
 Purpose
 --------

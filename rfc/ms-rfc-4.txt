@@ -7,6 +7,7 @@ MS RFC 4: MapServer Raster Resampling
 :Contact: warmerdam@pobox.com
 :Last Edited: $Date$
 :Status: adopted
+:Version: MapServer 4.8
 
 Overview
 --------

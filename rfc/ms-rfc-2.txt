@@ -7,6 +7,7 @@
 :Contact: steve.lime@DNR.STATE.MN.US
 :Last Edited: $Date$
 :Status: Proposed
+:Version: MapServer 4.8
 
 Description: Developing inline features or shapes within MapScript can be a 
 bit cumbersome.  One alternative would be to allow users to define feature 

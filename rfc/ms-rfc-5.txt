@@ -7,7 +7,7 @@ MS RFC 5: MapServer Horizon Reprojection Improvements
 :Contact: warmerdam@pobox.com
 :Last Edited: $Date$
 :Status: Adopted
-
+:Version: MapServer 4.8
 
 Purpose
 -------

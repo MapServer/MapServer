@@ -7,6 +7,7 @@ MS RFC 3: Feature Layer Plug-in Architecture
 :Contact: javerbach@extendthereach.com
 :Last Edited: $Date$
 :Status: Adopted
+:Version: MapServer 4.8
 
 
 
