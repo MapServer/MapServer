@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/11/23 19:23:54  frank
+ * fixed bug in line splitting logic in msProjectShapeLine
+ *
  * Revision 1.48  2005/11/15 18:59:01  frank
  * fixed hang on small rects in msProjectRect() - bug 1526
  *
@@ -572,7 +575,7 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
                     else if( line_out == line
                              && line->numpoints >= i-2 )
                     {
-                        newLine.numpoints = line->numpoints;
+                        newLine.numpoints = numpoints_in;
                         newLine.point = line->point;
                         msAddLine( shape, &newLine );
 
