@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- mapdrawgdal.c: Fix bug with nodata values not in the color table when 
+  rendering some raster layers (bug 1541). 
+
 
 Version 4.8.0-beta2 (2005-11-23)
 --------------------------------

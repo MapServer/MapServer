@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/11/24 16:16:41  frank
+ * fixed raster crash with some grass rasters (bug 1541)
+ *
  * Revision 1.46  2005/08/25 22:01:50  frank
  * fix problem with ungeorerenced files (eg augsignals)
  *
@@ -583,7 +586,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           double dfNoDataValue = msGetGDALNoDataValue( layer, hBand1, 
                                                        &bGotNoData);
 
-          if( bGotNoData && dfNoDataValue >= 0 && dfNoDataValue <= 255.0 )
+          if( bGotNoData && dfNoDataValue >= 0 
+              && dfNoDataValue < GDALGetColorEntryCount( hColorMap ) )
           {
               GDALColorEntry sEntry;
               
