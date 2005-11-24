@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.111  2005/11/24 04:35:50  dan
+ * Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
+ * static limitation on the STYLE argument values. (bug 1539)
+ *
  * Revision 1.110  2005/11/17 06:36:55  sdlime
  * Fixed bugs in marker drawing code for ELLIPSE symbols. Filled symbols will render if only an outline color is provided (only the outline will show). For non-filled symbols either the color or outlinecolor can be used. If both are present then color takes precedence.
  *
@@ -1065,7 +1069,6 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
 {
   int i, j;
   symbolObj *symbol;
-  int styleDashed[MS_MAXPATTERNSIZE];
   int x, y, ox, oy;
   int bc, fc;
   int brush_bc, brush_fc;
@@ -1178,8 +1181,16 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   }  
 
   if(symbol->stylelength > 0) {
+    int *styleDashed;
     int k=0, sc;
-   
+
+    /* Alloc styleDashed array large enough for this style */
+    int numElemStyle=0;
+    for(i=0; i<symbol->stylelength; i++) {
+      numElemStyle += symbol->style[i];
+    }
+    styleDashed = (int *)malloc(numElemStyle * sizeof(int));
+
     sc = fc; /* start with foreground color */
     for(i=0; i<symbol->stylelength; i++) {      
       for(j=0; j<symbol->style[i]; j++) {
@@ -1189,6 +1200,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       if(sc==fc) sc = bc; else sc = fc;
     }
     gdImageSetStyle(img, styleDashed, k);
+    free(styleDashed);
 
     if(!brush && !symbol->img)
       gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), 0, 360, gdStyled);      
@@ -1627,7 +1639,6 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 {
   int i, j, k;
   symbolObj *symbol, *oldsymbol=NULL;
-  int styleDashed[MS_MAXPATTERNSIZE]; /* todo: should be dynamically allocated */
   int x, y;
   int ox, oy;
   int fc, bc;
@@ -1809,20 +1820,28 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   }  
 
   if(symbol->stylelength > 0) {
+    int *styleDashed;
     int k=0, sc;
    
+    /* Alloc styleDashed array large enough for this style */
+    int numElemStyle=0;
+    for(i=0; i<symbol->stylelength; i++) {
+      numElemStyle += symbol->style[i];
+    }
+    styleDashed = (int *)malloc(numElemStyle * sizeof(int));
+
     sc = fc; /* start with foreground color */
 
-    /* todo: 1) scale the style/pattern and 2) compute actual style array size */
+    /* todo: scale the style/pattern */
     for(i=0; i<symbol->stylelength; i++) {      
       for(j=0; j<symbol->style[i]; j++) {
-	if(k == MS_MAXPATTERNSIZE) break; /* avoid breaking things is too large a style is defined, should log an error */
         styleDashed[k] = sc;
         k++;
       } 
       if(sc==fc) sc = bc; else sc = fc;
     }
     gdImageSetStyle(img, styleDashed, k);
+    free(styleDashed);
 
     if(!brush && !symbol->img)
       imagePolyline(img, p, gdStyled, ox, oy);

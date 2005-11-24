@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/11/24 04:35:50  dan
+ * Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
+ * static limitation on the STYLE argument values. (bug 1539)
+ *
  * Revision 1.21  2005/10/14 05:05:19  sdlime
  * Added MS_MAXPATTERNSIZE.
  *
@@ -55,7 +59,6 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_S
 #define MS_MAXSYMBOLS 64            /* maximum number of symbols in a symbol file */
 #define MS_MAXVECTORPOINTS 100      /* shade, marker and line symbol parameters */
 #define MS_MAXSTYLELENGTH 10
-#define MS_MAXPATTERNSIZE 100
 
 #define MS_IMAGECACHESIZE 6
 

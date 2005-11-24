@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
+  static limitation on the STYLE argument values. (bug 1539)
+
 - Fix bug in mapproject.c when splitting over the horizon lines.  
 
 - Fix Tcl mapscript's getBytes method (bug 1533).
