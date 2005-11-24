@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.432  2005/11/24 04:38:57  dan
+ * Update version for 4.8.0-beta2
+ *
  * Revision 1.431  2005/11/22 22:14:43  sean
  * expose maximum length of layer, class, and style arrays in mapscript (bug 1522)
  *
@@ -351,7 +354,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.0-beta1"
+#define MS_VERSION "4.8.0-beta2"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

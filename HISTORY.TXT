@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+
+Version 4.8.0-beta2 (2005-11-23)
+--------------------------------
+
 - Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
   static limitation on the STYLE argument values. (bug 1539)
 
@@ -33,6 +37,7 @@ CVS HEAD
 
 - Fixed hang in msProjectRect() for very small rectangles due to round off
   problems (bug 1526).
+
 
 Version 4.8.0-beta1 (2005-11-04)
 --------------------------------
