@@ -19,6 +19,8 @@ CVS HEAD
 - mapdrawgdal.c: Fix bug with nodata values not in the color table when 
   rendering some raster layers (bug 1541). 
 
+- mapogcsld.c : If a RULE name is not given, set the class name to "Unknown" 
+  (Bug 1451)
 
 Version 4.8.0-beta2 (2005-11-23)
 --------------------------------
