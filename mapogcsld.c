@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.57  2005/11/25 19:34:14  assefa
+ * If a RULE name is not given, set the class name to "Unknown" (Bug 1451)
+ *
  * Revision 1.56  2005/10/28 16:36:01  assefa
  * Syntax error when auto generating external symbols (Bug 1508),
  *
@@ -670,18 +673,22 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
 /* -------------------------------------------------------------------- */
 /*      set name and title to the classes created by the rule.          */
 /* -------------------------------------------------------------------- */
-        if (pszName || pszTitle)
+        for (i=0; i<nNewClasses; i++)
+        {
+             if (pszName)
+               psLayer->class[psLayer->numclasses-1-i].name = strdup(pszName);
+             else
+               psLayer->class[psLayer->numclasses-1-i].name = strdup("Unknown");
+        }
+        if (pszTitle)
         {
             for (i=0; i<nNewClasses; i++)
             {
-                if (pszName)
-                  psLayer->class[psLayer->numclasses-1-i].name = 
-                    strdup(pszName);
-                if (pszTitle)
-                  psLayer->class[psLayer->numclasses-1-i].title = 
-                    strdup(pszTitle);
+                psLayer->class[psLayer->numclasses-1-i].title = 
+                  strdup(pszTitle);
             }                           
         }
+          
     }
         
 }
