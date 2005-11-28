@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/11/28 04:22:54  sdlime
+ * Removed some unnecessary and potentially harmful if statements in msCopyStyle(). The macros should be cufficient.
+ *
  * Revision 1.42  2005/06/29 14:14:23  sean
  * no longer copying layer and join items, as these will be initialized on opening of layer and joining of data (bug 1403)
  *
@@ -379,10 +382,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYCOLOR(&(dst->mincolor), &(src->mincolor));
     MS_COPYCOLOR(&(dst->maxcolor), &(src->maxcolor));
 
-    /* The macro should protect us but it isn't in this case */
-    if (src->symbolname) {
-        MS_COPYSTRING(dst->symbolname, src->symbolname);
-    }
+    MS_COPYSTRING(dst->symbolname, src->symbolname);
 
     MS_COPYSTELEM(symbol);
     MS_COPYSTELEM(size);
@@ -399,9 +399,9 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(minvalue);
     MS_COPYSTELEM(maxvalue);
 
-    if (src->angleitem) MS_COPYSTRING(dst->angleitem, src->angleitem);
-    if (src->sizeitem) MS_COPYSTRING(dst->sizeitem, src->sizeitem);
-    if (src->rangeitem) MS_COPYSTRING(dst->rangeitem, src->rangeitem);
+    MS_COPYSTRING(dst->angleitem, src->angleitem);
+    MS_COPYSTRING(dst->sizeitem, src->sizeitem);
+    MS_COPYSTRING(dst->rangeitem, src->rangeitem);
 
     MS_COPYSTELEM(angleitemindex);
     MS_COPYSTELEM(sizeitemindex);
