@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2005/11/28 04:24:59  sdlime
+ * Changed msAddLabel() to use msCopyStyle() rather than doing on its own. This should fix some de-allocation errors folks have been having. (bug 1398)
+ *
  * Revision 1.78  2005/08/31 18:30:03  sdlime
  * Applied patch suggested to adjust TTF baselines (bug 1449).
  *
@@ -109,14 +112,13 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   cachePtr->styles = NULL;
   cachePtr->numstyles = 0;
   if((layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) {
-    cachePtr->styles = (styleObj *) malloc(sizeof(styleObj)*classPtr->numstyles);
-    memcpy(cachePtr->styles, classPtr->styles, sizeof(styleObj)*classPtr->numstyles);
     cachePtr->numstyles = classPtr->numstyles;
-
-    /* copy the style symbol name */
-    if (classPtr->numstyles > 0) {      
-      for(i=0; i<classPtr->numstyles; i++)
-        if (classPtr->styles[i].symbolname) cachePtr->styles[i].symbolname = strdup(classPtr->styles[i].symbolname);
+    cachePtr->styles = (styleObj *) malloc(sizeof(styleObj)*classPtr->numstyles);
+    if (classPtr->numstyles > 0) {
+      for(i=0; i<classPtr->numstyles; i++) {
+	initStyle(&(cachePtr->styles[i]));
+	msCopyStyle(&(cachePtr->styles[i]), &(classPtr->styles[i]));
+      }
     }
   }
 
