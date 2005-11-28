@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/11/28 04:32:42  sdlime
+ * Updated msCopyLabel() to copy encoding as well.
+ *
  * Revision 1.43  2005/11/28 04:22:54  sdlime
  * Removed some unnecessary and potentially harmful if statements in msCopyStyle(). The macros should be cufficient.
  *
@@ -322,6 +325,8 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     MS_COPYSTELEM(mindistance);
     MS_COPYSTELEM(partials);
     MS_COPYSTELEM(force);
+
+    MS_COPYSTRING(dst->encoding, src->encoding);
 
     return MS_SUCCESS;
 }
