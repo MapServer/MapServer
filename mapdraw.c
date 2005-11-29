@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2005/11/29 14:12:16  sdlime
+ * Fixed an error in mapdraw.c where item indicies where not being computed correctly with query maps. (bug 1492)
+ *
  * Revision 1.95  2005/10/26 17:44:28  frank
  * avoid warning when building without WMS and WFS.
  *
@@ -1106,7 +1109,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   /* build item list */
-  status = msLayerWhichItems(layer, MS_FALSE, annotate, NULL); /* FIX: results have already been classified (this may change) */
+  status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL); /* FIX: results have already been classified (this may change) */
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   msInitShape(&shape);
