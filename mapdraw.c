@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93.2.2  2005/11/29 23:35:53  sdlime
+ * Fixed a bug 1492 that could cause a segfault when querying layers using sizeitem or angleitem in a style.
+ *
  * Revision 1.93.2.1  2005/08/05 18:46:43  sdlime
  * Added code to apply sizeitem and angleitem to points.
  *
@@ -1103,7 +1106,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   /* build item list */
-  status = msLayerWhichItems(layer, MS_FALSE, annotate, NULL); /* FIX: results have already been classified (this may change) */
+  status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL); /* FIX: results have already been classified (this may change) */
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   msInitShape(&shape);
