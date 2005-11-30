@@ -135,6 +135,7 @@ void lexer_cleanup(void) {
 <INITIAL,OBJECT_STRING>backgroundshadowcolor   { return(BACKGROUNDSHADOWCOLOR); }
 <INITIAL,OBJECT_STRING>backgroundshadowsize    { return(BACKGROUNDSHADOWSIZE); }
 <INITIAL,OBJECT_STRING>bandsitem               { return(BANDSITEM); }
+<INITIAL,OBJECT_STRING>browseformat            { return(BROWSEFORMAT); }
 <INITIAL,OBJECT_STRING>buffer                  { return(BUFFER); }
 <INITIAL>character		               { return(CHARACTER); }
 <INITIAL,OBJECT_STRING>class		       { return(CLASS); }
@@ -196,6 +197,7 @@ void lexer_cleanup(void) {
 <INITIAL,OBJECT_STRING>latlon	               { return(LATLON); }
 <INITIAL,OBJECT_STRING>layer		       { return(LAYER); }
 <INITIAL,OBJECT_STRING>legend		       { return(LEGEND); }
+<INITIAL,OBJECT_STRING>legendformat	       { return(LEGENDFORMAT); }
 <INITIAL>linecap                               { return(LINECAP); }
 <INITIAL>linejoin                              { return(LINEJOIN); }
 <INITIAL>linejoinmaxsize                       { return(LINEJOINMAXSIZE); }

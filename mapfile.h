@@ -217,4 +217,7 @@
 /* WKT support (bug 1466) */
 #define WKT 1180
 
+#define LEGENDFORMAT 1190 /* bug 1518 */
+#define BROWSEFORMAT 1191
+
 #endif /* MAPFILE_H */
