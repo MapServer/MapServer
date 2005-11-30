@@ -12,10 +12,12 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.6.2 (???)
--------------------
 
-- Fixed bug 1490 : SLD crash when the number of filter elements is big.
+
+Version 4.6.2 (2005-11-29)
+--------------------------
+
+- Fixed SLD crash when the number of filter elements is big (bug 1490).
 
 - Fixed --enable-point-z-m fix in configure.in (== -> =) (bug 1485).
 
