@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.53.2.1  2005/10/13 19:41:44  assefa
+ * Correct bug 1490 : SLD crash when the number of filter elements is big.
+ *
  * Revision 1.53  2005/06/10 22:14:40  assefa
  * Filter Encoding spatial operator is Intersects and not Intersect : Bug 1163.
  *
@@ -923,7 +926,7 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     int nTokens = 0, nEpsgTmp = 0;
     projectionObj sProjTmp;
 
-    /*char szBuffer[512];*/
+    char *pszBuffer = NULL;
 
     lp = &(map->layers[iLayerIndex]);
 
@@ -974,34 +977,31 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     }
 
 
-    /*
-    if (lp->connectiontype == MS_OGR)
-    {
-        szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
-        if (szExpression)
-          sprintf(szBuffer, "WHERE %s", szExpression);
-    }
-    else if (lp->connectiontype == MS_POSTGIS)
-    {
-         szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
-         sprintf(szBuffer, "%s", szExpression);
-    }
-    */
-
     lp->numclasses = 1; /* set 1 so the query would work */
     initClass(&(lp->class[0]));
     lp->class[0].type = lp->type;
     lp->class[0].template = strdup("ttt.html");
 
     szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
-
     if (szExpression)
     {
-        msLoadExpressionString(&lp->filter, szExpression);
+        pszBuffer = (char *)malloc(sizeof(char) * (strlen(szExpression) + 8));
+        if (lp->connectiontype == MS_OGR)
+          sprintf(pszBuffer, "WHERE %s", szExpression);
+        else //POSTGIS OR ORACLE if (lp->connectiontype == MS_POSTGIS)
+          sprintf(pszBuffer, "%s", szExpression);
+
+        
+
+        
+
+        msLoadExpressionString(&lp->filter, pszBuffer);
         free(szExpression);
     }
 
     msQueryByRect(map, lp->index, sQueryRect);
+    if (pszBuffer)
+      free(pszBuffer);
  
 }
 
@@ -2553,9 +2553,9 @@ char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode)
 char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
                                             int connectiontype)
 {
-    char szBuffer[512];
+    char *pszBuffer = NULL;
     char *pszTmp = NULL;
-    szBuffer[0] = '\0';
+    int nTmp = 0;
 
 
 /* ==================================================================== */
@@ -2573,7 +2573,8 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
          if (!pszTmp)
           return NULL;
 
-         sprintf(szBuffer, "%s", pszTmp);
+         pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 1));
+         sprintf(pszBuffer, "%s", pszTmp);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2581,20 +2582,29 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 /* -------------------------------------------------------------------- */
     else if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
     {
-        strcat(szBuffer, " (");
         pszTmp = FLTGetSQLExpression(psFilterNode->psLeftNode, connectiontype);
         if (!pszTmp)
           return NULL;
 
-        strcat(szBuffer, pszTmp);
-        strcat(szBuffer, " ");
-        strcat(szBuffer, psFilterNode->pszValue);
-        strcat(szBuffer, " ");
+        pszBuffer = (char *)malloc(sizeof(char) * 
+                                    (strlen(pszTmp) + 
+                                     strlen(psFilterNode->pszValue) + 5));
+        pszBuffer[0] = '\0';
+        strcat(pszBuffer, " (");
+        strcat(pszBuffer, pszTmp);
+        strcat(pszBuffer, " ");
+        strcat(pszBuffer, psFilterNode->pszValue);
+        strcat(pszBuffer, " ");
+
+        nTmp = strlen(pszBuffer);
         pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, connectiontype);
         if (!pszTmp)
           return NULL;
-        strcat(szBuffer, pszTmp);
-        strcat(szBuffer, ") ");
+
+        pszBuffer = (char *)realloc(pszBuffer, 
+                                    sizeof(char) * (strlen(pszTmp) + nTmp +3));
+        strcat(pszBuffer, pszTmp);
+        strcat(pszBuffer, ") ");
     }
 /* -------------------------------------------------------------------- */
 /*      NOT                                                             */
@@ -2602,17 +2612,21 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     else if (psFilterNode->psLeftNode && 
              strcasecmp(psFilterNode->pszValue, "NOT") == 0)
     {
-        strcat(szBuffer, " (NOT ");
         pszTmp = FLTGetSQLExpression(psFilterNode->psLeftNode, connectiontype);
         if (!pszTmp)
           return NULL;
-        strcat(szBuffer, pszTmp);
-        strcat(szBuffer, ") ");
+        
+        pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) +  9));
+        pszBuffer[0] = '\0';
+
+        strcat(pszBuffer, " (NOT ");
+        strcat(pszBuffer, pszTmp);
+        strcat(pszBuffer, ") ");
     }
     else
       return NULL;
     
-    return strdup(szBuffer);
+    return pszBuffer;
 
 }
 
@@ -2623,9 +2637,9 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 /************************************************************************/
 char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 {
-    char szBuffer[512];
     char *pszTmp = NULL;
-    szBuffer[0] = '\0';
+    char *pszBuffer = NULL;
+    int nTmp = 0;
 
     if (!psFilterNode || !FLTIsLogicalFilterType(psFilterNode->pszValue))
       return NULL;
@@ -2642,7 +2656,8 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
          (strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") == 0) ||
          (strcasecmp(psFilterNode->psRightNode->pszValue, "Intersects") == 0)))
     {
-        strcat(szBuffer, " (");
+        
+        /*strcat(szBuffer, " (");*/
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0 &&
             strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") != 0 &&
             (strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") != 0 ||
@@ -2653,14 +2668,17 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 
         if (!pszTmp)
           return NULL;
+        
+        pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 3));
+        pszBuffer[0] = '\0';
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") == 0 ||
             strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") == 0)
-          sprintf(szBuffer, "%s", pszTmp);
+          sprintf(pszBuffer, "%s", pszTmp);
         else
-           sprintf(szBuffer, "(%s)", pszTmp);
+          sprintf(pszBuffer, "(%s)", pszTmp);
         
-
-        return strdup(szBuffer);
+        
+        return pszBuffer;
     }
 
 /* ==================================================================== */
@@ -2677,29 +2695,41 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 
         if (!pszTmp)
           return NULL;
-        strcat(szBuffer, pszTmp);
+        pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 1));
+        pszBuffer[0] = '\0';
+        sprintf(pszBuffer, "%s", pszTmp);
+        
 
-        return strdup(szBuffer);
+        return pszBuffer;
     }
 /* -------------------------------------------------------------------- */
 /*      OR and AND                                                      */
 /* -------------------------------------------------------------------- */
     if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
     {
-        strcat(szBuffer, " (");
         pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
         if (!pszTmp)
           return NULL;
 
-        strcat(szBuffer, pszTmp);
-        strcat(szBuffer, " ");
-        strcat(szBuffer, psFilterNode->pszValue);
-        strcat(szBuffer, " ");
+        pszBuffer = (char *)malloc(sizeof(char) * 
+                                   (strlen(pszTmp) + strlen(psFilterNode->pszValue) + 5));
+        pszBuffer[0] = '\0';
+        strcat(pszBuffer, " (");
+        
+        strcat(pszBuffer, pszTmp);
+        strcat(pszBuffer, " ");
+        strcat(pszBuffer, psFilterNode->pszValue);
+        strcat(pszBuffer, " ");
         pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
         if (!pszTmp)
           return NULL;
-        strcat(szBuffer, pszTmp);
-        strcat(szBuffer, ") ");
+
+        nTmp = strlen(pszBuffer);
+        pszBuffer = (char *)realloc(pszBuffer, 
+                                    sizeof(char) * (strlen(pszTmp) + nTmp +3));
+
+        strcat(pszBuffer, pszTmp);
+        strcat(pszBuffer, ") ");
     }
 /* -------------------------------------------------------------------- */
 /*      NOT                                                             */
@@ -2707,17 +2737,21 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
     else if (psFilterNode->psLeftNode && 
              strcasecmp(psFilterNode->pszValue, "NOT") == 0)
     {
-        strcat(szBuffer, " (NOT ");
         pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
         if (!pszTmp)
           return NULL;
-        strcat(szBuffer, pszTmp);
-        strcat(szBuffer, ") ");
+
+         pszBuffer = (char *)malloc(sizeof(char) * 
+                                   (strlen(pszTmp) +  9));
+         pszBuffer[0] = '\0';
+         strcat(pszBuffer, " (NOT ");
+         strcat(pszBuffer, pszTmp);
+         strcat(pszBuffer, ") ");
     }
     else
       return NULL;
     
-    return strdup(szBuffer);
+    return pszBuffer;
     
 }
 

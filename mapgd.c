@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102.2.1  2005/07/07 22:03:27  sdlime
+ * Fixes the whacky symbol behavior noted in bug 1376. Back ported from 4.7.
+ *
  * Revision 1.102  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -1374,14 +1377,12 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-  int offset_x, offset_y, x, y;
+  int offset_x, offset_y, x, y, w, h;
   int j, k;
   gdPoint oldpnt,newpnt;
   gdPoint mPoints[MS_MAXVECTORPOINTS];
   char *error=NULL;
-
-  gdImagePtr tmp;
-  int tmp_fc=-1, tmp_bc, tmp_oc=-1;
+  
   int fc, bc, oc;
   double size,d;
   int width;
@@ -1474,40 +1475,43 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     }
     break;
   case(MS_SYMBOL_ELLIPSE): /* TODO: Need to leverage the image cache! */
-    d = size/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d)+1;
-    y = MS_NINT(symbol->sizey*d)+1;
+    w = MS_NINT((size*symbol->sizex/symbol->sizey)); /* ellipse size */
+    h = MS_NINT(size);
 
-    /* create temporary image and allocate a few colors */
-    tmp = gdImageCreate(x, y);
-    tmp_bc = gdImageColorAllocate(tmp, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-    gdImageColorTransparent(tmp, 0);
-    if(fc >= 0)
-      tmp_fc = gdImageColorAllocate(tmp, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
-    if(oc >= 0)
-      tmp_oc = gdImageColorAllocate(tmp, gdImageRed(img, oc), gdImageGreen(img, oc), gdImageBlue(img, oc));
+    x = MS_NINT(p->x + ox); /* GD will center the ellipse on x,y */
+    y = MS_NINT(p->y + oy);
 
-    x = MS_NINT(tmp->sx/2);
-    y = MS_NINT(tmp->sy/2);
+    /* check for trivial cases - 1x1 and 2x2, GD does not do these well */
+    if(w==1 && h==1) {
+      gdImageSetPixel(img, x, y, fc);
+      return;
+    }
+
+    if(w==2 && h==2) {
+      gdImageSetPixel(img, x, y, fc);
+      gdImageSetPixel(img, x, y+1, fc);
+      gdImageSetPixel(img, x+1, y, fc);
+      gdImageSetPixel(img, x+1, y+1, fc);
+      return;
+    }
 
     /* for a circle interpret the style angle as the size of the arc (for drawing pies) */
-    if(symbol->points[0].x == symbol->points[0].y && style->angle != 360) {
-      if(symbol->filled && tmp_fc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_fc, gdEdged|gdPie);
-      if(!symbol->filled && tmp_fc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_fc, gdEdged|gdNoFill);
-      if(tmp_oc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_oc, gdEdged|gdNoFill);
+    if(w == h && style->angle != 360) {
+      if(symbol->filled && fc >= 0) {
+        gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdPie);
+        if(oc >= 0) gdImageFilledArc(img, x, y, w, h, 0, style->angle, oc, gdEdged|gdNoFill);
+      } else if(!symbol->filled && fc >= 0) {
+        gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdNoFill);
+      }
     } else {
-      if(symbol->filled && tmp_fc >= 0) gdImageFilledEllipse(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), tmp_fc);
-      if(!symbol->filled && tmp_fc >= 0) gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_fc);
-      if(tmp_oc >= 0) gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_oc);
+      if(symbol->filled && fc >= 0) {
+	gdImageFilledEllipse(img, x, y, w, h, fc);        
+        if(oc >= 0) gdImageArc(img, x, y, w, h, 0, 360, oc);
+      } else if(!symbol->filled && fc >= 0) {
+        gdImageArc(img, x, y, w, h, 0, 360, fc);
+      }      
     }
     
-    /* paste the tmp image in the main image */
-    offset_x = MS_NINT(p->x - .5*tmp->sx + ox);
-    offset_y = MS_NINT(p->y - .5*tmp->sx + oy);
-    msFixedImageCopy(img, tmp, offset_x, offset_y, 0, 0, tmp->sx, tmp->sy);
-
-    gdImageDestroy(tmp);
-
     break;
   case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
     d = size/symbol->sizey;

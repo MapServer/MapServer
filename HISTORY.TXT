@@ -13,8 +13,56 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.6.0 (final?)
-------------------------------
+
+Version 4.6.2 (2005-11-29)
+--------------------------
+
+- Fixed SLD crash when the number of filter elements is big (bug 1490).
+
+- Fixed --enable-point-z-m fix in configure.in (== -> =) (bug 1485).
+
+- Extra scalebar layer creation is prevented with a typo fix in mapscale.c. 
+  Good catch, Tamas (bug 1480).
+  
+- Avoid tail recursion in freeFeatureList() in mapfile.c.
+
+- Fixed writing of STYLE WIDTH in saveMap(). WIDTH used to be written
+  out as SIZE (bug 1462).
+
+- Fix in msGetGDALGetTransform() to use default geotransform even if
+  GDALGetGeoTransform() fails but alters the geotransform array.
+
+
+Version 4.6.1 (2005-08-26)
+--------------------------
+
+- Typemaps for C# to enable the imageObj.getBytes() method (bug 1389).
+
+- bug 1307: Enable -DUSE_ZLIB via configure for compressed SVG output.
+
+- bug 1372: mapresample.c - ensure that multi-band raw results can be
+  resampled.
+
+- bug 1418: Fixed sortshp.c to free shapes after processing to avoid major
+  memory leak.
+
+- bug 1402: fixed mappool.c so that any thread can release a connection,
+  not just it's allocator. 
+
+- Bug 1408: Fixed missing space in GML MultiLineString output
+
+- Bug 1399: Fixed copy of processing directives within a layer copy.
+
+- Bug 1312: Problems with string initialization when building tmp
+            files. It was cuasing a problem for wms client layers.
+
+- Bug 1390: Fix svg output for multipolygons.
+
+- Bug 1141: Fixed problem with GetLegendGraphic on layers with status=off
+
+
+Version 4.6.0 (2005-06-14)
+--------------------------
 
 - Bug 1163 : Filter Encoding spatial operator is Intersects 
   and not Intersect.

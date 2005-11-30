@@ -11,7 +11,7 @@ mapscriptvars.close
 
 # $CFLAGS works only with 1.8 ??? -> the -Wall argument is not needed !!!
 $CFLAGS = ""
-$CPPFLAGS = " -idirafter $(rubylibdir)/$(arch) " + make_define
+$CPPFLAGS = make_inc + " -idirafter $(rubylibdir)/$(arch) " + make_define
 $LDFLAGS += " -fPIC"
 $LOCAL_LIBS += " -L../.. " + make_libs + " " + make_static_libs
 
