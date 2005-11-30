@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- mapgraticule.c: Use MIN/MAXINTERVAL value when we define grid position and 
+  interval (bug 1530)
+
 - mapdrawgdal.c: Fix bug with nodata values not in the color table when 
   rendering some raster layers (bug 1541). 
 

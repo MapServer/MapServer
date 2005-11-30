@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2005/11/30 21:42:43  julien
+ * Use MIN/MAXINTERVAL value when we define grid layers (bug1530)
+ *
  * Revision 1.14  2005/10/28 01:09:41  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -194,6 +197,21 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 	pInfo->dendlongitude			= rect.maxx;
 	pInfo->bvertical				= 1;
 	pInfo->extent					= rect;
+	if( pInfo->minincrement > 0.0 )
+        {
+            pInfo->dincrementlongitude			= pInfo->minincrement;
+            pInfo->dincrementlatitude			= pInfo->minincrement;
+        }
+        else if( pInfo->maxincrement > 0.0 )
+        {
+            pInfo->dincrementlongitude			= pInfo->maxincrement;
+            pInfo->dincrementlatitude			= pInfo->maxincrement;
+        }
+        else
+        {
+            pInfo->dincrementlongitude			= 0;
+            pInfo->dincrementlatitude			= 0;
+        }
 	
 	if( pInfo->maxarcs > 0 )
 		iAxisTickCount				= (int) pInfo->maxarcs;
@@ -764,7 +782,10 @@ void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc )
 
 	/* compute candidate for increment */
 
+
 	Test_inc = pow( 10.0, ceil( log10( Range/10 ) ) ) ;
+        if( *Inc > 0 && ( Test_inc < *Inc || Test_inc > *Inc ) )
+            Test_inc=*Inc;
 
 	/* establish maximum scale value... */
 
@@ -772,7 +793,6 @@ void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc )
 
 	if( Test_max < *Max )
 		Test_max += Test_inc ;
-
 	/* establish minimum scale value... */
 
 	Test_min = Test_max ;
