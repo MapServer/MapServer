@@ -16,7 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
-- Bug 1552 : [SLD] : error parsing font parameters with the keyword "normal"
+- WFS : TYPENAME is manadatory for GetFeature request (Bug 1554).
+
+- SLD : error parsing font parameters with the keyword "normal" (Bu 1552)
 
 - mapgraticule.c: Use MIN/MAXINTERVAL value when we define grid position and 
   interval (bug 1530)

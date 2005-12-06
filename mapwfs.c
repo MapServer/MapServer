@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.72  2005/12/06 16:42:25  assefa
+ * WFS : TYPENAME is manadatory for GetFeature request (Bug 1554).
+ *
  * Revision 1.71  2005/10/25 20:29:52  sdlime
  * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can havespecific types (default is string). Constants are NOT queryable so their use should be limited untilsome extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
  *
@@ -904,7 +907,18 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   /* __TODO__ Need to support XML encoded requests */
   /*  */
   
-  
+
+  /* typename is mandatory unlsess featureid is specfied. We do not
+     support featureid */
+  if (paramsObj->pszTypeName==NULL)
+  {
+      msSetError(MS_WFSERR, 
+                 "Incomplete WFS request: TYPENAME parameter missing", 
+                 "msWFSGetFeature()");
+      return msWFSException(map, paramsObj->pszVersion);
+  }
+
+
   if(paramsObj->pszTypeName) {
     int j, k;
     const char *pszMapSRS = NULL;
