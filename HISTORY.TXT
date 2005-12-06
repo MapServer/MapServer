@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Bug 1552 : [SLD] : error parsing font parameters with the keyword "normal"
+
 - mapgraticule.c: Use MIN/MAXINTERVAL value when we define grid position and 
   interval (bug 1530)
 

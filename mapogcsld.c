@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.58  2005/12/06 15:06:24  assefa
+ * Error parsing font parameters with the keyword "normal"
+ *
  * Revision 1.57  2005/11/25 19:34:14  assefa
  * If a RULE name is not given, set the class name to "Unknown" (Bug 1451)
  *
@@ -2575,12 +2578,12 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                 if (pszFontFamily)
                 {
                     sprintf(szFontName, "%s", pszFontFamily);
-                    if (pszFontWeight)
+                    if (pszFontWeight && strcasecmp(pszFontWeight, "normal") != 0)
                     {
                         strcat(szFontName, "-");
                         strcat(szFontName, pszFontWeight);
                     }
-                    if (pszFontStyle)
+                    if (pszFontStyle && strcasecmp(pszFontStyle, "normal") != 0)
                     {
                         strcat(szFontName, "-");
                         strcat(szFontName, pszFontStyle);
