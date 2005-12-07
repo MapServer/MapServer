@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.116  2005/12/07 16:50:52  sdlime
+ * Fixed crash with non-substition lines in one-to-many join templates. (bug 1557)
+ *
  * Revision 1.115  2005/10/28 14:28:29  sdlime
  * Altered default coordinate output for the shpxy template tag to match imagemap specs. Added centroid option to shpxy tag to output a single point for line and polygon shapes. Should more closely match the label point, but isn't perfect.
  *
@@ -2263,7 +2266,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
         outbuf = strcatalloc(outbuf, tmpline);
         free(tmpline);
       } else /* no subs, just echo */
-        strcatalloc(outbuf, line);
+        outbuf = strcatalloc(outbuf, line);
     }
       
     rewind(stream);
