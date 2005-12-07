@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/12/07 16:47:43  sdlime
+ * Fixed potential segfault in mapjoin.c. (bug 1556)
+ *
  * Revision 1.27  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -293,7 +296,7 @@ int msDBFJoinClose(joinObj *join)
 
   if(!joininfo) return(MS_SUCCESS); /* already closed */
 
-  msDBFClose(joininfo->hDBF);
+  if(joininfo->hDBF) msDBFClose(joininfo->hDBF);
   if(joininfo->target) free(joininfo->target);
   free(joininfo);
   joininfo = NULL;
