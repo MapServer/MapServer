@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.112.2.1  2005/12/07 17:45:35  sdlime
+ * Fixed crash with non-substition lines in one-to-many join templates. (bug 1557)
+ *
  * Revision 1.112  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -2226,7 +2229,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
         outbuf = strcatalloc(outbuf, tmpline);
         free(tmpline);
       } else /* no subs, just echo */
-        strcatalloc(outbuf, line);
+        outbuf = strcatalloc(outbuf, line);
     }
       
     rewind(stream);
