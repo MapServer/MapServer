@@ -98,7 +98,6 @@ EPPL_OBJ= @EPPL_OBJ@
 # on your system someplace. The actual SDE server you wish to connect to can
 # be elsewhere.
 SDE=	  @SDE_ENABLED@
-SDERASTER= @SDERASTER_ENABLED@
 SDE_LIB=  @SDE_LIB@
 SDE_INC=  @SDE_INC@
 

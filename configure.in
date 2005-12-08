@@ -923,32 +923,6 @@ ALL_ENABLED="$SDE_ENABLED $ALL_ENABLED"
 ALL_INC="$SDE_INC $ALL_INC"
 ALL_LIB="$SDE_LIB $ALL_LIB"
 
-dnl ---------------------------------------------------------------------
-dnl Should we include ESRI SDE support?
-dnl ---------------------------------------------------------------------
-
-AC_CHECKING(whether we should include SDE raster support)
-AC_ARG_WITH(sderaster,
-[  --with-sderaster      Include experimental ESRI SDE raster support.],,)
-
-if test "$with_sderaster" = "yes" ; then
- 
-  if test "$SDE_ENABLED" != "-DUSE_SDE" ; then
-   AC_MSG_ERROR([--with-sderaster requested without SDE supported enabled.])
-  fi
-
-  SDERASTER_ENABLED=-DUSE_SDERASTER
-
-  AC_MSG_RESULT([        including experimental SDE raster support.])
-
-else
-
-  AC_MSG_RESULT([        not including experimental SDE raster support.])
-fi
-
-AC_SUBST(SDERASTER_ENABLED,$SDERASTER_ENABLED)
-
-ALL_ENABLED="$SDERASTER_ENABLED $ALL_ENABLED"
 
 dnl ---------------------------------------------------------------------
 dnl Use MPATROL ONLY IF REQUESTED.

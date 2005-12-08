@@ -20,7 +20,7 @@ CVS HEAD
   as I know, I'm the only one to ever get it to work, it hasn't kept up with 
   the connection pooling stuff we did, and its utility is quite limited in 
   comparison to regular gdal-based raster support (projections, 
-  resampling, etc) (HB).
+  resampling, etc) (HB - bug 1560).
 
 - SDE: Put msSDELayerGetRowIDColumn at the top of mapsde.c so things 
   would compile correctly.  This function is not included (or necessary) 
