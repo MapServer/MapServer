@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2005/12/08 19:07:36  hobu
+ * switch off SDE raster support and fix up msSDELayerGetRowIDColumn
+ *
  * Revision 1.97  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -229,6 +232,89 @@ static void sde_error(long error_code, char *routine, char *sde_routine)
               error_code);
 
   return;
+}
+
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetRowIDColumn                                             */
+/* -------------------------------------------------------------------- */
+/*     A helper function to return unique row ID column for             */ 
+/*     an opened SDE layer                                              */
+/* -------------------------------------------------------------------- */
+char *msSDELayerGetRowIDColumn(layerObj *layer)
+{
+#ifdef USE_SDE
+  long status, column_type; 
+  char* row_id_column;
+  SE_REGINFO registration;
+
+  msSDELayerInfo *sde=NULL;
+  sde = layer->layerinfo;
+  row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
+  if(!sde) {
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerGetSpatialColumn()");
+    return(NULL);
+  }   
+  
+  if (sde->state_id == SE_DEFAULT_STATE_ID) {
+    if(layer->debug) 
+      msDebug("msSDELayerGetRowIDColumn(): State ID was SE_DEFAULT_STATE_ID, "
+              "reverting to %s.\n", 
+              MS_SDE_ROW_ID_COLUMN);
+      return(strdup(MS_SDE_ROW_ID_COLUMN));
+  }
+  else 
+  {
+    status = SE_reginfo_create (&registration);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerGetRowIDColumn()", "SE_reginfo_create()");
+      return(NULL);
+    }
+    
+    status = SE_registration_get_info ( sde->connection, 
+                                        strdup(sde->table), 
+                                        registration);
+    if(status != SE_SUCCESS) {
+      sde_error(status, 
+                "msSDELayerGetRowIDColumn()", 
+                "SE_registration_get_info()");
+      return(NULL);
+    }
+    
+    status= SE_reginfo_get_rowid_column ( registration, 
+                                          row_id_column, 
+                                          &column_type);
+    if(status != SE_SUCCESS) {
+      sde_error(status, 
+                "msSDELayerGetRowIDColumn()", 
+                "SE_reginfo_get_rowid_column()");
+      return(NULL);
+    }
+    if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
+      if(layer->debug) {
+        msDebug("msSDELayerGetRowIDColumn(): Table was not registered, "
+        "returning %s.\n", 
+        MS_SDE_ROW_ID_COLUMN);
+      }
+      SE_reginfo_free(registration);
+      return (MS_SDE_ROW_ID_COLUMN);
+    }
+    
+    SE_reginfo_free(registration);
+    if (row_id_column){
+      return (strdup(row_id_column)); 
+    }
+    else {
+      return(strdup(MS_SDE_ROW_ID_COLUMN));
+    }
+}
+#else
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerGetRowIDColumn()");
+  return(NULL);
+#endif
 }
 
 /* -------------------------------------------------------------------- */
@@ -1567,95 +1653,16 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
 #endif
 }
 
-/* -------------------------------------------------------------------- */
-/* msSDELayerGetRowIDColumn                                             */
-/* -------------------------------------------------------------------- */
-/*     A helper function to return unique row ID column for             */ 
-/*     an opened SDE layer                                              */
-/* -------------------------------------------------------------------- */
-char *msSDELayerGetRowIDColumn(layerObj *layer)
-{
-#ifdef USE_SDE
-  long status, column_type; 
-  char* row_id_column;
-  SE_REGINFO registration;
 
-  msSDELayerInfo *sde=NULL;
-  sde = layer->layerinfo;
-  row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
-  if(!sde) {
-    msSetError( MS_SDEERR, 
-                "SDE layer has not been opened.", 
-                "msSDELayerGetSpatialColumn()");
-    return(NULL);
-  }   
-  
-  if (sde->state_id == SE_DEFAULT_STATE_ID) {
-    if(layer->debug) 
-      msDebug("msSDELayerGetRowIDColumn(): State ID was SE_DEFAULT_STATE_ID, "
-              "reverting to %s.\n", 
-              MS_SDE_ROW_ID_COLUMN);
-      return(strdup(MS_SDE_ROW_ID_COLUMN));
-  }
-  else 
-  {
-    status = SE_reginfo_create (&registration);
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerGetRowIDColumn()", "SE_reginfo_create()");
-      return(NULL);
-    }
-    
-    status = SE_registration_get_info ( sde->connection, 
-                                        strdup(sde->table), 
-                                        registration);
-    if(status != SE_SUCCESS) {
-      sde_error(status, 
-                "msSDELayerGetRowIDColumn()", 
-                "SE_registration_get_info()");
-      return(NULL);
-    }
-    
-    status= SE_reginfo_get_rowid_column ( registration, 
-                                          row_id_column, 
-                                          &column_type);
-    if(status != SE_SUCCESS) {
-      sde_error(status, 
-                "msSDELayerGetRowIDColumn()", 
-                "SE_reginfo_get_rowid_column()");
-      return(NULL);
-    }
-    if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
-      if(layer->debug) {
-        msDebug("msSDELayerGetRowIDColumn(): Table was not registered, "
-        "returning %s.\n", 
-        MS_SDE_ROW_ID_COLUMN);
-      }
-      SE_reginfo_free(registration);
-      return (MS_SDE_ROW_ID_COLUMN);
-    }
-    
-    SE_reginfo_free(registration);
-    if (row_id_column){
-      return (strdup(row_id_column)); 
-    }
-    else {
-      return(strdup(MS_SDE_ROW_ID_COLUMN));
-    }
-}
-#else
-  msSetError( MS_MISCERR, 
-              "SDE support is not available.", 
-              "msSDELayerGetRowIDColumn()");
-  return(NULL);
-#endif
-}
 
-/* -------- Raster support -------- */
+/* -------- Raster support -------- 
+Turned off for now.
 
 #define MAXCOLORS 256
 
 #ifdef USE_SDERASTER
-void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDINFO rasterband, int cmap[]) { /* FIXME: size check for cmap[] ! */
+void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDINFO rasterband, int cmap[]) { 
+  // FIXME: size check for cmap[] ! 
   LONG rc, cm_bottom, cm, num_cm_entries;
   SE_COLORMAP_TYPE colormap_type;
   SE_COLORMAP_DATA_TYPE data_type;
@@ -1666,12 +1673,12 @@ void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDIN
   
   if (!SE_rasbandinfo_has_colormap(rasterband)) {
     if(layer->debug) msDebug("msSDEGetColorMap(): Generating color map\n");
-    /* TODO: other than 8 bit (from drawTIFF mapraster.c) */
+    // TODO: other than 8 bit (from drawTIFF mapraster.c) 
     for (cm=0; cm<256; cm++) {
-      pixel.red = pixel.green = pixel.blue = pixel.pen = cm; /* offsite would be specified in range 0 to 255 */
+      pixel.red = pixel.green = pixel.blue = pixel.pen = cm;  offsite would be specified in range 0 to 255 
 
-      /* if(!MS_COMPARE_COLORS(pixel, layer->offsite))	     */
-      /* cmap[cm] = msAddColorGD(map,img, 0, (cm>>4)*17, (cm>>4)*17, (cm>>4)*17); // use raster color */
+      // if(!MS_COMPARE_COLORS(pixel, layer->offsite))	     
+      // cmap[cm] = msAddColorGD(map,img, 0, (cm>>4)*17, (cm>>4)*17, (cm>>4)*17); // use raster color 
       cmap[cm] = gdImageColorAllocate(img, (cm>>4)*17, (cm>>4)*17, (cm>>4)*17);
     }
     return;
@@ -1679,7 +1686,7 @@ void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDIN
 
   if(layer->debug) msDebug("msSDEGetColorMap(): Fetching color map\n");
   
-  /* Fetch the colormap data from the rasterband_info structure. */
+  // Fetch the colormap data from the rasterband_info structure. 
   rc = SE_rasbandinfo_get_colormap (rasterband,
                                     &colormap_type,
                                     &data_type,
@@ -1734,7 +1741,7 @@ void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDIN
 /************************************************************************/
 /*                              drawSDE()                              */
 /************************************************************************/
-
+/*
 int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
 {
 #ifdef USE_SDERASTER
@@ -1743,7 +1750,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   char **params=NULL;
   int numparams=0;
   
-  int i,j; /* loop counters */
+  int i,j; // loop counters 
   int cmap[MAXCOLORS];  
   gdImagePtr rgbimg;
   int col;
@@ -1785,14 +1792,14 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
 
   tpix = (int*) malloc(sizeof(int));
 
-  /* Allocate an SE_SQL_CONSTRUCT */
+  // Allocate an SE_SQL_CONSTRUCT 
   status = SE_sql_construct_alloc (1, &sqlc);
   if(status != SE_SUCCESS) {
     sde_error(status, "drawSDE()", "SE_sql_construct_alloc");
     return(MS_FAILURE);
   }
 
-  /* Fill in the details of the SQL query */
+  // Fill in the details of the SQL query 
   sqlc->where = (char *)malloc(20);
   sqlc->num_tables = 1;
   strcpy (sqlc->tables[0], sde->table);
@@ -1824,7 +1831,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
      msDebug("our bands were specified: red=%d, green=%d, blue=%d, alpha=%d\n", 
               red_band,green_band,blue_band,alpha_band);
   }
-  /* Define the number and names of the table columns to be returned */
+  // Define the number and names of the table columns to be returned 
   
   proc_value = NULL;
   proc_value = msLayerGetProcessingKey(layer,"RASTERCOLUMN");
@@ -1835,33 +1842,33 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   }
   num_cols = 1;
   attrs = (CHAR **) malloc (num_cols * sizeof(CHAR *));
-  attrs[0] = proc_value;/* sde->column; */
+  attrs[0] = proc_value;/* sde->column; 
 
   proc_value = NULL;
   free(proc_value);
   
-  /* Define the stream query */
+  // Define the stream query 
   status = SE_stream_query (sde->stream, num_cols, (const CHAR **) attrs, sqlc);
   if(status != SE_SUCCESS) {
     sde_error(status, "drawSDE()", "SE_stream_query");
     return(MS_FAILURE);
   }
 
-  /* Execute the query. */
+  // Execute the query. 
   status = SE_stream_execute (sde->stream);
   if(status != SE_SUCCESS) {
     sde_error(status, "drawSDE()", "SE_stream_execute");
     return(MS_FAILURE);
   }
 
-  /* Fetch the first row. */
+  // Fetch the first row. 
   status = SE_stream_fetch (sde->stream);
   if(status != SE_SUCCESS) {
     sde_error(status, "drawSDE()", "SE_stream_fetch");
     return(MS_FAILURE);
   }
 
-  /* Obtain the image metadata in the current row. */
+  // Obtain the image metadata in the current row. 
   status = SE_rasterattr_create (&hAttr, FALSE);
   if(status != SE_SUCCESS) {
     sde_error(status, "drawSDE()", "SE_rasterattr_create");
@@ -1881,7 +1888,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   if(layer->debug) msDebug("map->extent minx: %lf miny: %lf maxx: %lf maxy: %lf\n",
     map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);      
   
-  /* Get raster band metadata */
+  // Get raster band metadata 
 
   status = SE_rasterattr_get_rasterband_info (hAttr, &hRasBnd, 1);
   if(status != SE_SUCCESS) {
@@ -1919,7 +1926,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   for (; level >= 0; level--) {
     if (layer->debug) msDebug("Try pyramid level: %ld \n",level);  
 
-    /* Get the pixel dimensions of the current level. */    
+    // Get the pixel dimensions of the current level.  
     status = SE_rasterattr_get_image_size_by_level(hAttr,
                                                &band_width,
                                                &band_height,
@@ -1942,14 +1949,14 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
     if(layer->debug) msDebug("Raster extent minx: %lf miny: %lf maxx: %lf maxy: %lf offset_x: %lf offset_y: %lf\n",
       env.minx, env.miny, env.maxx, env.maxy, coord_offset_x, coord_offset_y);
   
-    /* calculate the pixel cell size in world coordinates */
+    // calculate the pixel cell size in world coordinates 
     cell_size = (env.maxx - env.minx) / (band_width - 1);
         
-    /* compute the real world coordinate width and height */
+    // compute the real world coordinate width and height 
     coord_tile_width = cell_size * tile_width;
     coord_tile_height = cell_size * tile_height;
   
-    /* compute the tile coordinates */
+    // compute the tile coordinates 
     effminx = MS_MAX(env.minx - coord_offset_x, minx);
     effmaxx = MS_MIN(env.maxx - coord_offset_x, maxx);
     effminy = MS_MAX(env.miny - coord_offset_y, miny);
@@ -1965,16 +1972,16 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
       effminx, effminy, effmaxx, effmaxy);
 
     if (((maxx-minx)/cell_size) >= img->sx && ((maxy-miny)/cell_size) >= img->sy)
-      break; /* use this level         */
+      break; /* use this level         
   }
 
-  /* make sure the user enter extent overlaps the image extent */
+  // make sure the user enter extent overlaps the image extent 
   if (minx > env.maxx || maxx < env.minx || miny > env.maxy || maxy < env.miny) {
     sde_error(status, "drawSDE()", "Invalid entry: The coordinate extent enter does not overlap image extent");
     return(MS_FAILURE);
   }
       
-  /* Add constraint & get the tiles. */
+  // Add constraint & get the tiles. 
 
   status = SE_rasconstraint_create (&hConstraint);
   if(status != SE_SUCCESS) {
@@ -2008,13 +2015,13 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
     return(MS_FAILURE);
   }
 
-  /* Setup RGB image */
+  // Setup RGB image 
   rgbimg = gdImageCreateTrueColor((constrmaxx-constrminx+1)*tile_width, (constrmaxy-constrminy+1)*tile_height);
-  /* int backcol = gdImageColorAllocate(rgbimg, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue); */
+  // int backcol = gdImageColorAllocate(rgbimg, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue); 
   backcol = gdImageColorAllocate(rgbimg, 0, 0, 0);
   gdImageFilledRectangle(rgbimg, 0, 0, rgbimg->sx, rgbimg->sy, backcol);
   
-  /* set up the color map (for 1-band images) */
+  // set up the color map (for 1-band images) 
   msSDEGetColorMap(map, layer, rgbimg, hRasBnd, cmap);
 
   while (SE_SUCCESS == status)
@@ -2028,12 +2035,12 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
         return(MS_FAILURE);
       }
 
-      /* status = SE_rastileinfo_get_level (hTile, &level);
+      // status = SE_rastileinfo_get_level (hTile, &level);
       if(status != SE_SUCCESS) {
         sde_error(status, "drawSDE()", "SE_rastileinfo_get_level");
         return(MS_FAILURE);
       }
-      if(layer->debug) msDebug("Got band from level %ld\n", level); */
+      if(layer->debug) msDebug("Got band from level %ld\n", level); 
 
       status = SE_rastileinfo_get_rowcol (hTile, &row, &column);
       if(status != SE_SUCCESS) {
@@ -2047,7 +2054,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
         return(MS_FAILURE);
       }
 
-      if (length==0) continue; /* holes (partial tiles: length != tile_height*tile_width) */
+      if (length==0) continue; // holes (partial tiles: length != tile_height*tile_width) 
       
       for(i=0; i<tile_height; i++)
         for(j=0; j<tile_width; j++) {
@@ -2081,7 +2088,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
     }
   }
 
-  /* Release memory */
+  // Release memory 
   SE_rastileinfo_free(hTile);
   SE_rasconstraint_free(hConstraint);
   SE_rasterattr_free(hAttr);
@@ -2089,28 +2096,28 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   free (sqlc->where);
   free (&tpix);
   SE_sql_construct_free (sqlc);
-  /* ret = SE_stream_free (sde->stream); */
+  // ret = SE_stream_free (sde->stream); 
 
-  /* backcol = gdImageColorResolve(img, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue); */
-  /* gdImageFilledRectangle(img, 0, 0, img->sx, img->sy, backcol); */
+  // backcol = gdImageColorResolve(img, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue); 
+  // gdImageFilledRectangle(img, 0, 0, img->sx, img->sy, backcol); 
   
   gdImageCopyResized(img, rgbimg, 0, 0, 
     (LONG) ((minx - (env.minx-coord_offset_x)-constrminx*coord_tile_width) / cell_size),
     (LONG) (((env.maxy - coord_offset_y) - maxy -constrminy*coord_tile_height) / cell_size),
     img->sx, img->sy,
     (LONG) ((maxx-minx)/cell_size), (LONG) ((maxy-miny)/cell_size));
-    /* int dstX, int dstY, int srcX, int srcY, int destW, int destH, int srcW, int srcH) */
+    // int dstX, int dstY, int srcX, int srcY, int destW, int destH, int srcW, int srcH) 
   gdImageDestroy(rgbimg);
   
-  /* using pooled connections for SDE, closed when map file is closed */
-  /* msSDELayerClose(layer);  */
+  // using pooled connections for SDE, closed when map file is closed 
+  // msSDELayerClose(layer);  
 
   return(0);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "drawSDE()");
   return(-1);
 #endif
-}
+} */
 
 /* -------------------------------------------------------------------- */
 /* msSDELayerCreateItems                                                */
