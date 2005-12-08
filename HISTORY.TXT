@@ -16,6 +16,16 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- SDE: Removed (commented out) support for SDE rasters at this time.  As far 
+  as I know, I'm the only one to ever get it to work, it hasn't kept up with 
+  the connection pooling stuff we did, and its utility is quite limited in 
+  comparison to regular gdal-based raster support (projections, 
+  resampling, etc) (HB).
+
+- SDE: Put msSDELayerGetRowIDColumn at the top of mapsde.c so things 
+  would compile correctly.  This function is not included (or necessary) 
+  in the rest of the MS RFC 3 layer virtualization at this time.
+  
 - WFS : TYPENAME is manadatory for GetFeature request (Bug 1554).
 
 - SLD : error parsing font parameters with the keyword "normal" (Bu 1552)
