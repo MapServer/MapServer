@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2005/12/08 19:44:46  hobu
+ * oops.  Move msSDELayerGetRowIDColumn to the right spot for
+ * non-SDE builds
+ *
  * Revision 1.98  2005/12/08 19:07:36  hobu
  * switch off SDE raster support and fix up msSDELayerGetRowIDColumn
  *
@@ -133,13 +137,17 @@
 #include "maptime.h"
 #include "mapthread.h"
 
+
+
 #ifdef USE_SDE
 #include <sdetype.h> /* ESRI SDE Client Includes */
 #include <sdeerno.h>
 
+/*
 #ifdef USE_SDERASTER
 #include <sderaster.h>
 #endif
+*/
 
 #define MS_SDE_MAXBLOBSIZE 1024*50 /* 50 kbytes */
 #define MS_SDE_NULLSTRING "<null>"
@@ -184,6 +192,8 @@ static layerId *lcache = NULL;
 /*       Start SDE/MapServer helper functions.                          */
 /*                                                                      */
 /************************************************************************/
+
+
 
 /* -------------------------------------------------------------------- */
 /* msSDECloseConnection                                                 */
@@ -316,6 +326,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
   return(NULL);
 #endif
 }
+
 
 /* -------------------------------------------------------------------- */
 /* msSDELCacheAdd                                                       */
@@ -2113,10 +2124,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   // msSDELayerClose(layer);  
 
   return(0);
-#else
-  msSetError(MS_MISCERR, "SDE support is not available.", "drawSDE()");
-  return(-1);
-#endif
+
 } */
 
 /* -------------------------------------------------------------------- */
@@ -2128,6 +2136,7 @@ int
 msSDELayerCreateItems(layerObj *layer,
                       int nt) 
 {
+#ifdef USE_SDE
     /* should be more than enough space, 
      * SDE always needs a couple of additional items 
      */
@@ -2140,6 +2149,12 @@ msSDELayerCreateItems(layerObj *layer,
     layer->items[1] = msSDELayerGetSpatialColumn(layer);
     layer->numitems = 2;
     return MS_SUCCESS;
+#else
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerGetRowIDColumn()");
+  return(NULL);
+#endif
 }
 
 int
