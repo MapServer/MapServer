@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.132  2005/12/08 19:06:30  hobu
+ * switch off SDE raster support
+ *
  * Revision 1.131  2005/10/26 17:50:54  frank
  * Avoid type punning warnings in readGEOTiff().
  *
@@ -1452,7 +1455,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
     if(strlen(filename) == 0) continue;
 
-#ifdef USE_SDE
+/*#ifdef USE_SDE
     if (layer->connectiontype == MS_SDE) {
       status = drawSDE(map, layer, img);
       if(status == -1) {
@@ -1461,7 +1464,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       }
       continue;
     }
-#endif
+#endif 
+*/
 
     msBuildPath3(szPath, map->mappath, map->shapepath, filename);
 

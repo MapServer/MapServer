@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.433  2005/12/08 19:05:32  hobu
+ * switch off SDE raster support
+ *
  * Revision 1.432  2005/11/24 04:38:57  dan
  * Update version for 4.8.0-beta2
  *
@@ -1340,7 +1343,7 @@ MS_DLL_EXPORT void msCleanup(void);
 /* Function prototypes, not wrapable */
 
 #ifndef SWIG
-int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapsde.c */
+/*int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img);  in mapsde.c */
 
 /*
 ** helper functions not part of the general API but needed in
