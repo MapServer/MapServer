@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/12/11 00:16:29  sean
+ * postgis layer test cases and fix for broken view and sub-select layers (bug 1443)
+ *
  * Revision 1.62  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1837,7 +1840,7 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
 
     /* this is a little hack so the rest of the code works.  If the ' using SRID=' comes before */
     /* the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts! */
-    pos_opt = (pos_srid > pos_urid) ? pos_srid : pos_urid;
+    pos_opt = (pos_srid > pos_urid) ? pos_urid : pos_srid;
 
     /* Scan for the table or sub-select clause */
     pos_scn = strstrIgnoreCase(data, " from ");

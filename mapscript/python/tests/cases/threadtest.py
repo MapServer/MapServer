@@ -179,20 +179,16 @@ def draw_map_wms(name, save=0):
 
 class OWSRequestTestCase(unittest.TestCase):
 
-    def testDrawWFS(self):
-        """map drawing with multiple threads"""
-    
-        workers = []
-        for i in range(10):
-            name = 'd%d' % (i)
-            thread = threading.Thread(target=draw_map_wfs, name=name, 
-                                      args=(name,1))
-            workers.append(thread)
-            thread.start()
+    #def testDrawWFS(self):
+    #    workers = []
+    #    for i in range(10):
+    #        name = 'd%d' % (i)
+    #        thread = threading.Thread(target=draw_map_wfs, name=name, 
+    #                                  args=(name,1))
+    #        workers.append(thread)
+    #        thread.start()
     
     def testDrawWMS(self):
-        """map drawing with multiple threads"""
-
         workers = []
         for i in range(10):
             name = 'd%d' % (i)
