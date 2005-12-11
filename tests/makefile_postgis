@@ -25,18 +25,22 @@
 POSTGIS = /home/sean/software/postgresql-8.1.0/contrib/postgis-1.0.4
 POLYGON = polygon.sql
 DBNAME = mapserver_test
+USER = postgres
 
 all: testdb
 
+sql:
+	-shp2pgsql -s 4269 -I polygon.shp postgis.polygon > $(POLYGON)
+	
 clean:
-	dropdb $(DBNAME)
+	dropdb -U $(USER) $(DBNAME)
 
-testdb:
-	createdb $(DBNAME)
-	createlang plpgsql $(DBNAME)
-	psql -d $(DBNAME) -c "CREATE SCHEMA postgis"
-	psql -d $(DBNAME) -f $(POSTGIS)/lwpostgis.sql
-	psql -d $(DBNAME) -f $(POSTGIS)/spatial_ref_sys.sql
-	psql -d $(DBNAME) -f $(POLYGON)
-	psql -d $(DBNAME) -c "CREATE VIEW polygon_v AS SELECT * FROM postgis.polygon"
+testdb: sql
+	createdb -U $(USER) $(DBNAME)
+	createlang -U $(USER) plpgsql $(DBNAME)
+	psql -U $(USER) -d $(DBNAME) -c "CREATE SCHEMA postgis"
+	psql -U $(USER) -d $(DBNAME) -f $(POSTGIS)/lwpostgis.sql
+	psql -U $(USER) -d $(DBNAME) -f $(POSTGIS)/spatial_ref_sys.sql
+	psql -U $(USER) -d $(DBNAME) -f $(POLYGON)
+	psql -U $(USER) -d $(DBNAME) -c "CREATE VIEW polygon_v AS SELECT * FROM postgis.polygon"
 	
