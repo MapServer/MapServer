@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/12/12 17:02:07  assefa
+ * Segfault on annotation layer when no style is set (Bug 1559)
+ *
  * Revision 1.35  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -489,7 +492,9 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         { /* there *is* a marker */
 
 	    /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
-            if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
+            if(cachePtr->numstyles==0)
+              marker_width = marker_height = 1;
+            else if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
 	      return(-1);
 
             marker_offset_x = MS_NINT(marker_width/2.0);

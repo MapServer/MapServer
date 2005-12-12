@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- PDF :  segfault on annotation layer when no style is set (Bug 1559)
+
 - PostGIS layer test cases and fix for broken views and sub-selects (bug 1443).
 
 - SDE: Removed (commented out) support for SDE rasters at this time.  As far 
