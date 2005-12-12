@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2005/12/12 16:57:56  sean
+ * write whether point/shape z and m is supported in version message
+ *
  * Revision 1.70  2005/11/17 14:38:21  assefa
  * Correct function msGetVersion to indicate if mapserver was build with
  * MYGIS support.
@@ -573,6 +576,9 @@ char *msGetVersion() {
 #ifdef USE_GEOS
   strcat(version, " SUPPORTS=GEOS");
 #endif
+#ifdef USE_POINT_Z_M
+  strcat(version, " SUPPORTS=POINT_Z_M");
+#endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
 #endif
@@ -604,7 +610,6 @@ char *msGetVersion() {
 #ifdef ENABLE_STDERR_DEBUG
   strcat(version, " DEBUG=MSDEBUG");
 #endif
-
   return(version);
 }
 
