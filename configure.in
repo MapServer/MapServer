@@ -390,7 +390,9 @@ if test -n "$ICONV_DIR" ; then
 fi
 
 if test -n "$ICONV_LIB" ; then
-  ICONV_INC="-I$ICONV_INCDIR"
+  if test -n "$ICONV_INCDIR"; then 
+     ICONV_INC="-I$ICONV_INCDIR"
+  fi
   AC_MSG_RESULT([        using libiconv from $ICONV_LIB])
   AC_ADD_RUNPATH("$ICONV_DIR")
 

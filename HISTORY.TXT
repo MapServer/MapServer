@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Fixed configure/build problem (empty include dir) when iconv.h is not
+  found (bug 1419)
+
 - PDF :  segfault on annotation layer when no style is set (Bug 1559)
 
 - PostGIS layer test cases and fix for broken views and sub-selects (bug 1443).

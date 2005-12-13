@@ -5293,7 +5293,9 @@ fi
 fi
 
 if test -n "$ICONV_LIB" ; then
-  ICONV_INC="-I$ICONV_INCDIR"
+  if test -n "$ICONV_INCDIR"; then
+     ICONV_INC="-I$ICONV_INCDIR"
+  fi
   echo "$as_me:$LINENO: result:         using libiconv from $ICONV_LIB" >&5
 echo "${ECHO_T}        using libiconv from $ICONV_LIB" >&6
 
