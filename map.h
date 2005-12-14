@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.434  2005/12/14 19:06:31  sdlime
+ * Added browseformat and legendformat to webObj. (bug 1518)
+ *
  * Revision 1.433  2005/12/08 19:05:32  hobu
  * switch off SDE raster support
  *
@@ -757,6 +760,8 @@ typedef struct {
   char *mintemplate, *maxtemplate;
 
   char *queryformat; /* what format is the query to be returned, given as a MIME type */
+  char *legendformat;
+  char *browseformat;
 
   hashTableObj metadata;
 
