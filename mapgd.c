@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.112  2005/12/14 05:38:50  sdlime
+ * Added createFuzzyBrush() to mapgd.c and have it hooked up to the for the simplest case (symbol=0) for line drawing.
+ *
  * Revision 1.111  2005/11/24 04:35:50  dan
  * Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
  * static limitation on the STYLE argument values. (bug 1539)
@@ -606,6 +609,50 @@ imageObj *msImageLoadGD(const char *filename)
     return(image);
 }
 
+static gdImagePtr createFuzzyBrush(int size, int r, int g, int b)
+{
+  gdImagePtr brush;
+  double hardness=.5; /* 0 to 1 */
+  int x, y, c, dx, dy;
+  long bgcolor, color;
+  int a, max_a;
+  double d;
+
+  if(size % 2 == 0) /* requested an even-sized brush, add one to size */
+    size++;
+
+  brush = gdImageCreateTrueColor(size, size);
+  gdImageAlphaBlending(brush, 0); /* don't blend */
+
+  bgcolor = gdImageColorAllocateAlpha(brush, 255, 255, 255, 127);
+  gdImageFilledRectangle(brush, 0, 0, gdImageSX(brush), gdImageSY(brush), bgcolor);
+
+  c = (size-1)/2; /* center coordinate (x=y) */
+  max_a = 127 - hardness*127;
+
+  color = gdImageColorAllocateAlpha(brush, r, g, b, 0);
+  gdImageFilledEllipse(brush, c, c, size, size, color); /* draw the base circle */
+
+  for(y=0; y<size; y++) { /* each row */
+    for(x=0; x<size; x++) { /* each column */
+
+      color = gdImageGetPixel(brush, x, y);
+      if(color == bgcolor) continue;
+
+      dx = x - c;
+      dy = y - c;
+      d = sqrt(dx*dx + dy*dy);
+
+      a = MS_NINT(d/c*max_a);
+
+      color = gdImageColorAllocateAlpha(brush, r, g, b, a);
+      gdImageSetPixel(brush, x, y, color);
+    }
+  }
+
+  return brush;
+}
+
 static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
 {
   gdImagePtr brush;
@@ -1090,12 +1137,10 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   oy = style->offsety;
 
   if(style->size == -1) {
-      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
-      size = MS_NINT(size*scalefactor);
-  }
-  else
-  {
-      size = MS_NINT(style->size*scalefactor);
+    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = MS_NINT(size*scalefactor);
+  } else {
+    size = MS_NINT(style->size*scalefactor);
   }
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
@@ -1670,7 +1715,6 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   /* TODO: Don't get this modification, is it needed elsewhere? */
   /* if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size; */
   /* if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size; */
-
   
   size = MS_NINT(size*scalefactor);
   size = MS_MAX(size, style->minsize);
@@ -1685,14 +1729,29 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
   if(size < 1) return; /* size too small */
+
   ox = MS_NINT(style->offsetx*scalefactor);
   oy = (style->offsety < -90) ? style->offsety : (int)(style->offsety*scalefactor);
 
-  if(style->symbol == 0) { /* just draw a single width line */
-    gdImageSetThickness(img, width);
-    imagePolyline(img, p, fc, ox, oy);
-    gdImageSetThickness(img, 1);
-    return;
+  /*
+  ** handle the most simple case
+  */
+  if(style->symbol == 0) {
+    if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */
+      brush = createFuzzyBrush(width, style->color.red, style->color.green, style->color.blue); 
+      gdImageSetBrush(img, brush);
+      imagePolyline(img, p, gdBrushed, ox, oy);
+      gdImageDestroy(brush);
+    } else {
+      gdImageSetThickness(img, width);
+      if(style->antialias == MS_TRUE) 
+	gdImageSetAntiAliased(img, fc);
+      imagePolyline(img, p, fc, ox, oy);
+      gdImageSetThickness(img, 1);
+      gdImageSetAntiAliased(img, -1);
+    }
+
+    return; /* done with easiest case */
   }
 
   switch(symbol->type) {
@@ -1718,11 +1777,6 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     y = MS_NINT(symbol->sizey*d);
 
     if((x < 2) && (y < 2)) break;
-
-    /* if(x == y) {
-         gdImageSetThickness(img, x);
-         break;
-     } */
 
     /* user wants a true ellipse brush */
 
@@ -1852,7 +1906,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       if(style->antialias==MS_TRUE) {       
         gdImageSetAntiAliased(img, fc);
         imagePolyline(img, p, gdAntiAliased, ox, oy);
-      } else {	
+	gdImageSetAntiAliased(img, -1);
+      } else {
         imagePolyline(img, p, fc, ox, oy);
       }
     } else
@@ -1865,6 +1920,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     msFreeSymbol(symbol); /* delete rotated version */
     symbol = oldsymbol;
   }
+
+  /* note, we don't free the brush because we are using the image cache for all line brushes and that is free'd later */
 
   return;
 }
