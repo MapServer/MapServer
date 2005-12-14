@@ -102,6 +102,25 @@ class SubSelectTest(unittest.TestCase):
         self.lo.close()
         self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
 
+class SubSelectNoSRIDTest(unittest.TestCase):
+    """SRID should be diagnosed from the selection"""
+    def setUp(self):
+        self.mo = mapscript.mapObj()
+        lo = mapscript.layerObj()
+        lo.name = 'pg_sub_layer'
+        lo.type = mapscript.MS_LAYER_POLYGON
+        lo.connectiontype = mapscript.MS_POSTGIS
+        lo.connection = "dbname=mapserver_test user=postgres"
+        lo.data = "the_geom from (select * from polygon) as foo using unique gid"
+        li = self.mo.insertLayer(lo)
+        self.lo = self.mo.getLayer(li)
+    def test_getfeature(self):
+        self.lo.open()
+        f = self.lo.getFeature(1, -1)
+        atts = [f.getValue(i) for i in range(self.lo.numitems)]
+        self.lo.close()
+        self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+
 
 # ===========================================================================
 # Run the tests outside of the main suite

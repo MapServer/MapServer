@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/12/14 21:25:47  sean
+ * test for the case of a selection w/out srid for postgis data and fix from Daryl (bug 1443)
+ *
  * Revision 1.64  2005/12/14 17:24:45  sdlime
  * Fixed documentation URL in the generic PostGIS error message. (bug 1558)
  *
@@ -1843,7 +1846,14 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
 
     /* this is a little hack so the rest of the code works.  If the ' using SRID=' comes before */
     /* the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts! */
-    pos_opt = (pos_srid > pos_urid) ? pos_urid : pos_srid;
+    
+    /*pos_opt = (pos_srid > pos_urid) ? pos_urid : pos_srid; */
+    if (!pos_srid && !pos_urid) { pos_opt = pos_urid; }
+    else if (pos_srid && pos_urid) 
+    { 
+        pos_opt = (pos_srid > pos_urid)? pos_urid : pos_srid;
+    }
+    else { pos_opt = (pos_srid > pos_urid) ? pos_srid : pos_urid; }
 
     /* Scan for the table or sub-select clause */
     pos_scn = strstrIgnoreCase(data, " from ");
