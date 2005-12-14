@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/12/14 17:24:45  sdlime
+ * Fixed documentation URL in the generic PostGIS error message. (bug 1558)
+ *
  * Revision 1.63  2005/12/11 00:16:29  sean
  * postgis layer test cases and fix for broken view and sub-select layers (bug 1443)
  *
@@ -137,7 +140,7 @@ typedef struct ms_POSTGIS_layer_info_t
     "Error with POSTGIS data variable. You specified '%s'.<br>\n" \
     "Standard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n\n" \
     "Make sure you put in the 'using unique  &lt;column name&gt;' and 'using SRID=#' clauses in.\n\n<br><br>" \
-    "For more help, please see http://postgis.refractions.net/documentation.php \n\n<br><br>" \
+    "For more help, please see http://postgis.refractions.net/documentation/ \n\n<br><br>" \
     "Mappostgis.c - version of Jan 23/2004.\n"
 
 
