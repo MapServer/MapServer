@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.117  2005/12/14 19:17:14  sdlime
+ * Added a few simple tags to the HTML legend output code.
+ *
  * Revision 1.116  2005/12/07 16:50:52  sdlime
  * Fixed crash with non-substition lines in one-to-many join templates. (bug 1557)
  *
@@ -1466,6 +1469,8 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    char *pszOptFlag = NULL;
    char *pszClassImg;
 
+   char szTmpstr[128]; /* easily big enough for the couple of instances we need */
+
    *pszTemp = NULL;
    
    if (!pszLayerTemplate || 
@@ -1521,7 +1526,16 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
     * Change layer tags
     */
    *pszTemp = gsub(*pszTemp, "[leg_layer_name]", map->layers[nIdxLayer].name);
-   
+   *pszTemp = gsub(*pszTemp, "[leg_layer_group]", map->layers[nIdxLayer].group);
+
+   snprintf(szTmpstr, 128, "%d", nIdxLayer); 
+   *pszTemp = gsub(*pszTemp, "[leg_layer_index]", szTmpstr);
+
+   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].minscale); 
+   *pszTemp = gsub(*pszTemp, "[leg_layer_minscale]", szTmpstr);
+   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].maxscale); 
+   *pszTemp = gsub(*pszTemp, "[leg_layer_maxscale]", szTmpstr);
+
    /*
     * Create a hash table that contain info
     * on current layer
@@ -1593,6 +1607,8 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    int nOptFlag=0;
    char *pszOptFlag = NULL;
 
+   char szTmpstr[128]; /* easily big enough for the couple of instances we need */
+
    *pszTemp = NULL;
    
    if (!pszClassTemplate ||
@@ -1653,7 +1669,16 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
     */
    *pszTemp = gsub(*pszTemp, "[leg_class_name]", map->layers[nIdxLayer].class[nIdxClass].name);
    *pszTemp = gsub(*pszTemp, "[leg_class_title]", map->layers[nIdxLayer].class[nIdxClass].title);
-   
+   *pszTemp = gsub(*pszTemp, "[leg_layer_name]", map->layers[nIdxLayer].name);
+
+   snprintf(szTmpstr, 128, "%d", nIdxClass); 
+   *pszTemp = gsub(*pszTemp, "[leg_class_index]", szTmpstr);
+
+   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].class[nIdxClass].minscale); 
+   *pszTemp = gsub(*pszTemp, "[leg_class_minscale]", szTmpstr);
+   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].class[nIdxClass].maxscale); 
+   *pszTemp = gsub(*pszTemp, "[leg_class_maxscale]", szTmpstr);
+
    /*
     * Create a hash table that contain info
     * on current layer
