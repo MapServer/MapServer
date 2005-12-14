@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/12/14 19:13:47  sdlime
+ * Patched mapfile read/write/copy routines to deal with browseformat and legendformat.
+ *
  * Revision 1.44  2005/11/28 04:32:42  sdlime
  * Updated msCopyLabel() to copy encoding as well.
  *
@@ -367,6 +370,10 @@ int msCopyWeb(webObj *dst, webObj *src, mapObj *map)
         if (msCopyHashTable(&(dst->metadata), &(src->metadata)) != MS_SUCCESS)
             return MS_FAILURE;
     }
+
+    MS_COPYSTRING(dst->queryformat, src->queryformat);
+    MS_COPYSTRING(dst->legendformat, src->legendformat);
+    MS_COPYSTRING(dst->browseformat, src->browseformat);
 
     return MS_SUCCESS ;
 }

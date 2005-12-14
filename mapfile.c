@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.315  2005/12/14 19:13:47  sdlime
+ * Patched mapfile read/write/copy routines to deal with browseformat and legendformat.
+ *
  * Revision 1.314  2005/10/31 05:08:17  sdlime
  * Cleaned up mapfile and url-based dynamic feature creation via WKT. Also simplified the url-based interface for creating dynamic features. It is no longer necessary to do something like map_layer_feature=new before sending the coordinates. If you send new text (that is, map_layer_feature_text=some+text) if affects the last feature placed in the list. Either the old points-based syntax or WKT is supported. WKT has the advantage of handling mulipart features.
  *
@@ -1811,7 +1814,7 @@ int loadStyle(styleObj *style) {
       return(MS_SUCCESS); /* done */
       break;
     case(MAXSIZE):
-      if(getInteger(&(style->maxsize)) == -1) return(MS_FAILURE);
+      if(getInteger(&(style->maxsize)) == -1) return(MS_FAILURE);      
       break;
     case(MINSIZE):
       if(getInteger(&(style->minsize)) == -1) return(MS_FAILURE);
@@ -3988,6 +3991,8 @@ void initWeb(webObj *web)
   
   web->map = NULL;
   web->queryformat = strdup("text/html");
+  web->legendformat = strdup("text/html");
+  web->browseformat = strdup("text/html");
 }
 
 void freeWeb(webObj *web)
@@ -4003,6 +4008,8 @@ void freeWeb(webObj *web)
   msFree(web->imagepath);
   msFree(web->imageurl);
   msFree(web->queryformat);
+  msFree(web->legendformat);
+  msFree(web->browseformat);
   if(&(web->metadata)) msFreeHashItems(&(web->metadata));
 }
 
@@ -4026,6 +4033,8 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->minscale > -1) fprintf(stream, "    MINSCALE %g\n", web->minscale);
   if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
   if(web->queryformat != NULL) fprintf(stream, "    QUERYFORMAT %s\n", web->queryformat);
+  if(web->legendformat != NULL) fprintf(stream, "    LEGENDFORMAT %s\n", web->legendformat);
+  if(web->browseformat != NULL) fprintf(stream, "    BROWSEFORMAT %s\n", web->browseformat);
   if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
   fprintf(stream, "  END\n\n");
 }
@@ -4036,6 +4045,10 @@ int loadWeb(webObj *web, mapObj *map)
 
   for(;;) {
     switch(msyylex()) {
+    case(BROWSEFORMAT):
+      free(web->browseformat); web->browseformat = NULL; /* there is a default */
+      if(getString(&web->browseformat) == MS_FAILURE) return(-1);
+      break;
     case(EMPTY):
       if(getString(&web->empty) == MS_FAILURE) return(-1);
       break;
@@ -4073,6 +4086,10 @@ int loadWeb(webObj *web, mapObj *map)
       free(web->imageurl); web->imageurl = NULL; /* there is a default */
       if(getString(&web->imageurl) == MS_FAILURE) return(-1);
       break;
+    case(LEGENDFORMAT):
+      free(web->legendformat); web->legendformat = NULL; /* there is a default */
+      if(getString(&web->legendformat) == MS_FAILURE) return(-1);
+      break;
     case(LOG):
       if(getString(&web->log) == MS_FAILURE) return(-1);
       break;
@@ -4108,6 +4125,10 @@ int loadWeb(webObj *web, mapObj *map)
 static void loadWebString(mapObj *map, webObj *web, char *value)
 {
   switch(msyylex()) {
+  case(BROWSEFORMAT):
+    msFree(web->browseformat);
+    web->browseformat = strdup(value);
+    break;
   case(EMPTY):
     msFree(web->empty);
     web->empty = strdup(value);
@@ -4145,6 +4166,10 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
   case(IMAGEURL):
     msFree(web->imageurl);
     web->imageurl = strdup(value);
+    break;
+  case(LEGENDFORMAT):
+    msFree(web->legendformat);
+    web->legendformat = strdup(value);
     break;
   case(MAXSCALE):
     msyystate = 2; msyystring = value;
