@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/12/14 01:21:38  assefa
+ * Add dash line support (bug 492).
+ *
  * Revision 1.36  2005/12/12 17:02:07  assefa
  * Segfault on annotation layer when no style is set (Bug 1559)
  *
@@ -300,6 +303,70 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
 
 }
 
+#if PDFLIB_MAJORVERSION >= 6
+ /************************************************************************/
+ /* void drawDashedPolylinePDF                                           */
+ /*                                                                      */
+ /* internal function to do line drawing in the pdf, using dashed patterns*/
+ /************************************************************************/
+ void drawDashedPolylinePDF(PDF *pdf, shapeObj *p, symbolObj  *s, colorObj *c, 
+                            double width)
+ {
+     int i, j;
+    int optlistlength=14;
+    char *optlist=NULL;
+     for(i=0;i<s->stylelength;i++) {
+       if(!s->style[i]) /*in case length is zero*/ 
+         optlistlength+=2;
+       else
+        if(s->style[i]>0)
+         optlistlength+=(int)(log10(s->style[i]))+2;
+        else{
+        	msSetError(MS_SYMERR, "Symbol styles must be positive", "drawDashedPolylinePDF()");
+        	return;
+        	}
+     }
+     optlist = (char*)malloc(optlistlength*sizeof(char));
+     sprintf(optlist,"dasharray={");
+     for(i=0;i<s->stylelength;i++)
+       sprintf(optlist,"%s %d",optlist,s->style[i]);
+     sprintf(optlist,"%s }",optlist);
+     PDF_setdashpattern(pdf,optlist);
+     
+    if (width)
+     {
+         PDF_setlinejoin(pdf,1);
+         PDF_setlinewidth(pdf,(float)width);
+     }
+ 
+     if (c)
+     {
+         PDF_setrgbcolor(pdf,((float)c->red)/255,
+                             ((float)c->green)/255,
+                             ((float)c->blue)/255);
+     }
+     for (i = 0; i < p->numlines; i++)
+     {
+         if (p->line[i].numpoints)
+         {
+             PDF_moveto(pdf,(float)p->line[i].point[0].x,
+                (float)p->line[i].point[0].y);
+         }
+         for(j=1; j<p->line[i].numpoints; j++)
+         {
+             PDF_lineto(pdf,(float)p->line[i].point[j].x,
+                (float)p->line[i].point[j].y);
+         }
+     }
+     
+     PDF_stroke(pdf);
+    PDF_setdashpattern(pdf,"");
+    free(optlist); 
+     PDF_setlinewidth(pdf,1);
+}
+
+#endif
+ 
 /************************************************************************/
 /*  void msDrawLineSymbolPDF                                            */
 /*                                                                      */
@@ -332,8 +399,16 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     if(size < 1) /* size too small */
         return;
 
-    drawPolylinePDF(pdf, p, &(style->color), size);
+#if PDFLIB_MAJORVERSION >= 6
+     if(symbolset && symbolset->symbol[style->symbol].stylelength)
+       drawDashedPolylinePDF(pdf, p, &(symbolset->symbol[style->symbol]), 
+                             &(style->color),size);
+     else
+#endif
+       drawPolylinePDF(pdf, p, &(style->color),  size);
+
     return;
+
 }
 
 /************************************************************************/
