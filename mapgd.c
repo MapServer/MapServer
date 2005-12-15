@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.115  2005/12/15 05:47:06  sdlime
+ * Enabled fuzzy brushes for SIMPLE symbols. Allows for basic fuzzy dashing.
+ *
  * Revision 1.114  2005/12/15 04:54:23  sdlime
  * Implemented image caching for existing fuzzy brush support.
  *
@@ -1763,8 +1766,16 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 
   switch(symbol->type) {
   case(MS_SYMBOL_SIMPLE):
-    gdImageSetThickness(img, width);
-    if(bc == -1) bc = gdTransparent;
+    if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */      
+      if((brush = searchImageCache(symbolset->imagecache, style, width)) == NULL) {
+        brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+        symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
+      }
+      gdImageSetBrush(img, brush);
+    } else {
+      gdImageSetThickness(img, width);
+    }
+    if(bc == -1) bc = gdTransparent; /* todo, what if bc isn't transparent */
     break;
   case(MS_SYMBOL_TRUETYPE):
     msImageTruetypePolyline(symbolset, img, p, style, scalefactor);
@@ -1878,7 +1889,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     gdImageSetBrush(img, brush);
     fc = 1; bc = 0;
     break;
-  }  
+  } /* symbol type end-switch */
 
   if(symbol->stylelength > 0) {
     int *styleDashed;
