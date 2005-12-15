@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2005/12/15 05:50:30  sdlime
+ * Symbol writer ignores type SIMPLE. It doesn't anymore...
+ *
  * Revision 1.87  2005/11/17 06:13:23  sdlime
  * Fixed symbol set copying so that the image cache is not copied and the destination symbol set cache is initialized properly. (bug 1521)
  *
@@ -426,19 +429,17 @@ void writeSymbol(symbolObj *s, FILE *stream)
     fprintf(stream, "    LINEJOIN %s\n", msCapsJoinsCorners[s->linejoin]);
     fprintf(stream, "    LINEJOINMAXSIZE %g\n", s->linejoinmaxsize);
     break;
-  case(MS_SYMBOL_SIMPLE):
-    break;
-  case(MS_SYMBOL_ELLIPSE):
-    /* default = MS_SYMBOL_VECTOR */
   default:
     if(s->type == MS_SYMBOL_ELLIPSE)
       fprintf(stream, "    TYPE ELLIPSE\n");
-    else
+    else if(s->type == MS_SYMBOL_VECTOR)
       fprintf(stream, "    TYPE VECTOR\n");
+    else
+      fprintf(stream, "    TYPE SIMPLE\n");
     
     if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
     
-    /* POINT */
+    /* POINTS */
     if(s->numpoints != 0) {
       fprintf(stream, "    POINTS\n");
       for(i=0; i<s->numpoints; i++) {
@@ -446,6 +447,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
       }
       fprintf(stream, "    END\n");
     }
+
     /* STYLE */
     if(s->stylelength != 0) {
       fprintf(stream, "    STYLE\n     ");
