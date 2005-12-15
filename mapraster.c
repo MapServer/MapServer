@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.133  2005/12/15 16:35:42  frank
+ * Dont require valid projections before calling mapresample.c code
+ *
  * Revision 1.132  2005/12/08 19:06:30  hobu
  * switch off SDE raster support
  *
@@ -1557,16 +1560,13 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
             msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
 
             /* 
-            ** We want to resample if the source image is rotated, or if
-            ** the projections differ.  However, due to limitations in 
-            ** msResampleGDALToMap() we can only resample rotated images
-            ** if they also have fully defined projections.
+            ** We want to resample if the source image is rotated, if
+            ** the projections differ or if resampling has been explicitly
+            ** requested.
             */
 #ifdef USE_PROJ
             if( ((adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0)
-                 && layer->transform
-                 && map->projection.proj != NULL 
-                 && layer->projection.proj != NULL)
+                 && layer->transform )
                 || msProjectionsDiffer( &(map->projection), 
                                         &(layer->projection) ) 
                 || CSLFetchNameValue( layer->processing, "RESAMPLE" ) != NULL )
@@ -1579,7 +1579,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
                 if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
                 {
                     if( layer->debug || map->debug )
-                        msDebug( "Layer %s has rotational coefficients but we are unable to\nuse them, is projection set?", layer->name );
+                        msDebug( "Layer %s has rotational coefficients but we are unable to\nuse them, projections support needs to be built in.", layer->name );
                     
                 }
                 status = msDrawRasterLayerGDAL(map, layer, image, hDS );
@@ -1602,7 +1602,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
             msReleaseLock( TLOCK_GDAL );
         }
     }
-#endif
+#endif /* ifdef USE_GDAL */
 
     /* If GDAL doesn't recognise it, and it wasn't successfully opened 
     ** Generate an error.
