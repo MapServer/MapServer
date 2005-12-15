@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.316  2005/12/15 14:27:52  assefa
+ * Missing semi colon. Did not build on windows.
+ *
  * Revision 1.315  2005/12/14 19:13:47  sdlime
  * Patched mapfile read/write/copy routines to deal with browseformat and legendformat.
  *
@@ -478,7 +481,7 @@ int loadColorWithAlpha(colorObj *color) {
       color->blue = hex2int(hex);
       hex[0] = msyytext[7];
       hex[1] = msyytext[8];
-      color->alpha = hex2int(hex)
+      color->alpha = hex2int(hex);
       return(MS_SUCCESS);
     }
     return(MS_FAILURE);
