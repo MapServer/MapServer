@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114  2005/12/15 04:54:23  sdlime
+ * Implemented image caching for existing fuzzy brush support.
+ *
  * Revision 1.113  2005/12/15 04:29:49  sdlime
  * Fixed issue that kept polygon outlines from being drawn correctly using fuzzy brushes.
  *
@@ -201,8 +204,7 @@ int msCompareColors(colorObj *c1, colorObj *c2)
   return MS_TRUE;
 }
 
-static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style,
-                                   int size) 
+static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, int size) 
 {
   struct imageCacheObj *icp;
 
@@ -1741,10 +1743,12 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   */
   if(style->symbol == 0) {
     if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */      
-      brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc)); 
+      if((brush = searchImageCache(symbolset->imagecache, style, width)) == NULL) {
+	brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc)); 
+	symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
+      }
       gdImageSetBrush(img, brush);
       imagePolyline(img, p, gdBrushed, ox, oy);
-      gdImageDestroy(brush);
     } else {
       gdImageSetThickness(img, width);
       if(style->antialias == MS_TRUE) 
