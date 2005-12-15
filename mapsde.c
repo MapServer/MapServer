@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2005/12/15 15:36:59  frank
+ * avoid comment-in-comment warnings
+ *
  * Revision 1.99  2005/12/08 19:44:46  hobu
  * oops.  Move msSDELayerGetRowIDColumn to the right spot for
  * non-SDE builds
@@ -1749,6 +1752,8 @@ void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDIN
   }
 }
 #endif
+*/
+
 /************************************************************************/
 /*                              drawSDE()                              */
 /************************************************************************/
@@ -1853,7 +1858,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   }
   num_cols = 1;
   attrs = (CHAR **) malloc (num_cols * sizeof(CHAR *));
-  attrs[0] = proc_value;/* sde->column; 
+  attrs[0] = proc_value;// sde->column; 
 
   proc_value = NULL;
   free(proc_value);
@@ -1983,7 +1988,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
       effminx, effminy, effmaxx, effmaxy);
 
     if (((maxx-minx)/cell_size) >= img->sx && ((maxy-miny)/cell_size) >= img->sy)
-      break; /* use this level         
+      break; // use this level         
   }
 
   // make sure the user enter extent overlaps the image extent 
@@ -2153,7 +2158,7 @@ msSDELayerCreateItems(layerObj *layer,
   msSetError( MS_MISCERR, 
               "SDE support is not available.", 
               "msSDELayerGetRowIDColumn()");
-  return(NULL);
+  return(MS_FAILURE);
 #endif
 }
 
