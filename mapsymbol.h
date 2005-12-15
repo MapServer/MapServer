@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/12/15 05:42:05  sdlime
+ * Fixed a problem in the symbol reader that basically turned TYPE SIMPLE into TYPE TRUETYPE. Fix what to start the symbol type enum at some larger value (e.g. 1000).
+ *
  * Revision 1.22  2005/11/24 04:35:50  dan
  * Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
  * static limitation on the STYLE argument values. (bug 1539)
@@ -54,7 +57,7 @@
 
 #include <gd.h>
 
-enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE, MS_SYMBOL_HATCH};
+enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE, MS_SYMBOL_HATCH};
 
 #define MS_MAXSYMBOLS 64            /* maximum number of symbols in a symbol file */
 #define MS_MAXVECTORPOINTS 100      /* shade, marker and line symbol parameters */
