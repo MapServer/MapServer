@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2005/12/15 04:29:49  sdlime
+ * Fixed issue that kept polygon outlines from being drawn correctly using fuzzy brushes.
+ *
  * Revision 1.112  2005/12/14 05:38:50  sdlime
  * Added createFuzzyBrush() to mapgd.c and have it hooked up to the for the simplest case (symbol=0) for line drawing.
  *
@@ -1737,8 +1740,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   ** handle the most simple case
   */
   if(style->symbol == 0) {
-    if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */
-      brush = createFuzzyBrush(width, style->color.red, style->color.green, style->color.blue); 
+    if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */      
+      brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc)); 
       gdImageSetBrush(img, brush);
       imagePolyline(img, p, gdBrushed, ox, oy);
       gdImageDestroy(brush);
