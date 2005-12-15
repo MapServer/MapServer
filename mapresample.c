@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/12/15 16:37:28  frank
+ * improve error reporting if proj not compiled in
+ *
  * Revision 1.64  2005/11/01 16:53:40  frank
  * fixed MapToSource calculation: bug 1509
  *
@@ -1402,7 +1405,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      have PJD_GRIDSHIFT.                                             */
 /* -------------------------------------------------------------------- */
 #if !defined(PJD_GRIDSHIFT) && !defined(PJ_VERSION)
-    return 0;
+    msSetError(MS_PROJERR, 
+               "Projection support is not available, so msResampleGDALToMap() fails.", 
+               "msProjectRect()");
+    return(MS_FAILURE);
 #else
     int		nSrcXSize, nSrcYSize, nDstXSize, nDstYSize;
     int		result, bSuccess;
