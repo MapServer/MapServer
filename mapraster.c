@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.134  2005/12/15 16:37:06  frank
+ * Last fix was for bug 1562
+ *
  * Revision 1.133  2005/12/15 16:35:42  frank
  * Dont require valid projections before calling mapresample.c code
  *
@@ -1579,7 +1582,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
                 if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
                 {
                     if( layer->debug || map->debug )
-                        msDebug( "Layer %s has rotational coefficients but we are unable to\nuse them, projections support needs to be built in.", layer->name );
+                        msDebug( 
+                            "Layer %s has rotational coefficients but we\n"
+                            "are unable to use them, projections support\n"
+                            "needs to be built in.", 
+                            layer->name );
                     
                 }
                 status = msDrawRasterLayerGDAL(map, layer, image, hDS );
