@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.170  2005/12/15 14:11:28  assefa
+ * Fix problem with WMS 1.1.1 OGC test problem with get capabilites dtd (Bug 1576)
+ *
  * Revision 1.169  2005/11/17 15:47:33  assefa
  * Add test on time striing length. Remove unused variables. (Bug 1517).
  *
@@ -1789,7 +1792,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   else {
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
+    /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
+    if (strcasecmp(schemalocation, "http://schemas.opengeospatial.net") == 0)
+      dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
+    else
+      dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
   }
 
   /* We need this server's onlineresource. */
@@ -1915,6 +1922,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   else
   {
     char *mime_list[20];
+
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
