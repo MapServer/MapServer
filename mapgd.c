@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.116  2005/12/16 04:58:38  sdlime
+ * Enabled fuzzy brushes when using ellipse (really circle) symbols with a size.
+ *
  * Revision 1.115  2005/12/15 05:47:06  sdlime
  * Enabled fuzzy brushes for SIMPLE symbols. Allows for basic fuzzy dashing.
  *
@@ -1772,10 +1775,11 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
         symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
       }
       gdImageSetBrush(img, brush);
+      fc = 1; bc = 0;
     } else {
       gdImageSetThickness(img, width);
+      if(bc == -1) bc = gdTransparent;
     }
-    if(bc == -1) bc = gdTransparent; /* todo, what if bc isn't transparent */
     break;
   case(MS_SYMBOL_TRUETYPE):
     msImageTruetypePolyline(symbolset, img, p, style, scalefactor);
@@ -1794,26 +1798,34 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     x = MS_NINT(symbol->sizex*d);    
     y = MS_NINT(symbol->sizey*d);
 
-    if((x < 2) && (y < 2)) break;
+    if((x < 2) && (y < 2)) break; /* no need for a brush */
 
-    /* user wants a true ellipse brush */
+    if(gdImageTrueColor(img) && x > 1 && style->antialias == MS_TRUE && x == y) { /* use a fuzzy brush */
 
-    /* create the brush image */
-    if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
-      brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); /* not in cache, create it */
+      /* create the brush image if not already in the cache */
+      if((brush = searchImageCache(symbolset->imagecache, style, x)) == NULL) {
+        brush = createFuzzyBrush(x, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+        symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, x, brush);
+      }
+    } else {
 
-      x = MS_NINT(brush->sx/2); /* center the ellipse */
-      y = MS_NINT(brush->sy/2);
+      /* create the brush image if not already in the cache */
+      if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
+	brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); /* not in cache, create it */
+
+	x = MS_NINT(brush->sx/2); /* center the ellipse */
+	y = MS_NINT(brush->sy/2);
       
-      /* draw in the brush image */
-      if(symbol->filled)
-	gdImageFilledEllipse(brush,  x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), brush_fc);
-      else
-	gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
-      
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
+	/* draw in the brush image */
+	if(symbol->filled)
+	  gdImageFilledEllipse(brush,  x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), brush_fc);
+	else
+	  gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
+	
+	symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
+      }
     }
-
+    
     gdImageSetBrush(img, brush);
     fc = 1; bc = 0;
     break;
@@ -1900,7 +1912,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     for(i=0; i<symbol->stylelength; i++) {
       numElemStyle += symbol->style[i];
     }
-    styleDashed = (int *)malloc(numElemStyle * sizeof(int));
+    styleDashed = (int *) malloc(numElemStyle * sizeof(int));
 
     sc = fc; /* start with foreground color */
 
@@ -1921,7 +1933,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       imagePolyline(img, p, gdStyledBrushed, ox, oy);
   } else {
     if(!brush && !symbol->img) {
-      if(style->antialias==MS_TRUE) {       
+      if(style->antialias==MS_TRUE) {
         gdImageSetAntiAliased(img, fc);
         imagePolyline(img, p, gdAntiAliased, ox, oy);
 	gdImageSetAntiAliased(img, -1);
@@ -1939,7 +1951,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     symbol = oldsymbol;
   }
 
-  /* note, we don't free the brush because we are using the image cache for all line brushes and that is free'd later */
+  /* note, we don't free any brush because we are using the image cache for all line brushes and that is free'd later */
 
   return;
 }
