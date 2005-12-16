@@ -16,17 +16,24 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
-- New support for psuedo anti-aliased fat lines using brushes with variable transparency. 
+
+Version 4.8.0-beta3 (2005-12-16)
+--------------------------------
+
+- New support for pseudo anti-aliased fat lines using brushes with variable
+  transparency. 
 
 - Arbitrary rotation support for vector symbols courtesy of Map Media.
 
-- Support for user-defined mime-types for CGI-based browse and legend templates. 
+- Support for user-defined mime-types for CGI-based browse and legend 
+  templates.
 
 - mapraster.c: Allow mapresample.c code to be called even if projections
   are not set on the map or layer object.  This is no longer a requirement.
   (Bug 1562)
 
-- Fix problem with WMS 1.1.1 OGC test problem with get capabilites dtd (Bug 1576) 
+- Fix problem with WMS 1.1.1 OGC test problem with get capabilites dtd 
+  (Bug 1576) 
 
 - PDF : adding dash line support (Bug 492)
 
@@ -49,7 +56,7 @@ CVS HEAD
   
 - WFS : TYPENAME is manadatory for GetFeature request (Bug 1554).
 
-- SLD : error parsing font parameters with the keyword "normal" (Bu 1552)
+- SLD : error parsing font parameters with the keyword "normal" (Bug 1552)
 
 - mapgraticule.c: Use MIN/MAXINTERVAL value when we define grid position and 
   interval (bug 1530)
