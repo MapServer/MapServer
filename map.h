@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.435  2005/12/16 13:28:33  dan
+ * Update version to 4.8.0-beta3
+ *
  * Revision 1.434  2005/12/14 19:06:31  sdlime
  * Added browseformat and legendformat to webObj. (bug 1518)
  *
@@ -360,7 +363,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.0-beta2"
+#define MS_VERSION "4.8.0-beta3"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
