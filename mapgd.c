@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.117  2005/12/16 06:21:51  sdlime
+ * Initial integration of fuzzy brushes into circle drawing. It is apprarent that circles need to be brought in line with the other drawing code so more work needs to be done. However the most used cases work fine.
+ *
  * Revision 1.116  2005/12/16 04:58:38  sdlime
  * Enabled fuzzy brushes when using ellipse (really circle) symbols with a size.
  *
@@ -1130,6 +1133,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   int x, y, ox, oy;
   int bc, fc;
   int brush_bc, brush_fc;
+  int width;
   double size, d;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
@@ -1144,30 +1148,64 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
-  ox = style->offsetx; /* TODO: add scaling? */
-  oy = style->offsety;
+  width = style->width;
 
-  if(style->size == -1) {
+  if(style->size == -1)
     size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
-    size = MS_NINT(size*scalefactor);
-  } else {
-    size = MS_NINT(style->size*scalefactor);
-  }
+  else
+    size = style->size;
+
+  size = MS_NINT(size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
+
+  width = MS_NINT(style->width*scalefactor);
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0) return; /* nothing to do */
   if(size < 1) return; /* size too small */
 
-  if(symbol == 0) { /* just draw a single width line */
-    gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)r, (int)r, 0, 360, fc);
-    return;
+  ox = MS_NINT(style->offsetx*scalefactor);
+  oy = (style->offsety < -90) ? style->offsety : (int)(style->offsety*scalefactor);
+
+  /*
+  ** handle the most simple case
+  */
+  if(style->symbol == 0) {
+    if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */
+      if((brush = searchImageCache(symbolset->imagecache, style, width)) == NULL) {
+        brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+        symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
+      }
+      gdImageSetBrush(img, brush);
+      gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)2*r, (int)2*r, 0, 360, gdBrushed);
+    } else {
+      gdImageSetThickness(img, width);
+      if(style->antialias == MS_TRUE)
+        gdImageSetAntiAliased(img, fc);
+      gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)2*r, (int)2*r, 0, 360, fc);
+      gdImageSetThickness(img, 1);
+      gdImageSetAntiAliased(img, -1);
+    }
+
+    return; /* done with easiest case */
   }
 
   switch(symbol->type) {
   case(MS_SYMBOL_SIMPLE):
-    if(bc == -1) bc = gdTransparent;
+    if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */
+      if((brush = searchImageCache(symbolset->imagecache, style, width)) == NULL) {
+        brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+        symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
+      }
+      gdImageSetBrush(img, brush);
+      fc = 1; bc = 0;
+    } else {
+      gdImageSetThickness(img, width);
+      if(bc == -1) bc = gdTransparent;
+    }
     break;
   case(MS_SYMBOL_TRUETYPE):
     /* msImageTruetypePolyline(img, p, symbol, fc, size, symbolset->fontset); */
@@ -1185,20 +1223,30 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
    
     if((x < 2) && (y < 2)) break;
     
-    /* create the brush image */
-    if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
-      brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); /* not in cache, create */
+    if(gdImageTrueColor(img) && x > 1 && style->antialias == MS_TRUE && x == y) { /* use a fuzzy brush */
 
-      x = MS_NINT(brush->sx/2); /* center the ellipse */
-      y = MS_NINT(brush->sy/2);
-      
-      /* draw in the brush image */
-      if(symbol->filled)
-	gdImageFilledEllipse(brush, x, y,  MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), brush_fc);
-      else
-	gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
-      
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
+      /* create the brush image if not already in the cache */
+      if((brush = searchImageCache(symbolset->imagecache, style, x)) == NULL) {
+        brush = createFuzzyBrush(x, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+        symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, x, brush);
+      }
+    } else {
+
+      /* create the brush image if not already in the cache */
+      if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
+	brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); /* not in cache, create */
+	
+	x = MS_NINT(brush->sx/2); /* center the ellipse */
+	y = MS_NINT(brush->sy/2);
+	
+	/* draw in the brush image */
+	if(symbol->filled)
+	  gdImageFilledEllipse(brush, x, y,  MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), brush_fc);
+	else
+	  gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
+	
+	symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
+      }
     }
 
     gdImageSetBrush(img, brush);
@@ -1273,7 +1321,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
 }
 
 /* ------------------------------------------------------------------------------- */
-/*       Fill a circle with a shade symbol of the specified size and color       */
+/*       Fill a circle with a shade symbol of the specified size and color         */
 /* ------------------------------------------------------------------------------- */
 void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
@@ -1327,10 +1375,20 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   if(fc < 0) return; /* invalid color, -1 is valid */
   if(size < 1) return; /* size too small */
 
-  if(style->symbol == 0) { /* solid fill         */
-    gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), fc);
-    if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
-    return;
+  if(style->symbol == 0) { /* solid fill */
+    if(style->antialias==MS_TRUE) {
+      gdImageFilledEllipse(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), fc);
+      if(oc>-1)
+        gdImageSetAntiAliased(img, oc);
+      else
+        gdImageSetAntiAliased(img, fc);
+      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, gdAntiAliased);
+    } else {
+      gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), fc);
+      if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
+    }
+
+    return; /* done simple case */
   }
 
   switch(symbol->type) {
@@ -1457,7 +1515,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
 
   return;
 }
-
 
 /* ------------------------------------------------------------------------------- */
 /*       Draw a single marker symbol of the specified size and color               */
