@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- New support for psuedo anti-aliased fat lines using brushes with variable transparency. 
+
+- Arbitrary rotation support for vector symbols courtesy of Map Media.
+
+- Support for user-defined mime-types for CGI-based browse and legend templates. 
+
 - mapraster.c: Allow mapresample.c code to be called even if projections
   are not set on the map or layer object.  This is no longer a requirement.
   (Bug 1562)
