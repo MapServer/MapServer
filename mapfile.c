@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.317  2005/12/20 18:25:36  sdlime
+ * Fixed a couple of typos in mapfile.c- misplaced break statement. (bug 1578)
+ *
  * Revision 1.316  2005/12/15 14:27:52  assefa
  * Missing semi colon. Did not build on windows.
  *
@@ -2099,8 +2102,8 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
 	class->styles[0].symbol = (int) msyynumber;
       else
 	class->styles[0].symbolname = strdup(msyytext);
-      break;
       class->numstyles = 1;
+      break;
 
     /*
     ** for backwards compatability, these are shortcuts for style 1
@@ -2131,8 +2134,8 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
 	class->styles[1].symbol = (int) msyynumber;
       else
 	class->styles[1].symbolname = strdup(msyytext);
-      break;
       class->numstyles = 2;
+      break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadClass()",
                  msyytext, msyylineno );
