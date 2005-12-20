@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.304.2.3  2005/12/20 18:26:52  sdlime
+ * Fixed a couple of typos in mapfile.c- misplaced break statement. (bug 1578)
+ *
  * Revision 1.304.2.2  2005/09/15 20:43:44  frank
  * Avoid tail recursion in freeFeatureList.
  *
@@ -1980,8 +1983,8 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
 	class->styles[0].symbol = (int) msyynumber;
       else
 	class->styles[0].symbolname = strdup(msyytext);
-      break;
       class->numstyles = 1;
+      break;
 
     /*
     ** for backwards compatability, these are shortcuts for style 1
@@ -2012,8 +2015,8 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
 	class->styles[1].symbol = (int) msyynumber;
       else
 	class->styles[1].symbolname = strdup(msyytext);
-      break;
       class->numstyles = 2;
+      break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadClass()",
                  msyytext, msyylineno );
