@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.242  2005/12/20 20:54:16  assefa
+ * Initialize variable (Bug 1584)
+ *
  * Revision 1.241  2005/10/18 20:46:53  assefa
  * Sync scale and celllsize in preparequery function (Bug 1334).
  *
@@ -6164,7 +6167,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     {           /* no filename - stdout */
         int size=0;
         int   b;
-        FILE *tmp;
+        FILE *tmp = NULL;
         char  buf[4096];
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
         void *iptr=NULL;
