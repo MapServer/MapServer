@@ -20,6 +20,8 @@ CVS HEAD
 Version 4.8.0-beta3 (2005-12-16)
 --------------------------------
 
+- Initialize properly variable in php mapscript (Bug  1584)
+
 - New support for pseudo anti-aliased fat lines using brushes with variable
   transparency. 
 
