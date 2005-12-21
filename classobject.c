@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/12/21 05:34:09  sdlime
+ * Fixed small problem in msRemoveStyle where a temporary style was not being initialized after being malloc'd.
+ *
  * Revision 1.5  2005/02/18 03:06:44  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -160,6 +163,7 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
             msSetError(MS_MEMERR, "Failed to allocate styleObj to return as removed style", "msRemoveStyle");
             return NULL;
         }
+	initStyle(style);
         msCopyStyle(style, &(class->styles[nStyleIndex]));
         style->isachild = MS_FALSE;
         for (i=nStyleIndex; i<class->numstyles-1; i++) {
