@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2005/12/21 23:31:19  sdlime
+ * Fixed an error that occurs when doing attribute queries against layers with a FILTER. The code to cache the existing filter blindly called strdup on a value that could be NULL.
+ *
  * Revision 1.87  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -304,7 +307,8 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   if(lp->filter.string) {
     old_filtertype = lp->filter.type;
     old_filterstring = strdup(lp->filter.string);
-    old_filteritem = strdup(lp->filteritem);
+    if(lp->filteritem) 
+      old_filteritem = strdup(lp->filteritem);
   }
 
   /* apply the passed query parameters */
