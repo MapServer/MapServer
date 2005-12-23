@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/12/23 05:52:48  sdlime
+ * Added function to recompute a shape bounds after reprojection. (bug 1586)
+ *
  * Revision 1.49  2005/11/23 19:23:54  frank
  * fixed bug in line splitting logic in msProjectShapeLine
  *
@@ -643,13 +646,13 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
       }
   }
 
-  if( shape->numlines == 0 )
-  {
+  if( shape->numlines == 0 ) {
       msFreeShape( shape );
       return MS_FAILURE;
-  }
-  else
+  } else {
+      msComputeBounds( shape ); /* fixes bug 1586 */
       return(MS_SUCCESS);
+  }
 #else
   msSetError(MS_PROJERR, "Projection support is not available.", "msProjectShape()");
   return(MS_FAILURE);
