@@ -16,6 +16,15 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+Version 4.8.0-rc1 (2005-12-22)
+------------------------------
+
+- Fixed shape projection to recompute shape bounds. (Bug 1586)
+
+- Fixed segfault when copying/removing styles via MapScript. (Bug 1565)
+
+- Fixed segfault when doing attribute queries on layers with a FILTER already
+  set but with no FILTERITEM.
 
 Version 4.8.0-beta3 (2005-12-16)
 --------------------------------
