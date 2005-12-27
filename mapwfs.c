@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.73  2005/12/27 17:36:27  sdlime
+ * Fixed a typo in msWFSGetGeometryType().
+ *
  * Revision 1.72  2005/12/06 16:42:25  assefa
  * WFS : TYPENAME is manadatory for GetFeature request (Bug 1554).
  *
@@ -512,7 +515,7 @@ static const char *msWFSGetGeometryType(char *type, int outputformat)
   } else if(strcasecmp(type, "multipolygon") == 0) {
     switch(outputformat) {
     case OWS_GML2:
-      return "MultiPolygonStringPropertyType";
+      return "MultiPolygonPropertyType";
     case OWS_GML3:
       return "MultiSurfacePropertyType";
     }
