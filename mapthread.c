@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/12/30 23:05:10  jani
+ * mapthread.c: Added missing lock_name "LAYER_VTABLE", this should go to
+ * 4.8.0 release.
+ *
  * Revision 1.14  2005/07/15 13:37:07  frank
  * Added OWS lock name.
  *
@@ -189,7 +193,7 @@ static int thread_debug = 0;
 
 static char *lock_names[] = 
 { NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", "SDE", 
-  "ORACLE", "OWS", NULL };
+  "ORACLE", "OWS", "LAYER_VTABLE", NULL };
 #endif
 
 /************************************************************************/
