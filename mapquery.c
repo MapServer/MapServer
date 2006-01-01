@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2006/01/01 02:42:39  sdlime
+ * The bounds that are part of the result cache are projected so there is no need to do any projection when computing the overall result set bounds.
+ *
  * Revision 1.88  2005/12/21 23:31:19  sdlime
  * Fixed an error that occurs when doing attribute queries against layers with a FILTER. The code to cache the existing filter blindly called strdup on a value that could be NULL.
  *
@@ -1165,10 +1168,7 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
     if(lp->resultcache->numresults <= 0) continue;
 
     tmpBounds = lp->resultcache->bounds;
-    #ifdef USE_PROJ  
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))  
-        msProjectRect(&(lp->projection), &(map->projection), &tmpBounds);
-    #endif
+
     if(found == 0) {
       *bounds = tmpBounds;
     } else {
