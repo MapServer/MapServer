@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2006/01/03 03:19:05  sdlime
+ * Rotation for pixmap symbols is *very* close but transparency is not handled correctly for 8-bit images. I think this is a bug in GD but I can't be sure yet. Rotated images look crappy anyway so this is just a start.
+ *
  * Revision 1.88  2005/12/15 05:50:30  sdlime
  * Symbol writer ignores type SIMPLE. It doesn't anymore...
  *
@@ -922,23 +925,19 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
 
   /* Copy the actual symbol imagery */
   if (src->img) {
-    if (dst->img) {
+    if (dst->img)
       gdFree(dst->img);
-    }
     
     if (gdImageTrueColor(src->img)) {
-      dst->img = gdImageCreateTrueColor(gdImageSX(src->img),
-					gdImageSY(src->img));
+      dst->img = gdImageCreateTrueColor(gdImageSX(src->img), gdImageSY(src->img));
       gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
       gdImageAlphaBlending(dst->img, 0);
-      gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
-		  gdImageSX(src->img), gdImageSY(src->img));
+      gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));
     } else {
       dst->img = gdImageCreate(gdImageSX(src->img), gdImageSY(src->img));
       gdImageAlphaBlending(dst->img, 0);
       gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
-      gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
-		  gdImageSX(src->img), gdImageSY(src->img));
+      gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));
     }
   }
 
@@ -1132,7 +1131,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
   /* use freeSymbol(symbolObj *s); to delete symbol that is not longer used */  
   newSymbol = (symbolObj *) malloc(sizeof(symbolObj));
-  msCopySymbol(newSymbol, symbol, NULL);
+  msCopySymbol(newSymbol, symbol, NULL); /* TODO: do we really want to do this for all symbol types? */
 
   angle_rad = (MS_DEG_TO_RAD*angle);
 
@@ -1199,6 +1198,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       long minx, miny, maxx, maxy;
 
       int width=0, height=0;
+      int color;
 
       sin_a = sin(angle_rad);
       cos_a = cos(angle_rad);
@@ -1219,6 +1219,16 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
       width = (int)ceil(maxx-minx);
       height = (int)ceil(maxy-miny);
+
+      /* create the new image based on the computed width/height */
+      gdFree(newSymbol->img);
+      if (gdImageTrueColor(symbol->img)) {
+	newSymbol->img = gdImageCreateTrueColor(width, height);
+	gdImageAlphaBlending(newSymbol->img, 0);
+      } else {
+	newSymbol->img = gdImageCreate(width, height);	
+      }
+
       gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
 
       return newSymbol;
