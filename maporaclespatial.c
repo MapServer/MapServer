@@ -4,7 +4,7 @@
  *  Authors: Fernando Simon (fsimon@univali.br)                              *
  *           Rodrigo Becke Cabral (cabral@univali.br)                        *
  *  Collaborator: Adriana Gomes Alves                                        *
- *  MapServer: MapServer 4.6 (cvs)                                           *
+ *  MapServer: MapServer 4.8-rc1 (cvs)                                       *
  *  Oracle: Oracle 9.2 Spatial Cartridge 9.2 release 9.0.1                   *
  *                                                                           *
  *****************************************************************************
@@ -18,42 +18,48 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.27        $Date$
+ * Revision 1.29        $Date$   fernando
+ * Bug fix: #1593
+ *
+ * Revision 1.28        2005/10/28 01:09:42 [CVS-TIME] jani
+ * MS RFC 3: Layer vtable architecture (bug 1477) 
+ *
+ * Revision 1.27        2005/09/13          [CVS-TIME] fernando
  * Bug fix: #1343, #1442 and #1469.
  *
- * Revision 1.26        2005/04/28 22:19:41 [CVS-TIME] fsimon
+ * Revision 1.26        2005/04/28 22:19:41 [CVS-TIME] fernando
  * and Revision 1.25    2005/04/21 15:09:28 [CVS-TIME] julien
  * Bug fix: #1244
  *
  * Revision 1.22
- * and Revision 1.21    2005/02/21 14:08:43 [CVS-TIME] fsimon
+ * and Revision 1.21    2005/02/21 14:08:43 [CVS-TIME] fernando
  * Added the support for 3D Data.
  * Bug fix: #1144
  *
- * Revision 1.20        2005/02/14 19:42:44 [CVS-TIME] fsimon
+ * Revision 1.20        2005/02/14 19:42:44 [CVS-TIME] fernando
  * and Revision 1.19    2005/02/10 20:27:03 [CVS-TIME]
  * Bug fix: #1109.
  *
- * Revision 1.18        2005/02/04 13:10:46 [CVS-TIME] fsimon
+ * Revision 1.18        2005/02/04 13:10:46 [CVS-TIME] fernando
  * Bug fix: #1109, #1110, #1111, #1112, #1136,
  *           #1210, #1211, #1212, #1213.
  * Cleaned code.
  * Added debug messages for internal SQL's.
  *
- * Revision 1.15        2004/12/20 14:01:10 [CVS-TIME] fsimon
+ * Revision 1.15        2004/12/20 14:01:10 [CVS-TIME] fernando
  * Fixed problem with LayerClose function.
  * Added token NONE for DATA statement.
  *
  * Revision 1.14        2004/11/15 20:35:02 [CVS-TIME] dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
- * Revision 1.13        2004/11/15 20:35:02 [CVS-TIME] fsimon
+ * Revision 1.13        2004/11/15 20:35:02 [CVS-TIME] fernando
  * Fixed declarations problems - Bug #1044
  *
- * Revision 1.12        2004/11/05 20:33:14 [CVS-TIME] fsimon
+ * Revision 1.12        2004/11/05 20:33:14 [CVS-TIME] fernando
  * Added debug messages.
  *
- * Revision 1.11        2004/10/30 05:15:15 [CVS-TIME] fsimon
+ * Revision 1.11        2004/10/30 05:15:15 [CVS-TIME] fernando
  * Connection Pool support.
  * New query item support.
  * New improve of performance.
@@ -63,7 +69,7 @@
  * Revision 1.10        2004/10/21 04:30:54 [CVS-TIME] frank
  * MS_CVSID support added.
  *
- * Revision 1.9         2004/04/30 13:27:46 [CVS-TIME] fsimon
+ * Revision 1.9         2004/04/30 13:27:46 [CVS-TIME] fernando
  * Query item support implemented.
  * Query map is not being generated yet.
  *
@@ -265,6 +271,8 @@ static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeomet
 static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d);
 static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d);
 static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind);
+static int osCheck2DGtype(int pIntGtype);
+static int osCheck3DGtype(int pIntGtype);
 
 /* if an error ocurred call msSetError, sets last_oci_status to MS_FAILURE and return 0;
  * otherwise returns 1 */
@@ -1348,6 +1356,34 @@ static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeome
     free (points.point);
 }
 
+static int osCheck2DGtype(int pIntGtype)
+{
+   if (pIntGtype > 2000 && pIntGtype < 2008)
+   {
+      if (pIntGtype != 2004)
+          return MS_TRUE;
+   }
+
+   return MS_FALSE;
+}
+
+static int osCheck3DGtype(int pIntGtype)
+{
+   if (pIntGtype > 3000 && pIntGtype < 3308)
+   {
+      if (pIntGtype > 3007)
+          pIntGtype-= 300;
+
+      if (pIntGtype < 3007 && pIntGtype != 3004)
+          return MS_TRUE;
+   }
+   /*
+   * Future version, untested
+   * return (pIntGtype & 2208 && (pIntGtype & 3000 || pIntGtype & 3296) && pIntGtype & 3);
+   */
+   return MS_FALSE;   
+}
+
 static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind)
 {
     int gtype, elem_type, compound_type;
@@ -1381,9 +1417,9 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
                && TRY( hand, OCINumberToInt( hand->errhp, &(obj->gtype), (uword)sizeof(int), OCI_NUMBER_SIGNED, (dvoid *)&gtype ) );
                /*&& (nords%2==0 && nelems%3==0);*/ /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
 
-        if (success && (gtype==2001 || gtype==2002 || gtype==2003 || gtype==2005 || gtype==2006 || gtype==2007))
+        if (success && osCheck2DGtype(gtype))
             success = (nords%2==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
-        else if (success && (gtype==3001 || gtype==3002 || gtype==3003 || gtype==3005 || gtype==3006 || gtype==3007))
+        else if (success && osCheck3DGtype(gtype))
         {
             success = (nords%3==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
             data3d = 1;
@@ -1859,6 +1895,34 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
 
         osShapeBounds(shape);
     }while(shape->type == MS_SHAPE_NULL);
+
+    return MS_SUCCESS;
+}
+
+int msOracleSpatialLayerInitItemInfo( layerObj *layer )
+{
+    int i;
+    int *itemindexes ;
+
+    if (layer->debug)
+        msDebug("msOracleSpatialLayerInitItemInfo was called.\n");
+
+    if (layer->numitems == 0)
+        return MS_SUCCESS;
+
+    if (layer->iteminfo)
+        free( layer->iteminfo );
+
+    if ((layer->iteminfo = (long *)malloc(sizeof(int)*layer->numitems))== NULL)
+    {
+        msSetError(MS_MEMERR, NULL, "msOracleSpatialLayerInitItemInfo()");
+        return MS_FAILURE;
+    }
+
+    itemindexes = (int*)layer->iteminfo;
+
+    for(i=0; i < layer->numitems; i++)
+        itemindexes[i] = i;  /*last one is always the geometry one - the rest are non-geom*/
 
     return MS_SUCCESS;
 }
@@ -2365,34 +2429,6 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
     return(MS_SUCCESS);
 }
 
-int msOracleSpatialLayerInitItemInfo( layerObj *layer )
-{
-    int i;
-    int *itemindexes ;
-
-    if (layer->debug)
-        msDebug("msOracleSpatialLayerInitItemInfo was called.\n");
-
-    if (layer->numitems == 0)
-        return MS_SUCCESS;
-
-    if (layer->iteminfo)
-        free( layer->iteminfo );
-
-    if ((layer->iteminfo = (long *)malloc(sizeof(int)*layer->numitems))== NULL)
-    {
-        msSetError(MS_MEMERR, NULL, "msOracleSpatialLayerInitItemInfo()");
-        return MS_FAILURE;
-    }
-
-    itemindexes = (int*)layer->iteminfo;
-
-    for(i=0; i < layer->numitems; i++)
-        itemindexes[i] = i;  /*last one is always the geometry one - the rest are non-geom*/
-
-    return MS_SUCCESS;
-}
-
 void msOracleSpatialLayerFreeItemInfo( layerObj *layer )
 {
     if (layer->debug)
@@ -2481,15 +2517,12 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
 
 #endif
 
-int
-msOracleSpatialLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
+int msOracleSpatialLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
 {
     return msOracleSpatialLayerGetShape(layer, shape, record);
 }
 
-
-int
-msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
+int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
 {
     assert(layer != NULL);
     assert(layer->vtable != NULL);
@@ -2507,7 +2540,7 @@ msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
 
     /* layer->vtable->LayerGetAutoStyle, use default */
-    
+
     layer->vtable->LayerCloseConnection = msOracleSpatialLayerClose;
 
     layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
@@ -2515,7 +2548,6 @@ msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
-
 
     return MS_SUCCESS;
 }
