@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.118  2006/01/03 03:54:44  sdlime
+ * Updated the fuzzy brush builder to use a better algorithm to create the variable transparency brush. Brushes look great but I'm convinced there is a problem with GD when stroking lines with transparent brushes.
+ *
  * Revision 1.117  2005/12/16 06:21:51  sdlime
  * Initial integration of fuzzy brushes into circle drawing. It is apprarent that circles need to be brought in line with the other drawing code so more work needs to be done. However the most used cases work fine.
  *
@@ -626,29 +629,31 @@ imageObj *msImageLoadGD(const char *filename)
 static gdImagePtr createFuzzyBrush(int size, int r, int g, int b)
 {
   gdImagePtr brush;
-  double hardness=.5; /* 0 to 1 */
   int x, y, c, dx, dy;
   long bgcolor, color;
-  int a, max_a;
-  double d;
+  int a;
+  double d, min_d, max_d;
+  double hardness=.5;
 
   if(size % 2 == 0) /* requested an even-sized brush, add one to size */
     size++;
 
-  brush = gdImageCreateTrueColor(size, size);
+  brush = gdImageCreateTrueColor(size+2, size+2);
   gdImageAlphaBlending(brush, 0); /* don't blend */
 
-  bgcolor = gdImageColorAllocateAlpha(brush, 255, 255, 255, 127);
+  bgcolor = gdImageColorAllocateAlpha(brush, 255, 255, 255, 127); /* fill the brush as transparent */
   gdImageFilledRectangle(brush, 0, 0, gdImageSX(brush), gdImageSY(brush), bgcolor);
 
-  c = (size-1)/2; /* center coordinate (x=y) */
-  max_a = 127 - hardness*127;
+  c = (gdImageSX(brush)-1)/2; /* center coordinate (x=y) */
+
+  min_d = hardness*(size/2.0) - 0.5;
+  max_d = gdImageSX(brush)/2.0;
 
   color = gdImageColorAllocateAlpha(brush, r, g, b, 0);
-  gdImageFilledEllipse(brush, c, c, size, size, color); /* draw the base circle */
+  gdImageFilledEllipse(brush, c, c, gdImageSX(brush), gdImageSY(brush), color); /* draw the base circle as opaque */
 
-  for(y=0; y<size; y++) { /* each row */
-    for(x=0; x<size; x++) { /* each column */
+  for(y=0; y<gdImageSY(brush); y++) { /* each row */
+    for(x=0; x<gdImageSX(brush); x++) { /* each column */
 
       color = gdImageGetPixel(brush, x, y);
       if(color == bgcolor) continue;
@@ -657,7 +662,9 @@ static gdImagePtr createFuzzyBrush(int size, int r, int g, int b)
       dy = y - c;
       d = sqrt(dx*dx + dy*dy);
 
-      a = MS_NINT(d/c*max_a);
+      if(d<min_d) continue; /* leave opaque */
+
+      a = MS_NINT(127*(d/max_d));
 
       color = gdImageColorAllocateAlpha(brush, r, g, b, a);
       gdImageSetPixel(brush, x, y, color);
