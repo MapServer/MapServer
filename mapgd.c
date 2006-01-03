@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.119  2006/01/03 15:11:31  sdlime
+ * Fixed a problem with trivial symbols (1 pixel wide) and antialiasing.
+ *
  * Revision 1.118  2006/01/03 03:54:44  sdlime
  * Updated the fuzzy brush builder to use a better algorithm to create the variable transparency brush. Brushes look great but I'm convinced there is a problem with GD when stroking lines with transparent brushes.
  *
@@ -1190,11 +1193,13 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)2*r, (int)2*r, 0, 360, gdBrushed);
     } else {
       gdImageSetThickness(img, width);
-      if(style->antialias == MS_TRUE)
+      if(style->antialias == MS_TRUE) {
         gdImageSetAntiAliased(img, fc);
-      gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)2*r, (int)2*r, 0, 360, fc);
+	gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)2*r, (int)2*r, 0, 360, gdAntiAliased);
+	gdImageSetAntiAliased(img, -1);
+      } else
+        gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)2*r, (int)2*r, 0, 360, fc);
       gdImageSetThickness(img, 1);
-      gdImageSetAntiAliased(img, -1);
     }
 
     return; /* done with easiest case */
@@ -1821,11 +1826,13 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       imagePolyline(img, p, gdBrushed, ox, oy);
     } else {
       gdImageSetThickness(img, width);
-      if(style->antialias == MS_TRUE) 
+      if(style->antialias == MS_TRUE) { 
 	gdImageSetAntiAliased(img, fc);
-      imagePolyline(img, p, fc, ox, oy);
+	imagePolyline(img, p, gdAntiAliased, ox, oy);
+	gdImageSetAntiAliased(img, -1);
+      } else
+	imagePolyline(img, p, fc, ox, oy);  
       gdImageSetThickness(img, 1);
-      gdImageSetAntiAliased(img, -1);
     }
 
     return; /* done with easiest case */
