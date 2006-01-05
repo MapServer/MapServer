@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.64  2006/01/05 16:25:10  assefa
+ * Correct mapscript windows build problem when flag USE_WMS_SVR was
+ * not set (Bug 1529)
+ *
  * Revision 1.63  2005/10/25 20:29:52  sdlime
  * Completed work to add constants to GML output. For example gml_constants 'aConstant'  gml_aConstant_value 'this is a constant', which results in output like <aConstant>this is a constant</aConstant>. Constants can appear in groups and can havespecific types (default is string). Constants are NOT queryable so their use should be limited untilsome extensions to wfs 1.1 appear that will allow us to mark certain elements as queryable or not in capabilities output.
  *
@@ -423,10 +427,9 @@ MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer);
 MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
 #endif
 
-#ifdef USE_WMS_SVR
 /* export to fix bug 851 */
 MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces);
-#endif
+
 
 #ifdef USE_WFS_SVR
 MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_namespace, int outputformat);

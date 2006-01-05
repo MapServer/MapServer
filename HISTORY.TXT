@@ -19,6 +19,9 @@ CVS HEAD
 Version 4.8.0-rc1 (2005-12-22)
 ------------------------------
 
+- Correct mapscript windows build problem when flag USE_WMS_SVR was
+  not set (Bug 1529)   
+
 - Fixed shape projection to recompute shape bounds. (Bug 1586)
 
 - Fixed segfault when copying/removing styles via MapScript. (Bug 1565)
