@@ -19,6 +19,8 @@ CVS HEAD
 Version 4.8.0-rc1 (2005-12-22)
 ------------------------------
 
+- Correct bound reprojection issue with ogc filer (Bug 1600)
+
 - Correct mapscript windows build problem when flag USE_WMS_SVR was
   not set (Bug 1529)   
 

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.63  2006/01/06 17:32:28  assefa
+ * Correct bound reprojection issue with ogc filer (Bug 1600)
+ *
  * Revision 1.62  2005/10/29 02:03:43  jani
  * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
  *
@@ -671,6 +674,12 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
           nClassIndex = msShapeGetClass(psLayer, &shape, map->scale);
         
         addResult(psLayer->resultcache, nClassIndex, anValues[i], -1);
+
+#ifdef USE_PROJ
+      if(psLayer->project && msProjectionsDiffer(&(psLayer->projection), 
+                                                 &(map->projection)))
+	msProjectShape(&(psLayer->projection), &(map->projection), &shape);
+#endif
 
         if(psLayer->resultcache->numresults == 1)
           psLayer->resultcache->bounds = shape.bounds;
