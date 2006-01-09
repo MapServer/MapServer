@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD
 --------
 
+- Commit fix for GD on win32 when different heaps are in use. (Bug 1513) 
+
 Version 4.8.0-rc1 (2005-12-22)
 ------------------------------
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2006/01/09 18:04:19  frank
+ * fix for gd calls when different heaps in use - win32 (bug 1513)
+ *
  * Revision 1.89  2006/01/03 03:19:05  sdlime
  * Rotation for pixmap symbols is *very* close but transparency is not handled correctly for 8-bit images. I think this is a bug in GD but I can't be sure yet. Rotated images look crappy anyway so this is just a start.
  *
@@ -513,19 +516,25 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   rewind(stream); /* reset the image for the readers */
   if (memcmp(bytes,"GIF8",4)==0) {
 #ifdef USE_GD_GIF
-    symbolset->symbol[i].img = gdImageCreateFromGif(stream);
+      gdIOCtx *ctx;
+      ctx = msNewGDFileCtx(stream);
+      symbolset->symbol[i].img = gdImageCreateFromGifCtx(ctx);
+      ctx->gd_free(ctx);
 #else
-    msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
-    fclose(stream);
-    return(-1);
+      msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
+      fclose(stream);
+      return(-1);
 #endif
   } else if (memcmp(bytes,PNGsig,8)==0) {
 #ifdef USE_GD_PNG
-    symbolset->symbol[i].img = gdImageCreateFromPng(stream);
+      gdIOCtx *ctx;
+      ctx = msNewGDFileCtx(stream);
+      symbolset->symbol[i].img = gdImageCreateFromPngCtx(ctx);
+      ctx->gd_free(ctx);
 #else
-    msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
-    fclose(stream);
-    return(-1);
+      msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
+      fclose(stream);
+      return(-1);
 #endif
   }
 
