@@ -42,10 +42,10 @@ Currently supported classes, properties and methods:
   The following MapServer constants are available:
 
     Boolean values:
-  	MS_TRUE, MS_FALSE, MS_ON, MS_OFF, MS_YES, MS_NO
+    MS_TRUE, MS_FALSE, MS_ON, MS_OFF, MS_YES, MS_NO
 
     Map units:
- 	MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD,
+    MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD,
         MS_PIXELS
 
     Layer types:
@@ -227,10 +227,10 @@ Currently supported classes, properties and methods:
         Returns FALSE if layer doesn't exist.
 
    colorObj getcolorbyindex(int iCloIndex)
-	Returns a colorObj corresponding to the color index in the palette
+    Returns a colorObj corresponding to the color index in the palette
 
    void setExtent(double minx, double miny, double maxx, double maxy)
-	Set the map extents using the georef extents passed in argument.
+    Set the map extents using the georef extents passed in argument.
 
    int setRotation(double rotation_angle)
         Set map rotation angle. The map view rectangle (specified in 
@@ -249,9 +249,9 @@ Currently supported classes, properties and methods:
    void zoompoint(int nZoomFactor, pointObj oPixelPos, int nImageWidth, 
                   int nImageHeight, rectObj oGeorefExt)
 
-	Zoom to a given	XY postion;
+    Zoom to a given XY postion;
 
-	Parmeters are :                                                 
+    Parmeters are :                                                 
        - Zoom factor : positive values do zoom in, negative values  
                       zoom out. Factor of 1 will recenter.           
        - Pixel position (pointObj) : x, y coordinates of the click, 
@@ -264,11 +264,11 @@ Currently supported classes, properties and methods:
          those extents.
 
    void zoomrectangle(rectObj oPixelExt, int nImageWidth, int nImageHeight,
-		     rectObj oGeorefExt)
-	Set the map extents to a given extents.
-	
-	Parmeters are :
-	- oPixelExt (rect object) : Pixel Extents, with (0,0) at the top-left
+             rectObj oGeorefExt)
+    Set the map extents to a given extents.
+    
+    Parmeters are :
+    - oPixelExt (rect object) : Pixel Extents, with (0,0) at the top-left
           The rectangle contains the coordinates of the LL and UR coordinates
           in pixel. (the maxy in the rect object should be < miny value)
           
@@ -284,12 +284,12 @@ Currently supported classes, properties and methods:
         - Georef extent (rectObj) : current georef extents.
 
    void zoomscale(double nScale, pointObj oPixelPos, int nImageWidth, 
-                  int nImageHeight, rectObj oGeorefExt)
+                  int nImageHeight, rectObj oGeorefExt [, rectObj oMaxGeorefExt])
 
-	Zoom in or out to a given XY position so that the map is displayed
+    Zoom in or out to a given XY position so that the map is displayed
         at specified scale.
 
-	Parmeters are :                                                 
+    Parmeters are :                                                 
        - Scale : Scale at which the map should be displayed.
        - Pixel position (pointObj) : x, y coordinates of the click, 
                                      with (0,0) at the top-left
@@ -1010,7 +1010,7 @@ Currently supported classes, properties and methods:
 
    string log;
    string imagepath
-   string template		
+   string template      
    string imageurl
    string header
    string footer
@@ -1263,7 +1263,7 @@ Constructor:
         Set object property to a new value. Returns -1 on error.
 
    void setextent(double minx, double miny, double maxx, double maxy)
-	Set the rectangle extents.
+    Set the rectangle extents.
 
    int draw(mapObj map, layerObj layer, imageObj img, 
             int class_index, string text)
@@ -1294,7 +1294,7 @@ Constructor:
         be one of MS_SHP_POINT, MS_SHP_ARC, MS_SHP_POLYGON or 
         MS_SHP_MULTIPOINT.
         Pass type as -1 to open an existing file for read-only access,
-	and type=-2 to open an existing file for update (append).
+    and type=-2 to open an existing file for update (append).
 
  Members:
 
