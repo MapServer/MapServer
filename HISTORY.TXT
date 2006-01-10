@@ -16,6 +16,7 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Fix the memory allocation bug in sdeShapeCopy (Bug 1606)
 
 
 
