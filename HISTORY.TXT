@@ -12,6 +12,10 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.8.0
+------------------------------
+
+- Fix the memory allocation bug in sdeShapeCopy (Bug 1606)
 
 Version 4.8.0-rc2 (2006-01-09)
 ------------------------------
