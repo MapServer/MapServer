@@ -13,6 +13,12 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+CVS HEAD (4.9-dev)
+------------------
+
+
+
+
 Version 4.8.0-rc2 (2006-01-09)
 ------------------------------
 
