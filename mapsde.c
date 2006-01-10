@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2006/01/10 19:27:20  hobu
+ * fix the memory allocation bug described in bug 1606
+ *
  * Revision 1.101  2006/01/10 00:19:49  hobu
  * Fix up allocation of the ROW_ID columns and how the functions that
  * call it were using it. (bug 1605)
@@ -490,13 +493,16 @@ long msSDEGetLayerInfo(layerObj *layer,
 /*     Copies a SDE shape into a MapServer shapeObj                     */
 /* -------------------------------------------------------------------- */
 static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
-	
-  long numparts, numsubparts, numpoints;
-  long *subparts=NULL;
+
   SE_POINT *points=NULL;
   SE_ENVELOPE envelope;
   long type, status;
-
+  long *part_offsets = NULL;
+  long *subpart_offsets = NULL;
+  long num_parts = -1;
+  long num_subparts = -1;
+  long num_points = -1;
+  
   lineObj line={0,NULL};
 
   int i,j,k;
@@ -535,20 +541,16 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
     return(MS_FAILURE);
   }
 
-  SE_shape_get_num_points(inshp, 0, 0, &numpoints);
-  SE_shape_get_num_parts(inshp, &numparts, &numsubparts);
 
-  if(numsubparts > 0) {
-    subparts = (long *)malloc(numsubparts*sizeof(long));
-    if(!subparts) {
-      msSetError( MS_MEMERR, 
-                  "Unable to allocate parts array.", 
-                  "sdeCopyShape()");
-      return(MS_FAILURE);
-    }
-  }
+  SE_shape_get_num_parts (inshp, &num_parts, &num_subparts);
+  SE_shape_get_num_points (inshp, 0, 0, &num_points); 
+	 
+  part_offsets = (long *) malloc( (num_parts + 1) * sizeof(long));
+  subpart_offsets = (long *) malloc( (num_subparts + 1)	* sizeof(long));
+  part_offsets[num_parts] = num_subparts;
+  subpart_offsets[num_subparts]	= num_points;
 
-  points = (SE_POINT *)malloc(numpoints*sizeof(SE_POINT));
+  points = (SE_POINT *)malloc(num_points*sizeof(SE_POINT));
   if(!points) {
     msSetError( MS_MEMERR, 
                 "Unable to allocate points array.", 
@@ -558,8 +560,8 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 
   status = SE_shape_get_all_points( inshp, 
                                     SE_DEFAULT_ROTATION, 
-                                    NULL, 
-                                    subparts, 
+                                    part_offsets, 
+                                    subpart_offsets, 
                                     points, 
                                     NULL, 
                                     NULL);
@@ -569,12 +571,12 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   }
 
   k = 0; /* overall point counter */
-  for(i=0; i<numsubparts; i++) {
+  for(i=0; i<num_subparts; i++) {
     
-    if( i == numsubparts-1)
-      line.numpoints = numpoints - subparts[i];
+    if( i == num_subparts-1)
+      line.numpoints = num_points - subpart_offsets[i];
     else
-      line.numpoints = subparts[i+1] - subparts[i];
+      line.numpoints = subpart_offsets[i+1] - subpart_offsets[i];
 
     line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
     if(!line.point) {
@@ -594,7 +596,8 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
     free(line.point);
   }
 
-  free(subparts);
+  free(part_offsets);
+  free(subpart_offsets);
   free(points);
 
   /* finally copy the bounding box for the entire shape */
@@ -831,13 +834,13 @@ int msSDELayerOpen(layerObj *layer) {
   }
  
   sde->state_id = SE_BASE_STATE_ID;
+  
   /* initialize the table and spatial column names */
-  sde->table = sde->column = NULL;
-
+  sde->table = NULL;
+  sde->column = NULL;
 
   /* request a connection and stream from the pool */
   poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
-
   
   /* If we weren't returned a connection and stream, initialize new ones */
   if (!poolinfo) {
@@ -1393,7 +1396,7 @@ int msSDELayerGetItems(layerObj *layer) {
     sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
   }
   sde->row_id_column = msSDELayerGetRowIDColumn(layer);
-   msDebug("msSDELayerGetItems ROW_ID COLUMN IS: %s\n", sde->row_id_column);
+
   status = SE_table_describe(sde->connection, sde->table, &n, &itemdefs);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetItems()", "SE_table_describe()");
