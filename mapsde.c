@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2006/01/10 00:19:49  hobu
+ * Fix up allocation of the ROW_ID columns and how the functions that
+ * call it were using it. (bug 1605)
+ *
  * Revision 1.100  2005/12/15 15:36:59  frank
  * avoid comment-in-comment warnings
  *
@@ -257,12 +261,14 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
 {
 #ifdef USE_SDE
   long status, column_type; 
-  char* row_id_column;
+  char* column_name;
   SE_REGINFO registration;
 
   msSDELayerInfo *sde=NULL;
   sde = layer->layerinfo;
-  row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
+
+
+  column_name = (char*) malloc(SE_MAX_COLUMN_LEN);
   if(!sde) {
     msSetError( MS_SDEERR, 
                 "SDE layer has not been opened.", 
@@ -286,7 +292,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     }
     
     status = SE_registration_get_info ( sde->connection, 
-                                        strdup(sde->table), 
+                                        sde->table, 
                                         registration);
     if(status != SE_SUCCESS) {
       sde_error(status, 
@@ -296,8 +302,9 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     }
     
     status= SE_reginfo_get_rowid_column ( registration, 
-                                          row_id_column, 
+                                          column_name, 
                                           &column_type);
+    SE_reginfo_free(registration);
     if(status != SE_SUCCESS) {
       sde_error(status, 
                 "msSDELayerGetRowIDColumn()", 
@@ -310,15 +317,15 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         "returning %s.\n", 
         MS_SDE_ROW_ID_COLUMN);
       }
-      SE_reginfo_free(registration);
       return (MS_SDE_ROW_ID_COLUMN);
     }
     
-    SE_reginfo_free(registration);
-    if (row_id_column){
-      return (strdup(row_id_column)); 
+    if (column_name){
+
+      return (column_name); 
     }
     else {
+      free(column_name);
       return(strdup(MS_SDE_ROW_ID_COLUMN));
     }
 }
@@ -801,6 +808,7 @@ int msSDELayerOpen(layerObj *layer) {
 #ifdef USE_SDE
   long status=-1;
   char **params=NULL;
+  char **data_params=NULL;
   int numparams=0;
   SE_ERROR error;
   SE_STATEINFO state;
@@ -825,8 +833,7 @@ int msSDELayerOpen(layerObj *layer) {
   sde->state_id = SE_BASE_STATE_ID;
   /* initialize the table and spatial column names */
   sde->table = sde->column = NULL;
-  /* initialize the row_id column */
-  sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
+
 
   /* request a connection and stream from the pool */
   poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
@@ -899,12 +906,12 @@ int msSDELayerOpen(layerObj *layer) {
     msConnPoolRegister(layer, poolinfo, msSDECloseConnection);
     msFreeCharArray(params, numparams); /* done with parameter list */
   }
-  
+
   /* Split the DATA member into its parameters using the comma */
   /* Periods (.) are used to denote table names and schemas in SDE,  */
   /* as are underscores (_). */
-  params = split(layer->data, ',', &numparams);
-  if(!params) {
+  data_params = split(layer->data, ',', &numparams);
+  if(!data_params) {
     msSetError(MS_MEMERR, 
         "Error spliting SDE layer information.", "msSDELayerOpen()");
     return(MS_FAILURE);
@@ -916,29 +923,31 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  sde->table = params[0]; 
-  sde->column = params[1];
+  sde->table = strdup(data_params[0]); 
+  sde->column = strdup(data_params[1]);
+
 
   if (numparams < 3){ 
     /* User didn't specify a version, we won't use one */
     if (layer->debug) {
       msDebug("msSDELayerOpen(): Layer %s did not have a " 
               "specified version.\n", layer->name);
-    }
+    } 
     sde->state_id = SE_DEFAULT_STATE_ID;
   } 
   else {
     if (layer->debug) {
       msDebug("msSDELayerOpen(): Layer %s specified version %s.\n", 
               layer->name, 
-              params[2]);
+              data_params[2]);
     }
     status = SE_versioninfo_create (&(version));
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_versioninfo_create()");
       return(MS_FAILURE);
     }
-    status = SE_version_get_info(poolinfo->connection, params[2], version);
+    status = SE_version_get_info(poolinfo->connection, data_params[2], version);
+    
     if(status != SE_SUCCESS) {
        
       if (status == SE_INVALID_RELEASE) {
@@ -951,7 +960,8 @@ int msSDELayerOpen(layerObj *layer) {
         sde_error(status, "msSDELayerOpen()", "SE_version_get_info()");
         return(MS_FAILURE);
       }
-    } 
+    }
+  
   }
 
   /* Get the STATEID from the given version and set the stream to  */
@@ -981,7 +991,8 @@ int msSDELayerOpen(layerObj *layer) {
       return(MS_FAILURE);
     }
     SE_stateinfo_free (state); 
-    
+
+        msFreeCharArray(data_params, numparams);  
   } /* if (!(sde->state_id == SE_DEFAULT_STATE_ID)) */
   
   
@@ -994,8 +1005,8 @@ int msSDELayerOpen(layerObj *layer) {
 
   status = msSDEGetLayerInfo( layer,
                               poolinfo->connection,
-                              params[0],
-                              params[1],
+                              sde->table,
+                              sde->column,
                               layer->connection,
                               sde->layerinfo);
 
@@ -1214,7 +1225,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   if(!(layer->filter.string))
     /* set to empty string */
     status = SE_queryinfo_set_where_clause (query_info, 
-                                            (const CHAR * ) strdup(""));
+                                            (const CHAR * ) "");
   else
     /* set to the layer's filter.string */
     status = SE_queryinfo_set_where_clause (query_info, 
@@ -1377,10 +1388,12 @@ int msSDELayerGetItems(layerObj *layer) {
                 "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
-
-  sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
-  sde->row_id_column = msSDELayerGetRowIDColumn(layer);
   
+  if (!sde->row_id_column) {
+    sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
+  }
+  sde->row_id_column = msSDELayerGetRowIDColumn(layer);
+   msDebug("msSDELayerGetItems ROW_ID COLUMN IS: %s\n", sde->row_id_column);
   status = SE_table_describe(sde->connection, sde->table, &n, &itemdefs);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetItems()", "SE_table_describe()");
@@ -1388,8 +1401,6 @@ int msSDELayerGetItems(layerObj *layer) {
   }
 
   layer->numitems = n+1;
-
-  layer->items = (char **)malloc(layer->numitems*sizeof(char *));
   if(!layer->items) {
     msSetError( MS_MEMERR, 
                 "Error allocating layer items array.", 
@@ -1564,10 +1575,9 @@ int msSDELayerInitItemInfo(layerObj *layer)
   msSDELayerInfo *sde=NULL;
 
   sde = layer->layerinfo;
-
-  sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
   sde->row_id_column = msSDELayerGetRowIDColumn(layer);
 
+  
   if(!sde) {
     msSetError( MS_SDEERR, 
                 "SDE layer has not been opened.", 
@@ -2143,17 +2153,19 @@ msSDELayerCreateItems(layerObj *layer,
 {
 #ifdef USE_SDE
     /* should be more than enough space, 
-     * SDE always needs a couple of additional items 
+     * SDE always needs a couple of additional items  
      */
+
     layer->items = (char **)calloc(nt+2, sizeof(char *)); 
     if( ! layer->items) {
         msSetError(MS_MEMERR, NULL, "msSDELayerCreateItems()");
         return(MS_FAILURE);
-    }
+      }
     layer->items[0] = msSDELayerGetRowIDColumn(layer); /* row id */
     layer->items[1] = msSDELayerGetSpatialColumn(layer);
     layer->numitems = 2;
     return MS_SUCCESS;
+
 #else
   msSetError( MS_MISCERR, 
               "SDE support is not available.", 
