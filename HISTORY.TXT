@@ -13,18 +13,24 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-CVS HEAD
---------
+Version 4.8.0-rc2 (2006-01-09)
+------------------------------
 
 - Commit fix for GD on win32 when different heaps are in use. (Bug 1513) 
-
-Version 4.8.0-rc1 (2005-12-22)
-------------------------------
 
 - Correct bound reprojection issue with ogc filer (Bug 1600)
 
 - Correct mapscript windows build problem when flag USE_WMS_SVR was
   not set (Bug 1529)   
+
+- Fix up allocation of the SDE ROW_ID columns and how the functions that
+  call it were using it. (bug 1605)
+
+- Fixed crash with 3D polygons in Oracle Spatial (bug 1593)
+
+
+Version 4.8.0-rc1 (2005-12-22)
+------------------------------
 
 - Fixed shape projection to recompute shape bounds. (Bug 1586)
 
@@ -32,6 +38,7 @@ Version 4.8.0-rc1 (2005-12-22)
 
 - Fixed segfault when doing attribute queries on layers with a FILTER already
   set but with no FILTERITEM.
+
 
 Version 4.8.0-beta3 (2005-12-16)
 --------------------------------

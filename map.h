@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437  2006/01/10 03:01:01  dan
+ * Update for 4.8.0-rc2
+ *
  * Revision 1.436  2005/12/23 06:20:50  sdlime
  * Updated files for 4.8.0-rc1.
  *
@@ -366,7 +369,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.0-rc1"
+#define MS_VERSION "4.8.0-rc2"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
