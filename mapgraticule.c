@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2006/01/11 04:45:36  sdlime
+ * Argh! Friggin' typos on my part. Fixed bug 1256.
+ *
  * Revision 1.15  2005/11/30 21:42:43  julien
  * Use MIN/MAXINTERVAL value when we define grid layers (bug1530)
  *
@@ -136,7 +139,7 @@ int msGraticuleLayerOpen(layerObj *layer)
     pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
     pInfo->ilabeltype = (int) lpDDMM;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
-  } else if( strcmp( pInfo->labelformat, "DDMM" )   == 0 ) {
+  } else if( strcmp( pInfo->labelformat, "DD" )   == 0 ) {
     pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DD ) + 1 );
     pInfo->ilabeltype = (int) lpDD;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DD );
