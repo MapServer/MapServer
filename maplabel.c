@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  MapServer
- * Purpose:  Labelling Implementation.
+ * Purpose:  Labeling Implementation.
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2006/01/12 05:26:23  sdlime
+ * Fixed spelling error in module name and replaced a // style comment.
+ *
  * Revision 1.79  2005/11/28 04:24:59  sdlime
  * Changed msAddLabel() to use msCopyStyle() rather than doing on its own. This should fix some de-allocation errors folks have been having. (bug 1398)
  *
@@ -319,7 +322,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     rect->maxx = bbox[2];
     rect->maxy = bbox[1];
 
-    // bug 1449 fix (adjust baseline)
+    /* bug 1449 fix (adjust baseline) */
     label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
     label->offsetx += MS_NINT(bbox[0] / 2); // optional?
 #else
