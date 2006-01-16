@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.1  2006/01/16 20:01:56  sean
+ * close handle when saving symbolset, pointed out by Albert Rovira
+ *
  * Revision 1.90  2006/01/09 18:04:19  frank
  * fix for gd calls when different heaps in use - win32 (bug 1513)
  *
@@ -821,7 +824,17 @@ int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
         return MS_FAILURE;
     }
     stream = fopen(filename, "w");
-    retval = msSaveSymbolSetStream(symbolset, stream);
+    if (stream)
+    {
+        retval = msSaveSymbolSetStream(symbolset, stream);
+        fclose(stream);
+    }
+    else 
+    {
+        msSetError(MS_SYMERR, "Could not write to %s", "msSaveSymbolSet()",
+                   filename);
+        retval = MS_FAILURE;
+    }
     return retval;
 }
 
