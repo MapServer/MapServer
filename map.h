@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.439  2006/01/16 20:21:18  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.438  2006/01/10 03:10:32  dan
  * Update version, this is now 4.9 (dev)
  *
@@ -1586,7 +1589,7 @@ MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabe
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 
-MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor);
+MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, labelObj *);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);

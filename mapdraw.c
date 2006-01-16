@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2006/01/16 20:21:18  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.96  2005/11/29 14:12:16  sdlime
  * Fixed an error in mapdraw.c where item indicies where not being computed correctly with query maps. (bug 1492)
  *
@@ -1851,7 +1854,7 @@ int msDrawLabel(imageObj *image, pointObj labelPnt, char *string,
     pointObj p;
     rectObj r;
 
-    if(msGetLabelSize(string, label, &r, fontset, scalefactor) == -1) return(-1);
+    if(msGetLabelSize(string, label, &r, fontset, scalefactor, MS_TRUE) == -1) return(-1);
     p = get_metrics(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
     msDrawText(image, p, string, label, fontset, scalefactor); /* actually draw the label */
   } else {

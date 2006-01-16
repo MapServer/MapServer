@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/01/16 20:21:18  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.23  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -1855,7 +1858,7 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
     if(cachePtr->label.type == MS_TRUETYPE)
       cachePtr->label.size = (int)(cachePtr->label.size*layerPtr->scalefactor);
 
-    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
+    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))

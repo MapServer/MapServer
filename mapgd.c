@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.120  2006/01/16 20:21:18  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.119  2006/01/03 15:11:31  sdlime
  * Fixed a problem with trivial symbols (1 pixel wide) and antialiasing.
  *
@@ -3141,7 +3144,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
     if(!cachePtr->text || strlen(cachePtr->text) == 0)
       continue; /* not an error, just don't want to do anything */
 
-    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
+    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))

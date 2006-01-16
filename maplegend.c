@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/01/16 20:21:18  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.57  2005/11/17 05:56:30  sdlime
  * Updated msDrawLegend to respect class min/max scale values. (bug 1524)
  *
@@ -324,8 +327,9 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 	  continue;
       }
 
-      if(msGetLabelSize(lp->class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0) != 0)
+      if(msGetLabelSize(lp->class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
 	return(NULL); /* something bad happened */
+
       maxheight = MS_MAX(maxheight, MS_NINT(rect.maxy - rect.miny));
       maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
       heights[n] = MS_NINT(rect.maxy - rect.miny);

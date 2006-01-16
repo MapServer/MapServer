@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/01/16 20:21:18  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.21  2005/10/26 17:53:57  frank
  * Avoid warning about unused function.
  *
@@ -1222,7 +1225,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
     if(!cachePtr->text || strlen(cachePtr->text) == 0)
       continue; /* not an error, just don't want to do anything */
 
-    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
+    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2006/01/16 20:21:18  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.16  2006/01/11 04:45:36  sdlime
  * Argh! Friggin' typos on my part. Fixed bug 1256.
  *
@@ -692,7 +695,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     if( pLayer->transform ) 
 		msTransformShapeToPixel( pShape, pLayer->map->extent, pLayer->map->cellsize );
 
-	if (msGetLabelSize( pShape->text, &pLayer->class[0].label, &rectLabel, &pLayer->map->fontset, 1.0 ) != 0)
+	if (msGetLabelSize( pShape->text, &pLayer->class[0].label, &rectLabel, &pLayer->map->fontset, 1.0, MS_TRUE) != 0)
         return MS_FAILURE;  /* msSetError already called */
 
 	switch( ePosition )
