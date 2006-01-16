@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2006/01/16 20:37:15  sdlime
+ * Changed label size calls to not adjust baseline offset.
+ *
  * Revision 1.38  2006/01/16 20:21:18  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -486,7 +489,7 @@ int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
         pointObj p;
         rectObj r;
 
-        if(msGetLabelSize(string, label, &r, fontset, scalefactor, MS_TRUE) == -1) return(-1);
+        if(msGetLabelSize(string, label, &r, fontset, scalefactor, MS_FALSE) == -1) return(-1);
         p = get_metrics(&labelPnt, label->position, r,
                                    label->offsetx,
                                    label->offsety,
