@@ -15,7 +15,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.0
 ------------------------------
 
-- Fix the memory allocation bug in sdeShapeCopy (Bug 1606)
+- Close file handle when saving symbolset.
+
+- Fix the memory allocation bug in sdeShapeCopy (Bug 1606).
+
 - Fixed OGR WKT support (Bug 1614). 
 
 Version 4.8.0-rc2 (2006-01-09)
