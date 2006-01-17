@@ -437,7 +437,7 @@ Currently supported classes, properties and methods:
            [my_tag] and would like it to be replaced by "value_of_my_tag"
            he would do :
               $tmparray["my_tag"] = "value_of_my_tag";
-              $map->processtemplate($tmparray, MS_FASLE);
+              $map->processtemplate($tmparray, MS_FALSE);
          
    string processquerytemplate(array params, boolean generateimages)     
        Process query template files and return the resut in a buffer.
