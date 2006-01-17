@@ -16,6 +16,7 @@ Version 4.8.0
 ------------------------------
 
 - Fix the memory allocation bug in sdeShapeCopy (Bug 1606)
+- Fixed OGR WKT support (Bug 1614). 
 
 Version 4.8.0-rc2 (2006-01-09)
 ------------------------------
