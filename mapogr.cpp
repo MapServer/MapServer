@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.94  2006/01/17 02:31:51  frank
+ * fixed ogr wkt support - bug 1614
+ *
  * Revision 1.93  2005/11/01 19:38:13  frank
  * Avoid using _2D geometry API if built with old GDAL/OGR.
  *
@@ -609,7 +612,8 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
           return ogrConvertGeometry((OGRGeometry *)hGeometry,
                                     psShape,  MS_LAYER_POLYGON);
     }
-        return MS_FALSE;
+    else
+        return MS_FAILURE;
 }
 
 
@@ -2120,6 +2124,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               c->label.angle = poLabelStyle->Angle(bIsNull);
 
               c->label.size = (int)poLabelStyle->Size(bIsNull);
+              if( c->label.size < 1 ) /* no point dropping to zero size */
+                  c->label.size = 1;
 
               // msDebug("** Label size=%d, angle=%f, string=%s **\n", c->label.size, c->label.angle, poLabelStyle->TextString(bIsNull));
 
@@ -2401,7 +2407,7 @@ shapeObj *msOGRShapeFromWKT(const char *string)
   
     if( msOGRGeometryToShape( hGeom, shape, 
                               wkbFlatten(OGR_G_GetGeometryType(hGeom)) )
-                              == MS_FALSE )
+                              == MS_FAILURE )
     {
         free( shape );
         return NULL;
