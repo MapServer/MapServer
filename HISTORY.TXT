@@ -22,6 +22,8 @@ CVS HEAD (4.9-dev)
 
 - Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
 
+- Finished implementation of OGR Shape2WKT function (Bug 1614).
+
 
 
 Version 4.8.0-rc2 (2006-01-09)

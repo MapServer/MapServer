@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.95  2006/01/18 04:35:52  frank
+ * completed implementation of shape2wkt
+ *
  * Revision 1.94  2006/01/17 02:31:51  frank
  * fixed ogr wkt support - bug 1614
  *
@@ -603,14 +606,16 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
     if (hGeometry && psShape && nType > 0)
     {
         if (nType == wkbPoint)
-          return ogrConvertGeometry((OGRGeometry *)hGeometry,
-                                    psShape,  MS_LAYER_POINT);
+            return ogrConvertGeometry((OGRGeometry *)hGeometry,
+                                      psShape,  MS_LAYER_POINT);
         else if (nType == wkbLineString)
-          return ogrConvertGeometry((OGRGeometry *)hGeometry,
-                                    psShape,  MS_LAYER_LINE);
+            return ogrConvertGeometry((OGRGeometry *)hGeometry,
+                                      psShape,  MS_LAYER_LINE);
         else if (nType == wkbPolygon)
-          return ogrConvertGeometry((OGRGeometry *)hGeometry,
-                                    psShape,  MS_LAYER_POLYGON);
+            return ogrConvertGeometry((OGRGeometry *)hGeometry,
+                                      psShape,  MS_LAYER_POLYGON);
+        else
+            return MS_FAILURE;
     }
     else
         return MS_FAILURE;
@@ -2430,6 +2435,7 @@ char *msOGRShapeToWKT(shapeObj *shape)
 #ifdef USE_OGR
     OGRGeometryH hGeom = NULL;
     int          i;
+    char        *wkt = NULL;
 
     if(!shape) 
         return NULL;
@@ -2500,10 +2506,14 @@ char *msOGRShapeToWKT(shapeObj *shape)
 
     if( hGeom != NULL )
     {
-        
+        char *pszOGRWkt;
+
+        OGR_G_ExportToWkt( hGeom, &pszOGRWkt );
+        wkt = strdup( pszOGRWkt );
+        CPLFree( pszOGRWkt );
     }
 
-    return NULL;
+    return wkt;
 #else
     msSetError(MS_OGRERR, "OGR support is not available.", "msOGRShapeToWKT()");
     return NULL;
