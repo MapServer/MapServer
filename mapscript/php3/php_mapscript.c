@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.243  2006/01/18 00:39:13  dan
+ * Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
+ *
  * Revision 1.242  2005/12/20 20:54:16  assefa
  * Initialize variable (Bug 1584)
  *
@@ -624,6 +627,7 @@ DLEXPORT void php3_ms_line_point(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_fromwkt(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_add(INTERNAL_FUNCTION_PARAMETERS);
@@ -636,6 +640,7 @@ DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_towkt(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS);
@@ -887,6 +892,7 @@ function_entry phpms_functions[] = {
     {"ms_newpointobj",  php3_ms_point_new,      NULL},
     {"ms_newlineobj",   php3_ms_line_new,       NULL},
     {"ms_newshapeobj",  php3_ms_shape_new,      NULL},
+    {"ms_shapeobjfromwkt", php3_ms_shape_fromwkt,  NULL},
     {"ms_newshapefileobj", php3_ms_shapefile_new,  NULL},
     {"ms_newrectobj",   php3_ms_rect_new,       NULL},
     {"ms_getcwd",       php3_ms_getcwd,         NULL},
@@ -1112,7 +1118,7 @@ function_entry php_class_class_functions[] = {
 
 function_entry php_point_class_functions[] = {
     {"setxy",           php3_ms_point_setXY,            NULL},    
-    {"setxyz",           php3_ms_point_setXYZ,            NULL},    
+    {"setxyz",          php3_ms_point_setXYZ,           NULL},    
     {"project",         php3_ms_point_project,          NULL},    
     {"draw",            php3_ms_point_draw,             NULL},    
     {"distancetopoint", php3_ms_point_distanceToPoint,  NULL},    
@@ -1126,7 +1132,7 @@ function_entry php_line_class_functions[] = {
     {"project",         php3_ms_line_project,           NULL},    
     {"add",             php3_ms_line_add,               NULL},    
     {"addxy",           php3_ms_line_addXY,             NULL},    
-    {"addxyz",           php3_ms_line_addXYZ,             NULL},    
+    {"addxyz",          php3_ms_line_addXYZ,            NULL},    
     {"point",           php3_ms_line_point,             NULL},    
     {"free",            php3_ms_line_free,              NULL},    
     {NULL, NULL, NULL}
@@ -1143,8 +1149,9 @@ function_entry php_shape_class_functions[] = {
     {"getvalue",        php3_ms_shape_getvalue,         NULL},
     {"getpointusingmeasure", php3_ms_shape_getpointusingmeasure, NULL},
     {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
-    {"buffer", php3_ms_shape_buffer, NULL},
-    {"convexhull", php3_ms_shape_convexhull, NULL},
+    {"buffer",          php3_ms_shape_buffer,           NULL},
+    {"convexhull",      php3_ms_shape_convexhull,       NULL},
+    {"towkt",           php3_ms_shape_towkt,            NULL},
     {"free",            php3_ms_shape_free,             NULL},
     {NULL, NULL, NULL}
 };
@@ -10469,6 +10476,39 @@ DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /**********************************************************************
+ *                        ms_newShapeObj()
+ **********************************************************************/
+
+/* {{{ proto shapeObj ms_shapeObjFromWkt()
+   Create a new shapeObj instance from a WKT string. */
+
+DLEXPORT void php3_ms_shape_fromwkt(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pWkt;
+    shapeObj *pNewShape;
+    HashTable   *list=NULL;
+
+    if (getParameters(ht, 1, &pWkt) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pWkt);
+
+    if ((pNewShape = msShapeFromWKT(pWkt->value.str.val)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        RETURN_FALSE;
+    }
+
+    /* Return shape object */
+    _phpms_build_shape_object(pNewShape, PHPMS_GLOBAL(le_msshape_new), NULL,
+                              list, return_value TSRMLS_CC);
+}
+/* }}} */
+
+
+/**********************************************************************
  *                        shape->set()
  **********************************************************************/
 
@@ -11067,6 +11107,43 @@ DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS)
 }
    
  
+/**********************************************************************
+ *                        shape->toWkt()
+ **********************************************************************/
+/* {{{ proto string shape.toWkt()
+   Returns WKT representation of geometry. */
+
+DLEXPORT void php3_ms_shape_towkt(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    shapeObj    *self;
+    HashTable   *list=NULL;
+    char        *pszWKT = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+
+    if (self && (pszWKT = msShapeToWKT(self)) )
+    {
+        RETVAL_STRING(pszWKT, 1);
+        msFree(pszWKT);
+        return;
+    }
+
+    RETURN_STRING("", 1);
+}
+/* }}} */
+
+
 /**********************************************************************
  *                        shape->free()
  **********************************************************************/
@@ -13756,7 +13833,6 @@ DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS)
     symbolObj *self;
     pval   *pFile, *pThis;
     HashTable   *list=NULL;
-    pval        **pValue = NULL;
  
 
     pThis = getThis();

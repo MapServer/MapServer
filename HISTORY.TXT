@@ -17,7 +17,10 @@ CVS HEAD (4.9-dev)
 ------------------
 
 - Fix the memory allocation bug in sdeShapeCopy (Bug 1606)
+
 - Fixed OGR WKT support (Bug 1614). 
+
+- Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
 
 
 

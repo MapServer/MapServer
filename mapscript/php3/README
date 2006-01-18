@@ -1170,6 +1170,9 @@ Constructor:
         'type' is one of MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON or
         MS_SHAPE_NULL
 
+   ShapeObj ms_shapeObjFromWkt(string wkt)
+        Creates new shape object from WKT string.
+
  Members:
 
    string  text
@@ -1238,6 +1241,9 @@ Constructor:
         Returns a shape object representing the convex hull of the current
         shape object. Only available if php/mapscript is built with GEOS 
         library.
+
+   string toWkt()
+        Returns WKT representation of the shape's geometry.
 
  RectObj Class:
  --------------
