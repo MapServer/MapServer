@@ -21,6 +21,9 @@ Version 4.8.0
 
 - Fixed OGR WKT support (Bug 1614). 
 
+- Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
+
+
 Version 4.8.0-rc2 (2006-01-09)
 ------------------------------
 
