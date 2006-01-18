@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/01/18 07:15:28  sdlime
+ * Update GEOS toWKT function to produce a malloc'd pointer. Updated shape.i to produce a new object. (bug 1466)
+ *
+ * Revision 1.14.2.1  2006/01/18 07:14:38  sdlime
+ * Update GEOS toWKT function to produce a malloc'd pointer. Updated shape.i to produce a new object. (bug 1466)
+ *
  * Revision 1.14  2005/10/31 04:59:43  sdlime
  * Now catching exceptions when reading WKT strings.
  *
@@ -728,6 +734,8 @@ shapeObj *msGEOSShapeFromWKT(const char *string)
 char *msGEOSShapeToWKT(shapeObj *shape)
 {
 #ifdef USE_GEOS
+  char *wkt=NULL;
+
   if(!shape) 
     return NULL;
 
@@ -737,7 +745,9 @@ char *msGEOSShapeToWKT(shapeObj *shape)
   if(!g) 
     return NULL;
 
-  return (char *) g->toString().c_str();
+  wkt = strdup((char *) g->toString().c_str());
+
+  return wkt;
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSShapeToWKT()");
   return NULL;
