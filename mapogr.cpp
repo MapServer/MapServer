@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.93.2.2  2006/01/18 04:40:56  frank
+ * finished implementation of ogr shape2wkt
+ *
  * Revision 1.93.2.1  2006/01/17 02:31:31  frank
  * fixed ogr wkt support - bug 1614
  *
@@ -611,6 +614,8 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
         else if (nType == wkbPolygon)
           return ogrConvertGeometry((OGRGeometry *)hGeometry,
                                     psShape,  MS_LAYER_POLYGON);
+        else
+            return MS_FAILURE;
     }
     else
         return MS_FAILURE;
@@ -2430,6 +2435,7 @@ char *msOGRShapeToWKT(shapeObj *shape)
 #ifdef USE_OGR
     OGRGeometryH hGeom = NULL;
     int          i;
+    char        *wkt = NULL;
 
     if(!shape) 
         return NULL;
@@ -2500,10 +2506,14 @@ char *msOGRShapeToWKT(shapeObj *shape)
 
     if( hGeom != NULL )
     {
-        
+        char *pszOGRWkt;
+
+        OGR_G_ExportToWkt( hGeom, &pszOGRWkt );
+        wkt = strdup( pszOGRWkt );
+        CPLFree( pszOGRWkt );
     }
 
-    return NULL;
+    return wkt;
 #else
     msSetError(MS_OGRERR, "OGR support is not available.", "msOGRShapeToWKT()");
     return NULL;
