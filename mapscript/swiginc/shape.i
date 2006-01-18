@@ -134,6 +134,7 @@
         return(msCopyShape(self, dest));
     }
 
+    %newobject toWKT;
     char *toWKT()
     {
         return msShapeToWKT(self);
