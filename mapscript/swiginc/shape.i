@@ -1,4 +1,4 @@
-/* ===========================================================================
+* ===========================================================================
    $Id$
  
    Project:  MapServer
@@ -32,32 +32,23 @@
 %extend shapeObj 
 {
   
-    shapeObj(int type=MS_SHAPE_NULL, char *wkt=NULL) 
+    shapeObj(int type=MS_SHAPE_NULL) 
     {
         int i;
         shapeObj *shape;
 
-	/* check for WKT string first */
-	if(wkt)
-	    shape = msShapeFromWKT(wkt);
-	else {
-            shape = (shapeObj *)malloc(sizeof(shapeObj));
-            if (!shape)
-                return NULL;
+	shape = (shapeObj *)malloc(sizeof(shapeObj));
+        if (!shape)
+            return NULL;
 
-            msInitShape(shape);
-            if(type >= 0) shape->type = type;
-        }
+        msInitShape(shape);
+        if(type >= 0) shape->type = type;
 
         /* Allocate memory for 4 values */
-        if ((shape->values = (char **)malloc(sizeof(char *)*4)) == NULL)
-        {
-            msSetError(MS_MEMERR, "Failed to allocate memory for values",
-                       "shapeObj()");
+        if ((shape->values = (char **)malloc(sizeof(char *)*4)) == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for values", "shapeObj()");
             return NULL;
-        }
-        else
-        {
+        } else {
             for (i=0; i<4; i++) shape->values[i] = strdup("");
         }
         shape->numvalues = 4;
@@ -69,6 +60,29 @@
     {
         msFreeShape(self);
         free(self);		
+    }
+
+    %newobject fromWKT;
+    static shapeObj *fromWKT(char *wkt)
+    {
+	shapeObj *shape;
+        int i;
+
+        if(!wkt) return NULL;
+
+        shape = msShapeFromWKT(wkt);
+	if(!shape) return NULL;
+
+        /* Allocate memory for 4 values */
+        if ((shape->values = (char **)malloc(sizeof(char *)*4)) == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for values", "fromWKT()");
+            return NULL;
+        } else {
+            for (i=0; i<4; i++) shape->values[i] = strdup("");
+        }
+        shape->numvalues = 4;
+
+	return shape;
     }
 
     int project(projectionObj *projin, projectionObj *projout) 
