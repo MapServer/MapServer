@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Move gBYTE_ORDER inside the pg layerinfo structure to allow for differently
+  byte ordered connections (bug 1587).
+
 - Fix the memory allocation bug in sdeShapeCopy (Bug 1606)
 
 - Fixed OGR WKT support (Bug 1614). 
@@ -1274,5 +1277,4 @@ Version 3.5.0 (2002-12-18)
 --------------------------
 
 - No Revision history before version 3.5
-
 
