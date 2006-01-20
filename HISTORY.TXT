@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- PHP : add shape->sontainsshape that uses geos lib (Bug 1623).
+
 - Move gBYTE_ORDER inside the pg layerinfo structure to allow for differently
   byte ordered connections (bug 1587).
 
