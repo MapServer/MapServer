@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/01/20 15:03:35  assefa
+ * Add containsshape function using uderlying GEOS function (Bug 1623).
+ *
  * Revision 1.53  2005/10/13 16:00:36  assefa
  * Add support for whichshape and nextshape (Bug 1491)
  * Adsd support for config setting/getting at the map level (Bug 1487).
@@ -304,6 +307,7 @@ pointObj        *shapeObj_getpointusingmeasure(shapeObj *self, double m);
 pointObj        *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point);
 shapeObj        *shapeObj_buffer(shapeObj *self, double width);
 shapeObj        *shapeObj_convexHull(shapeObj *self);
+int             shapeObj_contains_geos(shapeObj *self, shapeObj *poshape);
 
 rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);

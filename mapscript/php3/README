@@ -1242,6 +1242,11 @@ Constructor:
         shape object. Only available if php/mapscript is built with GEOS 
         library.
 
+   int containsShape(shapeobj shape)
+        Returns true if the shape given in argument is included inside 
+        the shape. Else returns false. Uses underlying GEOS msGEOSContains.
+
+
    string toWkt()
         Returns WKT representation of the shape's geometry.
 

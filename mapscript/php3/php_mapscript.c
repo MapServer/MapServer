@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.244  2006/01/20 15:03:35  assefa
+ * Add containsshape function using uderlying GEOS function (Bug 1623).
+ *
  * Revision 1.243  2006/01/18 00:39:13  dan
  * Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
  *
@@ -640,6 +643,7 @@ DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_contains_geos(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_towkt(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -1151,6 +1155,7 @@ function_entry php_shape_class_functions[] = {
     {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
     {"buffer",          php3_ms_shape_buffer,           NULL},
     {"convexhull",      php3_ms_shape_convexhull,       NULL},
+    {"containsshape",        php3_ms_shape_contains_geos,       NULL},
     {"towkt",           php3_ms_shape_towkt,            NULL},
     {"free",            php3_ms_shape_free,             NULL},
     {NULL, NULL, NULL}
@@ -10861,7 +10866,7 @@ DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS)
                                             PHPMS_GLOBAL(le_msshape_new),
                                             list TSRMLS_CC);
     poShape = 
-    (shapeObj *)_phpms_fetch_handle2(pShape, 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
                                      PHPMS_GLOBAL(le_msshape_ref),
                                      PHPMS_GLOBAL(le_msshape_new),
                                      list TSRMLS_CC);
@@ -11070,7 +11075,7 @@ DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS)
  
 
 /**********************************************************************
- *                        shape->buffer(width)
+ *                        shape->convexhull()
  **********************************************************************/
 /* {{{ proto int shape.convexhull()
    Given a shape, return a shape representing the convex hull using
@@ -11106,6 +11111,55 @@ DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS)
                               list, return_value TSRMLS_CC);
 }
    
+
+/**********************************************************************
+ *                        shape->contains_geos()
+ **********************************************************************/
+/* {{{ proto int shape.contains(shapeobj shape)
+   Return true or false if the given shape in argument 1 is contained
+   in the shape. Use3d underlying msGEOSContains GEOS library*/
+
+DLEXPORT void php3_ms_shape_contains_geos(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    if (shapeObj_contains_geos(self, poShape))
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE; 
+}
+ 
  
 /**********************************************************************
  *                        shape->toWkt()
