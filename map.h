@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.440  2006/01/20 06:06:53  sdlime
+ * Added contains operator to mapgeos.cpp and the Swig-based MapScript interface.
+ *
  * Revision 1.439  2006/01/16 20:21:18  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -2064,7 +2067,7 @@ MS_DLL_EXPORT shapeObj *msGEOSShapeFromWKT(const char *string);
 MS_DLL_EXPORT char *msGEOSShapeToWKT(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
-
+MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
 
 #endif
 

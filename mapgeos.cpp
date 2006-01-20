@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/01/20 06:06:53  sdlime
+ * Added contains operator to mapgeos.cpp and the Swig-based MapScript interface.
+ *
  * Revision 1.15  2006/01/18 07:15:28  sdlime
  * Update GEOS toWKT function to produce a malloc'd pointer. Updated shape.i to produce a new object. (bug 1466)
  *
@@ -811,5 +814,44 @@ shapeObj *msGEOSConvexHull(shapeObj *shape)
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSConvexHull()");
   return NULL;
+#endif
+}
+
+/*
+** Does shape1 contain shape2, returns MS_TRUE/MS_FALSE or -1 for an error.
+**
+** TODO: consider making this a more generic function for all binary operators.
+*/
+int msGEOSContains(shapeObj *shape1, shapeObj *shape2)
+{
+#ifdef USE_GEOS
+  if(!shape1 || !shape2)
+    return -1;
+
+  if(!shape1->geometry) /* if no geometry for shape1 then build one */
+    shape1->geometry = msGEOSShape2Geometry(shape1);
+  Geometry *g1 = (Geometry *) shape1->geometry;
+  if(!g1)
+    return -1;
+
+  if(!shape2->geometry) /* if no geometry for shape2 then build one */
+    shape2->geometry = msGEOSShape2Geometry(shape2);
+  Geometry *g2 = (Geometry *) shape2->geometry;
+  if(!g2)
+    return -1;
+
+  try {
+    bool result = g1->contains(g2);
+    return result;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSContains()", (char *) ge->toString().c_str());
+    delete ge;
+    return -1;
+  } catch (...) {
+    return -1;
+  }
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSContains()");
+  return MS_FALSE;
 #endif
 }

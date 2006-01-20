@@ -152,6 +152,11 @@
        return msGEOSConvexHull(self);
     }
 
+    int contains(shapeObj *shape)
+    {
+       return msGEOSContains(self, shape);
+    }
+
     char *getValue(int i) 
     {
         if (i >= 0 && i < self->numvalues && self->values)
