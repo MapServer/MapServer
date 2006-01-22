@@ -29,6 +29,8 @@ CVS HEAD (4.9-dev)
 
 - Finished implementation of OGR Shape2WKT function (Bug 1614).
 
+- Detect/add -DHAVE_VSNPRINTF in configure script (bug 1613)
+
 
 
 Version 4.8.0-rc2 (2006-01-09)
