@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2006/01/23 22:42:53  julien
+ * Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569)
+ *
  * Revision 1.78  2005/11/21 23:22:15  sdlime
  * Trivial comment fixes.
  *
@@ -344,13 +347,15 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s<gml:MultiLineString>\n", tab);
 
       for(j=0; j<shape->numlines; j++) {
-        msIO_fprintf(stream, "%s  <gml:LineString>\n", tab); /* no srsname at this point */
+        msIO_fprintf(stream, "%s  <gml:lineStringMember>\n", tab); /* no srsname at this point */
+        msIO_fprintf(stream, "%s    <gml:LineString>\n", tab); /* no srsname at this point */
 	
-        msIO_fprintf(stream, "%s    <gml:coordinates>", tab);
+        msIO_fprintf(stream, "%s      <gml:coordinates>", tab);
         for(i=0; i<shape->line[j].numpoints; i++)
 	  msIO_fprintf(stream, "%f,%f ", shape->line[j].point[i].x, shape->line[j].point[i].y);
         msIO_fprintf(stream, "</gml:coordinates>\n");
-        msIO_fprintf(stream, "%s  </gml:LineString>\n", tab);
+        msIO_fprintf(stream, "%s    </gml:LineString>\n", tab);
+        msIO_fprintf(stream, "%s  </gml:lineStringMember>\n", tab);
       }
       
       msIO_fprintf(stream, "%s</gml:MultiLineString>\n", tab);
