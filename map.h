@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437.2.2  2006/01/25 22:55:17  dan
+ * Update for 4.8.0-rc3
+ *
  * Revision 1.437.2.1  2006/01/16 20:41:22  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -372,7 +375,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.0-rc2"
+#define MS_VERSION "4.8.0-rc3"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

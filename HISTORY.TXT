@@ -15,6 +15,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.0
 ------------------------------
 
+
+Version 4.8.0-rc3 (2006-01-25)
+------------------------------
+
 - Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569).
 
 - Move gBYTE_ORDER inside the pg layerinfo structure to allow for differently
