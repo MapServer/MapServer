@@ -31,7 +31,8 @@ CVS HEAD (4.9-dev)
 
 - Finished implementation of OGR Shape2WKT function (Bug 1614).
 
-- Detect/add -DHAVE_VSNPRINTF in configure script (bug 1613)
+- Detect/add -DHAVE_VSNPRINTF in configure script and prevent systematic
+  buffer overflow in imagemap code when vsnprintf() not available (bug 1613)
 
 
 

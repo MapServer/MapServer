@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/01/25 16:11:34  dan
+ * Prevent systematic buffer overflow in imagemap code when vsnprintf()
+ * is not available (bug 1613)
+ *
  * Revision 1.24  2006/01/16 20:21:18  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -187,7 +191,14 @@ static void im_iprintf(pString *ps, const char *fmt, ...) {
 		n = vsnprintf((*(ps->string)) + ps->string_len, 
 			      remaining, fmt, ap);
 #else
-		n = vsprintf((*(ps->string)) + ps->string_len, fmt, ap);
+                /* If vsnprintf() is not available then require a minimum
+                 * of 512 bytes of free space to prevent a buffer overflow
+                 * This is not fully bulletproof but should help, see bug 1613
+                 */
+                if (remaining < 512)
+                    n = -1;  
+                else
+                    n = vsprintf((*(ps->string)) + ps->string_len, fmt, ap);
 #endif
 		va_end(ap);
 		/* if that worked, we're done! */
