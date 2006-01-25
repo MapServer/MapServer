@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.171  2006/01/25 17:35:38  assefa
+ * SLD / stretch images when using FE (Bug 1627)
+ *
  * Revision 1.170  2005/12/15 14:11:28  assefa
  * Fix problem with WMS 1.1.1 OGC test problem with get capabilites dtd (Bug 1576)
  *
@@ -2279,12 +2282,8 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       map->querymap.status = MS_ON;
       map->querymap.style = MS_SELECTED;
 
-      img = msImageCreate(map->width, map->height, map->outputformat,
-                          map->web.imagepath, map->web.imageurl,
-                          map);
-      map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-      msCalculateScale(map->extent, map->units, map->width,
-                       map->height, map->resolution, &map->scale);
+      img = msPrepareImage(map, MS_TRUE);
+      
       /* compute layer scale factors now */
       for(i=0;i<map->numlayers; i++) {
           if(map->layers[i].sizeunits != MS_PIXELS)

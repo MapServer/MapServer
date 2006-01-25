@@ -15,6 +15,7 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD (4.9-dev)
 ------------------
+- WMS : SLD / stretch images when using FE (Bug 1627)
 
 - Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569).
 
