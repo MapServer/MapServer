@@ -30,7 +30,8 @@ Version 4.8.0
 
 - Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
 
-- Detect/add -DHAVE_VSNPRINTF in configure script (bug 1613)
+- Detect/add -DHAVE_VSNPRINTF in configure script and prevent systematic
+  buffer overflow in imagemap code when vsnprintf() not available (bug 1613)
 
 
 Version 4.8.0-rc2 (2006-01-09)
