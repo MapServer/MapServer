@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.441  2006/01/30 15:06:57  dan
+ * Treat classindex as an int instead of a char in resultCacheMemberObj to
+ * prevent problems with more than 128 classes (bug 1633)
+ *
  * Revision 1.440  2006/01/20 06:06:53  sdlime
  * Added contains operator to mapgeos.cpp and the Swig-based MapScript interface.
  *
@@ -911,7 +915,7 @@ typedef struct {
 typedef struct {
   long shapeindex;
   int tileindex;
-  char classindex;
+  int classindex;
 } resultCacheMemberObj;
 #ifdef SWIG
 %mutable;
