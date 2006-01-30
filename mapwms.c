@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.172  2006/01/30 14:54:10  assefa
+ * Adjust extent using current width/height before loading all parameters
+ * (Bug 1627).
+ *
  * Revision 1.171  2006/01/25 17:35:38  assefa
  * SLD / stretch images when using FE (Bug 1627)
  *
@@ -711,8 +715,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   /* request, but for now we assume all are optional and the map file */
   /* defaults will apply. */
 
-  for(i=0; map && i<numentries; i++)
-  {
+   msAdjustExtent(&(map->extent), map->width, map->height);
+
+   for(i=0; map && i<numentries; i++)
+   {
     /* getMap parameters */
     if (strcasecmp(names[i], "LAYERS") == 0)
     {
