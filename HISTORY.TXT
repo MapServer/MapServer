@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.0
 ------------------------------
 
+- Treat classindex as an int instead of a char in resultCacheMemberObj to
+  prevent problems with more than 128 classes (bug 1633)
+
 
 Version 4.8.0-rc3 (2006-01-25)
 ------------------------------

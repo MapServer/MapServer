@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437.2.3  2006/01/30 15:06:32  dan
+ * Treat classindex as an int instead of a char in resultCacheMemberObj to
+ * prevent problems with more than 128 classes (bug 1633)
+ *
  * Revision 1.437.2.2  2006/01/25 22:55:17  dan
  * Update for 4.8.0-rc3
  *
@@ -908,7 +912,7 @@ typedef struct {
 typedef struct {
   long shapeindex;
   int tileindex;
-  char classindex;
+  int classindex;
 } resultCacheMemberObj;
 #ifdef SWIG
 %mutable;
