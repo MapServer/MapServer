@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.109  2006/01/31 17:06:10  assefa
+ * Add connectiontype initialization logic when the layer's virtual
+ * table is initialized (Bug 1615)
+ *
  * Revision 1.108  2005/10/29 02:03:43  jani
  * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
  *
@@ -1138,7 +1142,7 @@ static int
 createVirtualTable(layerVTableObj **vtable)
 {
     *vtable = malloc(sizeof(**vtable));
-    if ( ! vtable) {
+    if ( ! *vtable) {
         return MS_FAILURE;
     }
     return populateVirtualTable(*vtable);
@@ -1160,6 +1164,17 @@ msInitializeVirtualTable(layerObj *layer)
         destroyVirtualTable(&layer->vtable);
     }
     createVirtualTable(&layer->vtable);
+
+    
+    if(layer->features && layer->connectiontype != MS_GRATICULE ) 
+      layer->connectiontype = MS_INLINE;
+
+    if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
+      layer->connectiontype = MS_TILED_SHAPEFILE;
+
+    if(layer->type == MS_LAYER_RASTER )
+      layer->connectiontype = MS_RASTER;
+    
 
     switch(layer->connectiontype) {
         case(MS_INLINE):
