@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/01/31 17:09:28  sdlime
+ * Added function to 'commify' a number stored as a string. (supports bug 1636)
+ *
  * Revision 1.33  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -877,4 +880,51 @@ char *msHashString(const char *pszStr)
     }
 
     return pszOutBuf;
+}
+
+char *msCommifyString(char *str, char comma)
+{
+	int i, j, old_length, new_length;
+  int num_commas=0, num_decimal_points=0;
+  int add_commas;
+
+  if(!str) return NULL;
+
+  num_decimal_points = countChars(str, '.');
+  if(num_decimal_points > 1) return str;
+
+  old_length = strlen(str);
+  if(num_decimal_points == 0) {
+    num_commas =  floor((old_length - 1)/3);
+    add_commas=1; /* add commas right away */
+  } else {
+    num_commas = floor(((old_length - strlen(strchr(str, '.'))) - 1)/3);
+    add_commas=0; /* wait until after the decimal point */
+  }
+
+  if(num_commas < 1) return str; /* nothing to add */
+
+  new_length = old_length + num_commas;
+  str = (char *) realloc(str, new_length+1);
+  str[new_length] = '\0';
+
+  j = 0;
+  for(i=new_length-1;i>=0;i--) { /* step backwards through the string */
+
+    if(num_decimal_points == 1 &&  add_commas == 0) { /* to the right of the decimal point, no commas */
+      str[i] = str[i-num_commas];
+      if(str[i] == '.') add_commas = 1;
+    } else if(add_commas == 1 && j>2) { /* need a comma */
+      str[i] = comma;
+      num_commas--; /* need one fewer now */
+      j = 0; /* reset */
+    } else {
+      str[i] = str[i-num_commas]; /* shift to the right */
+      j++;
+    }
+
+    if(num_commas == 0) break; /* done, rest of string is ok "as is" */
+  }
+
+  return str;
 }

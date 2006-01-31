@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.442  2006/01/31 17:09:28  sdlime
+ * Added function to 'commify' a number stored as a string. (supports bug 1636)
+ *
  * Revision 1.441  2006/01/30 15:06:57  dan
  * Treat classindex as an int instead of a char in resultCacheMemberObj to
  * prevent problems with more than 128 classes (bug 1633)
@@ -1544,6 +1547,7 @@ MS_DLL_EXPORT int msIsXMLTagValid(const char *string);
 MS_DLL_EXPORT char *strcatalloc(char *pszDest, char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
+MS_DLL_EXPORT char *msCommifyString(char *str, char comma);
 
 #ifdef NEED_STRDUP
 MS_DLL_EXPORT char *strdup(char *s);
