@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Reverted behaviour to pre-1.61:
+  do not allow for use of the FILTERITEM attribute (bug 1629)
+
 - Treat classindex as an int instead of a char in resultCacheMemberObj to
   prevent problems with more than 128 classes (bug 1633)
 
