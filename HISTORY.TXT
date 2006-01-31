@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Added modulus operator to mapparser.y.
+
+- Added new support for [item...] tag in CGI-based templates (bug 1636)
+
 - Reverted behaviour to pre-1.61:
   do not allow for use of the FILTERITEM attribute (bug 1629)
 

@@ -40,7 +40,7 @@ int msyyresult;
 %left RE EQ NE LT GT LE GE IN IEQ
 %left LENGTH
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
 %left NEG
 %right '^'
 
@@ -323,8 +323,9 @@ math_exp: NUMBER
        | math_exp '+' math_exp   { $$ = $1 + $3; }
        | math_exp '-' math_exp   { $$ = $1 - $3; }
        | math_exp '*' math_exp   { $$ = $1 * $3; }
+       | math_exp '%' math_exp   { $$ = (int)$1 * (int)$3; }
        | math_exp '/' math_exp   {
-	                           if($3 == 0.0) {
+	         if($3 == 0.0) {
 				     msyyerror("division by zero");
 				     return(-1);
 				   } else
