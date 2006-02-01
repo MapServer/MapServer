@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+-  When generating an ogc filter for class regex expressions, use
+   the backslah as the default escape character (Bug 1637)
+
 - Add connectiontype initialization logic when the layer's virtual
   table is initialized (Bug 1615) 
 
