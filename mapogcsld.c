@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.59  2006/02/01 19:35:40  assefa
+ * When generating an ogc filter for class regex expressions, use
+ * the backslah as the default escape character (Bug 1637)
+ *
  * Revision 1.58  2005/12/06 15:06:24  assefa
  * Error parsing font parameters with the keyword "normal"
  *
@@ -4889,10 +4893,10 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
             if (psClass->layer && psClass->layer->classitem)
             {
                 if (pszWfsFilter)
-                  sprintf(szBuffer, "<ogc:Filter><ogc:And>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:And></ogc:Filter>\n", 
+                  sprintf(szBuffer, "<ogc:Filter><ogc:And>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"\\\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:And></ogc:Filter>\n", 
                         pszWfsFilter, psClass->layer->classitem, psClass->expression.string);
                 else
-                  sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 
+                  sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"\\\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 
                           psClass->layer->classitem, psClass->expression.string);
                 pszFilter = strdup(szBuffer);
             }
