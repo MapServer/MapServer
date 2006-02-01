@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/02/01 04:08:35  sdlime
+ * Converted strncmp to strcmp in shp2img.c to avoid parameter confusion and for consistency. (bug 1635)
+ *
  * Revision 1.17  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -91,7 +94,7 @@ int main(int argc, char *argv[])
   
   for(i=1;i<argc;i++) { /* Step though the user arguments, 1st to find map file */
  
-    if(strncmp(argv[i],"-m",2) == 0) {
+    if(strcmp(argv[i],"-m") == 0) {
       map = msLoadMap(argv[i+1], NULL);
       if(!map) {
 	msWriteError(stderr);
@@ -107,11 +110,11 @@ int main(int argc, char *argv[])
 
   for(i=1;i<argc;i++) { /* Step though the user arguments */
 
-    if(strncmp(argv[i],"-m",2) == 0) { /* skip it */
+    if(strcmp(argv[i],"-m") == 0) { /* skip it */
       i+=1;
     }
 
-    if(strncmp(argv[i],"-p",2) == 0) {
+    if(strcmp(argv[i],"-p") == 0) {
         int pause_length = atoi(argv[i+1]);
         time_t start_time = time(NULL);
 
@@ -122,12 +125,12 @@ int main(int argc, char *argv[])
         i+=1;
     }
 
-    if(strncmp(argv[i],"-o",2) == 0) { /* load the output image filename */
+    if(strcmp(argv[i],"-o") == 0) { /* load the output image filename */
       outfile = argv[i+1];
       i+=1;
     }
 
-    if(strncmp(argv[i],"-i",2) == 0) { 
+    if(strcmp(argv[i],"-i") == 0) { 
       outputFormatObj *format;
 
       format = msSelectOutputFormat( map, argv[i+1] );
@@ -144,7 +147,7 @@ int main(int argc, char *argv[])
       i+=1;
     }
 
-    if(strncmp(argv[i],"-d",2) == 0) { /* swap layer data */
+    if(strcmp(argv[i],"-d") == 0) { /* swap layer data */
       for(j=0; j<map->numlayers; j++) {
 	 if(strcmp(map->layers[j].name, argv[i+1]) == 0) {
 	   free(map->layers[j].data);
@@ -155,10 +158,10 @@ int main(int argc, char *argv[])
       i+=2;
     }
 
-    if(strncmp(argv[i], "-t", 2) == 0) /* transparency */
+    if(strcmp(argv[i], "-t") == 0) /* transparency */
       map->transparent = MS_ON;
     
-    if(strncmp(argv[i], "-all_debug", 10) == 0) /* debug */
+    if(strcmp(argv[i], "-all_debug") == 0) /* debug */
     {
         int debug_level = atoi(argv[++i]);
 
@@ -170,12 +173,12 @@ int main(int argc, char *argv[])
             putenv( "MS_ERRORFILE=stderr" );
     }
     
-    if(strncmp(argv[i], "-map_debug", 10) == 0) /* debug */
+    if(strcmp(argv[i], "-map_debug") == 0) /* debug */
     {
         map->debug = atoi(argv[++i]);
     }
     
-    if(strncmp(argv[i], "-layer_debug", 12) == 0) /* debug */
+    if(strcmp(argv[i], "-layer_debug") == 0) /* debug */
     {
         const char *layer_name = argv[++i];
         int debug_level = atoi(argv[++i]);
@@ -193,7 +196,7 @@ int main(int argc, char *argv[])
                      layer_name );
     }
     
-    if(strncmp(argv[i],"-e",2) == 0) { /* change extent */
+    if(strcmp(argv[i],"-e") == 0) { /* change extent */
       map->extent.minx = atof(argv[i+1]);
       map->extent.miny = atof(argv[i+2]);
       map->extent.maxx = atof(argv[i+3]);
@@ -201,7 +204,7 @@ int main(int argc, char *argv[])
       i+=4;
     }
 
-    if(strncmp(argv[i],"-l",2) == 0) { /* load layer list */
+    if(strcmp(argv[i],"-l") == 0) { /* load layer list */
       layers = split(argv[i+1], ' ', &(num_layers));
 
       for(j=0; j<map->numlayers; j++) {
