@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Add connectiontype initialization logic when the layer's virtual
+  table is initialized (Bug 1615) 
+
 - Added modulus operator to mapparser.y.
 
 - Added new support for [item...] tag in CGI-based templates (bug 1636)
