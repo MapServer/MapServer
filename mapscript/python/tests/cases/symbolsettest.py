@@ -87,6 +87,13 @@ class SymbolSetTestCase(unittest.TestCase):
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
 
+    def testError(self):
+        symbolset = mapscript.symbolSetObj(SYMBOLSET)
+        symbola = mapscript.symbolObj('testa')
+        symbolb = mapscript.symbolObj('testb')
+        symbolset.appendSymbol(symbola) 
+        symbolset.appendSymbol(symbolb)
+        self.assertRaises(mapscript.MapServerError, symbolset.save, '/bogus/new_symbols.txt')
 
 class MapSymbolSetTestCase(MapTestCase):
 

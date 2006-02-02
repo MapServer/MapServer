@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79.2.1  2006/01/16 20:41:22  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.79  2005/11/28 04:24:59  sdlime
  * Changed msAddLabel() to use msCopyStyle() rather than doing on its own. This should fix some de-allocation errors folks have been having. (bug 1398)
  *
@@ -285,7 +288,8 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 ** LL corner of the text to be rendered, this is first line for TrueType fonts.
 */
 
-int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor) /* assumes an angle of 0 */
+ /* assumes an angle of 0 regardless of the settings in the labelObj */
+int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
 {
   int size;
 
@@ -307,7 +311,6 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
       return(-1);
     }
 
-
     error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
     if(error) {
       msSetError(MS_TTFERR, error, "msGetLabelSize()");
@@ -320,8 +323,10 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     rect->maxy = bbox[1];
 
     // bug 1449 fix (adjust baseline)
-    label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
-    label->offsetx += MS_NINT(bbox[0] / 2); // optional?
+    if(adjustBaseline) {
+      label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
+      label->offsetx += MS_NINT(bbox[0] / 2); // optional?
+    }
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
     return(-1);
@@ -610,7 +615,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   label.outlinecolor = style->outlinecolor;
   label.antialias = symbol->antialias;
   
-  if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset, scalefactor) == -1)
+  if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE) == -1)
     return(-1);
 
   label_width = (int) label_rect.maxx - (int) label_rect.minx;
