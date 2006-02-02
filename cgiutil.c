@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/02/02 00:29:36  sdlime
+ * Fixed bug with default content-type and POST requests. (bug 1628)
+ *
  * Revision 1.22  2005/07/22 17:26:11  frank
  * bug 1259: fixed POST support in fastcgi mode
  *
@@ -129,7 +132,13 @@ int loadParams(cgiRequestObj *request){
     char *post_data;
 
     request->type = MS_POST_REQUEST;
-    request->contenttype = strdup(getenv("CONTENT_TYPE"));
+ 
+    if (s = getenv("CONTENT_TYPE"))
+      request->contenttype = strdup(s);
+     /* we've to set default content-type which is
+      * application/octet-stream according to
+      * W3 RFC 2626 section 7.2.1 */
+    else request->contenttype = strdup("application/octet-stream");
 
     post_data = readPostBody( request );
     if(strcmp(request->contenttype, "application/x-www-form-urlencoded")) 
