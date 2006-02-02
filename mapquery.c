@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2006/02/02 01:00:11  sdlime
+ * Moved the code to free previous query results a bit higher in the msQueryByAttribute() function.
+ *
  * Revision 1.90  2006/02/02 00:53:16  sdlime
  * Fixed bug when doing repeated queries where you make a layer not queryable then it is possible the results for that layer can persist. (bug 1550)
  *
@@ -296,8 +299,15 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   lp = &(map->layers[qlayer]);
 
+  /* free any previous search results, do now in case one of the following tests fails */
+  if(lp->resultcache) {
+    if(lp->resultcache->results) free(lp->resultcache->results);
+    free(lp->resultcache);
+    lp->resultcache = NULL;
+  }
+
   if(!msIsLayerQueryable(lp)) {
-    msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByAttributes()"); 
+    msSetError(MS_QUERYERR, "Requested layer has no templates defined so is not queryable.", "msQueryByAttributes()"); 
     return(MS_FAILURE);
   }
 
@@ -322,13 +332,6 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   msLoadExpressionString(&(lp->filter), qstring);
 
   msInitShape(&shape);
-
-  /* free any previous search results */
-  if(lp->resultcache) {
-    if(lp->resultcache->results) free(lp->resultcache->results);
-    free(lp->resultcache);
-    lp->resultcache = NULL;
-  }
 
   /* open this layer */
   status = msLayerOpen(lp);
@@ -467,12 +470,11 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     }    
 
     /* Raster layers are handled specially. */
-    if( lp->type == MS_LAYER_RASTER )
-    {
-        if( msRasterQueryByRect( map, lp, rect ) == MS_FAILURE)
-            return MS_FAILURE;
+    if( lp->type == MS_LAYER_RASTER ) {
+      if( msRasterQueryByRect( map, lp, rect ) == MS_FAILURE)
+        return MS_FAILURE;
 
-        continue;
+      continue;
     }
 
     /* open this layer */
