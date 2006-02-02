@@ -117,8 +117,7 @@ class ShapeWKTTestCase(unittest.TestCase):
     
     def testSetPointWKT(self):
         # Create new instance and set/init from WKT
-        so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
-        so.setWKT(self.point_wkt)
+        so = mapscript.shapeObj.fromWKT(self.point_wkt)
         
         # expect one line with one point
         self.assert_(so.numlines == 1, so.numlines)
