@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2006/02/02 00:53:16  sdlime
+ * Fixed bug when doing repeated queries where you make a layer not queryable then it is possible the results for that layer can persist. (bug 1550)
+ *
  * Revision 1.89  2006/01/01 02:42:39  sdlime
  * The bounds that are part of the result cache are projected so there is no need to do any projection when computing the overall result set bounds.
  *
@@ -205,9 +208,7 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
 
   msInitShape(&shape);
 
-  if (!addtoquery)
-  {
-  /* free any previous search results, do it now in case one of the next few tests fail */
+  if (!addtoquery) {  
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
       free(lp->resultcache);
@@ -223,8 +224,7 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
   status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  if (!addtoquery || lp->resultcache == NULL)
-  {
+  if (!addtoquery || lp->resultcache == NULL) {
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
     lp->resultcache->results = NULL;
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
@@ -323,7 +323,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   msInitShape(&shape);
 
-  /* free any previous search results, do it now in case one of the next few tests fail */
+  /* free any previous search results */
   if(lp->resultcache) {
     if(lp->resultcache->results) free(lp->resultcache->results);
     free(lp->resultcache);
@@ -450,7 +450,6 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
-    if(!msIsLayerQueryable(lp)) continue;
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -459,6 +458,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
       lp->resultcache = NULL;
     }
 
+    if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
 
     if(map->scale > 0) {
@@ -622,7 +622,6 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     if(l == slayer) continue; /* skip the selection layer */
     
     lp = &(map->layers[l]);
-    if(!msIsLayerQueryable(lp)) continue;
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -630,7 +629,8 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       free(lp->resultcache);
       lp->resultcache = NULL;
     }
-    
+
+    if(!msIsLayerQueryable(lp)) continue;    
     if(lp->status == MS_OFF) continue;
     
     if(map->scale > 0) {
@@ -835,16 +835,15 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);    
-    if(!msIsLayerQueryable(lp)) continue;
 
-    /* free any previous search results, do it now in case one of the next */
-    /* few tests fail */
+    /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
       free(lp->resultcache);
       lp->resultcache = NULL;
     }
 
+    if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
 
     if(map->scale > 0) {
@@ -996,7 +995,6 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
  
   for(l=start; l>=stop; l--) { /* each layer */
     lp = &(map->layers[l]);
-    if(!msIsLayerQueryable(lp)) continue;
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1005,6 +1003,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
       lp->resultcache = NULL;
     }
 
+    if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
     
     if(map->scale > 0) {
@@ -1188,25 +1187,24 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
  */
 void msQueryFree(mapObj *map, int qlayer)
 {
-    int l; /* counters */
-    int start, stop=0;
-    layerObj *lp;
+  int l; /* counters */
+  int start, stop=0;
+  layerObj *lp;
     
-    if(qlayer < 0 || qlayer >= map->numlayers)
-      start = map->numlayers-1;
-    else
-      start = stop = qlayer;
+  if(qlayer < 0 || qlayer >= map->numlayers)
+    start = map->numlayers-1;
+  else
+    start = stop = qlayer;
 
-    for(l=start; l>=stop; l--) 
-    {
-        lp = &(map->layers[l]);
-        if(lp->resultcache) 
-        {
-            if(lp->resultcache->results) 
-              free(lp->resultcache->results);
-            free(lp->resultcache);
-            lp->resultcache = NULL;
-        }
+  for(l=start; l>=stop; l--) {
+    lp = &(map->layers[l]);
+        
+    if(lp->resultcache) {
+      if(lp->resultcache->results) 
+        free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
     }
+  }
 }
       
