@@ -12,11 +12,17 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.8.0
-------------------------------
+
+Version 4.8.0 (2006-02-02)
+--------------------------
 
 - Treat classindex as an int instead of a char in resultCacheMemberObj to
   prevent problems with more than 128 classes (bug 1633)
+
+- Fixed possible crash with default content-type and POST requests.(bug 1628)
+
+- Known issue: MapScript queryByAttributes() creates wrong WHERE clause on
+  postgis layers in some cases (patch available, see bug 1629)
 
 
 Version 4.8.0-rc3 (2006-01-25)
