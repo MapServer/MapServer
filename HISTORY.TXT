@@ -13,16 +13,65 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-CVS HEAD
---------
+Version 4.8.1 (2006-02-03)
+--------------------------
 
-Version 4.8.0-rc1 (2005-12-22)
+- Fixed bug introduced by previous fix to set default content-type in
+  POST requests. (bug 1628)
+
+
+Version 4.8.0 (2006-02-02)
+--------------------------
+
+- Treat classindex as an int instead of a char in resultCacheMemberObj to
+  prevent problems with more than 128 classes (bug 1633)
+
+- Fixed possible crash with default content-type and POST requests.(bug 1628)
+
+- Known issue: MapScript queryByAttributes() creates wrong WHERE clause on
+  postgis layers in some cases (patch available, see bug 1629)
+
+
+Version 4.8.0-rc3 (2006-01-25)
 ------------------------------
+
+- Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569).
+
+- Move gBYTE_ORDER inside the pg layerinfo structure to allow for differently
+  byte ordered connections (bug 1587).
+
+- Close file handle when saving symbolset.
+
+- Fix the memory allocation bug in sdeShapeCopy (Bug 1606).
+
+- Fixed OGR WKT support (Bug 1614). 
+
+- Finished implementation of OGR Shape2WKT function (Bug 1614).
+
+- Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
+
+- Detect/add -DHAVE_VSNPRINTF in configure script and prevent systematic
+  buffer overflow in imagemap code when vsnprintf() not available (bug 1613)
+
+
+Version 4.8.0-rc2 (2006-01-09)
+------------------------------
+
+- Commit fix for GD on win32 when different heaps are in use. (Bug 1513) 
 
 - Correct bound reprojection issue with ogc filer (Bug 1600)
 
 - Correct mapscript windows build problem when flag USE_WMS_SVR was
   not set (Bug 1529)   
+
+- Fix up allocation of the SDE ROW_ID columns and how the functions that
+  call it were using it. (bug 1605)
+
+- Fixed crash with 3D polygons in Oracle Spatial (bug 1593)
+
+
+Version 4.8.0-rc1 (2005-12-22)
+------------------------------
 
 - Fixed shape projection to recompute shape bounds. (Bug 1586)
 
@@ -30,6 +79,7 @@ Version 4.8.0-rc1 (2005-12-22)
 
 - Fixed segfault when doing attribute queries on layers with a FILTER already
   set but with no FILTERITEM.
+
 
 Version 4.8.0-beta3 (2005-12-16)
 --------------------------------

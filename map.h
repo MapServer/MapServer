@@ -28,6 +28,25 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437.2.5  2006/02/03 19:12:19  dan
+ * Update for 4.8.1
+ *
+ * Revision 1.437.2.4  2006/02/02 16:29:37  dan
+ * Update for 4.8.0 release
+ *
+ * Revision 1.437.2.3  2006/01/30 15:06:32  dan
+ * Treat classindex as an int instead of a char in resultCacheMemberObj to
+ * prevent problems with more than 128 classes (bug 1633)
+ *
+ * Revision 1.437.2.2  2006/01/25 22:55:17  dan
+ * Update for 4.8.0-rc3
+ *
+ * Revision 1.437.2.1  2006/01/16 20:41:22  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
+ * Revision 1.437  2006/01/10 03:01:01  dan
+ * Update for 4.8.0-rc2
+ *
  * Revision 1.436  2005/12/23 06:20:50  sdlime
  * Updated files for 4.8.0-rc1.
  *
@@ -366,7 +385,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.0-rc1"
+#define MS_VERSION "4.8.1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
@@ -899,7 +918,7 @@ typedef struct {
 typedef struct {
   long shapeindex;
   int tileindex;
-  char classindex;
+  int classindex;
 } resultCacheMemberObj;
 #ifdef SWIG
 %mutable;
@@ -1580,7 +1599,7 @@ MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabe
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 
-MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor);
+MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, labelObj *);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
