@@ -13,6 +13,13 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.8.1 (2006-02-03)
+--------------------------
+
+- Fixed bug introduced by previous fix to set default content-type in
+  POST requests. (bug 1628)
+
+
 Version 4.8.0 (2006-02-02)
 --------------------------
 
