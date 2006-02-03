@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22.2.2  2006/02/03 18:57:51  sdlime
+ * Argh! I mis-applied the patch for 1628 and didn't delete one line.
+ *
  * Revision 1.22.2.1  2006/02/02 00:32:25  sdlime
  * Fixed bug with default content-type and POST requests. (bug 1628)
  *
@@ -132,7 +135,7 @@ int loadParams(cgiRequestObj *request){
     char *post_data;
 
     request->type = MS_POST_REQUEST;
-    post_data = readPostBody( request );
+
     if(s = getenv("CONTENT_TYPE"))
       request->contenttype = strdup(s);
     /* we've to set default content-type which is
