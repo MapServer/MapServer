@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2006/02/06 19:50:41  sdlime
+ * Added ability to define a item template for GML output, best for use with application schema. A templated attribute is: 1) not queryable and 2) not output in the server produced schema. The layer namespace and item value can be accessed via the template: e.g. gml_area_template '<:area></:area>
+ *
  * Revision 1.79  2006/01/23 22:42:53  julien
  * Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569)
  *
@@ -952,6 +955,7 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
     item->name = strdup(layer->items[i]);  /* initialize the item */
     item->alias = NULL;
     item->type = NULL;
+    item->template = NULL;
     item->encode = MS_TRUE;
     item->visible = MS_FALSE;
 
@@ -968,13 +972,13 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
     /* ...and now excluded items */
     for(j=0; j<numexcitems; j++) {
       if(strcasecmp(layer->items[i], excitems[j]) == 0)
-	item->visible = MS_FALSE;
+        item->visible = MS_FALSE;
     }
 
     /* check encoding */
     for(j=0; j<numxmlitems; j++) {
       if(strcasecmp(layer->items[i], xmlitems[j]) == 0)
-	item->encode = MS_FALSE;
+        item->encode = MS_FALSE;
     }
 
     snprintf(tag, 64, "%s_alias", layer->items[i]);
@@ -984,6 +988,10 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
     snprintf(tag, 64, "%s_type", layer->items[i]);
     if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
       item->type = strdup(value);
+
+    snprintf(tag, 64, "%s_template", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+      item->template = strdup(value);
   }
 
   msFreeCharArray(incitems, numincitems);
@@ -1003,6 +1011,7 @@ void msGMLFreeItems(gmlItemListObj *itemList)
     msFree(itemList->items[i].name);
     msFree(itemList->items[i].alias);
     msFree(itemList->items[i].type);
+    msFree(itemList->items[i].template);
   }
 
   free(itemList);
@@ -1023,22 +1032,31 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   else
     encoded_value = strdup(value);  
   
+  if(!item->template) { /* build the tag from pieces */  
+    if(item->alias) {
+      tag_name = item->alias;
+      if(strchr(item->alias, ':') != NULL) add_namespace = MS_FALSE;
+    } else {
+      tag_name = item->name;
+      if(strchr(item->name, ':') != NULL) add_namespace = MS_FALSE;
+    }    
   
-  if(item->alias) {
-    tag_name = item->alias;
-    if(strchr(item->alias, ':') != NULL) add_namespace = MS_FALSE;
+    if(add_namespace == MS_TRUE && msIsXMLTagValid(tag_name) == MS_FALSE)
+      msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", tag_name);
+  
+    if(add_namespace == MS_TRUE)
+      msIO_fprintf(stream, "%s<%s:%s>%s</%s:%s>\n", tab, namespace, tag_name, encoded_value, namespace, tag_name);
+    else
+      msIO_fprintf(stream, "%s<%s>%s</%s>\n", tab, tag_name, encoded_value, tag_name);
   } else {
-    tag_name = item->name;
-    if(strchr(item->name, ':') != NULL) add_namespace = MS_FALSE;
-  }    
-  
-  if(add_namespace == MS_TRUE && msIsXMLTagValid(tag_name) == MS_FALSE)
-    msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", tag_name);
-  
-  if(add_namespace == MS_TRUE)
-    msIO_fprintf(stream, "%s<%s:%s>%s</%s:%s>\n", tab, namespace, tag_name, encoded_value, namespace, tag_name);
-  else
-    msIO_fprintf(stream, "%s<%s>%s</%s>\n", tab, tag_name, encoded_value, tag_name);
+		char *tag = NULL;
+
+    tag = strdup(item->template);
+    tag = gsub(tag, "$value", encoded_value);
+		if(namespace) tag = gsub(tag, "$namespace", namespace);
+    msIO_fprintf(stream, "%s%s\n", tab, tag);
+    free(tag);
+  }
 
   return;
 }
