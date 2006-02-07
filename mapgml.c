@@ -27,8 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2006/02/07 16:13:37  sdlime
+ * Renamed gmlItemObj template to tmplate to avoid c++ compile errors.
+ *
  * Revision 1.80  2006/02/06 19:50:41  sdlime
- * Added ability to define a item template for GML output, best for use with application schema. A templated attribute is: 1) not queryable and 2) not output in the server produced schema. The layer namespace and item value can be accessed via the template: e.g. gml_area_template '<:area></:area>
+ * Added ability to define a item template for GML output, best for use with application schema. A templated attribute is: 1) not queryable and 2) not output in the server produced schema. The layer namespace and item value can be accessed via the template: e.g. gml_area_template '<$namespace:area>$value</$namespace:area>
  *
  * Revision 1.79  2006/01/23 22:42:53  julien
  * Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569)
@@ -955,7 +958,7 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
     item->name = strdup(layer->items[i]);  /* initialize the item */
     item->alias = NULL;
     item->type = NULL;
-    item->template = NULL;
+    item->tmplate = NULL;
     item->encode = MS_TRUE;
     item->visible = MS_FALSE;
 
@@ -991,7 +994,7 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
 
     snprintf(tag, 64, "%s_template", layer->items[i]);
     if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
-      item->template = strdup(value);
+      item->tmplate = strdup(value);
   }
 
   msFreeCharArray(incitems, numincitems);
@@ -1011,7 +1014,7 @@ void msGMLFreeItems(gmlItemListObj *itemList)
     msFree(itemList->items[i].name);
     msFree(itemList->items[i].alias);
     msFree(itemList->items[i].type);
-    msFree(itemList->items[i].template);
+    msFree(itemList->items[i].tmplate);
   }
 
   free(itemList);
@@ -1032,7 +1035,7 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   else
     encoded_value = strdup(value);  
   
-  if(!item->template) { /* build the tag from pieces */  
+  if(!item->tmplate) { /* build the tag from pieces */  
     if(item->alias) {
       tag_name = item->alias;
       if(strchr(item->alias, ':') != NULL) add_namespace = MS_FALSE;
@@ -1051,7 +1054,7 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   } else {
 		char *tag = NULL;
 
-    tag = strdup(item->template);
+    tag = strdup(item->tmplate);
     tag = gsub(tag, "$value", encoded_value);
 		if(namespace) tag = gsub(tag, "$namespace", namespace);
     msIO_fprintf(stream, "%s%s\n", tab, tag);

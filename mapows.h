@@ -5,11 +5,14 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.67  2006/02/07 16:13:37  sdlime
+ * Renamed gmlItemObj template to tmplate to avoid c++ compile errors.
+ *
  * Revision 1.66  2006/02/07 13:45:32  dan
  * Use _template instead of template in gmlItemObj in C++
  *
  * Revision 1.65  2006/02/06 19:50:41  sdlime
- * Added ability to define a item template for GML output, best for use with application schema. A templated attribute is: 1) not queryable and 2) not output in the server produced schema. The layer namespace and item value can be accessed via the template: e.g. gml_area_template '<:area></:area>
+ * Added ability to define a item template for GML output, best for use with application schema. A templated attribute is: 1) not queryable and 2) not output in the server produced schema. The layer namespace and item value can be accessed via the template: e.g. gml_area_template '<$namespace:area>$value</$namespace:area>
  *
  * Revision 1.64  2006/01/05 16:25:10  assefa
  * Correct mapscript windows build problem when flag USE_WMS_SVR was
@@ -379,11 +382,7 @@ typedef struct {
   char *name;     /* name of the item */
   char *alias;    /* is the item aliased for presentation? (NULL if not) */
   char *type;     /* raw type for this item (NULL for a "string") (TODO: should this be a lookup table instead?) */
-#ifndef __cplusplus
-  char *template; /* presentation string for this item, needs to be a complete XML tag */
-#else
-  char *_template;
-#endif
+  char *tmplate;  /* presentation string for this item, needs to be a complete XML tag */
   int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
   int visible;    /* should this item be output, default is MS_FALSE */  
 } gmlItemObj;
