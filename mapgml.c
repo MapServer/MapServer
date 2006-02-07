@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2006/02/07 17:40:23  sdlime
+ * Reverting to Dan's original solution for the template member.
+ *
  * Revision 1.81  2006/02/07 16:13:37  sdlime
  * Renamed gmlItemObj template to tmplate to avoid c++ compile errors.
  *
@@ -958,7 +961,7 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
     item->name = strdup(layer->items[i]);  /* initialize the item */
     item->alias = NULL;
     item->type = NULL;
-    item->tmplate = NULL;
+    item->template = NULL;
     item->encode = MS_TRUE;
     item->visible = MS_FALSE;
 
@@ -994,7 +997,7 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
 
     snprintf(tag, 64, "%s_template", layer->items[i]);
     if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
-      item->tmplate = strdup(value);
+      item->template = strdup(value);
   }
 
   msFreeCharArray(incitems, numincitems);
@@ -1014,7 +1017,7 @@ void msGMLFreeItems(gmlItemListObj *itemList)
     msFree(itemList->items[i].name);
     msFree(itemList->items[i].alias);
     msFree(itemList->items[i].type);
-    msFree(itemList->items[i].tmplate);
+    msFree(itemList->items[i].template);
   }
 
   free(itemList);
@@ -1035,7 +1038,7 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   else
     encoded_value = strdup(value);  
   
-  if(!item->tmplate) { /* build the tag from pieces */  
+  if(!item->template) { /* build the tag from pieces */  
     if(item->alias) {
       tag_name = item->alias;
       if(strchr(item->alias, ':') != NULL) add_namespace = MS_FALSE;
@@ -1054,7 +1057,7 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   } else {
 		char *tag = NULL;
 
-    tag = strdup(item->tmplate);
+    tag = strdup(item->template);
     tag = gsub(tag, "$value", encoded_value);
 		if(namespace) tag = gsub(tag, "$namespace", namespace);
     msIO_fprintf(stream, "%s%s\n", tab, tag);

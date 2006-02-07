@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.68  2006/02/07 17:40:23  sdlime
+ * Reverting to Dan's original solution for the template member.
+ *
  * Revision 1.67  2006/02/07 16:13:37  sdlime
  * Renamed gmlItemObj template to tmplate to avoid c++ compile errors.
  *
@@ -382,7 +385,11 @@ typedef struct {
   char *name;     /* name of the item */
   char *alias;    /* is the item aliased for presentation? (NULL if not) */
   char *type;     /* raw type for this item (NULL for a "string") (TODO: should this be a lookup table instead?) */
-  char *tmplate;  /* presentation string for this item, needs to be a complete XML tag */
+#ifndef __cplusplus 
+  char *template;  /* presentation string for this item, needs to be a complete XML tag */
+#else
+  char *_template;  /* presentation string for this item, needs to be a complete XML tag */
+#endif
   int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
   int visible;    /* should this item be output, default is MS_FALSE */  
 } gmlItemObj;
