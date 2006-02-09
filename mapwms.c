@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.173  2006/02/09 20:09:43  dan
+ * Use %.15g to increase precision of values in ScaleHint element (bug 1649)
+ *
  * Revision 1.172  2006/01/30 14:54:10  assefa
  * Adjust extent using current width/height before loading all parameters
  * (Bug 1627).
@@ -1297,7 +1300,7 @@ void msWMSPrintScaleHint(const char *tabspace, double minscale,
 
   if (scalehintmin > 0.0 || scalehintmax > 0.0)
   {
-      msIO_printf("%s<ScaleHint min=\"%g\" max=\"%g\" />\n",
+      msIO_printf("%s<ScaleHint min=\"%.15g\" max=\"%.15g\" />\n",
              tabspace, scalehintmin, scalehintmax);
       if (scalehintmax == 0.0)
           msIO_printf("%s<!-- WARNING: Only MINSCALE and no MAXSCALE specified in "
