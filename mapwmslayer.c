@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.79  2006/02/09 16:57:14  julien
+ * Support SLD_BODY in Web Map Context
+ *
  * Revision 1.78  2005/10/26 17:51:28  frank
  * avoid warnings about unused functions
  *
@@ -284,7 +287,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 {
     const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
     const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
-    const char *pszSLD=NULL, *pszVersionKeyword=NULL;
+    const char *pszSLD=NULL, *pszStyleSLDBody=NULL, *pszVersionKeyword=NULL;
     const char *pszSLDBody=NULL, *pszSLDURL = NULL;
     char *pszSLDGenerated = NULL;
 
@@ -405,8 +408,10 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
         char szBuf[100];
         sprintf(szBuf, "style_%.80s_sld", pszStyle);
         pszSLD = msOWSLookupMetadata(&(lp->metadata), "MO", szBuf);
+        sprintf(szBuf, "style_%.80s_sld_body", pszStyle);
+        pszStyleSLDBody = msOWSLookupMetadata(&(lp->metadata), "MO", szBuf);
 
-        if (pszSLD)
+        if (pszSLD || pszStyleSLDBody)
         {
             /* SLD URL is set.  If this defn. came from a map context then */
             /* the style name may just be an internal name: "Style{%d}" if */
@@ -416,21 +421,20 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
         }
     }
 
-    if (pszSLD == NULL)
+    if (strlen(pszStyle) > 0)
     {
-        /* STYLES is mandatory if SLD not set */
+        /* STYLES is set */
         msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
     }
-    else if (strlen(pszStyle) > 0)
-    {
-        /* Both STYLES and SLD are set */
-        msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
-        msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE);
-    }
-    else
+    if (pszSLD != NULL)
     {
         /* Only SLD is set */
         msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE);
+    }
+    else if (pszStyleSLDBody != NULL)
+    {
+        /* SLDBODY are set */
+        msSetWMSParamString(psWMSParams, "SLD_BODY", pszStyleSLDBody, MS_TRUE);
     }
 
     if (msIsLayerQueryable(lp))

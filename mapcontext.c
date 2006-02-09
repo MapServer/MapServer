@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.71  2006/02/09 16:57:14  julien
+ * Support SLD_BODY in Web Map Context
+ *
  * Revision 1.70  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -721,6 +724,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
 {
   char *pszValue, *pszValue1, *pszValue2;
   char *pszHash, *pszStyle=NULL, *pszStyleName;
+  CPLXMLNode *psStyleSLDBody;
 
   pszStyleName =(char*)CPLGetXMLValue(psStyle,"Name",NULL);
   if(pszStyleName == NULL)
@@ -769,6 +773,30 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   
   msGetMapContextXMLHashValueDecode( psStyle, "SLD.OnlineResource.xlink:href", 
                                      &(layer->metadata), pszStyle );
+  free(pszStyle);
+
+  /* SLDBODY */
+  pszStyle = (char*)malloc(strlen(pszStyleName)+20);
+  sprintf(pszStyle, "wms_style_%s_sld_body", pszStyleName);
+
+  psStyleSLDBody = CPLGetXMLNode(psStyle, "SLD.StyledLayerDescriptor");
+  if(psStyleSLDBody != NULL && &(layer->metadata) != NULL)
+  {
+      pszValue = CPLSerializeXMLTree(psStyleSLDBody);
+      if(pszValue != NULL)
+      {
+          /* Before including SLDBody in the mapfile, we must replace the */
+          /* double quote for single quote. This is to prevent having this: */
+          /* "metadata" "<string attriute="ttt">" */
+          char *c;
+          for(c=pszValue; *c != '\0'; c++)
+              if(*c == '"')
+                  *c = '\'';
+          msInsertHashTable(&(layer->metadata), pszStyle, pszValue );
+          msFree(pszValue);
+      }
+  }
+
   free(pszStyle);
 
   /* LegendURL */
@@ -1238,7 +1266,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
           if(strcasecmp(psStyle->pszValue, "Style") == 0)
           {
               nStyle++;
-              msLoadMapContextLayerStyle(psStyle, layer, nVersion);
+              msLoadMapContextLayerStyle(psStyle, layer, nStyle);
           }
       }
   }
@@ -1526,7 +1554,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszStyle, *pszCurrent, *pszStyleItem;
+  char *pszStyle, *pszCurrent, *pszStyleItem, *pszSLDBody;
   char *pszEncodedVal;
   int i, nValue, nVersion=-1;
 
@@ -1913,16 +1941,20 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               if(papszFormats)
                   msFreeCharArray(papszFormats, numFormats);
           }
-          /*  */
-          pszValue = msLookupHashTable(&(map->layers[i].metadata),"wms_stylelist");
+          /* Style */
+          /* First check the stylelist */
+          pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+                                       "wms_stylelist");
           if(pszValue == NULL || strlen(trimLeft(pszValue)) < 1)
           {
+              /* Check if the style is in the connection URL */
               pszURL = "";
               if(map->layers[i].connection)
                   pszURL = strdup( map->layers[i].connection );
               else
                   pszURL = strdup( "" );
               pszValue = pszURL;
+              /* Grab the STYLES in the URL */
               pszValue = strstr( pszValue, "STYLES=" );
               if( pszValue )
               {
@@ -1931,14 +1963,22 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   if( pszChar )
                       pszValue[pszChar - pszValue] = '\0';
 
+                  /* Check the SLD string from the URL */
                   if(map->layers[i].connection)
                       pszSLD2 = strdup(map->layers[i].connection);
                   else
                       pszSLD2 = strdup( "" );
                   if(pszSLD2)
+                  {
                       pszSLD = strstr(pszSLD2, "SLD=");
+                      pszSLDBody = strstr(pszSLD2, "SLD_BODY=");
+                  }
                   else
+                  {
                       pszSLD = NULL;
+                      pszSLDBody = NULL;
+                  }
+                  /* Check SLD */
                   if( pszSLD )
                   {
                       pszChar = strchr(pszSLD, '&');
@@ -1946,9 +1986,19 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                           pszSLD[pszChar - pszSLD] = '\0';
                       pszSLD += 4;
                   }
-                  if( (pszValue && (strcasecmp(pszValue, "") != 0)) || 
-                      (pszSLD && (strcasecmp(pszSLD, "") != 0)))
+                  /* Check SLDBody  */
+                  if( pszSLDBody )
                   {
+                      pszChar = strchr(pszSLDBody, '&');
+                      if( pszChar )
+                          pszSLDBody[pszChar - pszSLDBody] = '\0';
+                      pszSLDBody += 9;
+                  }
+                  if( (pszValue && (strcasecmp(pszValue, "") != 0)) || 
+                      (pszSLD && (strcasecmp(pszSLD, "") != 0)) || 
+                      (pszSLDBody && (strcasecmp(pszSLDBody, "") != 0)))
+                  {
+                      /* Write Name and Title */
                       msIO_fprintf( stream, "      <StyleList>\n");
                       msIO_fprintf( stream, "        <Style current=\"1\">\n");
                       if( pszValue && (strcasecmp(pszValue, "") != 0))
@@ -1960,15 +2010,23 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                   pszEncodedVal);
                           msFree(pszEncodedVal);
                       }
+                      /* Write the SLD string from the URL */
                       if( pszSLD && (strcasecmp(pszSLD, "") != 0))
                       {
                           pszEncodedVal = msEncodeHTMLEntities(pszSLD);
                           msIO_fprintf( stream, "          <SLD>\n" );
                           msIO_fprintf( stream, 
                          "            <OnlineResource xlink:type=\"simple\" ");
-                          msIO_fprintf(stream,"xlink:href=\"%s\"/>", pszEncodedVal);
+                          msIO_fprintf(stream,"xlink:href=\"%s\"/>", 
+                                       pszEncodedVal);
                           msIO_fprintf( stream, "          </SLD>\n" );
                           free(pszEncodedVal);
+                      }
+                      else if(pszSLDBody && (strcasecmp(pszSLDBody, "") != 0))
+                      {
+                          msIO_fprintf( stream, "          <SLD>\n" );
+                          msIO_fprintf( stream, "            %s\n",pszSLDBody);
+                          msIO_fprintf( stream, "          </SLD>\n" );
                       }
                       msIO_fprintf( stream, "        </Style>\n");
                       msIO_fprintf( stream, "      </StyleList>\n");
@@ -1987,46 +2045,67 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           }
           else
           {
+              /* If the style information is not in the connection URL, */
+              /* read the metadata. */
               pszValue = msLookupHashTable(&(map->layers[i].metadata), 
                                            "wms_stylelist");
               pszCurrent = msLookupHashTable(&(map->layers[i].metadata), 
                                              "wms_style");
               msIO_fprintf( stream, "      <StyleList>\n");
+              /* Loop in each style in the style list */
               while(pszValue != NULL)
               {
                   pszStyle = strdup(pszValue);
                   pszChar = strchr(pszStyle, ',');
                   if(pszChar != NULL)
                       pszStyle[pszChar - pszStyle] = '\0';
-                  if( strcasecmp(pszStyle, "") != 0)
-                  {
-                      if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
-                          msIO_fprintf( stream,"        <Style current=\"1\">\n" );
-                      else
-                          msIO_fprintf( stream, "        <Style>\n" );
+                  if(strcasecmp(pszStyle, "") == 0)
+                      continue;
 
-                      pszStyleItem = (char*)malloc(strlen(pszStyle)+10+5);
-                      sprintf(pszStyleItem, "wms_style_%s_sld", pszStyle);
+                  if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
+                      msIO_fprintf( stream,"        <Style current=\"1\">\n" );
+                  else
+                      msIO_fprintf( stream, "        <Style>\n" );
+
+                  /* Write SLDURL if it is in the metadata */
+                  pszStyleItem = (char*)malloc(strlen(pszStyle)+10+10);
+                  sprintf(pszStyleItem, "wms_style_%s_sld", pszStyle);
+                  if(msLookupHashTable(&(map->layers[i].metadata),
+                                       pszStyleItem) != NULL)
+                  {
+                      msIO_fprintf(stream, "          <SLD>\n");
+                      msOWSPrintEncodeMetadata(stream, 
+                                               &(map->layers[i].metadata),
+                                               NULL, pszStyleItem, 
+                                               OWS_NOERR, 
+     "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
+                                               NULL);
+                      msIO_fprintf(stream, "          </SLD>\n");
+                      free(pszStyleItem);
+                  }
+                  else
+                  {
+                      /* If the URL is not there, check for SLDBody */
+                      sprintf(pszStyleItem, "wms_style_%s_sld_body", pszStyle);
                       if(msLookupHashTable(&(map->layers[i].metadata),
                                            pszStyleItem) != NULL)
                       {
                           msIO_fprintf(stream, "          <SLD>\n");
-                          msOWSPrintEncodeMetadata(stream, 
-                                                   &(map->layers[i].metadata),
-                                                   NULL, pszStyleItem, 
-                                                   OWS_NOERR, 
-     "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
-                                                   NULL);
+                          msOWSPrintMetadata(stream,&(map->layers[i].metadata),
+                                             NULL, pszStyleItem, OWS_NOERR, 
+                                             "            %s\n", NULL);
                           msIO_fprintf(stream, "          </SLD>\n");
                           free(pszStyleItem);
                       }
                       else
                       {
+                          /* If the SLD is not specified, then write the */
+                          /* name, Title and LegendURL */
                           free(pszStyleItem);
                           /* Name */
                           pszEncodedVal = msEncodeHTMLEntities(pszStyle);
                           msIO_fprintf(stream, "          <Name>%s</Name>\n", 
-                                  pszEncodedVal);
+                                       pszEncodedVal);
                           msFree(pszEncodedVal);
                           pszStyleItem = (char*)malloc(strlen(pszStyle)+10+8);
                           sprintf(pszStyleItem, "wms_style_%s_title",pszStyle);
@@ -2035,7 +2114,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                                    &(map->layers[i].metadata), 
                                                    NULL, pszStyleItem, 
                                                    OWS_NOERR, 
-                                              "          <Title>%s</Title>\n", 
+                                        "          <Title>%s</Title>\n",
                                                    NULL);
                           free(pszStyleItem);
 
@@ -2055,9 +2134,10 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                             NULL, NULL, NULL, "          ");
                           free(pszStyleItem);
                       }
-
-                      msIO_fprintf( stream,"        </Style>\n" );
                   }
+
+                  msIO_fprintf( stream,"        </Style>\n" );
+ 
                   free(pszStyle);
                   pszValue = strchr(pszValue, ',');
                   if(pszValue)  
