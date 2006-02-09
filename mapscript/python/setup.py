@@ -8,9 +8,11 @@
 # INSTALL (usually as root)
 #   python setup.py install
 
+
 from distutils.core import setup, Extension
 from distutils import sysconfig
 
+import sys
 import os.path
 import string
 
@@ -68,6 +70,12 @@ for x in lib_opts:
         extras.append(x)
         
 libs = unique(libs)
+
+# if we're msvc, just link against the stub lib
+# and be done with it
+if sys.platform == 'win32':
+    libs = ['mapserver_i']
+
 lib_dirs = unique(lib_dirs)
 
 # Create list of macros used to create mapserver.
