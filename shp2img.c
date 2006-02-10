@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/02/10 05:51:45  sdlime
+ * Applied patch to resolve issue with layers with no names if -l option is specified. (bug 1655)
+ *
  * Revision 1.18  2006/02/01 04:08:35  sdlime
  * Converted strncmp to strcmp in shp2img.c to avoid parameter confusion and for consistency. (bug 1635)
  *
@@ -213,7 +216,7 @@ int main(int argc, char *argv[])
 	else {
 	  map->layers[j].status = MS_OFF;
 	  for(k=0; k<num_layers; k++) {
-	    if(strcmp(map->layers[j].name, layers[k]) == 0) {
+	    if(map->layers[j].name && strcmp(map->layers[j].name, layers[k]) == 0) {
 	      map->layers[j].status = MS_ON;
 	      break;
 	    }
