@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.318  2006/02/10 04:42:56  frank
+ * default layer->project to true for nonsquare without projection (bug 1645)
+ *
  * Revision 1.317  2005/12/20 18:25:36  sdlime
  * Fixed a couple of typos in mapfile.c- misplaced break statement. (bug 1578)
  *
@@ -877,17 +880,17 @@ static void writeGrid( graticuleObj *pGraticule, FILE *stream)
 */
 int msInitProjection(projectionObj *p)
 {
-#ifdef USE_PROJ  
+  p->gt.need_geotransform = MS_FALSE;
   p->numargs = 0;
+  p->args = NULL;
+#ifdef USE_PROJ  
   p->proj = NULL;
-  p->gt.need_geotransform = 0;
   if((p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *))) == NULL) {
     msSetError(MS_MEMERR, NULL, "initProjection()");
     return(-1);
   }
 #endif
   return(0);
-
 }
 
 void msFreeProjection(projectionObj *p) {
@@ -2362,7 +2365,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->units = MS_METERS;
   if(msInitProjection(&(layer->projection)) == -1) return(-1);
-  layer->project = MS_FALSE;
+  layer->project = MS_TRUE;
 
   MS_INIT_COLOR(layer->offsite, -1,-1,-1);
 

@@ -18,8 +18,8 @@ CVS HEAD (4.9-dev)
 
 - Support SLD body in context document. (bug 887)
 
--  When generating an ogc filter for class regex expressions, use
-   the backslah as the default escape character (Bug 1637)
+- When generating an ogc filter for class regex expressions, use
+  the backslah as the default escape character (Bug 1637)
 
 - Add connectiontype initialization logic when the layer's virtual
   table is initialized (Bug 1615) 
@@ -53,6 +53,9 @@ CVS HEAD (4.9-dev)
 
 - Detect/add -DHAVE_VSNPRINTF in configure script and prevent systematic
   buffer overflow in imagemap code when vsnprintf() not available (bug 1613)
+
+- Default layer->project to MS_TRUE even if no projection is set, to allow
+  geotransforms (nonsquare pixels, etc) to be applied (bug 1645).
 
 
 
