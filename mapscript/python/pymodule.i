@@ -61,6 +61,7 @@ PyObject *MSExc_MapServerError;
 PyObject *MSExc_MapServerChildError;
 %}
 
+/* Module initialization: call msSetup() and register msCleanup() */
 %init %{
 
 /* See bug 1203 for discussion of race condition with GD font cache */
@@ -70,12 +71,14 @@ PyObject *MSExc_MapServerChildError;
                    "msSetup()");
     }
 
-/* Generic MapServer error */
+    Py_AtExit(msCleanup);
+
+/* Define Generic MapServer error */
 MSExc_MapServerError=PyErr_NewException("_mapscript.MapServerError",NULL,NULL);
 if (MSExc_MapServerError != NULL)
     PyDict_SetItemString(d, "MapServerError", MSExc_MapServerError);
 
-/* MapServer query MS_CHILD error */
+/* Define MapServer MS_CHILD error */
 MSExc_MapServerChildError = PyErr_NewException("_mapscript.MapServerChildError", NULL, NULL);
 if (MSExc_MapServerChildError != NULL)
     PyDict_SetItemString(d, "MapServerChildError", MSExc_MapServerChildError);
