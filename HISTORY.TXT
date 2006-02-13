@@ -13,6 +13,13 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.8.2 (...cvs...)
+--------------------------
+
+- Use %.15g to increase precision of values in ScaleHint element in
+  WMS GetCapabilities response (bug 1649)
+
+
 Version 4.8.1 (2006-02-03)
 --------------------------
 

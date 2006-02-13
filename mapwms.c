@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.170.2.1  2006/02/13 16:06:09  dan
+ * Use %.15g to increase precision of values in ScaleHint element (bug 1649)
+ *
  * Revision 1.170  2005/12/15 14:11:28  assefa
  * Fix problem with WMS 1.1.1 OGC test problem with get capabilites dtd (Bug 1576)
  *
@@ -1288,7 +1291,7 @@ void msWMSPrintScaleHint(const char *tabspace, double minscale,
 
   if (scalehintmin > 0.0 || scalehintmax > 0.0)
   {
-      msIO_printf("%s<ScaleHint min=\"%g\" max=\"%g\" />\n",
+      msIO_printf("%s<ScaleHint min=\"%.15g\" max=\"%.15g\" />\n",
              tabspace, scalehintmin, scalehintmax);
       if (scalehintmax == 0.0)
           msIO_printf("%s<!-- WARNING: Only MINSCALE and no MAXSCALE specified in "
