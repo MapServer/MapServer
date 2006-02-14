@@ -49,9 +49,9 @@ USE_POINT_Z_M = @USE_POINT_Z_M@
 STRINGS= @STRINGS@
 
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
-PROJ_INC= @PROJ_INC@
-PROJ_LIB= @PROJ_LIB@
-PROJ=     @PROJ_ENABLED@
+PROJ_INC=  @PROJ_INC@
+PROJ_LIBS= @PROJ_LIBS@
+PROJ=      @PROJ_ENABLED@
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
@@ -211,7 +211,7 @@ CFLAGS   = @CFLAGS@ $(FLAGS)
 CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
+SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) \

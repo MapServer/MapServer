@@ -766,7 +766,7 @@ if test "$with_proj" = "yes" ; then
   if test -n "$PROJ_ENABLED" -a "$PJ_TRANSFORM" = "no"; then
       AC_MSG_ERROR([This version of PROJ is too old.  PROJ4.4.2 or later is required.])
   elif test -n "$PROJ_ENABLED" -a "$PJ_TRANSFORM" = "yes"; then
-      PROJ_LIB="-lproj"
+      PROJ_LIBS="-lproj"
       AC_MSG_RESULT([        using PROJ.4 from system libs.])
   else
       AC_MSG_WARN([        PROJ.4 not found in system libs... use --with-proj=DIR.])
@@ -792,13 +792,13 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
 
   if test -n "$PROJ_INCLUDE" -a -n "$PROJ_LIBDIR" ; then
       PROJ_INC=-I$PROJ_INCLUDE
-      PROJ_LIB="-L$PROJ_LIBDIR -lproj"
+      PROJ_LIBS="-L$PROJ_LIBDIR -lproj"
       AC_ADD_RUNPATH("$PROJ_LIBDIR")
   else
       AC_MSG_ERROR("Could not find projects.h or libproj.a/libproj.so in $PROJ_DIR.")
   fi
 
-  AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,$PROJ_LIB)
+  AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,$PROJ_LIBS)
   if test "$PJ_TRANSFORM" = "no"; then
       AC_MSG_ERROR([This version of PROJ is too old.  PROJ4.4.2 or later is required.])
   fi
@@ -813,11 +813,11 @@ fi
 
 AC_SUBST(PROJ_ENABLED,$PROJ_ENABLED)
 AC_SUBST(PROJ_INC,    $PROJ_INC)
-AC_SUBST(PROJ_LIB,    $PROJ_LIB)
+AC_SUBST(PROJ_LIBS,   $PROJ_LIBS)
 
 ALL_ENABLED="$PROJ_ENABLED $ALL_ENABLED"
 ALL_INC="$PROJ_INC $ALL_INC"
-ALL_LIB="$PROJ_LIB $ALL_LIB"
+ALL_LIB="$PROJ_LIBS $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl ENABLE THREADS ONLY IF REQUESTED.

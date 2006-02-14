@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- configure.in/Makefile.in: Use PROJ_LIBS instead of PROJ_LIB.  PROJ_LIB
+  is sometimes defined in the environment, but points to $prefix/share/proj
+  not the proj link libraries.  
+
 - Update Web Map Context to 1.1.0, add the dimension support. (bug 1581)
 
 - Support SLD body in context document. (bug 887)
