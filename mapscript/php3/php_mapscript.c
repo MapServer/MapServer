@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.245  2006/02/14 19:24:49  dan
+ * Call msSetup/msCleanup() in PHP's MINIT and MSHUTDOWN functions (bug 1665)
+ *
  * Revision 1.244  2006/01/20 15:03:35  assefa
  * Add containsshape function using uderlying GEOS function (Bug 1623).
  *
@@ -1247,6 +1250,9 @@ PHP_MINIT_FUNCTION(phpms)
 
     int const_flag = CONST_CS|CONST_PERSISTENT;
 
+    /* Init MapServer resources */
+    msSetup();
+
     ZEND_INIT_MODULE_GLOBALS(phpms, phpms_init_globals, NULL);
 
     /* If you have INI entries, uncomment this line
@@ -1596,6 +1602,9 @@ PHP_MINIT_FUNCTION(phpms)
 
 PHP_MSHUTDOWN_FUNCTION(phpms)
 {
+    /* Cleanup MapServer resources */
+    msCleanup();
+
     return SUCCESS;
 }
 
