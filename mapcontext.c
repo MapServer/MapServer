@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/02/14 03:53:04  julien
+ * Change layer server type for 1.1.0 version
+ *
  * Revision 1.72  2006/02/14 03:38:47  julien
  * Update to MapContext 1.1.0, add dimensions support in context bug 1581
  *
@@ -1898,10 +1901,16 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /*  */
           /* Server definition */
           /*  */
-          msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
-                                   NULL, "wms_server_version", OWS_WARN,
+          if(nVersion <= OWS_1_0_0 )
+              msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+                                       NULL, "wms_server_version", OWS_WARN,
                              "      <Server service=\"WMS\" version=\"%s\" ",
-                                   "1.1.0");
+                                       "1.0.0");
+          else
+              msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+                                       NULL, "wms_server_version", OWS_WARN,
+                          "      <Server service=\"OGC:WMS\" version=\"%s\" ",
+                                       "1.0.0");
           if(map->layers[i].name)
               msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
                                        NULL, "wms_title", OWS_NOERR, 
