@@ -585,7 +585,7 @@ REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
 !IFDEF POSTGIS
 !IFNDEF PHP_BUILD_CALL
 # If we're building PHP MapScript, there is a macro conflict
-POSTGIS_INC=-I$(POSTGIS_DIR)/interfaces/libpq -I$(POSTGIS_DIR)/src/include
+POSTGIS_INC=-I$(POSTGIS_DIR)/src/interfaces/libpq -I$(POSTGIS_DIR)/src/include
 !ENDIF
 POSTGIS_LIB=$(POSTGIS_DIR)/src/interfaces/libpq/release/libpqdll.lib
 !ENDIF
