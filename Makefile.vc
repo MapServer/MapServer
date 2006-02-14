@@ -134,30 +134,38 @@ install: $(MS_DLL) $(MS_EXE) python csharp java php
 !ENDIF	
 
 !IFDEF PYTHON_HOME	
-python: mapscriptvars
+python: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
     cd mapscript\python
     $(SWIG) -python -shadow -o mapscript_wrap.c ../mapscript.i
     $(PYTHON_HOME)\PCBuild\python.exe setup.py bdist
     cd ..\..
+!ELSE
+python:
 !ENDIF
 
 !IFDEF DOT_NET
-csharp: mapscriptvars
+csharp: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
     cd mapscript\csharp
     nmake /f makefile.vc
     cd ..\..
+!ELSE
+csharp:
 !ENDIF
 
 !IFDEF JAVA_HOME
-java: mapscriptvars
+java: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
     cd mapscript\java
     nmake /f makefile.vc
     cd ..\..
+!ELSE
+java:
 !ENDIF
 
 !IFDEF PHP_HOME
-php: mapscriptvars
+php: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
     cd mapscript\php3
     nmake /f makefile.vc
     cd ..\..
+!ELSE
+php:
 !ENDIF
