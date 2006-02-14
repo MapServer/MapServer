@@ -114,3 +114,50 @@ mapscriptvars: makefile.vc nmake.opt
 	echo $(LIBS) >> mapscriptvars
 	findstr MS_VERSION map.h | findstr define >> mapscriptvars
 
+install: $(MS_DLL) $(MS_EXE) python csharp java php
+	-mkdir $(BINDIR)
+	xcopy /y /r /d /f $(MS_DLL) $(BINDIR)
+	copy *.exe $(BINDIR)
+!IFDEF PYTHON_HOME
+	xcopy /y /r /d /f .\mapscript\python\dist\*.zip $(BINDIR)\mapscript\python
+!ENDIF
+	xcopy /y /r /d /f .\mapscript\csharp\*.cs $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.dll $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.exe $(BINDIR)\mapscript\csharp
+!IFDEF JAVA_HOME
+	xcopy /y /r /d /f .\mapscript\java\*.dll $(BINDIR)\mapscript\java
+	xcopy /y /r /d /f .\mapscript\java\*.jar $(BINDIR)\mapscript\java
+	xcopy /y /r /d /f .\mapscript\java\*.jar $(BINDIR)\mapscript\java
+!ENDIF
+!IFDEF PHP_HOME
+	xcopy /y /r /d /f .\mapscript\php3\*.dll $(BINDIR)\mapscript\php
+!ENDIF	
+
+!IFDEF PYTHON_HOME	
+python: mapscriptvars
+    cd mapscript\python
+    $(SWIG) -python -shadow -o mapscript_wrap.c ../mapscript.i
+    $(PYTHON_HOME)\PCBuild\python.exe setup.py bdist
+    cd ..\..
+!ENDIF
+
+!IFDEF DOT_NET
+csharp: mapscriptvars
+    cd mapscript\csharp
+    nmake /f makefile.vc
+    cd ..\..
+!ENDIF
+
+!IFDEF JAVA_HOME
+java: mapscriptvars
+    cd mapscript\java
+    nmake /f makefile.vc
+    cd ..\..
+!ENDIF
+
+!IFDEF PHP_HOME
+php: mapscriptvars
+    cd mapscript\php3
+    nmake /f makefile.vc
+    cd ..\..
+!ENDIF
