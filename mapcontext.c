@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.72  2006/02/14 03:38:47  julien
+ * Update to MapContext 1.1.0, add dimensions support in context bug 1581
+ *
  * Revision 1.71  2006/02/09 16:57:14  julien
  * Support SLD_BODY in Web Map Context
  *
@@ -859,6 +862,79 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   return MS_SUCCESS;
 }
 
+int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
+{
+    char *pszValue, *pszHash;
+  char *pszDimension=NULL, *pszDimensionName=NULL;
+
+  pszDimensionName =(char*)CPLGetXMLValue(psDimension,"name",NULL);
+  if(pszDimensionName == NULL)
+  {
+      return MS_FALSE;
+  }
+  else
+      pszDimensionName = strdup(pszDimensionName);
+
+  pszDimension = (char*)malloc(strlen(pszDimensionName)+50);
+
+  /* wms_dimension: This is the current dimension */
+  pszValue = (char*)CPLGetXMLValue(psDimension, "current", NULL);
+  if(pszValue != NULL && (strcasecmp(pszValue, "1") == 0))
+      msInsertHashTable(&(layer->metadata), 
+                        "wms_dimension", pszDimensionName);
+  /* wms_dimensionlist */
+  pszHash = msLookupHashTable(&(layer->metadata), 
+                              "wms_dimensionlist");
+  if(pszHash != NULL)
+  {
+      pszValue = (char*)malloc(strlen(pszHash)+
+                                strlen(pszDimensionName)+2);
+      sprintf(pszValue, "%s,%s", pszHash, pszDimensionName);
+      msInsertHashTable(&(layer->metadata), 
+                        "wms_dimensionlist", pszValue);
+      free(pszValue);
+  }
+  else
+      msInsertHashTable(&(layer->metadata), 
+                        "wms_dimensionlist", pszDimensionName);
+
+  /* Units */
+  sprintf(pszDimension, "wms_dimension_%s_units", pszDimensionName);
+  msGetMapContextXMLHashValue(psDimension, "units", &(layer->metadata), 
+                              pszDimension);
+
+  /* UnitSymbol */
+  sprintf(pszDimension, "wms_dimension_%s_unitsymbol", pszDimensionName);
+  msGetMapContextXMLHashValue(psDimension, "unitSymbol", &(layer->metadata),
+                              pszDimension);
+
+  /* userValue */
+  sprintf(pszDimension, "wms_dimension_%s_uservalue", pszDimensionName);
+  msGetMapContextXMLHashValue(psDimension, "userValue", &(layer->metadata),
+                              pszDimension);
+
+  /* default */
+  sprintf(pszDimension, "wms_dimension_%s_default", pszDimensionName);
+  msGetMapContextXMLHashValue(psDimension, "default", &(layer->metadata),
+                              pszDimension);
+
+  /* multipleValues */
+  sprintf(pszDimension, "wms_dimension_%s_multiplevalues", pszDimensionName);
+  msGetMapContextXMLHashValue(psDimension, "multipleValues",&(layer->metadata),
+                              pszDimension);
+
+  /* nearestValue */
+  sprintf(pszDimension, "wms_dimension_%s_nearestvalue", pszDimensionName);
+  msGetMapContextXMLHashValue(psDimension, "nearestValue", &(layer->metadata),
+                              pszDimension);
+
+  free(pszDimension);
+
+  free(pszDimensionName);
+
+  return MS_SUCCESS;
+}
+
 
 
 /*
@@ -1038,6 +1114,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   char *pszValue;
   char *pszHash, *pszName=NULL;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle;
+  CPLXMLNode *psDimensionList, *psDimension;
   int nStyle;
   layerObj *layer;
 
@@ -1123,6 +1200,20 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   /* be consistent with the spec. */
   msLoadMapContextURLELements( CPLGetXMLNode(psLayer, "MetadataURL"), 
                                        &(layer->metadata), "wms_metadataurl" );
+
+
+  /* MinScale && MaxScale */
+  pszValue = (char*)CPLGetXMLValue(psLayer, "sld:MinScaleDenominator", NULL);
+  if(pszValue != NULL)
+  {
+      layer->minscale = atof(pszValue);
+  }
+
+  pszValue = (char*)CPLGetXMLValue(psLayer, "sld:MaxScaleDenominator", NULL);
+  if(pszValue != NULL)
+  {
+      layer->maxscale = atof(pszValue);
+  }
 
   /*  */
   /* Server */
@@ -1270,6 +1361,22 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
           }
       }
   }
+
+  /* Dimension */
+  psDimensionList = CPLGetXMLNode(psLayer, "DimensionList");
+  if(psDimensionList != NULL)
+  {
+      for(psDimension = psDimensionList->psChild; 
+          psDimension != NULL; 
+          psDimension = psDimension->psNext)
+      {
+          if(strcasecmp(psDimension->pszValue, "Dimension") == 0)
+          {
+              msLoadMapContextLayerDimension(psDimension, layer);
+          }
+      }
+  }
+  
 
   return MS_SUCCESS;
 }
@@ -1427,6 +1534,7 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
     case OWS_0_1_4:
     case OWS_0_1_7:
     case OWS_1_0_0:
+    case OWS_1_1_0:
       /* All is good, this is a supported version. */
       break;
     default:
@@ -1557,11 +1665,17 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   char *pszStyle, *pszCurrent, *pszStyleItem, *pszSLDBody;
   char *pszEncodedVal;
   int i, nValue, nVersion=-1;
+  /* Dimension element */
+  char *pszDimension;
+  const char *pszDimUserValue=NULL, *pszDimUnits=NULL, *pszDimDefault=NULL;
+  const char *pszDimNearValue=NULL, *pszDimUnitSymbol=NULL;
+  const char *pszDimMultiValue=NULL;
+  int bDimensionList = 0;
 
   /* Decide which version we're going to return... */
   version = msLookupHashTable(&(map->web.metadata), "wms_context_version");
   if(version == NULL)
-    version = "1.0.0";
+    version = "1.1.0";
 
   nVersion = msOWSParseVersionString(version);
   if (nVersion < 0)
@@ -1574,6 +1688,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
     case OWS_0_1_4:
     case OWS_0_1_7:
     case OWS_1_0_0:
+    case OWS_1_1_0:
       /* All is good, this is a supported version. */
       break;
     default:
@@ -2146,6 +2261,85 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               msIO_fprintf( stream, "      </StyleList>\n");
           }
 
+          /* Dimension element */;
+          pszCurrent = NULL;
+
+          pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+                                       "wms_dimensionlist");
+          pszCurrent = msLookupHashTable(&(map->layers[i].metadata), 
+                                         "wms_dimension");
+          while(pszValue != NULL)
+          {
+              /* Extract the dimension name from the list */
+              pszDimension = strdup(pszValue);
+              pszChar = strchr(pszDimension, ',');
+              if(pszChar != NULL)
+                  pszDimension[pszChar - pszDimension] = '\0';
+              if(strcasecmp(pszDimension, "") == 0)
+              {
+                  free(pszDimension);
+                  pszValue = strchr(pszValue, ',');
+                  if(pszValue)  
+                      pszValue++;
+                  continue;
+              }
+
+              /* From the dimension list, extract the required dimension */
+              msOWSGetDimensionInfo(&(map->layers[i]), pszDimension, 
+                                    &pszDimUserValue, &pszDimUnits, 
+                                    &pszDimDefault, &pszDimNearValue, 
+                                    &pszDimUnitSymbol, &pszDimMultiValue);
+
+              if(pszDimUserValue == NULL || pszDimUnits == NULL || 
+                 pszDimUnitSymbol == NULL)
+              {
+                  free(pszDimension);
+                  pszValue = strchr(pszValue, ',');
+                  if(pszValue)  
+                      pszValue++;
+                  continue;
+              }
+
+              if(!bDimensionList)
+              {
+                  bDimensionList = 1;
+                  msIO_fprintf( stream, "      <DimensionList>\n");
+              }
+
+              /* name */
+              msIO_fprintf( stream, "        <Dimension name=\"%s\"", 
+                            pszDimension);
+              /* units */
+              msIO_fprintf( stream, " units=\"%s\"",      pszDimUnits);
+              /* unitSymbol */
+              msIO_fprintf( stream, " unitSymbol=\"%s\"", pszDimUnitSymbol);
+              /* userValue */
+              msIO_fprintf( stream, " userValue=\"%s\"",  pszDimUserValue);
+              /* default */
+              if(pszDimDefault)
+                  msIO_fprintf( stream, " default=\"%s\"", pszDimDefault);
+              /* multipleValues */
+              if(pszDimMultiValue)
+                  msIO_fprintf(stream, " multipleValues=\"%s\"", 
+                               pszDimMultiValue);
+              /* nearestValue */
+              if(pszDimNearValue)
+                  msIO_fprintf( stream," nearestValue=\"%s\"",pszDimNearValue);
+      
+              if(pszCurrent && strcasecmp(pszDimension, pszCurrent) == 0)
+                  msIO_fprintf( stream, " current=\"1\"");
+
+              msIO_fprintf( stream, "/>\n");
+
+              free(pszDimension);
+              pszValue = strchr(pszValue, ',');
+              if(pszValue)  
+                  pszValue++;
+          }
+
+          if(bDimensionList)
+              msIO_fprintf( stream, "      </DimensionList>\n");
+
           msIO_fprintf(stream, "    </Layer>\n");
       }
   }
@@ -2175,4 +2369,5 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   return MS_FAILURE;
 #endif
 }
+
 

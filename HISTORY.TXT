@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Update Web Map Context to 1.1.0, add the dimension support. (bug 1581)
+
 - Support SLD body in context document. (bug 887)
 
 - When generating an ogc filter for class regex expressions, use

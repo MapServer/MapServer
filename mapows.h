@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.69  2006/02/14 03:39:30  julien
+ * Update to MapContext 1.1.0, add dimensions support in context bug 1581
+ *
  * Revision 1.68  2006/02/07 17:40:23  sdlime
  * Reverting to Dan's original solution for the template member.
  *
@@ -368,6 +371,15 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
 char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 
                             const char *pszExt);
 const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
+
+void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension, 
+                           const char **pszDimUserValue, 
+                           const char **pszDimUnits, 
+                           const char **pszDimDefault, 
+                           const char **pszDimNearValue, 
+                           const char **pszDimUnitSymbol, 
+                           const char **pszDimMultiValue);
+
 #endif
 
 /*====================================================================

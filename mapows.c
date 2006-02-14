@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/02/14 03:38:47  julien
+ * Update to MapContext 1.1.0, add dimensions support in context bug 1581
+ *
  * Revision 1.60  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -1623,6 +1626,98 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
   }
 
   return NULL;
+}
+
+
+/*
+** msOWSGetDimensionInfo()
+**
+** Extract dimension information from a layer's metadata
+**
+** Before 4.9, only the time dimension was support. With the addition of
+** Web Map Context 1.1.0, we need to support every dimension types. 
+** This function get the dimension information from special metadata in
+** the layer, but can also return default values for the time dimension.
+** 
+*/
+void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension, 
+                           const char **papszDimUserValue, 
+                           const char **papszDimUnits, 
+                           const char **papszDimDefault, 
+                           const char **papszDimNearValue, 
+                           const char **papszDimUnitSymbol, 
+                           const char **papszDimMultiValue)
+{
+    char *pszDimensionItem;
+
+    if(pszDimension == NULL || layer == NULL)
+        return;
+
+    pszDimensionItem = (char*)malloc(strlen(pszDimension)+50);
+
+    /* units (mandatory in map context) */
+    if(papszDimUnits != NULL)
+    {
+        sprintf(pszDimensionItem, "dimension_%s_units",          pszDimension);
+        *papszDimUnits = msOWSLookupMetadata(&(layer->metadata), "MO",
+                                           pszDimensionItem);
+    }
+    /* unitSymbol (mandatory in map context) */
+    if(papszDimUnitSymbol != NULL)
+    {
+        sprintf(pszDimensionItem, "dimension_%s_unitsymbol",     pszDimension);
+        *papszDimUnitSymbol = msOWSLookupMetadata(&(layer->metadata), "MO", 
+                                                  pszDimensionItem);
+    }
+    /* userValue (mandatory in map context) */
+    if(papszDimUserValue != NULL)
+    {
+        sprintf(pszDimensionItem, "dimension_%s_uservalue",      pszDimension);
+        *papszDimUserValue = msOWSLookupMetadata(&(layer->metadata), "MO", 
+                                                 pszDimensionItem);
+    }
+    /* default */
+    if(papszDimDefault != NULL)
+    {
+        sprintf(pszDimensionItem, "dimension_%s_default",        pszDimension);
+        *papszDimDefault = msOWSLookupMetadata(&(layer->metadata), "MO",
+                                               pszDimensionItem);
+    }
+    /* multipleValues */
+    if(papszDimMultiValue != NULL)
+    {
+        sprintf(pszDimensionItem, "dimension_%s_multiplevalues", pszDimension);
+        *papszDimMultiValue = msOWSLookupMetadata(&(layer->metadata), "MO", 
+                                                  pszDimensionItem);
+    }
+    /* nearestValue */
+    if(papszDimNearValue != NULL)
+    {
+        sprintf(pszDimensionItem, "dimension_%s_nearestvalue",   pszDimension);
+        *papszDimNearValue = msOWSLookupMetadata(&(layer->metadata), "MO", 
+                                                 pszDimensionItem);
+    }
+
+    /* Use default time value if necessary */
+    if(strcasecmp(pszDimension, "time") == 0)
+    {
+        if(papszDimUserValue != NULL && *papszDimUserValue == NULL)
+            *papszDimUserValue = msOWSLookupMetadata(&(layer->metadata), 
+                                                   "MO", "time");
+        if(papszDimDefault != NULL && *papszDimDefault == NULL)
+            *papszDimDefault = msOWSLookupMetadata(&(layer->metadata), 
+                                                 "MO", "timedefault");
+        if(papszDimUnits != NULL && *papszDimUnits == NULL)
+            *papszDimUnits = "ISO8601";
+        if(papszDimUnitSymbol != NULL && *papszDimUnitSymbol == NULL)
+            *papszDimUnitSymbol = "t";
+        if(papszDimNearValue != NULL && *papszDimNearValue == NULL)
+            *papszDimNearValue = "0";
+    }
+
+    free(pszDimensionItem);
+
+    return;
 }
 
 #endif /* USE_WMS_SVR || USE_WFS_SVR  || USE_WCS_SVR */
