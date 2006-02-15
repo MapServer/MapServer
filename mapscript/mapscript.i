@@ -252,6 +252,7 @@ typedef struct {
 %include "../swiginc/hashtable.i"
 %include "../swiginc/resultcache.i"
 %include "../swiginc/owsrequest.i"
+%include "../swiginc/connpool.i"
 
 /* 
 =============================================================================

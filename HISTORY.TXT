@@ -16,6 +16,11 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Added missing mapscript function msConnPoolCloseUnreferenced() (bug 1661)
+  We need to make conn. pooling handling transparent to mapscript users
+  so that they do not have to call this function once in a while, for instance
+  by creating an evictor thread.
+
 - Added calls to msSetup/msCleanup() at MapScript load/unload time (bug 1665)
 
 - Reorganized nmake.opt to be more focused on functionality groups rather 
