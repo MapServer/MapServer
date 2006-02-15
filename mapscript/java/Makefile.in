@@ -38,7 +38,7 @@ STRINGS= @STRINGS@
 
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
 PROJ_INC= @PROJ_INC@
-PROJ_LIB= @PROJ_LIB@
+PROJ_LIBS= @PROJ_LIBS@
 PROJ=     @PROJ_ENABLED@
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
