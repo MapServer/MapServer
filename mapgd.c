@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.119.2.2  2006/02/16 07:00:18  sdlime
+ * Applied change to the fuzzy brush builder so that requests for even-sized brushed are handled a bit better. Before size=2 would result in a 5x5 fuzzy brush- too big. Now you get a 3x3 fuzzy brush. (bug 1659)
+ *
  * Revision 1.119.2.1  2006/01/16 20:41:22  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -641,8 +644,8 @@ static gdImagePtr createFuzzyBrush(int size, int r, int g, int b)
   double d, min_d, max_d;
   double hardness=.5;
 
-  if(size % 2 == 0) /* requested an even-sized brush, add one to size */
-    size++;
+  if(size % 2 == 0) /* requested an even-sized brush, subtract one from size */
+    size--;
 
   brush = gdImageCreateTrueColor(size+2, size+2);
   gdImageAlphaBlending(brush, 0); /* don't blend */
