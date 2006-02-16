@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78.2.2  2006/02/16 08:03:47  sdlime
+ * Removed duplicate call to create outer ring list in writeGeometry_GML2().
+ *
  * Revision 1.78.2.1  2006/01/23 22:41:47  julien
  * Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569)
  *
@@ -375,9 +378,6 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
     /* get a list of outter rings for this polygon */
     outerlist = msGetOuterList(shape);
   
-    /* get a list of outter rings for this polygon */
-    outerlist = msGetOuterList(shape);
-
     numouters = 0;
     for(i=0; i<shape->numlines; i++)
       if(outerlist[i] == MS_TRUE) numouters++;
@@ -386,7 +386,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
        (geometry_simple_index != -1 && geometry_aggregate_index == -1) ||
        (geometryList->numgeometries == 0 && shape->numlines == 1)) { /* write a Polygon(s) */
       for(i=0; i<shape->numlines; i++) {
-        if(outerlist[i] == MS_FALSE) break; /* skip non-outer rings, each outer ring is a new polygon */
+        if(outerlist[i] == MS_FALSE) break; /* skip non-outer rings, each outer ring is a new polygon */	
 	
         /* get a list of inner rings for this polygon */
         innerlist = msGetInnerList(shape, i, outerlist);
