@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Fixed the fuzzy brush support so that the transition between 1 pixel aa lines and brushes is less obvious. The old code would not allow for a 3x3 fuzzy brush to be built. (bug 1659)
+
 - Added missing mapscript function msConnPoolCloseUnreferenced() (bug 1661)
   We need to make conn. pooling handling transparent to mapscript users
   so that they do not have to call this function once in a while, for instance
