@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2006/02/16 07:49:10  sdlime
+ * Removed duplicate call to create outer ring list in writeGeometry_GML2().
+ *
  * Revision 1.82  2006/02/07 17:40:23  sdlime
  * Reverting to Dan's original solution for the template member.
  *
@@ -383,9 +386,6 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
 
     /* get a list of outter rings for this polygon */
     outerlist = msGetOuterList(shape);
-  
-    /* get a list of outter rings for this polygon */
-    outerlist = msGetOuterList(shape);
 
     numouters = 0;
     for(i=0; i<shape->numlines; i++)
@@ -442,7 +442,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
       free(outerlist);
     } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiPolygon */  
       gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
-      
+
       /* MultiPolygon */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:MultiPolygon srsName=\"%s\">\n", tab, srsname_encoded);
@@ -452,7 +452,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
       for(i=0; i<shape->numlines; i++) { /* step through the outer rings */
         if(outerlist[i] == MS_TRUE) {
 	  innerlist = msGetInnerList(shape, i, outerlist);
-	  
+
           msIO_fprintf(stream, "%s<gml:polygonMember>\n", tab);
           msIO_fprintf(stream, "%s  <gml:Polygon>\n", tab);
 	  
