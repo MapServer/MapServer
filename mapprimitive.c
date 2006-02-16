@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/02/16 07:51:31  sdlime
+ * Fixed a flaw in routine that computes outer ring list. In certain cases it could miss an outer ring with holes in certain places. (bug 1648)
+ *
  * Revision 1.60  2005/11/01 05:35:50  frank
  * added preliminary implementation of OGR based WKT translation, still untested
  *
@@ -262,18 +265,20 @@ void msComputeBounds(shapeObj *shape)
 /* checks to see if ring r is an outer ring of shape */
 static int isOuterRing(shapeObj *shape, int r) 
 {
-  pointObj point; /* a point in the ring */
-  shapeObj ring;
+  int i, count; 
 
   if(shape->numlines == 1) return(MS_TRUE);
 
-  msInitShape(&ring); /* convert the ring of interest into its own shape */
-  msAddLine(&ring, &(shape->line[r]));
+  count = 0;
+  for(i=0; i<shape->numlines; i++) {
+    if(i == r) continue;
+    count += msPointInPolygon(&(shape->line[r].point[0]), &(shape->line[i]));
+  }
 
-  msPolygonLabelPoint(&ring, &point, -1); /* generate a point in that ring */
-  msFreeShape(&ring); /* done with it */
-
-  return(msIntersectPointPolygon(&point, shape)); /* test the point against the main shape */
+  if(count%2 == 0)
+    return MS_TRUE;
+  else
+    return MS_FALSE;
 }
 
 /*
