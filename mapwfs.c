@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.74  2006/02/17 22:59:47  sdlime
+ * Updated WFS schema production code to ignore items with templates defined since we can't readily produce schema elements for them.
+ *
  * Revision 1.73  2005/12/27 17:36:27  sdlime
  * Fixed a typo in msWFSGetGeometryType().
  *
@@ -567,6 +570,7 @@ static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *ta
 
   if(!stream || !item || !tab) return;
   if(!item->visible) return; /* not exposing this attribute */
+	if(item->template) return; /* can't adequately deal with templated items yet */
 
   if(item->alias) /* TODO: what about name spaces embedded in the alias? */
     element_name = item->alias;
