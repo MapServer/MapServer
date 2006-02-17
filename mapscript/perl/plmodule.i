@@ -17,3 +17,9 @@
 /******************************************************************************
  * Simple Typemaps
  *****************************************************************************/
+
+%init %{
+  if(msSetup() != MS_SUCCESS) {
+    msSetError(MS_MISCERR, "Error initializing MapServer/Mapscript.", "msSetup()");
+  }
+%}
