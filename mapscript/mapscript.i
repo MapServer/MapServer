@@ -204,6 +204,11 @@ typedef struct {
 %include "rbmodule.i"
 #endif
 
+/* Perl */
+#ifdef SWIGPERL5
+%include "plmodule.i"
+#endif
+
 /* Tcl */
 #ifdef SWIGTCL8
 %include "tclmodule.i"
