@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/02/18 21:18:02  frank
+ * Avoid warning about lastPoint.
+ *
  * Revision 1.50  2005/12/23 05:52:48  sdlime
  * Added function to recompute a shape bounds after reprojection. (bug 1586)
  *
@@ -462,6 +465,8 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 
     if( numpoints_in > 0 )
         firstPoint = line->point[0];
+
+    memset( &lastPoint, 0, sizeof(lastPoint) );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all input points in linestring.                       */
