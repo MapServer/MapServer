@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/02/18 21:35:35  hobu
+ * be explicit about the assignment when getting the
+ * CONTENT_TYPE on line 137
+ *
  * Revision 1.23  2006/02/02 00:29:36  sdlime
  * Fixed bug with default content-type and POST requests. (bug 1628)
  *
@@ -132,8 +136,9 @@ int loadParams(cgiRequestObj *request){
     char *post_data;
 
     request->type = MS_POST_REQUEST;
- 
-    if (s = getenv("CONTENT_TYPE"))
+
+    s = getenv("CONTENT_TYPE"); 
+    if (s != NULL)
       request->contenttype = strdup(s);
      /* we've to set default content-type which is
       * application/octet-stream according to
