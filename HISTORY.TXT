@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD (4.9-dev)
 ------------------
+- Fixed mapthread.c looking for the unix compiler symbol rather than just 
+  testing whether or not _WIN32 is defined for the usage of posix threads
+  because unix is not defined on compilers like GCC 4.0.1 for OS X.
 
 - Fixed the fuzzy brush support so that the transition between 1 pixel aa lines and brushes is less obvious. The old code would not allow for a 3x3 fuzzy brush to be built. (bug 1659)
 

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/02/18 16:00:54  hobu
+ * Fix for mapthread.c to check for the non-existence of _WIN32 rather
+ * than unix to use posix threads (bug 1672).
+ *
  * Revision 1.15  2005/12/30 23:05:10  jani
  * mapthread.c: Added missing lock_name "LAYER_VTABLE", this should go to
  * 4.8.0 release.
@@ -202,7 +206,7 @@ static char *lock_names[] =
 /* ==================================================================== */
 /************************************************************************/
 
-#if defined(USE_THREAD) && defined(unix)
+#if defined(USE_THREAD) && !defined(_WIN32)
 
 #include "pthread.h"
 
@@ -275,7 +279,7 @@ void msReleaseLock( int nLockId )
     pthread_mutex_unlock( mutex_locks + nLockId );
 }
 
-#endif /* defined(USE_THREAD) && defined(unix) */
+#endif /* defined(USE_THREAD) && !defined(_WIN32) */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -363,4 +367,4 @@ void msReleaseLock( int nLockId )
     ReleaseMutex( mutex_locks[nLockId] );
 }
 
-#endif /* defined(USE_THREAD) && defined(unix) */
+#endif /* defined(USE_THREAD) && defined(_WIN32) */
