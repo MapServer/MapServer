@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2006/02/18 21:11:35  hobu
+ * make sure we cast the tv_sec to a long because on os x, the type is
+ * really __darwin_suseconds_t, which is ultimately a long.
+ *
  * Revision 1.71  2005/12/12 16:57:56  sean
  * write whether point/shape z and m is supported in version message
  *
@@ -635,7 +639,7 @@ void msDebug( const char * pszFormat, ... )
         struct timeval tv;
         msGettimeofday(&tv, NULL);
         msIO_fprintf(stderr, "[%s].%ld ", 
-                     chop(ctime(&(tv.tv_sec))), tv.tv_usec);
+                     chop(ctime(&(tv.tv_sec))), (long)tv.tv_usec);
     }
 #endif
 
