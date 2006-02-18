@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2006/02/18 21:04:20  hobu
+ * warning nanny on line 1223, unused variable
+ *
  * Revision 1.91  2006/01/16 19:46:35  sean
  * close handle when saving symbolset, pointed out by Albert Rovira
  *
@@ -1220,7 +1223,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       long minx, miny, maxx, maxy;
 
       int width=0, height=0;
-      int color;
+      //int color;
 
       sin_a = sin(angle_rad);
       cos_a = cos(angle_rad);
