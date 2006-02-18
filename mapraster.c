@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.135  2006/02/18 21:14:55  frank
+ * Fixed regex test.
+ *
  * Revision 1.134  2005/12/15 16:37:06  frank
  * Last fix was for bug 1562
  *
@@ -1372,7 +1375,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
               free(pszTmp);
           }
           else if (layer->filter.type == MS_REGEX || 
-                   layer->filter.type == MS_REGEX == MS_IREGEX)
+                   layer->filter.type == MS_IREGEX)
           {
               pszTmp = 
                 (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
