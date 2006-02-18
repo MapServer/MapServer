@@ -302,6 +302,7 @@ void lexer_cleanup(void) {
 <INITIAL,VALUE_STRING>embed		       { return(MS_EMBED); }
 <INITIAL,VALUE_STRING>false                    { return(MS_FALSE); }
 <INITIAL,VALUE_STRING>feet		       { return(MS_FEET); }
+<INITIAL,VALUE_STRING>follow		       { return(MS_FOLLOW); }
 <INITIAL,VALUE_STRING>giant		       { return(MS_GIANT); }
 <INITIAL>hatch                                 { return(MS_SYMBOL_HATCH); }
 <INITIAL,VALUE_STRING>hilite		       { return(MS_HILITE); }

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2006/02/18 20:59:13  sdlime
+ * Initial code for curved labels. (bug 1620)
+ *
  * Revision 1.81  2006/01/16 20:21:18  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -69,7 +72,7 @@
 
 MS_CVSID("$Id$")
 
-int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, labelObj *label )
+int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label )
 {
   int i;
   char wrap[2];
@@ -101,9 +104,17 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   cachePtr->tileindex = tileindex;
   cachePtr->shapeindex = shapeindex;
 
+  /* Store the label point or the label path (Bug #1620) */
+  if ( point ) {
+
   cachePtr->point = *point; /* the actual label point */
   cachePtr->point.x = MS_NINT(cachePtr->point.x);
   cachePtr->point.y = MS_NINT(cachePtr->point.y);
+    cachePtr->labelpath = NULL;
+    
+  } else if ( labelpath ) {
+    cachePtr->labelpath = labelpath;
+  }
 
   cachePtr->text = strdup(string); /* the actual text */
 

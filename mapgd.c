@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122  2006/02/18 20:59:13  sdlime
+ * Initial code for curved labels. (bug 1620)
+ *
  * Revision 1.121  2006/02/14 17:53:50  sdlime
  * Applied change to the fuzzy brush builder so that requests for even-sized brushed are handled a bit better. Before size=2 would result in a 5x5 fuzzy brush- too big. Now you get a 3x3 fuzzy brush. (bug 1659)
  *
@@ -3000,7 +3003,9 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
 
     if(label->outlinecolor.pen >= 0) { /* handle the outline color */
-      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y-1, string);
+      int os; /* outline size */
+      os = MS_NINT(ceil(size/10.0));
+      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y-os, string);
       if(error) {
         if( gdImageTrueColor(img) )
             gdImageAlphaBlending( img, oldAlphaBlending );
@@ -3009,14 +3014,14 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 	return(-1);
       }
 
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y+1, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y+os, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+os, y, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-os, y, string);
       
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);      
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-os, y-os, string);      
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-os, y+os, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+os, y-os, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+os, y+os, string);
     }
 
     if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
@@ -3103,7 +3108,157 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
   return(0);
 }
 
-/* TO DO: fix returned values to be MS_SUCCESS/MS_FAILURE */
+/*
+ * Draw a label curved along a line
+ */
+int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor)
+{
+  int oldAlphaBlending = 0;
+  double size;
+  int bbox[8];
+  int i;
+  
+  if ( !string ) return(0); /* do nothing */
+  if ( strlen(string) == 0 ) return(0); /* do nothing */
+
+  if( label->encoding != NULL ) { /* converting the label encoding */
+      string = msGetEncodedString(string, label->encoding);
+      if(string == NULL) return(-1);
+  }
+  
+  if(label->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->color));
+  if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->outlinecolor));
+  if(label->shadowcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->shadowcolor));
+
+  if(label->type == MS_TRUETYPE) {
+    char *error=NULL, *font=NULL;
+    char s[2];
+    
+    size = label->size*scalefactor;
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
+
+#ifdef USE_GD_FT
+    if(!fontset) {
+      msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextLineGD()");
+      if(label->encoding != NULL) msFree(string);
+      return(-1);
+    }
+
+    if(!label->font) {
+      msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextLineGD()");
+      if(label->encoding != NULL) msFree(string);
+      return(-1);
+    }
+
+    font = msLookupHashTable(&(fontset->fonts), label->font);
+    if(!font) {
+      msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextLineGD()", label->font);
+      if(label->encoding != NULL) msFree(string);
+      return(-1);
+    }
+
+    if( gdImageTrueColor(img) )
+    {
+      oldAlphaBlending = img->alphaBlendingFlag;
+      gdImageAlphaBlending( img, 1 );
+    }
+      
+
+    /* Iterate over the label line and draw each letter.  First we render
+       the shadow, then the outline, and finally the text.  This keeps the
+       entire shadow or entire outline below the foreground. */
+    
+    for (i = 0; i < labelpath->path.numpoints; i++) {
+      s[0] = string[i];
+      s[1] = '\0';
+      
+      if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
+        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size,
+                                labelpath->angles[i],
+                                labelpath->path.point[i].x+label->shadowsizex,
+                                labelpath->path.point[i].y+label->shadowsizey, s);
+        if(error) {
+          msSetError(MS_TTFERR, error, "msDrawTextLineGD()");
+          if(label->encoding != NULL) msFree(string);
+          return(-1);
+        }
+      }
+    }
+
+    /* Render the outline */
+    for (i = 0; i < labelpath->path.numpoints; i++) {
+      int x, y;
+      double theta;
+      s[0] = string[i];
+      s[1] = '\0';
+
+      theta = labelpath->angles[i];
+      x = MS_NINT(labelpath->path.point[i].x);
+      y = MS_NINT(labelpath->path.point[i].y);
+      
+      if(label->outlinecolor.pen >= 0) { /* handle the outline color */
+        int os; /* outline distance */
+        os = MS_NINT(ceil(size/10.0));
+
+        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x, y-os, s);
+        if(error) {
+          if( gdImageTrueColor(img) )
+            gdImageAlphaBlending( img, oldAlphaBlending );
+          msSetError(MS_TTFERR, error, "msDrawTextLineGD()");
+          if(label->encoding != NULL) msFree(string);
+          return(-1);
+        }
+      
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x, y+os, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+os, y, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-os, y, s);
+      
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-os, y-os, s);      
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-os, y+os, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+os, y-os, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+os, y+os, s);
+      }
+
+    }
+
+    /* Render the foreground */
+    for (i = 0; i < labelpath->path.numpoints; i++) {      
+      s[0] = string[i];
+      s[1] = '\0';
+    
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, labelpath->angles[i], labelpath->path.point[i].x, labelpath->path.point[i].y, s);
+      
+    }    
+
+    /* Uncomment this to see the label bounds */
+/*     imagePolyline(img, &(labelpath->bounds), label->color.pen, 0,0); */
+    
+    if( gdImageTrueColor(img) )
+      gdImageAlphaBlending( img, oldAlphaBlending );
+
+    
+#else
+    msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextGD()");
+    if(label->encoding != NULL) msFree(string);
+    return(-1);
+#endif
+    
+  } else {  /* MS_BITMAP */
+
+    msSetError(MS_TTFERR, "TrueType font support is not available and is required for angled text rendering.", "msDrawTextGD()");
+    if(label->encoding != NULL) msFree(string);
+    return(-1);
+    
+  }
+  
+  if(label->encoding != NULL) msFree(string);
+  
+  return(0);
+  
+}
+
+/* To DO: fix returned values to be MS_SUCCESS/MS_FAILURE */
 int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 {
   pointObj p;
@@ -3174,13 +3329,81 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       if(layerPtr->type == MS_LAYER_LINE) {
 	int position = MS_UC;
 
+        /* If we have a label path there are no alternate positions.
+           Just check against the image boundaries, existing markers
+           and existing labels. (Bug #1620) */
+        if ( cachePtr->labelpath ) {
+          
+          /* Assume label can be drawn */
+          cachePtr->status = MS_TRUE;
+
+          /* Copy the bounds into the cache's polygon */
+          msCopyShape(&(cachePtr->labelpath->bounds), cachePtr->poly);
+
+          msFreeShape(&(cachePtr->labelpath->bounds));
+          
+          
+          do {
+
+            /* Check the bounds against the image */
+            if ( !labelPtr->partials ) {
+              if ( labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer + map_edge_buffer) == MS_FALSE) {
+                cachePtr->status = MS_FALSE;
+                break;
+              }
+            }
+
+            /* Compare against rendered markers */
+            for ( i = 0; i < map->labelcache.nummarkers; i++ ) {
+              if ( l != map->labelcache.markers[i].id ) {
+                if ( intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly ) == MS_TRUE ) {
+                  cachePtr->status = MS_FALSE;
+                  break;
+                }
+              }
+            }
+
+            if ( !cachePtr->status )
+              break;
+              
+            /* Compare against rendered labels */
+            for ( i = l+1; i < map->labelcache.numlabels; i++ ) {
+              if ( map->labelcache.labels[i].status == MS_TRUE ) {
+
+                if ( (labelPtr->mindistance != -1) &&
+                     (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
+                     (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) &&
+                     (msDistancePointToPoint(&(cachePtr->labelpath->path.point[0]), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance) &&
+                     (msDistancePointToPoint(&(cachePtr->labelpath->path.point[ cachePtr->labelpath->path.numpoints-1 ]), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+                  cachePtr->status = MS_FALSE;
+                  break;
+                }
+
+                if ( intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE ) { /* Labels intersect */
+                  cachePtr->status = MS_FALSE;
+                  break;
+                }
+                
+              }
+            }
+
+            /* Done */
+
+          } while ( 0 );
+          
+        } else { 
+          /* We have a label point */
 	for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */
 
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
+            /* Should position be position + j here?  It seems like nothing
+               changes from one loop to the other? --Benj Carson */
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
+            /* I think this is unreachable? layerPtr->type == MS_LAYER_LINE
+               here. --Benj Carson */
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
@@ -3222,8 +3445,10 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	    break;
 
 	} /* next angle */
+        }
 
       } else {
+
 	for(j=0; j<=7; j++) { /* loop through the outer label positions */
 
 	  msFreeShape(cachePtr->poly);
@@ -3276,6 +3501,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
 
     } else {
+      
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
       if(labelPtr->position == MS_CC) /* don't need the marker_offset */
@@ -3335,7 +3561,12 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
     }
 
     if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardGD(img, cachePtr->poly, labelPtr);
+
+    if ( cachePtr->labelpath ) {
+      msDrawTextLineGD(img, cachePtr->text, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); /* Draw the curved label */
+    } else {
     msDrawTextGD(img, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
+    }
 
   } /* next label */
 

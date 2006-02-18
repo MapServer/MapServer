@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/02/18 20:59:13  sdlime
+ * Initial code for curved labels. (bug 1620)
+ *
  * Revision 1.58  2006/01/16 20:21:18  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -503,7 +506,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   if(map->legend.postlabelcache) /* add it directly to the image */
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   else
-    msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0, NULL);
+    msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or */
   /* with saving maps */

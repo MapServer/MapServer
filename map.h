@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.443  2006/02/18 20:59:12  sdlime
+ * Initial code for curved labels. (bug 1620)
+ *
  * Revision 1.442  2006/01/31 17:09:28  sdlime
  * Added function to 'commify' a number stored as a string. (supports bug 1636)
  *
@@ -568,7 +571,7 @@ extern "C" {
     enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
     enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX};
     enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
-    enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement, don't change it */
+    enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_FOLLOW}; /* arrangement matters for auto placement, don't change it.  Added MS_FOLLOW for bug #1620 implementation */
     enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
     enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
     enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER, MS_PLUGIN };
@@ -614,6 +617,13 @@ typedef struct _FilterNode
       
 }FilterEncodingNode;
 
+
+/* Label path object - used to hold path and bounds of curved labels - Bug #1620 implementation. */
+typedef struct {
+  multipointObj path;
+  shapeObj bounds;
+  double *angles;
+} labelPathObj;
 
 /* FONTSET OBJECT - used to hold aliases for TRUETYPE fonts */
     typedef struct {
@@ -747,6 +757,7 @@ typedef struct _FilterNode
 
         double angle;
         int autoangle; /* true or false */
+        int angle_follow;  /* true or false, bug #1620 implementation */
 
         int buffer; /* space to reserve around a label */
 
@@ -763,6 +774,7 @@ typedef struct _FilterNode
   int force; /* labels *must* be drawn */
 
   char *encoding;
+
 } labelObj;
 
 /* WEB OBJECT - holds parameters for a mapserver/mapscript interface */
@@ -899,6 +911,9 @@ typedef struct {
   shapeObj *poly; /* label bounding box */
 
   int status; /* has this label been drawn or not */
+
+  labelPathObj *labelpath;  /* Path & bounds of curved labels.  Bug #1620 implementation */
+  
 } labelCacheMemberObj;
 
 typedef struct {
@@ -1601,13 +1616,14 @@ MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 
 MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
-MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, labelObj *);
+MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
 MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
 MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimative.c */
+MS_DLL_EXPORT void msFreeLabelPathObj(labelPathObj *path);
 MS_DLL_EXPORT shapeObj *msShapeFromWKT(const char *string);
 MS_DLL_EXPORT char *msShapeToWKT(shapeObj *shape);
 MS_DLL_EXPORT void msInitShape(shapeObj *shape);
@@ -1624,6 +1640,7 @@ MS_DLL_EXPORT void msTransformShapeToPixel(shapeObj *shape, rectObj extent, doub
 MS_DLL_EXPORT void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
 MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
 MS_DLL_EXPORT int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
+MS_DLL_EXPORT labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *status);
 MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
@@ -1810,6 +1827,7 @@ MS_DLL_EXPORT void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, s
 MS_DLL_EXPORT void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
 MS_DLL_EXPORT int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);

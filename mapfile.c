@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.319  2006/02/18 20:59:13  sdlime
+ * Initial code for curved labels. (bug 1620)
+ *
  * Revision 1.318  2006/02/10 04:42:56  frank
  * default layer->project to true for nonsquare without projection (bug 1645)
  *
@@ -1222,6 +1225,7 @@ void initLabel(labelObj *label)
   label->position = MS_CC;
   label->angle = 0;
   label->autoangle = MS_FALSE;
+  label->angle_follow = MS_FALSE;
   label->minsize = MS_MINFONTSIZE;
   label->maxsize = MS_MAXFONTSIZE;
   label->buffer = 0;
@@ -1253,12 +1257,16 @@ static int loadLabel(labelObj *label, mapObj *map)
   for(;;) {
     switch(msyylex()) {
     case(ANGLE):
-      if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1) 
+      if((symbol = getSymbol(3, MS_NUMBER,MS_AUTO,MS_FOLLOW)) == -1) 
 	return(-1);
 
       if(symbol == MS_NUMBER)
 	label->angle = msyynumber;
-      else
+      else if ( symbol == MS_FOLLOW ) {
+        label->angle_follow = MS_TRUE;
+        /* Fallback in case ANGLE FOLLOW fails */
+        label->autoangle = MS_TRUE;
+      } else
 	label->autoangle = MS_TRUE;
       break;
     case(ANTIALIAS):
@@ -1378,12 +1386,17 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
   case(ANGLE):
     msyystate = 2; msyystring = value;
     label->autoangle = MS_FALSE;
-    if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1) 
+    label->angle_follow = MS_FALSE;
+    if((symbol = getSymbol(3, MS_NUMBER,MS_AUTO,MS_FOLLOW)) == -1) 
       return;
     
     if(symbol == MS_NUMBER)
       label->angle = msyynumber;
-    else
+    else if ( symbol == MS_FOLLOW ) {
+      label->angle_follow = MS_TRUE;
+      /* Fallback in case ANGLE FOLLOW fails */
+      label->autoangle = MS_TRUE;
+    } else
       label->autoangle = MS_TRUE;
     break;
   case(ANTIALIAS):
@@ -1514,7 +1527,9 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[label->size]);
     fprintf(stream, "  %sTYPE BITMAP\n", tab);
   } else {
-    if(label->autoangle)
+    if (label->angle_follow) 
+      fprintf(stream, "  %sANGLE FOLLOW\n", tab);
+    else if(label->autoangle)
       fprintf(stream, "  %sANGLE AUTO\n", tab);
     else
       fprintf(stream, "  %sANGLE %f\n", tab, label->angle);

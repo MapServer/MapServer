@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/02/18 20:59:13  sdlime
+ * Initial code for curved labels. (bug 1620)
+ *
  * Revision 1.49  2005/09/27 15:27:18  sean
  * Fixed typo to prevent extra scalebar layer creation (bug 1480)
  *
@@ -399,7 +402,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   }
   else
-    msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0, NULL);
+    msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or */
   /* with saving maps */

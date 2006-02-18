@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2006/02/18 20:59:13  sdlime
+ * Initial code for curved labels. (bug 1620)
+ *
  * Revision 1.98  2006/01/16 20:37:15  sdlime
  * Changed label size calls to not adjust baseline offset.
  *
@@ -1313,6 +1316,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   double r; /* circle radius */
   int csz; /* clip over size */
   double buffer;
+  int status = MS_FAILURE;
+  
+  labelPathObj *annopath = NULL; /* Curved label path. Bug #1620 implementation */
 
 /* Steve's original code
   cliprect.minx = map->extent.minx - 2*map->cellsize; // set clipping rectangle just a bit larger than the map extent
@@ -1394,8 +1400,49 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msTransformShape(shape, map->extent, map->cellsize, image);
       }
 
-      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
+      /* Bug #1620 implementation */
+      if ( layer->class[c].label.angle_follow == MS_TRUE ) {
 
+        annopath = msPolylineLabelPath(shape, layer->class[c].label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c].label), layer->scalefactor, &status);
+
+        if( annopath ) {
+
+          labelObj label;
+        
+          label = layer->class[c].label;
+          
+          /* Label path derived from line overrides the rotation and position
+             values, so ignore the specified angle and set the position to
+             auto. */
+          label.position = MS_AUTO;
+        
+          if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) label.size = atoi(shape->values[layer->labelsizeitemindex]);
+        
+          if(layer->labelcache) {
+            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, NULL, annopath, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+          } else {
+            /* FIXME: Not sure how this should work with the label path yet */
+            /*
+              if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
+              for(s=0; s<layer->class[c].numstyles; s++)
+              msDrawMarkerSymbol(&map->symbolset, image, &(label_line->point[0]), &(layer->class[c].styles[s]), layer->scalefactor);
+              }
+            */
+            /* FIXME: need to call msDrawTextLineGD() from here eventually */
+            /* msDrawLabel(image, label_line->point[0], shape->text, &label, &map->fontset, layer->scalefactor); */
+
+            /* Free the labelpath */
+            msFreeLabelPathObj(annopath);
+          }
+
+        }
+      }
+
+      /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
+      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status == MS_FAILURE) ) {
+
+        /* Regular labels */
+        if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
         labelObj label;
         
         label = layer->class[c].label;
@@ -1410,7 +1457,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(label.autoangle) label.angle = angle;
 
         if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
           if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
             for(s=0; s<layer->class[c].numstyles; s++)
@@ -1418,6 +1465,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  }
 	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
         }
+      }
       }
 
       break;
@@ -1442,7 +1490,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             label.angle -= map->gt.rotation_angle;
 
         if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+          if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
 	  if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
             for(s=0; s<layer->class[c].numstyles; s++)
@@ -1478,7 +1526,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 	  if(shape->text) {
 	    if(layer->labelcache) {
-	      if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
+	      if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
 	      if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
                 for(s=0; s<layer->class[c].numstyles; s++)
@@ -1530,7 +1578,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               label.angle -= map->gt.rotation_angle;
 
 	  if(layer->labelcache) {
-	    if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
+	    if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	  } else
 	    msDrawLabel(image, *point, shape->text, &label, &map->fontset, layer->scalefactor);
 	}
@@ -1570,6 +1618,39 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
     if(shape->text) {
+
+      /* Bug #1620 implementation */
+      if ( layer->class[c].label.angle_follow == MS_TRUE ) {
+
+        annopath = msPolylineLabelPath(shape, layer->class[c].label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c].label), layer->scalefactor, &status);
+        if( annopath ) {
+
+          labelObj label;
+
+          label = layer->class[c].label;
+          /* Label path derived from line overrides the rotation and position
+             values, so ignore the specified angle and set the position to
+             auto. */
+          label.position = MS_AUTO;
+          
+          if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) 
+            label.size = atoi(shape->values[layer->labelsizeitemindex]);
+          
+          if(layer->labelcache) {
+            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, NULL, annopath, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+          } else {
+            /* FIXME: need to call msDrawTextLineGD() from here eventually */
+            /* msDrawLabel(image, label_line->point[0], shape->text, &label, &map->fontset, layer->scalefactor); */
+            
+            /* Free the labelpath */
+            msFreeLabelPathObj(annopath);
+          }
+        }
+      }
+
+      /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
+      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status == MS_FAILURE) ) {
+
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
         labelObj label = layer->class[c].label;
 
@@ -1585,10 +1666,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(label.autoangle) label.angle = angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
           msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
       }
+    }
     }
     break;
 
@@ -1648,7 +1730,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             label.angle -= map->gt.rotation_angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
 	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
       }
@@ -1691,7 +1773,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
     if(labeltext) {
       if(layer->labelcache) {
-	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
+        if(msAddLabel(map, layer->index, c, -1, -1, point, NULL, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else {
 	if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
           for(s=0; s<layer->class[c].numstyles; s++)
@@ -1714,7 +1796,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
     if(labeltext) {
       if(layer->labelcache) {
-	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
+        if(msAddLabel(map, layer->index, c, -1, -1, point, NULL, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else
 	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, layer->scalefactor);
     }
