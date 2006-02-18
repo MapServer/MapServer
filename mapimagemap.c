@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/02/18 21:24:42  hobu
+ * strlen(img->img.imagemap) is a size_t on osx.  Cast to
+ * int on os x.
+ *
  * Revision 1.25  2006/01/25 16:11:34  dan
  * Prevent systematic buffer overflow in imagemap code when vsnprintf()
  * is not available (bug 1613)
@@ -56,7 +60,7 @@
 
 #include "map.h"
 #include "dxfcolor.h"
-
+ 
 #include <stdarg.h>
 #include <time.h>
 
@@ -2117,7 +2121,7 @@ if(filename != NULL && strlen(filename) > 0) {
   {
 DEBUG_IF printf("ALLOCD %d<BR>\n", img->size);
 /* DEBUG_IF printf("F %s<BR>\n", img->img.imagemap); */
-DEBUG_IF printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
+DEBUG_IF printf("FLEN %d<BR>\n", (int)strlen(img->img.imagemap));
 	  if (dxf == 2){
 	    msIO_fprintf(stream, "%s", layerlist); 
 	  } else if (dxf){
