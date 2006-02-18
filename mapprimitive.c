@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2006/02/18 21:14:09  hobu
+ * INFINITY is already defined on in the math headers on osx.
+ * Don't redefine it if it is already there.
+ *
  * Revision 1.63  2006/02/18 20:59:13  sdlime
  * Initial code for curved labels. (bug 1620)
  *
@@ -111,7 +115,9 @@ typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
 #define SWAP( a, b, t) ( (t) = (a), (a) = (b), (b) = (t) )
 #define EDGE_CHECK( x0, x, x1) ((x) < MS_MIN( (x0), (x1)) ? CLIP_LEFT : ((x) > MS_MAX( (x0), (x1)) ? CLIP_RIGHT : CLIP_MIDDLE ))
 
+#ifndef INFINITY
 #define INFINITY	(1.0e+30)
+#endif
 #define NEARZERO	(1.0e-30)	/* 1/INFINITY */
 
 void msPrintShape(shapeObj *p) 
