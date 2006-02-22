@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/02/22 05:04:34  sdlime
+ * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
+ *
  * Revision 1.17  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -80,7 +83,8 @@ typedef struct
 
 /*
 ** Function prototypes
-*/ 
+*/
+#ifndef SWIG
 MS_DLL_EXPORT  int loadParams(cgiRequestObj *);
 MS_DLL_EXPORT void getword(char *, char *, char);
 MS_DLL_EXPORT char *makeword_skip(char *, char, char);
@@ -97,5 +101,6 @@ MS_DLL_EXPORT void escape_shell_cmd(char *);
 
 MS_DLL_EXPORT cgiRequestObj *msAllocCgiObj(void);
 MS_DLL_EXPORT void msFreeCgiObj(cgiRequestObj *request);
+#endif /*SWIG*/
 
 #endif /* CGIUTIL_H */

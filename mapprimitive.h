@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/02/22 05:04:34  sdlime
+ * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
+ *
  * Revision 1.18  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -55,10 +58,12 @@ typedef struct {
   double minx, miny, maxx, maxy;
 } rectObj;
 
+#ifndef SWIG
 typedef struct {
   double x;
   double y;
 } vectorObj;
+#endif /*SWIG*/
 
 typedef struct {
   double x;

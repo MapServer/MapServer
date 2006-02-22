@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/02/22 05:04:34  sdlime
+ * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
+ *
  * Revision 1.34  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -178,6 +181,7 @@ typedef struct {
 #endif
 } shapefileObj;
 
+#ifndef SWIG
 /* layerInfo structure for tiled shapefiles */
 typedef struct { 
   shapefileObj *shpfile;
@@ -185,7 +189,6 @@ typedef struct {
   int tilelayerindex;
 } msTiledSHPLayerInfo;
 
-#ifndef SWIG
 
 /* shapefileObj function prototypes  */
 MS_DLL_EXPORT int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename);
