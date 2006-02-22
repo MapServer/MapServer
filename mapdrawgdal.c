@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/02/22 03:52:04  frank
+ * Incorporate range coloring support for rasters (bug 1673)
+ *
  * Revision 1.47  2005/11/24 16:16:41  frank
  * fixed raster crash with some grass rasters (bug 1541)
  *
@@ -405,10 +408,25 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   
   /*
    * Is this image classified?  We consider it classified if there are
-   * classes with an expression string.  
+   * classes with an expression string *or* a color range.  We don't want
+   * to treat the raster as classified if there is just a bogus class here
+   * to force inclusion in the legend.
    */
   for( i = 0; i < layer->numclasses; i++ )
   {
+      int s;
+
+      /* change colour based on colour range? */
+      for(s=0; s<layer->class[i].numstyles; s++)
+      {
+          if( MS_VALID_COLOR(layer->class[i].styles[s].mincolor)
+              && MS_VALID_COLOR(layer->class[i].styles[s].maxcolor) )
+          {
+              classified = TRUE;
+              break;
+          }
+      }
+      
       if( layer->class[i].expression.string != NULL )
       {
           classified = TRUE;
@@ -640,6 +658,19 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 cmap[i] = -1;
             else
             {
+                int s;
+                
+                /* change colour based on colour range?  Currently we 
+                   only address the greyscale case properly. */
+
+                for(s=0; s<layer->class[c].numstyles; s++)
+                {
+                    if( MS_VALID_COLOR(layer->class[c].styles[s].mincolor)
+                        && MS_VALID_COLOR(layer->class[c].styles[s].maxcolor) )
+                        msValueToRange(&layer->class[c].styles[s],
+                                       sEntry.c1 );
+                }
+
                 RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
                 if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
                     cmap[i] = -1;
@@ -1766,6 +1797,16 @@ msDrawRasterLayerGDAL_16BitClassification(
         c = msGetClass_Float(layer, (float) dfOriginalValue);
         if( c != -1 )
         {
+            int s;
+
+            /* change colour based on colour range? */
+            for(s=0; s<layer->class[c].numstyles; s++)
+            {
+                if( MS_VALID_COLOR(layer->class[c].styles[s].mincolor)
+                    && MS_VALID_COLOR(layer->class[c].styles[s].maxcolor) )
+                    msValueToRange(&layer->class[c].styles[s],dfOriginalValue);
+            }
+
             RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
             if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
                 cmap[i] = -1;
