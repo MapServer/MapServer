@@ -1,71 +1,78 @@
+/******************************************************************************
+ *
+ * Project:  MapServer
+ * Purpose:  C#-specific enhancements to MapScript
+ * Author:   Tamas Szekeres, szekerest@gmail.com
+ *
+ ******************************************************************************
+ *
+ * C#-specific mapscript code has been moved into this 
+ * SWIG interface file to improve the readibility of the main
+ * interface file.  The main mapscript.i file includes this
+ * file when SWIGCSHARP is defined (via 'swig -csharp ...').
+ *
+ *****************************************************************************/
 
-%typemap(ctype) gdBuffer    %{void%}
-%typemap(imtype) gdBuffer  %{void%}
-%typemap(cstype) gdBuffer %{byte[]%}
 
-%typemap(out, null="") gdBuffer
-%{ SWIG_csharp_bytearray_callback($1.data, $1.size);
-	gdFree($1.data); %}
-
-// SWIGEXCODE is a macro used by many other csout typemaps
-#ifdef SWIGEXCODE
-%typemap(csout, excode=SWIGEXCODE) gdBuffer {
-    $imcall;$excode
-    return $modulePINVOKE.GetBytes();
-}
-#else
-%typemap(csout) gdBuffer {
-    $imcall;
-    return $modulePINVOKE.GetBytes();
-}
-#endif
-
-%insert(runtime) %{
-/* Callback for returning byte arrays to C#, the resulting array is not marshaled back, so the caller should call GetBytes to get back the results */
-typedef void (SWIGSTDCALL* SWIG_CSharpByteArrayHelperCallback)(const unsigned char *, const int);
-static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
-%}
+/******************************************************************************
+ * gdBuffer Typemaps and helpers
+ *****************************************************************************/
 
 %pragma(csharp) imclasscode=%{
-  class SWIGByteArrayHelper 
-	{
-		public delegate void SWIGByteArrayDelegate(IntPtr data, int size);
-		static SWIGByteArrayDelegate bytearrayDelegate = new SWIGByteArrayDelegate(CreateByteArray);
-
-		[DllImport("$dllimport", EntryPoint="SWIGRegisterByteArrayCallback_$module")]
-		public static extern void SWIGRegisterByteArrayCallback_mapscript(SWIGByteArrayDelegate bytearrayDelegate);
-
-		static void CreateByteArray(IntPtr data, int size) 
-		{
-			arraybuffer = new byte[size];
-			Marshal.Copy(data, arraybuffer, 0, size);
-		}
-
-		static SWIGByteArrayHelper() 
-		{
-			SWIGRegisterByteArrayCallback_$module(bytearrayDelegate);
-		}
-	}
-	static SWIGByteArrayHelper bytearrayHelper = new SWIGByteArrayHelper();
-	static byte[] arraybuffer;
-
-	internal static byte[] GetBytes()
-	{
-		return arraybuffer;
-	}
+  public delegate void SWIGByteArrayDelegate(IntPtr data, int size);
 %}
 
 %insert(runtime) %{
-#ifdef __cplusplus
-extern "C" 
-#endif
-#ifdef SWIGEXPORT
-SWIGEXPORT void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByteArrayHelperCallback callback) {
-  SWIG_csharp_bytearray_callback = callback;
-}
-#else
-DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByteArrayHelperCallback callback) {
-  SWIG_csharp_bytearray_callback = callback;
-}
-#endif
+/* Callback for returning byte arrays to C# */
+typedef void (SWIGSTDCALL* SWIG_CSharpByteArrayHelperCallback)(const unsigned char *, const int);
 %}
+
+%typemap(ctype) SWIG_CSharpByteArrayHelperCallback    %{SWIG_CSharpByteArrayHelperCallback%}
+%typemap(imtype) SWIG_CSharpByteArrayHelperCallback  %{SWIGByteArrayDelegate%}
+%typemap(cstype) SWIG_CSharpByteArrayHelperCallback %{$imclassname.SWIGByteArrayDelegate%}
+%typemap(in) SWIG_CSharpByteArrayHelperCallback %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) SWIG_CSharpByteArrayHelperCallback "$csinput"
+
+%csmethodmodifiers getBytes "private";
+%ignore imageObj::getBytes();
+%extend imageObj 
+{
+	void getBytes(SWIG_CSharpByteArrayHelperCallback callback) {
+		gdBuffer buffer;
+        
+        buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
+                                          self->format);
+        if( buffer.size == 0 )
+        {
+            msSetError(MS_MISCERR, "Failed to get image buffer", "getBytes");
+            return;
+        }
+        
+        callback(buffer.data, buffer.size);
+        gdFree(buffer.data);
+	}
+}
+
+%ignore imageObj::write;
+
+%typemap(cscode) imageObj %{
+  private byte[] gdbuffer;
+  private void CreateByteArray(IntPtr data, int size)
+  {
+      gdbuffer = new byte[size];
+      Marshal.Copy(data, gdbuffer, 0, size);
+  }
+  
+  public byte[] getBytes()
+  {
+	getBytes(new $imclassname.SWIGByteArrayDelegate(this.CreateByteArray));
+	return gdbuffer;
+  }
+  
+  public void write(System.IO.Stream stream)
+  {
+	getBytes(new $imclassname.SWIGByteArrayDelegate(this.CreateByteArray));
+	stream.Write(gdbuffer, 0, gdbuffer.Length);
+  }
+%}
+
