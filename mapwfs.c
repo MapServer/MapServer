@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.75  2006/02/24 02:55:03  assefa
+ * Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
+ *
  * Revision 1.74  2006/02/17 22:59:47  sdlime
  * Updated WFS schema production code to ignore items with templates defined since we can't readily produce schema elements for them.
  *
@@ -1278,14 +1281,17 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     msFree(encoded_schema);
     msFree(encoded_typename);
 
-    msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
+    /* handle case of maxfeatures = 0 */
+    if(maxfeatures != 0)
+      msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
+
     
     /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
     for(i=0; i<map->numlayers; i++) {
       if (map->layers[i].resultcache && map->layers[i].resultcache->numresults > 0)
 	break;
     }
-    if (i==map->numlayers) {
+    if ((i==map->numlayers) || (maxfeatures == 0)) {
       msIO_printf("   <gml:boundedBy>\n"); 
       msIO_printf("      <gml:null>missing</gml:null>\n");
       msIO_printf("   </gml:boundedBy>\n"); 
