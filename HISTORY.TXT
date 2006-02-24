@@ -16,6 +16,11 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- SDE driver had a missing memory allocation that was preventing 
+  querying from working correctly (bug 1682).
+
+- SDE layers weren't closing properly (bug 1682).
+
 - Fixed the fuzzy brush support so that the transition between 1 pixel aa 
   lines and brushes is less obvious. The old code would not allow for a 3x3 
   fuzzy brush to be built. (bug 1659)
