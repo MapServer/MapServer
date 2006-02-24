@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2006/02/24 20:24:23  hobu
+ * make sure we check if layer->iteminfo exists before hammering it and reallocating
+ * just use LayerClose to close layer information rather than the
+ * LayerClose/LayerConnectionClose dichotomy that wasn't working
+ *
  * Revision 1.102  2006/01/10 19:27:20  hobu
  * fix the memory allocation bug described in bug 1606
  *
@@ -1082,14 +1087,14 @@ int msSDELayerIsOpen(layerObj *layer) {
 /*     Closes the MapServer layer.  This doesn't necessarily close the  */
 /*     connection to the layer.                                         */
 /* -------------------------------------------------------------------- */
-void msSDELayerClose(layerObj *layer) {
+int  msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
 
 
   msSDELayerInfo *sde=NULL;
 
   sde = layer->layerinfo;
-  if (sde == NULL) return;  /* Silently return if layer not opened. */
+  if (sde == NULL) return MS_SUCCESS;  /* Silently return if layer not opened. */
 
   if(layer->debug) 
     msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
@@ -1105,6 +1110,7 @@ void msSDELayerClose(layerObj *layer) {
   sde->connPoolInfo = NULL;
   if (layer->layerinfo) free(layer->layerinfo);
   layer->layerinfo = NULL;
+  return MS_SUCCESS;
 
 #else
   msSetError( MS_MISCERR, 
@@ -1114,27 +1120,42 @@ void msSDELayerClose(layerObj *layer) {
 #endif
 }
 
-/* -------------------------------------------------------------------- */
-/* msSDELayerNoOpClose                                                  */
-/* -------------------------------------------------------------------- */
-/* No-Op function for virtual table interface                           */
-/* -------------------------------------------------------------------- */
-int msSDELayerNoOpClose(layerObj *layer) 
-{
-	/* no-op because of connection pooling */
-	return MS_SUCCESS;
-}
 
 /* -------------------------------------------------------------------- */
 /* msSDELayerCloseConnection                                            */
 /* -------------------------------------------------------------------- */
 /* Virtual table function                                               */
 /* -------------------------------------------------------------------- */
-int msSDELayerCloseConnection(layerObj *layer) 
+/*int msSDELayerCloseConnection(layerObj *layer) 
 {
-	msSDELayerClose(layer);
-	return MS_SUCCESS;
+	
+
+#ifdef USE_SDE
+
+
+  msSDELayerInfo *sde=NULL;
+
+  sde = layer->layerinfo;
+  if (sde == NULL) return;   Silently return if layer not opened./
+
+  if(layer->debug)
+    msDebug("msSDELayerCloseConnection(): Closing connection for layer %s.\n", layer->name);
+
+  msConnPoolRelease( layer, sde->connPoolInfo );
+  sde->connection = NULL;
+  sde->connPoolInfo = NULL;
+
+#else
+  msSetError( MS_MISCERR,
+              "SDE support is not available.",
+              "msSDELayerClose()");
+  return;
+#endif
+
+    return MS_SUCCESS;
 }
+*/
+
 /* -------------------------------------------------------------------- */
 /* msSDELayerWhichShapes                                                */
 /* -------------------------------------------------------------------- */
@@ -1414,6 +1435,7 @@ int msSDELayerGetItems(layerObj *layer) {
   for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);
   layer->items[n] = strdup(sde->row_id_column); /* row id */
 
+if (!layer->iteminfo){
   layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, 
                                               sizeof(SE_COLUMN_DEF));
   if(!layer->iteminfo) {
@@ -1422,7 +1444,7 @@ int msSDELayerGetItems(layerObj *layer) {
                 "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
-
+}
 
   
   for(i=0; i<layer->numitems; i++) { /* requested columns */
@@ -1595,6 +1617,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
     return(MS_FAILURE);
   }
 
+if (!layer->iteminfo){
   layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, 
                                               sizeof(SE_COLUMN_DEF));
   if(!layer->iteminfo) {
@@ -1603,6 +1626,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
                 "msSDELayerInitItemInfo()");
     return(MS_FAILURE);
   }
+}
 
   for(i=0; i<layer->numitems; i++) { /* requested columns */
     if(strcmp(layer->items[i],sde->row_id_column) == 0)      
@@ -2190,7 +2214,7 @@ msSDELayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerWhichShapes = msSDELayerWhichShapes;
     layer->vtable->LayerNextShape = msSDELayerNextShape;
     layer->vtable->LayerGetShape = msSDELayerGetShapeVT;
-    layer->vtable->LayerClose = msSDELayerNoOpClose;
+    layer->vtable->LayerClose = msSDELayerClose;
     layer->vtable->LayerGetItems = msSDELayerGetItems;
     layer->vtable->LayerGetExtent = msSDELayerGetExtent;
 
@@ -2198,7 +2222,7 @@ msSDELayerInitializeVirtualTable(layerObj *layer)
     /* layer->vtable->LayerApplyFilterToLayer, use default */
 
     /* SDE uses pooled connections, close from msCloseConnections */
-    layer->vtable->LayerCloseConnection = msSDELayerCloseConnection;
+    /*layer->vtable->LayerCloseConnection = msSDELayerCloseConnection;*/
 
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     layer->vtable->LayerCreateItems = msSDELayerCreateItems;
