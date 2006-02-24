@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- [SLD] : set the default color on the style when using default settings
+  in PointSymbolizer. (bug 1681)
+
 - Incorporate range coloring support for rasters (bug 1673)
 
 - Fixed mapthread.c looking for the unix compiler symbol rather than just 

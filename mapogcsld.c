@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.60  2006/02/24 02:14:04  assefa
+ * Set the default color on the style when using default settings
+ * in PointSymbolizer. (bug 1681)
+ *
  * Revision 1.59  2006/02/01 19:35:40  assefa
  * When generating an ogc filter for class regex expressions, use
  * the backslah as the default escape character (Bug 1637)
@@ -474,6 +478,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
         }
 
     }
+
 
     if (bSuccess)
       return MS_SUCCESS;
@@ -2101,6 +2106,12 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         initStyle(&(psLayer->class[nClassId].styles[iStyle]));
         psLayer->class[nClassId].numstyles++;
         
+
+        /* set the default color */
+        psLayer->class[nClassId].styles[iStyle].color.red = 128;
+        psLayer->class[nClassId].styles[iStyle].color.green = 128;
+        psLayer->class[nClassId].styles[iStyle].color.blue = 128;
+
         msSLDParseGraphicFillOrStroke(psRoot, NULL,
                                       &psLayer->class[nClassId].styles[iStyle],
                                       psLayer->map, 1);
