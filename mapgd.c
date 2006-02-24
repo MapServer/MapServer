@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.124  2006/02/24 06:26:13  sdlime
+ * Updated truetype shade symbols to use the symbol gap value to provide space around the symbol. Change affects both polygons and circles. The gap is not scaled yet. (bug 1674)
+ *
  * Revision 1.123  2006/02/24 06:02:17  sdlime
  * Truetype shade symbols can now be antialiased using symbol-level or style-level ANTIALIAS TRUE.
  *
@@ -1426,10 +1429,10 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
     x = (int)(rect.maxx - rect.minx);
     y = (int)(rect.maxy - rect.miny);
 
-    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc); /* create the tile image */
+    tile = createBrush(img, x+2*symbol->gap, y+2*symbol->gap, style, &tile_fc, &tile_bc); /* create the tile image */
 
-    x = (int) -rect.minx; /* center the glyph */
-    y = (int) -rect.miny;
+    x = (int) -rect.minx + symbol->gap; /* center the glyph */
+    y = (int) -rect.miny + symbol->gap;
 
     gdImageStringFT(tile, bbox, ((symbol->antialias || style->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
     gdImageSetTile(img, tile);
@@ -2140,11 +2143,11 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     y = (int)(rect.maxy - rect.miny);
     
     /* create tile image */
-    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
+    tile = createBrush(img, x+2*symbol->gap, y+2*symbol->gap, style, &tile_fc, &tile_bc);
 
     /* center the glyph */
-    x = (int)-rect.minx;
-    y = (int)-rect.miny;
+    x = (int)-rect.minx + symbol->gap;
+    y = (int)-rect.miny + symbol->gap;
 
     gdImageStringFT(tile, bbox, ((symbol->antialias || style->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 
