@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.123  2006/02/24 06:02:17  sdlime
+ * Truetype shade symbols can now be antialiased using symbol-level or style-level ANTIALIAS TRUE.
+ *
  * Revision 1.122  2006/02/18 20:59:13  sdlime
  * Initial code for curved labels. (bug 1620)
  *
@@ -1428,7 +1431,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
     x = (int) -rect.minx; /* center the glyph */
     y = (int) -rect.miny;
 
-    gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
+    gdImageStringFT(tile, bbox, ((symbol->antialias || style->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
     gdImageSetTile(img, tile);
 #endif
 
@@ -2143,8 +2146,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     x = (int)-rect.minx;
     y = (int)-rect.miny;
 
-    /* TODO, should style->antialias be used here (it'd be nice to ditch antialias from symbols) */
-    gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
+    gdImageStringFT(tile, bbox, ((symbol->antialias || style->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 
     gdImageSetTile(img, tile);
     imageFilledPolygon(img, p, gdTiled, ox, oy);
