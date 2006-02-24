@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2006/02/24 22:41:50  sdlime
+ * Added missing malloc in mapsde in msSDELayerGetItems().
+ *
  * Revision 1.103  2006/02/24 20:24:23  hobu
  * make sure we check if layer->iteminfo exists before hammering it and reallocating
  * just use LayerClose to close layer information rather than the
@@ -1425,28 +1428,24 @@ int msSDELayerGetItems(layerObj *layer) {
   }
 
   layer->numitems = n+1;
+
+  layer->items = (char **)malloc(layer->numitems*sizeof(char *));
   if(!layer->items) {
-    msSetError( MS_MEMERR, 
-                "Error allocating layer items array.", 
-                "msSDELayerGetItems()");
+    msSetError( MS_MEMERR, "Error allocating layer items array.", "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
 
   for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);
   layer->items[n] = strdup(sde->row_id_column); /* row id */
 
-if (!layer->iteminfo){
-  layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, 
-                                              sizeof(SE_COLUMN_DEF));
-  if(!layer->iteminfo) {
-    msSetError( MS_MEMERR, 
-                "Error allocating SDE item information.", 
-                "msSDELayerGetItems()");
-    return(MS_FAILURE);
+  if (!layer->iteminfo){
+    layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
+    if(!layer->iteminfo) {
+      msSetError( MS_MEMERR, "Error allocating SDE item information.", "msSDELayerGetItems()");
+      return(MS_FAILURE);
+    }
   }
-}
 
-  
   for(i=0; i<layer->numitems; i++) { /* requested columns */
     if(strcmp(layer->items[i],sde->row_id_column) == 0)      
       continue;
