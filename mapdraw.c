@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2006/02/24 05:53:49  sdlime
+ * Applied another round of patches for bug 1620.
+ *
  * Revision 1.99  2006/02/18 20:59:13  sdlime
  * Initial code for curved labels. (bug 1620)
  *
@@ -1439,7 +1442,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
-      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status == MS_FAILURE) ) {
+      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
         /* Regular labels */
         if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
@@ -1464,6 +1467,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
 	  }
 	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
+
         }
       }
       }
@@ -1649,7 +1653,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
-      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status == MS_FAILURE) ) {
+      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
         labelObj label = layer->class[c].label;

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2006/02/24 05:53:49  sdlime
+ * Applied another round of patches for bug 1620.
+ *
  * Revision 1.64  2006/02/18 21:14:09  hobu
  * INFINITY is already defined on in the math headers on osx.
  * Don't redefine it if it is already there.
@@ -1231,15 +1234,16 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   i = line_index;
   
   if ( ((min_length != -1) && (total_length < min_length)) ) {
-    *status = MS_FAILURE;
     /* Too short */ 
+    *status = MS_FAILURE;
     goto FAILURE;
   }
 
 
-  if ( p->line[i].numpoints < 2 )
+  if ( p->line[i].numpoints < 2 ) {
     /* Degenerate */
     goto FAILURE;
+  }
 
    if ( p->line[i].numpoints == 2 ) {
      /* We can just use the regular algorithm to save some cycles */
@@ -1247,7 +1251,6 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
    }
 
     
-  
   /* Determine the total length of the text */
   if ( msGetLabelSize(string, label, &bbox, fontset, scalefactor, MS_TRUE) == MS_FAILURE ) {
     *status = MS_FAILURE;
@@ -1430,7 +1433,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
       /* Adjust the width of the bbox for a single character */
     
       /* FIXME: this is a pretty nasty hack to adjust the kerning for narrow characters. */
-      if ( (s[1] == 'i' || s[1] == 'l') && (s[0] != 'i' || s[0] != 'l') )
+      if ( (s[1] == 'i' || s[1] == 'l' || s[1] == 'I') && (s[0] != 'i' || s[0] != 'l' || s[0] != 'I') )
         w = (bbox.maxx - bbox.minx) / 1.5;
       else
         w = (bbox.maxx - bbox.minx) / 2.0;
