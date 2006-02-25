@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2006/02/25 19:11:41  pramsey
+ * Added checks for MS_FAILURE around ParseData calls.
+ * Patch from Tamas Szekeres
+ *
  * Revision 1.67  2006/01/31 10:26:24  umberto
  * Revert behaviour to pre-1.61: do not allow for use of the FILTERITEM attribute (bug 1629)
  *
@@ -672,7 +676,9 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
         return MS_FAILURE;
     }
 
-    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+	if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
+		return MS_FAILURE;
+	}
 
     set_up_result = prepare_database(table_name, geom_column_name, layer, &(layerinfo->query_result), rect, &query_str, urid_name, user_srid);
 
@@ -1195,7 +1201,9 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
         return MS_FAILURE;
     }
 
-    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+    if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
+		return MS_FAILURE;
+	}
 
     if(layer->numitems == 0) {
         /* Don't need the oid since its really record */
@@ -1450,7 +1458,9 @@ int msPOSTGISLayerGetItems(layerObj *layer)
     }
     /* get the table name and geometry column name */
 
-    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+    if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
+		return MS_FAILURE;
+	}
 
     /* two cases here.  One, its a table (use select * from table) otherwise, just use the select clause */
     sql = (char *) malloc(36 + strlen(table_name) + 1);
