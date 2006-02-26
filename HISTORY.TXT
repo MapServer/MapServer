@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- [PHP_MAPSCRIPT] Add antialias parameter in the style object (Bug 1685)
+
 - [WFS] : Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
 
 - [SLD] : set the default color on the style when using default settings
