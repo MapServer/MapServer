@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.246  2006/02/26 18:09:47  assefa
+ * Add antialias parameter in the style (Bug 1685)
+ *
  * Revision 1.245  2006/02/14 19:24:49  dan
  * Call msSetup/msCleanup() in PHP's MINIT and MSHUTDOWN functions (bug 1665)
  *
@@ -12839,7 +12842,8 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     add_property_long(return_value,   "maxsize",       pstyle->maxsize);
     add_property_long(return_value,   "offsetx",       pstyle->offsetx);
     add_property_long(return_value,   "offsety",       pstyle->offsety);
-    
+    add_property_long(return_value,   "antialias",  pstyle->antialias);
+
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_color_object(&(pstyle->color),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR TSRMLS_CC);
@@ -12974,6 +12978,7 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG( "maxsize",        self->maxsize)
     else IF_SET_LONG( "offsetx",        self->offsetx)
     else IF_SET_LONG( "offsety",        self->offsety)
+    else IF_SET_LONG(  "antialias",    self->antialias)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.",
