@@ -775,10 +775,10 @@ if test "$with_proj" = "yes" ; then
 elif test -n "$with_proj" -a "$with_proj" != "no" ; then
 
   AC_EXPAND_PATH($with_proj, PROJ_DIR)
-  test -f $PROJ_DIR/include/projects.h && PROJ_INCLUDE="$PROJ_DIR/include"
-  test -f $PROJ_DIR/include/proj/projects.h && PROJ_INCLUDE="$PROJ_DIR/include/proj"
-  test -f $PROJ_DIR/src/projects.h && PROJ_INCLUDE="$PROJ_DIR/src"
-  test -f $PROJ_DIR/projects.h && PROJ_INCLUDE="$PROJ_DIR"
+  test -f $PROJ_DIR/include/proj_api.h && PROJ_INCLUDE="$PROJ_DIR/include"
+  test -f $PROJ_DIR/include/proj/proj_api.h && PROJ_INCLUDE="$PROJ_DIR/include/proj"
+  test -f $PROJ_DIR/src/proj_api.h && PROJ_INCLUDE="$PROJ_DIR/src"
+  test -f $PROJ_DIR/proj_api.h && PROJ_INCLUDE="$PROJ_DIR"
 
   test -f $PROJ_DIR/src/.libs/libproj.a && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
   test -f $PROJ_DIR/lib/libproj.a && PROJ_LIBDIR="$PROJ_DIR/lib"
@@ -795,7 +795,7 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
       PROJ_LIBS="-L$PROJ_LIBDIR -lproj"
       AC_ADD_RUNPATH("$PROJ_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find projects.h or libproj.a/libproj.so in $PROJ_DIR.")
+      AC_MSG_ERROR("Could not find proj_api.h or libproj.a/libproj.so in $PROJ_DIR.")
   fi
 
   AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,$PROJ_LIBS)
