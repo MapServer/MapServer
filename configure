@@ -7773,10 +7773,10 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
     PROJ_DIR="`pwd`/$with_proj"
   fi
 
-  test -f $PROJ_DIR/include/projects.h && PROJ_INCLUDE="$PROJ_DIR/include"
-  test -f $PROJ_DIR/include/proj/projects.h && PROJ_INCLUDE="$PROJ_DIR/include/proj"
-  test -f $PROJ_DIR/src/projects.h && PROJ_INCLUDE="$PROJ_DIR/src"
-  test -f $PROJ_DIR/projects.h && PROJ_INCLUDE="$PROJ_DIR"
+  test -f $PROJ_DIR/include/proj_api.h && PROJ_INCLUDE="$PROJ_DIR/include"
+  test -f $PROJ_DIR/include/proj/proj_api.h && PROJ_INCLUDE="$PROJ_DIR/include/proj"
+  test -f $PROJ_DIR/src/proj_api.h && PROJ_INCLUDE="$PROJ_DIR/src"
+  test -f $PROJ_DIR/proj_api.h && PROJ_INCLUDE="$PROJ_DIR"
 
   test -f $PROJ_DIR/src/.libs/libproj.a && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
   test -f $PROJ_DIR/lib/libproj.a && PROJ_LIBDIR="$PROJ_DIR/lib"
@@ -7814,8 +7814,8 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   fi
 
   else
-      { { echo "$as_me:$LINENO: error: \"Could not find projects.h or libproj.a/libproj.so in $PROJ_DIR.\"" >&5
-echo "$as_me: error: \"Could not find projects.h or libproj.a/libproj.so in $PROJ_DIR.\"" >&2;}
+      { { echo "$as_me:$LINENO: error: \"Could not find proj_api.h or libproj.a/libproj.so in $PROJ_DIR.\"" >&5
+echo "$as_me: error: \"Could not find proj_api.h or libproj.a/libproj.so in $PROJ_DIR.\"" >&2;}
    { (exit 1); exit 1; }; }
   fi
 
