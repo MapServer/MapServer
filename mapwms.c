@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.174  2006/02/28 19:38:57  assefa
+ * Publish the GetStyles operation in the capabilities document.
+ *
  * Revision 1.173  2006/02/09 20:09:43  dan
  * Use %.15g to increase precision of values in ScaleHint element (bug 1649)
  *
@@ -1978,6 +1981,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                     mime_list[12], mime_list[13], mime_list[14], mime_list[15],
                     mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                     NULL );
+
+    msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded,
+                         "text/xml",
+                         NULL);
+
   }
 
   msIO_printf("  </Request>\n");
