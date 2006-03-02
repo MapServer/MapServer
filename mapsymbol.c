@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2006/03/02 16:43:44  jani
+ * This fixes second part of bug 1684, which happens when image is loaded
+ * by symbol file.
+ *
+ * * loadSymbol: initialize sizex, sizey when loading image as symbol.
+ *
  * Revision 1.93  2006/03/02 01:51:13  jani
  * When we add a pixmap symbol, be sure to initialize sizex,sizey fields of
  * symbol. These fields are used later (e.g.mapgd.c:msDrawMarkerSymbolGD)
@@ -334,6 +340,8 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	msSetError(MS_GDERR, NULL, "loadSymbol()");	
 	return(-1);
       }
+      s->sizex = s->img->sx;
+      s->sizey = s->img->sy;            
       break;
     case(LINECAP):
       if((s->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
