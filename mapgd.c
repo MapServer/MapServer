@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.125  2006/03/02 06:43:51  sdlime
+ * Applied latest patch for curved labels. (bug 1620)
+ *
  * Revision 1.124  2006/02/24 06:26:13  sdlime
  * Updated truetype shade symbols to use the symbol gap value to provide space around the symbol. Change affects both polygons and circles. The gap is not scaled yet. (bug 1674)
  *
@@ -3403,7 +3406,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-            /* Should position be position + j here?  It seems like nothing
+            /* Should position be (position - j), or (position - j - 2) here?  It seems like nothing
                changes from one loop to the other? --Benj Carson */
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2006/03/02 06:43:51  sdlime
+ * Applied latest patch for curved labels. (bug 1620)
+ *
  * Revision 1.65  2006/02/24 05:53:49  sdlime
  * Applied another round of patches for bug 1620.
  *
@@ -1239,9 +1242,9 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     goto FAILURE;
   }
 
-
   if ( p->line[i].numpoints < 2 ) {
     /* Degenerate */
+    *status = MS_FAILURE;
     goto FAILURE;
   }
 
@@ -1252,7 +1255,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
 
     
   /* Determine the total length of the text */
-  if ( msGetLabelSize(string, label, &bbox, fontset, scalefactor, MS_TRUE) == MS_FAILURE ) {
+  if ( msGetLabelSize(string, label, &bbox, fontset, scalefactor, MS_FALSE) == MS_FAILURE ) {
     *status = MS_FAILURE;
     goto FAILURE;
   }
