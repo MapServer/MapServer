@@ -27,6 +27,18 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2006/03/02 01:51:13  jani
+ * When we add a pixmap symbol, be sure to initialize sizex,sizey fields of
+ * symbol. These fields are used later (e.g.mapgd.c:msDrawMarkerSymbolGD)
+ * to calculate scaling factor.  If they are uninitialized (0.0),
+ * the scaling factor will be 1. This worked before with the old code because
+ * msDrawMarkerSymbolGD used directly img->sy when it calculated
+ * d (the scaling factor).
+ *
+ * This fixes bug #1684
+ *
+ * * msAddImageSymbol: Initialize sizex, sizey
+ *
  * Revision 1.92  2006/02/18 21:04:20  hobu
  * warning nanny on line 1223, unused variable
  *
@@ -553,6 +565,8 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   symbolset->symbol[i].name = strdup(filename);
   symbolset->symbol[i].type = MS_SYMBOL_PIXMAP;
+  symbolset->symbol[i].sizex = symbolset->symbol[i].img->sx;
+  symbolset->symbol[i].sizey = symbolset->symbol[i].img->sy;
   symbolset->numsymbols++;
 
   return(i);
