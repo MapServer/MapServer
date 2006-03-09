@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Implement QUANTIZE options for GD/PNG driver (Bug 1690, Bug 1701).
+
 - [WMS] Publish the GetStyles operation in the capabilities document.
 
 - [PHP_MAPSCRIPT] Add antialias parameter in the style object (Bug 1685)

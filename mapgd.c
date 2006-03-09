@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.126  2006/03/09 04:53:49  frank
+ * added GD/PNG Quantize support
+ *
  * Revision 1.125  2006/03/02 06:43:51  sdlime
  * Applied latest patch for curved labels. (bug 1620)
  *
@@ -3669,7 +3672,46 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
     else if ( strcasecmp(format->driver,"gd/png") == 0 )
     {
 #ifdef USE_GD_PNG
-        gdImagePngCtx( img, ctx );
+        int force_pc256 = MS_FALSE;
+
+        if( format->imagemode == MS_IMAGEMODE_RGB 
+            || format->imagemode == MS_IMAGEMODE_RGBA )
+        {
+            const char *force_string = 
+                msGetOutputFormatOption( format, "QUANTIZE_FORCE", "OFF" );
+
+            if( strcasecmp(force_string,"on") == 0 
+                || strcasecmp(force_string,"yes") == 0 
+                || strcasecmp(force_string,"true") == 0 )
+                force_pc256 = MS_TRUE;
+        }
+
+        if( force_pc256 )
+        {
+            gdImagePtr gdPImg;
+            int dither, i;
+            int colorsWanted = 
+                atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
+            const char *dither_string = 
+                msGetOutputFormatOption( format, "QUANTIZE_DITHER", "YES");
+
+            if( strcasecmp(dither_string,"on") == 0 
+                || strcasecmp(dither_string,"yes") == 0 
+                || strcasecmp(dither_string,"true") == 0 )
+                dither = 1;
+            else
+                dither = 0;
+                   
+            gdPImg = gdImageCreatePaletteFromTrueColor(img,dither,colorsWanted);
+            /* It seems there is a bug in gd 2.0.33 and earlier that leaves the 
+               colors open[] flag set to one. */
+            for( i = 0; i < gdPImg->colorsTotal; i++ )
+                gdPImg->open[i] = 0;
+            gdImagePngCtx( gdPImg, ctx );
+            gdImageDestroy( gdPImg );
+        }
+        else
+            gdImagePngCtx( img, ctx );
 #else
         msSetError(MS_MISCERR, "PNG output is not available.",
                    "msSaveImageGDCtx()");
