@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.74  2006/03/09 21:08:54  julien
+ * Remove XML header tag check
+ *
  * Revision 1.73  2006/02/14 03:53:04  julien
  * Change layer server type for 1.1.0 version
  *
@@ -1479,7 +1482,7 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
   free( pszWholeText );
 
   /* We assume parser will report errors via CPL. */
-  if( psRoot == NULL || psRoot->psNext == NULL )
+  if( psRoot == NULL )
   {
       msSetError( MS_MAPCONTEXTERR, "Invalid XML file (%s)", 
                   "msLoadMapContext()", filename );
