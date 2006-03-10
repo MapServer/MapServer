@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.106  2006/03/10 17:11:08  hobu
+ * add a PROCESSING directive to SDE to allow the user to specify
+ * the query order (attributes or spatial first).
+ *
  * Revision 1.105  2006/03/10 17:05:56  hobu
  * Fix 1699, where point queries in msSDEWhichShape were
  * causing the SDE C API to complain about creating an invalid
@@ -1177,6 +1181,8 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   SE_SHAPE shape=0;
   SE_FILTER constraint;
   SE_QUERYINFO query_info;
+  char* proc_value=NULL;
+  int query_order;
 
   msSDELayerInfo *sde=NULL;
 
@@ -1328,9 +1334,17 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
               "SE_stream_query_with_info()");
     return(MS_FAILURE);
   }
+  
+  proc_value = msLayerGetProcessingKey(layer,"QUERYORDER");
+  if(!proc_value) {
+      query_order= 2; /* SE_SPATIAL_FIRST */
+  }
+  else if (proc_value=="ATTRIBUTE"){
+      query_order = 1; /* SE_ATTRIBUTE_FIRST */
+  }
 
   status = SE_stream_set_spatial_constraints( sde->stream, 
-                                              SE_SPATIAL_FIRST, 
+                                              query_order, 
                                               FALSE, 
                                               1, 
                                               &constraint);

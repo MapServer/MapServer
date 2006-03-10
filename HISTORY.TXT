@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD (4.9-dev)
 ------------------
+- Allow a user to set a PROCESSING directive for an SDE layer to specify
+  using the attributes or spatial index first.  (bug 1708).
 
 - Cheap and easy way of fudging the boundary extents for msSDEWhichShapes 
   in the case where the rectangle is really a point (bug 1699).
@@ -36,7 +38,9 @@ CVS HEAD (4.9-dev)
   testing whether or not _WIN32 is defined for the usage of posix threads
   because unix is not defined on compilers like GCC 4.0.1 for OS X.
 
-- Fixed the fuzzy brush support so that the transition between 1 pixel aa lines and brushes is less obvious. The old code would not allow for a 3x3 fuzzy brush to be built. (bug 1659)
+- Fixed the fuzzy brush support so that the transition between 1 pixel aa lines 
+  and brushes is less obvious. The old code would not allow for a 3x3 fuzzy 
+  brush to be built. (bug 1659)
 
 - Added missing mapscript function msConnPoolCloseUnreferenced() (bug 1661)
   We need to make conn. pooling handling transparent to mapscript users
