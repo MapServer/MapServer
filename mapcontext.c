@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.75  2006/03/10 15:30:15  julien
+ * Set the wms_time metadata when we have the time dimension in context1.1
+ *
  * Revision 1.74  2006/03/09 21:08:54  julien
  * Remove XML header tag check
  *
@@ -918,6 +921,9 @@ int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
   sprintf(pszDimension, "wms_dimension_%s_uservalue", pszDimensionName);
   msGetMapContextXMLHashValue(psDimension, "userValue", &(layer->metadata),
                               pszDimension);
+  if(strcasecmp(pszDimensionName, "time") == 0)
+      msGetMapContextXMLHashValue(psDimension, "userValue", &(layer->metadata),
+                                  "wms_time");
 
   /* default */
   sprintf(pszDimension, "wms_dimension_%s_default", pszDimensionName);
