@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Cheap and easy way of fudging the boundary extents for msSDEWhichShapes 
+  in the case where the rectangle is really a point (bug 1699).
+
 - Implement QUANTIZE options for GD/PNG driver (Bug 1690, Bug 1701).
 
 - [WMS] Publish the GetStyles operation in the capabilities document.

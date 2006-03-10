@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2006/03/10 17:05:56  hobu
+ * Fix 1699, where point queries in msSDEWhichShape were
+ * causing the SDE C API to complain about creating an invalid
+ * rectangle
+ *
  * Revision 1.104  2006/02/24 22:41:50  sdlime
  * Added missing malloc in mapsde in msSDELayerGetItems().
  *
@@ -1210,6 +1215,16 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   envelope.miny = MS_MAX(rect.miny, envelope.miny);
   envelope.maxx = MS_MIN(rect.maxx, envelope.maxx);
   envelope.maxy = MS_MIN(rect.maxy, envelope.maxy);
+  
+  if( envelope.minx == envelope.maxx && envelope.miny == envelope.maxy){
+        /* fudge a rectangle so we have a valid one for generate_rectangle */
+        /* FIXME: use the real shape for the query and set the filter_type 
+           to be an appropriate type */
+        envelope.minx = envelope.minx - 0.001;
+        envelope.maxx = envelope.maxx + 0.001;
+        envelope.miny = envelope.miny - 0.001;
+        envelope.maxy = envelope.maxy + 0.001;
+    }
 
   status = SE_shape_generate_rectangle(&envelope, shape);
   if(status != SE_SUCCESS) {
