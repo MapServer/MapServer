@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.107  2006/03/12 05:54:35  hobu
+ * make sure to return a value in the failure case
+ * for msSDELayerClose
+ *
  * Revision 1.106  2006/03/10 17:11:08  hobu
  * add a PROCESSING directive to SDE to allow the user to specify
  * the query order (attributes or spatial first).
@@ -1128,7 +1132,7 @@ int  msSDELayerClose(layerObj *layer) {
   msSetError( MS_MISCERR, 
               "SDE support is not available.", 
               "msSDELayerClose()");
-  return;
+  return(MS_FALSE);
 #endif
 }
 
