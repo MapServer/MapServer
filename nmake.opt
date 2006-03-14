@@ -400,6 +400,18 @@ WFS=-DUSE_WFS_SVR
 WCS=-DUSE_WCS_SVR
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# OGC SOS
+# ----------------------------------------------------------------------
+# Use -DUSE_OGC_SOS to compile with SOS, needs USE_WMS_SVR or 
+#USE_WFS_SVR enabled so the the gml functions to be enabled
+#It also needs ICONV support since the libxml windoes binaries 
+#are built with it 
+#http://xmlsoft.org/index.html
+#SOS=-DUSE_OGC_SOS
+#LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.13.win32
+
+
 ########################################################################
 # Section V: MapScript Configuration Options.
 ########################################################################
@@ -510,6 +522,12 @@ PROJ_LIB=$(PROJ_DIR)/src/proj_i.lib
 !IFDEF WMSCLIENT
 CURL_INC = -I$(CURL_DIR)/include
 CURL_LIB = $(CURL_DIR)/libcurl.lib
+!ENDIF
+
+# LIBXML include and library
+!IFDEF SOS
+LIBXML_INC = -I$(LIBXML_DIR)/include
+LIBXML_LIB = $(LIBXML_DIR)/lib/libxml2.lib
 !ENDIF
 
 # Set the jpeg library
@@ -652,8 +670,9 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
-     $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB)
-
+     $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
+     $(LIBXML_LIB)
+        
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 
@@ -661,7 +680,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
-         $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC)
+         $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC)
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS)  -DWIN32 -D_WIN32 \
@@ -671,7 +690,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS)  -DWIN32 -D_WIN32 \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
-          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB)
+          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)
 
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS)
 
