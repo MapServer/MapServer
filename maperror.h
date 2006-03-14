@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/03/14 03:17:19  assefa
+ * Add SOS error code (Bug 1710).
+ * Correct error codes numbers for MS_TIMEERR and MS_GMLERR.
+ *
  * Revision 1.33  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -81,8 +85,9 @@ extern "C" {
 #define MS_WCSERR 32
 #define MS_GEOSERR 33
 #define MS_RECTERR 34
-#define MS_TIMEERR 36
-#define MS_GMLERR 37
+#define MS_TIMEERR 35
+#define MS_GMLERR 36
+#define MS_SOSERR 37
 #define MS_NUMERRORCODES 38
 
 #define MESSAGELENGTH 2048

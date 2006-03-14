@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/03/14 03:17:19  assefa
+ * Add SOS error code (Bug 1710).
+ * Correct error codes numbers for MS_TIMEERR and MS_GMLERR.
+ *
  * Revision 1.72  2006/02/18 21:11:35  hobu
  * make sure we cast the tv_sec to a long because on os x, the type is
  * really __darwin_suseconds_t, which is ultimately a long.
@@ -132,7 +136,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"GEOS library error.",
 						"Invalid rectangle.",
 						"Date/time error.",
-						"GML encoding error."
+						"GML encoding error.",
+                                                "SOS server error."
 };
 
 #ifndef USE_THREAD
