@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/03/14 03:43:30  assefa
+ * Move msValidateTimeValue to maptime so it can be used by WMS and SOS.
+ * (Bug 1710)
+ *
  * Revision 1.11  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -87,5 +91,7 @@ int msTimeMatchPattern(char *timestring, char *pattern);
 void msSetLimitedPattersToUse(char *patternstring);
 void msUnsetLimitedPatternToUse(void);
 int msTimeGetResolution(const char *timestring);
+
+int msValidateTimeValue(char *timestring, const char *timeextent);
 
 #endif /* MAPTIME_H */

@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/03/14 03:43:30  assefa
+ * Move msValidateTimeValue to maptime so it can be used by WMS and SOS.
+ * (Bug 1710)
+ *
  * Revision 1.18  2005/09/26 14:51:40  assefa
  * Correct typo in  ms_timeFormats (Bug 1478).
  *
@@ -326,3 +330,182 @@ int msTimeGetResolution(const char *timestring)
       
      return -1;
 }
+
+
+int _msValidateTime(char *timestring,  const char *timeextent)
+{
+    int numelements, numextents, i, numranges;
+    struct tm  tmtimestart, tmtimeend, tmstart, tmend;
+    char **atimerange = NULL, **atimeelements= NULL, **atimeextents=NULL;
+
+    if (!timestring || !timeextent)
+      return MS_FALSE;
+
+    if (strlen(timestring) <= 0 || 
+        strlen(timeextent) <= 0)
+       return MS_FALSE;
+  
+
+    /* we first need to parse the timesting that is passed
+       so that we can determine if it is a descrete time
+       or a range */
+    
+    numelements = 0;
+    atimeelements = split (timestring, '/', &numelements);
+    msTimeInit(&tmtimestart);
+    msTimeInit(&tmtimeend);
+
+    if (numelements == 1) /*descrete time*/
+    {
+        /*start end end times are the same*/
+        if (msParseTime(timestring, &tmtimestart) != MS_TRUE)
+        {       
+            msFreeCharArray(atimeelements, numelements);
+            return  MS_FALSE;
+        }
+        if (msParseTime(timestring, &tmtimeend) != MS_TRUE)
+        {
+            msFreeCharArray(atimeelements, numelements);
+            return  MS_FALSE;
+        }
+    }
+    else if (numelements >=2)/*range */
+    {
+        if (msParseTime(atimeelements[0], &tmtimestart) != MS_TRUE)
+        {
+            msFreeCharArray(atimeelements, numelements);
+            return  MS_FALSE;
+        }
+        if (msParseTime(atimeelements[1], &tmtimeend) != MS_TRUE)
+        {
+            msFreeCharArray(atimeelements, numelements);
+            return  MS_FALSE;
+        }
+    }
+
+    msFreeCharArray(atimeelements, numelements);
+    
+
+    /* Now parse the time extent. Extents can be 
+      -  one range (2004-09-21/2004-09-25/resolution) 
+      -  multiple rages 2004-09-21/2004-09-25/res1,2004-09-21/2004-09-25/res2
+      - one value 2004-09-21
+      - mutiple values 2004-09-21,2004-09-22,2004-09-23
+    */
+    
+    numextents = 0;
+    atimeextents = split (timeextent, ',', &numextents);
+    if (atimeextents == NULL || numextents <= 0)
+      return MS_FALSE;
+    
+    /*the time timestring should at be valid in one of the extents
+      defined */
+
+    for (i=0; i<numextents; i++)
+    {
+        /* build time structure for the extents */
+        msTimeInit(&tmstart);
+        msTimeInit(&tmend);
+        
+        numranges = 0;
+        atimerange = split (atimeextents[i], '/', &numranges);
+        /* - one value 2004-09-21 */
+        if (numranges == 1)
+        {
+            /*time tested can either be descrete or a range */
+            
+            if (msParseTime(atimerange[0], &tmstart) == MS_TRUE &&
+                msParseTime(atimerange[0], &tmend) == MS_TRUE &&
+                msTimeCompare(&tmstart, &tmtimestart) <= 0 &&
+                msTimeCompare(&tmend, &tmtimeend) >= 0)
+            {
+                msFreeCharArray(atimerange, numranges);
+                return MS_TRUE;
+            }
+        }
+        /*2004-09-21/2004-09-25/res1*/
+        else if (numranges >= 2)
+        {
+            if (msParseTime(atimerange[0], &tmstart) == MS_TRUE &&
+                msParseTime(atimerange[1], &tmend) == MS_TRUE &&
+                msTimeCompare(&tmstart, &tmtimestart) <= 0 &&
+                msTimeCompare(&tmend, &tmtimeend) >= 0)
+            {
+                 msFreeCharArray(atimerange, numranges);
+                return MS_TRUE;
+            }
+        }
+        msFreeCharArray(atimerange, numranges);
+        
+
+    }
+    msFreeCharArray(atimeextents, numextents);
+    return MS_FALSE;
+
+}
+
+
+
+int msValidateTimeValue(char *timestring, const char *timeextent)
+{
+    char **atimes, **tokens =  NULL;
+    int i, numtimes, ntmp = 0;
+
+    /* we need to validate the time passsed in the request */
+    /* against the time extent defined */
+
+    if (!timestring || !timeextent)
+      return MS_FALSE;
+
+   
+    /* parse the time string. We support descrete times (eg 2004-09-21), */
+    /* multiple times (2004-09-21, 2004-09-22, ...) */
+    /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
+    if (strstr(timestring, ",") == NULL &&
+        strstr(timestring, "/") == NULL) /* discrete time */
+    {
+        return _msValidateTime(timestring,  timeextent);
+        
+    }
+    else
+    {
+        atimes = split (timestring, ',', &numtimes);
+        if (numtimes >=1) /* multiple times */
+        {
+            tokens = split(atimes[0],  '/', &ntmp);
+            if (ntmp == 1) /* multiple descrete times */
+            {
+              /*msFreeCharArray(tokens, ntmp);*/
+                for (i=0; i<numtimes; i++)
+                {
+                    if (_msValidateTime(atimes[i], timeextent) == MS_FALSE)
+                    {
+                        msFreeCharArray(atimes, numtimes);
+                        return MS_FALSE;
+                    }
+                }
+                msFreeCharArray(atimes, numtimes);
+                return MS_TRUE;
+            }
+            else if (ntmp >= 2)/* multiple ranges */
+            {
+                for (i=0; i<numtimes; i++)
+                {
+                  /*msFreeCharArray(tokens, ntmp);*/
+                    if (_msValidateTime(atimes[i], timeextent) == MS_FALSE)
+                    {
+                        msFreeCharArray(atimes, numtimes);
+                        return MS_FALSE;
+                    }
+                     
+                 }
+                 msFreeCharArray(atimes, numtimes);
+                 return MS_TRUE;
+            }
+            
+        }
+
+    }
+    return MS_FALSE;
+}
+
