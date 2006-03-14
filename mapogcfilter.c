@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.64  2006/03/14 16:35:45  assefa
+ * Correct bug when generating an sql expression containing an escape
+ * character (Bug 1713).
+ *
  * Revision 1.63  2006/01/06 17:32:28  assefa
  * Correct bound reprojection issue with ogc filer (Bug 1600)
  *
@@ -3516,8 +3520,18 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     {
       strcat(szBuffer, " escape '");
       szTmp[0] = pszEscape[0];
-      szTmp[1] = '\'';
-      szTmp[2] = '\0';
+      if (pszEscape[0] == '\\')
+      {
+          szTmp[1] = '\\';
+          szTmp[2] = '\'';
+          szTmp[3] = '\0';
+      }
+      else
+      {
+          szTmp[1] = '\'';
+          szTmp[2] = '\0';
+      }
+
       strcat(szBuffer,  szTmp);
     }
     strcat(szBuffer,  ") ");

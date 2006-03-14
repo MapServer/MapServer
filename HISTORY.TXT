@@ -15,6 +15,10 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD (4.9-dev)
 ------------------
+
+- [OGC FILTER] Correct bug when generating an sql expression containing an escape 
+  character.
+
 - Allow a user to set a PROCESSING directive for an SDE layer to specify
   using the attributes or spatial index first.  (bug 1708).
 
