@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.70  2006/03/14 04:08:34  assefa
+ * Add disptach call to SOS service.
+ *
  * Revision 1.69  2006/02/14 03:39:30  julien
  * Update to MapContext 1.1.0, add dimensions support in context bug 1581
  *
@@ -311,6 +314,10 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
                              const char *namespaces, const char *name, 
                              int action_if_not_found, 
                              const char *format, const char *default_value) ;
+char *msOWSGetEncodeMetadata(hashTableObj *metadata, 
+                             const char *namespaces, const char *name, 
+                             const char *default_value);
+
 int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata, 
                                const char *namespaces, const char *name, 
                                int action_if_not_found, 
@@ -541,6 +548,15 @@ MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique
  *====================================================================*/
 
 int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj); /* only 1 public function */
+
+
+
+/*====================================================================
+ *   mapogsos.c
+ *====================================================================*/
+
+int msSOSDispatch(mapObj *map, cgiRequestObj *requestobj); /* only 1 public function */
+
 
 #endif /* MAPOWS_H */
 

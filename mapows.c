@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/03/14 04:08:34  assefa
+ * Add disptach call to SOS service.
+ *
  * Revision 1.61  2006/02/14 03:38:47  julien
  * Update to MapContext 1.1.0, add dimensions support in context bug 1581
  *
@@ -272,6 +275,11 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 #endif
 #ifdef USE_WCS_SVR
     if ((status = msWCSDispatch(map, request)) != MS_DONE )
+        return status;
+#endif
+
+#ifdef USE_OGC_SOS
+    if ((status = msSOSDispatch(map, request)) != MS_DONE )
         return status;
 #endif
 
@@ -602,6 +610,11 @@ const char *msOWSLookupMetadata(hashTableObj *metadata,
                 buf[1] = 'm';
                 buf[2] = 'l';
                 break;
+                case 'S':         /* sos_... */
+                buf[0] = 's';
+                buf[1] = 'o';
+                buf[2] = 's';
+                break;
               default:
                 /* We should never get here unless an invalid code (typo) is */
                 /* present in the code, but since this happened before... */
@@ -656,6 +669,7 @@ int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata,
     return status;
 }
 
+
 /*
 ** msOWSPrintEncodeMetadata()
 **
@@ -699,6 +713,29 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
 
     return status;
 }
+
+
+/*
+** msOWSGetEncodeMetadata()
+**
+** Equivalent to msOWSPrintEncodeMetadata. Returns en encoded value of the
+** metadata or the default value.
+** Caller should free the returned string.
+*/
+char *msOWSGetEncodeMetadata(hashTableObj *metadata, 
+                             const char *namespaces, const char *name, 
+                             const char *default_value)
+{
+    const char *value;
+    char * pszEncodedValue=NULL;    
+    if((value = msOWSLookupMetadata(metadata, namespaces, name)))
+      pszEncodedValue = msEncodeHTMLEntities(value);
+    else if (default_value)
+      pszEncodedValue = msEncodeHTMLEntities(default_value);
+
+    return pszEncodedValue;
+}
+      
 
 /*
 ** msOWSPrintValidateMetadata()
