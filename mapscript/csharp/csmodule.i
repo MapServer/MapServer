@@ -29,7 +29,7 @@ typedef void (SWIGSTDCALL* SWIG_CSharpByteArrayHelperCallback)(const unsigned ch
 
 %typemap(ctype) SWIG_CSharpByteArrayHelperCallback    %{SWIG_CSharpByteArrayHelperCallback%}
 %typemap(imtype) SWIG_CSharpByteArrayHelperCallback  %{SWIGByteArrayDelegate%}
-%typemap(cstype) SWIG_CSharpByteArrayHelperCallback %{$imclassname.SWIGByteArrayDelegate%}
+%typemap(cstype) SWIG_CSharpByteArrayHelperCallback %{$modulePINVOKE.SWIGByteArrayDelegate%}
 %typemap(in) SWIG_CSharpByteArrayHelperCallback %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) SWIG_CSharpByteArrayHelperCallback "$csinput"
 
@@ -65,13 +65,13 @@ typedef void (SWIGSTDCALL* SWIG_CSharpByteArrayHelperCallback)(const unsigned ch
   
   public byte[] getBytes()
   {
-	getBytes(new $imclassname.SWIGByteArrayDelegate(this.CreateByteArray));
+	getBytes(new $modulePINVOKE.SWIGByteArrayDelegate(this.CreateByteArray));
 	return gdbuffer;
   }
   
   public void write(System.IO.Stream stream)
   {
-	getBytes(new $imclassname.SWIGByteArrayDelegate(this.CreateByteArray));
+	getBytes(new $modulePINVOKE.SWIGByteArrayDelegate(this.CreateByteArray));
 	stream.Write(gdbuffer, 0, gdbuffer.Length);
   }
 %}
