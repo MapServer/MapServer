@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2006/03/15 20:31:18  frank
+ * Fixup comment for last change.
+ *
  * Revision 1.66  2006/03/15 20:29:12  frank
  * Fix inter-tile cracking problem (Bug 1715).
  *
@@ -1554,9 +1557,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     nLoadImgYSize = (int) MAX(1,(sSrcExtent.maxy - sSrcExtent.miny) 
                               * (dfNominalCellSize / sDummyMap.cellsize));
         
-    // Because the previous calculation involved some round off, we need
-    // to fixup the cellsize to ensure the map region represents the whole
-    // RAW_WINDOW (at least in X).  Re: bug 1715. 
+    /*
+    ** Because the previous calculation involved some round off, we need
+    ** to fixup the cellsize to ensure the map region represents the whole
+    ** RAW_WINDOW (at least in X).  Re: bug 1715. 
+    */
     sDummyMap.cellsize = 
         ((sSrcExtent.maxx - sSrcExtent.minx) * dfNominalCellSize) 
         / nLoadImgXSize;
