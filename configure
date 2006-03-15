@@ -9456,9 +9456,32 @@ if test "$ORA_HOME" = "no" ; then
   ORACLESPATIAL_INC=
   ORACLESPATIAL_LIB=
 else
+
+    test -f $ORA_HOME/lib/libclntsh.so && ORA_LIBDIR="$ORA_HOME/lib"
+  test -f $ORA_HOME/libclntsh.so &&     ORA_LIBDIR="$ORA_HOME"
+
+  if test -z "$ORA_LIBDIR" ; then
+    { { echo "$as_me:$LINENO: error: Oracle Spatial: libclntsh.so not found." >&5
+echo "$as_me: error: Oracle Spatial: libclntsh.so not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+    test -f $ORA_HOME/sdk/include/oci.h && ORA_INCDIR="$ORA_HOME/sdk/include"
+  test -f $ORA_HOME/rdbms/public/oci.h && ORA_INCDIR="$ORA_HOME/rdbms/public"
+
+  if test -z "$ORA_INCDIR" ; then
+    { { echo "$as_me:$LINENO: error: Oracle Spatial: oci.h not found." >&5
+echo "$as_me: error: Oracle Spatial: oci.h not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
   ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL
-  ORACLESPATIAL_LIB="-L$ORA_HOME/lib -lclntsh"
-  ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public"
+  ORACLESPATIAL_LIB="-L$ORA_LIBDIR -lclntsh"
+  ORACLESPATIAL_INC="-I$ORA_INCDIR -I$ORA_HOME/rdbms/demo"
+
+  echo "$as_me:$LINENO: result:         Oracle Spatial found in $ORA_HOME." >&5
+echo "${ECHO_T}        Oracle Spatial found in $ORA_HOME." >&6
+
 fi
 
 ORACLESPATIAL_ENABLED=$ORACLESPATIAL_ENABLED

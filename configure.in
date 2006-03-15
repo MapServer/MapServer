@@ -1348,9 +1348,29 @@ if test "$ORA_HOME" = "no" ; then
   ORACLESPATIAL_INC=
   ORACLESPATIAL_LIB=
 else
+
+  dnl Try to locate lib directory
+  test -f $ORA_HOME/lib/libclntsh.so && ORA_LIBDIR="$ORA_HOME/lib"
+  test -f $ORA_HOME/libclntsh.so &&     ORA_LIBDIR="$ORA_HOME"
+
+  if test -z "$ORA_LIBDIR" ; then
+    AC_MSG_ERROR([Oracle Spatial: libclntsh.so not found.])
+  fi
+
+  dnl Try to locate include directory
+  test -f $ORA_HOME/sdk/include/oci.h && ORA_INCDIR="$ORA_HOME/sdk/include"
+  test -f $ORA_HOME/rdbms/public/oci.h && ORA_INCDIR="$ORA_HOME/rdbms/public"
+
+  if test -z "$ORA_INCDIR" ; then
+    AC_MSG_ERROR([Oracle Spatial: oci.h not found.])
+  fi
+
   ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL
-  ORACLESPATIAL_LIB="-L$ORA_HOME/lib -lclntsh"
-  ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public"
+  ORACLESPATIAL_LIB="-L$ORA_LIBDIR -lclntsh"
+  ORACLESPATIAL_INC="-I$ORA_INCDIR -I$ORA_HOME/rdbms/demo"
+
+  AC_MSG_RESULT([        Oracle Spatial found in $ORA_HOME.])
+
 fi
 
 AC_SUBST(ORACLESPATIAL_ENABLED,$ORACLESPATIAL_ENABLED)
