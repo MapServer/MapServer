@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2006/03/15 18:17:14  dan
+ * Added SUPPORTS=SOS_SERVER to msGetVersion() (bug 1710)
+ *
  * Revision 1.73  2006/03/14 03:17:19  assefa
  * Add SOS error code (Bug 1710).
  * Correct error codes numbers for MS_TIMEERR and MS_GMLERR.
@@ -575,6 +578,9 @@ char *msGetVersion() {
 #endif
 #ifdef USE_WCS_SVR
   strcat(version, " SUPPORTS=WCS_SERVER");
+#endif
+#ifdef USE_SOS_SVR
+  strcat(version, " SUPPORTS=SOS_SERVER");
 #endif
 #ifdef USE_FASTCGI
   strcat(version, " SUPPORTS=FASTCGI");
