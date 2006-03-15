@@ -408,7 +408,7 @@ WCS=-DUSE_WCS_SVR
 #It also needs ICONV support since the libxml windoes binaries 
 #are built with it 
 #http://xmlsoft.org/index.html
-#SOS=-DUSE_OGC_SOS
+#SOS=-DUSE_SOS_SVR
 #LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.13.win32
 
 

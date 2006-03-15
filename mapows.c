@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2006/03/15 18:00:22  assefa
+ * Use flag SOS_SVR instead of OGC_SOS (Bug 1712).
+ *
  * Revision 1.62  2006/03/14 04:08:34  assefa
  * Add disptach call to SOS service.
  *
@@ -278,7 +281,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
         return status;
 #endif
 
-#ifdef USE_OGC_SOS
+#ifdef USE_SOS_SVR
     if ((status = msSOSDispatch(map, request)) != MS_DONE )
         return status;
 #endif
