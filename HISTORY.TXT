@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- Added ability to detect Oracle Instant Client (bug 1470, 1683)
+
 - Fix inter-tile "cracking" problem (Bug 1715).
 
 - Fixed problem with TRANSPARENCY ALPHA when set via MapScript or written
