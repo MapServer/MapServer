@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- Fixed problem with TRANSPARENCY ALPHA when set via MapScript or written
+  out by msSaveMap(). (bug 1669)
+
 - Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
 
 - SDE driver had a missing memory allocation that was preventing 
