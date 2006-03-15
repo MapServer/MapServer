@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.76  2006/03/15 22:54:07  sdlime
+ * Fixed my brain-dead gml_group schema writing support.
+ *
  * Revision 1.75  2006/02/24 02:55:03  assefa
  * Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
  *
@@ -545,19 +548,19 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
       geometry = &(geometryList->geometries[0]);
       msIO_fprintf(stream, "%s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
       if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
-	msIO_fprintf(stream, " maxOccurs=\"UNBOUNDED\"/>\n");
+        msIO_fprintf(stream, " maxOccurs=\"unbounded\"/>\n");
       else
-	msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);
+        msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);
     } else {
       msIO_fprintf(stream, "%s<choice>\n", tab);
       for(i=0; i<geometryList->numgeometries; i++) {
-	geometry = &(geometryList->geometries[i]);
+        geometry = &(geometryList->geometries[i]);
 	
-	msIO_fprintf(stream, "  %s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
-	if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
-	  msIO_fprintf(stream, " maxOccurs=\"UNBOUNDED\"/>\n");
-	else
-	  msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);	
+      msIO_fprintf(stream, "  %s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
+      if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
+        msIO_fprintf(stream, " maxOccurs=\"unbounded\"/>\n");
+      else
+	      msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);	
       }
       msIO_fprintf(stream, "%s</choice>\n", tab);
     }
@@ -602,7 +605,17 @@ static void msWFSWriteConstantElement(FILE *stream, gmlConstantObj *constant, co
   return;
 }
 
-static void msWFSWriteGroupElement(FILE *stream, gmlGroupObj *group, gmlItemListObj *itemList, gmlConstantListObj *constantList, const char *tab)
+static void msWFSWriteGroupElement(FILE *stream, gmlGroupObj *group, const char *tab, const char *namespace)
+{
+  if(group->type)
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s:%s\"/>\n", tab, group->name, namespace, group->type);
+  else
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s:%sType\"/>\n", tab, group->name, namespace, group->name);
+
+	return;
+}
+
+static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group, gmlItemListObj *itemList, gmlConstantListObj *constantList, const char *tab)
 {
   int i, j;
   char *element_tab;
@@ -613,40 +626,36 @@ static void msWFSWriteGroupElement(FILE *stream, gmlGroupObj *group, gmlItemList
   /* setup the element tab */
   element_tab = (char *) malloc(sizeof(char)*strlen(tab)+3);
   if(!element_tab) return;
-  sprintf(element_tab, "%s      ", tab);
+  sprintf(element_tab, "%s    ", tab);
 
-  if(group->type) {
-    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s\">\n", tab, group->name, group->type);
-    msIO_fprintf(stream, "%s  <complexType name=\"%s\">\n", tab, group->type);
-  } else {
-    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%sType\">\n", tab, group->name, group->name);     
-    msIO_fprintf(stream, "%s  <complexType name=\"%sType\">\n", tab, group->name);
-  }
+  if(group->type)
+    msIO_fprintf(stream, "%s<complexType name=\"%s\">\n", tab, group->type);
+  else
+    msIO_fprintf(stream, "%s<complexType name=\"%sType\">\n", tab, group->name);
   
-  msIO_fprintf(stream, "%s    <sequence>\n", tab);
+  msIO_fprintf(stream, "%s  <sequence>\n", tab);
 
   /* now the items/constants (e.g. elements) in the group */ 
   for(i=0; i<group->numitems; i++) {
     for(j=0; j<constantList->numconstants; j++) { /* find the right gmlConstantObj */
       constant = &(constantList->constants[j]);
       if(strcasecmp(constant->name, group->items[i]) == 0) { 
-	msWFSWriteConstantElement(stream, constant, element_tab);
-	break;
+        msWFSWriteConstantElement(stream, constant, element_tab);
+	      break;
       }
     }
     if(j != constantList->numconstants) continue; /* found this item */
     for(j=0; j<itemList->numitems; j++) { /* find the right gmlItemObj */
       item = &(itemList->items[j]);
       if(strcasecmp(item->name, group->items[i]) == 0) { 
-	msWFSWriteItemElement(stream, item, element_tab);
-	break;
+        msWFSWriteItemElement(stream, item, element_tab);
+        break;
       }
     }
   }
   
-  msIO_fprintf(stream, "%s    </sequence>\n", tab);
-  msIO_fprintf(stream, "%s  </complexType>\n", tab);
-  msIO_fprintf(stream, "%s</element>\n", tab);
+  msIO_fprintf(stream, "%s  </sequence>\n", tab);
+  msIO_fprintf(stream, "%s</complexType>\n", tab);
 
   return;
 }
@@ -680,16 +689,16 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       /* strip namespace if there is one :ex TYPENAME=cdf:Other */
       tokens = split(layers[0], ':', &n);
       if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
-	msFreeCharArray(tokens, n);
-	for (i=0; i<numlayers; i++) {
-	  tokens = split(layers[i], ':', &n);
-	  if (tokens && n==2) {
-	    free(layers[i]);
-	    layers[i] = strdup(tokens[1]);
-	  }
-	  if (tokens)
-	    msFreeCharArray(tokens, n);
-	}
+        msFreeCharArray(tokens, n);
+	      for (i=0; i<numlayers; i++) {
+	        tokens = split(layers[i], ':', &n);
+	        if (tokens && n==2) {
+	          free(layers[i]);
+	          layers[i] = strdup(tokens[1]);
+	        }
+	        if (tokens)
+	          msFreeCharArray(tokens, n);
+	      }
       }
     }
   } 
@@ -700,9 +709,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     else if(strcasecmp(paramsObj->pszOutputFormat, "SFE_XMLSCHEMA") == 0)
       outputformat = OWS_SFE_SCHEMA;
     else {
-      msSetError(MS_WFSERR, 
-		 "Unsupported DescribeFeatureType outputFormat (%s).", 
-		 "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
+      msSetError(MS_WFSERR, "Unsupported DescribeFeatureType outputFormat (%s).", "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
       return msWFSException(map, paramsObj->pszVersion);
     }
   }
@@ -711,10 +718,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   if (numlayers > 0) {
     for (i=0; i<numlayers; i++) {
       if (msGetLayerIndex(map, layers[i]) < 0) {
-	msSetError(MS_WFSERR, 
-		   "Invalid typename (%s).", 
-		   "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
-	return msWFSException(map, paramsObj->pszVersion);
+	      msSetError(MS_WFSERR, "Invalid typename (%s).", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
+        return msWFSException(map, paramsObj->pszVersion);
       }
     }
   }
@@ -782,84 +787,89 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 
     for (j=0; j<numlayers && !bFound; j++) {
       if ( lp->name && strcasecmp(lp->name, layers[j]) == 0)
-	bFound = 1;
+      bFound = 1;
     }
 
     if ((numlayers == 0 || bFound) && msWFSIsLayerSupported(lp)) {
 
       /*
-      ** OK, describe this layer
+      ** OK, describe this layer IF you can open it and retrieve items
       */
-      /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername"); */      
-      encoded_name = msEncodeHTMLEntities( lp->name );
-      if (user_namespace_prefix)
-	msIO_printf("\n"
-		    "  <element name=\"%s\" \n"
-		    "           type=\"%s:%sType\" \n"
-		    "           substitutionGroup=\"gml:_Feature\" />\n\n",
-		    encoded_name, user_namespace_prefix, encoded_name);
-      else
-	msIO_printf("\n"
-		    "  <element name=\"%s\" \n"
-		    "           type=\"ms:%sType\" \n"
-		    "           substitutionGroup=\"gml:_Feature\" />\n\n",
-		    encoded_name, encoded_name);
-      
-      msIO_printf("  <complexType name=\"%sType\">\n", encoded_name);
-      msIO_printf("    <complexContent>\n");
-      msIO_printf("      <extension base=\"gml:AbstractFeatureType\">\n");
-      msIO_printf("        <sequence>\n");
-      
       if (msLayerOpen(lp) == MS_SUCCESS) {
-	if (msLayerGetItems(lp) == MS_SUCCESS) {	  
-	  int k;
-	  gmlGroupListObj *groupList=NULL;
-	  gmlItemListObj *itemList=NULL;
+        if (msLayerGetItems(lp) == MS_SUCCESS) {
+          int k;
+          gmlGroupListObj *groupList=NULL;
+          gmlItemListObj *itemList=NULL;
           gmlConstantListObj *constantList=NULL;
-	  gmlGeometryListObj *geometryList=NULL;
-	  gmlItemObj *item=NULL;
-	  gmlConstantObj *constant=NULL;
+          gmlGeometryListObj *geometryList=NULL;
+          gmlItemObj *item=NULL;
+          gmlConstantObj *constant=NULL;
 
-	  itemList = msGMLGetItems(lp); /* GML-related metadata */
-	  constantList = msGMLGetConstants(lp);
-	  groupList = msGMLGetGroups(lp);
-	  geometryList = msGMLGetGeometries(lp);
+          itemList = msGMLGetItems(lp); /* GML-related metadata */
+          constantList = msGMLGetConstants(lp);
+          groupList = msGMLGetGroups(lp);
+          geometryList = msGMLGetGeometries(lp);
+          
+          /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername"); */      
+          encoded_name = msEncodeHTMLEntities( lp->name );
+          if (user_namespace_prefix)
+            msIO_printf("\n"
+                        "  <element name=\"%s\" \n"
+                        "           type=\"%s:%sType\" \n"
+                        "           substitutionGroup=\"gml:_Feature\" />\n\n",
+                        encoded_name, user_namespace_prefix, encoded_name);
+          else
+            msIO_printf("\n"
+                        "  <element name=\"%s\" \n"
+                        "           type=\"ms:%sType\" \n"
+                        "           substitutionGroup=\"gml:_Feature\" />\n\n",
+                        encoded_name, encoded_name);
 
-	  /* write the geometry schema element(s) */
-	  msWFSWriteGeometryElement(stdout, geometryList, outputformat, "          ");
+          msIO_printf("  <complexType name=\"%sType\">\n", encoded_name);
+          msIO_printf("    <complexContent>\n");
+          msIO_printf("      <extension base=\"gml:AbstractFeatureType\">\n");
+          msIO_printf("        <sequence>\n");
 
-	  /* write the constant-based schema elements */
-	  for(k=0; k<constantList->numconstants; k++) {
-	    constant = &(constantList->constants[k]);  
-	    if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
-	      msWFSWriteConstantElement(stdout, constant, "          ");
-	  }
+          /* write the geometry schema element(s) */
+          msWFSWriteGeometryElement(stdout, geometryList, outputformat, "          ");
 
-	  /* write the item-based schema elements */
-	  for(k=0; k<itemList->numitems; k++) {
-	    item = &(itemList->items[k]);  
-	    if(msItemInGroups(item->name, groupList) == MS_FALSE) 
-	      msWFSWriteItemElement(stdout, item, "          ");
-	  }
+          /* write the constant-based schema elements */
+          for(k=0; k<constantList->numconstants; k++) {
+            constant = &(constantList->constants[k]);  
+            if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
+              msWFSWriteConstantElement(stdout, constant, "          ");
+          }
 
-	  for(k=0; k<groupList->numgroups; k++)
-	    msWFSWriteGroupElement(stdout, &(groupList->groups[k]), itemList, constantList, "          ");
+          /* write the item-based schema elements */
+          for(k=0; k<itemList->numitems; k++) {
+            item = &(itemList->items[k]);  
+            if(msItemInGroups(item->name, groupList) == MS_FALSE) 
+              msWFSWriteItemElement(stdout, item, "          ");
+          }
 
-	  msGMLFreeItems(itemList);
-	  msGMLFreeConstants(constantList);
-	  msGMLFreeGroups(groupList);
-	  msGMLFreeGeometries(geometryList);
-	}
+          for(k=0; k<groupList->numgroups; k++)
+            msWFSWriteGroupElement(stdout, &(groupList->groups[k]), "          ", user_namespace_prefix);
 
-	msLayerClose(lp);
+          msIO_printf("        </sequence>\n");
+          msIO_printf("      </extension>\n");
+          msIO_printf("    </complexContent>\n");
+          msIO_printf("  </complexType>\n");
+
+          /* any group types */
+          for(k=0; k<groupList->numgroups; k++)
+            msWFSWriteGroupElementType(stdout, &(groupList->groups[k]), itemList, constantList, "  ");
+
+          msGMLFreeItems(itemList);
+          msGMLFreeConstants(constantList);
+          msGMLFreeGroups(groupList);
+          msGMLFreeGeometries(geometryList);
+				}
+
+	      msLayerClose(lp);
       } else {
-	msIO_printf("\n\n<!-- ERROR: Failed openinig layer %s -->\n\n", encoded_name);
+	      msIO_printf("\n\n<!-- ERROR: Failed opening layer %s -->\n\n", encoded_name);
       }
-      
-      msIO_printf("        </sequence>\n");
-      msIO_printf("      </extension>\n");
-      msIO_printf("    </complexContent>\n");
-      msIO_printf("  </complexType>\n");      
+          
     }
   }
   
