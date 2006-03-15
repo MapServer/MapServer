@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -871,7 +871,9 @@ Optional Packages:
                           required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
+  --with-sos              Enable OGC SOS Server Support (libxml2 required).
   --with-curl-config=PATH Specify path to curl-config.
+  --with-xml2-config=PATH Specify path to xml2-config.
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
   --with-warnings=flags   Enable strict warnings (or user defined warnings)
@@ -9671,6 +9673,32 @@ elif test "$with_wfsclient" = "yes" ; then
 fi
 
 
+{ echo "$as_me:$LINENO: checking whether we should include OGC SOS Server support..." >&5
+echo "$as_me: checking whether we should include OGC SOS Server support..." >&6;}
+
+# Check whether --with-sos or --without-sos was given.
+if test "${with_sos+set}" = set; then
+  withval="$with_sos"
+
+fi;
+
+if test "$with_sos" = "no" ; then
+
+  echo "$as_me:$LINENO: result:         OGC SOS Server support disabled by --without-sos." >&5
+echo "${ECHO_T}        OGC SOS Server support disabled by --without-sos." >&6
+
+elif test -z "$PROJ_ENABLED" ; then
+
+  echo "$as_me:$LINENO: result:         OGC SOS Support not enabled (PROJ.4 and libxml2 required)." >&5
+echo "${ECHO_T}        OGC SOS Support not enabled (PROJ.4 and libxml2 required)." >&6
+
+elif test "$with_sos" = "yes" ; then
+
+    SOS_REQUESTED="yes"
+
+fi
+
+
 { echo "$as_me:$LINENO: checking for curl-config..." >&5
 echo "$as_me: checking for curl-config..." >&6;}
 
@@ -9747,7 +9775,7 @@ echo "$as_me: error: libcurl version 7.10.1 or more recent is required." >&2;}
    { (exit 1); exit 1; }; }
   fi
 
-  if test "$WMS_REQUESTED" = "yes" ; then
+      if test "$WMS_REQUESTED" = "yes" ; then
     WMS_LYR_ENABLED="-DUSE_WMS_LYR"
     echo "$as_me:$LINENO: result:         OGC WMS Client Connections enabled ($WMS_LYR_ENABLED)." >&5
 echo "${ECHO_T}        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED)." >&6
@@ -9764,18 +9792,109 @@ echo "${ECHO_T}        OGC WFS Client Connections enabled ($WFS_LYR_ENABLED)." >
 
 fi
 
-WMS_LYR_ENABLED=$WMS_LYR_ENABLED
-
-WFS_LYR_ENABLED=$WFS_LYR_ENABLED
-
 CURL_INC=$CURL_INC
 
 CURL_LIB=$CURL_LIB
 
 
-ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $ALL_ENABLED"
 ALL_INC="$CURL_INC $ALL_INC"
 ALL_LIB="$CURL_LIB $ALL_LIB"
+
+
+
+{ echo "$as_me:$LINENO: checking for xml2-config..." >&5
+echo "$as_me: checking for xml2-config..." >&6;}
+
+# Check whether --with-xml2-config or --without-xml2-config was given.
+if test "${with_xml2_config+set}" = set; then
+  withval="$with_xml2_config"
+
+fi;
+
+unset ac_cv_path_LIBXML2_CONFIG
+
+if test "$SOS_REQUESTED" = "yes" ; then
+
+  if test "`basename xx/$with_xml2_config`" = "xml2-config" ; then
+    LIBXML2_CONFIG="$with_xml2_config"
+  else
+    # Extract the first word of "xml2-config", so it can be a program name with args.
+set dummy xml2-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_LIBXML2_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $LIBXML2_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_LIBXML2_CONFIG="$LIBXML2_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_LIBXML2_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_LIBXML2_CONFIG" && ac_cv_path_LIBXML2_CONFIG="no"
+  ;;
+esac
+fi
+LIBXML2_CONFIG=$ac_cv_path_LIBXML2_CONFIG
+
+if test -n "$LIBXML2_CONFIG"; then
+  echo "$as_me:$LINENO: result: $LIBXML2_CONFIG" >&5
+echo "${ECHO_T}$LIBXML2_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  fi
+
+  if test "$LIBXML2_CONFIG" = "no" ; then
+    { { echo "$as_me:$LINENO: error: couldn't find xml2-config, try using --with-xml2-config=PATH" >&5
+echo "$as_me: error: couldn't find xml2-config, try using --with-xml2-config=PATH" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  XML2_VER=`$LIBXML2_CONFIG --version`
+
+  echo "$as_me:$LINENO: result:         found libxml2 version $XML2_VER" >&5
+echo "${ECHO_T}        found libxml2 version $XML2_VER" >&6
+
+  SOS_SVR_ENABLED="-DUSE_SOS_SVR"
+  XML2_INC=`$LIBXML2_CONFIG --cflags`
+  XML2_LIB=`$LIBXML2_CONFIG --libs`
+
+  echo "$as_me:$LINENO: result:         OGC SOS Server enabled ($SOS_SVR_ENABLED)." >&5
+echo "${ECHO_T}        OGC SOS Server enabled ($SOS_SVR_ENABLED)." >&6
+
+fi
+
+XML2_INC=$XML2_INC
+
+XML2_LIB=$XML2_LIB
+
+
+ALL_INC="$XML2_INC $ALL_INC"
+ALL_LIB="$XML2_LIB $ALL_LIB"
+
+WMS_LYR_ENABLED=$WMS_LYR_ENABLED
+
+WFS_LYR_ENABLED=$WFS_LYR_ENABLED
+
+SOS_SVR_ENABLED=$SOS_SVR_ENABLED
+
+ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $SOS_SVR_ENABLED $ALL_ENABLED"
 
 
 { echo "$as_me:$LINENO: checking whether FastCGI support should be enabled..." >&5
@@ -11299,10 +11418,14 @@ s,@WMS_SVR_ENABLED@,$WMS_SVR_ENABLED,;t t
 s,@WFS_SVR_ENABLED@,$WFS_SVR_ENABLED,;t t
 s,@WCS_SVR_ENABLED@,$WCS_SVR_ENABLED,;t t
 s,@LIBCURL_CONFIG@,$LIBCURL_CONFIG,;t t
-s,@WMS_LYR_ENABLED@,$WMS_LYR_ENABLED,;t t
-s,@WFS_LYR_ENABLED@,$WFS_LYR_ENABLED,;t t
 s,@CURL_INC@,$CURL_INC,;t t
 s,@CURL_LIB@,$CURL_LIB,;t t
+s,@LIBXML2_CONFIG@,$LIBXML2_CONFIG,;t t
+s,@XML2_INC@,$XML2_INC,;t t
+s,@XML2_LIB@,$XML2_LIB,;t t
+s,@WMS_LYR_ENABLED@,$WMS_LYR_ENABLED,;t t
+s,@WFS_LYR_ENABLED@,$WFS_LYR_ENABLED,;t t
+s,@SOS_SVR_ENABLED@,$SOS_SVR_ENABLED,;t t
 s,@FASTCGI_ENABLED@,$FASTCGI_ENABLED,;t t
 s,@FASTCGI_INC@,$FASTCGI_INC,;t t
 s,@FASTCGI_LIB@,$FASTCGI_LIB,;t t
