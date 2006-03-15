@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- Fix inter-tile "cracking" problem (Bug 1715).
+
 - Fixed problem with TRANSPARENCY ALPHA when set via MapScript or written
   out by msSaveMap(). (bug 1669)
 
