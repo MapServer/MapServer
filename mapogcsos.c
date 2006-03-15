@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2006/03/15 18:07:33  assefa
+ * Add time output support
+ * Use USE_SOS_SVR flag instead of US_OGC_SOS.
+ *
  * Revision 1.1  2006/03/14 03:46:20  assefa
  * Sensor Observation support.
  *
@@ -41,7 +45,7 @@
 MS_CVSID("$Id$")
 
 
-#ifdef USE_OGC_SOS
+#ifdef USE_SOS_SVR
 
 #include "maperror.h"
 #include "mapthread.h"
@@ -553,29 +557,59 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
     shapeObj sShape;
     char szTmp[256];
     layerObj *lpfirst = NULL;
-
+    const char *pszTimeField = NULL;
 
     if (psParent)
     {
         msInitShape(&sShape);
     
-        psNode = xmlNewChild(psParent, NULL, "member", NULL);
-        
-        psObsNode = xmlNewChild(psNode, NULL, "Observation", pszValue);
-        pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
-                                       "observedProperty_id");
-        xmlNewChild(psObsNode, NULL, "observedProperty", pszValue);
-
-        /*TODO add time and procedure */
-
-        /* add result : gml:featureMember of all selected elements */
-        psNode = xmlNewChild(psObsNode, NULL, "result", NULL);
-        
         status = msLayerGetShape(lp, &sShape, 
                                  lp->resultcache->results[iFeatureId].tileindex, 
                                  lp->resultcache->results[iFeatureId].shapeindex);
         if(status != MS_SUCCESS) 
           return;
+
+        psNode = xmlNewChild(psParent, NULL, "member", NULL);
+        
+        psObsNode = xmlNewChild(psNode, NULL, "Observation", pszValue);
+        
+
+        /* order of elements is time, location, procedure, observedproperty
+         featureofinterest, result */
+
+        /* time*/
+        pszTimeField =  msOWSLookupMetadata(&(lp->metadata), "SO",
+                                            "timeitem");
+        if (pszTimeField && sShape.values)
+        {
+            for(i=0; i<lp->numitems; i++) 
+            {
+                if (strcasecmp(lp->items[i], pszTimeField) == 0)
+                {
+                    psNode = xmlNewChild(psObsNode, NULL, "time", 
+                                         sShape.values[i]); 
+                    xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+                    break;
+                
+                }
+            }
+        }
+        /*TODO add location, precedure*/
+
+        /*observed propery*/
+        pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
+                                       "observedProperty_id");
+        if (pszValue)
+        {
+            psNode= xmlNewChild(psObsNode, NULL, "observedProperty", pszValue);
+             xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+        }
+
+        /*TODO add featureofinterest*/
+
+        /* add result : gml:featureMember of all selected elements */
+        psNode = xmlNewChild(psObsNode, NULL, "result", NULL);
+        
         
 #ifdef USE_PROJ
         if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
@@ -631,6 +665,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                     }
                 }
             }
+            msLayerClose(lpfirst);
         }
     }        
 }
@@ -1071,7 +1106,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     const char *pszTmp = NULL, *pszTmp2 = NULL;
     int i, j, bLayerFound = 0;
-    layerObj *lp = NULL; 
+    layerObj *lp = NULL, *lpfirst = NULL; 
     const char *pszTimeExtent, *pszTimeField;
     FilterEncodingNode *psFilterNode = NULL;
     rectObj     sBbox;
@@ -1089,7 +1124,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
            pszOffering = values[i];
          else if (strcasecmp(names[i], "OBSERVEDPROPERTY") == 0)
            pszProperty = values[i];
-         else if (strcasecmp(names[i], "EVENTTIME") == 0)
+         else if ((strcasecmp(names[i], "EVENTTIME") == 0) ||
+                  (strcasecmp(names[i], "TIME") == 0))
            pszTime = values[i];
          else if (strcasecmp(names[i], "RESULT") == 0)
            pszFilter = values[i];
@@ -1174,26 +1210,32 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         {
             if (map->layers[i].status == MS_ON)
             {
-                /*TODO : there is a sos_offering_timeextent that could be used
-                  if timeextent at layer level is not available ?*/
-                pszTimeExtent = msOWSLookupMetadata(&(map->layers[i].metadata), "SO",
-                                             " timeextent");
+                /* the sos_offering_timeextent should be used for time validation*/
+                /*TODO : too documented  ?*/
+                lpfirst = 
+                  msSOSGetFirstLayerForOffering(map, 
+                                                msOWSLookupMetadata(&(map->layers[i].metadata), "S", 
+                                                                    "offering_id"),
+                                                NULL);
+                if (lpfirst)
+                  pszTimeExtent = 
+                    msOWSLookupMetadata(&lpfirst->metadata, "S", "offering_timeextent");
 
                 pszTimeField =  msOWSLookupMetadata(&(map->layers[i].metadata), "SO",
                                                     "timeitem");
 
-                if (pszTimeField)
-                {
-                    /*validate only if time extent is set.*/
-                    if (pszTimeExtent)
-                    {
-                        if (msValidateTimeValue(pszTime, pszTimeExtent) == MS_TRUE)
-                          msLayerSetTimeFilter(&(map->layers[i]), pszTime, 
-                                               pszTimeField);
-                    }
-                    else
-                      msLayerSetTimeFilter(&(map->layers[i]), pszTime, 
-                                               pszTimeField);
+            if (pszTimeField)
+              {
+                  /*validate only if time extent is set.*/
+                  if (pszTimeExtent)
+                  {
+                      if (msValidateTimeValue(pszTime, pszTimeExtent) == MS_TRUE)
+                        msLayerSetTimeFilter(&(map->layers[i]), pszTime, 
+                                             pszTimeField);
+                  }
+                  else
+                    msLayerSetTimeFilter(&(map->layers[i]), pszTime, 
+                                         pszTimeField);
                 }
             }
         }
@@ -1331,7 +1373,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
     return(MS_SUCCESS);
 }
 
-#endif /* USE_OGC_SOS*/
+#endif /* USE_SOS_SVR*/
 
 /*
 ** msSOSDispatch() is the entry point for SOS requests.
@@ -1340,7 +1382,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
 */
 int msSOSDispatch(mapObj *map, cgiRequestObj *req)
 {
-#ifdef USE_OGC_SOS
+#ifdef USE_SOS_SVR
     int i,  nVersion=-1;
     static char *request=NULL, *service=NULL, *format=NULL;
 
