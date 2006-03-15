@@ -73,11 +73,14 @@ Here is the list of available options as returned by "./configure --help":
                           directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).
+  --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).
   --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
                           required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
+  --with-sos              Enable OGC SOS Server Support (libxml2 required).
   --with-curl-config=PATH Specify path to curl-config.
+  --with-xml2-config=PATH Specify path to xml2-config.
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.
@@ -456,6 +459,14 @@ OGC WMS Client Support:
   http://mapserver.gis.umn.edu/doc/wfs-client-howto.html
 
 
+OGC SOS Server Support:
+-----------------------
+
+  --with-sos              Enable OGC SOS Server Support (libxml2 required).
+
+  OGC Sensor Observation Service (SOS) is disabled by default and can be
+  enabled using --with-sos. PROJ4 and libxml2 are required.
+
 
 Curl Support:
 -------------
@@ -475,6 +486,22 @@ Curl Support:
   script is located.
   e.g.
      ./configure .... --with-curl-config=/usr/local/bin/curl-config
+
+
+Libxml2 Support:
+----------------
+
+  --with-xml2-config=PATH Specify path to xml2-config.
+
+  The libxml2 library (http://xmlsoft.org/) is used by the optional 
+  OGC SOS Server module to handle XML generation and parsing.
+
+  If libxml2 is installed in the default system directories then it 
+  should automatically be detected by configure.  Otherwise use the
+  --with-xml2-config option to specify the path where the xml2-config
+  script is located.
+  e.g.
+     ./configure .... --with-xml2-config=/usr/local/bin/xml2-config
 
 
 
