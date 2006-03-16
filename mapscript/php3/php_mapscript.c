@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.242.2.2  2006/03/16 21:03:01  assefa
+ * problem with php mapscript build as a dll (bug 1717).
+ *
  * Revision 1.242.2.1  2006/01/18 00:37:47  dan
  * Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
  *
@@ -2372,7 +2375,7 @@ DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         RETVAL_STRING(pszPojString, 1);
-        free(pszPojString);
+        msFree(pszPojString);
     }
 }
     
@@ -4030,7 +4033,7 @@ DLEXPORT void php3_ms_map_getLayersIndexByGroup(INTERNAL_FUNCTION_PARAMETERS)
             {
                 add_next_index_long(return_value, aiIndex[i]);
             }
-            free (aiIndex);
+            msFree (aiIndex);
         }
         else
             RETURN_FALSE; 
@@ -4143,9 +4146,9 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
          /* add a copy of the group name to the PHP array */
           add_next_index_string(return_value, papszGroups[i], 1);
           
-          free(papszGroups[i]);
+          msFree(papszGroups[i]);
        }
-       free(papszGroups);
+       msFree(papszGroups);
     }
     else
     {
@@ -5187,7 +5190,7 @@ DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
     if (pszBuffer)
     {
         RETVAL_STRING(pszBuffer, 1);
-        free(pszBuffer);
+        msFree(pszBuffer);
     }
     else
     {
@@ -5295,7 +5298,7 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
     if (pszBuffer)
     {
         RETVAL_STRING(pszBuffer, 1);
-        free(pszBuffer);
+        msFree(pszBuffer);
     }
     else
     {
@@ -5417,7 +5420,7 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
     if (pszBuffer)
     {
         RETVAL_STRING(pszBuffer, 1);
-        free(pszBuffer);
+        msFree(pszBuffer);
     }
     else
     {
@@ -5948,7 +5951,7 @@ DLEXPORT void php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
     if (pszBuffer)
     {
         RETVAL_STRING(pszBuffer, 1);
-        free(pszBuffer);
+        msFree(pszBuffer);
     }
     else
     {
@@ -7265,7 +7268,7 @@ DLEXPORT void php3_ms_lyr_getFilter(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         RETVAL_STRING(pszFilterString, 1);
-        free(pszFilterString);
+        msFree(pszFilterString);
     }
 }
 
@@ -7409,7 +7412,7 @@ DLEXPORT void php3_ms_lyr_getProjection(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         RETVAL_STRING(pszPojString, 1);
-        free(pszPojString);
+        msFree(pszPojString);
     }
 }
 
@@ -8015,7 +8018,7 @@ DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     RETVAL_STRING(pszValue, 1);
-    free(pszValue);
+    msFree(pszValue);
 }
 /* }}} */
 
@@ -8191,10 +8194,10 @@ DLEXPORT void php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS)
     if (layer->numprocessing > 0)
     {
         for(i=0; i<layer->numprocessing; i++)
-          free(layer->processing[i]);
+          msFree(layer->processing[i]);
 
         layer->numprocessing = 0;
-        free(layer->processing);
+        msFree(layer->processing);
 
         _phpms_set_property_long(pThis, "num_processing", layer->numprocessing, E_ERROR TSRMLS_CC);
 
@@ -8231,7 +8234,7 @@ DLEXPORT void php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS)
        RETURN_STRING("", 1);
 
     RETVAL_STRING(pszValue, 1);
-    free(pszValue);
+    msFree(pszValue);
 }
  
 /**********************************************************************
@@ -8363,7 +8366,7 @@ DLEXPORT void php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
     if (pszBuffer)
     {
         RETVAL_STRING(pszBuffer, 1);
-        free(pszBuffer);
+        msFree(pszBuffer);
     }
     else
     {
@@ -8954,7 +8957,7 @@ DLEXPORT void php3_ms_class_getExpression(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
       RETURN_STRING(pszValue, 1);
-      free(pszValue);
+      msFree(pszValue);
     }
 }
 /* }}} */
