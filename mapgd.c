@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.127  2006/03/16 04:45:24  sdlime
+ * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
+ *
  * Revision 1.126  2006/03/09 04:53:49  frank
  * added GD/PNG Quantize support
  *
@@ -1358,6 +1361,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
 /* ------------------------------------------------------------------------------- */
 void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
+  char bRotated=MS_FALSE;
   symbolObj *symbol;
   int i;
   gdPoint oldpnt,newpnt;
@@ -1367,7 +1371,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
 
   int fc, bc, oc;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
-  double size, d;  
+  double size, d, angle, angle_radians;
   int width;
 
   int bbox[8];
@@ -1403,6 +1407,9 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, style->minwidth);
   width = MS_MIN(width, style->maxwidth);
+
+  angle = (style->angle) ? style->angle : 0.0;
+  angle_radians = angle*MS_DEG_TO_RAD;
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0) return; /* invalid color, -1 is valid */
@@ -1447,14 +1454,27 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
     break;
   case(MS_SYMBOL_PIXMAP):
 
+    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+
+    if (angle != 0.0 && angle != 360.0) {
+      bRotated = MS_TRUE;
+      symbol = msRotateSymbol(symbol, style->angle);
+    }
+
     /* fill with the background color before drawing transparent symbol */
     if(symbol->transparent == MS_TRUE && bc > -1)
       gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), bc);      
     
-    gdImageSetTile(img, symbol->img);
+    if(size == 1) /* use symbol->img "as is", this should be the most common case */
+      gdImageSetTile(img, symbol->img);
+    else {
+      tile = createBrush(img, d*symbol->sizex, d*symbol->sizey, style, &tile_fc, &tile_bc);
+      gdImageCopyResampled(tile, symbol->img, 0, 0, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);
+      gdImageSetTile(img, tile);
+    }
 
     break;
-  case(MS_SYMBOL_ELLIPSE):    
+  case(MS_SYMBOL_ELLIPSE):
    
     d = size/symbol->sizey; /* size ~ height in pixels */
     x = MS_NINT(symbol->sizex*d)+1;
@@ -1481,11 +1501,13 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
  
     break;
   case(MS_SYMBOL_VECTOR):
+    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
 
-    if(fc < 0)
-      return;
+    if (angle != 0.0 && angle != 360.0) {
+      bRotated = MS_TRUE;
+      symbol = msRotateSymbol(symbol, style->angle);
+    }
 
-    d = size/symbol->sizey; /* size ~ height in pixels */
     x = MS_NINT(symbol->sizex*d)+1;    
     y = MS_NINT(symbol->sizey*d)+1;
 
@@ -1535,7 +1557,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
     }
 
     gdImageSetTile(img, tile);
- 
+
     break;
   default:
     break;
@@ -1544,8 +1566,14 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   /* fill the circle in the main image   */
   gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), gdTiled);
   if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
+
   if(tile) gdImageDestroy(tile);
 
+  if(bRotated) { /* free the rotated symbol */
+    msFreeSymbol(symbol);
+    msFree(symbol);
+  }
+ 
   return;
 }
 
@@ -1554,7 +1582,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
 /* ------------------------------------------------------------------------------- */
 void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, styleObj *style, double scalefactor)
 {
-  symbolObj *symbol, *oldsymbol=NULL;
+  char bRotated=MS_FALSE;
+  symbolObj *symbol;
   int offset_x, offset_y, x, y, w, h;
   int j, k;
   gdPoint oldpnt,newpnt;
@@ -1562,7 +1591,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   char *error=NULL;
 
   int fc, bc, oc;
-  double size, max_size, d, angle, angle_radians;
+  double size, d, angle, angle_radians;
   int width;
 
   int ox, oy;
@@ -1641,9 +1670,11 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 
     break;
   case(MS_SYMBOL_PIXMAP):
+
+    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+
     if (angle != 0.0 && angle != 360.0) {
-      /* rotate the symbol creating a new symbol object */
-      oldsymbol = symbol;
+      bRotated = MS_TRUE;
       symbol = msRotateSymbol(symbol, style->angle);
     }
 
@@ -1652,12 +1683,16 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
       gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
     } else {
-      max_size = MS_MAX(symbol->sizex, symbol->sizey);
-      d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
       offset_x = MS_NINT(p->x - .5*symbol->img->sx*d + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy*d + oy);
       gdImageCopyResampled(img, symbol->img, offset_x, offset_y, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);
     }
+
+    if(bRotated) {
+      msFreeSymbol(symbol); /* clean up */
+      msFree(symbol);
+    }
+
     break;
   case(MS_SYMBOL_ELLIPSE):
     w = MS_NINT((size*symbol->sizex/symbol->sizey)); /* ellipse size */
@@ -1704,13 +1739,10 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     break;
   case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
 
-    /* compute the scaling factor (d) on the unrotated symbol */
-    max_size = MS_MAX(symbol->sizex, symbol->sizey);
-    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
+    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
 
-    if (angle != 0.0 && angle != 360.0) {
-      /* rotate the symbol creating a new symbol object */
-      oldsymbol = symbol;
+    if (angle != 0.0 && angle != 360.0) {      
+      bRotated = MS_TRUE;
       symbol = msRotateSymbol(symbol, style->angle);
     }
 
@@ -1770,6 +1802,12 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 
       gdImageSetThickness(img, 1); /* restore thinkness */
     } /* end if-then-else */
+
+    if(bRotated) {
+      msFreeSymbol(symbol); /* clean up */
+      msFree(symbol);
+    }
+
     break;
   default:
     break;
@@ -1789,7 +1827,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   int ox, oy;
   int fc, bc;
   int brush_bc, brush_fc;
-  double size, max_size, d, angle;
+  double size, d, angle;
   int width;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
@@ -1884,9 +1922,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   case(MS_SYMBOL_ELLIPSE):
     bc = gdTransparent;
 
-    max_size = MS_MAX(symbol->sizex, symbol->sizey);
-    d = max_size != 0 ? size/max_size : 1.0;
-    
+    d = (size)/symbol->sizey;
     x = MS_NINT(symbol->sizex*d);    
     y = MS_NINT(symbol->sizey*d);
 
@@ -1929,9 +1965,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   case(MS_SYMBOL_VECTOR):
     if(bc == -1) bc = gdTransparent;
     
-    /* compute the scaling factor (d) on the unrotated symbol */
-    max_size = MS_MAX(symbol->sizex, symbol->sizey);
-    d = max_size != 0 ? size/max_size : 1.0; /* was d = size/symbol->sizey; */
+    d = (size)/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
 
     if(angle != 0.0 && angle != 360.0) {
       /* rotate the symbol creating a new symbol object */
@@ -2053,15 +2087,16 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 /* ------------------------------------------------------------------------------- */
 void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
+  char bRotated=MS_FALSE;
   symbolObj *symbol;
   int i, k;
   gdPoint oldpnt, newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
-  gdImagePtr tile;
+  gdImagePtr tile=NULL;
   int x, y, ox, oy;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
-  double size, d;
+  double size, d, angle, angle_radians;
   int width;
   
   int bbox[8];
@@ -2091,6 +2126,9 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, style->minwidth);
   width = MS_MIN(width, style->maxwidth);
+
+  angle = (style->angle) ? style->angle : 0.0;
+  angle_radians = angle*MS_DEG_TO_RAD;
 
   ox = MS_NINT(style->offsetx*scalefactor); /* should we scale the offsets? */
   oy = MS_NINT(style->offsety*scalefactor);
@@ -2171,11 +2209,25 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     break;
   case(MS_SYMBOL_PIXMAP):
+    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+
+    if (angle != 0.0 && angle != 360.0) {
+      bRotated = MS_TRUE;
+      symbol = msRotateSymbol(symbol, style->angle);
+    }
+
+    if(size == 1) /* use symbol->img "as is", no scaling, this should be the most common case */
+      gdImageSetTile(img, symbol->img);
+    else {
+      tile = createBrush(img, d*symbol->sizex, d*symbol->sizey, style, &tile_fc, &tile_bc);
+      gdImageCopyResampled(tile, symbol->img, 0, 0, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);   
+      gdImageSetTile(img, tile);
+    }
+
     /* fill with the background color before drawing transparent symbol */
     if(symbol->transparent == MS_TRUE && bc > -1)
       imageFilledPolygon(img, p, bc, ox, oy); 
     
-    gdImageSetTile(img, symbol->img);
     imageFilledPolygon(img, p, gdTiled, ox, oy);
 
     if(style->antialias==MS_TRUE && oc>-1) { 
@@ -2183,6 +2235,14 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       imagePolyline(img, p, gdAntiAliased, ox, oy);
     } else 
       if(oc>-1) imagePolyline(img, p, oc, ox, oy);
+
+    if(bRotated) { /* free the rotated symbol */
+      msFreeSymbol(symbol);
+      msFree(symbol);
+    }
+
+    if(tile) /* we created a new tile */ 
+      gdImageDestroy(tile);
 
     break;
   case(MS_SYMBOL_ELLIPSE):    
@@ -2231,7 +2291,13 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     gdImageDestroy(tile);
     break;
   case(MS_SYMBOL_VECTOR):
-    d = size/symbol->sizey; /* size ~ height in pixels */
+    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+
+    if (angle != 0.0 && angle != 360.0) {
+      bRotated = MS_TRUE;
+      symbol = msRotateSymbol(symbol, style->angle);
+    }
+
     x = MS_NINT(symbol->sizex*d)+1;    
     y = MS_NINT(symbol->sizey*d)+1;
 
@@ -2248,6 +2314,11 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
         if(oc>-1) imagePolyline(img, p, oc, ox, oy);
       }      
       return;
+    }
+
+    if (angle != 0.0 && angle != 360.0) {
+      bRotated = MS_TRUE;
+      symbol = msRotateSymbol(symbol, style->angle);
     }
 
     /* create tile image */
@@ -2308,6 +2379,12 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       if(oc>-1) imagePolyline(img, p, oc, ox, oy);
 
     gdImageDestroy(tile);
+
+    if(bRotated) { /* free the rotated symbol */
+      msFreeSymbol(symbol);
+      msFree(symbol);
+    }
+
     break;
   default:
     break;

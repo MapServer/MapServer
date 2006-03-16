@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2006/03/16 04:45:24  sdlime
+ * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
+ *
  * Revision 1.94  2006/03/02 16:43:44  jani
  * This fixes second part of bug 1684, which happens when image is loaded
  * by symbol file.
@@ -1176,17 +1179,17 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
   double minx=0.0, miny=0.0, maxx=0.0, maxy=0.0;
   symbolObj *newSymbol = NULL;
 
-  /* use freeSymbol(symbolObj *s); to delete symbol that is not longer used */  
+  if(!(symbol->type == MS_SYMBOL_VECTOR || symbol->type == MS_SYMBOL_PIXMAP)) {
+    msSetError(MS_SYMERR, "Only symbols with type VECTOR or PIXMAP may be rotated.", "msRotateSymbol()");
+    return NULL;
+  }
+
   newSymbol = (symbolObj *) malloc(sizeof(symbolObj));
   msCopySymbol(newSymbol, symbol, NULL); /* TODO: do we really want to do this for all symbol types? */
 
   angle_rad = (MS_DEG_TO_RAD*angle);
 
   switch(symbol->type) {
-  case(MS_SYMBOL_ELLIPSE):
-    /* We have no coordinates here, only two radius values and could only rotate the brush after it was created. */
-    return symbol;
-    break;
   case(MS_SYMBOL_VECTOR):
     {
       double dp_x, dp_y, xcor, ycor;
@@ -1230,7 +1233,6 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
       newSymbol->sizex = maxx;
       newSymbol->sizey = maxy;
-      return newSymbol;
       break;
     }
   case(MS_SYMBOL_PIXMAP):
@@ -1277,17 +1279,11 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       }
 
       gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
-
-      return newSymbol;
-      break;
-    }
-  case(MS_SYMBOL_TRUETYPE):
-    {
-      return symbol; /* nothing to do, handled in code elsewhere */
       break;
     }
   default:
-    return symbol;
-    break;
+    /* should never get here */
   } /* end symbol type switch */
+
+  return newSymbol;
 }
