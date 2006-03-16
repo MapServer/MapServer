@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- [PHP-MAPSCRIPT] problem with php mapscript build as a dll (bug 1717)
+
 - Added ability to detect Oracle Instant Client (bug 1470, 1683)
 
 - Fix inter-tile "cracking" problem (Bug 1715).
