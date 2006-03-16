@@ -13,6 +13,62 @@
  *
  *****************************************************************************/
 
+/*Uncomment the following lines if you want to receive subsequent exceptions as
+inner exceptions. Otherwise the exception message will be concatenated*/
+//#if SWIG_VERSION >= 0x010329
+//#define ALLOW_INNER_EXCEPTIONS
+//#endif
+
+%ignore fp;
+
+/******************************************************************************
+ * C# exception redefinition
+ *****************************************************************************/
+#ifdef ALLOW_INNER_EXCEPTIONS
+%exception
+{
+	errorObj *ms_error;
+	$action
+    ms_error = msGetErrorObj();
+    if (ms_error != NULL && ms_error->code != MS_NOERR) {
+	    if (ms_error->code != MS_NOTFOUND && ms_error->code != -1) {
+            int ms_errorcode = ms_error->code;
+            while (ms_error!=NULL && ms_error->code != MS_NOERR) {
+                char* msg =  msAddErrorDisplayString(NULL, ms_error);
+                if (msg) {
+			        SWIG_CSharpException(SWIG_SystemError, msg);
+			        free(msg);
+		        }
+                else SWIG_CSharpException(SWIG_SystemError, "MapScript unknown error");
+                ms_error = ms_error->next;	  
+            }
+            msResetErrorList();
+            return $null;
+        }
+        msResetErrorList();
+    }
+}
+#else
+%exception
+{
+	errorObj *ms_error;
+	$action
+    ms_error = msGetErrorObj();
+    if (ms_error != NULL && ms_error->code != MS_NOERR) {
+	    if (ms_error->code != MS_NOTFOUND && ms_error->code != -1) {
+            char* msg = msGetErrorString(";"); 
+		    if (msg) {
+			    SWIG_CSharpException(SWIG_SystemError, msg);
+			    free(msg);
+		    }
+            else SWIG_CSharpException(SWIG_SystemError, "MapScript unknown error");
+            msResetErrorList();
+		    return $null;
+        }
+        msResetErrorList();
+    }
+}
+#endif
 
 /******************************************************************************
  * gdBuffer Typemaps and helpers
