@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Support for dispatching multiple error messages to the MapScript interface (bug 1704).
+
 - Fix inter-tile "cracking" problem (Bug 1715).
 
 - [OGC FILTER] Correct bug when generating an sql expression containing an escape 
