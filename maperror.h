@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/03/16 22:28:38  tamas
+ * Fixed msGetErrorString so as not to truncate the length of the error messages
+ * Added msAddErrorDisplayString to read the displayable messages separatedly
+ *
  * Revision 1.34  2006/03/14 03:17:19  assefa
  * Add SOS error code (Bug 1710).
  * Correct error codes numbers for MS_TIMEERR and MS_GMLERR.
@@ -126,6 +130,7 @@ MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine
 MS_DLL_EXPORT void msWriteError(FILE *stream);
 MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
 MS_DLL_EXPORT char *msGetErrorCodeString(int code);
+MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
 
 struct map_obj;
 MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);

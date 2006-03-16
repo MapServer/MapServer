@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2006/03/16 22:28:38  tamas
+ * Fixed msGetErrorString so as not to truncate the length of the error messages
+ * Added msAddErrorDisplayString to read the displayable messages separatedly
+ *
  * Revision 1.74  2006/03/15 18:17:14  dan
  * Added SUPPORTS=SOS_SERVER to msGetVersion() (bug 1710)
  *
@@ -338,25 +342,35 @@ char *msGetErrorCodeString(int code) {
   return(ms_errorCodes[code]);
 }
 
+/* -------------------------------------------------------------------- */
+/*      Adding the displayable error string to a given string           */
+/*      and reallocates the memory enough to hold the characters.       */
+/*      If source is null returns a newly allocated string              */
+/* -------------------------------------------------------------------- */
+char *msAddErrorDisplayString(char *source, errorObj *error)
+{
+	if((source = strcatalloc(source, error->routine)) == NULL) return(NULL);
+	if((source = strcatalloc(source, ": ")) == NULL) return(NULL);
+	if((source = strcatalloc(source, ms_errorCodes[error->code])) == NULL) return(NULL);
+	if((source = strcatalloc(source, " ")) == NULL) return(NULL);
+	if((source = strcatalloc(source, error->message)) == NULL) return(NULL);
+	return source;
+}
+
 char *msGetErrorString(char *delimiter) 
 {
-  char errbuf[256];
   char *errstr=NULL;
 
   errorObj *error = msGetErrorObj();
 
   if(!delimiter || !error) return(NULL);
 
-  if((errstr = strdup("")) == NULL) return(NULL); /* empty at first */
   while(error && error->code != MS_NOERR) {
-    if(error->next && error->next->code != MS_NOERR) /* (peek ahead) more errors, use delimiter */
-      snprintf(errbuf, 255, "%s: %s %s%s", error->routine, ms_errorCodes[error->code], error->message, delimiter);
-    else
-      snprintf(errbuf, 255, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);   
-
-    if((errstr = (char *) realloc(errstr, sizeof(char)*(strlen(errstr)+strlen(errbuf)+1))) == NULL) return(NULL);
-    strcat(errstr, errbuf);
-
+    if((errstr = msAddErrorDisplayString(errstr, error)) == NULL) return(NULL);
+	 
+	if(error->next && error->next->code != MS_NOERR) { /* (peek ahead) more errors, use delimiter */
+		if((errstr = strcatalloc(errstr, delimiter)) == NULL) return(NULL);
+	}
     error = error->next;   
   }
 
