@@ -71,6 +71,68 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 #endif
 
 /******************************************************************************
+ * typemaps for string arrays (for supporting map templates)
+ *****************************************************************************/
+ 
+%pragma(csharp) imclasscode=%{
+  public class StringArrayMarshal : IDisposable {
+    public readonly IntPtr[] _ar;
+    public StringArrayMarshal(string[] ar) {
+      _ar = new IntPtr[ar.Length];
+      for (int cx = 0; cx < _ar.Length; cx++) {
+	      _ar[cx] = System.Runtime.InteropServices.Marshal.StringToHGlobalAnsi(ar[cx]);
+      }
+    }
+    public virtual void Dispose() {
+	  for (int cx = 0; cx < _ar.Length; cx++) {
+          System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
+      }
+      GC.SuppressFinalize(this);
+    }
+  }
+%}
+
+%typemap(ctype) char** "void**"
+%typemap(imtype) char** "IntPtr[]"
+%typemap(cstype) char** %{string[]%}
+%typemap(in) char** %{ $1 = ($1_ltype)$input; %}
+%typemap(out) char** %{ $result = $1; %}
+%typemap(csin) char** "new $modulePINVOKE.StringArrayMarshal($csinput)._ar"
+%typemap(csout, excode=SWIGEXCODE) char** {
+    $excode
+    throw new System.NotSupportedException("Returning string arrays is not implemented yet.");
+}
+%typemap(csvarin, excode=SWIGEXCODE2) char** %{
+    set {
+      $excode
+	  throw new System.NotSupportedException("Setting string arrays is not supported now.");
+    } 
+%}
+/* specializations */
+%typemap(csvarout, excode=SWIGEXCODE2) char** formatoptions %{
+    get {
+        IntPtr[] cPtr = $imcall;
+	    string[] ret = new string[this.numformatoptions];
+        for(int cx = 0; cx < this.numformatoptions; cx++) {
+            ret[cx]= (cPtr[cx] == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(cPtr[cx]);
+        }
+        $excode
+        return ret;
+    }
+%}
+%typemap(csvarout, excode=SWIGEXCODE2) char** values %{
+    get {
+        IntPtr[] cPtr = $imcall;
+	    string[] ret = new string[this.numvalues];
+        for(int cx = 0; cx < this.numvalues; cx++) {
+            ret[cx]= (cPtr[cx] == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(cPtr[cx]);
+        }
+        $excode
+        return ret;
+    }
+%}
+
+/******************************************************************************
  * gdBuffer Typemaps and helpers
  *****************************************************************************/
 
