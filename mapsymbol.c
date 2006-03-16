@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2006/03/16 05:28:44  sdlime
+ * Cleaned up a build warning in mapsymbol.c.
+ *
  * Revision 1.95  2006/03/16 04:45:24  sdlime
  * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
  *
@@ -1247,7 +1250,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       long minx, miny, maxx, maxy;
 
       int width=0, height=0;
-      //int color;
+      /* int color; */
 
       sin_a = sin(angle_rad);
       cos_a = cos(angle_rad);
@@ -1282,7 +1285,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       break;
     }
   default:
-    /* should never get here */
+    break; /* should never get here */
   } /* end symbol type switch */
 
   return newSymbol;
