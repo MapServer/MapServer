@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2006/03/16 01:42:39  assefa
+ * Verfify layer indix before closing it.
+ *
  * Revision 1.2  2006/03/15 18:07:33  assefa
  * Add time output support
  * Use USE_SOS_SVR flag instead of US_OGC_SOS.
@@ -665,7 +668,8 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                     }
                 }
             }
-            msLayerClose(lpfirst);
+            if (lp->index != lpfirst->index)
+              msLayerClose(lpfirst);
         }
     }        
 }
