@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  C#-specific enhancements to MapScript
@@ -92,7 +93,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
   }
 %}
 
-%typemap(imtype) char** "IntPtr[]"
+%typemap(imtype, out="IntPtr") char** "IntPtr[]"
 %typemap(cstype) char** %{string[]%}
 %typemap(in) char** %{ $1 = ($1_ltype)$input; %}
 %typemap(out) char** %{ $result = $1; %}
@@ -110,10 +111,12 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 /* specializations */
 %typemap(csvarout, excode=SWIGEXCODE2) char** formatoptions %{
     get {
-        IntPtr[] cPtr = $imcall;
+        IntPtr cPtr = $imcall;
+        IntPtr objPtr;
 	    string[] ret = new string[this.numformatoptions];
         for(int cx = 0; cx < this.numformatoptions; cx++) {
-            ret[cx]= (cPtr[cx] == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(cPtr[cx]);
+            objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+            ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
         }
         $excode
         return ret;
@@ -121,13 +124,49 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 %}
 %typemap(csvarout, excode=SWIGEXCODE2) char** values %{
     get {
-        IntPtr[] cPtr = $imcall;
+        IntPtr cPtr = $imcall;
+        IntPtr objPtr;
 	    string[] ret = new string[this.numvalues];
         for(int cx = 0; cx < this.numvalues; cx++) {
-            ret[cx]= (cPtr[cx] == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(cPtr[cx]);
+            objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+            ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
         }
         $excode
         return ret;
+    }
+%}
+
+/******************************************************************************
+ * typemaps for outputFormatObj arrays
+ *****************************************************************************/
+
+%typemap(ctype) outputFormatObj** "void*"
+%typemap(imtype) outputFormatObj** "IntPtr"
+%typemap(cstype) outputFormatObj** "outputFormatObj[]"
+%typemap(out) outputFormatObj** %{ $result = $1; %}
+%typemap(csout, excode=SWIGEXCODE) outputFormatObj** {
+      IntPtr cPtr = $imcall;
+	  IntPtr objPtr;
+      outputFormatObj[] ret = new outputFormatObj[this.numoutputformats];
+      for(int cx = 0; cx < this.numoutputformats; cx++) {
+          objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false);
+      }
+      $excode
+      return ret;
+}
+
+%typemap(csvarout, excode=SWIGEXCODE2) outputFormatObj** %{
+    get {
+	  IntPtr cPtr = $imcall;
+	  IntPtr objPtr;
+      outputFormatObj[] ret = new outputFormatObj[this.numoutputformats];
+      for(int cx = 0; cx < this.numoutputformats; cx++) {
+          objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false);
+      }
+      $excode
+      return ret;
     }
 %}
 
