@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Added C# typemaps for char** and outputFormatObj**
+
 - Support for dispatching multiple error messages to the MapScript interface (bug 1704).
 
 - Fix inter-tile "cracking" problem (Bug 1715).
