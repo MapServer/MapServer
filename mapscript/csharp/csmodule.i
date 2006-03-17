@@ -92,7 +92,6 @@ inner exceptions. Otherwise the exception message will be concatenated*/
   }
 %}
 
-%typemap(ctype) char** "void**"
 %typemap(imtype) char** "IntPtr[]"
 %typemap(cstype) char** %{string[]%}
 %typemap(in) char** %{ $1 = ($1_ltype)$input; %}
