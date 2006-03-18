@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Added /csharp/Makefile.in for supporting the creation of Makefile 
+  during configuration with MONO/Linux (fix for bug 1595 and 1597)
+
 - Added C# typemaps for char** and outputFormatObj**
 
 - Support for dispatching multiple error messages to the MapScript interface (bug 1704).
