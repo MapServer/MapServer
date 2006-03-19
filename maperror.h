@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33.4.1  2006/03/19 19:14:03  tamas
+ * Fixed msGetErrorString so as not to truncate the length of the error messages
+ * Added msAddErrorDisplayString to read the displayable messages
+ *
  * Revision 1.33  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -121,6 +125,7 @@ MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine
 MS_DLL_EXPORT void msWriteError(FILE *stream);
 MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
 MS_DLL_EXPORT char *msGetErrorCodeString(int code);
+MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
 
 struct map_obj;
 MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
