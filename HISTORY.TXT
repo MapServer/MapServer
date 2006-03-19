@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- Added config file for mapping the library file so the DllImport 
+  is looking for to its unix equivalent (Bug 1596) Thanks to Scott Ellington
+
+- Added /csharp/Makefile.in for supporting the creation of Makefile 
+  during configuration with MONO/Linux (fix for bug 1595 and 1597)
+
 - [PHP-MAPSCRIPT] problem with php mapscript build as a dll (bug 1717)
 
 - Added ability to detect Oracle Instant Client (bug 1470, 1683)
