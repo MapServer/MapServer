@@ -57,10 +57,10 @@ version you might want to compile and install it from the source.
 Download and uncompress the latest SWIG release. You should probably compile it
 from the source if precompiled binaries are not available for your platform.
 
-The mapscript/csharp directory contains the makefile for the compilation. Edit this file 
-and set the SWIG and CSC for the corresponding executables.
-You should manually edit CCFLAGS and LDFLAGS according to the compilation options
-of mapserver (this behavior may change in the future)
+Before compiling mapscript mapserver sould be configured and compiled. During
+configuration the mapscript/csharp/Makefile will be created according to the configuration
+options. Edit this file and set the SWIG and CSC for the corresponding executable pathes if
+the files could not be accessed by default.
 To compile at a console step into the /mapscript/csharp directory
 Use
       make
@@ -104,7 +104,20 @@ directory.
 3.2 When compiling with Microsoft Visual Studio 2005 variable name collision may occur between regex.c
 and crtdefs.h. For more details see:
     http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1651
+
+3.3 To run the C# module on Mono/Linux, a dll.config file is needed.  This simply
+maps the library file the DllImport is looking for to its unix equivalent. The file
+normally contains the following information (mapscript_csharp.dll.config):
+
+<configuration>
+    <dllmap dll="mapscript" target="libmapscript.so" />
+ </configuration>
  
+The file should be placed along with the corresponding mapscript_csharp.dll file.
+For more information see:
+	http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1596
+    http://www.mono-project.com/Interop_with_Native_Libraries
+  
 4. Bug reports
 -------------
 If you find a problem dedicated to the mapscript C# interface feel free to file a bug report to BugZilla.
