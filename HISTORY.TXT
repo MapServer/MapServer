@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- Hiding items not to be exposed to the mapscript interface (bug 1660)
+
 - Added config file for mapping the library file so the DllImport 
   is looking for to its unix equivalent (Bug 1596) Thanks to Scott Ellington
 
