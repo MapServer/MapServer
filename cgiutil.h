@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17.4.1  2006/03/19 17:58:13  tamas
+ * Hiding items not to be exposed to the mapscript interface (bug 1660)
+ *
  * Revision 1.17  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -80,7 +83,8 @@ typedef struct
 
 /*
 ** Function prototypes
-*/ 
+*/
+#ifndef SWIG
 MS_DLL_EXPORT  int loadParams(cgiRequestObj *);
 MS_DLL_EXPORT void getword(char *, char *, char);
 MS_DLL_EXPORT char *makeword_skip(char *, char, char);
@@ -97,5 +101,6 @@ MS_DLL_EXPORT void escape_shell_cmd(char *);
 
 MS_DLL_EXPORT cgiRequestObj *msAllocCgiObj(void);
 MS_DLL_EXPORT void msFreeCgiObj(cgiRequestObj *request);
+#endif /*SWIG*/
 
 #endif /* CGIUTIL_H */

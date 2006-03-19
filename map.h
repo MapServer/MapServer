@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437.2.6  2006/03/19 17:58:13  tamas
+ * Hiding items not to be exposed to the mapscript interface (bug 1660)
+ *
  * Revision 1.437.2.5  2006/02/03 19:12:19  dan
  * Update for 4.8.1
  *
@@ -585,6 +588,7 @@ extern "C" {
 #define MS_FILE_DEFAULT MS_FILE_MAP   
 
 
+#ifndef SWIG
 /* Filter object */    
 typedef enum 
 {
@@ -613,6 +617,7 @@ typedef struct _FilterNode
 
       
 }FilterEncodingNode;
+#endif /*SWIG*/
 
 
 /* FONTSET OBJECT - used to hold aliases for TRUETYPE fonts */
@@ -1022,6 +1027,7 @@ typedef struct {
   struct map_obj *map;
 } legendObj;
 
+#ifndef SWIG
 typedef struct
 {
   double    dwhichlatitude;
@@ -1051,6 +1057,7 @@ typedef struct
 
 struct layerVTable;
 typedef struct layerVTable layerVTableObj;
+#endif /*SWIG*/
 
 /* LAYER OBJECT - basic unit of a map */
 typedef struct layer_obj {
@@ -1135,9 +1142,9 @@ typedef struct layer_obj {
   char *plugin_library_original; /* this is needed for mapfile writing */
   enum MS_CONNECTION_TYPE connectiontype;
 
+#ifndef SWIG
   layerVTableObj *vtable;
 
-#ifndef SWIG
   struct layer_obj *sameconnection;
   /* SDL has converted OracleSpatial, SDE, Graticules, MyGIS */
   void *layerinfo; /* all connection types should use this generic pointer to a vendor specific structure */
@@ -1227,8 +1234,9 @@ typedef struct map_obj{ /* structure for a map */
   rectObj extent; /* map extent array */
   double cellsize; /* in map units */
 
-
+#ifndef SWIG
   geotransformObj gt; /* rotation / geotransform */
+#endif /*SWIG*/
   rectObj saved_extent;
 
   enum MS_UNITS units; /* units of the projection */
@@ -1238,7 +1246,9 @@ typedef struct map_obj{ /* structure for a map */
   char *shapepath; /* where are the shape files located */
   char *mappath; /* path of the mapfile, all path are relative to this path */
 
+#ifndef SWIG
   paletteObj palette; /* holds a map palette */
+#endif /*SWIG*/
   colorObj imagecolor; /* holds the initial image color value */
 
 #ifdef SWIG
@@ -1286,6 +1296,7 @@ typedef struct {
 } PDFObj; 
 #endif
 
+#ifndef SWIG
 typedef struct  {
   mapObj *map;
   FILE *stream;
@@ -1293,6 +1304,7 @@ typedef struct  {
   int streamclosed; /* track if a save image is done */
   int compressed; /*track if output is set to be svgz */
 } SVGObj;
+#endif /*SWIG*/
 
 /* IMAGE OBJECT - a wrapper for GD images */
 typedef struct {
@@ -1334,6 +1346,7 @@ typedef struct {
  * If you add new functions to here, remember to update
  * populateVirtualTable in maplayer.c
  */
+#ifndef SWIG
 struct layerVTable {
     int (*LayerInitItemInfo)(layerObj *layer);
     void (*LayerFreeItemInfo)(layerObj *layer);
@@ -1362,7 +1375,7 @@ struct layerVTable {
     int (*LayerCreateItems)(layerObj *layer, int nt);
     int (*LayerGetNumFeatures)(layerObj *layer);
 };
-
+#endif /*SWIG*/
 
 /* Function prototypes, wrapable */
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
