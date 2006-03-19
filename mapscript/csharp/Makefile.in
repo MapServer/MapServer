@@ -34,7 +34,7 @@ STRINGS= @STRINGS@
 
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
 PROJ_INC= @PROJ_INC@
-PROJ_LIBS= @PROJ_LIBS@
+PROJ_LIB= @PROJ_LIB@
 PROJ=     @PROJ_ENABLED@
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
@@ -153,7 +153,7 @@ CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
+SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
           $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS)
