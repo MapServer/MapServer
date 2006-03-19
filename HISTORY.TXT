@@ -16,6 +16,13 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.2 (...cvs...)
 --------------------------
 
+- Typemap enhancement for C# to support multiple imageObj and writing the image onto
+  a Stream object (bug 1680)
+
+- Added C# typemaps for char** and outputFormatObj**
+
+- Support for dispatching multiple error messages to the MapScript interface (bug 1704).
+
 - Hiding items not to be exposed to the mapscript interface (bug 1660)
 
 - Added config file for mapping the library file so the DllImport 
