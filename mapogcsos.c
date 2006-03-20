@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2006/03/20 02:00:36  assefa
+ * Add bbox support for getobservation.
+ *
  * Revision 1.3  2006/03/16 01:42:39  assefa
  * Verfify layer indix before closing it.
  *
@@ -251,6 +254,15 @@ void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd)
 
 
 
+/************************************************************************/
+/*                            Add a bbox node.                          */
+/*      <gml:boundedBy>                                                 */
+/*      -<gml:Envelope>                                                 */
+/*      <gml:lowerCorner srsName="epsg:4326">-66 43</gml:lowerCorner>   */
+/*      <upperCorner srsName="epsg:4326">-62 45</upperCorner>           */
+/*      </gml:Envelope>                                                 */
+/*      </gml:boundedBy>                                                */
+/************************************************************************/
 void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx, 
                     double maxy, const char *psEpsg)
 {               
@@ -259,8 +271,9 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
 
     if (psParent)
     {
-        psNode = xmlNewChild(psParent, NULL, "boundedBy", NULL);
-        xmlSetNs(psNode,xmlNewNs(psNode, "http://www.opengis.net/gml",  "gml"));
+        psNode = xmlNewChild(psParent, 
+                             xmlNewNs(NULL, "http://www.opengis.net/gml",  "gml"),
+                             "boundedBy", NULL);
         
         psEnvNode = xmlNewChild(psNode, NULL, "Envelope", NULL);
         xmlSetNs(psNode,xmlNewNs(psNode, "http://www.opengis.net/gml",  "gml"));
@@ -1010,8 +1023,24 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      
                  }
                  
-                 /*TODO : procedure*/
-
+                 /*procedure : output all procedure links for the offering */
+                 for (j=0; j<map->numlayers; j++)
+                 {
+                     if (panOfferingLayers[j] == i)
+                     {
+                         value = msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
+                                             "procedure");
+                         if (value)
+                         {
+                             psNode = 
+                               xmlNewChild(psOfferingNode, NULL, "porcedure", NULL);
+                             xmlNewNsProp(psNode,
+                                          xmlNewNs(NULL, "http://www.w3.org/1999/xlink", 
+                                                   "xlink"), "href", value);
+                             
+                         }
+                     }
+                 }
                  /*observed property */
                  /* observed property are equivalent to layers. We can group 
                     sevaral layers using the same sos_observedproperty_id. The 
@@ -1050,7 +1079,33 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                    free(papszProperties[j]);
                  free(papszProperties);
 
-                 /*TODO <sos:featureOfInterest>*/
+                 /*TODO <sos:featureOfInterest> : we will use the offering_extent that was used
+                  for the bbox */
+                 value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_extent");
+                 if (value)
+                 {
+                     char **tokens;
+                     int n;
+                     tokens = split(value, ',', &n);
+                     if (tokens==NULL || n != 4) {
+                         msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
+                                    "msSOSGetCapabilities()");
+                         return msSOSException(map, nVersion);
+                     }
+                     value = msOWSGetEPSGProj(&(lp->projection),
+                                              &(lp->metadata), "SO", MS_TRUE);
+                     if (value)
+                     {
+                         psNode = xmlNewChild(psOfferingNode, NULL, "featureOfInterest", 
+                                              NULL);
+
+                         msSOSAddBBNode(psNode, atof(tokens[0]), atof(tokens[1]),
+                                        atof(tokens[2]), atof(tokens[3]), value);
+                     }
+
+                     msFreeCharArray(tokens, n);
+                       
+                 }
                  
                  psNode = xmlNewChild(psOfferingNode, NULL, "resultFormat", 
                                       "application/com-xml");
@@ -1106,14 +1161,14 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 {
     char *pszOffering=NULL, *pszProperty=NULL, *pszTime = NULL;
     char *pszFilter = NULL, *pszProdedure = NULL;
-    char *pszBBox = NULL;
+    char *pszBbox = NULL;
 
     const char *pszTmp = NULL, *pszTmp2 = NULL;
     int i, j, bLayerFound = 0;
     layerObj *lp = NULL, *lpfirst = NULL; 
     const char *pszTimeExtent, *pszTimeField;
     FilterEncodingNode *psFilterNode = NULL;
-    rectObj     sBbox;
+    rectObj sBbox;
 
     xmlChar *buffer = NULL;
     int size = 0;
@@ -1121,6 +1176,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlDocPtr psDoc = NULL;
     xmlNodePtr psRootNode,  psNode;
     xmlNsPtr psNameSpace = NULL;
+
 
     for(i=0; i<numentries; i++) 
      {
@@ -1135,8 +1191,9 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
            pszFilter = values[i];
          else if (strcasecmp(names[i], "PROCEDURE") == 0)
            pszProdedure = values[i];
-          else if (strcasecmp(names[i], "FEATUREOFINTEREST") == 0)
-            pszBBox = values[i];
+          else if ((strcasecmp(names[i], "FEATUREOFINTEREST") == 0) ||
+                   (strcasecmp(names[i], "BBOX") == 0))
+            pszBbox = values[i];
          
      }
 
@@ -1264,13 +1321,33 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     }
  
 
-    /*TODO : parse featureofInterest*/
+    /*bbox*/
+    if (pszBbox)
+    {
+        char **tokens;
+        int n;
+        tokens = split(pszBbox, ',', &n);
+        if (tokens==NULL || n != 4) 
+        {
+            msSetError(MS_SOSERR, "Wrong number of arguments for bounding box.", "msSOSGetObservation()");
+            return msSOSException(map, nVersion);
+        }
+        sBbox.minx = atof(tokens[0]);
+        sBbox.miny = atof(tokens[1]);
+        sBbox.maxx = atof(tokens[2]);
+        sBbox.maxy = atof(tokens[3]);
+        msFreeCharArray(tokens, n);
+    }
 
-    /*do the query*/
+
+    /*do the query. use the same logic (?) as wfs. bbox and filer are incomaptible since bbox
+     can be given inside a filter*/
     if (!pszFilter) 
     {
-         sBbox = map->extent;
-         msQueryByRect(map, -1, sBbox);
+        if (pszBbox)
+          msQueryByRect(map, -1, sBbox);
+        else
+          msQueryByRect(map, -1, map->extent);
     }
 
     /*get the first layers of the offering*/
@@ -1283,9 +1360,6 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
             break;
         }
     }
-    
-
-
     
     
     /* build xml return tree*/
