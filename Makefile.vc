@@ -128,7 +128,6 @@ install: $(MS_DLL) $(MS_EXE) python csharp java php
 !IFDEF JAVA_HOME
 	xcopy /y /r /d /f .\mapscript\java\*.dll $(BINDIR)\mapscript\java
 	xcopy /y /r /d /f .\mapscript\java\*.jar $(BINDIR)\mapscript\java
-	xcopy /y /r /d /f .\mapscript\java\*.jar $(BINDIR)\mapscript\java
 !ENDIF
 !IFDEF PHP_HOME
 	xcopy /y /r /d /f .\mapscript\php3\*.dll $(BINDIR)\mapscript\php
