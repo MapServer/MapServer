@@ -124,6 +124,8 @@ install: $(MS_DLL) $(MS_EXE) python csharp java php
 !ENDIF
 	xcopy /y /r /d /f .\mapscript\csharp\*.dll $(BINDIR)\mapscript\csharp
 	xcopy /y /r /d /f .\mapscript\csharp\*.exe $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.manifest $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.config $(BINDIR)\mapscript\csharp
 !IFDEF JAVA_HOME
 	xcopy /y /r /d /f .\mapscript\java\*.dll $(BINDIR)\mapscript\java
 	xcopy /y /r /d /f .\mapscript\java\*.jar $(BINDIR)\mapscript\java
