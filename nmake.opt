@@ -552,7 +552,7 @@ FT_LIB=$(FT_DIR)/objs/freetype2110.lib
 
 # GD include and library
 GD_INC=	-I$(GD_DIR)
-GD_LIBS= $(GD_DIR)/bgd_i.lib  $(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
+GD_LIBS= $(GD_LIB) $(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
 GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT) $(GD_HAS_GETBITMAPFONT)
 
 # Tiff library on input
