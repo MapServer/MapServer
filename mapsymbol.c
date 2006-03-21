@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.4  2006/03/21 06:29:29  sdlime
+ * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
+ *
  * Revision 1.90.2.3  2006/03/02 01:38:43  jani
  * Revert 1.90.2.2; (bug fix #1684).
  * I accidentally committed to 4.8 branch. Sorry about that.
@@ -333,6 +336,8 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	msSetError(MS_GDERR, NULL, "loadSymbol()");	
 	return(-1);
       }
+      s->sizex = s->img->sx;
+      s->sizey = s->img->sy;            
       break;
     case(LINECAP):
       if((s->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
@@ -1165,17 +1170,17 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
   double minx=0.0, miny=0.0, maxx=0.0, maxy=0.0;
   symbolObj *newSymbol = NULL;
 
-  /* use freeSymbol(symbolObj *s); to delete symbol that is not longer used */  
+  if(!(symbol->type == MS_SYMBOL_VECTOR || symbol->type == MS_SYMBOL_PIXMAP)) {
+    msSetError(MS_SYMERR, "Only symbols with type VECTOR or PIXMAP may be rotated.", "msRotateSymbol()");
+    return NULL;
+  }
+
   newSymbol = (symbolObj *) malloc(sizeof(symbolObj));
   msCopySymbol(newSymbol, symbol, NULL); /* TODO: do we really want to do this for all symbol types? */
 
   angle_rad = (MS_DEG_TO_RAD*angle);
 
   switch(symbol->type) {
-  case(MS_SYMBOL_ELLIPSE):
-    /* We have no coordinates here, only two radius values and could only rotate the brush after it was created. */
-    return symbol;
-    break;
   case(MS_SYMBOL_VECTOR):
     {
       double dp_x, dp_y, xcor, ycor;
@@ -1219,7 +1224,6 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
       newSymbol->sizex = maxx;
       newSymbol->sizey = maxy;
-      return newSymbol;
       break;
     }
   case(MS_SYMBOL_PIXMAP):
@@ -1234,7 +1238,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       long minx, miny, maxx, maxy;
 
       int width=0, height=0;
-      int color;
+      /* int color; */
 
       sin_a = sin(angle_rad);
       cos_a = cos(angle_rad);
@@ -1265,18 +1269,15 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 	newSymbol->img = gdImageCreate(width, height);	
       }
 
-      gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
+      newSymbol->sizex = width;
+      newSymbol->sizey = height;
 
-      return newSymbol;
-      break;
-    }
-  case(MS_SYMBOL_TRUETYPE):
-    {
-      return symbol; /* nothing to do, handled in code elsewhere */
+      gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
       break;
     }
   default:
-    return symbol;
-    break;
+    break; /* should never get here */   
   } /* end symbol type switch */
+
+  return newSymbol;
 }
