@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2006/03/21 06:27:08  sdlime
+ * Made sure msRotateSymbol sets the new symbol's sizex and sizey members for PIXMAP symbols.
+ *
  * Revision 1.96  2006/03/16 05:28:44  sdlime
  * Cleaned up a build warning in mapsymbol.c.
  *
@@ -347,7 +350,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	return(-1);
       }
       s->sizex = s->img->sx;
-      s->sizey = s->img->sy;            
+      s->sizey = s->img->sy;
       break;
     case(LINECAP):
       if((s->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
@@ -1280,6 +1283,9 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       } else {
 	newSymbol->img = gdImageCreate(width, height);	
       }
+
+      newSymbol->sizex = maxx;
+      newSymbol->sizey = maxy;
 
       gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
       break;
