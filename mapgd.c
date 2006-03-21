@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.128  2006/03/21 06:28:28  sdlime
+ * Fixed logic error so we use faster GD functions when we don't have to scale PIXMAP symbols.
+ *
  * Revision 1.127  2006/03/16 04:45:24  sdlime
  * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
  *
@@ -1465,11 +1468,11 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
     if(symbol->transparent == MS_TRUE && bc > -1)
       gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), bc);      
     
-    if(size == 1) /* use symbol->img "as is", this should be the most common case */
+    if(d == 1) /* use symbol->img "as is", this should be the most common case */
       gdImageSetTile(img, symbol->img);
     else {
       tile = createBrush(img, d*symbol->sizex, d*symbol->sizey, style, &tile_fc, &tile_bc);
-      gdImageCopyResampled(tile, symbol->img, 0, 0, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);
+      gdImageCopyResampled(tile, symbol->img, 0, 0, 0, 0, tile->sx, tile->sy, symbol->img->sx, symbol->img->sy);
       gdImageSetTile(img, tile);
     }
 
@@ -1678,7 +1681,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       symbol = msRotateSymbol(symbol, style->angle);
     }
 
-    if(size == 1) { /* don't scale */
+    if(d == 1) { /* don't scale */
       offset_x = MS_NINT(p->x - .5*symbol->img->sx + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
       gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
@@ -2216,11 +2219,11 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       symbol = msRotateSymbol(symbol, style->angle);
     }
 
-    if(size == 1) /* use symbol->img "as is", no scaling, this should be the most common case */
+    if(d == 1) /* use symbol->img "as is", no scaling, this should be the most common case */
       gdImageSetTile(img, symbol->img);
     else {
       tile = createBrush(img, d*symbol->sizex, d*symbol->sizey, style, &tile_fc, &tile_bc);
-      gdImageCopyResampled(tile, symbol->img, 0, 0, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);   
+      gdImageCopyResampled(tile, symbol->img, 0, 0, 0, 0, tile->sx, tile->sy, symbol->img->sx, symbol->img->sy);   
       gdImageSetTile(img, tile);
     }
 
