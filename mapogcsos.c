@@ -28,6 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2006/03/22 03:45:55  assefa
+ * Clean up exception output.
+ * Add describelayer.
+ * Add filter using procedure.
+ *
  * Revision 1.4  2006/03/20 02:00:36  assefa
  * Add bbox support for getobservation.
  *
@@ -75,23 +80,61 @@ MS_CVSID("$Id$")
 static int msSOSException(mapObj *map, int nVersion) 
 {
     char *schemalocation = NULL;
+    char *dtd_url = NULL;
+    char *pszError = NULL;
+    xmlDocPtr psDoc = NULL;   
+    xmlNodePtr psRootNode, psMainNode, psNode;
+    xmlChar *buffer = NULL;
+    int size = 0;
 
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+    psDoc = xmlNewDoc("1.0");
 
-    msIO_printf("<ServiceExceptionReport\n");
-    msIO_printf("xmlns=\"http://www.opengis.net/ogc\" ");
-    msIO_printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
-    schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-    msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wms/1.1.1/OGC-exception.xsd\">\n", schemalocation);
+    psRootNode = xmlNewNode(NULL, "ExceptionReport");
+    xmlDocSetRootElement(psDoc, psRootNode);
+     
+
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, "http://www.w3.org/2001/XMLSchema-instance",  "xsi"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, "http://www.opengis.net/ows",  "ows"));
+
+    xmlNewProp(psRootNode, "version", "1.0.0");
+
+    schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
+    dtd_url = strdup("http://www.opengeospatial.net/ows ");
+    dtd_url = strcatalloc(dtd_url, schemalocation);
+    dtd_url = strcatalloc(dtd_url, "/owsExceptionReport.xsd");
+    xmlNewNsProp(psRootNode, NULL, "xsi:schemaLocation", dtd_url);
     free(schemalocation);
-    msIO_printf("  <ServiceException>\n");
-    msWriteErrorXML(stdout);
-    msIO_printf("  </ServiceException>\n");
-    msIO_printf("</ServiceExceptionReport>\n");
+
+    psMainNode = xmlNewChild(psRootNode,
+                             NULL,
+                             "Exception", NULL);
+    xmlSetNs(psMainNode, xmlNewNs(psMainNode, "http://www.opengis.net/ows", "ows"));
+
+    /*TODO should be html encoded */
+    pszError = msGetErrorString("\n");
+    psNode = xmlNewChild(psMainNode,
+                         xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"),
+                         "ExceptionText", pszError);
+    
+
+     msIO_printf("Content-type: text/xml%c%c",10,10);
+     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+    
+    msIO_printf("%s", buffer);
+
+    /*free buffer and the document */
+    xmlFree(buffer);
+    xmlFreeDoc(psDoc);
 
     return MS_FAILURE;
 }
 
+
+/************************************************************************/
+/*                        msSOSAddMetadataChildNode                     */
+/*                                                                      */
+/*      Utility function to add a metadata node.                        */
+/************************************************************************/
 void msSOSAddMetadataChildNode(xmlNodePtr psParent, const char *psNodeName,
                               xmlNsPtr psNs, hashTableObj *metadata,
                               const char *psNamespaces, 
@@ -307,7 +350,7 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
 
 void msSOSAddPropropertyNode(xmlNodePtr psParent, layerObj *lp)
 {
-    const char *pszValue = NULL;
+    const char *pszValue = NULL, *pszFullName = NULL;
     xmlNodePtr psCompNode, psNode;
     int i;
     char szTmp[256];
@@ -348,6 +391,15 @@ void msSOSAddPropropertyNode(xmlNodePtr psParent, layerObj *lp)
                                            xmlNewNs(NULL, 
                                           "http://www.opengis.net/swe", "swe"), 
                                            "component", NULL);
+
+                      //check if there is an alias/full name used
+                      sprintf(szTmp, "%s_alias", lp->items[i]);
+                      pszFullName = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
+                      if (pszFullName)
+                        xmlNewNsProp(psNode, NULL, "name", pszFullName);
+                      else
+                        xmlNewNsProp(psNode, NULL, "name", lp->items[i]);
+
                       xmlNewNsProp(psNode, 
                                    xmlNewNs(NULL, "http://www.w3.org/1999/xlink", 
                                             "xlink"),
@@ -574,6 +626,8 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
     char szTmp[256];
     layerObj *lpfirst = NULL;
     const char *pszTimeField = NULL;
+    char *pszTmp = NULL;
+    char *pszTime = NULL;
 
     if (psParent)
     {
@@ -602,15 +656,35 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
             {
                 if (strcasecmp(lp->items[i], pszTimeField) == 0)
                 {
-                    psNode = xmlNewChild(psObsNode, NULL, "time", 
-                                         sShape.values[i]); 
-                    xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+                    if (sShape.values[i] && strlen(sShape.values[i]) > 0)
+                    {
+                        pszTime = strcatalloc(pszTime, sShape.values[i]);
+                        psNode = xmlNewChild(psObsNode, NULL, "time", pszTime);
+
+                        xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+                    }
                     break;
                 
                 }
             }
         }
-        /*TODO add location, precedure*/
+        /*TODO add location,*/
+
+        /*precedure*/
+        pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
+        if (pszValue)
+        {
+            sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+            pszTmp = strcatalloc(pszTmp, szTmp);
+            pszTmp = strcatalloc(pszTmp, (char *)pszValue);
+            
+            psNode =  xmlNewChild(psObsNode, NULL, "procedure", NULL);
+            xmlNewNsProp(psNode,
+                         xmlNewNs(NULL, "http://www.w3.org/1999/xlink", 
+                                  "xlink"), "href", pszTmp);
+            msFree(pszTmp);
+            pszTmp = NULL;
+        }
 
         /*observed propery*/
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
@@ -625,6 +699,9 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
 
         /* add result : gml:featureMember of all selected elements */
         psNode = xmlNewChild(psObsNode, NULL, "result", NULL);
+
+        /*TODO should we add soemwhere the units of the value :
+          <om:result uom="units.xml#cm">29.00</om:result> */
         
         
 #ifdef USE_PROJ
@@ -683,6 +760,16 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
             }
             if (lp->index != lpfirst->index)
               msLayerClose(lpfirst);
+
+            /*add also the time field */
+            if (pszTime)
+            {
+                psNode = xmlNewChild(psLayerNode, NULL, "time", pszTime);
+                xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+
+                msFree(pszTime);
+            }
+                
         }
     }        
 }
@@ -691,6 +778,11 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
 
 
 
+/************************************************************************/
+/*                           msSOSGetCapabilities                       */
+/*                                                                      */
+/*      getCapabilities request handler.                                */
+/************************************************************************/
 int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
@@ -707,13 +799,15 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     int i,j,k;
     layerObj *lp = NULL;
     const char *value = NULL;
+    char *pszTmp = NULL;
+    char szTmp[256]; 
 
      /* array of offering */
     char **papsOfferings = NULL; 
     int nOfferings  =0, nCurrentOff = -1;
     int nProperties = 0;
     char **papszProperties = NULL;
-
+    
      /* for each layer it indicates the indice to be used in papsOfferings
         (to associate it with the offering) */
     int *panOfferingLayers = NULL;
@@ -752,7 +846,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     dtd_url = strdup("http://www.opengeospatial.net/sos ");
     dtd_url = strcatalloc(dtd_url, schemalocation);
     dtd_url = strcatalloc(dtd_url, "/sosGetCapabilities.xsd");
-    xmlNewProp(psRootNode, "xsi:schemaLocation", dtd_url);
+    xmlNewNsProp(psRootNode, NULL, "xsi:schemaLocation", dtd_url);
 
 
     /*service identification*/
@@ -783,7 +877,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      xmlNewProp(psNode, "codeSpace", "http://opengeospatial.net");
 
      psNode = xmlNewChild(psMainNode, xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"), 
-                         "ServiceTypeVersion", "0.0.30");
+                         "ServiceTypeVersion", "0.0.31");
      msSOSAddMetadataChildNode(psMainNode, "Fees", 
                                xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                         "ows"), 
@@ -875,7 +969,8 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     if (psNode)
     {
         msSOSAddOperationParametersNode(psNode, "service", "SOS", 1);
-        msSOSAddOperationParametersNode(psNode, "version", "0.0.31", 1);
+        /*TODO : is version required ?*/
+        msSOSAddOperationParametersNode(psNode, "version", "0.0.31", 0); 
     }
     
     /* GetObservation */
@@ -883,12 +978,14 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                    script_url_encoded, NULL);
     if (psNode)
     {
-        msSOSAddOperationParametersNode(psNode, "Offering", NULL, 1);
-        msSOSAddOperationParametersNode(psNode, "ObservedProperty", NULL, 1);
+        msSOSAddOperationParametersNode(psNode, "service", "SOS", 1);
+        msSOSAddOperationParametersNode(psNode, "version", "0.0.31", 1); 
+        msSOSAddOperationParametersNode(psNode, "offering", NULL, 1);
+        msSOSAddOperationParametersNode(psNode, "observedProperty", NULL, 1);
         msSOSAddOperationParametersNode(psNode, "eventTime", NULL, 0);
         msSOSAddOperationParametersNode(psNode, "procedure", NULL, 0);
         msSOSAddOperationParametersNode(psNode, "featureOfInterest", NULL, 0);
-        msSOSAddOperationParametersNode(psNode, "Result", NULL, 0);
+        msSOSAddOperationParametersNode(psNode, "Result", NULL, 0); /*filter*/
     }
 
    
@@ -896,8 +993,10 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psNode = msSOSAddOperationNode(psMainNode, "DescribeSensor",  
                                    script_url_encoded, NULL);
     if (psNode)
-      msSOSAddOperationParametersNode(psNode, "SensorId", NULL, 1);
+      msSOSAddOperationParametersNode(psNode, "SensorID", NULL, 1);
     
+    
+    /*TODO : add <ogc:Filter_Capabilities>
 
     /*Offerings */
      psNode = xmlNewChild(psRootNode, NULL, "Content", NULL);
@@ -1010,7 +1109,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      char *pszEndTime = NULL;
                      tokens = split(value, '/', &n);
                      if (tokens==NULL || (n != 1 && n!=2)) {
-                         msSetError(MS_WMSERR, "Wrong number of arguments for offering_timeextent.",
+                         msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
                                     "msSOSGetCapabilities()");
                          return msSOSException(map, nVersion);
                      }
@@ -1031,13 +1130,19 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                          value = msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
                                              "procedure");
                          if (value)
-                         {
+                         {      
+                             /*TODO review the urn output */
+                             sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                             pszTmp = strcatalloc(pszTmp, szTmp);
+                             pszTmp = strcatalloc(pszTmp, (char *)value);
+
                              psNode = 
-                               xmlNewChild(psOfferingNode, NULL, "porcedure", NULL);
+                               xmlNewChild(psOfferingNode, NULL, "procedure", NULL);
                              xmlNewNsProp(psNode,
                                           xmlNewNs(NULL, "http://www.w3.org/1999/xlink", 
-                                                   "xlink"), "href", value);
-                             
+                                                   "xlink"), "href", pszTmp);
+                             msFree(pszTmp);
+                             pszTmp = NULL;
                          }
                      }
                  }
@@ -1080,7 +1185,25 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  free(papszProperties);
 
                  /*TODO <sos:featureOfInterest> : we will use the offering_extent that was used
-                  for the bbox */
+                  for the bbox. I Think we should generate a gml:FeatureCollection which 
+                  gathers the extents on each layer associate with the offering : something like :
+                  <sos:featureOfInterest>
+                    <gml:FeatureCollection>
+	              <gml:featureMember xlink:href="foi_ahlen">
+	                  <om:Station xsi:type="om:StationType">
+	                     <om:position>
+	                        <gml:Point srsName="EPSG:31467">
+                                     <gml:coordinates>342539 573506</gml:coordinates>
+                                </gml:Point>
+                             </om:position>
+                              <om:procedureHosted xlink:href="urn:ogc:def:procedure:ifgi-sensor-1b"/>
+                           </om:Station>
+                      </gml:featureMember>
+                      <gml:featureMember xlink:href="foi_ahlen_2">
+                     ...
+                     </gml:FeatureCollection>
+                     </sos:featureOfInterest> */
+
                  value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_extent");
                  if (value)
                  {
@@ -1163,10 +1286,13 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     char *pszFilter = NULL, *pszProdedure = NULL;
     char *pszBbox = NULL;
 
+    char *schemalocation = NULL;
+    char *dtd_url = NULL;
+
     const char *pszTmp = NULL, *pszTmp2 = NULL;
     int i, j, bLayerFound = 0;
     layerObj *lp = NULL, *lpfirst = NULL; 
-    const char *pszTimeExtent, *pszTimeField;
+    const char *pszTimeExtent, *pszTimeField, *pszValue;
     FilterEncodingNode *psFilterNode = NULL;
     rectObj sBbox;
 
@@ -1179,7 +1305,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
 
     for(i=0; i<numentries; i++) 
-     {
+    {
          if (strcasecmp(names[i], "OFFERING") == 0)
            pszOffering = values[i];
          else if (strcasecmp(names[i], "OBSERVEDPROPERTY") == 0)
@@ -1196,6 +1322,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
             pszBbox = values[i];
          
      }
+
+    /*TODO : validate for version number*/
 
     /* validates manadatory request elements */
     if (!pszOffering) 
@@ -1262,7 +1390,24 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                    "msSOSGetObservation()", pszProperty);
         return msSOSException(map, nVersion);
     }
-      
+     
+    /*apply procedure : set only to on those layers that have the sos_procedure
+     equals to the parameter. Note that the layer should already be set to ON
+    by the  offering,observerproperty filter done above */
+    if (pszProdedure)
+    {
+        for (i=0; i<map->numlayers; i++)
+        {
+            if(map->layers[i].status == MS_ON)
+            {
+                pszValue =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
+                                                "procedure");
+                if (!pszValue  || strcasecmp(pszValue, pszProdedure) != 0)
+                  map->layers[i].status = MS_OFF;
+            }
+        }
+    }
+              
 
     /*apply time filter if available */
     if (pszTime)
@@ -1377,6 +1522,15 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlNewNsProp(psRootNode,  xmlNewNs(NULL, "http://www.opengis.net/gml",  "gml"),
                  "id", pszOffering);
 
+    /*schema fixed*/
+    schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
+    /*TODO : review this*/
+    dtd_url = strdup("http://www.opengeospatial.net/om ");
+    dtd_url = strcatalloc(dtd_url, schemalocation);
+    dtd_url = strcatalloc(dtd_url, "/om.xsd");
+    xmlNewNsProp(psRootNode, NULL, "xsi:schemaLocation", dtd_url);
+
+
     /*name */
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "S", "offering_name");
     if (pszTmp)
@@ -1444,12 +1598,58 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 }
 
 
+/************************************************************************/
+/*                           msSOSDescribeSensor                        */
+/*                                                                      */
+/*      Describe sensor request handlerr.                               */
+/************************************************************************/
 int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                         char **values, int numentries)
 
 {
-    return(MS_SUCCESS);
+    char *pszSensorId=NULL;
+    char *pszEncodedUrl = NULL;
+    const char *pszId = NULL, *pszUrl = NULL;
+    int i = 0;
+    layerObj *lp = NULL;
+
+    for(i=0; i<numentries; i++) 
+    {
+        if (strcasecmp(names[i], "SENSORID") == 0)
+          pszSensorId =  values[i];
+    }
+
+
+    if (!pszSensorId)
+    {
+        msSetError(MS_SOSERR, "Missing manadatory parameter sensorid.",
+                   "msSOSDescribeSensor()");
+        return msSOSException(map, nVersion);
+    }
+    
+    for (i=0; i<map->numlayers; i++)
+    {
+        lp = &map->layers[i];
+        pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
+        if (pszId && strcasecmp(pszId, pszSensorId) == 0)
+        {
+            pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
+            
+            if (pszUrl)
+            {
+                pszEncodedUrl = msEncodeHTMLEntities(pszUrl); 
+                msIO_printf("Location: %s\n\n", pszEncodedUrl); 
+                return(MS_SUCCESS);
+            }
+        }
+    }
+
+     msSetError(MS_SOSERR, "Sensor not found.",
+                   "msSOSDescribeSensor()");
+     return msSOSException(map, nVersion);
+    
 }
+
 
 #endif /* USE_SOS_SVR*/
 
