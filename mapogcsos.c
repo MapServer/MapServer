@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2006/03/22 20:39:39  assefa
+ * Suport parameters FEATUREOFINTEREST and EVENTTIME  for GetObservation.
+ *
  * Revision 1.7  2006/03/22 04:13:56  assefa
  * Look for the attribute name alias when outputing members in getobservation.
  *
@@ -791,6 +794,82 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
         
 
 
+/************************************************************************/
+/*                            msSOSParseTimeGML                         */
+/*                                                                      */
+/*      Utility function to convert a gml time value to a               */
+/*      string. Supported gml times are :                               */
+/*                                                                      */
+/*       -  <gml:TimePeriod>                                            */
+/*           <gml:beginPosition>2005-09-01T11:54:32</gml:beginPosition> */
+/*            <gml:endPosition>2005-09-02T14:54:32</gml:endPosition>    */
+/*          </gml:TimePeriod>                                           */
+/*        This will be converted to startime/endtime                    */
+/*                                                                      */
+/*       - <gml:TimeInstant>                                            */
+/*           <gml:timePosition>2003-02-13T12:28-08:00</gml:timePosition>*/
+/*           </gml:TimeInstant>                                         */
+/*       This will retunr the timevalue as a string.                    */
+/*                                                                      */
+/*       The caller of the function should free the return value.       */
+/************************************************************************/
+char *msSOSParseTimeGML(char *pszGmlTime)
+{
+    char *pszReturn = NULL, *pszBegin, *pszEnd = NULL;
+    CPLXMLNode *psRoot=NULL, *psChild=NULL;
+    CPLXMLNode *psTime=NULL, *psBegin=NULL, *psEnd=NULL;
+
+    if (pszGmlTime)
+    {
+        psRoot = CPLParseXMLString(pszGmlTime);
+        if(!psRoot)
+          return NULL;
+        CPLStripXMLNamespace(psRoot, "gml", 1);
+        
+        if (psRoot->eType == CXT_Element && 
+            (EQUAL(psRoot->pszValue,"TimePeriod") || 
+             EQUAL(psRoot->pszValue,"TimeInstant")))
+        {
+            if (EQUAL(psRoot->pszValue,"TimeInstant"))
+            {
+                psChild = psRoot->psChild;
+                if (psChild && EQUAL(psChild->pszValue,"timePosition"))
+                {
+                    psTime = psChild->psNext;
+                    if (psTime && psTime->pszValue && psTime->eType == CXT_Text)
+                      pszReturn = strdup(psTime->pszValue);
+                }
+            }
+            else
+            {
+                psBegin = psRoot->psChild;
+                if (psBegin)
+                  psEnd = psBegin->psNext;
+
+                if (psBegin && EQUAL(psBegin->pszValue, "beginPosition") &&
+                    psEnd && EQUAL(psEnd->pszValue, "endPosition"))
+                {
+                    if (psBegin->psChild && psBegin->psChild->pszValue &&
+                        psBegin->psChild->eType == CXT_Text)
+                      pszBegin = strdup( psBegin->psChild->pszValue);
+
+                    if (psEnd->psChild && psEnd->psChild->pszValue &&
+                        psEnd->psChild->eType == CXT_Text)
+                      pszEnd = strdup(psEnd->psChild->pszValue);
+
+                    if (pszBegin && pszEnd)
+                    {
+                        pszReturn = strdup(pszBegin);
+                        pszReturn = strcatalloc(pszReturn, "/");
+                        pszReturn = strcatalloc(pszReturn, pszEnd);
+                    }
+                }
+            }
+        }
+    }
+        
+    return pszReturn;
+}
 
 
 /************************************************************************/
@@ -1008,8 +1087,11 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psNode = msSOSAddOperationNode(psMainNode, "DescribeSensor",  
                                    script_url_encoded, NULL);
     if (psNode)
-      msSOSAddOperationParametersNode(psNode, "SensorID", NULL, 1);
-    
+    {
+        msSOSAddOperationParametersNode(psNode, "service", "SOS", 1);
+        msSOSAddOperationParametersNode(psNode, "version", "0.0.31", 1);
+        msSOSAddOperationParametersNode(psNode, "SensorID", NULL, 1);
+    }
     
     /*TODO : add <ogc:Filter_Capabilities> */
 
@@ -1299,7 +1381,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 {
     char *pszOffering=NULL, *pszProperty=NULL, *pszTime = NULL;
     char *pszFilter = NULL, *pszProdedure = NULL;
-    char *pszBbox = NULL;
+    char *pszBbox = NULL, *pszFeature=NULL;
 
     char *schemalocation = NULL;
     char *dtd_url = NULL;
@@ -1318,6 +1400,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlNodePtr psRootNode,  psNode;
 
 
+    sBbox = map->extent;
 
     for(i=0; i<numentries; i++) 
     {
@@ -1332,9 +1415,10 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
            pszFilter = values[i];
          else if (strcasecmp(names[i], "PROCEDURE") == 0)
            pszProdedure = values[i];
-          else if ((strcasecmp(names[i], "FEATUREOFINTEREST") == 0) ||
-                   (strcasecmp(names[i], "BBOX") == 0))
-            pszBbox = values[i];
+         else if (strcasecmp(names[i], "FEATUREOFINTEREST") == 0)
+           pszFeature = values[i];
+         else if (strcasecmp(names[i], "BBOX") == 0)
+           pszBbox = values[i];
          
      }
 
@@ -1423,10 +1507,53 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         }
     }
               
+/* -------------------------------------------------------------------- */
+/*      supports 2 types of gml:Time : TimePeriod and TimeInstant :     */
+/*      - <gml:TimePeriod>                                              */
+/*          <gml:beginPosition>2005-09-01T11:54:32</gml:beginPosition>  */
+/*         <gml:endPosition>2005-09-02T14:54:32</gml:endPosition>       */
+/*       </gml:TimePeriod>                                              */
+/*                                                                      */
+/*      - <gml:TimeInstant>                                             */
+/*           <gml:timePosition>2003-02-13T12:28-08:00</gml:timePosition>*/
+/*         </gml:TimeInstant>                                           */
+/*                                                                      */
+/*       The user can specify mutilple times separated by commas.       */
+/*                                                                      */
+/*       The gml will be parsed and trasformed into a sting tah         */
+/*      looks like timestart/timeend,...                                */
+/* -------------------------------------------------------------------- */
+
 
     /*apply time filter if available */
     if (pszTime)
     {
+        char **apszTimes = NULL;
+        int numtimes = 0;
+        char *pszTimeString = NULL, *pszTmp = NULL;
+
+        apszTimes = split (pszTime, ',', &numtimes);
+        if (numtimes >=1)
+        {
+            for (i=0; i<numtimes; i++)
+            {
+                pszTmp = msSOSParseTimeGML(apszTimes[i]);
+                if (pszTmp)
+                {
+                    if (pszTimeString)
+                      pszTimeString = strcatalloc(pszTimeString, ",");
+                    pszTimeString = strcatalloc(pszTimeString, pszTmp);
+                    msFree(pszTmp);
+                }
+            }
+            msFreeCharArray(apszTimes, numtimes);
+        }
+        if (!pszTimeString)
+        {
+            msSetError(MS_SOSERR, "Invalid time value given for the eventTime parameter",
+                   "msSOSGetObservation()", pszProperty);
+            return msSOSException(map, nVersion);
+        }
         for (i=0; i<map->numlayers; i++)
         {
             if (map->layers[i].status == MS_ON)
@@ -1450,16 +1577,18 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                   /*validate only if time extent is set.*/
                   if (pszTimeExtent)
                   {
-                      if (msValidateTimeValue(pszTime, pszTimeExtent) == MS_TRUE)
-                        msLayerSetTimeFilter(&(map->layers[i]), pszTime, 
+                      if (msValidateTimeValue(pszTimeString, pszTimeExtent) == MS_TRUE)
+                        msLayerSetTimeFilter(&(map->layers[i]), pszTimeString, 
                                              pszTimeField);
                   }
                   else
-                    msLayerSetTimeFilter(&(map->layers[i]), pszTime, 
+                    msLayerSetTimeFilter(&(map->layers[i]), pszTimeString, 
                                          pszTimeField);
                 }
             }
         }
+        if (pszTimeString)
+          msFree(pszTimeString);
     }
     /* apply filter */
     if (pszFilter)
@@ -1482,10 +1611,108 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
  
 
     /*bbox*/
-    if (pszBbox)
+    /* this should normally be a gml feature instead of a comma separated extents
+- <gml:Envelope xmlns:gml="http://www.opengis.net/gml">
+  <gml:lowerCorner srsName="EPSG:4326">-66 43</gml:lowerCorner> 
+  <upperCorner srsName="EPSG:4326">-62 45</upperCorner> 
+  </gml:Envelope>
+*/
+
+    if (pszFeature)
+    {
+        CPLXMLNode *psRoot=NULL, *psChild=NULL; 
+        CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
+        char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
+        int bValid = 0;
+         char **tokens;
+        int n;
+
+        psRoot = CPLParseXMLString(pszFeature);
+        if(!psRoot)
+        {       
+            msSetError(MS_SOSERR, "Invalid gml:Envelop value given for featureOfInterest .", 
+                       "msSOSGetObservation()");
+            return msSOSException(map, nVersion);
+        }
+
+        CPLStripXMLNamespace(psRoot, "gml", 1);
+        bValid = 0;
+        if (psRoot->eType == CXT_Element && 
+            EQUAL(psRoot->pszValue,"Envelope"))
+        {
+            psLowerCorner = psRoot->psChild;
+            if (psLowerCorner)
+              psUpperCorner=  psLowerCorner->psNext;
+
+            if (psLowerCorner && psUpperCorner && 
+                EQUAL(psLowerCorner->pszValue,"lowerCorner") &&
+                EQUAL(psUpperCorner->pszValue,"upperCorner"))
+            {
+                /*get the values*/
+                psChild = psLowerCorner->psChild;
+                while (psChild != NULL)
+                {
+                    if (psChild->eType != CXT_Text)
+                      psChild = psChild->psNext;
+                    else
+                      break;
+                }
+                if (psChild && psChild->eType == CXT_Text)
+                  pszLowerCorner = psChild->pszValue;
+
+                psChild = psUpperCorner->psChild;
+                while (psChild != NULL)
+                {
+                    if (psChild->eType != CXT_Text)
+                      psChild = psChild->psNext;
+                    else
+                      break;
+                }
+                if (psChild && psChild->eType == CXT_Text)
+                  pszUpperCorner = psChild->pszValue;
+
+                if (pszLowerCorner && pszUpperCorner)
+                {
+                    tokens = split(pszLowerCorner, ' ', &n);
+                    if (tokens && n == 2)
+                    {
+                        sBbox.minx = atof(tokens[0]);
+                        sBbox.miny = atof(tokens[1]);
+
+                         msFreeCharArray(tokens, n);
+
+                         tokens = split(pszUpperCorner, ' ', &n);
+                         if (tokens && n == 2)
+                         {
+                             sBbox.maxx = atof(tokens[0]);
+                             sBbox.maxy = atof(tokens[1]);
+                             msFreeCharArray(tokens, n);
+
+                             bValid = 1;
+                         }
+                    }
+                }
+                    
+            }
+            
+        }
+
+        if (!bValid)
+        {
+            msSetError(MS_SOSERR, "Invalid gml:Envelop value given for featureOfInterest .", "msSOSGetObservation()");
+            return msSOSException(map, nVersion);
+        }
+    }
+
+
+    /* this is just a fall back if bbox is enetered. The bbox parameter is not supported
+       by the sos specs */
+    if (pszBbox && !pszFeature)
     {
         char **tokens;
         int n;
+
+
         tokens = split(pszBbox, ',', &n);
         if (tokens==NULL || n != 4) 
         {
@@ -1500,14 +1727,13 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     }
 
 
+
     /*do the query. use the same logic (?) as wfs. bbox and filer are incomaptible since bbox
      can be given inside a filter*/
     if (!pszFilter) 
     {
-        if (pszBbox)
-          msQueryByRect(map, -1, sBbox);
-        else
-          msQueryByRect(map, -1, map->extent);
+        msQueryByRect(map, -1, sBbox);
+        
     }
 
     /*get the first layers of the offering*/
