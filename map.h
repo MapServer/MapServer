@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.445  2006/03/22 23:31:20  sdlime
+ * Applied latest patch for curved labels. (bug 1620)
+ *
  * Revision 1.444  2006/02/22 05:04:34  sdlime
  * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
  *
@@ -1632,6 +1635,7 @@ MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 
 MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
+MS_DLL_EXPORT int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline, double **offsets);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);

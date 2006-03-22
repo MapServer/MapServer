@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2006/03/22 23:31:20  sdlime
+ * Applied latest patch for curved labels. (bug 1620)
+ *
  * Revision 1.66  2006/03/02 06:43:51  sdlime
  * Applied latest patch for curved labels. (bug 1620)
  *
@@ -1190,6 +1193,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   double direction;
   rectObj bbox;
   lineObj bounds;
+  double *offsets;
   double size, t;
   double cx, cy; /* centre of a character, x & y values. */
   
@@ -1200,6 +1204,14 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   labelPathObj *labelpath = NULL;
   char *font = NULL;
 
+  /* Line smoothing kernel */
+  double kernel[] = {1.5, 2, 15, 2, 1.5};
+  double kernel_normal = 22; /* Must be sum of kernel elements */
+
+  double letterspacing = 1.18;
+
+  offsets = NULL;
+  
   /* Assume success */
   *status = MS_SUCCESS;
 
@@ -1255,7 +1267,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
 
     
   /* Determine the total length of the text */
-  if ( msGetLabelSize(string, label, &bbox, fontset, scalefactor, MS_FALSE) == MS_FAILURE ) {
+  if ( msGetLabelSizeEx(string, label, &bbox, fontset, scalefactor, MS_FALSE, &offsets) == MS_FAILURE ) {
     *status = MS_FAILURE;
     goto FAILURE;
   }
@@ -1274,7 +1286,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     goto FAILURE;
   }
   
-  text_length = bbox.maxx - bbox.minx;
+  text_length = letterspacing * (bbox.maxx - bbox.minx);
 
   /* If the text length is way longer than the line, skip adding the
      label if it isn't forced (long extrapolated labels tend to be
@@ -1287,7 +1299,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   /* Allocate the labelpath */
   labelpath = (labelPathObj*)malloc(sizeof(labelPathObj));
   labelpath->path.numpoints = strlen(string);
-  labelpath->path.point = (pointObj*)malloc(sizeof(pointObj) * (labelpath->path.numpoints));
+  labelpath->path.point = (pointObj*)calloc(labelpath->path.numpoints,sizeof(pointObj));
   labelpath->angles = (double*)malloc(sizeof(double) * (labelpath->path.numpoints));
   msInitShape(&(labelpath->bounds));
 
@@ -1362,111 +1374,63 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     
   distance_along_segment = t * segment_length; /* Starting point */
   
-  /* Pre-calc the character's centre y value.  It is used for rotation adjustment.  */
-  cy = -size / 2.0;
-  cx = 0;
   theta = 0;
   k = 0;
   w = 0;
   while ( k < labelpath->path.numpoints ) {
-    char s[3];
+    int m;
+    double x,y;
+      
+    x = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x;
+    y = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y;
+
+    /* Check if the new point is too close to the last point.  This
+       helps prevent labels from self-intersecting. */
+/*     if ( k > 0 ) { */
+/*       double D; */
+/*       dx = (x - last_x) * (x - last_x); */
+/*       dy = (y - last_y) * (y - last_y); */
+/*       D = 0.82 * letterspacing * w; */
+
+/*       /\* Check if the distance is < 0.9 * the last character width *\/ */
+/*       if ( dx + dy < D*D ) { */
+/*         *status = MS_FAILURE; */
+/*         goto FAILURE; */
+/*       } */
+/*     } */
     
-    labelpath->path.point[k].x = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x;
-    labelpath->path.point[k].y = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y;
-    
-    /* We need two points before we can calculate the angle. */
-    if ( k > 0 ) {
-      dx = labelpath->path.point[k].x - labelpath->path.point[k-1].x;
-      dy = labelpath->path.point[k].y - labelpath->path.point[k-1].y;
-
-      theta = -atan2(dy,dx);
-
-      if ( k > 1 )
-        theta += ( labelpath->angles[k-2] - theta ) / 2.0;
+    if ( k == 0 ) {
+      labelpath->path.point[k].x += (kernel[0] + kernel[1]) * x;      
+      labelpath->path.point[k].y += (kernel[0] + kernel[1]) * y;      
       
-      labelpath->angles[k-1] = theta;
-
-      /* Move the previous point so that when the character is rotated and
-         placed it is centred on the line */
-      cos_t = cos(theta);
-      sin_t = sin(theta);
+    } else if ( k == 1 ) {
+      labelpath->path.point[k].x += kernel[0] * x;
+      labelpath->path.point[k].y += kernel[0] * y;
       
-      dx = - (cx * cos_t + cy * sin_t);
-      dy = - (cy * cos_t - cx * sin_t);
+    } else if ( k == labelpath->path.numpoints - 2 ) {
+      labelpath->path.point[k].x += kernel[4] * x;
+      labelpath->path.point[k].y += kernel[4] * y;
       
-      labelpath->path.point[k-1].x += dx;
-      labelpath->path.point[k-1].y += dy;
-      
-      /* Calculate the bounds */
-      
-      /* Add the label buffer to the bounds */  
-      bbox.maxx += label->buffer;
-      bbox.maxy += label->buffer;
-      bbox.minx -= label->buffer;
-      bbox.miny -= label->buffer;
-
-      /* Transform the bbox too.  We take the UL and LL corners and rotate
-         then translate them. */
-      bounds.point[k-1].x = (bbox.minx * cos_t + bbox.maxy * sin_t) + labelpath->path.point[k-1].x;
-      bounds.point[k-1].y = (bbox.maxy * cos_t - bbox.minx * sin_t) + labelpath->path.point[k-1].y;
-
-      /* Start at end and work towards the half way point */
-      bounds.point[bounds.numpoints - k - 1].x = (bbox.minx * cos_t + bbox.miny * sin_t) + labelpath->path.point[k-1].x;
-      bounds.point[bounds.numpoints - k - 1].y = (bbox.miny * cos_t - bbox.minx * sin_t) + labelpath->path.point[k-1].y;
-      
-    }    
-    
-    /* Determine the width of a pair of characters: this takes into
-       account kerning pairs */
-    if ( labelpath->path.numpoints > 1 ) {
-      if ( k + 1 < labelpath->path.numpoints ) {
-        s[0] = string[k];
-        s[1] = string[k+1];
-      } else {
-        s[0] = string[k-1];
-        s[1] = string[k];
-      }
-      s[2] = '\0';
-
-      if ( msGetLabelSize(s, label, &bbox, fontset, scalefactor, MS_FALSE) == MS_FAILURE ) {
-        *status = MS_FAILURE;
-        goto FAILURE;
-      }
-
-      /* Adjust the width of the bbox for a single character */
-    
-      /* FIXME: this is a pretty nasty hack to adjust the kerning for narrow characters. */
-      if ( (s[1] == 'i' || s[1] == 'l' || s[1] == 'I') && (s[0] != 'i' || s[0] != 'l' || s[0] != 'I') )
-        w = (bbox.maxx - bbox.minx) / 1.5;
-      else
-        w = (bbox.maxx - bbox.minx) / 2.0;
-      
-    } else {
-      
-      /* Only have a single character */
-      s[0] = string[k];
-      s[1] = '\0';
-      
-      if ( msGetLabelSize(s, label, &bbox, fontset, scalefactor, MS_FALSE) == MS_FAILURE ) {
-        *status = MS_FAILURE;
-        goto FAILURE;
+    } else if ( k == labelpath->path.numpoints - 1 ) {
+      labelpath->path.point[k].x += (kernel[3] + kernel[4]) * x;
+      labelpath->path.point[k].y += (kernel[3] + kernel[4]) * y;
       }
       
-      w = bbox.maxx - bbox.minx;
+    for (m = 0; m < 5; m++) {
+      if ( m + k - 2 < 0 || m + k - 2 > labelpath->path.numpoints - 1 )
+        continue;
       
+      labelpath->path.point[k+m-2].x += kernel[m]*x;
+      labelpath->path.point[k+m-2].y += kernel[m]*y;
     }
     
-    cx = w / 2.0;
+    w = letterspacing*offsets[k];
     
     /* Add the character's width to the distance along the line */
     distance_along_segment += w;
 
-    /* Add a bit more spacing if the last angle was sharp */
-    if ( k > 1 && abs(labelpath->angles[k-1] - labelpath->angles[k-2]) > MS_PI / 4.0 )
-      distance_along_segment += 0.25 * w;
-        
-    /* If we still have segments left and we've past the current segment,
-       move to the next one */
+    /* If we still have segments left and we've past the current
+       segment, move to the next one */
     
     if ( inc == 1 && j < p->line[i].numpoints - 2 ) {
       
@@ -1500,37 +1464,78 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     
   }
   
+  /* Pre-calc the character's centre y value.  Used for rotation adjustment.  */
+  cy = -size / 2.0;
+    
+  labelpath->path.point[0].x /= kernel_normal;
+  labelpath->path.point[0].y /= kernel_normal;
+  
+  /* Average the points and calculate each angle */
+  for (k = 1; k <= labelpath->path.numpoints; k++) {
+
+    if ( k < labelpath->path.numpoints ) {  
+      labelpath->path.point[k].x /= kernel_normal;
+      labelpath->path.point[k].y /= kernel_normal;
+      dx = labelpath->path.point[k].x - labelpath->path.point[k-1].x;
+      dy = labelpath->path.point[k].y - labelpath->path.point[k-1].y;
+    } else {
   /* Handle the last character */
   dx = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x - labelpath->path.point[k-1].x;
   dy = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y - labelpath->path.point[k-1].y;
+    }
 
   theta = -atan2(dy,dx);
-  if ( k > 1 )
-    theta += ( labelpath->angles[k-2] - theta ) / 2.0;
+
+    /* If the difference between subsequent angles is > 80% of 180deg
+       then bail because the line likely overlaps itself. */
+    if ( k > 2 && abs(theta - labelpath->angles[k-2]) > 0.4 * MS_PI ) {
+      *status = MS_FAILURE;
+      goto FAILURE;
+    }
+      
+/*     msDebug("s: %c (x,y): (%0.2f,%0.2f) t: %0.2f\n", string[k-1], labelpath->path.point[k-1].x, labelpath->path.point[k-1].y, theta); */
 
   labelpath->angles[k-1] = theta;
   
-  /* Move the last point so that when the character is rotated and
+    /* Move the previous point so that when the character is rotated and
      placed it is centred on the line */
   cos_t = cos(theta);
   sin_t = sin(theta);
   
+    w = letterspacing*offsets[k-1];
+
+    cx = 0; /* Center the character vertically only */
+    
   dx = - (cx * cos_t + cy * sin_t);
   dy = - (cy * cos_t - cx * sin_t);
   
   labelpath->path.point[k-1].x += dx;
   labelpath->path.point[k-1].y += dy;
 
-  /* Adjust the bbox to account for the label buffer */
-  bbox.maxx += label->buffer - w;
+    /* Calculate the bounds */
+
+    bbox.minx = 0;
+    bbox.maxx = w;
+    bbox.maxy = 0;
+    bbox.miny = -size;
+    
+    /* Add the label buffer to the bounds */
+    bbox.maxx += label->buffer;
   bbox.maxy += label->buffer;
-  bbox.minx -= label->buffer + w;
+    bbox.minx -= label->buffer;
   bbox.miny -= label->buffer;
   
-  /* Check if miny == maxy (i.e. whitspace character).  We don't
-     necessarily want labels crossing each other through spaces */
-  if ( bbox.miny == bbox.maxy )    
-    bbox.maxy = size;
+    if ( k < labelpath->path.numpoints ) {
+      /* Transform the bbox too.  We take the UL and LL corners and rotate
+         then translate them. */
+      bounds.point[k-1].x = (bbox.minx * cos_t + bbox.maxy * sin_t) + labelpath->path.point[k-1].x;
+      bounds.point[k-1].y = (bbox.maxy * cos_t - bbox.minx * sin_t) + labelpath->path.point[k-1].y;
+
+      /* Start at end and work towards the half way point */
+      bounds.point[bounds.numpoints - k - 1].x = (bbox.minx * cos_t + bbox.miny * sin_t) + labelpath->path.point[k-1].x;
+      bounds.point[bounds.numpoints - k - 1].y = (bbox.miny * cos_t - bbox.minx * sin_t) + labelpath->path.point[k-1].y;
+
+    } else {
     
   /* This is the last character in the string so we take the UR and LR
      corners of the bbox */
@@ -1539,6 +1544,9 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   
   bounds.point[bounds.numpoints - k - 1].x = (bbox.maxx * cos_t + bbox.miny * sin_t) + labelpath->path.point[k-1].x;
   bounds.point[bounds.numpoints - k - 1].y = (bbox.miny * cos_t - bbox.maxx * sin_t) + labelpath->path.point[k-1].y;
+    }
+
+  }
 
   /* Close the bounds */
   bounds.point[bounds.numpoints - 1].x = bounds.point[0].x;
@@ -1558,6 +1566,8 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     free(segment_lengths);
   }
   
+  free(offsets);
+  
   return labelpath;
 
  FAILURE:
@@ -1567,6 +1577,9 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     free(segment_lengths);
   }
     
+  if ( offsets )
+    free(offsets);
+  
   if ( labelpath ) {
     msFreeLabelPathObj(labelpath);
     labelpath = NULL;

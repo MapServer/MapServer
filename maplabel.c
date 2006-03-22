@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2006/03/22 23:31:20  sdlime
+ * Applied latest patch for curved labels. (bug 1620)
+ *
  * Revision 1.82  2006/02/18 20:59:13  sdlime
  * Initial code for curved labels. (bug 1620)
  *
@@ -377,13 +380,80 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
   return(0);
 }
 
+/*
+ * Return the size of the label, plus an array of individual character
+ * offsets, as calculated by gdImageStringEx().  The callee is
+ * responsible for freeing *offsets.
+ */
+int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline, double **offsets) {
+   int size;
+
+   /*  if(label->type == MS_TRUETYPE) { */
+#ifdef USE_GD_FT
+    char *s;
+    int k;
+    int bbox[8];
+    char *error=NULL, *font=NULL;
+    gdFTStringExtra strex;
+    
+    size = MS_NINT(label->size*scalefactor);
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
+
+    font = msLookupHashTable(&(fontset->fonts), label->font);
+    if(!font) {
+      if(label->font) 
+        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSize()", label->font);
+      else
+        msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msGetLabelSize()");
+      return(-1);
+    }
+    
+    strex.flags = gdFTEX_XSHOW;
+    error = gdImageStringFTEx(NULL, bbox, 0, font, size, 0, 0, 0, string, &strex);
+    if(error) {
+      msSetError(MS_TTFERR, error, "msGetLabelSize()");
+      return(-1);
+    }
+
+    *offsets = (double*)malloc( strlen(string) * sizeof(double) );
+    
+    s = strex.xshow;
+    k = 0;
+    while ( *s && k < strlen(string) ) {
+      (*offsets)[k++] = atof(s);      
+      while ( *s && *s != ' ')
+        s++;
+      if ( *s == ' ' )
+        s++;
+    }
+               
+    rect->minx = bbox[0];
+    rect->miny = bbox[5];
+    rect->maxx = bbox[2];
+    rect->maxy = bbox[1];
+
+    /* bug 1449 fix (adjust baseline) */
+    if(adjustBaseline) {
+      label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
+      label->offsetx += MS_NINT(bbox[0] / 2);
+    }
+
+    return MS_SUCCESS;
+#else
+    msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
+    return(-1);
+#endif
+    /* } */
+}
+
 gdFontPtr msGetBitmapFont(int size)
 {
   switch(size) { /* set the font to use */
   case MS_TINY:
 #ifdef GD_HAS_GETBITMAPFONT
     return gdFontGetTiny();
-#else
+#elseqq
     return(gdFontTiny);
 #endif
     break;
