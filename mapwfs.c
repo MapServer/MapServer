@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.77  2006/03/22 21:40:47  sdlime
+ * Added support to allow a service provider (WFS or WMS) tonot expose feature geometries. (bug 1718)
+ *
  * Revision 1.76  2006/03/15 22:54:07  sdlime
  * Fixed my brain-dead gml_group schema writing support.
  *
@@ -539,6 +542,7 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
   gmlGeometryObj *geometry=NULL;
 
   if(!stream || !tab) return;
+  if(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
 
   if(!geometryList || geometryList->numgeometries == 0) { /* write a default container */
     msIO_fprintf(stream, "%s<element name=\"%s\" type=\"gml:GeometryPropertyType\" minOccurs=\"0\" maxOccurs=\"1\"/>\n", tab, OWS_GML_DEFAULT_GEOMETRY_NAME);
