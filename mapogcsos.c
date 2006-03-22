@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2006/03/22 03:51:12  assefa
+ * cleaup unused varaibles.
+ *
  * Revision 1.5  2006/03/22 03:45:55  assefa
  * Clean up exception output.
  * Add describelayer.
@@ -791,7 +794,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
     xmlChar *buffer = NULL;
     int size = 0;
-    xmlNsPtr psNameSpace = NULL;
+
     char *schemalocation = NULL;
     char *dtd_url = NULL;
     char *script_url=NULL, *script_url_encoded=NULL;
@@ -996,7 +999,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
       msSOSAddOperationParametersNode(psNode, "SensorID", NULL, 1);
     
     
-    /*TODO : add <ogc:Filter_Capabilities>
+    /*TODO : add <ogc:Filter_Capabilities> */
 
     /*Offerings */
      psNode = xmlNewChild(psRootNode, NULL, "Content", NULL);
@@ -1161,9 +1164,9 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  {
                      if (panOfferingLayers[j] == i)
                      {
-                         if (value = 
+                         if ((value = 
                              msOWSLookupMetadata(&(lp->metadata), "S", 
-                                                 "observedProperty_id"))
+                                                 "observedProperty_id")))
                          {
                              for (k=0; k<nProperties; k++)
                              {
@@ -1292,7 +1295,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     const char *pszTmp = NULL, *pszTmp2 = NULL;
     int i, j, bLayerFound = 0;
     layerObj *lp = NULL, *lpfirst = NULL; 
-    const char *pszTimeExtent, *pszTimeField, *pszValue;
+    const char *pszTimeExtent=NULL, *pszTimeField=NULL, *pszValue=NULL;
     FilterEncodingNode *psFilterNode = NULL;
     rectObj sBbox;
 
@@ -1301,7 +1304,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     xmlDocPtr psDoc = NULL;
     xmlNodePtr psRootNode,  psNode;
-    xmlNsPtr psNameSpace = NULL;
+
 
 
     for(i=0; i<numentries; i++) 
