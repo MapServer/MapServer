@@ -25,7 +25,7 @@ LDFLAGS =	/NODEFAULTLIB:"MSVCRTD" /NODEFAULTLIB:libcd /NODEFAULTLIB:libcmtd /NOD
 all: interface_release mapscript_java mapscript_lib mapscript_jar
 
 interface_release: 
-        mkdir edu\umn\gis\mapscript
+        -mkdir edu\umn\gis\mapscript
         $(SWIG) -java -package edu.umn.gis.mapscript -outdir edu/umn/gis/mapscript -o mapscript_wrap.c ../mapscript.i
 
 mapscript_java:
