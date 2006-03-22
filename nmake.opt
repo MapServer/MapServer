@@ -595,7 +595,7 @@ SDE_LIB = $(SDE_DIR)\lib\pe$(SDE_VERSION).lib \
 
 # Setup REGEX object and includes
 !IFNDEF PHP_REGEX
-REGEX_OBJ=$(REGEX_DIR)\regex.obj $(REGEX_DIR)\test\printchar.obj
+REGEX_OBJ=$(REGEX_DIR)\regex.obj 
 REGEX_INC=-I$(REGEX_DIR)
 !ELSE
 REGEX_OBJ=$(PHP_HOME)\regex\regcomp.obj $(PHP_HOME)\regex\regerror.obj \
