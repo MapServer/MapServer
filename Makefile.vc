@@ -120,19 +120,23 @@ install: $(MS_DLL) $(MS_EXE) python csharp java php
 	xcopy /y /r /d /f $(MS_DLL) $(BINDIR)
 	copy *.exe $(BINDIR)
 !IFDEF PYTHON_HOME
+    -mkdir $(BINDIR)\mapscript\python
 	xcopy /y /r /d /f .\mapscript\python\dist\*.zip $(BINDIR)\mapscript\python
 !ENDIF
 !IFDEF DOT_NET
+    -mkdir $(BINDIR)\mapscript\csharp
 	xcopy /y /r /d /f .\mapscript\csharp\*.dll $(BINDIR)\mapscript\csharp
 	xcopy /y /r /d /f .\mapscript\csharp\*.exe $(BINDIR)\mapscript\csharp
 	xcopy /y /r /d /f .\mapscript\csharp\*.manifest $(BINDIR)\mapscript\csharp
 	xcopy /y /r /d /f .\mapscript\csharp\*.config $(BINDIR)\mapscript\csharp
 !ENDIF
 !IFDEF JAVA_HOME
+    -mkdir $(BINDIR)\mapscript\java
 	xcopy /y /r /d /f .\mapscript\java\*.dll $(BINDIR)\mapscript\java
 	xcopy /y /r /d /f .\mapscript\java\*.jar $(BINDIR)\mapscript\java
 !ENDIF
 !IFDEF PHP_HOME
+    -mkdir $(BINDIR)\mapscript\php
 	xcopy /y /r /d /f .\mapscript\php3\*.dll $(BINDIR)\mapscript\php
 !ENDIF	
 
