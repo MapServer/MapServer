@@ -24,17 +24,18 @@
 
 PHP4=1
 
+!IFDEF PHP4
 # Install directory for PHP4
 PHP_INSTALL_DIR=c:\php\php4\extensions 
-
-# Install directory for PHP5
-#PHP_INSTALL_DIR=c:\php\php5\ext 
-
-
 
 # PHP TS library for PHP4
 PHP_TS_LIB_NAME=php4ts.lib
 
-# PHP TS library for PHP5
-#PHP_TS_LIB_NAME=php5ts.lib
+!ELSE
 
+# Install directory for PHP5
+PHP_INSTALL_DIR=c:\php\php5\ext 
+
+# PHP TS library for PHP5
+PHP_TS_LIB_NAME=php5ts.lib
+!ENDIF
