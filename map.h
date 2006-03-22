@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437.2.7  2006/03/22 22:08:29  hobu
+ * Bump version to 4.8.2
+ *
  * Revision 1.437.2.6  2006/03/19 17:58:13  tamas
  * Hiding items not to be exposed to the mapscript interface (bug 1660)
  *
@@ -388,7 +391,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.1"
+#define MS_VERSION "4.8.2"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

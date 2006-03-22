@@ -13,15 +13,21 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.8.2 (...cvs...)
+Version 4.8.2 (2006-03-22)
 --------------------------
+
+- nmake.opt and makefile.vc for Windows were updated to reflect the 
+  MapServer buildkit layout 
+  see http://mapserver.gis.umn.edu/docs/buildkit for more info.
+  
+  * added "make clean" and "make install" targets
+  * reorganized nmake.opt to reflect functional groupings of libraries
+  * tweaked the C# and Java windows makefiles
 
 - Typemap enhancement for C# to support multiple imageObj and writing the image onto
   a Stream object (bug 1680)
 
 - Added C# typemaps for char** and outputFormatObj**
-
-- Support for dispatching multiple error messages to the MapScript interface (bug 1704).
 
 - Hiding items not to be exposed to the mapscript interface (bug 1660)
 
