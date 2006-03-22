@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2006/03/22 04:13:56  assefa
+ * Look for the attribute name alias when outputing members in getobservation.
+ *
  * Revision 1.6  2006/03/22 03:51:12  assefa
  * cleaup unused varaibles.
  *
@@ -753,8 +756,17 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                     {
                         if (strcasecmp(lpfirst->items[i],  lpfirst->items[j]) == 0)
                         {
-                            psNode = xmlNewChild(psLayerNode, NULL, lpfirst->items[i], 
-                                                 sShape.values[j]); 
+                            /*if there is an alias used, use it to ooutput the
+                              parameter name : eg "sos_AMMON_DIS_alias" "Amonia"  */
+                            sprintf(szTmp, "%s_alias", lpfirst->items[i]);
+                            pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
+                            if (pszValue)
+                               psNode = xmlNewChild(psLayerNode, NULL, pszValue, 
+                                                    sShape.values[j]); 
+                            else
+                              psNode = xmlNewChild(psLayerNode, NULL, lpfirst->items[i], 
+                                                   sShape.values[j]); 
+
                             xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
                             break;
                         }
@@ -1665,7 +1677,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req)
 {
 #ifdef USE_SOS_SVR
     int i,  nVersion=-1;
-    static char *request=NULL, *service=NULL, *format=NULL;
+    static char *request=NULL, *service=NULL;
 
 
      for(i=0; i<req->NumParams; i++) 
