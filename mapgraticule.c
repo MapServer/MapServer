@@ -29,6 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15.2.2  2006/01/16 20:41:22  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
+ * Revision 1.15.2.1  2006/01/11 04:52:33  sdlime
+ * Argh! Friggin' typos on my part. Fixed bug 1256.
+ *
  * Revision 1.15  2005/11/30 21:42:43  julien
  * Use MIN/MAXINTERVAL value when we define grid layers (bug1530)
  *
@@ -136,7 +142,7 @@ int msGraticuleLayerOpen(layerObj *layer)
     pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
     pInfo->ilabeltype = (int) lpDDMM;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
-  } else if( strcmp( pInfo->labelformat, "DDMM" )   == 0 ) {
+  } else if( strcmp( pInfo->labelformat, "DD" )   == 0 ) {
     pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DD ) + 1 );
     pInfo->ilabeltype = (int) lpDD;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DD );
@@ -689,7 +695,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     if( pLayer->transform ) 
 		msTransformShapeToPixel( pShape, pLayer->map->extent, pLayer->map->cellsize );
 
-	if (msGetLabelSize( pShape->text, &pLayer->class[0].label, &rectLabel, &pLayer->map->fontset, 1.0 ) != 0)
+	if (msGetLabelSize( pShape->text, &pLayer->class[0].label, &rectLabel, &pLayer->map->fontset, 1.0, MS_FALSE) != 0)
         return MS_FAILURE;  /* msSetError already called */
 
 	switch( ePosition )

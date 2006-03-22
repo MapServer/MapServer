@@ -27,6 +27,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65.2.2  2006/02/25 19:10:41  pramsey
+ * Added checks for MS_FAILURE to the ParseData function calls.
+ * Patch from Tamas Szekeres
+ *
+ * Revision 1.65.2.1  2006/01/19 15:58:16  sean
+ * move gBYTE_ORDER inside the pg layerinfo structure to allow for differently byte ordered connections (bug 1587).
+ *
  * Revision 1.65  2005/12/14 21:25:47  sean
  * test for the case of a selection w/out srid for postgis data and fix from Daryl (bug 1443)
  *
@@ -135,6 +142,7 @@ typedef struct ms_POSTGIS_layer_info_t
     PGresult    *query_result;  /* for fetching rows from the db */
     char        *urid_name;     /* name of user-specified unique identifier or OID */
     char        *user_srid;     /* zero length = calculate, non-zero means using this value! */
+    int gBYTE_ORDER;            /* no longer a global variable */
 
 } msPOSTGISLayerInfo;
 
@@ -239,7 +247,7 @@ static void msPOSTGISCloseConnection(void *conn_handle)
     PQfinish((PGconn*) conn_handle);
 }
 
-static int gBYTE_ORDER = 0;
+/*static int gBYTE_ORDER = 0;*/
 
 /* open up a connection to the postgresql database using the connection string in layer->connection */
 /* ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv" */
@@ -276,6 +284,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
     layerinfo->urid_name = NULL;
     layerinfo->user_srid = NULL;
     layerinfo->conn = NULL;
+    layerinfo->gBYTE_ORDER = 0;
 
     layerinfo->conn = (PGconn *) msConnPoolRequest(layer);
     if(!layerinfo->conn) {
@@ -312,14 +321,13 @@ int msPOSTGISLayerOpen(layerObj *layer)
     }
 
 
-    setPostGISLayerInfo(layer, layerinfo);
-
     if(((char *) &order_test)[0] == 1) {
-        gBYTE_ORDER = LITTLE_ENDIAN;
+        layerinfo->gBYTE_ORDER = LITTLE_ENDIAN;
     } else {
-        gBYTE_ORDER = BIG_ENDIAN;
+        layerinfo->gBYTE_ORDER = BIG_ENDIAN;
     }
 
+    setPostGISLayerInfo(layer, layerinfo);
     return MS_SUCCESS;
 }
 
@@ -459,7 +467,7 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
 
     if(layer->numitems == 0) {
         columns_wanted = (char *) malloc(55 + strlen(geom_column) + strlen(urid_name) + 1);
-        if (gBYTE_ORDER == LITTLE_ENDIAN) {
+        if (layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
             sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'NDR'),%s::text", geom_column, urid_name);
         } else {
             sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'XDR'),%s::text", geom_column, urid_name);
@@ -476,7 +484,7 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
             strcat(columns_wanted, "::text,");
         }
         temp = columns_wanted + strlen(columns_wanted);
-        if(gBYTE_ORDER == LITTLE_ENDIAN) {
+        if(layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
             sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),%s::text", geom_column, urid_name);
         } else {
             sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),%s::text", geom_column, urid_name);
@@ -672,7 +680,9 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
         return MS_FAILURE;
     }
 
-    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+	if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
+		return MS_FAILURE;
+	}
 
     set_up_result = prepare_database(table_name, geom_column_name, layer, &(layerinfo->query_result), rect, &query_str, urid_name, user_srid);
 
@@ -1195,12 +1205,14 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
         return MS_FAILURE;
     }
 
-    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+    if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
+		return MS_FAILURE;
+	}
 
     if(layer->numitems == 0) {
         /* Don't need the oid since its really record */
         columns_wanted = (char *) malloc(46 + strlen(geom_column_name) + 1);
-        if(gBYTE_ORDER == LITTLE_ENDIAN) {
+        if(layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
             sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
         } else {
             sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
@@ -1217,7 +1229,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
             strcat(columns_wanted, "::text,");
         }
         temp = columns_wanted + strlen(columns_wanted);
-        if(gBYTE_ORDER == LITTLE_ENDIAN) {
+        if(layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
             sprintf(temp, "asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
         } else {
             sprintf(temp, "asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
@@ -1450,7 +1462,9 @@ int msPOSTGISLayerGetItems(layerObj *layer)
     }
     /* get the table name and geometry column name */
 
-    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+    if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
+		return MS_FAILURE;
+	}
 
     /* two cases here.  One, its a table (use select * from table) otherwise, just use the select clause */
     sql = (char *) malloc(36 + strlen(table_name) + 1);

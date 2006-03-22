@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9.4.1  2006/03/19 17:58:13  tamas
+ * Hiding items not to be exposed to the mapscript interface (bug 1660)
+ *
  * Revision 1.9  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -55,21 +58,32 @@ extern "C" {
  * Structs
  * ========================================================================= */
 
+#ifndef SWIG
 struct hashObj {
     struct hashObj *next;  /* pointer to next item */
     char           *key;   /* string key that is hashed */
     char           *data;  /* string stored in this item */ 
 };
+#endif /*SWIG*/
 
 typedef struct {
+#ifndef SWIG
     struct hashObj **items;  /* the hash table */
+#endif
+#ifdef SWIG
+%immutable;
+#endif /*SWIG*/
     int              numitems;  /* number of items */
+#ifdef SWIG
+	%mutable;
+#endif /*SWIG*/
 } hashTableObj;
 
 /* =========================================================================
  * Functions
  * ========================================================================= */
 
+#ifndef SWIG
 /* msCreateHashTable - create a hash table
  * ARGS:
  *     None
@@ -141,6 +155,7 @@ MS_DLL_EXPORT const char *msFirstKeyFromHashTable( hashTableObj *table );
  */
 MS_DLL_EXPORT const char *msNextKeyFromHashTable( hashTableObj *table,
                                                   const char *prevkey );
+#endif /*SWIG*/
 
 #ifdef __cplusplus
 }

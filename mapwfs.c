@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.73.2.1  2006/03/05 20:54:52  assefa
+ * Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678).
+ *
  * Revision 1.73  2005/12/27 17:36:27  sdlime
  * Fixed a typo in msWFSGetGeometryType().
  *
@@ -1274,14 +1277,15 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     msFree(encoded_schema);
     msFree(encoded_typename);
 
-    msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
+    if(maxfeatures != 0)
+      msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
     
     /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
     for(i=0; i<map->numlayers; i++) {
       if (map->layers[i].resultcache && map->layers[i].resultcache->numresults > 0)
 	break;
     }
-    if (i==map->numlayers) {
+    if ((i==map->numlayers) || (maxfeatures == 0)) {
       msIO_printf("   <gml:boundedBy>\n"); 
       msIO_printf("      <gml:null>missing</gml:null>\n");
       msIO_printf("   </gml:boundedBy>\n"); 

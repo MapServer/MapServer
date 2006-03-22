@@ -4182,6 +4182,100 @@ else
   STRINGS="-DNEED_STRLCAT $STRINGS"
 fi
 
+echo "$as_me:$LINENO: checking for vsnprintf" >&5
+echo $ECHO_N "checking for vsnprintf... $ECHO_C" >&6
+if test "${ac_cv_func_vsnprintf+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define vsnprintf to an innocuous variant, in case <limits.h> declares vsnprintf.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define vsnprintf innocuous_vsnprintf
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char vsnprintf (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef vsnprintf
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char vsnprintf ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_vsnprintf) || defined (__stub___vsnprintf)
+choke me
+#else
+char (*f) () = vsnprintf;
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+return f != vsnprintf;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_vsnprintf=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_func_vsnprintf=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_vsnprintf" >&5
+echo "${ECHO_T}$ac_cv_func_vsnprintf" >&6
+if test $ac_cv_func_vsnprintf = yes; then
+  STRINGS="-DHAVE_VSNPRINTF $STRINGS"
+fi
+
 STRINGS=$STRINGS
 
 
@@ -9360,9 +9454,34 @@ if test "$ORA_HOME" = "no" ; then
   ORACLESPATIAL_INC=
   ORACLESPATIAL_LIB=
 else
+
+    test -f $ORA_HOME/lib/libclntsh.so && ORA_LIBDIR="$ORA_HOME/lib"
+  test -f $ORA_HOME/libclntsh.so &&     ORA_LIBDIR="$ORA_HOME"
+  test -f $ORA_HOME/lib/oracle/10*/client/lib/libclntsh.so && ORA_LIBDIR=`dirname $ORA_HOME/lib/oracle/10*/client/lib/libclntsh.so`
+
+  if test -z "$ORA_LIBDIR" ; then
+    { { echo "$as_me:$LINENO: error: Oracle Spatial: libclntsh.so not found." >&5
+echo "$as_me: error: Oracle Spatial: libclntsh.so not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+    test -f $ORA_HOME/sdk/include/oci.h && ORA_INCDIR="$ORA_HOME/sdk/include"
+  test -f $ORA_HOME/rdbms/public/oci.h && ORA_INCDIR="$ORA_HOME/rdbms/public"
+  test -f $ORA_HOME/include/oracle/10*/client/oci.h && ORA_INCDIR=`dirname $ORA_HOME/include/oracle/10*/client/oci.h`
+
+  if test -z "$ORA_INCDIR" ; then
+    { { echo "$as_me:$LINENO: error: Oracle Spatial: oci.h not found." >&5
+echo "$as_me: error: Oracle Spatial: oci.h not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
   ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL
-  ORACLESPATIAL_LIB="-L$ORA_HOME/lib -lclntsh"
-  ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public"
+  ORACLESPATIAL_LIB="-L$ORA_LIBDIR -lclntsh"
+  ORACLESPATIAL_INC="-I$ORA_INCDIR -I$ORA_HOME/rdbms/demo"
+
+  echo "$as_me:$LINENO: result:         Oracle Spatial found in $ORA_HOME." >&5
+echo "${ECHO_T}        Oracle Spatial found in $ORA_HOME." >&6
+
 fi
 
 ORACLESPATIAL_ENABLED=$ORACLESPATIAL_ENABLED
@@ -10484,7 +10603,7 @@ ALL_STATIC_LIB=$ALL_STATIC_LIB
 RPATHS=$RPATHS
 
 
-                              ac_config_files="$ac_config_files Makefile $PHPMS_MAKEFILE mapscript/java/Makefile"
+                                        ac_config_files="$ac_config_files Makefile $PHPMS_MAKEFILE mapscript/java/Makefile mapscript/csharp/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -11038,6 +11157,7 @@ do
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "$PHPMS_MAKEFILE" ) CONFIG_FILES="$CONFIG_FILES $PHPMS_MAKEFILE" ;;
   "mapscript/java/Makefile" ) CONFIG_FILES="$CONFIG_FILES mapscript/java/Makefile" ;;
+  "mapscript/csharp/Makefile" ) CONFIG_FILES="$CONFIG_FILES mapscript/csharp/Makefile" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;

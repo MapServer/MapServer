@@ -16,10 +16,9 @@ PHP_BUILD_CALL=TRUE
 !INCLUDE ../../nmake.opt
 !INCLUDE nmake.opt
 
-!IFDEF PHP4
+
 PDB_FILE=/Fdphpms.pdb
 PHP4_FLAGS=/DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS
-!ENDIF
 
 OPTFLAGS =	/nologo /Zi $(WARNING_LEVEL) $(DEBUG) $(PDB_FILE)
 BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32 $(PHP4_FLAGS)
@@ -27,13 +26,9 @@ BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32 $(PHP4_FLAGS)
 LDFLAGS =	/NODEFAULTLIB:libcd /dll $(LDEBUG)
 
 #
-# Set PHP_DIR to point to the root of the PHP source tree
+# Set PHP_HOME to point to the root of the PHP source tree
 #
-!IFDEF PHP4
-PHP_INC = -I$(PHP_DIR) -I$(PHP_DIR)/main -I$(PHP_DIR)/zend -I$(PHP_DIR)/include -I$(PHP_DIR)/tsrm
-!else
-PHP_INC = -I$(PHP_DIR) -I$(PHP_DIR)/dl
-!endif
+PHP_INC = -I$(PHP_HOME) -I$(PHP_HOME)/main -I$(PHP_HOME)/zend -I$(PHP_HOME)/include -I$(PHP_HOME)/tsrm
 
 !IFDEF DLLBUILD
 MS_LIBS = ../../mapserver_i.lib $(EXTERNAL_LIBS)
@@ -49,11 +44,7 @@ PHPMS_OBJS =  php_mapscript_util.obj php_mapscript.obj mapscript_i.obj
 
 PHPPROJ_OBJS = php_mapscript_util.obj php_proj.obj
 
-!ifdef PHP4
 PHPMS_DLL =	php_mapscript.dll
-!else
-PHPMS_DLL =	php3_mapscript.dll
-!endif
 
 PHPPROJ_DLL =	php_proj.dll
 
@@ -68,25 +59,15 @@ mapscript:      $(PHPMS_DLL)
 proj:	        $(PHPPROJ_DLL)
 
 install:	all
-	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)\php_mapscript_45.dll"
+	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)\$(PHP_INSTALL_DLL_NAME)
 
-!ifdef PHP4
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LDFLAGS) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
-		$(PHP_DIR)\lib\$(PHP_TS_LIB_NAME)
+		$(PHP_HOME)\lib\$(PHP_TS_LIB_NAME)
 
 $(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
 	link $(LDFLAGS) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
-		$(PHP_DIR)\lib\$(PHP_TS_LIB_NAME)
-!else
-$(PHPMS_DLL):	$(PHPMS_OBJS)
-	link $(LDFLAGS) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
-		$(PHP_DIR)\win32\cgi_debug\php.lib
-
-$(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
-	link $(LDFLAGS) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
-		$(PHP_DIR)\win32\cgi_debug\php.lib
-!endif
+		$(PHP_HOME)\lib\$(PHP_TS_LIB_NAME)
 
 $(PHPMS_OBJS):	php_mapscript_util.h php_mapscript.h $(MS_LIBS)
 

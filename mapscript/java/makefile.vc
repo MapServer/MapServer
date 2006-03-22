@@ -1,9 +1,5 @@
 
-#
-# SWIG Stuff
-#
-SWIG_HOME="D:\swig\SWIG-1.3.23\"
-SWIG=$(SWIG_HOME)\swig
+# SWIG and JAVA_HOME are now defined in nmake.opt in the mapscript section
 
 !INCLUDE ..\..\nmake.opt
 
@@ -12,7 +8,6 @@ MS_LIB_DLL  =	mapscript_i.lib
 
 #
 # Java Stuff
-JAVA_HOME = "C:\Progra~1\Java\jdk1.5.0"
 JAVADOC=$(JAVA_HOME)\bin\javadoc
 JAVAC=$(JAVA_HOME)\bin\javac
 JAVA=$(JAVA_HOME)\bin\java
@@ -30,7 +25,7 @@ LDFLAGS =	/NODEFAULTLIB:"MSVCRTD" /NODEFAULTLIB:libcd /NODEFAULTLIB:libcmtd /NOD
 all: interface_release mapscript_java mapscript_lib mapscript_jar
 
 interface_release: 
-        mkdir edu\umn\gis\mapscript
+        -mkdir edu\umn\gis\mapscript
         $(SWIG) -java -package edu.umn.gis.mapscript -outdir edu/umn/gis/mapscript -o mapscript_wrap.c ../mapscript.i
 
 mapscript_java:
@@ -61,10 +56,6 @@ test:
 clean:
 	del *.obj
 	del *.lib
-	cd edu
-	rmdir /s /q umn
-	cd ..
-	rmdir edu
+	rmdir /s /q edu
 	del libmapscript.dll
 	del mapscript_wrap.c
-
