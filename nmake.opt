@@ -24,6 +24,13 @@
 #   Section VIII: UMN GIS System Support
 #   Section IX:  Collect compiler flags
 #
+# The easiest way to get going is to use MSVC 2003 and the MapServer 
+# buildkit that is available at 
+# http://mapserver.gis.umn.edu/docs/howto/buildkit
+# This will provide a full set of libraries to build MapServer will almost 
+# all of its options enabled.  If you are building everything from 
+# scratch, start by commenting out most of the options and adding them 
+# in incrementally.
 
 
 ########################################################################
