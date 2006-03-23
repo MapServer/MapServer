@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.84  2006/03/23 20:28:52  sdlime
+ * Most recent patch for curved labels. (bug 1620)
+ *
  * Revision 1.83  2006/03/22 23:31:20  sdlime
  * Applied latest patch for curved labels. (bug 1620)
  *
@@ -116,7 +119,12 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     cachePtr->labelpath = NULL;
     
   } else if ( labelpath ) {
+    int i;
     cachePtr->labelpath = labelpath;
+    /* Use the middle point of the labelpath for mindistance calculations */
+    i = labelpath->path.numpoints / 2;
+    cachePtr->point.x = MS_NINT(labelpath->path.point[i].x);
+    cachePtr->point.y = MS_NINT(labelpath->path.point[i].y);
   }
 
   cachePtr->text = strdup(string); /* the actual text */
@@ -453,7 +461,7 @@ gdFontPtr msGetBitmapFont(int size)
   case MS_TINY:
 #ifdef GD_HAS_GETBITMAPFONT
     return gdFontGetTiny();
-#elseqq
+#else
     return(gdFontTiny);
 #endif
     break;

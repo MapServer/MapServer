@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.129  2006/03/23 20:28:52  sdlime
+ * Most recent patch for curved labels. (bug 1620)
+ *
  * Revision 1.128  2006/03/21 06:28:28  sdlime
  * Fixed logic error so we use faster GD functions when we don't have to scale PIXMAP symbols.
  *
@@ -3464,8 +3467,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
                 if ( (labelPtr->mindistance != -1) &&
                      (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
                      (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) &&
-                     (msDistancePointToPoint(&(cachePtr->labelpath->path.point[0]), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance) &&
-                     (msDistancePointToPoint(&(cachePtr->labelpath->path.point[ cachePtr->labelpath->path.numpoints-1 ]), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+                     (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
                   cachePtr->status = MS_FALSE;
                   break;
                 }
