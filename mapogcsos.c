@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2006/03/27 13:59:07  assefa
+ * Initilaize variabale properly.
+ *
  * Revision 1.9  2006/03/27 13:50:58  assefa
  * Add support for more than 1 observed property and procedure.
  *
@@ -1530,7 +1533,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                                                         "procedure");
                     if (!pszValue)
                     {
-                        map->layers[j].status = MS_OFF;
+                        map->layers[i].status = MS_OFF;
                     }
                     else
                     {
@@ -1540,7 +1543,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                               break;
                         }
                         if (j == n) /*not found*/
-                          map->layers[j].status = MS_OFF;
+                          map->layers[i].status = MS_OFF;
                     }
                 }
             }
