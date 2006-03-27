@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2006/03/27 13:50:58  assefa
+ * Add support for more than 1 observed property and procedure.
+ *
  * Revision 1.8  2006/03/22 20:39:39  assefa
  * Suport parameters FEATUREOFINTEREST and EVENTTIME  for GetObservation.
  *
@@ -334,10 +337,10 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
         pszTmp = strcatalloc(pszTmp, " ");
         pszTmp = strcatalloc(pszTmp, double2string(miny));
         psNode = xmlNewChild(psEnvNode, NULL, "lowerCorner", pszTmp);
-
+        xmlSetNs(psNode,xmlNewNs(psEnvNode, "http://www.opengis.net/gml",  "gml"));
         if (psEpsg)
         {
-            xmlSetNs(psNode,xmlNewNs(psEnvNode, "http://www.opengis.net/gml",  "gml"));
+            
             xmlNewProp(psNode, "srsName", psEpsg);
         }
         free(pszTmp);
@@ -345,10 +348,13 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
         pszTmp = double2string(maxx);
         pszTmp = strcatalloc(pszTmp, " ");
         pszTmp = strcatalloc(pszTmp, double2string(maxy));
-        psNode = xmlNewChild(psEnvNode, NULL, "upperCorner", pszTmp);
+        psNode = xmlNewChild(psEnvNode, 
+                             xmlNewNs(NULL, "http://www.opengis.net/gml",  "gml"), 
+                             "upperCorner", pszTmp);
+        
         if (psEpsg)
         {
-            xmlSetNs(psNode,xmlNewNs(psEnvNode, "http://www.opengis.net/gml",  "gml"));
+            
             xmlNewProp(psNode, "srsName", psEpsg);
         }
         free(pszTmp);
@@ -356,8 +362,7 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
     }
 }
 
-
-void msSOSAddPropropertyNode(xmlNodePtr psParent, layerObj *lp)
+void msSOSAddPropertyNode(xmlNodePtr psParent, layerObj *lp)
 {
     const char *pszValue = NULL, *pszFullName = NULL;
     xmlNodePtr psCompNode, psNode;
@@ -815,7 +820,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
 /************************************************************************/
 char *msSOSParseTimeGML(char *pszGmlTime)
 {
-    char *pszReturn = NULL, *pszBegin, *pszEnd = NULL;
+    char *pszReturn = NULL, *pszBegin = NULL, *pszEnd = NULL;
     CPLXMLNode *psRoot=NULL, *psChild=NULL;
     CPLXMLNode *psTime=NULL, *psBegin=NULL, *psEnd=NULL;
 
@@ -998,8 +1003,10 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                         "ows"), 
                               &(map->web.metadata), "SO", "ProviderSite",  NULL);
 
-    psSubNode = xmlNewChild(psMainNode,NULL,"ServiceContact", NULL);
-    xmlSetNs(psSubNode, xmlNewNs(psMainNode, "http://www.opengis.net/ows", "ows"));
+    psSubNode = xmlNewChild(psMainNode,
+                             xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"),
+                            "ServiceContact", NULL);
+    xmlSetNs(psSubNode, xmlNewNs(psSubNode, "http://www.opengis.net/ows", "ows"));
     msSOSAddMetadataChildNode(psSubNode, "IndividualName", 
                               xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"), 
@@ -1259,7 +1266,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (panOfferingLayers[j] == i)
                      {
                          if ((value = 
-                             msOWSLookupMetadata(&(lp->metadata), "S", 
+                             msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
                                                  "observedProperty_id")))
                          {
                              for (k=0; k<nProperties; k++)
@@ -1271,7 +1278,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                              {
                                  papszProperties[nProperties] = strdup(value);
                                  nProperties++;
-                                 msSOSAddPropropertyNode(psOfferingNode, 
+                                 msSOSAddPropertyNode(psOfferingNode, 
                                                          &(map->layers[j]));
                              }
                          }
@@ -1398,7 +1405,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     xmlDocPtr psDoc = NULL;
     xmlNodePtr psRootNode,  psNode;
-
+    char **tokens;
+    int n;
 
     sBbox = map->extent;
 
@@ -1456,32 +1464,46 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     }
 
     /*validate if observed property exist*/
-    /*TODO : allow more the 1 oberved property (specs is unclear on it). If we
+    /* Allow more the 1 oberved property comma separated (specs is unclear on it). If we
       do it, we need to see if other parameters like result (filter encoding)
       should be given for each property too) */
 
     bLayerFound = 0;
+    tokens = split(pszProperty, ',', &n);
+    
     for (i=0; i<map->numlayers; i++)
     {
         pszTmp = msOWSLookupMetadata(&(map->layers[i].metadata), "S", "offering_id");
         pszTmp2 = msOWSLookupMetadata(&(map->layers[i].metadata), "S", 
-                                        "observedproperty_id");
+                                      "observedproperty_id");
 
-         map->layers[i].status = MS_OFF;
+        map->layers[i].status = MS_OFF;
         
         if (pszTmp && pszTmp2)
         {
-            if ((strcasecmp(pszTmp, pszOffering) == 0) &&
-                (strcasecmp(pszTmp2, pszProperty) == 0))
-            {
-                 map->layers[i].status = MS_ON;
-                 /* Force setting a template to enable query. */
-                 if (!map->layers[i].template)
-                   map->layers[i].template = strdup("ttt.html");
-                 bLayerFound = 1;
+            if (strcasecmp(pszTmp, pszOffering) == 0)
+            {   
+                if (tokens && n > 0)
+                {
+                    for (j=0; j<n; j++)
+                    {
+                        if(strcasecmp(pszTmp2, tokens[j]) == 0)
+                        {
+                            map->layers[i].status = MS_ON;
+                            /* Force setting a template to enable query. */
+                            if (!map->layers[i].template)
+                              map->layers[i].template = strdup("ttt.html");
+                            bLayerFound = 1;
+                            break;
+                        }
+                    }
+                }                 
             }
         }
     }
+    if (tokens && n > 0)
+       msFreeCharArray(tokens, n);
+
 
     if (bLayerFound == 0)
     {
@@ -1490,20 +1512,40 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         return msSOSException(map, nVersion);
     }
      
-    /*apply procedure : set only to on those layers that have the sos_procedure
-     equals to the parameter. Note that the layer should already be set to ON
-    by the  offering,observerproperty filter done above */
+    /*apply procedure : could be a comma separated list.
+      set status to on those layers that have the sos_procedure metadata
+     equals to this parameter. Note that the layer should already have it's status at ON
+     by the  offering,observerproperty filter done above */
     if (pszProdedure)
     {
-        for (i=0; i<map->numlayers; i++)
+        tokens = split(pszProdedure, ',', &n);
+        
+        if (tokens && n > 0)
         {
-            if(map->layers[i].status == MS_ON)
+            for (i=0; i<map->numlayers; i++)
             {
-                pszValue =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
-                                                "procedure");
-                if (!pszValue  || strcasecmp(pszValue, pszProdedure) != 0)
-                  map->layers[i].status = MS_OFF;
+                if(map->layers[i].status == MS_ON)
+                {
+                    pszValue =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
+                                                        "procedure");
+                    if (!pszValue)
+                    {
+                        map->layers[j].status = MS_OFF;
+                    }
+                    else
+                    {
+                        for (j=0; j<n; j++)
+                        {
+                            if (strcasecmp(pszValue, tokens[i]) == 0)
+                              break;
+                        }
+                        if (j == n) /*not found*/
+                          map->layers[j].status = MS_OFF;
+                    }
+                }
             }
+            
+            msFreeCharArray(tokens, n);
         }
     }
               
@@ -1611,7 +1653,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
  
 
     /*bbox*/
-    /* this should normally be a gml feature instead of a comma separated extents
+    /* this is a gml feature
 - <gml:Envelope xmlns:gml="http://www.opengis.net/gml">
   <gml:lowerCorner srsName="EPSG:4326">-66 43</gml:lowerCorner> 
   <upperCorner srsName="EPSG:4326">-62 45</upperCorner> 
