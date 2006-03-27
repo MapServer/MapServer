@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57.2.2  2006/03/27 05:50:52  sdlime
+ * Fixed symbol initialization error with embedded scalebars and legends. (bug 1725)
+ *
  * Revision 1.57.2.1  2006/01/16 20:41:22  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -438,11 +441,12 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   image->img.gd = NULL;
   msFreeImage( image );
 
-
   if(!map->symbolset.symbol[s].img) return(-1); /* something went wrong creating scalebar */
 
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; /* intialize a few things */
   map->symbolset.symbol[s].name = strdup("legend");  
+  map->symbolset.symbol[s].sizex = map->symbolset.symbol[s].img->sx;
+  map->symbolset.symbol[s].sizey = map->symbolset.symbol[s].img->sy;
 
   /* I'm not too sure this test is sufficient ... NFW. */
   if(map->legend.transparent == MS_ON)
