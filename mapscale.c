@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/03/27 05:48:03  sdlime
+ * Fixed symbol initialization error with embedded scalebars and legends. (bug 1725)
+ *
  * Revision 1.50  2006/02/18 20:59:13  sdlime
  * Initial code for curved labels. (bug 1620)
  *
@@ -336,6 +339,8 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; /* intialize a few things */
   map->symbolset.symbol[s].name = strdup("scalebar");  
+  map->symbolset.symbol[s].sizex = map->symbolset.symbol[s].img->sx;
+  map->symbolset.symbol[s].sizey = map->symbolset.symbol[s].img->sy;
 
   /* in 8 bit, mark 0 as being transparent.  In 24bit hopefully already
      have transparency enabled ... */
