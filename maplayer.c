@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.110  2006/03/28 17:31:30  assefa
+ * When setting the time filter, do not override existing Filter paramter
+ * if possible (Bug 1261).
+ *
  * Revision 1.109  2006/01/31 17:06:10  assefa
  * Add connectiontype initialization logic when the layer's virtual
  * table is initialized (Bug 1615)
@@ -729,9 +733,8 @@ makeTimeFilter(layerObj *lp,
   
     char **atimes, **tokens = NULL;
     int numtimes,i, ntmp = 0;
-    char buffer[512];
-
-    buffer[0] = '\0';
+    char *pszBuffer = NULL;
+    int bOnlyExistingFilter = 0;
 
     if (!lp || !timestring || !timefield)
       return MS_FALSE;
@@ -742,42 +745,67 @@ makeTimeFilter(layerObj *lp,
 
     if (strstr(timestring, ",") == NULL && 
         strstr(timestring, "/") == NULL) /* discrete time */
-    {
+    {   
+        /*
         if(lp->filteritem) free(lp->filteritem);
         lp->filteritem = strdup(timefield);
         if (&lp->filter)
           freeExpression(&lp->filter);
+        */
+
+        if (&lp->filter)
+        {
+            /* if the filter is set and it's a sting type, concatenate it with
+               the time. If not just free it */
+            if (lp->filter.type == MS_EXPRESSION)
+            {
+                pszBuffer = strcatalloc(pszBuffer, "((");
+                pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
+                pszBuffer = strcatalloc(pszBuffer, ") and ");
+            }
+            else
+            {
+                freeExpression(&lp->filter);
+            }
+        }
         
+        pszBuffer = strcatalloc(pszBuffer, "(");
+        if (addtimebacktics)
+          pszBuffer = strcatalloc(pszBuffer,  "`");
 
-        strcat(buffer, "(");
         if (addtimebacktics)
-          strcat(buffer,  "`");
-
-         if (addtimebacktics)
-           strcat(buffer, "[");
-        strcat(buffer, timefield);
+           pszBuffer = strcatalloc(pszBuffer, "[");
+        pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
         if (addtimebacktics)
-          strcat(buffer, "]");
+          pszBuffer = strcatalloc(pszBuffer, "]");
         if (addtimebacktics)
-          strcat(buffer,  "`");
+          pszBuffer = strcatalloc(pszBuffer,  "`");
 
          
-        strcat(buffer, " = ");
+        pszBuffer = strcatalloc(pszBuffer, " = ");
         if (addtimebacktics)
-          strcat(buffer,  "`");
+          pszBuffer = strcatalloc(pszBuffer,  "`");
         else
-          strcat(buffer,  "'");
+          pszBuffer = strcatalloc(pszBuffer,  "'");
 
-        strcat(buffer, timestring);
+        pszBuffer = strcatalloc(pszBuffer, (char *)timestring);
         if (addtimebacktics)
-          strcat(buffer,  "`");
+          pszBuffer = strcatalloc(pszBuffer,  "`");
         else
-          strcat(buffer,  "'");
+          pszBuffer = strcatalloc(pszBuffer,  "'");
 
-        strcat(buffer, ")");
+        pszBuffer = strcatalloc(pszBuffer, ")");
         
-        /* loadExpressionString(&lp->filter, (char *)timestring); */
-        loadExpressionString(&lp->filter, buffer);
+        /* if there was a filter, It was concatenate with an And ans should be closed*/
+        if(&lp->filter && lp->filter.type == MS_EXPRESSION)
+        {
+            pszBuffer = strcatalloc(pszBuffer, ")");
+        }
+
+        loadExpressionString(&lp->filter, pszBuffer);
+
+        if (pszBuffer)
+          msFree(pszBuffer);
 
         return MS_TRUE;
     }
@@ -788,114 +816,128 @@ makeTimeFilter(layerObj *lp,
 
     if (numtimes >= 1)
     {
+        if (&lp->filter && lp->filter.type == MS_EXPRESSION)
+        {
+            pszBuffer = strcatalloc(pszBuffer, "((");
+            pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
+            pszBuffer = strcatalloc(pszBuffer, ") and ");
+            /*this flag is used to indicate that the buffer contains only the 
+              existing filter. It is set to 0 when time filter parts are
+              added to the buffer */
+            bOnlyExistingFilter = 1;
+        }
+        else
+          freeExpression(&lp->filter);
+
         /* check to see if we have ranges by parsing the first entry */
         tokens = split(atimes[0],  '/', &ntmp);
         if (ntmp == 2) /* ranges */
         {
-                
             msFreeCharArray(tokens, ntmp);
-             for (i=0; i<numtimes; i++)
-             {
+            for (i=0; i<numtimes; i++)
+            {
                  tokens = split(atimes[i],  '/', &ntmp);
                  if (ntmp == 2)
                  {
-                     if (strlen(buffer) > 0)
-                       strcat(buffer, " OR ");
+                     if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
+                       pszBuffer = strcatalloc(pszBuffer, " OR ");
                      else
-                       strcat(buffer, "(");
+                       pszBuffer = strcatalloc(pszBuffer, "(");
 
-                     strcat(buffer, "(");
+                     bOnlyExistingFilter = 0;
+
+                     pszBuffer = strcatalloc(pszBuffer, "(");
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
 
                      if (addtimebacktics)
-                       strcat(buffer, "[");
-                     strcat(buffer, timefield);
+                       pszBuffer = strcatalloc(pszBuffer, "[");
+                     pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
                      if (addtimebacktics)
-                       strcat(buffer, "]");
+                       pszBuffer = strcatalloc(pszBuffer, "]");
                      
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
 
-                     strcat(buffer, " >= ");
+                     pszBuffer = strcatalloc(pszBuffer, " >= ");
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
                      else
-                       strcat(buffer,  "'");
+                       pszBuffer = strcatalloc(pszBuffer,  "'");
 
-                     strcat(buffer, tokens[0]);
+                     pszBuffer = strcatalloc(pszBuffer, tokens[0]);
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
                      else
-                       strcat(buffer,  "'");
-                     strcat(buffer, " AND ");
+                       pszBuffer = strcatalloc(pszBuffer,  "'");
+                     pszBuffer = strcatalloc(pszBuffer, " AND ");
 
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
 
                      if (addtimebacktics)
-                       strcat(buffer, "[");
-                     strcat(buffer, timefield);
+                       pszBuffer = strcatalloc(pszBuffer, "[");
+                     pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
                      if (addtimebacktics)
-                       strcat(buffer, "]");
+                       pszBuffer = strcatalloc(pszBuffer, "]");
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
 
-                     strcat(buffer, " <= ");
+                     pszBuffer = strcatalloc(pszBuffer, " <= ");
                      
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
                      else
-                       strcat(buffer,  "'");
-                     strcat(buffer, tokens[1]);
+                       pszBuffer = strcatalloc(pszBuffer,  "'");
+                     pszBuffer = strcatalloc(pszBuffer, tokens[1]);
                      if (addtimebacktics)
-                       strcat(buffer,  "`");
+                       pszBuffer = strcatalloc(pszBuffer,  "`");
                      else
-                       strcat(buffer,  "'");
-                     strcat(buffer, ")");
+                       pszBuffer = strcatalloc(pszBuffer,  "'");
+                     pszBuffer = strcatalloc(pszBuffer, ")");
                  }
                  
                   msFreeCharArray(tokens, ntmp);
-             }
-             if (strlen(buffer) > 0)
-               strcat(buffer, ")");
+            }
+            if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
+              pszBuffer = strcatalloc(pszBuffer, ")");
         }
         else if (ntmp == 1) /* multiple times */
         {
-             msFreeCharArray(tokens, ntmp);
-             strcat(buffer, "(");
-             for (i=0; i<numtimes; i++)
-             {
-                 if (i > 0)
-                   strcat(buffer, " OR ");
+            msFreeCharArray(tokens, ntmp);
+            pszBuffer = strcatalloc(pszBuffer, "(");
+            for (i=0; i<numtimes; i++)
+            {
+                if (i > 0)
+                  pszBuffer = strcatalloc(pszBuffer, " OR ");
 
-                  strcat(buffer, "(");
-                  if (addtimebacktics)
-                    strcat(buffer, "`");
+                pszBuffer = strcatalloc(pszBuffer, "(");
+                if (addtimebacktics)
+                  pszBuffer = strcatalloc(pszBuffer, "`");
                   
-                  if (addtimebacktics)
-                    strcat(buffer, "[");
-                  strcat(buffer, timefield);
-                  if (addtimebacktics)
-                    strcat(buffer, "]");
+                if (addtimebacktics)
+                  pszBuffer = strcatalloc(pszBuffer, "[");
+                pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
+                if (addtimebacktics)
+                  pszBuffer = strcatalloc(pszBuffer, "]");
 
-                  if (addtimebacktics)
-                    strcat(buffer, "`");
+                if (addtimebacktics)
+                  pszBuffer = strcatalloc(pszBuffer, "`");
 
-                  strcat(buffer, " = ");
+                pszBuffer = strcatalloc(pszBuffer, " = ");
                   
-                  if (addtimebacktics)
-                    strcat(buffer, "`");
-                  else
-                    strcat(buffer,  "'");
-                  strcat(buffer, atimes[i]);
-                  if (addtimebacktics)
-                    strcat(buffer,  "`");
-                  else
-                    strcat(buffer,  "'");
-                  strcat(buffer, ")");
-             } 
-              strcat(buffer, ")");
+                if (addtimebacktics)
+                  pszBuffer = strcatalloc(pszBuffer, "`");
+                else
+                  pszBuffer = strcatalloc(pszBuffer,  "'");
+                pszBuffer = strcatalloc(pszBuffer, atimes[i]);
+                if (addtimebacktics)
+                  pszBuffer = strcatalloc(pszBuffer,  "`");
+                else
+                  pszBuffer = strcatalloc(pszBuffer,  "'");
+                pszBuffer = strcatalloc(pszBuffer, ")");
+            } 
+            pszBuffer = strcatalloc(pszBuffer, ")");
         }
         else
         {
@@ -906,14 +948,20 @@ makeTimeFilter(layerObj *lp,
         msFreeCharArray(atimes, numtimes);
 
         /* load the string to the filter */
-        if (strlen(buffer) > 0)
+        if (pszBuffer && strlen(pszBuffer) > 0)
         {
+            if(&lp->filter && lp->filter.type == MS_EXPRESSION)
+              pszBuffer = strcatalloc(pszBuffer, ")");
+            /*
             if(lp->filteritem) 
               free(lp->filteritem);
-            lp->filteritem = strdup(timefield);     
-            if (&lp->filter)
-              freeExpression(&lp->filter);
-            loadExpressionString(&lp->filter, buffer);
+            lp->filteritem = strdup(timefield);
+            */     
+
+            loadExpressionString(&lp->filter, pszBuffer);
+
+            if (pszBuffer)
+              msFree(pszBuffer);
         }
 
         return MS_TRUE;
