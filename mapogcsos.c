@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2006/03/28 17:36:11  assefa
+ * Correct use of the wrong variaable.
+ *
  * Revision 1.10  2006/03/27 13:59:07  assefa
  * Initilaize variabale properly.
  *
@@ -1539,7 +1542,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                     {
                         for (j=0; j<n; j++)
                         {
-                            if (strcasecmp(pszValue, tokens[i]) == 0)
+                            if (strcasecmp(pszValue, tokens[j]) == 0)
                               break;
                         }
                         if (j == n) /*not found*/
