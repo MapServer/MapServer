@@ -46,7 +46,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Set the following to point to the current directory. 
-MS_BASE = 	c:\projects\mapserver
+MS_BASE =   c:\projects\mapserver
 
 BINDIR = $(MS_BASE)\..\bin
 
@@ -55,14 +55,14 @@ BINDIR = $(MS_BASE)\..\bin
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Optimized, with using MSVCRT. 
-OPTFLAGS =	/nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
+OPTFLAGS =  /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
 
 # For MSVC8
 #OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
 
 # Debug with MSVCRT
-#OPTFLAGS =	/nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
-#LDFLAGS =	/NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+#OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
+#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
 
 # Uncomment the following to link mapserv.exe with a dll.  In almost 
 # all cases you will want to do this.
@@ -412,7 +412,7 @@ WCS=-DUSE_WCS_SVR
 # ----------------------------------------------------------------------
 # Use -DUSE_OGC_SOS to compile with SOS, needs USE_WMS_SVR or 
 #USE_WFS_SVR enabled so the the gml functions to be enabled
-#It also needs ICONV support since the libxml windoes binaries 
+#It also needs ICONV support since the libxml windows binaries 
 #are built with it 
 #http://xmlsoft.org/index.html
 #SOS=-DUSE_SOS_SVR
@@ -516,8 +516,8 @@ REGEX_DIR=$(MS_BASE)\..\regex-0.12
 # Should not need to be updated.
 ########################################################################
 
-MS_LIB = 	mapserver.lib
-MS_LIB_DLL  =	mapserver_i.lib
+MS_LIB =    mapserver.lib
+MS_LIB_DLL  =   mapserver_i.lib
 
 # Proj.4 include and library
 !IFDEF PROJ_DIR
@@ -558,7 +558,7 @@ FT_LIB=$(FT_DIR)/objs/freetype2110.lib
 !ENDIF
 
 # GD include and library
-GD_INC=	-I$(GD_DIR)
+GD_INC= -I$(GD_DIR)
 GD_LIBS= $(GD_LIB) $(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
 GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT) $(GD_HAS_GETBITMAPFONT)
 
