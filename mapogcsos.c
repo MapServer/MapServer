@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2006/03/29 01:11:07  assefa
+ * Corrected misspelled keywordlist.
+ *
  * Revision 1.11  2006/03/28 17:36:11  assefa
  * Correct use of the wrong variaable.
  *
@@ -975,7 +978,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     msSOSAddMetadataChildNode(psNode, "Keyword", 
                               xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"), 
-                              &(map->web.metadata), "SO", "keyworlist",  NULL);
+                              &(map->web.metadata), "SO", "keywordlist",  NULL);
 
      psNode = xmlNewChild(psMainNode, xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"), 
                          "ServiceType", "OGC:SOS");
