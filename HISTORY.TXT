@@ -12,6 +12,16 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.8.3 (2006-03-30)
+--------------------------
+
+- PIXMAP symbols were broken causing GD to spin off forever (bug 1725)
+
+- Oracle spatial configure wasn't working when an ORACLE_HOME was 
+  specified for 9i (bug 1683).
+
+- queryByAttributes creates wrong WHERE clause on PostGIS layers (bug 1629).
+
 
 Version 4.8.2 (2006-03-22)
 --------------------------
