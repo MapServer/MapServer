@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65.2.3  2006/03/30 05:20:46  sdlime
+ * Applied patch for bug 1629.
+ *
  * Revision 1.65.2.2  2006/02/25 19:10:41  pramsey
  * Added checks for MS_FAILURE to the ParseData function calls.
  * Patch from Tamas Szekeres
@@ -534,18 +537,10 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
             sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )", columns_wanted, data_source, geom_column, box3d, user_srid);
         }
     } else {
-        if(layer->filteritem) {
-            if(!strlen(user_srid)) {
-                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s = '%s') and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filteritem, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
-            } else {
-                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s = '%s') and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filteritem, layer->filter.string, geom_column, box3d, user_srid);
-            }
+        if(!strlen(user_srid)) {
+            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
         } else {
-            if(!strlen(user_srid)) {
-                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
-            } else {
-                sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid);
-            }
+            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid);
         }
     }
 
