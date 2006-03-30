@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.5  2006/03/30 03:46:30  sdlime
+ * Fixed a few more instances where PIXMAP symbols are created but sizex and sizey are not explicitly set. (bug 1725)
+ *
  * Revision 1.90.2.4  2006/03/21 06:29:29  sdlime
  * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
  *
@@ -569,6 +572,8 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   symbolset->symbol[i].name = strdup(filename);
   symbolset->symbol[i].type = MS_SYMBOL_PIXMAP;
+  symbolset->symbol[i].sizex = symbolset->symbol[i].img->sx;
+  symbolset->symbol[i].sizey = symbolset->symbol[i].img->sy;
   symbolset->numsymbols++;
 
   return(i);
@@ -914,6 +919,8 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     }
 
     symbol->type = MS_SYMBOL_PIXMAP;
+    symbol->sizex = symbol->img->sx;
+    symbol->sizey = symbol->img->sy;
 
     return MS_SUCCESS;
 }
@@ -1138,6 +1145,9 @@ int msSymbolSetImageGD(symbolObj *symbol, imageObj *image)
     
     gdImageCopy(symbol->img, image->img.gd, 0, 0, 0, 0,
                 image->width, image->height);
+
+    symbol->sizex = symbol->img->sx;
+    symbol->sizey = symbol->img->sy;
 
     return MS_SUCCESS;
 }
