@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101.2.4  2006/03/30 16:16:37  hobu
+ * make sure to return a value in msSDELayerClose
+ *
  * Revision 1.101.2.3  2006/03/10 18:59:36  hobu
  * Fix 1699, where point queries in msSDEWhichShape were
  * causing the SDE C API to complain about creating an invalid
@@ -1127,7 +1130,7 @@ int  msSDELayerClose(layerObj *layer) {
   msSetError( MS_MISCERR, 
               "SDE support is not available.", 
               "msSDELayerClose()");
-  return;
+  return MS_FALSE;
 #endif
 }
 
