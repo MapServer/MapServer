@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2006/03/30 03:58:04  sdlime
+ * Fixed what I hope are the last of the routines that create PIXMAP symbols but don't set symbol sizex and sizey. (bug 1725)
+ *
  * Revision 1.97  2006/03/21 06:27:08  sdlime
  * Made sure msRotateSymbol sets the new symbol's sizex and sizey members for PIXMAP symbols.
  *
@@ -929,6 +932,8 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     }
 
     symbol->type = MS_SYMBOL_PIXMAP;
+    symbol->sizex = symbol->img->sx;
+    symbol->sizey = symbol->img->sy;
 
     return MS_SUCCESS;
 }
@@ -1153,6 +1158,10 @@ int msSymbolSetImageGD(symbolObj *symbol, imageObj *image)
     
     gdImageCopy(symbol->img, image->img.gd, 0, 0, 0, 0,
                 image->width, image->height);
+
+    symbol->type = MS_SYMBOL_PIXMAP; /* just in case the symbol wasn't a PIXMAP symbol before */
+    symbol->sizex = symbol->img->sx;
+    symbol->sizey = symbol->img->sy;
 
     return MS_SUCCESS;
 }
