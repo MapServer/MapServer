@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.78  2006/03/30 21:43:47  sdlime
+ * Upgraded GML 3 version from 3.1.0 to 3.1.1 based on discussions with Tom Kralidis.
+ *
  * Revision 1.77  2006/03/22 21:40:47  sdlime
  * Added support to allow a service provider (WFS or WMS) tonot expose feature geometries. (bug 1718)
  *
@@ -757,9 +760,9 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 		user_namespace_uri_encoded, user_namespace_prefix,  user_namespace_uri_encoded);
 
   encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-  if(outputformat == OWS_SFE_SCHEMA) /* reference GML 3.1.0 schema */
+  if(outputformat == OWS_SFE_SCHEMA) /* reference GML 3.1.1 schema */
     msIO_printf("\n  <import namespace=\"http://www.opengis.net/gml\"\n"
-		"          schemaLocation=\"%s/gml/3.1.0/base/feature.xsd\" />\n", encoded);
+		"          schemaLocation=\"%s/gml/3.1.1/base/feature.xsd\" />\n", encoded);
   else /* default GML 2.1.x schema */
     msIO_printf("\n  <import namespace=\"http://www.opengis.net/gml\"\n"
 	      "          schemaLocation=\"%s/gml/2.1.2/feature.xsd\" />\n", encoded);
@@ -770,7 +773,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "feature_collection");
     if(value) collection_name = value;
     
-    msIO_printf("  <element name=\"%s\" type=\"%s:%sType\" substitutionGroup=\"gml:FeatureCollection\"/>\n", collection_name, user_namespace_prefix, collection_name);
+    msIO_printf("  <element name=\"%s\" type=\"%s:%sType\" substitutionGroup=\"gml:_FeatureCollection\"/>\n", collection_name, user_namespace_prefix, collection_name);
     msIO_printf("  <complexType name=\"%sType\">\n", collection_name);
     msIO_printf("    <complexContent>\n");
     msIO_printf("      <extension base=\"gml:AbstractFeatureCollectionType\">\n");
@@ -1282,6 +1285,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 		  script_url_encoded, encoded, encoded_typename, output_schema_format);
     else 
       msIO_printf("<%s:%s\n"
+      "   version=\"1.0.0\"\n"
 		  "   xmlns:%s=\"%s\"\n"  
 		  "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
 		  "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
