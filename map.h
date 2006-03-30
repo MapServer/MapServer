@@ -28,6 +28,34 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437.2.8  2006/03/30 23:40:50  hobu
+ * bump version to 4.8.3
+ *
+ * Revision 1.437.2.7  2006/03/22 22:08:29  hobu
+ * Bump version to 4.8.2
+ *
+ * Revision 1.437.2.6  2006/03/19 17:58:13  tamas
+ * Hiding items not to be exposed to the mapscript interface (bug 1660)
+ *
+ * Revision 1.437.2.5  2006/02/03 19:12:19  dan
+ * Update for 4.8.1
+ *
+ * Revision 1.437.2.4  2006/02/02 16:29:37  dan
+ * Update for 4.8.0 release
+ *
+ * Revision 1.437.2.3  2006/01/30 15:06:32  dan
+ * Treat classindex as an int instead of a char in resultCacheMemberObj to
+ * prevent problems with more than 128 classes (bug 1633)
+ *
+ * Revision 1.437.2.2  2006/01/25 22:55:17  dan
+ * Update for 4.8.0-rc3
+ *
+ * Revision 1.437.2.1  2006/01/16 20:41:22  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
+ * Revision 1.437  2006/01/10 03:01:01  dan
+ * Update for 4.8.0-rc2
+ *
  * Revision 1.436  2005/12/23 06:20:50  sdlime
  * Updated files for 4.8.0-rc1.
  *
@@ -366,7 +394,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.0-rc1"
+#define MS_VERSION "4.8.3"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
@@ -566,6 +594,7 @@ extern "C" {
 #define MS_FILE_DEFAULT MS_FILE_MAP   
 
 
+#ifndef SWIG
 /* Filter object */    
 typedef enum 
 {
@@ -594,6 +623,7 @@ typedef struct _FilterNode
 
       
 }FilterEncodingNode;
+#endif /*SWIG*/
 
 
 /* FONTSET OBJECT - used to hold aliases for TRUETYPE fonts */
@@ -899,7 +929,7 @@ typedef struct {
 typedef struct {
   long shapeindex;
   int tileindex;
-  char classindex;
+  int classindex;
 } resultCacheMemberObj;
 #ifdef SWIG
 %mutable;
@@ -1003,6 +1033,7 @@ typedef struct {
   struct map_obj *map;
 } legendObj;
 
+#ifndef SWIG
 typedef struct
 {
   double    dwhichlatitude;
@@ -1032,6 +1063,7 @@ typedef struct
 
 struct layerVTable;
 typedef struct layerVTable layerVTableObj;
+#endif /*SWIG*/
 
 /* LAYER OBJECT - basic unit of a map */
 typedef struct layer_obj {
@@ -1116,9 +1148,9 @@ typedef struct layer_obj {
   char *plugin_library_original; /* this is needed for mapfile writing */
   enum MS_CONNECTION_TYPE connectiontype;
 
+#ifndef SWIG
   layerVTableObj *vtable;
 
-#ifndef SWIG
   struct layer_obj *sameconnection;
   /* SDL has converted OracleSpatial, SDE, Graticules, MyGIS */
   void *layerinfo; /* all connection types should use this generic pointer to a vendor specific structure */
@@ -1208,8 +1240,9 @@ typedef struct map_obj{ /* structure for a map */
   rectObj extent; /* map extent array */
   double cellsize; /* in map units */
 
-
+#ifndef SWIG
   geotransformObj gt; /* rotation / geotransform */
+#endif /*SWIG*/
   rectObj saved_extent;
 
   enum MS_UNITS units; /* units of the projection */
@@ -1219,7 +1252,9 @@ typedef struct map_obj{ /* structure for a map */
   char *shapepath; /* where are the shape files located */
   char *mappath; /* path of the mapfile, all path are relative to this path */
 
+#ifndef SWIG
   paletteObj palette; /* holds a map palette */
+#endif /*SWIG*/
   colorObj imagecolor; /* holds the initial image color value */
 
 #ifdef SWIG
@@ -1267,6 +1302,7 @@ typedef struct {
 } PDFObj; 
 #endif
 
+#ifndef SWIG
 typedef struct  {
   mapObj *map;
   FILE *stream;
@@ -1274,6 +1310,7 @@ typedef struct  {
   int streamclosed; /* track if a save image is done */
   int compressed; /*track if output is set to be svgz */
 } SVGObj;
+#endif /*SWIG*/
 
 /* IMAGE OBJECT - a wrapper for GD images */
 typedef struct {
@@ -1315,6 +1352,7 @@ typedef struct {
  * If you add new functions to here, remember to update
  * populateVirtualTable in maplayer.c
  */
+#ifndef SWIG
 struct layerVTable {
     int (*LayerInitItemInfo)(layerObj *layer);
     void (*LayerFreeItemInfo)(layerObj *layer);
@@ -1343,7 +1381,7 @@ struct layerVTable {
     int (*LayerCreateItems)(layerObj *layer, int nt);
     int (*LayerGetNumFeatures)(layerObj *layer);
 };
-
+#endif /*SWIG*/
 
 /* Function prototypes, wrapable */
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
@@ -1580,7 +1618,7 @@ MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabe
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 
-MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor);
+MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, labelObj *);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);

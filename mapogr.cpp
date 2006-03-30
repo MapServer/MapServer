@@ -29,6 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.93.2.2  2006/01/18 04:40:56  frank
+ * finished implementation of ogr shape2wkt
+ *
+ * Revision 1.93.2.1  2006/01/17 02:31:31  frank
+ * fixed ogr wkt support - bug 1614
+ *
  * Revision 1.93  2005/11/01 19:38:13  frank
  * Avoid using _2D geometry API if built with old GDAL/OGR.
  *
@@ -608,8 +614,11 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
         else if (nType == wkbPolygon)
           return ogrConvertGeometry((OGRGeometry *)hGeometry,
                                     psShape,  MS_LAYER_POLYGON);
+        else
+            return MS_FAILURE;
     }
-        return MS_FALSE;
+    else
+        return MS_FAILURE;
 }
 
 
@@ -2120,6 +2129,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               c->label.angle = poLabelStyle->Angle(bIsNull);
 
               c->label.size = (int)poLabelStyle->Size(bIsNull);
+              if( c->label.size < 1 ) /* no point dropping to zero size */
+                  c->label.size = 1;
 
               // msDebug("** Label size=%d, angle=%f, string=%s **\n", c->label.size, c->label.angle, poLabelStyle->TextString(bIsNull));
 
@@ -2401,7 +2412,7 @@ shapeObj *msOGRShapeFromWKT(const char *string)
   
     if( msOGRGeometryToShape( hGeom, shape, 
                               wkbFlatten(OGR_G_GetGeometryType(hGeom)) )
-                              == MS_FALSE )
+                              == MS_FAILURE )
     {
         free( shape );
         return NULL;
@@ -2424,6 +2435,7 @@ char *msOGRShapeToWKT(shapeObj *shape)
 #ifdef USE_OGR
     OGRGeometryH hGeom = NULL;
     int          i;
+    char        *wkt = NULL;
 
     if(!shape) 
         return NULL;
@@ -2494,10 +2506,14 @@ char *msOGRShapeToWKT(shapeObj *shape)
 
     if( hGeom != NULL )
     {
-        
+        char *pszOGRWkt;
+
+        OGR_G_ExportToWkt( hGeom, &pszOGRWkt );
+        wkt = strdup( pszOGRWkt );
+        CPLFree( pszOGRWkt );
     }
 
-    return NULL;
+    return wkt;
 #else
     msSetError(MS_OGRERR, "OGR support is not available.", "msOGRShapeToWKT()");
     return NULL;

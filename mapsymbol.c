@@ -27,6 +27,32 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.5  2006/03/30 03:46:30  sdlime
+ * Fixed a few more instances where PIXMAP symbols are created but sizex and sizey are not explicitly set. (bug 1725)
+ *
+ * Revision 1.90.2.4  2006/03/21 06:29:29  sdlime
+ * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
+ *
+ * Revision 1.90.2.3  2006/03/02 01:38:43  jani
+ * Revert 1.90.2.2; (bug fix #1684).
+ * I accidentally committed to 4.8 branch. Sorry about that.
+ *
+ * Revision 1.90.2.2  2006/03/02 01:34:57  jani
+ * When we add a pixmap symbol, be sure to initialize sizex,sizey fields of
+ * symbol. These fields are used later by mapgd.c:msDrawMarkerSymbolGD
+ * to calculate scaling factor, if they are uninitialized (0.0),
+ * the scaling factor will be 1.
+ *
+ * This fixes bug #1684
+ *
+ * * msAddImageSymbol: Initialize sizex, sizey
+ *
+ * Revision 1.90.2.1  2006/01/16 20:01:56  sean
+ * close handle when saving symbolset, pointed out by Albert Rovira
+ *
+ * Revision 1.90  2006/01/09 18:04:19  frank
+ * fix for gd calls when different heaps in use - win32 (bug 1513)
+ *
  * Revision 1.89  2006/01/03 03:19:05  sdlime
  * Rotation for pixmap symbols is *very* close but transparency is not handled correctly for 8-bit images. I think this is a bug in GD but I can't be sure yet. Rotated images look crappy anyway so this is just a start.
  *
@@ -313,6 +339,8 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	msSetError(MS_GDERR, NULL, "loadSymbol()");	
 	return(-1);
       }
+      s->sizex = s->img->sx;
+      s->sizey = s->img->sy;            
       break;
     case(LINECAP):
       if((s->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
@@ -513,19 +541,25 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   rewind(stream); /* reset the image for the readers */
   if (memcmp(bytes,"GIF8",4)==0) {
 #ifdef USE_GD_GIF
-    symbolset->symbol[i].img = gdImageCreateFromGif(stream);
+      gdIOCtx *ctx;
+      ctx = msNewGDFileCtx(stream);
+      symbolset->symbol[i].img = gdImageCreateFromGifCtx(ctx);
+      ctx->gd_free(ctx);
 #else
-    msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
-    fclose(stream);
-    return(-1);
+      msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
+      fclose(stream);
+      return(-1);
 #endif
   } else if (memcmp(bytes,PNGsig,8)==0) {
 #ifdef USE_GD_PNG
-    symbolset->symbol[i].img = gdImageCreateFromPng(stream);
+      gdIOCtx *ctx;
+      ctx = msNewGDFileCtx(stream);
+      symbolset->symbol[i].img = gdImageCreateFromPngCtx(ctx);
+      ctx->gd_free(ctx);
 #else
-    msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
-    fclose(stream);
-    return(-1);
+      msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
+      fclose(stream);
+      return(-1);
 #endif
   }
 
@@ -538,6 +572,8 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   symbolset->symbol[i].name = strdup(filename);
   symbolset->symbol[i].type = MS_SYMBOL_PIXMAP;
+  symbolset->symbol[i].sizex = symbolset->symbol[i].img->sx;
+  symbolset->symbol[i].sizey = symbolset->symbol[i].img->sy;
   symbolset->numsymbols++;
 
   return(i);
@@ -812,7 +848,17 @@ int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
         return MS_FAILURE;
     }
     stream = fopen(filename, "w");
-    retval = msSaveSymbolSetStream(symbolset, stream);
+    if (stream)
+    {
+        retval = msSaveSymbolSetStream(symbolset, stream);
+        fclose(stream);
+    }
+    else 
+    {
+        msSetError(MS_SYMERR, "Could not write to %s", "msSaveSymbolSet()",
+                   filename);
+        retval = MS_FAILURE;
+    }
     return retval;
 }
 
@@ -873,6 +919,8 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     }
 
     symbol->type = MS_SYMBOL_PIXMAP;
+    symbol->sizex = symbol->img->sx;
+    symbol->sizey = symbol->img->sy;
 
     return MS_SUCCESS;
 }
@@ -1098,6 +1146,9 @@ int msSymbolSetImageGD(symbolObj *symbol, imageObj *image)
     gdImageCopy(symbol->img, image->img.gd, 0, 0, 0, 0,
                 image->width, image->height);
 
+    symbol->sizex = symbol->img->sx;
+    symbol->sizey = symbol->img->sy;
+
     return MS_SUCCESS;
 }
 
@@ -1129,17 +1180,17 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
   double minx=0.0, miny=0.0, maxx=0.0, maxy=0.0;
   symbolObj *newSymbol = NULL;
 
-  /* use freeSymbol(symbolObj *s); to delete symbol that is not longer used */  
+  if(!(symbol->type == MS_SYMBOL_VECTOR || symbol->type == MS_SYMBOL_PIXMAP)) {
+    msSetError(MS_SYMERR, "Only symbols with type VECTOR or PIXMAP may be rotated.", "msRotateSymbol()");
+    return NULL;
+  }
+
   newSymbol = (symbolObj *) malloc(sizeof(symbolObj));
   msCopySymbol(newSymbol, symbol, NULL); /* TODO: do we really want to do this for all symbol types? */
 
   angle_rad = (MS_DEG_TO_RAD*angle);
 
   switch(symbol->type) {
-  case(MS_SYMBOL_ELLIPSE):
-    /* We have no coordinates here, only two radius values and could only rotate the brush after it was created. */
-    return symbol;
-    break;
   case(MS_SYMBOL_VECTOR):
     {
       double dp_x, dp_y, xcor, ycor;
@@ -1183,7 +1234,6 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
       newSymbol->sizex = maxx;
       newSymbol->sizey = maxy;
-      return newSymbol;
       break;
     }
   case(MS_SYMBOL_PIXMAP):
@@ -1198,7 +1248,7 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       long minx, miny, maxx, maxy;
 
       int width=0, height=0;
-      int color;
+      /* int color; */
 
       sin_a = sin(angle_rad);
       cos_a = cos(angle_rad);
@@ -1229,18 +1279,15 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 	newSymbol->img = gdImageCreate(width, height);	
       }
 
-      gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
+      newSymbol->sizex = width;
+      newSymbol->sizey = height;
 
-      return newSymbol;
-      break;
-    }
-  case(MS_SYMBOL_TRUETYPE):
-    {
-      return symbol; /* nothing to do, handled in code elsewhere */
+      gdImageCopyRotated (newSymbol->img, symbol->img, width*0.5, height*0.5, 0, 0, gdImageSX(symbol->img), gdImageSY(symbol->img), angle);
       break;
     }
   default:
-    return symbol;
-    break;
+    break; /* should never get here */   
   } /* end symbol type switch */
+
+  return newSymbol;
 }

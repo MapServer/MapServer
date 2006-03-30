@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18.4.1  2006/03/19 17:58:13  tamas
+ * Hiding items not to be exposed to the mapscript interface (bug 1660)
+ *
  * Revision 1.18  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -55,10 +58,12 @@ typedef struct {
   double minx, miny, maxx, maxy;
 } rectObj;
 
+#ifndef SWIG
 typedef struct {
   double x;
   double y;
 } vectorObj;
+#endif /*SWIG*/
 
 typedef struct {
   double x;

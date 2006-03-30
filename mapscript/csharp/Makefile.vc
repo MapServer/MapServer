@@ -24,7 +24,6 @@ CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../..
 CC=     cl
 LINK=   link
 CSC = csc
-SWIG = swig
 
 !IFDEF DLLBUILD
 MS_LIBS = ../../mapserver_i.lib $(EXTERNAL_LIBS)
@@ -67,4 +66,5 @@ clean:
 	del *.pdb
 	del *.exp
 	del *.ilk
+	del *.cs
 
