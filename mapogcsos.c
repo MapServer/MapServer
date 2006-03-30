@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2006/03/30 00:57:14  assefa
+ * Correct misspling.
+ * Encode itme names.
+ *
  * Revision 1.12  2006/03/29 01:11:07  assefa
  * Corrected misspelled keywordlist.
  *
@@ -778,11 +782,19 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                             sprintf(szTmp, "%s_alias", lpfirst->items[i]);
                             pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
                             if (pszValue)
-                               psNode = xmlNewChild(psLayerNode, NULL, pszValue, 
-                                                    sShape.values[j]); 
+                            {
+                              pszTmp = msEncodeHTMLEntities(pszValue);
+                              psNode = xmlNewChild(psLayerNode, NULL, pszTmp, 
+                                                   sShape.values[j]);
+                              free(pszTmp);
+                            } 
                             else
+                            {
+                              pszTmp = msEncodeHTMLEntities(lpfirst->items[i]);
                               psNode = xmlNewChild(psLayerNode, NULL, lpfirst->items[i], 
-                                                   sShape.values[j]); 
+                                                   sShape.values[j]);
+                              free(pszTmp);
+                            } 
 
                             xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
                             break;
@@ -1516,7 +1528,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     if (bLayerFound == 0)
     {
-        msSetError(MS_SOSERR, "ObserverProperty %s not found.",
+        msSetError(MS_SOSERR, "ObservedProperty %s not found.",
                    "msSOSGetObservation()", pszProperty);
         return msSOSException(map, nVersion);
     }
@@ -1524,7 +1536,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /*apply procedure : could be a comma separated list.
       set status to on those layers that have the sos_procedure metadata
      equals to this parameter. Note that the layer should already have it's status at ON
-     by the  offering,observerproperty filter done above */
+     by the  offering,observedproperty filter done above */
     if (pszProdedure)
     {
         tokens = split(pszProdedure, ',', &n);
