@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/03/31 15:53:03  julien
+ * bug 1733 Fix SLD nonsquare pixel and SLD with FE projection issue
+ *
  * Revision 1.23  2005/10/26 17:40:03  frank
  * Avoid unused variable warning.
  *
@@ -410,6 +413,7 @@ void msMapGeorefToPixel( mapObj *map, double *x, double *y )
 int msMapSetFakedExtent( mapObj *map )
 
 {
+    int i;
 /* -------------------------------------------------------------------- */
 /*      Remember the original map extents so we can restore them        */
 /*      later.                                                          */
@@ -444,6 +448,9 @@ int msMapSetFakedExtent( mapObj *map )
 
     map->projection.gt.geotransform[2] *= -1;
     map->projection.gt.geotransform[5] *= -1;
+
+    for(i=0; i<map->numlayers; i++)
+        map->layers[i].project = MS_TRUE;
 
     return InvGeoTransform( map->projection.gt.geotransform, 
                             map->projection.gt.invgeotransform );
