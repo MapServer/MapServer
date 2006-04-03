@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
+
 - Added config file for mapping the library file so the DllImport 
   is looking for to its unix equivalent (Bug 1596) Thanks to Scott Ellington
 

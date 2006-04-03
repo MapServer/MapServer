@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.130  2006/04/03 15:40:23  dan
+ * Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
+ *
  * Revision 1.129  2006/03/23 20:28:52  sdlime
  * Most recent patch for curved labels. (bug 1620)
  *
@@ -1460,7 +1463,10 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
     break;
   case(MS_SYMBOL_PIXMAP):
 
-    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+    if (symbol->sizey)
+      d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+    else
+      d = 1;
 
     if (angle != 0.0 && angle != 360.0) {
       bRotated = MS_TRUE;
@@ -1677,7 +1683,10 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     break;
   case(MS_SYMBOL_PIXMAP):
 
-    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+    if (symbol->sizey)
+      d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+    else
+      d = 1;
 
     if (angle != 0.0 && angle != 360.0) {
       bRotated = MS_TRUE;
@@ -2215,7 +2224,11 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     break;
   case(MS_SYMBOL_PIXMAP):
-    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+
+    if (symbol->sizey)
+      d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+    else
+      d = 1;
 
     if (angle != 0.0 && angle != 360.0) {
       bRotated = MS_TRUE;
