@@ -12,6 +12,12 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.8.4 (CVS)
+--------------------------
+
+- Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
+
+
 Version 4.8.3 (2006-03-30)
 --------------------------
 
