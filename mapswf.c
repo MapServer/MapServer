@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/04/05 12:59:52  assefa
+ * Adding format option to turn off loading  movies automatically (Bug 1696).
+ *
  * Revision 1.55  2005/09/23 21:18:58  assefa
  * Remove call to ming.h inside map.h (Bug 1479)
  *
@@ -2737,7 +2740,14 @@ int msSaveImageSWF(imageObj *image, char *filename)
     FILE        *fp; 
     unsigned char block[4000];
     int         bytes_read;
-
+	
+    int         bLoadAutomatically = MS_TRUE;
+	
+    /*do not load all the movie for the layers automatically  if flag is set to off
+      Bug 1696*/
+    if (strcasecmp(msGetOutputFormatOption(image->format,
+                                           "LOAD_AUTOMATICALLY",""), "OFF") != 0)
+      bLoadAutomatically = MS_FALSE;
 
     if (image && MS_DRIVER_SWF(image->format))/* && filename) */
     {
@@ -2987,14 +2997,18 @@ int msSaveImageSWF(imageObj *image, char *filename)
                 /*      name of the file.                                               */
                 /* ==================================================================== */
                 /* sprintf(szAction, "loadMovie(\"%s\",%d);", gszFilename, i+1); */
-                if( bFileIsTemporary )
-                  sprintf(szAction, "loadMovieNum(\"%s%s\",%d);", map->web.imageurl, 
-                          pszRelativeName, i+1);
-                else
-                  sprintf(szAction, "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
+				
+                if ( bLoadAutomatically )
+                {
+                    if( bFileIsTemporary )
+                      sprintf(szAction, "loadMovieNum(\"%s%s\",%d);", map->web.imageurl, 
+	                          pszRelativeName, i+1);
+                    else
+                      sprintf(szAction, "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
 
-                oAction = compileSWFActionCode(szAction);
-                SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
+                    oAction = compileSWFActionCode(szAction);
+                    SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
+                }
             } 
             else /*layer which was not drawn */
             {
