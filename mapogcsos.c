@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2006/04/06 00:51:54  assefa
+ * change url location the exception's schema.
+ *
  * Revision 1.13  2006/03/30 00:57:14  assefa
  * Correct misspling.
  * Encode itme names.
@@ -126,7 +129,7 @@ static int msSOSException(mapObj *map, int nVersion)
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     dtd_url = strdup("http://www.opengeospatial.net/ows ");
     dtd_url = strcatalloc(dtd_url, schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/owsExceptionReport.xsd");
+    dtd_url = strcatalloc(dtd_url, "/ows/1.0.0/owsExceptionReport.xsd");
     xmlNewNsProp(psRootNode, NULL, "xsi:schemaLocation", dtd_url);
     free(schemalocation);
 
@@ -1656,6 +1659,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /* apply filter */
     if (pszFilter)
     {
+        //TODO : preparse parser so that alias for fields can be used
+        
         psFilterNode = FLTParseFilterEncoding(pszFilter);
 	
 	if (!psFilterNode) {
