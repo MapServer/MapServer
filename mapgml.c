@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2006/04/08 05:16:55  frank
+ * Fixed memory leak of encoded entities in msGMLWriteItem().
+ *
  * Revision 1.84  2006/03/22 21:40:47  sdlime
  * Added support to allow a service provider (WFS or WMS) tonot expose feature geometries. (bug 1718)
  *
@@ -1066,6 +1069,8 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
     msIO_fprintf(stream, "%s%s\n", tab, tag);
     free(tag);
   }
+
+  free( encoded_value );
 
   return;
 }
