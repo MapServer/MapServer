@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2006/04/08 03:31:52  frank
+ * emit layer timing info if layer debug set (as well as map)
+ *
  * Revision 1.100  2006/02/24 05:53:49  sdlime
  * Applied another round of patches for bug 1620.
  *
@@ -448,7 +451,7 @@ imageObj *msDrawMap(mapObj *map)
 
     for(i=0; i<map->numlayers; i++) {
 
-        if (map->debug)
+        if (map->debug || lp->debug)
             msGettimeofday(&starttime, NULL);
 
         if (map->layerorder[i] != -1) {
@@ -520,7 +523,7 @@ imageObj *msDrawMap(mapObj *map)
             }
         }
 
-        if (map->debug)
+        if (map->debug || lp->debug)
         {
             msGettimeofday(&endtime, NULL);
             msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
@@ -582,7 +585,7 @@ imageObj *msDrawMap(mapObj *map)
     if (!msLayerIsVisible(map, lp))
       continue;
 
-    if (map->debug)
+    if (map->debug || lp->debug)
         msGettimeofday(&starttime, NULL);
 
     if (lp->connectiontype == MS_WMS)  
@@ -619,7 +622,7 @@ imageObj *msDrawMap(mapObj *map)
         return(NULL);
     }
 
-    if (map->debug)
+    if (map->debug || lp->debug)
     {
         msGettimeofday(&endtime, NULL);
         msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
