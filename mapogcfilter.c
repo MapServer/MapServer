@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.65  2006/04/08 03:39:15  frank
+ * improve error propagation
+ *
  * Revision 1.64  2006/03/14 16:35:45  assefa
  * Correct bug when generating an sql expression containing an escape
  * character (Bug 1713).
@@ -955,8 +958,11 @@ int *FLTArraysAnd(int *aFirstArray, int nSizeFirst,
     return NULL;
 }
 
+/************************************************************************/
+/*                      FLTApplySimpleSQLFilter()                       */
+/************************************************************************/
 
-void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
+int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
                              int iLayerIndex)
 {
     layerObj *lp = NULL;
@@ -966,6 +972,7 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     char **tokens = NULL;
     int nTokens = 0, nEpsgTmp = 0;
     projectionObj sProjTmp;
+    int msErr;
 
     char *pszBuffer = NULL;
 
@@ -1017,7 +1024,6 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 #endif
     }
 
-
     lp->numclasses = 1; /* set 1 so the query would work */
     initClass(&(lp->class[0]));
     lp->class[0].type = lp->type;
@@ -1032,18 +1038,16 @@ void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
         else //POSTGIS OR ORACLE if (lp->connectiontype == MS_POSTGIS)
           sprintf(pszBuffer, "%s", szExpression);
 
-        
-
-        
-
         msLoadExpressionString(&lp->filter, pszBuffer);
         free(szExpression);
     }
 
-    msQueryByRect(map, lp->index, sQueryRect);
+    msErr = msQueryByRect(map, lp->index, sQueryRect);
+
     if (pszBuffer)
       free(pszBuffer);
- 
+
+    return msErr;
 }
 
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
@@ -1152,8 +1156,7 @@ int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /* ==================================================================== */
     if (!bOnlySpatialFilter && FLTIsSimpleFilter(psNode))
     {
-        FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
-        return MS_SUCCESS;
+        return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
     }        
     
     return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex, bOnlySpatialFilter);

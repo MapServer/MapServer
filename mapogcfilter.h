@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2006/04/08 03:39:15  frank
+ * improve error propagation
+ *
  * Revision 1.14  2005/10/29 02:03:43  jani
  * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
  *
@@ -159,7 +162,7 @@ int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 
 
 /*SQL expressions related functions.*/
-void FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
+int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex);
 
 char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,int connectiontype);
