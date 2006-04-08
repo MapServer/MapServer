@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.80  2006/04/08 05:58:48  frank
+ * fix various memory leaks
+ *
  * Revision 1.79  2006/04/08 03:38:18  frank
  * Ensure that an error in FLTApplyFilterToLayer() is reported as a
  * WFS exception.
@@ -989,6 +992,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	  msFreeCharArray(tokens, n);
       }
     }
+    else
+      msFreeCharArray(tokens, n);
 
     pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
 
@@ -1201,6 +1206,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
 	if( FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE) != MS_SUCCESS )
 	  return msWFSException(map, paramsObj->pszVersion);
+
+        FLTFreeFilterEncodingNode( psNode );
+        psNode = NULL;
       }
 
       if (paszFilter)

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.66  2006/04/08 05:58:48  frank
+ * fix various memory leaks
+ *
  * Revision 1.65  2006/04/08 03:39:15  frank
  * improve error propagation
  *
@@ -1271,7 +1274,7 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
         FLTInsertElementInNode(psFilterNode, psFilterStart);
     }
 
-
+    CPLDestroyXMLNode( psRoot );
 
 /* -------------------------------------------------------------------- */
 /*      validate the node tree to make sure that all the nodes are valid.*/
@@ -1349,8 +1352,23 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
             psFilterNode->psRightNode = NULL;
         }
 
+        if( psFilterNode->pszValue )
+            free( psFilterNode->pszValue );
+
+        if( psFilterNode->pOther )
+        {
+#ifdef notdef
+            /* TODO free pOther special fields */
+            if( psFilterNode->pszWildCard )
+                free( psFilterNode->pszWildCard );
+            if( psFilterNode->pszSingleChar )
+                free( psFilterNode->pszSingleChar );
+            if( psFilterNode->pszEscapeChar )
+                free( psFilterNode->pszEscapeChar );
+#endif
+            free( psFilterNode->pOther );
+        }
         free(psFilterNode);
-        /* TODO free pOther point for some operators. */
     }
 }
 
@@ -2752,6 +2770,8 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
         strcat(pszBuffer, psFilterNode->pszValue);
         strcat(pszBuffer, " ");
 
+        free( pszTmp );
+
         nTmp = strlen(pszBuffer);
         pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, connectiontype);
         if (!pszTmp)
@@ -2781,7 +2801,12 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     }
     else
       return NULL;
-    
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    if( pszTmp != NULL )
+        free( pszTmp );
     return pszBuffer;
 
 }
