@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2006/04/08 05:24:41  frank
+ * Fixed itemList->items memory leak.
+ *
  * Revision 1.85  2006/04/08 05:16:55  frank
  * Fixed memory leak of encoded entities in msGMLWriteItem().
  *
@@ -1026,6 +1029,9 @@ void msGMLFreeItems(gmlItemListObj *itemList)
     msFree(itemList->items[i].template);
   }
 
+  if( itemList->items != NULL )
+      free(itemList->items);
+
   free(itemList);
 }
 
@@ -1512,7 +1518,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
-        if(status != MS_SUCCESS) return(status);
+        if(status != MS_SUCCESS) 
+            return(status);
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
