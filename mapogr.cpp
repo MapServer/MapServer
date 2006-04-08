@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.96  2006/04/08 03:36:48  frank
+ * Ensure that an error in GetNextFeature() will be properly translated
+ * into a MapServer error in GetNextShape().
+ *
  * Revision 1.95  2006/01/18 04:35:52  frank
  * completed implementation of shape2wkt
  *
@@ -1223,7 +1227,14 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
 
       if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
       {
-          return MS_DONE;  // No more features to read
+          if( CPLGetLastErrorType() == CE_Failure )
+          {
+              msSetError(MS_OGRERR, "%s", "msOGRFileNextShape()",
+                         CPLGetLastErrorMsg() );
+              return MS_FAILURE;
+          }
+          else
+              return MS_DONE;  // No more features to read
       }
 
       if(layer->numitems > 0) 
