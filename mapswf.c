@@ -33,6 +33,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/04/10 15:16:01  assefa
+ * msDrawStartShapeUsingIdxSWF needs to check return value from
+ * msLayerGetShape (Bug 1744)
+ *
  * Revision 1.56  2006/04/05 12:59:52  assefa
  * Adding format option to turn off loading  movies automatically (Bug 1696).
  *
@@ -1152,16 +1156,28 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 
 
 void msDrawStartShapeUsingIdxSWF(mapObj *map, layerObj *layer, imageObj *image,
-                                 int shapeidx)
+                                 labelCacheMemberObj * cachePtr)
 {
     shapeObj shape;
-
-    if (map && layer && image && shapeidx >=0)
+    int retval = 0;
+    if (map && layer && image && cachePtr->shapeindex >=0)
     {
         msInitShape(&shape);
-        msLayerGetShape(layer, &shape, -1, shapeidx);
-        msDrawStartShapeSWF(map, layer, image, &shape);
+        retval = msLayerGetShape(layer, &shape, cachePtr->tileindex,
+                                 cachePtr->shapeindex);
+	  
+        if (retval == MS_SUCCESS) 
+        {
+            msDrawStartShapeSWF(map, layer, image, &shape);
+        } 
+        else 
+        {
+            msSetError(MS_MISCERR, "Cannot find shape for shapeidx:%d", 
+                       "msDrawStartShapeUsingIdxSWF()", cachePtr->shapeindex);
+        }
     }
+}
+ 
 }
 
 
@@ -2297,7 +2313,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         
         
         /* ((SWFObj *)image->img.swf)->nCurrentShapeIdx = cachePtr->shapeidx; */
-        msDrawStartShapeUsingIdxSWF(map, layerPtr, image,  cachePtr->shapeindex);
+        msDrawStartShapeUsingIdxSWF(map, layerPtr, image,  cachePtr);
            
         
         /* classPtr = &(cachePtr->class); */
