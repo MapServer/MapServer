@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.4 (CVS)
 --------------------------
 
+- Preventing to take ownership of the memory when constructing objects
+  with parent objects using C# mapscript (causing nullreference exception, Bug 1743)
+  
 - Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
 
 
