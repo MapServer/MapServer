@@ -232,3 +232,20 @@ typedef void (SWIGSTDCALL* SWIG_CSharpByteArrayHelperCallback)(const unsigned ch
   }
 %}
 
+/******************************************************************************
+ * Preventing to take ownership of the memory when constructing objects 
+ * with parent objects (causing nullreference exception, Bug 1743)
+ *****************************************************************************/
+
+%typemap(csconstruct, excode=SWIGEXCODE) layerObj(mapObj map) %{: this($imcall, true) {
+  if (map != null) this.swigCMemOwn = false;$excode
+}
+%}
+%typemap(csconstruct, excode=SWIGEXCODE) classObj(layerObj layer) %{: this($imcall, true) {
+  if (layer != null) this.swigCMemOwn = false;$excode
+}
+%}
+%typemap(csconstruct, excode=SWIGEXCODE) styleObj(classObj parent_class) %{: this($imcall, true) {
+  if (parent_class != null) this.swigCMemOwn = false;$excode
+}
+%}
