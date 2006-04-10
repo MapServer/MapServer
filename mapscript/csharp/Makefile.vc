@@ -15,10 +15,13 @@
 # Flag indicating to the option files that this is the build of C#/MapScript
 !INCLUDE ../../nmake.opt
 
-OPTFLAGS =	/nologo /Zi $(WARNING_LEVEL) $(DEBUG)
+# Be aware when setting different options for libmap.dll and mapscript.dll (Bug 1476)
+# To change the options for mapscript.dll uncomment the following line
+# otherwise the options of nmake.opt will be used
+#OPTFLAGS =	/nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG)
 BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32
-LDFLAGS =	/NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /dll $(LDEBUG)
-#LDFLAGS =	/NODEFAULTLIB:libcd /dll $(LDEBUG)
+#LDFLAGS =	/NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /dll $(LDEBUG)
+LDFLAGS =	/dll $(LDEBUG)
 CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../.. 
 
 CC=     cl
@@ -67,4 +70,7 @@ clean:
 	del *.pdb
 	del *.exp
 	del *.ilk
+	del *.cs
+	del *.c
+	del *.exe
 
