@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/04/11 14:57:03  assefa
+ * Remove } preventing build.
+ *
  * Revision 1.57  2006/04/10 15:16:01  assefa
  * msDrawStartShapeUsingIdxSWF needs to check return value from
  * msLayerGetShape (Bug 1744)
@@ -1178,7 +1181,7 @@ void msDrawStartShapeUsingIdxSWF(mapObj *map, layerObj *layer, imageObj *image,
     }
 }
  
-}
+
 
 
 
