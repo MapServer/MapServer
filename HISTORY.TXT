@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Detection of os-dependent Java headers for Java mapscript (bug 1209)
+
 - Preventing to take ownership of the memory when constructing objects
   with parent objects using C# mapscript (causing nullreference exception, Bug 1743)
 

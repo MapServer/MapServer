@@ -191,7 +191,7 @@ JAVADOC=javadoc
 JAVAC=javac
 JAVA=java
 JAR=jar
-JAVA_INCLUDE=-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux
+JAVA_INCLUDE=-I${JAVA_HOME}/include -I${JAVA_HOME}/include/@OS_INCLUDE_DIR@
 
 CC=gcc
 

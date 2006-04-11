@@ -20,7 +20,7 @@ For the impatient:
 To build the "mapserv" CGI program with the default options, go to the
 directory where you extracted the MapServer source code package and...
 
- $ cd mapserver-4.6.x
+ $ cd mapserver-4.8.x
  $ ./configure
  $ make
 
@@ -111,7 +111,14 @@ Here is the list of available options as returned by "./configure --help":
   --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
   --disable-runpath       Do not link with runtime lib path (the default).
-
+  --with-java-include-os-name=dirname
+                          (AUTODETECTED)
+                          Use this option only if building of Java Mapscript
+                          fails because os-dependent headers are not found.
+                          dirname is the name of subdirectory of the Java installation
+                          where os-dependent include files are found (for instance
+                          linux or solaris).
+                          Only used by Java mapscript.
 
 All the options are described in more details below.
 
@@ -600,7 +607,33 @@ Tcl MapScript Module:
   Mapserver must first be configured and build before building Tcl
   MapScript.
 
+Java Mapscript Module:
+----------------------
 
+  Building of Java Mapscript is described in the mapscript/java/README file.
+  
+  Relevant configure options are:
+  
+  --with-threads : absolutely necessary due to the highly threaded
+                   nature of Java programs.
+  
+  --with-java-include-os-name=dirname : use only if compilation of Java
+                   mapscript fails because of missing headers.
+                   
+                   dirname is the directory where the os-dependent headers
+                   used by the Java Native Interface are found.
+		   
+		   Example:
+			$JAVA_HOME/include/linux
+			                   ^^^^^ this is the directory name
+		   
+                   On linux the directory is called linux and on Solaris
+                   solaris. The configure script will try to autodetect
+                   it if not specified.
+                   
+                   In case autodetection fails you might want to add a comment
+                   to bug:
+                   http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1209
 
 ----------------
 $Id$

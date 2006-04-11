@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -891,6 +891,14 @@ Optional Packages:
                           on a system where PHP was built as an Apache
                           module statically linked into the httpd executable.
                           DIR is the path to the apache include files.
+  --with-java-include-os-name=dirname
+                          (AUTODETECTED)
+                          Use this option only if building of Java Mapscript
+                          fails because os-dependent headers are not found.
+                          dirname is the name of subdirectory of the Java installation
+                          where os-dependent include files are found (for instance
+                          linux or solaris).
+                          Only used by Java mapscript.
 
 Some influential environment variables:
   CC          C compiler command
@@ -10711,6 +10719,34 @@ echo "${ECHO_T}yes ($RPATHS)" >&6
 fi
 
 
+echo "$as_me:$LINENO: checking if --with-java-include-os-name specified" >&5
+echo $ECHO_N "checking if --with-java-include-os-name specified... $ECHO_C" >&6
+
+# Check whether --with-java-include-os-name or --without-java-include-os-name was given.
+if test "${with_java_include_os_name+set}" = set; then
+  withval="$with_java_include_os_name"
+
+fi;
+if test -n "${with_java_include_os_name}" ; then
+OS_INCLUDE_DIR="${with_java_include_os_name}"
+echo "$as_me:$LINENO: result: yes ($OS_INCLUDE_DIR)" >&5
+echo "${ECHO_T}yes ($OS_INCLUDE_DIR)" >&6
+else
+OUR_OSNAME=`uname -s`
+case "${OUR_OSNAME}" in
+[Ll]inux) OS_INCLUDE_DIR="linux" ;;
+[sS]olaris*) OS_INCLUDE_DIR="solaris" ;;
+[sS]unOS*) OS_INCLUDE_DIR="solaris" ;;
+[Ww]in*) OS_INCLUDE_DIR="win32" ;;
+*) OS_INCLUDE_DIR="linux" ;;
+esac
+echo "$as_me:$LINENO: result: no, autodetected $OS_INCLUDE_DIR" >&5
+echo "${ECHO_T}no, autodetected $OS_INCLUDE_DIR" >&6
+fi
+
+OS_INCLUDE_DIR=$OS_INCLUDE_DIR
+
+
 
 ALL_ENABLED=$ALL_ENABLED
 
@@ -11474,6 +11510,7 @@ s,@USE_PHP_REGEX@,$USE_PHP_REGEX,;t t
 s,@MAKE_PHPMS@,$MAKE_PHPMS,;t t
 s,@MAKE_PHPMS_CLEAN@,$MAKE_PHPMS_CLEAN,;t t
 s,@APACHE_INC@,$APACHE_INC,;t t
+s,@OS_INCLUDE_DIR@,$OS_INCLUDE_DIR,;t t
 s,@ALL_ENABLED@,$ALL_ENABLED,;t t
 s,@ALL_INC@,$ALL_INC,;t t
 s,@ALL_LIB@,$ALL_LIB,;t t

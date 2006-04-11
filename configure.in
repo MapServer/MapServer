@@ -2134,6 +2134,38 @@ else
   AC_MSG_RESULT([yes ($RPATHS)])
 fi
 
+dnl ---------------------------------------------------------------------
+dnl Check operating system (used by Java Mapscript and possibily
+dnl other mapscripts)
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING([if --with-java-include-os-name specified])
+AC_ARG_WITH(java-include-os-name,
+[  --with-java-include-os-name=dirname
+                          (AUTODETECTED)
+                          Use this option only if building of Java Mapscript
+                          fails because os-dependent headers are not found.
+                          dirname is the name of subdirectory of the Java installation
+                          where os-dependent include files are found (for instance
+                          linux or solaris).
+                          Only used by Java mapscript.],,)
+if test -n "${with_java_include_os_name}" ; then
+OS_INCLUDE_DIR="${with_java_include_os_name}"
+AC_MSG_RESULT([yes ($OS_INCLUDE_DIR)])
+else
+dnl might break on Windows???
+OUR_OSNAME=`uname -s`
+case "${OUR_OSNAME}" in
+[[Ll]inux]) OS_INCLUDE_DIR="linux" ;;
+[[sS]olaris*]) OS_INCLUDE_DIR="solaris" ;;
+[[sS]unOS*]) OS_INCLUDE_DIR="solaris" ;;
+[[Ww]in*]) OS_INCLUDE_DIR="win32" ;;
+*) OS_INCLUDE_DIR="linux" ;;
+esac
+AC_MSG_RESULT([no, autodetected $OS_INCLUDE_DIR])
+fi
+
+AC_SUBST(OS_INCLUDE_DIR, $OS_INCLUDE_DIR)
 
 dnl ---------------------------------------------------------------------
 dnl Generate output files
