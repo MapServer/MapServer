@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2006/04/13 12:35:35  umberto
+ * Fix for segfault on line 454: lp used before assigned
+ *
  * Revision 1.101  2006/04/08 03:31:52  frank
  * emit layer timing info if layer debug set (as well as map)
  *
@@ -451,7 +454,7 @@ imageObj *msDrawMap(mapObj *map)
 
     for(i=0; i<map->numlayers; i++) {
 
-        if (map->debug || lp->debug)
+        if (map->debug)
             msGettimeofday(&starttime, NULL);
 
         if (map->layerorder[i] != -1) {
