@@ -48,8 +48,29 @@ and use
 
 to compile mapscript.dll and mapscript_csharp.dll.
 
+1.4 Alternative compilation methods on Windows
+------------
+Beginning from mapserver 4.8.3 you can invoke the C# compilation from the mapserver directory by uncommenting DOT_NET in nmake.opt
 
-1.4 Linux compilation targeting the MONO framework
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# .NET/C# MapScript
+# ----------------------------------------------------------------------
+# .NET will of course only work with MSVC 7.0 and 7.1.  Also note that
+# you will definitely want USE_THREAD defined.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#DOT_NET = YES
+
+and invoking the compilation by
+
+nmake -f makefile.vc csharp
+
+You can also use
+
+nmake -f makefile.vc install
+
+for making the compilation an copying the targets into a common output directory.
+
+1.5 Linux compilation targeting the MONO framework
 ------------
 Before the compilation you should download and install the recent mono Linux package.
 Some distributions have precompiled binaries to install, but for using the latest
