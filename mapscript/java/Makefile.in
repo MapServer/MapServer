@@ -234,3 +234,5 @@ test:
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DumpShp ../../tests/point.shp
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ShapeInfo ../../tests/point.shp ../../tests/point.dbf
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DrawMap ../../tests/test.map ./map.png
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ConnPool
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttribute ../../tests/test.map

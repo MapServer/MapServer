@@ -158,6 +158,8 @@ MAP
         SIZE 10
         COLOR 0 0 0
       END
+
+      TEMPLATE "point.html"
     END
     CLASS
       NAME "1"
