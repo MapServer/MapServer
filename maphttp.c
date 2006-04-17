@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2006/04/17 19:06:49  dan
+ * Set User-Agent in HTTP headers of client WMS/WFS connections (bug 1749)
+ *
  * Revision 1.21  2005/07/15 13:37:47  frank
  * Acquire TLOCK_OWS around whole func in msHTTPCleanup().
  *
@@ -204,6 +207,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         pasReqInfo[i].nStatus = 0;
         pasReqInfo[i].pszContentType = NULL;
         pasReqInfo[i].pszErrBuf = NULL;
+        pasReqInfo[i].pszUserAgent = NULL;
 
         pasReqInfo[i].debug = MS_FALSE;
 
@@ -246,6 +250,10 @@ void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         if (pasReqInfo[i].pszErrBuf)
             free(pasReqInfo[i].pszErrBuf);
         pasReqInfo[i].pszErrBuf = NULL;
+
+        if (pasReqInfo[i].pszUserAgent)
+            free(pasReqInfo[i].pszUserAgent);
+        pasReqInfo[i].pszUserAgent = NULL;
 
         pasReqInfo[i].curl_handle = NULL;
     }
@@ -391,6 +399,31 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
         /* set URL, note that curl keeps only a ref to our string buffer */
         curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
+
+        /* Set User-Agent (auto-generate if not set by caller */
+        if (pasReqInfo[i].pszUserAgent == NULL)
+        {
+            curl_version_info_data *psCurlVInfo;
+
+            psCurlVInfo = curl_version_info(CURLVERSION_NOW);
+
+            pasReqInfo[i].pszUserAgent = (char*)malloc(100*sizeof(char));
+
+            if (pasReqInfo[i].pszUserAgent)
+            {
+                sprintf(pasReqInfo[i].pszUserAgent, 
+                        "MapServer/%s libcurl/%d.%d.%d",
+                        MS_VERSION, 
+                        psCurlVInfo->version_num/0x10000 & 0xff,
+                        psCurlVInfo->version_num/0x100 & 0xff,
+                        psCurlVInfo->version_num & 0xff );
+            }
+        }
+        if (pasReqInfo[i].pszUserAgent)
+        {
+            curl_easy_setopt(http_handle, 
+                             CURLOPT_USERAGENT, pasReqInfo[i].pszUserAgent );
+        }
 
         /* Enable following redirections.  Requires libcurl 7.10.1 at least */
         curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );

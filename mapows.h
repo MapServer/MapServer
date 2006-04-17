@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.71  2006/04/17 19:06:49  dan
+ * Set User-Agent in HTTP headers of client WMS/WFS connections (bug 1749)
+ *
  * Revision 1.70  2006/03/14 04:08:34  assefa
  * Add disptach call to SOS service.
  *
@@ -210,16 +213,17 @@
 
 typedef struct http_request_info
 {
-    int         nLayerId;
-    char      * pszGetUrl;
-    char      * pszOutputFile;
-    int         nTimeout;
-    rectObj     bbox;
-    int         nStatus;       /* 200=success, value < 0 if request failed */
-    char      * pszContentType;/* Content-Type of the response */
-    char      * pszErrBuf;     /* Buffer where curl can write errors */
-    char        *pszPostRequest;     /* post request content (NULL for GET) */
-    char        *pszPostContentType; /* post request MIME type */
+    int     nLayerId;
+    char    *pszGetUrl;
+    char    *pszOutputFile;
+    int     nTimeout;
+    rectObj bbox;
+    int     nStatus;            /* 200=success, value < 0 if request failed */
+    char    *pszContentType;    /* Content-Type of the response */
+    char    *pszErrBuf;         /* Buffer where curl can write errors */
+    char    *pszPostRequest;    /* post request content (NULL for GET) */
+    char    *pszPostContentType;/* post request MIME type */
+    char    *pszUserAgent;      /* User-Agent, auto-generated if not set */
 
     /* For debugging/profiling */
     int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
