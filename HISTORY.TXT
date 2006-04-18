@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Support large (>2GB) raster files relative to SHAPEPATH. (bug 1748)
+
 - Set User-Agent in HTTP headers of client WMS/WFS connections (bug 1749)
 
 - Detection of os-dependent Java headers for Java mapscript (bug 1209)

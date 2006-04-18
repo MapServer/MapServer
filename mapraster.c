@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.136  2006/04/18 17:20:37  frank
+ * Support large (>2GB) raster files relative to SHAPEPATH. (bug 1748)
+ *
  * Revision 1.135  2006/02/18 21:14:55  frank
  * Fixed regex test.
  *
@@ -1478,10 +1481,21 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
     msBuildPath3(szPath, map->mappath, map->shapepath, filename);
 
+    /*
+    ** Try to open the file, and read the first 8 bytes as a signature. 
+    ** If the open fails for a reason other than "bigness" then we use
+    ** the filename unaltered by path logic since it might be something
+    ** very virtual.
+    */
     f = fopen( szPath, "rb");
     if(!f) {
       memset( dd, 0, 8 );
+#ifdef EFBIG
+      if( errno != EFBIG )
+          strcpy( szPath, filename );
+#else
       strcpy( szPath, filename );
+#endif
     } else {
       fread(dd,8,1,f); /* read some bytes to try and identify the file */
       fclose(f);
