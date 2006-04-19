@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/04/19 16:36:18  hobu
+ * don't throw an MS_IOERR when we're in debug mode when we don't find an index (bug 1752)
+ *
  * Revision 1.17  2005/08/25 14:20:16  sdlime
  * Applied patch for bug 1440.
  *
@@ -530,7 +533,7 @@ char *msSearchDiskTree(char *filename, rectObj aoi, int debug)
   if(!disktree) {
 
     /* only set this error IF debugging is turned on, gets annoying otherwise */
-    if(debug) msSetError(MS_IOERR, "Unable to open spatial index for %s. In most cases you can safely ignore this message, otherwise check file names and permissions.", "msSearchDiskTree()", filename);
+    if(debug) msSetError(MS_NOTFOUND, "Unable to open spatial index for %s. In most cases you can safely ignore this message, otherwise check file names and permissions.", "msSearchDiskTree()", filename);
 
     return(NULL);
   }
