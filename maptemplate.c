@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.119  2006/04/25 20:58:46  sdlime
+ * Fixed bug in shpxy that prevented the requested projection from being applied in certain cases.
+ *
  * Revision 1.118  2006/01/31 17:18:35  sdlime
  * Initial item tag support, only for core attributes, does not cover joined attributes as yet.
  *
@@ -1191,7 +1194,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
        status = msLoadProjectionString(&projection, projectionString);
        if(status != MS_SUCCESS) return MS_FAILURE;
 
-       if(layer->project && msProjectionsDiffer(&(layer->projection), &projection))  
+       if(msProjectionsDiffer(&(layer->projection), &projection)) 
          msProjectShape(&layer->projection, &projection, &tShape);
     }
       
