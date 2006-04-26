@@ -26,7 +26,13 @@ CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../..
 
 CC=     cl
 LINK=   link
+
+!IFDEF MONO
+CSC = mcs
+!ELSE
 CSC = csc
+!ENDIF
+
 #SWIG = swig
 
 !IFDEF DLLBUILD
@@ -58,10 +64,21 @@ $(MAPSCRIPT_DLL): $(MAPSCRIPT_OBJS)
 
 $(CSHARP_DLL)::
 	$(CSC) /t:library /out:mapscript_csharp.dll *.cs
-	$(CSC) /r:mapscript_csharp.dll examples\shpdump.cs
-	$(CSC) /r:mapscript_csharp.dll examples\drawmap.cs
-	$(CSC) /r:mapscript_csharp.dll examples\shapeinfo.cs
-		
+	$(CSC) /r:mapscript_csharp.dll /out:shpdump.exe examples\shpdump.cs
+	$(CSC) /r:mapscript_csharp.dll /out:drawmap.exe examples\drawmap.cs
+	$(CSC) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
+
+test:
+!IFDEF MONO
+	mono shpdump.exe ../../tests/point.shp
+	mono shapeinfo.exe ../../tests/point.shp
+	mono drawmap.exe ../../tests/test.map test_csharp.png
+!ELSE
+	shpdump ../../tests/point.shp
+	shapeinfo ../../tests/point.shp
+	drawmap ../../tests/test.map test_csharp.png
+!ENDIF
+	
 
 clean:
 	del *.obj
