@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2006/04/26 03:25:47  sdlime
+ * Applied most recent patch for curved labels. (bug 1620)
+ *
  * Revision 1.67  2006/03/22 23:31:20  sdlime
  * Applied latest patch for curved labels. (bug 1620)
  *
@@ -762,6 +765,64 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 }
 
 /*
+** offsets a shape relative to an image position
+*/
+void msOffsetRelativeTo(layerObj *layer, shapeObj *shape) 
+{
+  int i, j;
+  double x=0, y=0;
+
+  if(layer->transform == MS_FALSE) return; /* nothing to do */
+
+  if(layer->units == MS_PERCENTAGES) {
+    for (i=0; i<shape->numlines; i++) {
+      for (j=0; j<shape->line[i].numpoints; j++) {
+        shape->line[i].point[j].x = shape->line[i].point[j].x * layer->map->width;
+        shape->line[i].point[j].y = shape->line[i].point[j].y * layer->map->height;
+      }
+    }
+  }
+
+  if(layer->transform == MS_TRUE || layer->transform == MS_UL) return; /* done */
+
+  switch(layer->transform) {
+  case MS_UC:
+    x = (layer->map->width-1)/2;
+    y = 0;
+    break;
+  case MS_UR:
+    x = layer->map->width-1;
+    y = 0;
+    break;  
+  case MS_CC:
+    x = layer->map->width/2;
+    y = layer->map->height/2;
+    break;
+  case MS_LL:
+    x = 0;
+    y = layer->map->height-1;
+    break;
+  case MS_LC:
+    x = (layer->map->width-1)/2;
+    y = layer->map->height-1;
+    break;
+  case MS_LR:
+    x = layer->map->width-1;
+    y = layer->map->height-1;
+    break;
+  }
+
+  for (i=0; i<shape->numlines; i++) {
+    for (j=0; j<shape->line[i].numpoints; j++) {
+      shape->line[i].point[j].x = x + shape->line[i].point[j].x;
+      shape->line[i].point[j].y = y + shape->line[i].point[j].y;
+    }
+  }
+
+  return;
+}
+
+/*
 ** converts from map coordinates to image coordinates
 */
 void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
@@ -1205,10 +1266,10 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   char *font = NULL;
 
   /* Line smoothing kernel */
-  double kernel[] = {1.5, 2, 15, 2, 1.5};
-  double kernel_normal = 22; /* Must be sum of kernel elements */
+  double kernel[] = {0.1,0.2,2,0.2,0.1}; /*{1.5, 2, 15, 2, 1.5};*/
+  double kernel_normal = 2.6; /* Must be sum of kernel elements */
 
-  double letterspacing = 1.18;
+  double letterspacing = 1.25;
 
   offsets = NULL;
   
@@ -1384,20 +1445,8 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     x = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x;
     y = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y;
 
-    /* Check if the new point is too close to the last point.  This
-       helps prevent labels from self-intersecting. */
-/*     if ( k > 0 ) { */
-/*       double D; */
-/*       dx = (x - last_x) * (x - last_x); */
-/*       dy = (y - last_y) * (y - last_y); */
-/*       D = 0.82 * letterspacing * w; */
-
-/*       /\* Check if the distance is < 0.9 * the last character width *\/ */
-/*       if ( dx + dy < D*D ) { */
-/*         *status = MS_FAILURE; */
-/*         goto FAILURE; */
-/*       } */
-/*     } */
+    /* Average this label point with its neighbors according to the
+       smoothing kernel */
     
     if ( k == 0 ) {
       labelpath->path.point[k].x += (kernel[0] + kernel[1]) * x;      
@@ -1487,7 +1536,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   theta = -atan2(dy,dx);
 
     /* If the difference between subsequent angles is > 80% of 180deg
-       then bail because the line likely overlaps itself. */
+       bail because the line likely overlaps itself. */
     if ( k > 2 && abs(theta - labelpath->angles[k-2]) > 0.4 * MS_PI ) {
       *status = MS_FAILURE;
       goto FAILURE;

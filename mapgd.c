@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.131  2006/04/26 03:25:47  sdlime
+ * Applied most recent patch for curved labels. (bug 1620)
+ *
  * Revision 1.130  2006/04/03 15:40:23  dan
  * Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
  *
@@ -3369,7 +3372,7 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
 int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 {
   pointObj p;
-  int i, j, l;
+  int i, l;
   int oldAlphaBlending=0;
   rectObj r;
   
@@ -3433,9 +3436,6 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
     if(labelPtr->position == MS_AUTO) {
 
-      if(layerPtr->type == MS_LAYER_LINE) {
-	int position = MS_UC;
-
         /* If we have a label path there are no alternate positions.
            Just check against the image boundaries, existing markers
            and existing labels. (Bug #1620) */
@@ -3477,6 +3477,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
             for ( i = l+1; i < map->labelcache.numlabels; i++ ) {
               if ( map->labelcache.labels[i].status == MS_TRUE ) {
 
+              /* Check mindistance */
                 if ( (labelPtr->mindistance != -1) &&
                      (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
                      (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) &&
@@ -3489,7 +3490,6 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
                   cachePtr->status = MS_FALSE;
                   break;
                 }
-                
               }
             }
 
@@ -3498,69 +3498,26 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
           } while ( 0 );
           
         } else { 
-          /* We have a label point */
-	for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */
 
-	  msFreeShape(cachePtr->poly);
-	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+        /* We have a label point */
+        int first_pos, pos, last_pos;
 
-            /* Should position be (position - j), or (position - j - 2) here?  It seems like nothing
-               changes from one loop to the other? --Benj Carson */
-	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
-
-            /* I think this is unreachable? layerPtr->type == MS_LAYER_LINE
-               here. --Benj Carson */
-	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
-
-	  if(!labelPtr->partials) { /* check against image first */
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer+map_edge_buffer) == MS_FALSE) {
-	      cachePtr->status = MS_FALSE;
-	      continue; /* next angle */
-	    }
-	  }
-
-	  for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
-	    if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
-	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-		cachePtr->status = MS_FALSE;
-		break;
-	      }
-	    }
-	  }
-
-	  if(!cachePtr->status)
-	    continue; /* next angle */
-
-	  for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered labels */
-	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-
-	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
-		cachePtr->status = MS_FALSE;
-		break;
-	      }
-
-	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-		cachePtr->status = MS_FALSE;
-		break;
-	      }
-	    }
-	  }
-
-	  if(cachePtr->status) /* found a suitable place for this label */
-	    break;
-
-	} /* next angle */
+        if ( labelPtr->type == MS_LAYER_LINE ) {
+          /* There are three possible positions: UC, CC, LC */
+          first_pos = MS_UC;
+          last_pos = MS_CC;
+      } else {
+          /* There are 8 possible outer positions: UL, LR, UR, LL, CR, CL, UC, LC */
+          first_pos = MS_UL;
+          last_pos = MS_LC;
         }
 
-      } else {
-
-	for(j=0; j<=7; j++) { /* loop through the outer label positions */
+        for(pos = first_pos; pos <= last_pos; pos++) {
 
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+          p = get_metrics(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
@@ -3601,7 +3558,9 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
 	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
+
 	} /* next position */
+      
       }
 
       if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
