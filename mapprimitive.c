@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2006/04/26 13:42:53  frank
+ * temporarily block out MS_PERCENTAGES use till it is defined.
+ *
  * Revision 1.68  2006/04/26 03:25:47  sdlime
  * Applied most recent patch for curved labels. (bug 1620)
  *
@@ -774,6 +777,7 @@ void msOffsetRelativeTo(layerObj *layer, shapeObj *shape)
 
   if(layer->transform == MS_FALSE) return; /* nothing to do */
 
+#ifdef notdef
   if(layer->units == MS_PERCENTAGES) {
     for (i=0; i<shape->numlines; i++) {
       for (j=0; j<shape->line[i].numpoints; j++) {
@@ -782,6 +786,7 @@ void msOffsetRelativeTo(layerObj *layer, shapeObj *shape)
       }
     }
   }
+#endif
 
   if(layer->transform == MS_TRUE || layer->transform == MS_UL) return; /* done */
 
