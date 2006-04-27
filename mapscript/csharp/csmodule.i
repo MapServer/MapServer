@@ -23,6 +23,25 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 %ignore fp;
 
 /******************************************************************************
+ * Module initialization helper (bug 1665)
+ *****************************************************************************/
+
+%pragma(csharp) imclasscode=%{
+  class $moduleHelper 
+	{
+		static $moduleHelper() 
+		{
+			$module.msSetup();
+		}
+		 ~$moduleHelper() 
+		{
+			//$module.msCleanup();
+		}
+	}
+	static $moduleHelper the$moduleHelper = new $moduleHelper();
+%}
+
+/******************************************************************************
  * C# exception redefinition
  *****************************************************************************/
 #ifdef ALLOW_INNER_EXCEPTIONS
