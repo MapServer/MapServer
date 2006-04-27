@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2006/04/27 04:05:17  sdlime
+ * Initial support for relative coordinates. (bug 1547)
+ *
  * Revision 1.69  2006/04/26 13:42:53  frank
  * temporarily block out MS_PERCENTAGES use till it is defined.
  *
@@ -768,25 +771,72 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 }
 
 /*
+** offsets a point relative to an image position
+*/
+void msOffsetPointRelativeTo(pointObj *point, layerObj *layer)
+{
+  double x=0, y=0;
+
+  if(layer->transform == MS_FALSE) return; /* nothing to do */
+
+  if(layer->units == MS_PERCENTAGES) {
+    point->x *= layer->map->width;
+    point->y *= layer->map->height;
+  }
+
+  if(layer->transform == MS_TRUE || layer->transform == MS_UL) return; /* done */
+
+  switch(layer->transform) {
+  case MS_UC:
+    x = (layer->map->width-1)/2;
+    y = 0;
+    break;
+  case MS_UR:
+    x = layer->map->width-1;
+    y = 0;
+    break;
+  case MS_CC:
+    x = layer->map->width/2;
+    y = layer->map->height/2;
+    break;
+  case MS_LL:
+    x = 0;
+    y = layer->map->height-1;
+    break;
+  case MS_LC:
+    x = (layer->map->width-1)/2;
+    y = layer->map->height-1;
+    break;
+  case MS_LR:
+    x = layer->map->width-1;
+    y = layer->map->height-1;
+    break;
+  }
+
+  point->x += x;
+  point->y += y;
+
+  return;
+}
+
+/*
 ** offsets a shape relative to an image position
 */
-void msOffsetRelativeTo(layerObj *layer, shapeObj *shape) 
+void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer) 
 {
   int i, j;
   double x=0, y=0;
 
   if(layer->transform == MS_FALSE) return; /* nothing to do */
 
-#ifdef notdef
   if(layer->units == MS_PERCENTAGES) {
     for (i=0; i<shape->numlines; i++) {
       for (j=0; j<shape->line[i].numpoints; j++) {
-        shape->line[i].point[j].x = shape->line[i].point[j].x * layer->map->width;
-        shape->line[i].point[j].y = shape->line[i].point[j].y * layer->map->height;
+        shape->line[i].point[j].x *= layer->map->width;
+        shape->line[i].point[j].y *= layer->map->height;
       }
     }
   }
-#endif
 
   if(layer->transform == MS_TRUE || layer->transform == MS_UL) return; /* done */
 
@@ -819,8 +869,8 @@ void msOffsetRelativeTo(layerObj *layer, shapeObj *shape)
 
   for (i=0; i<shape->numlines; i++) {
     for (j=0; j<shape->line[i].numpoints; j++) {
-      shape->line[i].point[j].x = x + shape->line[i].point[j].x;
-      shape->line[i].point[j].y = y + shape->line[i].point[j].y;
+      shape->line[i].point[j].x += x;
+      shape->line[i].point[j].y += y;
     }
   }
 

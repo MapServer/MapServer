@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2006/04/27 04:05:17  sdlime
+ * Initial support for relative coordinates. (bug 1547)
+ *
  * Revision 1.102  2006/04/13 12:35:35  umberto
  * Fix for segfault on line 454: lp used before assigned
  *
@@ -1379,7 +1382,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
       center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
       r /= map->cellsize;      
-    }
+    } else
+      msOffsetPointRelativeTo(&center, layer);
 
     /* shade symbol drawing will call outline function if color not set */
     if(style != -1)
@@ -1407,7 +1411,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msClipPolylineRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
         msTransformShape(shape, map->extent, map->cellsize, image);
-      }
+      } else
+	msOffsetShapeRelativeTo(shape, layer);
 
       /* Bug #1620 implementation */
       if ( layer->class[c].label.angle_follow == MS_TRUE ) {
@@ -1485,7 +1490,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msClipPolygonRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
         msTransformShape(shape, map->extent, map->cellsize, image);
-      }
+      } else
+	msOffsetShapeRelativeTo(shape, layer);
 
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 
@@ -1568,7 +1574,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  if(!msPointInRect(point, &map->extent)) continue; /* next point */
 	  point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
 	  point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
-	}
+	} else
+          msOffsetPointRelativeTo(point, layer);
 
 	for(s=0; s<layer->class[c].numstyles; s++) {
 	  if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
@@ -1613,7 +1620,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
       msTransformShape(shape, map->extent, map->cellsize, image);
-    }
+    } else
+      msOffsetShapeRelativeTo(shape, layer);
  
     if(style != -1) {
       if(layer->class[c].styles[style].angleitemindex != -1) layer->class[c].styles[style].angle = atof(shape->values[layer->class[c].styles[style].angleitemindex]);
@@ -1719,7 +1727,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msClipPolygonRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
       msTransformShape(shape, map->extent, map->cellsize, image);
-    }
+    } else
+      msOffsetShapeRelativeTo(shape, layer);
  
     for(s=0; s<layer->class[c].numstyles; s++) {
       if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
@@ -1779,7 +1788,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
       point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
-    }
+    } else
+      msOffsetPointRelativeTo(point, layer);
 
     if(labeltext) {
       if(layer->labelcache) {
@@ -1799,7 +1809,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
       point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
-    }
+    } else
+      msOffsetPointRelativeTo(point, layer);
 
     for(s=0; s<layer->class[c].numstyles; s++)
       msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);

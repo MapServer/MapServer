@@ -247,6 +247,7 @@ void lexer_cleanup(void) {
 <INITIAL,OBJECT_STRING>queryformat	       { return(QUERYFORMAT); }
 <INITIAL,OBJECT_STRING>querymap	               { return(QUERYMAP); }
 <INITIAL,OBJECT_STRING>reference	       { return(REFERENCE); }
+<INITIAL,OBJECT_STRING>relativeto	       { return(RELATIVETO); }
 <INITIAL,OBJECT_STRING>requires	               { return(REQUIRES); }
 <INITIAL,OBJECT_STRING>resolution	       { return(RESOLUTION); }
 <INITIAL,OBJECT_STRING>scale		       { return(SCALE); }
@@ -327,13 +328,14 @@ void lexer_cleanup(void) {
 <INITIAL,VALUE_STRING>one-to-one	       { return(MS_JOIN_ONE_TO_ONE); }
 <INITIAL,VALUE_STRING>one-to-many	       { return(MS_JOIN_ONE_TO_MANY); }
 <INITIAL,VALUE_STRING>oraclespatial	       { return(MS_ORACLESPATIAL); }
+<INITIAL,VALUE_STRING>percentages              { return(MS_PERCENTAGES); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
 <INITIAL,VALUE_STRING>pixels                   { return(MS_PIXELS); }
 <INITIAL,VALUE_STRING>point		       { return(MS_LAYER_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_LAYER_POLYGON); }
 <INITIAL,VALUE_STRING>postgis		       { return(MS_POSTGIS); }
 <INITIAL,VALUE_STRING>mygis		       { return(MS_MYGIS); }
-<INITIAL,VALUE_STRING>plugin                    { return(MS_PLUGIN); }
+<INITIAL,VALUE_STRING>plugin                   { return(MS_PLUGIN); }
 <INITIAL,VALUE_STRING>query                    { return(MS_LAYER_QUERY); }
 <INITIAL,VALUE_STRING>raster		       { return(MS_LAYER_RASTER); }
 <INITIAL,VALUE_STRING>round		       { return(MS_CJC_ROUND); }

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.111  2006/04/27 04:05:17  sdlime
+ * Initial support for relative coordinates. (bug 1547)
+ *
  * Revision 1.110  2006/03/28 17:31:30  assefa
  * When setting the time filter, do not override existing Filter paramter
  * if possible (Bug 1261).
@@ -1323,11 +1326,14 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int tile, long shape
 int msINLINELayerNextShape(layerObj *layer, shapeObj *shape) 
 {
     if( ! (layer->currentfeature)) {
-        /* out of features     */
+        /* out of features */
         return(MS_DONE); 
     }
+
     msCopyShape(&(layer->currentfeature->shape), shape);
+
     layer->currentfeature = layer->currentfeature->next;
+
     return(MS_SUCCESS);
 }
 

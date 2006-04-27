@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2006/04/27 04:05:18  sdlime
+ * Initial support for relative coordinates. (bug 1547)
+ *
  * Revision 1.98  2006/03/30 03:58:04  sdlime
  * Fixed what I hope are the last of the routines that create PIXMAP symbols but don't set symbol sizex and sizey. (bug 1725)
  *
@@ -147,7 +150,7 @@ extern unsigned char JPEGsig[3];
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
 */
-extern char *msLabelPositions[]; /* Defined in mapfile.c */
+extern char *msPositionsText[]; /* Defined in mapfile.c */
 static char *msCapsJoinsCorners[7]={"NONE", "BEVEL", "BUTT", "MITER", "ROUND", "SQUARE", "TRIANGLE"};
 
 void freeImageCache(struct imageCacheObj *ic)
@@ -465,7 +468,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
     if (s->character != NULL) fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
     fprintf(stream, "    GAP %d\n", s->gap);
     if (s->font != NULL) fprintf(stream, "    FONT \"%s\"\n", s->font);
-    fprintf(stream, "    POSITION %s\n", msLabelPositions[s->position]);
+    fprintf(stream, "    POSITION %s\n", msPositionsText[s->position - MS_UL]);
     break;
   case(MS_SYMBOL_CARTOLINE):
     fprintf(stream, "    TYPE CARTOLINE\n");

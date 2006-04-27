@@ -220,4 +220,6 @@
 #define LEGENDFORMAT 1190 /* bug 1518 */
 #define BROWSEFORMAT 1191
 
+#define RELATIVETO 1192
+
 #endif /* MAPFILE_H */

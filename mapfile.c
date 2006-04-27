@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.321  2006/04/27 04:05:17  sdlime
+ * Initial support for relative coordinates. (bug 1547)
+ *
  * Revision 1.320  2006/03/15 20:10:25  dan
  * Fixed problem with TRANSPARENCY ALPHA when set via MapScript or written
  * out by msSaveMap(). (bug 1669)
@@ -175,10 +178,9 @@ static int loadGrid( layerObj *pLayer );
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
 */
-static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
+static char *msUnits[8]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS", "PERCENTAGES"};
 static char *msLayerTypes[8]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX"};
-/* msLabelPositions[] also used in mapsymbols.c (not static) */
-char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
+char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY", "FOLLOW"}; /* msLabelPositions[] also used in mapsymbols.c (not static) */
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
 static char *msStatus[5]={"OFF", "ON", "DEFAULT", "EMBED"};
@@ -744,6 +746,7 @@ static int loadFeature(layerObj	*player, int type)
 {
   int status=MS_SUCCESS;
   featureListNodeObjPtr *list = &(player->features);
+  featureListNodeObjPtr node;
   multipointObj points={0,NULL};
   shapeObj *shape=NULL;
 
@@ -758,7 +761,7 @@ static int loadFeature(layerObj	*player, int type)
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
       return(MS_FAILURE);
     case(END):
-      if(insertFeatureList(list, shape) == NULL) 
+      if((node = insertFeatureList(list, shape)) == NULL) 
 	status = MS_FAILURE;
 
       msFreeShape(shape); /* clean up */
@@ -773,7 +776,7 @@ static int loadFeature(layerObj	*player, int type)
       points.numpoints = 0;
 
       if(status == MS_FAILURE) return(MS_FAILURE);
-      break;
+      break;    
     case(TEXT):
       if(getString(&shape->text) == MS_FAILURE) return(MS_FAILURE);
       break;
@@ -1566,7 +1569,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   writeColor(&(label->outlinecolor), stream, "  OUTLINECOLOR", tab);  
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   if (label->position != MS_XY)   /* MS_XY is an internal value used only for legend labels... never write it */
-    fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
+    fprintf(stream, "  %sPOSITION %s\n", tab, msPositionsText[label->position - MS_UL]);
   writeColor(&(label->shadowcolor), stream, "  SHADOWCOLOR", tab);
   if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   if(label->wrap) fprintf(stream, "  %sWRAP '%c'\n", tab, label->wrap);
@@ -2739,14 +2742,14 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->toleranceunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
       break;
     case(TRANSFORM):
-      if((layer->transform = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
+      if((layer->transform = getSymbol(11, MS_TRUE,MS_FALSE, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) return(-1);
       break;
     case(TYPE):
       if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,TILEINDEX)) == -1) return(-1);
       if(layer->type == TILEINDEX) layer->type = MS_LAYER_TILEINDEX; /* TILEINDEX is also a parameter */
       break;    
     case(UNITS):
-      if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
+      if((layer->units = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLayer()",
@@ -3019,7 +3022,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(TRANSFORM):
     msyystate = 2; msyystring = value;
-    if((layer->transform = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
+    if((layer->transform = getSymbol(11, MS_TRUE,MS_FALSE, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) return;
     break;
   case (TRANSPARENCY):
     /* Should we check if transparency is supported by outputformat or
@@ -3034,7 +3037,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(UNITS):
     msyystate = 2; msyystring = value;
-    if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
+    if((layer->units = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return;
     break;
   default:
     break;
@@ -3715,7 +3718,7 @@ static void writeLegend(legendObj *legend, FILE *stream)
   fprintf(stream, "    KEYSPACING %d %d\n", legend->keyspacingx, legend->keyspacingy);
   writeLabel(&(legend->label), stream, "    ");
   writeColor(&(legend->outlinecolor), stream, "OUTLINECOLOR", "    ");
-  fprintf(stream, "    POSITION %s\n", msLabelPositions[legend->position]);
+  fprintf(stream, "    POSITION %s\n", msPositionsText[legend->position - MS_UL]);
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
   if( legend->transparent != MS_NOOVERRIDE )
@@ -3904,7 +3907,7 @@ static void writeScalebar(scalebarObj *scalebar, FILE *stream)
   fprintf(stream, "    INTERVALS %d\n", scalebar->intervals);
   writeLabel(&(scalebar->label), stream, "    ");
   writeColor(&(scalebar->outlinecolor), stream, "OUTLINECOLOR", "    ");
-  fprintf(stream, "    POSITION %s\n", msLabelPositions[scalebar->position]);
+  fprintf(stream, "    POSITION %s\n", msPositionsText[scalebar->position - MS_UL]);
   if(scalebar->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    SIZE %d %d\n", scalebar->width, scalebar->height);
   fprintf(stream, "    STATUS %s\n", msStatus[scalebar->status]);
