@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.176  2006/04/28 16:48:38  dan
+ * Made request, service and format const instead of static in msWMSDispatch()
+ *
  * Revision 1.175  2006/03/14 03:43:30  assefa
  * Move msValidateTimeValue to maptime so it can be used by WMS and SOS.
  * (Bug 1710)
@@ -2776,7 +2779,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 {
 #ifdef USE_WMS_SVR
   int i, status, nVersion=-1;
-  static char *request=NULL, *service=NULL, *format=NULL;
+  const char *request=NULL, *service=NULL, *format=NULL;
 
   /*
   ** Process Params common to all requests
