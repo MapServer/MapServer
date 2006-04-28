@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.322  2006/04/28 02:14:14  sdlime
+ * Fixed writeStyle to quote all string output. (bug 1755)
+ *
  * Revision 1.321  2006/04/27 04:05:17  sdlime
  * Initial support for relative coordinates. (bug 1547)
  *
@@ -1905,7 +1908,7 @@ void freeStyle(styleObj *style) {
 void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
   if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
-  if(style->angleitem) fprintf(stream, "        ANGLEITEM %s\n", style->angleitem);
+  if(style->angleitem) fprintf(stream, "        ANGLEITEM \"%s\"\n", style->angleitem);
   if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
   writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
 
@@ -1921,7 +1924,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);  
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
   if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
-  if(style->sizeitem) fprintf(stream, "        SIZEITEM %s\n", style->sizeitem);
+  if(style->sizeitem) fprintf(stream, "        SIZEITEM \"%s\"\n", style->sizeitem);
   if(style->symbolname)
     fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
   else
@@ -1930,7 +1933,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
 
   if(style->rangeitem) {
-    fprintf(stream, "        RANGEITEM %s\n", style->rangeitem);
+    fprintf(stream, "        RANGEITEM \"%s\"\n", style->rangeitem);
     writeColorRange(&(style->mincolor),&(style->maxcolor), stream, "COLORRANGE", "        ");
     fprintf(stream, "        DATARANGE %g %g\n", style->minvalue, style->maxvalue);
   }
