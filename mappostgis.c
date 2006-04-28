@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2006/04/28 16:07:53  pramsey
+ * Removed HTML tags from PostGIS error messages (Bug 1572)
+ *
  * Revision 1.68  2006/02/25 19:11:41  pramsey
  * Added checks for MS_FAILURE around ParseData calls.
  * Patch from Tamas Szekeres
@@ -152,10 +155,10 @@ typedef struct ms_POSTGIS_layer_info_t
 
 #define DATA_ERROR_MESSAGE \
     "%s" \
-    "Error with POSTGIS data variable. You specified '%s'.<br>\n" \
-    "Standard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n\n" \
-    "Make sure you put in the 'using unique  &lt;column name&gt;' and 'using SRID=#' clauses in.\n\n<br><br>" \
-    "For more help, please see http://postgis.refractions.net/documentation/ \n\n<br><br>" \
+    "Error with POSTGIS data variable. You specified '%s'.\n" \
+    "Standard ways of specifiying are : \n(1) 'geometry_column from geometry_table' \n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' \n\n" \
+    "Make sure you put in the 'using unique  &lt;column name&gt;' and 'using SRID=#' clauses in.\n\n" \
+    "For more help, please see http://postgis.refractions.net/documentation/ \n\n" \
     "Mappostgis.c - version of Jan 23/2004.\n"
 
 
@@ -274,7 +277,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
     }
 
     if(!layer->data) {
-        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerOpen()", "", "Error parsing POSTGIS data variable: nothing specified in DATA statement.<br><br>\n\nMore Help:<br><br>\n\n");
+        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerOpen()", "", "Error parsing POSTGIS data variable: nothing specified in DATA statement.\n\nMore Help:\n\n");
 
         return MS_FAILURE;
     }
@@ -312,7 +315,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
               }
             }
             
-            msSetError(MS_QUERYERR, "couldnt make connection to DB with connect string '%s'.\n<br>\nError reported was '%s'.\n<br>\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n<br>\nMost commonly this is caused by <br>\n(1) incorrect connection string <br>\n(2) you didnt specify a 'user=...' in your connection string <br>\n(3) the postmaster (postgresql server) isnt running <br>\n(4) you are not allowing TCP/IP connection to the postmaster <br>\n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' <br>\n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster <br>\n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine<br>\n(8) you made a typo <br>\n  ", "msPOSTGISLayerOpen()", maskeddata,PQerrorMessage(layerinfo->conn));
+            msSetError(MS_QUERYERR, "couldnt make connection to DB with connect string '%s'.\n\nError reported was '%s'.\n\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n\nMost commonly this is caused by \n(1) incorrect connection string \n(2) you didnt specify a 'user=...' in your connection string \n(3) the postmaster (postgresql server) isnt running \n(4) you are not allowing TCP/IP connection to the postmaster \n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' \n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster \n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine\n(8) you made a typo \n  ", "msPOSTGISLayerOpen()", maskeddata,PQerrorMessage(layerinfo->conn));
 
             free(maskeddata);
             free(layerinfo);
@@ -453,7 +456,7 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
 #endif
 
         if(!pos_space || !pos_paren) {
-            msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "prepare_database()", geom_table, "Error parsing POSTGIS data variable: Something is wrong with your subselect statement.<br><br>\n\nMore Help:<br><br>\n\n");
+            msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "prepare_database()", geom_table, "Error parsing POSTGIS data variable: Something is wrong with your subselect statement.\n\nMore Help:\n\n");
 
             return MS_FAILURE;
         }
@@ -629,7 +632,7 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
 
     /* TODO Rename tmp2 to something meaningful */
     tmp2 = (char *) malloc(149 + strlen(query_string_0_6) + strlen(error_message) + 1);
-    sprintf(tmp2, "Error executing POSTGIS DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error as '%s'<br><br>\n\nMore Help:<br><br>\n\n", query_string_0_6, error_message);
+    sprintf(tmp2, "Error executing POSTGIS DECLARE (the actual query) statement: '%s' \n\nPostgresql reports the error as '%s'\n\nMore Help:\n\n", query_string_0_6, error_message);
     msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "prepare_database()", tmp2, "&lt;check your .map file&gt;");
 
     free(tmp2);
@@ -1265,7 +1268,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     query_result = PQexec(layerinfo->conn, query_str);
 
     if(!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK) {
-        msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in FETCH ALL): %s\n-%s\n<br>More Help:<br>", "msPOSTGISLayerGetShape()", query_str, PQerrorMessage(layerinfo->conn));
+        msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in FETCH ALL): %s\n-%s\nMore Help:", "msPOSTGISLayerGetShape()", query_str, PQerrorMessage(layerinfo->conn));
 
         if(query_result) {
           PQclear(query_result);
@@ -1843,7 +1846,7 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
     } else {
         slength = strspn(pos_srid + 12, "-0123456789");
         if(!slength) {
-            msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable: You specified 'using SRID=#' but didnt have any numbers!<br><br>\n\nMore Help:<br><br>\n\n", data);
+            msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable: You specified 'using SRID=#' but didnt have any numbers!\n\nMore Help:\n\n", data);
 
             return MS_FAILURE;
         } else {
@@ -1868,7 +1871,7 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
     /* Scan for the table or sub-select clause */
     pos_scn = strstrIgnoreCase(data, " from ");
     if(!pos_scn) {
-        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').  More help: <br><br>\n\n", data);
+        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').  More help: \n\n", data);
 
         return MS_FAILURE;
     }
@@ -1887,7 +1890,7 @@ static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, cha
     (*table_name)[pos_opt - (pos_scn + 6)] = 0;
 
     if(strlen(*table_name) < 1 || strlen(*geom_column_name) < 1) {
-        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find a geometry_column or table/subselect).  More help: <br><br>\n\n", data);
+        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find a geometry_column or table/subselect).  More help: \n\n", data);
 
         return MS_FAILURE;
     }
