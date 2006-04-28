@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2006/04/28 03:13:02  sdlime
+ * Fixed a few issues with relative coordinates. Added support for all nine relative positions. (bug 1547)
+ *
  * Revision 1.103  2006/04/27 04:05:17  sdlime
  * Initial support for relative coordinates. (bug 1547)
  *
@@ -1378,7 +1381,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       layer->project = MS_FALSE;
 #endif
 
-    if(layer->transform) {
+    if(layer->transform == MS_TRUE) {
       center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
       center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
       r /= map->cellsize;      
@@ -1407,7 +1410,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
     switch(shape->type) {
     case(MS_SHAPE_LINE):
-      if(layer->transform) {
+      if(layer->transform == MS_TRUE) {
         msClipPolylineRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
         msTransformShape(shape, map->extent, map->cellsize, image);
@@ -1486,7 +1489,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       break;
     case(MS_SHAPE_POLYGON):
 
-      if(layer->transform) {
+      if(layer->transform == MS_TRUE) {
         msClipPolygonRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
         msTransformShape(shape, map->extent, map->cellsize, image);
@@ -1524,11 +1527,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 	  point = &(shape->line[j].point[i]);
 
-	  if(layer->transform) {
+	  if(layer->transform == MS_TRUE) {
 	    if(!msPointInRect(point, &map->extent)) return(MS_SUCCESS);
 	    point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
 	    point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
-	  }
+	  } else
+            msOffsetPointRelativeTo(point, layer);
 
           label = layer->class[c].label;
 
@@ -1570,7 +1574,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 	point = &(shape->line[j].point[i]);
 
-	if(layer->transform) {
+	if(layer->transform == MS_TRUE) {
 	  if(!msPointInRect(point, &map->extent)) continue; /* next point */
 	  point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
 	  point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
@@ -1616,7 +1620,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       layer->project = MS_FALSE;
 #endif
 
-    if(layer->transform) {
+    if(layer->transform == MS_TRUE) {
       msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
       msTransformShape(shape, map->extent, map->cellsize, image);
@@ -1712,7 +1716,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       layer->project = MS_FALSE;
 #endif
 
-    if(layer->transform) {
+    if(layer->transform == MS_TRUE) {
       /*
        * add a small buffer around the cliping rectangle to
        * avoid lines around the edges : Bug 179
@@ -1784,7 +1788,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
   switch(layer->type) {
   case MS_LAYER_ANNOTATION:
-    if(layer->transform) {
+    if(layer->transform == MS_TRUE) {
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
       point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
@@ -1805,7 +1809,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
     break;
 
   case MS_LAYER_POINT:
-    if(layer->transform) {
+    if(layer->transform == MS_TRUE) {
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
       point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);

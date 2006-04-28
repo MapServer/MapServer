@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2006/04/28 03:13:02  sdlime
+ * Fixed a few issues with relative coordinates. Added support for all nine relative positions. (bug 1547)
+ *
  * Revision 1.70  2006/04/27 04:05:17  sdlime
  * Initial support for relative coordinates. (bug 1547)
  *
@@ -777,14 +780,14 @@ void msOffsetPointRelativeTo(pointObj *point, layerObj *layer)
 {
   double x=0, y=0;
 
-  if(layer->transform == MS_FALSE) return; /* nothing to do */
+  if(layer->transform == MS_TRUE) return; /* nothing to do */
 
   if(layer->units == MS_PERCENTAGES) {
     point->x *= layer->map->width;
     point->y *= layer->map->height;
   }
 
-  if(layer->transform == MS_TRUE || layer->transform == MS_UL) return; /* done */
+  if(layer->transform == MS_FALSE || layer->transform == MS_UL) return; /* done */
 
   switch(layer->transform) {
   case MS_UC:
@@ -795,8 +798,16 @@ void msOffsetPointRelativeTo(pointObj *point, layerObj *layer)
     x = layer->map->width-1;
     y = 0;
     break;
+  case MS_CL:
+    x = 0;
+    y = layer->map->height/2;
+    break;
   case MS_CC:
     x = layer->map->width/2;
+    y = layer->map->height/2;
+    break;
+  case MS_CR:
+    x = layer->map->width-1;
     y = layer->map->height/2;
     break;
   case MS_LL:
@@ -804,7 +815,7 @@ void msOffsetPointRelativeTo(pointObj *point, layerObj *layer)
     y = layer->map->height-1;
     break;
   case MS_LC:
-    x = (layer->map->width-1)/2;
+    x = layer->map->width/2;
     y = layer->map->height-1;
     break;
   case MS_LR:
@@ -827,7 +838,7 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
   int i, j;
   double x=0, y=0;
 
-  if(layer->transform == MS_FALSE) return; /* nothing to do */
+  if(layer->transform == MS_TRUE) return; /* nothing to do */
 
   if(layer->units == MS_PERCENTAGES) {
     for (i=0; i<shape->numlines; i++) {
@@ -838,7 +849,7 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
     }
   }
 
-  if(layer->transform == MS_TRUE || layer->transform == MS_UL) return; /* done */
+  if(layer->transform == MS_FALSE || layer->transform == MS_UL) return; /* done */
 
   switch(layer->transform) {
   case MS_UC:
@@ -848,9 +859,17 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
   case MS_UR:
     x = layer->map->width-1;
     y = 0;
-    break;  
+    break;
+  case MS_CL:
+    x = 0;
+    y = layer->map->height/2;
+    break;
   case MS_CC:
     x = layer->map->width/2;
+    y = layer->map->height/2;
+    break;
+  case MS_CR:
+    x = layer->map->width-1;
     y = layer->map->height/2;
     break;
   case MS_LL:
@@ -858,7 +877,7 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
     y = layer->map->height-1;
     break;
   case MS_LC:
-    x = (layer->map->width-1)/2;
+    x = layer->map->width/2;
     y = layer->map->height-1;
     break;
   case MS_LR:
