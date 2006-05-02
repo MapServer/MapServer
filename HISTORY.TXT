@@ -20,6 +20,9 @@ Version 4.8.4 (CVS)
   
 - Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
 
+- Fixed problem with mycursor not being closed on layer close in the 
+  mappostgis.c module (bug 1757).
+
 
 Version 4.8.3 (2006-03-30)
 --------------------------

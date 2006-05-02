@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65.2.4  2006/05/02 16:28:27  frank
+ * close mycursor in postgis layer close func (bug 1757)
+ *
  * Revision 1.65.2.3  2006/03/30 05:20:46  sdlime
  * Applied patch for bug 1629.
  *
@@ -739,6 +742,15 @@ int msPOSTGISLayerClose(layerObj *layer)
             layerinfo->query_result = NULL;
         } else if(layer->debug) {
             msDebug("msPOSTGISLayerClose -- query_result is NULL\n");
+        }
+
+        
+        {
+            PGresult    *query_result;  
+            query_result = PQexec(layerinfo->conn, "CLOSE mycursor");
+            if(query_result) {
+                PQclear(query_result);
+            }
         }
 
         msConnPoolRelease(layer, layerinfo->conn);
