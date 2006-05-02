@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2006/05/02 19:38:39  dan
+ * Allow use of wms/ows_include_items and wms/ows_exclude_items to control
+ * which items to output in text/plain GetFeatureInfo. (bug 1761)
+ *
  * Revision 1.86  2006/04/08 05:24:41  frank
  * Fixed itemList->items memory leak.
  *
@@ -941,11 +945,11 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
   gmlItemObj *item=NULL;
 
   /* get a list of items that should be included in output */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "include_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFGM", "include_items")) != NULL)  
     incitems = split(value, ',', &numincitems);
 
   /* get a list of items that should be excluded in output */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "exclude_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), "OFGM", "exclude_items")) != NULL)  
     excitems = split(value, ',', &numexcitems);
 
   /* get a list of items that need don't get encoded */

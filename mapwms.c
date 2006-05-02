@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.177  2006/05/02 19:38:39  dan
+ * Allow use of wms/ows_include_items and wms/ows_exclude_items to control
+ * which items to output in text/plain GetFeatureInfo. (bug 1761)
+ *
  * Revision 1.176  2006/04/28 16:48:38  dan
  * Made request, service and format const instead of static in msWMSDispatch()
  *
@@ -2184,7 +2188,13 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
 
    for(i=0; i<map->numlayers && numresults<feature_count; i++)
    {
-      int j, k;
+      int j, k, *itemvisible;
+      char **incitems=NULL;
+      int numincitems=0;
+      char **excitems=NULL;
+      int numexcitems=0;
+      const char *value;
+
       layerObj *lp;
       lp = &(map->layers[i]);
 
@@ -2194,6 +2204,47 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
       if(msLayerOpen(lp) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
         return msWMSException(map, nVersion, NULL);
 
+      /* Use metadata to control which fields to output. We use the same 
+       * metadata names as for GML:
+       * wms/ows_include_items: comma delimited list or keyword 'all'
+       * wms/ows_exclude_items: comma delimited list (all items are excluded by default)
+       */
+      /* get a list of items that should be excluded in output */
+      if((value = msOWSLookupMetadata(&(lp->metadata), "MO", "include_items")) != NULL)  
+          incitems = split(value, ',', &numincitems);
+
+      /* get a list of items that should be excluded in output */
+      if((value = msOWSLookupMetadata(&(lp->metadata), "MO", "exclude_items")) != NULL)  
+          excitems = split(value, ',', &numexcitems);
+
+      itemvisible = (int*)malloc(lp->numitems*sizeof(int));
+      for(k=0; k<lp->numitems; k++)
+      {
+          int l;
+
+          itemvisible[k] = MS_FALSE;
+
+          /* check visibility, included items first... */
+          if(numincitems == 1 && strcasecmp("all", incitems[0]) == 0) {
+              itemvisible[k] = MS_TRUE;
+          } else {
+              for(l=0; l<numincitems; l++) {
+                  if(strcasecmp(lp->items[k], incitems[l]) == 0)
+                      itemvisible[k] = MS_TRUE;
+              }
+          }
+
+          /* ...and now excluded items */
+          for(l=0; l<numexcitems; l++) {
+              if(strcasecmp(lp->items[k], excitems[l]) == 0)
+                  itemvisible[k] = MS_FALSE;
+          }
+      }
+
+      msFreeCharArray(incitems, numincitems);
+      msFreeCharArray(excitems, numexcitems);
+
+      /* Output selected shapes for this layer */
       msIO_printf("\nLayer '%s'\n", lp->name);
 
       for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
@@ -2201,16 +2252,24 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
 
         msInitShape(&shape);
         if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
-          return msWMSException(map, nVersion, NULL);
+        {
+            msFree(itemvisible);
+            return msWMSException(map, nVersion, NULL);
+        }
 
         msIO_printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
 
         for(k=0; k<lp->numitems; k++)
-	  msIO_printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
+        {
+            if (itemvisible[k])
+                msIO_printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
+        }
 
         msFreeShape(&shape);
         numresults++;
       }
+
+      msFree(itemvisible);
 
       msLayerClose(lp);
     }

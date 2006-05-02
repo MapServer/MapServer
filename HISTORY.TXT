@@ -16,6 +16,14 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Allow use of wms/ows_include_items and wms/ows_exclude_items to control
+  which items to output in text/plain GetFeatureInfo. Making the behavior
+  of this INFO_FORMAT consistent with the new behavior of GML GetFeatureInfo
+  output introduced in v4.8. (bug 1761)
+  IMPORTANT NOTE: With this change if the *_include_items metadata
+  is not specified for a given layer then no items are output for that layer
+  (previous behavior was to always all items by default in text/plain)
+
 - Make sure mappostgis.c closes MYCURSOR in layer close function so that
   CLOSE_CONNECTION=DEFER works properly.  (bug 1757)
 
