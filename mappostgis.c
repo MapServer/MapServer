@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2006/05/02 16:03:36  frank
+ * keep track of mycursor and close in layerclose (bug 1757)
+ *
  * Revision 1.69  2006/04/28 16:07:53  pramsey
  * Removed HTML tags from PostGIS error messages (Bug 1572)
  *
@@ -150,6 +153,8 @@ typedef struct ms_POSTGIS_layer_info_t
     char        *urid_name;     /* name of user-specified unique identifier or OID */
     char        *user_srid;     /* zero length = calculate, non-zero means using this value! */
     int gBYTE_ORDER;            /* no longer a global variable */
+
+    char        cursor_name[128]; /* active cursor (empty string if none) */
 
 } msPOSTGISLayerInfo;
 
@@ -292,6 +297,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
     layerinfo->user_srid = NULL;
     layerinfo->conn = NULL;
     layerinfo->gBYTE_ORDER = 0;
+    layerinfo->cursor_name[0] = '\0';
 
     layerinfo->conn = (PGconn *) msConnPoolRequest(layer);
     if(!layerinfo->conn) {
@@ -533,6 +539,10 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
 
     /* Allocate buffer to fit the largest query string */
     query_string_0_6 = (char *) malloc(113 + 42 + strlen(columns_wanted) + strlen(data_source) + (layer->filter.string ? strlen(layer->filter.string) : 0) + 2 * strlen(geom_column) + strlen(box3d) + strlen(f_table_name) + strlen(user_srid) + 1);
+    
+    assert( layerinfo->cursor_name[0] == '\0' );
+    strcpy( layerinfo->cursor_name, "mycursor" );
+
     if(!layer->filter.string) {
         if(!strlen(user_srid)) {
             sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )", columns_wanted, data_source, geom_column, box3d, f_table_name, geom_column);
@@ -743,6 +753,21 @@ int msPOSTGISLayerClose(layerObj *layer)
             layerinfo->query_result = NULL;
         } else if(layer->debug) {
             msDebug("msPOSTGISLayerClose -- query_result is NULL\n");
+        }
+
+        if( strlen(layerinfo->cursor_name) > 0 )
+        {
+            PGresult            *query_result;
+            char                cmd_buffer[500];
+
+            sprintf( cmd_buffer, "CLOSE %s", layerinfo->cursor_name );
+
+            query_result = PQexec(layerinfo->conn, cmd_buffer );
+            if(query_result) {
+                PQclear(query_result);
+            }
+
+            layerinfo->cursor_name[0] = '\0';
         }
 
         msConnPoolRelease(layer, layerinfo->conn);

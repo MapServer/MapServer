@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Make sure mappostgis.c closes MYCURSOR in layer close function so that
+  CLOSE_CONNECTION=DEFER works properly.  (bug 1757)
+
 - Support large (>2GB) raster files relative to SHAPEPATH. (bug 1748)
 
 - Set User-Agent in HTTP headers of client WMS/WFS connections (bug 1749)
