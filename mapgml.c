@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2006/05/02 20:52:06  dan
+ * Output feature id as @fid instead of @gml:id in WFS 1.0.0 / GML 2.1.2
+ * GetFeature requests (bug 1759)
+ *
  * Revision 1.87  2006/05/02 19:38:39  dan
  * Allow use of wms/ows_include_items and wms/ows_exclude_items to control
  * which items to output in text/plain GetFeatureInfo. (bug 1761)
@@ -1538,8 +1542,13 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
         msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layerName) == MS_FALSE)
           msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
-        if(featureIdIndex != -1)
-          msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, shape.values[featureIdIndex]);
+        if(featureIdIndex != -1) 
+        {
+            if (outputformat == OWS_GML2)
+                msIO_fprintf(stream, "      <%s fid=\"%s\">\n", layerName, shape.values[featureIdIndex]);
+            else  /* OWS_GML3 */
+                msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, shape.values[featureIdIndex]);
+        }
         else
           msIO_fprintf(stream, "      <%s>\n", layerName);
                     

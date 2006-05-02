@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Output feature id as @fid instead of @gml:id in WFS 1.0.0 / GML 2.1.2
+  GetFeature requests (bug 1759)
+
 - Allow use of wms/ows_include_items and wms/ows_exclude_items to control
   which items to output in text/plain GetFeatureInfo. Making the behavior
   of this INFO_FORMAT consistent with the new behavior of GML GetFeatureInfo
