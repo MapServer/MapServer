@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2006/05/03 22:35:41  pramsey
+ * Added schema separation and search path awareness to the LayerRetrievePK. (towards Bug 1571)
+ *
  * Revision 1.70  2006/05/02 16:03:36  frank
  * keep track of mycursor and close in layerclose (bug 1757)
  *
@@ -161,8 +164,8 @@ typedef struct ms_POSTGIS_layer_info_t
 #define DATA_ERROR_MESSAGE \
     "%s" \
     "Error with POSTGIS data variable. You specified '%s'.\n" \
-    "Standard ways of specifiying are : \n(1) 'geometry_column from geometry_table' \n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' \n\n" \
-    "Make sure you put in the 'using unique  &lt;column name&gt;' and 'using SRID=#' clauses in.\n\n" \
+    "Standard ways of specifiying are : \n(1) 'geometry_column from geometry_table' \n(2) 'geometry_column from (sub query) as foo using unique column name using SRID=srid#' \n\n" \
+    "Make sure you put in the 'using unique  column name' and 'using SRID=#' clauses in.\n\n" \
     "For more help, please see http://postgis.refractions.net/documentation/ \n\n" \
     "Mappostgis.c - version of Jan 23/2004.\n"
 
@@ -643,7 +646,7 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
     /* TODO Rename tmp2 to something meaningful */
     tmp2 = (char *) malloc(149 + strlen(query_string_0_6) + strlen(error_message) + 1);
     sprintf(tmp2, "Error executing POSTGIS DECLARE (the actual query) statement: '%s' \n\nPostgresql reports the error as '%s'\n\nMore Help:\n\n", query_string_0_6, error_message);
-    msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "prepare_database()", tmp2, "&lt;check your .map file&gt;");
+    msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "prepare_database()", tmp2, "check your .map file");
 
     free(tmp2);
     free(error_message);
@@ -1726,6 +1729,30 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
     char        *sql = 0;
     msPOSTGISLayerInfo *layerinfo = 0;
     int major, minor, point, tmpint;
+    int length;
+    char *pos_sep, *schema, *table;
+    schema = NULL;
+    table = NULL;
+
+     /* Attempt to separate table_name into schema.table */
+    pos_sep = strstr(table_name, ".");
+    if(pos_sep) 
+    {
+      length = pos_sep - table_name;
+      schema = (char *)malloc(length + 1);
+      strncpy(schema, table_name, length);
+      schema[length] = 0;
+
+      length = (int)pos_sep + strlen(pos_sep);
+      table = (char *)malloc(length);
+      strncpy(table, pos_sep + 1, length - 1);
+      table[length - 1] = 0;
+      
+      if(debug)
+      {
+        msDebug("msPOSTGISLayerRetrievePK(): Found schema %s, table %s.\n", schema, table);
+      }
+    }
     
     if(msPOSTGISLayerRetrievePGVersion(layer, debug, &major, &minor, &point) == MS_FAILURE) 
     {
@@ -1747,7 +1774,7 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
     {
         if(debug)
         {
-            msDebug("msPOSTGISLayerRetrievePK(): Version below 7.3.\n");
+            msDebug("msPOSTGISLayerRetrievePK(): Version below 7.2.\n");
         }
         return MS_FAILURE;
     }
@@ -1765,8 +1792,18 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
          * We only support single column primary keys, so multicolumn
          * pks are explicitly excluded from the query.
          */
-        sql = malloc(strlen(table_name) + 288); 
-        sprintf(sql, "select attname from pg_attribute, pg_constraint, pg_class where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_constraint.conkey[2] is null", table_name);
+        if(schema && table)
+        {
+            sql = malloc(strlen(schema) + strlen(table) + 376); 
+            sprintf(sql, "select attname from pg_attribute, pg_constraint, pg_class, pg_namespace where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_class.relnamespace = pg_namespace.oid and pg_namespace.nspname = '%s' and pg_constraint.conkey[2] is null", table, schema);
+            free(table);
+            free(schema);
+        }
+        else
+        {
+            sql = malloc(strlen(table_name) + 325); 
+            sprintf(sql, "select attname from pg_attribute, pg_constraint, pg_class where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_table_is_visible(pg_class.oid) and pg_constraint.conkey[2] is null", table_name);
+      }
     }
 
     if (debug)
@@ -1806,6 +1843,16 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       if(debug) 
       {
         msDebug("msPOSTGISLayerRetrievePK: No results found.\n");
+      }
+      PQclear(query_result);
+      free(sql);
+      return MS_FAILURE;
+    }
+    if(PQntuples(query_result) > 1)
+    {
+      if(debug)
+      {
+        msDebug("msPOSTGISLayerRetrievePK: Multiple results found.\n");
       }
       PQclear(query_result);
       free(sql);
