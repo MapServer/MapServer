@@ -42,6 +42,18 @@ cd mapscript/java
 nmake /f makefile.vc
 nmake /f makefile.vc test
 
+International language support
+------------------------------
+
+Since May 2006 Java mapscript has complete support for international languages
+usage in queries and mapscript internals. To document this improvement
+we have created the examples/QueryByAttributeUnicode.java
+test program which uses the ISO-8859-15 encoding.
+
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1753
+http://thread.gmane.org/gmane.comp.gis.mapserver.user/19298/focus=19298
+http://thread.gmane.org/gmane.comp.gis.mapserver.user/19213/focus=19213
+
 Onlice resources
 ----------------
 
@@ -54,3 +66,4 @@ http://mapserver.gis.umn.edu/docs/faq/thread_safety
 General:
 
 http://mapserver.gis.umn.edu/docs
+

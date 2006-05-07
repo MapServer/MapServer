@@ -17,11 +17,15 @@ public class QueryByAttribute {
 	}
 
 	layerObj layer = map.getLayerByName("POINT");
+	layer.setTemplate("template.html");
+
 	layer.queryByAttributes(map,"FNAME", filter, mapscriptConstants.MS_MULTIPLE);
 	layer.open();
 	System.out.println( "Searched for: " +filter );        
 	System.out.println( "Results number (should be always 1): " +layer.getNumResults() );
 	layer.close();
+
+
 	}
 }
 

@@ -27,12 +27,15 @@ public class DrawMap {
 	}    
    
     mapObj map = new mapObj(args[0]);
-    map.getImagecolor().setRGB(153, 153, 204);
-    styleObj st = map.getLayer(1).getClass(0).getStyle(0);
-    st.getColor().setHex("#000000");
-    imageObj img = map.draw();
-    System.out.println("The map will be drawn to:"+args[1]);
-    img.save(args[1], map);
+    //map.getImagecolor().setRGB(153, 153, 204);
+    //styleObj st = map.getLayer(1).getClass(0).getStyle(0);
+    //st.getColor().setHex("#000000");
+    int i=0;
+    //for (i=0; i<100; i++) {
+    	imageObj img = map.draw();
+    	System.out.println(i+") the map will be drawn to:"+args[1]);
+    	img.save(args[1], map);
+    //}
     //img.delete();
     //map.delete();
     //mapscript.msCleanup();
