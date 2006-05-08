@@ -60,7 +60,7 @@ $(MS_OBJS):	$(MS_HDRS)
 
 $(MS_DLL) $(MS_LIB_DLL):	$(MS_LIB)
 	link /dll $(LDEBUG) \
-	   $(MS_OBJS) $(EXTERNAL_LIBS) /def:mapserver.def \
+	   $(MS_OBJS) $(EXTERNAL_LIBS) \
 	   /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
 	
 $(MS_LIB):	$(MS_OBJS)
