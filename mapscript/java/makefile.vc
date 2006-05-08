@@ -56,6 +56,6 @@ test:
 clean:
 	del *.obj
 	del *.lib
-	rmdir /s /q edu
+	-rmdir /s /q edu
 	del libmapscript.dll
 	del mapscript_wrap.c
