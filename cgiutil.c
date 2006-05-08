@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/05/08 20:28:43  frank
+ * force stdin into binary mode when reading from stdin on win32 (bug 1768)
+ *
  * Revision 1.24  2006/02/18 21:35:35  hobu
  * be explicit about the assignment when getting the
  * CONTENT_TYPE on line 137
@@ -65,6 +68,8 @@ static char *readPostBody( cgiRequestObj *request )
     char *data; 
     int data_max, data_len, chunk_size;
 
+    msIO_needBinaryStdin();
+    
 /* -------------------------------------------------------------------- */
 /*      If the length is provided, read in one gulp.                    */
 /* -------------------------------------------------------------------- */

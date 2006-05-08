@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/05/08 20:28:43  frank
+ * force stdin into binary mode when reading from stdin on win32 (bug 1768)
+ *
  * Revision 1.4  2005/07/22 17:26:11  frank
  * bug 1259: fixed POST support in fastcgi mode
  *
@@ -108,5 +111,6 @@ int msIO_contextWrite( msIOContext *context, const void *data, int byteCount );
 /* this is just for setting normal stdout's to binary mode on windows */
 
 int msIO_needBinaryStdout( void );
+int msIO_needBinaryStdin( void );
 
 #endif /* nef MAPIO_H */

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/05/08 20:28:43  frank
+ * force stdin into binary mode when reading from stdin on win32 (bug 1768)
+ *
  * Revision 1.8  2005/07/25 20:56:00  frank
  * Undef msIO_fread() too.
  *
@@ -497,6 +500,34 @@ int msIO_needBinaryStdout()
       msSetError(MS_IOERR, 
                  "Unable to change stdout to binary mode.", 
                  "msIO_needBinaryStdout()" );
+      return(MS_FAILURE);
+    }
+#endif
+    
+    return MS_SUCCESS;
+}
+
+/************************************************************************/
+/*                        msIO_needBinaryStdin()                        */
+/*                                                                      */
+/*      This function is intended to ensure that stdin is in binary     */
+/*      mode.                                                           */
+/*                                                                      */
+/*      But don't do it we are using FastCGI.  We will take care of     */
+/*      doing it in the libfcgi library in that case for the normal     */
+/*      cgi case, and for the fastcgi case the _setmode() call          */
+/*      causes a crash.                                                 */
+/************************************************************************/
+
+int msIO_needBinaryStdin()
+
+{
+#if defined(_WIN32) && !defined(USE_FASTCGI)
+    if(_setmode( _fileno(stdin), _O_BINARY) == -1) 
+    {
+      msSetError(MS_IOERR, 
+                 "Unable to change stdin to binary mode.", 
+                 "msIO_needBinaryStdin()" );
       return(MS_FAILURE);
     }
 #endif

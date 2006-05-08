@@ -147,6 +147,7 @@ CVS HEAD (4.9-dev)
 - Default layer->project to MS_TRUE even if no projection is set, to allow
   geotransforms (nonsquare pixels, etc) to be applied (bug 1645).
 
+- Force stdin into binary mode on win32 when reading post bodies. (bug 1768)
 
 
 Version 4.8.0-rc2 (2006-01-09)
