@@ -237,3 +237,4 @@ test:
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DrawMap ../../tests/test.map ./map.png
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ConnPool
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttribute ../../tests/test.map
+	LC_ALL=de_DE $(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttributeUnicode data/subset-umlauts.map
