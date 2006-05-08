@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2006/05/08 17:41:04  frank
+ * fixed layer debug time reporting
+ *
  * Revision 1.104  2006/04/28 03:13:02  sdlime
  * Fixed a few issues with relative coordinates. Added support for all nine relative positions. (bug 1547)
  *
@@ -460,14 +463,14 @@ imageObj *msDrawMap(mapObj *map)
 
     for(i=0; i<map->numlayers; i++) {
 
-        if (map->debug)
-            msGettimeofday(&starttime, NULL);
-
         if (map->layerorder[i] != -1) {
             lp = &(map->layers[ map->layerorder[i]]);
 
             if(lp->postlabelcache) /* wait to draw */
                 continue;
+
+            if (map->debug || lp->debug )
+                msGettimeofday(&starttime, NULL);
 
             if (!msLayerIsVisible(map, lp))
                 continue;
