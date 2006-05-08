@@ -60,7 +60,7 @@ $(MS_OBJS):	$(MS_HDRS)
 
 $(MS_DLL) $(MS_LIB_DLL):	$(MS_LIB)
 	link /dll $(LDEBUG) \
-	   $(MS_OBJS) $(EXTERNAL_LIBS) /def:mapserver.def \
+	   $(MS_OBJS) $(EXTERNAL_LIBS) \
 	   /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
 	
 $(MS_LIB):	$(MS_OBJS)
@@ -101,9 +101,27 @@ clean:
 	del *.pdb
 	del *.exp
 	del *.ilk
-#	cd gd-1.2
-#	nmake -f makefile.nt clean
-#	cd ..
+!IFDEF DOT_NET
+	cd mapscript\csharp
+	nmake /f makefile.vc clean
+	cd ..\..
+!ENDIF
+!IFDEF JAVA_HOME
+	cd mapscript\java
+	nmake /f makefile.vc clean
+	cd ..\..
+!ENDIF
+!IFDEF PHP_HOME
+	cd mapscript\php3
+	nmake /f makefile.vc clean
+	cd ..\..
+!ENDIF
+!IFDEF PYTHON_HOME
+    cd mapscript\python
+    del mapscript_wrap.c
+    -rmdir /s /q build
+    cd ..\..
+!ENDIF
 
 
 mapscriptvars: makefile.vc nmake.opt
