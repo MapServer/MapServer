@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2006/05/09 14:33:41  assefa
+ * WFS client/OWS : correct path concatenation logic for temporary gml file
+ * created (bug 1770).
+ *
  * Revision 1.63  2006/03/15 18:00:22  assefa
  * Use flag SOS_SVR instead of OGC_SOS (Bug 1712).
  *
@@ -1593,6 +1597,7 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
     char *pszBuf, *pszPtr;
     int  i, nBufLen;
 
+
     nBufLen = strlen(pszURL) + strlen(pszExt) +1;
     if (pszPath)
         nBufLen += (strlen(pszPath)+1);
@@ -1608,9 +1613,16 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
     if (pszPath)
     {
 #ifdef _WIN32
-        sprintf(pszBuf, "%s\\", pszPath);
+        if (pszPath[strlen(pszPath) -1] != '/' &&
+            pszPath[strlen(pszPath) -1] != '\\')
+          sprintf(pszBuf, "%s\\", pszPath);
+        else
+          sprintf(pszBuf, "%s", pszPath);
 #else
-        sprintf(pszBuf, "%s/", pszPath);
+        if (pszPath[strlen(pszPath) -1] != '/')
+          sprintf(pszBuf, "%s/", pszPath);
+        else
+          sprintf(pszBuf, "%s", pszPath);
 #endif
     }
 
