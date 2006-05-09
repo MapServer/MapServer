@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2006/05/09 22:35:41  pramsey
+ * Added quotes around field names being retrieved by query requests. (Bug 1536)
+ *
  * Revision 1.71  2006/05/03 22:35:41  pramsey
  * Added schema separation and search path awareness to the LayerRetrievePK. (towards Bug 1571)
  *
@@ -491,12 +494,14 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
     } else {
         length = 55 + strlen(geom_column) + strlen(urid_name);
         for(t = 0; t < layer->numitems; t++) {
-            length += strlen(layer->items[t]) + 7;
+            length += strlen(layer->items[t]) + 9;
         }
         columns_wanted = (char *) malloc(length + 1);
         *columns_wanted = 0;
         for(t = 0; t < layer->numitems; t++) {
+            strcat(columns_wanted, "\"");
             strcat(columns_wanted, layer->items[t]);
+            strcat(columns_wanted, "\"");
             strcat(columns_wanted, "::text,");
         }
         temp = columns_wanted + strlen(columns_wanted);
@@ -1247,12 +1252,14 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     } else {
         length = 46 + strlen(geom_column_name);
         for(t = 0; t < layer->numitems; t++) {
-            length += strlen(layer->items[t]) + 7;
+            length += strlen(layer->items[t]) + 9;
         }
         columns_wanted = (char *) malloc(length + 1);
         *columns_wanted = 0;
         for(t = 0; t < layer->numitems; t++) {
+            strcat(columns_wanted, "\"");
             strcat(columns_wanted, layer->items[t]);
+            strcat(columns_wanted, "\"");
             strcat(columns_wanted, "::text,");
         }
         temp = columns_wanted + strlen(columns_wanted);
