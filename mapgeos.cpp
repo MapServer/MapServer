@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/05/11 14:10:35  sdlime
+ * Added GEOS Union, difference and intersection methods.
+ *
  * Revision 1.16  2006/01/20 06:06:53  sdlime
  * Added contains operator to mapgeos.cpp and the Swig-based MapScript interface.
  *
@@ -760,6 +763,108 @@ char *msGEOSShapeToWKT(shapeObj *shape)
 /*
 ** Analytical functions exposed to MapServer/MapScript.
 */
+
+shapeObj *msGEOSUnion(shapeObj *shape1, shapeObj *shape2)
+{
+#ifdef USE_GEOS
+  if(!shape1 || !shape2)
+    return NULL;
+
+  if(!shape1->geometry) /* if no geometry for the shape then build one */
+    shape1->geometry = msGEOSShape2Geometry(shape1);
+  Geometry *g1 = (Geometry *) shape1->geometry;
+  if(!g1)
+    return NULL;
+
+  if(!shape2->geometry) /* if no geometry for the shape then build one */
+    shape2->geometry = msGEOSShape2Geometry(shape2);
+  Geometry *g2 = (Geometry *) shape2->geometry;
+  if(!g2)
+    return NULL;
+
+  try {
+    Geometry *g = g1->Union(g2);
+    return msGEOSGeometry2Shape(g);
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSUnion()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSUnion()");
+  return NULL;
+#endif
+}
+
+shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2)
+{
+#ifdef USE_GEOS
+  if(!shape1 || !shape2)
+    return NULL;
+
+  if(!shape1->geometry) /* if no geometry for the shape then build one */
+    shape1->geometry = msGEOSShape2Geometry(shape1);
+  Geometry *g1 = (Geometry *) shape1->geometry;
+  if(!g1)
+    return NULL;
+
+  if(!shape2->geometry) /* if no geometry for the shape then build one */
+    shape2->geometry = msGEOSShape2Geometry(shape2);
+  Geometry *g2 = (Geometry *) shape2->geometry;
+  if(!g2)
+    return NULL;
+
+  try {
+    Geometry *g = g1->intersection(g2);
+    return msGEOSGeometry2Shape(g);
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSIntersection()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSIntersection()");
+  return NULL;
+#endif
+}
+
+shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2)
+{
+#ifdef USE_GEOS
+  if(!shape1 || !shape2)
+    return NULL;
+
+  if(!shape1->geometry) /* if no geometry for the shape then build one */
+    shape1->geometry = msGEOSShape2Geometry(shape1);
+  Geometry *g1 = (Geometry *) shape1->geometry;
+  if(!g1)
+    return NULL;
+
+  if(!shape2->geometry) /* if no geometry for the shape then build one */
+    shape2->geometry = msGEOSShape2Geometry(shape2);
+  Geometry *g2 = (Geometry *) shape2->geometry;
+  if(!g2)
+    return NULL;
+
+  try {
+    Geometry *g = g1->difference(g2);
+    return msGEOSGeometry2Shape(g);
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSDifference()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSDifference()");
+  return NULL;
+#endif
+}
 
 shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 {

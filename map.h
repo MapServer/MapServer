@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.447  2006/05/11 14:10:35  sdlime
+ * Added GEOS Union, difference and intersection methods.
+ *
  * Revision 1.446  2006/04/27 04:05:17  sdlime
  * Initial support for relative coordinates. (bug 1547)
  *
@@ -2117,6 +2120,9 @@ MS_DLL_EXPORT shapeObj *msGEOSShapeFromWKT(const char *string);
 MS_DLL_EXPORT char *msGEOSShapeToWKT(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
+MS_DLL_EXPORT shapeObj *msGEOSUnion(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
 
 #endif

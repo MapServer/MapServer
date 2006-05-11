@@ -152,6 +152,24 @@
        return msGEOSConvexHull(self);
     }
 
+    %newobject Union;
+    shapeObj *Union(shapeObj *shape)
+    {
+       return msGEOSUnion(self, shape);
+    }
+
+    %newobject intersection;
+    shapeObj *intersection(shapeObj *shape)
+    {
+       return msGEOSIntersection(self, shape);
+    }
+
+    %newobject difference;
+    shapeObj *difference(shapeObj *shape)
+    {
+       return msGEOSDifference(self, shape);
+    }
+
     int contains(shapeObj *shape)
     {
        return msGEOSContains(self, shape);
