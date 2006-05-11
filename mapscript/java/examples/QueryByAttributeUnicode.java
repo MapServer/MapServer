@@ -1,7 +1,4 @@
-
 import edu.umn.gis.mapscript.*;
-
-import java.nio.charset.Charset;
 
 public class QueryByAttributeUnicode {
 	public static void main(String[] args)  {
