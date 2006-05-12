@@ -297,6 +297,7 @@ void lexer_cleanup(void) {
 <INITIAL,VALUE_STRING>cr                       { return(MS_CR); }
 <INITIAL,VALUE_STRING>csv                      { return(MS_DB_CSV); }
 <INITIAL,VALUE_STRING>mysql                    { return(MS_DB_MYSQL); }
+<INITIAL,VALUE_STRING>postgresql               { return(MS_DB_POSTGRES); }
 <INITIAL,VALUE_STRING>default		       { return(MS_DEFAULT); }
 <INITIAL,VALUE_STRING>dd                       { return(MS_DD); }
 <INITIAL>ellipse                               { return(MS_SYMBOL_ELLIPSE); }

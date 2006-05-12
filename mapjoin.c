@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/05/12 18:32:41  pramsey
+ * Added support for postgresql joins (Bug 1570).
+ *
  * Revision 1.28  2005/12/07 16:47:43  sdlime
  * Fixed potential segfault in mapjoin.c. (bug 1556)
  *
@@ -69,6 +72,12 @@ int msMySQLJoinNext(joinObj *join);
 int msMySQLJoinClose(joinObj *join);
 int msMySQLJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
 
+/* PostgreSQL function prototypes */
+int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join);
+int msPOSTGRESQLJoinPrepare(joinObj *join, shapeObj *shape);
+int msPOSTGRESQLJoinNext(joinObj *join);
+int msPOSTGRESQLJoinClose(joinObj *join);
+
 /* wrapper function for DB specific join functions */
 int msJoinConnect(layerObj *layer, joinObj *join) 
 {
@@ -81,6 +90,9 @@ int msJoinConnect(layerObj *layer, joinObj *join)
     break;
   case(MS_DB_MYSQL):
     return msMySQLJoinConnect(layer, join);
+    break;
+  case(MS_DB_POSTGRES):
+    return msPOSTGRESQLJoinConnect(layer, join);
     break;
   default:
     break;
@@ -102,6 +114,9 @@ int msJoinPrepare(joinObj *join, shapeObj *shape)
   case(MS_DB_MYSQL):
     return msMySQLJoinPrepare(join, shape);
     break;
+  case(MS_DB_POSTGRES):
+    return msPOSTGRESQLJoinPrepare(join, shape);
+    break;
   default:
     break;
   }
@@ -122,6 +137,9 @@ int msJoinNext(joinObj *join)
   case(MS_DB_MYSQL):
     return msMySQLJoinNext(join);
     break;
+  case(MS_DB_POSTGRES):
+    return msPOSTGRESQLJoinNext(join);
+    break;
   default:
     break;
   }
@@ -141,6 +159,9 @@ int msJoinClose(joinObj *join)
     break;
   case(MS_DB_MYSQL):
     return msMySQLJoinClose(join);
+    break;
+  case(MS_DB_POSTGRES):
+    return msPOSTGRESQLJoinClose(join);
     break;
   default:
     break;
