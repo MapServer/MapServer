@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/05/12 20:59:07  frank
+ * Removed -t switch, it doesn't work.
+ *
  * Revision 1.19  2006/02/10 05:51:45  sdlime
  * Applied patch to resolve issue with layers with no names if -l option is specified. (bug 1655)
  *
@@ -79,11 +82,10 @@ int main(int argc, char *argv[])
   if( argc < 3 ) {
     fprintf(stdout,
             "Syntax: shp2img -m [mapfile] -o [image] -e minx miny maxx maxy\n"
-            "                -t -l [layers] -i [format]\n");
+            "                -l [layers] -i [format]\n");
 
     fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
     fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format.\n" );
-    fprintf(stdout,"  -t: enable transparency\n" );
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render - optional\n");
     fprintf(stdout,"  -l layers: layers to enable - optional\n" );
@@ -161,9 +163,6 @@ int main(int argc, char *argv[])
       i+=2;
     }
 
-    if(strcmp(argv[i], "-t") == 0) /* transparency */
-      map->transparent = MS_ON;
-    
     if(strcmp(argv[i], "-all_debug") == 0) /* debug */
     {
         int debug_level = atoi(argv[++i]);
