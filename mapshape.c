@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2006/05/15 19:09:10  frank
+ * Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
+ *
  * Revision 1.69  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1196,7 +1199,9 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	}
       }
 
-      if(psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_POLYGONM)
+      if(psSHP->nShapeType == SHP_POLYGON 
+         || psSHP->nShapeType == SHP_POLYGONZ
+         || psSHP->nShapeType == SHP_POLYGONM)
         shape->type = MS_SHAPE_POLYGON;
       else
         shape->type = MS_SHAPE_LINE;
