@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22.2.3  2006/05/15 17:25:03  dan
+ * Force stdin into binary mode on win32 when reading post bodies. (bug 1768)
+ *
  * Revision 1.22.2.2  2006/02/03 18:57:51  sdlime
  * Argh! I mis-applied the patch for 1628 and didn't delete one line.
  *
@@ -64,6 +67,8 @@ static char *readPostBody( cgiRequestObj *request )
     char *data; 
     int data_max, data_len, chunk_size;
 
+    msIO_needBinaryStdin();
+    
 /* -------------------------------------------------------------------- */
 /*      If the length is provided, read in one gulp.                    */
 /* -------------------------------------------------------------------- */
