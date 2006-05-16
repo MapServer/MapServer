@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.132  2006/05/16 05:36:02  sdlime
+ * Fixed bug that required PIXMAP fills to define a bogus color.
+ *
  * Revision 1.131  2006/04/26 03:25:47  sdlime
  * Applied most recent patch for curved labels. (bug 1620)
  *
@@ -1392,7 +1395,9 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
 
   if(!p) return;
 
-  if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor)) { /* use msDrawLineSymbolGD() instead (POLYLINE) */
+  symbol = &(symbolset->symbol[style->symbol]);
+
+  if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolGD() instead (POLYLINE) */
     msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
     return;
   }
@@ -1401,7 +1406,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
 
-  symbol = &(symbolset->symbol[style->symbol]);
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
@@ -1424,7 +1428,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   angle_radians = angle*MS_DEG_TO_RAD;
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
-  if(fc < 0) return; /* invalid color, -1 is valid */
+  if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
   if(size < 1) return; /* size too small */
 
   if(style->symbol == 0) { /* solid fill */
@@ -2151,13 +2155,13 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   ox = MS_NINT(style->offsetx*scalefactor); /* should we scale the offsets? */
   oy = MS_NINT(style->offsety*scalefactor);
 
-  if(fc==-1 && oc!=-1) { /* use msDrawLineSymbolGD() instead (POLYLINE) */
+  if(fc==-1 && oc!=-1 && symbol->type!=MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolGD() instead (POLYLINE) */
     msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
     return;
   }
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
-  if(fc < 0) return; /* nothing to do */
+  if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
   if(size < 1) return; /* size too small */
       
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color */    
@@ -2227,7 +2231,6 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     break;
   case(MS_SYMBOL_PIXMAP):
-
     if (symbol->sizey)
       d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
     else
