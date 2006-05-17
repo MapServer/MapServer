@@ -93,6 +93,10 @@ jstring JNU_NewStringNative(JNIEnv *env, const char *str) {
 	jclass jcls_str;
 	jmethodID MID_String_init;
 
+	if (str == NULL) {
+		return NULL;
+	}
+
 	if ((*env)->EnsureLocalCapacity(env, 2) < 0) {
 	    return NULL; /* out of memory error */
 	}
