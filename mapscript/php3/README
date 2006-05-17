@@ -1487,6 +1487,17 @@ Constructor:
   colorObj      color
   colorObj      backgroundcolor
   colorObj      outlinecolor
+  int           width
+  int           minwidth
+  int           maxwidth
+  double        angle
+  string        angleitem  
+  string        sizeitem
+  double        minvalue
+  double        maxvalue
+  string        rangeitem
+      
+        
         
   Methods:
 

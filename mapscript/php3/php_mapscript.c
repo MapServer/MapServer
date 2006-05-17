@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.247  2006/05/17 14:11:02  assefa
+ * Add angle and other missing properties to the style object (Bug 1786)
+ *
  * Revision 1.246  2006/02/26 18:09:47  assefa
  * Add antialias parameter in the style (Bug 1685)
  *
@@ -12976,9 +12979,18 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG( "size",           self->size)
     else IF_SET_LONG( "minsize",        self->minsize)
     else IF_SET_LONG( "maxsize",        self->maxsize)
+    else IF_SET_LONG( "width",          self->width)
+    else IF_SET_LONG( "minwidth",       self->minwidth)
+    else IF_SET_LONG( "maxwidth",       self->maxwidth)
     else IF_SET_LONG( "offsetx",        self->offsetx)
     else IF_SET_LONG( "offsety",        self->offsety)
-    else IF_SET_LONG(  "antialias",    self->antialias)
+    else IF_SET_DOUBLE("angle",         self->angle)
+    else IF_SET_STRING( "angleitem",    self->angleitem)
+    else IF_SET_STRING( "sizeitem",     self->sizeitem)
+    else IF_SET_LONG(  "antialias",     self->antialias)
+    else IF_SET_DOUBLE("minvalue",      self->minvalue)
+    else IF_SET_DOUBLE("maxvalue",      self->maxvalue)
+    else IF_SET_STRING( "rangeitem",    self->rangeitem)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.",
