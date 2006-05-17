@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.248  2006/05/17 16:04:55  assefa
+ * Add geos functions union, difference and intersection (Bug 1778)
+ *
  * Revision 1.247  2006/05/17 14:11:02  assefa
  * Add angle and other missing properties to the style object (Bug 1786)
  *
@@ -650,9 +653,16 @@ DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS);
+
+/*geos related functions*/
 DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_contains_geos(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_Union(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_intersection(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_difference(INTERNAL_FUNCTION_PARAMETERS);
+/*end of geos related functions*/
+
 DLEXPORT void php3_ms_shape_towkt(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -1164,7 +1174,10 @@ function_entry php_shape_class_functions[] = {
     {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
     {"buffer",          php3_ms_shape_buffer,           NULL},
     {"convexhull",      php3_ms_shape_convexhull,       NULL},
-    {"containsshape",        php3_ms_shape_contains_geos,       NULL},
+    {"containsshape",        php3_ms_shape_contains_geos,NULL},
+    {"union_geos",          php3_ms_shape_Union,             NULL},
+    {"intersection",          php3_ms_shape_intersection,NULL},
+    {"difference",          php3_ms_shape_difference,    NULL},
     {"towkt",           php3_ms_shape_towkt,            NULL},
     {"free",            php3_ms_shape_free,             NULL},
     {NULL, NULL, NULL}
@@ -11176,6 +11189,160 @@ DLEXPORT void php3_ms_shape_contains_geos(INTERNAL_FUNCTION_PARAMETERS)
 }
  
  
+
+/**********************************************************************
+ *                        shape->Union()
+ **********************************************************************/
+/* {{{ proto int shape.Union(shapeobj shape)
+   Return a shape which is the union of the current shape and the one
+   given in argument 1 . Uses underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_Union(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+    shapeObj    *return_shape = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    return_shape = shapeObj_Union(self, poShape);
+    
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new),  NULL,
+                              list, return_value TSRMLS_CC);
+}
+ 
+
+
+/**********************************************************************
+ *                        shape->intersection()
+ **********************************************************************/
+/* {{{ proto int shape.intersection(shapeobj shape)
+   Return a shape which is the intersection of the current shape and the one
+   given in argument 1 . Uses underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_intersection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+    shapeObj    *return_shape = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    return_shape = shapeObj_intersection(self, poShape);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new),  NULL,
+                              list, return_value TSRMLS_CC);
+
+}
+
+
+
+/**********************************************************************
+ *                        shape->difference()
+ **********************************************************************/
+/* {{{ proto int shape.difference(shapeobj shape)
+   Return a shape which is the difference of the current shape and the one
+   given in argument 1 . Uses underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_difference(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+    shapeObj    *return_shape = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    return_shape = shapeObj_difference(self, poShape);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new),  NULL,
+                              list, return_value TSRMLS_CC);
+}
+
+
 /**********************************************************************
  *                        shape->toWkt()
  **********************************************************************/

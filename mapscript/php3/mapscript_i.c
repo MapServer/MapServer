@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.97  2006/05/17 16:04:55  assefa
+ * Add geos functions union, difference and intersection (Bug 1778)
+ *
  * Revision 1.96  2006/01/20 15:03:35  assefa
  * Add containsshape function using uderlying GEOS function (Bug 1623).
  *
@@ -973,6 +976,20 @@ int shapeObj_contains_geos(shapeObj *self, shapeObj *shape)
     return msGEOSContains(self, shape);
 }
 
+shapeObj *shapeObj_Union(shapeObj *self, shapeObj *shape)
+{
+     return msGEOSUnion(self, shape);
+}
+
+shapeObj *shapeObj_intersection(shapeObj *self, shapeObj *shape)
+{
+     return msGEOSIntersection(self, shape);
+}
+
+shapeObj *shapeObj_difference(shapeObj *self, shapeObj *shape)
+{
+     return msGEOSDifference(self, shape);
+}
  
 /**********************************************************************
  * class extensions for rectObj

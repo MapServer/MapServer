@@ -1247,6 +1247,24 @@ Constructor:
         the shape. Else returns false. Uses underlying GEOS msGEOSContains.
 
 
+   shapeobj union_geos(shapeobj shape)
+        Returns a shape object representing the union of the current
+        shape object with the one passed as parameter. 
+        Only available if php/mapscript is built with GEOS 
+        library.
+
+   shapeobj intersection(shapeobj shape)
+        Returns a shape object representing the intersection of the current
+        shape object with the one passed as parameter. 
+        Only available if php/mapscript is built with GEOS 
+        library.
+
+   shapeobj difference(shapeobj shape)
+        Returns a shape object representing the difference of the current
+        shape object with the one passed as parameter. 
+        Only available if php/mapscript is built with GEOS 
+        library.
+
    string toWkt()
         Returns WKT representation of the shape's geometry.
 
