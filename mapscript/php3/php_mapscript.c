@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.249  2006/05/17 19:25:10  assefa
+ * forgot to add the style parameters in phpms_build_style_object (Bug 1786).
+ *
  * Revision 1.248  2006/05/17 16:04:55  assefa
  * Add geos functions union, difference and intersection (Bug 1778)
  *
@@ -13010,10 +13013,19 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     add_property_long(return_value,   "size",       pstyle->size);
     add_property_long(return_value,   "minsize",       pstyle->minsize);
     add_property_long(return_value,   "maxsize",       pstyle->maxsize);
+    add_property_long(return_value,   "width",       pstyle->width);
+    add_property_long(return_value,   "minwidth",       pstyle->minwidth);
+    add_property_long(return_value,   "maxwidth",       pstyle->maxwidth);
     add_property_long(return_value,   "offsetx",       pstyle->offsetx);
     add_property_long(return_value,   "offsety",       pstyle->offsety);
+    add_property_double(return_value,   "angle",       pstyle->angle);
+    PHPMS_ADD_PROP_STR(return_value,  "angleitem", pstyle->angleitem);
+    PHPMS_ADD_PROP_STR(return_value,  "sizeitem", pstyle->sizeitem);
     add_property_long(return_value,   "antialias",  pstyle->antialias);
-
+    add_property_double(return_value,   "minvalue", pstyle->minvalue);
+    add_property_double(return_value,   "maxvalue", pstyle->maxvalue);
+    PHPMS_ADD_PROP_STR(return_value,  "rangeitem", pstyle->rangeitem);
+    
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_color_object(&(pstyle->color),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR TSRMLS_CC);
