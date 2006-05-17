@@ -407,10 +407,18 @@
         }
      
         value = (char *) msLookupHashTable(&(self->metadata), name);
+	/*
+	Umberto, 05/17/2006
+	Exceptions should be reserved for situations when a serious error occurred
+	and normal program flow must be interrupted.
+	In this case returning null should be more that enough.
+	*/
+#ifndef SWIGJAVA
         if (!value) {
             msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
             return NULL;
         }
+#endif
         return value;
     }
 
