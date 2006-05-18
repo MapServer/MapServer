@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2006/05/18 22:20:37  sdlime
+ * Fixed offseting code percentage of 1.0 maps to width-1 or height-1.
+ *
  * Revision 1.71  2006/04/28 03:13:02  sdlime
  * Fixed a few issues with relative coordinates. Added support for all nine relative positions. (bug 1547)
  *
@@ -783,8 +786,8 @@ void msOffsetPointRelativeTo(pointObj *point, layerObj *layer)
   if(layer->transform == MS_TRUE) return; /* nothing to do */
 
   if(layer->units == MS_PERCENTAGES) {
-    point->x *= layer->map->width;
-    point->y *= layer->map->height;
+    point->x *= (layer->map->width-1);
+    point->y *= (layer->map->height-1);
   }
 
   if(layer->transform == MS_FALSE || layer->transform == MS_UL) return; /* done */
@@ -843,8 +846,8 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
   if(layer->units == MS_PERCENTAGES) {
     for (i=0; i<shape->numlines; i++) {
       for (j=0; j<shape->line[i].numpoints; j++) {
-        shape->line[i].point[j].x *= layer->map->width;
-        shape->line[i].point[j].y *= layer->map->height;
+        shape->line[i].point[j].x *= (layer->map->width-1);
+        shape->line[i].point[j].y *= (layer->map->height-1);
       }
     }
   }
