@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.448  2006/05/19 20:53:27  dan
+ * Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
+ *
  * Revision 1.447  2006/05/11 14:10:35  sdlime
  * Added GEOS Union, difference and intersection methods.
  *
@@ -1172,7 +1175,6 @@ typedef struct layer_obj {
   struct layer_obj *sameconnection;
   /* SDL has converted OracleSpatial, SDE, Graticules, MyGIS */
   void *layerinfo; /* all connection types should use this generic pointer to a vendor specific structure */
-  void *ogrlayerinfo; /* For OGR layers, will contain a msOGRLayerInfo struct */
   void *wfslayerinfo; /* For WFS layers, will contain a msWFSLayerInfo struct */
 #endif /* not SWIG */
 

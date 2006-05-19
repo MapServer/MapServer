@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.97  2006/05/19 20:53:27  dan
+ * Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
+ *
  * Revision 1.96  2006/04/08 03:36:48  frank
  * Ensure that an error in GetNextFeature() will be properly translated
  * into a MapServer error in GetNextShape().
@@ -1491,7 +1494,7 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
 
   msOGRFileInfo *psInfo;
 
-  if (layer->ogrlayerinfo != NULL)
+  if (layer->layerinfo != NULL)
   {
       return MS_SUCCESS;  // Nothing to do... layer is already opened
   }
@@ -1504,10 +1507,10 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
       psInfo = msOGRFileOpen( layer, 
                               (pszOverrideConnection ? pszOverrideConnection:
                                                        layer->connection) );
-      layer->ogrlayerinfo = psInfo;
+      layer->layerinfo = psInfo;
       layer->tileitemindex = -1;
       
-      if( layer->ogrlayerinfo == NULL )
+      if( layer->layerinfo == NULL )
           return MS_FAILURE;
   }
 
@@ -1521,9 +1524,9 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
       // Open tile index
 
       psInfo = msOGRFileOpen( layer, layer->tileindex );
-      layer->ogrlayerinfo = psInfo;
+      layer->layerinfo = psInfo;
       
-      if( layer->ogrlayerinfo == NULL )
+      if( layer->layerinfo == NULL )
           return MS_FAILURE;
 
       // Identify TILEITEM
@@ -1542,7 +1545,7 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
                      "msOGRLayerOpen()", 
                      layer->tileitem, layer->tileindex );
           msOGRFileClose( layer, psInfo );
-          layer->ogrlayerinfo = NULL;
+          layer->layerinfo = NULL;
           return MS_FAILURE;
       }
   }
@@ -1572,7 +1575,7 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
                      (pszOverrideConnection ? pszOverrideConnection:
                                               layer->connection) );
           msOGRFileClose( layer, psInfo );
-          layer->ogrlayerinfo = NULL;
+          layer->layerinfo = NULL;
           return(MS_FAILURE);
       }
   }
@@ -1607,7 +1610,7 @@ static int msOGRLayerOpenVT(layerObj *layer)
 int msOGRLayerClose(layerObj *layer) 
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
   if (psInfo)
   {
@@ -1615,7 +1618,7 @@ int msOGRLayerClose(layerObj *layer)
           msDebug("msOGRLayerClose(%s).\n", layer->connection);
 
       msOGRFileClose( layer, psInfo );
-      layer->ogrlayerinfo = NULL;
+      layer->layerinfo = NULL;
   }
 
   return MS_SUCCESS;
@@ -1637,7 +1640,7 @@ int msOGRLayerClose(layerObj *layer)
 static int msOGRLayerIsOpen(layerObj *layer) 
 {
 #ifdef USE_OGR
-  if (layer->ogrlayerinfo)
+  if (layer->layerinfo)
       return MS_TRUE;
 
   return MS_FALSE;
@@ -1664,7 +1667,7 @@ static int msOGRLayerIsOpen(layerObj *layer)
 int msOGRLayerWhichShapes(layerObj *layer, rectObj rect) 
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   status;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
@@ -1706,7 +1709,7 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect)
 int msOGRLayerGetItems(layerObj *layer)
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   
   if( layer->tileindex != NULL )
   {
@@ -1747,7 +1750,7 @@ int msOGRLayerGetItems(layerObj *layer)
 static int msOGRLayerInitItemInfo(layerObj *layer)
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   i;
   OGRFeatureDefn *poDefn;
 
@@ -1857,7 +1860,7 @@ void msOGRLayerFreeItemInfo(layerObj *layer)
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int  status;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
@@ -1916,7 +1919,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
                        long record)
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
   {
@@ -1960,7 +1963,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent) 
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   OGREnvelope oExtent;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
@@ -2057,7 +2060,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                   int tile, long record)
 {
 #ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->ogrlayerinfo;
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
   if (psInfo == NULL || psInfo->poLayer == NULL)
   {

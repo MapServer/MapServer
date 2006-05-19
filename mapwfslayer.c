@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/05/19 20:53:27  dan
+ * Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
+ *
  * Revision 1.36  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1175,7 +1178,7 @@ int msWFSLayerClose(layerObj *lp)
 /* ------------------------------------------------------------------
  * Cleanup OGR connection
  * ------------------------------------------------------------------ */
-    if (lp->ogrlayerinfo)
+    if (lp->layerinfo)
         msOGRLayerClose(lp);
 
 /* ------------------------------------------------------------------

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.323  2006/05/19 20:53:27  dan
+ * Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
+ *
  * Revision 1.322  2006/04/28 02:14:14  sdlime
  * Fixed writeStyle to quote all string output. (bug 1755)
  *
@@ -2420,7 +2423,6 @@ int initLayer(layerObj *layer, mapObj *map)
 
 
   layer->layerinfo = NULL;
-  layer->ogrlayerinfo = NULL;
   layer->wfslayerinfo = NULL;
 
   layer->items = NULL;
