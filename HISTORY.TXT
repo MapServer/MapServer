@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Implementation of RFC 16 mapio services (bug 1788).
+
 - Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
 
 - Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
