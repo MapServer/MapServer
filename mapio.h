@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/05/22 19:20:59  frank
+ * added some of the RFC 16 entry points
+ *
  * Revision 1.5  2006/05/08 20:28:43  frank
  * force stdin into binary mode when reading from stdin on win32 (bug 1768)
  *
@@ -107,6 +110,23 @@ msIOContext MS_DLL_EXPORT *msIO_getHandler( FILE * );
 */
 int msIO_contextRead( msIOContext *context, void *data, int byteCount );
 int msIO_contextWrite( msIOContext *context, const void *data, int byteCount );
+
+/*
+** For redirecting IO to a memory buffer. 
+*/
+
+typedef struct {
+    unsigned char *data;
+    int            data_len;
+    int            data_offset;
+} msIOBuffer;
+
+int MS_DLL_EXPORT msIO_bufferRead( void *, void *, int );
+int MS_DLL_EXPORT msIO_bufferWrite( void *, void *, int );
+
+void MS_DLL_EXPORT msIO_resetHandlers(void);
+void MS_DLL_EXPORT msIO_installStdoutToBuffer(void);
+void MS_DLL_EXPORT msIO_installStdinFromBuffer(void);
 
 /* this is just for setting normal stdout's to binary mode on windows */
 

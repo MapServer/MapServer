@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/05/22 19:20:59  frank
+ * added some of the RFC 16 entry points
+ *
  * Revision 1.9  2006/05/08 20:28:43  frank
  * force stdin into binary mode when reading from stdin on win32 (bug 1768)
  *
@@ -100,17 +103,17 @@ int msIO_installHandlers( msIOContext *stdin_context,
 
     if( stdin_context == NULL )
         current_stdin_context = default_stdin_context;
-    else
+    else if( stdin_context != &current_stdin_context )
         current_stdin_context = *stdin_context;
     
     if( stdout_context == NULL )
         current_stdout_context = default_stdout_context;
-    else
+    else if( stdout_context != &current_stdout_context )
         current_stdout_context = *stdout_context;
     
     if( stderr_context == NULL )
         current_stderr_context = default_stderr_context;
-    else
+    else if( stderr_context != &current_stderr_context )
         current_stderr_context = *stderr_context;
 
     return MS_TRUE;
@@ -535,3 +538,133 @@ int msIO_needBinaryStdin()
     return MS_SUCCESS;
 }
 
+/* ==================================================================== */
+/*      memory buffer io handling functions.                            */
+/* ==================================================================== */
+
+/************************************************************************/
+/*                         msIO_resetHandlers()                         */
+/************************************************************************/
+
+void msIO_resetHandlers()
+
+{
+    if( current_stdin_context.readWriteFunc == msIO_bufferRead )
+    {
+        msIOBuffer *buf = (msIOBuffer *) current_stdin_context.cbData;
+        
+        if( buf->data != NULL )
+            free( buf->data );
+        free( buf );
+    }
+
+    if( current_stdout_context.readWriteFunc == msIO_bufferWrite )
+    {
+        msIOBuffer *buf = (msIOBuffer *) current_stdout_context.cbData;
+        
+        if( buf->data != NULL )
+            free( buf->data );
+        free( buf );
+    }
+
+    if( current_stderr_context.readWriteFunc == msIO_bufferWrite )
+    {
+        msIOBuffer *buf = (msIOBuffer *) current_stderr_context.cbData;
+        
+        if( buf->data != NULL )
+            free( buf->data );
+        free( buf );
+    }
+
+    msIO_installHandlers( NULL, NULL, NULL );
+}
+
+/************************************************************************/
+/*                     msIO_installStdoutToBuffer()                     */
+/************************************************************************/
+
+void msIO_installStdoutToBuffer()
+
+{
+    msIOContext  context;
+
+    context.write_channel = MS_TRUE;
+    context.readWriteFunc = msIO_bufferWrite;
+    context.cbData = calloc(sizeof(msIOBuffer),1);
+
+    msIO_installHandlers( &current_stdin_context, 
+                          &context, 
+                          &current_stderr_context );
+}
+
+/************************************************************************/
+/*                    msIO_installStdinFromBuffer()                     */
+/************************************************************************/
+
+void msIO_installStdinFromBuffer()
+
+{
+    msIOContext  context;
+
+    context.write_channel = MS_FALSE;
+    context.readWriteFunc = msIO_bufferRead;
+    context.cbData = calloc(sizeof(msIOBuffer),1);
+
+    msIO_installHandlers( &context, 
+                          &current_stdout_context, 
+                          &current_stderr_context );
+}
+
+/************************************************************************/
+/*                          msIO_bufferWrite()                          */
+/************************************************************************/
+
+int msIO_bufferWrite( void *cbData, void *data, int byteCount )
+
+{
+    msIOBuffer *buf = (msIOBuffer *) cbData;
+
+    /*
+    ** Grow buffer if needed.
+    */
+    if( buf->data_offset + byteCount > buf->data_len )
+    {
+        buf->data_len = buf->data_len * 2 + byteCount + 100;
+        if( buf->data == NULL )
+            buf->data = (unsigned char *) malloc(buf->data_len);
+        else
+            buf->data = (unsigned char *) realloc(buf->data, buf->data_len);
+
+        if( buf->data == NULL )
+        {
+            msSetError( MS_MEMERR, 
+                        "Failed to allocate %d bytes for capture buffer.",
+                        "msIO_bufferWrite()", buf->data_len );
+            buf->data_len = 0;
+            return 0;
+        }
+    }
+
+    /*
+    ** Copy result into buffer.
+    */
+
+    memcpy( buf->data + buf->data_offset, data, byteCount );
+    buf->data_offset += byteCount;
+
+    return byteCount;
+}
+
+/************************************************************************/
+/*                          msIO_bufferRead()                           */
+/************************************************************************/
+
+int msIO_bufferRead( void *cbData, void *data, int byteCount )
+
+{
+/*    msIOBuffer *buf = (msIOBuffer *) cbData; */
+
+    /* not implemented yet. */
+
+    return 0;
+}
