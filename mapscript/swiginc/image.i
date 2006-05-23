@@ -211,6 +211,7 @@
     {
         gdBuffer buffer;
         
+  	buffer.owns_data = MS_TRUE;
         buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
                                           self->format);
         if( buffer.size == 0 )
