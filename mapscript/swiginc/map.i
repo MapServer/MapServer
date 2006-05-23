@@ -415,4 +415,9 @@
         return msMapLoadOWSParameters(self, request, wmtver_string);
     }
 
+    int OWSDispatch( cgiRequestObj *req )
+    {
+	return msOWSDispatch( self, req );
+    }
+
 }
