@@ -42,6 +42,12 @@
         free(self);
     }
 
+    int loadParams()
+    {
+	self->NumParams = loadParams( self );
+	return self->NumParams;
+    }
+
     void setParameter(char *name, char *value) 
     {
         int i;
