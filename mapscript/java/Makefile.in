@@ -206,7 +206,7 @@ interface: ../mapscript.i
 	mkdir -p edu/umn/gis/mapscript 
 	$(SWIG) -java -package edu.umn.gis.mapscript -o mapscript_wrap.c ../mapscript.i
 	mv *.java edu/umn/gis/mapscript/
-	
+
 # This target will be used in the release script
 interface_release: ../mapscript.i
 	mkdir -p edu/umn/gis/mapscript 
@@ -221,7 +221,7 @@ mapscript_java::
 
 mapscript_javadoc::
 	$(JAVADOC) -d doc -sourcepath edu/umn/gis/mapscript/*.java
-		
+
 mapscript_jar::
 	$(JAR) cf mapscript.jar edu
 
@@ -230,11 +230,12 @@ clean:
 	rm -rf examples/*.class
 
 test:
-	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java
+	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java examples/WxSTest.java
 	$(JAVAC) -encoding iso-8859-15 -classpath ./:examples/:./mapscript.jar -d examples/ examples/QueryByAttributeUnicode.java 
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DumpShp ../../tests/point.shp
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ShapeInfo ../../tests/point.shp ../../tests/point.dbf
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DrawMap ../../tests/test.map ./map.png
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ConnPool
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttribute ../../tests/test.map
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. WxSTest ../../tests/test.map
 	LC_ALL=de_DE $(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttributeUnicode data/subset-umlauts.map
