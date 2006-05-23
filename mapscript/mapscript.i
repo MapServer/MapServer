@@ -159,6 +159,7 @@ extern "C" {
 typedef struct {
     unsigned char *data;
     int size;
+    int owns_data;
 } gdBuffer;
 
 #ifdef __cplusplus
@@ -258,6 +259,7 @@ typedef struct {
 %include "../swiginc/resultcache.i"
 %include "../swiginc/owsrequest.i"
 %include "../swiginc/connpool.i"
+%include "../swiginc/msio.i"
 
 /* 
 =============================================================================
