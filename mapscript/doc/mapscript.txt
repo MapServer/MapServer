@@ -427,9 +427,9 @@ remains the primary reference for mapscript class attributes.
 ==========================  ============  ===========
    Name                         Type         Value   
 --------------------------  ------------  -----------
- MS_SUCCESS                  integer                
- MS_FAILURE                  integer                
- MS_DONE                     integer                
+ MS_SUCCESS                  integer           0
+ MS_FAILURE                  integer           1    
+ MS_DONE                     integer           2    
 ==========================  ============  ===========
 
 -----------------------------------------------------------------------------
@@ -500,6 +500,27 @@ msCleanup() : void
   by MapServer code and dependent libraries.  It it used primarily for final
   cleanup in scripts that need to do memory leak testing to get rid of "noise"
   one-time allocations.  It should not normally be used by production code. 
+
+msIO_installStdoutToBuffer() : void
+  Installs a mapserver IO handler directing future stdout output to a memory
+  buffer. 
+
+msIO_installStdinFromBuffer() : void
+  Installs a mapserver IO handler directing future stdin reading (ie. post 
+  request capture) to come from a buffer. 
+
+msIO_resetHandlers() : void
+  Resets the default stdin and stdout handlers in place of "buffer" based
+  handlers. 
+
+msIO_getStdoutBufferString() : string
+  Fetch the current stdout buffer contents as a string.  This method does
+  not clear the buffer.
+
+msIO_getStdoutBufferBytes() : binary data
+  Fetch the current stdout buffer contents as a binary buffer.  The exact
+  form of this buffer will vary by mapscript language (eg. string in Python,
+  byte[] array in Java, unhandled in perl)
 
   
 =============================================================================
@@ -1938,6 +1959,16 @@ nextLabel( ) : labelCacheMemberObj_
     Return the next label from the map's labelcache, allowing iteration
     over labels.
 
+OWSDispatch( OWSRequest req ) : int
+    Processes and executes the passed OpenGIS Web Services request on the 
+    map.  Returns MS_DONE (2) if there is no valid OWS request in the req 
+    object, MS_SUCCESS (0) if an OWS request was successfully processed and
+    MS_FAILURE (1) if an OWS request was not successfully processed.  OWS
+    requests include WMS, WFS, WCS and SOS requests supported by MapServer. 
+    Results of a dispatched request are written to stdout and can be captured
+    using the msIO services (ie. msIO_installStdoutToBuffer() and 
+    msIO_getStdoutBufferString())
+
 prepareImage( ) : imageObj_
     Returns an imageObj initialized to map extents and outputformat.
     
@@ -2218,6 +2249,12 @@ getValue( int index ) : string
 
 getValueByName( string name) : string
     Return the value associated with the parameter *name*.
+
+loadParams() : int
+    Initializes the OWSRequest object from the cgi environment variables
+    REQUEST_METHOD, QUERY_STRING and HTTP_COOKIE.  Returns the number of 
+    name/value pairs collected.  Warning: most errors will result in a 
+    process exit!
 
 
 -----------------------------------------------------------------------------
