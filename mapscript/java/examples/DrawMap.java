@@ -30,14 +30,17 @@ public class DrawMap {
     //map.getImagecolor().setRGB(153, 153, 204);
     //styleObj st = map.getLayer(1).getClass(0).getStyle(0);
     //st.getColor().setHex("#000000");
+    if( map.getLayer(1).getMetaData("hidden") != null ) {
+    	System.out.println("Layer 1 is hidden? "+map.getLayer(1).getMetaData("hidden"));
+    }
     int i=0;
     //for (i=0; i<100; i++) {
     	imageObj img = map.draw();
     	System.out.println(i+") the map will be drawn to:"+args[1]);
     	img.save(args[1], map);
     //}
-    //img.delete();
-    //map.delete();
+    img.delete();
+    map.delete();
     //mapscript.msCleanup();
   }
 }
