@@ -30,7 +30,7 @@
 ..
 
 *****************************************************************************
- Mapscript API Reference, MapServer version 4.4
+ Mapscript API Reference, MapServer version 4.9
 *****************************************************************************
 
 :Author: Sean Gillies
