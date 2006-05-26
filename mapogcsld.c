@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.61  2006/05/26 02:21:13  assefa
+ * Support symbols beside the WellKnownName ones for Mark symbols (Bug 1798).
+ *
  * Revision 1.60  2006/02/24 02:14:04  assefa
  * Set the default color on the style when using default settings
  * in PointSymbolizer. (bug 1681)
@@ -1475,6 +1478,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     strdup(psWellKnownName->psChild->pszValue);
                     
                 /* default symbol is square */
+                
                 if (!pszSymbolName || 
                     (strcasecmp(pszSymbolName, "square") != 0 &&
                      strcasecmp(pszSymbolName, "circle") != 0 &&
@@ -1482,8 +1486,10 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                      strcasecmp(pszSymbolName, "star") != 0 &&
                      strcasecmp(pszSymbolName, "cross") != 0 &&
                      strcasecmp(pszSymbolName, "x") != 0))
-                  pszSymbolName = strdup("square");
-                    
+                {
+                    if (msGetSymbolIndex(&map->symbolset, pszSymbolName,  MS_FALSE) < 0)
+                      pszSymbolName = strdup("square");
+                }
                 
                 
                 /* check if the symbol should be filled or not */
@@ -1809,7 +1815,12 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
                                        SLD_MARK_SYMBOL_X, 
                                        MS_FALSE);
     }
-
+    else
+    {
+        nSymbolId = msGetSymbolIndex(&map->symbolset, 
+                                     pszSymbolName, 
+                                     MS_FALSE);
+    }
 
     if (nSymbolId <= 0)
     {
