@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/05/26 21:46:27  tamas
+ * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
+ *
  * Revision 1.20  2005/10/28 01:09:41  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -325,12 +328,52 @@ if (SHOWQUERY || MYDEBUG) printf("%d rows<br>\n", numrows);
    return MS_SUCCESS;
 }
 
+/*
+** Functions for persistent database connections. Code by Jan Hartman 
+** (jhart@frw.uva.nl).
+**
+** See also mappool.c for the "new" connection pooling API.
+** msMYGISCheckConnection will return the reference of a layer using the same connection
+*/
+layerObj* msMYGISCheckConnection(layerObj * layer) {
+  int i;
+  layerObj *lp;
+
+  /* TODO: there is an issue with layer order since it's possible that layers to be rendered out of order */
+  for (i=0;i<layer->index;i++) { 	/* check all layers previous to this one */
+    lp = &(layer->map->layers[i]);
+
+    if (lp == layer) continue;
+
+    /* check to make sure lp even has an open connection (database types only) */
+    switch (lp->connectiontype) {
+    case MS_MYGIS:
+      if(!lp->layerinfo) continue;
+      break;
+    default:
+      continue; /* not a database layer or uses new connection pool API -> skip it */
+      break;
+    }
+
+    /* check if the layers share this connection */
+    if (lp->connectiontype != layer->connectiontype) continue;
+    if (!lp->connection) continue;
+    if (strcmp(lp->connection, layer->connection)) continue;
+   
+    /* layerinfo->sameconnection = lp;*/
+    return(lp); /* this connection can be shared */
+  }
+
+  /*layerinfo->sameconnection = NULL; */
+  return(NULL);
+}
 
 /* open up a connection to the postgresql database using the connection string in layer->connection */
 /* ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv" */
 int msMYGISLayerOpen(layerObj *layer)
 {
 	msMYGISLayerInfo	*layerinfo;
+	layerObj* sameconnection = NULL;
   int			order_test = 1;
 	char* DB_HOST = NULL;
 	char* DB_USER = NULL;
@@ -360,16 +403,18 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 	layerinfo->table = NULL;
 	layerinfo->feature = NULL;
 	layerinfo->attriboffset = 3;
-
+	
     /* check whether previous connection can be used */
 
-	if (msCheckConnection(layer) != MS_SUCCESS){
+	sameconnection = msMYGISCheckConnection(layer);
+	if (sameconnection == NULL){
 			
 		if( layer->data == NULL ) {
 			msSetError(MS_QUERYERR,	DATAERRORMESSAGE("","Error parsing MYGIS data variable: nothing specified in DATA statement.<br><br>\n\nMore Help:<br><br>\n<br>\n"),
 			"msMYGISLayerOpen()");
 
-				return(MS_FAILURE);
+			free(layerinfo);	
+			return(MS_FAILURE);
 		}
 		delim = strdup(":");
 		DB_HOST = strdup(strtok(layer->connection, delim));
@@ -383,6 +428,7 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 		if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL)
 		{
 			printf("DB param error %s/%s/%s/%s !\n",DB_HOST,DB_USER,DB_PASSWD,DB_DATABASE);
+			free(layerinfo);
 			return MS_FAILURE;
 		}
 		if (strcmp(DB_PASSWD, "none") == 0) strcpy(DB_PASSWD, "");
@@ -412,7 +458,8 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
       return MS_FAILURE;
     }
 	} else {		/* connection reusable */
-			layerinfo = layer->sameconnection->layerinfo;
+			free(layerinfo);
+			layerinfo = sameconnection->layerinfo;
 /* layerinfo->conn = layer->sameconnection->layerinfo->conn; */
 	}
 	if (MYDEBUG)printf("msMYGISLayerOpen3 called<br>\n");

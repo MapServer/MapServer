@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/05/26 21:46:27  tamas
+ * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
+ *
  * Revision 1.45  2005/12/14 19:13:47  sdlime
  * Patched mapfile read/write/copy routines to deal with browseformat and legendformat.
  *
@@ -807,8 +810,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
     MS_COPYSTRING(dst->connection, src->connection);
     MS_COPYSTELEM(connectiontype);
-    MS_COPYSTELEM(sameconnection);
-
+    
     /* Do not copy *layerinfo, items, or iteminfo. these are all initialized
        when the copied layer is opened */
 

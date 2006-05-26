@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.449  2006/05/26 21:46:27  tamas
+ * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
+ *
  * Revision 1.448  2006/05/19 20:53:27  dan
  * Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
  *
@@ -1172,7 +1175,6 @@ typedef struct layer_obj {
 #ifndef SWIG
   layerVTableObj *vtable;
 
-  struct layer_obj *sameconnection;
   /* SDL has converted OracleSpatial, SDE, Graticules, MyGIS */
   void *layerinfo; /* all connection types should use this generic pointer to a vendor specific structure */
   void *wfslayerinfo; /* For WFS layers, will contain a msWFSLayerInfo struct */
