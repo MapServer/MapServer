@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/05/29 18:07:49  assefa
+ * Correct a missing argument when generating layer related Action scripts.
+ *
  * Revision 1.58  2006/04/11 14:57:03  assefa
  * Remove } preventing build.
  *
@@ -3033,7 +3036,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
             {
                 sprintf(szAction, 
                         "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"undefined\",\"undefined\");", i, 
-                        map->layers[i].name);
+                        map->layers[i].name, map->layers[i].type);
             
                 oAction = compileSWFActionCode(szAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
