@@ -10468,7 +10468,7 @@ fi;
         export DYLD_LIBRARY_PATH
         if test -z "`./conftest1 2>&1`" ; then
           echo "checking for ${CXX} -dynamiclib ... yes"
-          LD_SHARED="${CXX} -dynamiclib -single_module"
+          LD_SHARED="${CXX} -dynamiclib -single_module -flat_namespace -undefined suppress"
 	  SO_EXT=dylib
           SO_COMMAND_NAME='-dylib_install_name'
         fi
