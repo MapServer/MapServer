@@ -147,7 +147,9 @@ AC_DEFUN(AC_LD_SHARED,
   echo 'void g(); void g(){printf("");}' >> conftest2.c
   ${CC} ${C_PIC} -c conftest2.c
   SO_EXT="so"
+  SO_COMMAND_NAME="-soname"
   export SO_EXT
+  export SO_COMMAND_NAME 
   LD_SHARED="/bin/true"
   if test ! -z "`uname -a | grep IRIX`" ; then
     IRIX_ALL=-all
@@ -206,6 +208,7 @@ AC_DEFUN(AC_LD_SHARED,
           echo "checking for ${CXX} -dynamiclib ... yes"
           LD_SHARED="${CXX} -dynamiclib -single_module"
 	  SO_EXT=dylib
+          SO_COMMAND_NAME='-dylib_install_name'
         fi
         DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
       fi
@@ -275,6 +278,7 @@ AC_DEFUN(AC_LD_SHARED,
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
   AC_SUBST(SO_EXT,$SO_EXT)
+  AC_SUBST(SO_COMMAND_NAME,$SO_COMMAND_NAME)
 ])
 
 

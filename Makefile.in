@@ -16,8 +16,8 @@ MS_VERSION=	@MS_VERSION@
 # Name of static and shared libs to produce
 #
 LIBMAP_STATIC=	libmap.a
-LIBMAP_SHARED=	libmap.so
-LIBMAP_SH_VER=	libmap.so.$(MS_VERSION)
+LIBMAP_SHARED=	libmapserver.@SO_EXT@
+LIBMAP_SH_VER=	libmapserver.@SO_EXT@.$(MS_VERSION)
 
 #
 # mpatrol runtime memory debugger
@@ -187,17 +187,19 @@ ICONV_INC=@ICONV_INC@
 #
 CXX=	@CXX@
 CC=     @CC@
-LD=     @CC@
+LD=     @CXX@
 AR= ar rc
 RANLIB= @RANLIB@
 LEX=    @LEX@
 YACC=   @YACC@
 
-#
-# This should really be figured out by configure
-#
-LD_SHARED = g++ -shared
-LD_SONAME_LIBMAP= -Wl,-soname,$(LIBMAP_SH_VER)
+
+# figure out how to build a shared library.  
+# most of the relevant stuff is in AC_LD_SHARED in 
+# aclocal.m4
+
+LD_SHARED = @LD_SHARED@
+LD_SONAME_LIBMAP = -W1,@SO_COMMAND_NAME@,$(LIBMAP_SH_VER)
 
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
