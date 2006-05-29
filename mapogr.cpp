@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.98  2006/05/29 20:31:20  dan
+ * Make sure oPenColor is always initialized (avoid warning on MacOSX)
+ *
  * Revision 1.97  2006/05/19 20:53:27  dan
  * Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
  *
@@ -2199,6 +2202,9 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               colorObj oPenColor;
               int nPenSymbol = 0;
               int nPenSize = 1;
+
+              // Make sure pen is always initialized
+              MS_INIT_COLOR(oPenColor, -1, -1, -1);
 
               // Check for Pen Pattern "ogr-pen-1": the invisible pen
               // If that's what we have then set pen color to -1
