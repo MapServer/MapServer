@@ -132,6 +132,7 @@ dnl      fi
 ])
 
 
+
 dnl
 dnl Try to find something to link shared libraries with.  Use "c++ -shared"
 dnl in preference to "ld -shared" because it will link in required c++
@@ -139,12 +140,12 @@ dnl run time support for us.
 dnl
 AC_DEFUN(AC_LD_SHARED,
 [
+
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
   echo '#include <stdio.h>' > conftest2.c
   echo 'void g(); void g(){printf("");}' >> conftest2.c
   ${CC} ${C_PIC} -c conftest2.c
-
   SO_EXT="so"
   export SO_EXT
   LD_SHARED="/bin/true"
@@ -154,15 +155,66 @@ AC_DEFUN(AC_LD_SHARED,
     IRIX_ALL=
   fi
 
-  SHARED_FLAG="-shared"
+  AC_ARG_WITH(ld-shared,[  --without-ld-shared   Disable shared library support],,)
 
-  dnl MacOSX
-  if test -n "`uname -a | grep Darwin`" ; then
-    SHARED_FLAG="-bundle -flat_namespace -undefined suppress"
-    LD_SHARED="${CXX} $SHARED_FLAG"
+  if test "$with_ld_shared" != "" ; then
+    if test "$with_ld_shared" = "no" ; then
+      echo "user disabled shared library support."	
+    else
+      echo "using user supplied .so link command ... $with_ld_shared"	
+    fi
+    LD_SHARED="$with_ld_shared"
   fi
 
-  if test -z "`${CXX} $SHARED_FLAG $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
+  dnl Check For Cygwin case.  Actually verify that the produced DLL works.
+  if test ! -z "`uname -a | grep CYGWIN`" \
+        -a "$LD_SHARED" = "/bin/true" ; then
+    if test -z "`gcc -shared conftest2.o -o libconftest.dll`" ; then
+      if test -z "`${CC} conftest1.c -L./ -lconftest -o conftest1 2>&1`"; then
+        LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
+        if test -z "$LD_LIBRARY_PATH" ; then
+          LD_LIBRARY_PATH="`pwd`"
+        else
+          LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+        fi
+        export LD_LIBRARY_PATH
+        if test -z "`./conftest1 2>&1`" ; then
+          echo "checking for Cygwin gcc -shared ... yes"
+          LD_SHARED="c++ -shared"
+          SO_EXT="dll"
+        fi
+        LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
+      fi
+    fi
+  fi
+
+
+  dnl Test special MacOS (Darwin) case. 
+  if test ! -z "`uname | grep Darwin`" \
+          -a "$LD_SHARED" = "/bin/true" ; then
+    if test -z "`${CXX} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
+      ${CC} -c conftest1.c
+      if test -z "`${CXX} conftest1.o libconftest.so -o conftest1 2>&1`"; then
+        DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
+        if test -z "$DYLD_LIBRARY_PATH" ; then
+          DYLD_LIBRARY_PATH="`pwd`"
+        else
+          DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
+        fi
+        export DYLD_LIBRARY_PATH
+        if test -z "`./conftest1 2>&1`" ; then
+          echo "checking for ${CXX} -dynamiclib ... yes"
+          LD_SHARED="${CXX} -dynamiclib -single_module"
+	  SO_EXT=dylib
+        fi
+        DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
+      fi
+      rm -f conftest1.o
+    fi 
+  fi
+
+  if test "$LD_SHARED" = "/bin/true" \
+	-a -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       if test -z "$LD_LIBRARY_PATH" ; then
@@ -172,21 +224,23 @@ AC_DEFUN(AC_LD_SHARED,
       fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ${CXX} $SHARED_FLAG ... yes"
-        LD_SHARED="${CXX} $SHARED_FLAG $IRIX_ALL"
+        echo "checking for ${CXX} -shared ... yes"
+        LD_SHARED="${CXX} -shared $IRIX_ALL"
       else
-        echo "checking for ${CXX} $SHARED_FLAG ... no(3)"
+        echo "checking for ${CXX} -shared ... no(3)"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
     else
-      echo "checking for ${CXX} $SHARED_FLAG ... no(2)"
+      echo "checking for ${CXX} -shared ... no(2)"
     fi
-  else
-    echo "checking for ${CXX} $SHARED_FLAG ... no(1)"
+  else 
+    if test "$LD_SHARED" = "/bin/true" ; then
+      echo "checking for ${CXX} -shared ... no(1)"
+    fi
   fi
 
   if test "$LD_SHARED" = "/bin/true" \
-          -a -z "`ld $SHARED_FLAG conftest2.o -o libconftest.so 2>&1`" ; then
+          -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       if test -z "$LD_LIBRARY_PATH" ; then
@@ -196,45 +250,33 @@ AC_DEFUN(AC_LD_SHARED,
       fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ld $SHARED_FLAG ... yes"
-        LD_SHARED="ld $SHARED_FLAG"
+        echo "checking for ld -shared ... yes"
+        LD_SHARED="ld -shared"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-    fi
-  fi
-
-  if test "$LD_SHARED" = "/bin/true" \
-          -a -z "`${CC} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
-    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
-      DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
-      if test -z "$DYLD_LIBRARY_PATH" ; then
-        DYLD_LIBRARY_PATH="`pwd`"
-      else
-        DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
-      fi
-      export DYLD_LIBRARY_PATH
-      if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ${CC} -dynamiclib ... yes"
-        LD_SHARED="${CC} -dynamiclib"
-	SO_EXT=dylib
-      fi
-      DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
     fi
   fi
 
   if test "$LD_SHARED" = "/bin/true" ; then
-    echo "checking for ld $SHARED_FLAG ... no"
+    echo "checking for ld -shared ... no"
     if test ! -x /bin/true ; then
       LD_SHARED=/usr/bin/true
     fi
   fi
-  rm -f conftest* libconftest* 
+  if test "$LD_SHARED" = "no" ; then
+    if test -x /bin/true ; then
+      LD_SHARED=/bin/true
+    else
+      LD_SHARED=/usr/bin/true
+    fi
+  fi
 
-  echo "        using '${CXX} $SHARED_FLAG' for dynamic linking"
+  rm -f conftest* libconftest* 
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
   AC_SUBST(SO_EXT,$SO_EXT)
 ])
+
 
 
 dnl
