@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/05/29 19:02:01  assefa
+ * Update PHP mapscript to support addition of MapScript WxS Services
+ * (RFC 16, Bug 1790)
+ *
  * Revision 1.55  2006/05/17 16:04:55  assefa
  * Add geos functions union, difference and intersection (Bug 1778)
  *
@@ -202,6 +206,9 @@ int             mapObj_selectOutputFormat(mapObj *self,
 int             mapObj_applySLD(mapObj *self, char *sld);
 int             mapObj_applySLDURL(mapObj *self, char *sld);
 char            *mapObj_generateSLD(mapObj *self);
+int             mapObj_loadOWSParameters(mapObj *self, cgiRequestObj *request, 
+                                          char *wmtver_string);
+int             mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req );
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
@@ -361,5 +368,14 @@ const char     *hashTableObj_get(hashTableObj *self, const char *key);
 int            *hashTableObj_remove(hashTableObj *self, const char *key);
 void           *hashTableObj_clear(hashTableObj *self);
 char           *hashTableObj_nextKey(hashTableObj *self, const char *prevkey);
+
+
+cgiRequestObj *cgirequestObj_new();
+int cgirequestObj_loadParams(cgiRequestObj *self);
+void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value);
+char *cgirequestObj_getName(cgiRequestObj *self, int index);
+char *cgirequestObj_getValue(cgiRequestObj *self, int index);
+char *cgirequestObj_getValueByName(cgiRequestObj *self, const char *name);
+void cgirequestObj_destroy(cgiRequestObj *self);
 
 #endif /* _PHP_MAPSCRIPT_H_INCLUDED_ */

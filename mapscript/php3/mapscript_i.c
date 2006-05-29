@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.98  2006/05/29 19:02:01  assefa
+ * Update PHP mapscript to support addition of MapScript WxS Services
+ * (RFC 16, Bug 1790)
+ *
  * Revision 1.97  2006/05/17 16:04:55  assefa
  * Add geos functions union, difference and intersection (Bug 1778)
  *
@@ -408,6 +412,18 @@ int mapObj_applySLDURL(mapObj *self, char *sld)
 char *mapObj_generateSLD(mapObj *self)
 {
     return msSLDGenerateSLD(self, -1);
+}
+
+
+int mapObj_loadOWSParameters(mapObj *self, cgiRequestObj *request, 
+                              char *wmtver_string)
+{
+    return msMapLoadOWSParameters(self, request, wmtver_string);
+}
+
+int mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req )
+{
+    return msOWSDispatch( self, req);
 }
 
 /**********************************************************************
@@ -1217,4 +1233,80 @@ styleObj *styleObj_clone(styleObj *style){
   msCopyStyle(newstyle, style);
   
   return newstyle;
+}
+
+
+cgiRequestObj *cgirequestObj_new()
+{
+    cgiRequestObj *request;
+    request = msAllocCgiObj();
+
+    request->ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
+    request->ParamValues = (char **) malloc(MAX_PARAMS*sizeof(char*));
+
+    return request;
+}
+
+int cgirequestObj_loadParams(cgiRequestObj *self)
+{
+  self->NumParams = loadParams(self);
+  return self->NumParams;
+}
+
+
+void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value)
+{
+    int i;
+        
+    if (self->NumParams == MAX_PARAMS) {
+      msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MAX_PARAMS);
+    }
+        
+    for (i=0; i<self->NumParams; i++) {
+      if (strcasecmp(self->ParamNames[i], name) == 0) {
+        free(self->ParamValues[i]);
+                self->ParamValues[i] = strdup(value);
+                break;
+      }
+    }
+    if (i == self->NumParams) {
+      self->ParamNames[self->NumParams] = strdup(name);
+      self->ParamValues[self->NumParams] = strdup(value);
+      self->NumParams++;
+    }
+}
+
+char *cgirequestObj_getName(cgiRequestObj *self, int index)
+{
+    if (index < 0 || index >= self->NumParams) {
+            msSetError(MS_CHILDERR, "Invalid index, valid range is [0, %d]", "getName()", self->NumParams-1);
+            return NULL;
+        }
+        return self->ParamNames[index];
+}
+
+char *cgirequestObj_getValue(cgiRequestObj *self, int index) 
+{
+    if (index < 0 || index >= self->NumParams) {
+            msSetError(MS_CHILDERR, "Invalid index, valid range is [0, %d]", "getValue()", self->NumParams-1);
+            return NULL;
+        }
+        return self->ParamValues[index];
+}
+ 
+char *cgirequestObj_getValueByName(cgiRequestObj *self, const char *name) 
+{
+    int i;
+    for (i=0; i<self->NumParams; i++) {
+        if (strcasecmp(self->ParamNames[i], name) == 0) {
+            return self->ParamValues[i];
+        }
+    }
+    return NULL;
+}
+void cgirequestObj_destroy(cgiRequestObj *self)
+{
+    msFreeCharArray(self->ParamNames, self->NumParams);
+    msFreeCharArray(self->ParamValues, self->NumParams);
+    free(self);
 }

@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.250  2006/05/29 19:02:01  assefa
+ * Update PHP mapscript to support addition of MapScript WxS Services
+ * (RFC 16, Bug 1790)
+ *
  * Revision 1.249  2006/05/17 19:25:10  assefa
  * forgot to add the style parameters in phpms_build_style_object (Bug 1786).
  *
@@ -474,6 +478,8 @@ DLEXPORT void php3_ms_free_shapefile(shapefileObj *pShapefile);
 DLEXPORT void php3_ms_free_rect(rectObj *pRect);
 DLEXPORT void php3_ms_free_stub(void *ptr) ;
 DLEXPORT void php3_ms_free_projection(projectionObj *pProj);
+DLEXPORT void php_ms_free_cgirequest(cgiRequestObj *request);
+
 
 DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -553,6 +559,9 @@ DLEXPORT void  php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getConfigOption(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setConfigOption(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_applyConfigOptions(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_map_loadOWSParameters(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_OWSDispatch(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -719,6 +728,13 @@ DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_querymap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 
+DLEXPORT void php_ms_cgirequest_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_cgirequest_loadParams(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_cgirequest_setParameter(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_cgirequest_getName(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_cgirequest_getValue(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_cgirequest_getValueByName(INTERNAL_FUNCTION_PARAMETERS);
+
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value  TSRMLS_DC);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -792,6 +808,15 @@ DLEXPORT void php3_ms_getpid(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS);
 
 
+/* ==================================================================== */
+/*      msio functions prototypes.                                      */
+/* ==================================================================== */
+DLEXPORT void php_ms_IO_installStdoutToBuffer(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_IO_installStdinFromBuffer(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_IO_getStdoutBufferString(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_IO_resetHandlers(INTERNAL_FUNCTION_PARAMETERS);
+
+
 static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits, 
                                         double dCenterLat,
                                         int nWidth, double resolution);
@@ -830,6 +855,7 @@ static int le_mserror_ref;
 static int le_mslabelcache;
 static int le_mssymbol;
 static int le_msquerymap;
+static int le_mscgirequest;
 
 /* 
  * Declare any global variables you may need between the BEGIN
@@ -893,6 +919,7 @@ static zend_class_entry *error_class_entry_ptr;
 static zend_class_entry *labelcache_class_entry_ptr;
 static zend_class_entry *symbol_class_entry_ptr;
 static zend_class_entry *querymap_class_entry_ptr;
+static zend_class_entry *cgirequest_class_entry_ptr;
 
 #ifdef ZEND_ENGINE_2  // PHP5
 ZEND_BEGIN_ARG_INFO(one_arg_force_ref, 0)
@@ -932,6 +959,11 @@ function_entry phpms_functions[] = {
     {"ms_reseterrorlist", php3_ms_reset_error_list, NULL},
     {"ms_newsymbolobj", php3_ms_symbol_new, NULL},
 //    {"ms_newoutputformatobj", php_ms_outputformat_new, NULL},
+    {"ms_newowsrequestobj",    php_ms_cgirequest_new,        NULL},
+    {"ms_ioinstallstdouttobuffer",    php_ms_IO_installStdoutToBuffer,   NULL},
+    {"ms_ioinstallstdinfrombuffer",    php_ms_IO_installStdinFromBuffer,   NULL},
+    {"ms_iogetstdoutbufferstring",    php_ms_IO_getStdoutBufferString,   NULL},
+    {"ms_ioresethandlers",    php_ms_IO_resetHandlers,   NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1032,6 +1064,8 @@ function_entry php_map_class_functions[] = {
     {"getconfigoption",      php3_ms_map_getConfigOption,           NULL},
     {"setconfigoption",      php3_ms_map_setConfigOption,           NULL},
     {"applyconfigoptions",   php3_ms_map_applyConfigOptions,           NULL},
+    {"loadowsparameters",   php3_ms_map_loadOWSParameters,           NULL},
+    {"owsdispatch",   php3_ms_map_OWSDispatch,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1252,6 +1286,17 @@ function_entry php_querymap_class_functions[] = {
 };
 
 
+
+function_entry php_cgirequest_class_functions[] = {
+    {"loadparams",             php_ms_cgirequest_loadParams,   NULL},
+    {"setparameter",             php_ms_cgirequest_setParameter,   NULL},
+    {"getname",             php_ms_cgirequest_getName,   NULL},
+    {"getvalue",             php_ms_cgirequest_getValue,   NULL},
+    {"getvaluebyname",             php_ms_cgirequest_getValueByName,   NULL},
+    {NULL, NULL, NULL}
+};
+
+
 PHP_MINFO_FUNCTION(mapscript)
 {
   php_info_print_table_start();
@@ -1355,6 +1400,10 @@ PHP_MINIT_FUNCTION(phpms)
 
     PHPMS_GLOBAL(le_msquerymap)= register_list_destructors(php3_ms_free_stub, 
                                                            NULL);
+
+    PHPMS_GLOBAL(le_mscgirequest)= 
+        register_list_destructors(php_ms_free_cgirequest, NULL);
+    
 
 
     /* boolean constants*/
@@ -1619,6 +1668,9 @@ PHP_MINIT_FUNCTION(phpms)
                       php_querymap_class_functions);
      querymap_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_cgirequest_obj", php_cgirequest_class_functions);
+     cgirequest_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
     return SUCCESS;
 }
 
@@ -1691,6 +1743,11 @@ DLEXPORT void php3_ms_free_stub(void *ptr)
 DLEXPORT void php3_ms_free_projection(projectionObj *pProj) 
 {
     projectionObj_destroy(pProj);
+}
+
+DLEXPORT void php_ms_free_cgirequest(cgiRequestObj *request) 
+{
+    cgirequestObj_destroy(request);
 }
 
 
@@ -5957,6 +6014,11 @@ DLEXPORT void php3_ms_map_applySLDURL(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 
+/**********************************************************************
+ *                        map->generateSLD()
+ *
+ * Generates an sld based on the map layers/class
+ **********************************************************************/
 DLEXPORT void php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
 {
      pval        *pThis;
@@ -5992,6 +6054,8 @@ DLEXPORT void php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_STRING("", 0);
     }
 }
+
+
 
 
 
@@ -6102,6 +6166,111 @@ DLEXPORT void php3_ms_map_applyConfigOptions(INTERNAL_FUNCTION_PARAMETERS)
      }
    
      RETURN_LONG(MS_FAILURE);
+}
+
+
+
+/************************************************************************/
+/*                         php3_ms_map_OWSDispatch                      */
+/*                                                                      */
+/*      Dispatch a owsrequest through the wxs services.                 */
+/************************************************************************/
+DLEXPORT void php3_ms_map_OWSDispatch(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pRequest;
+     mapObj      *self=NULL;
+     HashTable   *list=NULL;
+     char       *pszBuffer = NULL;
+     cgiRequestObj *pCgiRequest = NULL;
+     int nReturn = 0;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+
+     if (getParameters(ht,1,&pRequest) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    pCgiRequest = (cgiRequestObj *)_phpms_fetch_handle(pRequest, PHPMS_GLOBAL(le_mscgirequest), 
+                                                       list TSRMLS_CC);
+    if (pCgiRequest == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    nReturn = mapObj_OWSDispatch(self, pCgiRequest);
+
+    RETURN_LONG(nReturn);
+}
+
+
+DLEXPORT void php3_ms_map_loadOWSParameters(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pRequest, *pVersion;
+     mapObj      *self=NULL;
+     HashTable   *list=NULL;
+     char       *pszBuffer = NULL;
+     cgiRequestObj *pCgiRequest = NULL;
+     int nArgs;
+     char *pszVersion = NULL;
+      int nReturn = 0;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+     {
+       RETURN_LONG(MS_FAILURE);
+     }
+
+
+     nArgs = ARG_COUNT(ht);
+     if ((nArgs != 1 && nArgs != 2) ||
+         getParameters(ht,nArgs,&pRequest, &pVersion) != SUCCESS)
+     {
+       WRONG_PARAM_COUNT;
+     }
+
+     if (nArgs >= 2)
+     {
+       convert_to_string(pVersion);
+       pszVersion =  strdup(pVersion->value.str.val);
+     }
+     else
+       pszVersion = strdup("1.1.1");
+     
+     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+     if (self == NULL)
+     {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+     pCgiRequest = (cgiRequestObj *)_phpms_fetch_handle(pRequest, 
+                                                        PHPMS_GLOBAL(le_mscgirequest), 
+                                                       list TSRMLS_CC);
+     if (pCgiRequest == NULL)
+     {
+       RETURN_LONG(MS_FAILURE);
+     }
+
+     nReturn = mapObj_loadOWSParameters(self, pCgiRequest, pszVersion);
+
+     msFree(pszVersion);
+
+     RETURN_LONG(nReturn);
 }
 
 
@@ -14206,7 +14375,295 @@ DLEXPORT void php3_ms_querymap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
+/*=====================================================================
+ *         PHP function wrappers - cgirequest object (used for ows)
+ *====================================================================*/
 
+static long _phpms_build_cgirequest_object(cgiRequestObj *prequest, int handle_type, 
+                                           HashTable *list, pval *return_value TSRMLS_DC)
+{
+    int id;
+
+    if (prequest == NULL)
+      return 0;
+
+    id = php3_list_insert(prequest, handle_type);
+
+    _phpms_object_init(return_value, id, php_cgirequest_class_functions,
+                       PHP4_CLASS_ENTRY(cgirequest_class_entry_ptr) TSRMLS_CC);
+
+    add_property_long(return_value,   "numparams",     prequest->NumParams);
+
+    return id;
+}
+
+
+DLEXPORT void php_ms_cgirequest_new(INTERNAL_FUNCTION_PARAMETERS)
+{
+    int          nArgs;
+    cgiRequestObj *pRequest;
+     HashTable   *list=NULL;
+
+    nArgs = ARG_COUNT(ht);
+
+    if (ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if ((pRequest = cgirequestObj_new()) == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        RETURN_FALSE;
+    }
+
+    /* Return cgirequest object */
+    _phpms_build_cgirequest_object(pRequest, PHPMS_GLOBAL(le_mscgirequest), 
+                                   list, return_value TSRMLS_CC);
+}
+
+
+DLEXPORT void php_ms_cgirequest_loadParams(INTERNAL_FUNCTION_PARAMETERS)
+{
+     cgiRequestObj *self;
+     pval *pThis;
+     HashTable   *list=NULL;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+       RETURN_FALSE;
+
+      self = (cgiRequestObj *)_phpms_fetch_handle(pThis, le_mscgirequest, list TSRMLS_CC);
+      if (self == NULL)
+         RETURN_FALSE;
+
+      cgirequestObj_loadParams(self);
+     /* sync the class member*/ 
+     _phpms_set_property_long(pThis,"numparams", self->NumParams, E_ERROR TSRMLS_CC); 
+
+     php_printf("ttt%d",  self->NumParams);
+
+     RETURN_LONG(self->NumParams);
+}
+
+
+DLEXPORT void php_ms_cgirequest_setParameter(INTERNAL_FUNCTION_PARAMETERS)
+{
+    cgiRequestObj *self;
+    pval *pThis;
+    HashTable   *list=NULL;
+    pval *pName, *pValue;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) != 2)
+    {
+      WRONG_PARAM_COUNT;
+    }
+     else
+     {
+       if (getParameters(ht, 2, &pName, &pValue) != SUCCESS)
+         WRONG_PARAM_COUNT;
+     }
+
+    self = (cgiRequestObj *)_phpms_fetch_handle(pThis, le_mscgirequest, list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+     convert_to_string(pName);
+     convert_to_string(pValue);
+
+     cgirequestObj_setParameter(self, pName->value.str.val, 
+                                pValue->value.str.val);
+
+     /* sync the class member*/ 
+     _phpms_set_property_long(pThis,"numparams", self->NumParams, E_ERROR TSRMLS_CC); 
+
+     RETURN_LONG(0);
+}
+
+
+DLEXPORT void php_ms_cgirequest_getName(INTERNAL_FUNCTION_PARAMETERS)
+{
+    cgiRequestObj *self;
+    pval *pThis;
+    HashTable   *list=NULL;
+    pval *pIndex;
+    char   *pszValue = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) != 1)
+    {
+      WRONG_PARAM_COUNT;
+    }
+     else
+     {
+       if (getParameters(ht, 1, &pIndex) != SUCCESS)
+         WRONG_PARAM_COUNT;
+     }
+
+    self = (cgiRequestObj *)_phpms_fetch_handle(pThis, le_mscgirequest, list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    convert_to_long(pIndex);
+
+    pszValue = cgirequestObj_getName(self, pIndex->value.lval);
+
+    if (pszValue)
+    {
+      RETURN_STRING(pszValue, 1);
+    }
+    else
+    {
+      RETURN_STRING("", 1);
+    }
+}
+
+
+
+DLEXPORT void php_ms_cgirequest_getValue(INTERNAL_FUNCTION_PARAMETERS)
+{
+    cgiRequestObj *self;
+    pval *pThis;
+    HashTable   *list=NULL;
+    pval *pIndex;
+    char   *pszValue = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) != 1)
+    {
+      WRONG_PARAM_COUNT;
+    }
+     else
+     {
+       if (getParameters(ht, 1, &pIndex) != SUCCESS)
+         WRONG_PARAM_COUNT;
+     }
+
+    self = (cgiRequestObj *)_phpms_fetch_handle(pThis, le_mscgirequest, list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    convert_to_long(pIndex);
+
+    pszValue = cgirequestObj_getValue(self, pIndex->value.lval);
+
+    if (pszValue)
+    {
+      RETURN_STRING(pszValue, 1);
+    }
+    else
+    {
+      RETURN_STRING("", 1);
+    }
+}
+
+
+DLEXPORT void php_ms_cgirequest_getValueByName(INTERNAL_FUNCTION_PARAMETERS)
+{
+    cgiRequestObj *self;
+    pval *pThis;
+    HashTable   *list=NULL;
+    pval *pName;
+    char   *pszValue = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) != 1)
+    {
+      WRONG_PARAM_COUNT;
+    }
+    else
+    {
+      if (getParameters(ht, 1, &pName) != SUCCESS)
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (cgiRequestObj *)_phpms_fetch_handle(pThis, le_mscgirequest, list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    convert_to_string(pName);
+
+    pszValue = cgirequestObj_getValueByName(self, pName->value.str.val);
+
+    if (pszValue)
+    {
+      RETURN_STRING(pszValue, 1);
+    }
+    else
+    {
+      RETURN_STRING("", 1);
+    }
+}
+/* }}} */
+
+/* ==================================================================== */
+/*      utility functions related to msio                               */
+/* ==================================================================== */
+DLEXPORT void php_ms_IO_installStdoutToBuffer(INTERNAL_FUNCTION_PARAMETERS)
+{
+    msIO_installStdoutToBuffer();
+
+    RETURN_TRUE;
+}
+
+
+DLEXPORT void php_ms_IO_resetHandlers(INTERNAL_FUNCTION_PARAMETERS)
+{
+    msIO_resetHandlers();
+    RETURN_TRUE;
+}
+
+
+DLEXPORT void php_ms_IO_installStdinFromBuffer(INTERNAL_FUNCTION_PARAMETERS)
+{
+    msIO_installStdinFromBuffer();
+
+    RETURN_TRUE;
+}
+
+DLEXPORT void php_ms_IO_getStdoutBufferString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    char *buffer;
+
+    msIOContext *ctx = msIO_getHandler( stdout );
+    msIOBuffer  *buf;
+
+    if( ctx == NULL)
+    {
+        php_error(E_ERROR, "Can't identify msIO buffer");
+        RETURN_FALSE;
+    }
+    if ( ctx->write_channel == MS_FALSE )
+    {
+        php_error(E_ERROR, "Can't identify msIO buffer");
+        RETURN_FALSE;
+    }
+        
+    if(0)//ctx->readWriteFunc != msIO_bufferWrite )
+    {
+        php_error(E_ERROR, "Can't identify msIO buffer");
+        RETURN_FALSE;
+    }
+
+    buf = (msIOBuffer *) ctx->cbData;
+
+    /* write one zero byte and backtrack if it isn't already there */
+    if( buf->data_len == 0 || buf->data[buf->data_offset] != '\0' ) {
+        msIO_bufferWrite( buf, "", 1 );
+	buf->data_offset--;
+    }
+
+    buffer = (char *) (buf->data);
+
+    RETURN_STRING(buffer, 1);
+}
+     
 /* ==================================================================== */
 /*      utility functions                                               */
 /* ==================================================================== */

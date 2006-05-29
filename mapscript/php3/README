@@ -119,6 +119,22 @@ Currently supported classes, properties and methods:
         logical expressions, regex expressions and comments are returned
         as individual tokens.
 
+   void ms_ioinstallstdouttobuffer()
+       Installs a mapserver IO handler directing future stdout output 
+       to a memory buffer. 
+
+   void ms_ioinstallstdinfrombuffer()
+      Installs a mapserver IO handler directing future stdin reading 
+      (ie. post request capture) to come from a buffer. 
+
+   void ms_iogetstdoutbufferstring()
+      Fetch the current stdout buffer contents as a string.  This method 
+      does not clear the buffer.
+
+   void ms_ioresethandlers()   
+     Resets the default stdin and stdout handlers in place of "buffer" based
+     handlers. 
+     
 
  MapObj Class:
  -------------
@@ -517,6 +533,23 @@ Currently supported classes, properties and methods:
         the value in the map object. applyconfigoptions will actually
         change the PROJ_LIB  value that will be used when dealing with
         projection.
+
+
+  int loadowsparameters(owsrequest request, string version)
+        Load OWS request parameters (BBOX, LAYERS, &c.) into map.  Returns
+    MS_SUCCESS or MS_FAILURE.   
+        2nd argument version is not mandatory. If not given, the version
+       will be set to 1.1.1
+    
+  int owsdispatch(owsrequest request)
+    Processes and executes the passed OpenGIS Web Services request on the 
+    map.  Returns MS_DONE (2) if there is no valid OWS request in the req 
+    object, MS_SUCCESS (0) if an OWS request was successfully processed and
+    MS_FAILURE (1) if an OWS request was not successfully processed.  OWS
+    requests include WMS, WFS, WCS and SOS requests supported by MapServer. 
+    Results of a dispatched request are written to stdout and can be captured
+    using the msIO services (ie. ms_ioinstallstdouttobuffer() and 
+    ms_iogetstdoutbufferstring())
 
 
  LayerObj Class:
@@ -1741,4 +1774,40 @@ Constructor:
 
 
       
+
+  OwsrequestObj Class: 
+  -------------------------
+
+  Constructor:
+        
+       request = ms_newOwsrequestObj();
+
+       Create a new ows request object.
+
+  Members:
+       int numparams  
+          Number of parameters in the request object. Read only.
+
+  Methods:
+
+       int loadparams()
+          Initializes the OWSRequest object from the cgi environment variables
+          REQUEST_METHOD, QUERY_STRING and HTTP_COOKIE.  Returns the number of 
+          name/value pairs collected.
+
+       int setparameter(string name, string value)
+          Set a request parameter.  For example :
+            $request->setparameter('REQUEST', 'GetMap');
+
+       string getname(int index)
+         Return the name of the parameter at *index* in the request's array
+         of parameter names.
+
+       string getvalue(int index)
+          Return the value of the parameter at *index* in the request's array
+          of parameter values.
+
+       string getvaluebyname(string name)
+           Return the value associated with the parameter *name*.
+
                      --------------------------
