@@ -279,9 +279,9 @@
                        "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
-        if (poPixRect->maxy >= poPixRect->miny)
+        if (poPixRect->miny >= poPixRect->maxy)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates miny <= maxy",
+            msSetError(MS_MISCERR, "image rectangle miny >= maxy",
                        "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
