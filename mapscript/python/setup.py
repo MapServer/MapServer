@@ -74,7 +74,7 @@ libs = unique(libs)
 # if we're msvc, just link against the stub lib
 # and be done with it
 if sys.platform == 'win32':
-    libs = ['mapserver_i']
+    libs = ['mapserver_i','gd']
 
 lib_dirs = unique(lib_dirs)
 
