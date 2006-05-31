@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Fixed zoomRectangle in mapscript: miny and maxy were swapped, making it
+  impossible to zoom by rect; also the error message was referring to the wrong rect.
+  There were no open issues on bugzilla.
+
 - Implementation of RFC 16 mapio services (bug 1788).
 
 - Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
