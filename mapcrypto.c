@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/06/01 20:51:02  dan
+ * Fixed possible buffer overflow in msDecryptStringTokens() and improved
+ * error message if key file could not be read.
+ *
  * Revision 1.1  2006/06/01 19:56:31  dan
  * Added ability to encrypt tokens (passwords, etc.) in database connection
  * strings (MS-RFC-18, bug 1792)
@@ -292,7 +296,8 @@ static int msLoadEncryptionKey(mapObj *map)
     }
     else
     {
-        msSetError(MS_MISCERR, "Failed reading encryption key.", 
+        msSetError(MS_MISCERR, "Failed reading encryption key. Make sure "
+                   "MS_ENCRYPTION_KEY is set and points to a valid key file.", 
                    "msLoadEncryptionKey()");
         return MS_FAILURE;
     }
@@ -444,7 +449,7 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
 
     /* Start with a copy of the string. Decryption can only result in 
      * a string with the same or shorter length */
-    if ((outbuf = (char *)malloc(strlen(in)*sizeof(char))) == NULL)
+    if ((outbuf = (char *)malloc((strlen(in)+1)*sizeof(char))) == NULL)
     {
         msSetError(MS_MEMERR, NULL, "msDecryptStringTokens()");
         return NULL;
