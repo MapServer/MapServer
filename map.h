@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.450  2006/06/01 19:56:31  dan
+ * Added ability to encrypt tokens (passwords, etc.) in database connection
+ * strings (MS-RFC-18, bug 1792)
+ *
  * Revision 1.449  2006/05/26 21:46:27  tamas
  * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
  *
@@ -580,6 +584,8 @@ extern "C" {
 #define MS_PI2   1.57079632679489661923  /* (MS_PI / 2) */
 #define MS_3PI2  4.71238898038468985769  /* (3 * MS_PI2) */
 #define MS_2PI   6.28318530717958647693  /* (2 * MS_PI) */
+
+#define MS_ENCRYPTION_KEY_SIZE  16   /* Key size: 128 bits = 16 bytes */
 
 #endif
 
@@ -1312,6 +1318,12 @@ typedef struct map_obj{ /* structure for a map */
   char *datapattern, *templatepattern;   
 
   hashTableObj configoptions;
+
+#ifndef SWIG
+  /* Private encryption key information - see mapcrypto.c */
+  int encryption_key_loaded;        /* MS_TRUE once key has been loaded */
+  unsigned char encryption_key[MS_ENCRYPTION_KEY_SIZE]; /* 128bits encryption key */
+#endif
 } mapObj;
 
 
@@ -2128,6 +2140,17 @@ MS_DLL_EXPORT shapeObj *msGEOSUnion(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
+
+/* ==================================================================== */
+/*      prototypes for functions in mapcrypto.c                         */
+/* ==================================================================== */
+MS_DLL_EXPORT int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k);
+MS_DLL_EXPORT void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out);
+MS_DLL_EXPORT void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out);
+MS_DLL_EXPORT char *msDecryptStringTokens(mapObj *map, const char *in);
+MS_DLL_EXPORT void msHexEncode(const unsigned char *in, char *out, int numbytes);
+MS_DLL_EXPORT int msHexDecode(const char *in, unsigned char *out, int numchars);
+
 
 #endif
 

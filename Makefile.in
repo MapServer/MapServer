@@ -231,10 +231,11 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmap $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o $(EPPL_OBJ) 
+OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o $(EPPL_OBJ) 
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
-		shptreetst scalebar sortshp mapscriptvars tile4ms
+		shptreetst scalebar sortshp mapscriptvars tile4ms \
+		msencrypt
 
 #
 # --- You shouldn't have to edit anything else. ---
@@ -308,11 +309,17 @@ sortshp: sortshp.o
 tile4ms: tile4ms.o
 	$(LD) $(CFLAGS) tile4ms.o $(EXE_LDFLAGS) -o tile4ms
 
+msencrypt: $(LIBMAP_STATIC) msencrypt.o map.h
+	$(LD) $(CFLAGS) msencrypt.o $(EXE_LDFLAGS) -o msencrypt
+
 testexpr: testexpr.o mapparser.o maplexer.o
 	$(LD) $(CFLAGS) testexpr.o $(EXE_LDFLAGS) -o testexpr
 
 testcopy: $(LIBMAP_STATIC) testcopy.o mapcopy.o map.h
 	$(LD) $(CFLAGS) testcopy.o $(EXE_LDFLAGS) -o testcopy
+
+test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c
+	$(CC) $(CFLAGS) mapcrypto.c -DTEST_MAPCRYPTO $(EXE_LDFLAGS) -o test_mapcrypto
 
 mapscriptvars:	Makefile
 	touch mapscriptvars

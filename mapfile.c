@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.325  2006/06/01 19:56:31  dan
+ * Added ability to encrypt tokens (passwords, etc.) in database connection
+ * strings (MS-RFC-18, bug 1792)
+ *
  * Revision 1.324  2006/05/26 21:46:27  tamas
  * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
  *
@@ -4338,6 +4342,9 @@ int initMap(mapObj *map)
   map->layerorder = (int *)malloc(sizeof(int)*MS_MAXLAYERS);
 
   map->templatepattern = map->datapattern = NULL;
+
+  /* Encryption key information - see mapcrypto.c */
+  map->encryption_key_loaded = MS_FALSE;
 
   return(0);
 }

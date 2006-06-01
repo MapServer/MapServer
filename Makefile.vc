@@ -41,13 +41,15 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
         mapogcfilter.obj mapogcsld.obj mapthread.obj mapobject.obj \
 		classobject.obj layerobject.obj mapwcs.obj mapgeos.obj strptime.obj \
 		mapcpl.obj mapio.obj mappool.obj mapsvg.obj mapregex.obj mappluginlayer.obj \
-                mapogcsos.obj mappostgresql.obj $(EPPL_OBJ) $(REGEX_OBJ)
+                mapogcsos.obj mappostgresql.obj mapcrypto.obj \
+		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
 
 MS_EXE = 	mapserv.exe \
                 shp2img.exe legend.exe \
-		shptree.exe scalebar.exe sortshp.exe tile4ms.exe shptreevis.exe
+		shptree.exe scalebar.exe sortshp.exe tile4ms.exe \
+		shptreevis.exe msencrypt.exe
 
 #
 #

@@ -123,6 +123,7 @@
  *            One database table name
  *       or:
  *            (SELECT stmt)
+ * - Parts of the CONNECTION string may be encrypted, see MS-RFC-18
  *
  *****************************************************************************
  * Notices above shall be included in all copies or portions of the software.
@@ -244,7 +245,7 @@ typedef
 /* local prototypes */
 static int TRY( msOracleSpatialHandler *hand, sword status );
 static int ERROR( char *routine, msOracleSpatialHandler *hand, msOracleSpatialDataHandler *dthand );
-static void msSplitLogin( char *connection, char *username, char *password, char *dblink );
+static void msSplitLogin( char *connection, mapObj *map, char *username, char *password, char *dblink );
 static int msSplitData( char *data, char *geometry_column_name, char *table_name, char* unique, char *srid, int *function, int * version);
 static void msOCICloseConnection( void *layerinfo );
 static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password, char *dblink );
@@ -331,15 +332,20 @@ static int ERROR( char *routine, msOracleSpatialHandler *hand, msOracleSpatialDa
 }
 
 /* break layer->connection (username/password@dblink) into username, password and dblink */
-static void msSplitLogin( char *connection, char *username, char *password, char *dblink )
+static void msSplitLogin( char *connection, mapObj *map, char *username, char *password, char *dblink )
 {
-    char *src, *tgt;
+    char *src, *tgt, *conn_decrypted;
     /* clearup */
     *username = *password = *dblink = 0;
     /* bad 'connection' */
     if (connection == NULL) return;
+
+    /* Decrypt any encrypted token */
+    conn_decrypted = msDecryptStringTokens(map, connection);
+    if (connection == NULL) return;
+
     /* ok, split connection */
-    for( tgt=username, src=connection; *src; src++, tgt++ )
+    for( tgt=username, src=conn_decrypted; *src; src++, tgt++ )
         if (*src=='/' || *src=='@')
             break;
         else
@@ -356,6 +362,8 @@ static void msSplitLogin( char *connection, char *username, char *password, char
     }
     if (*src == '@')
         strcpy( dblink, ++src );
+
+    msFree(conn_decrypted);
 }
 
 /* break layer->data into geometry_column_name, table_name and srid */
@@ -1593,7 +1601,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
         return MS_FAILURE;
     }
 
-    msSplitLogin( layer->connection, username, password, dblink );
+    msSplitLogin( layer->connection, layer->map, username, password, dblink );
 
     hand = (msOracleSpatialHandler *) msConnPoolRequest( layer );
 
