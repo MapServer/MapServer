@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.99  2006/06/01 20:49:21  dan
+ * Enabled support for encrypted connection strings (MS-RFC-18, bug 1792)
+ *
  * Revision 1.98  2006/05/29 20:31:20  dan
  * Make sure oPenColor is always initialized (avoid warning on MacOSX)
  *
@@ -849,6 +852,8 @@ static msOGRFileInfo *
 msOGRFileOpen(layerObj *layer, const char *connection ) 
 
 {
+  char *conn_decrypted = NULL;
+
 /* ------------------------------------------------------------------
  * Register OGR Drivers, only once per execution
  * ------------------------------------------------------------------ */
@@ -868,24 +873,34 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   }
 
 /* ------------------------------------------------------------------
+ * Make sure any encrypted token in the connection string are decrypted
+ * ------------------------------------------------------------------ */
+  if (connection)
+  {
+      conn_decrypted = msDecryptStringTokens(layer->map, connection);
+      if (conn_decrypted == NULL)
+          return NULL;  /* An error should already have been reported */
+  }
+
+/* ------------------------------------------------------------------
  * Parse connection string into dataset name, and layer name. 
  * ------------------------------------------------------------------ */
   char *pszDSName = NULL, *pszLayerDef = NULL;
 
-  if( connection == NULL )
+  if( conn_decrypted == NULL )
   {
       /* we don't have anything */
   }
   else if( layer->data != NULL )
   {
-      pszDSName = CPLStrdup(connection);
+      pszDSName = CPLStrdup(conn_decrypted);
       pszLayerDef = CPLStrdup(layer->data);
   }
   else
   {
       char **papszTokens = NULL;
 
-      papszTokens = CSLTokenizeStringComplex( connection, ",", TRUE, FALSE );
+      papszTokens = CSLTokenizeStringComplex( conn_decrypted, ",", TRUE, FALSE );
 
       if( CSLCount(papszTokens) > 0 )
           pszDSName = CPLStrdup( papszTokens[0] );
@@ -894,6 +909,12 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
       CSLDestroy(papszTokens);
   }
+
+  /* Get rid of decrypted connection string. We'll use the original (not
+   * decrypted) string for debug and error messages in the rest of the code.
+   */
+  msFree(conn_decrypted);
+  conn_decrypted = NULL;
 
   if( pszDSName == NULL )
   {
