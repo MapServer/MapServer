@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.451  2006/06/01 20:08:04  dan
+ * Added missing prototype for msGenerateEncryptionKey() (bug 1792)
+ *
  * Revision 1.450  2006/06/01 19:56:31  dan
  * Added ability to encrypt tokens (passwords, etc.) in database connection
  * strings (MS-RFC-18, bug 1792)
@@ -2144,6 +2147,7 @@ MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
 /* ==================================================================== */
 /*      prototypes for functions in mapcrypto.c                         */
 /* ==================================================================== */
+MS_DLL_EXPORT int msGenerateEncryptionKey(unsigned char *k);
 MS_DLL_EXPORT int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k);
 MS_DLL_EXPORT void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out);
 MS_DLL_EXPORT void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out);
