@@ -16,9 +16,12 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Added ability to encrypt tokens (passwords, etc.) in database connection
+  strings (MS-RFC-18, bug 1792)
+
 - Fixed zoomRectangle in mapscript: miny and maxy were swapped, making it
-  impossible to zoom by rect; also the error message was referring to the wrong rect.
-  There were no open issues on bugzilla.
+  impossible to zoom by rect; also the error message was referring to the
+  wrong rect. There were no open issues on bugzilla.
 
 - Implementation of RFC 16 mapio services (bug 1788).
 
