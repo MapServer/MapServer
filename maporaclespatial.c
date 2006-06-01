@@ -342,7 +342,7 @@ static void msSplitLogin( char *connection, mapObj *map, char *username, char *p
 
     /* Decrypt any encrypted token */
     conn_decrypted = msDecryptStringTokens(map, connection);
-    if (connection == NULL) return;
+    if (conn_decrypted == NULL) return;
 
     /* ok, split connection */
     for( tgt=username, src=conn_decrypted; *src; src++, tgt++ )
