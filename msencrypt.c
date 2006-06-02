@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/06/02 18:56:24  dan
+ * Fixed buffer overflow when encrypting string (buffer passed to
+ * msEncryptStringWithKey() didn't include enough room for padding)
+ *
  * Revision 1.1  2006/06/01 19:56:31  dan
  * Added ability to encrypt tokens (passwords, etc.) in database connection
  * strings (MS-RFC-18, bug 1792)
@@ -77,7 +81,7 @@ int main(int argc, char *argv[])
             return -1;
         }
 
-        pszBuf = (char*)malloc((strlen(argv[3])*2+9)*sizeof(char));
+        pszBuf = (char*)malloc((strlen(argv[3])*2+17)*sizeof(char));
         if (pszBuf == NULL)
         {
             printf("ERROR: Memory Allocation failed!\n");
