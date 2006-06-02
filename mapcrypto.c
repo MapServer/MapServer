@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/06/02 18:58:09  dan
+ * Doc update: Buffer passed to msEncryptStringWithKey() has to be
+ * strlen(in)+16+1 bytes and not strlen(in)+8+1 to account for hex encoding of
+ * padding bytes
+ *
  * Revision 1.2  2006/06/01 20:51:02  dan
  * Fixed possible buffer overflow in msDecryptStringTokens() and improved
  * error message if key file could not be read.
@@ -310,7 +315,7 @@ static int msLoadEncryptionKey(mapObj *map)
  *
  * Encrypts and hex-encodes the contents of string in[] and returns the 
  * result in out[] which should have been pre-allocated by the caller
- * to be at least twice the size of in[] + 9 bytes (for padding).
+ * to be at least twice the size of in[] + 16+1 bytes (for padding + '\0').
  *
  **********************************************************************/
 
