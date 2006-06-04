@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.452  2006/06/04 16:39:32  hobu
+ * remove old SDE Raster cruft (was commented out anyway)
+ *
  * Revision 1.451  2006/06/01 20:08:04  dan
  * Added missing prototype for msGenerateEncryptionKey() (bug 1792)
  *
@@ -1431,7 +1434,6 @@ MS_DLL_EXPORT void msCleanup(void);
 /* Function prototypes, not wrapable */
 
 #ifndef SWIG
-/*int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img);  in mapsde.c */
 
 /*
 ** helper functions not part of the general API but needed in
