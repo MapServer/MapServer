@@ -1,0 +1,322 @@
+================================================================
+MS RFC 13: Support of Sensor Observation Service in Mapserver
+================================================================
+
+:Date:  2006/02/21
+:Author: Yewondwossen Assefa
+:Contact: yassefa@dmsolutions.ca
+:Status: passed 
+ 
+ 
+ 
+Overview
+--------
+
+This is the a first attempt to support part of the OGC Sensor Web Enablement (SWE) in Mapserver. 
+The different specifications developed around the SWE are :
+
+- Sensor Observation Service (SOS) :  provides an API for managing deployed sensors and retrieving sensor data.
+- Observation & Measurement: Information model and encoding for observations and measurements.
+- Sensor Alert Service : A service by which a client can register for and receive sensor alert messages. The service supports both pre-defined and custom alerts and covers the process of alert publication, subscription, and notification. 
+- Sensor Model Language : Information model and XML encoding for discovering, querying and controlling Web-resident sensors.
+- Sensor Planning Service : A service by which a client can determine collection feasibility for a desired set of collection requests for one or more mobile sensors/platforms, or a client may submit collection requests directly to these sensors/platforms.
+- Transducer markup Language (TML) : General characterizations of transducers (both receivers and transmitters)
+- Web Notification Service : Executes and manages message dialogue between a client and Web service(s) for long duration asynchronous processes. 
+
+
+The intention here is to support the SOS mandatory operations.  
+Please refer to the OGC site (http://www.opengeospatial.org/functional/?page=swe) 
+for more details on the SWE initiatives.
+
+User Interface
+--------------
+
+From the user perspective there will be an SOS interface will offer the three core operations 
+(GetCapabilities, GetObservation and DescribeSensor). A full description of what could be available is 
+presented in Annexe A.
+
+Changes in Mapserver
+--------------------
+
+- All the development will be localized into a mapogcsos.c file.  
+- There will be additions to the mapows.c/h file to integrate the dispatch of the requests.
+- In mapgml.c (function msGMLWriteWFSQuery), extract the loop that writes features ( gml:featureMember)
+  into a separate function so the the GetObservation can also use it to output the results.
+- The SOS capability will be available when Mapserver is built using the flag USE_SOS.
+
+
+Mapscript implications
+----------------------
+
+The are no special implication for the mapscript module 
+
+
+Additional libraries
+--------------------
+
+There will be an attempt to use the libxml2 (http://xmlsoft.org/) library when generating the GetCapabilities document. Decision to go ahead will be based on ease to use and speed of output.
+
+
+Testing
+-------
+
+It is proposed that automatic tests with map/data/expected
+results be added into the msautotest project to test the
+GetCapbilities and GetObservation requests.
+
+
+Bug Tracking
+------------
+
+Bug 1710 : http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1710
+
+
+Voting History
+--------------
+
+- +1 : Assefa, Warmerdam, Nacionales
+- +0 : Morissette
+- -0 : Gillies 
+
+Note : discussions, concerns are available in the mapserver dev list (Feb 2006 RFC 13 : SOS support) 
+
+
+Annexe A  :  Sensor Observation System (SOS) support in Mapserver
+-----------------------------------------------------------------
+
+This is a first attempt to define what will be supported in Mapserver to be able to deploy a Sensor Observation System (SOS)
+  
+
+Specifications and useful links used :
+ 
+- Sensor Observation Service (SOS) (OGC 05-088r1, Version 0.1.1)
+- Observation and Measurement (OGC 05-087r1, toward Version 1.0)
+- Sensor ML : Sensor Model Language(ML) OGC 04-019r2
+- http://www.opengeospatial.org/functional/?page=swe svn link for members : https://svn.opengeospatial.org:8443/ogc-projects/ows-3/schema4demo/
+ 
+SOS provides several operations divided into core mandatory operations 
+(GetCapabilities, DescribeSensor and GetObservation) and optional transactional and 
+enhanced operations.  The first implementation of SOS in Mapserver will only address the core operations
+  
+  
+**1. GetCapabilities Request**
+  
+   The GetCapabilities request will use the following parameters :
+   
+   
+   
+   - Request : fixed at GetCapabilities
+   - Service : fixed at SOS
+   
+   
+**2. GetCapabilities returned document**
+
+
+   Attached at the end of the document examples of a GetCapabilities document. 
+   The following elements are SOS items included in the capabilities document,
+   with an equivalent Mapserver implementation                                         
+
+   
+   - ServiceIdentification (all elements are extracted from metadata at the web level)
+
+      - Title : extracted from a metadata at web level ows/sos_title. Same concept as wms/wfs
+      - Abstract : metadata ows/sos abstract  
+      - ServiceType  : Fixed to SOS	
+      - ServiceType version : Fixed to 0.3	
+      - Fees : metadata Ows/sos_fees 
+      - Access Constrains : metadata : Ows/sos_constrain
+      
+        
+   - ServiceProvider (all elements are extracted from metadata at the web level, 
+     using an equivalent name as the SOS element)
+
+      - ProviderName : 
+      - ProviderSite
+      - IndividualName
+      - PositionName
+      - Voice
+      - Facsimile
+      - DeliveryPoint
+      - City
+      - AdministrativeArea
+      - PostalCode
+      - Country
+      - ElectronicmailAdress
+      - EndAdress
+      - OnlineResource
+      - HoursOfService
+      - ContactInstructions
+      
+   - Operation Metadata : This part of the capabilities defines the operations 
+     that will be supported which are GetCapbilities and GetObservation. 
+     For more information refer to 
+     https://svn.opengeospatial.org:8443/ogc-
+     projects/ows-3/schema4demo/ows/1.0.30/owsOperationsMetadata.xsd
+     
+     - Operation : GetCapabilities
+
+        - Operation Name : Fixed at GetCapabilities
+        - HTTP : Connect point URL extracted. Only the Get request method is 
+          supported
+        - Parameter : includes name and version.  We could use the parameters 
+          to propagate the name of the service SOS and the version. Other 
+          parameters may be added if needed.
+        
+     - Operation : GetObservation
+
+        - Operation Name : Fixed GetObservation
+        - DCP (HTTP) : extracted from a metadata
+        -  Parameter : We could use this to propagate the parameters needed 
+           when doing a GetObservation request (Offering, eventTime)
+           
+     - Operation : DescribeSensor
+     
+     
+   - Filter Capabilities
+  
+     The Filter Capabilities that will be supported are the same ones that are 
+     currently supported in Mapserver (http://mapserver.gis.umn.edu/docs/howto/filterencoding) :
+     Spatial Capabilities, Logical Operators, Comparison Operators
+  
+     There is a mention in the specifications of ogc filter temporal capabilities,
+     but I could not locate the exact definition of it. In any case, 
+
+
+   - SOS Contents (Observation Offerings)
+  
+     As explained in SOS specifications (section 6.2) , “ ...An observation offering 
+     is also analogous to a layer in a Web Map Service because each offering is intended 
+     to be a non-overlapping group of related observations. Each Observation Offering is 
+     constrained by a number of parameters including sensor system that report observation,
+     Time, phenomena, geographical region ... “
+     
+     In Mapserver an Offering will be represented by a group of layers using 
+     mapserer's group parameter.  The metadata associated with a group 
+     (offering will be taken from the first layer of the group)
+     
+     The following properties would be set at a group level.
+  
+     - Standard Properties
+     
+        - id : Unique Offering Identifier. Mandatory
+        - name : name used with the offering. Optional
+        - description : description of the offering. Optional
+        
+     - Bounded By : used to define the geographical boundaries of the Offering.
+       It should be extracted from a metadata. Mandatory
+       
+     - EventTime : used to define a valid time range for the offering. It should be  extracted 
+       from a metadata. Mandatory
+       
+     - Procedures : series of URLS reference to one or more systems that supply 
+       observations in the offering. It should be extracted from a metadata. Mandatory
+       
+       
+   - Observed property : Observables/Phenomena that can be requested in this offering.
+
+     Two specializations are identified in the specifications:
+    
+        - Constrained : modifies base phenomenon by adding a single constrains (ex surface 
+          water  temperature add a constrain that depth is between 0, -0.3)
+        - Compound which is either a composite (a set of component phenomena that may or may not 
+          relate to each other)or a phenomenonSeries that applies one or more constrainstList to 
+          the base phenomenon)
+
+     There is no clear cut indication which representation would be the more natural for 
+     Mapserver but if we consider the group/layer/attribute combination, we can see that 
+     a group of layers could represent an offering, a layer would be an observed property 
+     (or phenomenon) and the attributes would be the composite phenomenon defining the 
+     phenomenon.
+
+     The capabilities document will include CompositePhenomenonType element with an mandatory
+     id element identifying the phenomenon and optional elements such as name and 
+     component.
+ 
+ 
+   - Feature Of Interest
+  
+     The definition given in the specification is : This is a single feature or a 
+     collection of features that represents the object on which the sensor systems are 
+     making observations. In case of in-situ sensor this may be a station to which the 
+     sensor is attached or the atmosphere directly surrounding it. For remote sensors this 
+     may be the area or volume that is being sensor.
+     It is represented by GML feature type and is expected to include bounding box extents. 
+  
+     In our case here, this would be equivalent to the “bounded by” element defined earlier.
+  
+     Note that in the implementation of Mapserver, It is assumed that geographical 
+     information used to represent the individual sensors represent the feature of interest 
+     of the sensor. This is a requirement to be able to do spatial queries.
+
+   - Result Format
+  
+     MIME type of the result that will be returned to a GetObservation request.
+     Fixed to text/xml;subtype=”om1.0.30”
+
+
+**3. GetObservation Request**
+
+   The GetObservation request used to retrieve observation data will be supported using 
+   the Get method. Post method will not be supported in the first implementation.
+
+   Here are the parameters that will be supported and their definitions :
+
+     - Offering  : Equivalent to the Offering Id identified in the capabilities (Mandatory)
+     - evetnTime : single time or time period. This will be used as a Time filter to do the 
+       queries using an identified time attribute. (Optional)
+     - observedProperty : Identifies the layer in Mapserver (Mandatory)
+     - featureOfInterest : Additional geographical filter using a bbox. (Optional)
+     - Result : Will be used to filter using the OGC Filter supported capabilities.
+  
+  
+**4. Get Observation Response**
+
+   An observation response should contain the following information :
+
+   - Information describing the Offering
+   - Valid time (instances or period)
+   - Description of the phenomenon (like the offering name)
+   - location and feature of interest for the offering
+   - The result associated with the offering
+
+   In the case of Mapserver implementation, what is proposed is to be returned an 
+   observation collection reflecting the query results. Here is the different elements 
+   returned :
+
+   - name : The offering unique identifier
+   - description : Description of the offering
+   - time : Valid time instance or period
+   - featureofinterest : Geographical extents covered of the offering
+   - Member : This is repeated for all the observations returned. The following
+     are the parameters included for each member
+
+     - observed property : the phenomenon observed
+     - location : geographical coordinates
+     - procedure
+     - result : Result of the observation. In the first implementation It is proposed 
+       that the gml:feature member is returned. This gives the possibility to return 
+       one/more attribute values in an easily manipulated format. The will be equivalent 
+       to a gml:feature member returned in wfs.
+       
+       
+**5. Describe Sensor**
+
+
+   The Describe sensor request uses two parameter that are SensorId (Mandatory) and an 
+   optional outputFormat. 
+
+   In this phase the DescribeSensor will use a metadata of URL type set on the layer and 
+   relay the request. There won't be any SensorML output generation done in Mapserver in 
+   this implementation.
+
+
+
+**6. Examples**
+
+   - http://vast.uah.edu:8080/ows/weather?request=GetCapabilities
+   - http://vast.uah.edu:8080/ows/weather?
+     request=GetObservation&offering=WEATHER_DATA&time=2004-
+     04-01T05:00:00Z/2004-04-01T06:00:00Z&format=application/com-xml
+
+
+
