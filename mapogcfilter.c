@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.67  2006/06/05 20:07:56  hobu
+ * make sure to close the layer in FLTAddToLayerResultCache
+ *
  * Revision 1.66  2006/04/08 05:58:48  frank
  * fix various memory leaks
  *
@@ -697,6 +700,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
           msMergeRect(&(psLayer->resultcache->bounds), &shape.bounds);
     }
 
+    msLayerClose(psLayer);
 
 }
 
