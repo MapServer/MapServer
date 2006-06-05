@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2006/06/05 19:45:04  assefa
+ * Split buffer into small pieces before outputting it.
+ *
  * Revision 1.14  2006/04/06 00:51:54  assefa
  * change url location the exception's schema.
  *
@@ -1431,8 +1434,14 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlNodePtr psRootNode,  psNode;
     char **tokens;
     int n;
+    
+    char workbuffer[5000];
+    int nSize = 0;
+    int iIndice = 0;
 
     sBbox = map->extent;
+
+    
 
     for(i=0; i<numentries; i++) 
     {
@@ -1891,7 +1900,30 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /* output results */    
      msIO_printf("Content-type: text/xml%c%c",10,10);
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
-     msIO_printf("%s", buffer);
+
+     nSize = sizeof(workbuffer);
+     if (size > sizeof(workbuffer))
+     {
+         iIndice = 0;
+         while ((iIndice + nSize) <= size)
+         {
+             snprintf(workbuffer, (sizeof(workbuffer)-1), "%s", buffer+iIndice );
+             workbuffer[sizeof(workbuffer)-1] = '\0';
+             msIO_printf("%s", workbuffer);
+
+             iIndice +=nSize;
+         }
+         if (iIndice < size)
+         {
+              sprintf(workbuffer, "%s", buffer+iIndice );
+              msIO_printf("%s", workbuffer);
+         }
+     }
+     else
+     {
+       //msIO_printf("size: %d",size);
+       msIO_printf("%s", buffer);
+     }
 
     /*free buffer and the document */
      xmlFree(buffer);
