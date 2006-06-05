@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- FLTAddToLayerResultCache wasn't properly closing the layer after it 
+  was done with it.
+
 - Added ability to encrypt tokens (passwords, etc.) in database connection
   strings (MS-RFC-18, bug 1792)
 
