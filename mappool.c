@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/06/05 20:07:25  hobu
+ * only print debug output for unreferenced closes if debug is
+ * set for the connection
+ *
  * Revision 1.13  2006/06/05 16:39:28  hobu
  * don't output connection details into debug output
  *
@@ -323,9 +327,11 @@ static void msConnPoolClose( int conn_index )
 
     if( conn->ref_count > 0 )
     {
-        msDebug( "msConnPoolClose(): "
-                 "Closing connection even though ref_count=%d.\n", 
-                  conn->ref_count );
+        if( conn->debug )
+            msDebug( "msConnPoolClose(): "
+                 "Closing connection %s even though ref_count=%d.\n", 
+                 conn->connection, conn->ref_count );
+
         msSetError( MS_MISCERR, 
                     "Closing connection %s even though ref_count=%d.", 
                     "msConnPoolClose()",
