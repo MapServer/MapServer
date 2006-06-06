@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.72  2006/06/06 14:21:01  frank
+ * ensure msOWSDispatch() always available
+ *
  * Revision 1.71  2006/04/17 19:06:49  dan
  * Set User-Agent in HTTP headers of client WMS/WFS connections (bug 1749)
  *
@@ -274,9 +277,10 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
 /*====================================================================
  *   mapows.c
  *====================================================================*/
+MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
+
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
 
-MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);

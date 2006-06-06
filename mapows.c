@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2006/06/06 14:21:01  frank
+ * ensure msOWSDispatch() always available
+ *
  * Revision 1.64  2006/05/09 14:33:41  assefa
  * WFS client/OWS : correct path concatenation logic for temporary gml file
  * created (bug 1770).
@@ -251,12 +254,6 @@
 
 MS_CVSID("$Id$")
 
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
-
-#if !defined(USE_PROJ)
-#error "PROJ.4 is required for WMS, WFS and WCS Server Support."
-#endif
-
 /*
 ** msOWSDispatch() is the entry point for any OWS request (WMS, WFS, ...)
 ** - If this is a valid request then it is processed and MS_SUCCESS is returned
@@ -292,6 +289,12 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
 }
+
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+
+#if !defined(USE_PROJ)
+#error "PROJ.4 is required for WMS, WFS and WCS Server Support."
+#endif
 
 /*
 ** msRenameLayer()

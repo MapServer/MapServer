@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- mapows.c: ensure msOWSDispatch() is always available even if there are
+  no services to dispatch.  This makes mapscript binding easier.
+
 - FLTAddToLayerResultCache wasn't properly closing the layer after it 
   was done with it.
 
