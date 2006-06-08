@@ -260,6 +260,7 @@ typedef struct {
 %include "../swiginc/owsrequest.i"
 %include "../swiginc/connpool.i"
 %include "../swiginc/msio.i"
+%include "../swiginc/web.i"
 
 /* 
 =============================================================================

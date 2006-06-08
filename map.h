@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.454  2006/06/08 07:51:11  umberto
+ * webObj constructor and destructor (bug 1798)
+ *
  * Revision 1.453  2006/06/04 16:46:10  hobu
  * trim log so it only goes back to the beginning of 4.8
  *
@@ -1272,6 +1275,8 @@ MS_DLL_EXPORT int initStyle(styleObj *style);
 MS_DLL_EXPORT void initReferenceMap(referenceMapObj *ref);
 MS_DLL_EXPORT void initScalebar(scalebarObj *scalebar);
 MS_DLL_EXPORT void initGrid( graticuleObj *pGraticule );
+MS_DLL_EXPORT void initWeb(webObj *web);
+MS_DLL_EXPORT void freeWeb(webObj *web);
 
 MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
