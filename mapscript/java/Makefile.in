@@ -198,7 +198,7 @@ CC=gcc
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: mapscript_so mapscript_java mapscript_jar
+all: interface mapscript_so mapscript_java mapscript_jar
 
 # This target is for users who are generating their own interface
 # with SWIG versions lower than 1.3.19 (no -outdir)
