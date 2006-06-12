@@ -1,29 +1,33 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
 use XBase;
 use mapscript;
 use Getopt::Long;
 
-%types = ( '1' => 'point',
-           '3' => 'arc',
-           '5' => 'polygon',
-           '8' => 'multipoint'
-         );
+my $file;
 
-&GetOptions("file=s", \$file);
+my %types = ( '1' => 'point',
+              '3' => 'arc',
+              '5' => 'polygon',
+              '8' => 'multipoint'
+            );
+
+GetOptions("file=s", \$file);
 if(!$file) {
-  print "Syntax: shpinfo.pl -file=[filename]\n";
+  print "Syntax: shpinfo.pl --file=[filename]\n";
   exit 0;
 }
 
-$shapefile = new mapscript::shapefileObj($file, -1) or die "Unable to open shapefile $file.";
+my $shapefile = new mapscript::shapefileObj($file, -1) or die "Unable to open shapefile $file.";
 
 print "Shapefile $file:\n\n";
 print "\ttype: ". $types{$shapefile->{type}} ."\n"; 
 print "\tnumber of features: ". $shapefile->{numshapes} ."\n";
 printf "\tbounds: (%f,%f) (%f,%f)\n", $shapefile->{bounds}->{minx}, $shapefile->{bounds}->{miny}, $shapefile->{bounds}->{maxx}, $shapefile->{bounds}->{maxy};
 
-$table = new XBase $file.'.dbf' or die XBase->errstr;
+my $table = new XBase $file.'.dbf' or die XBase->errstr;
 
 print "\nXbase table $file.dbf:\n\n";
 
