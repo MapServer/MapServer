@@ -7,7 +7,7 @@ import edu.umn.gis.mapscript.*;
 
 	@author: Nicole Herman, Umberto Nicoletti
 */
-public class wms_client_part {
+public class RunTimeBuiltWMSClient {
 	public static void main(String[] args)  {
 	   // Not needed anymore since mapserver 4.4.x
 	   //System.loadLibrary("mapscript");
