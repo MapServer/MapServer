@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69.2.2  2006/06/14 12:31:40  dan
+ * Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
+ *
  * Revision 1.69.2.1  2006/05/15 19:11:29  frank
  * Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
  *
@@ -1732,7 +1735,11 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 #endif
 
         status = msSHPWhichShapes(tSHP->shpfile, rect, layer->debug);
-        if(status == MS_DONE) continue; /* next tile */
+        if(status == MS_DONE) {
+            /* Close and continue to next tile */
+            msSHPCloseFile(tSHP->shpfile);
+            continue;
+        }
         else if(status != MS_SUCCESS) return(MS_FAILURE);
 
         tSHP->tileshpfile->lastshape = i;
