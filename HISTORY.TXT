@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Support WMC Min/Max scale in write mode (bug 1581)
+
 - Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
 
 - Added webObj constructor and destructor to swig interface with 

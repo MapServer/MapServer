@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.76  2006/06/14 18:13:39  julien
+ * Support WMC Min/Max scale in write mode. bug 1581
+ *
  * Revision 1.75  2006/03/10 15:30:15  julien
  * Set the wms_time metadata when we have the time dimension in context1.1
  *
@@ -2002,6 +2005,16 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                             " xlink:href=\"%s\"/>\n", 
                             MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
                             MS_TRUE, NULL, NULL, NULL, NULL, NULL, "      ");
+
+          /* MinScale && MaxScale */
+          if(nVersion >= OWS_1_1_0 && map->layers[i].minscale > 0)
+              msIO_fprintf(stream, 
+               "      <sld:MinScaleDenominator>%f</sld:MinScaleDenominator>\n",
+                           map->layers[i].minscale);
+          if(nVersion >= OWS_1_1_0 && map->layers[i].maxscale > 0)
+              msIO_fprintf(stream, 
+               "      <sld:MaxScaleDenominator>%f</sld:MaxScaleDenominator>\n",
+                           map->layers[i].maxscale);
 
           /* Layer SRS */
           pszValue = (char*)msOWSGetEPSGProj(&(map->layers[i].projection), 
