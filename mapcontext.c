@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.77  2006/06/15 14:58:24  julien
+ * Add SLD xsd and 1.1.0 reference in the root element
+ *
  * Revision 1.76  2006/06/14 18:13:39  julien
  * Support WMC Min/Max scale in write mode. bug 1581
  *
@@ -1756,11 +1759,16 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   {
       msIO_fprintf( stream, " xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
       msIO_fprintf( stream, " xmlns=\"http://www.opengis.net/context\"");
-      /* fprintf( stream, " xmlns:sld=\"http://www.opengis.net/sld"); */
+      msIO_fprintf( stream, " xmlns:sld=\"http://www.opengis.net/sld\"");
       pszEncodedVal = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-      msIO_fprintf( stream, 
-               " xsi:schemaLocation=\"http://www.opengis.net/context %s/context/1.0.0/context.xsd\">\n",
-                    pszEncodedVal);
+      if( nVersion >= OWS_1_1_0 )
+          msIO_fprintf( stream, 
+                        " xsi:schemaLocation=\"http://www.opengis.net/context %s/context/1.1.0/context.xsd\">\n",
+                        pszEncodedVal);
+      else
+          msIO_fprintf( stream, 
+                        " xsi:schemaLocation=\"http://www.opengis.net/context %s/context/1.0.0/context.xsd\">\n",
+                        pszEncodedVal);
       msFree(pszEncodedVal);
   }
   else
@@ -2009,11 +2017,11 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /* MinScale && MaxScale */
           if(nVersion >= OWS_1_1_0 && map->layers[i].minscale > 0)
               msIO_fprintf(stream, 
-               "      <sld:MinScaleDenominator>%f</sld:MinScaleDenominator>\n",
+               "      <sld:MinScaleDenominator>%g</sld:MinScaleDenominator>\n",
                            map->layers[i].minscale);
           if(nVersion >= OWS_1_1_0 && map->layers[i].maxscale > 0)
               msIO_fprintf(stream, 
-               "      <sld:MaxScaleDenominator>%f</sld:MaxScaleDenominator>\n",
+               "      <sld:MaxScaleDenominator>%g</sld:MaxScaleDenominator>\n",
                            map->layers[i].maxscale);
 
           /* Layer SRS */
