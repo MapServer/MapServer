@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/06/19 15:13:37  frank
+ * add io context labelling, avoid depending on function pointer compares
+ *
  * Revision 1.6  2006/05/22 19:20:59  frank
  * added some of the RFC 16 entry points
  *
@@ -52,9 +55,12 @@
 #ifndef MAPIO_H
 #define MAPIO_H
 
-#ifdef USE_FASTCGI
+#define USE_MAPIO
+
+#if defined(USE_FASTCGI) && !defined(USE_MAPIO)
 #define USE_MAPIO
 #endif
+
 
 /*
 ** We deliberately emulate stdio functions in the msIO cover functions. 
@@ -94,6 +100,7 @@ gdIOCtx MS_DLL_EXPORT *msIO_getGDIOCtx( FILE *fp );
 typedef int (*msIO_llReadWriteFunc)( void *cbData, void *data, int byteCount );
 
 typedef struct msIOContext_t {
+    const char           *label;
     int                   write_channel; /* 1 for stdout/stderr, 0 for stdin */
     msIO_llReadWriteFunc  readWriteFunc;
     void                  *cbData;

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/06/19 15:13:37  frank
+ * add io context labelling, avoid depending on function pointer compares
+ *
  * Revision 1.10  2006/05/22 19:20:59  frank
  * added some of the RFC 16 entry points
  *
@@ -128,11 +131,11 @@ msIOContext *msIO_getHandler( FILE * fp )
 {
     msIO_Initialize();
 
-    if( fp == stdin )
+    if( fp == stdin || fp == NULL || strcmp((const char *)fp,"stdin") == 0 )
         return &current_stdin_context;
-    else if( fp == stdout )
+    else if( fp == stdout || strcmp((const char *)fp,"stdout") == 0 )
         return &current_stdout_context;
-    else if( fp == stderr )
+    else if( fp == stderr || strcmp((const char *)fp,"stderr") == 0 )
         return &current_stderr_context;
     else
         return NULL;
@@ -333,14 +336,17 @@ static void msIO_Initialize( void )
     if( is_msIO_initialized == MS_TRUE )
         return;
 
+    default_stdin_context.label = "stdio";
     default_stdin_context.write_channel = MS_FALSE;
     default_stdin_context.readWriteFunc = msIO_stdioRead;
     default_stdin_context.cbData = (void *) stdin;
 
+    default_stdout_context.label = "stdio";
     default_stdout_context.write_channel = MS_TRUE;
     default_stdout_context.readWriteFunc = msIO_stdioWrite;
     default_stdout_context.cbData = (void *) stdout;
 
+    default_stderr_context.label = "stdio";
     default_stderr_context.write_channel = MS_TRUE;
     default_stderr_context.readWriteFunc = msIO_stdioWrite;
     default_stderr_context.cbData = (void *) stderr;
@@ -463,14 +469,17 @@ int msIO_installFastCGIRedirect()
 {
     msIOContext stdin_ctx, stdout_ctx, stderr_ctx;
 
+    stdin_ctx.label = "fcgi";
     stdin_ctx.write_channel = MS_FALSE;
     stdin_ctx.readWriteFunc = msIO_fcgiRead;
     stdin_ctx.cbData = (void *) FCGI_stdin;
 
+    stdout_ctx.label = "fcgi";
     stdout_ctx.write_channel = MS_TRUE;
     stdout_ctx.readWriteFunc = msIO_fcgiWrite;
     stdout_ctx.cbData = (void *) FCGI_stdout;
 
+    stderr_ctx.label = "fcgi";
     stderr_ctx.write_channel = MS_TRUE;
     stderr_ctx.readWriteFunc = msIO_fcgiWrite;
     stderr_ctx.cbData = (void *) FCGI_stderr;
@@ -549,7 +558,7 @@ int msIO_needBinaryStdin()
 void msIO_resetHandlers()
 
 {
-    if( current_stdin_context.readWriteFunc == msIO_bufferRead )
+    if( strcmp(current_stdin_context.label,"buffer") == 0 )
     {
         msIOBuffer *buf = (msIOBuffer *) current_stdin_context.cbData;
         
@@ -558,7 +567,7 @@ void msIO_resetHandlers()
         free( buf );
     }
 
-    if( current_stdout_context.readWriteFunc == msIO_bufferWrite )
+    if( strcmp(current_stdout_context.label,"buffer") == 0 )
     {
         msIOBuffer *buf = (msIOBuffer *) current_stdout_context.cbData;
         
@@ -567,7 +576,7 @@ void msIO_resetHandlers()
         free( buf );
     }
 
-    if( current_stderr_context.readWriteFunc == msIO_bufferWrite )
+    if( strcmp(current_stderr_context.label,"buffer") == 0 )
     {
         msIOBuffer *buf = (msIOBuffer *) current_stderr_context.cbData;
         
@@ -587,7 +596,8 @@ void msIO_installStdoutToBuffer()
 
 {
     msIOContext  context;
-
+    
+    context.label = "buffer";
     context.write_channel = MS_TRUE;
     context.readWriteFunc = msIO_bufferWrite;
     context.cbData = calloc(sizeof(msIOBuffer),1);
@@ -606,6 +616,7 @@ void msIO_installStdinFromBuffer()
 {
     msIOContext  context;
 
+    context.label = "buffer";
     context.write_channel = MS_FALSE;
     context.readWriteFunc = msIO_bufferRead;
     context.cbData = calloc(sizeof(msIOBuffer),1);

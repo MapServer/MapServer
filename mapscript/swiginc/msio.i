@@ -14,11 +14,11 @@ gdBuffer msIO_getStdoutBufferBytes(void);
 %{
 
 const char *msIO_getStdoutBufferString() {
-    msIOContext *ctx = msIO_getHandler( stdout );
+    msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;
 
     if( ctx == NULL || ctx->write_channel == MS_FALSE 
-        || ctx->readWriteFunc != msIO_bufferWrite )
+        || strcmp(ctx->label,"buffer") != 0 )
     {
 	msSetError( MS_MISCERR, "Can't identify msIO buffer.",
                     "msIO_getStdoutBufferString" );
@@ -37,12 +37,12 @@ const char *msIO_getStdoutBufferString() {
 }
 
 gdBuffer msIO_getStdoutBufferBytes() {
-    msIOContext *ctx = msIO_getHandler( stdout );
+    msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;
     gdBuffer     gdBuf;
 
     if( ctx == NULL || ctx->write_channel == MS_FALSE 
-        || ctx->readWriteFunc != msIO_bufferWrite )
+        || strcmp(ctx->label,"buffer") != 0 )
     {
 	msSetError( MS_MISCERR, "Can't identify msIO buffer.",
                     "msIO_getStdoutBufferString" );
