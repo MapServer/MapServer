@@ -10652,6 +10652,168 @@ MAKE_PHPMS_CLEAN=$MAKE_PHPMS_CLEAN
 
 
 
+if test "x$LD_SHARED" = "x" ; then
+
+	echo 'void f(){}' > conftest.c
+	if test -z "`${CC} -fPIC -c conftest.c 2>&1`"; then
+	  C_PIC=-fPIC
+	else
+	  C_PIC=
+	fi
+	rm -f conftest*
+
+	C_PIC=$C_PIC
+
+
+
+
+  echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
+
+  echo '#include <stdio.h>' > conftest2.c
+  echo 'void g(); void g(){printf("");}' >> conftest2.c
+  ${CC} ${C_PIC} -c conftest2.c
+  SO_EXT="so"
+  SO_COMMAND_NAME="-soname"
+  export SO_EXT
+  export SO_COMMAND_NAME
+  LD_SHARED="/bin/true"
+  if test ! -z "`uname -a | grep IRIX`" ; then
+    IRIX_ALL=-all
+  else
+    IRIX_ALL=
+  fi
+
+
+# Check whether --with-ld-shared or --without-ld-shared was given.
+if test "${with_ld_shared+set}" = set; then
+  withval="$with_ld_shared"
+
+fi;
+
+  if test "$with_ld_shared" != "" ; then
+    if test "$with_ld_shared" = "no" ; then
+      echo "user disabled shared library support."
+    else
+      echo "using user supplied .so link command ... $with_ld_shared"
+    fi
+    LD_SHARED="$with_ld_shared"
+  fi
+
+    if test ! -z "`uname -a | grep CYGWIN`" \
+        -a "$LD_SHARED" = "/bin/true" ; then
+    if test -z "`gcc -shared conftest2.o -o libconftest.dll`" ; then
+      if test -z "`${CC} conftest1.c -L./ -lconftest -o conftest1 2>&1`"; then
+        LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
+        if test -z "$LD_LIBRARY_PATH" ; then
+          LD_LIBRARY_PATH="`pwd`"
+        else
+          LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+        fi
+        export LD_LIBRARY_PATH
+        if test -z "`./conftest1 2>&1`" ; then
+          echo "checking for Cygwin gcc -shared ... yes"
+          LD_SHARED="c++ -shared"
+          SO_EXT="dll"
+        fi
+        LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
+      fi
+    fi
+  fi
+
+
+    if test ! -z "`uname | grep Darwin`" \
+          -a "$LD_SHARED" = "/bin/true" ; then
+    if test -z "`${CXX} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
+      ${CC} -c conftest1.c
+      if test -z "`${CXX} conftest1.o libconftest.so -o conftest1 2>&1`"; then
+        DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
+        if test -z "$DYLD_LIBRARY_PATH" ; then
+          DYLD_LIBRARY_PATH="`pwd`"
+        else
+          DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
+        fi
+        export DYLD_LIBRARY_PATH
+        if test -z "`./conftest1 2>&1`" ; then
+          echo "checking for ${CXX} -dynamiclib ... yes"
+          LD_SHARED="${CXX} -dynamiclib -single_module -flat_namespace -undefined suppress"
+	  SO_EXT=dylib
+          SO_COMMAND_NAME='-dylib_install_name'
+        fi
+        DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
+      fi
+      rm -f conftest1.o
+    fi
+  fi
+
+  if test "$LD_SHARED" = "/bin/true" \
+	-a -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
+    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
+      LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
+      export LD_LIBRARY_PATH
+      if test -z "`./conftest1 2>&1`" ; then
+        echo "checking for ${CXX} -shared ... yes"
+        LD_SHARED="${CXX} -shared $IRIX_ALL"
+      else
+        echo "checking for ${CXX} -shared ... no(3)"
+      fi
+      LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
+    else
+      echo "checking for ${CXX} -shared ... no(2)"
+    fi
+  else
+    if test "$LD_SHARED" = "/bin/true" ; then
+      echo "checking for ${CXX} -shared ... no(1)"
+    fi
+  fi
+
+  if test "$LD_SHARED" = "/bin/true" \
+          -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
+    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
+      LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
+      export LD_LIBRARY_PATH
+      if test -z "`./conftest1 2>&1`" ; then
+        echo "checking for ld -shared ... yes"
+        LD_SHARED="ld -shared"
+      fi
+      LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
+    fi
+  fi
+
+  if test "$LD_SHARED" = "/bin/true" ; then
+    echo "checking for ld -shared ... no"
+    if test ! -x /bin/true ; then
+      LD_SHARED=/usr/bin/true
+    fi
+  fi
+  if test "$LD_SHARED" = "no" ; then
+    if test -x /bin/true ; then
+      LD_SHARED=/bin/true
+    else
+      LD_SHARED=/usr/bin/true
+    fi
+  fi
+
+  rm -f conftest* libconftest*
+
+  LD_SHARED=$LD_SHARED
+
+  SO_EXT=$SO_EXT
+
+  SO_COMMAND_NAME=$SO_COMMAND_NAME
+
+
+fi
+
 
 
 # Check whether --with-apxs or --without-apxs was given.

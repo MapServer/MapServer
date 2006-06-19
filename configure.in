@@ -2029,6 +2029,16 @@ fi
 AC_SUBST(MAKE_PHPMS, $MAKE_PHPMS)
 AC_SUBST(MAKE_PHPMS_CLEAN, $MAKE_PHPMS_CLEAN)
 
+dnl ---------------------------------------------------------------------
+dnl Shared library building.
+dnl
+dnl If we didn't select an LD_SHARED for PHP then we should do so here.
+dnl ---------------------------------------------------------------------
+
+if test "x$LD_SHARED" = "x" ; then
+  AC_COMPILER_PIC
+  AC_LD_SHARED
+fi
 
 dnl ---------------------------------------------------------------------
 dnl 'apxs' option for PHP built as an Apache module (libphp3.so)

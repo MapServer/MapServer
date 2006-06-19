@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Added logic to collect LD_SHARED even if PHP not requested in configure.
+
 - Fix problems with msio/rfc16 stuff on windows.  Don't depend on comparing
   function pointers or "stdio" handles.  (mapio.c, mapio.h, msio.i)
 
