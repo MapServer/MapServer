@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Fix problems with msio/rfc16 stuff on windows.  Don't depend on comparing
+  function pointers or "stdio" handles.  (mapio.c, mapio.h, msio.i)
+
 - Support WMC Min/Max scale in write mode (bug 1581)
 
 - Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
