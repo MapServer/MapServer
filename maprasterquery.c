@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/06/22 17:32:25  frank
+ * Use backtics version of LayerSetTimeFilter so that time
+ * queries against layers with direct shapefile tileindexes
+ * will work properly.
+ *
  * Revision 1.21  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1368,10 +1373,11 @@ msRASTERLayerInitializeVirtualTable(layerObj *layer)
 
     layer->vtable->LayerCloseConnection = msRASTERLayerClose;
 
-    layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+    /* we use backtics for proper tileindex shapefile functioning */
+    layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
-
 
     return MS_SUCCESS;
 }
