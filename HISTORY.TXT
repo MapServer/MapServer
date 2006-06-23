@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.4 (CVS)
 --------------------------
 
+- Missing GEOS support caused heap corruption using shapeObj C# on linux (Bug 1801)
+
 - Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
 
 - Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
