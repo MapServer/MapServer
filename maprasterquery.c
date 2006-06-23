@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/06/23 20:39:19  frank
+ * fix time filter propogation to tileindex layer
+ *
  * Revision 1.22  2006/06/22 17:32:25  frank
  * Use backtics version of LayerSetTimeFilter so that time
  * queries against layers with direct shapefile tileindexes
@@ -1349,6 +1352,58 @@ int msRASTERLayerGetItems(layerObj *layer)
 #endif /* def USE_GDAL */
 }
 
+/************************************************************************/
+/*                     msRASTERLayerSetTimeFilter()                     */
+/*                                                                      */
+/*      This function is actually just used in the context of           */
+/*      setting a filter on the tileindex for time based queries.       */
+/*      For instance via WMS requests.  So it isn't really related      */
+/*      to the "raster query" support at all.                           */
+/*                                                                      */
+/*      If a local shapefile tileindex is in use, we will set a         */
+/*      backtics filter (shapefile compatible).  If another layer is    */
+/*      being used as the tileindex then we will forward the            */
+/*      SetTimeFilter call to it.  If there is no tileindex in          */
+/*      place, we do nothing.                                           */
+/************************************************************************/
+
+int msRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring, 
+                               const char *timefield)
+{
+    int tilelayerindex;
+
+/* -------------------------------------------------------------------- */
+/*      If we don't have a tileindex the time filter has no effect.     */
+/* -------------------------------------------------------------------- */
+    if( layer->tileindex == NULL ) 
+        return MS_SUCCESS;
+
+/* -------------------------------------------------------------------- */
+/*      Find the tileindex layer.                                       */
+/* -------------------------------------------------------------------- */
+    tilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
+
+/* -------------------------------------------------------------------- */
+/*      If we are using a local shapefile as our tileindex (that is     */
+/*      to say, the tileindex name is not of another layer), then we    */
+/*      just install a backtics style filter on the raster layer.       */
+/*      This is propogated to the "working layer" created for the       */
+/*      tileindex by code in mapraster.c.                               */
+/* -------------------------------------------------------------------- */
+    if( tilelayerindex == -1 )
+        return msLayerMakeBackticsTimeFilter( layer, timestring, timefield );
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise we invoke the tileindex layers SetTimeFilter          */
+/*      method.                                                         */
+/* -------------------------------------------------------------------- */
+    return msLayerSetTimeFilter( layer->map->layers + tilelayerindex,
+                                 timestring, timefield );
+}
+
+/************************************************************************/
+/*                msRASTERLayerInitializeVirtualTable()                 */
+/************************************************************************/
 
 int
 msRASTERLayerInitializeVirtualTable(layerObj *layer)
@@ -1374,7 +1429,7 @@ msRASTERLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerCloseConnection = msRASTERLayerClose;
 
     /* we use backtics for proper tileindex shapefile functioning */
-    layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+    layer->vtable->LayerSetTimeFilter = msRASTERLayerSetTimeFilter;
 
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
