@@ -90,6 +90,12 @@ GDAL=	  @GDAL_ENABLED@
 GDAL_LIB=  @GDAL_LIB@
 GDAL_INC=  @GDAL_INC@
 
+# Optional GEOS Support.
+# See http://geos.refractions.net/
+GEOS=     @GEOS_ENABLED@
+GEOS_LIB=  @GEOS_LIB@
+GEOS_INC=  @GEOS_INC@
+
 # Optional PostGIS Support.  See http://postgis.refractions.net/
 POSTGIS=      @POSTGIS_ENABLED@
 POSTGIS_LIB=  @POSTGIS_LIB@
@@ -147,7 +153,7 @@ RUNPATHS= @RPATHS@
 CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
         $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
 	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) \
-	$(POSTGIS) $(MYGIS) $(MPATROL) $(THREAD) $(GD_INC) $(PDF_INC) \
+	$(POSTGIS) $(GEOS) $(MYGIS) $(MPATROL) $(THREAD) $(GD_INC) $(PDF_INC) \
 	$(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(MPATROL_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC)
@@ -155,7 +161,7 @@ CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
 # Link flags and shared libs only
 SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
-	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
+	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
