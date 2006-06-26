@@ -6,6 +6,13 @@ and the Java programs "java" and "javac" must be on your path.
 
 To generate the SWIG wrappers you need swig >= 1.3.21.
 
+MAPSCRIPT Reference
+-------------------
+
+The complete reference documentation is available on-line:
+
+http://mapserver.gis.umn.edu/docs/reference/mapscript
+
 SWIG wrappers
 -------------
 
