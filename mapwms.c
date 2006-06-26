@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.178  2006/06/26 16:29:23  frank
+ * If a layer has wms_timedefault metadata, make sure it is applied even
+ * if there is no TIME= item in the url.  (Bug 1810)
+ *
  * Revision 1.177  2006/05/02 19:38:39  dan
  * Allow use of wms/ows_include_items and wms/ows_exclude_items to control
  * which items to output in text/plain GetFeatureInfo. (bug 1761)
@@ -751,8 +755,28 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         timerequest = 1;
     }
   }
+
   /*
-  ** Apply time filters if available in the request
+  ** If any select layers have a default time, we will apply the default
+  ** time value even if no TIME request was in the url.
+  */
+  if( !timerequest && map )
+  {
+      for (i=0; i<map->numlayers && !timerequest; i++)
+      {
+          layerObj *lp = NULL;
+
+          lp = &(map->layers[i]);
+          if (lp->status != MS_ON && lp->status != MS_DEFAULT)
+              continue;
+
+          if( msOWSLookupMetadata(&(lp->metadata), "MO", "timedefault") )
+              timerequest = 1;
+      }
+  }
+
+  /*
+  ** Apply time filters if available in the request.  
   */
   if (timerequest)
   {

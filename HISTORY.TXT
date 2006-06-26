@@ -15,6 +15,10 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD (4.9-dev)
 ------------------
+
+- If a layer has wms_timedefault metadata, make sure it is applied even
+  if there is no TIME= item in the url.  (Bug 1810)
+
 - Support for GEOS/ICONV/XML2 use flags in Java Makefile.in (related to 
   bug 1801)
 
