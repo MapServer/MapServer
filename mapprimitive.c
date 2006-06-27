@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2006/06/27 13:58:19  frank
+ * Place shapeObj->geometry assignment into #ifdef USE_GEOS.
+ *
  * Revision 1.73  2006/06/27 06:32:09  sdlime
  * Fixed msCopyShape to initialize the geometry property of the destination shape to NULL.
  *
@@ -237,7 +240,9 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
     to->numvalues = from->numvalues;
   }
 
+#ifdef USE_GEOS
   to->geometry = NULL; /* GEOS code will build automatically if necessary */
+#endif
 
   return(0);
 }
