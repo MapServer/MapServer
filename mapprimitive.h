@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/06/27 06:53:08  sdlime
+ * Excluded shapeObj geometry member from Swig wrapping.
+ *
  * Revision 1.19  2006/02/22 05:04:34  sdlime
  * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
  *
@@ -93,6 +96,11 @@ typedef struct {
   int numvalues;
   lineObj *line;
   char **values;
+
+#ifdef USE_GEOS
+  void *geometry;
+#endif
+
 #ifdef SWIG
 %mutable;
 #endif
@@ -103,11 +111,7 @@ typedef struct {
   int tileindex;
   int classindex;
   char *text;
-
-#ifdef USE_GEOS
-  void *geometry;
-#endif
-
+  
 } shapeObj;
 
 typedef lineObj multipointObj;
