@@ -1069,7 +1069,7 @@ int msGEOSDisjoint(shapeObj *shape1, shapeObj *shape2)
 */
 double msGEOSArea(shapeObj *shape)
 {
-#if defined(USE_GEOS) && defined(GEOS_CAPI_VERSION_MAJOR) && defined(GEOS_CAPI_VERSION_MINOR) && (GEOS_CAPI_VERSION_MAJOR >= 1 || GEOS_CAPI_VERSION_MINOR >= 1)
+#if defined(USE_GEOS) && defined(GEOS_CAPI_VERSION_MAJOR) && defined(GEOS_CAPI_VERSION_MINOR) && (GEOS_CAPI_VERSION_MAJOR > 1 || GEOS_CAPI_VERSION_MINOR >= 1)
   GEOSGeom g;
   double area;
   int result;
@@ -1094,7 +1094,7 @@ double msGEOSArea(shapeObj *shape)
 
 double msGEOSLength(shapeObj *shape)
 {
-#if defined(USE_GEOS) && defined(GEOS_CAPI_VERSION_MAJOR) && defined(GEOS_CAPI_VERSION_MINOR) && (GEOS_CAPI_VERSION_MAJOR >= 1 || GEOS_CAPI_VERSION_MINOR >= 1)
+#if defined(USE_GEOS) && defined(GEOS_CAPI_VERSION_MAJOR) && defined(GEOS_CAPI_VERSION_MINOR) && (GEOS_CAPI_VERSION_MAJOR > 1 || GEOS_CAPI_VERSION_MINOR >= 1)
 
   GEOSGeom g;
   double length;
