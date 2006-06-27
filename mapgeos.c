@@ -1069,7 +1069,7 @@ int msGEOSDisjoint(shapeObj *shape1, shapeObj *shape2)
 */
 double msGEOSArea(shapeObj *shape)
 {
-#ifdef USE_GEOS
+#if defined(USE_GEOS) && defined(GEOS_CAPI_VERSION_MAJOR) && defined(GEOS_CAPI_VERSION_MINOR) && (GEOS_CAPI_VERSION_MAJOR >= 1 || GEOS_CAPI_VERSION_MINOR >= 1)
   GEOSGeom g;
   double area;
   int result;
@@ -1083,6 +1083,9 @@ double msGEOSArea(shapeObj *shape)
 
   result = GEOSArea(g, &area);
   return  ((result==0) ? -1 : area);
+#elif defined(USE_GEOS)
+  msSetError(MS_GEOSERR, "GEOS support enabled, but old version lacks GEOSArea().", "msGEOSArea()");
+  return -1;
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSArea()");
   return -1;
@@ -1091,7 +1094,8 @@ double msGEOSArea(shapeObj *shape)
 
 double msGEOSLength(shapeObj *shape)
 {
-#ifdef USE_GEOS
+#if defined(USE_GEOS) && defined(GEOS_CAPI_VERSION_MAJOR) && defined(GEOS_CAPI_VERSION_MINOR) && (GEOS_CAPI_VERSION_MAJOR >= 1 || GEOS_CAPI_VERSION_MINOR >= 1)
+
   GEOSGeom g;
   double length;
   int result;
@@ -1105,6 +1109,9 @@ double msGEOSLength(shapeObj *shape)
 
   result = GEOSLength(g, &length);
   return  ((result==0) ? -1 : length);
+#elif defined(USE_GEOS)
+  msSetError(MS_GEOSERR, "GEOS support enabled, but old version lacks GEOSLength().", "msGEOSLength()");
+  return -1;
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSLength()");
   return -1;
