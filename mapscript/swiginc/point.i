@@ -85,7 +85,7 @@
         self->x = x;
         self->y = y;
 #ifdef USE_POINT_Z_M
-	    self->z = 0.0;
+	self->z = 0.0;
         self->m = m;
 #endif /* USE_POINT_Z_M */
 	
@@ -132,5 +132,28 @@
         msPointToFormattedString(self, fmt, (char *) &buffer, 256);
         return strdup(buffer);
     }
-}
 
+    %newobject toShape;
+    shapeObj *toShape() 
+    {
+      shapeObj *shape;
+
+      shape = (shapeObj *) malloc(sizeof(shapeObj));
+      msInitShape(shape);
+    
+      shape->type = MS_SHAPE_POINT;
+      shape->line = (lineObj *) malloc(sizeof(lineObj));
+      shape->numlines = 1;
+      shape->line[0].point = (pointObj *) malloc(sizeof(pointObj));
+      shape->line[0].numpoints = 1;
+
+      shape->line[0].point[0].x = self->x;
+      shape->line[0].point[0].y = self->y;
+#ifdef USE_POINT_Z_M
+      shape->line[0].point[0].z = self->z;
+      shape->line[0].point[0].m = self->m;
+#endif /* USE_POINT_Z_M */
+
+      return shape;
+    }
+}
