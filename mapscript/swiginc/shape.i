@@ -141,39 +141,40 @@
     }
 
     %newobject buffer;
-    shapeObj *buffer(int width)
-    {
-       return msGEOSBuffer(self, width);
-    }
+    shapeObj *buffer(int width) { return msGEOSBuffer(self, width); }
 
     %newobject convexHull;
-    shapeObj *convexHull()
-    {
-       return msGEOSConvexHull(self);
-    }
+    shapeObj *convexHull() { return msGEOSConvexHull(self); }
+
+    %newobject boundary;
+    shapeObj *boundary() { return msGEOSBoundary(self); }
+
+    %newobject getCentroid;
+    pointObj *getCentroid() { return msGEOSGetCentroid(self); }
 
     %newobject Union;
-    shapeObj *Union(shapeObj *shape)
-    {
-       return msGEOSUnion(self, shape);
-    }
+    shapeObj *Union(shapeObj *shape) { return msGEOSUnion(self, shape); }
 
     %newobject intersection;
-    shapeObj *intersection(shapeObj *shape)
-    {
-       return msGEOSIntersection(self, shape);
-    }
+    shapeObj *intersection(shapeObj *shape) { return msGEOSIntersection(self, shape); }
 
     %newobject difference;
-    shapeObj *difference(shapeObj *shape)
-    {
-       return msGEOSDifference(self, shape);
-    }
+    shapeObj *difference(shapeObj *shape) { return msGEOSDifference(self, shape); }
 
-    int contains(shapeObj *shape)
-    {
-       return msGEOSContains(self, shape);
-    }
+    %newobject symDifference;
+    shapeObj *symDifference(shapeObj *shape) { return msGEOSSymDifference(self, shape); }
+
+    int contains(shapeObj *shape) { return msGEOSContains(self, shape); }
+    int overlaps(shapeObj *shape) { return msGEOSOverlaps(self, shape); }
+    int within(shapeObj *shape) { return msGEOSWithin(self, shape); }    
+    int crosses(shapeObj *shape) { return msGEOSCrosses(self, shape); }
+    /* int intersects(shapeObj *shape) { return msGEOSIntersects(self, shape); } */
+    int touches(shapeObj *shape) { return msGEOSTouches(self, shape); }
+    int equals(shapeObj *shape) { return msGEOSEquals(self, shape); }
+    int disjoint(shapeObj *shape) { return msGEOSDisjoint(self, shape); }
+
+    double getArea() { return msGEOSArea(self); }
+    double getLength() { return msGEOSLength(self); }
 
     char *getValue(int i) 
     {
@@ -198,11 +199,18 @@
 
     double distanceToShape(shapeObj *shape) 
     {
+#ifdef USE_GEOS
+	return msGEOSDistance(self, shape);
+#else
         return msDistanceShapeToShape(self, shape);
+#endif
     }
 
     int intersects(shapeObj *shape) 
     {
+#ifdef USE_GEOS
+        return msGEOSIntersects(self, shape);
+#else
         switch(self->type) {
             case(MS_SHAPE_LINE):
                 switch(shape->type) {
@@ -220,9 +228,10 @@
 	                    return msIntersectPolygons(self, shape);
                 }
                 break;
-            }
+        }
 
         return -1;
+#endif
     }
    
     int setValue(int i, char *value)
@@ -250,4 +259,3 @@
         }
     }
 }
-

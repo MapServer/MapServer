@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.455  2006/06/27 13:35:45  sdlime
+ * Initial version of GEOS C-API code including SWIG bindings for most everything useful.
+ *
  * Revision 1.454  2006/06/08 07:51:11  umberto
  * webObj constructor and destructor (bug 1798)
  *
@@ -205,7 +208,6 @@ typedef int ms_int32;
 #if defined USE_PDF
 #include <pdflib.h>
 #endif
-
 
 #include <sys/types.h> /* regular expression support */
 
@@ -1950,17 +1952,36 @@ MS_DLL_EXPORT void *msGetSymbol(const char *pszLibrary,
 #include "mapows.h"
 
 /* ==================================================================== */
-/*      prototypes for functions in mapgeos.cpp                         */
+/*      prototypes for functions in mapgeos.c                         */
 /* ==================================================================== */
+MS_DLL_EXPORT void msGEOSSetup();
+MS_DLL_EXPORT void msGEOSCleanup();
 MS_DLL_EXPORT void msGEOSFreeGeometry(shapeObj *shape);
+
 MS_DLL_EXPORT shapeObj *msGEOSShapeFromWKT(const char *string);
 MS_DLL_EXPORT char *msGEOSShapeToWKT(shapeObj *shape);
+
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
+MS_DLL_EXPORT shapeObj *msGEOSBoundary(shapeObj *shape);
+MS_DLL_EXPORT pointObj *msGEOSGetCentroid(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSUnion(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2);
+
 MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT int msGEOSOverlaps(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT int msGEOSWithin(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT int msGEOSCrosses(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT int msGEOSIntersects(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT int msGEOSTouches(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT int msGEOSEquals(shapeObj *shape1, shapeObj *shape2);
+MS_DLL_EXPORT int msGEOSDisjoint(shapeObj *shape1, shapeObj *shape2);
+
+MS_DLL_EXPORT double msGEOSArea(shapeObj *shape);
+MS_DLL_EXPORT double msGEOSLength(shapeObj *shape);
+MS_DLL_EXPORT double msGEOSDistance(shapeObj *shape1, shapeObj *shape2);
 
 /* ==================================================================== */
 /*      prototypes for functions in mapcrypto.c                         */

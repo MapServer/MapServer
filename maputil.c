@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.188  2006/06/27 13:35:45  sdlime
+ * Initial version of GEOS C-API code including SWIG bindings for most everything useful.
+ *
  * Revision 1.187  2005/08/27 04:57:25  sdlime
  * Fixed a recursion problem in context evaluation function msEvalContext(). Had to disable the [raster] option though and will try to implement some other way. (bug 1283)
  *
@@ -1291,16 +1294,20 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 int msSetup()
 {
 #ifdef USE_THREAD
-    msThreadInit();
+   msThreadInit();
 #endif
 
 #ifdef USE_GD_FT
-    if (gdFontCacheSetup() != 0) 
-    {
-        return MS_FAILURE;
-    }
+  if (gdFontCacheSetup() != 0) {
+    return MS_FAILURE;
+   }
 #endif
-    return MS_SUCCESS;
+
+#ifdef USE_GEOS
+  msGEOSSetup();
+#endif
+
+  return MS_SUCCESS;
 }
   
 /* This is intended to be a function to cleanup anything that "hangs around"
@@ -1309,23 +1316,28 @@ extern void lexer_cleanup(void);
 
 void msCleanup()
 {
-    msForceTmpFileBase( NULL );
-    msConnPoolFinalCleanup();
-    lexer_cleanup();
+  msForceTmpFileBase( NULL );
+  msConnPoolFinalCleanup();
+  lexer_cleanup();
+
 #ifdef USE_OGR
-    msOGRCleanup();
+  msOGRCleanup();
 #endif    
 #ifdef USE_GDAL
-    msGDALCleanup();
+  msGDALCleanup();
 #endif    
 #ifdef USE_PROJ
-    pj_deallocate_grids();
-    msSetPROJ_LIB( NULL );
+  pj_deallocate_grids();
+  msSetPROJ_LIB( NULL );
 #endif
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    msHTTPCleanup();
+  msHTTPCleanup();
 #endif
-    msResetErrorList();
+#ifdef USE_GEOS
+  msGEOSCleanup();
+#endif
+
+  msResetErrorList();
 }
 
 /************************************************************************/

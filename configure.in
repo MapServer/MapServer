@@ -1009,7 +1009,7 @@ if test "$with_geos" = "yes" ; then
 
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
-  GEOS_LIB=`$GEOS_CONFIG --libs`
+  GEOS_LIB="`$GEOS_CONFIG --libs`_c"
 
   AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
   AC_SUBST(GEOS_INC,    $GEOS_INC)
@@ -1033,7 +1033,7 @@ elif test -n "$with_geos" -a "$with_geos" != "no" ; then
 
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
-  GEOS_LIB=`$GEOS_CONFIG --libs`
+  GEOS_LIB="`$GEOS_CONFIG --libs`_c"
 
   AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
   AC_SUBST(GEOS_INC,    $GEOS_INC)
