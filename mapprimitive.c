@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/06/27 06:32:09  sdlime
+ * Fixed msCopyShape to initialize the geometry property of the destination shape to NULL.
+ *
  * Revision 1.72  2006/05/18 22:20:37  sdlime
  * Fixed offseting code percentage of 1.0 maps to width-1 or height-1.
  *
@@ -234,7 +237,7 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
     to->numvalues = from->numvalues;
   }
 
-  /* TODO add GEOS copy, or at least initialize to->geometry to NULL */
+  to->geometry = NULL; /* GEOS code will build automatically if necessary */
 
   return(0);
 }
