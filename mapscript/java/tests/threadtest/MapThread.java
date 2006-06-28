@@ -16,6 +16,17 @@ public class MapThread extends Thread {
     public void run() {
 	System.out.println("Thread "+id+" running...");
 
+	/*
+		Uncomment this if you need to reschedule threads
+	if (id>=5) {
+		try {
+			sleep(10000);
+		} catch(InterruptedException ie) {
+			ie.printStackTrace();
+		}
+	}
+	*/
+
         for( int i = 0; i < iterations; i++ ) {
             mapObj  map = new mapObj(mapfile);
 	    long path=Math.round(Math.random()*10);
@@ -25,7 +36,11 @@ public class MapThread extends Thread {
 	       query(map);
 	    } else {
 	       System.out.println("Thread "+id+"-"+i+" using geos to create a buffer...");
-               createBuffer(map);
+	       try {
+               	  createBuffer(map);
+	       } catch(Exception e) {
+		   System.out.println("have you enabled GEOS support? "+e.getMessage());
+	       }
 	    }
    	    // We use this to test swig's memory management code
 	    System.gc();
@@ -33,12 +48,13 @@ public class MapThread extends Thread {
             map.draw();
 	    
         }
+	mapscript.msConnPoolCloseUnreferenced();
 	System.out.println("Thread "+id+" done.");
     }
 
     public void createBuffer(mapObj map) {
 
-	layerObj layer = map.getLayerByName("POINT");
+	layerObj layer = map.getLayer(3);
 	if (layer!=null) {
 		layer.open();
 		shapeObj shape=layer.getFeature(0,-1);
@@ -61,8 +77,6 @@ public class MapThread extends Thread {
 				style.setColor(green);
 				bufferLayer.addFeature(buffer);
 
-				// just for safety
-				//layer.addFeature(buffer);
 			} else {
 				System.out.println("Buffer shape is NULL!");
 			}
@@ -72,14 +86,16 @@ public class MapThread extends Thread {
 
     public void query(mapObj map) {
 
-	layerObj layer = map.getLayerByName("POINT");
-	layer.setTemplate("template.html");
-	String filter="A Point";
+	layerObj layer = map.getLayer(3);
+	if (layer!=null) {
+	   layer.setTemplate("template.html");
+	   String filter="A Point";
 
-	layer.queryByAttributes(map,"FNAME", filter, mapscriptConstants.MS_MULTIPLE);
-	layer.open();
-	System.out.println( " numresults: " +layer.getNumResults() );
-	layer.close();
+	   layer.queryByAttributes(map,"FNAME", filter, mapscriptConstants.MS_MULTIPLE);
+	   layer.open();
+	   System.out.println( " numresults: " +layer.getNumResults() );
+	   layer.close();
+	}
     }
 
     String      mapfile;
