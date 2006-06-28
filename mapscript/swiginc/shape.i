@@ -141,7 +141,7 @@
     }
 
     %newobject buffer;
-    shapeObj *buffer(int width) { return msGEOSBuffer(self, width); }
+    shapeObj *buffer(double width) { return msGEOSBuffer(self, width); }
 
     %newobject convexHull;
     shapeObj *convexHull() { return msGEOSConvexHull(self); }
