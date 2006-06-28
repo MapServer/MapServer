@@ -1,3 +1,16 @@
+-----------------------------------
+June, 28th 2006
+Umberto Nicoletti (umberto.nicoletti@gmail.com)
+
+I have added more functionality to the thread test by integrating it
+in the Makefile so that it can be ran more easily and by adding a
+query by attribute and a buffer functions. The latter requires GEOS
+support in mapserver.
+
+It is best to run the tests with MALLOC_CHECK_ variable set to 2 so
+that memory errors are detected and reported (the jvm will crash
+on the first error so it should be quite noticeable ;-) ).
+
 -------- Original Message --------
 Subject: [UMN_MAPSERVER-DEV] Multithreaded Mapscript
 Date: Mon, 6 Jun 2005 19:22:41 -0700

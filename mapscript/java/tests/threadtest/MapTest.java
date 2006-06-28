@@ -26,7 +26,7 @@ public class MapTest {
 
         Thread[]    tpool = new Thread[threads.intValue()];
         for( int i = 0; i < tpool.length; i++ ) {
-            tpool[i] = new MapThread(mapfile, iterations.intValue());
+            tpool[i] = new MapThread(mapfile, iterations.intValue(), i);
         }
         for( int i = 0; i < tpool.length; i++ ) {
             tpool[i].start();

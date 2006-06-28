@@ -246,6 +246,7 @@ mapscript_jar::
 clean:
 	rm -rf edu *.o *.c *.so *.java *.jar *.png
 	rm -rf examples/*.class
+	rm -rf tests/threadtest/*.class
 
 test:
 	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java examples/WxSTest.java examples/Metadata.java examples/RunTimeBuiltWMSClient.java
