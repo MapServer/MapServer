@@ -548,7 +548,7 @@ PNG_LIB=$(PNG_DIR)\projects\visualc71\Win32_LIB_Release\libpng.lib $(ZLIB_DIR)/z
 !ENDIF
 
 !IFDEF GEOS_DIR
-GEOS_LIB=$(GEOS_DIR)/source/geos.lib
+GEOS_LIB=$(GEOS_DIR)/source/geos_c_i.lib
 GEOS_INC=-I$(GEOS_DIR)/source/headers -I$(GEOS_DIR)/source/capi
 !ENDIF
 
