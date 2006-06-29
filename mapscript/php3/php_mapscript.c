@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.251  2006/06/29 20:15:11  assefa
+ * Comment out errno causing build problems in depricated php3_ms_getcwd
+ * function (Bug 1772).
+ *
  * Revision 1.250  2006/05/29 19:02:01  assefa
  * Update PHP mapscript to support addition of MapScript WxS Services
  * (RFC 16, Bug 1790)
@@ -14699,8 +14703,8 @@ DLEXPORT void php3_ms_getcwd(INTERNAL_FUNCTION_PARAMETERS)
    
     p = getcwd(buffer, PATH_MAX);
     if (!p) {
-        php3_error(E_WARNING, "posix_getcwd() failed with '%s'",
-                   strerror(errno));
+      //php3_error(E_WARNING, "posix_getcwd() failed with '%s'",
+      //            strerror(errno));
         RETURN_FALSE;
     }
 
