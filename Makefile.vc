@@ -120,7 +120,7 @@ clean:
 !ENDIF
 !IFDEF PYTHON_HOME
     cd mapscript\python
-    del mapscript_wrap.c
+    -del mapscript_wrap.c
     -rmdir /s /q build
     cd ..\..
 !ENDIF
