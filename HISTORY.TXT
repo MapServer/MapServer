@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- MapScript (swig) creation of an outputFormatObj will now set the inmapfile 
+  flag so that it gets written out to saved maps by default (Bug 1816).
+
 - Converted GEOS support to use the GEOS C-API (versiopn 2.2.2 and higher).
   Wrapped remaining relevant GEOS functionality and exposed via SWIG-based
   MapScript.

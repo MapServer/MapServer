@@ -49,6 +49,8 @@
         
         /* Else, continue */
         format->refcount++;
+	format->inmapfile = MS_TRUE;
+
         if (name != NULL)
         {
             free(format->name);
