@@ -15,6 +15,7 @@ the CVS logs is updated daily at the following URL:
 
 CVS HEAD (4.9-dev)
 ------------------
+- Revert changes to rect.i that swapped miny and maxy (Bug 1817).
 
 - MapScript (swig) creation of an outputFormatObj will now set the inmapfile 
   flag so that it gets written out to saved maps by default (Bug 1816).
