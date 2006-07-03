@@ -101,7 +101,7 @@ class ZoomRectangleTestCase(MapZoomTestCase):
     def testZoomRectangle(self):
         """ZoomRectangleTestCase.testZoomRectangle: zooming to an extent returns proper map extent"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
-        r = mapscript.rectObj(1, 1, 26, 26, 1)
+        r = mapscript.rectObj(1, 26, 26, 1, 1)
         extent = self.mapobj1.extent
         self.mapobj1.zoomRectangle(r, w, h, extent, None)
         new_extent = self.mapobj1.extent
@@ -110,7 +110,7 @@ class ZoomRectangleTestCase(MapZoomTestCase):
         """ZoomRectangleTestCase.testZoomRectangleConstrained: zooming to a constrained extent returns proper extent"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = mapscript.rectObj(-100.0, -100.0, 100.0, 100.0)
-        r = mapscript.rectObj(0, 0, 200, 200, 1)
+        r = mapscript.rectObj(0, 200, 200, 0, 1)
         extent = self.mapobj1.extent
         self.mapobj1.zoomRectangle(r, w, h, extent, max)
         new_extent = self.mapobj1.extent
@@ -119,7 +119,7 @@ class ZoomRectangleTestCase(MapZoomTestCase):
     def testZoomRectangleBadly(self):
         """zooming into an invalid extent raises proper error"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
-        r = mapscript.rectObj(0, 200, 0, 200)
+        r = mapscript.rectObj(0, 0, 200, 200)
         extent = self.mapobj1.extent
         self.assertRaises(mapscript.MapServerError, 
             self.mapobj1.zoomRectangle, r, w, h, extent, None)
