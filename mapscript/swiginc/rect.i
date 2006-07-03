@@ -20,7 +20,7 @@
         }
         else 
         {
-            if (minx > maxx || miny > maxy) 
+            if (minx > maxx || maxy > miny) 
             {
                 msSetError(MS_RECTERR,
                     "image (pixel/line) units { 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
