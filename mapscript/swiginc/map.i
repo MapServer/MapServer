@@ -200,6 +200,13 @@
     return msDrawLabelCache(image, self);
   }
 
+  labelCacheMemberObj *getLabel(int i) {
+    if(i >= 0 && i < self->labelcache.numlabels)	
+      return &(self->labelcache.labels[i]);
+    else
+      return NULL;
+  }
+
   labelCacheMemberObj *nextLabel() {
     static int i=0;
 
