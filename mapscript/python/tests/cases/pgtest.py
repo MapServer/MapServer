@@ -75,7 +75,7 @@ class ViewTest(unittest.TestCase):
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
         lo.connection = PG_CONNECTION_STRING
-        lo.data = "the_geom from polygon using unique gid using srid=4326"
+        lo.data = "the_geom from polygon_v using unique gid using srid=4326"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
     def test_getfeature(self):
