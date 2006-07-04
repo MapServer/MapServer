@@ -47,6 +47,7 @@ import unittest
 from testing import mapscript
 from testing import MapTestCase
 
+PG_CONNECTION_STRING="dbname=mapserver_test user=postgres"
 
 class TableTest(unittest.TestCase):
     def setUp(self):
@@ -55,7 +56,7 @@ class TableTest(unittest.TestCase):
         lo.name = 'pg_layer'
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
-        lo.connection = "dbname=mapserver_test user=postgres"
+        lo.connection = PG_CONNECTION_STRING
         lo.data = "the_geom from polygon"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
@@ -73,8 +74,8 @@ class ViewTest(unittest.TestCase):
         lo.name = 'pg_sub_layer'
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
-        lo.connection = "dbname=mapserver_test user=postgres"
-        lo.data = "the_geom from polygon_v using unique gid using srid=4326"
+        lo.connection = PG_CONNECTION_STRING
+        lo.data = "the_geom from polygon using unique gid using srid=4326"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
     def test_getfeature(self):
@@ -91,7 +92,7 @@ class SubSelectTest(unittest.TestCase):
         lo.name = 'pg_sub_layer'
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
-        lo.connection = "dbname=mapserver_test user=postgres"
+        lo.connection = PG_CONNECTION_STRING
         lo.data = "the_geom from (select * from polygon) as foo using unique gid using srid=4326"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
@@ -110,7 +111,7 @@ class SubSelectNoSRIDTest(unittest.TestCase):
         lo.name = 'pg_sub_layer'
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
-        lo.connection = "dbname=mapserver_test user=postgres"
+        lo.connection = PG_CONNECTION_STRING
         lo.data = "the_geom from (select * from polygon) as foo using unique gid"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
