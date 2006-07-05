@@ -35,7 +35,7 @@ class WxSTest_thread extends Thread {
 public class WxSTest {
     public static void main(String[] args)  {
         try {
-            WxSTest_thread tt[] = new WxSTest_thread[10];
+            WxSTest_thread tt[] = new WxSTest_thread[100];
             int i;
             int expectedLength=0, success = 0, failure=0;
 
