@@ -158,7 +158,8 @@ def draw_map_wms(name, save=0):
     lo.name = 'jpl_wms'
     lo.setProjection('+init=epsg:4326')
     lo.connectiontype = mapscript.MS_WMS
-    lo.connection = 'http://wms.jpl.nasa.gov/wms.cgi?'
+#    lo.connection = 'http://wms.jpl.nasa.gov/wms.cgi?'
+    lo.connection = 'http://maps.gdal.org/cgi-bin/mapserv_dem?'
     lo.metadata.set('wms_service', 'WMS')
     lo.metadata.set('wms_server_version', '1.1.1')
     lo.metadata.set('wms_name', 'global_mosaic_base')
