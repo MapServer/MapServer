@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/07/05 05:54:53  frank
+ * implement per-thread io contexts
+ *
  * Revision 1.11  2006/06/19 15:13:37  frank
  * add io context labelling, avoid depending on function pointer compares
  *
@@ -65,6 +68,7 @@
 #include <stdarg.h>
 
 #include "map.h"
+#include "mapthread.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -75,14 +79,18 @@ MS_CVSID("$Id$")
 
 static int is_msIO_initialized = MS_FALSE;
 
-static msIOContext default_stdin_context;
-static msIOContext default_stdout_context;
-static msIOContext default_stderr_context;
+typedef struct msIOContextGroup_t
+{
+    msIOContext stdin_context;
+    msIOContext stdout_context;
+    msIOContext stderr_context;
 
-static msIOContext current_stdin_context;
-static msIOContext current_stdout_context;
-static msIOContext current_stderr_context;
+    int    thread_id;
+    struct msIOContextGroup_t *next;
+} msIOContextGroup;
 
+static msIOContextGroup default_contexts;
+static msIOContextGroup *io_context_list = NULL;
 static void msIO_Initialize( void );
 
 #ifdef msIO_printf
@@ -94,32 +102,84 @@ static void msIO_Initialize( void );
 #endif
 
 /************************************************************************/
-/*                        msIO_installHandlers()                        */
+/*                            msIO_Cleanup()                            */
 /************************************************************************/
 
-int msIO_installHandlers( msIOContext *stdin_context,
-                          msIOContext *stdout_context,
-                          msIOContext *stderr_context )
+void msIO_Cleanup()
 
 {
+    if( is_msIO_initialized )
+
+    {
+        is_msIO_initialized = MS_FALSE;
+        while( io_context_list != NULL )
+        {
+            msIOContextGroup *last = io_context_list;
+            io_context_list = io_context_list->next;
+            free( last );
+        }
+    }
+}
+
+/************************************************************************/
+/*                        msIO_GetContextGroup()                        */
+/************************************************************************/
+
+static msIOContextGroup *msIO_GetContextGroup()
+
+{
+    int nThreadId = msGetThreadId();
+    msIOContextGroup *prev = NULL, *group = io_context_list;
+
+    if( group != NULL && group->thread_id == nThreadId )
+        return group;
+
+/* -------------------------------------------------------------------- */
+/*      Search for group for this thread                                */
+/* -------------------------------------------------------------------- */
+    msAcquireLock( TLOCK_IOCONTEXT );
     msIO_Initialize();
 
-    if( stdin_context == NULL )
-        current_stdin_context = default_stdin_context;
-    else if( stdin_context != &current_stdin_context )
-        current_stdin_context = *stdin_context;
-    
-    if( stdout_context == NULL )
-        current_stdout_context = default_stdout_context;
-    else if( stdout_context != &current_stdout_context )
-        current_stdout_context = *stdout_context;
-    
-    if( stderr_context == NULL )
-        current_stderr_context = default_stderr_context;
-    else if( stderr_context != &current_stderr_context )
-        current_stderr_context = *stderr_context;
+    group = io_context_list;
+    while( group != NULL && group->thread_id != nThreadId )
+    {
+        prev = group;
+        group = group->next;
+    }
 
-    return MS_TRUE;
+/* -------------------------------------------------------------------- */
+/*      If we found it, make sure it is pushed to the front of the      */
+/*      link for faster finding next time, and return it.               */
+/* -------------------------------------------------------------------- */
+    if( group != NULL )
+    {
+        if( prev != NULL )
+        {
+            prev->next = group->next;
+            group->next = io_context_list;
+            io_context_list = group;
+        }
+
+        msReleaseLock( TLOCK_IOCONTEXT );
+        return group;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a new context group for this thread.                     */
+/* -------------------------------------------------------------------- */
+    group = (msIOContextGroup *) calloc(sizeof(msIOContextGroup),1);
+    
+    group->stdin_context = default_contexts.stdin_context;
+    group->stdout_context = default_contexts.stdout_context;
+    group->stderr_context = default_contexts.stderr_context;
+    group->thread_id = nThreadId;
+
+    group->next = io_context_list;
+    io_context_list = group;
+    
+    msReleaseLock( TLOCK_IOCONTEXT );
+
+    return group;
 }
 
 /************************************************************************/
@@ -131,14 +191,57 @@ msIOContext *msIO_getHandler( FILE * fp )
 {
     msIO_Initialize();
 
+    int nThreadId = msGetThreadId();
+    msIOContextGroup *group = io_context_list;
+
+    if( group == NULL || group->thread_id != nThreadId )
+    {
+        group = msIO_GetContextGroup();
+        if( group == NULL )
+            return NULL;
+    }
+
     if( fp == stdin || fp == NULL || strcmp((const char *)fp,"stdin") == 0 )
-        return &current_stdin_context;
+        return &(group->stdin_context);
     else if( fp == stdout || strcmp((const char *)fp,"stdout") == 0 )
-        return &current_stdout_context;
+        return &(group->stdout_context);
     else if( fp == stderr || strcmp((const char *)fp,"stderr") == 0 )
-        return &current_stderr_context;
+        return &(group->stderr_context);
     else
         return NULL;
+}
+
+/************************************************************************/
+/*                        msIO_installHandlers()                        */
+/************************************************************************/
+
+int msIO_installHandlers( msIOContext *stdin_context,
+                          msIOContext *stdout_context,
+                          msIOContext *stderr_context )
+
+{
+    msIOContextGroup *group;
+
+    msIO_Initialize();
+
+    group = msIO_GetContextGroup();
+    
+    if( stdin_context == NULL )
+        group->stdin_context = default_contexts.stdin_context;
+    else if( stdin_context != &group->stdin_context )
+        group->stdin_context = *stdin_context;
+    
+    if( stdout_context == NULL )
+        group->stdout_context = default_contexts.stdout_context;
+    else if( stdout_context != &group->stdout_context )
+        group->stdout_context = *stdout_context;
+    
+    if( stderr_context == NULL )
+        group->stderr_context = default_contexts.stderr_context;
+    else if( stderr_context != &group->stderr_context )
+        group->stderr_context = *stderr_context;
+    
+    return MS_TRUE;
 }
 
 /************************************************************************/
@@ -336,24 +439,23 @@ static void msIO_Initialize( void )
     if( is_msIO_initialized == MS_TRUE )
         return;
 
-    default_stdin_context.label = "stdio";
-    default_stdin_context.write_channel = MS_FALSE;
-    default_stdin_context.readWriteFunc = msIO_stdioRead;
-    default_stdin_context.cbData = (void *) stdin;
+    default_contexts.stdin_context.label = "stdio";
+    default_contexts.stdin_context.write_channel = MS_FALSE;
+    default_contexts.stdin_context.readWriteFunc = msIO_stdioRead;
+    default_contexts.stdin_context.cbData = (void *) stdin;
 
-    default_stdout_context.label = "stdio";
-    default_stdout_context.write_channel = MS_TRUE;
-    default_stdout_context.readWriteFunc = msIO_stdioWrite;
-    default_stdout_context.cbData = (void *) stdout;
+    default_contexts.stdout_context.label = "stdio";
+    default_contexts.stdout_context.write_channel = MS_TRUE;
+    default_contexts.stdout_context.readWriteFunc = msIO_stdioWrite;
+    default_contexts.stdout_context.cbData = (void *) stdout;
 
-    default_stderr_context.label = "stdio";
-    default_stderr_context.write_channel = MS_TRUE;
-    default_stderr_context.readWriteFunc = msIO_stdioWrite;
-    default_stderr_context.cbData = (void *) stderr;
+    default_contexts.stderr_context.label = "stdio";
+    default_contexts.stderr_context.write_channel = MS_TRUE;
+    default_contexts.stderr_context.readWriteFunc = msIO_stdioWrite;
+    default_contexts.stderr_context.cbData = (void *) stderr;
 
-    current_stdin_context = default_stdin_context;
-    current_stdout_context = default_stdout_context;
-    current_stderr_context = default_stderr_context;
+    default_contexts.next = NULL;
+    default_contexts.thread_id = 0;
 
     is_msIO_initialized = MS_TRUE;
 }
@@ -558,27 +660,32 @@ int msIO_needBinaryStdin()
 void msIO_resetHandlers()
 
 {
-    if( strcmp(current_stdin_context.label,"buffer") == 0 )
+    msIOContextGroup *group = msIO_GetContextGroup();
+
+    if( group == NULL )
+        return;
+
+    if( strcmp(group->stdin_context.label,"buffer") == 0 )
     {
-        msIOBuffer *buf = (msIOBuffer *) current_stdin_context.cbData;
+        msIOBuffer *buf = (msIOBuffer *) group->stdin_context.cbData;
         
         if( buf->data != NULL )
             free( buf->data );
         free( buf );
     }
 
-    if( strcmp(current_stdout_context.label,"buffer") == 0 )
+    if( strcmp(group->stdout_context.label,"buffer") == 0 )
     {
-        msIOBuffer *buf = (msIOBuffer *) current_stdout_context.cbData;
+        msIOBuffer *buf = (msIOBuffer *) group->stdout_context.cbData;
         
         if( buf->data != NULL )
             free( buf->data );
         free( buf );
     }
 
-    if( strcmp(current_stderr_context.label,"buffer") == 0 )
+    if( strcmp(group->stderr_context.label,"buffer") == 0 )
     {
-        msIOBuffer *buf = (msIOBuffer *) current_stderr_context.cbData;
+        msIOBuffer *buf = (msIOBuffer *) group->stderr_context.cbData;
         
         if( buf->data != NULL )
             free( buf->data );
@@ -595,6 +702,7 @@ void msIO_resetHandlers()
 void msIO_installStdoutToBuffer()
 
 {
+    msIOContextGroup *group = msIO_GetContextGroup();
     msIOContext  context;
     
     context.label = "buffer";
@@ -602,9 +710,9 @@ void msIO_installStdoutToBuffer()
     context.readWriteFunc = msIO_bufferWrite;
     context.cbData = calloc(sizeof(msIOBuffer),1);
 
-    msIO_installHandlers( &current_stdin_context, 
+    msIO_installHandlers( &group->stdin_context, 
                           &context, 
-                          &current_stderr_context );
+                          &group->stderr_context );
 }
 
 /************************************************************************/
@@ -614,6 +722,7 @@ void msIO_installStdoutToBuffer()
 void msIO_installStdinFromBuffer()
 
 {
+    msIOContextGroup *group = msIO_GetContextGroup();
     msIOContext  context;
 
     context.label = "buffer";
@@ -622,8 +731,8 @@ void msIO_installStdinFromBuffer()
     context.cbData = calloc(sizeof(msIOBuffer),1);
 
     msIO_installHandlers( &context, 
-                          &current_stdout_context, 
-                          &current_stderr_context );
+                          &group->stdout_context, 
+                          &group->stderr_context );
 }
 
 /************************************************************************/

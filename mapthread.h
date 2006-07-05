@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/07/05 05:54:53  frank
+ * implement per-thread io contexts
+ *
  * Revision 1.11  2005/10/29 02:03:43  jani
  * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
  *
@@ -87,6 +90,7 @@ void msReleaseLock(int);
 #define TLOCK_ORACLE    8
 #define TLOCK_OWS       9
 #define TLOCK_LAYER_VTABLE 10
+#define TLOCK_IOCONTEXT 11
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100

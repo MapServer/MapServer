@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.189  2006/07/05 05:54:53  frank
+ * implement per-thread io contexts
+ *
  * Revision 1.188  2006/06/27 13:35:45  sdlime
  * Initial version of GEOS C-API code including SWIG bindings for most everything useful.
  *
@@ -1336,6 +1339,7 @@ void msCleanup()
 #ifdef USE_GEOS
   msGEOSCleanup();
 #endif
+  msIO_Cleanup();
 
   msResetErrorList();
 }

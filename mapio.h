@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/07/05 05:54:53  frank
+ * implement per-thread io contexts
+ *
  * Revision 1.7  2006/06/19 15:13:37  frank
  * add io context labelling, avoid depending on function pointer compares
  *
@@ -134,6 +137,7 @@ int MS_DLL_EXPORT msIO_bufferWrite( void *, void *, int );
 void MS_DLL_EXPORT msIO_resetHandlers(void);
 void MS_DLL_EXPORT msIO_installStdoutToBuffer(void);
 void MS_DLL_EXPORT msIO_installStdinFromBuffer(void);
+void MS_DLL_EXPORT msIO_Cleanup();
 
 /* this is just for setting normal stdout's to binary mode on windows */
 
