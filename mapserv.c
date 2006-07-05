@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.151  2006/07/05 05:50:14  frank
+ * avoid mapservobj leak in some error cases
+ *
  * Revision 1.150  2005/12/14 19:55:07  sdlime
  * Patched mapserv.c to use legendformat and browseformat (both default to text/html). (bug 1518)
  *
@@ -179,6 +182,7 @@ void writeError(void)
     msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
     msWriteError(stdout);
     msIO_printf("</BODY></HTML>");
+    msFreeMapServObj(msObj);
     msCleanup();
     exit(0);
   }
