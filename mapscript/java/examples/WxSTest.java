@@ -2,12 +2,13 @@ import edu.umn.gis.mapscript.mapObj;
 import edu.umn.gis.mapscript.OWSRequest;
 import edu.umn.gis.mapscript.mapscript;
 
-public class WxSTest {
-    public static void main(String[] args)  {
-	  
-	String filter="A Point";
+class WxSTest_thread extends Thread {
 
-	mapObj map = new mapObj(args[0]);
+    public String	mapName;
+    public byte[]       resultBytes;
+
+    public void run() {
+	mapObj map = new mapObj(mapName);
 
         map.setMetaData( "ows_onlineresource", "http://dummy.org/" );
 
@@ -21,14 +22,55 @@ public class WxSTest {
 
         int owsResult = map.OWSDispatch( req );
 
-        System.out.println( "OWSDispatch Result (expect 0): " + owsResult );
+        if( owsResult != 0 )
+            System.out.println( "OWSDispatch Result (expect 0): " + owsResult );
 
 //        System.out.println( "Document:" );
 //        System.out.println( mapscript.msIO_getStdoutBufferString() );
 
-        byte[] resultBytes = mapscript.msIO_getStdoutBufferBytes();
-        
-        System.out.println( "Document Length (expect 10603):" + resultBytes.length);
+        resultBytes = mapscript.msIO_getStdoutBufferBytes();
+    }
+}
+
+public class WxSTest {
+    public static void main(String[] args)  {
+        try {
+            WxSTest_thread tt[] = new WxSTest_thread[10];
+            int i;
+            int expectedLength=0, success = 0, failure=0;
+
+            for( i = 0; i < tt.length; i++ )
+            {
+                tt[i] = new WxSTest_thread();
+                tt[i].mapName = args[0];
+            }
+            
+            for( i = 0; i < tt.length; i++ )
+                tt[i].start();
+
+            for( i = 0; i < tt.length; i++ )
+            {
+                tt[i].join();
+                if( i == 0 )
+                {
+                    expectedLength = tt[i].resultBytes.length;
+                    System.out.println( "Document Length: " + expectedLength + ", expecting somewhere around 10000 or more." );
+                }
+                else if( expectedLength != tt[i].resultBytes.length )
+                {
+                    System.out.println( "Document Length:" + tt[i].resultBytes.length + " Expected:" + expectedLength );
+                    failure++;
+                }
+                else
+                    success++;
+            }
+
+            System.out.println( "Successes: " + success );
+            System.out.println( "Failures: " + failure );
+
+        } catch( Exception e ) {
+            e.printStackTrace();
+        }
     }
 }
 
