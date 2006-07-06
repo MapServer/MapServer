@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/07/06 21:35:29  frank
+ * fixed statement order to be valid C
+ *
  * Revision 1.12  2006/07/05 05:54:53  frank
  * implement per-thread io contexts
  *
@@ -189,10 +192,10 @@ static msIOContextGroup *msIO_GetContextGroup()
 msIOContext *msIO_getHandler( FILE * fp )
 
 {
-    msIO_Initialize();
-
     int nThreadId = msGetThreadId();
     msIOContextGroup *group = io_context_list;
+
+    msIO_Initialize();
 
     if( group == NULL || group->thread_id != nThreadId )
     {
