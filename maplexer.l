@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "map.h"
+#include "maperror.h"
 #include "mapfile.h"
 #include "maptime.h"
 #include "mapsymbol.h"
@@ -43,11 +44,16 @@ void lexer_cleanup(void) {
     }
 #endif
 }
+
+#define MAX_INCLUDE_DEPTH 5
+YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
+int include_stack_ptr = 0;
 %}
 
 %s OBJECT_STRING
 %s VALUE_STRING
 %s EXPRESSION_STRING
+%s INCLUDE
 
 %%
        switch(msyystate) {
@@ -100,7 +106,7 @@ void lexer_cleanup(void) {
          break;
        }
 
-<INITIAL,VALUE_STRING,EXPRESSION_STRING>[ \t\r]+             ;
+<INITIAL,VALUE_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
 <INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
 
@@ -178,6 +184,7 @@ void lexer_cleanup(void) {
 <INITIAL,OBJECT_STRING>imagemode	       { return(IMAGEMODE); }
 <INITIAL,OBJECT_STRING>imagepath	       { return(IMAGEPATH); }
 <INITIAL,OBJECT_STRING>imageurl		       { return(IMAGEURL); }
+<INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL,OBJECT_STRING>index                   { return(INDEX); }
 <INITIAL,OBJECT_STRING>interlace               { return(INTERLACE); }
 <INITIAL,OBJECT_STRING>intervals               { return(INTERVALS); } 
@@ -432,11 +439,34 @@ void lexer_cleanup(void) {
      			                         return(MS_STRING);
 			                       }
 
-<INITIAL,VALUE_STRING>\'[^\']*\'	       {                                                 
+<INCLUDE>\"[^\"]*\"                            {
                                                  msyytext++;
-			                         msyytext[strlen(msyytext)-1] = '\0';
-       			                         return(MS_STRING);
-			                       }
+                                                 msyytext[strlen(msyytext)-1] = '\0';
+
+                                                 if(include_stack_ptr >= MAX_INCLUDE_DEPTH) {
+                                                   msSetError(MS_IOERR, "Includes nested to deeply.", "msyylex()");
+                                                   exit(1);
+                                                 }
+
+                                                 include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+
+                                                 msyyin = fopen(msyytext, "r");
+                                                 if(!msyyin) {
+                                                   msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
+                                                   exit(1);
+                                                 }
+
+                                                 msyy_switch_to_buffer( msyy_create_buffer(msyyin, YY_BUF_SIZE) );
+
+                                                 BEGIN(INITIAL);
+                                               }
+
+<INITIAL,VALUE_STRING>\'[^\']*\'               {
+                                                 msyytext++;
+                                                 msyytext[strlen(msyytext)-1] = '\0';
+                                                 return(MS_STRING);
+                                               }
+
 
 <EXPRESSION_STRING>\"[^\"]*\"i	               {
                                                  msyytext++;
@@ -476,7 +506,14 @@ void lexer_cleanup(void) {
 
 <INITIAL>\n                                    { msyylineno++; }
 
-<INITIAL><<EOF>>                               { return(EOF); }
+<INITIAL><<EOF>>                               {
+                                                 if( --include_stack_ptr < 0 )
+                                                   return(EOF); /* end of main file */
+                                                 else {
+                                                   msyy_delete_buffer( YY_CURRENT_BUFFER );
+                                                   msyy_switch_to_buffer(include_stack[include_stack_ptr]);
+                                                 }
+                                               }
 
 <EXPRESSION_STRING,VALUE_STRING,OBJECT_STRING>[\r|\n|\0]          { return(0); }
 
