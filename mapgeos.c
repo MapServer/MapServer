@@ -34,13 +34,34 @@
 #include <geos_c.h>
 
 /*
-** Setup/Cleanup wrappers
+** Error handling...
 */
-void msGEOSSetup() {
-  initGEOS(NULL, NULL);
+static void msGEOSError(const char *format, ...)
+{
+  va_list args;
+
+  va_start (args, format);
+  msSetError(MS_GEOSERR, format, "msGEOSError()", args); /* just pass along to MapServer error handling */
+  va_end(args);
+
+  return;
 }
 
-void msGEOSCleanup() {
+static void msGEOSNotice(const char *fmt, ...) 
+{
+  return; /* do nothing with notices at this point */
+}
+
+/*
+** Setup/Cleanup wrappers
+*/
+void msGEOSSetup() 
+{
+  initGEOS(msGEOSNotice, msGEOSError);
+}
+
+void msGEOSCleanup() 
+{
   finishGEOS();
 }
 
