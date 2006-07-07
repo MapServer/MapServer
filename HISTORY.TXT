@@ -18,7 +18,7 @@ CVS HEAD (4.9-dev)
 
 - Added INCLUDE capability in mapfile parser (bug 279)
 
-- Revert changes to rect.i that swapped miny and maxy (Bug 1817).
+- Revert changes to mapzoom.i that swapped miny and maxy (Bug 1817).
 
 - MapScript (swig) creation of an outputFormatObj will now set the inmapfile 
   flag so that it gets written out to saved maps by default (Bug 1816).
@@ -62,7 +62,7 @@ CVS HEAD (4.9-dev)
 
 - Fixed zoomRectangle in mapscript: miny and maxy were swapped, making it
   impossible to zoom by rect; also the error message was referring to the
-  wrong rect. There were no open issues on bugzilla.
+  wrong rect. There were no open issues on bugzilla. Reverted because of 1817.
 
 - Implementation of RFC 16 mapio services (bug 1788).
 
