@@ -15,6 +15,7 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.4 (CVS)
 --------------------------
 
+- Mark dynamically created mapscript outputFormatObj's as inmapfile (bug 1816)
 - Missing GEOS support caused heap corruption using shapeObj C# on linux (Bug 1801)
 
 - Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
