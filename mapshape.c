@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/07/12 06:17:17  sdlime
+ * Added debug statements to output information when tiles tiles are not found (mimicing mapraster.c). Useful when debuging tileindex problems.
+ *
  * Revision 1.72  2006/06/20 17:26:40  dan
  * Fixed 3 more instances of the same shapefile leak in tiled layers (bug 1802)
  *
@@ -1637,13 +1640,19 @@ int msTiledSHPOpenFile(layerObj *layer)
       
     /* open the shapefile */
 #ifndef IGNORE_MISSING_DATA
-    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+        if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
         return(MS_FAILURE);
+      }
+    }
 #else
-    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	    continue; /* check again */
+    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+	if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
+	continue; /* check again */
+      }
+    }
 #endif
 
     return(MS_SUCCESS); /* found a template, ok to proceed */
@@ -1691,13 +1700,19 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 
       /* open the shapefile */
 #ifndef IGNORE_MISSING_DATA
-      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
-	    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	      return(MS_FAILURE);
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+          if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
+          return(MS_FAILURE);
+        }
+      }
 #else
-      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
-        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+          if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
           continue; /* check again */
+        }
+      }
 #endif
 
       status = msSHPWhichShapes(tSHP->shpfile, rect, layer->debug);
@@ -1736,13 +1751,19 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
       
         /* open the shapefile */
 #ifndef IGNORE_MISSING_DATA
-        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+            if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
             return(MS_FAILURE);
+          }
+        }
 #else
-        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+            if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
             continue; /* check again */
+          }
+        }
 #endif
 
         status = msSHPWhichShapes(tSHP->shpfile, rect, layer->debug);
@@ -1813,13 +1834,19 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 
           /* open the shapefile */
 #ifndef IGNORE_MISSING_DATA
-          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
-	        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	          return(MS_FAILURE);
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+              if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
+              return(MS_FAILURE);
+            }
+          }
 #else
-          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
-            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+              if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
               continue; /* check again */
+            }
+          }
 #endif
 
           status = msSHPWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
@@ -1847,41 +1874,46 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
       } else { /* or reference a shapefile directly   */
 
         for(i=(tSHP->tileshpfile->lastshape + 1); i<tSHP->tileshpfile->numshapes; i++) {
-	      if(msGetBit(tSHP->tileshpfile->status,i)) {
-	        if(!layer->data) /* assume whole filename is in attribute field */
-	          filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
-	        else {  
-	          sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
-	          filename = tilename;
-	        }
+          if(msGetBit(tSHP->tileshpfile->status,i)) {
+            if(!layer->data) /* assume whole filename is in attribute field */
+              filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
+            else {  
+              sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
+              filename = tilename;
+	    }
 
-  	        if(strlen(filename) == 0) continue; /* check again */
+            if(strlen(filename) == 0) continue; /* check again */
 
-  	        /* open the shapefile */
+            /* open the shapefile */
 #ifndef IGNORE_MISSING_DATA
-	        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-              if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	            return(MS_FAILURE);
+            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+              if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+                if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
+                return(MS_FAILURE);
+              }
+            }
 #else
-            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-              if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	            continue; /* check again */
+            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) {
+              if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1) {
+                if( layer->debug || layer->map->debug ) msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
+                continue; /* check again */
+              }
+	    }
 #endif
 
-  	        status = msSHPWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
-                if(status == MS_DONE) {
-                    /* Close and continue to next tile */
-                    msSHPCloseFile(tSHP->shpfile);
-                    continue;
-                }
-                else if(status != MS_SUCCESS) {
-                    msSHPCloseFile(tSHP->shpfile);
-                    return(MS_FAILURE);
-                }
+            status = msSHPWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
+            if(status == MS_DONE) {
+              /* Close and continue to next tile */
+              msSHPCloseFile(tSHP->shpfile);
+              continue;
+            } else if(status != MS_SUCCESS) {
+              msSHPCloseFile(tSHP->shpfile);
+              return(MS_FAILURE);
+            }
 	  
-	        tSHP->tileshpfile->lastshape = i;
-	        break;
-	      }
+            tSHP->tileshpfile->lastshape = i;
+            break;
+	  }
         } /* end for loop */
       
         if(i == tSHP->tileshpfile->numshapes) return(MS_DONE); /* no more tiles */
