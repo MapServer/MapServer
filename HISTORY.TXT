@@ -12,7 +12,8 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.8.4 (CVS)
+
+Version 4.8.4 (2006-07-12)
 --------------------------
 
 - msCloneOutputFormat() needs to propagate inmapfile flag (bug 1823).

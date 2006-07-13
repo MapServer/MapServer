@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.437.2.9  2006/07/13 01:53:49  dan
+ * Update for 4.8.4 release
+ *
  * Revision 1.437.2.8  2006/03/30 23:40:50  hobu
  * bump version to 4.8.3
  *
@@ -394,7 +397,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.8.3"
+#define MS_VERSION "4.8.4"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
