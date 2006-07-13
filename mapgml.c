@@ -27,6 +27,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78.2.3  2006/05/02 20:59:59  dan
+ * Output feature id as @fid instead of @gml:id in WFS 1.0.0 / GML 2.1.2
+ * GetFeature requests (bug 1759)
+ *
+ * Revision 1.78.2.2  2006/02/16 08:03:47  sdlime
+ * Removed duplicate call to create outer ring list in writeGeometry_GML2().
+ *
+ * Revision 1.78.2.1  2006/01/23 22:41:47  julien
+ * Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569)
+ *
  * Revision 1.78  2005/11/21 23:22:15  sdlime
  * Trivial comment fixes.
  *
@@ -344,13 +354,15 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s<gml:MultiLineString>\n", tab);
 
       for(j=0; j<shape->numlines; j++) {
-        msIO_fprintf(stream, "%s  <gml:LineString>\n", tab); /* no srsname at this point */
+        msIO_fprintf(stream, "%s  <gml:lineStringMember>\n", tab); /* no srsname at this point */
+        msIO_fprintf(stream, "%s    <gml:LineString>\n", tab); /* no srsname at this point */
 	
-        msIO_fprintf(stream, "%s    <gml:coordinates>", tab);
+        msIO_fprintf(stream, "%s      <gml:coordinates>", tab);
         for(i=0; i<shape->line[j].numpoints; i++)
 	  msIO_fprintf(stream, "%f,%f ", shape->line[j].point[i].x, shape->line[j].point[i].y);
         msIO_fprintf(stream, "</gml:coordinates>\n");
-        msIO_fprintf(stream, "%s  </gml:LineString>\n", tab);
+        msIO_fprintf(stream, "%s    </gml:LineString>\n", tab);
+        msIO_fprintf(stream, "%s  </gml:lineStringMember>\n", tab);
       }
       
       msIO_fprintf(stream, "%s</gml:MultiLineString>\n", tab);
@@ -370,9 +382,6 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
     /* get a list of outter rings for this polygon */
     outerlist = msGetOuterList(shape);
   
-    /* get a list of outter rings for this polygon */
-    outerlist = msGetOuterList(shape);
-
     numouters = 0;
     for(i=0; i<shape->numlines; i++)
       if(outerlist[i] == MS_TRUE) numouters++;
@@ -381,7 +390,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
        (geometry_simple_index != -1 && geometry_aggregate_index == -1) ||
        (geometryList->numgeometries == 0 && shape->numlines == 1)) { /* write a Polygon(s) */
       for(i=0; i<shape->numlines; i++) {
-        if(outerlist[i] == MS_FALSE) break; /* skip non-outer rings, each outer ring is a new polygon */
+        if(outerlist[i] == MS_FALSE) break; /* skip non-outer rings, each outer ring is a new polygon */	
 	
         /* get a list of inner rings for this polygon */
         innerlist = msGetInnerList(shape, i, outerlist);
@@ -1488,13 +1497,18 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
         
 	/* 
 	** start this feature 
-	*/	
+	*/      
 
 	msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layerName) == MS_FALSE)
             msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
-        if(featureIdIndex != -1)
-          msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, shape.values[featureIdIndex]);
+        if(featureIdIndex != -1) 
+        {
+            if (outputformat == OWS_GML2)
+                msIO_fprintf(stream, "      <%s fid=\"%s\">\n", layerName, shape.values[featureIdIndex]);
+            else  /* OWS_GML3 */
+                msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, shape.values[featureIdIndex]);
+        }
         else
 	  msIO_fprintf(stream, "      <%s>\n", layerName);
 

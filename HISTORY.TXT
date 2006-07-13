@@ -13,16 +13,152 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-CVS HEAD
---------
+Version 4.8.4 (2006-07-12)
+--------------------------
 
-Version 4.8.0-rc1 (2005-12-22)
+- msCloneOutputFormat() needs to propagate inmapfile flag (bug 1823).
+
+- Mark dynamically created mapscript outputFormatObj's as inmapfile (bug 1816)
+
+- Missing GEOS support caused heap corruption using shapeObj C# on linux (Bug 1801)
+
+- Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
+
+- Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
+
+- Force stdin into binary mode on win32 when reading post bodies. (bug 1768)
+
+- Output feature id as @fid instead of @gml:id in WFS 1.0.0 / GML 2.1.2
+  GetFeature requests (bug 1759)
+
+- Preventing to take ownership of the memory when constructing objects
+  with parent objects using C# mapscript (causing nullreference exception,
+  Bug 1743)
+  
+- Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
+
+- Fixed problem with mycursor not being closed on layer close in the 
+  mappostgis.c module (bug 1757).
+
+
+Version 4.8.3 (2006-03-30)
+--------------------------
+
+- PIXMAP symbols were broken causing GD to spin off forever (bug 1725)
+
+- Oracle spatial configure wasn't working when an ORACLE_HOME was 
+  specified for 9i (bug 1683).
+
+- queryByAttributes creates wrong WHERE clause on PostGIS layers (bug 1629).
+
+
+Version 4.8.2 (2006-03-22)
+--------------------------
+
+- nmake.opt and makefile.vc for Windows were updated to reflect the 
+  MapServer buildkit layout 
+  see http://mapserver.gis.umn.edu/docs/buildkit for more info.
+  
+  * added "make clean" and "make install" targets
+  * reorganized nmake.opt to reflect functional groupings of libraries
+  * tweaked the C# and Java windows makefiles
+
+- Typemap enhancement for C# to support multiple imageObj and writing the image onto
+  a Stream object (bug 1680)
+
+- Added C# typemaps for char** and outputFormatObj**
+
+- Hiding items not to be exposed to the mapscript interface (bug 1660)
+
+- Added config file for mapping the library file so the DllImport 
+  is looking for to its unix equivalent (Bug 1596) Thanks to Scott Ellington
+
+- Added /csharp/Makefile.in for supporting the creation of Makefile 
+  during configuration with MONO/Linux (fix for bug 1595 and 1597)
+
+- [PHP-MAPSCRIPT] problem with php mapscript build as a dll (bug 1717)
+
+- Added ability to detect Oracle Instant Client (bug 1470, 1683)
+
+- Fix inter-tile "cracking" problem (Bug 1715).
+
+- Fixed problem with TRANSPARENCY ALPHA when set via MapScript or written
+  out by msSaveMap(). (bug 1669)
+
+- Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
+
+- SDE driver had a missing memory allocation that was preventing 
+  querying from working correctly (bug 1682).
+
+- SDE layers weren't closing properly (bug 1682).
+
+- Fixed the fuzzy brush support so that the transition between 1 pixel aa 
+  lines and brushes is less obvious. The old code would not allow for a 3x3 
+  fuzzy brush to be built. (bug 1659)
+
+- Use %.15g to increase precision of values in ScaleHint element in
+  WMS GetCapabilities response (bug 1649)
+
+
+Version 4.8.1 (2006-02-03)
+--------------------------
+
+- Fixed bug introduced by previous fix to set default content-type in
+  POST requests. (bug 1628)
+
+
+Version 4.8.0 (2006-02-02)
+--------------------------
+
+- Treat classindex as an int instead of a char in resultCacheMemberObj to
+  prevent problems with more than 128 classes (bug 1633)
+
+- Fixed possible crash with default content-type and POST requests.(bug 1628)
+
+- Known issue: MapScript queryByAttributes() creates wrong WHERE clause on
+  postgis layers in some cases (patch available, see bug 1629)
+
+
+Version 4.8.0-rc3 (2006-01-25)
 ------------------------------
+
+- Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569).
+
+- Move gBYTE_ORDER inside the pg layerinfo structure to allow for differently
+  byte ordered connections (bug 1587).
+
+- Close file handle when saving symbolset.
+
+- Fix the memory allocation bug in sdeShapeCopy (Bug 1606).
+
+- Fixed OGR WKT support (Bug 1614). 
+
+- Finished implementation of OGR Shape2WKT function (Bug 1614).
+
+- Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
+
+- Detect/add -DHAVE_VSNPRINTF in configure script and prevent systematic
+  buffer overflow in imagemap code when vsnprintf() not available (bug 1613)
+
+
+Version 4.8.0-rc2 (2006-01-09)
+------------------------------
+
+- Commit fix for GD on win32 when different heaps are in use. (Bug 1513) 
 
 - Correct bound reprojection issue with ogc filer (Bug 1600)
 
 - Correct mapscript windows build problem when flag USE_WMS_SVR was
   not set (Bug 1529)   
+
+- Fix up allocation of the SDE ROW_ID columns and how the functions that
+  call it were using it. (bug 1605)
+
+- Fixed crash with 3D polygons in Oracle Spatial (bug 1593)
+
+
+Version 4.8.0-rc1 (2005-12-22)
+------------------------------
 
 - Fixed shape projection to recompute shape bounds. (Bug 1586)
 
@@ -30,6 +166,7 @@ Version 4.8.0-rc1 (2005-12-22)
 
 - Fixed segfault when doing attribute queries on layers with a FILTER already
   set but with no FILTERITEM.
+
 
 Version 4.8.0-beta3 (2005-12-16)
 --------------------------------

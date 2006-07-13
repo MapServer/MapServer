@@ -32,6 +32,15 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69.2.3  2006/06/20 17:26:21  dan
+ * Fixed 3 more instances of the same shapefile leak in tiled layers (bug 1802)
+ *
+ * Revision 1.69.2.2  2006/06/14 12:31:40  dan
+ * Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
+ *
+ * Revision 1.69.2.1  2006/05/15 19:11:29  frank
+ * Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
+ *
  * Revision 1.69  2005/10/28 01:09:42  jani
  * MS RFC 3: Layer vtable architecture (bug 1477)
  *
@@ -1196,11 +1205,12 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	}
       }
 
-      if(psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_POLYGONM)
+      if(psSHP->nShapeType == SHP_POLYGON 
+         || psSHP->nShapeType == SHP_POLYGONZ
+         || psSHP->nShapeType == SHP_POLYGONM)
         shape->type = MS_SHAPE_POLYGON;
       else
         shape->type = MS_SHAPE_LINE;
-
     }
 
     /* -------------------------------------------------------------------- */
@@ -1690,8 +1700,15 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 #endif
 
       status = msSHPWhichShapes(tSHP->shpfile, rect, layer->debug);
-      if(status == MS_DONE) continue; /* next tile */
-      else if(status != MS_SUCCESS) return(MS_FAILURE);
+      if(status == MS_DONE) {
+          /* Close and continue to next tile */
+          msSHPCloseFile(tSHP->shpfile);
+          continue;
+      }
+      else if(status != MS_SUCCESS) {
+          msSHPCloseFile(tSHP->shpfile);
+          return(MS_FAILURE);
+      }
        
       /* the layer functions keeps track of this */
       /* tSHP->tileshpfile->lastshape = tshape.index; */
@@ -1728,8 +1745,15 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 #endif
 
         status = msSHPWhichShapes(tSHP->shpfile, rect, layer->debug);
-        if(status == MS_DONE) continue; /* next tile */
-        else if(status != MS_SUCCESS) return(MS_FAILURE);
+        if(status == MS_DONE) {
+            /* Close and continue to next tile */
+            msSHPCloseFile(tSHP->shpfile);
+            continue;
+        }
+        else if(status != MS_SUCCESS) {
+            msSHPCloseFile(tSHP->shpfile);
+            return(MS_FAILURE);
+        }
 
         tSHP->tileshpfile->lastshape = i;
         break;
@@ -1798,8 +1822,15 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 #endif
 
           status = msSHPWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
-          if(status == MS_DONE) continue; /* next tile */
-          else if(status != MS_SUCCESS) return(MS_FAILURE);
+          if(status == MS_DONE) {
+              /* Close and continue to next tile */
+              msSHPCloseFile(tSHP->shpfile);
+              continue;
+          }
+          else if(status != MS_SUCCESS) {
+              msSHPCloseFile(tSHP->shpfile);
+              return(MS_FAILURE);
+          }
 
           /* the layer functions keeps track of this */
           /* tSHP->tileshpfile->lastshape = tshape.index; */
@@ -1837,8 +1868,15 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 #endif
 
   	        status = msSHPWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
-	        if(status == MS_DONE) continue; /* next tile */
-	        else if(status != MS_SUCCESS) return(MS_FAILURE);
+                if(status == MS_DONE) {
+                    /* Close and continue to next tile */
+                    msSHPCloseFile(tSHP->shpfile);
+                    continue;
+                }
+                else if(status != MS_SUCCESS) {
+                    msSHPCloseFile(tSHP->shpfile);
+                    return(MS_FAILURE);
+                }
 	  
 	        tSHP->tileshpfile->lastshape = i;
 	        break;

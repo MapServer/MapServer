@@ -27,6 +27,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.317.2.2  2006/04/28 02:14:44  sdlime
+ * Fixed writeStyle to quote all string output. (bug 1755)
+ *
+ * Revision 1.317.2.1  2006/03/15 20:09:56  dan
+ * Fixed problem with TRANSPARENCY ALPHA when set via MapScript or written
+ * out by msSaveMap(). (bug 1669)
+ *
  * Revision 1.317  2005/12/20 18:25:36  sdlime
  * Fixed a couple of typos in mapfile.c- misplaced break statement. (bug 1578)
  *
@@ -1880,7 +1887,7 @@ void freeStyle(styleObj *style) {
 void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
   if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
-  if(style->angleitem) fprintf(stream, "        ANGLEITEM %s\n", style->angleitem);
+  if(style->angleitem) fprintf(stream, "        ANGLEITEM \"%s\"\n", style->angleitem);
   if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
   writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
 
@@ -1896,7 +1903,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);  
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
   if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
-  if(style->sizeitem) fprintf(stream, "        SIZEITEM %s\n", style->sizeitem);
+  if(style->sizeitem) fprintf(stream, "        SIZEITEM \"%s\"\n", style->sizeitem);
   if(style->symbolname)
     fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
   else
@@ -1905,7 +1912,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
 
   if(style->rangeitem) {
-    fprintf(stream, "        RANGEITEM %s\n", style->rangeitem);
+    fprintf(stream, "        RANGEITEM \"%s\"\n", style->rangeitem);
     writeColorRange(&(style->mincolor),&(style->maxcolor), stream, "COLORRANGE", "        ");
     fprintf(stream, "        DATARANGE %g %g\n", style->minvalue, style->maxvalue);
   }
@@ -3002,9 +3009,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   case (TRANSPARENCY):
     /* Should we check if transparency is supported by outputformat or
        if transparency for this layer is already set??? */
+    /* layers can now specify ALPHA transparency */
     msyystate = 2; msyystring = value;
-    if(getInteger(&(layer->transparency)) == -1) return;
-    break;   
+    if (getIntegerOrSymbol(&(layer->transparency), 1, MS_GD_ALPHA) == -1) return;
+    break;
   case(TYPE):
     msyystate = 2; msyystring = value;
     if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,MS_LAYER_TILEINDEX)) == -1) return;
@@ -3102,7 +3110,12 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->tolerance != -1) fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
-  if(layer->transparency > 0) fprintf(stream, "    TRANSPARENCY %d\n", layer->transparency);
+
+  if(layer->transparency == MS_GD_ALPHA) 
+      fprintf(stream, "    TRANSPARENCY ALPHA\n");
+  else if(layer->transparency > 0) 
+      fprintf(stream, "    TRANSPARENCY %d\n", layer->transparency);
+
   if (layer->type != -1)
     fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);

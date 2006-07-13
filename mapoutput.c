@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35.2.1  2006/07/11 01:10:34  frank
+ * msCloneOutputFormat() needs to propagate inmapfile flag (bug 1823).
+ *
  * Revision 1.35  2005/11/10 15:41:16  frank
  * Added missing function header.
  *
@@ -761,6 +764,8 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
 
     for( i = 0; i < src->numformatoptions; i++ )
         dst->formatoptions[i] = strdup(src->formatoptions[i]);
+
+    dst->inmapfile = src->inmapfile;
 
     return dst;
 }

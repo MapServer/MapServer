@@ -27,6 +27,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23.4.2  2006/01/25 16:10:40  dan
+ * Prevent systematic buffer overflow in imagemap code when vsnprintf()
+ * is not available (bug 1613)
+ *
+ * Revision 1.23.4.1  2006/01/16 20:41:22  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.23  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -184,7 +191,14 @@ static void im_iprintf(pString *ps, const char *fmt, ...) {
 		n = vsnprintf((*(ps->string)) + ps->string_len, 
 			      remaining, fmt, ap);
 #else
-		n = vsprintf((*(ps->string)) + ps->string_len, fmt, ap);
+                /* If vsnprintf() is not available then require a minimum
+                 * of 512 bytes of free space to prevent a buffer overflow
+                 * This is not fully bulletproof but should help, see bug 1613
+                 */
+                if (remaining < 512)
+                    n = -1;  
+                else
+                    n = vsprintf((*(ps->string)) + ps->string_len, fmt, ap);
 #endif
 		va_end(ap);
 		/* if that worked, we're done! */
@@ -1855,7 +1869,7 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
     if(cachePtr->label.type == MS_TRUETYPE)
       cachePtr->label.size = (int)(cachePtr->label.size*layerPtr->scalefactor);
 
-    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
+    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))

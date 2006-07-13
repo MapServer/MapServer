@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57.2.2  2006/03/27 05:50:52  sdlime
+ * Fixed symbol initialization error with embedded scalebars and legends. (bug 1725)
+ *
+ * Revision 1.57.2.1  2006/01/16 20:41:22  sdlime
+ * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
+ *
  * Revision 1.57  2005/11/17 05:56:30  sdlime
  * Updated msDrawLegend to respect class min/max scale values. (bug 1524)
  *
@@ -324,7 +330,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 	  continue;
       }
 
-      if(msGetLabelSize(lp->class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0) != 0)
+      if(msGetLabelSize(lp->class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
 	return(NULL); /* something bad happened */
       maxheight = MS_MAX(maxheight, MS_NINT(rect.maxy - rect.miny));
       maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
@@ -435,11 +441,12 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   image->img.gd = NULL;
   msFreeImage( image );
 
-
   if(!map->symbolset.symbol[s].img) return(-1); /* something went wrong creating scalebar */
 
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; /* intialize a few things */
   map->symbolset.symbol[s].name = strdup("legend");  
+  map->symbolset.symbol[s].sizex = map->symbolset.symbol[s].img->sx;
+  map->symbolset.symbol[s].sizey = map->symbolset.symbol[s].img->sy;
 
   /* I'm not too sure this test is sufficient ... NFW. */
   if(map->legend.transparent == MS_ON)
