@@ -522,6 +522,10 @@ msIO_getStdoutBufferBytes() : binary data
   form of this buffer will vary by mapscript language (eg. string in Python,
   byte[] array in Java, unhandled in perl)
 
+msIO_stripStdoutBufferContentType() : string
+  Strip the Content-type header off the stdout buffer if it has one, and
+  if a content type is found it is return (otherwise NULL/None/etc). 
+
   
 =============================================================================
  Mapscript Classes
