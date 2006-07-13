@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/07/13 20:18:12  frank
+ * added msIO_stripStdoutBufferContentType
+ *
  * Revision 1.13  2006/07/06 21:35:29  frank
  * fixed statement order to be valid C
  *
@@ -736,6 +739,94 @@ void msIO_installStdinFromBuffer()
     msIO_installHandlers( &context, 
                           &group->stdout_context, 
                           &group->stderr_context );
+}
+
+/************************************************************************/
+/*                 msIO_stripStdoutBufferContentType()                  */
+/*                                                                      */
+/*      Strip off content-type header from buffer, and return to        */
+/*      caller.  Returned string is the callers responsibility to       */
+/*      call msFree() on to deallocate.  This function will return      */
+/*      NULL if there is no content-type header.                        */
+/************************************************************************/
+
+char *msIO_stripStdoutBufferContentType()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find stdout buffer.                                             */
+/* -------------------------------------------------------------------- */
+    msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
+    msIOBuffer  *buf;
+    char *content_type = NULL;
+    int end_of_ct, start_of_data;
+
+    if( ctx == NULL || ctx->write_channel == MS_FALSE 
+        || strcmp(ctx->label,"buffer") != 0 )
+    {
+	msSetError( MS_MISCERR, "Can't identify msIO buffer.",
+                    "msIO_stripStdoutBufferContentType" );
+	return NULL;
+    }
+
+    buf = (msIOBuffer *) ctx->cbData;
+
+/* -------------------------------------------------------------------- */
+/*      Return NULL if we don't have a content-type header.             */
+/* -------------------------------------------------------------------- */
+    if( buf->data_len < 14 
+        || strncasecmp(buf->data,"Content-type: ",14) != 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find newline marker at end of content type argument.            */
+/* -------------------------------------------------------------------- */
+    end_of_ct = 13;
+    while( end_of_ct+1 < buf->data_len 
+           && buf->data[end_of_ct+1] != 10 )
+        end_of_ct++;
+
+    if( end_of_ct+1 == buf->data_len )
+    {
+	msSetError( MS_MISCERR, "Corrupt Content-type header.",
+                    "msIO_stripStdoutBufferContentType" );
+	return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Continue on to the start of data ... skipping two newline       */
+/*      markers.                                                        */
+/* -------------------------------------------------------------------- */
+    start_of_data = end_of_ct+2;
+    while( start_of_data  < buf->data_len 
+           && buf->data[start_of_data] != 10 )
+        start_of_data++;
+
+    if( start_of_data == buf->data_len )
+    {
+	msSetError( MS_MISCERR, "Corrupt Content-type header.",
+                    "msIO_stripStdoutBufferContentType" );
+	return NULL;
+    }
+
+    start_of_data++;
+
+/* -------------------------------------------------------------------- */
+/*      Copy out content type.                                          */
+/* -------------------------------------------------------------------- */
+    content_type = (char *) malloc(end_of_ct-14+2);
+    strncpy( content_type, (const char *) buf->data + 14, end_of_ct - 14 + 1);
+    content_type[end_of_ct-14+1] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Move data to front of buffer, and reset length.                 */
+/* -------------------------------------------------------------------- */
+    memmove( buf->data, buf->data+start_of_data, 
+             buf->data_len - start_of_data );
+    buf->data[buf->data_len - start_of_data] = '\0';
+    buf->data_len -= start_of_data;
+
+    return content_type;
 }
 
 /************************************************************************/

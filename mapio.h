@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/07/13 20:18:12  frank
+ * added msIO_stripStdoutBufferContentType
+ *
  * Revision 1.8  2006/07/05 05:54:53  frank
  * implement per-thread io contexts
  *
@@ -138,6 +141,7 @@ void MS_DLL_EXPORT msIO_resetHandlers(void);
 void MS_DLL_EXPORT msIO_installStdoutToBuffer(void);
 void MS_DLL_EXPORT msIO_installStdinFromBuffer(void);
 void MS_DLL_EXPORT msIO_Cleanup();
+char MS_DLL_EXPORT *msIO_stripStdoutBufferContentType(void);
 
 /* this is just for setting normal stdout's to binary mode on windows */
 

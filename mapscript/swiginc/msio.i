@@ -5,6 +5,7 @@
 void msIO_resetHandlers(void);
 void msIO_installStdoutToBuffer(void);
 void msIO_installStdinFromBuffer(void);
+const char *msIO_stripStdoutBufferContentType(void);
 
 /* mapscript only extensions */
 
