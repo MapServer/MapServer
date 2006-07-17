@@ -351,7 +351,7 @@
     intarray *order;
     order = new_intarray(self->numlayers);
     for (i=0; i<self->numlayers; i++)
-        #if defined(SWIGPYTHON) && SWIG_VERSION >= 0x010329 /* 1.3.29 */
+        #if defined(SWIGPYTHON) && SWIG_VERSION >= 0x010328 /* 1.3.28 */
         intarray___setitem__(order, i, self->layerorder[i]);
         #else
         intarray_setitem(order, i, self->layerorder[i]);
