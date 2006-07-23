@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2006/07/23 03:28:45  sdlime
+ * Fixed error in msAddImageSymbol() where imagepath is not set. (bug 1832)
+ *
  * Revision 1.99  2006/04/27 04:05:18  sdlime
  * Initial support for relative coordinates. (bug 1547)
  *
@@ -512,6 +515,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
 /*
 ** Little helper function to allow us to build symbol files on-the-fly 
 ** from just a file name.
+**
 ** Returns the symbol index or -1 if it could not be added.
 */
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename) 
@@ -533,21 +537,16 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   }
 
   
-  if (symbolset->map)
-  {
-      if((stream = fopen(msBuildPath(szPath, symbolset->map->mappath, filename), "rb")) == NULL)        
-      {
-          msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
-          return(-1);
-      }
-  }
-  else
-  {
-      if((stream = fopen(msBuildPath(szPath, NULL, filename), "rb")) == NULL)        
-      {
-          msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
-          return(-1);
-      }
+  if(symbolset->map) {
+    if((stream = fopen(msBuildPath(szPath, symbolset->map->mappath, filename), "rb")) == NULL) {
+      msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
+      return(-1);
+    }
+  } else {
+    if((stream = fopen(msBuildPath(szPath, NULL, filename), "rb")) == NULL) {
+      msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
+      return(-1);
+    }
   }
   i = symbolset->numsymbols;  
 
@@ -555,27 +554,27 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
   rewind(stream); /* reset the image for the readers */
-  if (memcmp(bytes,"GIF8",4)==0) {
+  if(memcmp(bytes,"GIF8",4)==0) {
 #ifdef USE_GD_GIF
-      gdIOCtx *ctx;
-      ctx = msNewGDFileCtx(stream);
-      symbolset->symbol[i].img = gdImageCreateFromGifCtx(ctx);
-      ctx->gd_free(ctx);
+    gdIOCtx *ctx;
+    ctx = msNewGDFileCtx(stream);
+    symbolset->symbol[i].img = gdImageCreateFromGifCtx(ctx);
+    ctx->gd_free(ctx);
 #else
-      msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
-      fclose(stream);
-      return(-1);
+    msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
+    fclose(stream);
+    return(-1);
 #endif
   } else if (memcmp(bytes,PNGsig,8)==0) {
 #ifdef USE_GD_PNG
-      gdIOCtx *ctx;
-      ctx = msNewGDFileCtx(stream);
-      symbolset->symbol[i].img = gdImageCreateFromPngCtx(ctx);
-      ctx->gd_free(ctx);
+    gdIOCtx *ctx;
+    ctx = msNewGDFileCtx(stream);
+    symbolset->symbol[i].img = gdImageCreateFromPngCtx(ctx);
+    ctx->gd_free(ctx);
 #else
-      msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
-      fclose(stream);
-      return(-1);
+    msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
+    fclose(stream);
+    return(-1);
 #endif
   }
 
@@ -587,6 +586,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   }
 
   symbolset->symbol[i].name = strdup(filename);
+  symbolset->symbol[i].imagepath = strdup(filename);
   symbolset->symbol[i].type = MS_SYMBOL_PIXMAP;
   symbolset->symbol[i].sizex = symbolset->symbol[i].img->sx;
   symbolset->symbol[i].sizey = symbolset->symbol[i].img->sy;
