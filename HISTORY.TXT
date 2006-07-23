@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Fixed error in msAddImageSymbol() where a symbol's imagepath was not set (bug 1832).
+
 - Added INCLUDE capability in mapfile parser (bug 279)
 
 - Revert changes to mapzoom.i that swapped miny and maxy (Bug 1817).
