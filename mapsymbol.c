@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.6  2006/07/23 03:31:27  sdlime
+ * Fixed error in msAddImageSymbol() where imagepath is not set. (bug 1832)
+ *
  * Revision 1.90.2.5  2006/03/30 03:46:30  sdlime
  * Fixed a few more instances where PIXMAP symbols are created but sizex and sizey are not explicitly set. (bug 1725)
  *
@@ -571,6 +574,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   }
 
   symbolset->symbol[i].name = strdup(filename);
+  symbolset->symbol[i].imagepath = strdup(filename);
   symbolset->symbol[i].type = MS_SYMBOL_PIXMAP;
   symbolset->symbol[i].sizex = symbolset->symbol[i].img->sx;
   symbolset->symbol[i].sizey = symbolset->symbol[i].img->sy;
