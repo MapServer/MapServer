@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2006/08/01 13:48:31  sdlime
+ * Added missing / in closing tag for multipoint (GML v2.1.2).
+ *
  * Revision 1.89  2006/08/01 03:09:26  sdlime
  * Added missing pointMember tag to multipoint output for GML 2.1.2. (bug 1847)
  *
@@ -332,7 +335,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s    <gml:Point>\n", tab);
           msIO_fprintf(stream, "%s      <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
           msIO_fprintf(stream, "%s    </gml:Point>\n", tab);
-          msIO_fprintf(stream, "%s  <gml:pointMember>\n", tab);
+          msIO_fprintf(stream, "%s  </gml:pointMember>\n", tab);
         }
       }
 
