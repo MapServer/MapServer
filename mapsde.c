@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.108  2006/08/01 18:23:12  sdlime
+ * Fixed a problem in the SDE code that prohibited setting SDE to only process the attribute portion of a query.
+ *
  * Revision 1.107  2006/03/12 05:54:35  hobu
  * make sure to return a value in the failure case
  * for msSDELayerClose
@@ -1186,7 +1189,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   SE_FILTER constraint;
   SE_QUERYINFO query_info;
   char* proc_value=NULL;
-  int query_order;
+  int query_order=SE_SPATIAL_FIRST;
 
   msSDELayerInfo *sde=NULL;
 
@@ -1340,18 +1343,15 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   }
   
   proc_value = msLayerGetProcessingKey(layer,"QUERYORDER");
-  if(!proc_value) {
-      query_order= 2; /* SE_SPATIAL_FIRST */
-  }
-  else if (proc_value=="ATTRIBUTE"){
-      query_order = 1; /* SE_ATTRIBUTE_FIRST */
-  }
+  if(proc_value && strcasecmp(proc_value, "ATTRIBUTE") == 0)
+    query_order = SE_ATTRIBUTE_FIRST;
 
   status = SE_stream_set_spatial_constraints( sde->stream, 
                                               query_order, 
                                               FALSE, 
                                               1, 
                                               &constraint);
+
   if(status != SE_SUCCESS) {
     sde_error(status, 
               "msSDELayerWhichShapes()", 
