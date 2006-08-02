@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78.2.4  2006/08/02 03:25:59  sdlime
+ * Added missing pointMember tag to multipoint output for GML 2.1.2. (bug 1847)
+ *
  * Revision 1.78.2.3  2006/05/02 20:59:59  dan
  * Output feature id as @fid instead of @gml:id in WFS 1.0.0 / GML 2.1.2
  * GetFeature requests (bug 1759)
@@ -303,9 +306,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
 
       for(i=0; i<shape->numlines; i++) {
         for(j=0; j<shape->line[i].numpoints; j++) {
-	  msIO_fprintf(stream, "%s  <gml:Point>\n", tab);
-	  msIO_fprintf(stream, "%s    <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
-	  msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
+          msIO_fprintf(stream, "%s  <gml:pointMember>\n", tab);
+	  msIO_fprintf(stream, "%s    <gml:Point>\n", tab);
+	  msIO_fprintf(stream, "%s      <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
+	  msIO_fprintf(stream, "%s    </gml:Point>\n", tab);
+	  msIO_fprintf(stream, "%s  </gml:pointMember>\n", tab);
 	}
       }
 	
