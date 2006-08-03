@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/08/03 00:22:00  sdlime
+ * Fixed problem where insertLayer does not set the layer index properly if the layer is inserted between existing layers. (bug 1838)
+ *
  * Revision 1.24  2006/03/31 15:53:03  julien
  * bug 1733 Fix SLD nonsquare pixel and SLD with FE projection issue
  *
@@ -521,7 +524,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         freeLayer(&(map->layers[nIndex]));
         initLayer(&(map->layers[nIndex]), map);
         msCopyLayer(&(map->layers[nIndex]), layer);
-        map->layers[map->numlayers].index = nIndex;
+        map->layers[nIndex].index = nIndex;
 
         /* adjust layers drawing order */
         for (i=map->numlayers; i>nIndex; i--) {
