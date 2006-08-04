@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/08/04 04:33:45  sdlime
+ * Fixed a problem with full-image legends where layer sizeunits were not taken into account when rendering a legend. (bug 1147)
+ *
  * Revision 1.60  2006/03/27 05:48:03  sdlime
  * Fixed symbol initialization error with embedded scalebars and legends. (bug 1725)
  *
@@ -127,7 +130,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     if(type == MS_LAYER_POLYGON) {
       type = MS_LAYER_LINE;
       for(i=0; i<class->numstyles; i++) {
-        if(MS_VALID_COLOR(class->styles[i].color)) { /* there is a fill */
+icon        if(MS_VALID_COLOR(class->styles[i].color)) { /* there is a fill */
 	  type = MS_LAYER_POLYGON;
 	  break;
         }
@@ -150,7 +153,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
       marker.y = dstY + MS_NINT(height / 2.0);
 
       for(i=0; i<class->numstyles; i++)
-        msDrawMarkerSymbolGD(&map->symbolset, img, &marker, &(class->styles[i]), 1.0);          
+        msDrawMarkerSymbolGD(&map->symbolset, img, &marker, &(class->styles[i]), lp->scalefactor);          
       break;
     case MS_LAYER_LINE:
       zigzag.line = (lineObj *)malloc(sizeof(lineObj));
@@ -169,7 +172,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
       zigzag.line[0].numpoints = 4;
 
       for(i=0; i<class->numstyles; i++)
-        msDrawLineSymbolGD(&map->symbolset, img, &zigzag, &(class->styles[i]), 1.0); 
+        msDrawLineSymbolGD(&map->symbolset, img, &zigzag, &(class->styles[i]), lp->scalefactor); 
 
       free(zigzag.line[0].point);
       free(zigzag.line);	
@@ -178,7 +181,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     case MS_LAYER_RASTER:
     case MS_LAYER_POLYGON:
       for(i=0; i<class->numstyles; i++)     
-        msDrawShadeSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), 1.0);
+        msDrawShadeSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), lp->scalefactor);
       break;
     default:
       return MS_FAILURE;
@@ -206,12 +209,9 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   outputFormatObj *format = NULL;
   int i = 0;
 
-  if(!map->outputformat || !MS_RENDERER_GD(map->outputformat) ) 
-  {
-      msSetError(MS_GDERR, 
-                 "Map outputformat must be set to a GD format!", 
-                 "msCreateLegendIcon()");
-      return(NULL);
+  if(!map->outputformat || !MS_RENDERER_GD(map->outputformat) ) {
+    msSetError(MS_GDERR, "Map outputformat must be set to a GD format!", "msCreateLegendIcon()");
+    return(NULL);
   }
 
   /* ensure we have an image format representing the options for the legend */
@@ -239,8 +239,7 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
     msClearLayerPenValues(lp); /* just in case the mapfile has already been processed */
     if (class) {
       msDrawLegendIcon(map, lp, class, width, height, image->img.gd, 0, 0);
-    }
-    else {
+    } else {
       for (i=0; i<lp->numclasses; i++) {
         msDrawLegendIcon(map, lp, &lp->class[i], width, height, image->img.gd, 0, 0);
       }
@@ -249,7 +248,6 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 
   return image;
 }
-
 
 /*
 ** Creates a GD image of a legend for a specific map. msDrawLegend()
@@ -277,9 +275,9 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   outputFormatObj *format = NULL;
 
   if (!scale_independent) {
-      map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-      status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
-      if(status != MS_SUCCESS) return(NULL);
+    map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+    status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
+    if(status != MS_SUCCESS) return(NULL);
   }
 
   if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
@@ -294,8 +292,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       continue;
 
     for(j=0;j<lp->numclasses;j++) {
-      if(!lp->class[j].name)
-	continue; /* skip it */
+      if(!lp->class[j].name) continue; /* skip it */
       n++;
     }
   }
@@ -316,10 +313,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       continue;
 
     if(!scale_independent && map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale))
-	continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale))
-	continue;
+      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
+      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
  
     for(j=0;j<lp->numclasses;j++) {
@@ -387,6 +382,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 	continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale))
 	continue;
+
+      /* Should we also consider lp->symbolscale? I don't think so. Showing the "standard" size makes the most sense. */
+      if(lp->sizeunits != MS_PIXELS)
+        lp->scalefactor = (msInchesPerUnit(lp->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
     }
 
     for(j=0; j<lp->numclasses; j++) { /* always at least 1 class */
@@ -403,8 +402,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
       /* TODO */
-      if (msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, (int) pnt.y) != MS_SUCCESS)
-         return NULL;
+      if(msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, (int) pnt.y) != MS_SUCCESS)
+        return NULL;
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
       /* TODO */
@@ -418,7 +417,6 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   free(heights);
   return(image);
 }
-
 
 /* TODO */
 int msEmbedLegend(mapObj *map, gdImagePtr img)
