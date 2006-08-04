@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/08/04 04:36:12  sdlime
+ * Removed cut & paste artifact (oops).
+ *
  * Revision 1.61  2006/08/04 04:33:45  sdlime
  * Fixed a problem with full-image legends where layer sizeunits were not taken into account when rendering a legend. (bug 1147)
  *
@@ -130,7 +133,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     if(type == MS_LAYER_POLYGON) {
       type = MS_LAYER_LINE;
       for(i=0; i<class->numstyles; i++) {
-icon        if(MS_VALID_COLOR(class->styles[i].color)) { /* there is a fill */
+       if(MS_VALID_COLOR(class->styles[i].color)) { /* there is a fill */
 	  type = MS_LAYER_POLYGON;
 	  break;
         }
