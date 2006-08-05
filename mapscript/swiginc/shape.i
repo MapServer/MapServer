@@ -34,7 +34,6 @@
   
     shapeObj(int type=MS_SHAPE_NULL) 
     {
-        int i;
         shapeObj *shape;
 
 	shape = (shapeObj *)malloc(sizeof(shapeObj));
@@ -43,15 +42,6 @@
 
         msInitShape(shape);
         if(type >= 0) shape->type = type;
-
-        /* Allocate memory for 4 values */
-        if ((shape->values = (char **)malloc(sizeof(char *)*4)) == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for values", "shapeObj()");
-            return NULL;
-        } else {
-            for (i=0; i<4; i++) shape->values[i] = strdup("");
-        }
-        shape->numvalues = 4;
         
         return shape;
     }
@@ -66,21 +56,11 @@
     static shapeObj *fromWKT(char *wkt)
     {
 	shapeObj *shape;
-        int i;
-
+        
         if(!wkt) return NULL;
 
         shape = msShapeFromWKT(wkt);
 	if(!shape) return NULL;
-
-        /* Allocate memory for 4 values */
-        if ((shape->values = (char **)malloc(sizeof(char *)*4)) == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for values", "fromWKT()");
-            return NULL;
-        } else {
-            for (i=0; i<4; i++) shape->values[i] = strdup("");
-        }
-        shape->numvalues = 4;
 
 	return shape;
     }
@@ -241,7 +221,7 @@
             msSetError(MS_SHPERR, "Can't set value", "setValue()");
             return MS_FAILURE;
         }
-        if (i >= 0 && i < 4)
+        if (i >= 0 && i < self->numvalues)
         {
             msFree(self->values[i]);
             self->values[i] = strdup(value);
@@ -253,9 +233,29 @@
         }
         else
         {
-            msSetError(MS_SHPERR, "Invalid index, only 4 possible values", 
+            msSetError(MS_SHPERR, "Invalid value index", 
                                   "setValue()");
             return MS_FAILURE;
+        }
+    }
+    
+    void initValues(int numvalues)
+    {
+        int i;
+        
+        if(self->values) msFreeCharArray(self->values, self->numvalues);
+        self->values = NULL;
+        self->numvalues = 0;
+        
+        /* Allocate memory for the values */
+        if (numvalues > 0) {
+            if ((self->values = (char **)malloc(sizeof(char *)*numvalues)) == NULL) {
+                msSetError(MS_MEMERR, "Failed to allocate memory for values", "shapeObj()");
+                return;
+            } else {
+                for (i=0; i<numvalues; i++) self->values[i] = strdup("");
+            }
+            self->numvalues = numvalues;
         }
     }
 }
