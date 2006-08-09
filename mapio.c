@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/08/09 14:27:00  frank
+ * fixed data length handling in strip content header
+ *
  * Revision 1.14  2006/07/13 20:18:12  frank
  * added msIO_stripStdoutBufferContentType
  *
@@ -774,7 +777,7 @@ char *msIO_stripStdoutBufferContentType()
 /* -------------------------------------------------------------------- */
 /*      Return NULL if we don't have a content-type header.             */
 /* -------------------------------------------------------------------- */
-    if( buf->data_len < 14 
+    if( buf->data_offset < 14 
         || strncasecmp(buf->data,"Content-type: ",14) != 0 )
         return NULL;
 
@@ -782,11 +785,11 @@ char *msIO_stripStdoutBufferContentType()
 /*      Find newline marker at end of content type argument.            */
 /* -------------------------------------------------------------------- */
     end_of_ct = 13;
-    while( end_of_ct+1 < buf->data_len 
+    while( end_of_ct+1 < buf->data_offset 
            && buf->data[end_of_ct+1] != 10 )
         end_of_ct++;
 
-    if( end_of_ct+1 == buf->data_len )
+    if( end_of_ct+1 == buf->data_offset )
     {
 	msSetError( MS_MISCERR, "Corrupt Content-type header.",
                     "msIO_stripStdoutBufferContentType" );
@@ -798,11 +801,11 @@ char *msIO_stripStdoutBufferContentType()
 /*      markers.                                                        */
 /* -------------------------------------------------------------------- */
     start_of_data = end_of_ct+2;
-    while( start_of_data  < buf->data_len 
+    while( start_of_data  < buf->data_offset 
            && buf->data[start_of_data] != 10 )
         start_of_data++;
 
-    if( start_of_data == buf->data_len )
+    if( start_of_data == buf->data_offset )
     {
 	msSetError( MS_MISCERR, "Corrupt Content-type header.",
                     "msIO_stripStdoutBufferContentType" );
@@ -822,9 +825,9 @@ char *msIO_stripStdoutBufferContentType()
 /*      Move data to front of buffer, and reset length.                 */
 /* -------------------------------------------------------------------- */
     memmove( buf->data, buf->data+start_of_data, 
-             buf->data_len - start_of_data );
-    buf->data[buf->data_len - start_of_data] = '\0';
-    buf->data_len -= start_of_data;
+             buf->data_offset - start_of_data );
+    buf->data[buf->data_offset - start_of_data] = '\0';
+    buf->data_offset -= start_of_data;
 
     return content_type;
 }

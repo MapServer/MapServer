@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/08/09 14:27:00  frank
+ * fixed data length handling in strip content header
+ *
  * Revision 1.9  2006/07/13 20:18:12  frank
  * added msIO_stripStdoutBufferContentType
  *
@@ -130,8 +133,8 @@ int msIO_contextWrite( msIOContext *context, const void *data, int byteCount );
 
 typedef struct {
     unsigned char *data;
-    int            data_len;
-    int            data_offset;
+    int            data_len;    /* really buffer length */
+    int            data_offset; /* really buffer used */
 } msIOBuffer;
 
 int MS_DLL_EXPORT msIO_bufferRead( void *, void *, int );
