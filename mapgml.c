@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2006/08/11 18:56:40  sdlime
+ * Initial versions of namespace read/free functions.
+ *
  * Revision 1.90  2006/08/01 13:48:31  sdlime
  * Added missing / in closing tag for multipoint (GML v2.1.2).
  *
@@ -1097,6 +1100,68 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   return;
 }
 
+gmlNamespaceListObj *msGMLGetNamespaces(webObj *web)
+{
+  int i;
+  const char *value=NULL;
+  char tag[64];
+
+  char **prefixes=NULL;
+  int numprefixes=0;
+
+  gmlNamespaceListObj *namespaceList=NULL;
+  gmlNamespaceObj *namespace=NULL;
+
+  /* allocate the collection */
+  namespaceList = (gmlNamespaceListObj *) malloc(sizeof(gmlNamespaceListObj)); 
+  namespaceList->namespaces = NULL;
+  namespaceList->numnamespaces = 0; 
+
+  /* list of constants (TODO: make this automatic by parsing metadata) */
+  if((value = msOWSLookupMetadata(&(web->metadata), "OFG", "namespaces")) != NULL) {
+    prefixes = split(value, ',', &numprefixes);
+
+    /* allocation an array of gmlNamespaceObj's */
+    namespaceList->numnamespaces = numprefixes;
+    namespaceList->namespaces = (gmlNamespaceObj *) malloc(sizeof(gmlNamespaceObj)*namespaceList->numnamespaces);
+
+    for(i=0; i<namespaceList->numnamespaces; i++) {
+      namespace = &(namespaceList->namespaces[i]);
+
+      namespace->prefix = strdup(prefixes[i]); /* initialize a few things */      
+      namespace->uri = NULL;
+      namespace->schema = NULL;
+
+      snprintf(tag, 64, "%s_uri", namespace->prefix);
+      if((value = msOWSLookupMetadata(&(web->metadata), "OFG", tag)) != NULL) 
+      namespace->uri = strdup(value);
+
+      snprintf(tag, 64, "%s_schema", namespace->prefix);
+      if((value = msOWSLookupMetadata(&(web->metadata), "OFG", tag)) != NULL) 
+      namespace->schema = strdup(value);
+    }
+
+    msFreeCharArray(prefixes, numprefixes);
+	}
+
+	return namespaceList;
+}
+
+void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList)
+{
+  int i;
+
+  if(!namespaceList) return;
+
+  for(i=0; i<namespaceList->numnamespaces; i++) {
+    msFree(namespaceList->namespaces[i].prefix);
+    msFree(namespaceList->namespaces[i].uri);
+    msFree(namespaceList->namespaces[i].schema);
+  }
+
+  free(namespaceList);
+}
+
 gmlConstantListObj *msGMLGetConstants(layerObj *layer)
 {
   int i;
@@ -1109,7 +1174,7 @@ gmlConstantListObj *msGMLGetConstants(layerObj *layer)
   gmlConstantListObj *constantList=NULL;
   gmlConstantObj *constant=NULL;
 
-    /* allocate the collection */
+  /* allocate the collection */
   constantList = (gmlConstantListObj *) malloc(sizeof(gmlConstantListObj)); 
   constantList->constants = NULL;
   constantList->numconstants = 0;

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.74  2006/08/11 18:56:40  sdlime
+ * Initial versions of namespace read/free functions.
+ *
  * Revision 1.73  2006/08/11 18:40:20  sdlime
  * Created gmlNamespaceObj structures.
  *
@@ -486,6 +489,8 @@ MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer);
 MS_DLL_EXPORT void msGMLFreeGeometries(gmlGeometryListObj *geometryList);
 MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer);
 MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
+MS_DLL_EXPORT gmlNamespaceListObj *msGMLGetNamespaces(webObj *web);
+MS_DLL_EXPORT void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList);
 #endif
 
 /* export to fix bug 851 */
