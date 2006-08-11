@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.81  2006/08/11 21:44:48  sdlime
+ * Added namespace reading (using is the hard part) to WFS server.
+ *
  * Revision 1.80  2006/04/08 05:58:48  frank
  * fix various memory leaks
  *
@@ -692,7 +695,10 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   char *encoded_name = NULL, *encoded;
   
   int outputformat = OWS_DEFAULT_SCHEMA; /* default output is GML 2.1 compliant schema*/
-  
+
+  gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
+  gmlNamespaceObj *namespace;
+
   if(paramsObj->pszTypeName && numlayers == 0) {
     /* Parse comma-delimited list of type names (layers) */
     /*  */
@@ -737,7 +743,12 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       }
     }
   }
-            
+
+  /*
+	** retrieve any necessary external namespace/schema configuration information
+  */
+  namespaceList = msGMLGetNamespaces(&(map->web));
+
   /*
   ** DescribeFeatureType response
   */
