@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/08/11 16:58:01  dan
+ * Added ability to encrypt tokens (passwords, etc.) in database connection
+ * strings (MS-RFC-18, bug 1792)
+ *
  * Revision 1.72  2006/05/09 22:35:41  pramsey
  * Added quotes around field names being retrieved by query requests. (Bug 1536)
  *
@@ -307,11 +311,21 @@ int msPOSTGISLayerOpen(layerObj *layer)
 
     layerinfo->conn = (PGconn *) msConnPoolRequest(layer);
     if(!layerinfo->conn) {
+        char *conn_decrypted;
         if(layer->debug) {
             msDebug("MSPOSTGISLayerOpen -- shared connection not available.\n");
         }
-                
+
+        /* Decrypt any encrypted token in connection and attempt to connect */
+        conn_decrypted = msDecryptStringTokens(map, connection);
+        if (conn_decrypted == NULL) {
+          return(MS_FAILURE);  /* An error should already have been produced */
+        }
+   
         layerinfo->conn = PQconnectdb(layer->connection);
+
+        msFree(conn_decrypted);
+        conn_decrypted = NULL;
 
         if(!layerinfo->conn || PQstatus(layerinfo->conn) == CONNECTION_BAD) {
             msDebug("FAILURE!!!");

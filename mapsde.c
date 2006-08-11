@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.109  2006/08/11 16:58:02  dan
+ * Added ability to encrypt tokens (passwords, etc.) in database connection
+ * strings (MS-RFC-18, bug 1792)
+ *
  * Revision 1.108  2006/08/01 18:23:12  sdlime
  * Fixed a problem in the SDE code that prohibited setting SDE to only process the attribute portion of a query.
  *
@@ -868,6 +872,8 @@ int msSDELayerOpen(layerObj *layer) {
   
   /* If we weren't returned a connection and stream, initialize new ones */
   if (!poolinfo) {
+    char *conn_decrypted;
+
     if (layer->debug) 
       msDebug("msSDELayerOpen(): "
               "Layer %s opened from scratch.\n", layer->name);
@@ -878,14 +884,23 @@ int msSDELayerOpen(layerObj *layer) {
       return MS_FAILURE;
     } 		
 
-	  /* Split the connection parameters and make sure we have enough of them */
-    params = split(layer->connection, ',', &numparams);
+    /* Decrypt any encrypted token in the connection string */
+    conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
+    if (conn_decrypted == NULL) {
+        return(MS_FAILURE);  /* An error should already have been produced */
+    }
+    /* Split the connection parameters and make sure we have enough of them */
+    params = split(conn_decrypted, ',', &numparams);
     if(!params) {
       msSetError( MS_MEMERR, 
                   "Error spliting SDE connection information.", 
                   "msSDELayerOpen()");
+      msFree(conn_decrypted);
       return(MS_FAILURE);
     }
+    msFree(conn_decrypted);
+    conn_decrypted = NULL;
+
     if(numparams < 5) {
       msSetError( MS_SDEERR, 
                   "Not enough SDE connection parameters specified.", 
