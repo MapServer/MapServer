@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2006/08/11 21:32:22  sdlime
+ * The GML writer for WFS now allows a layer to override the default namespace via OWS_NAMESPACE_PREFIX at the layer level.
+ *
  * Revision 1.91  2006/08/11 18:56:40  sdlime
  * Initial versions of namespace read/free functions.
  *
@@ -1118,7 +1121,7 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web)
   namespaceList->numnamespaces = 0; 
 
   /* list of constants (TODO: make this automatic by parsing metadata) */
-  if((value = msOWSLookupMetadata(&(web->metadata), "OFG", "namespaces")) != NULL) {
+  if((value = msOWSLookupMetadata(&(web->metadata), "OFG", "external_namespace_prefixes")) != NULL) {
     prefixes = split(value, ',', &numprefixes);
 
     /* allocation an array of gmlNamespaceObj's */
@@ -1530,7 +1533,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 **
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_namespace, int outputformat)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default_namespace_prefix, int outputformat)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -1546,6 +1549,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
   gmlGeometryListObj *geometryList=NULL;
   gmlItemObj *item=NULL;
   gmlConstantObj *constant=NULL;
+
+	char *namespace_prefix=NULL;
 
   msInitShape(&shape);
 
@@ -1570,6 +1575,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       /* retrieve all the item names. (Note : there might be no attributes) */
       status = msLayerGetItems(lp);
       /* if(status != MS_SUCCESS) return(status); */
+
+			/* setup namespace, a layer can override the default */
+			namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
+			if(!namespace_prefix) namespace_prefix = default_namespace_prefix;
       
       value = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
       if(value) { /* find the featureid amongst the items for this layer */
@@ -1590,9 +1599,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       /* set the layer name */
       /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername");
          if(!value) value = lp->name; */
-      if (wfs_namespace) {
-        layerName = (char *) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
-        sprintf(layerName, "%s:%s", wfs_namespace, lp->name);
+      if (namespace_prefix) {
+        layerName = (char *) malloc(strlen(namespace_prefix)+strlen(lp->name)+2);
+        sprintf(layerName, "%s:%s", namespace_prefix, lp->name);
       } else {
         layerName = strdup(lp->name);
       }
@@ -1631,14 +1640,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
 #ifdef USE_PROJ
           if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) { /* use the map projection first*/
             gmlWriteBounds(stream, outputformat, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
-            gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), wfs_namespace, "        "); 
+            gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), namespace_prefix, "        "); 
           } else { /* then use the layer projection and/or metadata */
             gmlWriteBounds(stream, outputformat, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");
-            gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), wfs_namespace, "        ");
+            gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), namespace_prefix, "        ");
           }
 #else
           gmlWriteBounds(stream, outputformat, &(shape.bounds), NULL, "        "); /* no projection information */
-          gmlWriteGeometry(stream, geometryList, outputformat, &(shape), NULL, wfs_namespace, "        ");
+          gmlWriteGeometry(stream, geometryList, outputformat, &(shape), NULL, namespace_prefix, "        ");
 #endif
         }
 
@@ -1646,19 +1655,19 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
         for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);  
           if(msItemInGroups(item->name, groupList) == MS_FALSE) 
-            msGMLWriteItem(stream, item, shape.values[k], wfs_namespace, "        ");
+            msGMLWriteItem(stream, item, shape.values[k], namespace_prefix, "        ");
         }
 
         /* write the constants */
         for(k=0; k<constantList->numconstants; k++) {
           constant = &(constantList->constants[k]);  
           if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
-            msGMLWriteConstant(stream, constant, wfs_namespace, "        ");
+            msGMLWriteConstant(stream, constant, namespace_prefix, "        ");
         }
 
         /* write the groups */
         for(k=0; k<groupList->numgroups; k++)
-          msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, wfs_namespace, "        ");
+          msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, namespace_prefix, "        ");
 
         /* end this feature */
         msIO_fprintf(stream, "      </%s>\n", layerName);
