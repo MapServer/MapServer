@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.73  2006/08/11 18:40:20  sdlime
+ * Created gmlNamespaceObj structures.
+ *
  * Revision 1.72  2006/06/06 14:21:01  frank
  * ensure msOWSDispatch() always available
  *
@@ -408,6 +411,9 @@ void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
 #define OWS_GML_OCCUR_UNBOUNDED -1
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
+
+/* TODO, there must be a better way to generalize these lists of objects... */
+
 typedef struct {
   char *name;     /* name of the item */
   char *alias;    /* is the item aliased for presentation? (NULL if not) */
@@ -459,6 +465,17 @@ typedef struct {
   gmlGroupObj *groups;
   int numgroups;
 } gmlGroupListObj;
+
+typedef struct {
+	char *prefix;
+	char *uri;
+	char *schema;
+} gmlNamespaceObj;
+
+typedef struct {
+  gmlNamespaceObj *namespaces;
+  int numnamespaces;
+} gmlNamespaceListObj;
 
 MS_DLL_EXPORT int msItemInGroups(char *name, gmlGroupListObj *groupList);
 MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer);
