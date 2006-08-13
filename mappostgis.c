@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2006/08/13 14:26:52  sdlime
+ * Fixed typo in connection encryption addition.
+ *
  * Revision 1.73  2006/08/11 16:58:01  dan
  * Added ability to encrypt tokens (passwords, etc.) in database connection
  * strings (MS-RFC-18, bug 1792)
@@ -317,7 +320,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
         }
 
         /* Decrypt any encrypted token in connection and attempt to connect */
-        conn_decrypted = msDecryptStringTokens(map, connection);
+        conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
         if (conn_decrypted == NULL) {
           return(MS_FAILURE);  /* An error should already have been produced */
         }
