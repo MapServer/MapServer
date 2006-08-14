@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.75  2006/08/14 18:47:28  sdlime
+ * Some more implementation of external application schema support.
+ *
  * Revision 1.74  2006/08/11 18:56:40  sdlime
  * Initial versions of namespace read/free functions.
  *
@@ -472,7 +475,7 @@ typedef struct {
 typedef struct {
 	char *prefix;
 	char *uri;
-	char *schema;
+	char *schemalocation;
 } gmlNamespaceObj;
 
 typedef struct {

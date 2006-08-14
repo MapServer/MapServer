@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.82  2006/08/14 18:47:28  sdlime
+ * Some more implementation of external application schema support.
+ *
  * Revision 1.81  2006/08/11 21:44:48  sdlime
  * Added namespace reading (using is the hard part) to WFS server.
  *
@@ -773,9 +776,21 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 		"   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
 		"   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
 		"   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
-		"   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-		"   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
+		"   xmlns:gml=\"http://www.opengis.net/gml\"\n",  
 		user_namespace_uri_encoded, user_namespace_prefix,  user_namespace_uri_encoded);
+
+  /* any additional namespaces */
+  for(i=0; i<namespaceList->numnamespaces; i++) {
+    if(namespaceList->namespaces[i].uri) {
+      char *uri_encoded=NULL;
+
+      uri_encoded = msEncodeHTMLEntities(namespaceList->namespaces[i].uri);
+      msIO_printf("   xmlns:%s=\"%s\" \n", namespaceList->namespaces[i].prefix, uri_encoded);
+      msFree(uri_encoded);
+    }
+  }
+
+	msIO_printf("   elementFormDefault=\"qualified\" version=\"0.1\" >\n");
 
   encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
   if(outputformat == OWS_SFE_SCHEMA) /* reference GML 3.1.1 schema */
@@ -785,6 +800,19 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     msIO_printf("\n  <import namespace=\"http://www.opengis.net/gml\"\n"
 	      "          schemaLocation=\"%s/gml/2.1.2/feature.xsd\" />\n", encoded);
   msFree(encoded);
+
+  /* any additional namespace includes */
+    for(i=0; i<namespaceList->numnamespaces; i++) {
+    if(namespaceList->namespaces[i].uri && namespaceList->namespaces[i].schemalocation) {
+      char *schema_location_encoded=NULL, *uri_encoded=NULL;
+
+      uri_encoded = msEncodeHTMLEntities(namespaceList->namespaces[i].uri);
+      schema_location_encoded = msEncodeHTMLEntities(namespaceList->namespaces[i].schemalocation);
+      msIO_printf("\n  <import namespace=\"%s\"\n schemaLocation=\"%s\" />\n", uri_encoded, schema_location_encoded);
+      msFree(uri_encoded);
+      msFree(schema_location_encoded);
+    }
+  }
 
   /* output definition for the default feature container, can't use wfs:FeatureCollection with GML3 */
   if(outputformat == OWS_SFE_SCHEMA) {

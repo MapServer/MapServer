@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2006/08/14 18:47:28  sdlime
+ * Some more implementation of external application schema support.
+ *
  * Revision 1.92  2006/08/11 21:32:22  sdlime
  * The GML writer for WFS now allows a layer to override the default namespace via OWS_NAMESPACE_PREFIX at the layer level.
  *
@@ -1133,15 +1136,15 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web)
 
       namespace->prefix = strdup(prefixes[i]); /* initialize a few things */      
       namespace->uri = NULL;
-      namespace->schema = NULL;
+      namespace->schemalocation = NULL;
 
       snprintf(tag, 64, "%s_uri", namespace->prefix);
       if((value = msOWSLookupMetadata(&(web->metadata), "OFG", tag)) != NULL) 
       namespace->uri = strdup(value);
 
-      snprintf(tag, 64, "%s_schema", namespace->prefix);
+      snprintf(tag, 64, "%s_schema_location", namespace->prefix);
       if((value = msOWSLookupMetadata(&(web->metadata), "OFG", tag)) != NULL) 
-      namespace->schema = strdup(value);
+      namespace->schemalocation = strdup(value);
     }
 
     msFreeCharArray(prefixes, numprefixes);
@@ -1159,7 +1162,7 @@ void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList)
   for(i=0; i<namespaceList->numnamespaces; i++) {
     msFree(namespaceList->namespaces[i].prefix);
     msFree(namespaceList->namespaces[i].uri);
-    msFree(namespaceList->namespaces[i].schema);
+    msFree(namespaceList->namespaces[i].schemalocation);
   }
 
   free(namespaceList);
@@ -1586,7 +1589,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
           if(strcasecmp(lp->items[j], value) == 0) { /* found it */
             featureIdIndex = j;
             break;
-          } 
+          }
         }
       }
 
