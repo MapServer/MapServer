@@ -16,10 +16,15 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
-- Removed the default preallocation of 4 values causing memory leaks.  (related to bug 1801)
-  Added initValues to achieve the similar functionality if needed.
+- Produce warning in WFS GetFeature output if ???_featureid is specified
+  but corresponding item is not found in layer (bug 1781)
 
-- Fixed error in msAddImageSymbol() where a symbol's imagepath was not set (bug 1832).
+- Removed the default preallocation of 4 values causing memory leaks.
+  (related to bug 1801) Added initValues to achieve the similar 
+  functionality if needed.
+
+- Fixed error in msAddImageSymbol() where a symbol's imagepath was not
+  set (bug 1832).
 
 - Added INCLUDE capability in mapfile parser (bug 279)
 

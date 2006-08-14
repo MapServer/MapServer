@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2006/08/14 20:06:32  dan
+ * Produce warning in WFS GetFeature output if ???_featureid is specified
+ * but corresponding item is not found in layer (bug 1781)
+ *
  * Revision 1.93  2006/08/14 18:47:28  sdlime
  * Some more implementation of external application schema support.
  *
@@ -1553,7 +1557,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
   gmlItemObj *item=NULL;
   gmlConstantObj *constant=NULL;
 
-	char *namespace_prefix=NULL;
+  char *namespace_prefix=NULL;
 
   msInitShape(&shape);
 
@@ -1579,9 +1583,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       status = msLayerGetItems(lp);
       /* if(status != MS_SUCCESS) return(status); */
 
-			/* setup namespace, a layer can override the default */
-			namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
-			if(!namespace_prefix) namespace_prefix = default_namespace_prefix;
+      /* setup namespace, a layer can override the default */
+      namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
+      if(!namespace_prefix) namespace_prefix = default_namespace_prefix;
       
       value = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
       if(value) { /* find the featureid amongst the items for this layer */
@@ -1590,6 +1594,13 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
             featureIdIndex = j;
             break;
           }
+        }
+
+        /* Produce a warning if a featureid was set but the corresponding
+         * item is not found. 
+         */
+        if (featureIdIndex == -1) {
+            msIO_fprintf(stream, "<!-- WARNING: FeatureId item '%s' not found in typename '%s'. -->\n", value, lp->name);
         }
       }
 
