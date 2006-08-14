@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.84  2006/08/14 21:15:00  sdlime
+ * Added support to WFS  DescribeFeatureType for external schemas (initial coding).
+ *
  * Revision 1.83  2006/08/14 20:19:54  dan
  * Produce a warning in GetCapabilities if ???_featureid not set (bug 1782)
  *
@@ -865,25 +868,40 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
           gmlItemObj *item=NULL;
           gmlConstantObj *constant=NULL;
 
+					const char *layer_namespace_prefix;
+          char *encoded_type=NULL;
+
           itemList = msGMLGetItems(lp); /* GML-related metadata */
           constantList = msGMLGetConstants(lp);
           groupList = msGMLGetGroups(lp);
           geometryList = msGMLGetGeometries(lp);
-          
+
+          value = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
+          if(value) 
+            layer_namespace_prefix = value;
+          else 
+						layer_namespace_prefix = user_namespace_prefix;
+
           /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername"); */      
-          encoded_name = msEncodeHTMLEntities( lp->name );
-          if (user_namespace_prefix)
+          encoded_name = msEncodeHTMLEntities( lp->name );          
+          value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layer_type");
+          if(value) {
+            encoded_type = msEncodeHTMLEntities(value);
             msIO_printf("\n"
-                        "  <element name=\"%s\" \n"
-                        "           type=\"%s:%sType\" \n"
-                        "           substitutionGroup=\"gml:_Feature\" />\n\n",
-                        encoded_name, user_namespace_prefix, encoded_name);
-          else
+                      "  <element name=\"%s\" \n"
+                      "           type=\"%s:%s\" \n"
+                      "           substitutionGroup=\"gml:_Feature\" />\n\n",
+                      encoded_name, layer_namespace_prefix, encoded_type);
+            msFree(encoded_type);
+          } else
             msIO_printf("\n"
-                        "  <element name=\"%s\" \n"
-                        "           type=\"ms:%sType\" \n"
-                        "           substitutionGroup=\"gml:_Feature\" />\n\n",
-                        encoded_name, encoded_name);
+                      "  <element name=\"%s\" \n"
+                      "           type=\"%s:%sType\" \n"
+                      "           substitutionGroup=\"gml:_Feature\" />\n\n",
+                      encoded_name, layer_namespace_prefix, encoded_name);
+
+          if(strcmp(layer_namespace_prefix, user_namespace_prefix) != 0)
+						continue; /* the rest is defined in an external schema */
 
           msIO_printf("  <complexType name=\"%sType\">\n", encoded_name);
           msIO_printf("    <complexContent>\n");
