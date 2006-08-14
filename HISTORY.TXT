@@ -17,7 +17,8 @@ CVS HEAD (4.9-dev)
 ------------------
 
 - Produce warning in WFS GetFeature output if ???_featureid is specified
-  but corresponding item is not found in layer (bug 1781)
+  but corresponding item is not found in layer (bug 1781). Also produce
+  a warning in GetCapabilities if ???_featureid not set (bug 1782)
 
 - Removed the default preallocation of 4 values causing memory leaks.
   (related to bug 1801) Added initValues to achieve the similar 

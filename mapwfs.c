@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.83  2006/08/14 20:19:54  dan
+ * Produce a warning in GetCapabilities if ???_featureid not set (bug 1782)
+ *
  * Revision 1.82  2006/08/14 18:47:28  sdlime
  * Some more implementation of external application schema support.
  *
@@ -340,6 +343,11 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
                      NULL, NULL, " format=\"%s\"", "%s", 
                      MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
                      NULL, NULL, NULL, NULL, NULL, "        ");
+
+   if (msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid") == NULL)
+   {
+       msIO_fprintf(stdout, "<!-- WARNING: Required Feature Id attribute (fid) not specified for this feature type. Make sure you set one of wfs_featureid, ows_feature_id or gml_featureid metadata. -->\n");
+   }
 
    msIO_printf("    </FeatureType>\n");
       
@@ -700,7 +708,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   int outputformat = OWS_DEFAULT_SCHEMA; /* default output is GML 2.1 compliant schema*/
 
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
-  gmlNamespaceObj *namespace;
 
   if(paramsObj->pszTypeName && numlayers == 0) {
     /* Parse comma-delimited list of type names (layers) */
@@ -713,15 +720,15 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       tokens = split(layers[0], ':', &n);
       if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
         msFreeCharArray(tokens, n);
-	      for (i=0; i<numlayers; i++) {
-	        tokens = split(layers[i], ':', &n);
-	        if (tokens && n==2) {
-	          free(layers[i]);
-	          layers[i] = strdup(tokens[1]);
-	        }
-	        if (tokens)
-	          msFreeCharArray(tokens, n);
-	      }
+        for (i=0; i<numlayers; i++) {
+            tokens = split(layers[i], ':', &n);
+            if (tokens && n==2) {
+                free(layers[i]);
+                layers[i] = strdup(tokens[1]);
+            }
+            if (tokens)
+                msFreeCharArray(tokens, n);
+        }
       }
     }
   } 
