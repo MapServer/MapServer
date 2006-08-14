@@ -12,10 +12,15 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.8.5
+
+Version 4.8.5 (CVS)
 -------------
 
-- Fixed error in msAddImageSymbol() where a symbol's imagepath was not set (bug 1832).
+- Fixed error in msAddImageSymbol() where a symbol's imagepath was not
+  set (bug 1832).
+
+- Added support for missing members of styleObj in PHP MapScript (bug 1852).
+
 
 Version 4.8.4 (2006-07-12)
 --------------------------
@@ -24,7 +29,8 @@ Version 4.8.4 (2006-07-12)
 
 - Mark dynamically created mapscript outputFormatObj's as inmapfile (bug 1816)
 
-- Missing GEOS support caused heap corruption using shapeObj C# on linux (Bug 1801)
+- Missing GEOS support caused heap corruption using shapeObj C# on 
+  linux (Bug 1801)
 
 - Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
 
@@ -67,8 +73,8 @@ Version 4.8.2 (2006-03-22)
   * reorganized nmake.opt to reflect functional groupings of libraries
   * tweaked the C# and Java windows makefiles
 
-- Typemap enhancement for C# to support multiple imageObj and writing the image onto
-  a Stream object (bug 1680)
+- Typemap enhancement for C# to support multiple imageObj and writing 
+  the image onto a Stream object (bug 1680)
 
 - Added C# typemaps for char** and outputFormatObj**
 
