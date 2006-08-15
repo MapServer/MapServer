@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.106  2006/08/15 05:01:54  sdlime
+ * Fixed a couple of query map bugs, 1858 that alters which style is re-colored with POLYGON layers, msDrawQueryMap now respects layer order.
+ *
  * Revision 1.105  2006/05/08 17:41:04  frank
  * fixed layer debug time reporting
  *
@@ -730,7 +733,7 @@ imageObj *msDrawQueryMap(mapObj *map)
   }
 
   for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[i]);
+    lp = &(map->layers[ map->layerorder[i]]);
 
     if(lp->postlabelcache) /* wait to draw */
       continue;
@@ -749,7 +752,7 @@ imageObj *msDrawQueryMap(mapObj *map)
     return(NULL);
 
   for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
-    lp = &(map->layers[i]);
+    lp = &(map->layers[ map->layerorder[i]]);
 
     if(!lp->postlabelcache)
       continue;
@@ -1115,15 +1118,25 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* reset layer pen values just in case the map has been previously processed */
   msClearLayerPenValues(layer);
 
-  /* if MS_HILITE, alter the first class (always at least 1 class), and set a MINDISTANCE for the labelObj to avoid duplicates */
+  /* if MS_HILITE, alter the one style (always at least 1 style), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
-      if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color)) {
-        colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].color; /* save the color from the TOP style */
-        layer->class[i].styles[layer->class[i].numstyles-1].color = map->querymap.color;
-      } else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor)) {
-	colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor; /* if no color, save the outlinecolor from the TOP style */
-        layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = map->querymap.color;
+      if(layer->type == MS_LAYER_POLYGON) { /* alter BOTTOM style since that's almost always the fill */
+        if(MS_VALID_COLOR(layer->class[i].styles[0].color)) {
+          colorbuffer[i] = layer->class[i].styles[0].color; /* save the color from the BOTTOM style */
+          layer->class[i].styles[0].color = map->querymap.color;
+        } else if(MS_VALID_COLOR(layer->class[i].styles[0].outlinecolor)) {
+          colorbuffer[i] = layer->class[i].styles[0].outlinecolor; /* if no color, save the outlinecolor from the BOTTOM style */
+          layer->class[i].styles[0].outlinecolor = map->querymap.color;
+        }
+      } else {
+        if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color)) {
+          colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].color; /* save the color from the TOP style */
+          layer->class[i].styles[layer->class[i].numstyles-1].color = map->querymap.color;
+        } else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor)) {
+	  colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor; /* if no color, save the outlinecolor from the TOP style */
+          layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = map->querymap.color;
+        }
       }
 
       mindistancebuffer[i] = layer->class[i].label.mindistance;
@@ -1206,10 +1219,17 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* if MS_HILITE, restore color and mindistance values */
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
-      if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color))
-        layer->class[i].styles[layer->class[i].numstyles-1].color = colorbuffer[i];        
-      else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor))
-	layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
+      if(layer->type == MS_LAYER_POLYGON) {
+	if(MS_VALID_COLOR(layer->class[i].styles[0].color))
+          layer->class[i].styles[0].color = colorbuffer[i];
+        else if(MS_VALID_COLOR(layer->class[i].styles[0].outlinecolor))
+          layer->class[i].styles[0].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the BOTTOM style */
+      } else {
+        if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color))
+          layer->class[i].styles[layer->class[i].numstyles-1].color = colorbuffer[i];        
+        else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor))
+	  layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
+      }
     }
     layer->class[i].label.mindistance = mindistancebuffer[i];
   }
