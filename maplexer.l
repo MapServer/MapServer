@@ -421,25 +421,13 @@ int include_stack_ptr = 0;
 			                         return(MS_EXPRESSION);
 			                       }
 
-<INITIAL,VALUE_STRING>\"[^\"]*\"i	       {
-			                         msyytext++;
-			                         msyytext[strlen(msyytext)-2] = '\0';
-     			                         return(MS_ISTRING);
-			                       }
-
-<INITIAL,VALUE_STRING>\'[^\']*\'i	       {                                                 
+<INITIAL,VALUE_STRING>\"[^\"]*\"i|\'[^\']*\'i  {                                                 
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-2] = '\0';
        			                         return(MS_ISTRING);
 			                       }
 
-<INITIAL,VALUE_STRING>\"[^\"]*\"	       {
-			                         msyytext++;
-			                         msyytext[strlen(msyytext)-1] = '\0';
-     			                         return(MS_STRING);
-			                       }
-
-<INCLUDE>\"[^\"]*\"                            {
+<INCLUDE>\"[^\"]*\"|\'[^\']*\'                 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
 
@@ -461,22 +449,13 @@ int include_stack_ptr = 0;
                                                  BEGIN(INITIAL);
                                                }
 
-<INITIAL,VALUE_STRING>\'[^\']*\'               {
+<INITIAL,VALUE_STRING>\"[^\"]*\"|\'[^\']*\'    {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_STRING);
                                                }
 
-
-<EXPRESSION_STRING>\"[^\"]*\"i	               {
-                                                 msyytext++;
-			                         msyytext[strlen(msyytext)-2] = '\0';
-			                         /* msyylval.strval = strdup(msyytext);*/
-			                         msyylval.strval = msyytext;
-			                         return(ISTRING);
-			                       }
-
-<EXPRESSION_STRING>\'[^\']*\'i	               {
+<EXPRESSION_STRING>\"[^\"]*\"i|\'[^\']*\'i     {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-2] = '\0';
 			                         /* msyylval.strval = strdup(msyytext);*/
@@ -484,15 +463,7 @@ int include_stack_ptr = 0;
 			                         return(ISTRING);
                                                }
 
-<EXPRESSION_STRING>\"[^\"]*\"	               {
-                                                 msyytext++;
-			                         msyytext[strlen(msyytext)-1] = '\0';
-			                         /* msyylval.strval = strdup(msyytext);*/
-			                         msyylval.strval = msyytext;
-			                         return(STRING);
-			                       }
-
-<EXPRESSION_STRING>\'[^\']*\'	               {
+<EXPRESSION_STRING>\"[^\"]*\"|\'[^\']*\'       {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
 			                         /* msyylval.strval = strdup(msyytext);*/
