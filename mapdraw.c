@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96.2.2  2006/08/15 05:07:28  sdlime
+ * msDrawQueryMap now respects layer drawing order.
+ *
  * Revision 1.96.2.1  2006/01/16 20:41:22  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -706,7 +709,7 @@ imageObj *msDrawQueryMap(mapObj *map)
   }
 
   for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[i]);
+    lp = &(map->layers[ map->layerorder[i]]);
 
     if(lp->postlabelcache) /* wait to draw */
       continue;
@@ -725,7 +728,7 @@ imageObj *msDrawQueryMap(mapObj *map)
     return(NULL);
 
   for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
-    lp = &(map->layers[i]);
+    lp = &(map->layers[ map->layerorder[i]]);
 
     if(!lp->postlabelcache)
       continue;
