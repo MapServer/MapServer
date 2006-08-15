@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.253  2006/08/15 17:24:56  dan
+ * Fixed problem with PHP MapScript's saveWebImage() filename collisions
+ * when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
+ *
  * Revision 1.252  2006/08/15 14:27:02  dan
  * Trim the CVS logs in header a bit
  *
@@ -510,17 +514,12 @@ static int le_mscgirequest;
  * and END macros here:     
  */
 ZEND_BEGIN_MODULE_GLOBALS(phpms)
-    /* We'll use tmpId and tmpCount to generate unique filenames */
-    char tmpId[128]; /* big enough for time + pid */
-    int  tmpCount;
 ZEND_END_MODULE_GLOBALS(phpms)
 
 ZEND_DECLARE_MODULE_GLOBALS(phpms)
 
 static void phpms_init_globals(zend_phpms_globals *phpms_globals)
 {
-    sprintf(phpms_globals->tmpId, "%ld%d",(long)time(NULL),(int)getpid());
-    phpms_globals->tmpCount = 0;
 }
 
 
@@ -5828,7 +5827,6 @@ DLEXPORT void php3_ms_map_OWSDispatch(INTERNAL_FUNCTION_PARAMETERS)
      pval        *pThis, *pRequest;
      mapObj      *self=NULL;
      HashTable   *list=NULL;
-     char       *pszBuffer = NULL;
      cgiRequestObj *pCgiRequest = NULL;
      int nReturn = 0;
 
@@ -5870,7 +5868,6 @@ DLEXPORT void php3_ms_map_loadOWSParameters(INTERNAL_FUNCTION_PARAMETERS)
      pval        *pThis, *pRequest, *pVersion;
      mapObj      *self=NULL;
      HashTable   *list=NULL;
-     char       *pszBuffer = NULL;
      cgiRequestObj *pCgiRequest = NULL;
      int nArgs;
      char *pszVersion = NULL;
@@ -5979,7 +5976,6 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     int         nArgs;
     mapObj      *poMap = NULL;
     char        *pImagepath = NULL;
-    int         nBufSize, nTmpCount;
     char        *pBuf = NULL;
 
 
@@ -6053,15 +6049,11 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         else if (MS_DRIVER_SVG(im->format))
         {
             retVal = -1;
-            /* Build a unique filename in the IMAGEPATH directory 
-             */ 
+            
             if (pImagepath)
             {
-                nBufSize = (strlen(pImagepath)) + strlen(PHPMS_G(tmpId)) + 30;
-                pBuf = (char*)emalloc(nBufSize);
-                nTmpCount = ++(PHPMS_G(tmpCount));
-                sprintf(pBuf, "%s%s%d.svg", 
-                        pImagepath, PHPMS_G(tmpId), nTmpCount);
+                pBuf = msTmpFile(NULL, pImagepath, "svg");
+                
                 tmp = fopen(pBuf, "w");
             }
             //tmp = tmpfile(); 
@@ -6164,9 +6156,9 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 
     imageObj *im = NULL;
 
-    char *pImagepath, *pImageurl, *pBuf;
-    int nBufSize, nLen1, nLen2, nTmpCount;
+    char *pImagepath, *pImageurl, *pTmpfname, *pImagefile,*pImageurlfull;
     const char *pszImageExt;
+    char szPath[MS_MAXPATHLEN];
 
     HashTable   *list=NULL;
     pThis = getThis();
@@ -6182,32 +6174,25 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 
     pszImageExt = im->format->extension;
 
-    /* Build a unique filename in the IMAGEPATH directory 
-     */
-    nLen1 = strlen(pImagepath);
-    nLen2 = strlen(pImageurl);
-    nBufSize = (nLen1>nLen2 ? nLen1:nLen2) + strlen(PHPMS_G(tmpId)) + 30;
-    pBuf = (char*)emalloc(nBufSize);
-    nTmpCount = ++(PHPMS_G(tmpCount));
-    sprintf(pBuf, "%s%s%d.%s", 
-            pImagepath, PHPMS_G(tmpId), nTmpCount, pszImageExt);
-
+    pTmpfname = msTmpFile(NULL,NULL,pszImageExt);
 
     /* Save the image... 
      */
+    pImagefile = msBuildPath(szPath,pImagepath,pTmpfname);
     if (im == NULL || 
-        msSaveImage(NULL, im, pBuf) != 0 )
+        msSaveImage(NULL, im, pImagefile) != 0 )
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "Failed writing image to %s", 
-                   pBuf);
+                   pImagefile);
     }
 
     /* ... and return the corresponding URL
      */
-    sprintf(pBuf, "%s%s%d.%s", 
-            pImageurl, PHPMS_G(tmpId), nTmpCount, pszImageExt);
-    RETURN_STRING(pBuf, 0);
+    pImageurlfull = msBuildPath(szPath,pImageurl,pTmpfname);
+    msFree(pTmpfname);
+    
+    RETURN_STRING(pImageurlfull, 1);
 }
 /* }}} */
 

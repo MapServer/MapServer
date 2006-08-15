@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Fixed problem with PHP MapScript's saveWebImage() filename collisions
+  when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
+
 - Produce warning in WFS GetFeature output if ???_featureid is specified
   but corresponding item is not found in layer (bug 1781). Also produce
   a warning in GetCapabilities if ???_featureid not set (bug 1782)

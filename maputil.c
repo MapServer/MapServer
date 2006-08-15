@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.190  2006/08/15 17:24:56  dan
+ * Fixed problem with PHP MapScript's saveWebImage() filename collisions
+ * when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
+ *
  * Revision 1.189  2006/07/05 05:54:53  frank
  * implement per-thread io contexts
  *
@@ -1104,7 +1108,7 @@ void msForceTmpFileBase( const char *new_base )
  * 
  *    PID + timestamp + sequence# + extension
  * 
- * If msForceTmpFileBase() has been call to control the temporary filename
+ * If msForceTmpFileBase() has been called to control the temporary filename
  * then the filename will be:
  *
  *    TmpBase + sequence# + extension
@@ -1125,13 +1129,15 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     else 
     {
         /* We'll use tmpId and tmpCount to generate unique filenames */
-        sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
+        sprintf(tmpId, "%lx_%x",(long)time(NULL),(int)getpid());
     }
 
     if (ext == NULL)  ext = "";
     tmpFname = (char*)malloc(strlen(tmpId) + 10  + strlen(ext) + 1);
 
-    sprintf(tmpFname, "%s%d.%s", tmpId, tmpCount++, ext);
+    msAcquireLock( TLOCK_TMPFILE );
+    sprintf(tmpFname, "%s_%x.%s", tmpId, tmpCount++, ext);
+    msReleaseLock( TLOCK_TMPFILE );
 
     fullFname = msBuildPath3(szPath, mappath, tmppath, tmpFname);
     free(tmpFname);
