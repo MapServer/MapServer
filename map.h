@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.456  2006/08/16 14:05:07  sdlime
+ * Removed any ambiguity with msCommifyString(). At the moment it only handles North American representaions of numbers (e.g. 2,345.678).
+ *
  * Revision 1.455  2006/06/27 13:35:45  sdlime
  * Initial version of GEOS C-API code including SWIG bindings for most everything useful.
  *
@@ -1425,7 +1428,7 @@ MS_DLL_EXPORT int msIsXMLTagValid(const char *string);
 MS_DLL_EXPORT char *strcatalloc(char *pszDest, char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
-MS_DLL_EXPORT char *msCommifyString(char *str, char comma);
+MS_DLL_EXPORT char *msCommifyString(char *str);
 
 #ifdef NEED_STRDUP
 MS_DLL_EXPORT char *strdup(char *s);

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.120  2006/08/16 14:05:07  sdlime
+ * Removed any ambiguity with msCommifyString(). At the moment it only handles North American representaions of numbers (e.g. 2,345.678).
+ *
  * Revision 1.119  2006/04/25 20:58:46  sdlime
  * Fixed bug in shpxy that prevented the requested projection from being applied in certain cases.
  *
@@ -898,7 +901,7 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
   char *format="$value";
   char *nullFormat="";
   int uc=MS_FALSE, lc=MS_FALSE, commify=MS_FALSE;
-  char comma=',';
+
   /* int substr=MS_FALSE, substrStart, substrLength; */
   int escape=ESCAPE_HTML;
 
@@ -938,9 +941,6 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
 			argValue = msLookupHashTable(tagArgs, "commify");
       if(argValue && strcasecmp(argValue, "true") == 0) commify = MS_TRUE;
 
-      argValue = msLookupHashTable(tagArgs, "comma");
-      if(argValue && strlen(argValue) > 0) comma = argValue[0]; /* nab first char */
-
       argValue = msLookupHashTable(tagArgs, "escape");
       if(argValue && strcasecmp(argValue, "url") == 0) escape = ESCAPE_URL;
       else if(argValue && strcasecmp(argValue, "none") == 0) escape = ESCAPE_NONE;
@@ -977,7 +977,7 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
 				itemValue = strdup(shape->values[i]);
 
 			if(commify == MS_TRUE)
-					itemValue = msCommifyString(itemValue, comma);		 
+					itemValue = msCommifyString(itemValue);
 
 			/* apply other effects */
       if(uc == MS_TRUE)

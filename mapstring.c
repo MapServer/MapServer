@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/08/16 14:05:07  sdlime
+ * Removed any ambiguity with msCommifyString(). At the moment it only handles North American representaions of numbers (e.g. 2,345.678).
+ *
  * Revision 1.34  2006/01/31 17:09:28  sdlime
  * Added function to 'commify' a number stored as a string. (supports bug 1636)
  *
@@ -882,15 +885,17 @@ char *msHashString(const char *pszStr)
     return pszOutBuf;
 }
 
-char *msCommifyString(char *str, char comma)
+char *msCommifyString(char *str)
 {
 	int i, j, old_length, new_length;
   int num_commas=0, num_decimal_points=0;
   int add_commas;
 
+  char comma=',', decimal_point='.';
+
   if(!str) return NULL;
 
-  num_decimal_points = countChars(str, '.');
+  num_decimal_points = countChars(str, decimal_point);
   if(num_decimal_points > 1) return str;
 
   old_length = strlen(str);
@@ -898,7 +903,7 @@ char *msCommifyString(char *str, char comma)
     num_commas =  floor((old_length - 1)/3);
     add_commas=1; /* add commas right away */
   } else {
-    num_commas = floor(((old_length - strlen(strchr(str, '.'))) - 1)/3);
+    num_commas = floor(((old_length - strlen(strchr(str, decimal_point))) - 1)/3);
     add_commas=0; /* wait until after the decimal point */
   }
 
@@ -913,7 +918,7 @@ char *msCommifyString(char *str, char comma)
 
     if(num_decimal_points == 1 &&  add_commas == 0) { /* to the right of the decimal point, no commas */
       str[i] = str[i-num_commas];
-      if(str[i] == '.') add_commas = 1;
+      if(str[i] == decimal_point) add_commas = 1;
     } else if(add_commas == 1 && j>2) { /* need a comma */
       str[i] = comma;
       num_commas--; /* need one fewer now */
