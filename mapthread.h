@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/08/16 13:27:59  dan
+ * Added TLOCK_TMPFILE (bug 1322)
+ *
  * Revision 1.12  2006/07/05 05:54:53  frank
  * implement per-thread io contexts
  *
@@ -91,6 +94,7 @@ void msReleaseLock(int);
 #define TLOCK_OWS       9
 #define TLOCK_LAYER_VTABLE 10
 #define TLOCK_IOCONTEXT 11
+#define TLOCK_TMPFILE   12
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100
