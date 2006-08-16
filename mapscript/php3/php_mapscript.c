@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.254  2006/08/16 18:33:26  dan
+ * Cleanup some old PHP3 stuff
+ *
  * Revision 1.253  2006/08/15 17:24:56  dan
  * Fixed problem with PHP MapScript's saveWebImage() filename collisions
  * when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
@@ -5953,8 +5956,6 @@ static long _phpms_build_img_object(imageObj *im, webObj *pweb,
 
     PHPMS_ADD_PROP_STR(return_value, "imagetype", im->format->name);
 
-/* php3_printf("Create image: id=%d, ptr=0x%x<P>\n", img_id, im);*/
-
     return img_id;
 }
 
@@ -5977,18 +5978,10 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *poMap = NULL;
     char        *pImagepath = NULL;
     char        *pBuf = NULL;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     nArgs = ARG_COUNT(ht);
     if (pThis == NULL || (nArgs != 1 && nArgs != 2) ||
@@ -6032,11 +6025,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         retVal = 0;
 
 
-#ifdef PHP4
         php_header(TSRMLS_C);
-#else
-         php_header();
-#endif
 
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
         if( MS_DRIVER_GD(im->format) )
@@ -6091,11 +6080,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         } 
         else
         {
-#ifdef PHP4
             php_write(iptr, size TSRMLS_CC);
-#else
-            php3_write(iptr, size);
-#endif
             retVal = size;
             gdFree(iptr);
         }
@@ -6123,11 +6108,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
             while ((b = fread(buf, 1, sizeof(buf), tmp)) > 0) 
             {
-#ifdef PHP4
                 php_write(buf, b TSRMLS_CC);
-#else
-                php3_write(buf, b);
-#endif
             }
 
             fclose(tmp); /* the temporary file is automatically deleted */
@@ -6219,15 +6200,9 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
     imageObj *imgDst = NULL, *imgSrc = NULL;
     int         nDstX=0, nDstY=0, nAngle=0, bAngleSet=MS_FALSE;
     int         nArgs = ARG_COUNT(ht);
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         (nArgs != 2 && nArgs != 4 && nArgs != 5))
