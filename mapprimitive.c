@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2006/08/17 04:32:16  sdlime
+ * Disable path following labels unless GD 2.0.29 or greater is available.
+ *
  * Revision 1.74  2006/06/27 13:58:19  frank
  * Place shapeObj->geometry assignment into #ifdef USE_GEOS.
  *
@@ -1361,6 +1364,9 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   /* Assume success */
   *status = MS_SUCCESS;
 
+#ifndef GD_HAS_FTEX_XSHOW
+  goto FAILURE; /* we don't have a current enough version of GD, fall back to ANGLE AUTO */
+#else
   /* Skip the label and use the normal algorithm if it has fewer than 2 characters */
   if ( strlen(string) < 2 ) {
     goto FAILURE;
@@ -1406,12 +1412,11 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     goto FAILURE;
   }
 
-   if ( p->line[i].numpoints == 2 ) {
-     /* We can just use the regular algorithm to save some cycles */
-     goto FAILURE;
-   }
-
-    
+  if ( p->line[i].numpoints == 2 ) {
+    /* We can just use the regular algorithm to save some cycles */
+    goto FAILURE;
+  }
+  
   /* Determine the total length of the text */
   if ( msGetLabelSizeEx(string, label, &bbox, fontset, scalefactor, MS_FALSE, &offsets) == MS_FAILURE ) {
     *status = MS_FAILURE;
@@ -1613,12 +1618,12 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
       dx = labelpath->path.point[k].x - labelpath->path.point[k-1].x;
       dy = labelpath->path.point[k].y - labelpath->path.point[k-1].y;
     } else {
-  /* Handle the last character */
-  dx = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x - labelpath->path.point[k-1].x;
-  dy = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y - labelpath->path.point[k-1].y;
+      /* Handle the last character */
+      dx = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x - labelpath->path.point[k-1].x;
+      dy = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y - labelpath->path.point[k-1].y;
     }
 
-  theta = -atan2(dy,dx);
+    theta = -atan2(dy,dx);
 
     /* If the difference between subsequent angles is > 80% of 180deg
        bail because the line likely overlaps itself. */
@@ -1627,37 +1632,36 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
       goto FAILURE;
     }
       
-/*     msDebug("s: %c (x,y): (%0.2f,%0.2f) t: %0.2f\n", string[k-1], labelpath->path.point[k-1].x, labelpath->path.point[k-1].y, theta); */
+    /* msDebug("s: %c (x,y): (%0.2f,%0.2f) t: %0.2f\n", string[k-1], labelpath->path.point[k-1].x, labelpath->path.point[k-1].y, theta); */
 
-  labelpath->angles[k-1] = theta;
+    labelpath->angles[k-1] = theta;
   
     /* Move the previous point so that when the character is rotated and
-     placed it is centred on the line */
-  cos_t = cos(theta);
-  sin_t = sin(theta);
+       placed it is centred on the line */
+    cos_t = cos(theta);
+    sin_t = sin(theta);
   
     w = letterspacing*offsets[k-1];
 
     cx = 0; /* Center the character vertically only */
-    
-  dx = - (cx * cos_t + cy * sin_t);
-  dy = - (cy * cos_t - cx * sin_t);
+
+    dx = - (cx * cos_t + cy * sin_t);
+    dy = - (cy * cos_t - cx * sin_t);
   
-  labelpath->path.point[k-1].x += dx;
-  labelpath->path.point[k-1].y += dy;
+    labelpath->path.point[k-1].x += dx;
+    labelpath->path.point[k-1].y += dy;
 
     /* Calculate the bounds */
-
     bbox.minx = 0;
     bbox.maxx = w;
     bbox.maxy = 0;
     bbox.miny = -size;
-    
+
     /* Add the label buffer to the bounds */
     bbox.maxx += label->buffer;
-  bbox.maxy += label->buffer;
+    bbox.maxy += label->buffer;
     bbox.minx -= label->buffer;
-  bbox.miny -= label->buffer;
+    bbox.miny -= label->buffer;
   
     if ( k < labelpath->path.numpoints ) {
       /* Transform the bbox too.  We take the UL and LL corners and rotate
@@ -1671,13 +1675,13 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
 
     } else {
     
-  /* This is the last character in the string so we take the UR and LR
-     corners of the bbox */
-  bounds.point[k-1].x = (bbox.maxx * cos_t + bbox.maxy * sin_t) + labelpath->path.point[k-1].x;
-  bounds.point[k-1].y = (bbox.maxy * cos_t - bbox.maxx * sin_t) + labelpath->path.point[k-1].y;
+      /* This is the last character in the string so we take the UR and LR
+         corners of the bbox */
+      bounds.point[k-1].x = (bbox.maxx * cos_t + bbox.maxy * sin_t) + labelpath->path.point[k-1].x;
+      bounds.point[k-1].y = (bbox.maxy * cos_t - bbox.maxx * sin_t) + labelpath->path.point[k-1].y;
   
-  bounds.point[bounds.numpoints - k - 1].x = (bbox.maxx * cos_t + bbox.miny * sin_t) + labelpath->path.point[k-1].x;
-  bounds.point[bounds.numpoints - k - 1].y = (bbox.miny * cos_t - bbox.maxx * sin_t) + labelpath->path.point[k-1].y;
+      bounds.point[bounds.numpoints - k - 1].x = (bbox.maxx * cos_t + bbox.miny * sin_t) + labelpath->path.point[k-1].x;
+      bounds.point[bounds.numpoints - k - 1].y = (bbox.miny * cos_t - bbox.maxx * sin_t) + labelpath->path.point[k-1].y;
     }
 
   }
@@ -1703,8 +1707,9 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   free(offsets);
   
   return labelpath;
+#endif
 
- FAILURE:
+FAILURE:
   if ( segment_lengths ) {
     for ( i = 0; i < p->numlines; i++ )
       free(segment_lengths[i]);
@@ -1720,7 +1725,6 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   }
     
   return NULL;
-
 }
 
 /* ===========================================================================

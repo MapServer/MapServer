@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.326  2006/08/17 04:32:16  sdlime
+ * Disable path following labels unless GD 2.0.29 or greater is available.
+ *
  * Revision 1.325  2006/06/01 19:56:31  dan
  * Added ability to encrypt tokens (passwords, etc.) in database connection
  * strings (MS-RFC-18, bug 1792)
@@ -1283,9 +1286,13 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(symbol == MS_NUMBER)
 	label->angle = msyynumber;
       else if ( symbol == MS_FOLLOW ) {
-        label->angle_follow = MS_TRUE;
-        /* Fallback in case ANGLE FOLLOW fails */
-        label->autoangle = MS_TRUE;
+#ifndef GD_HAS_FTEX_XSHOW
+	msSetError(MS_IDENTERR, "Keyword FOLLOW is not valid without TrueType font support and GD version 2.0.29 or higher.", "loadlabel()");
+	return(-1);
+#else 
+        label->angle_follow = MS_TRUE;         
+        label->autoangle = MS_TRUE; /* Fallback in case ANGLE FOLLOW fails */
+#endif
       } else
 	label->autoangle = MS_TRUE;
       break;

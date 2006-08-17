@@ -549,9 +549,9 @@ else
   fi
 fi
 
-dnl ---------------------------------------------------------------------
-dnl Continue with GD processing - determine GD formats
-dnl ---------------------------------------------------------------------
+dnl ----------------------------------------------------------------------
+dnl Continue with GD processing - determine GD formats and other features
+dnl ----------------------------------------------------------------------
 
 if test -n "$with_gd" -a "$with_gd" != "yes" ; then
 
@@ -578,8 +578,11 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
   dnl check for Freetype 2.x support  
   AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
+  dnl check for gdImageOpenPolygon (means GD version 2.0.29 or higher)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageOpenPolygon, GD_DEF="$GD_DEF -DGD_HAS_FTEX_XSHOW",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+
   dnl gdImageGifPtr is there only in GIF-patched GD versions
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl GD 2.0.22 and more recent replaced the static font pointers with 
   dnl getter functions.
@@ -607,6 +610,9 @@ else
 
   dnl Check for Freetype 2 support
   AC_CHECK_LIB(gd, gdImageStringFT, GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_LIB $GD_XTRA_LIBS)
+
+  dnl check for gdImageOpenPolygon (means GD version 2.0.29 or higher)
+  AC_CHECK_LIB(gd, gdImageOpenPolygon, GD_DEF="$GD_DEF -DGD_HAS_FTEX_XSHOW",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl gdImageGifPtr is there only in GIF-patched GD versions
   AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB $GD_XTRA_LIBS)

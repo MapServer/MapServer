@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2006/08/17 04:32:16  sdlime
+ * Disable path following labels unless GD 2.0.29 or greater is available.
+ *
  * Revision 1.84  2006/03/23 20:28:52  sdlime
  * Most recent patch for curved labels. (bug 1620)
  *
@@ -390,14 +393,13 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 
 /*
  * Return the size of the label, plus an array of individual character
- * offsets, as calculated by gdImageStringEx().  The callee is
+ * offsets, as calculated by gdImageStringFTEx().  The callee is
  * responsible for freeing *offsets.
  */
-int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline, double **offsets) {
-   int size;
-
-   /*  if(label->type == MS_TRUETYPE) { */
-#ifdef USE_GD_FT
+int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline, double **offsets) 
+{
+#if defined (USE_GD_FT) && defined (GD_HAS_FTEX_XSHOW)
+    int size;
     char *s;
     int k;
     int bbox[8];
@@ -411,16 +413,16 @@ int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *f
     font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
       if(label->font) 
-        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSize()", label->font);
+        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSizeEx()", label->font);
       else
-        msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msGetLabelSize()");
+        msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msGetLabelSizeEx()");
       return(-1);
     }
-    
+
     strex.flags = gdFTEX_XSHOW;
     error = gdImageStringFTEx(NULL, bbox, 0, font, size, 0, 0, 0, string, &strex);
     if(error) {
-      msSetError(MS_TTFERR, error, "msGetLabelSize()");
+      msSetError(MS_TTFERR, error, "msGetLabelSizeEx()");
       return(-1);
     }
 
@@ -435,7 +437,7 @@ int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *f
       if ( *s == ' ' )
         s++;
     }
-               
+
     rect->minx = bbox[0];
     rect->miny = bbox[5];
     rect->maxx = bbox[2];
@@ -449,10 +451,9 @@ int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *f
 
     return MS_SUCCESS;
 #else
-    msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
+    msSetError(MS_TTFERR, "TrueType font support is not available or is not current enough (requires 2.0.29 or higher).", "msGetLabelSizeEx()");
     return(-1);
 #endif
-    /* } */
 }
 
 gdFontPtr msGetBitmapFont(int size)

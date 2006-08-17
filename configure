@@ -5905,6 +5905,66 @@ if test `eval echo '${'$as_ac_Lib'}'` = yes; then
 fi
 
 
+    as_ac_Lib=`echo "ac_cv_lib_$GD_CHECKLIB''_gdImageOpenPolygon" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for gdImageOpenPolygon in -l$GD_CHECKLIB" >&5
+echo $ECHO_N "checking for gdImageOpenPolygon in -l$GD_CHECKLIB... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$GD_CHECKLIB $GD_STATIC $GD_LIB $GD_XTRA_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gdImageOpenPolygon ();
+int
+main ()
+{
+gdImageOpenPolygon ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Lib=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Lib=no"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
+  GD_DEF="$GD_DEF -DGD_HAS_FTEX_XSHOW"
+fi
+
+
     as_ac_Lib=`echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGifPtr" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for gdImageGifPtr in -l$GD_CHECKLIB" >&5
 echo $ECHO_N "checking for gdImageGifPtr in -l$GD_CHECKLIB... $ECHO_C" >&6
@@ -6384,6 +6444,65 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageStringFT" >&5
 echo "${ECHO_T}$ac_cv_lib_gd_gdImageStringFT" >&6
 if test $ac_cv_lib_gd_gdImageStringFT = yes; then
   GD_DEF="$GD_DEF -DUSE_GD_FT"
+fi
+
+
+    echo "$as_me:$LINENO: checking for gdImageOpenPolygon in -lgd" >&5
+echo $ECHO_N "checking for gdImageOpenPolygon in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdImageOpenPolygon+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgd $GD_STATIC $GD_LIB $GD_XTRA_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gdImageOpenPolygon ();
+int
+main ()
+{
+gdImageOpenPolygon ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_gd_gdImageOpenPolygon=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_gd_gdImageOpenPolygon=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageOpenPolygon" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdImageOpenPolygon" >&6
+if test $ac_cv_lib_gd_gdImageOpenPolygon = yes; then
+  GD_DEF="$GD_DEF -DGD_HAS_FTEX_XSHOW"
 fi
 
 
