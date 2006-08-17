@@ -16,7 +16,15 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
-- Marking some SWIG object members immutable (bug 1803)
+- Marking the following SWIG object members immutable (bug 1803)
+  layerObj.metadata, classObj.label, classObj.metadata,
+  fontSetObj.fonts, legendObj.label, mapObj.symbolset,
+  mapObj.fontset, mapObj.labelcache, mapObj.reference,
+  mapObj.scalebar, mapObj.legend, mapObj.querymap
+  mapObj.web, mapObj.configoptions, webObj.metadata,
+  imageObj.format, classObj.layer, legendObj.map,
+  webObj.map, referenceMapObj.map
+  labelPathObj was made completely hidden (according to Steve's suggestion)
 
 - Fixed problem with PHP MapScript's saveWebImage() filename collisions
   when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
