@@ -584,7 +584,7 @@ layer : layerObj_ immutable
 maxscale : float
     The maximum scale at which class is drawn
    
-metadata : hashTableObj_
+metadata : hashTableObj_ immutable
     class metadata hash table.
 
 minscale : float
@@ -777,7 +777,7 @@ fontSetObj Attributes
 filename : string immutable
     Path to the fontset file on disk.
 
-fonts : hashTableObj_
+fonts : hashTableObj_ immutable
     Mapping of fonts.
 
 numfonts : int immutable
@@ -834,7 +834,7 @@ An image object is a wrapper for GD and GDAL images.
 imageObj Attributes
 -------------------
 
-format : outputFormatObj_
+format : outputFormatObj_ immutable
     Image format.
 
 height : int immutable
@@ -1226,7 +1226,7 @@ maxfeatures : int
 maxscale : float
     Maximum scale at which layer will be drawn.
 
-metadata : hashTableObj_
+metadata : hashTableObj_ immutable
     Layer metadata.
     
 minscale : float
@@ -1611,10 +1611,10 @@ keyspacingx : int
 keyspacingy : int
     Vertical padding.
 
-label : labelObj_
+label : labelObj_ immutable
     legend label.
 
-map : mapObj_
+map : mapObj_ immutable
     Reference to parent mapObj.
     
 outlinecolor : colorObj_
@@ -1714,7 +1714,7 @@ mapObj Attributes
 cellsize : float
     Pixel size in map units.
 
-configoptions : hashObj
+configoptions : hashObj immutable
     A hash table of configuration options from CONFIG keywords in the .map. 
     Direct access to config options is discouraged.  Use the setConfigOption()
     and getConfigOption() methods instead.
@@ -1728,7 +1728,7 @@ debug : int
 extent : rectObj_
     Map's spatial extent.
     
-fontset : fontSetObj_
+fontset : fontSetObj_ immutable
     The map's defined fonts.
 
 height : int
@@ -1755,10 +1755,10 @@ interlace : int
 .. note:: map interlace is deprecated in MapServer 4.4 and should
           instead be managed through map outputformats.
 
-lablecache : labelCacheObj_
+lablecache : labelCacheObj_ immutable
     Map's labelcache.
 
-legend : legendObj_
+legend : legendObj_ immutable
     Reference to map's legend.
 
 mappath : string
@@ -1781,14 +1781,11 @@ outputformat : outputFormatObj_
 
 .. note:: Map outputformat should not be modified directly.  Use the
           selectOutputFormat() method to select named formats.
-
-palette : paletteObj
-    **TODO** should this be deprecated?
    
-querymap : queryMapObj
+querymap : queryMapObj immutable
     **TODO** should this be exposed to mapscript?
 
-reference : referenceMapObj_
+reference : referenceMapObj_ immutable
     Reference to reference map.
     
 resolution : float
@@ -1797,7 +1794,7 @@ resolution : float
 scale : float
     The nominal map scale.  A value of 25000 means 1:25000 scale.
 
-scalebar : scalebarObj_
+scalebar : scalebarObj_ immutable
     Reference to the scale bar.
     
 shapepath : string
@@ -1806,7 +1803,7 @@ shapepath : string
 status : int
     MS_OFF, MS_ON, or MS_DEFAULT.
 
-symbolset : symbolSetObj_
+symbolset : symbolSetObj_ immutable
     The map's set of symbols.
 
 templatepattern : string
@@ -1821,7 +1818,7 @@ transparent : int
 units : int
     MS_DD, MS_METERS, etc.
    
-web : webObj_
+web : webObj_ immutable
     Reference to map's web definitions.
     
 width : int
@@ -2461,7 +2458,7 @@ height : int
 image : string
     Filename of reference map image.
 
-map : mapObj_
+map : mapObj_ immutable
     Reference to parent mapObj.
     
 marker : int
@@ -3068,7 +3065,7 @@ imageurl : string
 log : string
     **TODO**
 
-map : mapObj
+map : mapObj immutable
     Reference to parent mapObj.
 
 maxscale : float
@@ -3077,7 +3074,7 @@ maxscale : float
 maxtemplate : string
     **TODO**
    
-metadata : hashTableObj_
+metadata : hashTableObj_ immutable
     metadata hash table.
 
 minscale : float

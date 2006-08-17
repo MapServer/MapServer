@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.458  2006/08/17 20:57:46  tamas
+ * Made some object members immutable (bug 1803)
+ *
  * Revision 1.457  2006/08/17 04:37:17  sdlime
  * In keeping with naming conventions (like it or not) label->angle_follow becomes label->autofollow...
  *
@@ -468,7 +471,6 @@ typedef struct _FilterNode
 
       
 }FilterEncodingNode;
-#endif /*SWIG*/
 
 
 /* Label path object - used to hold path and bounds of curved labels - Bug #1620 implementation. */
@@ -477,6 +479,7 @@ typedef struct {
   shapeObj bounds;
   double *angles;
 } labelPathObj;
+#endif /*SWIG*/
 
 /* FONTSET OBJECT - used to hold aliases for TRUETYPE fonts */
     typedef struct {
@@ -485,10 +488,11 @@ typedef struct {
 #endif
         char *filename; 
         int numfonts;
+        hashTableObj fonts;
 #ifdef SWIG
         %mutable;
 #endif
-        hashTableObj fonts;
+
 #ifndef SWIG
         struct map_obj *map;
 #endif
@@ -635,7 +639,13 @@ typedef struct {
   char *log;
   char *imagepath, *imageurl;
 
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   struct map_obj *map;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 
 #ifndef __cplusplus
   char *template;
@@ -653,7 +663,13 @@ typedef struct {
   char *legendformat;
   char *browseformat;
 
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   hashTableObj metadata;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 
 } webObj;
 
@@ -715,7 +731,13 @@ typedef struct class_obj{
 
   int numstyles;
 
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   labelObj label;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 
   char *name; /* should be unique within a layer */
   char *title; /* used for legend labeling */
@@ -732,10 +754,22 @@ typedef struct class_obj{
 
   int type;
 
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   hashTableObj metadata;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 
   double minscale, maxscale;
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   struct layer_obj *layer;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
   int debug;
 
   char *keyimage;
@@ -844,7 +878,13 @@ typedef struct {
   int markersize;
   int minboxsize;
   int maxboxsize;
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   struct map_obj *map;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 } referenceMapObj;
 
 /* SCALEBAR OBJECT */
@@ -870,7 +910,13 @@ typedef struct {
 /* LEGEND OBJECT */
 typedef struct {
   colorObj imagecolor;
+#ifdef SWIG
+        %immutable;
+#endif
   labelObj label;
+#ifdef SWIG
+        %mutable;
+#endif
   int keysizex, keysizey;
   int keyspacingx, keyspacingy;
   colorObj outlinecolor; /* Color of outline of box, -1 for no outline */
@@ -887,7 +933,13 @@ typedef struct {
 #else /* __cplusplus */
    char *_template;
 #endif /* __cplusplus */
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   struct map_obj *map;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 } legendObj;
 
 #ifndef SWIG
@@ -1039,8 +1091,14 @@ typedef struct layer_obj {
   char *requires; /* context expressions, simple enough to not use expressionObj */
   char *labelrequires;
 
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   hashTableObj metadata;
-  
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
+
   int transparency; /* transparency value 0-100 */
   
   int dump;
@@ -1080,14 +1138,14 @@ typedef struct map_obj{ /* structure for a map */
 %immutable;
 #endif /* SWIG */
   int numlayers; /* number of layers in mapfile */
-#ifdef SWIG
-%mutable;
-#endif /* SWIG */
 
   symbolSetObj symbolset;
   fontSetObj fontset;
 
   labelCacheObj labelcache; /* we need this here so multiple feature processors can access it */
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 
   int transparent; /* TODO - Deprecated */
   int interlace; /* TODO - Deprecated */
@@ -1131,6 +1189,9 @@ typedef struct map_obj{ /* structure for a map */
   projectionObj latlon; /* geographic projection definition */
 #endif /* not SWIG */
 
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */  
   referenceMapObj reference;
   scalebarObj scalebar;
   legendObj legend;
@@ -1138,6 +1199,9 @@ typedef struct map_obj{ /* structure for a map */
   queryMapObj querymap;
 
   webObj web;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 
   int *layerorder;
 
@@ -1145,7 +1209,13 @@ typedef struct map_obj{ /* structure for a map */
 
   char *datapattern, *templatepattern;   
 
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
   hashTableObj configoptions;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 
 #ifndef SWIG
   /* Private encryption key information - see mapcrypto.c */
@@ -1182,11 +1252,11 @@ typedef struct {
 #endif
   int width, height;
   char *imagepath, *imageurl;
+
+  outputFormatObj *format;
 #ifdef SWIG
 %mutable;
 #endif
-
-  outputFormatObj *format;
   int renderer;
   int size;
 
