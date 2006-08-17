@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 CVS HEAD (4.9-dev)
 ------------------
 
+- Marking some SWIG object members immutable (bug 1803)
+
 - Fixed problem with PHP MapScript's saveWebImage() filename collisions
   when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
 
