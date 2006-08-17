@@ -2344,6 +2344,8 @@ toString() : string
         >>> str(p)
         { 'x': 1.000000 , 'y': 1.000000, 'z': 1.000000 }
 
+toShape() : shapeObj_
+    Convience method to quickly turn a point into a shapeObj.
 
 ------------------------------------------------------------------------------
  projectionObj
@@ -2691,14 +2693,43 @@ new shapeObj( int type ) : shapeObj
 add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
 
+boundary() : shapeObj
+    Returns the boundary of the existing shape. Requires GEOS support.
+    Returns NULL/undef on failure.
+
+buffer( int distance ) : shapeObj
+    Returns a new buffered shapeObj based on the supplied distance (given in
+    the coordinates of the existing shapeObj). Requires GEOS support. 
+    Returns NULL/undef on failure.
+
 contains( pointObj_ point ) : int
     Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
+
+contains( shapeObj shape2 ) : int
+    Returns MS_TRUE if shape2 is entirely within the shape. Returns -1 on 
+    error and MS_FALSE otherwise. Requires GEOS support.
+
+convexHull() : shapeObj
+    Returns the convex hull of the existing shape. Requires GEOS support. 
+    Returns NULL/undef on failure.
 
 copy( shapeObj shape_copy ) : int
     Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
 
 clone() : shapeObj
     Return an independent copy of the shape.
+
+crosses( shapeObj shape2 ) : int
+    Returns MS_TRUE if shape2 crosses the shape. Returns -1 on error and 
+    MS_FALSE otherwise. Requires GEOS support.
+
+difference( shapeObj shape ) : shapeObj
+    Returns the computed difference of the supplied and existing
+    shape. Requires GEOS support. Returns NULL/undef on failure.
+
+disjoint( shapeObj shape2 ) : int
+    Returns MS_TRUE if shape2 and the shape are disjoint. Returns -1 on 
+    error and MS_FALSE otherwise. Requires GEOS support.
 
 distanceToPoint( pointObj_ point ) : float
     Return distance to *point*.
@@ -2709,15 +2740,43 @@ distanceToShape( shapeObj shape ) : float
 draw( mapObj_ map, layerObj_ layer, imageObj_ img ) : int
     Draws the individual shape using layer.  Returns MS_SUCCESS or MS_FAILURE.
 
+equals( shapeObj shape2 ) : int
+    Returns MS_TRUE if the shape and shape2 are equal (geometry only). Returns -1
+    on error and MS_FALSE otherwise. Requires GEOS support.
+
+fromWKT( char *wkt ) : shapeObj
+    Returns a new shapeObj based on a well-known text representation of a 
+    geometry. Requires GEOS support. Returns NULL/undef on failure.
+
 get( int index ) : lineObj_
     Returns a reference to part at *index*.  Reference is valid
     only during the life of the shapeObj.
+
+getArea() : double
+    Returns the area of the shape (if applicable). Requires GEOS support.
+
+getCentroid() : pointObj_
+    Returns the centroid for the existing shape. Requires GEOS support. 
+    Returns NULL/undef on failure.
+
+getLength() : double
+    Returns the length (or perimeter) of a shape. Requires GEOS support.
 
 getValue( int i ) : string
     Return the shape attribute at index *i*.
 
 intersects( shapeObj shape ) : int
     Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
+    Note, does not require GEOS support but will use GEOS functions if
+    available.
+
+intersection( shapeObj shape ) : shapeObj
+    Returns the computed intersection of the supplied and existing
+    shape. Requires GEOS support. Returns NULL/undef on failure.
+
+overlaps( shapeObj shape2 ) : int
+    Returns MS_TRUE if shape2 overlaps shape. Returns -1 on error and 
+    MS_FALSE otherwise. Requires GEOS support.
 
 project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject shape from *proj_in* to *proj_out*.  Transformation
@@ -2732,6 +2791,25 @@ setBounds : void
 setValue( int i, string value ) : int
     Set the shape value at index *i* to *value*.
 
+symDifference( shapeObj shape ) : shapeObj
+    Returns the computed symmetric difference of the supplied and existing
+    shape. Requires GEOS support. Returns NULL/undef on failure.
+
+touches( shapeObj shape2 ) : int
+    Returns MS_TRUE if the shape and shape2 touch. Returns -1 on error and
+    MS_FALSE otherwise. Requires GEOS support.
+
+toWKT() : string
+    Returns the well-known text representation of a shapeObj. Requires 
+    GEOS support. Returns NULL/undef on failure.
+
+Union( shapeObj shape ) : shapeObj
+    Returns the union of the existing and supplied shape. Shapes must be
+    of the same type. Requires GEOS support. Returns NULL/undef on failure.
+
+within( shapeObj shape2 ) : int
+    Returns MS_TRUE if the shape is entirely within shape2. Returns -1
+    on error and MS_FALSE otherwise. Requires GEOS support.
 
 -----------------------------------------------------------------------------
  styleObj
