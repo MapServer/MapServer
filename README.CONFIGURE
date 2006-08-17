@@ -133,7 +133,14 @@ GD and Support Libraries:
   The GD library is the only component that is not optional.  
   Version 2.0.16 or more recent is required, see http://www.boutell.com/gd/ .
 
-  By default, configure tries to locate it on your system and uses the
+  Version 2.0.29 or more recent is required for the LABEL FOLLOW option 
+  to work (curved labels, added in 4.10).
+
+  There is a bug in GD with 1 pixel antialiased lines that requires a
+  patch that has not been released in GD yet. See bug 1612:
+  http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1612
+
+  By default, configure tries to locate GD on your system and uses the
   system copy if found.   
 
   You can use the --with-gd=DIR option to use a copy of GD installed in
