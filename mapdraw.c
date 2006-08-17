@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.107  2006/08/17 04:37:17  sdlime
+ * In keeping with naming conventions (like it or not) label->angle_follow becomes label->autofollow...
+ *
  * Revision 1.106  2006/08/15 05:01:54  sdlime
  * Fixed a couple of query map bugs, 1858 that alters which style is re-colored with POLYGON layers, msDrawQueryMap now respects layer order.
  *
@@ -1441,7 +1444,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	msOffsetShapeRelativeTo(shape, layer);
 
       /* Bug #1620 implementation */
-      if ( layer->class[c].label.angle_follow == MS_TRUE ) {
+      if ( layer->class[c].label.autofollow == MS_TRUE ) {
 
         annopath = msPolylineLabelPath(shape, layer->class[c].label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c].label), layer->scalefactor, &status);
 
@@ -1479,7 +1482,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
-      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
+      if ( layer->class[c].label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
         /* Regular labels */
         if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
@@ -1665,7 +1668,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     if(shape->text) {
 
       /* Bug #1620 implementation */
-      if ( layer->class[c].label.angle_follow == MS_TRUE ) {
+      if ( layer->class[c].label.autofollow == MS_TRUE ) {
 
         annopath = msPolylineLabelPath(shape, layer->class[c].label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c].label), layer->scalefactor, &status);
         if( annopath ) {
@@ -1694,7 +1697,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
-      if ( layer->class[c].label.angle_follow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
+      if ( layer->class[c].label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
         labelObj label = layer->class[c].label;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.457  2006/08/17 04:37:17  sdlime
+ * In keeping with naming conventions (like it or not) label->angle_follow becomes label->autofollow...
+ *
  * Revision 1.456  2006/08/16 14:05:07  sdlime
  * Removed any ambiguity with msCommifyString(). At the moment it only handles North American representaions of numbers (e.g. 2,345.678).
  *
@@ -607,7 +610,7 @@ typedef struct {
 
         double angle;
         int autoangle; /* true or false */
-        int angle_follow;  /* true or false, bug #1620 implementation */
+        int autofollow;  /* true or false, bug #1620 implementation */
 
         int buffer; /* space to reserve around a label */
 

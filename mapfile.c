@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.327  2006/08/17 04:37:16  sdlime
+ * In keeping with naming conventions (like it or not) label->angle_follow becomes label->autofollow...
+ *
  * Revision 1.326  2006/08/17 04:32:16  sdlime
  * Disable path following labels unless GD 2.0.29 or greater is available.
  *
@@ -1248,7 +1251,7 @@ void initLabel(labelObj *label)
   label->position = MS_CC;
   label->angle = 0;
   label->autoangle = MS_FALSE;
-  label->angle_follow = MS_FALSE;
+  label->autofollow = MS_FALSE;
   label->minsize = MS_MINFONTSIZE;
   label->maxsize = MS_MAXFONTSIZE;
   label->buffer = 0;
@@ -1290,7 +1293,7 @@ static int loadLabel(labelObj *label, mapObj *map)
 	msSetError(MS_IDENTERR, "Keyword FOLLOW is not valid without TrueType font support and GD version 2.0.29 or higher.", "loadlabel()");
 	return(-1);
 #else 
-        label->angle_follow = MS_TRUE;         
+        label->autofollow = MS_TRUE;         
         label->autoangle = MS_TRUE; /* Fallback in case ANGLE FOLLOW fails */
 #endif
       } else
@@ -1413,14 +1416,14 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
   case(ANGLE):
     msyystate = 2; msyystring = value;
     label->autoangle = MS_FALSE;
-    label->angle_follow = MS_FALSE;
+    label->autofollow = MS_FALSE;
     if((symbol = getSymbol(3, MS_NUMBER,MS_AUTO,MS_FOLLOW)) == -1) 
       return;
     
     if(symbol == MS_NUMBER)
       label->angle = msyynumber;
     else if ( symbol == MS_FOLLOW ) {
-      label->angle_follow = MS_TRUE;
+      label->autofollow = MS_TRUE;
       /* Fallback in case ANGLE FOLLOW fails */
       label->autoangle = MS_TRUE;
     } else
@@ -1554,7 +1557,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[label->size]);
     fprintf(stream, "  %sTYPE BITMAP\n", tab);
   } else {
-    if (label->angle_follow) 
+    if (label->autofollow) 
       fprintf(stream, "  %sANGLE FOLLOW\n", tab);
     else if(label->autoangle)
       fprintf(stream, "  %sANGLE AUTO\n", tab);
@@ -1575,7 +1578,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
 #if ALPHACOLOR_ENABLED
   if( label->color.alpha )
 	writeColorWithAlpha(&(label->color), stream, "  ALPHACOLOR", tab);
-  else
+  Else
 #endif
 	writeColor(&(label->color), stream, "  COLOR", tab);
   if(label->encoding) fprintf(stream, "  %sENCODING \"%s\"\n", tab, label->encoding);
