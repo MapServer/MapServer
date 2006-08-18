@@ -13,8 +13,9 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-CVS HEAD (4.9-dev)
-------------------
+
+Version 4.10.0-beta1 (2006-08-17)
+---------------------------------
 
 - Marking the following SWIG object members immutable (bug 1803)
   layerObj.metadata, classObj.label, classObj.metadata,

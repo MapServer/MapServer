@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.459  2006/08/18 02:09:22  dan
+ * Updated for 4.10.0-beta1
+ *
  * Revision 1.458  2006/08/17 20:57:46  tamas
  * Made some object members immutable (bug 1803)
  *
@@ -241,7 +244,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.9"
+#define MS_VERSION "4.10.0-beta1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
