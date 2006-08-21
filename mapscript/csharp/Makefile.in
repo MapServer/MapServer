@@ -194,6 +194,9 @@ STATIC_LIBS= $(GD_STATIC)
 
 LDFLAGS= $(RUNPATHS) -L../.. -lmap $(SUP_LIBS) $(STATIC_LIBS)
 
+LIBMAPSCRIPT_SHARED= libmapscript.@SO_EXT@
+LD_SHARED= @LD_SHARED@
+
 # END OF CONFIGURE----
 
 #
@@ -211,23 +214,29 @@ CC= @CC@
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: interface mapscript_so mapscript_csharp
+all: interface mapscript_so mapscript_csharp dll_config
 
 interface: ../mapscript.i
 	$(SWIG) -csharp -o mapscript_wrap.c ../mapscript.i
 
 mapscript_so: mapscript_wrap.c
 	$(CC) -fpic -c $(CCFLAGS) mapscript_wrap.c
-	$(CC) -fpic -shared mapscript_wrap.o -o libmapscript.so $(LDFLAGS)
+	$(LD_SHARED) mapscript_wrap.o -o $(LIBMAPSCRIPT_SHARED) $(LDFLAGS)
 
 mapscript_csharp::
 	$(CSC) /t:library /out:mapscript_csharp.dll *.cs
 	$(CSC) /r:mapscript_csharp.dll /out:shpdump.exe examples/shpdump.cs
 	$(CSC) /r:mapscript_csharp.dll /out:shapeinfo.exe examples/shapeinfo.cs
 	$(CSC) /r:mapscript_csharp.dll /out:drawmap.exe examples/drawmap.cs
-	
+
+dll_config: Makefile
+	rm mapscript_csharp.dll.config
+	echo "<configuration>" >> mapscript_csharp.dll.config
+	echo "<dllmap dll=\"mapscript\" target=\""$(LIBMAPSCRIPT_SHARED)"\">" >> mapscript_csharp.dll.config
+	echo "</configuration>" >> mapscript_csharp.dll.config
+
 clean:
-	rm -rf edu *.o *.c *.cs *.so *.dll
+	rm -rf edu *.o *.c *.cs *.@SO_EXT@ *.dll
 
 test:
 	LC_ALL=C mono ./shpdump.exe ../../tests/point.shp
