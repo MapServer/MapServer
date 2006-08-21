@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.5 (CVS)
 -------------
 
+- Fixed error in detection of libpdf.sl in configure.in (bug 1868).
+
 - Fixed error in msAddImageSymbol() where a symbol's imagepath was not
   set (bug 1832).
 
