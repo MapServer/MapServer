@@ -5,14 +5,14 @@ http://mapserver.gis.umn.edu/docs/howto/mapscriptcscompile
 
 
 C# mapscript
-==============
+============
 ..
 
 --------
 
 :Author: Tamas Szekeres
 :Contact: szekerest(at)gmail.com
-:Last Updated: 2006/05/08
+:Last Updated: 2006/08/21
 
 --------
 
@@ -139,6 +139,29 @@ For testing the compilation and the runtime environment you can use
 
 for starting the sample applications compiled previously.
 
+1.7 OSX compilation targeting the MONO framework
+------------------------------------------------
+Beginning from 4.10.0 the csharp/Makefile supports the OSX builds. Before making the build the recent MONO package should be installed on the system.
+
+Before compiling mapscript mapserver should be configured and compiled. Beginning from mapserver 4.8.2 during configuration the mapscript/csharp/Makefile will be created according to the configuration options. Edit this file and set the SWIG and CSC for the corresponding executable pathes if the files could not be accessed by default. To compile at a console step into the /mapscript/csharp directory
+use
+
+::
+
+      make
+      
+to compile libmapscript.dylib and mapscript_csharp.dll.
+
+For testing the compilation and the runtime environment you can use
+
+::
+
+      make test
+
+for starting the sample applications compiled previously.
+
+To run the applications mapscript_csharp.dll.config is needed along with the mapscript_csharp.dll file. This file is created during the make process
+
 2. Installation
 ===============
 The files required for your application should be manually installed. It is highly recommended to copy the files into the same folder as the executable resides.
@@ -232,8 +255,16 @@ maps the library file the DllImport is looking for to its unix equivalent. The f
 <configuration>
 <dllmap dll="mapscript" target="libmapscript.so" />
 </configuration>
+
+and with the OSX builds:
+
+::
+
+<configuration>
+<dllmap dll="mapscript" target="libmapscript.dylib" />
+</configuration>
  
-The file should be placed along with the corresponding mapscript_csharp.dll file.
+The file should be placed along with the corresponding mapscript_csharp.dll file, and created by default during the make process.
 For more information see:
 
 http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1596
@@ -252,4 +283,3 @@ Since the MONO process takes over the locale settings of the environment it is w
 4. Bug reports
 ==============
 If you find a problem dedicated to the mapscript C# interface feel free to file a bug report to BugZilla.
-
