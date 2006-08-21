@@ -47,7 +47,7 @@ gdBuffer msIO_getStdoutBufferBytes() {
     {
 	msSetError( MS_MISCERR, "Can't identify msIO buffer.",
                     "msIO_getStdoutBufferString" );
-	gdBuf.data = "";
+	gdBuf.data = (unsigned char*)"";
 	gdBuf.size = 0;
 	gdBuf.owns_data = MS_FALSE;
 	return gdBuf;
