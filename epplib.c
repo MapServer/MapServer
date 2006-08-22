@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/08/22 23:11:08  hobu
+ * cast the first argument of the call to swap2 on line 231 to
+ * short * as the function prototype expects
+ *
  * Revision 1.3  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -228,7 +232,7 @@ char position(eppfile *EPP,int row)
     if (nread!=(EPP->lr-EPP->fr+1)*2)
 	  /*if not right amount,assume bad*/
 	    EPP->access_ptr=0;
-    if (REVERSE) swap2(EPP->access_table,EPP->lr-EPP->fr+1);
+    if (REVERSE) swap2((short*)EPP->access_table,EPP->lr-EPP->fr+1);
     fseek(EPP->fil,now,0);
   }
   if (EPP->access_ptr==0) {  /*some kind of bad table,just count*/
