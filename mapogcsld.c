@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.62  2006/08/22 17:33:32  assefa
+ * Use the label element in the ColorMapEntry for the raster symbolizer
+ * (Bug 1844).
+ *
  * Revision 1.61  2006/05/26 02:21:13  assefa
  * Support symbols beside the WellKnownName ones for Mark symbols (Bug 1798).
  *
@@ -482,7 +486,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
     }
 
-
     if (bSuccess)
       return MS_SUCCESS;
 
@@ -630,7 +633,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 /************************************************************************/
 /*                           _SLDApplyRuleValues                        */
 /*                                                                      */
-/*      Utility function top set the scale, title/name for the          */
+/*      Utility function to set the scale, title/name for the          */
 /*      classes created by a Rule.                                      */
 /************************************************************************/
 void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer, 
@@ -690,10 +693,13 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
 /* -------------------------------------------------------------------- */
         for (i=0; i<nNewClasses; i++)
         {
-             if (pszName)
-               psLayer->class[psLayer->numclasses-1-i].name = strdup(pszName);
-             else
-               psLayer->class[psLayer->numclasses-1-i].name = strdup("Unknown");
+            if (!psLayer->class[psLayer->numclasses-1-i].name)
+            {
+                if (pszName)
+                  psLayer->class[psLayer->numclasses-1-i].name = strdup(pszName);
+                else
+                  psLayer->class[psLayer->numclasses-1-i].name = strdup("Unknown");
+            }
         }
         if (pszTitle)
         {
@@ -2380,6 +2386,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
     char szExpression[100];
     int nClassId = 0;
     double dfOpacity = 1.0;
+    char *pszLabel = NULL;
 
     if (!psRoot || !psLayer)
       return;
@@ -2415,6 +2422,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         {
             pszColor = (char *)CPLGetXMLValue(psColorEntry, "color", NULL);
             pszQuantity = (char *)CPLGetXMLValue(psColorEntry, "quantity", NULL);
+            pszLabel = (char *)CPLGetXMLValue(psColorEntry, "label", NULL);
 
             if (pszColor && pszQuantity)
             {
@@ -2438,6 +2446,14 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                             initClass(&(psLayer->class[psLayer->numclasses]));
                             psLayer->numclasses++;
                             nClassId = psLayer->numclasses-1;
+
+                            /*set the class name using the label. If label not defined
+                              set it with the quantity*/
+                            if (pszLabel)
+                              psLayer->class[nClassId].name = strdup(pszLabel);
+                            else
+                              psLayer->class[nClassId].name = strdup(pszQuantity);
+
                             initStyle(&(psLayer->class[nClassId].styles[0]));
                             psLayer->class[nClassId].numstyles = 1;
 
