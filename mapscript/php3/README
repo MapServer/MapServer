@@ -1266,37 +1266,88 @@ Constructor:
         Returns the value for a given field name.
  
    shapeobj buffer(width)
-        Returns a shape object that has a buffer around the current
-        shape object. Only available if php/mapscript is built with GEOS 
-        library.
+     Returns a new buffered shapeObj based on the supplied distance (given in
+     the coordinates of the existing shapeObj). 
+     Only available if php/mapscript is built with GEOS library.   
 
    shapeobj convexhull()
-        Returns a shape object representing the convex hull of the current
-        shape object. Only available if php/mapscript is built with GEOS 
+        Returns a shape object representing the convex hull of shape.
+        Only available if php/mapscript is built with GEOS 
         library.
+
+     shapeobj boundary()
+        Returns the boundary of the shape.
+        Only available if php/mapscript is built with GEOS library.
 
    int containsShape(shapeobj shape)
         Returns true if the shape given in argument is included inside 
-        the shape. Else returns false. Uses underlying GEOS msGEOSContains.
+        the shape. Else returns false. 
+        Only available if php/mapscript is built with GEOS 
+        library.
 
 
    shapeobj union_geos(shapeobj shape)
-        Returns a shape object representing the union of the current
-        shape object with the one passed as parameter. 
+        Returns a shape object representing the union of the shape object 
+        with the one passed as parameter. 
         Only available if php/mapscript is built with GEOS 
         library.
 
    shapeobj intersection(shapeobj shape)
-        Returns a shape object representing the intersection of the current
-        shape object with the one passed as parameter. 
-        Only available if php/mapscript is built with GEOS 
-        library.
+        Returns a shape object representing the intersection of the shape 
+        object with the one passed as parameter. 
+        Only available if php/mapscript is built with GEOS library.
 
    shapeobj difference(shapeobj shape)
-        Returns a shape object representing the difference of the current
+        Returns a shape object representing the difference of the
         shape object with the one passed as parameter. 
-        Only available if php/mapscript is built with GEOS 
-        library.
+        Only available if php/mapscript is built with GEOS library.
+
+   shapeobj symdifference(shapeobj shape)
+        Returns the computed symmetric difference of the supplied and existing
+        shape.
+        Only available if php/mapscript is built with GEOS library.
+  
+   int overlaps(shapeobj shape)  
+       Returns true if the shape passed as argument overlaps the shape.
+       Else returns false.
+       Only available if php/mapscript is built with GEOS library.
+
+   int within(shapeobj shape)  
+       Returns true if the shape passed as argument is entirely within
+       the shape. Else return false.
+       Only available if php/mapscript is built with GEOS library.
+
+   int crosses(shapeobj shape)  
+       Returns true if the shape passed as argument crosses the shape.
+       Else return false.
+       Only available if php/mapscript is built with GEOS library.
+
+   int touches(shapeobj shape)  
+       Returns true if the shape passed as argument touches the shape.
+       Else return false.
+       Only available if php/mapscript is built with GEOS library.
+
+   int equals(shapeobj shape)  
+       Returns true if the shape passed as argument is equal to the 
+       shape (geometry only). Else return false.
+       Only available if php/mapscript is built with GEOS library.
+    
+   int disjoint(shapeobj shape)  
+       Returns true if the shape passed as argument is disjoint to the 
+       shape. Else return false.
+       Only available if php/mapscript is built with GEOS library.
+
+   pointObj getCentroid(shapeobj shape)  
+       Returns a point object representing the centroid of the shape.
+       Only available if php/mapscript is built with GEOS library.
+
+   double getArea(shapeobj shape)  
+       Returns the area of the shape (if applicable).
+       Only available if php/mapscript is built with GEOS library.
+
+   double getLength(shapeobj shape)  
+       Returns the length (or perimeter) of the shape.
+       Only available if php/mapscript is built with GEOS library.
 
    string toWkt()
         Returns WKT representation of the shape's geometry.

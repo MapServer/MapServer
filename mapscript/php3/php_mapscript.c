@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.255  2006/08/22 15:55:03  assefa
+ * Adding geos functions to php mapscript (Bug 1327)
+ *
  * Revision 1.254  2006/08/16 18:33:26  dan
  * Cleanup some old PHP3 stuff
  *
@@ -324,10 +327,21 @@ DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS);
 /*geos related functions*/
 DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_shape_contains_geos(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_boundary(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_Union(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_intersection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_difference(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_symdifference(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_contains_geos(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_overlaps(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_within(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_crosses(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_touches(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_equals(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_disjoint(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_getcentroid(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_getarea(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_getlength(INTERNAL_FUNCTION_PARAMETERS);
 /*end of geos related functions*/
 
 DLEXPORT void php3_ms_shape_towkt(INTERNAL_FUNCTION_PARAMETERS);
@@ -516,7 +530,9 @@ static int le_mscgirequest;
  * Declare any global variables you may need between the BEGIN
  * and END macros here:     
  */
+
 ZEND_BEGIN_MODULE_GLOBALS(phpms)
+  int ttt; /* won't build on widows if the typdef struct is empty */ 
 ZEND_END_MODULE_GLOBALS(phpms)
 
 ZEND_DECLARE_MODULE_GLOBALS(phpms)
@@ -861,10 +877,21 @@ function_entry php_shape_class_functions[] = {
     {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
     {"buffer",          php3_ms_shape_buffer,           NULL},
     {"convexhull",      php3_ms_shape_convexhull,       NULL},
+    {"boundary",      php3_ms_shape_boundary,       NULL},
     {"containsshape",        php3_ms_shape_contains_geos,NULL},
     {"union_geos",          php3_ms_shape_Union,             NULL},
     {"intersection",          php3_ms_shape_intersection,NULL},
     {"difference",          php3_ms_shape_difference,    NULL},
+    {"symdifference",          php3_ms_shape_symdifference,    NULL},
+    {"overlaps",          php3_ms_shape_overlaps,    NULL},
+    {"within",          php3_ms_shape_within,    NULL},
+    {"crosses",          php3_ms_shape_crosses,    NULL},
+    {"touches",          php3_ms_shape_touches,    NULL},
+    {"equals",          php3_ms_shape_equals,    NULL},
+    {"disjoint",          php3_ms_shape_disjoint,    NULL},
+    {"getcentroid",          php3_ms_shape_getcentroid,    NULL},
+    {"getarea",          php3_ms_shape_getarea,    NULL},
+    {"getlength",          php3_ms_shape_getlength,    NULL},
     {"towkt",           php3_ms_shape_towkt,            NULL},
     {"free",            php3_ms_shape_free,             NULL},
     {NULL, NULL, NULL}
@@ -10920,6 +10947,38 @@ DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS)
 }
    
 
+
+DLEXPORT void php3_ms_shape_boundary(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    shapeObj     *self = NULL;
+    shapeObj    *return_shape = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+      WRONG_PARAM_COUNT;
+    
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    return_shape = shapeObj_boundary(self);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new),  NULL,
+                              list, return_value TSRMLS_CC);
+}
+   
+
 /**********************************************************************
  *                        shape->contains_geos()
  **********************************************************************/
@@ -11121,6 +11180,448 @@ DLEXPORT void php3_ms_shape_difference(INTERNAL_FUNCTION_PARAMETERS)
                               PHPMS_GLOBAL(le_msshape_new),  NULL,
                               list, return_value TSRMLS_CC);
 }
+
+/**********************************************************************
+ *                        shape->symdifference()
+ **********************************************************************/
+/* {{{ proto int shape.symdifference(shapeobj shape)
+   Return a shape which is the symetrical difference of the current shape and 
+   the one given in argument 1 . Uses underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_symdifference(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+    shapeObj    *return_shape = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    return_shape = shapeObj_symdifference(self, poShape);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new),  NULL,
+                              list, return_value TSRMLS_CC);
+}
+
+
+
+/**********************************************************************
+ *                        shape->overlaps()
+ **********************************************************************/
+/* {{{ proto int shape.overlaps(shapeobj shape)
+   Return true if the given shape in argument 1 overlaps
+   the shape. Else return false. */
+
+DLEXPORT void php3_ms_shape_overlaps(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    if (shapeObj_overlaps(self, poShape))
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE; 
+}
+
+
+/**********************************************************************
+ *                        shape->within()
+ **********************************************************************/
+/* {{{ proto int shape.within(shapeobj shape)
+   Return true if the given shape in argument 1 is within
+   the shape. Else return false. */
+
+DLEXPORT void php3_ms_shape_within(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    if (shapeObj_within(self, poShape))
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE; 
+}
+
+
+/**********************************************************************
+ *                        shape->crosses()
+ **********************************************************************/
+/* {{{ proto int shape.crosses(shapeobj shape)
+   Return true if the given shape in argument 1 crosses
+   the shape. Else return false. */
+
+DLEXPORT void php3_ms_shape_crosses(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    if (shapeObj_crosses(self, poShape))
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE; 
+}
+
+
+/**********************************************************************
+ *                        shape->touches()
+ **********************************************************************/
+/* {{{ proto int shape.touches(shapeobj shape)
+   Return true if the given shape in argument 1 touches
+   the shape. Else return false. */
+DLEXPORT void php3_ms_shape_touches(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    if (shapeObj_touches(self, poShape))
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE; 
+}
+
+
+/**********************************************************************
+ *                        shape->equals()
+ **********************************************************************/
+/* {{{ proto int shape.equals(shapeobj shape)
+   Return true if the given shape in argument 1 is equal to
+   the shape. Else return false. */
+DLEXPORT void php3_ms_shape_equals(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    if (shapeObj_equals(self, poShape))
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE; 
+}
+
+/**********************************************************************
+ *                        shape->disjoint()
+ **********************************************************************/
+/* {{{ proto int shape.disjoint(shapeobj shape)
+   Return true if the given shape in argument 1 is disjoint to
+   the shape. Else return false. */
+DLEXPORT void php3_ms_shape_disjoint(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pShape;
+    shapeObj     *self = NULL;
+    shapeObj    *poShape;
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShape) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    poShape = 
+      (shapeObj *)_phpms_fetch_handle2(pShape, 
+                                     PHPMS_GLOBAL(le_msshape_ref),
+                                     PHPMS_GLOBAL(le_msshape_new),
+                                     list TSRMLS_CC);
+       
+    if (poShape  == NULL)
+       RETURN_FALSE;
+        
+    if (shapeObj_disjoint(self, poShape))
+    {
+      RETURN_TRUE;
+    }
+    else
+      RETURN_FALSE; 
+}
+
+
+/**********************************************************************
+ *                        shape->getcentroid()
+ **********************************************************************/
+/* {{{ proto int shape.getcentroid()
+   Given a shape, return a point pbject representing the centroid */
+
+DLEXPORT void php3_ms_shape_getcentroid(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    shapeObj     *self = NULL;
+    pointObj    *return_point = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+      WRONG_PARAM_COUNT;
+    
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    return_point = shapeObj_getcentroid(self);
+    if (return_point  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_point_object(return_point, 
+                              PHPMS_GLOBAL(le_mspoint_new),
+                              list, return_value TSRMLS_CC);
+}
+ 
+
+/**********************************************************************
+ *                        shape->getarea()
+ **********************************************************************/
+/* {{{ proto int shape.getarea()
+   Returns the area  of the shape */
+DLEXPORT void php3_ms_shape_getarea(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    shapeObj     *self = NULL;
+    HashTable   *list=NULL;
+    double      dfArea = 0;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    dfArea = shapeObj_getarea(self);
+
+    RETURN_DOUBLE(dfArea);
+}
+   
+/**********************************************************************
+ *                        shape->getlength()
+ **********************************************************************/
+/* {{{ proto int shape.getlength()
+   Returns the length  of the shape */
+DLEXPORT void php3_ms_shape_getlength(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    shapeObj     *self = NULL;
+    HashTable   *list=NULL;
+    double      dfLength = 0;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;;
+    }
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    dfLength = shapeObj_getlength(self);
+
+    RETURN_DOUBLE(dfLength);
+}
+   
 
 
 /**********************************************************************

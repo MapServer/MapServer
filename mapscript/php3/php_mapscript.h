@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/08/22 15:55:03  assefa
+ * Adding geos functions to php mapscript (Bug 1327)
+ *
  * Revision 1.56  2006/05/29 19:02:01  assefa
  * Update PHP mapscript to support addition of MapScript WxS Services
  * (RFC 16, Bug 1790)
@@ -315,12 +318,24 @@ int             shapeObj_contains(shapeObj *self, pointObj *point);
 int             shapeObj_intersects(shapeObj *self, shapeObj *shape);
 pointObj        *shapeObj_getpointusingmeasure(shapeObj *self, double m);
 pointObj        *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point);
+
 shapeObj        *shapeObj_buffer(shapeObj *self, double width);
 shapeObj        *shapeObj_convexHull(shapeObj *self);
+shapeObj        *shapeObj_boundary(shapeObj *self);
 int             shapeObj_contains_geos(shapeObj *self, shapeObj *poshape);
 shapeObj        *shapeObj_Union(shapeObj *self, shapeObj *poshape);
 shapeObj        *shapeObj_intersection(shapeObj *self, shapeObj *poshape);
 shapeObj        *shapeObj_difference(shapeObj *self, shapeObj *poshape);
+shapeObj        *shapeObj_symdifference(shapeObj *self, shapeObj *poshape);
+int             shapeObj_overlaps(shapeObj *self, shapeObj *shape);
+int             shapeObj_within(shapeObj *self, shapeObj *shape);
+int             shapeObj_crosses(shapeObj *self, shapeObj *shape);
+int             shapeObj_touches(shapeObj *self, shapeObj *shape);
+int             shapeObj_equals(shapeObj *self, shapeObj *shape);
+int             shapeObj_disjoint(shapeObj *self, shapeObj *shape);
+pointObj        *shapeObj_getcentroid(shapeObj *self);
+double          shapeObj_getarea(shapeObj *self);
+double          shapeObj_getlength(shapeObj *self);
 
 rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);

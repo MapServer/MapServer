@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.99  2006/08/22 15:55:03  assefa
+ * Adding geos functions to php mapscript (Bug 1327)
+ *
  * Revision 1.98  2006/05/29 19:02:01  assefa
  * Update PHP mapscript to support addition of MapScript WxS Services
  * (RFC 16, Bug 1790)
@@ -987,6 +990,11 @@ shapeObj *shapeObj_convexHull(shapeObj *self)
     return msGEOSConvexHull(self);
 }
 
+shapeObj *shapeObj_boundary(shapeObj *self)
+{
+    return msGEOSBoundary(self);
+}
+
 int shapeObj_contains_geos(shapeObj *self, shapeObj *shape)
 {
     return msGEOSContains(self, shape);
@@ -1006,6 +1014,58 @@ shapeObj *shapeObj_difference(shapeObj *self, shapeObj *shape)
 {
      return msGEOSDifference(self, shape);
 }
+ 
+shapeObj *shapeObj_symdifference(shapeObj *self, shapeObj *shape)
+{
+     return msGEOSSymDifference(self, shape);
+}
+
+int shapeObj_overlaps(shapeObj *self, shapeObj *shape)
+{
+    return msGEOSOverlaps(self, shape);
+}
+ 
+int shapeObj_within(shapeObj *self, shapeObj *shape)
+{
+    return msGEOSWithin(self, shape);
+}
+
+int shapeObj_crosses(shapeObj *self, shapeObj *shape)
+{
+    return msGEOSCrosses(self, shape);
+}
+
+int shapeObj_touches(shapeObj *self, shapeObj *shape)
+{
+    return msGEOSTouches(self, shape);
+}
+ 
+int shapeObj_equals(shapeObj *self, shapeObj *shape)
+{
+    return msGEOSEquals(self, shape);
+}
+ 
+int shapeObj_disjoint(shapeObj *self, shapeObj *shape)
+{
+    return msGEOSDisjoint(self, shape);
+}
+ 
+
+pointObj *shapeObj_getcentroid(shapeObj *self)
+{
+    return msGEOSGetCentroid(self);
+}
+
+double shapeObj_getarea(shapeObj *self)
+{
+    return msGEOSArea(self);
+}
+
+double shapeObj_getlength(shapeObj *self)
+{
+    return msGEOSLength(self);
+}
+
  
 /**********************************************************************
  * class extensions for rectObj
