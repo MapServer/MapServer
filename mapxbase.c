@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/08/22 13:54:37  hobu
+ * cast the second argument to char* that we're passing into strncopy
+ *
  * Revision 1.22  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -521,7 +524,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /* -------------------------------------------------------------------- */
     /*	Extract the requested field.					    */
     /* -------------------------------------------------------------------- */
-    strncpy( psDBF->pszStringField, pabyRec+psDBF->panFieldOffset[iField], psDBF->panFieldSize[iField] );
+    strncpy( psDBF->pszStringField,(char *) pabyRec+psDBF->panFieldOffset[iField], psDBF->panFieldSize[iField] );
     psDBF->pszStringField[psDBF->panFieldSize[iField]] = '\0';
 
     /*
