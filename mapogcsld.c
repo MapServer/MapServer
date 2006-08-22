@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.63  2006/08/22 18:20:50  assefa
+ * Support <propertyname> tag in SLD label (Bug 1857)
+ *
  * Revision 1.62  2006/08/22 17:33:32  assefa
  * Use the label element in the ColorMapEntry for the raster symbolizer
  * (Bug 1844).
@@ -2542,28 +2545,38 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
     char *pszName=NULL, *pszFontFamily=NULL, *pszFontStyle=NULL;
     char *pszFontWeight=NULL; 
     CPLXMLNode *psLabelPlacement=NULL, *psPointPlacement=NULL, *psLinePlacement=NULL;
-    CPLXMLNode *psFill = NULL;
+    CPLXMLNode *psFill = NULL, *psPropertyName=NULL;
     int nLength = 0;
     char *pszColor = NULL;
+    char *pszItem = NULL;
 
     szFontName[0]='\0';
 
     if (psRoot && psClass && psLayer)
     {
         /* label  */
-        /* support only literal expression instead of propertyname */
+        /* support literal expression  and  propertyname 
+         - <TextSymbolizer><Label>MY_COLUMN</Label>
+         - <TextSymbolizer><Label><ogc:PropertyName>MY_COLUMN</ogc:PropertyName></Label>
+        Bug 1857 */
         psLabel = CPLGetXMLNode(psRoot, "Label");
         if (psLabel )
         {
-            if (psLabel->psChild && psLabel->psChild->pszValue)
+            psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
+            if (psPropertyName && psPropertyName->psChild &&
+                psPropertyName->psChild->pszValue)
+              pszItem = psPropertyName->psChild->pszValue;
+            else if (psLabel->psChild && psLabel->psChild->pszValue)
+              pszItem = psLabel->psChild->pszValue;
+
+            if (pszItem)
             /* psPropertyName = CPLGetXMLNode(psLabel, "PropertyName"); */
               /* if (psPropertyName && psPropertyName->psChild && */
               /* psPropertyName->psChild->pszValue) */
             {
                 if (psLayer->labelitem)
                   free (psLayer->labelitem);
-                psLayer->labelitem = strdup(psLabel->psChild->pszValue);
-                  /* strdup(psPropertyName->psChild->pszValue); */
+                psLayer->labelitem = strdup(pszItem);
 
                 /* font */
                 psFont = CPLGetXMLNode(psRoot, "Font");
