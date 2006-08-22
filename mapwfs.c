@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.86  2006/08/22 04:45:06  sdlime
+ * Fixed a bug that did not allow for seperate metadata namespaces to be used for WMS vs. WFS for GML transformations (e.g. WFS_GEOMETRIES, WMS_GEOMETRIES).
+ *
  * Revision 1.85  2006/08/14 21:52:20  sdlime
  * Updated WFS GetFeature to reference external namespaces if available.
  *
@@ -761,9 +764,9 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   }
 
   /*
-	** retrieve any necessary external namespace/schema configuration information
+  ** retrieve any necessary external namespace/schema configuration information
   */
-  namespaceList = msGMLGetNamespaces(&(map->web));
+  namespaceList = msGMLGetNamespaces(&(map->web), "OFG");
 
   /*
   ** DescribeFeatureType response
@@ -803,7 +806,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     }
   }
 
-	msIO_printf("   elementFormDefault=\"qualified\" version=\"0.1\" >\n");
+  msIO_printf("   elementFormDefault=\"qualified\" version=\"0.1\" >\n");
 
   encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
   if(outputformat == OWS_SFE_SCHEMA) /* reference GML 3.1.1 schema */
@@ -871,19 +874,19 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
           gmlItemObj *item=NULL;
           gmlConstantObj *constant=NULL;
 
-					const char *layer_namespace_prefix;
+          const char *layer_namespace_prefix;
           char *encoded_type=NULL;
 
-          itemList = msGMLGetItems(lp); /* GML-related metadata */
-          constantList = msGMLGetConstants(lp);
-          groupList = msGMLGetGroups(lp);
-          geometryList = msGMLGetGeometries(lp);
+          itemList = msGMLGetItems(lp, "OFG"); /* GML-related metadata */
+          constantList = msGMLGetConstants(lp, "OFG");
+          groupList = msGMLGetGroups(lp, "OFG");
+          geometryList = msGMLGetGeometries(lp, "OFG");
 
           value = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
           if(value) 
             layer_namespace_prefix = value;
-          else 
-						layer_namespace_prefix = user_namespace_prefix;
+          else
+            layer_namespace_prefix = user_namespace_prefix;
 
           /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername"); */      
           encoded_name = msEncodeHTMLEntities( lp->name );          
@@ -944,11 +947,11 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
           msGMLFreeConstants(constantList);
           msGMLFreeGroups(groupList);
           msGMLFreeGeometries(geometryList);
-				}
+        }
 
-	      msLayerClose(lp);
+        msLayerClose(lp);
       } else {
-	      msIO_printf("\n\n<!-- ERROR: Failed opening layer %s -->\n\n", encoded_name);
+        msIO_printf("\n\n<!-- ERROR: Failed opening layer %s -->\n\n", encoded_name);
       }
           
     }
@@ -962,10 +965,9 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   msFree(encoded_name);
   msFree(user_namespace_uri_encoded);
   
-  if (layers)
+  if(layers)
     msFreeCharArray(layers, numlayers);
-  
-  
+    
   return MS_SUCCESS;
 }
 
@@ -1001,7 +1003,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int outputformat = OWS_GML2; /* default output is GML 2.1 */
     
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
-  gmlNamespaceObj *namespace;
 
   /* Default filter is map extents */
   bbox = map->extent;
@@ -1329,10 +1330,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       return msWFSException(map, paramsObj->pszVersion);
     }
 
-  /*
-	** retrieve any necessary external namespace/schema configuration information
-  */
-  namespaceList = msGMLGetNamespaces(&(map->web));
+    /*
+    ** retrieve any necessary external namespace/schema configuration information
+    */
+    namespaceList = msGMLGetNamespaces(&(map->web), "OFG");
 
     msIO_printf("Content-type: text/xml%c%c",10,10);
 

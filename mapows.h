@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.76  2006/08/22 04:45:06  sdlime
+ * Fixed a bug that did not allow for seperate metadata namespaces to be used for WMS vs. WFS for GML transformations (e.g. WFS_GEOMETRIES, WMS_GEOMETRIES).
+ *
  * Revision 1.75  2006/08/14 18:47:28  sdlime
  * Some more implementation of external application schema support.
  *
@@ -484,15 +487,15 @@ typedef struct {
 } gmlNamespaceListObj;
 
 MS_DLL_EXPORT int msItemInGroups(char *name, gmlGroupListObj *groupList);
-MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer);
+MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeItems(gmlItemListObj *itemList);
-MS_DLL_EXPORT gmlConstantListObj *msGMLGetConstants(layerObj *layer);
+MS_DLL_EXPORT gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeConstants(gmlConstantListObj *constantList);
-MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer);
+MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeGeometries(gmlGeometryListObj *geometryList);
-MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer);
+MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
-MS_DLL_EXPORT gmlNamespaceListObj *msGMLGetNamespaces(webObj *web);
+MS_DLL_EXPORT gmlNamespaceListObj *msGMLGetNamespaces(webObj *web, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList);
 #endif
 

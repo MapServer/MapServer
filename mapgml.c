@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2006/08/22 04:45:06  sdlime
+ * Fixed a bug that did not allow for seperate metadata namespaces to be used for WMS vs. WFS for GML transformations (e.g. WFS_GEOMETRIES, WMS_GEOMETRIES).
+ *
  * Revision 1.94  2006/08/14 20:06:32  dan
  * Produce warning in WFS GetFeature output if ???_featureid is specified
  * but corresponding item is not found in layer (bug 1781)
@@ -877,7 +880,7 @@ static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, char *type)
   return -1; /* not found */
 }
 
-gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
+gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces)
 {
   int i;
 
@@ -895,7 +898,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
   geometryList->geometries = NULL;
   geometryList->numgeometries = 0;
 
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "geometries")) != NULL) {
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "geometries")) != NULL) {
     names = split(value, ',', &numnames);
 
     /* allocation an array of gmlGeometryObj's */
@@ -911,11 +914,11 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer)
       geometry->occurmax = 1;      
 
       snprintf(tag, 64, "%s_type", names[i]);
-      if((value =  msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL)
+      if((value =  msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL)
         geometry->type = strdup(value); /* TODO: validate input value */
 
       snprintf(tag, 64, "%s_occurances", names[i]);
-      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) {
+      if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) {
         char **occur;
         int numoccur;
 
@@ -950,7 +953,7 @@ void msGMLFreeGeometries(gmlGeometryListObj *geometryList)
   free(geometryList);
 }
 
-gmlItemListObj *msGMLGetItems(layerObj *layer) 
+gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces) 
 {
   int i,j;
 
@@ -970,15 +973,15 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
   gmlItemObj *item=NULL;
 
   /* get a list of items that should be included in output */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFGM", "include_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "include_items")) != NULL)  
     incitems = split(value, ',', &numincitems);
 
   /* get a list of items that should be excluded in output */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFGM", "exclude_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "exclude_items")) != NULL)  
     excitems = split(value, ',', &numexcitems);
 
   /* get a list of items that need don't get encoded */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "xml_items")) != NULL)  
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "xml_items")) != NULL)  
     xmlitems = split(value, ',', &numxmlitems);
 
   /* allocate memory and iinitialize the item collection */
@@ -1026,15 +1029,15 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
     }
 
     snprintf(tag, 64, "%s_alias", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       item->alias = strdup(value);
 
     snprintf(tag, 64, "%s_type", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       item->type = strdup(value);
 
     snprintf(tag, 64, "%s_template", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       item->template = strdup(value);
   }
 
@@ -1110,7 +1113,7 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
   return;
 }
 
-gmlNamespaceListObj *msGMLGetNamespaces(webObj *web)
+gmlNamespaceListObj *msGMLGetNamespaces(webObj *web, const char *metadata_namespaces)
 {
   int i;
   const char *value=NULL;
@@ -1128,7 +1131,7 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web)
   namespaceList->numnamespaces = 0; 
 
   /* list of constants (TODO: make this automatic by parsing metadata) */
-  if((value = msOWSLookupMetadata(&(web->metadata), "OFG", "external_namespace_prefixes")) != NULL) {
+  if((value = msOWSLookupMetadata(&(web->metadata), metadata_namespaces, "external_namespace_prefixes")) != NULL) {
     prefixes = split(value, ',', &numprefixes);
 
     /* allocation an array of gmlNamespaceObj's */
@@ -1143,18 +1146,18 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web)
       namespace->schemalocation = NULL;
 
       snprintf(tag, 64, "%s_uri", namespace->prefix);
-      if((value = msOWSLookupMetadata(&(web->metadata), "OFG", tag)) != NULL) 
+      if((value = msOWSLookupMetadata(&(web->metadata), metadata_namespaces, tag)) != NULL) 
       namespace->uri = strdup(value);
 
       snprintf(tag, 64, "%s_schema_location", namespace->prefix);
-      if((value = msOWSLookupMetadata(&(web->metadata), "OFG", tag)) != NULL) 
+      if((value = msOWSLookupMetadata(&(web->metadata), metadata_namespaces, tag)) != NULL) 
       namespace->schemalocation = strdup(value);
     }
 
     msFreeCharArray(prefixes, numprefixes);
-	}
+  }
 
-	return namespaceList;
+  return namespaceList;
 }
 
 void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList)
@@ -1172,7 +1175,7 @@ void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList)
   free(namespaceList);
 }
 
-gmlConstantListObj *msGMLGetConstants(layerObj *layer)
+gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_namespaces)
 {
   int i;
   const char *value=NULL;
@@ -1190,7 +1193,7 @@ gmlConstantListObj *msGMLGetConstants(layerObj *layer)
   constantList->numconstants = 0;
 
   /* list of constants (TODO: make this automatic by parsing metadata) */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "constants")) != NULL) {
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "constants")) != NULL) {
     names = split(value, ',', &numnames);
 
     /* allocation an array of gmlConstantObj's */
@@ -1205,11 +1208,11 @@ gmlConstantListObj *msGMLGetConstants(layerObj *layer)
       constant->type = NULL;
 
       snprintf(tag, 64, "%s_value", constant->name);
-      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+      if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       constant->value = strdup(value);
 
       snprintf(tag, 64, "%s_type", constant->name);
-      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+      if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       constant->type = strdup(value);
     }
 
@@ -1255,7 +1258,7 @@ static void msGMLWriteConstant(FILE *stream, gmlConstantObj *constant, const cha
   return;
 }
 
-gmlGroupListObj *msGMLGetGroups(layerObj *layer)
+gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces)
 {
   int i;
   const char *value=NULL;
@@ -1273,7 +1276,7 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
   groupList->numgroups = 0;
 
   /* list of groups (TODO: make this automatic by parsing metadata) */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", "groups")) != NULL) {
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "groups")) != NULL) {
     names = split(value, ',', &numnames);
 
     /* allocation an array of gmlGroupObj's */
@@ -1289,11 +1292,11 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
       group->type = NULL;
 
       snprintf(tag, 64, "%s_group", group->name);
-      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL)
+      if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL)
         group->items = split(value, ',', &group->numitems);
 
       snprintf(tag, 64, "%s_type", group->name);
-      if((value = msOWSLookupMetadata(&(layer->metadata), "OFG", tag)) != NULL) 
+      if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       group->type = strdup(value);
     }
 
@@ -1437,10 +1440,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       if(status != MS_SUCCESS) return(status);
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
-      itemList = msGMLGetItems(lp);
-      constantList = msGMLGetConstants(lp);
-      groupList = msGMLGetGroups(lp);      
-      geometryList = msGMLGetGeometries(lp);
+      itemList = msGMLGetItems(lp, namespaces);
+      constantList = msGMLGetConstants(lp, namespaces);
+      groupList = msGMLGetGroups(lp, namespaces);      
+      geometryList = msGMLGetGeometries(lp, namespaces);
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -1605,10 +1608,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       }
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
-      itemList = msGMLGetItems(lp);
-      constantList = msGMLGetConstants(lp);
-      groupList = msGMLGetGroups(lp);
-      geometryList = msGMLGetGeometries(lp);
+      itemList = msGMLGetItems(lp, "OFG");
+      constantList = msGMLGetConstants(lp, "OFG");
+      groupList = msGMLGetGroups(lp, "OFG");
+      geometryList = msGMLGetGeometries(lp, "OFG");
 
       /* set the layer name */
       /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername");
