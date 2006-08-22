@@ -15,13 +15,22 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.10.0-beta2 (CVS)
 ---------------------------------
+
+- Fixed php_mapscript Windows build that was broken in beta1 (bug 1872)
+
 - Supported <propertyname> tag in SLD label (Bug 1857)
-- Use the label element in the ColorMapEntry for the raster symbolizer (Bug 1844)
+
+- Use the label element in the ColorMapEntry for the raster symbolizer
+  (Bug 1844)
+
 - Adding Geos functions to php mapscript (bug 1327)
+
 - Added a type cast to msio.i so as to eliminate the warning with the
   SWIG unix/osx builds
+
 - Fixed csharp/Makefile.in for supporting the OSX builds and creating 
   the platform dependent mapscript_csharp.dll.config file.
+
 - Fixed error in detection of libpdf.sl in configure.in (bug 1868).
 
 
