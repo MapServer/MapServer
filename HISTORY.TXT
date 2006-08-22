@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-beta2 (CVS)
 ---------------------------------
 
+- MIGRATION_GUIDE.TXT has been created to document backwards incompatible
+  changes between 4.8 and 4.10
+
 - Fixed php_mapscript Windows build that was broken in beta1 (bug 1872)
 
 - Supported <propertyname> tag in SLD label (Bug 1857)

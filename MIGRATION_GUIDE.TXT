@@ -1,0 +1,14 @@
+MapServer 4.8 to 4.10 Migration Guide
+=====================================
+
+This page documents the changes that must be made to MapServer 
+applications when migrating from version 4.8.x (or earlier versions) 
+to 4.10.x (i.e. backwards incompatibilities), as well as information
+on some of the new features.
+
+
+SWIG MapScript (Python, Perl, Csharp, Java) changes:
+----------------------------------------------------
+
+... szekerest to document bug 1803 changes here ...
+
