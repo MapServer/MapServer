@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.134  2006/08/22 13:47:23  hobu
+ * make sure to cast the strings being passed into
+ * gdImageString as (unsigned char *) to silence warnings
+ * from the compiler
+ *
  * Revision 1.133  2006/08/15 17:24:18  sdlime
  * Trimmed history...
  *
@@ -3018,20 +3023,20 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       y -= fontPtr->h*num_tokens;
       for(t=0; t<num_tokens; t++) {
 	if(label->outlinecolor.pen >= 0) {	  
-	  gdImageString(img, fontPtr, x, y-1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x, y+1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x+1, y, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x-1, y, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x+1, y-1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x+1, y+1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x-1, y-1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x-1, y+1, token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x, y-1, (unsigned char *) token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x, y+1, (unsigned char *) token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x+1, y, (unsigned char *) token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x-1, y, (unsigned char *) token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x+1, y-1, (unsigned char *) token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x+1, y+1, (unsigned char *) token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x-1, y-1, (unsigned char *) token[t], label->outlinecolor.pen);
+	  gdImageString(img, fontPtr, x-1, y+1, (unsigned char *) token[t], label->outlinecolor.pen);
 	}
 
 	if(label->shadowcolor.pen >= 0)
-	  gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, token[t], label->shadowcolor.pen);
+	  gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, (unsigned char *) token[t], label->shadowcolor.pen);
 
-	gdImageString(img, fontPtr, x, y, token[t], label->color.pen);
+	gdImageString(img, fontPtr, x, y, (unsigned char *) token[t], label->color.pen);
 
 	y += fontPtr->h; /* shift down */
       }
@@ -3041,20 +3046,20 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       y -= fontPtr->h;
 
       if(label->outlinecolor.pen >= 0) {
-	gdImageString(img, fontPtr, x, y-1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x, y+1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x-1, y, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y-1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y+1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x-1, y-1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x-1, y+1, string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x, y-1, (unsigned char *) string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x, y+1, (unsigned char *) string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x+1, y, (unsigned char *) string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x-1, y, (unsigned char *) string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x+1, y-1, (unsigned char *) string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x+1, y+1, (unsigned char *) string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x-1, y-1, (unsigned char *) string, label->outlinecolor.pen);
+	gdImageString(img, fontPtr, x-1, y+1, (unsigned char *) string, label->outlinecolor.pen);
       }
 
       if(label->shadowcolor.pen >= 0)
-	gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, string, label->shadowcolor.pen);
+	gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, (unsigned char *) string, label->shadowcolor.pen);
 
-      gdImageString(img, fontPtr, x, y, string, label->color.pen);
+      gdImageString(img, fontPtr, x, y, (unsigned char *) string, label->color.pen);
     }
   }
 
