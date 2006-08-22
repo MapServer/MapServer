@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2006/08/22 23:14:13  hobu
+ * throw away the const qualifier of msOWSLookupMetadata when we set
+ * the namespace_prefix which is not defined as constant
+ *
  * Revision 1.95  2006/08/22 04:45:06  sdlime
  * Fixed a bug that did not allow for seperate metadata namespaces to be used for WMS vs. WFS for GML transformations (e.g. WFS_GEOMETRIES, WMS_GEOMETRIES).
  *
@@ -1587,7 +1591,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       /* if(status != MS_SUCCESS) return(status); */
 
       /* setup namespace, a layer can override the default */
-      namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
+      namespace_prefix = (char*) msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
       if(!namespace_prefix) namespace_prefix = default_namespace_prefix;
       
       value = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
