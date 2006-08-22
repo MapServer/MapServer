@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/08/22 23:07:52  hobu
+ * cast to a const char* the first argument to strncasecmp
+ *
  * Revision 1.15  2006/08/09 14:27:00  frank
  * fixed data length handling in strip content header
  *
@@ -778,7 +781,7 @@ char *msIO_stripStdoutBufferContentType()
 /*      Return NULL if we don't have a content-type header.             */
 /* -------------------------------------------------------------------- */
     if( buf->data_offset < 14 
-        || strncasecmp(buf->data,"Content-type: ",14) != 0 )
+        || strncasecmp((const char*) buf->data,"Content-type: ",14) != 0 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
