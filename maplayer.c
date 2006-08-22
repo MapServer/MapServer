@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.112  2006/08/22 13:56:58  hobu
+ * ssh!  comment out "tile;" which was unused and
+ * causing compiler to complain
+ *
  * Revision 1.111  2006/04/27 04:05:17  sdlime
  * Initial support for relative coordinates. (bug 1547)
  *
@@ -1304,7 +1308,7 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int tile, long shape
     int i=0;
     featureListNodeObjPtr current;
 
-    tile; /* Not used */
+    /* tile ; */ /* Not used -- commented out to silence compiler warning.  hobu*/
     current = layer->features;
     while (current!=NULL && i!=shapeindex) {
         i++;
