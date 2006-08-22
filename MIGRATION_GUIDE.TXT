@@ -6,9 +6,91 @@ applications when migrating from version 4.8.x (or earlier versions)
 to 4.10.x (i.e. backwards incompatibilities), as well as information
 on some of the new features.
 
-
+----------------------------------------------------
 SWIG MapScript (Python, Perl, Csharp, Java) changes:
 ----------------------------------------------------
 
-... szekerest to document bug 1803 changes here ...
+Object members that are internal stuctures having subsequent references were made immutable
+-------------------------------------------------------------------------------------------
+
+According bug 1803 setting the following object members were identified
+as potential unsafe operations causing unexpected access violations and
+were made immutable (read-only). The members are created by default so
+there's no need to create those from scratch.
+
+::
+
+    layerObj.metadata
+    classObj.label
+    classObj.metadata
+    fontSetObj.fonts
+    legendObj.label
+    mapObj.symbolset,
+    mapObj.fontset
+    mapObj.labelcache
+    mapObj.reference
+    mapObj.scalebar
+    mapObj.legend
+    mapObj.querymap
+    mapObj.web
+    mapObj.configoptions
+    webObj.metadata
+    
+The common characteristic of the members is that those are internal
+structures (not references to external objects) having subsequent references.
+By allowing to set these items one could use the following code to set the object.
+
+::
+
+    mapObj map = new mapObj("mymap.map");
+    webObj web = new webObj();
+    web.imagepath = "/tmp/";
+    web.imageurl = "http://");
+    map.web = web;
+
+Setting the mapObj.web member a shallow copy of the structure takes place.
+The subsequent references of the webObj are not be copied becoming candidates 
+to be destroyed twice.
+Instead of creating a new object the already created one should be readed 
+and used as:
+
+::
+
+    mapObj map = new mapObj("mymap.map");
+    webObj web = map.web;
+    web.imagepath = "/tmp/";
+    web.imageurl = "http://");
+
+Object members that are references to the parent object were made immutable
+---------------------------------------------------------------------------
+
+The following object members are references to the parent object and were
+also made immutable. The values of these members are set internally. It makes
+no sense to set these items since the parent-child relationship between the
+objects are set by other member functions like (insertClass).
+
+::
+
+    classObj.layer
+    legendObj.map
+    webObj.map
+    referenceMapObj.map
+
+Setting these members should be avoided.    
+    
+imageObj.format was made immutable
+----------------------------------
+
+It does not make sense to explicitly set imageObj.format that was now made immutable.   
+
+When constructing shapeObj the creation of the default values was eliminated 
+----------------------------------------------------------------------------
+
+When constructing a new shapeObj 4 predefinied values were implicitly created 
+that could be accessed and modified using getValue and setValue. Using this shape 
+as a parameter of other functions like layerObj.getShape might result in memory leak.
+So as to allow explicit creation of the values the shapeObj.initValues was introduced. 
+The user can initialize arbitrary number of the values and use getValue and setValue
+to access them. Beware of using these objects as out parameters.
+
 
