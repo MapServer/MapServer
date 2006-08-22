@@ -17,7 +17,7 @@ MS_VERSION=	@MS_VERSION@
 #
 LIBMAP_STATIC=	libmap.a
 LIBMAP_SHARED=	libmapserver.@SO_EXT@
-LIBMAP_SH_VER=	libmapserver.@SO_EXT@.$(MS_VERSION)
+LIBMAP_SH_VER=	libmapserver.$(MS_VERSION).@SO_EXT@
 
 #
 # mpatrol runtime memory debugger
