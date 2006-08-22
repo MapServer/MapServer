@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.256  2006/08/22 19:46:43  dan
+ * Comment-out the empty ZEND_*_GLOBALS() stuff that was breaking the
+ * Windows build (bug 1872)
+ *
  * Revision 1.255  2006/08/22 15:55:03  assefa
  * Adding geos functions to php mapscript (Bug 1327)
  *
@@ -528,18 +532,24 @@ static int le_mscgirequest;
 
 /* 
  * Declare any global variables you may need between the BEGIN
- * and END macros here:     
+ * and END macros here after uncommenting the following lines and the 
+ * ZEND_INIT_MODULE_GLOBALS() call in PHP_MINIT_FUNCTION() )
  */
 
+/*
 ZEND_BEGIN_MODULE_GLOBALS(phpms)
-  int ttt; /* won't build on widows if the typdef struct is empty */ 
+    int   global_value;
+    char *global_string;
 ZEND_END_MODULE_GLOBALS(phpms)
 
 ZEND_DECLARE_MODULE_GLOBALS(phpms)
 
 static void phpms_init_globals(zend_phpms_globals *phpms_globals)
 {
+    phpms_globals->global_value = 0;
+    phpms_globals->global_string = NULL;
 }
+*/
 
 
 /* In every utility function you add that needs to use variables 
@@ -997,7 +1007,9 @@ PHP_MINIT_FUNCTION(phpms)
     /* Init MapServer resources */
     msSetup();
 
+    /* If you have defined globals, uncomment this line
     ZEND_INIT_MODULE_GLOBALS(phpms, phpms_init_globals, NULL);
+    */
 
     /* If you have INI entries, uncomment this line
     REGISTER_INI_ENTRIES();
