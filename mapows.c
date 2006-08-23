@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2006/08/23 18:28:00  dan
+ * Use OWS_DEFAULT_SCHEMAS_LOCATION #define instead of hardcoded string (bug 1873)
+ *
  * Revision 1.66  2006/08/23 17:52:06  dan
  * schemas.opengeospatial.net has been shutdown, use schemas.opengis.net
  * instead as the default schema repository for OGC services (bug 1873)
@@ -505,7 +508,7 @@ const char *msOWSGetSchemasLocation(mapObj *map)
     schemas_location = msLookupHashTable(&(map->web.metadata), 
                                          "ows_schemas_location");
     if (schemas_location == NULL)
-      schemas_location = "http://schemas.opengis.net"; /* ".."; */
+      schemas_location = OWS_DEFAULT_SCHEMAS_LOCATION;
 
     return schemas_location;
 }

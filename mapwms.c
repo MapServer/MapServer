@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.180  2006/08/23 18:28:00  dan
+ * Use OWS_DEFAULT_SCHEMAS_LOCATION #define instead of hardcoded string (bug 1873)
+ *
  * Revision 1.179  2006/08/23 18:05:20  dan
  * Fixed another ref to http://schemas.opengis.net (bug 1873)
  *
@@ -1669,7 +1672,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
-    if (strcasecmp(schemalocation, "http://schemas.opengis.net") == 0)
+    if (strcasecmp(schemalocation, OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
       dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
     else
       dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");

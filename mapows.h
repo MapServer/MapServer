@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.77  2006/08/23 18:28:00  dan
+ * Use OWS_DEFAULT_SCHEMAS_LOCATION #define instead of hardcoded string (bug 1873)
+ *
  * Revision 1.76  2006/08/22 04:45:06  sdlime
  * Fixed a bug that did not allow for seperate metadata namespaces to be used for WMS vs. WFS for GML transformations (e.g. WFS_GEOMETRIES, WMS_GEOMETRIES).
  *
@@ -91,123 +94,6 @@
  * Revision 1.49  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
- * Revision 1.48  2004/12/29 22:49:57  sdlime
- * Added GML3 writing capabilities to mapgml.c. Not hooked up to anything yet.
- *
- * Revision 1.47  2004/11/25 06:19:05  dan
- * Add trailing "?" or "&" to connection string when required in WFS
- * client layers using GET method (bug 1082)
- *
- * Revision 1.46  2004/11/16 21:57:49  dan
- * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
- * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
- *
- * Revision 1.45  2004/11/15 20:35:02  dan
- * Added msLayerIsOpen() to all vector layer types (bug 1051)
- *
- * Revision 1.44  2004/11/02 21:01:00  assefa
- * Add a 2nd optional argument to msLoadMapContext function (Bug 1023).
- *
- * Revision 1.43  2004/10/25 17:30:38  julien
- * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
- *
- * Revision 1.42  2004/10/15 20:29:03  assefa
- * Add support for OGC mapcontext through mapserver cgi : Bug 946.
- *
- * Revision 1.41  2004/09/25 17:16:31  julien
- * Don't encode XML tag (Bug 897)
- * Don't compile mapgml.c function if not necessary (Bug 896)
- *
- * Revision 1.40  2004/09/23 19:18:10  julien
- * Encode all metadata and parameter printed in an XML document (Bug 802)
- *
- * Revision 1.39  2004/09/08 14:33:30  sean
- * declared MS_DLL_EXPORT for hex2int and msGMLWriteQuery (bug 851).
- *
- * Revision 1.38  2004/08/03 23:26:24  dan
- * Cleanup OWS version tests in the code, mapwms.c (bug 799)
- *
- * Revision 1.37  2004/08/03 22:12:34  dan
- * Cleanup OWS version tests in the code, started with mapcontext.c (bug 799)
- *
- * Revision 1.36  2004/06/22 22:22:16  sean
- * set MS_DLL_EXPORT for msWMSLoadGetMapParams
- *
- * Revision 1.35  2004/06/22 20:55:20  sean
- * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
- *
- * Revision 1.34  2004/05/22 15:51:10  sean
- * Prototype msWMSLoadGetMapParams
- *
- * Revision 1.33  2004/05/11 19:13:46  sean
- * Changes to function prototypes to reduce number of SWIG-mapscript build warnings (bug 568) and committed changes to fix bug 650, WMS layer drawing
- *
- * Revision 1.32  2004/05/03 03:45:42  dan
- * Include map= param in default onlineresource of GetCapabilties if it
- * was explicitly set in QUERY_STRING (bug 643)
- *
- * Revision 1.31  2004/04/19 22:08:39  sdlime
- * Added msOWSGetEPSGProj() to mapows.h/.c and updated the original from mapproject.c to use Dan's namespaces.
- *
- * Revision 1.30  2004/04/14 07:31:40  dan
- * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
- *
- * Revision 1.29  2004/04/14 05:14:54  dan
- * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
- *
- * Revision 1.28  2004/04/14 04:54:30  dan
- * Created msOWSLookupMetadata() and added namespaces lookup in all
- * msOWSPrint*Metadata() functions. Also pass namespaces=NULL everywhere
- * that calls those functions for now to avoid breaking something just
- * before the release. (bug 615, 568)
- *
- * Revision 1.27  2004/04/12 18:38:24  assefa
- * Add dll export support for windows.
- *
- * Revision 1.26  2004/03/30 00:12:28  dan
- * Added ability to combine multiple WMS connections to the same server
- * into a single request when the layers are adjacent and compatible.(bug 116)
- *
- * Revision 1.25  2004/03/29 18:34:25  assefa
- * Windows compilation problem : gettimeofday and timval struct (Bug 602)
- *
- * Revision 1.24  2004/03/29 14:41:55  dan
- * Use CURL's internal timer instead of custom gettimeofday() calls for
- * timing WMS/WFS requests
- *
- * Revision 1.23  2004/03/18 23:11:12  dan
- * Added detailed reporting (using msDebug) of layer rendering times
- *
- * Revision 1.22  2004/03/11 22:45:39  dan
- * Added pszPostContentType in httpRequestObj instead of using hardcoded
- * text/html mime type for all post requests.
- *
- * Revision 1.21  2004/02/24 06:20:37  sdlime
- * Added msOWSGetMetadata() function.
- *
- * Revision 1.20  2004/02/05 06:05:54  sdlime
- * Added first WCS prototype to mapows.h
- *
- * Revision 1.19  2003/10/30 22:37:01  assefa
- * Add function msWFSExecuteGetFeature on a wfs layer.
- *
- * Revision 1.18  2003/10/06 13:03:19  assefa
- * Use of namespace. Correct execption return.
- *
- * Revision 1.17  2003/09/19 21:54:19  assefa
- * Add support fot the Post request.
- *
- * Revision 1.16  2003/04/09 07:13:49  dan
- * Added GetContext (custom) request in WMS interface.
- * Added missing gml: namespace in 0.1.7 context output.
- *
- * Revision 1.15  2003/03/26 20:24:38  dan
- * Do not call msDebug() unless debug flag is turned on
- *
- * Revision 1.14  2003/01/10 06:39:06  sdlime
- * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c 
- * to mapstring.c so they can be used a bit more freely.
- *
  * ...
  *
  * Revision 1.1  2002/09/03 03:19:51  dan
@@ -219,6 +105,12 @@
 #define MAPOWS_H
 
 #include <time.h>
+
+/* This is the URL to the official OGC Schema Repository. We use it by 
+ * default for OGC services unless the ows_schemas_lcoation web metadata 
+ * is set in the mapfile.
+ */
+#define OWS_DEFAULT_SCHEMAS_LOCATION   "http://schemas.opengis.net"
 
 /*====================================================================
  *   maphttp.c
