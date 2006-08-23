@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.179  2006/08/23 18:05:20  dan
+ * Fixed another ref to http://schemas.opengis.net (bug 1873)
+ *
  * Revision 1.178  2006/06/26 16:29:23  frank
  * If a layer has wms_timedefault metadata, make sure it is applied even
  * if there is no TIME= item in the url.  (Bug 1810)
@@ -1666,7 +1669,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
-    if (strcasecmp(schemalocation, "http://schemas.opengeospatial.net") == 0)
+    if (strcasecmp(schemalocation, "http://schemas.opengis.net") == 0)
       dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
     else
       dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
