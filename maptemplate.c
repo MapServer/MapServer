@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.121  2006/08/23 04:15:29  sdlime
+ * Updated template tags that maintain checkbox/radio box/select list state to output valid XHTML. (bug 1860)
+ *
  * Revision 1.120  2006/08/16 14:05:07  sdlime
  * Removed any ambiguity with msCommifyString(). At the moment it only handles North American representaions of numbers (e.g. 2,345.678).
  *
@@ -2590,15 +2593,15 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     if(isOn(msObj, msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) {
       if(msObj->Map->layers[i].group) {
         sprintf(substr, "[%s_select]", msObj->Map->layers[i].group);
-        outstr = gsub(outstr, substr, "selected");
+        outstr = gsub(outstr, substr, "selected=\"selected\"");
         sprintf(substr, "[%s_check]", msObj->Map->layers[i].group);
-        outstr = gsub(outstr, substr, "checked");
+        outstr = gsub(outstr, substr, "checked=\"checked\"");
       }
       if(msObj->Map->layers[i].name) {
         sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
-        outstr = gsub(outstr, substr, "selected");
+        outstr = gsub(outstr, substr, "selected=\"selected\"");
         sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
-        outstr = gsub(outstr, substr, "checked");
+        outstr = gsub(outstr, substr, "checked=\"checked\"");
       }
     } else {
       if(msObj->Map->layers[i].group) {
@@ -2619,9 +2622,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   for(i=-1;i<=1;i++) { /* make zoom direction persistant */
     if(msObj->ZoomDirection == i) {
       sprintf(substr, "[zoomdir_%d_select]", i);
-      outstr = gsub(outstr, substr, "selected");
+      outstr = gsub(outstr, substr, "selected=\"selected\"");
       sprintf(substr, "[zoomdir_%d_check]", i);
-      outstr = gsub(outstr, substr, "checked");
+      outstr = gsub(outstr, substr, "checked=\"checked\"");
     } else {
       sprintf(substr, "[zoomdir_%d_select]", i);
       outstr = gsub(outstr, substr, "");
@@ -2633,9 +2636,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   for(i=MINZOOM;i<=MAXZOOM;i++) { /* make zoom persistant */
     if(msObj->Zoom == i) {
       sprintf(substr, "[zoom_%d_select]", i);
-      outstr = gsub(outstr, substr, "selected");
+      outstr = gsub(outstr, substr, "selected=\"selected\"");
       sprintf(substr, "[zoom_%d_check]", i);
-      outstr = gsub(outstr, substr, "checked");
+      outstr = gsub(outstr, substr, "checked=\"checked\"");
     } else {
       sprintf(substr, "[zoom_%d_select]", i);
       outstr = gsub(outstr, substr, "");
