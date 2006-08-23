@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.65  2006/08/23 18:06:46  assefa
+ * Correct partly the problem of translating regex to ogc:Literal (bug 1644).
+ *
  * Revision 1.64  2006/08/23 14:16:14  assefa
  * Initialize variables. Remove unused function.
  *
@@ -4907,7 +4910,73 @@ char *msSLDParseExpression(char *pszExpression)
 }               
                
     
-    
+/************************************************************************/
+/*                     msSLDConvertRegexExpToOgcIsLike                  */
+/*                                                                      */
+/*      Convert mapserver regex expression to ogc is like propoery      */
+/*      exprssion.                                                      */
+/*                                                                      */
+/*      Review bug 1644 for details. Here are the current rules:        */
+/*                                                                      */
+/*       The filter encoding property like is more limited compared     */
+/*      to regular expressiosn that can be built in mapserver. I        */
+/*      think we should define what is possible to convert properly     */
+/*      and do those, and also identify potential problems.  Example :  */
+/*        - any time there is a .* in the expression it will be         */
+/*      converted to *                                                  */
+/*        - any other character plus all the metacharcters . ^ $ * +    */
+/*      ? { [ ] \ | ( ) would be outputed as is. (In case of            */
+/*      mapserver, when we read the the ogc filter expression, we       */
+/*      convert the wild card chracter to .*, and we convert the        */
+/*      single chracter to .  and the escpae character to \ all         */
+/*      other are outputed as is)                                       */
+/*        - the  ogc tag would look like <ogc:PropertyIsLike            */
+/*      wildCard="*"  singleChar="." escape="\">                        */
+/*                                                                      */
+/*        - type of potential problem :                                 */
+/*           * if an expression is like /T (star)/ it will be           */
+/*      converted to T* which is not correct.                           */
+/*                                                                      */
+/************************************************************************/
+char *msSLDConvertRegexExpToOgcIsLike(char *pszRegex)
+{   
+    char szBuffer[1024];
+    int iBuffer = 0, i=0;
+    int nLength = 0;
+
+    if (!pszRegex || strlen(pszRegex) == 0)
+      return NULL;
+
+    szBuffer[0] = '\0';
+    nLength = strlen(pszRegex);
+
+    while (i < nLength)
+    {
+        if (pszRegex[i] != '.')
+        {
+            szBuffer[iBuffer++] = pszRegex[i];
+            i++;
+        }
+        else 
+        {
+            if (i<nLength-1 && pszRegex[i+1] == '*')
+            {
+                szBuffer[iBuffer++] = '*';
+                i = i+2;
+            }
+            else
+            {
+                szBuffer[iBuffer++] =  pszRegex[i];
+                i++;
+            }
+        }
+    }
+    szBuffer[iBuffer] = '\0';
+
+    return strdup(szBuffer);
+}
+
+
 
 /************************************************************************/
 /*                              msSLDGetFilter                          */
@@ -4920,6 +4989,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
 {
     char *pszFilter = NULL;
     char szBuffer[500];
+    char *pszOgcFilter = NULL;
 
     if (psClass && psClass->expression.string)
     {   
@@ -4944,14 +5014,19 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
         }
         else if (psClass->expression.type == MS_REGEX)
         {
-            if (psClass->layer && psClass->layer->classitem)
+            if (psClass->layer && psClass->layer->classitem && psClass->expression.string)
             {
+                pszOgcFilter = msSLDConvertRegexExpToOgcIsLike(psClass->expression.string);
+
                 if (pszWfsFilter)
-                  sprintf(szBuffer, "<ogc:Filter><ogc:And>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"\\\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:And></ogc:Filter>\n", 
-                        pszWfsFilter, psClass->layer->classitem, psClass->expression.string);
+                  sprintf(szBuffer, "<ogc:Filter><ogc:And>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\".\" escape=\"\\\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:And></ogc:Filter>\n", 
+                        pszWfsFilter, psClass->layer->classitem, pszOgcFilter);
                 else
-                  sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"\\\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 
-                          psClass->layer->classitem, psClass->expression.string);
+                  sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\".\" escape=\"\\\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 
+                          psClass->layer->classitem, pszOgcFilter);
+
+                free(pszOgcFilter);
+
                 pszFilter = strdup(szBuffer);
             }
         }
