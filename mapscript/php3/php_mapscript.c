@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.257  2006/08/23 22:16:26  assefa
+ * Add function  ms_iostripstdoutbuffercontenttype (bug 1790)
+ *
  * Revision 1.256  2006/08/22 19:46:43  dan
  * Comment-out the empty ZEND_*_GLOBALS() stuff that was breaking the
  * Windows build (bug 1872)
@@ -488,6 +491,8 @@ DLEXPORT void php_ms_IO_installStdoutToBuffer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_ms_IO_installStdinFromBuffer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_ms_IO_getStdoutBufferString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_ms_IO_resetHandlers(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_IO_stripStdoutBufferContentType(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_ms_IO_getStdoutBufferBytes(INTERNAL_FUNCTION_PARAMETERS);
 
 
 static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits, 
@@ -634,12 +639,13 @@ function_entry phpms_functions[] = {
     {"ms_geterrorobj",  php3_ms_get_error_obj,  NULL},
     {"ms_reseterrorlist", php3_ms_reset_error_list, NULL},
     {"ms_newsymbolobj", php3_ms_symbol_new, NULL},
-//    {"ms_newoutputformatobj", php_ms_outputformat_new, NULL},
     {"ms_newowsrequestobj",    php_ms_cgirequest_new,        NULL},
     {"ms_ioinstallstdouttobuffer",    php_ms_IO_installStdoutToBuffer,   NULL},
     {"ms_ioinstallstdinfrombuffer",    php_ms_IO_installStdinFromBuffer,   NULL},
     {"ms_iogetstdoutbufferstring",    php_ms_IO_getStdoutBufferString,   NULL},
     {"ms_ioresethandlers",    php_ms_IO_resetHandlers,   NULL},
+    {"ms_iostripstdoutbuffercontenttype",    php_ms_IO_stripStdoutBufferContentType,  NULL},
+    {"ms_iogetstdoutbufferbytes",    php_ms_IO_getStdoutBufferBytes,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -14755,23 +14761,13 @@ DLEXPORT void php_ms_IO_getStdoutBufferString(INTERNAL_FUNCTION_PARAMETERS)
     msIOContext *ctx = msIO_getHandler( stdout );
     msIOBuffer  *buf;
 
-    if( ctx == NULL)
+    if(ctx == NULL ||  ctx->write_channel == MS_FALSE
+        || strcmp(ctx->label,"buffer") != 0 )
     {
         php_error(E_ERROR, "Can't identify msIO buffer");
         RETURN_FALSE;
     }
-    if ( ctx->write_channel == MS_FALSE )
-    {
-        php_error(E_ERROR, "Can't identify msIO buffer");
-        RETURN_FALSE;
-    }
-        
-    if(0)//ctx->readWriteFunc != msIO_bufferWrite )
-    {
-        php_error(E_ERROR, "Can't identify msIO buffer");
-        RETURN_FALSE;
-    }
-
+    
     buf = (msIOBuffer *) ctx->cbData;
 
     /* write one zero byte and backtrack if it isn't already there */
@@ -14784,7 +14780,60 @@ DLEXPORT void php_ms_IO_getStdoutBufferString(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_STRING(buffer, 1);
 }
-     
+  
+
+typedef struct {
+    unsigned char *data;
+    int size;
+    int owns_data;
+} gdBuffer;
+
+
+DLEXPORT void php_ms_IO_getStdoutBufferBytes(INTERNAL_FUNCTION_PARAMETERS)
+{
+    msIOContext *ctx = msIO_getHandler(stdout);
+    msIOBuffer  *buf;
+    gdBuffer     gdBuf;
+    char        *buffer = NULL;
+
+    if( ctx == NULL || ctx->write_channel == MS_FALSE 
+        || strcmp(ctx->label,"buffer") != 0 )
+    {
+        php_error(E_ERROR, "Can't identify msIO buffer");
+        RETURN_FALSE;
+    }
+
+    buf = (msIOBuffer *) ctx->cbData;
+
+    gdBuf.data = buf->data;
+    gdBuf.size = buf->data_offset;
+    gdBuf.owns_data = MS_FALSE;
+
+    /* we are seizing ownership of the buffer contents */
+    buf->data_offset = 0;
+    buf->data_len = 0;
+    buf->data = NULL;
+
+    /*??TODO comment retouner gdbuf*/
+    RETURN_STRING(gdBuf.data, 1);
+}
+
+DLEXPORT void php_ms_IO_stripStdoutBufferContentType(INTERNAL_FUNCTION_PARAMETERS)
+{
+    const char *buf = NULL;
+
+    buf = msIO_stripStdoutBufferContentType();
+
+    if (buf)
+    {
+        RETURN_STRING((char *)buf, 1);
+    }
+    else
+    {
+        RETURN_FALSE;
+    }
+}
+
 /* ==================================================================== */
 /*      utility functions                                               */
 /* ==================================================================== */

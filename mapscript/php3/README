@@ -135,6 +135,9 @@ Currently supported classes, properties and methods:
      Resets the default stdin and stdout handlers in place of "buffer" based
      handlers. 
      
+   void ms_iostripstdoutbuffercontenttype()
+     Strip the Content-type header off the stdout buffer if it has one, and
+     if a content type is found it is return. Otherwise return false.
 
  MapObj Class:
  -------------
