@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-beta2 (CVS)
 ---------------------------------
 
+- schemas.opengeospatial.net has been shutdown, use schemas.opengis.net 
+  instead as the default schema repository for OGC services (bug 1873)
+
 - MIGRATION_GUIDE.TXT has been created to document backwards incompatible
   changes between 4.8 and 4.10
 
