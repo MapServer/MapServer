@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60.4.1  2006/08/23 17:52:19  dan
+ * schemas.opengeospatial.net has been shutdown, use schemas.opengis.net
+ * instead as the default schema repository for OGC services (bug 1873)
+ *
  * Revision 1.60  2005/06/14 16:03:34  dan
  * Updated copyright date to 2005
  *
@@ -480,7 +484,7 @@ const char *msOWSGetSchemasLocation(mapObj *map)
     schemas_location = msLookupHashTable(&(map->web.metadata), 
                                          "ows_schemas_location");
     if (schemas_location == NULL)
-      schemas_location = "http://schemas.opengeospatial.net"; /* ".."; */
+      schemas_location = "http://schemas.opengis.net"; /* ".."; */
 
     return schemas_location;
 }

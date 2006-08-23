@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.5 (CVS)
 -------------
 
+- schemas.opengeospatial.net has been shutdown, use schemas.opengis.net 
+  instead as the default schema repository for OGC services (bug 1873)
+
 - Fixed error in detection of libpdf.sl in configure.in (bug 1868).
 
 - Fixed error in msAddImageSymbol() where a symbol's imagepath was not
