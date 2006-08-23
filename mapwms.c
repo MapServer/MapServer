@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.170.2.2  2006/08/23 18:06:10  dan
+ * Fixed another ref to http://schemas.opengeospatial.net (bug 1873)
+ *
  * Revision 1.170.2.1  2006/02/13 16:06:09  dan
  * Use %.15g to increase precision of values in ScaleHint element (bug 1649)
  *
@@ -1796,7 +1799,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
-    if (strcasecmp(schemalocation, "http://schemas.opengeospatial.net") == 0)
+    if (strcasecmp(schemalocation, "http://schemas.opengis.net") == 0)
       dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
     else
       dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
