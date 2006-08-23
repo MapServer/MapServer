@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.64  2006/08/23 14:16:14  assefa
+ * Initialize variables. Remove unused function.
+ *
  * Revision 1.63  2006/08/22 18:20:50  assefa
  * Support <propertyname> tag in SLD label (Bug 1857)
  *
@@ -3922,10 +3925,6 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 #ifdef USE_OGR
 
 
-char *msSLDSimplifyExpression(char *pszExpression)
-{
-  return NULL;
-}
 
 
 
@@ -4182,6 +4181,10 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
 
     if (!pszExpression || !pszComparionValue || strlen(pszExpression) <=0)
       return NULL;
+
+    szCompare[0] = '\0';
+    szCompare2[0] = '\0';
+    
 
     if (strcasecmp(pszComparionValue, "PropertyIsEqualTo") == 0)
     {
