@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-beta2 (CVS)
 ---------------------------------
 
+- Don't return a WCS ref in WMS DescribeLayer responses when layer type is
+  CONNECTIONTYPE WMS (cascaded WMS layers not supported for WCS) (bug 1874)
+
 - Correct partly the problem of translating regex to ogc:Literal (bug 1644)
 
 - schemas.opengeospatial.net has been shutdown, use schemas.opengis.net 

@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.181  2006/08/24 12:44:51  dan
+ * Don't return a WCS ref in WMS DescribeLayer responses when layer type is
+ * CONNECTIONTYPE WMS (cascaded WMS layers not supported for WCS) (bug 1874)
+ *
  * Revision 1.180  2006/08/23 18:28:00  dan
  * Use OWS_DEFAULT_SCHEMAS_LOCATION #define instead of hardcoded string (bug 1873)
  *
@@ -2558,7 +2562,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              msFree(pszOnlineResEncoded);
              msFree(pszLayerName);
            }
-           else if (pszOnlineResLyrWCS && lp->type == MS_LAYER_RASTER)
+           else if (pszOnlineResLyrWCS && lp->type == MS_LAYER_RASTER &&
+                    lp->connectiontype != MS_WMS)
            {
                pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWCS);
                pszLayerName = msEncodeHTMLEntities(lp->name);
