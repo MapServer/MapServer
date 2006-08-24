@@ -185,6 +185,12 @@ OUTPUT_WBMP=-DUSE_GD_WBMP
 GD_HAS_GETBITMAPFONT=-DGD_HAS_GETBITMAPFONT
 
 
+# ----------------------------------------------------------------------
+# used for curved text (keyword FOLLOW for angle in label object)
+# GD version 2.0.29 or higher
+# ----------------------------------------------------------------------
+GD_HAS_FTEX_XSHOW=-DGD_HAS_FTEX_XSHOW
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # GD Antialiasing support
 # ----------------------------------------------------------------------
@@ -560,7 +566,7 @@ FT_LIB=$(FT_DIR)/objs/freetype2110.lib
 # GD include and library
 GD_INC= -I$(GD_DIR)
 GD_LIBS= $(GD_LIB) $(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
-GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT) $(GD_HAS_GETBITMAPFONT)
+GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT) $(GD_HAS_GETBITMAPFONT) $(GD_HAS_FTEX_XSHOW)
 
 # Tiff library on input
 !IFDEF TIFF
