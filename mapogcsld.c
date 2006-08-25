@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.66  2006/08/25 14:03:17  assefa
+ * Generate ogc filters now outputs the ocg name space (bug 1863).
+ *
  * Revision 1.65  2006/08/23 18:06:46  assefa
  * Correct partly the problem of translating regex to ogc:Literal (bug 1644).
  *
@@ -3962,13 +3965,13 @@ char *msSLDGetLogicalOperator(char *pszExpression)
     /* TODO for NOT */
 
     if(strstr(pszExpression, " AND ") || strstr(pszExpression, "AND("))
-      return strdup("AND");
+      return strdup("And");
     
     if(strstr(pszExpression, " OR ") || strstr(pszExpression, "OR("))
-      return strdup("OR");
+      return strdup("Or");
 
      if(strstr(pszExpression, "NOT ") || strstr(pszExpression, "NOT("))
-      return strdup("NOT");
+      return strdup("Not");
 
     return NULL;
 }
@@ -4738,7 +4741,7 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
         psNode->pszValue && psNode->psLeftNode && psNode->psLeftNode->pszValue &&
         psNode->psRightNode && psNode->psRightNode->pszValue)
     {
-        sprintf(szTmp," <ogc:%s><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:%s>",
+        sprintf(szTmp,"<ogc:%s><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:%s>",
                 psNode->pszValue, psNode->psLeftNode->pszValue,
                 psNode->psRightNode->pszValue, psNode->pszValue);
         pszExpression = strdup(szTmp);
@@ -4748,7 +4751,7 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
              ((psNode->psLeftNode && psNode->psLeftNode->pszValue) ||
               (psNode->psRightNode && psNode->psRightNode->pszValue)))
     {
-        sprintf(szTmp, "<%s>", psNode->pszValue);
+        sprintf(szTmp, "<ogc:%s>", psNode->pszValue);
         pszExpression = strcatalloc(pszExpression, szTmp);
         if (psNode->psLeftNode)
         {
@@ -4768,7 +4771,7 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
                 free(pszTmp);
             }
         }
-        sprintf(szTmp, "</%s>", psNode->pszValue);
+        sprintf(szTmp, "</ogc:%s>", psNode->pszValue);
         pszExpression = strcatalloc(pszExpression, szTmp);
     }
     return pszExpression;
@@ -4784,6 +4787,7 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
 
     if (!pszExpression || strlen(pszExpression) <=0)
       return NULL;
+
 
     /* psNode = BuildExpressionTree(pszExpression, NULL); */
     psNode = BuildExpressionTree(pszExpression, NULL);
