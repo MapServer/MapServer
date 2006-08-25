@@ -33,11 +33,12 @@ public class RunTimeBuiltWMSClient {
 	   output.setDriver("gd/png");
 	   output.setMimetype("image/png");
 	   output.setExtension("png");
-	   output.setImagemode(mapscript.MS_IMAGEMODE_RGB);
+	   output.setImagemode(MS_IMAGEMODE.MS_IMAGEMODE_RGB.swigValue());
 	   
-
+	   /* This fixes bug #1870 and #1803 */
 	   // Instanz des WebObjekts 
-	   web = new webObj();
+	   // web = new webObj();
+	   web=map.getWeb();
 	   web.setImagepath("/tmp/");
 	   web.setImageurl("http://katrin/~nicol/mapserver/tmp/");
 	   web.setLog("/tmp/wms.log");
@@ -45,8 +46,9 @@ public class RunTimeBuiltWMSClient {
 	   web.setTemplate("../html/form.html");
 	   web.setEmpty("../themen/noFeature.html");
 	   
-	   web.setMap(map);
-	   map.setWeb(web);
+	   // no longer necessary
+	   //web.setMap(map);
+	   //map.setWeb(web);
 	   System.out.println("ImagePath="+web.getImagepath());
 
 
@@ -55,8 +57,8 @@ public class RunTimeBuiltWMSClient {
 	   layer = new layerObj(map);
 	   layer.setName("DUEKN5000");
            layer.setDebug(mapscriptConstants.MS_ON);
-	   layer.setType(mapscript.MS_LAYER_RASTER);
-	   layer.setConnectiontype(mapscript.MS_WMS);
+	   layer.setType(MS_LAYER_TYPE.MS_LAYER_RASTER);
+	   layer.setConnectiontype(MS_CONNECTION_TYPE.MS_WMS);
 	   // TODO: replace with a permanent url
 	   layer.setConnection("http://www.mapserver.niedersachsen.de/freezoneogc/mapserverogc?");
 	   layer.setMetaData("wms_srs", "EPSG:31467");

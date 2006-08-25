@@ -20,7 +20,7 @@ public class QueryByAttributeUnicode {
 			layer.open();
 
 			resultCacheMemberObj result = layer.getResult(0);
-			shapeObj shp = new shapeObj( layer.getType()  );
+			shapeObj shp = new shapeObj( layer.getType().swigValue() );
 			layer.getShape(shp, result.getTileindex(), result.getShapeindex());
 			for (int z = 0; z < shp.getNumvalues(); z++) {
 				System.out.println("shp.value[" + z + "]=" + shp.getValue(z));

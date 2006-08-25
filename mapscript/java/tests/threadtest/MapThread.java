@@ -67,7 +67,7 @@ public class MapThread extends Thread {
 				bufferLayer.setName("BUFFER");
 				//bufferLayer.setType(mapscriptConstants.MS_LAYER_POLYGON);
 				bufferLayer.setProjection("init=epsg:4326");
-				bufferLayer.setType(mapscriptConstants.MS_LAYER_POINT);
+				bufferLayer.setType(MS_LAYER_TYPE.MS_LAYER_POINT);
 				bufferLayer.setTransparency(50);
 				classObj clazz=new classObj(bufferLayer);
 				clazz.setName("Buffer class");
