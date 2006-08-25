@@ -19,7 +19,7 @@
 //
 if (PHP_OS == "WINNT" || PHP_OS == "WIN32")
 {
-  dl("php3_mapscript.dll");
+  dl("php_mapscript.dll");
 }
 else
 {
@@ -45,21 +45,21 @@ $map = ms_newMapObj("demo.map");
 //
 $img = $map->draw();
 
-$url = $img->saveWebImage(MS_PNG, 0, 0, 0);
+$url = $img->saveWebImage();
 printf("<IMG SRC=%s WIDTH=%d HEIGHT=%d>\n", $url, $map->width, $map->height);
  
 //
 // LEGEND
 //
 $img = $map->drawLegend();
-$url = $img->saveWebImage(MS_PNG, 0, 0, 0);
+$url = $img->saveWebImage();
 printf("<P><IMG SRC=%s>\n", $url);
  
 //
 // SCALE BAR
 //
 $img = $map->drawScaleBar();
-$url = $img->saveWebImage(MS_PNG, 0, 0, 0);
+$url = $img->saveWebImage();
 printf("<P><IMG SRC=%s>\n", $url);
  
 ?>
