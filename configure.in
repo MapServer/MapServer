@@ -1942,9 +1942,10 @@ if test -n "$with_php" -a -d "$with_php" ; then
     dnl The default: use the internal AC_LD_SHARED macro
     dnl
     AC_COMPILER_PIC
-    AC_LD_SHARED
+    dnl AC_LD_SHARED
+    AC_PHP_LD_SHARED
     PHP_CC="$CC $C_PIC"
-    PHP_LD="$LD_SHARED"
+    PHP_LD="$PHP_LD_SHARED"
   fi
 
   dnl
