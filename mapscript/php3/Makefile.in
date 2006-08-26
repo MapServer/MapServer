@@ -84,10 +84,10 @@ PHPMS_OBJS =  php_mapscript_util.o php_mapscript.o mapscript_i.o $(PHP_REGEX_OBJ
 PHPPROJ_OBJS = php_mapscript_util.o php_proj.o $(PHP_REGEX_OBJ)
 
 
-php_mapscript.@SO_EXT@: $(PHPMS_OBJS) ../../libmap.a
+php_mapscript.so: $(PHPMS_OBJS) ../../libmap.a
 	$(LD) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
 
-php_proj.@SO_EXT@:  $(PHPPROJ_OBJS)
+php_proj.so:  $(PHPPROJ_OBJS)
 	$(LD) -o $@ $(PHPPROJ_OBJS) $(MS_LIBS)
 
 %.o: %.c php_mapscript_util.h php_mapscript.h
