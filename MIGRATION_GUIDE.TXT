@@ -7,13 +7,13 @@ to 4.10.x (i.e. backwards incompatibilities), as well as information
 on some of the new features.
 
 ----------------------------------------------------
-SWIG MapScript (Python, Perl, Csharp, Java) changes:
+SWIG MapScript (Python, Perl, Csharp, Java) changes
 ----------------------------------------------------
 
-Object members that are internal stuctures having subsequent references were made immutable
--------------------------------------------------------------------------------------------
+Immutable internal structures 
+------------------------------
 
-According bug 1803 setting the following object members were identified
+According `bug 1803`_ setting the following object members were identified
 as potential unsafe operations causing unexpected access violations and
 were made immutable (read-only). The members are created by default so
 there's no need to create those from scratch.
@@ -38,7 +38,8 @@ there's no need to create those from scratch.
     
 The common characteristic of the members is that those are internal
 structures (not references to external objects) having subsequent references.
-By allowing to set these items one could use the following code to set the object.
+By allowing to set these items one could use the following 
+code to set the object.
 
 ::
 
@@ -50,9 +51,8 @@ By allowing to set these items one could use the following code to set the objec
 
 Setting the mapObj.web member a shallow copy of the structure takes place.
 The subsequent references of the webObj are not be copied becoming candidates 
-to be destroyed twice.
-Instead of creating a new object the already created one should be readed 
-and used as:
+to be destroyed twice.  Instead of creating a new object the already 
+created one should be read and used as:
 
 ::
 
@@ -61,10 +61,10 @@ and used as:
     web.imagepath = "/tmp/";
     web.imageurl = "http://");
 
-Object members that are references to the parent object were made immutable
----------------------------------------------------------------------------
+Immutable references to parent objects
+--------------------------------------
 
-The following object members are references to the parent object and were
+The following object members are references to parent objects and were
 also made immutable. The values of these members are set internally. It makes
 no sense to set these items since the parent-child relationship between the
 objects are set by other member functions like (insertClass).
@@ -78,19 +78,63 @@ objects are set by other member functions like (insertClass).
 
 Setting these members should be avoided.    
     
-imageObj.format was made immutable
-----------------------------------
+imageObj.format now immutable
+-----------------------------
 
-It does not make sense to explicitly set imageObj.format that was now made immutable.   
+imageObj.format is now immutable can can no longer explicitly be set 
+with an assignment operation.   
 
-When constructing shapeObj the creation of the default values was eliminated 
-----------------------------------------------------------------------------
+shapeObj.initValue and default values 
+-------------------------------------
 
-When constructing a new shapeObj 4 predefinied values were implicitly created 
-that could be accessed and modified using getValue and setValue. Using this shape 
-as a parameter of other functions like layerObj.getShape might result in memory leak.
-So as to allow explicit creation of the values the shapeObj.initValues was introduced. 
-The user can initialize arbitrary number of the values and use getValue and setValue
-to access them. Beware of using these objects as out parameters.
+When constructing a new shapeObj 4 predefined values were implicitly created 
+that could be accessed and modified using getValue and setValue. Using 
+this shape as a parameter of other functions like layerObj.getShape might 
+result in memory leak.So as to allow explicit creation of the values the 
+shapeObj.initValues was introduced. The user can initialize arbitrary 
+number of the values and use getValue and setValue to access them. Beware 
+of using these objects as out parameters.
+
+----------------------------------------------------
+libgd 
+----------------------------------------------------
+
+1px Anti-Aliasing and segfaults
+--------------------------------
+
+libgd has apparently fallen out of maintenance by its primary developer.  A 
+release has not been made since 11/03/04 (libgd 2.0.33), and one very 
+significant bug will *always* cause a segfault when using this library 
+without a patch and you attempt to do one pixel wide antialiasing.
+
+In gd.c, function gdImageSetAAPixelColor() change:
+
+::
+
+    int dr,dg,db,p,r,g,b;
+    p = gdImageGetPixel(im,x,y);
+
+to
+
+::
+
+    int dr,dg,db,p,r,g,b;
+    if (!gdImageBoundsSafeMacro (im, x, y)) return;
+    p = gdImageGetPixel(im,x,y);
+
+More detail about this patch (if you need any) was described by Steve Lime 
+in a `post to mapserver-users`_.  *NOTE*: Windows builds that are built 
+with the buildkit (this includes MS4W) have this patch already and do not 
+need to be updated.
+
+Curved label support
+--------------------
+
+ANGLE FOLLOW, a new feature that allows MapServer to draw curved labels 
+about a linear feature like a road, requires libgd 2.0.29 and TrueType 
+font support.  Configure should autodetect if you have a sufficient 
+libgd and TrueType support to be able to use this feature.
 
 
+.. _`bug 1803`: http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1549
+.. _`post to mapserver-users`: http://article.gmane.org/gmane.comp.gis.mapserver.user/17766
