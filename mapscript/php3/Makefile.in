@@ -77,7 +77,7 @@ MS_LIBS =   $(RUNPATHS) @MS_LIB@ @ALL_LIB@ @XTRALIBS@ $(MS_STATIC)
 
 CFLAGS112 = $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC) $(PHP_REGEX_INC)
 
-all: php_mapscript.@SO_EXT@
+all: php_mapscript.so
 
 PHPMS_OBJS =  php_mapscript_util.o php_mapscript.o mapscript_i.o $(PHP_REGEX_OBJ)
 
