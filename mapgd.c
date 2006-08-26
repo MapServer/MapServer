@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.135  2006/08/26 17:25:48  frank
+ * use MS_NINT_GENERIC for symbol offset calculation (bug 1716)
+ *
  * Revision 1.134  2006/08/22 13:47:23  hobu
  * make sure to cast the strings being passed into
  * gdImageString as (unsigned char *) to silence warnings
@@ -1615,8 +1618,12 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       symbol = msRotateSymbol(symbol, style->angle);
     }
 
-    offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
-    offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
+    /* We avoid MS_NINT in this context because the potentially variable
+       handling of 0.5 rounding is often a problem for symbols which are
+       often an odd size (ie. 7pixels) and so if "p" is integral the 
+       value is always on a 0.5 boundary - bug 1716 */
+    offset_x = MS_NINT_GENERIC(p->x - d*.5*symbol->sizex + ox);
+    offset_y = MS_NINT_GENERIC(p->y - d*.5*symbol->sizey + oy);
     
     if(symbol->filled) { /* if filled */
       
