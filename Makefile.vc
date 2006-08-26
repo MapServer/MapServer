@@ -129,7 +129,7 @@ clean:
 mapscriptvars: makefile.vc nmake.opt
 	-del mapscriptvars
 	echo $(MS_BASE) > mapscriptvars
-	echo $(MS_DEFS) >> mapscriptvars
+	echo $(MS_DEFS) -DWIN32 -D_WIN32 >> mapscriptvars
 	echo $(INCLUDES) >> mapscriptvars
 	echo $(LIBS_DLL) >> mapscriptvars
 	echo $(LIBS) >> mapscriptvars
