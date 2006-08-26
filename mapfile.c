@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.328  2006/08/26 22:04:13  novak
+ * Enable support for TrueType fonts (bug 1882)
+ *
  * Revision 1.327  2006/08/17 04:37:16  sdlime
  * In keeping with naming conventions (like it or not) label->angle_follow becomes label->autofollow...
  *
@@ -3807,10 +3810,6 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
     case(LABEL):
       if(loadLabel(&(scalebar->label), map) == -1) return(-1);
       scalebar->label.angle = 0;
-      if(scalebar->label.type != MS_BITMAP) {
-	 msSetError(MS_TYPEERR, "Scalebars only support bitmapped fonts.", "loadScalebar()");
-	 return(-1);
-      }
       break;
     case(OUTLINECOLOR):      
       if(loadColor(&(scalebar->outlinecolor)) != MS_SUCCESS) return(-1);
@@ -3875,10 +3874,6 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
     msyystate = 2; msyystring = value;
     loadLabelString(map, &(scalebar->label), value);
     scalebar->label.angle = 0;
-    if(scalebar->label.type != MS_BITMAP) {
-      msSetError(MS_TYPEERR, "Scalebars only support bitmapped fonts.", "loadScalebarString()");
-      return;
-    }
     break;
   case(OUTLINECOLOR):
     msyystate = 2; msyystring = value;

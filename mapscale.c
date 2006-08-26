@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/08/26 22:04:13  novak
+ * Enable support for TrueType fonts (bug 1882)
+ *
  * Revision 1.51  2006/03/27 05:48:03  sdlime
  * Fixed symbol initialization error with embedded scalebars and legends. (bug 1725)
  *
@@ -179,22 +182,83 @@ imageObj *msDrawScalebar(mapObj *map)
   int j;
   int isx, sx, sy, ox, oy, state, dsx;
   pointObj p;
-  gdFontPtr fontPtr;
+  gdFontPtr fontPtr = NULL;
   imageObj      *image = NULL;
   outputFormatObj *format = NULL;
+  int iFreeGDFont = 0;
 
   if(map->units == -1) {
     msSetError(MS_MISCERR, "Map units not set.", "msDrawScalebar()");
     return(NULL);
   }
+/*
+ *  Allow scalebars to use TrueType fonts for labels (jnovak@novacell.com)
+ *
+ *  A string containing the ten decimal digits is rendered to compute an average cell size 
+ *  for each number, which is used later to place labels on the scalebar.
+ */
+  if( map->scalebar.label.type == MS_TRUETYPE )
+  {
+#ifdef USE_GD_FT
+	int bbox[8];
+    char *error	= NULL;
+    char *font	= NULL;
+    char szTestString[] = "0123456789";
 
-  fontPtr = msGetBitmapFont(map->scalebar.label.size);
+    fontPtr = (gdFontPtr) malloc( sizeof( gdFont ) );
+
+	if(!fontPtr) {
+      msSetError(MS_TTFERR, "fontPtr allocation failed.", "msDrawScalebar()");
+      return(NULL);
+    };
+
+    if(! map->fontset.filename ) {
+      msSetError(MS_TTFERR, "No fontset defined.", "msDrawScalebar()");
+	  free( fontPtr );
+      return(NULL);
+    }
+
+    if(! map->scalebar.label.font) {
+      msSetError(MS_TTFERR, "No TrueType font defined.", "msDrawScalebar()");
+	  free( fontPtr );
+      return(NULL);
+    }
+
+    font = msLookupHashTable(&(map->fontset.fonts), map->scalebar.label.font);
+    if(!font) {
+      msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawScalebar()", map->scalebar.label.font);
+	  free( fontPtr );
+      return(NULL);
+    }
+
+    error = gdImageStringFT( NULL, bbox, map->scalebar.label.outlinecolor.pen, font, map->scalebar.label.size, 0, 0, 0, szTestString );
+
+    if(error) {
+      msSetError(MS_TTFERR, "gdImageStringFT returned error %d.", "msDrawScalebar()", error );
+	  free( fontPtr );
+      return(NULL);
+    }
+
+	iFreeGDFont = 1;
+	fontPtr->w	= (bbox[2] - bbox[0]) / strlen( szTestString );
+	fontPtr->h  = (bbox[3] - bbox[5]);
+#else
+    msSetError(MS_TTFERR, "TrueType font support required.", "msDrawScalebar()");
+    return(NULL);
+#endif
+  }
+  else
+    fontPtr = msGetBitmapFont(map->scalebar.label.size);
+
   if(!fontPtr) return(NULL);
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
-  if(status != MS_SUCCESS) return(NULL);
-  
+  if(status != MS_SUCCESS)
+  { 	
+    if( iFreeGDFont ) free( fontPtr );
+	return(NULL);
+  }
   dsx = map->scalebar.width - 2*HMARGIN;
   do {
     msx = (map->cellsize * dsx)/(msInchesPerUnit(map->scalebar.units,0)/msInchesPerUnit(map->units,0));
@@ -229,6 +293,9 @@ imageObj *msDrawScalebar(mapObj *map)
     img = image->img.gd;
   else {
     msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
+	
+    if( iFreeGDFont ) free( fontPtr );
+
     return(NULL);
   }
 
@@ -309,10 +376,15 @@ imageObj *msDrawScalebar(mapObj *map)
   default:
     msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
     return(NULL);
+
+    if( iFreeGDFont ) free( fontPtr );
     break;
   }
 
   msClearScalebarPenValues( &(map->scalebar));
+
+  if( iFreeGDFont ) free( fontPtr );
+
   return(image);
 
 }
