@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.67  2006/08/26 14:53:38  hobu
+ * ensure that szCompare and szCompare2 are initialized before being used
+ *
  * Revision 1.66  2006/08/25 14:03:17  assefa
  * Generate ogc filters now outputs the ocg name space (bug 1863).
  *
@@ -4177,8 +4180,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
     char *pszAttributeName = NULL;
     char *pszAttributeValue = NULL;
     char cCompare = '=';
-    char szCompare[3];
-    char szCompare2[3];
+    char szCompare[3] = {0};
+    char szCompare2[3] = {0};
     int bOneCharCompare = -1, nTokens = 0, nLength =0;
     int iValue=0, i=0, iValueIndex =0;
     int bStartCopy=0, iAtt=0;
