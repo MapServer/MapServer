@@ -2684,8 +2684,8 @@ shapeObj Methods
 
 new shapeObj( int type ) : shapeObj
     Return a new shapeObj of the specified *type*.  See the type attribute
-    above.  Shapes created from this constructor contain 4 default values
-    initialized to empty strings "".
+    above. No attribute values created by default. initValues should be
+    explicitly called to create the required number of values.
 
 add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
@@ -2761,6 +2761,9 @@ getLength() : double
 
 getValue( int i ) : string
     Return the shape attribute at index *i*.
+    
+initValues( int numvalues ) : void
+    Allocates memory for the requested number of values.
 
 intersects( shapeObj shape ) : int
     Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
@@ -2884,6 +2887,9 @@ new styleObj( [ classObj_ parent_class ] ) : styleObj
 clone : styleObj
     Returns an independent copy of the style with no parent class.
 
+setSymbolByName(mapObj_ map, string symbolname) : int
+    Setting the symbol of the styleObj given the reference of the
+    map object and the symbol name. 
 
 -----------------------------------------------------------------------------
  symbolObj
