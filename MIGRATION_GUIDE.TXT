@@ -135,6 +135,26 @@ about a linear feature like a road, requires libgd 2.0.29 and TrueType
 font support.  Configure should autodetect if you have a sufficient 
 libgd and TrueType support to be able to use this feature.
 
+----------------------------------------------------
+GEOS
+----------------------------------------------------
 
+As of version 4.10, MapServer now uses the GEOS C API for doing 
+geometric algebra and predicate operations.  All of the operators 
+available to the GEOS C API are available in MapScript.  Some operators 
+are available through the MapServer CGI interface.  See the `SWIG MapScript`_ 
+for details.
+
+Multiple subsystems' use of the GEOS C API
+------------------------------------------
+
+It is important to note that both OGR and the Python Cartographic Library 
+(and possibly other applications linked to the GEOS C API within the same process) 
+also can (and often do) take advantage of the GEOS C API.  A bug in GEOS 
+2.2.2 and 2.2.3 will cause a segfault during teardown as a result of the 
+C API keeping its global GeometryFactory around and not properly 
+accounting for it.  GEOS 3.0 should do the right thing in this instance.
+
+.. _`SWIG MapScript`: http://mapserver.gis.umn.edu/docs/reference/mapscript
 .. _`bug 1803`: http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1549
 .. _`post to mapserver-users`: http://article.gmane.org/gmane.comp.gis.mapserver.user/17766
