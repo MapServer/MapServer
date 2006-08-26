@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.460  2006/08/26 17:25:05  frank
+ * added --disable-fast-nint, made ignore-missing off by default (bug 1716)
+ *
  * Revision 1.459  2006/08/18 02:09:22  dan
  * Updated for 4.10.0-beta1
  *
@@ -335,12 +338,15 @@ extern "C" {
 #define MS_ABS(a) (((a)<0) ? -(a) : (a))
 #define MS_SGN(a) (((a)<0) ? -1 : 1)
 
+#define MS_NINT_GENERIC(x) ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
+
 /* see http://mega-nerd.com/FPcast/ for some discussion of fast
    conversion to nearest int.  We avoid lrint() for now because it
    would be hard to include math.h "properly". */
 
-#if defined(WE_HAVE_THE_C99_LRINT)
+#if defined(WE_HAVE_THE_C99_LRINT) && !defined(USE_GENERIC_MS_NINT)
 #   define MS_NINT(x) lrint(x)
+//#   define MS_NINT(x) lround(x)
 #elif defined(_MSC_VER) && defined(_WIN32) && !defined(USE_GENERIC_MS_NINT)
     static __inline long int MS_NINT (double flt) 
     {	int intgr;
@@ -362,7 +368,7 @@ extern "C" {
         return __lrintres;
     }
 #else
-#  define MS_NINT(x)      ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
+#  define MS_NINT(x)      MS_NINT_GENERIC(x)
 #endif
 
 

@@ -42,6 +42,14 @@ IGNORE_MISSING_DATA = @IGNORE_MISSING_DATA@
 USE_POINT_Z_M = @USE_POINT_Z_M@
 
 #
+# If you want to use disable fast versions of NINT (used by default) then
+# define the following
+# It's OFF by default.
+#
+#USE_NINT=-DUSE_GENERIC_MS_NINT
+USE_NINT = @USE_NINT@
+
+#
 # Apparently these aren't as commonplace as I'd hoped. Edit the
 # following line to reflect the missing functions on your platform.
 #

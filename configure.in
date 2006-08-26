@@ -1776,14 +1776,13 @@ AC_SUBST(MS_INC, $MS_INC)
 AC_SUBST(MS_LIB, $MS_LIB)
 
 dnl ---------------------------------------------------------------------
-dnl Check IGNORE_MISSING_DATA option (ON by default)
+dnl Check IGNORE_MISSING_DATA option (OFF by default)
 dnl ---------------------------------------------------------------------
 
 AC_ARG_ENABLE(ignore-missing-data,
 [  --enable-ignore-missing-data   Ignore missing data file errors at runtime
-                                 (enabled by default).
-  --disable-ignore-missing-data  Report all missing data files.],,)
-if test "$enable_ignore_missing_data" != "no" ; then
+  --disable-ignore-missing-data  Report all missing data files (enabled by default).],,)
+if test "$enable_ignore_missing_data" = "yes" ; then
 
   IGNORE_MISSING_DATA="-DIGNORE_MISSING_DATA"
 
@@ -1807,6 +1806,26 @@ fi
 AC_SUBST(USE_POINT_Z_M, $USE_POINT_Z_M)
 ALL_ENABLED="$USE_POINT_Z_M $ALL_ENABLED"
 
+
+dnl ---------------------------------------------------------------------
+dnl Force use of slow (generic) MS_NINT macro.
+dnl ---------------------------------------------------------------------
+
+AC_ARG_ENABLE(point-z-m,
+[  --disable-fast-nint     Use safe MS_NINT with reliable rounding],,)
+
+if test "$enable_fast_nint" = "no" ; then
+
+  USE_NINT="-DUSE_GENERIC_MS_NINT"
+
+  AC_MSG_RESULT([Compiling with safe MS_NINT])
+else
+  USE_NINT=""
+
+  AC_MSG_RESULT([Compiling with fast MS_NINT])
+fi
+AC_SUBST(USE_NINT, $USE_NINT)
+ALL_ENABLED="$USE_NINT $ALL_ENABLED"
 
 dnl ---------------------------------------------------------------------
 dnl Check for warning flags. 
