@@ -109,5 +109,13 @@
         style->isachild = MS_FALSE;
         return style;
     }
-
+    
+    int setSymbolByName(mapObj *map, char* symbolname) 
+    {
+        self->symbol = msGetSymbolIndex(&map->symbolset, symbolname, MS_TRUE);
+        if (self->symbolname) free((char*)self->symbolname);
+        if (symbolname) self->symbolname = strdup(symbolname);
+        else self->symbolname = 0;
+        return self->symbol;
+	}
 }
