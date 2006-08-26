@@ -281,7 +281,30 @@ AC_DEFUN(AC_LD_SHARED,
   AC_SUBST(SO_COMMAND_NAME,$SO_COMMAND_NAME)
 ])
 
+dnl
+dnl PHP on OSX (and potentially other platforms) does not use the 
+dnl same options for creating a shared MapScript that Python 
+dnl and a normal 'make shared' need to use.  The only way around 
+dnl this is to use our normal LD_SHARED stuff for everything 
+dnl except MacOSX.
+dnl
 
+AC_DEFUN(AC_PHP_LD_SHARED,[
+
+
+  AC_LD_SHARED()
+  
+  dnl Test special MacOS (Darwin) case.
+  if test ! -z "`uname | grep Darwin`" ;then
+          PHP_LD_SHARED="${CXX} -bundle -flat_namespace -undefined suppress"
+  else
+	  PHP_LD_SHARED=$LD_SHARED
+  fi
+
+export PHP_LD_SHARED
+AC_SUBST(PHP_LD_SHARED,$PHP_LD_SHARED)
+
+])
 
 dnl
 dnl The following macro is actually based on the "setup" script that
