@@ -575,7 +575,7 @@ debug : int
 keyimage : string
     **TODO** Not sure what this attribute is for
 
-label : labelObj_
+label : labelObj_ immutable
     Definition of class labeling
 
 layer : layerObj_ immutable
@@ -876,8 +876,8 @@ write( [ FILE file=NULL ] ) : int
     Write image data to an open file descriptor or, by default, to *stdout*.
     Returns MS_SUCCESS or MS_FAILURE.
     
-.. note:: This method is current enabled for Python only.  User-contributed
-   typemaps are needed for Perl, Ruby, C#, and Java.
+.. note:: This method is current enabled for Python and C# only. C# supports writing onto a
+   Stream object. User-contributed typemaps are needed for Perl, Ruby, and Java.
 
 .. note:: The free() method of imageObj has been deprecated.  In MapServer
    revisions 4+ all instances of imageObj will be properly disposed of by
@@ -1091,7 +1091,7 @@ partials : int
     MS_TRUE (default) or MS_FALSE.  Whether or not labels can flow past
     the map edges.
     
-postion : int
+position : int
     MS_UL, MS_UC, MS_UR, MS_CL, MS_CC, MS_CR, MS_LL, MS_LC, MS_LR, or
     MS_AUTO.
 
