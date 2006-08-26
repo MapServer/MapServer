@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-beta2 (CVS)
 ---------------------------------
 
+- Added setSymbolByName to styleObj for the SWIG mapscript in order to 
+  set both the symbol and the symbolname members (bug 1835)
+
 - Generate ogc filters now outputs the ocg name space (bug 1863)
 
 - Don't return a WCS ref in WMS DescribeLayer responses when layer type is
