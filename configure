@@ -4398,9 +4398,9 @@ echo "${ECHO_T}        using libfreetype from $FT_LIB" >&6
 
 
 else
-    test -f $FT_DIR/lib/libfreetype.a -o -f $FT_DIR/lib/libfreetype.so -o -f $FT_DIR/lib/libfreetype.sl && FT_LIBDIR="$FT_DIR/lib"
+    test -f $FT_DIR/lib/libfreetype.a -o -f $FT_DIR/lib/libfreetype.so -o -f $FT_DIR/lib/libfreetype.sl -o -f $FT_DIR/lib/libfreetype.dylib && FT_LIBDIR="$FT_DIR/lib"
   test -f $FT_DIR/lib64/libfreetype.a -o -f $FT_DIR/lib64/libfreetype.so -o -f $FT_DIR/lib64/libfreetype.sl && FT_LIBDIR="$FT_DIR/lib64"
-  test -f $FT_DIR/libfreetype.a -o -f $FT_DIR/libfreetype.so -o -f $FT_DIR/libfreetype.sl && FT_LIBDIR="$FT_DIR"
+  test -f $FT_DIR/libfreetype.a -o -f $FT_DIR/libfreetype.so -o -f $FT_DIR/libfreetype.sl -o -f $FT_DIR/libfreetype.dylib && FT_LIBDIR="$FT_DIR"
 
   if test -n "$FT_LIBDIR" ; then
      FT_TYPE="-lfreetype"
@@ -4538,7 +4538,7 @@ ZLIB_LIB=''
 
 test -f $ZLIB_DIR/include/zlib.h && ZLIB_INCDIR="$ZLIB_DIR/include"
 
-test -f $ZLIB_DIR/lib/libz.a -o -f $ZLIB_DIR/lib/libz.so -o -f $ZLIB_DIR/lib/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib"
+test -f $ZLIB_DIR/lib/libz.a -o -f $ZLIB_DIR/lib/libz.so -o -f $ZLIB_DIR/lib/libz.sl -o -f $ZLIB_DIR/lib/libz.dylib && ZLIB_LIBDIR="$ZLIB_DIR/lib"
 test -f $ZLIB_DIR/lib64/libz.a -o -f $ZLIB_DIR/lib64/libz.so -o -f $ZLIB_DIR/lib64/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib64"
 test -f $ZLIB_DIR/libz.a -o -f $ZLIB_DIR/libz.so -o -f $ZLIB_DIR/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR"
 
@@ -4719,9 +4719,9 @@ fi;
 echo "$as_me: checking where PNG is installed..." >&6;}
 PNG_LIB=''
 
-test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl && PNG_LIBDIR="$PNG_DIR/lib"
-test -f $PNG_DIR/lib64/libpng.a -o -f $PNG_DIR/lib64/libpng.so -o -f $PNG_DIR/lib64/libpng.sl && PNG_LIBDIR="$PNG_DIR/lib64"
-test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl && PNG_LIBDIR="$PNG_DIR"
+test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib"
+test -f $PNG_DIR/lib64/libpng.a -o -f $PNG_DIR/lib64/libpng.so -o -f $PNG_DIR/lib64/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib64"
+test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR"
 
 if test -n "$PNG_LIBDIR" ; then
 
@@ -4863,9 +4863,9 @@ if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
   test -f $JPEG_DIR/lib64/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib64"
   test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
 
-  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl -o -f $JPEG_DIR/lib/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR/lib"
   test -f $JPEG_DIR/lib64/libjpeg.so -o -f $JPEG_DIR/lib64/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib64"
-  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR"
+  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl -o -f $JPEG_DIR/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR"
 
   if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then
       JPEG_ENABLED="-DUSE_JPEG"
@@ -5106,9 +5106,9 @@ if test "$with_xpm" != "no" ; then
 echo "$as_me: checking where libXpm is installed..." >&6;}
   XPM_LIB=''
 
-  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib"
+  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl -o -f $XPM_DIR/lib/libXpm.dylib && XPM_LIBDIR="$XPM_DIR/lib"
   test -f $XPM_DIR/lib64/libXpm.a -o -f $XPM_DIR/lib64/libXpm.so -o -f $XPM_DIR/lib64/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib64"
-  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl && XPM_LIBDIR="$XPM_DIR"
+  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl -o -f $XPM_DIR/libXpm.dylib && XPM_LIBDIR="$XPM_DIR"
 
   if test -n "$XPM_LIBDIR" ; then
 
@@ -5254,7 +5254,7 @@ if test -n "$ICONV_DIR" ; then
 
 
   test -f $ICONV_DIR/include/iconv.h && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
-  test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
+  test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl -o -f $ICONV_DIR/lib/libiconv.dylib && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
   test -f $ICONV_DIR/lib64/libiconv.a -o -f $ICONV_DIR/lib64/libiconv.so -o -f $ICONV_DIR/lib64/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib64" && ICONV_INCDIR="$ICONV_DIR/include"
 
             echo "$as_me:$LINENO: checking for iconv_open in -lc" >&5
@@ -5661,11 +5661,11 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
 
-  test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
   test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
-  test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl && GD_LIBDIR="$GD_DIR/.libs"
-  test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
-  test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
+  test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl -o -f $GD_DIR/.libs/libgd.dylib && GD_LIBDIR="$GD_DIR/.libs"
+  test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
+  test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
 
     echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
 echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
@@ -5851,7 +5851,7 @@ else
     test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
-    test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+    test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
 
         echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
@@ -7309,10 +7309,10 @@ elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
   test -f $PDF_DIR/libpdf/libpdf.a && PDF_LIBDIR="$PDF_DIR/libpdf"
   test -f $PDF_DIR/libpdf.a && PDF_LIBDIR="$PDF_DIR"
 
-  test -f $PDF_DIR/lib/libpdf.so -o -f $PDF_DIR/lib/libpdf.sl && PDF_LIBDIR="$PDF_DIR/lib"
+  test -f $PDF_DIR/lib/libpdf.so -o -f $PDF_DIR/lib/libpdf.sl -o -f $PDF_DIR/lib/libpdf.dylib && PDF_LIBDIR="$PDF_DIR/lib"
   test -f $PDF_DIR/lib64/libpdf.so -o -f $PDF_DIR/lib64/libpdf.sl && PDF_LIBDIR="$PDF_DIR/lib64"
-  test -f $PDF_DIR/libpdf/libpdf.so -o -f $PDF_DIR/libpdf/libpdf.sl && PDF_LIBDIR="$PDF_DIR/libpdf"
-  test -f $PDF_DIR/libpdf.so -o -f $PDF_DIR/libpdf.sl && PDF_LIBDIR="$PDF_DIR"
+  test -f $PDF_DIR/libpdf/libpdf.so -o -f $PDF_DIR/libpdf/libpdf.sl -o -f $PDF_DIR/libpdf/libpdf.dylib && PDF_LIBDIR="$PDF_DIR/libpdf"
+  test -f $PDF_DIR/libpdf.so -o -f $PDF_DIR/libpdf.sl -o -f $PDF_DIR/libpdf.dylib && PDF_LIBDIR="$PDF_DIR"
 
   if test -n "$PDF_INCLUDE" -a -n "$PDF_LIBDIR" ; then
 
@@ -7932,10 +7932,10 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   test -f $PROJ_DIR/lib64/libproj.a && PROJ_LIBDIR="$PROJ_DIR/lib64"
   test -f $PROJ_DIR/libproj.a && PROJ_LIBDIR="$PROJ_DIR"
 
-  test -f $PROJ_DIR/src/.libs/libproj.so -o -f $PROJ_DIR/src/.libs/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
-  test -f $PROJ_DIR/lib/libproj.so -o -f $PROJ_DIR/lib/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/lib"
+  test -f $PROJ_DIR/src/.libs/libproj.so -o -f $PROJ_DIR/src/.libs/libproj.sl -o -f $PROJ_DIR/src/.libs/libproj.dylib && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
+  test -f $PROJ_DIR/lib/libproj.so -o -f $PROJ_DIR/lib/libproj.sl -o -f $PROJ_DIR/lib/libproj.dylib && PROJ_LIBDIR="$PROJ_DIR/lib"
   test -f $PROJ_DIR/lib64/libproj.so -o -f $PROJ_DIR/lib64/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/lib64"
-  test -f $PROJ_DIR/libproj.so -o -f $PROJ_DIR/libproj.sl && PROJ_LIBDIR="$PROJ_DIR"
+  test -f $PROJ_DIR/libproj.so -o -f $PROJ_DIR/libproj.sl -o -f $PROJ_DIR/libproj.dylib && PROJ_LIBDIR="$PROJ_DIR"
 
   if test -n "$PROJ_INCLUDE" -a -n "$PROJ_LIBDIR" ; then
       PROJ_INC=-I$PROJ_INCLUDE
@@ -9099,10 +9099,10 @@ elif test -n "$with_tiff" -a "$with_tiff" != "yes" ; then
   test -f $TIFF_DIR/libtiff/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/libtiff"
   test -f $TIFF_DIR/libtiff.a && TIFF_LIBDIR="$TIFF_DIR"
 
-  test -f $TIFF_DIR/lib/libtiff.so -o $TIFF_DIR/lib/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/lib"
+  test -f $TIFF_DIR/lib/libtiff.so -o $TIFF_DIR/lib/libtiff.sl -o -f $TIFF_DIR/lib/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/lib"
   test -f $TIFF_DIR/lib64/libtiff.so -o $TIFF_DIR/lib64/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/lib64"
-  test -f $TIFF_DIR/libtiff/libtiff.so -o -f $TIFF_DIR/libtiff/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/libtiff"
-  test -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR"
+  test -f $TIFF_DIR/libtiff/libtiff.so -o -f $TIFF_DIR/libtiff/libtiff.sl -o -f $TIFF_DIR/libtiff/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/libtiff"
+  test -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl -o -f $TIFF_DIR/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR"
 
   if test -n "$TIFF_INCLUDE" -a -n "$TIFF_LIBDIR" ; then
 
