@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.461  2006/08/27 16:28:11  hobu
+ * remove mpatrol support (bug 1883).
+ *
  * Revision 1.460  2006/08/26 17:25:05  frank
  * added --disable-fast-nint, made ignore-missing off by default (bug 1716)
  *
@@ -202,11 +205,6 @@ typedef long ms_int32;
 typedef int ms_int32;
 #endif
     
-
-#ifdef USE_MPATROL
-#include "mpatrol.h"
-#endif
-
 #include "maperror.h"
 #include "mapprimitive.h"
 #include "mapshape.h"
