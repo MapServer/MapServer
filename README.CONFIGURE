@@ -62,7 +62,6 @@ Here is the list of available options as returned by "./configure --help":
   --with-threads[=linkopt]Include thread safe support
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).
-  --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir).
   --with-geos=PATH        Include GEOS support (PATH is path to geos-config)
   --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).
   --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)
@@ -523,8 +522,6 @@ Miscellaneous flags:
 --------------------
 
   --with-threads[=linkopt]Include thread safe support
-
-  --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir).
 
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).

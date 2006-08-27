@@ -8,13 +8,6 @@ INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
 
 #
-# mpatrol runtime memory debugger
-#
-MPATROL=  	@MPATROL_ENABLED@
-MPATROL_INC=	@MPATROL_INC@
-MPATROL_LIB=	@MPATROL_LIB@
-
-#
 # If you want to ignore missing datafile errors uncomment the following
 # line. This is especially useful with large tiled datasets that may not
 # have complete data for each tile.
@@ -177,16 +170,16 @@ RUNPATHS= @RPATHS@
 CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
         $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
 	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) $(GEOS) $(ICONV) \
-	$(POSTGIS) $(MYGIS) $(MPATROL) $(THREAD) $(GD_INC) $(PDF_INC) \
+	$(POSTGIS) $(MYGIS) $(THREAD) $(GD_INC) $(PDF_INC) \
 	$(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
-	$(REGEX_INC) $(MPATROL_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
+	$(REGEX_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) $(XML2_INC)
 
 # Link flags and shared libs only
 SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
-	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS) $(GEOS_LIB) $(ICONV_INC) $(XML2_INC)
+	  $(THREAD_LIB) $(XTRALIBS) $(GEOS_LIB) $(ICONV_INC) $(XML2_INC)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)
