@@ -251,9 +251,9 @@ if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
   test -f $JPEG_DIR/lib64/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib64"
   test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
 
-  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl -o -f $JPEG_DIR/lib/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR/lib"
   test -f $JPEG_DIR/lib64/libjpeg.so -o -f $JPEG_DIR/lib64/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib64"
-  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR"
+  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl -o -f $JPEG_DIR/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR"
 
   if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then
       JPEG_ENABLED="-DUSE_JPEG"
@@ -791,10 +791,10 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   test -f $PROJ_DIR/lib64/libproj.a && PROJ_LIBDIR="$PROJ_DIR/lib64"
   test -f $PROJ_DIR/libproj.a && PROJ_LIBDIR="$PROJ_DIR"
 
-  test -f $PROJ_DIR/src/.libs/libproj.so -o -f $PROJ_DIR/src/.libs/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
-  test -f $PROJ_DIR/lib/libproj.so -o -f $PROJ_DIR/lib/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/lib"
+  test -f $PROJ_DIR/src/.libs/libproj.so -o -f $PROJ_DIR/src/.libs/libproj.sl -o -f $PROJ_DIR/src/.libs/libproj.dylib && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
+  test -f $PROJ_DIR/lib/libproj.so -o -f $PROJ_DIR/lib/libproj.sl -o -f $PROJ_DIR/lib/libproj.dylib && PROJ_LIBDIR="$PROJ_DIR/lib"
   test -f $PROJ_DIR/lib64/libproj.so -o -f $PROJ_DIR/lib64/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/lib64"
-  test -f $PROJ_DIR/libproj.so -o -f $PROJ_DIR/libproj.sl && PROJ_LIBDIR="$PROJ_DIR"
+  test -f $PROJ_DIR/libproj.so -o -f $PROJ_DIR/libproj.sl -o -f $PROJ_DIR/libproj.dylib && PROJ_LIBDIR="$PROJ_DIR"
 
   if test -n "$PROJ_INCLUDE" -a -n "$PROJ_LIBDIR" ; then
       PROJ_INC=-I$PROJ_INCLUDE
