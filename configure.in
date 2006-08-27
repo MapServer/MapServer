@@ -323,9 +323,9 @@ if test "$with_xpm" != "no" ; then
   AC_CHECKING(where libXpm is installed)
   XPM_LIB=''
 
-  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib"
+  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl -o -f $XPM_DIR/lib/libXpm.dylib && XPM_LIBDIR="$XPM_DIR/lib"
   test -f $XPM_DIR/lib64/libXpm.a -o -f $XPM_DIR/lib64/libXpm.so -o -f $XPM_DIR/lib64/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib64"
-  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl && XPM_LIBDIR="$XPM_DIR"
+  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl -o -f $XPM_DIR/libXpm.dylib && XPM_LIBDIR="$XPM_DIR"
 
   if test -n "$XPM_LIBDIR" ; then
 
@@ -377,7 +377,7 @@ if test -n "$ICONV_DIR" ; then
   AC_EXPAND_PATH($ICONV_DIR, ICONV_DIR)
 
   test -f $ICONV_DIR/include/iconv.h && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
-  test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
+  test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl -o -f $ICONV_DIR/lib/libiconv.dylib && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
   test -f $ICONV_DIR/lib64/libiconv.a -o -f $ICONV_DIR/lib64/libiconv.so -o -f $ICONV_DIR/lib64/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib64" && ICONV_INCDIR="$ICONV_DIR/include"
 
   dnl If we have both the glibc and a local libiconv, then the local libiconv
