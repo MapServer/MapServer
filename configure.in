@@ -681,10 +681,10 @@ elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
   test -f $PDF_DIR/libpdf/libpdf.a && PDF_LIBDIR="$PDF_DIR/libpdf"
   test -f $PDF_DIR/libpdf.a && PDF_LIBDIR="$PDF_DIR"
 
-  test -f $PDF_DIR/lib/libpdf.so -o -f $PDF_DIR/lib/libpdf.sl && PDF_LIBDIR="$PDF_DIR/lib"
+  test -f $PDF_DIR/lib/libpdf.so -o -f $PDF_DIR/lib/libpdf.sl -o -f $PDF_DIR/lib/libpdf.dylib && PDF_LIBDIR="$PDF_DIR/lib"
   test -f $PDF_DIR/lib64/libpdf.so -o -f $PDF_DIR/lib64/libpdf.sl && PDF_LIBDIR="$PDF_DIR/lib64"
-  test -f $PDF_DIR/libpdf/libpdf.so -o -f $PDF_DIR/libpdf/libpdf.sl && PDF_LIBDIR="$PDF_DIR/libpdf"
-  test -f $PDF_DIR/libpdf.so -o -f $PDF_DIR/libpdf.sl && PDF_LIBDIR="$PDF_DIR"
+  test -f $PDF_DIR/libpdf/libpdf.so -o -f $PDF_DIR/libpdf/libpdf.sl -o -f $PDF_DIR/libpdf/libpdf.dylib && PDF_LIBDIR="$PDF_DIR/libpdf"
+  test -f $PDF_DIR/libpdf.so -o -f $PDF_DIR/libpdf.sl -o -f $PDF_DIR/libpdf.dylib && PDF_LIBDIR="$PDF_DIR"
 
   if test -n "$PDF_INCLUDE" -a -n "$PDF_LIBDIR" ; then
 
@@ -1152,10 +1152,10 @@ elif test -n "$with_tiff" -a "$with_tiff" != "yes" ; then
   test -f $TIFF_DIR/libtiff/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/libtiff"
   test -f $TIFF_DIR/libtiff.a && TIFF_LIBDIR="$TIFF_DIR"
 
-  test -f $TIFF_DIR/lib/libtiff.so -o $TIFF_DIR/lib/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/lib"
+  test -f $TIFF_DIR/lib/libtiff.so -o $TIFF_DIR/lib/libtiff.sl -o -f $TIFF_DIR/lib/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/lib"
   test -f $TIFF_DIR/lib64/libtiff.so -o $TIFF_DIR/lib64/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/lib64"
-  test -f $TIFF_DIR/libtiff/libtiff.so -o -f $TIFF_DIR/libtiff/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/libtiff"
-  test -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR"
+  test -f $TIFF_DIR/libtiff/libtiff.so -o -f $TIFF_DIR/libtiff/libtiff.sl -o -f $TIFF_DIR/libtiff/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/libtiff"
+  test -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl -o -f $TIFF_DIR/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR"
 
   if test -n "$TIFF_INCLUDE" -a -n "$TIFF_LIBDIR" ; then
 
