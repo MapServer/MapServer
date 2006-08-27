@@ -96,9 +96,9 @@ if test -n "$FT_BIN" ; then
 
 else
   dnl try freetype 2.x install lib name
-  test -f $FT_DIR/lib/libfreetype.a -o -f $FT_DIR/lib/libfreetype.so -o -f $FT_DIR/lib/libfreetype.sl && FT_LIBDIR="$FT_DIR/lib"
+  test -f $FT_DIR/lib/libfreetype.a -o -f $FT_DIR/lib/libfreetype.so -o -f $FT_DIR/lib/libfreetype.sl -o -f $FT_DIR/lib/libfreetype.dylib && FT_LIBDIR="$FT_DIR/lib"
   test -f $FT_DIR/lib64/libfreetype.a -o -f $FT_DIR/lib64/libfreetype.so -o -f $FT_DIR/lib64/libfreetype.sl && FT_LIBDIR="$FT_DIR/lib64"
-  test -f $FT_DIR/libfreetype.a -o -f $FT_DIR/libfreetype.so -o -f $FT_DIR/libfreetype.sl && FT_LIBDIR="$FT_DIR"
+  test -f $FT_DIR/libfreetype.a -o -f $FT_DIR/libfreetype.so -o -f $FT_DIR/libfreetype.sl -o -f $FT_DIR/libfreetype.dylib && FT_LIBDIR="$FT_DIR"
 
   if test -n "$FT_LIBDIR" ; then
      FT_TYPE="-lfreetype"  
@@ -138,7 +138,7 @@ ZLIB_LIB=''
 
 test -f $ZLIB_DIR/include/zlib.h && ZLIB_INCDIR="$ZLIB_DIR/include"
 
-test -f $ZLIB_DIR/lib/libz.a -o -f $ZLIB_DIR/lib/libz.so -o -f $ZLIB_DIR/lib/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib"
+test -f $ZLIB_DIR/lib/libz.a -o -f $ZLIB_DIR/lib/libz.so -o -f $ZLIB_DIR/lib/libz.sl -o -f $ZLIB_DIR/lib/libz.dylib && ZLIB_LIBDIR="$ZLIB_DIR/lib"
 test -f $ZLIB_DIR/lib64/libz.a -o -f $ZLIB_DIR/lib64/libz.so -o -f $ZLIB_DIR/lib64/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib64"
 test -f $ZLIB_DIR/libz.a -o -f $ZLIB_DIR/libz.so -o -f $ZLIB_DIR/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR"
 
@@ -205,9 +205,9 @@ AC_EXPAND_PATH($PNG_DIR, PNG_DIR)
 AC_CHECKING(where PNG is installed)
 PNG_LIB=''
 
-test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl && PNG_LIBDIR="$PNG_DIR/lib"
-test -f $PNG_DIR/lib64/libpng.a -o -f $PNG_DIR/lib64/libpng.so -o -f $PNG_DIR/lib64/libpng.sl && PNG_LIBDIR="$PNG_DIR/lib64"
-test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl && PNG_LIBDIR="$PNG_DIR"
+test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib"
+test -f $PNG_DIR/lib64/libpng.a -o -f $PNG_DIR/lib64/libpng.so -o -f $PNG_DIR/lib64/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib64"
+test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR"
 
 if test -n "$PNG_LIBDIR" ; then
 
