@@ -9511,8 +9511,8 @@ else
   echo "$as_me:$LINENO: result: yes, user supplied MING directory" >&5
 echo "${ECHO_T}yes, user supplied MING directory" >&6
   MING_ENABLED=-DUSE_MING_FLASH
-  MING_LIB="-L$with_ming -lming"
-  MING_INC="-I$with_ming"
+  MING_LIB="-L$with_ming/lib -lming"
+  MING_INC="-I$with_ming/include"
 fi
 
 MING_ENABLED=$MING_ENABLED

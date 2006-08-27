@@ -1358,8 +1358,8 @@ elif test "$with_ming" = "yes"; then
 else
   AC_MSG_RESULT([yes, user supplied MING directory])
   MING_ENABLED=-DUSE_MING_FLASH
-  MING_LIB="-L$with_ming -lming"
-  MING_INC="-I$with_ming"
+  MING_LIB="-L$with_ming/lib -lming"
+  MING_INC="-I$with_ming/include"
 fi
 
 AC_SUBST(MING_ENABLED,$MING_ENABLED)
