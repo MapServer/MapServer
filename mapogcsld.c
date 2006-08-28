@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.69  2006/08/28 21:43:30  assefa
+ * Add ifdefs around functions using ows functions.
+ *
  * Revision 1.68  2006/08/28 20:16:43  assefa
  * PointSymbolizer does not use outline color correctly (bug 1887).
  *
@@ -356,6 +359,8 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
 int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                   char *pszStyleLayerName)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+
 #ifdef USE_OGR
 
     int nLayers = 0;
@@ -519,6 +524,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     return(MS_FAILURE);
 
 #endif /* USE_OGR */
+
+#else
+    msSetError(MS_MISCERR, "OWS support is not available.", 
+               "msSLDGenerateSLDLayer()");
+    return(MS_FAILURE);
+#endif
 }
 
 
@@ -2877,8 +2888,11 @@ void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 /************************************************************************/
 char *msSLDGenerateSLD(mapObj *map, int iLayer)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
 #ifdef USE_OGR
+
+
     char szTmp[500];
     int i = 0;
     char *pszTmp = NULL;
@@ -2929,6 +2943,12 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
 
 #endif /* USE_OGR */
 
+#else
+    msSetError(MS_MISCERR, "OWS support is not available.", 
+               "msSLDGenerateSLDLayer()");
+    return NULL; 
+
+#endif
 }
 
 
@@ -3713,6 +3733,8 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
 /************************************************************************/
 char *msSLDGenerateSLDLayer(layerObj *psLayer)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+
 #ifdef USE_OGR
     char szTmp[100];
     int i, j;
@@ -3924,6 +3946,13 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     return NULL;
 
 #endif /* USE_OGR */
+
+
+#else
+    msSetError(MS_MISCERR, "OWS support is not available.", 
+               "msSLDGenerateSLDLayer()");
+    return NULL; 
+#endif
 }
 
 #ifdef USE_OGR
