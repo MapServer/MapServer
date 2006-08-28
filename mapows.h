@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.78  2006/08/28 21:16:21  assefa
+ * add flag USE_SOS_SVR as part of the flags enabling ows utility functions
+ * to be defined.
+ *
  * Revision 1.77  2006/08/23 18:28:00  dan
  * Use OWS_DEFAULT_SCHEMAS_LOCATION #define instead of hardcoded string (bug 1873)
  *
@@ -183,7 +187,7 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
  *====================================================================*/
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
