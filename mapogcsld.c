@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.68  2006/08/28 20:16:43  assefa
+ * PointSymbolizer does not use outline color correctly (bug 1887).
+ *
  * Revision 1.67  2006/08/26 14:53:38  hobu
  * ensure that szCompare and szCompare2 are initialized before being used
  *
@@ -1581,16 +1584,8 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                                     nLength = strlen(psColor);
                                     if (nLength == 7 && psColor[0] == '#')
                                     {
-                                        /* we should set the color for point layers since the */
-                                        /* outline color is not used when  */
-                                        /* rendering symbols */
-                                        if (bPointLayer)
-                                          msSLDSetColorObject(psColor,
-                                                           &psStyle->color);
-                                        else
-                                          msSLDSetColorObject(psColor,
-                                                              &psStyle->outlinecolor);
-                                        
+                                      msSLDSetColorObject(psColor,
+                                                          &psStyle->outlinecolor);
                                     }
                                 }
                                 break;
