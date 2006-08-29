@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/08/29 02:51:24  sdlime
+ * Applied patch supplied by Vilson Farias for extra commas with imagemap output (bug 770).
+ *
  * Revision 1.26  2006/02/18 21:24:42  hobu
  * strlen(img->img.imagemap) is a size_t on osx.  Cast to
  * int on os x.
@@ -1241,6 +1244,7 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 		    } else if (dxf){
 		      im_iprintf (&imgStr, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
 		    } else {
+				first = 1;
 		      char *title=(p->numvalues) ? p->values[0] : "";
 		      im_iprintf (&imgStr, "<area ");
 		      if (strcmp(polyHrefFmt,"%.s")!=0) {
@@ -1462,6 +1466,7 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
 		    } else if (dxf){
 		      im_iprintf (&imgStr, "  0\nPOLYLINE\n 73\n     1\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
 		    } else {
+				first = 1;
 		      char *title=(p->numvalues) ? p->values[0] : "";
 		      im_iprintf (&imgStr, "<area ");
 		      if (strcmp(polyHrefFmt,"%.s")!=0) {
