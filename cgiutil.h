@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17.4.2  2006/08/29 02:22:21  sdlime
+ * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. (bug 1885)
+ *
  * Revision 1.17.4.1  2006/03/19 17:58:13  tamas
  * Hiding items not to be exposed to the mapscript interface (bug 1660)
  *
@@ -54,7 +57,7 @@
 /*
 ** Misc. defines
 */
-#define MAX_PARAMS 10000
+#define MAX_PARAMS 100
 
 enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
 
