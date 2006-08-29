@@ -28,8 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.437.2.10  2006/08/29 02:22:21  sdlime
- * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. (bug 1885)
+ * Revision 1.437.2.11  2006/08/29 02:31:11  sdlime
+ * Got a bit overzealous with the commit for bug 1885.
  *
  * Revision 1.437.2.9  2006/07/13 01:53:49  dan
  * Update for 4.8.4 release
@@ -2099,9 +2099,7 @@ MS_DLL_EXPORT shapeObj *msGEOSShapeFromWKT(const char *string);
 MS_DLL_EXPORT char *msGEOSShapeToWKT(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
-MS_DLL_EXPORT shapeObj *msGEOSUnion(shapeObj *shape1, shapeObj *shape2);
-MS_DLL_EXPORT shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2);
-MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
+
 
 #endif
 
