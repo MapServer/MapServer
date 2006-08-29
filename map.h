@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.462  2006/08/29 02:57:18  dan
+ * Prepare for 4.10.0-beta2
+ *
  * Revision 1.461  2006/08/27 16:28:11  hobu
  * remove mpatrol support (bug 1883).
  *
@@ -245,7 +248,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.10.0-beta1"
+#define MS_VERSION "4.10.0-beta2"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.10.0-beta2 (CVS)
+Version 4.10.0-beta2 (2006-08-28)
 ---------------------------------
 
 - Set ./lib and ./include properly for MING support (bug 1866)
