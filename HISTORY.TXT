@@ -16,6 +16,11 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-beta2 (2006-08-28)
 ---------------------------------
 
+- Applied patch supplied by Vilson Farias for extra commas with imagemap
+  output (bug 760).
+
+- Fixed possible heap overflow with oversized POST requests (bug 1885)
+
 - Set ./lib and ./include properly for MING support (bug 1866)
 
 - More robust library checking on OSX (bug 1867)
