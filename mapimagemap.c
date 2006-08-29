@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/08/29 19:23:39  frank
+ * fixed syntax error in mapimagemap.c - affects vc++
+ *
  * Revision 1.27  2006/08/29 02:51:24  sdlime
  * Applied patch supplied by Vilson Farias for extra commas with imagemap output (bug 770).
  *
@@ -1244,8 +1247,10 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 		    } else if (dxf){
 		      im_iprintf (&imgStr, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
 		    } else {
-				first = 1;
-		      char *title=(p->numvalues) ? p->values[0] : "";
+                      char *title;
+
+                      first = 1;
+		      title=(p->numvalues) ? p->values[0] : "";
 		      im_iprintf (&imgStr, "<area ");
 		      if (strcmp(polyHrefFmt,"%.s")!=0) {
 			im_iprintf (&imgStr, "href=\"");
