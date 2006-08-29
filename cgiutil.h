@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/08/29 01:56:53  sdlime
+ * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
+ *
  * Revision 1.18  2006/02/22 05:04:34  sdlime
  * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
  *
@@ -54,7 +57,7 @@
 /*
 ** Misc. defines
 */
-#define MAX_PARAMS 10000
+#define MS_MAX_CGI_PARAMS 100
 
 enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
 

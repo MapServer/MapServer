@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.152  2006/08/29 01:56:53  sdlime
+ * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
+ *
  * Revision 1.151  2006/07/05 05:50:14  frank
  * avoid mapservobj leak in some error cases
  *
@@ -1184,8 +1187,8 @@ int main(int argc, char *argv[]) {
 /* -------------------------------------------------------------------- */
     msObj = msAllocMapServObj();
 
-    msObj->request->ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
-    msObj->request->ParamValues = (char **) malloc(MAX_PARAMS*sizeof(char*));
+    msObj->request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
+    msObj->request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
     if (msObj->request->ParamNames==NULL || msObj->request->ParamValues==NULL) {
 	msSetError(MS_MEMERR, NULL, "mapserv()");
 	writeError();

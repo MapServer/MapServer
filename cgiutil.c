@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/08/29 01:56:53  sdlime
+ * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
+ *
  * Revision 1.25  2006/05/08 20:28:43  frank
  * force stdin into binary mode when reading from stdin on win32 (bug 1768)
  *
@@ -152,29 +155,36 @@ int loadParams(cgiRequestObj *request){
 
     post_data = readPostBody( request );
     if(strcmp(request->contenttype, "application/x-www-form-urlencoded")) 
-        request->postrequest = post_data;
-    else 
-    {
-        int data_len = strlen(post_data);
-        while( data_len > 0 && isspace(post_data[data_len-1]) )
-            post_data[--data_len] = '\0';
+      request->postrequest = post_data;
+    else {
+      int data_len = strlen(post_data);
+      while( data_len > 0 && isspace(post_data[data_len-1]) )
+        post_data[--data_len] = '\0';
             
-        while( post_data[0] )
-        {
-            request->ParamValues[m] = makeword(post_data,'&');
-            plustospace(request->ParamValues[m]);
-            unescape_url(request->ParamValues[m]);
-            request->ParamNames[m] = makeword(request->ParamValues[m],'=');
-            m++;
+      while( post_data[0] ) {
+        if(m >= MS_MAX_CGI_PARAMS) {
+          msIO_printf("Too many name/value pairs, aborting.\n");
+	  exit(0);
         }
-        free( post_data );
+
+        request->ParamValues[m] = makeword(post_data,'&');
+        plustospace(request->ParamValues[m]);
+        unescape_url(request->ParamValues[m]);
+        request->ParamNames[m] = makeword(request->ParamValues[m],'=');
+        m++;
+      }
+      free( post_data );
     }
   
-    /*check the QUERY_STRING even in the post request since it can contain 
-      information. Eg a wfs request with  */
+    /* check the QUERY_STRING even in the post request since it can contain 
+       information. Eg a wfs request with  */
     s = getenv("QUERY_STRING");
-    if (s){
+    if(s) {
       for(x=0;s[0] != '\0';x++) {       
+        if(m >= MS_MAX_CGI_PARAMS) {
+          msIO_printf("Too many name/value pairs, aborting.\n");
+          exit(0);
+        }
         request->ParamValues[m] = makeword(s,'&');
         plustospace(request->ParamValues[m]);
         unescape_url(request->ParamValues[m]);
@@ -200,6 +210,10 @@ int loadParams(cgiRequestObj *request){
       }
 
       for(x=0;s[0] != '\0';x++) {       
+        if(m >= MS_MAX_CGI_PARAMS) {
+          msIO_printf("Too many name/value pairs, aborting.\n");
+          exit(0);
+        }
         request->ParamValues[m] = makeword(s,'&');
         plustospace(request->ParamValues[m]);
         unescape_url(request->ParamValues[m]);
@@ -217,6 +231,10 @@ int loadParams(cgiRequestObj *request){
   s = getenv("HTTP_COOKIE");
   if(s != NULL) {    
     for(x=0;s[0] != '\0';x++) {
+      if(m >= MS_MAX_CGI_PARAMS) {
+	msIO_printf("Too many name/value pairs, aborting.\n");
+	exit(0);
+      }
       request->ParamValues[m] = makeword(s,';');
       plustospace(request->ParamValues[m]);
       unescape_url(request->ParamValues[m]);

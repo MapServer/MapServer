@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.100  2006/08/29 01:56:53  sdlime
+ * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
+ *
  * Revision 1.99  2006/08/22 15:55:03  assefa
  * Adding geos functions to php mapscript (Bug 1327)
  *
@@ -1301,8 +1304,8 @@ cgiRequestObj *cgirequestObj_new()
     cgiRequestObj *request;
     request = msAllocCgiObj();
 
-    request->ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
-    request->ParamValues = (char **) malloc(MAX_PARAMS*sizeof(char*));
+    request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
+    request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
 
     return request;
 }
@@ -1318,8 +1321,8 @@ void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value)
 {
     int i;
         
-    if (self->NumParams == MAX_PARAMS) {
-      msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MAX_PARAMS);
+    if (self->NumParams == MS_MAX_CGI_PARAMS) {
+      msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MS_MAX_CGI_PARAMS);
     }
         
     for (i=0; i<self->NumParams; i++) {
