@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.136  2006/08/30 16:06:37  hobu
+ * northwest airlines sucks.  I fixed the libiconv warning on my Memphis->Greenland->Boston leg of my trip to Italy
+ *
  * Revision 1.135  2006/08/26 17:25:48  frank
  * use MS_NINT_GENERIC for symbol offset calculation (bug 1716)
  *
@@ -2890,7 +2893,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   status = -1;
 
   while (len > 0){
-    status = iconv(cd, &inp, &len, &outp, &bufleft);
+    status = iconv(cd, (const char**)&inp, &len, &outp, &bufleft);
     if(status == -1){
       msFree(in);
       msFree(out);
