@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.258  2006/08/30 21:19:01  assefa
+ * Remove debug statement in function loadparams.
+ *
  * Revision 1.257  2006/08/23 22:16:26  assefa
  * Add function  ms_iostripstdoutbuffercontenttype (bug 1790)
  *
@@ -14568,8 +14571,6 @@ DLEXPORT void php_ms_cgirequest_loadParams(INTERNAL_FUNCTION_PARAMETERS)
       cgirequestObj_loadParams(self);
      /* sync the class member*/ 
      _phpms_set_property_long(pThis,"numparams", self->NumParams, E_ERROR TSRMLS_CC); 
-
-     php_printf("ttt%d",  self->NumParams);
 
      RETURN_LONG(self->NumParams);
 }
