@@ -131,7 +131,7 @@ Currently supported classes, properties and methods:
       Fetch the current stdout buffer contents as a string.  This method 
       does not clear the buffer.
 
-    int msIO_getStdoutBufferBytes() 
+    int ms_iogetStdoutBufferBytes() 
        Writes the current buffer to stdout.  The PHP header() function should be 
        used to set the documents's content-type prior to calling the function.
        Returns the number of bytes written if output is sent to stdout.  
