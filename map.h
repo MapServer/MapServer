@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.463  2006/08/31 20:48:47  dan
+ * Fixed MapScript getExpressionString() that was failing on expressions
+ * longer that 256 chars (SWIG) and 512 chars (PHP). Also moved all that
+ * code to a msGetExpressionString() in mapfile.c (bug 1428)
+ *
  * Revision 1.462  2006/08/29 02:57:18  dan
  * Prepare for 4.10.0-beta2
  *
@@ -1376,6 +1381,7 @@ MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
 /* Use this next, thread safe wrapper, function everywhere else */
 MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
+MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 
 MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);
 

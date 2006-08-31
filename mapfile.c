@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.330  2006/08/31 20:48:47  dan
+ * Fixed MapScript getExpressionString() that was failing on expressions
+ * longer that 256 chars (SWIG) and 512 chars (PHP). Also moved all that
+ * code to a msGetExpressionString() in mapfile.c (bug 1428)
+ *
  * Revision 1.329  2006/08/31 06:32:26  sdlime
  * Cleaned up loadExpressionString a bit.
  *
@@ -1712,6 +1717,51 @@ int loadExpressionString(expressionObj *exp, char *value)
 
   return(0); 
 }
+
+
+/* msGetExpressionString()
+ *
+ * Returns the string representation of this expression, including delimiters
+ * and any flags (e.g. i = case-insensitive).
+ *
+ * Returns a newly allocated buffer that should be freed by the caller or NULL.
+ */
+char *msGetExpressionString(expressionObj *exp) 
+{
+
+  if (exp->string)
+  {
+      char *exprstring;
+      const char *case_insensitive = "";
+
+      if (exp->flags & MS_EXP_INSENSITIVE)
+          case_insensitive = "i";
+
+      /* Alloc buffer big enough for string + 2 delimiters + 'i' + \0 */
+      exprstring = (char*)malloc(strlen(exp->string)+4);
+
+      switch(exp->type)
+      {
+          case(MS_REGEX):
+            sprintf(exprstring, "/%s/%s", exp->string, case_insensitive);
+            return exprstring;
+          case(MS_STRING):
+            sprintf(exprstring, "\"%s\"%s", exp->string, case_insensitive);
+            return exprstring;
+          case(MS_EXPRESSION):
+            sprintf(exprstring, "(%s)", exp->string);
+            return exprstring;
+          default:
+            /* We should never get to here really! */
+            free(exprstring);
+            return NULL;
+      }
+    }
+    return NULL;
+}
+
+
+
 
 static void writeExpression(expressionObj *exp, FILE *stream)
 {

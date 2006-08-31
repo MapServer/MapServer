@@ -123,19 +123,7 @@
 
   %newobject getExpressionString;
   char *getExpressionString() {
-    char exprstring[256];
-    switch(self->expression.type) {
-    case(MS_REGEX):
-      snprintf(exprstring, 255, "/%s/", self->expression.string);
-      return strdup(exprstring);
-    case(MS_STRING):
-      snprintf(exprstring, 255, "\"%s\"", self->expression.string);
-      return strdup(exprstring);
-    case(MS_EXPRESSION):
-      snprintf(exprstring, 255, "(%s)", self->expression.string);
-      return strdup(exprstring);
-    }
-    return NULL;
+    return msGetExpressionString(&self->expression);
   }
 
   int setText(char *text) {

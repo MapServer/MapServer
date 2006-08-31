@@ -7,6 +7,11 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.101  2006/08/31 20:48:47  dan
+ * Fixed MapScript getExpressionString() that was failing on expressions
+ * longer that 256 chars (SWIG) and 512 chars (PHP). Also moved all that
+ * code to a msGetExpressionString() in mapfile.c (bug 1428)
+ *
  * Revision 1.100  2006/08/29 01:56:53  sdlime
  * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
  *
@@ -705,24 +710,8 @@ int classObj_setExpression(classObj *self, char *string) {
   }
 
 char *classObj_getExpressionString(classObj *self) {
-  char exprstring[512];
 
-  if (self->expression.string)
-  {
-      switch(self->expression.type)
-      {
-          case(MS_REGEX):
-            sprintf(exprstring, "/%s/", self->expression.string);
-            return strdup(exprstring);
-          case(MS_STRING):
-            sprintf(exprstring, "\"%s\"", self->expression.string);
-            return strdup(exprstring);
-          case(MS_EXPRESSION):
-            sprintf(exprstring, "(%s)", self->expression.string);
-            return strdup(exprstring);
-      }
-    }
-    return NULL;
+    return msGetExpressionString(&self->expression);
 }
 
 
