@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.259  2006/08/31 15:34:30  assefa
+ * Correct a problem with function ms_iogetStdoutBufferBytes (Bug 1790).
+ *
  * Revision 1.258  2006/08/30 21:19:01  assefa
  * Remove debug statement in function loadparams.
  *
@@ -6027,7 +6030,6 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     char        *pImagepath = NULL;
     char        *pBuf = NULL;
     HashTable   *list=NULL;
-
 
     pThis = getThis();
 
@@ -14815,8 +14817,9 @@ DLEXPORT void php_ms_IO_getStdoutBufferBytes(INTERNAL_FUNCTION_PARAMETERS)
     buf->data_len = 0;
     buf->data = NULL;
 
-    /*??TODO comment retouner gdbuf*/
-    RETURN_STRING(gdBuf.data, 1);
+    php_write(gdBuf.data, gdBuf.size TSRMLS_CC);
+
+    RETURN_LONG(buf->data_len);
 }
 
 DLEXPORT void php_ms_IO_stripStdoutBufferContentType(INTERNAL_FUNCTION_PARAMETERS)

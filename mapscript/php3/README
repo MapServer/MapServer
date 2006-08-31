@@ -131,6 +131,13 @@ Currently supported classes, properties and methods:
       Fetch the current stdout buffer contents as a string.  This method 
       does not clear the buffer.
 
+    int msIO_getStdoutBufferBytes() 
+       Writes the current buffer to stdout.  The PHP header() function should be 
+       used to set the documents's content-type prior to calling the function.
+       Returns the number of bytes written if output is sent to stdout.  
+       See http://mapserver.gis.umn.edu/docs/howto/wxs_mapscript/view for
+       more info.
+
    void ms_ioresethandlers()   
      Resets the default stdin and stdout handlers in place of "buffer" based
      handlers. 
