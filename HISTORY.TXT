@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-beta3
 --------------------
 
+- [WMSSLD] use Title of Rule if Name not present (bug 1889)
+
 - Fixed syntax error (for visual c++) in mapimagemap.c. 
 
 

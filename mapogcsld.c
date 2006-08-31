@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.70  2006/08/31 17:24:05  assefa
+ * use Title of Rule if Name not present (bug 1889).
+ *
  * Revision 1.69  2006/08/28 21:43:30  assefa
  * Add ifdefs around functions using ows functions.
  *
@@ -726,6 +729,8 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
             {
                 if (pszName)
                   psLayer->class[psLayer->numclasses-1-i].name = strdup(pszName);
+                else if (pszTitle)
+                  psLayer->class[psLayer->numclasses-1-i].name = strdup(pszTitle);
                 else
                   psLayer->class[psLayer->numclasses-1-i].name = strdup("Unknown");
             }
