@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.329  2006/08/31 06:32:26  sdlime
+ * Cleaned up loadExpressionString a bit.
+ *
  * Revision 1.328  2006/08/26 22:04:13  novak
  * Enable support for TrueType fonts (bug 1882)
  *
@@ -1683,30 +1686,22 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); /* we're totally replacing the old expression so free then init to start over */
   /* initExpression(exp); */
 
-  if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) == -1) {
-    msResetErrorList(); /* failure above is not really an error, so reset the stack */
-
-    exp->type = MS_STRING;
-    if((strlen(value) - strlen(msyytext)) == 2)
-      exp->string = strdup(msyytext); /* value was quoted */
-    else
-      exp->string = strdup(value); /* use the whole value */
-  } else
-    {
+  if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
     exp->string = strdup(msyytext);
 
-    if(exp->type == MS_ISTRING)
-    {
+    if(exp->type == MS_ISTRING) {
         exp->type = MS_STRING;
         exp->flags = exp->flags | MS_EXP_INSENSITIVE;
-    }
-    else if(exp->type == MS_IREGEX)
-    {
+    } else if(exp->type == MS_IREGEX) {
         exp->type = MS_REGEX;
         exp->flags = exp->flags | MS_EXP_INSENSITIVE;
     }
+  } else {
+    msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
+    exp->type = MS_STRING;
+    exp->string = strdup(value); /* use the whole value */
   }
-    
+
   /* if(exp->type == MS_REGEX) { */
   /* if(ms_regcomp(&(exp->regex), exp->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { // compile the expression  */
   /* sprintf(ms_error.message, "Parsing error near (%s):(line %d)", exp->string, msyylineno); */
