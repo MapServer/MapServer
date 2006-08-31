@@ -990,7 +990,28 @@ int msGEOSIntersects(shapeObj *shape1, shapeObj *shape2)
   result = GEOSIntersects(g1, g2);  
   return ((result==2) ? -1 : result);
 #else
-  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSIntersects()");
+  if(!shape1 || !shape2)
+    return -1;
+
+  switch(shape1->type) { /* todo: deal with point shapes */
+  case(MS_SHAPE_LINE):
+    switch(shape2->type) {
+    case(MS_SHAPE_LINE):
+      return msIntersectPolylines(shape1, shape2);
+    case(MS_SHAPE_POLYGON):
+      return msIntersectPolylinePolygon(shape1, shape2);
+    }
+    break;
+  case(MS_SHAPE_POLYGON):
+    switch(shape2->type) {
+    case(MS_SHAPE_LINE):
+      return msIntersectPolylinePolygon(shape2, shape1);
+    case(MS_SHAPE_POLYGON):
+      return msIntersectPolygons(shape1, shape2);
+    }
+    break;
+  }
+
   return -1;
 #endif
 }
@@ -1162,7 +1183,6 @@ double msGEOSDistance(shapeObj *shape1, shapeObj *shape2)
   result = GEOSDistance(g1, g2, &distance);  
   return ((result==0) ? -1 : distance);
 #else
-  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSDistance()");
-  return -1;
+  return msDistanceShapeToShape(shape1, shape2); /* fall back on brute force method (for MapScript) */
 #endif
 }

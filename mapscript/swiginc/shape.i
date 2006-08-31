@@ -146,9 +146,9 @@
 
     int contains(shapeObj *shape) { return msGEOSContains(self, shape); }
     int overlaps(shapeObj *shape) { return msGEOSOverlaps(self, shape); }
-    int within(shapeObj *shape) { return msGEOSWithin(self, shape); }    
+    int within(shapeObj *shape) { return msGEOSWithin(self, shape); }
     int crosses(shapeObj *shape) { return msGEOSCrosses(self, shape); }
-    /* int intersects(shapeObj *shape) { return msGEOSIntersects(self, shape); } */
+    int intersects(shapeObj *shape) { return msGEOSIntersects(self, shape); } /* if GEOS is not present an alternative computation is provided, see mapgeos.c */
     int touches(shapeObj *shape) { return msGEOSTouches(self, shape); }
     int equals(shapeObj *shape) { return msGEOSEquals(self, shape); }
     int disjoint(shapeObj *shape) { return msGEOSDisjoint(self, shape); }
@@ -174,46 +174,14 @@
 
     double distanceToPoint(pointObj *point) 
     {
-        return msDistancePointToShape(point, self);
+        return msDistancePointToShape(point, self); /* should there be a GEOS version of this? */
     }
 
     double distanceToShape(shapeObj *shape) 
     {
-#ifdef USE_GEOS
-	return msGEOSDistance(self, shape);
-#else
-        return msDistanceShapeToShape(self, shape);
-#endif
+	return msGEOSDistance(self, shape); /* note this calls msDistanceShapeToShape() if GEOS support is not present */
     }
 
-    int intersects(shapeObj *shape) 
-    {
-#ifdef USE_GEOS
-        return msGEOSIntersects(self, shape);
-#else
-        switch(self->type) {
-            case(MS_SHAPE_LINE):
-                switch(shape->type) {
-                    case(MS_SHAPE_LINE):
-	                    return msIntersectPolylines(self, shape);
-                    case(MS_SHAPE_POLYGON):
-	                    return msIntersectPolylinePolygon(self, shape);
-                }
-                break;
-            case(MS_SHAPE_POLYGON):
-                switch(shape->type) {
-                    case(MS_SHAPE_LINE):
-	                    return msIntersectPolylinePolygon(shape, self);
-                    case(MS_SHAPE_POLYGON):
-	                    return msIntersectPolygons(self, shape);
-                }
-                break;
-        }
-
-        return -1;
-#endif
-    }
-   
     int setValue(int i, char *value)
     {
         if (!self->values || !value)
