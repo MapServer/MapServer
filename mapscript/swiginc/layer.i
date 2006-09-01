@@ -334,7 +334,7 @@
     %newobject getFilterString;
     char *getFilterString() 
     {
-        return msLayerGetFilterString(self);
+        return msGetExpressionString(&(self->filter));
     }
 
     int setWKTProjection(char *wkt) 

@@ -123,7 +123,7 @@
 
   %newobject getExpressionString;
   char *getExpressionString() {
-    return msGetExpressionString(&self->expression);
+    return msGetExpressionString(&(self->expression));
   }
 
   int setText(char *text) {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.464  2006/09/01 02:30:15  sdlime
+ * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
+ *
  * Revision 1.463  2006/08/31 20:48:47  dan
  * Fixed MapScript getExpressionString() that was failing on expressions
  * longer that 256 chars (SWIG) and 512 chars (PHP). Also moved all that
@@ -1380,6 +1383,7 @@ MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
 MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
 /* Use this next, thread safe wrapper, function everywhere else */
 MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
+MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
 MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 

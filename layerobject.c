@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/09/01 02:30:15  sdlime
+ * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
+ *
  * Revision 1.10  2005/02/18 03:06:44  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -247,21 +250,3 @@ int msLayerSetExtent( layerObj *layer,
       
     return(MS_SUCCESS);
 }
-
-char *msLayerGetFilterString(layerObj *layer)
-{
-    char exprstring[256];
-    switch (layer->filter.type) {
-        case (MS_REGEX):
-            snprintf(exprstring, 255, "/%s/", layer->filter.string);
-            return strdup(exprstring);
-        case (MS_STRING):
-            snprintf(exprstring, 255, "\"%s\"", layer->filter.string);
-            return strdup(exprstring);
-        case (MS_EXPRESSION):
-            snprintf(exprstring, 255, "(%s)", layer->filter.string);
-            return strdup(exprstring);
-    }
-    return NULL;
-}
-

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.331  2006/09/01 02:30:15  sdlime
+ * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
+ *
  * Revision 1.330  2006/08/31 20:48:47  dan
  * Fixed MapScript getExpressionString() that was failing on expressions
  * longer that 256 chars (SWIG) and 512 chars (PHP). Also moved all that
@@ -1718,7 +1721,6 @@ int loadExpressionString(expressionObj *exp, char *value)
   return(0); 
 }
 
-
 /* msGetExpressionString()
  *
  * Returns the string representation of this expression, including delimiters
@@ -1759,9 +1761,6 @@ char *msGetExpressionString(expressionObj *exp)
     }
     return NULL;
 }
-
-
-
 
 static void writeExpression(expressionObj *exp, FILE *stream)
 {

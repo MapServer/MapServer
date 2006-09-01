@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.102  2006/09/01 02:30:15  sdlime
+ * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
+ *
  * Revision 1.101  2006/08/31 20:48:47  dan
  * Fixed MapScript getExpressionString() that was failing on expressions
  * longer that 256 chars (SWIG) and 512 chars (PHP). Also moved all that
@@ -591,7 +594,7 @@ int layerObj_setFilter(layerObj *self, char *string) {
   }
 
 char *layerObj_getFilter(layerObj *self) {
-    return msLayerGetFilterString(self);
+    return msGetExpressionString(&(self->filter));
   }
 
 int layerObj_setWKTProjection(layerObj *self, char *string) {
@@ -710,15 +713,12 @@ int classObj_setExpression(classObj *self, char *string) {
   }
 
 char *classObj_getExpressionString(classObj *self) {
-
-    return msGetExpressionString(&self->expression);
+    return msGetExpressionString(&(self->expression));
 }
-
-
 
 int classObj_setText(classObj *self, layerObj *layer, char *string) {
     return msLoadExpressionString(&self->text, string);
-  }
+}
 
 int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {
   msClearLayerPenValues(layer); // just in case the mapfile has already been processed
