@@ -136,19 +136,7 @@
 
   %newobject getTextString;
   char *getTextString() {
-    char exprstring[256];
-    switch(self->text.type) {
-    case(MS_REGEX):
-      snprintf(exprstring, 255, "/%s/", self->text.string);
-      return strdup(exprstring);
-    case(MS_STRING):
-      snprintf(exprstring, 255, "\"%s\"", self->text.string);
-      return strdup(exprstring);
-    case(MS_EXPRESSION):
-      snprintf(exprstring, 255, "(%s)", self->text.string);
-      return strdup(exprstring);
-    }
-    return NULL;
+    return msGetExpressionString(&(self->text));
   }
 
   char *getMetaData(char *name) {
