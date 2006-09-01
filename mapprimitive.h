@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/09/01 18:03:19  umberto
+ * Removed USE_GEOS defines, bug #1890
+ *
  * Revision 1.20  2006/06/27 06:53:08  sdlime
  * Excluded shapeObj geometry member from Swig wrapping.
  *
@@ -97,7 +100,7 @@ typedef struct {
   lineObj *line;
   char **values;
 
-#ifdef USE_GEOS
+#ifndef SWIG
   void *geometry;
 #endif
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2006/09/01 18:03:19  umberto
+ * Removed USE_GEOS defines, bug #1890
+ *
  * Revision 1.75  2006/08/17 04:32:16  sdlime
  * Disable path following labels unless GD 2.0.29 or greater is available.
  *
@@ -203,9 +206,7 @@ void msInitShape(shapeObj *shape)
   shape->values = NULL;
   shape->numvalues = 0;
 
-#ifdef USE_GEOS
   shape->geometry = NULL;
-#endif
 
   /* annotation component */
   shape->text = NULL;
@@ -243,9 +244,7 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
     to->numvalues = from->numvalues;
   }
 
-#ifdef USE_GEOS
   to->geometry = NULL; /* GEOS code will build automatically if necessary */
-#endif
 
   return(0);
 }
