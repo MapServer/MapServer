@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.100  2006/09/04 17:05:35  dan
+ * Added support for MULTIPOLYGON and MULTILINESTRING in msShapeFromWKT()
+ * when going through OGR (i.e. GEOS disabled) (bug 1891)
+ *
  * Revision 1.99  2006/06/01 20:49:21  dan
  * Enabled support for encrypted connection strings (MS-RFC-18, bug 1792)
  *
@@ -621,10 +625,10 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
         if (nType == wkbPoint)
             return ogrConvertGeometry((OGRGeometry *)hGeometry,
                                       psShape,  MS_LAYER_POINT);
-        else if (nType == wkbLineString)
+        else if (nType == wkbLineString || nType == wkbMultiLineString)
             return ogrConvertGeometry((OGRGeometry *)hGeometry,
                                       psShape,  MS_LAYER_LINE);
-        else if (nType == wkbPolygon)
+        else if (nType == wkbPolygon || nType == wkbMultiPolygon)
             return ogrConvertGeometry((OGRGeometry *)hGeometry,
                                       psShape,  MS_LAYER_POLYGON);
         else

@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-beta3
 --------------------
 
+- Added support for MULTIPOLYGON and MULTILINESTRING in msShapeFromWKT()
+  when going through OGR (i.e. GEOS disabled) (bug 1891)
+
 - Fixed MapScript getExpressionString() that was failing on expressions
   longer that 256 chars (SWIG) and 512 chars (PHP). (bug 1428)
 
