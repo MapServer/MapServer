@@ -15,10 +15,6 @@ $CPPFLAGS = make_inc + " -idirafter $(rubylibdir)/$(arch) " + make_define
 $LDFLAGS += " -fPIC"
 $LOCAL_LIBS += " -L../.. " + make_libs + " " + make_static_libs
 
-# variable overwritten this directories have to been included with '-idirafter' (not '-I')
-$topdir = "."
-$hdrdir = "."
-
 # if the source file 'mapscript_wrap.c' is missing nothing works
 # this is a workaround !!
 if !FileTest.exist?("mapscript_wrap.c")
@@ -26,16 +22,9 @@ if !FileTest.exist?("mapscript_wrap.c")
 	$objs.push("mapscript_wrap.o")
 end
 
-#cmake = find_executable('swig')
-#cmake &&= find_executable('make')
-#if cmake
-  create_makefile("mapscript")
-	make_file = File.open("Makefile", "a")
-	make_file << "mapscript_wrap.c: ../mapscript.i\n\tswig -ruby -o mapscript_wrap.c ../mapscript.i"
-	make_file.close
-	exit 0
-#end
+create_makefile("mapscript")
 
-#print "\nnot possible to execute the Makefile: the program swig is missing!\n"
-#exit 1
+make_file = File.open("Makefile", "a")
+make_file << "\nmapscript_wrap.c: ../mapscript.i\n\tswig -ruby -o mapscript_wrap.c ../mapscript.i"
+make_file.close
 
