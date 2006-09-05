@@ -1438,6 +1438,9 @@ getNumResults() : int
 
 getProcessing( int index) : string
     Return the raster processing directive at *index*.
+    
+getProjection( ) : string
+    Returns the PROJ.4 definition of the layer's projection.
 
 getResult( int i ) : resultCacheMemberObj_ 
     Fetches the requested query result cache entry, or NULL if the index is
@@ -1492,6 +1495,25 @@ moveClassUp( int class ) : int
     ex. moveClassUp(1) will have the effect of moving class 1
     up to postion 0, and the class at position 0 will be moved
     to position 1.
+
+nextShape( ) : shapeObj_
+    Called after msWhichShapes has been called to actually retrieve shapes 
+    within a given area returns a shape object or MS_FALSE
+    
+    example of usage :
+
+::
+
+           mapObj map = new mapObj("d:/msapps/gmap-ms40/htdocs/gmap75.map");
+           layerObj layer = map.getLayerByName('road');
+           int status = layer.open();
+           status = layer.whichShapes(map.extent);
+           shapeObj shape;
+           while ((shape = layer.nextShape()) != null) 
+           {
+             ...
+           }
+           layer.close();
 
 open() : void
     Opens the underlying layer.  This is required before operations like
@@ -1591,8 +1613,13 @@ setProjection( string proj4 ) : int
 
 setWKTProjection( string wkt ) : int
     Set the layer projection using OpenGIS Well Known Text format.  Returns
-    MS_SUCCESS or MS_FAILURE. 
+    MS_SUCCESS or MS_FAILURE.
 
+int whichShapes( rectObj_ rect ) : int
+    Performs a spatial, and optionally an attribute based feature search. 
+    The function basically prepares things so that candidate features can be 
+    accessed by query or drawing functions (eg using nextShape function).
+    Returns MS_SUCCESS or MS_FAILURE.
 
 -----------------------------------------------------------------------------
  legendObj
