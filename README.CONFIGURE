@@ -249,8 +249,10 @@ GEOS Support:
   --with-geos=PATH        Include GEOS support (PATH is path to geos-config)
 
   GEOS support is optional, and is not included by default.
+  MapServer requires GEOS version 2.2.2 or more recent.
 
   The GEOS library can be found at http://geos.refractions.net/
+
 
 
 OGR Support:
