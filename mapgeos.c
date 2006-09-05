@@ -333,9 +333,9 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
     point = GEOSGetGeometryN(g, i);
     coords = GEOSGeom_getCoordSeq(point);
 
-    GEOSCoordSeq_getX(coords, 0, &(shape->line[i].point[0].x));
-    GEOSCoordSeq_getY(coords, 0, &(shape->line[i].point[0].y));
-    /* GEOSCoordSeq_getZ(coords, 0, &(shape->line[i].point[0].z)); */
+    GEOSCoordSeq_getX(coords, 0, &(shape->line[0].point[i].x));
+    GEOSCoordSeq_getY(coords, 0, &(shape->line[0].point[i].y));
+    /* GEOSCoordSeq_getZ(coords, 0, &(shape->line[0].point[i].z)); */
   }
   
   return shape;
@@ -389,8 +389,6 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
   msInitShape(shape);
 
   shape->type = MS_SHAPE_LINE;
-  shape->line = (lineObj *) malloc(sizeof(lineObj)*numLines);
-  shape->numlines = numLines;
   shape->geometry = (GEOSGeom) g;
 
   for(j=0; j<numLines; j++) {
@@ -407,9 +405,7 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
       /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */  	
     }
 
-    msAddLine(shape, &line);
-
-    free(line.point);
+    msAddLineDirectly(shape, &line);
   }
 
   return shape;
@@ -466,9 +462,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
       GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
       /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
     }
-    msAddLine(shape, &line);
-
-    free(line.point);
+    msAddLineDirectly(shape, &line);
   }
 
   return shape;

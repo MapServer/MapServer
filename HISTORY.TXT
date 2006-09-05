@@ -29,6 +29,8 @@ Version 4.10.0-beta3
 
 - Fixed syntax error (for visual c++) in mapimagemap.c. 
 
+- Fixed mapgeos.c problems with multipoint and multilinestring WKT (bug 1897).
+
 
 Version 4.10.0-beta2 (2006-08-28)
 ---------------------------------
