@@ -202,3 +202,50 @@ MS_UNITS
 
 
 
+----------------------------------------------------
+OGC Web Mapping Service (WMS)
+----------------------------------------------------
+
+WMS GetFeatureInfo in text/plain format
+---------------------------------------
+
+Before MapServer 4.10, WMS GetFeatureInfo output in text/plain format 
+used to always return the values of *all* attributes for the selected
+shapes in a given layer and there was no way to control which attributes
+would be returned. This was a problem for WMS server administrators who
+needed to control the list of attributes to return or to hide some 
+attributes from the underlying dataset.
+
+Starting with MapServer 4.10, the behavior of text/plain GetFeatureInfo
+output has been brought in sync with that of GML output: by default 
+no attributes are returned unless the wms_include_items and 
+wms_exclude_items layer-level metadata are used. (See bug 1761)
+
+For more details see the gml_include_items and gml_exclude_items layer 
+object metadata docs in the WMS Server HOWTO at 
+http://mapserver.gis.umn.edu/docs/howto/wms_server/#layer-object-metadata
+
+The GML output is controlled with gml_include_items and gml_exclude_items.
+The text/plain output is controlled with wms_include_items and 
+wms_exclude_items.
+Both GML and text/plain can also be configured using a common pair of 
+ows_include_items and ows_exclude_items layer-level metadata entries.
+
+
+----------------------------------------------------
+OGC Web Feature Service (WFS)
+----------------------------------------------------
+
+
+Requirement for gml_featureid
+-----------------------------
+
+The WFS 1.0.0 specification states that the 'fid' attribute on GML features
+returned in response to a GetFeature is required (see bug 1759).
+
+Since MapServer 4.8 it was already possible to specify the attribute to 
+use as fid using the "gml_featureid" metadata, but that was not a requirement.
+
+MapServer 4.10 has been modified to produce a warning in the GetCapabilities
+and GetFeature output if the gml_featureid metadata is not set or if the
+item that it refers to doesn not exist in the layer (see bugs 1781 and 1782).
