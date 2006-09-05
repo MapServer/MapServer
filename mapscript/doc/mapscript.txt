@@ -1964,6 +1964,9 @@ getNextMetaDataKey( string lastkey ) : string
     Returns the next key in the web.metadata hash table or NULL if
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
+    
+getNumSymbols( ) : int
+    Return the number of symbols in map.
 
 getOutputFormatByName( string imagetype ) : outputFormatObj_
     Return the output format corresponding to driver name *imagetype* or
