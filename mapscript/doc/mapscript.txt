@@ -501,6 +501,11 @@ msCleanup() : void
   cleanup in scripts that need to do memory leak testing to get rid of "noise"
   one-time allocations.  It should not normally be used by production code. 
 
+msGetVersion() : string
+  Returns a string containing MapServer version information, and details on 
+  what optional components are built in.  The same report as produced by 
+  "mapserv -v".
+
 msIO_installStdoutToBuffer() : void
   Installs a mapserver IO handler directing future stdout output to a memory
   buffer. 
