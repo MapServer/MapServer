@@ -2162,6 +2162,35 @@ zoomScale( float scale, pointObj_ imgpoint, int width, int height, rectObj_ exte
 
 
 -----------------------------------------------------------------------------
+ markerCacheMemberObj
+-----------------------------------------------------------------------------
+
+An individual marker.  The markerCacheMemberObj class is associated
+with labelCacheObj.
+
+::
+
+    +------------------+ 0..*     1 +------------+
+    | MarkerCacheMember | <--------- | LabelCache |
+    +------------------+            +------------+
+    
+
+markerCacheMemberObj Attributes
+------------------------------
+
+id : int immutable
+    Id of the marker.
+
+poly : shapeObj_ immutable
+    Marker bounding box.
+
+markerCacheMemberObj Methods
+---------------------------
+
+None.
+
+
+-----------------------------------------------------------------------------
  outputFormatObj
 -----------------------------------------------------------------------------
 
