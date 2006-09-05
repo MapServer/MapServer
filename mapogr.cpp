@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.101  2006/09/05 15:32:38  frank
+ * added support for translating multipoint to ms shapes (bug 1891)
+ *
  * Revision 1.100  2006/09/04 17:05:35  dan
  * Added support for MULTIPOLYGON and MULTILINESTRING in msShapeFromWKT()
  * when going through OGR (i.e. GEOS disabled) (bug 1891)
@@ -622,7 +625,7 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
 {
     if (hGeometry && psShape && nType > 0)
     {
-        if (nType == wkbPoint)
+        if (nType == wkbPoint || nType == wkbMultiPoint )
             return ogrConvertGeometry((OGRGeometry *)hGeometry,
                                       psShape,  MS_LAYER_POINT);
         else if (nType == wkbLineString || nType == wkbMultiLineString)
