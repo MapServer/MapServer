@@ -2935,17 +2935,54 @@ a class.  Programmers should no longer directly access the styles attribute.
 styleObj Attributes
 -------------------
 
+angle : double
+    Angle, given in degrees, to draw the line work. Default is 0.
+    For symbols of Type HATCH, this is the angle of the hatched lines.
+
+angleitem : string
+    Attribute/field that stores the angle to be used in rendering.
+    Angle is given in degrees with 0 meaning no rotation.
+
+antialias : int
+    MS_TRUE or MS_FALSE. Should TrueType fonts and Cartoline symbols be antialiased.  
+
 backgroundcolor : colorObj_
     Background pen color.
 
 color : colorObj_
     Foreground or fill pen color.
 
+mincolor : colorObj_
+    Attribute for Color Range Mapping (RFC-6). mincolor, minvalue, maxcolor,
+    maxvalue define the range for mapping a continuous feature value to a continuous
+    range of colors when rendering the feature on the map.
+
 minsize : int
     Minimum pen or symbol width for scaling styles.
-    
+
+minvalue : double
+    Attribute for Color Range Mapping (RFC-6). mincolor, minvalue, maxcolor,
+    maxvalue define the range for mapping a continuous feature value to a continuous
+    range of colors when rendering the feature on the map.
+
+minwidth : int
+    Minimum width of the symbol.    
+
+maxcolor : colorObj_
+    Attribute for Color Range Mapping (RFC-6). mincolor, minvalue, maxcolor,
+    maxvalue define the range for mapping a continuous feature value to a continuous
+    range of colors when rendering the feature on the map.
+
 maxsize : int
     Maximum pen or symbol width for scaling.
+    
+maxvalue : double
+    Attribute for Color Range Mapping (RFC-6). mincolor, minvalue, maxcolor,
+    maxvalue define the range for mapping a continuous feature value to a continuous
+    range of colors when rendering the feature on the map.
+    
+maxwidth : int
+    Maximum width of the symbol.
     
 offsetx : int
     Draw with pen or symbol offset from map data.
@@ -2956,15 +2993,24 @@ offsety : int
 outlinecolor : colorObj_
     Outline pen color.
 
+rangeitem : string
+    Attribute/field that stores the values for the Color Range Mapping (RFC-6).
+
 size : int
     Pixel width of the style's pen or symbol.
+
+sizeitem : string
+    Attribute/field that stores the size to be used in rendering. Value is given in pixels.    
 
 symbol : int
     The index within the map symbolset of the style's symbol.
     
 symbolname : string immutable
     Name of the style's symbol.
-
+    
+width : int
+    Width refers to the thickness of line work drawn, in pixels. Default is 1.
+    For symbols of Type HATCH, the with is how thick the hatched lines are.
 
 styleObj Methods
 -----------------
