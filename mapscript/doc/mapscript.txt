@@ -525,7 +525,7 @@ msIO_getStdoutBufferString() : string
 msIO_getStdoutBufferBytes() : binary data
   Fetch the current stdout buffer contents as a binary buffer.  The exact
   form of this buffer will vary by mapscript language (eg. string in Python,
-  byte[] array in Java, unhandled in perl)
+  byte[] array in Java and C#, unhandled in perl)
 
 msIO_stripStdoutBufferContentType() : string
   Strip the Content-type header off the stdout buffer if it has one, and
@@ -872,6 +872,11 @@ new imageObj( int width, int height [, outputFormatObj_ format=NULL [, string fi
     *filename*.  Otherwise, if *format* is specified an imageObj is created
     using that format.  See the *format* attribute above for details.  If
     *filename* is not specified, then *width* and *height* should be specified.
+    
+getBytes() : binary data
+    Returns the image contents as a binary buffer.  The exact
+    form of this buffer will vary by mapscript language (eg. string in Python,
+    byte[] array in Java and C#, unhandled in perl)
 
 save( string filename [, mapObj_ parent_map=NULL ] ) : int
     Save image to *filename*.  The optional *parent_map* parameter must be
