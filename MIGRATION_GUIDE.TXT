@@ -248,4 +248,4 @@ use as fid using the "gml_featureid" metadata, but that was not a requirement.
 
 MapServer 4.10 has been modified to produce a warning in the GetCapabilities
 and GetFeature output if the gml_featureid metadata is not set or if the
-item that it refers to doesn not exist in the layer (see bugs 1781 and 1782).
+item that it refers to does not exist in the layer (see bugs 1781 and 1782).
