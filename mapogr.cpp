@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.102  2006/09/05 20:39:07  frank
+ * added support for multipoint and multiline to wkt translation (bug 1618)
+ *
  * Revision 1.101  2006/09/05 15:32:38  frank
  * added support for translating multipoint to ms shapes (bug 1891)
  *
@@ -2503,6 +2506,28 @@ char *msOGRShapeToWKT(shapeObj *shape)
                         0.0 );
 #endif
     }
+    else if( shape->type == MS_SHAPE_POINT && shape->numlines == 1 
+             && shape->line[0].numpoints > 1 )
+    {
+        hGeom = OGR_G_CreateGeometry( wkbMultiPoint );
+        for( i = 0; i < shape->line[0].numpoints; i++ )
+        {
+            OGRGeometryH hPoint;
+            
+            hPoint = OGR_G_CreateGeometry( wkbPoint );
+#if GDAL_VERSION_NUM >= 1310
+            OGR_G_SetPoint_2D( hPoint, 0, 
+                               shape->line[0].point[i].x, 
+                               shape->line[0].point[i].y );
+#else
+            OGR_G_SetPoint( hPoint, 0, 
+                            shape->line[0].point[i].x, 
+                            shape->line[0].point[i].y,
+                            0.0 );
+#endif
+            OGR_G_AddGeometryDirectly( hGeom, hPoint );
+        }
+    }
     else if( shape->type == MS_SHAPE_LINE && shape->numlines == 1 )
     {
         hGeom = OGR_G_CreateGeometry( wkbLineString );
@@ -2519,6 +2544,33 @@ char *msOGRShapeToWKT(shapeObj *shape)
                             0.0 );
 #endif
         }
+    }
+    else if( shape->type == MS_SHAPE_LINE && shape->numlines > 1 )
+    {
+        OGRGeometryH hMultiLine = OGR_G_CreateGeometry( wkbMultiLineString );
+        int iLine;
+
+        for( iLine = 0; iLine < shape->numlines; iLine++ )
+        {
+            hGeom = OGR_G_CreateGeometry( wkbLineString );
+            for( i = 0; i < shape->line[iLine].numpoints; i++ )
+            {
+#if GDAL_VERSION_NUM >= 1310
+                OGR_G_AddPoint_2D( hGeom, 
+                                   shape->line[iLine].point[i].x, 
+                                   shape->line[iLine].point[i].y );
+#else
+                OGR_G_AddPoint( hGeom, 
+                            shape->line[iLine].point[i].x, 
+                            shape->line[iLine].point[i].y,
+                            0.0 );
+#endif
+            }
+
+            OGR_G_AddGeometryDirectly( hMultiLine, hGeom );
+        }
+
+        hGeom = hMultiLine;
     }
     else if( shape->type == MS_SHAPE_POLYGON )
     {

@@ -31,6 +31,9 @@ Version 4.10.0-beta3
 
 - Fixed mapgeos.c problems with multipoint and multilinestring WKT (bug 1897).
 
+- Implemented translation via OGR to WKT for multipoint, multiline and
+  multipolygon (bug 1618)
+
 
 Version 4.10.0-beta2 (2006-08-28)
 ---------------------------------
