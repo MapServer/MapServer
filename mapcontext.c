@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.78  2006/09/05 13:49:42  julien
+ * WMC true/false bool and use format when formatlist not avail. bug 1723,1692
+ *
  * Revision 1.77  2006/06/15 14:58:24  julien
  * Add SLD xsd and 1.1.0 reference in the root element
  *
@@ -657,7 +660,7 @@ int msLoadMapContextLayerFormat(CPLXMLNode *psFormat, layerObj *layer)
       pszValue1 = (char*)CPLGetXMLValue(psFormat, 
                                         "current", NULL);
       if(pszValue1 != NULL && 
-         (strcasecmp(pszValue1, "1") == 0))
+         (strcasecmp(pszValue1, "1") == 0 || strcasecmp(pszValue1, "true")==0))
           msInsertHashTable(&(layer->metadata), 
                             "wms_format", pszValue);
       /* wms_formatlist */
@@ -756,7 +759,8 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   /* wms_style */
   pszValue = (char*)CPLGetXMLValue(psStyle,"current",NULL);
   if(pszValue != NULL && 
-     (strcasecmp(pszValue, "1") == 0))
+     (strcasecmp(pszValue, "1") == 0 || 
+      strcasecmp(pszValue, "true") == 0))
       msInsertHashTable(&(layer->metadata), 
                         "wms_style", pszStyleName);
   /* wms_stylelist */
@@ -894,7 +898,8 @@ int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
 
   /* wms_dimension: This is the current dimension */
   pszValue = (char*)CPLGetXMLValue(psDimension, "current", NULL);
-  if(pszValue != NULL && (strcasecmp(pszValue, "1") == 0))
+  if(pszValue != NULL && (strcasecmp(pszValue, "1") == 0 || 
+                          strcasecmp(pszValue, "true") == 0))
       msInsertHashTable(&(layer->metadata), 
                         "wms_dimension", pszDimensionName);
   /* wms_dimensionlist */
@@ -1149,14 +1154,16 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   
   /* Status */
   pszValue = (char*)CPLGetXMLValue(psLayer, "hidden", "1");
-  if((pszValue != NULL) && (atoi(pszValue) == 0))
+  if((pszValue != NULL) && (atoi(pszValue) == 0 && 
+                            !strcasecmp(pszValue, "true") == 0))
       layer->status = MS_ON;
   else
       layer->status = MS_OFF;
 
   /* Queryable */
   pszValue = (char*)CPLGetXMLValue(psLayer, "queryable", "0");
-  if(pszValue !=NULL && atoi(pszValue) == 1)
+  if(pszValue !=NULL && (atoi(pszValue) == 1  || 
+                         strcasecmp(pszValue, "true") == 0))
       layer->template = strdup("ttt");
 
   /* Name and Title */
@@ -2036,7 +2043,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           }
 
           /* Format */
-          if(msLookupHashTable(&(map->layers[i].metadata),"wms_formatlist")==NULL)
+          if(msLookupHashTable(&(map->layers[i].metadata),"wms_formatlist")==NULL && 
+             msLookupHashTable(&(map->layers[i].metadata),"wms_format")==NULL)
           {
               pszURL = NULL;
               if(map->layers[i].connection)
@@ -2070,6 +2078,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
               pszValue = msLookupHashTable(&(map->layers[i].metadata), 
                                            "wms_formatlist");
+              if(!pszValue)
+                  pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+                                               "wms_format");
               pszCurrent = msLookupHashTable(&(map->layers[i].metadata), 
                                              "wms_format");
 
