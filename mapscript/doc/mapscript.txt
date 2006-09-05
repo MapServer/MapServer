@@ -1046,6 +1046,10 @@ antialias : int
 
 autoangle : int
     MS_TRUE or MS_FALSE
+    
+autofollow : int
+    MS_TRUE or MS_FALSE. Tells mapserver to compute a curved label
+    for appropriate linear features (see RFC 11 for specifics).   
 
 autominfeaturesize: int
     MS_TRUE or MS_FALSE
@@ -1068,7 +1072,17 @@ buffer : int
 
 color : colorObj_
     Foreground color.
-
+    
+encoding : string
+    Supported encoding format to be used for labels.
+    If the format is not supported, the label will not be drawn.
+    Requires the iconv library (present on most systems).
+    The library is always detected if present on the system,
+    but if not the label will not be drawn.
+    Required for displaying international characters in MapServer.
+    More information can be found at:
+    http://www.foss4g.org/FOSS4G/MAPSERVER/mpsnf-i18n-en.html.
+    
 font : string
     Name of TrueType font.
 
