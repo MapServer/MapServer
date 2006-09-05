@@ -1832,6 +1832,12 @@ outputformat : outputFormatObj_
 
 .. note:: Map outputformat should not be modified directly.  Use the
           selectOutputFormat() method to select named formats.
+          
+outputformatlist : outputFormatObj[]
+    Array of the available output formats.
+
+.. note:: Currently only available for C#. A proper typemaps should be
+          implemented for the other languages.
    
 querymap : queryMapObj immutable
     **TODO** should this be exposed to mapscript?
