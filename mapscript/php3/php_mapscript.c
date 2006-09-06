@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.260  2006/09/06 16:42:36  dan
+ * Removed unused variable in php_ms_IO_getStdoutBufferBytes()
+ *
  * Revision 1.259  2006/08/31 15:34:30  assefa
  * Correct a problem with function ms_iogetStdoutBufferBytes (Bug 1790).
  *
@@ -14797,7 +14800,6 @@ DLEXPORT void php_ms_IO_getStdoutBufferBytes(INTERNAL_FUNCTION_PARAMETERS)
     msIOContext *ctx = msIO_getHandler(stdout);
     msIOBuffer  *buf;
     gdBuffer     gdBuf;
-    char        *buffer = NULL;
 
     if( ctx == NULL || ctx->write_channel == MS_FALSE 
         || strcmp(ctx->label,"buffer") != 0 )
