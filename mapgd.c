@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.137  2006/09/06 05:51:35  sdlime
+ * Applied Bart's quick fix for bug 1776. Real fix is addressed by rounding width and height before calling createBrush. However, that might still be an issue due to the rounding issues mentioned in that bug. This is a safe alternative for now.
+ *
  * Revision 1.136  2006/08/30 16:06:37  hobu
  * northwest airlines sucks.  I fixed the libiconv warning on my Memphis->Greenland->Boston leg of my trip to Italy
  *
@@ -572,6 +575,9 @@ static gdImagePtr createFuzzyBrush(int size, int r, int g, int b)
 static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
 {
   gdImagePtr brush;
+
+  if(width == 0) width = 1; /* quick fix for bug 1776, should really handle with rounding when calling this function */
+  if(height == 0) height = 1;
 
   if(!gdImageTrueColor(img)) {
     brush = gdImageCreate(width, height);
