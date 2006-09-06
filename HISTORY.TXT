@@ -12,8 +12,9 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.10.0-beta3
---------------------
+
+Version 4.10.0-beta3 (2006-09-06)
+---------------------------------
 
 - Web Map Context use format metadata when formatlist not available. (bug 1723)
 

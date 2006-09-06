@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.465  2006/09/06 21:50:36  dan
+ * Update for 4.10.0-beta3
+ *
  * Revision 1.464  2006/09/01 02:30:15  sdlime
  * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
  *
@@ -256,7 +259,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.10.0-beta2"
+#define MS_VERSION "4.10.0-beta3"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
