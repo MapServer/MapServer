@@ -441,9 +441,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
     GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
     /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */    
   }
-  msAddLine(shape, &line);
-
-  free(line.point);
+  msAddLineDirectly(shape, &line);
 
   /* interior rings */
   numRings = GEOSGetNumInteriorRings(g);
@@ -502,10 +500,8 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
       GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
       /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
     }
-    msAddLine(shape, &line);
+    msAddLineDirectly(shape, &line);
     
-    free(line.point);
-
     /* interior rings */
     numRings = GEOSGetNumInteriorRings(polygon);
 
@@ -516,17 +512,15 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
       numPoints = GEOSGetNumCoordinates(ring);
       coords = GEOSGeom_getCoordSeq(ring);	  
 
-  	  line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
-	  line.numpoints = numPoints;
+      line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
+      line.numpoints = numPoints;
 
-	  for(i=0; i<numPoints; i++) {
-	    GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
+      for(i=0; i<numPoints; i++) {
+	GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
         GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
         /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
-	  }
-	  msAddLine(shape, &line);	  
-	  
-	  free(line.point);
+      }
+      msAddLineDirectly(shape, &line);	  
     }
   } /* next polygon */
 
