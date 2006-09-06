@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2006/09/06 05:26:18  sdlime
+ * Fixed a bug with curved labels where character advance array was not being gdFree'd. (bug 1899)
+ *
  * Revision 1.85  2006/08/17 04:32:16  sdlime
  * Disable path following labels unless GD 2.0.29 or greater is available.
  *
@@ -437,6 +440,8 @@ int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *f
       if ( *s == ' ' )
         s++;
     }
+
+    gdFree(strex.xshow); /* done with character advances */
 
     rect->minx = bbox[0];
     rect->miny = bbox[5];
