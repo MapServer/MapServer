@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.87  2006/09/06 17:26:24  sdlime
+ * Removed advertising GML3 support in WFS 1.0.0 getCapabilities output.
+ *
  * Revision 1.86  2006/08/22 04:45:06  sdlime
  * Fixed a bug that did not allow for seperate metadata namespaces to be used for WMS vs. WFS for GML transformations (e.g. WFS_GEOMETRIES, WMS_GEOMETRIES).
  *
@@ -447,10 +450,13 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   msIO_printf("  <Request>\n");
   msWFSPrintRequestCap(wmtver, "GetCapabilities", script_url_encoded, 
                        NULL, NULL);
-  msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, 
-                       "SchemaDescriptionLanguage", "XMLSCHEMA", "SFE_XMLSCHEMA", NULL);
-  msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, 
-                       "ResultFormat", "GML2", "GML3", NULL);
+  /* msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA", "SFE_XMLSCHEMA", NULL); */
+  /* msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", "GML2", "GML3", NULL); */
+
+  /* don't advertise the GML3 or GML for SFE support */
+  msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA", NULL);
+  msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", "GML2", NULL);
+
   msIO_printf("  </Request>\n");
   msIO_printf("</Capability>\n\n");
 
