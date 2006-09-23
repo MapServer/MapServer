@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.466  2006/09/23 15:23:34  frank
+ * Avoid c++ style comments.
+ *
  * Revision 1.465  2006/09/06 21:50:36  dan
  * Update for 4.10.0-beta3
  *
@@ -358,7 +361,7 @@ extern "C" {
 
 #if defined(WE_HAVE_THE_C99_LRINT) && !defined(USE_GENERIC_MS_NINT)
 #   define MS_NINT(x) lrint(x)
-//#   define MS_NINT(x) lround(x)
+/*#   define MS_NINT(x) lround(x) */
 #elif defined(_MSC_VER) && defined(_WIN32) && !defined(USE_GENERIC_MS_NINT)
     static __inline long int MS_NINT (double flt) 
     {	int intgr;
