@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/09/23 16:00:51  frank
+ * Fixed computation of geotransform to match BBOX (to edges of image) not
+ * map.extent (to center of edge pixels).  (bug 1916)
+ *
  * Revision 1.25  2006/08/03 00:22:00  sdlime
  * Fixed problem where insertLayer does not set the layer index properly if the layer is inserted between existing layers. (bug 1838)
  *
@@ -366,10 +370,15 @@ int msMapComputeGeotransform( mapObj * map )
     center_x = map->extent.minx + geo_width*0.5;
     center_y = map->extent.miny + geo_height*0.5;
 
+    /*
+    ** Per bug 1916 we have to adjust for the fact that map extents
+    ** are based on the center of the edge pixels, not the outer
+    ** edges as is expected in a geotransform.
+    */
     map->gt.geotransform[1] = 
-        cos(rot_angle) * geo_width / map->width;
+        cos(rot_angle) * geo_width / (map->width-1);
     map->gt.geotransform[2] = 
-        sin(rot_angle) * geo_height / map->height;
+        sin(rot_angle) * geo_height / (map->height-1);
     map->gt.geotransform[0] = center_x 
         - (map->width * 0.5) * map->gt.geotransform[1]
         - (map->height * 0.5) * map->gt.geotransform[2];
