@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.137  2006/09/24 02:42:12  frank
+ * handle upsidedown images through resample logic. (bug 1904)
+ *
  * Revision 1.136  2006/04/18 17:20:37  frank
  * Support large (>2GB) raster files relative to SHAPEPATH. (bug 1748)
  *
@@ -1582,10 +1585,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
             /* 
             ** We want to resample if the source image is rotated, if
             ** the projections differ or if resampling has been explicitly
-            ** requested.
+            ** requested, or if the image has north-down instead of north-up.
             */
 #ifdef USE_PROJ
-            if( ((adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0)
+            if( ((adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0
+                  || adfGeoTransform[5] > 0.0 || adfGeoTransform[1] < 0.0 )
                  && layer->transform )
                 || msProjectionsDiffer( &(map->projection), 
                                         &(layer->projection) ) 

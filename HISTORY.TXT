@@ -19,6 +19,8 @@ Version 4.10.0-RC1 (?)
 - Fixed computation of geotransform to match BBOX (to edges of image) not
   map.extent (to center of edge pixels).  (bug 1916)
 
+- mapraster.c: Use msResampleGDALToMap() for "upside down" images. (bug 1904)
+
 
 Version 4.10.0-beta3 (2006-09-06)
 ---------------------------------
