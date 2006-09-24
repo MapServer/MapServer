@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/09/24 03:31:35  frank
+ * Same as last fix, but for y dimension, instead of just x.
+ *
  * Revision 1.26  2006/09/23 16:00:51  frank
  * Fixed computation of geotransform to match BBOX (to edges of image) not
  * map.extent (to center of edge pixels).  (bug 1916)
@@ -384,9 +387,9 @@ int msMapComputeGeotransform( mapObj * map )
         - (map->height * 0.5) * map->gt.geotransform[2];
 
     map->gt.geotransform[4] = 
-        sin(rot_angle) * geo_width / map->width;
+        sin(rot_angle) * geo_width / (map->width-1);
     map->gt.geotransform[5] = 
-        - cos(rot_angle) * geo_height / map->height;
+        - cos(rot_angle) * geo_height / (map->height-1);
     map->gt.geotransform[3] = center_y 
         - (map->width * 0.5) * map->gt.geotransform[4]
         - (map->height * 0.5) * map->gt.geotransform[5];
