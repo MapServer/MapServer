@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-RC1 (?)
 ---------------------------------
 
+- Hiding labelitemindex, labelsizeitemindex, labelangleitemindex
+  from the SWIG interface (bug 1906)
+
 - Fixed computation of geotransform to match BBOX (to edges of image) not
   map.extent (to center of edge pixels).  (bug 1916)
 
