@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.467  2006/09/25 20:51:56  tamas
+ * Hiding labelitemindex, labelsizeitemindex, labelangleitemindex from the SWIG interface (bug 1906)
+ *
  * Revision 1.466  2006/09/23 15:23:34  frank
  * Avoid c++ style comments.
  *
@@ -1059,7 +1062,9 @@ typedef struct layer_obj {
   int labelcache, postlabelcache; /* on or off */
 
   char *labelitem, *labelsizeitem, *labelangleitem;
+#ifndef SWIG
   int labelitemindex, labelsizeitemindex, labelangleitemindex;
+#endif /* not SWIG */
 
   char *tileitem;
   char *tileindex; /* layer index file for tiling support */
