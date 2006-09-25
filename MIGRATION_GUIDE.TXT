@@ -95,6 +95,13 @@ shapeObj.initValues was introduced. The user can initialize arbitrary
 number of the values and use getValue and setValue to access them. Beware 
 of using these objects as out parameters.
 
+layerObj.labelitemindex, .labelsizeitemindex, .labelangleitemindex 
+------------------------------------------------------------------
+
+These members were hidden entirely from the SWIG interface since the
+elements are handled internally. Setting these elements for the interface
+might cause access violations. (See bug 1906)
+
 ----------------------------------------------------
 libgd 
 ----------------------------------------------------
