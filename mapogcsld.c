@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.71  2006/09/26 12:18:09  assefa
+ * [SLD] quantity values for raster sld can be float values instead of just
+ * being integer
+ *
  * Revision 1.70  2006/08/31 17:24:05  assefa
  * use Title of Rule if Name not present (bug 1889).
  *
@@ -2413,6 +2417,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
     int nClassId = 0;
     double dfOpacity = 1.0;
     char *pszLabel = NULL;
+    char *pch = NULL, *pchPrevious=NULL;
 
     if (!psRoot || !psLayer)
       return;
@@ -2462,11 +2467,32 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                         sColor.green= hex2int(pszPreviousColor+3);
                         sColor.blue = hex2int(pszPreviousColor+5);
 
-                        /* ?? Test if pszPreviousQuality < pszQuantity */
-                        sprintf(szExpression, 
-                                "([pixel] >= %d AND [pixel] < %d)",
-                                atoi(pszPreviousQuality), 
-                                atoi(pszQuantity));
+                        /* pszQuantity and pszPreviousQuality may be integer or float */
+			pchPrevious=strchr(pszPreviousQuality,'.');
+			pch=strchr(pszQuantity,'.');
+			if (pchPrevious==NULL && pch==NULL) {
+			  sprintf(szExpression,
+				  "([pixel] >= %d AND [pixel] < %d)",
+				  atoi(pszPreviousQuality),
+				  atoi(pszQuantity));
+			} else if (pchPrevious != NULL && pch==NULL) {
+			  sprintf(szExpression,
+				  "([pixel] >= %f AND [pixel] < %d)",
+				  atof(pszPreviousQuality),
+				  atoi(pszQuantity));
+			} else if (pchPrevious == NULL && pch != NULL) {
+			  sprintf(szExpression,
+				  "([pixel] >= %d AND [pixel] < %f)",
+				  atoi(pszPreviousQuality),
+				  atof(pszQuantity));
+			} else {
+			  sprintf(szExpression,
+				  "([pixel] >= %f AND [pixel] < %f)",
+				  atof(pszPreviousQuality),
+				  atof(pszQuantity));
+			}
+
+
                         if (psLayer->numclasses < MS_MAXCLASSES)
                         {
                             initClass(&(psLayer->class[psLayer->numclasses]));
@@ -2524,7 +2550,15 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                 sColor.red = hex2int(pszColor+1);
                 sColor.green= hex2int(pszColor+3);
                 sColor.blue = hex2int(pszColor+5);
-                sprintf(szExpression, "([pixel] = %d)", atoi(pszQuantity));
+
+		/* pszQuantity may be integer or float */
+		pch=strchr(pszQuantity,'.');
+		if (pch==NULL) {
+		  sprintf(szExpression, "([pixel] = %d)", atoi(pszQuantity));
+		} else {
+		  sprintf(szExpression, "([pixel] = %f)", atof(pszQuantity));
+		}
+
                 if (psLayer->numclasses < MS_MAXCLASSES)
                 {
                     initClass(&(psLayer->class[psLayer->numclasses]));

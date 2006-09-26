@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.0-RC1 (?)
 ---------------------------------
 
+- [SLD] quantity values for raster sld can be float values instead of just 
+   being integer
+
 - Hiding labelitemindex, labelsizeitemindex, labelangleitemindex
   from the SWIG interface (bug 1906)
 
