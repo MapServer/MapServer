@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.468  2006/09/27 21:57:02  dan
+ * Update for 4.10.0-rc1
+ *
  * Revision 1.467  2006/09/25 20:51:56  tamas
  * Hiding labelitemindex, labelsizeitemindex, labelangleitemindex from the SWIG interface (bug 1906)
  *
@@ -265,7 +268,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.10.0-beta3"
+#define MS_VERSION "4.10.0-rc1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

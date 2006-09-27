@@ -13,8 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.10.0-RC1 (?)
----------------------------------
+Version 4.10.0-RC1 (2006-09-27)
+-------------------------------
 
 - [SLD] quantity values for raster sld can be float values instead of just 
    being integer
