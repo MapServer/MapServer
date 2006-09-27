@@ -373,7 +373,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Server
 # ----------------------------------------------------------------------
-WMS=-DUSE_WMS_SVR
+#WMS=-DUSE_WMS_SVR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Client
@@ -387,8 +387,8 @@ WMS=-DUSE_WMS_SVR
 # Set the full path to the curl project directory.
 # You may also need to the full path to the windows socket library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-WMSCLIENT= -DUSE_WMS_LYR
-CURL_DIR=$(MS_BASE)\..\curl-7.15.0
+#WMSCLIENT= -DUSE_WMS_LYR
+#CURL_DIR=$(MS_BASE)\..\curl-7.15.0
 #WINSOCK_LIB = "WSOCK32.LIB"
 #WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
 WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WS2_32.Lib"
@@ -397,20 +397,20 @@ WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK
 # WFS Client
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
-WFSCLIENT= -DUSE_WFS_LYR
+#WFSCLIENT= -DUSE_WFS_LYR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_SVR to compile with WFS server 
 # support, requires OGR and PROJ4
-WFS=-DUSE_WFS_SVR
+#WFS=-DUSE_WFS_SVR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WCS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WCS_SVR to compile with WCS server support, requires GDAL.
-WCS=-DUSE_WCS_SVR
+#WCS=-DUSE_WCS_SVR
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -439,7 +439,7 @@ WCS=-DUSE_WCS_SVR
 # make any MapScript bindings, eg. "nmake /f makefile.vc python", you 
 # will need to have SWIG installed.  
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SWIG = $(MS_BASE)\..\SWIG-1.3.27\swig
+#SWIG = $(MS_BASE)\..\SWIG-1.3.27\swig
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Java MapScript
