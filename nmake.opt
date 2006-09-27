@@ -282,8 +282,8 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # http://www.gdal.org/.  Once built, enable the GDAL flag, and point 
 # GDAL_DIR to the directory where GDAL was built. 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GDAL=-DUSE_GDAL
-GDAL_DIR=$(MS_BASE)\..\gdal
+#GDAL=-DUSE_GDAL
+#GDAL_DIR=$(MS_BASE)\..\gdal
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,8 +300,8 @@ GDAL_DIR=$(MS_BASE)\..\gdal
 # want to use GDAL/OGR for both raster and vector support, but GDAL_DIR 
 # needs only be defined once.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OGR=-DUSE_OGR
-GDAL_DIR=$(MS_BASE)\..\gdal
+#OGR=-DUSE_OGR
+#GDAL_DIR=$(MS_BASE)\..\gdal
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -391,7 +391,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #CURL_DIR=$(MS_BASE)\..\curl-7.15.0
 #WINSOCK_LIB = "WSOCK32.LIB"
 #WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
-WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WS2_32.Lib"
+#WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WS2_32.Lib"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Client
@@ -488,8 +488,8 @@ WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK
 # Proj.4 distribution (cartographic projection routines).  PROJ.4 is
 # also required for all OGC services (WMS, WFS, and WCS). 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
-PROJ_DIR=$(MS_BASE)\..\proj-4.4.9
+#PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
+#PROJ_DIR=$(MS_BASE)\..\proj-4.4.9
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
