@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122  2006/09/29 20:52:05  sdlime
+ * Updated error message about malformed template names to output the actual name. Makes debugging easier.
+ *
  * Revision 1.121  2006/08/23 04:15:29  sdlime
  * Updated template tags that maintain checkbox/radio box/select list state to output valid XHTML. (bug 1860)
  *
@@ -2994,7 +2997,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
 
   if(ms_regexec(&re, html, 0, NULL, 0) != 0) { /* no match */
     ms_regfree(&re);
-    msSetError(MS_WEBERR, "Malformed template name.", "msReturnPage()");
+    msSetError(MS_WEBERR, "Malformed template name (%s).", "msReturnPage()", html);
     return MS_FAILURE;
   }
   ms_regfree(&re);
