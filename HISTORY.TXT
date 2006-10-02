@@ -13,6 +13,23 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.10.0 (2006-10-04)
+---------------------------
+
+- No source code changes since 4.10.0-rc1
+
+Known issues in 4.10.0:
+
+- PHP5 not detected properly on Mandriva Linux (bug 1923)
+
+- Mapfile INCLUDE does not work with relative paths on Windows (bug 1880)
+
+- Curved labels don't work with multibyte character encodings (bug 1921)
+
+- Quotes in DATA or CONNECTION strings produce parsing errors (bug 1549)
+
+
+
 Version 4.10.0-RC1 (2006-09-27)
 -------------------------------
 
