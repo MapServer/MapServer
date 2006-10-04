@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.470  2006/10/04 15:01:56  dan
+ * Update version, this is now 4.99 (dev version to be released as 5.0)
+ *
  * Revision 1.469  2006/10/04 14:54:49  dan
  * Update for 4.10.0
  *
@@ -214,7 +217,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.10.0"
+#define MS_VERSION "4.99"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
