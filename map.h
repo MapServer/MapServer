@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.469  2006/10/04 14:54:49  dan
+ * Update for 4.10.0
+ *
  * Revision 1.468  2006/09/27 21:57:02  dan
  * Update for 4.10.0-rc1
  *
@@ -128,63 +131,6 @@
  * Revision 1.437  2006/01/10 03:01:01  dan
  * Update for 4.8.0-rc2
  *
- * Revision 1.436  2005/12/23 06:20:50  sdlime
- * Updated files for 4.8.0-rc1.
- *
- * Revision 1.435  2005/12/16 13:28:33  dan
- * Update version to 4.8.0-beta3
- *
- * Revision 1.434  2005/12/14 19:06:31  sdlime
- * Added browseformat and legendformat to webObj. (bug 1518)
- *
- * Revision 1.433  2005/12/08 19:05:32  hobu
- * switch off SDE raster support
- *
- * Revision 1.432  2005/11/24 04:38:57  dan
- * Update version for 4.8.0-beta2
- *
- * Revision 1.431  2005/11/22 22:14:43  sean
- * expose maximum length of layer, class, and style arrays in mapscript (bug 1522)
- *
- * Revision 1.430  2005/11/04 20:58:35  dan
- * Updated MS_VERSION to 4.8.0-beta1
- *
- * Revision 1.429  2005/11/01 05:35:50  frank
- * added preliminary implementation of OGR based WKT translation, still untested
- *
- * Revision 1.428  2005/10/30 05:05:07  sdlime
- * Initial support for WKT via GEOS. The reader is only integrated via the map file reader, with MapScript, CGI and URL support following ASAP. (bug 1466)
- *
- * Revision 1.427  2005/10/29 02:03:43  jani
- * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
- *
- * Revision 1.426  2005/10/28 02:08:14  frank
- * a few mapogr.cpp funcs used from WFS code, exposed in map.h
- *
- * Revision 1.425  2005/10/28 01:09:41  jani
- * MS RFC 3: Layer vtable architecture (bug 1477)
- *
- * Revision 1.424  2005/10/20 19:37:03  frank
- * added msAddPointToLine
- *
- * Revision 1.423  2005/10/18 03:10:45  frank
- * added msShapeDeleteLine
- *
- * Revision 1.422  2005/10/14 05:04:12  sdlime
- * Added msRotateSymbol(), changed freeSymbol to a public function called msFreeSymbol() in mapsymbol.c. Added to map.h as well.
- *
- * Revision 1.421  2005/09/23 21:18:58  assefa
- * Remove call to ming.h inside map.h (Bug 1479)
- *
- * Revision 1.420  2005/08/25 14:20:16  sdlime
- * Applied patch for bug 1440.
- *
- * Revision 1.419  2005/07/16 19:07:38  jerryp
- * Bug 1420: PostGIS connector no longer needs two layer close functions.
- *
- * Revision 1.418  2005/07/13 19:35:08  julien
- * Bug 1381: Support for case-insensitive Expression
- *
  */
 
 
@@ -268,7 +214,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "4.10.0-rc1"
+#define MS_VERSION "4.10.0"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
