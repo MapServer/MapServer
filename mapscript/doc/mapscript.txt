@@ -2182,7 +2182,7 @@ with labelCacheObj.
     
 
 markerCacheMemberObj Attributes
-------------------------------
+--------------------------------
 
 id : int immutable
     Id of the marker.
@@ -2191,7 +2191,7 @@ poly : shapeObj_ immutable
     Marker bounding box.
 
 markerCacheMemberObj Methods
----------------------------
+-----------------------------
 
 None.
 
@@ -2830,7 +2830,7 @@ equals( shapeObj shape2 ) : int
     Returns MS_TRUE if the shape and shape2 are equal (geometry only). Returns -1
     on error and MS_FALSE otherwise. Requires GEOS support.
 
-fromWKT( char *wkt ) : shapeObj
+fromWKT( char \*wkt ) : shapeObj
     Returns a new shapeObj based on a well-known text representation of a 
     geometry. Requires GEOS support. Returns NULL/undef on failure.
 
