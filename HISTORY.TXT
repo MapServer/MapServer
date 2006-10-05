@@ -13,6 +13,11 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.99 (CVS HEAD)
+-----------------------
+
+
+
 Version 4.10.0 (2006-10-04)
 ---------------------------
 
@@ -33,7 +38,7 @@ Known issues in 4.10.0:
 Version 4.10.0-RC1 (2006-09-27)
 -------------------------------
 
-- [SLD] quantity values for raster sld can be float values instead of just 
+- SLD: quantity values for raster sld can be float values instead of just 
    being integer
 
 - Hiding labelitemindex, labelsizeitemindex, labelangleitemindex
@@ -58,7 +63,7 @@ Version 4.10.0-beta3 (2006-09-06)
 - Fixed MapScript getExpressionString() that was failing on expressions
   longer that 256 chars (SWIG) and 512 chars (PHP). (bug 1428)
 
-- [WMSSLD] use Title of Rule if Name not present (bug 1889)
+- WMSSLD: use Title of Rule if Name not present (bug 1889)
 
 - Fixed syntax error (for visual c++) in mapimagemap.c. 
 
@@ -232,7 +237,7 @@ Version 4.10.0-beta1 (2006-08-17)
 - Preventing to take ownership of the memory when constructing objects
   with parent objects using C# mapscript (causing nullreference exception, Bug 1743)
 
-- [SWF] Adding format option to turn off loading  movies automatically (Bug 1696)
+- SWF: Adding format option to turn off loading  movies automatically (Bug 1696)
 
 - Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
 
@@ -248,7 +253,7 @@ Version 4.10.0-beta1 (2006-08-17)
 
 - Fix inter-tile "cracking" problem (Bug 1715).
 
-- [OGC FILTER] Correct bug when generating an sql expression containing an escape 
+- OGC FILTER: Correct bug when generating an sql expression containing an escape 
   character.
 
 - Allow a user to set a PROCESSING directive for an SDE layer to specify
@@ -259,13 +264,13 @@ Version 4.10.0-beta1 (2006-08-17)
 
 - Implement QUANTIZE options for GD/PNG driver (Bug 1690, Bug 1701).
 
-- [WMS] Publish the GetStyles operation in the capabilities document.
+- WMS: Publish the GetStyles operation in the capabilities document.
 
-- [PHP_MAPSCRIPT] Add antialias parameter in the style object (Bug 1685)
+- PHP_MAPSCRIPT: Add antialias parameter in the style object (Bug 1685)
 
-- [WFS] : Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
+- WFS: Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
 
-- [SLD] : set the default color on the style when using default settings
+- SLD: set the default color on the style when using default settings
   in PointSymbolizer. (bug 1681)
 
 - Incorporate range coloring support for rasters (bug 1673)
