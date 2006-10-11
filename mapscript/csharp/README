@@ -1,20 +1,8 @@
 -- $Id$
 
-The recent version of this document can be found on
+The most recent version of this document can be found on
 http://mapserver.gis.umn.edu/docs/howto/mapscriptcscompile
 
-
-C# mapscript
-============
-..
-
---------
-
-:Author: Tamas Szekeres
-:Contact: szekerest(at)gmail.com
-:Last Updated: 2006/08/21
-
---------
 
 1. Compilation
 ==============
@@ -279,7 +267,19 @@ Since the MONO process takes over the locale settings of the environment it is w
 ::
 
  LC_ALL=C mono ./drawmap.exe ../../tests/test.map test_csharp.png
-  
-4. Bug reports
+
+4. Most frequent errors
+=======================
+
+This chapter will summarize the most frequent problems the user can run into. The issues were collected mainly from the -users list and the IRC.
+
+4.1 Unable to load dll (mapscript)
+----------------------------------
+
+You can get this problem on Windows and in most cases it can be dedicated to a missing or an unloadable shared library. The error message talks about mapscript.dll but surely one or more of the dll-s are missing that libmap.dll depends on. So firstly you might want to check for the dependencies of your libmap.dll in your application directory. You can use the Visual Studio Dependency Walker to accomplish this task. You can also use a file monitoring tool (like SysInternal's filemon) to detect the dll-s that could not be loaded. I propose to store all of the dll-s required by your application in the application folder. If you can run the drawmap C# sample application with your mapfile your compilation might be correct and all of the dlls are available.
+
+You may find that the mapscript C# interface behaves differently for the desktop and the ASP.NET applications. Although you can run the drawmap sample correctly you may encounter the dll loading problem with the ASP.NET applications. When creating an ASP.NET project your application folder will be '\Inetpub\wwwroot\[YourApp]\bin' by default. The host process of the application will aspnet_wp.exe or w3wp.exe depending on your system. The application will run under a different security context than the interactive user (under the context of the ASPNET user by default). When placing the dll-s outside of your application directory you should consider that the PATH environment variable may differ between the interactive and the ASPNET user and/or you may not have enough permission to access a dll outside of your application folder.
+
+5. Bug reports
 ==============
 If you find a problem dedicated to the mapscript C# interface feel free to file a bug report to BugZilla.
