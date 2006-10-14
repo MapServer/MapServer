@@ -241,13 +241,18 @@ EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 #
 # --- You shouldn't have to edit anything else. ---
 #
+all: $(MAKE_GD) libmap.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
+
+#
+# Non-gnumake's don't seem to use this pattern rule, 
+# but have a similar built-in rule for C code.  So try not
+# to change these, since the change is unlikely to stick.
+# 
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
-.cpp.o:
-	$(CXX) -c $(CXXFLAGS) $< -o $@
-
-all: $(MAKE_GD) libmap.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
+mapogr.o:	mapogr.cpp
+	$(CXX) -c $(CXXFLAGS) mapogr.cpp -o mapogr.o
 
 php3_mapscript:: $(LIBMAP_STATIC)
 	cd mapscript/php3; $(MAKE); cd ../..
