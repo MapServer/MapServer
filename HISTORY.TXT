@@ -16,7 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
-
+ - [OGC:SOS] : Fixed bugs realted to metadata and xml output
+               (1731, 1739, 1740, 1741).  Fixed bug with large xml output (1938)
 
 Version 4.10.0 (2006-10-04)
 ---------------------------

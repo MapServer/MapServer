@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2006/10/16 14:50:32  assefa
+ * Fixed bugs realted to metadata and xml output
+ * (1731, 1739, 1740, 1741).  Fixed bug with large xml output (1938)
+ *
  * Revision 1.15  2006/06/05 19:45:04  assefa
  * Split buffer into small pieces before outputting it.
  *
@@ -108,7 +112,7 @@ MS_CVSID("$Id$")
 ** at one point, that is why it is local to SOS.
 */
 
-static int msSOSException(mapObj *map, int nVersion) 
+static int msSOSException(mapObj *map, int nVersion, char *exceptionCode) 
 {
     char *schemalocation = NULL;
     char *dtd_url = NULL;
@@ -130,7 +134,7 @@ static int msSOSException(mapObj *map, int nVersion)
     xmlNewProp(psRootNode, "version", "1.0.0");
 
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    dtd_url = strdup("http://www.opengeospatial.net/ows ");
+    dtd_url = strdup("http://www.opengis.net/ows ");
     dtd_url = strcatalloc(dtd_url, schemalocation);
     dtd_url = strcatalloc(dtd_url, "/ows/1.0.0/owsExceptionReport.xsd");
     xmlNewNsProp(psRootNode, NULL, "xsi:schemaLocation", dtd_url);
@@ -141,8 +145,12 @@ static int msSOSException(mapObj *map, int nVersion)
                              "Exception", NULL);
     xmlSetNs(psMainNode, xmlNewNs(psMainNode, "http://www.opengis.net/ows", "ows"));
 
+
+    xmlNewProp(psMainNode, "exceptionCode", exceptionCode);
+
     /*TODO should be html encoded */
     pszError = msGetErrorString("\n");
+
     psNode = xmlNewChild(psMainNode,
                          xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"),
                          "ExceptionText", pszError);
@@ -933,7 +941,17 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     int nOfferings  =0, nCurrentOff = -1;
     int nProperties = 0;
     char **papszProperties = NULL;
-    
+
+    char workbuffer[5000];
+    int nSize = 0;
+    int iIndice = 0;
+
+
+    /* keywords */
+   
+    char **keywords = NULL;
+    int numkeywords;
+ 
      /* for each layer it indicates the indice to be used in papsOfferings
         (to associate it with the offering) */
     int *panOfferingLayers = NULL;
@@ -960,8 +978,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, "http://www.w3.org/2001/XMLSchema-instance",  "xsi"));
     xmlSetNs(psRootNode,   xmlNewNs(psRootNode, "http://www.opengis.net/sos",  "sos"));
     
-    //xsi:schemaLocation="http://www.opengeospatial.net/sos file:///D:/Projects/NSSTC/OGC%20Schemas/schemas_OGC/sos/0.0.31/sosGetCapabilities.xsd"
-
 
     /*version fixed for now*/
     xmlNewProp(psRootNode, "version", "0.0.31");
@@ -969,9 +985,9 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     /*TODO : review this*/
-    dtd_url = strdup("http://www.opengeospatial.net/sos ");
+    dtd_url = strdup("http://www.opengis.net/sos ");
     dtd_url = strcatalloc(dtd_url, schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/sosGetCapabilities.xsd");
+    dtd_url = strcatalloc(dtd_url, "/sos/0.0.31/sosGetCapabilities.xsd");
     xmlNewNsProp(psRootNode, NULL, "xsi:schemaLocation", dtd_url);
 
 
@@ -991,16 +1007,31 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                        "ows"), 
                               &(map->web.metadata), "SO", "Abstract",  NULL);
 
-    psNode = xmlNewChild(psMainNode, xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"), 
-                         "Keywords", NULL);
-    msSOSAddMetadataChildNode(psNode, "Keyword", 
-                              xmlNewNs(NULL, "http://www.opengis.net/ows", 
-                                       "ows"), 
-                              &(map->web.metadata), "SO", "keywordlist",  NULL);
+    psNode = xmlNewChild(psMainNode, xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"), "Keywords", NULL);
+
+    value = msOWSLookupMetadata(&(map->web.metadata), "SO", "keywordlist");
+    if (value)
+    {
+        char **tokens;
+         int n;
+         int i = 0;
+         xmlNodePtr psNodeKeyWord;
+         tokens = split(value, ',', &n);
+         if (tokens && n > 0)
+         {
+             for (i=0; i<n; i++)
+             {
+                 psNodeKeyWord = xmlNewChild(psNode, NULL, "Keyword", tokens[i]);
+                 xmlSetNs(psNodeKeyWord, xmlNewNs(NULL, "http://www.opengis.net/ows",
+                                                  "ows"));
+             }
+         }
+     }
+
 
      psNode = xmlNewChild(psMainNode, xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"), 
                          "ServiceType", "OGC:SOS");
-     xmlNewProp(psNode, "codeSpace", "http://opengeospatial.net");
+     xmlNewProp(psNode, "codeSpace", "http://www.opengis.net");
 
      psNode = xmlNewChild(psMainNode, xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"), 
                          "ServiceTypeVersion", "0.0.31");
@@ -1013,8 +1044,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                         "ows"), 
                                &(map->web.metadata), "SO", "AccessConstraints",  NULL);
                               
-    
-
      /*service provider*/
     psMainNode = xmlNewChild(psRootNode,
                              NULL,
@@ -1024,11 +1053,25 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     msSOSAddMetadataChildNode(psMainNode, "ProviderName", 
                                xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                         "ows"), 
-                               &(map->web.metadata), "SO", "ProviderName",  NULL);
-    msSOSAddMetadataChildNode(psMainNode, "ProviderSite", 
-                              xmlNewNs(NULL, "http://www.opengis.net/ows", 
-                                        "ows"), 
-                              &(map->web.metadata), "SO", "ProviderSite",  NULL);
+                               &(map->web.metadata), "SO", "contactorganization",  NULL);
+
+
+
+    /* msSOSAddMetadataChildNode(psMainNode, "ProviderSite",  */
+                              /* xmlNewNs(NULL, "http://www.opengis.net/ows",  */
+                              /*          "ows"),  */
+                              /* &(map->web.metadata), "SO", "service_onlineresource",  NULL); */
+
+    psNode = xmlNewChild(psMainNode,
+                              xmlNewNs(NULL,
+                              "http://www.opengis.net/ows", "ows"),
+                              "ProviderSite", NULL);
+
+    value = msOWSLookupMetadata(&(map->web.metadata), "SO", "service_onlineresource");
+
+    xmlNewNsProp(psNode, xmlNewNs(NULL, "http://www.w3.org/1999/xlink",
+                         "xlink"),
+                         "href", value);
 
     psSubNode = xmlNewChild(psMainNode,
                              xmlNewNs(NULL, "http://www.opengis.net/ows", "ows"),
@@ -1050,6 +1093,10 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                               xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"), 
                               &(map->web.metadata), "SO", "contactvoicetelephone",  NULL);
+    msSOSAddMetadataChildNode(psNode, "Facsimile",
+                              xmlNewNs(NULL, "http://www.opengis.net/ows",
+                                       "ows"),
+                              &(map->web.metadata), "SO", "contactfacsimiletelephone",  NULL);
     psNode = xmlNewChild(psSubNode,xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"),"Address", NULL);
     msSOSAddMetadataChildNode(psNode, "DeliveryPoint", 
@@ -1063,7 +1110,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     msSOSAddMetadataChildNode(psNode, "AdministrativeArea", 
                               xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"), 
-                              &(map->web.metadata), "SO", "AdministrativeArea",  NULL);
+                              &(map->web.metadata), "SO", "stateorprovince",  NULL);
     msSOSAddMetadataChildNode(psNode, "PostalCode", 
                               xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"), 
@@ -1071,19 +1118,29 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     msSOSAddMetadataChildNode(psNode, "Country", 
                               xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"), 
-                              &(map->web.metadata), "SO", "Country",  NULL);
+                              &(map->web.metadata), "SO", "country",  NULL);
     msSOSAddMetadataChildNode(psNode, "ElectronicMailAddress", 
                               xmlNewNs(NULL, "http://www.opengis.net/ows", 
                                        "ows"), 
-                              &(map->web.metadata), "SO", "ElectronicMailAddress",  NULL);
+                              &(map->web.metadata), "SO", "contactelectronicmailaddress",  NULL);
 
-    
+
+    psNode = xmlNewChild(psSubNode,
+                              xmlNewNs(NULL,
+                              "http://www.opengis.net/ows", "ows"),
+                              "OnlineResource", NULL);
+
+    xmlNewNsProp(psNode, xmlNewNs(NULL, "http://www.w3.org/1999/xlink",
+                         "xlink"),
+                         "href", value);
+
+
     /*operation metadata */
 
     if ((script_url=msOWSGetOnlineResource(map, "SO", "onlineresource", req)) == NULL ||
         (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
     {
-        return msSOSException(map, nVersion);
+        return msSOSException(map, nVersion, "NoApplicableCode");
     }
 
     psMainNode = xmlNewChild(psRootNode,
@@ -1208,7 +1265,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (tokens==NULL || n != 4) {
                          msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
                                     "msSOSGetCapabilities()");
-                         return msSOSException(map, nVersion);
+                         return msSOSException(map, nVersion, "InvalidParameterValue");
                      }
                      value = msOWSGetEPSGProj(&(lp->projection),
                                               &(lp->metadata), "SO", MS_TRUE);
@@ -1242,7 +1299,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (tokens==NULL || (n != 1 && n!=2)) {
                          msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
                                     "msSOSGetCapabilities()");
-                         return msSOSException(map, nVersion);
+                         return msSOSException(map, nVersion, "InvalidParameterValue");
                      }
 
                      if (n == 2) /* end time is empty. It is going to be set as "now*/
@@ -1344,7 +1401,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (tokens==NULL || n != 4) {
                          msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
                                     "msSOSGetCapabilities()");
-                         return msSOSException(map, nVersion);
+                         return msSOSException(map, nVersion, "InvalidParameterValue");
                      }
                      value = msOWSGetEPSGProj(&(lp->projection),
                                               &(lp->metadata), "SO", MS_TRUE);
@@ -1383,7 +1440,29 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     */
     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
     
-    msIO_printf("%s", buffer);
+    nSize = sizeof(workbuffer);
+    nSize = nSize-1; /* the last character for the '\0' */
+    if (size > nSize)
+    {
+         iIndice = 0;
+         while ((iIndice + nSize) <= size)
+         {
+             snprintf(workbuffer, (sizeof(workbuffer)-1), "%s", buffer+iIndice );
+             workbuffer[sizeof(workbuffer)-1] = '\0';
+             msIO_printf("%s", workbuffer);
+
+             iIndice +=nSize;
+         }
+         if (iIndice < size)
+         {
+              sprintf(workbuffer, "%s", buffer+iIndice );
+              msIO_printf("%s", workbuffer);
+         }
+     }
+    else
+    {
+        msIO_printf("%s", buffer);
+    }
 
     /*free buffer and the document */
     xmlFree(buffer);
@@ -1470,14 +1549,14 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     {
         msSetError(MS_SOSERR, "Missing manadatory Offering parameter.",
                    "msSOSGetObservation()");
-        return msSOSException(map, nVersion);
+        return msSOSException(map, nVersion, "MissingParameterValue");
     }
 
     if (!pszProperty)
     {
         msSetError(MS_SOSERR, "Missing manadatory ObservedProperty parameter.",
                    "msSOSGetObservation()");
-        return msSOSException(map, nVersion);
+        return msSOSException(map, nVersion, "MissingParameterValue");
     }
 
     /*validate if offering exists*/
@@ -1493,7 +1572,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     {
         msSetError(MS_SOSERR, "Offering %s not found.",
                    "msSOSGetObservation()", pszOffering);
-        return msSOSException(map, nVersion);
+        return msSOSException(map, nVersion, "InvalidParameterValue");
     }
 
     /*validate if observed property exist*/
@@ -1542,7 +1621,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     {
         msSetError(MS_SOSERR, "ObservedProperty %s not found.",
                    "msSOSGetObservation()", pszProperty);
-        return msSOSException(map, nVersion);
+        return msSOSException(map, nVersion, "InvalidParameterValue");
     }
      
     /*apply procedure : could be a comma separated list.
@@ -1627,7 +1706,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         {
             msSetError(MS_SOSERR, "Invalid time value given for the eventTime parameter",
                    "msSOSGetObservation()", pszProperty);
-            return msSOSException(map, nVersion);
+            return msSOSException(map, nVersion, "InvalidParameterValue");
         }
         for (i=0; i<map->numlayers; i++)
         {
@@ -1676,7 +1755,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 	  msSetError(MS_SOSERR, 
 		     "Invalid or Unsupported FILTER in GetObservation", 
 		     "msSOSGetObservation()");
-	  return msSOSException(map, nVersion);
+	  return msSOSException(map, nVersion, "InvalidParameterValue");
 	}
         /* apply the filter to all layers thar are on*/
         for (i=0; i<map->numlayers; i++)
@@ -1709,7 +1788,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         {       
             msSetError(MS_SOSERR, "Invalid gml:Envelop value given for featureOfInterest .", 
                        "msSOSGetObservation()");
-            return msSOSException(map, nVersion);
+            return msSOSException(map, nVersion, "InvalidParameterValue");
         }
 
         CPLStripXMLNamespace(psRoot, "gml", 1);
@@ -1777,7 +1856,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         if (!bValid)
         {
             msSetError(MS_SOSERR, "Invalid gml:Envelop value given for featureOfInterest .", "msSOSGetObservation()");
-            return msSOSException(map, nVersion);
+            return msSOSException(map, nVersion, "InvalidParameterValue");
         }
     }
 
@@ -1794,7 +1873,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         if (tokens==NULL || n != 4) 
         {
             msSetError(MS_SOSERR, "Wrong number of arguments for bounding box.", "msSOSGetObservation()");
-            return msSOSException(map, nVersion);
+            return msSOSException(map, nVersion, "InvalidParameterValue");
         }
         sBbox.minx = atof(tokens[0]);
         sBbox.miny = atof(tokens[1]);
@@ -1843,7 +1922,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     /*TODO : review this*/
-    dtd_url = strdup("http://www.opengeospatial.net/om ");
+    dtd_url = strdup("http://www.opengis.net/om ");
     dtd_url = strcatalloc(dtd_url, schemalocation);
     dtd_url = strcatalloc(dtd_url, "/om.xsd");
     xmlNewNsProp(psRootNode, NULL, "xsi:schemaLocation", dtd_url);
@@ -1868,7 +1947,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         if (tokens==NULL || (n != 1 && n!=2)) {
             msSetError(MS_WMSERR, "Wrong number of arguments for offering_timeextent.",
                        "msSOSGetCapabilities()");
-            return msSOSException(map, nVersion);
+            return msSOSException(map, nVersion, "InvalidParameterValue");
         }
 
         if (n == 2) /* end time is empty. It is going to be set as "now*/
@@ -1902,7 +1981,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
 
      nSize = sizeof(workbuffer);
-     if (size > sizeof(workbuffer))
+     nSize = nSize-1; /* the last character for the '\0' */
+     if (size > nSize)
      {
          iIndice = 0;
          while ((iIndice + nSize) <= size)
@@ -1965,7 +2045,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
     {
         msSetError(MS_SOSERR, "Missing manadatory parameter sensorid.",
                    "msSOSDescribeSensor()");
-        return msSOSException(map, nVersion);
+        return msSOSException(map, nVersion, "MissingParameterValue");
     }
     
     for (i=0; i<map->numlayers; i++)
@@ -1987,7 +2067,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
 
      msSetError(MS_SOSERR, "Sensor not found.",
                    "msSOSDescribeSensor()");
-     return msSOSException(map, nVersion);
+     return msSOSException(map, nVersion, "InvalidParameterValue");
     
 }
 
