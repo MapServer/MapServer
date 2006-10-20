@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2006/10/20 19:02:10  frank
+ * fixed performance problem in raster reprojection (bug 1944)
+ *
  * Revision 1.67  2006/03/15 20:31:18  frank
  * Fixup comment for last change.
  *
@@ -1162,8 +1165,7 @@ static int msApproxTransformer( void *pCBData, int nPoints,
     if( dfError > psATInfo->dfMaxError )
     {
         bSuccess = 
-            psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, nMiddle, 
-                                          x, y, panSuccess );
+            msApproxTransformer( psATInfo, nMiddle, x, y, panSuccess );
             
         if( !bSuccess )
         {
@@ -1173,10 +1175,8 @@ static int msApproxTransformer( void *pCBData, int nPoints,
         }
 
         bSuccess = 
-            psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, 
-                                          nPoints - nMiddle, 
-                                          x+nMiddle, y+nMiddle, 
-                                          panSuccess+nMiddle );
+            msApproxTransformer( psATInfo, nPoints - nMiddle, 
+                                 x+nMiddle, y+nMiddle, panSuccess+nMiddle );
 
         if( !bSuccess )
         {

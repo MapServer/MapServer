@@ -17,7 +17,10 @@ Version 4.99 (CVS HEAD)
 -----------------------
 
  - [OGC:SOS] : Fixed bugs realted to metadata and xml output
-               (1731, 1739, 1740, 1741).  Fixed bug with large xml output (1938)
+   (1731, 1739, 1740, 1741).  Fixed bug with large xml output (bug 1938)
+
+ - fixed performance problem in raster reprojection (bug 1944)
+
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
