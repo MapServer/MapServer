@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.103  2006/10/22 17:48:24  tamas
+ * Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString causing access violation.
+ *
  * Revision 1.102  2006/09/05 20:39:07  frank
  * added support for multipoint and multiline to wkt translation (bug 1618)
  *
@@ -2185,14 +2188,14 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // OGR default is anchor point = LL, so label is at UR of anchor
               c->label.position = MS_UR;
 
-              if (poLabelStyle->GetRGBFromString(poLabelStyle->
-                                                 ForeColor(bIsNull),r,g,b,t))
+              const char *pszColor = poLabelStyle->ForeColor(bIsNull);
+              if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
                   MS_INIT_COLOR(c->label.color, r, g, b);
               }
-              if (poLabelStyle->GetRGBFromString(poLabelStyle->
-                                                 BackColor(bIsNull),r,g,b,t) 
-                  && !bIsNull)
+
+              pszColor = poLabelStyle->BackColor(bIsNull);
+              if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
                   MS_INIT_COLOR(c->label.color, r, g, b);
               }
@@ -2245,8 +2248,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               }
               else
               {
-                  if (poPenStyle->GetRGBFromString(poPenStyle->
-                                               Color(bIsNull),r,g,b,t))
+                  const char *pszColor = poPenStyle->Color(bIsNull);
+                  if (!bIsNull && poPenStyle->GetRGBFromString(pszColor,r,g,b,t))
                   {
                       MS_INIT_COLOR(oPenColor, r, g, b);
                       // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, nPenColor);
@@ -2310,15 +2313,15 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               else
               {
                   bIsBrush = TRUE;
-                  if (poBrushStyle->GetRGBFromString(poBrushStyle->
-                                                   ForeColor(bIsNull),r,g,b,t))
+                  const char *pszColor = poBrushStyle->ForeColor(bIsNull);
+                  if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
                   {
                       MS_INIT_COLOR(c->styles[0].color, r, g, b);
                       // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
                   }
-                  if (poBrushStyle->GetRGBFromString(poBrushStyle->
-                                                   BackColor(bIsNull),r,g,b,t) 
-                      && !bIsNull)
+
+                  pszColor = poBrushStyle->BackColor(bIsNull);
+                  if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
                   {
                       MS_INIT_COLOR(c->styles[0].backgroundcolor, r, g, b);
                   }
@@ -2340,8 +2343,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           {
               OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
-              if (poSymbolStyle->GetRGBFromString(poSymbolStyle->
-                                                  Color(bIsNull),r,g,b,t))
+              const char *pszColor = poSymbolStyle->Color(bIsNull);
+              if (!bIsNull && poSymbolStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
                   MS_INIT_COLOR(c->styles[0].color, r, g, b);
               }
