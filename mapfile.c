@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.331.2.2  2006/10/24 05:10:50  sdlime
+ * Fixed one more issue with loadExpressionString...
+ *
  * Revision 1.331.2.1  2006/10/24 04:46:27  sdlime
  * Fixed a problem in loadExpressionString so that if an expression string is not a logical, regex or case insensitive expression then it is automatically a string expression. This allows more straight forward filter and expression setting from MapScript.
  *
@@ -1710,7 +1713,10 @@ int loadExpressionString(expressionObj *exp, char *value)
   } else {
     msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
-    exp->string = strdup(value); /* use the whole value */
+    if((strlen(value) - strlen(msyytext)) == 2)
+      exp->string = strdup(msyytext); /* value was quoted */
+    else
+      exp->string = strdup(value); /* use the whole value */
   }
 
   /* if(exp->type == MS_REGEX) { */
