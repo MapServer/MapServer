@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.332  2006/10/24 04:40:31  sdlime
+ * Fixed a problem in loadExpressionString so that if an expression string is not a logical, regex or case insensitive expression then it is automatically a string expression. This allows more straight forward filter and expression setting from MapScript.
+ *
  * Revision 1.331  2006/09/01 02:30:15  sdlime
  * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
  *
@@ -1694,7 +1697,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); /* we're totally replacing the old expression so free then init to start over */
   /* initExpression(exp); */
 
-  if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
+  if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
     exp->string = strdup(msyytext);
 
     if(exp->type == MS_ISTRING) {
