@@ -1289,9 +1289,9 @@ Constructor:
         Returns the boundary of the shape.
         Only available if php/mapscript is built with GEOS library.
 
-   int containsShape(shapeobj shape)
-        Returns true if the shape given in argument is included inside 
-        the shape. Else returns false. 
+   int containsShape(shapeobj shape2)
+        Returns true if shape2 passed as argument is entirely within the shape. 
+        Else return false.
         Only available if php/mapscript is built with GEOS 
         library.
 
@@ -1322,9 +1322,9 @@ Constructor:
        Else returns false.
        Only available if php/mapscript is built with GEOS library.
 
-   int within(shapeobj shape)  
-       Returns true if the shape passed as argument is entirely within
-       the shape. Else return false.
+   int within(shapeobj shape2) 
+       Returns true if the shape is entirely within the shape2 passed as argument. 
+       Else returns false. 
        Only available if php/mapscript is built with GEOS library.
 
    int crosses(shapeobj shape)  
