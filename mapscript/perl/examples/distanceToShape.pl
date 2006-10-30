@@ -36,5 +36,5 @@ $distance = $inshape1->distanceToShape($inshape2);
 undef $inshpf1;
 undef $inshpf2;
 
-print "Distance between shape $infile1/$infile1_shpid and shape $infile2/$infile2_shpid is $distance\n";
+print "Distance between shape $infile1/$infile1_shpid and shape $infile2/$infile2_shpid is $distance units\n";
 
