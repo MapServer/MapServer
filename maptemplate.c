@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.123  2006/10/30 23:42:39  sdlime
+ * Added pattern option to the item tag so you can restrict the set of feature values that a particular output tag is applied to. The pattern is given as a regex.
+ *
  * Revision 1.122  2006/09/29 20:52:05  sdlime
  * Updated error message about malformed template names to output the actual name. Makes debugging easier.
  *
@@ -903,6 +906,7 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
   char *argValue;
 
   char *name=NULL;
+  char *pattern=NULL;
 	int precision=-1; /* don't change */
   char *format="$value";
   char *nullFormat="";
@@ -928,6 +932,9 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
     if(tagArgs) {
       argValue = msLookupHashTable(tagArgs, "name");
       if(argValue) name = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "pattern");
+      if(argValue) pattern = argValue;
 
 			argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
@@ -965,40 +972,45 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
     if(i == layer->numitems) {
       msSetError(MS_WEBERR, "Item name not found in layer item list.", "processItem()");
       return(MS_FAILURE);
-    }
+    }    
 
     /*
     ** now we know which item so build the tagValue
     */
     if(shape->values[i] && strlen(shape->values[i]) > 0) {
-			char *itemValue=NULL;
 
-			if(precision != -1) {
-				char numberFormat[16];
+      if(pattern && msEvalRegex(pattern, shape->values[i]) != MS_TRUE)
+				tagValue = strdup(nullFormat);
+			else {
+        char *itemValue=NULL;
+
+        if(precision != -1) {
+				  char numberFormat[16];
 				
-        itemValue = (char *) malloc(64); /* plenty big */
-				snprintf(numberFormat, 16, "%%.%dlf", precision);
-				snprintf(itemValue, 64, numberFormat, atof(shape->values[i]));
-			} else
-				itemValue = strdup(shape->values[i]);
+          itemValue = (char *) malloc(64); /* plenty big */
+          snprintf(numberFormat, 16, "%%.%dlf", precision);
+          snprintf(itemValue, 64, numberFormat, atof(shape->values[i]));
+        } else
+          itemValue = strdup(shape->values[i]);
 
-			if(commify == MS_TRUE)
+        if(commify == MS_TRUE)
 					itemValue = msCommifyString(itemValue);
 
-			/* apply other effects */
-      if(uc == MS_TRUE)
-        for(j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
-      if(lc == MS_TRUE)
-        for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
+        /* apply other effects */
+        if(uc == MS_TRUE)
+          for(j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
+        if(lc == MS_TRUE)
+          for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
       
-			tagValue = strdup(format);
-			tagValue = gsub(tagValue, "$value", itemValue);
-			msFree(itemValue);
+        tagValue = strdup(format);
+        tagValue = gsub(tagValue, "$value", itemValue);
+        msFree(itemValue);
 
-      if(!tagValue) {
-        msSetError(MS_WEBERR, "Error applying item format.", "processItem()");
-        return(MS_FAILURE);
-      }
+        if(!tagValue) {
+          msSetError(MS_WEBERR, "Error applying item format.", "processItem()");
+          return(MS_FAILURE); /* todo leaking... */
+        }
+			}
     } else {
       tagValue = strdup(nullFormat);
     }
