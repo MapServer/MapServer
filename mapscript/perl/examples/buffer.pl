@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Script : buffer
+# Script : buffer.pl
 #
 # Purpose: Applies buffer to shapefile dataset using geos support
 #          buffer units as are per units of data
