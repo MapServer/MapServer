@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - Fixed a bug with SDE capability requests where we were double 
+   freeing because sde->row_id_column wasn't set to NULL in msSDELayerOpen
+
  - [OGC:SOS] : Fixed bugs realted to metadata and xml output
    (1731, 1739, 1740, 1741).  Fixed bug with large xml output (bug 1938)
 
