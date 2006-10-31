@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.110  2006/10/31 17:03:50  hobu
+ * make sure to initialize sde->row_id_column to NULL or we'll blow
+ * up on close for operations like GetCapabilities
+ *
  * Revision 1.109  2006/08/11 16:58:02  dan
  * Added ability to encrypt tokens (passwords, etc.) in database connection
  * strings (MS-RFC-18, bug 1792)
@@ -866,7 +870,8 @@ int msSDELayerOpen(layerObj *layer) {
   /* initialize the table and spatial column names */
   sde->table = NULL;
   sde->column = NULL;
-
+  sde->row_id_column = NULL;
+  
   /* request a connection and stream from the pool */
   poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
   
