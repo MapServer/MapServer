@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.72  2006/10/31 19:35:44  assefa
+ * when reading an SLD, sequence of classes was reversed (Bug 1925)
+ *
  * Revision 1.71  2006/09/26 12:18:09  assefa
  * [SLD] quantity values for raster sld can be float values instead of just
  * being integer
@@ -419,7 +422,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                     map->layers[i].type = pasLayers[j].type;
                     map->layers[i].numclasses = 0;
                     iClass = 0;
-                    for (k=pasLayers[j].numclasses-1; k>=0; k--)
+                    for (k=0; k < pasLayers[j].numclasses; k++)
                     {
                         initClass(&map->layers[i].class[iClass]);
                         msCopyClass(&map->layers[i].class[iClass], 
