@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2006/11/02 18:58:58  tkralidi
+ * Added msOWSGetLanguage function as per bug 1955
+ *
  * Revision 1.67  2006/08/23 18:28:00  dan
  * Use OWS_DEFAULT_SCHEMAS_LOCATION #define instead of hardcoded string (bug 1873)
  *
@@ -511,6 +514,24 @@ const char *msOWSGetSchemasLocation(mapObj *map)
       schemas_location = OWS_DEFAULT_SCHEMAS_LOCATION;
 
     return schemas_location;
+}
+
+/* msOWSGetLanguage()
+**
+** returns the language via MAP/WEB/METADATA/ows_language
+**
+** Use value of "ows_language" metadata, if not set then
+** return "undefined" as a default
+*/
+const char *msOWSGetLanguage(mapObj *map)
+{
+    const char *language;
+
+    language = msLookupHashTable(&(map->web.metadata), "ows_language");
+    if (language == NULL) {
+      language = "undefined";
+    }
+    return language;
 }
 
 /* msOWSParseVersionString()
