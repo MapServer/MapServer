@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.79  2006/11/06 15:17:15  tkralidi
+ * added msGetLanguage as per bug 1955
+ *
  * Revision 1.78  2006/08/28 21:16:21  assefa
  * add flag USE_SOS_SVR as part of the flags enabling ows utility functions
  * to be defined.
@@ -193,6 +196,7 @@ MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
+MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 
 /* Constants for OWS Service version numbers */
 #define OWS_0_1_2   0x000102
