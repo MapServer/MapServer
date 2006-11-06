@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/11/06 04:03:19  frank
+ * preliminary implementation of RFC21/raster color correction (bug 1943)
+ *
  * Revision 1.48  2006/02/22 03:52:04  frank
  * Incorporate range coloring support for rasters (bug 1673)
  *
@@ -1052,6 +1055,180 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 }
 
 /************************************************************************/
+/*                          ParseDefaultLUT()                           */
+/************************************************************************/
+
+static int ParseDefaultLUT( const char *lut_def, GByte *lut )
+
+{
+    const char *lut_read;
+    int last_in=0, last_out=0, all_done=FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Parse definition, applying to lut on the fly.                   */
+/* -------------------------------------------------------------------- */
+    lut_read = lut_def;
+    while( !all_done )
+    {
+        int this_in, this_out;
+        int lut_i;
+
+        while( isspace(*lut_read) )
+            lut_read++;
+
+        /* if we are at end, assum 255:255 */
+        if( *lut_read == '\0' )
+        {
+            all_done = TRUE;
+            this_in = 255;
+            this_out = 255;
+        }
+
+        /* otherwise read "in:out", and skip past */
+        else
+        {
+            this_in = atoi(lut_read);
+            while( *lut_read != ':' && *lut_read )
+                lut_read++;
+            if( *lut_read == ':' )
+                lut_read++;
+            while( isspace(*lut_read) )
+                lut_read++;
+            this_out = atoi(lut_read);
+            while( *lut_read && *lut_read != ',' && *lut_read != '\n' )
+                lut_read++;
+            if( *lut_read == ',' || *lut_read == '\n' )
+                lut_read++;
+            while( isspace(*lut_read) )
+                lut_read++;
+        }
+
+        this_in = MAX(0,MIN(255,this_in));
+        this_out = MAX(0,MIN(255,this_out));
+
+        /* apply linear values from last in:out to this in:out */
+        for( lut_i = last_in; lut_i <= this_in; lut_i++ )
+        {
+            double ratio;
+
+            if( last_in == this_in )
+                ratio = 1.0;
+            else
+                ratio = (lut_i - last_in) / (double) (this_in - last_in);
+            
+            lut[lut_i] = (int) 
+                floor(((1.0 - ratio)*last_out + ratio*this_out) + 0.5);
+        }
+        
+        last_in = this_in;
+        last_out = this_out;
+    }
+
+    return 0;
+}
+
+/************************************************************************/
+/*                            ParseGimpLUT()                            */
+/*                                                                      */
+/*      Parse a Gimp style LUT.                                         */
+/************************************************************************/
+
+static int ParseGimpLUT( const char *lut_def, GByte *lut, int iColorIndex )
+
+{
+    msSetError(MS_IMGERR, 
+               "GIMP style files not yet supported.", 
+               "ParseGimpLUT()" );
+    return -1;
+}
+
+/************************************************************************/
+/*                              ApplyLUT()                              */
+/*                                                                      */
+/*      Apply a LUT according to RFC 21.                                */
+/************************************************************************/
+
+static int ApplyLUT( int iColorIndex, layerObj *layer, 
+                     GByte *buffer, int buf_xsize, int buf_ysize )
+
+{
+    const char *lut_def;
+    char key[20], lut_def_fromfile[2500];
+    GByte lut[256];
+    int   err, i;
+
+/* -------------------------------------------------------------------- */
+/*      Get lut specifier from processing directives.  Do nothing if    */
+/*      none are found.                                                 */
+/* -------------------------------------------------------------------- */
+    sprintf( key, "LUT_%d", iColorIndex + 1 );
+    lut_def = msLayerGetProcessingKey( layer, key );
+    if( lut_def == NULL )
+        lut_def = msLayerGetProcessingKey( layer, "LUT" );
+    if( lut_def == NULL )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Does this look like a file?  If so, read it into memory.        */
+/* -------------------------------------------------------------------- */
+    if( strspn(lut_def,"0123456789:, ") != strlen(lut_def) )
+    {
+        FILE *fp;
+        char path[MS_MAXPATHLEN];
+        int len;
+        msBuildPath(path, layer->map->mappath, lut_def);
+        fp = fopen( path, "rb" );
+        if( fp == NULL )
+        {
+            msSetError(MS_IOERR, 
+                       "Failed to open LUT file '%s'.",
+                       path,
+                       "drawGDAL()");
+            return -1;
+        }
+        
+        len = fread( lut_def_fromfile, 1, sizeof(lut_def_fromfile), fp );
+        fclose( fp );
+
+        if( len == sizeof(lut_def_fromfile) )
+        {
+            msSetError(MS_IOERR, 
+                       "LUT definition from file %s longer than maximum buffer size (%d bytes).",
+                       path, sizeof(lut_def_fromfile),
+                       "drawGDAL()");
+            return -1;
+        }
+        
+        lut_def_fromfile[len] = '\0';
+
+        lut_def = lut_def_fromfile;
+    } 
+
+/* -------------------------------------------------------------------- */
+/*      Parse the LUT description.                                      */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(lut_def,"# GIMP",6) )
+    {
+        err = ParseGimpLUT( lut_def, lut, iColorIndex );
+    }
+    else
+    {
+        err = ParseDefaultLUT( lut_def, lut );
+    }
+
+    if( err != 0 )
+        return err;
+
+/* -------------------------------------------------------------------- */
+/*      Apply LUT.                                                      */
+/* -------------------------------------------------------------------- */
+    for( i = buf_xsize * buf_ysize - 1; i >= 0; i-- )
+        buffer[i] = lut[buffer[i]];
+
+    return 0;
+}
+
+/************************************************************************/
 /*                           LoadGDALImage()                            */
 /*                                                                      */
 /*      This call will load and process one band of input for the       */
@@ -1125,7 +1302,10 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
                         CPLGetLastErrorMsg(), "drawGDAL()" );
 
         if( eErr == CE_None )
-            return 0;
+        {
+            return ApplyLUT( iColorIndex, layer, 
+                             pabyBuffer, dst_xsize, dst_ysize );;
+        }
         else
             return -1;
     }
@@ -1202,7 +1382,11 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
                  "unclassified scaled data.\n",
                  layer->name, dfNoDataValue );
 
-    return 0;
+/* -------------------------------------------------------------------- */
+/*      Apply LUT if there is one.                                      */
+/* -------------------------------------------------------------------- */
+    return ApplyLUT( iColorIndex, layer, 
+                             pabyBuffer, dst_xsize, dst_ysize );;
 }
 
 /************************************************************************/
