@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2006/11/06 15:18:23  tkralidi
+ * altered msOWSGetLanguage to always return en-US for exceptions, else ows_language
+ *
  * Revision 1.68  2006/11/02 18:58:58  tkralidi
  * Added msOWSGetLanguage function as per bug 1955
  *
@@ -523,13 +526,23 @@ const char *msOWSGetSchemasLocation(mapObj *map)
 ** Use value of "ows_language" metadata, if not set then
 ** return "undefined" as a default
 */
-const char *msOWSGetLanguage(mapObj *map)
+const char *msOWSGetLanguage(mapObj *map, const char *context)
 {
     const char *language;
 
-    language = msLookupHashTable(&(map->web.metadata), "ows_language");
-    if (language == NULL) {
-      language = "undefined";
+    /* if this is an exception, MapServer always returns Exception
+       messages in en-US
+    */
+    if (context == "exception") {
+      language = "en-US";
+    }
+    /* if not, fetch language from mapfile metadata */
+    else {
+      language = msLookupHashTable(&(map->web.metadata), "ows_language");
+
+      if (language == NULL) {
+        language = "undefined";
+      }
     }
     return language;
 }
