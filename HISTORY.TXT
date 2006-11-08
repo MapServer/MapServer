@@ -28,6 +28,7 @@ Version 4.99 (CVS HEAD)
 
  - fixed performance problem in raster reprojection (bug 1944)
 
+ - added msOWSGetLanguage function in mapows.c/h (bug 1955)
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
