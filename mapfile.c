@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.334  2006/11/09 19:05:22  dan
+ * Log time spent in msLoadMap() if map-> debug is set
+ *
  * Revision 1.333  2006/10/24 05:08:43  sdlime
  * Fixed one more issue with loadExpressionString...
  *
@@ -191,6 +194,7 @@
 #include "map.h"
 #include "mapfile.h"
 #include "mapthread.h"
+#include "maptime.h"
 
 #ifdef USE_GDAL
 #  include "cpl_conv.h"
@@ -4797,10 +4801,30 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 mapObj *msLoadMap(char *filename, char *new_mappath)
 {
     mapObj *map;
+    struct mstimeval starttime, endtime;
+
+#ifdef ENABLE_STDERR_DEBUG
+    /* In debug mode, track time spent loading/parsing mapfile.
+     * In all other cases we use a 'if (map->debug)' to enable this 
+     * feature, but since the mapObjs isn't loaded yet we can't, 
+     * so we rely on a #ifdef for that.
+     */
+    msGettimeofday(&starttime, NULL);
+#endif
 
     msAcquireLock( TLOCK_PARSER );
     map = loadMapInternal( filename, new_mappath );
     msReleaseLock( TLOCK_PARSER );
+
+#ifdef ENABLE_STDERR_DEBUG
+    if (map->debug)
+    {
+        msGettimeofday(&endtime, NULL);
+        msDebug("msLoadMap(): %.3fs\n", 
+                (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+                (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+    }
+#endif
 
     return map;
 }
