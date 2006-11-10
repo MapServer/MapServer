@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/11/10 17:48:41  frank
+ * Fixed some serious bugs in gimp handling.
+ *
  * Revision 1.50  2006/11/10 04:50:15  frank
  * Added gimp curve file support.
  *
@@ -1155,7 +1158,7 @@ static int LutFromGimpLine( const char *lut_line, GByte *lut )
     wrkLUTDef[0] = '\0';
     for( i = 0; i < 17; i++ )
     {
-        if( atoi(tokens[i]) >= 0 )
+        if( atoi(tokens[i*2]) >= 0 )
         {
             if( count++ > 0 )
                 strcat( wrkLUTDef, "," );
@@ -1198,7 +1201,7 @@ static int ParseGimpLUT( const char *lut_def, GByte *lut, int iColorIndex )
      * Convert the overall curve, and the color band specific curve into LUTs.
      */
     if( LutFromGimpLine( lines[1], lutValue ) != 0 
-        || LutFromGimpLine( lines[iColorIndex + 2], lutColorBand ) != 0 )
+        || LutFromGimpLine( lines[iColorIndex + 1], lutColorBand ) != 0 )
     {
         CSLDestroy( lines );
         return -1;
@@ -1238,7 +1241,7 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
 /*      Get lut specifier from processing directives.  Do nothing if    */
 /*      none are found.                                                 */
 /* -------------------------------------------------------------------- */
-    sprintf( key, "LUT_%d", iColorIndex + 1 );
+    sprintf( key, "LUT_%d", iColorIndex );
     lut_def = msLayerGetProcessingKey( layer, key );
     if( lut_def == NULL )
         lut_def = msLayerGetProcessingKey( layer, "LUT" );
