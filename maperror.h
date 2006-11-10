@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/11/10 01:30:44  tkralidi
+ * Added MS_ERROR_LANGUAGE #define for use by error handlers such as
+ * msOWSCommonExceptionReport and msOWSGetLanguage
+ *
  * Revision 1.35  2006/03/16 22:28:38  tamas
  * Fixed msGetErrorString so as not to truncate the length of the error messages
  * Added msAddErrorDisplayString to read the displayable messages separatedly
@@ -96,6 +100,8 @@ extern "C" {
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
+
+#define MS_ERROR_LANGUAGE "en-US"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define MS_DLL_EXPORT     __declspec(dllexport)
