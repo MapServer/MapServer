@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/11/10 04:50:15  frank
+ * Added gimp curve file support.
+ *
  * Revision 1.49  2006/11/06 04:03:19  frank
  * preliminary implementation of RFC21/raster color correction (bug 1943)
  *
@@ -1128,6 +1131,46 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
 }
 
 /************************************************************************/
+/*                          LutFromGimpLine()                           */
+/************************************************************************/
+
+static int LutFromGimpLine( const char *lut_line, GByte *lut )
+
+{
+    char wrkLUTDef[1000];
+    int  i, count = 0;
+    char **tokens;
+
+    tokens = CSLTokenizeString( lut_line );
+    if( CSLCount(tokens) != 17 * 2 )
+    {
+        CSLDestroy( tokens );
+        msSetError(MS_MISCERR, 
+                   "GIMP curve file appears corrupt.", 
+                   "LutFromGimpLine()" );
+        return -1;
+    }
+
+    /* Convert to our own format */
+    wrkLUTDef[0] = '\0';
+    for( i = 0; i < 17; i++ )
+    {
+        if( atoi(tokens[i]) >= 0 )
+        {
+            if( count++ > 0 )
+                strcat( wrkLUTDef, "," );
+
+            sprintf( wrkLUTDef + strlen(wrkLUTDef), "%s:%s",
+                     tokens[i*2], tokens[i*2+1] );
+        }
+    }
+
+    CSLDestroy( tokens );
+
+    return ParseDefaultLUT( wrkLUTDef, lut );
+}
+
+/************************************************************************/
 /*                            ParseGimpLUT()                            */
 /*                                                                      */
 /*      Parse a Gimp style LUT.                                         */
@@ -1136,10 +1179,44 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
 static int ParseGimpLUT( const char *lut_def, GByte *lut, int iColorIndex )
 
 {
-    msSetError(MS_IMGERR, 
-               "GIMP style files not yet supported.", 
-               "ParseGimpLUT()" );
-    return -1;
+    int i;
+    GByte lutValue[256];
+    GByte lutColorBand[256];
+    char **lines = 
+        CSLTokenizeStringComplex( lut_def, "\n", FALSE, FALSE );
+
+    if( !EQUALN(lines[0],"# GIMP Curves File",18) 
+        || CSLCount(lines) < 6 )
+    {
+        msSetError(MS_MISCERR, 
+                   "GIMP curve file appears corrupt.", 
+                   "ParseGimpLUT()" );
+        return -1;
+    }
+
+    /*
+     * Convert the overall curve, and the color band specific curve into LUTs.
+     */
+    if( LutFromGimpLine( lines[1], lutValue ) != 0 
+        || LutFromGimpLine( lines[iColorIndex + 2], lutColorBand ) != 0 )
+    {
+        CSLDestroy( lines );
+        return -1;
+    }
+    CSLDestroy( lines );
+
+    /*
+     * Compose the two luts as if the raw value passed through the color band
+     * specific lut, and then the general value lut.  Usually one or the
+     * other will be the identity mapping, but not always.
+     */
+    
+    for( i = 0; i < 256; i++ )
+    {
+        lut[i] = lutValue[lutColorBand[i]];
+    }
+    
+    return 0;
 }
 
 /************************************************************************/
