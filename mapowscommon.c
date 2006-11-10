@@ -30,16 +30,22 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/11/10 18:38:36  frank
+ * Added big ifdef USE_SOS_SVR for now.
+ *
  * Revision 1.1  2006/11/10 01:37:44  tkralidi
  * Initial implementation (bug 1954)
  *
  *
  ******************************************************************************/
 
+#include "map.h"
+
+#ifdef USE_SOS_SVR
+
 #include<libxml/parser.h>
 #include<libxml/tree.h>
 
-#include "map.h"
 #include "mapowscommon.h"
 
 MS_CVSID("$Id$")
@@ -333,3 +339,6 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(int dimensions, double minx, double miny,
 
   return psRootNode;
 }
+
+#endif /* defined(USE_SOS_SVR) */
+
