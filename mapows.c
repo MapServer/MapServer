@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2006/11/10 01:36:08  tkralidi
+ * msGetLanguage now uses maperror.h MS_ERROR_LANGUAGE
+ *
  * Revision 1.69  2006/11/06 15:18:23  tkralidi
  * altered msOWSGetLanguage to always return en-US for exceptions, else ows_language
  *
@@ -534,7 +537,7 @@ const char *msOWSGetLanguage(mapObj *map, const char *context)
        messages in en-US
     */
     if (context == "exception") {
-      language = "en-US";
+      language = MS_ERROR_LANGUAGE;
     }
     /* if not, fetch language from mapfile metadata */
     else {
