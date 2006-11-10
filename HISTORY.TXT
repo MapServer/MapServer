@@ -30,6 +30,10 @@ Version 4.99 (CVS HEAD)
 
  - added msOWSGetLanguage function in mapows.c/h (bug 1955)
 
+ - added mapowscommon.c/mapowscommon.h (bug 1954)
+
+ - updated mapogcsos.c to use mapowscommon.c functions (bug 1954)
+
 Version 4.10.0 (2006-10-04)
 ---------------------------
 
