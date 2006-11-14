@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/11/14 16:32:05  frank
+ * avoid warning when wms/wfs disabled
+ *
  * Revision 1.51  2006/11/10 17:48:41  frank
  * Fixed some serious bugs in gimp handling.
  *
@@ -1144,6 +1147,9 @@ static int LutFromGimpLine( const char *lut_line, GByte *lut )
     int  i, count = 0;
     char **tokens;
 
+    while( *lut_line == 10 || *lut_line == 13 )
+        lut_line++;
+
     tokens = CSLTokenizeString( lut_line );
     if( CSLCount(tokens) != 17 * 2 )
     {
@@ -1647,7 +1653,9 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
                            double *padfGeoTransform )
 
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
     rectObj  rect;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      some GDAL drivers (ie. GIF) don't set geotransform on failure.  */
