@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/11/14 16:44:41  frank
+ * Added more robust handling of dos text mode gimp files.
+ *
  * Revision 1.52  2006/11/14 16:32:05  frank
  * avoid warning when wms/wfs disabled
  *
@@ -1140,16 +1143,22 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
 /*                          LutFromGimpLine()                           */
 /************************************************************************/
 
-static int LutFromGimpLine( const char *lut_line, GByte *lut )
+static int LutFromGimpLine( char *lut_line, GByte *lut )
 
 {
     char wrkLUTDef[1000];
     int  i, count = 0;
     char **tokens;
 
+    /* cleanup white space at end of line (DOS LF, etc) */
+    i = strlen(lut_line) - 1;
+    while( i > 0 && isspace(lut_line[i]) )
+        lut_line[i--] = '\0';
+
     while( *lut_line == 10 || *lut_line == 13 )
         lut_line++;
-
+    
+    /* tokenize line */
     tokens = CSLTokenizeString( lut_line );
     if( CSLCount(tokens) != 17 * 2 )
     {
