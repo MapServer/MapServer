@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.335  2006/11/14 19:06:48  dan
+ * Avoid seg. fault in msLoadMap() in debug mode when map parsing fails
+ *
  * Revision 1.334  2006/11/09 19:05:22  dan
  * Log time spent in msLoadMap() if map-> debug is set
  *
@@ -4817,7 +4820,7 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
     msReleaseLock( TLOCK_PARSER );
 
 #ifdef ENABLE_STDERR_DEBUG
-    if (map->debug)
+    if (map && map->debug)
     {
         msGettimeofday(&endtime, NULL);
         msDebug("msLoadMap(): %.3fs\n", 
