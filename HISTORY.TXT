@@ -34,6 +34,9 @@ Version 4.99 (CVS HEAD)
 
  - updated mapogcsos.c to use mapowscommon.c functions (bug 1954)
 
+ - added more Perl mapscript examples in mapscript/perl/examples/, most
+   of which exemplify recently added GEOS functionality
+
 Version 4.10.0 (2006-10-04)
 ---------------------------
 
