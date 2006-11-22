@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/11/22 17:25:41  frank
+ * Fixed msMapSetExtent() to avoid trying to calcuate the
+ * scale if the map size hasn't been set yet (bug 1968)
+ *
  * Revision 1.27  2006/09/24 03:31:35  frank
  * Same as last fix, but for y dimension, instead of just x.
  *
@@ -311,8 +315,11 @@ int msMapSetExtent( mapObj *map,
       
     map->cellsize = msAdjustExtent(&(map->extent), map->width, 
                                    map->height);
-    msCalculateScale(map->extent, map->units, map->width, map->height, 
-                     map->resolution, &(map->scale));
+
+    /* if the map size is also set, recompute scale, ignore errors? */
+    if( map->width != -1 || map->height != -1 )
+        msCalculateScale(map->extent, map->units, map->width, map->height, 
+                         map->resolution, &(map->scale));
 
     return msMapComputeGeotransform( map );
 }

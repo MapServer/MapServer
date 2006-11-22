@@ -37,6 +37,12 @@ Version 4.99 (CVS HEAD)
  - added more Perl mapscript examples in mapscript/perl/examples/, most
    of which exemplify recently added GEOS functionality
 
+ - php_mapscript.c: Fixed setRotation() method to check for MS_SUCCESS, not 
+   MS_TRUE (bug 1968)
+
+ - mapobject.c: Fixed msMapSetExtent() to avoid trying to calcuate the 
+   scale if the map size hasn't been set yet (bug 1968) 
+
 Version 4.10.0 (2006-10-04)
 ---------------------------
 
