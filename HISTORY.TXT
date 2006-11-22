@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.1 (??)
 -------------------
 
+- Fixed setRotation() to check for MS_SUCCESS, not MS_TRUE (bug 1968)
+
 - sde->row_id_column needs to be initialized to NULL in msSDELayerOpen (bug 1953).
 
 - Makefile.in: fix mapogr rule so that it works with regular make (not gnumake)
