@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.261  2006/11/22 17:26:45  frank
+ * fixed setRotation() to check for MS_SUCCESS, not MS_TRUE (bug 1968)
+ *
  * Revision 1.260  2006/09/06 16:42:36  dan
  * Removed unused variable in php_ms_IO_getStdoutBufferBytes()
  *
@@ -1865,7 +1868,7 @@ DLEXPORT void php3_ms_map_setRotation(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_double(pAngle);
 
-    if ((nStatus = mapObj_setRotation(self, pAngle->value.dval)) != MS_TRUE)
+    if ((nStatus = mapObj_setRotation(self, pAngle->value.dval)) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }
