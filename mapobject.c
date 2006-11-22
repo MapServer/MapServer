@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/11/22 19:53:12  frank
+ * ensure msMapComputeGeotransform() returns MS_FAILURE, not MS_FALSE (bug 1968)
+ *
  * Revision 1.28  2006/11/22 17:25:41  frank
  * Fixed msMapSetExtent() to avoid trying to calcuate the
  * scale if the map size hasn't been set yet (bug 1968)
@@ -370,7 +373,7 @@ int msMapComputeGeotransform( mapObj * map )
     /* Do we have all required parameters? */
     if( map->extent.minx == map->extent.maxx 
         || map->width == 0 || map->height == 0 )
-        return MS_FALSE;
+        return MS_FAILURE;
 
     rot_angle = map->gt.rotation_angle * MS_PI / 180.0;
 
