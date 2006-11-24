@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - maperror.c: fix closing of stderr/stdout after writing error msg (bug 1970)
+
  - Preliminary implementation of RFC 21 (Raster Color Correction). 
 
  - [SLD] : when reading an SLD, sequence of classes was reversed (Bug 1925)

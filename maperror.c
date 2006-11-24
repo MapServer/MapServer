@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2006/11/24 22:02:22  frank
+ * fix closing of stderr/stdout after writing error msg (bug 1970)
+ *
  * Revision 1.75  2006/03/16 22:28:38  tamas
  * Fixed msGetErrorString so as not to truncate the length of the error messages
  * Added msAddErrorDisplayString to read the displayable messages separatedly
@@ -414,7 +417,8 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
     if(!errstream) return;
     errtime = time(NULL);
     fprintf(errstream, "%s - %s: %s %s\n", chop(ctime(&errtime)), ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
-    fclose(errstream);
+    if( errstream != stderr && errstream != stdout )
+        fclose(errstream);
   }
 }
 
