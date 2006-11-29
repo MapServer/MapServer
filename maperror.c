@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2006/11/29 05:27:17  sdlime
+ * Applied patch supplied with bug 1963.
+ *
  * Revision 1.76  2006/11/24 22:02:22  frank
  * fix closing of stderr/stdout after writing error msg (bug 1970)
  *
@@ -471,9 +474,6 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   int nBlack = 0;   
   outputFormatObj *format = NULL;
 
-  char errormsg[MESSAGELENGTH+ROUTINELENGTH+4];
-  errorObj *ms_error = msGetErrorObj();
-
   if (map) {
       if( map->width != -1 && map->height != -1 )
       {
@@ -494,7 +494,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if (map->outputformat && map->outputformat->transparent)
     gdImageColorTransparent(img, 0);
 
-  sprintf(errormsg, "%s: %s", ms_error->routine, ms_error->message);
+  char *errormsg = msGetErrorString("; ");
   nTextLength = strlen(errormsg); 
   nWidthTxt  =  nTextLength * font->w;
   nUsableWidth = width - (nMargin*2);
@@ -550,6 +550,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 
   if (format->refcount == 0)
     msFreeOutputFormat(format);
+  msFree(errormsg);  
 }
 
 char *msGetVersion() {
