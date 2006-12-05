@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.73  2006/12/05 12:50:25  assefa
+ * Support of mixing  static text with column names (bug 1857).
+ *
  * Revision 1.72  2006/10/31 19:35:44  assefa
  * when reading an SLD, sequence of classes was reversed (Bug 1925)
  *
@@ -2609,6 +2612,9 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
     int nLength = 0;
     char *pszColor = NULL;
     char *pszItem = NULL;
+    CPLXMLNode *psTmpNode = NULL;
+    char *pszClassText = NULL;
+    char szTmp[100];
 
     szFontName[0]='\0';
 
@@ -2622,22 +2628,63 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         psLabel = CPLGetXMLNode(psRoot, "Label");
         if (psLabel )
         {
+            psTmpNode = psLabel->psChild;
+            psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
+            if (psPropertyName)
+            {
+                while (psTmpNode)
+                {
+                    //open bracket to get valid expression
+                    if (pszClassText == NULL)
+                      pszClassText = strcatalloc(pszClassText, "(");
+                    
+                    if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
+                    {
+                        pszClassText = strcatalloc(pszClassText, psTmpNode->pszValue);
+                    }
+                    else if (psTmpNode->eType == CXT_Element && 
+                             strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
+                             psTmpNode->psChild &&
+                             psTmpNode->psChild->pszValue)
+                    {
+                        sprintf(szTmp, "[%s]", psTmpNode->psChild->pszValue);
+                        pszClassText = strcatalloc(pszClassText, szTmp);
+                    }
+                    psTmpNode = psTmpNode->psNext;
+                
+                }
+                //close bracket to get valid expression
+                if (pszClassText != NULL)
+                  pszClassText = strcatalloc(pszClassText, ")");
+            }
+            else
+            {
+                //supports  - <TextSymbolizer><Label>MY_COLUMN</Label>
+                if (psLabel->psChild && psLabel->psChild->pszValue)
+                {
+                    pszClassText = strcatalloc(pszClassText, "([");
+                    pszClassText = strcatalloc(pszClassText, psLabel->psChild->pszValue);
+                    pszClassText = strcatalloc(pszClassText, "])");
+                }
+            }
+            /*
             psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
             if (psPropertyName && psPropertyName->psChild &&
                 psPropertyName->psChild->pszValue)
               pszItem = psPropertyName->psChild->pszValue;
             else if (psLabel->psChild && psLabel->psChild->pszValue)
               pszItem = psLabel->psChild->pszValue;
-
-            if (pszItem)
-            /* psPropertyName = CPLGetXMLNode(psLabel, "PropertyName"); */
-              /* if (psPropertyName && psPropertyName->psChild && */
-              /* psPropertyName->psChild->pszValue) */
+            */
+            if (pszClassText)//pszItem)
             {
-                if (psLayer->labelitem)
-                  free (psLayer->labelitem);
-                psLayer->labelitem = strdup(pszItem);
+                //if (psLayer->labelitem)
+                //  free (psLayer->labelitem);
+                //psLayer->labelitem = strdup(pszItem);
 
+                
+
+                msLoadExpressionString(&psClass->text, pszClassText);
+                free(pszClassText);
                 /* font */
                 psFont = CPLGetXMLNode(psRoot, "Font");
                 if (psFont)

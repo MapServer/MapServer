@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - [SLD] : support of mixing  static text with column names (bug 1857) 
+
  - maperror.c: fix for wrapping long in image errors, thanks to Chris Schmidt (bug 1963) 
 
  - maperror.c: fix closing of stderr/stdout after writing error msg (bug 1970)
