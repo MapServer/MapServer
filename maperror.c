@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75.2.3  2006/12/06 05:51:18  sdlime
+ * Make sure to declare errormsg at the top of the function for MSVC.
+ *
  * Revision 1.75.2.2  2006/12/06 05:44:21  sdlime
  * Applied user supplied patch to fix long in-image error wrapping. (bug 1963)
  *
@@ -473,14 +476,14 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   int nSpaceBewteenLines = font->h;
   int nBlack = 0;   
   outputFormatObj *format = NULL;
+  char *errormsg = msGetErrorString("; ");
 
-  if (map) {
-      if( map->width != -1 && map->height != -1 )
-      {
-          width = map->width;
-          height = map->height;
-      }
-      format = map->outputformat;
+  if(map) {
+    if(map->width != -1 && map->height != -1) {
+      width = map->width;
+      height = map->height;
+    }
+    format = map->outputformat;
   }
 
   if (format == NULL) format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
@@ -494,7 +497,6 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if (map->outputformat && map->outputformat->transparent)
     gdImageColorTransparent(img, 0);
 
-  char *errormsg = msGetErrorString("; ");
   nTextLength = strlen(errormsg); 
   nWidthTxt  =  nTextLength * font->w;
   nUsableWidth = width - (nMargin*2);
