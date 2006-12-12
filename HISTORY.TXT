@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - [SLD]: use the url as symbol name for external symbols (bug 1985)
+
  - [SLD] : support of mixing  static text with column names (bug 1857) 
 
  - maperror.c: fix for wrapping long in image errors, thanks to Chris Schmidt (bug 1963) 

@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.74  2006/12/12 15:05:15  assefa
+ * Use the url as symbol name for external symbols (bug 1985)
+ *
  * Revision 1.73  2006/12/05 12:50:25  assefa
  * Support of mixing  static text with column names (bug 1857).
  *
@@ -2073,7 +2076,7 @@ extern unsigned char PNGsig[8];
 /*      Create a symbol entry for an inmap pixmap symbol. Returns       */
 /*      the symbol id.                                                  */
 /************************************************************************/
-int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName)
+int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName)
 {
     FILE *fp;
     char bytes[8];
@@ -2084,39 +2087,48 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName)
 
     if (map && pszFileName)
     {
-        /* check if a symbol of a  */
-        fp = fopen(pszFileName, "rb");
-        if (fp)
+        if (nSymbolId <= 0)
         {
-            fread(bytes,8,1,fp);
-            rewind(fp);
-            if (memcmp(bytes,"GIF8",4)==0)
+            if(map->symbolset.numsymbols == MS_MAXSYMBOLS) 
+            {    
+                 msSetError(MS_SYMERR, "Too many symbols defined.", "msSLDGetGraphicSymbol()");
+                 return 0; /* returs 0 for no symbol */
+            }
+
+            /* check if a symbol of a  */
+            fp = fopen(pszFileName, "rb");
+            if (fp)
             {
+                fread(bytes,8,1,fp);
+                rewind(fp);
+                if (memcmp(bytes,"GIF8",4)==0)
+                {
 #ifdef USE_GD_GIF
-                img = gdImageCreateFromGif(fp);
+                    img = gdImageCreateFromGif(fp);
 #endif
-            }
-            else if (memcmp(bytes,PNGsig,8)==0) 
-            {
+                }
+                else if (memcmp(bytes,PNGsig,8)==0) 
+                {
 #ifdef USE_GD_PNG
-                img = gdImageCreateFromPng(fp);
+                    img = gdImageCreateFromPng(fp);
 #endif        
-            }
-            fclose(fp);
+                }
+                fclose(fp);
 
-            if (img)
-            {
-                psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
-                nSymbolId = map->symbolset.numsymbols;
-                map->symbolset.numsymbols++;
-                initSymbol(psSymbol);
-                psSymbol->inmapfile = MS_TRUE;
-                psSymbol->sizex = 1;
-                psSymbol->sizey = 1; 
-                psSymbol->type = MS_SYMBOL_PIXMAP;
-                psSymbol->name = strdup(pszFileName);
-
-                psSymbol->img = img;
+                if (img)
+                {
+                    psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
+                    nSymbolId = map->symbolset.numsymbols;
+                    map->symbolset.numsymbols++;
+                    initSymbol(psSymbol);
+                    psSymbol->inmapfile = MS_TRUE;
+                    psSymbol->sizex = 1;
+                    psSymbol->sizey = 1; 
+                    psSymbol->type = MS_SYMBOL_PIXMAP;
+                    psSymbol->name = strdup(extGraphicName);
+  
+                    psSymbol->img = img;
+                }
             }
         }
     }
@@ -2190,6 +2202,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
     char *pszURL=NULL, *pszTmpSymbolName=NULL;
     int status;
 
+
     if (psExternalGraphic && psStyle && map)
     {
         psFormat = CPLGetXMLNode(psExternalGraphic, "Format");
@@ -2204,7 +2217,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
              strcasecmp(pszFormat, "image/png") == 0))
         {
           
-          /* <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/> */
+            /* <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/> */
             psURL = CPLGetXMLNode(psExternalGraphic, "OnlineResource");
             if (psURL && psURL->psChild)
             {
@@ -2218,32 +2231,51 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                 if (psTmp && psTmp->psChild)
                 {
                     pszURL = (char*)psTmp->psChild->pszValue;
-
-                    if (strcasecmp(pszFormat, "GIF") == 0 || 
-                        strcasecmp(pszFormat, "image/gif") == 0)
-                      pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "gif");
-                    else
-                      pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "png");
-
-                    if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) ==  
-                        MS_SUCCESS)
+                    /* pf@mapmedia.de:
+                       check if this external graphic is allready in Symbollist; 
+                       avoids unnecessary http requests; 
+                       this works only if we use the url as symbol->name hashkey!
+                    */
+                    psStyle->symbol = msGetSymbolIndex(&map->symbolset, 
+                                                       pszURL, 
+                                                       MS_FALSE);
+                    if (psStyle->symbol <= 0) 
                     {
-                        psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName);
-                        if (psStyle->symbol > 0 &&
-                            psStyle->symbol < map->symbolset.numsymbols)
-                          psStyle->symbolname = 
-                            strdup(map->symbolset.symbol[psStyle->symbol].name);
+                        if (strcasecmp(pszFormat, "GIF") == 0 || 
+                            strcasecmp(pszFormat, "image/gif") == 0)
+                          pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "gif");
+                        else
+                          pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "png");
+
+                        if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) == MS_SUCCESS)
+                        {
+                            psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL);
+                            if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
+                              psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol].name);
+
+                            /* set the color parameter if not set. Does not make sense */
+                            /* for pixmap but mapserver needs it. */
+                            if (psStyle->color.red == -1 || psStyle->color.green || psStyle->color.blue)
+                            {
+                                psStyle->color.red = 0;
+                                psStyle->color.green = 0;
+                                psStyle->color.blue = 0;
+                            }
+                        }        
+                    } 
+                    else 
+                    {
+                        if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
+                          psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol].name);
 
                         /* set the color parameter if not set. Does not make sense */
                         /* for pixmap but mapserver needs it. */
-                        if (psStyle->color.red == -1 || psStyle->color.green ||
-                            psStyle->color.blue)
+                        if (psStyle->color.red == -1 || psStyle->color.green || psStyle->color.blue)
                         {
                             psStyle->color.red = 0;
                             psStyle->color.green = 0;
                             psStyle->color.blue = 0;
                         }
-                     
                     }
                 }
             }

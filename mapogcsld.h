@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2006/12/12 15:05:15  assefa
+ * Use the url as symbol name for external symbols (bug 1985)
+ *
  * Revision 1.13  2005/05/01 15:15:47  sean
  * Previous commit mangled revision 1.12, now repaired (bug 1337)
  *
@@ -119,7 +122,7 @@ int msSLDGetLineSymbol(mapObj *map);
 int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray);
 int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
                        char *pszDashValue);
-int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName);
+int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName, char *extGraphicName);
 
 void msSLDSetColorObject(char *psHexColor, colorObj *psColor);
 
