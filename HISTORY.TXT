@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - exposed label point computation to mapscript (bug 1979)
+
  - mapscript/swiginc/mapzoom.i: fixed consistency checking in zoomRectangle (bug 1982)
 
  - [SLD]: use the url as symbol name for external symbols (bug 1985)
