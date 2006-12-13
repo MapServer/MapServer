@@ -227,8 +227,8 @@
             msSetError(MS_MISCERR, "image rectangle minx >= maxx", "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
-        if (poPixRect->miny >= poPixRect->maxy) {
-            msSetError(MS_MISCERR, "image rectangle miny >= maxy", "mapscript::mapObj::zoomRectangle()");
+        if (poPixRect->maxy >= poPixRect->miny) {
+            msSetError(MS_MISCERR, "image rectangle maxy >= miny", "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
 
