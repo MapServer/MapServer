@@ -182,6 +182,22 @@
 	return msGEOSDistance(self, shape); /* note this calls msDistanceShapeToShape() if GEOS support is not present */
     }
 
+    %newobject getLabelPoint;
+    pointObj *getLabelPoint()
+    {
+        pointObj *point = (pointObj *)calloc(1, sizeof(pointObj));
+        if (point == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for point", "labelPoint()");
+            return NULL;
+        }
+
+        if(self->type == MS_SHAPE_POLYGON && msPolygonLabelPoint(self, point, -1) == MS_SUCCESS)
+            return point;
+
+        free(point);
+        return NULL;
+    }
+
     int setValue(int i, char *value)
     {
         if (!self->values || !value)
