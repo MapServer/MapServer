@@ -16,8 +16,6 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.1 (??)
 -------------------
 
-- mapscript/swiginc/mapzoom.i: fixed consistency checking in zoomRectangle (bug 1982)
-
 - maperror.c: fix long in-image error message wrapping (bug 1963)
 
 - maperror.c: fix closing of stderr/stdout after writing error msg (bug 1970)
