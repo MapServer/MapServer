@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.103  2006/12/13 16:41:15  dan
+ * Added shapeObj.getLabelPoint() (bug 1979)
+ *
  * Revision 1.102  2006/09/01 02:30:15  sdlime
  * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
  *
@@ -1058,7 +1061,22 @@ double shapeObj_getlength(shapeObj *self)
     return msGEOSLength(self);
 }
 
- 
+pointObj *shapeObj_getLabelPoint(shapeObj *self)
+{
+    pointObj *point = (pointObj *)calloc(1, sizeof(pointObj));
+    if (point == NULL) {
+        msSetError(MS_MEMERR, "Failed to allocate memory for point", "getLabelPoint()");
+        return NULL;
+    }
+
+    if(self->type == MS_SHAPE_POLYGON && msPolygonLabelPoint(self, point, -1) == MS_SUCCESS)
+        return point;
+
+    free(point);
+    return NULL;
+}
+
+
 /**********************************************************************
  * class extensions for rectObj
  **********************************************************************/

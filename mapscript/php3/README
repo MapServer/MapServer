@@ -1276,16 +1276,16 @@ Constructor:
         Returns the value for a given field name.
  
    shapeobj buffer(width)
-     Returns a new buffered shapeObj based on the supplied distance (given in
-     the coordinates of the existing shapeObj). 
-     Only available if php/mapscript is built with GEOS library.   
+        Returns a new buffered shapeObj based on the supplied distance (given
+        in the coordinates of the existing shapeObj). 
+        Only available if php/mapscript is built with GEOS library.   
 
    shapeobj convexhull()
         Returns a shape object representing the convex hull of shape.
         Only available if php/mapscript is built with GEOS 
         library.
 
-     shapeobj boundary()
+   shapeobj boundary()
         Returns the boundary of the shape.
         Only available if php/mapscript is built with GEOS library.
 
@@ -1347,17 +1347,21 @@ Constructor:
        shape. Else return false.
        Only available if php/mapscript is built with GEOS library.
 
-   pointObj getCentroid(shapeobj shape)  
+   pointObj getCentroid()  
        Returns a point object representing the centroid of the shape.
        Only available if php/mapscript is built with GEOS library.
 
-   double getArea(shapeobj shape)  
+   double getArea()  
        Returns the area of the shape (if applicable).
        Only available if php/mapscript is built with GEOS library.
 
-   double getLength(shapeobj shape)  
+   double getLength()  
        Returns the length (or perimeter) of the shape.
        Only available if php/mapscript is built with GEOS library.
+
+   pointObj getLabelPoint()  
+       Returns a point object with coordinates suitable for labelling 
+       the shape.
 
    string toWkt()
         Returns WKT representation of the shape's geometry.

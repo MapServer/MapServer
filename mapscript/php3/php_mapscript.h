@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/12/13 16:41:15  dan
+ * Added shapeObj.getLabelPoint() (bug 1979)
+ *
  * Revision 1.57  2006/08/22 15:55:03  assefa
  * Adding geos functions to php mapscript (Bug 1327)
  *
@@ -336,6 +339,7 @@ int             shapeObj_disjoint(shapeObj *self, shapeObj *shape);
 pointObj        *shapeObj_getcentroid(shapeObj *self);
 double          shapeObj_getarea(shapeObj *self);
 double          shapeObj_getlength(shapeObj *self);
+pointObj        *shapeObj_getLabelPoint(shapeObj *self);
 
 rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);

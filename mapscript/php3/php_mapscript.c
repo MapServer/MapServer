@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.262  2006/12/13 16:41:15  dan
+ * Added shapeObj.getLabelPoint() (bug 1979)
+ *
  * Revision 1.261  2006/11/22 17:26:45  frank
  * fixed setRotation() to check for MS_SUCCESS, not MS_TRUE (bug 1968)
  *
@@ -362,6 +365,7 @@ DLEXPORT void php3_ms_shape_getcentroid(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getarea(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getlength(INTERNAL_FUNCTION_PARAMETERS);
 /*end of geos related functions*/
+DLEXPORT void php3_ms_shape_getlabelpoint(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shape_towkt(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS);
@@ -736,30 +740,30 @@ function_entry php_map_class_functions[] = {
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
     {"getmetadata",     php3_ms_map_getMetaData,        NULL},
     {"setmetadata",     php3_ms_map_setMetaData,        NULL},
-    {"removemetadata",     php3_ms_map_removeMetaData,        NULL},
+    {"removemetadata",  php3_ms_map_removeMetaData,     NULL},
     {"prepareimage",    php3_ms_map_prepareImage,       NULL},
     {"preparequery",    php3_ms_map_prepareQuery,       NULL},
     {"movelayerup",     php3_ms_map_moveLayerUp,        NULL},
     {"movelayerdown",   php3_ms_map_moveLayerDown,      NULL},
-    {"getlayersdrawingorder",   php3_ms_map_getLayersDrawingOrder,  NULL},
-    {"setlayersdrawingorder",   php3_ms_map_setLayersDrawingOrder,  NULL},
-    {"processtemplate",   php3_ms_map_processTemplate,  NULL},
-    {"processlegendtemplate",   php3_ms_map_processLegendTemplate,  NULL},
-    {"processquerytemplate",   php3_ms_map_processQueryTemplate,  NULL},
+    {"getlayersdrawingorder", php3_ms_map_getLayersDrawingOrder, NULL},
+    {"setlayersdrawingorder", php3_ms_map_setLayersDrawingOrder, NULL},
+    {"processtemplate", php3_ms_map_processTemplate,    NULL},
+    {"processlegendtemplate", php3_ms_map_processLegendTemplate, NULL},
+    {"processquerytemplate",  php3_ms_map_processQueryTemplate,  NULL},
     {"setsymbolset",    php3_ms_map_setSymbolSet,       NULL},
     {"getnumsymbols",   php3_ms_map_getNumSymbols,      NULL},
     {"setfontset",      php3_ms_map_setFontSet,         NULL},
     {"savemapcontext",  php3_ms_map_saveMapContext,     NULL},
     {"loadmapcontext",  php3_ms_map_loadMapContext,     NULL},
-    {"selectoutputformat", php3_ms_map_selectOutputFormat, NULL},
-    {"applysld",         php3_ms_map_applySLD,           NULL},
-    {"applysldurl",         php3_ms_map_applySLDURL,           NULL},
-    {"generatesld",      php3_ms_map_generateSLD,           NULL},
-    {"getconfigoption",      php3_ms_map_getConfigOption,           NULL},
-    {"setconfigoption",      php3_ms_map_setConfigOption,           NULL},
-    {"applyconfigoptions",   php3_ms_map_applyConfigOptions,           NULL},
-    {"loadowsparameters",   php3_ms_map_loadOWSParameters,           NULL},
-    {"owsdispatch",   php3_ms_map_OWSDispatch,           NULL},
+    {"selectoutputformat", php3_ms_map_selectOutputFormat,      NULL},
+    {"applysld",        php3_ms_map_applySLD,           NULL},
+    {"applysldurl",     php3_ms_map_applySLDURL,        NULL},
+    {"generatesld",     php3_ms_map_generateSLD,        NULL},
+    {"getconfigoption", php3_ms_map_getConfigOption,    NULL},
+    {"setconfigoption", php3_ms_map_setConfigOption,    NULL},
+    {"applyconfigoptions", php3_ms_map_applyConfigOptions,      NULL},
+    {"loadowsparameters",  php3_ms_map_loadOWSParameters,       NULL},
+    {"owsdispatch",     php3_ms_map_OWSDispatch,        NULL},
     {NULL, NULL, NULL}
 };
 
@@ -797,13 +801,13 @@ function_entry php_reference_class_functions[] = {
 };
 
 function_entry php_scalebar_class_functions[] = {
-    {"set",             php3_ms_scalebar_setProperty,        NULL},
-    {"setimagecolor",   php3_ms_scalebar_setImageColor,      NULL},    
+    {"set",             php3_ms_scalebar_setProperty,   NULL},
+    {"setimagecolor",   php3_ms_scalebar_setImageColor, NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_legend_class_functions[] = {
-    {"set",             php3_ms_legend_setProperty,        NULL},    
+    {"set",             php3_ms_legend_setProperty,     NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -824,8 +828,8 @@ function_entry php_layer_class_functions[] = {
     {"getnumresults",   php3_ms_lyr_getNumResults,      NULL},
     {"getresult",       php3_ms_lyr_getResult,          NULL},
     {"open",            php3_ms_lyr_open,               NULL},
-    {"whichshapes",     php3_ms_lyr_whichShapes,               NULL},
-    {"nextshape",       php3_ms_lyr_nextShape,               NULL},
+    {"whichshapes",     php3_ms_lyr_whichShapes,        NULL},
+    {"nextshape",       php3_ms_lyr_nextShape,          NULL},
     {"close",           php3_ms_lyr_close,              NULL},
     {"getshape",        php3_ms_lyr_getShape,           NULL},
     {"getextent",       php3_ms_lyr_getExtent,          NULL},
@@ -856,17 +860,17 @@ function_entry php_label_class_functions[] = {
 };
 
 function_entry php_class_class_functions[] = {
-    {"set",              php3_ms_class_setProperty,      NULL},    
-    {"setexpression",    php3_ms_class_setExpression,    NULL},    
-    {"getexpression",    php3_ms_class_getExpression,    NULL},    
-    {"settext",          php3_ms_class_setText,          NULL},
-    {"drawlegendicon",   php3_ms_class_drawLegendIcon,   NULL},
-    {"createlegendicon", php3_ms_class_createLegendIcon, NULL},   
-    {"getstyle",        php3_ms_class_getStyle, NULL},   
-    {"clone",           php3_ms_class_clone, NULL},   
-    {"movestyleup",     php3_ms_class_moveStyleUp, NULL},   
-    {"movestyledown",   php3_ms_class_moveStyleDown, NULL},   
-    {"deletestyle",     php3_ms_class_deleteStyle, NULL},   
+    {"set",             php3_ms_class_setProperty,      NULL},    
+    {"setexpression",   php3_ms_class_setExpression,    NULL},    
+    {"getexpression",   php3_ms_class_getExpression,    NULL},    
+    {"settext",         php3_ms_class_setText,          NULL},
+    {"drawlegendicon",  php3_ms_class_drawLegendIcon,   NULL},
+    {"createlegendicon",php3_ms_class_createLegendIcon, NULL},   
+    {"getstyle",        php3_ms_class_getStyle,         NULL},   
+    {"clone",           php3_ms_class_clone,            NULL},   
+    {"movestyleup",     php3_ms_class_moveStyleUp,      NULL},   
+    {"movestyledown",   php3_ms_class_moveStyleDown,    NULL},   
+    {"deletestyle",     php3_ms_class_deleteStyle,      NULL},   
     {NULL, NULL, NULL}
 };
 
@@ -905,23 +909,24 @@ function_entry php_shape_class_functions[] = {
     {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
     {"buffer",          php3_ms_shape_buffer,           NULL},
     {"convexhull",      php3_ms_shape_convexhull,       NULL},
-    {"boundary",      php3_ms_shape_boundary,       NULL},
-    {"containsshape",        php3_ms_shape_contains_geos,NULL},
-    {"union_geos",          php3_ms_shape_Union,             NULL},
-    {"intersection",          php3_ms_shape_intersection,NULL},
-    {"difference",          php3_ms_shape_difference,    NULL},
-    {"symdifference",          php3_ms_shape_symdifference,    NULL},
-    {"overlaps",          php3_ms_shape_overlaps,    NULL},
-    {"within",          php3_ms_shape_within,    NULL},
-    {"crosses",          php3_ms_shape_crosses,    NULL},
-    {"touches",          php3_ms_shape_touches,    NULL},
-    {"equals",          php3_ms_shape_equals,    NULL},
-    {"disjoint",          php3_ms_shape_disjoint,    NULL},
-    {"getcentroid",          php3_ms_shape_getcentroid,    NULL},
-    {"getarea",          php3_ms_shape_getarea,    NULL},
-    {"getlength",          php3_ms_shape_getlength,    NULL},
+    {"boundary",        php3_ms_shape_boundary,         NULL},
+    {"containsshape",   php3_ms_shape_contains_geos,    NULL},
+    {"union_geos",      php3_ms_shape_Union,            NULL},
+    {"intersection",    php3_ms_shape_intersection,     NULL},
+    {"difference",      php3_ms_shape_difference,       NULL},
+    {"symdifference",   php3_ms_shape_symdifference,    NULL},
+    {"overlaps",        php3_ms_shape_overlaps,         NULL},
+    {"within",          php3_ms_shape_within,           NULL},
+    {"crosses",         php3_ms_shape_crosses,          NULL},
+    {"touches",         php3_ms_shape_touches,          NULL},
+    {"equals",          php3_ms_shape_equals,           NULL},
+    {"disjoint",        php3_ms_shape_disjoint,         NULL},
+    {"getcentroid",     php3_ms_shape_getcentroid,      NULL},
+    {"getarea",         php3_ms_shape_getarea,          NULL},
+    {"getlength",       php3_ms_shape_getlength,        NULL},
     {"towkt",           php3_ms_shape_towkt,            NULL},
     {"free",            php3_ms_shape_free,             NULL},
+    {"getlabelpoint",   php3_ms_shape_getlabelpoint,    NULL},
     {NULL, NULL, NULL}
 };
 
@@ -943,7 +948,7 @@ function_entry php_projection_class_functions[] = {
 
 function_entry php_style_class_functions[] = {
     {"set",             php3_ms_style_setProperty,      NULL},    
-    {"clone",           php3_ms_style_clone,      NULL},    
+    {"clone",           php3_ms_style_clone,            NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -959,7 +964,7 @@ function_entry php_outputformat_class_functions[] = {
 };
 
 function_entry php_grid_class_functions[] = {
-    {"set",             php3_ms_grid_setProperty,        NULL},
+    {"set",             php3_ms_grid_setProperty,       NULL},
     {NULL, NULL, NULL}
 };
 
@@ -11652,6 +11657,42 @@ DLEXPORT void php3_ms_shape_getlength(INTERNAL_FUNCTION_PARAMETERS)
 }
    
 
+/**********************************************************************
+ *                        shape->getLabelPoint()
+ **********************************************************************/
+/* {{{ proto int shape.getlabelpoint()
+   Given a shape, return a point object suitable for labelling it */
+
+DLEXPORT void php3_ms_shape_getlabelpoint(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    shapeObj     *self = NULL;
+    pointObj    *return_point = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+      WRONG_PARAM_COUNT;
+    
+
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    return_point = shapeObj_getLabelPoint(self);
+    if (return_point  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_point_object(return_point, 
+                              PHPMS_GLOBAL(le_mspoint_new),
+                              list, return_value TSRMLS_CC);
+}
+ 
 
 /**********************************************************************
  *                        shape->toWkt()
