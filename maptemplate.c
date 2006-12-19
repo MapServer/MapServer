@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.124  2006/12/19 18:58:05  sdlime
+ * Fixed templating code to respect msJoinConnect return values for URL templates. (bug 1989)
+ *
  * Revision 1.123  2006/10/30 23:42:39  sdlime
  * Added pattern option to the item tag so you can restrict the set of feature values that a particular output tag is applied to. The pattern is given as a regex.
  *
@@ -3185,7 +3188,9 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 
         if(lp->numjoins > 0) {
           for(k=0; k<lp->numjoins; k++) { 
-            msJoinConnect(lp, &(lp->joins[k]));
+            status = msJoinConnect(lp, &(lp->joins[k]));
+            if(status != MS_SUCCESS) return status;  
+
             msJoinPrepare(&(lp->joins[k]), &(msObj->ResultShape));
             msJoinNext(&(lp->joins[k])); /* fetch the first row */
           }
