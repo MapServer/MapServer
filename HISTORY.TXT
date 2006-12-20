@@ -56,6 +56,9 @@ Version 4.99 (CVS HEAD)
  - mapobject.c: ensure msMapComputeGeotransform() returns MS_FAILURE, not 
    MS_FALSE (bug 1968)
 
+ - mapdraw.c: Actually report that we aren't configure with wms client
+   support if that is why we can't draw a layer.
+
 Version 4.10.0 (2006-10-04)
 ---------------------------
 

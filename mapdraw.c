@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.108  2006/12/20 17:35:07  frank
+ * improve error message if not configured with wms client support
+ *
  * Revision 1.107  2006/08/17 04:37:17  sdlime
  * In keeping with naming conventions (like it or not) label->angle_follow becomes label->autofollow...
  *
@@ -485,35 +488,31 @@ imageObj *msDrawMap(mapObj *map)
             {
 #ifdef USE_WMS_LYR 
                 if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-                status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
-                                           numOWSRequests, 
-                                           map, lp, image);
-
+                    status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
+                                               numOWSRequests, 
+                                               map, lp, image);
+                
 #ifdef USE_MING_FLASH                
-                 else if( MS_RENDERER_SWF(image->format) )
-                   status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, 
-                                              numOWSRequests,
-                                              map, lp, image);
+                else if( MS_RENDERER_SWF(image->format) )
+                    status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, 
+                                               numOWSRequests,
+                                               map, lp, image);
 #endif
 #ifdef USE_PDF
-                 else if( MS_RENDERER_PDF(image->format) )
-                 {
-                  status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, 
-                                             numOWSRequests,
-                                             map, lp, image);
-                 }
+                else if( MS_RENDERER_PDF(image->format) )
+                {
+                    status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, 
+                                               numOWSRequests,
+                                               map, lp, image);
+                }
 #endif
-                 else
-                 {
-                     msSetError(MS_WMSCONNERR, 
-                                "Output format '%s' doesn't support WMS layers.", 
-                                "msDrawMap()", image->format->name);
-	        status = MS_FAILURE;
-			}
-#else /* ndef USE_WMS_LYR */
-                status = MS_FAILURE;
-#endif
-
+                else
+                {
+                    msSetError(MS_WMSCONNERR, 
+                               "Output format '%s' doesn't support WMS layers.", 
+                               "msDrawMap()", image->format->name);
+                    status = MS_FAILURE;
+                }
                 if(status == MS_FAILURE) {
                     msSetError(MS_WMSCONNERR, 
                                "Failed to draw WMS layer named '%s'. This most likely happened because "
@@ -525,6 +524,14 @@ imageObj *msDrawMap(mapObj *map)
                     return(NULL);
                 }
 
+
+#else /* ndef USE_WMS_LYR */
+                msSetError(MS_WMSCONNERR, 
+                           "MapServer not built with WMS Client support, unable to render layer '%s'.", 
+                           "msDrawMap()", lp->name);
+                msFreeImage(image);
+                return(NULL);
+#endif
 
             }        
             else 
