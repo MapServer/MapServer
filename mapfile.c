@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.336  2006/12/21 21:04:48  sdlime
+ * Initial fix for relative INCLUDEs. (bug 1880)
+ *
  * Revision 1.335  2006/11/14 19:06:48  dan
  * Avoid seg. fault in msLoadMap() in debug mode when map parsing fails
  *
@@ -215,6 +218,7 @@ extern FILE *msyyin;
 
 extern int msyystate;
 extern char *msyystring;
+extern char *msyybasepath;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
@@ -4596,15 +4600,14 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
   /* of the mapfile as the default path */
   getcwd(szCWDPath, MS_MAXPATHLEN);
   if (new_mappath)
-      map->mappath = strdup(
-          msBuildPath(szPath, szCWDPath, strdup(new_mappath)));
-  else
-  {
-      char *path = getPath(filename);
-      map->mappath = strdup(msBuildPath(szPath, szCWDPath, path));
-      if( path )
-          free( path );
+    map->mappath = strdup(msBuildPath(szPath, szCWDPath, strdup(new_mappath)));
+  else {
+    char *path = getPath(filename);
+    map->mappath = strdup(msBuildPath(szPath, szCWDPath, path));
+    if( path ) free( path );
   }
+
+  msyybasepath = map->mappath; /* for includes */
 
   for(;;) {
 

@@ -29,6 +29,7 @@ int msyylineno = 1;
 double msyynumber;
 int msyystate=0;
 char *msyystring=NULL;
+char *msyybasepath=NULL;
 
 int msyyreturncomments = 0;
 
@@ -48,6 +49,7 @@ void lexer_cleanup(void) {
 #define MAX_INCLUDE_DEPTH 5
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
+char path[MS_MAXPATHLEN];
 %}
 
 %s OBJECT_STRING
@@ -438,7 +440,7 @@ int include_stack_ptr = 0;
 
                                                  include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
 
-                                                 msyyin = fopen(msyytext, "r");
+                                                 msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
                                                    msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
                                                    exit(1);
