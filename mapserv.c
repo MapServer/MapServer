@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.154  2006/12/26 21:07:58  sdlime
+ * Change validation metadata name from foo_pattern to a more descriptive foo_validation_pattern.
+ *
  * Revision 1.153  2006/12/26 20:56:38  sdlime
  * Added support for checking runtime substitution values against a pattern (e.g. regex). (bug 1918)
  *
@@ -299,8 +302,8 @@ mapObj *loadMap(void)
     sprintf(tmpstr,"%%%s%%", msObj->request->ParamNames[i]);
 
     /* validation pattern metadata key */
-    key = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 9);
-    sprintf(key,"%s_pattern", msObj->request->ParamNames[i]);
+    key = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 20);
+    sprintf(key,"%s_validation_pattern", msObj->request->ParamNames[i]);
 		
     for(j=0; j<map->numlayers; j++) {
 			value = msLookupHashTable(&(map->layers[j].metadata), key);
