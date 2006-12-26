@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.153  2006/12/26 20:56:38  sdlime
+ * Added support for checking runtime substitution values against a pattern (e.g. regex). (bug 1918)
+ *
  * Revision 1.152  2006/08/29 01:56:53  sdlime
  * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
  *
@@ -262,9 +265,8 @@ mapObj *loadMap(void)
 {
   int i,j,k;
   mapObj *map = NULL;
-  char *tmpstr;
+  char *tmpstr, *key, *value=NULL;
   
-
   for(i=0;i<msObj->request->NumParams;i++) /* find the mapfile parameter first */
     if(strcasecmp(msObj->request->ParamNames[i], "map") == 0) break;
   
@@ -289,21 +291,42 @@ mapObj *loadMap(void)
   for(i=0;i<msObj->request->NumParams;i++) {
     if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0) { /* check to see if there are any additions to the mapfile */
       if(msLoadMapString(map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) == -1) writeError();
+      continue;
     }
 
+    /* subtitution string */
     tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 3);
     sprintf(tmpstr,"%%%s%%", msObj->request->ParamNames[i]);
-    
+
+    /* validation pattern metadata key */
+    key = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 9);
+    sprintf(key,"%s_pattern", msObj->request->ParamNames[i]);
+		
     for(j=0; j<map->numlayers; j++) {
-      if(map->layers[j].data && (strstr(map->layers[j].data, tmpstr) != NULL)) map->layers[j].data = gsub(map->layers[j].data, tmpstr, msObj->request->ParamValues[i]);
-      if(map->layers[j].tileindex && (strstr(map->layers[j].tileindex, tmpstr) != NULL)) map->layers[j].tileindex = gsub(map->layers[j].tileindex, tmpstr, msObj->request->ParamValues[i]);
-      if(map->layers[j].connection && (strstr(map->layers[j].connection, tmpstr) != NULL)) map->layers[j].connection = gsub(map->layers[j].connection, tmpstr, msObj->request->ParamValues[i]);
-      if(map->layers[j].filter.string && (strstr(map->layers[j].filter.string, tmpstr) != NULL)) map->layers[j].filter.string = gsub(map->layers[j].filter.string, tmpstr, msObj->request->ParamValues[i]);
-      for(k=0; k<map->layers[j].numclasses; k++)
-	if(map->layers[j].class[k].expression.string && (strstr(map->layers[j].class[k].expression.string, tmpstr) != NULL)) map->layers[j].class[k].expression.string = gsub(map->layers[j].class[k].expression.string, tmpstr, msObj->request->ParamValues[i]);
+			value = msLookupHashTable(&(map->layers[j].metadata), key);
+      if(value) { /* validate parameter value */
+        if(msEvalRegex(value, msObj->request->ParamValues[i]) == MS_FALSE) {
+          msSetError(MS_WEBERR, "Parameter '%s' value fails to validate.", "loadMap()", msObj->request->ParamNames[i]);
+          writeError();
+        }
+      }
+
+      if(map->layers[j].data && (strstr(map->layers[j].data, tmpstr) != NULL)) 
+        map->layers[j].data = gsub(map->layers[j].data, tmpstr, msObj->request->ParamValues[i]);
+      if(map->layers[j].tileindex && (strstr(map->layers[j].tileindex, tmpstr) != NULL)) 
+        map->layers[j].tileindex = gsub(map->layers[j].tileindex, tmpstr, msObj->request->ParamValues[i]);
+      if(map->layers[j].connection && (strstr(map->layers[j].connection, tmpstr) != NULL)) 
+        map->layers[j].connection = gsub(map->layers[j].connection, tmpstr, msObj->request->ParamValues[i]);
+      if(map->layers[j].filter.string && (strstr(map->layers[j].filter.string, tmpstr) != NULL)) 
+        map->layers[j].filter.string = gsub(map->layers[j].filter.string, tmpstr, msObj->request->ParamValues[i]);
+      for(k=0; k<map->layers[j].numclasses; k++) {
+	      if(map->layers[j].class[k].expression.string && (strstr(map->layers[j].class[k].expression.string, tmpstr) != NULL)) 
+          map->layers[j].class[k].expression.string = gsub(map->layers[j].class[k].expression.string, tmpstr, msObj->request->ParamValues[i]);
+      }
     }
     
     free(tmpstr);
+    free(key);
   }
 
   /* check to see if a ogc map context is passed as argument. if there */

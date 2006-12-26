@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - Added feature to the CGI to check runtime substitutions against patterns
+   defined in layer metadata. (bug 1918)
+
  - exposed label point computation to mapscript (bug 1979)
 
  - [SLD]: use the url as symbol name for external symbols (bug 1985)
