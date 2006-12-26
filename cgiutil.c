@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/12/26 16:33:35  sdlime
+ * Standardized formatting.
+ *
  * Revision 1.26  2006/08/29 01:56:53  sdlime
  * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
  *
@@ -68,69 +71,60 @@ MS_CVSID("$Id$")
 
 static char *readPostBody( cgiRequestObj *request ) 
 {
-    char *data; 
-    int data_max, data_len, chunk_size;
+  char *data; 
+  int data_max, data_len, chunk_size;
 
-    msIO_needBinaryStdin();
-    
-/* -------------------------------------------------------------------- */
-/*      If the length is provided, read in one gulp.                    */
-/* -------------------------------------------------------------------- */
-    if( getenv("CONTENT_LENGTH") != NULL )
-    {
+  msIO_needBinaryStdin();
 
-        data_max = atoi(getenv("CONTENT_LENGTH"));
-        data = (char *) malloc(data_max+1);
-        if( data == NULL )
-        {
-            msIO_printf("Content-type: text/html%c%c",10,10);
-            msIO_printf("malloc() failed, Content-Length: %d unreasonably large?\n",
-                   data_max );
-            exit( 1 );
-        }
-
-        if ( (int) msIO_fread(data, 1, data_max, stdin) < data_max ) {
-            msIO_printf("Content-type: text/html%c%c",10,10);
-            msIO_printf("POST body is short\n");
-            exit(1);
-        }
-        data[data_max] = '\0';
-        return data;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Otherwise read in chunks to the end.                            */
-/* -------------------------------------------------------------------- */
-    data_max = 10000;
-    data_len = 0;
+  /* -------------------------------------------------------------------- */
+  /*      If the length is provided, read in one gulp.                    */
+  /* -------------------------------------------------------------------- */
+  if( getenv("CONTENT_LENGTH") != NULL ) {
+    data_max = atoi(getenv("CONTENT_LENGTH"));
     data = (char *) malloc(data_max+1);
-
-    while( (chunk_size = msIO_fread( data + data_len, 1, 
-                                     data_max-data_len, stdin )) > 0 )
-    {
-        data_len += chunk_size;
-
-        if( data_len == data_max )
-        {
-            data_max = data_max + 10000;
-            data = (char *) realloc(data, data_max+1);
-
-            if( data == NULL )
-            {
-                msIO_printf("Content-type: text/html%c%c",10,10);
-                msIO_printf("out of memory trying to allocate %d input buffer, POST body too large?\n", data_max+1 );
-                exit(1);
-            }
-        }
+    if( data == NULL ) {
+      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_printf("malloc() failed, Content-Length: %d unreasonably large?\n", data_max );
+      exit( 1 );
     }
 
-    data[data_len] = '\0';
-    
+    if( (int) msIO_fread(data, 1, data_max, stdin) < data_max ) {
+      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_printf("POST body is short\n");
+      exit(1);
+    }
+
+    data[data_max] = '\0';
     return data;
+  }
+
+  /* -------------------------------------------------------------------- */
+  /*      Otherwise read in chunks to the end.                            */
+  /* -------------------------------------------------------------------- */
+  data_max = 10000;
+  data_len = 0;
+  data = (char *) malloc(data_max+1);
+
+  while( (chunk_size = msIO_fread( data + data_len, 1, data_max-data_len, stdin )) > 0 ) {
+    data_len += chunk_size;
+
+    if( data_len == data_max ) {
+      data_max = data_max + 10000;
+      data = (char *) realloc(data, data_max+1);
+
+      if( data == NULL ) {
+        msIO_printf("Content-type: text/html%c%c",10,10);
+        msIO_printf("out of memory trying to allocate %d input buffer, POST body too large?\n", data_max+1 );
+        exit(1);
+      }
+    }
+  }
+
+  data[data_len] = '\0';  
+  return data;
 }
 
-
-int loadParams(cgiRequestObj *request){
+int loadParams(cgiRequestObj *request) {
   register int x,m=0;
   char *s;
 
@@ -160,11 +154,11 @@ int loadParams(cgiRequestObj *request){
       int data_len = strlen(post_data);
       while( data_len > 0 && isspace(post_data[data_len-1]) )
         post_data[--data_len] = '\0';
-            
+
       while( post_data[0] ) {
         if(m >= MS_MAX_CGI_PARAMS) {
           msIO_printf("Too many name/value pairs, aborting.\n");
-	  exit(0);
+          exit(0);
         }
 
         request->ParamValues[m] = makeword(post_data,'&');
@@ -175,7 +169,7 @@ int loadParams(cgiRequestObj *request){
       }
       free( post_data );
     }
-  
+
     /* check the QUERY_STRING even in the post request since it can contain 
        information. Eg a wfs request with  */
     s = getenv("QUERY_STRING");
@@ -191,22 +185,21 @@ int loadParams(cgiRequestObj *request){
         request->ParamNames[m] = makeword(request->ParamValues[m],'=');
         m++;
       }
-    }
-     
+    }     
   } else { 
     if(strcmp(getenv("REQUEST_METHOD"),"GET") == 0) { /* we've got a get request */
       request->type = MS_GET_REQUEST;
-      
+
       s = getenv("QUERY_STRING");
       if(s == NULL) {
-	msIO_printf("Content-type: text/html%c%c",10,10);
-	msIO_printf("No query information to decode. QUERY_STRING not set.\n");	
-	exit(1);
+        msIO_printf("Content-type: text/html%c%c",10,10);
+        msIO_printf("No query information to decode. QUERY_STRING not set.\n");	
+        exit(1);
       }
       if(strlen(s)==0) {
-	msIO_printf("Content-type: text/html%c%c",10,10);
-	msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
-	exit(1);
+        msIO_printf("Content-type: text/html%c%c",10,10);
+        msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
+        exit(1);
       }
 
       for(x=0;s[0] != '\0';x++) {       
@@ -232,8 +225,8 @@ int loadParams(cgiRequestObj *request){
   if(s != NULL) {    
     for(x=0;s[0] != '\0';x++) {
       if(m >= MS_MAX_CGI_PARAMS) {
-	msIO_printf("Too many name/value pairs, aborting.\n");
-	exit(0);
+        msIO_printf("Too many name/value pairs, aborting.\n");
+        exit(0);
       }
       request->ParamValues[m] = makeword(s,';');
       plustospace(request->ParamValues[m]);
@@ -247,200 +240,197 @@ int loadParams(cgiRequestObj *request){
 }
 
 void getword(char *word, char *line, char stop) {
-    int x = 0,y;
+  int x = 0,y;
 
-    for(x=0;((line[x]) && (line[x] != stop));x++)
-        word[x] = line[x];
+  for(x=0;((line[x]) && (line[x] != stop));x++)
+    word[x] = line[x];
 
-    word[x] = '\0';
-    if(line[x]) ++x;
-    y=0;
+  word[x] = '\0';
+  if(line[x]) ++x;
+  y=0;
 
-    while((line[y++] = line[x++]));
+  while((line[y++] = line[x++]));
 }
 
 char *makeword_skip(char *line, char stop, char skip) {
-    int x = 0,y,offset=0;
-    char *word = (char *) malloc(sizeof(char) * (strlen(line) + 1));
+  int x = 0,y,offset=0;
+  char *word = (char *) malloc(sizeof(char) * (strlen(line) + 1));
 
-    for(x=0;((line[x]) && (line[x] == skip));x++);
-    offset = x;
+  for(x=0;((line[x]) && (line[x] == skip));x++);
+  offset = x;
 
-    for(x=offset;((line[x]) && (line[x] != stop));x++)
-        word[x-offset] = line[x];
+  for(x=offset;((line[x]) && (line[x] != stop));x++)
+    word[x-offset] = line[x];
 
-    word[x-offset] = '\0';
-    if(line[x]) ++x;
-    y=0;
+  word[x-offset] = '\0';
+  if(line[x]) ++x;
+  y=0;
 
-    while((line[y++] = line[x++]));
-    return word;
+  while((line[y++] = line[x++]));
+  return word;
 }
 
 char *makeword(char *line, char stop) {
-    int x = 0,y;
-    char *word = (char *) malloc(sizeof(char) * (strlen(line) + 1));
+  int x = 0,y;
+  char *word = (char *) malloc(sizeof(char) * (strlen(line) + 1));
 
-    for(x=0;((line[x]) && (line[x] != stop));x++)
-        word[x] = line[x];
+  for(x=0;((line[x]) && (line[x] != stop));x++)
+    word[x] = line[x];
 
-    word[x] = '\0';
-    if(line[x]) ++x;
-    y=0;
+  word[x] = '\0';
+  if(line[x]) ++x;
+  y=0;
 
-    while((line[y++] = line[x++]));
-    return word;
+  while((line[y++] = line[x++]));
+  return word;
 }
 
 char *fmakeword(FILE *f, char stop, int *cl) {
-    int wsize;
-    char *word;
-    int ll;
+  int wsize;
+  char *word;
+  int ll;
 
-    wsize = 102400;
-    ll=0;
-    word = (char *) malloc(sizeof(char) * (wsize + 1));
+  wsize = 102400;
+  ll=0;
+  word = (char *) malloc(sizeof(char) * (wsize + 1));
 
-    while(1) {
-        word[ll] = (char)fgetc(f);
-        if(ll==wsize) {
-            word[ll+1] = '\0';
-            wsize+=102400;
-            word = (char *)realloc(word,sizeof(char)*(wsize+1));
-        }
-        --(*cl);
-        if((word[ll] == stop) || (feof(f)) || (!(*cl))) {
-            if(word[ll] != stop) ll++;
-            word[ll] = '\0';
-	    word = (char *) realloc(word, ll+1);
-            return word;
-        }
-        ++ll;
+  while(1) {
+    word[ll] = (char)fgetc(f);
+    if(ll==wsize) {
+      word[ll+1] = '\0';
+      wsize+=102400;
+      word = (char *)realloc(word,sizeof(char)*(wsize+1));
     }
+    --(*cl);
+    if((word[ll] == stop) || (feof(f)) || (!(*cl))) {
+      if(word[ll] != stop) ll++;
+      word[ll] = '\0';
+	    word = (char *) realloc(word, ll+1);
+      return word;
+    }
+    ++ll;
+  }
 }
 
 char x2c(char *what) {
-    register char digit;
+  register char digit;
 
-    digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A')+10 : (what[0] - '0'));
-    digit *= 16;
-    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A')+10 : (what[1] - '0'));
-    return(digit);
+  digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A')+10 : (what[0] - '0'));
+  digit *= 16;
+  digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A')+10 : (what[1] - '0'));
+  return(digit);
 }
 
 void unescape_url(char *url) {
-    register int x,y;
+  register int x,y;
 
-    for(x=0,y=0;url[y];++x,++y) {
-        if((url[x] = url[y]) == '%') {
-            url[x] = x2c(&url[y+1]);
-            y+=2;
-        }
+  for(x=0,y=0;url[y];++x,++y) {
+    if((url[x] = url[y]) == '%') {
+      url[x] = x2c(&url[y+1]);
+      y+=2;
     }
-    url[x] = '\0';
+  }
+  url[x] = '\0';
 }
 
 void plustospace(char *str) {
-    register int x;
+  register int x;
 
-    for(x=0;str[x];x++) if(str[x] == '+') str[x] = ' ';
+  for(x=0;str[x];x++) if(str[x] == '+') str[x] = ' ';
 }
 
 int rind(char *s, char c) {
-    register int x;
-    for(x=strlen(s) - 1;x != -1; x--)
-        if(s[x] == c) return x;
-    return -1;
+  register int x;
+  for(x=strlen(s) - 1;x != -1; x--)
+    if(s[x] == c) return x;
+  return -1;
 }
 
 int _getline(char *s, int n, FILE *f) {
-    register int i=0;
+  register int i=0;
 
-    while(1) {
-        s[i] = (char)fgetc(f);
+  while(1) {
+    s[i] = (char)fgetc(f);
 
-        if(s[i] == CR)
-            s[i] = fgetc(f);
+    if(s[i] == CR)
+      s[i] = fgetc(f);
 
-        if((s[i] == 0x4) || (s[i] == LF) || (i == (n-1))) {
-            s[i] = '\0';
-            return (feof(f) ? 1 : 0);
-        }
-        ++i;
+    if((s[i] == 0x4) || (s[i] == LF) || (i == (n-1))) {
+      s[i] = '\0';
+      return (feof(f) ? 1 : 0);
     }
+    ++i;
+  }
 }
 
-void send_fd(FILE *f, FILE *fd)
-{
-    char c;
+void send_fd(FILE *f, FILE *fd) {
+  char c;
 
-    while (1) {
-        c = fgetc(f);
-        if(feof(f))
-            return;
-        fputc(c,fd);
-    }
+  while (1) {
+    c = fgetc(f);
+    if(feof(f))
+      return;
+    fputc(c,fd);
+  }
 }
 
 int ind(char *s, char c) {
-    register int x;
+  register int x;
 
-    for(x=0;s[x];x++)
-        if(s[x] == c) return x;
+  for(x=0;s[x];x++)
+    if(s[x] == c) return x;
 
-    return -1;
+  return -1;
 }
 
 /*
 ** patched version according to CERT advisory...
 */
 void escape_shell_cmd(char *cmd) {
-    register int x,y,l;
+  register int x,y,l;
 
-    l=strlen(cmd);
-    for(x=0;cmd[x];x++) {
-        if(ind("&;`'\"|*?~<>^()[]{}$\\\n",cmd[x]) != -1){
-            for(y=l+1;y>x;y--)
-                cmd[y] = cmd[y-1];
-            l++; /* length has been increased */
-            cmd[x] = '\\';
-            x++; /* skip the character */
-        }
+  l=strlen(cmd);
+  for(x=0;cmd[x];x++) {
+    if(ind("&;`'\"|*?~<>^()[]{}$\\\n",cmd[x]) != -1) {
+      for(y=l+1;y>x;y--)
+        cmd[y] = cmd[y-1];
+      l++; /* length has been increased */
+      cmd[x] = '\\';
+      x++; /* skip the character */
     }
+  }
 }
 
 /*
-  Allocate a new request holder structure
+** Allocate a new request holder structure
 */
-cgiRequestObj *msAllocCgiObj()
-{
-    cgiRequestObj *request = (cgiRequestObj *)malloc(sizeof(cgiRequestObj));
+cgiRequestObj *msAllocCgiObj() {
+  cgiRequestObj *request = (cgiRequestObj *)malloc(sizeof(cgiRequestObj));
 
-    if (!request)
-      return NULL;
+  if(!request)
+    return NULL;
 
-    request->ParamNames = NULL;
-    request->ParamValues = NULL;
-    request->NumParams = 0;
-    request->type = -1;
-    request->contenttype = NULL;
-    request->postrequest = NULL;
+  request->ParamNames = NULL;
+  request->ParamValues = NULL;
+  request->NumParams = 0;
+  request->type = -1;
+  request->contenttype = NULL;
+  request->postrequest = NULL;
 
-    return request;
+  return request;
 }
       
-void msFreeCgiObj(cgiRequestObj *request)
-{
-    msFreeCharArray(request->ParamNames, request->NumParams);
-    msFreeCharArray(request->ParamValues, request->NumParams);
-    request->ParamNames = NULL;
-    request->ParamValues = NULL;
-    request->NumParams = 0;
-    request->type = -1;
-    msFree(request->contenttype);
-    msFree(request->postrequest);
-    request->contenttype = NULL;
-    request->postrequest = NULL;
+void msFreeCgiObj(cgiRequestObj *request) {
+  msFreeCharArray(request->ParamNames, request->NumParams);
+  msFreeCharArray(request->ParamValues, request->NumParams);
+  request->ParamNames = NULL;
+  request->ParamValues = NULL;
+  request->NumParams = 0;
+  request->type = -1;
+  msFree(request->contenttype);
+  msFree(request->postrequest);
+  request->contenttype = NULL;
+  request->postrequest = NULL;
 
-    msFree(request);
+  msFree(request);
 }
