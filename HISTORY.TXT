@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.1 (??)
 -------------------
 
+- Added feature to the CGI to check runtime substitutions against patterns
+  defined in layer metadata. (bug 1918)
+
 - Fixed INCLUDEs to accept paths relative to the location of the mapfile (bug 1880)
 
 - maperror.c: fix long in-image error message wrapping (bug 1963)
