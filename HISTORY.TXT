@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.1 (??)
 -------------------
 
+- Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the 
+  CGI program. (bug 1992)
+
 - Added feature to the CGI to check runtime substitutions against patterns
   defined in layer metadata. (bug 1918)
 

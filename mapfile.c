@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.331.2.4  2006/12/29 05:25:14  sdlime
+ * Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the CGI program. (bug 1992)
+ *
  * Revision 1.331.2.3  2006/12/29 05:01:13  sdlime
  * Fixed INCLUDEs to accept paths relative to the location of the mapfile. (bug 1880)
  *
@@ -3091,6 +3094,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   case(TEMPLATE):
     msFree(layer->template);
     layer->template = strdup(value);
+    break;
+  case(TILEINDEX):
+    msFree(layer->tileindex);
+    layer->tileindex = strdup(value);
     break;
   case(TOLERANCE):
     msyystate = 2; msyystring = value;
