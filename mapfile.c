@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.331.2.3  2006/12/29 05:01:13  sdlime
+ * Fixed INCLUDEs to accept paths relative to the location of the mapfile. (bug 1880)
+ *
  * Revision 1.331.2.2  2006/10/24 05:10:50  sdlime
  * Fixed one more issue with loadExpressionString...
  *
@@ -208,6 +211,7 @@ extern FILE *msyyin;
 
 extern int msyystate;
 extern char *msyystring;
+extern char *msyybasepath;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
@@ -4598,6 +4602,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if( path )
           free( path );
   }
+
+  msyybasepath = map->mappath; /* for includes */
 
   for(;;) {
 
