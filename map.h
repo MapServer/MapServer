@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.471  2006/12/29 05:35:12  sdlime
+ * Initial definition of base types for RFC-19.
+ *
  * Revision 1.470  2006/10/04 15:01:56  dan
  * Update version, this is now 4.99 (dev version to be released as 5.0)
  *
@@ -291,13 +294,14 @@ extern "C" {
 #define MS_FEATUREINITSIZE 10 /* how many points initially can a feature have */
 #define MS_FEATUREINCREMENT 10
 
-#define MS_EXPRESSION 2000
+#define MS_EXPRESSION 2000 /* todo: make this an enum */
 #define MS_REGEX 2001
 #define MS_STRING 2002
 #define MS_NUMBER 2003
 #define MS_COMMENT 2004
 #define MS_IREGEX 2005
 #define MS_ISTRING 2006
+#define MS_BINDING 2007
 
 /* boolean options for the expression object. */
 #define MS_EXP_INSENSITIVE 1
@@ -651,6 +655,21 @@ typedef struct {
 #endif /* SWIG */
 
 } webObj;
+
+
+/* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
+#ifndef SWIG
+#define MS_STYLE_BINDING_LENGTH 2
+enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_ANGLE};
+#define MS_LABEL_BINDING_LENGTH 2
+enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE};
+
+/* ATTRIBUTE BINDING OBJECT - holds parameters necessary to bind an item to mapfile property (e.g. style size) */
+typedef struct {
+  char *item;
+  char index;
+} attributeBindingObj;
+#endif
 
 /* STYLE OBJECT - holds parameters for symbolization, multiple styles may be applied within a classObj */
 typedef struct {
