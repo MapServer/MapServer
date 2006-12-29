@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.337  2006/12/29 05:26:35  sdlime
+ * Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the CGI program. (bug 1992)
+ *
  * Revision 1.336  2006/12/21 21:04:48  sdlime
  * Initial fix for relative INCLUDEs. (bug 1880)
  *
@@ -3098,6 +3101,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   case(TEMPLATE):
     msFree(layer->template);
     layer->template = strdup(value);
+    break;
+  case(TILEINDEX):
+    msFree(layer->tileindex);
+    layer->tileindex = strdup(value);
     break;
   case(TOLERANCE):
     msyystate = 2; msyystring = value;
