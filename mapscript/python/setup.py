@@ -62,6 +62,7 @@ ex_next = False
 for x in lib_opts:
     if ex_next:
         extras.append(x)
+        ex_next = False
     elif x[:2] == '-l':
         libs.append( x[2:] )
     elif x[-4:] == '.lib' or x[-4:] == '.LIB':
