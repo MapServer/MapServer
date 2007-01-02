@@ -57,18 +57,26 @@ lib_dirs = lib_dirs + string.split(ms_install_dir)
 
 libs = []
 extras = []
+ex_next = False
 
 for x in lib_opts:
-    if x[:2] == '-l':
+    if ex_next:
+        extras.append(x)
+    elif x[:2] == '-l':
         libs.append( x[2:] )
-    if x[-4:] == '.lib' or x[-4:] == '.LIB':
+    elif x[-4:] == '.lib' or x[-4:] == '.LIB':
 	    dir, lib = os.path.split(x)
 	    libs.append( lib[:-4] )
 	    if len(dir) > 0:
 	        lib_dirs.append( dir )
-    if x[-2:] == '.a':
+    elif x[-2:] == '.a':
         extras.append(x)
-        
+    elif x[:10] == '-framework':
+        extras.append(x)
+        ex_next = True
+    elif x[:2] == '-F':
+        extras.append(x)
+          
 libs = unique(libs)
 
 # if we're msvc, just link against the stub lib
