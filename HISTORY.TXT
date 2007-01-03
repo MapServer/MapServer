@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - [Filter Encoding] : Check if Literal value in Filter is empty (bug 1995)
+
  - [SLD] : Else filters are now generated at the end of classes (bug 1925)  
 
  - Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the 

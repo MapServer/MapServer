@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.76  2007/01/03 20:50:06  assefa
+ * Check if Literal value in Filter is empty (bug 1995)
+ *
  * Revision 1.75  2007/01/03 16:09:34  assefa
  * Else filters are now generated at the end of classes (bug 1925)
  *
@@ -527,6 +530,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
         }
 
     }
+    
+    msSaveMap(map, "c:/temp/sld.map");
 
     if (bSuccess)
       return MS_SUCCESS;
