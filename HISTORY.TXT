@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - [SLD] : Else filters are now generated at the end of classes (bug 1925)  
+
  - Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the 
    CGI program. (bug 1992)
 

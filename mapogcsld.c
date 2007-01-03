@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.75  2007/01/03 16:09:34  assefa
+ * Else filters are now generated at the end of classes (bug 1925)
+ *
  * Revision 1.74  2006/12/12 15:05:15  assefa
  * Use the url as symbol name for external symbols (bug 1985)
  *
@@ -800,31 +803,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                         continue;
                     }
 
-                    psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
-/* -------------------------------------------------------------------- */
-/*      First parse rules with the else filter. These rules will        */
-/*      create the classes that are placed at the end of class          */
-/*      list. (See how classes are applied to layers in function        */
-/*      msSLDApplySLD).                                                 */
-/* -------------------------------------------------------------------- */
-                    while (psRule)
-                    {
-                        if (!psRule->pszValue || 
-                            strcasecmp(psRule->pszValue, "Rule") != 0)
-                        {
-                            psRule = psRule->psNext;
-                            continue;
-                        }
-                        psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
-                        if (psElseFilter)
-                        {
-                            msSLDParseRule(psRule, psLayer);
-                            _SLDApplyRuleValues(psRule, psLayer, 1);
-                        }
-                        psRule = psRule->psNext;
-
-                        
-                    }
 /* -------------------------------------------------------------------- */
 /*      Parse rules with no Else filter.                                */
 /* -------------------------------------------------------------------- */
@@ -914,6 +892,32 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                         psRule = psRule->psNext;
 
                     }
+/* -------------------------------------------------------------------- */
+/*      First parse rules with the else filter. These rules will        */
+/*      create the classes that are placed at the end of class          */
+/*      list. (See how classes are applied to layers in function        */
+/*      msSLDApplySLD).                                                 */
+/* -------------------------------------------------------------------- */
+                    psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
+                    while (psRule)
+                    {
+                        if (!psRule->pszValue || 
+                            strcasecmp(psRule->pszValue, "Rule") != 0)
+                        {
+                            psRule = psRule->psNext;
+                            continue;
+                        }
+                        psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
+                        if (psElseFilter)
+                        {
+                            msSLDParseRule(psRule, psLayer);
+                            _SLDApplyRuleValues(psRule, psLayer, 1);
+                        }
+                        psRule = psRule->psNext;
+
+                        
+                    }
+
                     psFeatureTypeStyle = psFeatureTypeStyle->psNext;
                 }
             }
