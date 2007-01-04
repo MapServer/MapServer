@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.80  2007/01/04 19:00:22  dan
+ * Fixed problem with WMS CONNECTION strings that contains a layer name
+ * with a "." in them (bug 1996)
+ *
  * Revision 1.79  2006/02/09 16:57:14  julien
  * Support SLD_BODY in Web Map Context
  *
@@ -501,7 +505,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     char *pszEPSG = NULL;
     const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam;
     rectObj bbox;
-    int nVersion;
+    int nVersion=0;
     
     if (lp->connectiontype != MS_WMS)
     {
@@ -529,15 +533,24 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         if (pszVersion ==NULL)
             pszVersion = msLookupHashTable(psWMSParams->params, "WMTVER");
 
+        nVersion = msOWSParseVersionString(pszVersion);
     }
     else
     {
         /* CONNECTION string seems complete, start with that. */
+        char *pszDelimiter;
         psWMSParams->onlineresource = strdup(lp->connection);
+
+        /* Fetch version info */
         pszVersion = strchr(pszVersion, '=')+1;
+        pszDelimiter = strchr(pszVersion, '&');
+        if (pszDelimiter != NULL)
+            *pszDelimiter = '\0';
+        nVersion = msOWSParseVersionString(pszVersion);
+        if (pszDelimiter != NULL)
+            *pszDelimiter = '&';
     }
 
-    nVersion = msOWSParseVersionString(pszVersion);
     switch (nVersion)
     {
       case OWS_1_0_8:
