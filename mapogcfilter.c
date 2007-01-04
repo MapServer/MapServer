@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.68  2007/01/04 14:27:05  assefa
+ * Check if Literal value in Filter is empty (bug 1995)
+ *
  * Revision 1.67  2006/06/05 20:07:56  hobu
  * make sure to close the layer in FLTAddToLayerResultCache
  *
@@ -1847,8 +1850,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     
                     psTmpNode = CPLSearchXMLNode(psXMLNode,  "Literal");
                     if (psTmpNode &&  psXMLNode->psChild && 
-                    psTmpNode->psChild->pszValue && 
-                    strlen(psTmpNode->psChild->pszValue) > 0)
+                        psTmpNode->psChild && 
+                        psTmpNode->psChild->pszValue && 
+                        strlen(psTmpNode->psChild->pszValue) > 0)
                     {
                         psFilterNode->psRightNode = FLTCreateBinaryCompFilterEncodingNode();
                 
