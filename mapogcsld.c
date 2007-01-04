@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.77  2007/01/04 14:27:43  assefa
+ * Remove debug statement.
+ *
  * Revision 1.76  2007/01/03 20:50:06  assefa
  * Check if Literal value in Filter is empty (bug 1995)
  *
@@ -531,7 +534,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
     }
     
-    msSaveMap(map, "c:/temp/sld.map");
 
     if (bSuccess)
       return MS_SUCCESS;
