@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.139  2007/01/05 05:19:35  sdlime
+ * GD clean-up. Added general purpose vector symbol drawing function that will support thick line (optionally and anti-aliased drawing). Will be used by all GD renderers.
+ *
  * Revision 1.138  2006/12/13 05:34:10  sdlime
  * Changed indentation in a few places to two spaces, helps readability IMHO...
  *
@@ -271,104 +274,11 @@ void msImageInitGD( imageObj *image, colorObj *background )
   }
 }
 
-/* msImageLoadGDStream is called by msImageLoadGD and is useful
- * by itself */
-/*imageObj *msImageLoadGDStream(FILE *stream)
-{
-  gdImagePtr img=NULL;
-  const char *driver = NULL;
-  char bytes[8];
-  imageObj      *image = NULL;
-
-  image = (imageObj *)calloc(1,sizeof(imageObj));
-  
-  fread(bytes,8,1,stream); // read some bytes to try and identify the file
-  rewind(stream); // reset the image for the readers
-  if (memcmp(bytes,"GIF8",4)==0) {
-#ifdef USE_GD_GIF
-    img = gdImageCreateFromGif(stream);
-    driver = "GD/GIF";
-    image->img.gd = img;
-    image->imagepath = NULL;
-    image->imageurl = NULL;
-    image->width = img->sx;
-    image->height = img->sy;
-#else
-    msSetError(MS_MISCERR, "Unable to load GIF reference image.", "msImageLoadGD()");
-    fclose(stream);
-    return(NULL);
-#endif
-  } else if (memcmp(bytes,PNGsig,8)==0) {
-#ifdef USE_GD_PNG
-    img = gdImageCreateFromPng(stream);
-    driver = "GD/PNG";
-    image->img.gd = img;
-    image->imagepath = NULL;
-    image->imageurl = NULL;
-    image->width = img->sx;
-    image->height = img->sy;
-#else
-    msSetError(MS_MISCERR, "Unable to load PNG reference image.", "msImageLoadGD()");
-    fclose(stream);
-    return(NULL);
-#endif
-  } else if (memcmp(bytes,JPEGsig,3)==0) {
-#ifdef USE_GD_JPEG
-    img = gdImageCreateFromJpeg(stream);
-    driver = "GD/JPEG";
-    image->img.gd = img;
-    image->imagepath = NULL;
-    image->imageurl = NULL;
-    image->width = img->sx;
-    image->height = img->sy;
-#else
-    msSetError(MS_MISCERR, "Unable to load JPEG reference image.", "msImageLoadGD()");
-    fclose(stream);
-    return(NULL);
-#endif
-  }
-
-  if(!img) {
-    msSetError(MS_GDERR, "Unable to initialize image", "msLoadImageGDStream()");
-    fclose(stream);
-    return(NULL);
-  }
-
-  image->format = msCreateDefaultOutputFormat( NULL, driver );
-  image->format->refcount++;
-
-  if( image->format == NULL )
-  {
-    msSetError(MS_GDERR, "Unable to create default OUTPUTFORMAT definition for driver '%s'.", "msImageLoadGDStream()", driver );
-    return(NULL);
-  }
-
-  if( gdImageTrueColor(img) && image->format->imagemode == MS_IMAGEMODE_PC256 )
-  {
-      image->format->imagemode = MS_IMAGEMODE_RGB;
-  }
-  else if( !gdImageTrueColor(img) 
-           && (image->format->imagemode == MS_IMAGEMODE_RGB 
-               || image->format->imagemode == MS_IMAGEMODE_RGBA) )
-  {
-      image->format->imagemode = MS_IMAGEMODE_PC256;
-  }
-
-  if (gdImageGetInterlaced(img)) {
-      msSetOutputFormatOption( image->format, "INTERLACE", "ON" );
-  } else {
-      msSetOutputFormatOption( image->format, "INTERLACE", "OFF" );
-  }  
-  
-  return image;
-}*/
-
 /* ===========================================================================
    msImageLoadGDCtx
    
    So that we can avoid passing a FILE* to GD, all gd image IO is now done
-   through the fileIOCtx interface defined at the end of this file.  The
-   old msImageLoadStreamGD function has been removed.
+   through the fileIOCtx interface defined at the end of this file. 
    ========================================================================= */
    
 imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver) 
@@ -587,7 +497,9 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
   return(brush);
 }
 
-/* Function to create a custom hatch symbol. */
+/* 
+** Function to create a custom hatch symbol based on an arbitrary angle. 
+*/
 static gdImagePtr createHatch(gdImagePtr img, int sx, int sy, rectObj *clip, styleObj *style, double scalefactor)
 {
   gdImagePtr hatch;
@@ -734,7 +646,7 @@ static gdPoint generateGDLineIntersection(gdPoint a, gdPoint b, gdPoint c, gdPoi
   return(p);
 }
 
-static void ImageFilledPolygonAA (gdImagePtr im, gdPointPtr p, int n, int c, int antialias)
+static void imageFilledPolygonAA (gdImagePtr im, gdPointPtr p, int n, int c, int antialias)
 {
   if (antialias) {
     /* gdImageSetAntiAliased(im, c); */
@@ -783,7 +695,7 @@ static void imageFilledSegment(gdImagePtr im, double x, double y, double sz, dou
   
 /* gdImagePolygon(im, points, j, c); */
 /* gdImageFilledPolygon(im, points, j, c); */
-    ImageFilledPolygonAA(im, points, j, c, antialias);
+    imageFilledPolygonAA(im, points, j, c, antialias);
   }
 }
 
@@ -851,7 +763,8 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
         dx0 = dx; dy0 = dy; x0 = x, y0 = y; k0 = k; q0=q;
       }
       /* last point */
-      if(first==0)gdImageLine(img, (int)x0, (int)y0, (int)(p->line[i].point[p->line[i].numpoints-1].x+ox), (int)(p->line[i].point[p->line[i].numpoints-1].y+oy), color);
+      if(first==0)
+        gdImageLine(img, (int)x0, (int)y0, (int)(p->line[i].point[p->line[i].numpoints-1].x+ox), (int)(p->line[i].point[p->line[i].numpoints-1].y+oy), color);
     }
   } else { /* normal offset (eg. drop shadow) */
     for (i = 0; i < p->numlines; i++)
@@ -1010,6 +923,90 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
   free(xintersect);
 }
 
+/*
+** Function to draw a vector symbol, using a given style in an image. Image could be a map
+** or a tile/brush. Use will vary by point, line or polygon renderer.
+*/
+static int drawVectorSymbolGD(gdImagePtr img, symbolObj *symbol, styleObj *style, int ox, int oy) 
+{
+  int i, j; /* loop counters */
+  int fc, oc; /* colors */
+
+  gdImagePtr brush=NULL; /* only used for anti-aliasing (e.g. fuzzy brush) */
+
+  if(symbol->type != MS_SYMBOL_VECTOR) {
+    msSetError(MS_GDERR, "Incorrect symbol type, expected MS_SYMBOL_VECTOR.", "drawVectorSymbolGD()");
+    return MS_FAILURE;
+  }
+
+  fc = style->color.pen;
+  oc = style->outlinecolor.pen;
+
+  /* todo set width/brush */
+
+  if(symbol->filled) { /* filled */
+    int numPoints;    
+    gdPoint points[MS_MAXVECTORPOINTS];
+      
+    numPoints = 0;
+    for(j=0;j < symbol->numpoints;j++) {  /* step through the marker points */
+      if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) { /* new polygon (PENUP) */
+	if(numPoints>2) {
+          if(fc >= 0) gdImageFilledPolygon(img, points, numPoints, fc);
+	  if(oc >= 0) gdImagePolygon(img, points, numPoints, oc);
+        }
+        numPoints = 0;
+      } else {
+  	points[numPoints].x = MS_NINT(style->size*symbol->points[j].x + ox);
+	points[numPoints].y = MS_NINT(style->size*symbol->points[j].y + oy); 
+        numPoints++;
+      }
+    }
+
+    if(fc >= 0) gdImageFilledPolygon(img, points, numPoints, fc);
+    if(oc >= 0) gdImagePolygon(img, points, numPoints, oc);
+      
+  } else  { /* NOT filled */
+    gdPoint p1, p2;
+
+    if(fc < 0) fc = oc; /* try the outline color (reference maps sometimes do this when combining a box and a custom vector marker) */
+    if(fc < 0) return MS_FAILURE;
+      
+    p1.x = MS_NINT(style->size*symbol->points[0].x + ox); /* convert first point in marker */
+    p1.y = MS_NINT(style->size*symbol->points[0].y + oy);
+
+    /* gdImageSetThickness(img, width); */
+      
+    for(j=1;j < symbol->numpoints;j++) { /* step through the marker points */
+      if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
+	p1.x = MS_NINT(style->size*symbol->points[j].x + ox);
+	p1.y = MS_NINT(style->size*symbol->points[j].y + oy);
+      } else {
+	if((symbol->points[j-1].x < 0) && (symbol->points[j-1].y < 0)) { /* Last point was PENUP, now a new beginning */
+	  p1.x = MS_NINT(style->size*symbol->points[j].x + ox);
+	  p1.y = MS_NINT(style->size*symbol->points[j].y + oy);
+	} else {
+	  p2.x = MS_NINT(style->size*symbol->points[j].x + ox);
+	  p2.y = MS_NINT(style->size*symbol->points[j].y + oy);
+	  gdImageLine(img, p1.x, p1.y, p2.x, p2.y, fc);
+	  p1 = p2;
+	}
+      }
+    } /* end for loop */   
+  } /* end if-then-else */
+
+  /* restore a few things */
+  gdImageSetThickness(img, 1);
+
+  return MS_SUCCESS;
+}
+
+/*
+**
+** Begin renderers for circles, points, lines and polygons.
+**
+*/
+
 /* ---------------------------------------------------------------------------*/
 /*       Stroke an ellipse with a line symbol of the specified size and color */
 /* ---------------------------------------------------------------------------*/
@@ -1107,7 +1104,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     bc = gdTransparent;
 
     d = size/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d);    
+    x = MS_NINT(symbol->sizex*d);
     y = MS_NINT(symbol->sizey*d);
    
     if((x < 2) && (y < 2)) break;
@@ -2699,7 +2696,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               s = s?s:1;
               cap_join_points[3].x = MS_NINT(x - dx/s); 
               cap_join_points[3].y = MS_NINT(y - dy/s); 
-              ImageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
+              imageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
 
             /* Bevel */
             } else {
@@ -2707,7 +2704,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[1] = cap_join_points[2]; 
               cap_join_points[2].x = MS_NINT(x - dx/s); 
               cap_join_points[2].y = MS_NINT(y - dy/s); 
-              ImageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
+              imageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
             }
           break;
         }
@@ -2756,7 +2753,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[2].y = MS_NINT(points[1].y - size_2*dy_px); 
               cap_join_points[3].x = MS_NINT(points[0].x - size_2*dx_px); 
               cap_join_points[3].y = MS_NINT(points[0].y - size_2*dy_px);
-              ImageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
+              imageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
             } 
             /* Last point */            
             if (j == (p->line[i].numpoints-1)) {
@@ -2768,7 +2765,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[2].y = MS_NINT(points[3].y + size_2*dy_px); 
               cap_join_points[3].x = MS_NINT(points[2].x + size_2*dx_px); 
               cap_join_points[3].y = MS_NINT(points[2].y + size_2*dy_px);
-              ImageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
+              imageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
             } 
           break;
           /* Triangle */
@@ -2781,7 +2778,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[1].y = MS_NINT(points[1].y+dy_px); 
               cap_join_points[2].x = MS_NINT((points[0].x+points[1].x)/2 - size_2*dx_px); 
               cap_join_points[2].y = MS_NINT((points[0].y+points[1].y)/2 - size_2*dy_px); 
-              ImageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
+              imageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
             } 
             /* Last point */            
             if (j == (p->line[i].numpoints-1)) {
@@ -2791,7 +2788,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[1].y = MS_NINT(points[3].y-dy_px); 
               cap_join_points[2].x = MS_NINT((points[2].x+points[3].x)/2 + size_2*dx_px); 
               cap_join_points[2].y = MS_NINT((points[2].y+points[3].y)/2 + size_2*dy_px); 
-              ImageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
+              imageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
             } 
           break;
         }
