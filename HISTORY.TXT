@@ -41,6 +41,8 @@ Version 4.10.1 (??)
 
 - Fixed bug in loadExpressionString (bug 1948)
 
+- Fix possible gdal-related build problem by including gdal-config --dep-libs
+  in GDAL_LIBS (bug 2004)
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
