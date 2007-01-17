@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96.2.3  2007/01/17 04:22:07  sdlime
+ * Removed spurrious debugging statement in mapdraw.c (bug 2007).
+ *
  * Revision 1.96.2.2  2006/08/15 05:07:28  sdlime
  * msDrawQueryMap now respects layer drawing order.
  *
@@ -328,10 +331,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     /* compute layer scale factors now */
     for(i=0;i<map->numlayers; i++) {
       if(map->layers[i].sizeunits != MS_PIXELS)
-      {
         map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / geo_cellsize;
-        msDebug( "scalefactor = %g\n", map->layers[i].scalefactor );
-      }
       else if(map->layers[i].symbolscale > 0 && map->scale > 0)
         map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
       else
