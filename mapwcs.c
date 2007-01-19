@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2007/01/19 03:51:24  sdlime
+ * Fixed requestResponseCRSs output to create multiple tags instead of one with a space delimited list. (bug 1148)
+ *
  * Revision 1.71  2005/09/23 04:37:32  frank
  * added preliminary WCS INTERPOLATION support
  *
@@ -816,9 +819,11 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
 
 static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params) 
 {
+  char **tokens;
+  int numtokens;
   const char *value; 
   coverageMetadataObj cm;
-  int status;
+  int i, status;
 
   if(!msWCSIsLayerSupported(layer)) return MS_SUCCESS; /* not an error, this layer cannot be served via WCS */
 
@@ -924,14 +929,11 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   
   /* compound range sets */
   if((value = msOWSLookupMetadata(&(layer->metadata), "COM", "rangeset_axes")) != NULL) {
-    char **tokens;
-    int numtokens;
-
      tokens = split(value, ',', &numtokens);
      if(tokens && numtokens > 0) {
-       int i;
        for(i=0; i<numtokens; i++)
          msWCSDescribeCoverage_AxisDescription(layer, tokens[i]);
+       msFreeCharArray(tokens, numtokens);
      }
   }
   
@@ -942,11 +944,21 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("    <supportedCRSs>\n");
   
   /* requestResposeCRSs: check the layer metadata/projection, and then the map metadata/projection if necessary (should never get to the error message) */
-  if((value = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "COM", MS_FALSE)) != NULL)    
-    msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", value);
-  else if((value = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "COM", MS_FALSE)) != NULL)
-    msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", value);
-  else 
+  if((value = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "COM", MS_FALSE)) != NULL) {
+    tokens = split(value, ' ', &numtokens);
+    if(tokens && numtokens > 0) {
+      for(i=0; i<numtokens; i++)
+        msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", tokens[i]);
+      msFreeCharArray(tokens, numtokens);
+    }
+  } else if((value = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "COM", MS_FALSE)) != NULL) {
+    tokens = split(value, ' ', &numtokens);
+    if(tokens && numtokens > 0) {
+      for(i=0; i<numtokens; i++)
+        msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", tokens[i]);
+      msFreeCharArray(tokens, numtokens);
+    }
+  } else 
     msIO_printf("      <!-- requestResponseCRSs ERROR: missing required information, no SRSs defined -->\n");
   
   /* nativeCRSs (only one in our case) */
