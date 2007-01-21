@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.79  2007/01/21 17:45:54  dan
+ * Ignore MS_DELETE layers in msWriteMapContext() (bug 2011)
+ *
  * Revision 1.78  2006/09/05 13:49:42  julien
  * WMC true/false bool and use format when formatlist not avail. bug 1723,1692
  *
@@ -1916,7 +1919,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   /* Loop on all layer   */
   for(i=0; i<map->numlayers; i++)
   {
-      if(map->layers[i].connectiontype == MS_WMS)
+      if(map->layers[i].status != MS_DELETE && map->layers[i].connectiontype == MS_WMS)
       {
           if(map->layers[i].status == MS_OFF)
               nValue = 1;
