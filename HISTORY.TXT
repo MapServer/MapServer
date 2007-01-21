@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.1 (??)
 -------------------
 
+- Ignore MS_DELETE layers in msWriteMapContext() (bug 2011)
+
 - Fixed problem with WMS CONNECTION strings that contains a layer name 
   with a "." in them (bug 1996)
 
@@ -43,6 +45,7 @@ Version 4.10.1 (??)
 
 - Fix possible gdal-related build problem by including gdal-config --dep-libs
   in GDAL_LIBS (bug 2004)
+
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
