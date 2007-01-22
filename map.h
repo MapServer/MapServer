@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.472  2007/01/22 14:47:24  sdlime
+ * Fixed off-by-one computation issue when calculating cellsize and adjusting extents. (bug 2015)
+ *
  * Revision 1.471  2006/12/29 05:35:12  sdlime
  * Initial definition of base types for RFC-19.
  *
@@ -382,8 +385,7 @@ extern "C" {
 #define MS_RENDERER_IMAGEMAP(format) ((format)->renderer == MS_RENDER_WITH_IMAGEMAP)
 #define MS_RENDERER_SVG(format) ((format)->renderer == MS_RENDER_WITH_SVG)
 
-/* ok, we'll switch to an UL cell model to make this work with WMS */
-#define MS_CELLSIZE(min,max,d)    ((max - min)/d)
+#define MS_CELLSIZE(min,max,d)    ((max - min)/(d-1))
 #define MS_MAP2IMAGE_X(x,minx,cx) (MS_NINT((x - minx)/cx))
 #define MS_MAP2IMAGE_Y(y,maxy,cy) (MS_NINT((maxy - y)/cy))
 #define MS_IMAGE2MAP_X(x,minx,cx) (minx + cx*x)

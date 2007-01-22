@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.191  2007/01/22 14:47:24  sdlime
+ * Fixed off-by-one computation issue when calculating cellsize and adjusting extents. (bug 2015)
+ *
  * Revision 1.190  2006/08/15 17:24:56  dan
  * Fixed problem with PHP MapScript's saveWebImage() filename collisions
  * when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
@@ -478,8 +481,8 @@ double msAdjustExtent(rectObj *rect, int width, int height)
   if(cellsize <= 0) /* avoid division by zero errors */
     return(0);
 
-  ox = MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0); /* these were width-1 and height-1 */
-  oy = MS_MAX((height - (rect->maxy - rect->miny)/cellsize)/2,0);
+  ox = MS_MAX(((width-1) - (rect->maxx - rect->minx)/cellsize)/2,0); /* these were width-1 and height-1 */
+  oy = MS_MAX(((height-1) - (rect->maxy - rect->miny)/cellsize)/2,0);
 
   rect->minx = rect->minx - ox*cellsize;
   rect->miny = rect->miny - oy*cellsize;
