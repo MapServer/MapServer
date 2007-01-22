@@ -49,7 +49,7 @@ USE_NINT = @USE_NINT@
 # STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP -DNEED_STRLCAT
 STRINGS= @STRINGS@
 
-# Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
+# Proj.4 distribution (cartographic projection routines). Not required for normal use.
 PROJ_INC=  @PROJ_INC@
 PROJ_LIBS= @PROJ_LIBS@
 PROJ=      @PROJ_ENABLED@
