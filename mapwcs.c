@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2007/01/22 14:43:09  sdlime
+ * Fixed bug in WCS code where we weren't converting between MapServer extents and OWS extents properly. (bug 1983)
+ *
  * Revision 1.72  2007/01/19 03:51:24  sdlime
  * Fixed requestResponseCRSs output to create multiple tags instead of one with a space delimited list. (bug 1148)
  *
@@ -1272,6 +1275,12 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* apply region and size to map object.  */
   map->width = params->width;
   map->height = params->height;
+
+  /* adjust OWS BBOX to MapServer's pixel model */
+  params->bbox.minx += params->resx*0.5;
+  params->bbox.miny += params->resy*0.5;
+  params->bbox.maxx -= params->resx*0.5;
+  params->bbox.maxy -= params->resy*0.5;
   map->extent = params->bbox;
  
   map->cellsize = params->resx; /* pick one, MapServer only supports square cells (what about msAdjustExtent here!) */
