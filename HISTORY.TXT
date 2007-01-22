@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.99 (CVS HEAD)
 -----------------------
+ 
+ - [SLD] : Error on last class in raster class names based on the ColorMapEntry
+           (bug 1844)
 
  - [Filter Encoding] : Check if Literal value in Filter is empty (bug 1995)
 

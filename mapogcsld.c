@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.78  2007/01/22 15:12:15  assefa
+ * Error on last class in raster class names based on the ColorMapEntry ((bug 1844)
+ *
  * Revision 1.77  2007/01/04 14:27:43  assefa
  * Remove debug statement.
  *
@@ -534,7 +537,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
     }
     
-
     if (bSuccess)
       return MS_SUCCESS;
 
@@ -2465,7 +2467,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
     char szExpression[100];
     int nClassId = 0;
     double dfOpacity = 1.0;
-    char *pszLabel = NULL;
+    char *pszLabel = NULL,  *pszPreviousLabel = NULL;
     char *pch = NULL, *pchPrevious=NULL;
 
     if (!psRoot || !psLayer)
@@ -2550,10 +2552,10 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                             /*set the class name using the label. If label not defined
                               set it with the quantity*/
-                            if (pszLabel)
-                              psLayer->class[nClassId].name = strdup(pszLabel);
+                            if (pszPreviousLabel)
+                              psLayer->class[nClassId].name = strdup(pszPreviousLabel);
                             else
-                              psLayer->class[nClassId].name = strdup(pszQuantity);
+                              psLayer->class[nClassId].name = strdup(pszPreviousQuality);
 
                             initStyle(&(psLayer->class[nClassId].styles[0]));
                             psLayer->class[nClassId].numstyles = 1;
@@ -2587,7 +2589,8 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                
                 pszPreviousColor = pszColor;
                 pszPreviousQuality = pszQuantity;
-                
+                pszPreviousLabel = pszLabel;
+
             }
             psColorEntry = psColorEntry->psNext;
         }
@@ -2614,6 +2617,10 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                     psLayer->numclasses++;
                     nClassId = psLayer->numclasses-1;
                     initStyle(&(psLayer->class[nClassId].styles[0]));
+                    if (pszLabel)
+                      psLayer->class[nClassId].name = strdup(pszLabel);
+                    else
+                      psLayer->class[nClassId].name = strdup(pszQuantity);
                     psLayer->class[nClassId].numstyles = 1;
                     psLayer->class[nClassId].styles[0].color.red = 
                       sColor.red;
