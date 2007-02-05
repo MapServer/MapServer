@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.1 (??)
 -------------------
 
+- Fix support for OFFSITE for simple greyscale rasters (bug 2024). 
+ 
 - Ignore MS_DELETE layers in msWriteMapContext() (bug 2011)
 
 - Fixed problem with WMS CONNECTION strings that contains a layer name 
