@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2007/02/05 05:56:41  frank
+ * Fix support for OFFSITE for simple greyscale rasters (bug 2024).
+ *
  * Revision 1.53  2006/11/14 16:44:41  frank
  * Added more robust handling of dos text mode gimp files.
  *
@@ -585,9 +588,22 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           
           for( i = 0; i < 256; i++ )
           {
+              colorObj pixel;
               GDALColorEntry sEntry;
 
-              if( truecolor )
+              pixel.red = i;
+              pixel.green = i;
+              pixel.blue = i;
+              pixel.pen = i;
+              
+              if(MS_COMPARE_COLORS(pixel, layer->offsite))
+              {
+                  sEntry.c1 = 0;
+                  sEntry.c2 = 0;
+                  sEntry.c3 = 0;
+                  sEntry.c4 = 0; /* alpha set to zero */
+              }
+              else if( truecolor )
               {
                   sEntry.c1 = i;
                   sEntry.c2 = i;
