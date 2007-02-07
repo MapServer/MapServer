@@ -488,7 +488,7 @@ char path[MS_MAXPATHLEN];
                                                  if( --include_stack_ptr < 0 )
                                                    return(EOF); /* end of main file */
                                                  else {
-                                                   fclose(msyyin); /* done with included file */
+                                                   fclose(YY_CURRENT_BUFFER->yy_input_file);
                                                    msyy_delete_buffer( YY_CURRENT_BUFFER );
                                                    msyy_switch_to_buffer(include_stack[include_stack_ptr]);
                                                  }
