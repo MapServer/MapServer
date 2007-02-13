@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2007/02/13 16:52:00  frank
+ * Undo last change till it can be done right...
+ *
  * Revision 1.71  2007/02/13 04:43:02  frank
  * always call WMS/WFS/WCS/SOS dispatchers (bug 2025)
  *
@@ -288,17 +291,23 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
     if (!request)
       return status;
 
+#ifdef USE_WMS_SVR
     if ((status = msWMSDispatch(map, request)) != MS_DONE )
         return status;
-
+#endif
+#ifdef USE_WFS_SVR
     if ((status = msWFSDispatch(map, request)) != MS_DONE )
         return status;
-
+#endif
+#ifdef USE_WCS_SVR
     if ((status = msWCSDispatch(map, request)) != MS_DONE )
         return status;
+#endif
 
+#ifdef USE_SOS_SVR
     if ((status = msSOSDispatch(map, request)) != MS_DONE )
         return status;
+#endif
 
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
 }
