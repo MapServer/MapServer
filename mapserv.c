@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.155  2007/02/13 04:44:54  frank
+ * msOWSDispatch() is no longer invoked conditionally.  If msOWSDispatch()
+ * returns MS_FAILURE and there is still an error on the stack, report it.
+ * This ensure that errors that can't be issued as exceptions still get
+ * reported (such as reports that the service isn't compiled in) (bug 2025)
+ *
  * Revision 1.154  2006/12/26 21:07:58  sdlime
  * Change validation metadata name from foo_pattern to a more descriptive foo_validation_pattern.
  *
@@ -1221,6 +1227,19 @@ int main(int argc, char *argv[]) {
     }
 
     msObj->request->NumParams = loadParams(msObj->request);
+    if( msObj->request->NumParams == -1 )
+    {
+#ifdef USE_FASTCGI
+      /* FCGI_ --- return to top of loop */
+      msResetErrorList();
+      continue;
+#else
+      /* normal case, processing is complete */
+      msCleanup();
+      exit( 0 );
+#endif
+    }
+
     msObj->Map = loadMap();
 
 #ifdef USE_FASTCGI
@@ -1239,27 +1258,68 @@ int main(int argc, char *argv[]) {
     ** Start by calling the WMS/WFS/WCS Dispatchers.  If they fail then we'll 
     ** process this as a regular MapServer request.
     */
-#if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR)
     if ((status = msOWSDispatch(msObj->Map, msObj->request)) != MS_DONE  ) 
     {
-      /* This was a WMS/WFS request... cleanup and exit 
-       * At this point any error has already been handled
-       * as an XML exception by the OGC service.
-       */
-      msFreeMapServObj(msObj);
+        /*
+        ** Normally if the OWS service fails it will issue an exception,
+        ** and clear the error stack but still return MS_FAILURE.  But in
+        ** a few situations it can't issue the exception and will instead 
+        ** just an error and let us report it. 
+        */
+        if( status == MS_FAILURE )
+        {
+            errorObj *ms_error = msGetErrorObj();
 
+            if( ms_error->code != MS_NOERR )
+                writeError();
+        }
+        
+        /* This was a WMS/WFS request... cleanup and exit 
+         * At this point any error has already been handled
+         * as an XML exception by the OGC service.
+         */
+        msFreeMapServObj(msObj);
+      
 #ifdef USE_FASTCGI
-      /* FCGI_ --- return to top of loop */
-      msResetErrorList();
-      continue;
+        /* FCGI_ --- return to top of loop */
+        continue;
 #else
-      /* normal case, processing is complete */
-      msCleanup();
-      exit( 0 );
+        /* normal case, processing is complete */
+        msCleanup();
+        exit( 0 );
 #endif
 
     }
-#endif /* have an OWS service request */
+
+    /*
+    ** Try to report a meaningful message if we had an OGC request but
+    ** we couldn't handle it because we don't have support compiled in.
+    */
+    {
+        const char *service = NULL;
+
+        for(i=0; i<msObj->request->NumParams; i++) {
+            if (strcasecmp(msObj->request->ParamNames[i], "SERVICE") == 0)
+                service = msObj->request->ParamValues[i];
+        }
+
+        if( service != NULL 
+            && (strcasecmp(service,"WMS") == 0 
+                || strcasecmp(service,"WCS") == 0 
+                || strcasecmp(service,"WFS") == 0 
+                || strcasecmp(service,"SOS") == 0) )
+        {
+            msSetError(MS_WEBERR, 
+                       "SERVICE=%s requested, but that OGC web service is not enabled in this build.  Please rebuild MapServer with appropriate options.", 
+                       "mapserv() ",
+                       service );
+            writeError();
+        }
+    }
+
+    /*
+    ** Do "traditional" mode processing.
+    */
 
     loadForm();
  
@@ -1290,7 +1350,9 @@ int main(int argc, char *argv[]) {
     if(msObj->Mode == BROWSE) {
 
       if(!msObj->Map->web.template) {
-	msSetError(MS_WEBERR, "No template provided.", "mapserv()");
+	msSetError(MS_WEBERR, 
+                   "Traditional BROWSE mode requires a TEMPLATE in the WEB section, but none was provided.", 
+                   "mapserv()");
 	writeError();
       }
 
