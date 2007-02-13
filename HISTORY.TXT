@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - Improve error reporting when OWS services are requested but the support
+   is not compiled in.  (bug 2025)
+
  - Fix support for OFFSITE for simple greyscale rasters (bug 2024). 
  
  - [SLD] : Error on last class in raster class names based on the ColorMapEntry
