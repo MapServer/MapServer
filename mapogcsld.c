@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.79  2007/02/13 04:18:16  frank
+ * Avoid warnings about unused pszItem.
+ *
  * Revision 1.78  2007/01/22 15:12:15  assefa
  * Error on last class in raster class names based on the ColorMapEntry ((bug 1844)
  *
@@ -2661,7 +2664,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
     CPLXMLNode *psFill = NULL, *psPropertyName=NULL;
     int nLength = 0;
     char *pszColor = NULL;
-    char *pszItem = NULL;
+    /* char *pszItem = NULL; */
     CPLXMLNode *psTmpNode = NULL;
     char *pszClassText = NULL;
     char szTmp[100];
