@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2007/02/13 23:18:57  frank
+ * issue an error in msOWSDispatch for services not compiled in (bug 2025)
+ *
  * Revision 1.72  2007/02/13 16:52:00  frank
  * Undo last change till it can be done right...
  *
@@ -286,27 +289,56 @@ MS_CVSID("$Id$")
 */
 int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 {
-    int status = MS_DONE;
+    int i, status = MS_DONE;
+    const char *service=NULL;
 
     if (!request)
       return status;
 
+    for( i=0; i<request->NumParams; i++ ) 
+    {
+        if(strcasecmp(request->ParamNames[i], "VERSION") == 0)
+            service = request->ParamValues[i];
+    }
+
 #ifdef USE_WMS_SVR
     if ((status = msWMSDispatch(map, request)) != MS_DONE )
         return status;
+#else
+    if( service != NULL && strcasecmp(service,"WMS") == 0 )
+        msSetError( MS_WMSERR, 
+                    "SERVICE=WMS requested, but WMS support not configured in MapServer.", 
+                    "msOWSDispatch()" );
 #endif
+
 #ifdef USE_WFS_SVR
     if ((status = msWFSDispatch(map, request)) != MS_DONE )
         return status;
+#else
+    if( service != NULL && strcasecmp(service,"WFS") == 0 )
+        msSetError( MS_WFSERR, 
+                    "SERVICE=WFS requested, but WFS support not configured in MapServer.", 
+                    "msOWSDispatch()" );
 #endif
+
 #ifdef USE_WCS_SVR
     if ((status = msWCSDispatch(map, request)) != MS_DONE )
         return status;
+#else
+    if( service != NULL && strcasecmp(service,"WCS") == 0 )
+        msSetError( MS_WCSERR, 
+                    "SERVICE=WCS requested, but WCS support not configured in MapServer.", 
+                    "msOWSDispatch()" );
 #endif
 
 #ifdef USE_SOS_SVR
     if ((status = msSOSDispatch(map, request)) != MS_DONE )
         return status;
+#else
+    if( service != NULL && strcasecmp(service,"SOS") == 0 )
+        msSetError( MS_SOSERR, 
+                    "SERVICE=SOS requested, but SOS support not configured in MapServer.", 
+                    "msOWSDispatch()" );
 #endif
 
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
