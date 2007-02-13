@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2007/02/13 04:43:02  frank
+ * always call WMS/WFS/WCS/SOS dispatchers (bug 2025)
+ *
  * Revision 1.70  2006/11/10 01:36:08  tkralidi
  * msGetLanguage now uses maperror.h MS_ERROR_LANGUAGE
  *
@@ -285,23 +288,17 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
     if (!request)
       return status;
 
-#ifdef USE_WMS_SVR
     if ((status = msWMSDispatch(map, request)) != MS_DONE )
         return status;
-#endif
-#ifdef USE_WFS_SVR
+
     if ((status = msWFSDispatch(map, request)) != MS_DONE )
         return status;
-#endif
-#ifdef USE_WCS_SVR
+
     if ((status = msWCSDispatch(map, request)) != MS_DONE )
         return status;
-#endif
 
-#ifdef USE_SOS_SVR
     if ((status = msSOSDispatch(map, request)) != MS_DONE )
         return status;
-#endif
 
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
 }
@@ -309,7 +306,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
 #if !defined(USE_PROJ)
-#error "PROJ.4 is required for WMS, WFS and WCS Server Support."
+#error "PROJ.4 is required for WMS, WFS, WCS and SOS Server Support."
 #endif
 
 /*
