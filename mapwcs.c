@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2007/02/13 04:39:07  frank
+ * ensure that error stack is cleared after issing exceptions (bug 2025)
+ *
  * Revision 1.73  2007/01/22 14:43:09  sdlime
  * Fixed bug in WCS code where we weren't converting between MapServer extents and OWS extents properly. (bug 1983)
  *
@@ -215,6 +218,9 @@ static int msWCSException(mapObj *map, const char *version)
   msWriteErrorXML(stdout);
   msIO_printf("  </ServiceException>\n");
   msIO_printf("</ServiceExceptionReport>\n");
+
+  /* clear error since we have already reported it */
+  msResetErrorList();
 
   return MS_FAILURE;
 }

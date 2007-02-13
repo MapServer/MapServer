@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.182  2007/02/13 04:39:07  frank
+ * ensure that error stack is cleared after issing exceptions (bug 2025)
+ *
  * Revision 1.181  2006/08/24 12:44:51  dan
  * Don't return a WCS ref in WMS DescribeLayer responses when layer type is
  * CONNECTIONTYPE WMS (cascaded WMS layers not supported for WCS) (bug 1874)
@@ -370,6 +373,9 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     free(schemalocation);
 
   }
+
+  /* clear error since we have already reported it */
+  msResetErrorList();
 
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }

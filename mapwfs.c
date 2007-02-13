@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.88  2007/02/13 04:39:07  frank
+ * ensure that error stack is cleared after issing exceptions (bug 2025)
+ *
  * Revision 1.87  2006/09/06 17:26:24  sdlime
  * Removed advertising GML3 support in WFS 1.0.0 getCapabilities output.
  *
@@ -155,6 +158,9 @@ static int msWFSException(mapObj *map, const char *wmtversion)
     /* msIO_printf("    </Message>\n"); */
     msIO_printf("  </ServiceException>\n");
     msIO_printf("</ServiceExceptionReport>\n");
+
+    /* clear error since we have already reported it */
+    msResetErrorList();
 
     return MS_FAILURE; /* so we can call 'return msWFSException();' anywhere */
 }

@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2007/02/13 04:39:07  frank
+ * ensure that error stack is cleared after issing exceptions (bug 2025)
+ *
  * Revision 1.17  2006/11/10 01:44:49  tkralidi
  * Integration of mapowscommon.c/h (bug 1954) to derive all OWS Common
  * constructs from mapowscommon functions.
@@ -143,6 +146,9 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
     /*free buffer and the document */
     xmlFree(buffer);
     xmlFreeDoc(psDoc);
+
+    /* clear error since we have already reported it */
+    msResetErrorList();
 
     return MS_FAILURE;
 }
