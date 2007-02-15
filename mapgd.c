@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.137.2.1  2007/02/13 16:45:50  sdlime
+ * Removed busted code in mapgd.c that attempted to draw thick text outlines.
+ *
  * Revision 1.137  2006/09/06 05:51:35  sdlime
  * Applied Bart's quick fix for bug 1776. Real fix is addressed by rounding width and height before calling createBrush. However, that might still be an issue due to the rounding issues mentioned in that bug. This is a safe alternative for now.
  *
@@ -2979,33 +2982,31 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
 
     if(label->outlinecolor.pen >= 0) { /* handle the outline color */
-      int os; /* outline size */
-      os = MS_NINT(ceil(size/10.0));
-      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y-os, string);
+      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y-1, string);
       if(error) {
         if( gdImageTrueColor(img) )
-            gdImageAlphaBlending( img, oldAlphaBlending );
-	msSetError(MS_TTFERR, error, "msDrawTextGD()");
+          gdImageAlphaBlending( img, oldAlphaBlending );
+	      msSetError(MS_TTFERR, error, "msDrawTextGD()");
         if(label->encoding != NULL) msFree(string);
-	return(-1);
+	      return(-1);
       }
 
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y+os, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+os, y, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-os, y, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y+1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y, string);
       
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-os, y-os, string);      
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-os, y+os, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+os, y-os, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+os, y+os, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);      
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
     }
 
     if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
       if(error) {
-	msSetError(MS_TTFERR, error, "msDrawTextGD()");
+        msSetError(MS_TTFERR, error, "msDrawTextGD()");
         if(label->encoding != NULL) msFree(string);
-	return(-1);
+	      return(-1);
       }
     }
 

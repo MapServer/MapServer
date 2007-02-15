@@ -13,6 +13,61 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.10.1 (2007-02-15)
+---------------------------
+
+- Fixed text outline problem. (bug 2027)
+
+- Fix support for OFFSITE for simple greyscale rasters (bug 2024). 
+ 
+- Ignore MS_DELETE layers in msWriteMapContext() (bug 2011)
+
+- Fixed problem with WMS CONNECTION strings that contains a layer name 
+  with a "." in them (bug 1996)
+
+- Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the 
+  CGI program. (bug 1992)
+
+- Added feature to the CGI to check runtime substitutions against patterns
+  defined in layer metadata. (bug 1918)
+
+- Fixed INCLUDEs to accept paths relative to the location of the mapfile
+  (bug 1880)
+
+- maperror.c: fix long in-image error message wrapping (bug 1963)
+
+- maperror.c: fix closing of stderr/stdout after writing error msg (bug 1970)
+
+- Fixed setRotation() to check for MS_SUCCESS, not MS_TRUE (bug 1968)
+
+- sde->row_id_column needs to be initialized to NULL in msSDELayerOpen
+  (bug 1953)
+
+- Makefile.in: fix mapogr rule so that it works with regular make (not gnumake)
+
+- Fixed bug in loadExpressionString (bug 1948)
+
+- Fix possible gdal-related build problem by including gdal-config --dep-libs
+  in GDAL_LIBS (bug 2004)
+
+
+Version 4.10.0 (2006-10-04)
+---------------------------
+
+- No source code changes since 4.10.0-rc1
+
+Known issues in 4.10.0:
+
+- PHP5 not detected properly on Mandriva Linux (bug 1923)
+
+- Mapfile INCLUDE does not work with relative paths on Windows (bug 1880)
+
+- Curved labels don't work with multibyte character encodings (bug 1921)
+
+- Quotes in DATA or CONNECTION strings produce parsing errors (bug 1549)
+
+
+
 Version 4.10.0-RC1 (2006-09-27)
 -------------------------------
 

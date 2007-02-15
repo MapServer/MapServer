@@ -27,6 +27,15 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75.2.3  2006/12/06 05:51:18  sdlime
+ * Make sure to declare errormsg at the top of the function for MSVC.
+ *
+ * Revision 1.75.2.2  2006/12/06 05:44:21  sdlime
+ * Applied user supplied patch to fix long in-image error wrapping. (bug 1963)
+ *
+ * Revision 1.75.2.1  2006/11/24 22:11:27  frank
+ * fix closing of stderr/stdout after writing error msg (bug 1970)
+ *
  * Revision 1.75  2006/03/16 22:28:38  tamas
  * Fixed msGetErrorString so as not to truncate the length of the error messages
  * Added msAddErrorDisplayString to read the displayable messages separatedly
@@ -414,7 +423,8 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
     if(!errstream) return;
     errtime = time(NULL);
     fprintf(errstream, "%s - %s: %s %s\n", chop(ctime(&errtime)), ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
-    fclose(errstream);
+    if( errstream != stderr && errstream != stdout )
+        fclose(errstream);
   }
 }
 
@@ -466,17 +476,14 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   int nSpaceBewteenLines = font->h;
   int nBlack = 0;   
   outputFormatObj *format = NULL;
+  char *errormsg = msGetErrorString("; ");
 
-  char errormsg[MESSAGELENGTH+ROUTINELENGTH+4];
-  errorObj *ms_error = msGetErrorObj();
-
-  if (map) {
-      if( map->width != -1 && map->height != -1 )
-      {
-          width = map->width;
-          height = map->height;
-      }
-      format = map->outputformat;
+  if(map) {
+    if(map->width != -1 && map->height != -1) {
+      width = map->width;
+      height = map->height;
+    }
+    format = map->outputformat;
   }
 
   if (format == NULL) format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
@@ -490,7 +497,6 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if (map->outputformat && map->outputformat->transparent)
     gdImageColorTransparent(img, 0);
 
-  sprintf(errormsg, "%s: %s", ms_error->routine, ms_error->message);
   nTextLength = strlen(errormsg); 
   nWidthTxt  =  nTextLength * font->w;
   nUsableWidth = width - (nMargin*2);
@@ -546,6 +552,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 
   if (format->refcount == 0)
     msFreeOutputFormat(format);
+  msFree(errormsg);  
 }
 
 char *msGetVersion() {

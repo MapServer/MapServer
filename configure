@@ -8199,6 +8199,9 @@ else
   SDE_VERSION=80
 fi;
 
+if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
+SDE_VERSION=""
+fi
 if test "$with_sde" = "yes" ; then
 
   as_ac_Lib=`echo "ac_cv_lib_sde$SDE_VERSION''_SE_connection_create" | $as_tr_sh`
@@ -9026,7 +9029,7 @@ fi
 
 if test -n "$GDAL_ENABLED" -o "$OGR_ENABLED"; then
 
-  GDAL_LIB=`$GDAL_CONFIG --libs`
+  GDAL_LIB=`$GDAL_CONFIG --libs`' '`$GDAL_CONFIG --dep-libs`
   GDAL_INC=`$GDAL_CONFIG --cflags`
 
 fi

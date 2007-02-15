@@ -27,6 +27,18 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.331.2.4  2006/12/29 05:25:14  sdlime
+ * Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the CGI program. (bug 1992)
+ *
+ * Revision 1.331.2.3  2006/12/29 05:01:13  sdlime
+ * Fixed INCLUDEs to accept paths relative to the location of the mapfile. (bug 1880)
+ *
+ * Revision 1.331.2.2  2006/10/24 05:10:50  sdlime
+ * Fixed one more issue with loadExpressionString...
+ *
+ * Revision 1.331.2.1  2006/10/24 04:46:27  sdlime
+ * Fixed a problem in loadExpressionString so that if an expression string is not a logical, regex or case insensitive expression then it is automatically a string expression. This allows more straight forward filter and expression setting from MapScript.
+ *
  * Revision 1.331  2006/09/01 02:30:15  sdlime
  * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
  *
@@ -202,6 +214,7 @@ extern FILE *msyyin;
 
 extern int msyystate;
 extern char *msyystring;
+extern char *msyybasepath;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
@@ -1694,7 +1707,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); /* we're totally replacing the old expression so free then init to start over */
   /* initExpression(exp); */
 
-  if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
+  if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
     exp->string = strdup(msyytext);
 
     if(exp->type == MS_ISTRING) {
@@ -1707,7 +1720,10 @@ int loadExpressionString(expressionObj *exp, char *value)
   } else {
     msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
-    exp->string = strdup(value); /* use the whole value */
+    if((strlen(value) - strlen(msyytext)) == 2)
+      exp->string = strdup(msyytext); /* value was quoted */
+    else
+      exp->string = strdup(value); /* use the whole value */
   }
 
   /* if(exp->type == MS_REGEX) { */
@@ -3078,6 +3094,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   case(TEMPLATE):
     msFree(layer->template);
     layer->template = strdup(value);
+    break;
+  case(TILEINDEX):
+    msFree(layer->tileindex);
+    layer->tileindex = strdup(value);
     break;
   case(TOLERANCE):
     msyystate = 2; msyystring = value;
@@ -4589,6 +4609,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if( path )
           free( path );
   }
+
+  msyybasepath = map->mappath; /* for includes */
 
   for(;;) {
 
