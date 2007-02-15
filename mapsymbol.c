@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100.2.1  2007/02/15 06:16:41  sdlime
+ * Applied patch for bug 1978 (roating transparent pixmaps).
+ *
  * Revision 1.100  2006/07/23 03:28:45  sdlime
  * Fixed error in msAddImageSymbol() where imagepath is not set. (bug 1832)
  *
@@ -1289,12 +1292,13 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
       /* create the new image based on the computed width/height */
       gdFree(newSymbol->img);
-      if (gdImageTrueColor(symbol->img)) {
+      if (gdImageTrueColor(symbol->img))
 	newSymbol->img = gdImageCreateTrueColor(width, height);
-	gdImageAlphaBlending(newSymbol->img, 0);
-      } else {
+      else
 	newSymbol->img = gdImageCreate(width, height);	
-      }
+
+      gdImageColorTransparent(newSymbol->img, gdImageGetTransparent(symbol->img));
+      gdImageAlphaBlending(newSymbol->img, 0);
 
       newSymbol->sizex = maxx;
       newSymbol->sizey = maxy;
