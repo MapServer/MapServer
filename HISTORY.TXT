@@ -12,6 +12,11 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.10.2
+---------------------------
+
+- Apply patch for bug 1990 for OS X Framework builds support for Python
+  MapScript.  Thanks William!
 
 Version 4.10.1 (2007-02-15)
 ---------------------------
