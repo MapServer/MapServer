@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.69  2007/02/26 21:50:45  assefa
+ * Partially fixed : ignore for now parameters decimal="." cs="," ts=" " (Bug 2034)
+ *
  * Revision 1.68  2007/01/04 14:27:05  assefa
  * Check if Literal value in Filter is empty (bug 1995)
  *
@@ -1591,7 +1594,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 char *pszSRS = NULL;
                 CPLXMLNode *psPropertyName = NULL;
                 CPLXMLNode *psBox = NULL;
-                CPLXMLNode *psCoordinates = NULL;
+                CPLXMLNode *psCoordinates = NULL, *psCoordChild=NULL;
                 CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
                 CPLXMLNode *psX = NULL, *psY = NULL;
                 char **szCoords=NULL, **szMin=NULL, **szMax = NULL;
@@ -1610,10 +1613,14 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
             
                     psCoordinates = CPLGetXMLNode(psBox, "coordinates");
-                    if (psCoordinates && psCoordinates->psChild && 
-                        psCoordinates->psChild->pszValue)
+                    psCoordChild =  psCoordinates->psChild;
+                    while (psCoordinates && psCoordChild && psCoordChild->eType != CXT_Text)
                     {
-                        pszTmpCoord = psCoordinates->psChild->pszValue;
+                            psCoordChild = psCoordChild->psNext;
+                    }
+                    if (psCoordChild && psCoordChild->pszValue)
+                    {
+                        pszTmpCoord = psCoordChild->pszValue;
                         szCoords = split(pszTmpCoord, ' ', &nCoords);
                         if (szCoords && nCoords == 2)
                         {
