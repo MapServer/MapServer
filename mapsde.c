@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.111  2007/02/26 16:41:09  hobu
+ * trim log
+ *
  * Revision 1.110  2006/10/31 17:03:50  hobu
  * make sure to initialize sde->row_id_column to NULL or we'll blow
  * up on close for operations like GetCapabilities
@@ -35,139 +38,7 @@
  * Added ability to encrypt tokens (passwords, etc.) in database connection
  * strings (MS-RFC-18, bug 1792)
  *
- * Revision 1.108  2006/08/01 18:23:12  sdlime
- * Fixed a problem in the SDE code that prohibited setting SDE to only process the attribute portion of a query.
- *
- * Revision 1.107  2006/03/12 05:54:35  hobu
- * make sure to return a value in the failure case
- * for msSDELayerClose
- *
- * Revision 1.106  2006/03/10 17:11:08  hobu
- * add a PROCESSING directive to SDE to allow the user to specify
- * the query order (attributes or spatial first).
- *
- * Revision 1.105  2006/03/10 17:05:56  hobu
- * Fix 1699, where point queries in msSDEWhichShape were
- * causing the SDE C API to complain about creating an invalid
- * rectangle
- *
- * Revision 1.104  2006/02/24 22:41:50  sdlime
- * Added missing malloc in mapsde in msSDELayerGetItems().
- *
- * Revision 1.103  2006/02/24 20:24:23  hobu
- * make sure we check if layer->iteminfo exists before hammering it and reallocating
- * just use LayerClose to close layer information rather than the
- * LayerClose/LayerConnectionClose dichotomy that wasn't working
- *
- * Revision 1.102  2006/01/10 19:27:20  hobu
- * fix the memory allocation bug described in bug 1606
- *
- * Revision 1.101  2006/01/10 00:19:49  hobu
- * Fix up allocation of the ROW_ID columns and how the functions that
- * call it were using it. (bug 1605)
- *
- * Revision 1.100  2005/12/15 15:36:59  frank
- * avoid comment-in-comment warnings
- *
- * Revision 1.99  2005/12/08 19:44:46  hobu
- * oops.  Move msSDELayerGetRowIDColumn to the right spot for
- * non-SDE builds
- *
- * Revision 1.98  2005/12/08 19:07:36  hobu
- * switch off SDE raster support and fix up msSDELayerGetRowIDColumn
- *
- * Revision 1.97  2005/10/28 01:09:42  jani
- * MS RFC 3: Layer vtable architecture (bug 1477)
- *
- * Revision 1.96  2005/07/07 15:03:33  hobu
- * put thread locking around static data members
- * used in the lcache (msSDELCacheAdd)
- *
- * Revision 1.95  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.94  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.93  2004/11/18 23:06:10  hobu
- * allow bands and raster column for
- * SDE rasters to be specified with
- * PROCESSING directives
- *
- * Revision 1.92  2004/11/17 17:16:16  hobu
- * define USE_SDERASTER to turn on experimental SDE
- * raster support
- *
- * Revision 1.91  2004/11/15 20:35:02  dan
- * Added msLayerIsOpen() to all vector layer types (bug 1051)
- *
- * Revision 1.90  2004/11/15 18:42:49  hobu
- * do not silently return a MS_SUCCESS in msSDELayerOpen.
- * Instead, depend on the connection/layer pooling stuff to cache
- * the expensive calls.
- *
- * I also included the drawSDE() code that is the bulk of
- * SDE Raster support by Pirmin Kalberer of sourcepole.com.  It
- * isn't hooked up the rest of the MapServer raster machinery
- * yet.
- *
- * Revision 1.89  2004/11/03 20:31:38  hobu
- * first cut at implementing layer and stream caching
- * to go along with pool caching to improve the
- * response time for opening/closing layers
- *
- * Revision 1.88  2004/10/26 16:28:10  hobu
- * make sure to initialize sde->row_id_column
- * in msSDELayerOpen
- *
- * Revision 1.87  2004/10/26 16:06:04  hobu
- * check for the layer->layerinfo member
- * in msSDELayerClose before freeing
- *
- * Revision 1.86  2004/10/21 14:47:07  hobu
- * MSVC doesn't like it when you start
- * doing operations before you initialize
- * something.  Fixup the declaration of
- * msSDELayerInfo in sdeGetRecord
- *
- * Revision 1.85  2004/10/21 04:30:57  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- * Revision 1.84  2004/10/19 19:06:48  hobu
- * First cut of BLOB support.  Blobs
- * can't actually query yet, but NULL
- * blob columns in a table will not prevent
- * the user from querying the table.
- *
- * Revision 1.83  2004/10/19 16:51:00  hobu
- * if no version is specified, do not set
- * a default or do any versioned queries.
- *
- * Revision 1.82  2004/10/15 18:13:02  hobu
- * sde->state_id was being used before it was initialized
- * sde->connection was being set to null *after* the sde
- * structure was already freed in msSDELayerClose causing heap
- * corruption.  (Thanks Frank!)
- *
- * Revision 1.81  2004/10/14 15:20:08  hobu
- * make sure that we call SE_stream_free
- * when the layer is closed
- *
- * Revision 1.80  2004/10/11 14:34:26  hobu
- * change thread locking policy
- * to SE_UNPROTECTED_POLICY
- *
- * Revision 1.79  2004/10/04 22:13:49  hobu
- * touch up comments that weren't properly
- * closed that were causing gcc to complain
- *
- * Revision 1.78  2004/10/04 20:15:00  hobu
- * touch up commit comment
- *
- * Revision 1.77  2004/10/04 20:11:00  hobu
- * Rework of the style to fit code in under 80 columns and add visual breaks 
- * between the start and end of functions.  Normalized tabs to spaces wherever 
- * I found them, but it is still possible I missed a few
+
  *
 */
 
