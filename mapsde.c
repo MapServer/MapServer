@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.109.2.2  2007/02/27 19:52:20  hobu
+ * do not double-grab the row_id column in msSDELayerGetItems (bug 2041)
+ *
  * Revision 1.109.2.1  2006/10/31 17:08:52  hobu
  * make sure to initialize sde->row_id_column to NULL or we'll blow
  * up on close for operations like GetCapabilities
@@ -1480,7 +1483,11 @@ int msSDELayerGetItems(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  layer->numitems = n+1;
+  /* 2/27/07 - hobu.  If we can't get the row_id_column right from the table, we're screwed anyway.  
+                      stop double-grabbing it here because else where in the code assumes that 
+                      layer->items maps layer->itemdefs, which it doesn't if we have dups of
+                      the OBJECTID (or other row_id column) */
+  layer->numitems = n;
 
   layer->items = (char **)malloc(layer->numitems*sizeof(char *));
   if(!layer->items) {
@@ -1489,7 +1496,7 @@ int msSDELayerGetItems(layerObj *layer) {
   }
 
   for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);
-  layer->items[n] = strdup(sde->row_id_column); /* row id */
+  /* layer->items[n] = strdup(sde->row_id_column); */ /* row id */
 
   if (!layer->iteminfo){
     layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
@@ -1500,8 +1507,8 @@ int msSDELayerGetItems(layerObj *layer) {
   }
 
   for(i=0; i<layer->numitems; i++) { /* requested columns */
-    if(strcmp(layer->items[i],sde->row_id_column) == 0)      
-      continue;
+   /* if(strcmp(layer->items[i],sde->row_id_column) == 0)      
+      continue; */
 
     for(j=0; j<n; j++) { /* all columns */
       if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { 
