@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.115  2007/02/28 20:34:03  hobu
+ * return NULL instead of an int in msSDELayerGetSpatialColumn if the layer is not open
+ *
  * Revision 1.114  2007/02/28 03:46:11  hobu
  * use msSDELayerIsOpen instead of manually checking for layerinfo
  *
@@ -1628,7 +1631,7 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
     msSetError( MS_SDEERR, 
                 "SDE layer has not been opened.", 
                 "msSDELayerGetSpatialColumn()");
-    return(MS_FAILURE);
+    return NULL;
   }
 
   sde = layer->layerinfo;
