@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - Fix SDE returning the row_id_column multiple times (bug 2040).
+
  - Fix text outline bug. (bug 2027)
 
  - Improve error reporting when OWS services are requested but the support
