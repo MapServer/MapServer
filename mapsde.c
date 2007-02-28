@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2007/02/28 01:28:18  hobu
+ * fix 2040
+ *
  * Revision 1.112  2007/02/26 17:01:47  hobu
  * delete the SDE raster code for good.  This is now available in GDAL.
  *
@@ -1354,7 +1357,7 @@ int msSDELayerGetItems(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  layer->numitems = n+1;
+  layer->numitems = n;
 
   layer->items = (char **)malloc(layer->numitems*sizeof(char *));
   if(!layer->items) {
@@ -1363,7 +1366,6 @@ int msSDELayerGetItems(layerObj *layer) {
   }
 
   for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);
-  layer->items[n] = strdup(sde->row_id_column); /* row id */
 
   if (!layer->iteminfo){
     layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
@@ -1374,8 +1376,6 @@ int msSDELayerGetItems(layerObj *layer) {
   }
 
   for(i=0; i<layer->numitems; i++) { /* requested columns */
-    if(strcmp(layer->items[i],sde->row_id_column) == 0)      
-      continue;
 
     for(j=0; j<n; j++) { /* all columns */
       if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { 
