@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.120  2007/02/28 22:57:21  hobu
+ * normalize sdeGetRecord
+ *
  * Revision 1.119  2007/02/28 21:33:46  hobu
  * whitespace normalization for sdeShapeCopy.
  * Make sure to status check some SDE function calls that weren't being tested.
@@ -579,176 +582,211 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 /*     or row fetch routines.                                           */
 /* -------------------------------------------------------------------- */
 static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
-  int i;
-  long status;
-
-  double doubleval;
-  long longval;
-  struct tm dateval;
-
-  short shortval; /* new gdv */
-  float floatval;
-
-  SE_COLUMN_DEF *itemdefs;
-  SE_SHAPE shapeval=0;
-  SE_BLOB_INFO blobval;
- /* blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO)); */
-  msSDELayerInfo *sde;
-
-  sde = layer->layerinfo;
-
-  if(layer->numitems > 0) {
-    shape->numvalues = layer->numitems;
-    shape->values = (char **)malloc(sizeof(char *)*layer->numitems);
-    if(!shape->values) {
-      msSetError( MS_MEMERR, 
-                  "Error allocation shape attribute array.", 
-                  "sdeGetRecord()");
-      return(MS_FAILURE);
+    int i;
+    long status;
+    
+    double doubleval;
+    long longval;
+    struct tm dateval;
+    
+    short shortval; /* new gdv */
+    float floatval;
+    
+    SE_COLUMN_DEF *itemdefs;
+    SE_SHAPE shapeval=0;
+    SE_BLOB_INFO blobval;
+    /* blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO)); */
+    msSDELayerInfo *sde;
+    
+    if(!msSDELayerIsOpen(layer)) {
+        msSetError( MS_SDEERR, 
+                    "SDE layer has not been opened.", 
+                    "sdeGetRecord()");
+        return MS_FAILURE;
     }
-  }
 
-  status = SE_shape_create(NULL, &shapeval);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "sdeGetRecord()", "SE_shape_create()");
-    return(MS_FAILURE);
-  }
 
-  itemdefs = layer->iteminfo;
-  for(i=0; i<layer->numitems; i++) {
+    sde = layer->layerinfo;
 
-    if(strcmp(layer->items[i],sde->row_id_column) == 0) {
-      status = SE_stream_get_integer(sde->stream, (short)(i+1), &shape->index);
-      if(status != SE_SUCCESS) {
-         sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
-         return(MS_FAILURE);
-      }
+    if(layer->numitems > 0) {
+        shape->numvalues = layer->numitems;
+        shape->values = (char **) malloc (sizeof(char *)*layer->numitems);
+        if(!shape->values) {
+            msSetError( MS_MEMERR, 
+                      "Error allocation shape attribute array.", 
+                      "sdeGetRecord()");
+            return(MS_FAILURE);
+        }
+    }
 
-      shape->values[i] = (char *)malloc(64); /* should be enough */
-      sprintf(shape->values[i], "%ld", shape->index);
-      continue;
-    }    
+    status = SE_shape_create(NULL, &shapeval);
+    if(status != SE_SUCCESS) {
+        sde_error(status, "sdeGetRecord()", "SE_shape_create()");
+        return(MS_FAILURE);
+    }
+
+    itemdefs = layer->iteminfo;
+    for(i=0; i<layer->numitems; i++) {
+
+        // do something special 
+        if(strcmp(layer->items[i],sde->row_id_column) == 0) {
+            status = SE_stream_get_integer(sde->stream, (short)(i+1), &shape->index);
+            if(status != SE_SUCCESS) {
+                sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
+                return(MS_FAILURE);
+            }
+    
+            shape->values[i] = (char *)malloc(64); /* should be enough */
+            sprintf(shape->values[i], "%ld", shape->index);
+            continue;
+        }    
     
     switch(itemdefs[i].sde_type) {
-    case SE_SMALLINT_TYPE:
-      /* changed by gdv */
-      status = SE_stream_get_smallint(sde->stream, (short)(i+1), &shortval); 
-      if(status == SE_SUCCESS)
-        shape->values[i] = long2string(shortval);
-      else if(status == SE_NULL_VALUE)
-        shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      else {
-        sde_error(status, "sdeGetRecord()", "SE_stream_get_smallint()");
-        return(MS_FAILURE);
-      }
-      break;
-    case SE_INTEGER_TYPE:
-      status = SE_stream_get_integer(sde->stream, (short)(i+1), &longval);
-      if(status == SE_SUCCESS)
-        shape->values[i] = long2string(longval);
-      else if(status == SE_NULL_VALUE)
-        shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      else {
-        sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
-        return(MS_FAILURE);
-      }      
-      break;
-    case SE_FLOAT_TYPE:
-      /* changed by gdv */
-      status = SE_stream_get_float(sde->stream, (short)(i+1), &floatval); 
-      if(status == SE_SUCCESS)
-        shape->values[i] = double2string(floatval);
-      else if(status == SE_NULL_VALUE)
-        shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      else {     
-        sde_error(status, "sdeGetRecord()", "SE_stream_get_float()");
-        return(MS_FAILURE);
-      }
-      break;
-    case SE_DOUBLE_TYPE:
-      status = SE_stream_get_double(sde->stream, (short) (i+1), &doubleval);
-      if(status == SE_SUCCESS)
-        shape->values[i] = double2string(doubleval);
-      else if(status == SE_NULL_VALUE)
-        shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      else {     
-        sde_error(status, "sdeGetRecord()", "SE_stream_get_double()");
-        return(MS_FAILURE);
-      }
-      break;
-    case SE_STRING_TYPE:
-      shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-      status = SE_stream_get_string(sde->stream, 
-                                    (short) (i+1), 
-                                    shape->values[i]);
-      if(status == SE_NULL_VALUE)
-        shape->values[i][0] = '\0'; /* empty string */
-      else if(status != SE_SUCCESS) {
-        sde_error(status, "sdeGetRecord()", "SE_stream_get_string()");
-        return(MS_FAILURE);
-      }
-      break;
-    case SE_BLOB_TYPE:
-        status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
-        if(status == SE_SUCCESS) {
-          shape->values[i] = (char *)malloc(sizeof(char)*blobval.blob_length);
-          shape->values[i] = memcpy(shape->values[i],
-                                    blobval.blob_buffer, 
-                                    blobval.blob_length);
-          SE_blob_free(&blobval);
-        }
-        else if (status == SE_NULL_VALUE) {
-          shape->values[i] = strdup(MS_SDE_NULLSTRING);
-        }
-        else {
-          sde_error(status, "sdeGetRecord()", "SE_stream_get_blob()");
+        case SE_SMALLINT_TYPE:
+            /* changed by gdv */
+            status = SE_stream_get_smallint(sde->stream, 
+                                            (short)(i+1), 
+                                            &shortval); 
+            if(status == SE_SUCCESS)
+                shape->values[i] = long2string(shortval);
+            else if(status == SE_NULL_VALUE)
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            else {
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_smallint()");
+                return(MS_FAILURE);
+            }
+            break;
+        case SE_INTEGER_TYPE:
+            status = SE_stream_get_integer( sde->stream, 
+                                            (short)(i+1), 
+                                            &longval);
+            if(status == SE_SUCCESS)
+                shape->values[i] = long2string(longval);
+            else if(status == SE_NULL_VALUE)
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            else {
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_integer()");
+                return(MS_FAILURE);
+            }      
+            break;
+        case SE_FLOAT_TYPE:
+            status = SE_stream_get_float(   sde->stream, 
+                                            (short)(i+1), 
+                                            &floatval); 
+            if(status == SE_SUCCESS)
+                shape->values[i] = double2string(floatval);
+            else if(status == SE_NULL_VALUE)
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            else {     
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_float()");
+                return(MS_FAILURE);
+            }
+            break;
+        case SE_DOUBLE_TYPE:
+            status = SE_stream_get_double(  sde->stream, 
+                                            (short) (i+1), 
+                                            &doubleval);
+            if(status == SE_SUCCESS)
+                shape->values[i] = double2string(doubleval);
+            else if(status == SE_NULL_VALUE)
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            else {     
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_double()");
+                return(MS_FAILURE);
+            }
+            break;
+        case SE_STRING_TYPE:
+            shape->values[i] = (char *)malloc(itemdefs[i].size+1);
+            status = SE_stream_get_string(  sde->stream, 
+                                            (short) (i+1), 
+                                            shape->values[i]);
+            if(status == SE_NULL_VALUE)
+                shape->values[i][0] = '\0'; /* empty string */
+            else if(status != SE_SUCCESS) {
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_string()");
+                return(MS_FAILURE);
+            }
+            break;
+        case SE_BLOB_TYPE:
+            status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
+            if(status == SE_SUCCESS) {
+                shape->values[i] = (char *)malloc(sizeof(char)*blobval.blob_length);
+                shape->values[i] = memcpy(  shape->values[i],
+                                            blobval.blob_buffer, 
+                                            blobval.blob_length);
+                SE_blob_free(&blobval);
+            }
+            else if (status == SE_NULL_VALUE) {
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            }
+            else {
+                sde_error(  status,  
+                            "sdeGetRecord()", 
+                            "SE_stream_get_blob()");
+                return(MS_FAILURE);
+            }
+            break;
+        case SE_DATE_TYPE:
+            status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
+            if(status == SE_SUCCESS) {
+                shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
+                strftime(   shape->values[i], 
+                            MS_SDE_TIMEFMTSIZE, 
+                            MS_SDE_TIMEFMT, 
+                            &dateval);
+            } 
+            else if(status == SE_NULL_VALUE)
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            else {     
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_date()");
+                return(MS_FAILURE);
+            }
+            break;
+        case SE_SHAPE_TYPE:
+            status = SE_stream_get_shape(sde->stream, (short)(i+1), shapeval);
+            if(status == SE_SUCCESS)
+                shape->values[i] = strdup(MS_SDE_SHAPESTRING);
+            else if(status == SE_NULL_VALUE)
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            else {
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_shape()");
+                return(MS_FAILURE);
+            }
+            break;
+        default: 
+          msSetError(   MS_SDEERR, 
+                        "Unknown SDE column type.", 
+                        "sdeGetRecord()");
           return(MS_FAILURE);
-        }
-      break;
-    case SE_DATE_TYPE:
-      status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
-      if(status == SE_SUCCESS) {
-        shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
-        strftime( shape->values[i], 
-                  MS_SDE_TIMEFMTSIZE, 
-                  MS_SDE_TIMEFMT, 
-                  &dateval);
-      } else if(status == SE_NULL_VALUE)
-        shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      else {     
-        sde_error(status, "sdeGetRecord()", "SE_stream_get_date()");
-        return(MS_FAILURE);
-      }
-      break;
-    case SE_SHAPE_TYPE:
-      status = SE_stream_get_shape(sde->stream, (short)(i+1), shapeval);
-      if(status == SE_SUCCESS)
-        shape->values[i] = strdup(MS_SDE_SHAPESTRING);
-      else if(status == SE_NULL_VALUE)
-        shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      else {
-        sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
-        return(MS_FAILURE);
-      }
-      break;
-    default: 
-      msSetError(MS_SDEERR, "Unknown SDE column type.", "sdeGetRecord()");
-      return(MS_FAILURE);
-      break;
-    }
-  }
+          break;
+        } // switch(itemdefs[i].sde_type) 
+    } //     for(i=0; i<layer->numitems; i++) {
 
-  if(SE_shape_is_nil(shapeval)) return(MS_SUCCESS);
+    if(SE_shape_is_nil(shapeval)) return(MS_SUCCESS);
   
-  /* copy sde shape to a mapserver shape */
-  status = sdeShapeCopy(shapeval, shape);
-  if(status != MS_SUCCESS) return(MS_FAILURE);
+    /* copy sde shape to a mapserver shape */
+    status = sdeShapeCopy(shapeval, shape);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  /* clean up */
-  SE_shape_free(shapeval);
+    /* clean up */
+    SE_shape_free(shapeval);
 
   
-  return(MS_SUCCESS);
+    return(MS_SUCCESS);
 }
 #endif
 
