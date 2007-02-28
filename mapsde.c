@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.118  2007/02/28 21:24:22  hobu
+ * whitespace normalization of msSDELCacheAdd and msSDEGetLayerInfo.
+ * Simplified some of the conditionals.
+ *
  * Revision 1.117  2007/02/28 21:10:32  hobu
  * comments and whitespace normalization of msSDELayerGetRowIDColumn
  *
@@ -300,49 +304,47 @@ long msSDELCacheAdd( layerObj *layer,
                      char *connectionString) 
 {
   
-  layerId *lid = NULL;
-  int status = 0;
+    layerId *lid = NULL;
+    long status = 0;
   
-  msAcquireLock( TLOCK_SDE );
+    msAcquireLock( TLOCK_SDE );
   
-  if (layer->debug){
-    msDebug( "%s: Caching id for %s, %s, %s\n", "msSDELCacheAdd()", 
-            tableName, columnName, connectionString);
-  }
-  /*
-   * Ensure the cache is large enough to hold the new item.
-   */
-  if(lcacheCount == lcacheMax)
-  {
-    lcacheMax += 10;
-    lcache = (layerId *)realloc(lcache, sizeof(layerId) * lcacheMax);
-    if(lcache == NULL)
-    {
-      msReleaseLock( TLOCK_SDE );
-      msSetError(MS_MEMERR, NULL, "msSDELCacheAdd()");
-      return (MS_FAILURE);
+    if (layer->debug){
+        msDebug( "%s: Caching id for %s, %s, %s\n", "msSDELCacheAdd()", 
+                 tableName, columnName, connectionString);
     }
-  }
 
-  /*
-   * Population the new lcache object.
-   */
-  lid = lcache + lcacheCount;
-  lcacheCount++;
+    // Ensure the cache is large enough to hold the new item.
+    if(lcacheCount == lcacheMax)
+    {
+        lcacheMax += 10;
+        lcache = (layerId *)realloc(lcache, sizeof(layerId) * lcacheMax);
+        if(lcache == NULL)
+        {
+            msReleaseLock( TLOCK_SDE );
+            msSetError(MS_MEMERR, NULL, "msSDELCacheAdd()");
+            return (MS_FAILURE);
+        }
+    }
 
-  status = SE_layerinfo_get_id(layerinfo, &lid->layerId);
-  if(status != SE_SUCCESS)
-  {
+    // Population the new lcache object.
+    lid = lcache + lcacheCount;
+    lcacheCount++;
+
+    status = SE_layerinfo_get_id(layerinfo, &lid->layerId);
+    if(status != SE_SUCCESS)
+    {
         msReleaseLock( TLOCK_SDE );
         sde_error(status, "msSDELCacheAdd()", "SE_layerinfo_get_id()");
         return(MS_FAILURE);
-  }
-  lid->table = strdup(tableName);
-  lid->column = strdup(columnName);
-  lid->connection = strdup(connectionString);
+    }
+    
+    lid->table = strdup(tableName);
+    lid->column = strdup(columnName);
+    lid->connection = strdup(connectionString);
   
-  msReleaseLock( TLOCK_SDE );
-  return (MS_SUCCESS);
+    msReleaseLock( TLOCK_SDE );
+    return (MS_SUCCESS);
 }
 
 /* -------------------------------------------------------------------- */
@@ -358,80 +360,76 @@ long msSDEGetLayerInfo(layerObj *layer,
                        char *connectionString,
                        SE_LAYERINFO layerinfo)
 {
-  int i;
-  long status;
-  layerId *lid = NULL;
+    int i;
+    long status;
+    layerId *lid = NULL;
   
-  /*
-   * If table or column are null, nothing can be done.
-   */
-  if(tableName == NULL)
-  {
-    msSetError( MS_MISCERR,
-                "Missing table name.\n",
-                "msSDEGetLayerInfo()");
-    return (MS_FAILURE);
-  }
-  if(columnName == NULL)
-  {
-    msSetError( MS_MISCERR,
-                "Missing column name.\n",
-                "msSDEGetLayerInfo()");
-    return (MS_FAILURE);
-  }
-  if(connectionString == NULL)
-  {
-    msSetError( MS_MISCERR,
-                "Missing connection string.\n",
-                "msSDEGetLayerInfo()");
-    return (MS_FAILURE);
-  }  
-
-  if (layer->debug){
-    msDebug("%s: Looking for layer by %s, %s, %s\n", "msSDEGetLayerInfo()",
-          tableName, columnName, connectionString);
-  }
-  /*
-   * Search the lcache for the layer id.
-   */
-  for(i = 0; i < lcacheCount; i++)
-  {
-    lid = lcache + i;
-    if(strcasecmp(lid->table, tableName) == 0 &&
-        strcasecmp(lid->column, columnName) == 0 &&
-        strcasecmp(lid->connection, connectionString) == 0)
+    // If table or column are null, nothing can be done.
+    if(tableName == NULL)
     {
-      status = SE_layer_get_info_by_id(conn, lid->layerId, layerinfo);
-      if(status != SE_SUCCESS) {
+        msSetError( MS_MISCERR,
+                    "Missing table name.\n",
+                    "msSDEGetLayerInfo()");
+        return (MS_FAILURE);
+    }
+    if(columnName == NULL)
+    {
+        msSetError( MS_MISCERR,
+                    "Missing column name.\n",
+                    "msSDEGetLayerInfo()");
+        return (MS_FAILURE);
+    }
+    if(connectionString == NULL)
+    {
+        msSetError( MS_MISCERR,
+                    "Missing connection string.\n",
+                    "msSDEGetLayerInfo()");
+        return (MS_FAILURE);
+    }  
+
+    if (layer->debug){
+        msDebug("%s: Looking for layer by %s, %s, %s\n", 
+                "msSDEGetLayerInfo()",
+                tableName, 
+                columnName, 
+                connectionString);
+    }
+
+    // Search the lcache for the layer id.
+    for(i = 0; i < lcacheCount; i++)
+    {
+        lid = lcache + i;
+        if(strcasecmp(lid->table, tableName) == 0 &&
+            strcasecmp(lid->column, columnName) == 0 &&
+            strcasecmp(lid->connection, connectionString) == 0)
+        {
+            status = SE_layer_get_info_by_id(conn, lid->layerId, layerinfo);
+            if(status != SE_SUCCESS) {
+                sde_error(status, "msSDEGetLayerInfo()", "SE_layer_get_info()");
+                return(MS_FAILURE);
+            } 
+            if (layer->debug){
+                msDebug( "%s: Matched layer to id %i.\n", 
+                       "msSDEGetLayerId()", lid->layerId);
+            }
+            return (MS_SUCCESS);
+            
+        }
+    }
+    if (layer->debug){
+        msDebug("%s: No cached layerid found.\n", "msSDEGetLayerInfo()");
+    }
+
+    // No matches found, create one.
+    status = SE_layer_get_info( conn, tableName, columnName, layerinfo );
+    if(status != SE_SUCCESS) {
         sde_error(status, "msSDEGetLayerInfo()", "SE_layer_get_info()");
         return(MS_FAILURE);
-      }
-      else
-      {
-        if (layer->debug){
-          msDebug( "%s: Matched layer to id %i.\n", 
-                   "msSDEGetLayerId()", lid->layerId);
-        }
-        return (MS_SUCCESS);
-      }
     }
-  }
-  if (layer->debug){
-    msDebug("%s: No cached layerid found.\n", "msSDEGetLayerInfo()");
-  }
-  /*
-   * No matches found, create one.
-   */
-  status = SE_layer_get_info( conn, tableName, columnName, layerinfo );
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDEGetLayerInfo()", "SE_layer_get_info()");
-    return(MS_FAILURE);
-  }
-  else 
-  {
+
     status = msSDELCacheAdd(layer, layerinfo, tableName, columnName, connectionString);
     return(MS_SUCCESS);
-  }
+
 }
 
 /* -------------------------------------------------------------------- */
