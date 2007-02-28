@@ -27,8 +27,9 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.115  2007/02/28 20:34:03  hobu
- * return NULL instead of an int in msSDELayerGetSpatialColumn if the layer is not open
+ * Revision 1.116  2007/02/28 20:48:35  hobu
+ * move msSDELayerIsOpen to the top so it is available.
+ * clean up msSDELayerGetRowIDColumn to always return a string that is owned by the caller.
  *
  * Revision 1.114  2007/02/28 03:46:11  hobu
  * use msSDELayerIsOpen instead of manually checking for layerinfo
@@ -67,13 +68,7 @@
 #ifdef USE_SDE
 #include <sdetype.h> /* ESRI SDE Client Includes */
 #include <sdeerno.h>
-
-/*
-#ifdef USE_SDERASTER
-#include <sderaster.h>
-#endif
-*/
-
+ 
 #define MS_SDE_MAXBLOBSIZE 1024*50 /* 50 kbytes */
 #define MS_SDE_NULLSTRING "<null>"
 #define MS_SDE_SHAPESTRING "<shape>"
@@ -170,10 +165,30 @@ static void sde_error(long error_code, char *routine, char *sde_routine)
 }
 
 /* -------------------------------------------------------------------- */
+/* msSDELayerIsOpen                                                     */
+/* -------------------------------------------------------------------- */
+/*     Returns MS_TRUE if layer is already opened, MS_FALSE otherwise   */
+/* -------------------------------------------------------------------- */
+int msSDELayerIsOpen(layerObj *layer) {
+#ifdef USE_SDE
+
+  if(layer->layerinfo) 
+      return(MS_TRUE); 
+
+  return MS_FALSE;
+
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.",
+             "msSDELayerIsOpen()");
+  return(MS_FALSE);
+#endif
+}
+
+/* -------------------------------------------------------------------- */
 /* msSDELayerGetRowIDColumn                                             */
 /* -------------------------------------------------------------------- */
 /*     A helper function to return unique row ID column for             */ 
-/*     an opened SDE layer                                              */
+/*     an opened SDE layer.  The caller owns the string.                */
 /* -------------------------------------------------------------------- */
 char *msSDELayerGetRowIDColumn(layerObj *layer)
 {
@@ -185,14 +200,16 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
   msSDELayerInfo *sde=NULL;
   sde = layer->layerinfo;
 
-
-  column_name = (char*) malloc(SE_MAX_COLUMN_LEN);
-  if(!sde) {
+  if(!msSDELayerIsOpen(layer)) {
     msSetError( MS_SDEERR, 
                 "SDE layer has not been opened.", 
-                "msSDELayerGetSpatialColumn()");
-    return(NULL);
-  }   
+                "msSDELayerGetRowIDColumn()");
+    return NULL;
+  }
+  
+  column_name = (char*) malloc(SE_MAX_COLUMN_LEN+1);
+  column_name[0]='\0';
+
   
   if (sde->state_id == SE_DEFAULT_STATE_ID) {
     if(layer->debug) 
@@ -235,12 +252,12 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         "returning %s.\n", 
         MS_SDE_ROW_ID_COLUMN);
       }
-      return (MS_SDE_ROW_ID_COLUMN);
+      return (strdup(MS_SDE_ROW_ID_COLUMN));
     }
     
     if (column_name){
 
-      return (column_name); 
+      return (strdup(column_name)); 
     }
     else {
       free(column_name);
@@ -984,25 +1001,7 @@ int msSDELayerOpen(layerObj *layer) {
 }
 
 
-/* -------------------------------------------------------------------- */
-/* msSDELayerIsOpen                                                     */
-/* -------------------------------------------------------------------- */
-/*     Returns MS_TRUE if layer is already opened, MS_FALSE otherwise   */
-/* -------------------------------------------------------------------- */
-int msSDELayerIsOpen(layerObj *layer) {
-#ifdef USE_SDE
 
-  if(layer->layerinfo) 
-      return(MS_TRUE); 
-
-  return MS_FALSE;
-
-#else
-  msSetError(MS_MISCERR, "SDE support is not available.",
-             "msSDELayerIsOpen()");
-  return(MS_FALSE);
-#endif
-}
 
 /* -------------------------------------------------------------------- */
 /* msSDELayerClose                                                      */
