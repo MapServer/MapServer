@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.119  2007/02/28 21:33:46  hobu
+ * whitespace normalization for sdeShapeCopy.
+ * Make sure to status check some SDE function calls that weren't being tested.
+ *
  * Revision 1.118  2007/02/28 21:24:22  hobu
  * whitespace normalization of msSDELCacheAdd and msSDEGetLayerInfo.
  * Simplified some of the conditionals.
@@ -439,120 +443,133 @@ long msSDEGetLayerInfo(layerObj *layer,
 /* -------------------------------------------------------------------- */
 static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 
-  SE_POINT *points=NULL;
-  SE_ENVELOPE envelope;
-  long type, status;
-  long *part_offsets = NULL;
-  long *subpart_offsets = NULL;
-  long num_parts = -1;
-  long num_subparts = -1;
-  long num_points = -1;
+    SE_POINT *points=NULL;
+    SE_ENVELOPE envelope;
+    long type, status;
+    long *part_offsets = NULL;
+    long *subpart_offsets = NULL;
+    long num_parts = -1;
+    long num_subparts = -1;
+    long num_points = -1;
   
-  lineObj line={0,NULL};
+    lineObj line={0,NULL};
 
-  int i,j,k;
+    int i,j,k;
 
-  status = SE_shape_get_type(inshp, &type);
-  if(status != SE_SUCCESS) {
-    sde_error(status, 
-              "sdeCopyShape()", 
-              "SE_shape_get_type()");
-    return(MS_FAILURE);
-  }
+    status = SE_shape_get_type(inshp, &type);
+    if(status != SE_SUCCESS) {
+        sde_error(status, 
+                  "sdeCopyShape()", 
+                  "SE_shape_get_type()");
+        return(MS_FAILURE);
+    }
   
-  switch(type) {
-  case(SG_NIL_SHAPE):
-    return(MS_SUCCESS); /* skip null shapes */
-    break;
-  case(SG_POINT_SHAPE):
-  case(SG_MULTI_POINT_SHAPE):
-    outshp->type = MS_SHAPE_POINT;
-    break;
-  case(SG_LINE_SHAPE):
-  case(SG_SIMPLE_LINE_SHAPE): 
-  case(SG_MULTI_LINE_SHAPE):
-  case(SG_MULTI_SIMPLE_LINE_SHAPE):
-    outshp->type = MS_SHAPE_LINE;
-    break;
-  case(SG_AREA_SHAPE):
-  case(SG_MULTI_AREA_SHAPE):
-    outshp->type = MS_SHAPE_POLYGON;
-    break;  
-  default:
-    msSetError( MS_SDEERR, 
-                "Unsupported SDE shape type (%ld).", 
-                "sdeCopyShape()", 
-                type);
-    return(MS_FAILURE);
-  }
+    switch(type) {
+        case(SG_NIL_SHAPE):
+            return(MS_SUCCESS); /* skip null shapes */
+            break;
+        case(SG_POINT_SHAPE):
+        case(SG_MULTI_POINT_SHAPE):
+            outshp->type = MS_SHAPE_POINT;
+            break;
+        case(SG_LINE_SHAPE):
+        case(SG_SIMPLE_LINE_SHAPE): 
+        case(SG_MULTI_LINE_SHAPE):
+        case(SG_MULTI_SIMPLE_LINE_SHAPE):
+            outshp->type = MS_SHAPE_LINE;
+            break;
+        case(SG_AREA_SHAPE):
+        case(SG_MULTI_AREA_SHAPE):
+            outshp->type = MS_SHAPE_POLYGON;
+            break;  
+        default:
+            msSetError( MS_SDEERR, 
+                        "Unsupported SDE shape type (%ld).", 
+                        "sdeCopyShape()", 
+                        type);
+            return(MS_FAILURE);
+    }
 
 
-  SE_shape_get_num_parts (inshp, &num_parts, &num_subparts);
-  SE_shape_get_num_points (inshp, 0, 0, &num_points); 
-	 
-  part_offsets = (long *) malloc( (num_parts + 1) * sizeof(long));
-  subpart_offsets = (long *) malloc( (num_subparts + 1)	* sizeof(long));
-  part_offsets[num_parts] = num_subparts;
-  subpart_offsets[num_subparts]	= num_points;
-
-  points = (SE_POINT *)malloc(num_points*sizeof(SE_POINT));
-  if(!points) {
-    msSetError( MS_MEMERR, 
-                "Unable to allocate points array.", 
-                "sdeCopyShape()");
-    return(MS_FAILURE);
-  }
-
-  status = SE_shape_get_all_points( inshp, 
-                                    SE_DEFAULT_ROTATION, 
-                                    part_offsets, 
-                                    subpart_offsets, 
-                                    points, 
-                                    NULL, 
-                                    NULL);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "sdeCopyShape()", "SE_shape_get_all_points()");
-    return(MS_FAILURE);
-  }
-
-  k = 0; /* overall point counter */
-  for(i=0; i<num_subparts; i++) {
-    
-    if( i == num_subparts-1)
-      line.numpoints = num_points - subpart_offsets[i];
-    else
-      line.numpoints = subpart_offsets[i+1] - subpart_offsets[i];
-
-    line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
-    if(!line.point) {
-      msSetError( MS_MEMERR, 
-                  "Unable to allocate temporary point cache.", 
-                  "sdeShapeCopy()");
-      return(MS_FAILURE);
+    status = SE_shape_get_num_parts (inshp, &num_parts, &num_subparts);
+    if(status != SE_SUCCESS) {
+        sde_error(status, "sdeShapeCopy()", "SE_shape_get_num_parts()");
+        return(MS_FAILURE);
+    }
+    status = SE_shape_get_num_points (inshp, 0, 0, &num_points); 
+    if(status != SE_SUCCESS) {
+        sde_error(status, "sdeShapeCopy()", "SE_shape_get_num_points()");
+        return(MS_FAILURE);
     }
      
-    for(j=0; j < line.numpoints; j++) {
-      line.point[j].x = points[k].x; 
-      line.point[j].y = points[k].y;     
-      k++;
+    part_offsets = (long *) malloc( (num_parts + 1) * sizeof(long));
+    subpart_offsets = (long *) malloc( (num_subparts + 1)	* sizeof(long));
+    part_offsets[num_parts] = num_subparts;
+    subpart_offsets[num_subparts]	= num_points;
+
+    points = (SE_POINT *) malloc (num_points*sizeof(SE_POINT));
+    if(!points) {
+        msSetError( MS_MEMERR, 
+                    "Unable to allocate points array.", 
+                    "sdeCopyShape()");
+        return(MS_FAILURE);
     }
 
-    msAddLine(outshp, &line);
-    free(line.point);
-  }
+    status = SE_shape_get_all_points(   inshp, 
+                                        SE_DEFAULT_ROTATION, 
+                                        part_offsets, 
+                                        subpart_offsets, 
+                                        points, 
+                                        NULL, 
+                                        NULL);
+    if(status != SE_SUCCESS) {
+        sde_error(status, "sdeCopyShape()", "SE_shape_get_all_points()");
+        return(MS_FAILURE);
+    }
 
-  free(part_offsets);
-  free(subpart_offsets);
-  free(points);
+    k = 0; /* overall point counter */
+    for(i=0; i<num_subparts; i++) 
+    {
 
-  /* finally copy the bounding box for the entire shape */
-  SE_shape_get_extent(inshp, 0, &envelope);
-  outshp->bounds.minx = envelope.minx;
-  outshp->bounds.miny = envelope.miny;
-  outshp->bounds.maxx = envelope.maxx;
-  outshp->bounds.maxy = envelope.maxy;
+        if( i == num_subparts-1)
+            line.numpoints = num_points - subpart_offsets[i];
+        else
+            line.numpoints = subpart_offsets[i+1] - subpart_offsets[i];
+    
+        line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
+        if(!line.point) {
+            msSetError( MS_MEMERR, 
+                      "Unable to allocate temporary point cache.", 
+                      "sdeShapeCopy()");
+            return(MS_FAILURE);
+        }
+         
+        for(j=0; j < line.numpoints; j++) {
+            line.point[j].x = points[k].x; 
+            line.point[j].y = points[k].y;     
+            k++;
+        }
+    
+        msAddLine(outshp, &line);
+        free(line.point);
+    }
 
-  return(MS_SUCCESS);
+    free(part_offsets);
+    free(subpart_offsets);
+    free(points);
+
+    /* finally copy the bounding box for the entire shape */
+    status = SE_shape_get_extent(inshp, 0, &envelope);
+    if(status != SE_SUCCESS) {
+        sde_error(status, "sdeCopyShape()", "SE_shape_get_extent()");
+        return(MS_FAILURE);
+    }
+    outshp->bounds.minx = envelope.minx;
+    outshp->bounds.miny = envelope.miny;
+    outshp->bounds.maxx = envelope.maxx;
+    outshp->bounds.maxy = envelope.maxy;
+
+    return(MS_SUCCESS);
 }
 
 /* -------------------------------------------------------------------- */
