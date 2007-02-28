@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.117  2007/02/28 21:10:32  hobu
+ * comments and whitespace normalization of msSDELayerGetRowIDColumn
+ *
  * Revision 1.116  2007/02/28 20:48:35  hobu
  * move msSDELayerIsOpen to the top so it is available.
  * clean up msSDELayerGetRowIDColumn to always return a string that is owned by the caller.
@@ -124,21 +127,21 @@ static layerId *lcache = NULL;
 static void msSDECloseConnection( void *conn_handle )
 {
 
-  long status;
-  msSDEConnPoolInfo *poolinfo = conn_handle;
-
-  if (poolinfo) {
-     if (poolinfo->stream) {
-        SE_stream_free(poolinfo->stream);
-     }
-     if (poolinfo->connection) {
-        status = SE_connection_free_all_locks (poolinfo->connection);
-        if (status == SE_SUCCESS) {
-           SE_connection_free(poolinfo->connection);
+    long status;
+    msSDEConnPoolInfo *poolinfo = conn_handle;
+    
+    if (poolinfo) {
+        if (poolinfo->stream) {
+            SE_stream_free(poolinfo->stream);
         }
-     }
-     free(poolinfo);
-  } 
+        if (poolinfo->connection) {
+            status = SE_connection_free_all_locks (poolinfo->connection);
+            if (status == SE_SUCCESS) {
+                SE_connection_free(poolinfo->connection);
+            }
+        }
+        free(poolinfo);
+    } 
 
 }
 
@@ -172,15 +175,15 @@ static void sde_error(long error_code, char *routine, char *sde_routine)
 int msSDELayerIsOpen(layerObj *layer) {
 #ifdef USE_SDE
 
-  if(layer->layerinfo) 
-      return(MS_TRUE); 
-
-  return MS_FALSE;
+    if(layer->layerinfo) 
+        return(MS_TRUE); 
+    
+    return MS_FALSE;
 
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.",
+    msSetError(MS_MISCERR, "SDE support is not available.",
              "msSDELayerIsOpen()");
-  return(MS_FALSE);
+    return(MS_FALSE);
 #endif
 }
 
@@ -193,82 +196,94 @@ int msSDELayerIsOpen(layerObj *layer) {
 char *msSDELayerGetRowIDColumn(layerObj *layer)
 {
 #ifdef USE_SDE
-  long status, column_type; 
-  char* column_name;
-  SE_REGINFO registration;
+    long status, column_type; 
+    char* column_name;
+    SE_REGINFO registration;
+    
+    msSDELayerInfo *sde=NULL;
+    sde = layer->layerinfo;
 
-  msSDELayerInfo *sde=NULL;
-  sde = layer->layerinfo;
-
-  if(!msSDELayerIsOpen(layer)) {
-    msSetError( MS_SDEERR, 
-                "SDE layer has not been opened.", 
-                "msSDELayerGetRowIDColumn()");
-    return NULL;
-  }
+    if(!msSDELayerIsOpen(layer)) {
+        msSetError( MS_SDEERR, 
+                    "SDE layer has not been opened.", 
+                    "msSDELayerGetRowIDColumn()");
+        return NULL;
+    }
   
-  column_name = (char*) malloc(SE_MAX_COLUMN_LEN+1);
-  column_name[0]='\0';
+    column_name = (char*) malloc(SE_MAX_COLUMN_LEN+1);
+    column_name[0]='\0';
 
-  
-  if (sde->state_id == SE_DEFAULT_STATE_ID) {
-    if(layer->debug) 
-      msDebug("msSDELayerGetRowIDColumn(): State ID was SE_DEFAULT_STATE_ID, "
-              "reverting to %s.\n", 
-              MS_SDE_ROW_ID_COLUMN);
-      return(strdup(MS_SDE_ROW_ID_COLUMN));
-  }
-  else 
-  {
+    // if the state_id is the SE_DEFAULT_STATE_ID, we are 
+    // assuming no versioned queries are happening at all 
+    // and we are using the hardcoded row_id column.
+    if (sde->state_id == SE_DEFAULT_STATE_ID) {
+        if(layer->debug) {
+            msDebug("msSDELayerGetRowIDColumn(): State ID was "
+                    "SE_DEFAULT_STATE_ID, reverting to %s.\n", 
+                    MS_SDE_ROW_ID_COLUMN);
+        }
+
+        return(strdup(MS_SDE_ROW_ID_COLUMN));
+    } 
+    
+    // if the state_id was not set to SE_DEFAULT_STATE_ID,
+    // check if the table is registered, and if so, use the 
+    // registration info to tell us what the row_id column is.
     status = SE_reginfo_create (&registration);
     if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerGetRowIDColumn()", "SE_reginfo_create()");
-      return(NULL);
+        sde_error(  status, 
+                    "msSDELayerGetRowIDColumn()", 
+                    "SE_reginfo_create()");
+        SE_reginfo_free(registration);
+        return(NULL);
     }
     
     status = SE_registration_get_info ( sde->connection, 
                                         sde->table, 
                                         registration);
     if(status != SE_SUCCESS) {
-      sde_error(status, 
-                "msSDELayerGetRowIDColumn()", 
-                "SE_registration_get_info()");
-      return(NULL);
+        sde_error(  status, 
+                    "msSDELayerGetRowIDColumn()", 
+                    "SE_registration_get_info()");
+        SE_reginfo_free(registration);
+        return(NULL);
     }
     
     status= SE_reginfo_get_rowid_column ( registration, 
                                           column_name, 
                                           &column_type);
-    SE_reginfo_free(registration);
+    
     if(status != SE_SUCCESS) {
-      sde_error(status, 
+        sde_error(status, 
                 "msSDELayerGetRowIDColumn()", 
                 "SE_reginfo_get_rowid_column()");
-      return(NULL);
-    }
-    if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
-      if(layer->debug) {
-        msDebug("msSDELayerGetRowIDColumn(): Table was not registered, "
-        "returning %s.\n", 
-        MS_SDE_ROW_ID_COLUMN);
-      }
-      return (strdup(MS_SDE_ROW_ID_COLUMN));
+        SE_reginfo_free(registration);
+        return(NULL);
     }
     
-    if (column_name){
-
-      return (strdup(column_name)); 
+    // if the table wasn't registered, return the hard-coded row_id column.
+    if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
+        if(layer->debug) {
+            msDebug("msSDELayerGetRowIDColumn(): Table was not registered, "
+                    "returning %s.\n", 
+                    MS_SDE_ROW_ID_COLUMN);
+        }
+        return (strdup(MS_SDE_ROW_ID_COLUMN));
+    }
+    
+    if (column_name) {
+        return (strdup(column_name)); 
     }
     else {
-      free(column_name);
-      return(strdup(MS_SDE_ROW_ID_COLUMN));
+        free(column_name);
+        return(strdup(MS_SDE_ROW_ID_COLUMN));
     }
-}
+
 #else
-  msSetError( MS_MISCERR, 
-              "SDE support is not available.", 
-              "msSDELayerGetRowIDColumn()");
-  return(NULL);
+    msSetError( MS_MISCERR, 
+                "SDE support is not available.", 
+                "msSDELayerGetRowIDColumn()");
+    return(NULL);
 #endif
 }
 
