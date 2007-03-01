@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122  2007/03/01 03:14:13  hobu
+ * whitespace normalization
+ *
  * Revision 1.121  2007/02/28 23:49:32  hobu
  * whitespace normalization
  *
@@ -437,7 +440,11 @@ long msSDEGetLayerInfo(layerObj *layer,
         return(MS_FAILURE);
     }
 
-    status = msSDELCacheAdd(layer, layerinfo, tableName, columnName, connectionString);
+    status = msSDELCacheAdd(layer, 
+                            layerinfo, 
+                            tableName, 
+                            columnName, 
+                            connectionString);
     return(MS_SUCCESS);
 
 }
@@ -812,119 +819,122 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 /* -------------------------------------------------------------------- */
 int msSDELayerOpen(layerObj *layer) {
 #ifdef USE_SDE
-  long status=-1;
-  char **params=NULL;
-  char **data_params=NULL;
-  int numparams=0;
-  SE_ERROR error;
-  SE_STATEINFO state;
-  SE_VERSIONINFO version;
+    long status=-1;
+    char **params=NULL;
+    char **data_params=NULL;
+    int numparams=0;
+    SE_ERROR error;
+    SE_STATEINFO state;
+    SE_VERSIONINFO version;
+    
+    msSDELayerInfo *sde;
+    msSDEConnPoolInfo *poolinfo;
 
-  msSDELayerInfo *sde;
-  msSDEConnPoolInfo *poolinfo;
 
- // if (msSDELayerIsOpen(layer)) return MS_SUCCESS;
 
-  /* layer already open, silently return */
-  /* if(layer->layerinfo) return(MS_SUCCESS);  */
-
-  /* allocate space for SDE structures */
-  sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
-  if(!sde) {
-    msSetError( MS_MEMERR, 
-                "Error allocating SDE layer structure.", 
-                "msSDELayerOpen()");
-    return(MS_FAILURE);
-  }
+    /* allocate space for SDE structures */
+    sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
+    if(!sde) {
+        msSetError( MS_MEMERR, 
+                    "Error allocating SDE layer structure.", 
+                    "msSDELayerOpen()");
+        return(MS_FAILURE);
+    }
  
-  sde->state_id = SE_BASE_STATE_ID;
+    sde->state_id = SE_BASE_STATE_ID;
   
-  /* initialize the table and spatial column names */
-  sde->table = NULL;
-  sde->column = NULL;
-  sde->row_id_column = NULL;
+    /* initialize the table and spatial column names */
+    sde->table = NULL;
+    sde->column = NULL;
+    sde->row_id_column = NULL;
   
-  /* request a connection and stream from the pool */
-  poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
+    /* request a connection and stream from the pool */
+    poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
   
-  /* If we weren't returned a connection and stream, initialize new ones */
-  if (!poolinfo) {
-    char *conn_decrypted;
-
-    if (layer->debug) 
-      msDebug("msSDELayerOpen(): "
-              "Layer %s opened from scratch.\n", layer->name);
-
-
-    poolinfo = malloc(sizeof *poolinfo);
+    /* If we weren't returned a connection and stream, initialize new ones */
     if (!poolinfo) {
-      return MS_FAILURE;
-    } 		
+        char *conn_decrypted;
 
-    /* Decrypt any encrypted token in the connection string */
-    conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
-    if (conn_decrypted == NULL) {
-        return(MS_FAILURE);  /* An error should already have been produced */
-    }
-    /* Split the connection parameters and make sure we have enough of them */
-    params = split(conn_decrypted, ',', &numparams);
-    if(!params) {
-      msSetError( MS_MEMERR, 
-                  "Error spliting SDE connection information.", 
-                  "msSDELayerOpen()");
-      msFree(conn_decrypted);
-      return(MS_FAILURE);
-    }
-    msFree(conn_decrypted);
-    conn_decrypted = NULL;
+        if (layer->debug) 
+            msDebug("msSDELayerOpen(): "
+                    "Layer %s opened from scratch.\n", layer->name);
 
-    if(numparams < 5) {
-      msSetError( MS_SDEERR, 
-                  "Not enough SDE connection parameters specified.", 
-                  "msSDELayerOpen()");
-      return(MS_FAILURE);
-    }
+
+        poolinfo = (msSDEConnPoolInfo *)malloc(sizeof *poolinfo);
+        if (!poolinfo) {
+            return MS_FAILURE;
+        } 		
+
+        /* Decrypt any encrypted token in the connection string */
+        conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
+        if (conn_decrypted == NULL) {
+            return(MS_FAILURE);  /* An error should already have been produced */
+        }
+        /* Split the connection parameters and make sure we have enough of them */
+        params = split(conn_decrypted, ',', &numparams);
+        if(!params) {
+            msSetError( MS_MEMERR, 
+                        "Error spliting SDE connection information.", 
+                    "msSDELayerOpen()");
+            msFree(conn_decrypted);
+            return(MS_FAILURE);
+        }
+        msFree(conn_decrypted);
+        conn_decrypted = NULL;
+
+        if(numparams < 5) {
+            msSetError( MS_SDEERR, 
+                        "Not enough SDE connection parameters specified.", 
+                        "msSDELayerOpen()");
+            return(MS_FAILURE);
+        }
   
-    /* Create the connection handle and put into poolinfo->connection */
-    status = SE_connection_create(params[0], 
-                                  params[1], 
-                                  params[2], 
-                                  params[3], 
-                                  params[4], 
-                                  &error, 
-                                  &(poolinfo->connection));
+        /* Create the connection handle and put into poolinfo->connection */
+        status = SE_connection_create(params[0], 
+                                      params[1], 
+                                      params[2], 
+                                      params[3], 
+                                      params[4], 
+                                      &error, 
+                                      &(poolinfo->connection));
 
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
-      return(MS_FAILURE);
-    }
+        if(status != SE_SUCCESS) {
+            sde_error(  status, 
+                        "msSDELayerOpen()", 
+                        "SE_connection_create()");
+        return(MS_FAILURE);
+        }
 
-    /* ------------------------------------------------------------------------- */
-    /* Set the concurrency type for the connection.  SE_UNPROTECTED_POLICY is    */
-    /* suitable when only one thread accesses the specified connection.          */
-    /* ------------------------------------------------------------------------- */
-    status = SE_connection_set_concurrency( poolinfo->connection, 
-                                            SE_UNPROTECTED_POLICY);
+        /* ------------------------------------------------------------------------- */
+        /* Set the concurrency type for the connection.  SE_UNPROTECTED_POLICY is    */
+        /* suitable when only one thread accesses the specified connection.          */
+        /* ------------------------------------------------------------------------- */
+        status = SE_connection_set_concurrency( poolinfo->connection, 
+                                                SE_UNPROTECTED_POLICY);
 
   
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerOpen()", "SE_connection_set_concurrency()");
-      return(MS_FAILURE);
-    }
+        if(status != SE_SUCCESS) {
+            sde_error(  status, 
+                        "msSDELayerOpen()", 
+                        "SE_connection_set_concurrency()");
+            return(MS_FAILURE);
+        }
     
 
-    status = SE_stream_create(poolinfo->connection, &(poolinfo->stream));
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerOpen()", "SE_stream_create()");
-    return(MS_FAILURE);
-    }
+        status = SE_stream_create(poolinfo->connection, &(poolinfo->stream));
+        if(status != SE_SUCCESS) {
+            sde_error(  status, 
+                        "msSDELayerOpen()", 
+                        "SE_stream_create()");
+            return(MS_FAILURE);
+        }
 
-    /* Register the connection with the connection pooling API.  Give  */
-    /* msSDECloseConnection as the function to call when we run out of layer  */
-    /* instances using it */
-    msConnPoolRegister(layer, poolinfo, msSDECloseConnection);
-    msFreeCharArray(params, numparams); /* done with parameter list */
-  } // !poolinfo
+        /* Register the connection with the connection pooling API.  Give  */
+        /* msSDECloseConnection as the function to call when we run out of layer  */
+        /* instances using it */
+        msConnPoolRegister(layer, poolinfo, msSDECloseConnection);
+        msFreeCharArray(params, numparams); /* done with parameter list */
+    } // !poolinfo
 
     /* Split the DATA member into its parameters using the comma */
     /* Periods (.) are used to denote table names and schemas in SDE,  */
@@ -1125,7 +1135,7 @@ int  msSDELayerClose(layerObj *layer) {
     if (layer->layerinfo) free(layer->layerinfo);
     layer->layerinfo = NULL;
     return MS_SUCCESS;
-
+ 
 #else
     msSetError( MS_MISCERR, 
               "SDE support is not available.", 
