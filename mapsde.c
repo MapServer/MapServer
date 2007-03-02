@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.124  2007/03/02 02:00:39  hobu
+ * free the wide character array when we're done with it
+ *
  * Revision 1.123  2007/03/02 01:58:50  hobu
  * handle SE_NSTRING_TYPE columns for SDK's that have it defined.
  * We just turn the wide string into a narrow one, but it's hard to do much
@@ -750,7 +753,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 wcstombs(   shape->values[i], 
                             wide,
                             strlen(shape->values[i])); 
-
+                free(wide);
                 if(status == SE_NULL_VALUE)
                     shape->values[i][0] = '\0'; /* empty string */
                 else if(status != SE_SUCCESS) {
