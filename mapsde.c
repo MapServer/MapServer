@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.127  2007/03/02 03:55:42  hobu
+ * ensure that we use msFree instead of regular free
+ *
  * Revision 1.126  2007/03/02 03:40:02  hobu
  * merge msSDELayerGetItems into msSDELayerCreateItems.
  * The GetItems method just calls CreateItems now, which returns
@@ -178,7 +181,7 @@ static void msSDECloseConnection( void *conn_handle )
                 SE_connection_free(poolinfo->connection);
             }
         }
-        free(poolinfo);
+        msFree(poolinfo);
     } 
 
 }
@@ -313,7 +316,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         return (strdup(column_name)); 
     }
     else {
-        free(column_name);
+        msFree(column_name);
         return(strdup(MS_SDE_ROW_ID_COLUMN));
     }
 
@@ -585,12 +588,12 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
         }
     
         msAddLine(outshp, &line);
-        free(line.point);
+        msFree(line.point);
     }
 
-    free(part_offsets);
-    free(subpart_offsets);
-    free(points);
+    msFree(part_offsets);
+    msFree(subpart_offsets);
+    msFree(points);
 
     /* finally copy the bounding box for the entire shape */
     status = SE_shape_get_extent(inshp, 0, &envelope);
@@ -639,7 +642,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                     "sdeGetRecord()");
         return MS_FAILURE;
     }
-
 
     sde = layer->layerinfo;
 
@@ -766,7 +768,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 wcstombs(   shape->values[i], 
                             wide,
                             strlen(shape->values[i])); 
-                free(wide);
+                msFree(wide);
                 if(status == SE_NULL_VALUE)
                     shape->values[i][0] = '\0'; /* empty string */
                 else if(status != SE_SUCCESS) {
@@ -879,8 +881,6 @@ int msSDELayerOpen(layerObj *layer) {
     
     msSDELayerInfo *sde;
     msSDEConnPoolInfo *poolinfo;
-
-
 
     /* allocate space for SDE structures */
     sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
@@ -1006,7 +1006,6 @@ int msSDELayerOpen(layerObj *layer) {
 
     sde->table = strdup(data_params[0]); 
     sde->column = strdup(data_params[1]);
-
 
     if (numparams < 3){ 
         /* User didn't specify a version, we won't use one */
@@ -1175,14 +1174,14 @@ int  msSDELayerClose(layerObj *layer) {
     
     if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
     if (sde->coordref) SE_coordref_free(sde->coordref);
-    if (sde->table) free(sde->table);
-    if (sde->column) free(sde->column);
-    if (sde->row_id_column) free(sde->row_id_column);
+    if (sde->table) msFree(sde->table);
+    if (sde->column) msFree(sde->column);
+    if (sde->row_id_column) msFree(sde->row_id_column);
     
     msConnPoolRelease( layer, sde->connPoolInfo );  
     sde->connection = NULL;
     sde->connPoolInfo = NULL;
-    if (layer->layerinfo) free(layer->layerinfo);
+    if (layer->layerinfo) msFree(layer->layerinfo);
     layer->layerinfo = NULL;
     return MS_SUCCESS;
  
