@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.126  2007/03/02 03:40:02  hobu
+ * merge msSDELayerGetItems into msSDELayerCreateItems.
+ * The GetItems method just calls CreateItems now, which returns
+ * right away if we have already been initialized.  This completes
+ * the merger of three similar yet different methods into one.
+ *
  * Revision 1.125  2007/03/02 03:18:59  hobu
  * merge msSDELayerInitItemInfo into msSDELayerCreateItems.
  * The InitInfo method just calls CreateItems now, which returns
@@ -242,7 +248,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         return NULL;
     }
   
-    column_name = (char*) malloc(SE_MAX_COLUMN_LEN+1);
+    column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
     column_name[0]='\0';
 
     // if the state_id is the SE_DEFAULT_STATE_ID, we are 
@@ -1494,87 +1500,6 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerGetItems                                                   */
-/* -------------------------------------------------------------------- */
-/*     Queries the SDE table's column names into layer->iteminfo        */
-/* -------------------------------------------------------------------- */
-int msSDELayerGetItems(layerObj *layer) {
-#ifdef USE_SDE
-    int i,j;
-    short n;
-    long status;
-    
-    SE_COLUMN_DEF *itemdefs;
-    
-    msSDELayerInfo *sde=NULL;
-  
-    if(!msSDELayerIsOpen(layer)) {
-        msSetError( MS_SDEERR, 
-                    "SDE layer has not been opened.", 
-                    "msSDELayerGetItems()");
-        return(MS_FAILURE);
-    }
-
-    sde = layer->layerinfo;
-    
-    if (!sde->row_id_column) {
-        sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN+1);
-    }
-    sde->row_id_column = msSDELayerGetRowIDColumn(layer);
-
-    status = SE_table_describe(sde->connection, sde->table, &n, &itemdefs);
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerGetItems()", 
-                    "SE_table_describe()");
-        return(MS_FAILURE);
-    }
-
-    layer->numitems = n;
-
-    layer->items = (char **)malloc(layer->numitems*sizeof(char *));
-    if(!layer->items) {
-        msSetError( MS_MEMERR, 
-                    "Error allocating layer items array.", 
-                    "msSDELayerGetItems()");
-        return(MS_FAILURE);
-    }
-
-    for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);
-
-    if (!layer->iteminfo){
-        layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
-        if(!layer->iteminfo) {
-            msSetError( MS_MEMERR, 
-                        "Error allocating SDE item information.", 
-                        "msSDELayerGetItems()");
-            return(MS_FAILURE);
-        }
-    }
-
-    for(i=0; i<layer->numitems; i++) { /* requested columns */
-
-        for(j=0; j<n; j++) { /* all columns */
-            if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { 
-                /* found it */
-                ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = itemdefs[j];
-                break;
-            }
-        }
-    }
-  
-    SE_table_free_descriptions(itemdefs);
-
-    return(MS_SUCCESS);
-#else
-    msSetError( MS_MISCERR, 
-                "SDE support is not available.", 
-                "msSDELayerGetItems()");
-    return(MS_FAILURE);
-#endif
-}
-
-/* -------------------------------------------------------------------- */
 /* msSDELayerGetExtent                                                  */
 /* -------------------------------------------------------------------- */
 /*     Returns the extent of the SDE layer                              */
@@ -1636,7 +1561,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
                     "SDE layer has not been opened.", 
                     "msSDELayerGetShape()");
         return(MS_FAILURE);
-  }
+    }
 
     sde = layer->layerinfo;
 
@@ -1647,8 +1572,6 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
                     "msSDELayerGetShape()");
         return(MS_FAILURE);
     }
-
-
 
     /* reset the stream */
     status = SE_stream_close(sde->stream, 1);
@@ -1699,6 +1622,8 @@ int msSDELayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record
 /* -------------------------------------------------------------------- */
 /*     A helper function to return the spatial column for               */ 
 /*     an opened SDE layer                                              */
+/*                                                                      */
+/*     The caller owns the string after it is returned.                 */
 /* -------------------------------------------------------------------- */
 char *msSDELayerGetSpatialColumn(layerObj *layer)
 {
@@ -1771,6 +1696,7 @@ msSDELayerCreateItems(layerObj *layer,
     sde = layer->layerinfo;
     
     if (!(sde->row_id_column)) {
+        
         sde->row_id_column = msSDELayerGetRowIDColumn(layer);   
     } else {
         // Don't think this should happen.  If it does, it'd be good to know why.
@@ -1884,6 +1810,30 @@ int msSDELayerInitItemInfo(layerObj *layer)
     }   
     return (MS_SUCCESS);
 
+}
+
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetItems                                                   */
+/* -------------------------------------------------------------------- */
+/*     Queries the SDE table's column names into layer->iteminfo        */
+/* -------------------------------------------------------------------- */
+int msSDELayerGetItems(layerObj *layer) {
+#ifdef USE_SDE
+    int status = msSDELayerCreateItems(layer, 0);
+    if (status != MS_SUCCESS) {
+        msSetError( MS_MISCERR,  
+                    "Unable to create SDE column info", 
+                    "msSDELayerGetItems()");
+        return(MS_FAILURE);     
+    }    
+    return (MS_SUCCESS);
+
+#else
+    msSetError( MS_MISCERR, 
+                "SDE support is not available.", 
+                "msSDELayerGetItems()");
+    return(MS_FAILURE);
+#endif
 }
 
 /* -------------------------------------------------------------------- */
