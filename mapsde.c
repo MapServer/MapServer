@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.132  2007/03/02 20:26:54  hobu
+ * carry the join_table around on the layerinfo rather than
+ * grabbing it from the PROCESSING key everywhere.
+ *
  * Revision 1.131  2007/03/02 19:31:30  hobu
  * new helper function called getSDEQueryInfo to get
  * the SE_QUERYINFO object from SDE.
@@ -147,7 +151,10 @@ typedef struct {
   SE_COORDREF coordref;
   SE_STREAM stream;
   long state_id;
-  char *table, *column, *row_id_column;
+  char *table;
+  char *column;
+  char *row_id_column;
+  char *join_table;
   rectObj* extent;
 } msSDELayerInfo;
 
@@ -972,6 +979,8 @@ int msSDELayerOpen(layerObj *layer) {
     long status=-1;
     char **params=NULL;
     char **data_params=NULL;
+    char *join_table=NULL;
+    
     int numparams=0;
     SE_ERROR error;
     SE_STATEINFO state;
@@ -997,6 +1006,7 @@ int msSDELayerOpen(layerObj *layer) {
     sde->table = NULL;
     sde->column = NULL;
     sde->row_id_column = NULL;
+    sde->join_table = NULL;
 
     sde->extent = (rectObj *) malloc(sizeof(rectObj));
     if(!sde->extent) {
@@ -1114,6 +1124,10 @@ int msSDELayerOpen(layerObj *layer) {
 
     sde->table = strdup(data_params[0]); 
     sde->column = strdup(data_params[1]);
+    
+    join_table = msLayerGetProcessingKey(layer,"JOINTABLE");
+    if (join_table) 
+        sde->join_table = strdup(join_table);
 
     if (numparams < 3){ 
         /* User didn't specify a version, we won't use one */
@@ -1717,8 +1731,6 @@ msSDELayerCreateItems(layerObj *layer,
     int i,j;
     short nBaseColumns, nJoinColumns;
     long status;
-    
-    char* join_table=NULL;
 
     SE_COLUMN_DEF *base_itemdefs = NULL;
     SE_COLUMN_DEF *join_itemdefs = NULL;
@@ -1766,16 +1778,17 @@ msSDELayerCreateItems(layerObj *layer,
         return(MS_FAILURE);
     }
     
-    join_table = msLayerGetProcessingKey(layer,"JOINTABLE");
-    if (join_table) {
+    if (layer->debug)
+        msDebug("Join table was specified, %s, getting column info...\n", sde->join_table);
+    if (sde->join_table) {
         status = SE_table_describe( sde->connection, 
-                                    join_table, 
+                                    sde->join_table, 
                                     &nJoinColumns,  
                                     &join_itemdefs);
         if(status != SE_SUCCESS) {
             sde_error(  status, 
                         "msSDELayerCreateItems()", 
-                        "SE_table_describe() (join table)");
+                        "SE_table_describe() (join table).  Did you specify the name of the join table properly?");
             return(MS_FAILURE);
         }     
     }
