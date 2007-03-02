@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.133  2007/03/02 22:07:07  hobu
+ * use sqlconstruct for the case where we have joins and
+ * queryinfo otherwise.
+ *
  * Revision 1.132  2007/03/02 20:26:54  hobu
  * carry the join_table around on the layerinfo rather than
  * grabbing it from the PROCESSING key everywhere.
@@ -955,6 +959,44 @@ static SE_QUERYINFO getSDEQueryInfo(layerObj *layer)
     
     return query_info;
 }
+
+static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer) 
+{
+    SE_SQL_CONSTRUCT* sql;
+    long status;
+    
+    msSDELayerInfo *sde=NULL;
+    
+    if(!msSDELayerIsOpen(layer)) {
+        msSetError( MS_SDEERR, 
+                    "SDE layer has not been opened.", 
+                    "getSDESQLConstructInfo()");
+        return(NULL);
+    }
+    
+    sde = layer->layerinfo;
+    
+    if (!sde->join_table) {
+        msSetError( MS_SDEERR, 
+                    "Join table is null, we should be using QueryInfo.", 
+                    "getSDESQLConstructInfo()");
+        return(NULL);
+    }
+    
+    status = SE_sql_construct_alloc( 2, &sql);
+    if(status != SE_SUCCESS) {
+        sde_error(  status, 
+                    "getSDESQLConstructInfo()", 
+                    "SE_sql_construct_alloc()");
+        return(NULL);       
+    }
+
+    strcpy(sql->tables[0], strdup(sde->table)); // main table
+    strcpy(sql->tables[1], strdup(sde->join_table)); // join table    
+    sql->where = strdup(layer->filter.string);
+    msDebug("WHERE statement: %s\n", sql->where);
+    return sql;
+} 
 #endif
 
 /************************************************************************/
@@ -1070,7 +1112,7 @@ int msSDELayerOpen(layerObj *layer) {
             sde_error(  status, 
                         "msSDELayerOpen()", 
                         "SE_connection_create()");
-        return(MS_FAILURE);
+            return(MS_FAILURE);
         }
 
         /* ------------------------------------------------------------------------- */
@@ -1377,6 +1419,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     SE_SHAPE shape=0;
     SE_FILTER constraint;
     SE_QUERYINFO query_info = NULL;
+    SE_SQL_CONSTRUCT* sql = NULL;
     char* proc_value=NULL;
     int query_order=SE_SPATIAL_FIRST;
 
@@ -1442,13 +1485,24 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     constraint.filter_type = SE_SHAPE_FILTER;
     constraint.truth = TRUE;
   
-    query_info = getSDEQueryInfo(layer);
-    if (!query_info) {
-        sde_error(  status, 
-                    "msSDELayerWhichShapes()", 
-                    "getSDEQueryInfo()");
-        return(MS_FAILURE);
-    }
+    if (!sde->join_table) {
+        query_info = getSDEQueryInfo(layer);
+        if (!query_info) {
+            sde_error(  status, 
+                        "msSDELayerWhichShapes()", 
+                        "getSDEQueryInfo()");
+            return(MS_FAILURE);
+        }
+    } else {
+        if (!layer->filter.string) {
+            sde_error(  -51, 
+                        "msSDELayerWhichShapes()", 
+                        "A join table is specified, but no FILTER is"
+                        " defined that joins the two tables together");
+            return(MS_FAILURE);
+        }
+        sql = getSDESQLConstructInfo(layer);
+    }    
         
     /* reset the stream */
     status = SE_stream_close(sde->stream, 1);
@@ -1476,14 +1530,23 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
         }  
     } 
 
-    status = SE_stream_query_with_info(sde->stream, query_info);
-    if(status != SE_SUCCESS) {
-        sde_error(status, 
-                  "msSDELayerWhichShapes()", 
-                  "SE_stream_query_with_info()");
-        return(MS_FAILURE);
-    }
-  
+    if (!sql) {
+        status = SE_stream_query_with_info(sde->stream, query_info);
+        if(status != SE_SUCCESS) {
+            sde_error(status, 
+                      "msSDELayerWhichShapes()", 
+                      "SE_stream_query_with_info()");
+            return(MS_FAILURE);
+        }
+    } else {
+        status = SE_stream_query(sde->stream, layer->numitems, layer->items, sql);
+        if(status != SE_SUCCESS) {
+            sde_error(status, 
+                      "msSDELayerWhichShapes()", 
+                      "SE_stream_query()");
+            return(MS_FAILURE);
+        }
+    }  
     proc_value = msLayerGetProcessingKey(layer,"QUERYORDER");
     if(proc_value && strcasecmp(proc_value, "ATTRIBUTE") == 0)
         query_order = SE_ATTRIBUTE_FIRST;
@@ -1742,8 +1805,9 @@ msSDELayerCreateItems(layerObj *layer,
 
     // Hop right out again if we've already gotten the layer->iteminfo
     if (layer->iteminfo) {
-        msDebug("Column information has already been gotten..." 
-                " returning from msSDELayerCreateItems\n");
+        if (layer->debug)
+            msDebug("Column information has already been gotten..." 
+                    " returning from msSDELayerCreateItems\n");
         return (MS_SUCCESS);  
     }
     if (layer->debug)
@@ -1777,9 +1841,7 @@ msSDELayerCreateItems(layerObj *layer,
                     "SE_table_describe() (base table)");
         return(MS_FAILURE);
     }
-    
-    if (layer->debug)
-        msDebug("Join table was specified, %s, getting column info...\n", sde->join_table);
+        
     if (sde->join_table) {
         status = SE_table_describe( sde->connection, 
                                     sde->join_table, 
