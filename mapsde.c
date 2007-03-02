@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.130  2007/03/02 16:48:37  hobu
+ * use the cached layer extent in msSDEWhichShapes rather than
+ * asking SDE for it.
+ *
  * Revision 1.129  2007/03/02 16:13:15  hobu
  * cache the layer extent in the open and have msSDELayerGetExtent
  * use that instead of requesting multiple times.
@@ -1291,35 +1295,20 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
     sde = layer->layerinfo;
 
-    status = SE_shape_create(sde->coordref, &shape);
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerWhichShapes()", 
-                    "SE_shape_create()");
-        return(MS_FAILURE);
-    }
-
-    status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerWhichShapes()", 
-                    "SE_layerinfo_get_envelope()");
-        return(MS_FAILURE);
-    }
-  
+    // use the cached layer's extent.
     /* there is NO overlap, return MS_DONE */
     /* (FIX: use this in ALL which shapes functions) */
-    if(envelope.minx > rect.maxx) return(MS_DONE); 
-    if(envelope.maxx < rect.minx) return(MS_DONE);
-    if(envelope.miny > rect.maxy) return(MS_DONE);
-    if(envelope.maxy < rect.miny) return(MS_DONE);
+    if(sde->extent->minx > rect.maxx) return(MS_DONE); 
+    if(sde->extent->maxx < rect.minx) return(MS_DONE);
+    if(sde->extent->miny > rect.maxy) return(MS_DONE);
+    if(sde->extent->maxy < rect.miny) return(MS_DONE);
 
     /* set spatial constraint search shape */
     /* crop against SDE layer extent *argh* */
-    envelope.minx = MS_MAX(rect.minx, envelope.minx); 
-    envelope.miny = MS_MAX(rect.miny, envelope.miny);
-    envelope.maxx = MS_MIN(rect.maxx, envelope.maxx);
-    envelope.maxy = MS_MIN(rect.maxy, envelope.maxy);
+    envelope.minx = MS_MAX(rect.minx, sde->extent->minx); 
+    envelope.miny = MS_MAX(rect.miny, sde->extent->miny);
+    envelope.maxx = MS_MIN(rect.maxx, sde->extent->maxx);
+    envelope.maxy = MS_MIN(rect.maxy, sde->extent->maxy);
   
     if( envelope.minx == envelope.maxx && envelope.miny == envelope.maxy){
         /* fudge a rectangle so we have a valid one for generate_rectangle */
@@ -1331,6 +1320,14 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
         envelope.maxy = envelope.maxy + 0.001;
     }
 
+    status = SE_shape_create(sde->coordref, &shape);
+    if(status != SE_SUCCESS) {
+        sde_error(  status, 
+                    "msSDELayerWhichShapes()", 
+                    "SE_shape_create()");
+        return(MS_FAILURE);
+    }
+    
     status = SE_shape_generate_rectangle(&envelope, shape);
     if(status != SE_SUCCESS) {
         sde_error(  status, 
