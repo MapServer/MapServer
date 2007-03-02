@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.134  2007/03/02 22:55:08  hobu
+ * preliminary join table support.  have a heap corruption
+ * issue yet to deal with.
+ *
  * Revision 1.133  2007/03/02 22:07:07  hobu
  * use sqlconstruct for the case where we have joins and
  * queryinfo otherwise.
@@ -709,6 +713,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             continue;
         }    
     
+    if (layer->debug)
+        msDebug("SDE column data type is: %d", itemdefs[i].sde_type);
     switch(itemdefs[i].sde_type) {
         case SE_SMALLINT_TYPE:
             /* changed by gdv */
@@ -1861,23 +1867,7 @@ msSDELayerCreateItems(layerObj *layer,
     all_itemdefs = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
     for(i=0;i<nBaseColumns;i++) all_itemdefs[i] = base_itemdefs[i];
     for(i=0;i<nJoinColumns;i++) all_itemdefs[i+nBaseColumns]=join_itemdefs[i];    
-    
-    // gather up all of the column names and put them onto layer->items
-    layer->items = (char **)malloc(layer->numitems*sizeof(char *));
-    if(!layer->items) {
-        msSetError( MS_MEMERR, 
-                    "Error allocating layer items array.",  
-                    "msSDELayerCreateItems()");
-        return(MS_FAILURE);
-    }
-    for(i=0; i<layer->numitems; i++) layer->items[i] = strdup(all_itemdefs[i].column_name);
-    
-    // Tell the user which columns we've gotten
-    if (layer->debug)
-        for(i=0; i<layer->numitems; i++) msDebug("msSDECreateItems(): getting info for %s\n", layer->items[i]);
 
-    // gather up all of the SDE column definitions and put them 
-    // onto layer->iteminfo
     if (!layer->iteminfo){
         layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
         if(!layer->iteminfo) {
@@ -1891,16 +1881,63 @@ msSDELayerCreateItems(layerObj *layer,
         if (layer->debug)
             msDebug ("layer->iteminfo has already been initialized... msSDELayerCreateItems()\n");
     }
-    
-    for(i=0; i<layer->numitems; i++) { /* requested columns */
-        for(j=0; j<layer->numitems; j++) { /* all columns */
-            if(strcasecmp(layer->items[i], all_itemdefs[j].column_name) == 0) {
-                /* found it */
-                ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[j];
-                break;
+        
+    // gather up all of the column names and put them onto layer->items
+    layer->items = (char **)malloc(layer->numitems*sizeof(char *));
+    if(!layer->items) {
+        msSetError( MS_MEMERR, 
+                    "Error allocating layer items array.",  
+                    "msSDELayerCreateItems()");
+        return(MS_FAILURE);
+    }
+    if (!sde->join_table) {
+        for(i=0; i<layer->numitems; i++) layer->items[i] = strdup(all_itemdefs[i].column_name);
+        for(i=0; i<layer->numitems; i++) { /* requested columns */
+            for(j=0; j<layer->numitems; j++) { /* all columns */
+                if(strcasecmp(layer->items[i], all_itemdefs[j].column_name) == 0) {
+                    /* found it */
+                    ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[j];
+                    break;
+                }
             }
         }
     }
+    else {
+        for(i=0;i<nBaseColumns;i++) {
+            layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
+            layer->items[i][0] = '\0';
+            strcat(layer->items[i], sde->table);
+            strcat(layer->items[i], ".");
+            strcat(layer->items[i], all_itemdefs[i].column_name);
+            ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[i];
+
+        }
+        for(i=nBaseColumns;i<layer->numitems;i++) {
+            layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
+            layer->items[i][0] = '\0';
+
+            strcat(layer->items[i], sde->join_table);
+            strcat(layer->items[i], ".");
+            strcat(layer->items[i], all_itemdefs[i].column_name);
+            ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[i];
+  
+        }    
+    }
+    // Tell the user which columns we've gotten
+    if (layer->debug)
+        for(i=0; i<layer->numitems; i++) msDebug("msSDECreateItems(): getting info for %s\n", layer->items[i]);
+
+
+    
+//    for(i=0; i<layer->numitems; i++) { /* requested columns */
+//        for(j=0; j<layer->numitems; j++) { /* all columns */
+//            if(strcasecmp(layer->items[i], all_itemdefs[j].column_name) == 0) {
+//                /* found it */
+//                ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[j];
+//                break;
+//            }
+//        }
+//    }
 
     // Clean up
     if (all_itemdefs)
