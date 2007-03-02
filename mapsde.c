@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.129  2007/03/02 16:13:15  hobu
+ * cache the layer extent in the open and have msSDELayerGetExtent
+ * use that instead of requesting multiple times.
+ *
  * Revision 1.128  2007/03/02 15:41:04  hobu
  * get msSDELayerOpen in the right spot
  *
@@ -136,6 +140,7 @@ typedef struct {
   SE_STREAM stream;
   long state_id;
   char *table, *column, *row_id_column;
+  rectObj* extent;
 } msSDELayerInfo;
 
 typedef struct {
@@ -886,6 +891,8 @@ int msSDELayerOpen(layerObj *layer) {
     SE_STATEINFO state;
     SE_VERSIONINFO version;
     
+    SE_ENVELOPE envelope;
+
     msSDELayerInfo *sde;
     msSDEConnPoolInfo *poolinfo;
 
@@ -904,6 +911,14 @@ int msSDELayerOpen(layerObj *layer) {
     sde->table = NULL;
     sde->column = NULL;
     sde->row_id_column = NULL;
+
+    sde->extent = (rectObj *) malloc(sizeof(rectObj));
+    if(!sde->extent) {
+        msSetError( MS_MEMERR, 
+                    "Error allocating extent for SDE layer", 
+                    "msSDELayerOpen()");
+        return(MS_FAILURE);
+    }
   
     /* request a connection and stream from the pool */
     poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
@@ -1131,6 +1146,19 @@ int msSDELayerOpen(layerObj *layer) {
         return(MS_FAILURE);
     }
 
+    // Get the layer extent and hang it on the layerinfo
+    status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
+    if(status != SE_SUCCESS) {
+        sde_error(status, 
+                "msSDELayerOpen()", 
+                "SE_layerinfo_get_envelope()");
+        return(MS_FAILURE);
+    }
+  
+    sde->extent->minx = envelope.minx;
+    sde->extent->miny = envelope.miny;
+    sde->extent->maxx = envelope.maxx;
+    sde->extent->maxy = envelope.maxy;
 
     /* reset the stream */
     status = SE_stream_close(poolinfo->stream, 1);
@@ -1512,12 +1540,9 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 /* -------------------------------------------------------------------- */
 int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 #ifdef USE_SDE
-    long status;
-    
-    SE_ENVELOPE envelope;
-    
-    msSDELayerInfo *sde=NULL;
-  
+
+    msSDELayerInfo *sde = NULL;
+
     if(!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR, 
                     "SDE layer has not been opened.", 
@@ -1526,19 +1551,13 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
     }
 
     sde = layer->layerinfo;
-
-    status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
-    if(status != SE_SUCCESS) {
-        sde_error(status, 
-                "msSDELayerGetExtent()", 
-                "SE_layerinfo_get_envelope()");
-        return(MS_FAILURE);
-    }
-  
-    extent->minx = envelope.minx;
-    extent->miny = envelope.miny;
-    extent->maxx = envelope.maxx;
-    extent->maxy = envelope.maxy;
+    
+    // copy our cached extent members into the 
+    // caller's extent
+    extent->minx = sde->extent->minx;
+    extent->miny = sde->extent->miny;
+    extent->maxx = sde->extent->maxx;
+    extent->maxy = sde->extent->maxy;
 
     return(MS_SUCCESS);
 #else
