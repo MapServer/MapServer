@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.123  2007/03/02 01:58:50  hobu
+ * handle SE_NSTRING_TYPE columns for SDK's that have it defined.
+ * We just turn the wide string into a narrow one, but it's hard to do much
+ * more until MapServer is more equipped to deal with these issues.
+ *
  * Revision 1.122  2007/03/01 03:14:13  hobu
  * whitespace normalization
  *
@@ -607,7 +612,11 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     SE_BLOB_INFO blobval;
     /* blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO)); */
     msSDELayerInfo *sde;
-    
+
+#ifdef SE_NSTRING_TYPE
+    SE_WCHAR* wide;
+#endif
+
     if(!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR, 
                     "SDE layer has not been opened.", 
@@ -727,6 +736,31 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 return(MS_FAILURE);
             }
             break;
+#ifdef SE_NSTRING_TYPE
+            case SE_NSTRING_TYPE:
+                shape->values[i] = (char *)malloc(itemdefs[i].size*sizeof(char)+1);
+                wide = (SE_WCHAR *)malloc(itemdefs[i].size*sizeof(SE_WCHAR)+1);
+                status = SE_stream_get_nstring( sde->stream, 
+                                                (short) (i+1), 
+                                                wide);
+
+                // hammer the wide character to narrow
+                // FIXME: do the right thing when MapServer becomes more 
+                // unicode aware.
+                wcstombs(   shape->values[i], 
+                            wide,
+                            strlen(shape->values[i])); 
+
+                if(status == SE_NULL_VALUE)
+                    shape->values[i][0] = '\0'; /* empty string */
+                else if(status != SE_SUCCESS) {
+                    sde_error(  status, 
+                                "sdeGetRecord()", 
+                                "SE_stream_get_string()");
+                    return(MS_FAILURE);
+                }
+                break;
+#endif
         case SE_BLOB_TYPE:
             status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
             if(status == SE_SUCCESS) {
