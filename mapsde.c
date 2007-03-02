@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.131  2007/03/02 19:31:30  hobu
+ * new helper function called getSDEQueryInfo to get
+ * the SE_QUERYINFO object from SDE.
+ *
  * Revision 1.130  2007/03/02 16:48:37  hobu
  * use the cached layer extent in msSDEWhichShapes rather than
  * asking SDE for it.
@@ -866,6 +870,84 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   
     return(MS_SUCCESS);
 }
+
+static SE_QUERYINFO getSDEQueryInfo(layerObj *layer) 
+{
+    SE_QUERYINFO query_info;
+    long status;
+    
+    msSDELayerInfo *sde=NULL;
+    
+    if(!msSDELayerIsOpen(layer)) {
+        msSetError( MS_SDEERR, 
+                    "SDE layer has not been opened.", 
+                    "getSDEQueryInfo()");
+        return(NULL);
+    }
+    
+    sde = layer->layerinfo;
+
+    /* See http://forums.esri.com/Thread.asp?c=2&f=59&t=108929&mc=4#msgid310273 */
+    /* SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier  */
+    /* (and faster) to use.  HCB */
+    status = SE_queryinfo_create (&query_info);
+    if(status != SE_SUCCESS) {
+        sde_error(  status, 
+                    "getSDEQueryInfo()", 
+                    "SE_queryinfo_create()");
+        return(NULL);
+    }
+
+    /* set the tables -- just one at this point */
+    status = SE_queryinfo_set_tables (  query_info, 
+                                        1, 
+                                        (const CHAR **) &(sde->table),
+                                        NULL);
+    if(status != SE_SUCCESS) {
+        sde_error(  status, 
+                    "getSDEQueryInfo()", 
+                    "SE_queryinfo_create()");
+        return(NULL);
+    }
+
+    /* set the "where" clause */
+    if(!(layer->filter.string))
+        /* set to empty string */
+        status = SE_queryinfo_set_where_clause (query_info, 
+                                                (const CHAR * ) "");
+    else
+        /* set to the layer's filter.string */
+        status = SE_queryinfo_set_where_clause (query_info, 
+                                                (const CHAR * ) strdup(layer->filter.string));
+    if(status != SE_SUCCESS) {
+        sde_error(  status, 
+                    "getSDEQueryInfo()", 
+                    "SE_queryinfo_set_where_clause()");
+        return(NULL);
+    }
+
+    status = SE_queryinfo_set_columns(  query_info, 
+                                        layer->numitems, 
+                                        (const char **)layer->items);
+    if(status != SE_SUCCESS) {
+        sde_error(  status, 
+                    "getSDEQueryInfo()", 
+                    "SE_queryinfo_set_columns()");
+        return(NULL);
+    }
+  
+    /* Join the spatial and feature tables.  If we specify the type of join */
+    /* we'll query faster than querying all tables individually (old method) */
+    status = SE_queryinfo_set_query_type (query_info,SE_QUERYTYPE_JSF);
+    if(status != SE_SUCCESS) {
+        sde_error(  status, 
+                    "getSDEQueryInfo()", 
+                    "SE_queryinfo_set_query_type()");
+        return(NULL);
+    }
+    
+    return query_info;
+}
 #endif
 
 /************************************************************************/
@@ -1280,7 +1362,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     SE_ENVELOPE envelope;
     SE_SHAPE shape=0;
     SE_FILTER constraint;
-    SE_QUERYINFO query_info;
+    SE_QUERYINFO query_info = NULL;
     char* proc_value=NULL;
     int query_order=SE_SPATIAL_FIRST;
 
@@ -1345,68 +1427,15 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     constraint.method = SM_ENVP;
     constraint.filter_type = SE_SHAPE_FILTER;
     constraint.truth = TRUE;
-
-    /* See http://forums.esri.com/Thread.asp?c=2&f=59&t=108929&mc=4#msgid310273 */
-    /* SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier  */
-    /* (and faster) to use and will allow us to support joins in the future.  HCB */
-    status = SE_queryinfo_create (&query_info);
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerWhichShapes()", 
-                    "SE_queryinfo_create()");
-        return(MS_FAILURE);
-    }
-
-    /* set the tables -- just one at this point */
-    status = SE_queryinfo_set_tables (  query_info, 
-                                        1, 
-                                        (const CHAR **) &(sde->table),
-                                        NULL);
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerWhichShapes()", 
-                    "SE_queryinfo_create()");
-        return(MS_FAILURE);
-    }
-
-    /* set the "where" clause */
-    if(!(layer->filter.string))
-        /* set to empty string */
-        status = SE_queryinfo_set_where_clause (query_info, 
-                                                (const CHAR * ) "");
-    else
-        /* set to the layer's filter.string */
-        status = SE_queryinfo_set_where_clause (query_info, 
-                                                (const CHAR * ) strdup(layer->filter.string));
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerWhichShapes()", 
-                    "SE_queryinfo_set_where_clause()");
-        return(MS_FAILURE);
-    }
-
-    status = SE_queryinfo_set_columns(  query_info, 
-                                        layer->numitems, 
-                                        (const char **)layer->items);
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerWhichShapes()", 
-                    "SE_queryinfo_set_columns()");
-        return(MS_FAILURE);
-    }
   
-    /* Join the spatial and feature tables.  If we specify the type of join */
-    /* we'll query faster than querying all tables individually (old method) */
-    status = SE_queryinfo_set_query_type (query_info,SE_QUERYTYPE_JSF);
-    if(status != SE_SUCCESS) {
+    query_info = getSDEQueryInfo(layer);
+    if (!query_info) {
         sde_error(  status, 
                     "msSDELayerWhichShapes()", 
-                    "SE_queryinfo_set_query_type()");
+                    "getSDEQueryInfo()");
         return(MS_FAILURE);
     }
-  
-
-
+        
     /* reset the stream */
     status = SE_stream_close(sde->stream, 1);
     if(status != SE_SUCCESS) {
