@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.128  2007/03/02 15:41:04  hobu
+ * get msSDELayerOpen in the right spot
+ *
  * Revision 1.127  2007/03/02 03:55:42  hobu
  * ensure that we use msFree instead of regular free
  *
@@ -150,6 +153,29 @@ static int lcacheCount = 0;
 static int lcacheMax = 0;
 static layerId *lcache = NULL;
 
+#endif
+
+/* -------------------------------------------------------------------- */
+/* msSDELayerIsOpen                                                     */
+/* -------------------------------------------------------------------- */
+/*     Returns MS_TRUE if layer is already opened, MS_FALSE otherwise   */
+/* -------------------------------------------------------------------- */
+int msSDELayerIsOpen(layerObj *layer) {
+#ifdef USE_SDE
+
+    if(layer->layerinfo) 
+        return(MS_TRUE); 
+    
+    return MS_FALSE;
+
+#else
+    msSetError(MS_MISCERR, "SDE support is not available.",
+             "msSDELayerIsOpen()");
+    return(MS_FALSE);
+#endif
+} 
+
+#ifdef USE_SDE
 
 
 /************************************************************************/
@@ -208,25 +234,6 @@ static void sde_error(long error_code, char *routine, char *sde_routine)
   return;
 }
 
-/* -------------------------------------------------------------------- */
-/* msSDELayerIsOpen                                                     */
-/* -------------------------------------------------------------------- */
-/*     Returns MS_TRUE if layer is already opened, MS_FALSE otherwise   */
-/* -------------------------------------------------------------------- */
-int msSDELayerIsOpen(layerObj *layer) {
-#ifdef USE_SDE
-
-    if(layer->layerinfo) 
-        return(MS_TRUE); 
-    
-    return MS_FALSE;
-
-#else
-    msSetError(MS_MISCERR, "SDE support is not available.",
-             "msSDELayerIsOpen()");
-    return(MS_FALSE);
-#endif
-}
 
 /* -------------------------------------------------------------------- */
 /* msSDELayerGetRowIDColumn                                             */
