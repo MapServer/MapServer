@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.135  2007/03/02 23:00:30  hobu
+ * clean up a few warnings
+ *
  * Revision 1.134  2007/03/02 22:55:08  hobu
  * preliminary join table support.  have a heap corruption
  * issue yet to deal with.
@@ -803,7 +806,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 // FIXME: do the right thing when MapServer becomes more 
                 // unicode aware.
                 wcstombs(   shape->values[i], 
-                            wide,
+                            (unsigned short*) wide,
                             strlen(shape->values[i])); 
                 msFree(wide);
                 if(status == SE_NULL_VALUE)
@@ -1545,7 +1548,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
             return(MS_FAILURE);
         }
     } else {
-        status = SE_stream_query(sde->stream, layer->numitems, layer->items, sql);
+        status = SE_stream_query(sde->stream, layer->numitems, (const CHAR**) layer->items, sql);
         if(status != SE_SUCCESS) {
             sde_error(status, 
                       "msSDELayerWhichShapes()", 
