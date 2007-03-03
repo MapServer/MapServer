@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.2
 ---------------------------
 
+- Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString 
+  causing access violation (bug 1950).
+
 - do not double-grab the row_id column in msSDELayerGetItems (bug 2041)
 
 - Apply patch for bug 1990 for OS X Framework builds support for Python
