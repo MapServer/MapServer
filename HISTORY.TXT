@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString 
+   causing access violation (bug 1950).
+ 
  - Fix SDE returning the row_id_column multiple times (bug 2040).
 
  - Fix text outline bug. (bug 2027)
