@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.139  2007/03/04 07:12:11  hobu
+ * one last memory leak
+ *
  * Revision 1.138  2007/03/04 06:40:02  hobu
  * clean up a number of leaks thanks to valgrind
  *
@@ -372,7 +375,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     }
     
     if (column_name) {
-        return (strdup(column_name)); 
+        return (column_name); 
     }
     else {
         msFree(column_name);
@@ -1832,8 +1835,6 @@ msSDELayerCreateItems(layerObj *layer,
     short nBaseColumns, nJoinColumns;
     long status;
 
-    //SE_COLUMN_DEF *base_itemdefs = NULL;
-    //SE_COLUMN_DEF *join_itemdefs = NULL;
     SE_COLUMN_DEF *all_itemdefs = NULL;
 
     msSDELayerInfo *sde = NULL;
