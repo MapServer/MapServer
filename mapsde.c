@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.138  2007/03/04 06:40:02  hobu
+ * clean up a number of leaks thanks to valgrind
+ *
  * Revision 1.137  2007/03/04 06:04:23  hobu
  * carry the base and join column descriptions
  * around on the layerinfo.  We merge them
@@ -330,7 +333,6 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         sde_error(  status, 
                     "msSDELayerGetRowIDColumn()", 
                     "SE_reginfo_create()");
-        SE_reginfo_free(registration);
         return(NULL);
     }
     
@@ -356,7 +358,9 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         SE_reginfo_free(registration);
         return(NULL);
     }
-    
+    // Free up the reginfo now that we're done with it
+    SE_reginfo_free(registration);
+
     // if the table wasn't registered, return the hard-coded row_id column.
     if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
         if(layer->debug) {
@@ -1017,9 +1021,9 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer)
         return(NULL);       
     }
 
-    strcpy(sql->tables[0], strdup(sde->table)); // main table
-    strcpy(sql->tables[1], strdup(sde->join_table)); // join table    
-    sql->where = strdup(layer->filter.string);
+    strcpy(sql->tables[0], sde->table); // main table
+    strcpy(sql->tables[1], sde->join_table); // join table    
+    sql->where = layer->filter.string;
     if (layer->debug) msDebug("WHERE statement: %s\n", sql->where);
     return sql;
 } 
@@ -1196,9 +1200,10 @@ int msSDELayerOpen(layerObj *layer) {
     sde->column = strdup(data_params[1]);
     
     join_table = msLayerGetProcessingKey(layer,"JOINTABLE");
-    if (join_table) 
+    if (join_table) {
         sde->join_table = strdup(join_table);
-
+        //msFree(join_table);
+    }
     if (numparams < 3){ 
         /* User didn't specify a version, we won't use one */
         if (layer->debug) {
@@ -1382,7 +1387,9 @@ int  msSDELayerClose(layerObj *layer) {
     if (sde->table) msFree(sde->table);
     if (sde->column) msFree(sde->column);
     if (sde->row_id_column) msFree(sde->row_id_column);
-    
+    if (sde->join_table) msFree(sde->join_table);
+    if (sde->extent) msFree(sde->extent);
+
     msConnPoolRelease( layer, sde->connPoolInfo );  
     sde->connection = NULL;
     sde->connPoolInfo = NULL;
@@ -1574,6 +1581,8 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
                       "SE_stream_query()");
             return(MS_FAILURE);
         }
+        // Free up the sql now that we've queried
+        SE_sql_construct_free(sql);
     }  
     proc_value = msLayerGetProcessingKey(layer,"QUERYORDER");
     if(proc_value && strcasecmp(proc_value, "ATTRIBUTE") == 0)
@@ -1948,20 +1957,8 @@ msSDELayerCreateItems(layerObj *layer,
     // Tell the user which columns we've gotten
     if (layer->debug)
         for(i=0; i<layer->numitems; i++) msDebug("msSDECreateItems(): getting info for %s\n", layer->items[i]);
-
-
     
-//    for(i=0; i<layer->numitems; i++) { /* requested columns */
-//        for(j=0; j<layer->numitems; j++) { /* all columns */
-//            if(strcasecmp(layer->items[i], all_itemdefs[j].column_name) == 0) {
-//                /* found it */
-//                ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[j];
-//                break;
-//            }
-//        }
-//    }
-
-
+    msFree(all_itemdefs);
     return MS_SUCCESS;
 
 #else
@@ -2034,6 +2031,10 @@ void msSDELayerFreeItemInfo(layerObj *layer)
     if (sde->joindefs) {
         SE_table_free_descriptions(sde->joindefs);
         sde->joindefs = NULL;
+    }
+    if (layer->iteminfo) {
+        msFree(layer->iteminfo);
+        layer->iteminfo = NULL;
     }
 #else
     msSetError( MS_MISCERR, 
