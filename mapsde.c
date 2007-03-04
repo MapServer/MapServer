@@ -27,6 +27,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.136  2007/03/04 05:23:20  hobu
+ * allocate enough space for the wide character array.
+ * The SDE docs don't say how much space to alloc, but it
+ * is clearly larger than the column's specified length.
+ * Double the size of the column's length and call it good
+ * for now.
+ *
  * Revision 1.135  2007/03/02 23:00:30  hobu
  * clean up a few warnings
  *
@@ -671,7 +678,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     msSDELayerInfo *sde;
 
 #ifdef SE_NSTRING_TYPE
-    SE_WCHAR* wide;
+    SE_WCHAR* wide=NULL;
 #endif
 
     if(!msSDELayerIsOpen(layer)) {
@@ -716,8 +723,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             continue;
         }    
     
-    if (layer->debug)
-        msDebug("SDE column data type is: %d", itemdefs[i].sde_type);
     switch(itemdefs[i].sde_type) {
         case SE_SMALLINT_TYPE:
             /* changed by gdv */
@@ -797,7 +802,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 #ifdef SE_NSTRING_TYPE
             case SE_NSTRING_TYPE:
                 shape->values[i] = (char *)malloc(itemdefs[i].size*sizeof(char)+1);
-                wide = (SE_WCHAR *)malloc(itemdefs[i].size*sizeof(SE_WCHAR)+1);
+                memset(shape->values[i], 0, itemdefs[i].size*sizeof(char)+1);
+                wide = (SE_WCHAR *)malloc(itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
+                memset(wide, 0, itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
                 status = SE_stream_get_nstring( sde->stream, 
                                                 (short) (i+1), 
                                                 wide);
@@ -806,8 +813,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 // FIXME: do the right thing when MapServer becomes more 
                 // unicode aware.
                 wcstombs(   shape->values[i], 
-                            (unsigned short*) wide,
-                            strlen(shape->values[i])); 
+                            (const wchar_t*) wide,
+                            (size_t)strlen(shape->values[i])); 
                 msFree(wide);
                 if(status == SE_NULL_VALUE)
                     shape->values[i][0] = '\0'; /* empty string */
@@ -1003,7 +1010,7 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer)
     strcpy(sql->tables[0], strdup(sde->table)); // main table
     strcpy(sql->tables[1], strdup(sde->join_table)); // join table    
     sql->where = strdup(layer->filter.string);
-    msDebug("WHERE statement: %s\n", sql->where);
+    if (layer->debug) msDebug("WHERE statement: %s\n", sql->where);
     return sql;
 } 
 #endif
@@ -1943,12 +1950,12 @@ msSDELayerCreateItems(layerObj *layer,
 //    }
 
     // Clean up
-    if (all_itemdefs)
-        SE_table_free_descriptions(all_itemdefs);
-    if (join_itemdefs)
-        SE_table_free_descriptions(join_itemdefs);
-    if (base_itemdefs)
-        SE_table_free_descriptions(base_itemdefs);
+    //if (all_itemdefs)
+    //    SE_table_free_descriptions(all_itemdefs);
+    //if (join_itemdefs)
+    //    SE_table_free_descriptions(join_itemdefs);
+    //if (base_itemdefs)
+    //    SE_table_free_descriptions(base_itemdefs);
 
     return MS_SUCCESS;
 
