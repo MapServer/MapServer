@@ -27,6 +27,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.137  2007/03/04 06:04:23  hobu
+ * carry the base and join column descriptions
+ * around on the layerinfo.  We merge them
+ * together into one list for the layerinfo->iteminfo,
+ * but we can only free the individual column
+ * description arrays that SDE gives us.
+ *
  * Revision 1.136  2007/03/04 05:23:20  hobu
  * allocate enough space for the wide character array.
  * The SDE docs don't say how much space to alloc, but it
@@ -174,6 +181,9 @@ typedef struct {
   char *row_id_column;
   char *join_table;
   rectObj* extent;
+  SE_COLUMN_DEF *basedefs;
+  SE_COLUMN_DEF *joindefs;
+
 } msSDELayerInfo;
 
 typedef struct {
@@ -1046,7 +1056,7 @@ int msSDELayerOpen(layerObj *layer) {
     
     SE_ENVELOPE envelope;
 
-    msSDELayerInfo *sde;
+    msSDELayerInfo *sde = NULL;
     msSDEConnPoolInfo *poolinfo;
 
     /* allocate space for SDE structures */
@@ -1065,8 +1075,10 @@ int msSDELayerOpen(layerObj *layer) {
     sde->column = NULL;
     sde->row_id_column = NULL;
     sde->join_table = NULL;
-
+    sde->basedefs = NULL;
+    sde->joindefs = NULL;
     sde->extent = (rectObj *) malloc(sizeof(rectObj));
+
     if(!sde->extent) {
         msSetError( MS_MEMERR, 
                     "Error allocating extent for SDE layer", 
@@ -1811,8 +1823,8 @@ msSDELayerCreateItems(layerObj *layer,
     short nBaseColumns, nJoinColumns;
     long status;
 
-    SE_COLUMN_DEF *base_itemdefs = NULL;
-    SE_COLUMN_DEF *join_itemdefs = NULL;
+    //SE_COLUMN_DEF *base_itemdefs = NULL;
+    //SE_COLUMN_DEF *join_itemdefs = NULL;
     SE_COLUMN_DEF *all_itemdefs = NULL;
 
     msSDELayerInfo *sde = NULL;
@@ -1850,7 +1862,7 @@ msSDELayerCreateItems(layerObj *layer,
     status = SE_table_describe( sde->connection, 
                                 sde->table, 
                                 &nBaseColumns,  
-                                &base_itemdefs);
+                                &(sde->basedefs));
     if(status != SE_SUCCESS) {
         sde_error(  status, 
                     "msSDELayerCreateItems()", 
@@ -1862,7 +1874,7 @@ msSDELayerCreateItems(layerObj *layer,
         status = SE_table_describe( sde->connection, 
                                     sde->join_table, 
                                     &nJoinColumns,  
-                                    &join_itemdefs);
+                                    &(sde->joindefs));
         if(status != SE_SUCCESS) {
             sde_error(  status, 
                         "msSDELayerCreateItems()", 
@@ -1875,8 +1887,8 @@ msSDELayerCreateItems(layerObj *layer,
 
     // combine the itemdefs of both tables into one
     all_itemdefs = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
-    for(i=0;i<nBaseColumns;i++) all_itemdefs[i] = base_itemdefs[i];
-    for(i=0;i<nJoinColumns;i++) all_itemdefs[i+nBaseColumns]=join_itemdefs[i];    
+    for(i=0;i<nBaseColumns;i++) all_itemdefs[i] = sde->basedefs[i];
+    for(i=0;i<nJoinColumns;i++) all_itemdefs[i+nBaseColumns]=sde->joindefs[i];    
 
     if (!layer->iteminfo){
         layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
@@ -1949,13 +1961,6 @@ msSDELayerCreateItems(layerObj *layer,
 //        }
 //    }
 
-    // Clean up
-    //if (all_itemdefs)
-    //    SE_table_free_descriptions(all_itemdefs);
-    //if (join_itemdefs)
-    //    SE_table_free_descriptions(join_itemdefs);
-    //if (base_itemdefs)
-    //    SE_table_free_descriptions(base_itemdefs);
 
     return MS_SUCCESS;
 
@@ -2015,9 +2020,20 @@ int msSDELayerGetItems(layerObj *layer) {
 void msSDELayerFreeItemInfo(layerObj *layer)
 {
 #ifdef USE_SDE
-    if(layer->iteminfo) {
-        SE_table_free_descriptions((SE_COLUMN_DEF *)layer->iteminfo);  
-        layer->iteminfo = NULL;
+    msSDELayerInfo *sde = NULL;
+    if (!msSDELayerIsOpen(layer)) {
+        msSetError( MS_SDEERR,
+                    "SDE layer has not been opened.",
+                    "msSDELayerFreeItemInfo()");
+    }
+    sde = layer->layerinfo;
+    if (sde->basedefs) {
+        SE_table_free_descriptions(sde->basedefs);  
+        sde->basedefs = NULL;
+    }
+    if (sde->joindefs) {
+        SE_table_free_descriptions(sde->joindefs);
+        sde->joindefs = NULL;
     }
 #else
     msSetError( MS_MISCERR, 
