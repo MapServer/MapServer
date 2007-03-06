@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.140  2007/03/06 18:35:16  hobu
+ * support GetFeatureInfo requests when there is a join
+ *
  * Revision 1.139  2007/03/04 07:12:11  hobu
  * one last memory leak
  *
@@ -300,6 +303,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
 #ifdef USE_SDE
     long status, column_type; 
     char* column_name;
+    char* full_column_name;
     SE_REGINFO registration;
     
     msSDELayerInfo *sde=NULL;
@@ -315,6 +319,9 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
     column_name[0]='\0';
 
+    full_column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
+    full_column_name[0]='\0';
+    
     // if the state_id is the SE_DEFAULT_STATE_ID, we are 
     // assuming no versioned queries are happening at all 
     // and we are using the hardcoded row_id column.
@@ -324,8 +331,9 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
                     "SE_DEFAULT_STATE_ID, reverting to %s.\n", 
                     MS_SDE_ROW_ID_COLUMN);
         }
+        column_name = strdup(MS_SDE_ROW_ID_COLUMN);
 
-        return(strdup(MS_SDE_ROW_ID_COLUMN));
+        //return(strdup(MS_SDE_ROW_ID_COLUMN));
     } 
     
     // if the state_id was not set to SE_DEFAULT_STATE_ID,
@@ -371,14 +379,29 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
                     "returning %s.\n", 
                     MS_SDE_ROW_ID_COLUMN);
         }
-        return (strdup(MS_SDE_ROW_ID_COLUMN));
+        column_name = strdup(MS_SDE_ROW_ID_COLUMN);
+        //return (strdup(MS_SDE_ROW_ID_COLUMN));
     }
-    
-    if (column_name) {
-        return (column_name); 
+
+
+    if (sde->join_table) {
+        strcat(full_column_name, sde->table);
+        strcat(full_column_name, ".");
+        strcat(full_column_name, column_name);
+        msFree(column_name);
+
     }
     else {
+        full_column_name = strdup(column_name);
         msFree(column_name);
+        }
+        
+
+    if (full_column_name) {
+        return (full_column_name); 
+    }
+    else {
+        msFree(full_column_name);
         return(strdup(MS_SDE_ROW_ID_COLUMN));
     }
 
@@ -993,13 +1016,17 @@ static SE_QUERYINFO getSDEQueryInfo(layerObj *layer)
     return query_info;
 }
 
-static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer) 
+static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id) 
 {
     SE_SQL_CONSTRUCT* sql;
+
+    char *full_filter=NULL;
+    char *pszId=NULL;
     long status;
     
     msSDELayerInfo *sde=NULL;
-    
+    full_filter = (char*) malloc((1000+1)*sizeof (char));
+    full_filter[0] = '\0';
     if(!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR, 
                     "SDE layer has not been opened.", 
@@ -1025,8 +1052,27 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer)
     }
 
     strcpy(sql->tables[0], sde->table); // main table
-    strcpy(sql->tables[1], sde->join_table); // join table    
-    sql->where = layer->filter.string;
+    strcpy(sql->tables[1], sde->join_table); // join table 
+      
+    // If we were given an ID *and* we have a join, we need to 
+    // set our FILTER statement to reflect this.
+    if ((sde->join_table) && (id != NULL)) {
+        pszId = long2string(*id);
+        strcat(full_filter, layer->filter.string);
+        strcat(full_filter, " AND ");
+        strcat(full_filter, sde->row_id_column);
+        strcat(full_filter, "=");
+        strcat(full_filter, pszId);
+        msFree(pszId);
+        sql->where = strdup(full_filter);
+     
+
+    } else {
+        sql->where = layer->filter.string;
+    }
+    
+    msFree(full_filter);   
+    
     if (layer->debug) msDebug("WHERE statement: %s\n", sql->where);
     return sql;
 } 
@@ -1414,7 +1460,7 @@ int  msSDELayerClose(layerObj *layer) {
 /* -------------------------------------------------------------------- */
 /* Virtual table function                                               */
 /* -------------------------------------------------------------------- */
-/*int msSDELayerCloseConnection(layerObj *layer) 
+int msSDELayerCloseConnection(layerObj *layer) 
 {
 	
 
@@ -1423,8 +1469,11 @@ int  msSDELayerClose(layerObj *layer) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->layerinfo;
-  if (sde == NULL) return;   Silently return if layer not opened./
+    if(!msSDELayerIsOpen(layer)) {
+        return MS_SUCCESS;  // already closed
+    }
+
+    sde = layer->layerinfo;
 
   if(layer->debug)
     msDebug("msSDELayerCloseConnection(): Closing connection for layer %s.\n", layer->name);
@@ -1432,7 +1481,7 @@ int  msSDELayerClose(layerObj *layer) {
   msConnPoolRelease( layer, sde->connPoolInfo );
   sde->connection = NULL;
   sde->connPoolInfo = NULL;
-
+  return (MS_SUCCESS);
 #else
   msSetError( MS_MISCERR,
               "SDE support is not available.",
@@ -1442,7 +1491,7 @@ int  msSDELayerClose(layerObj *layer) {
 
     return MS_SUCCESS;
 }
-*/
+
 
 /* -------------------------------------------------------------------- */
 /* msSDELayerWhichShapes                                                */
@@ -1539,7 +1588,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
                         " defined that joins the two tables together");
             return(MS_FAILURE);
         }
-        sql = getSDESQLConstructInfo(layer);
+        sql = getSDESQLConstructInfo(layer, NULL);
     }    
         
     /* reset the stream */
@@ -1722,6 +1771,8 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 #ifdef USE_SDE
     long status;
 
+    SE_SQL_CONSTRUCT* sql;
+
     msSDELayerInfo *sde=NULL;
   
     if(!msSDELayerIsOpen(layer)) {
@@ -1750,18 +1801,49 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
         return(MS_FAILURE);
     }
 
-    status = SE_stream_fetch_row(   sde->stream, 
-                                    sde->table, 
-                                    record, 
-                                    (short)(layer->numitems), 
-                                    (const char **)layer->items);
-    if(status != SE_SUCCESS) {
-        sde_error(  status, 
-                    "msSDELayerGetShape()", 
-                    "SE_stream_fetch_row()");
-        return(MS_FAILURE);
+    if (!sde->join_table) {
+
+        status = SE_stream_fetch_row(   sde->stream, 
+                                        sde->table, 
+                                        record, 
+                                        (short)(layer->numitems), 
+                                        (const char **)layer->items);
+
+        if(status != SE_SUCCESS) {
+            sde_error(  status, 
+                        "msSDELayerGetShape()", 
+                        "SE_stream_fetch_row()");
+            return(MS_FAILURE);
+        }
+    } else {
+        sql = getSDESQLConstructInfo(layer, &record);
+
+        status = SE_stream_query(sde->stream, layer->numitems, (const CHAR**) layer->items, sql);
+;
+        if(status != SE_SUCCESS) {
+            sde_error(status, 
+                      "msSDELayerWhichShapes()", 
+                      "SE_stream_query()");
+            return(MS_FAILURE);
+        }
+        
+        // Free up the sql now that we've queried
+        SE_sql_construct_free(sql);
+  
+        /* *should* be ready to step through shapes now */
+        status = SE_stream_execute(sde->stream);  
+
+        if(status != SE_SUCCESS) {
+            sde_error(status, 
+                      "SE_stream_execute()", 
+                      "SE_stream_execute()");
+            return(MS_FAILURE);
+        } 
+           
+        /* fetch the next record from the stream */
+        status = SE_stream_fetch(sde->stream);
+
     }
- 
     status = sdeGetRecord(layer, shape);
     if(status != MS_SUCCESS)
         return(MS_FAILURE); /* something went wrong fetching the record/shape */
@@ -1977,7 +2059,8 @@ msSDELayerCreateItems(layerObj *layer,
 /* -------------------------------------------------------------------- */
 int msSDELayerInitItemInfo(layerObj *layer)
 {
-    int status = msSDELayerCreateItems(layer, 0);
+    int status;
+    status = msSDELayerCreateItems(layer, 0);
     if (status != MS_SUCCESS) {
         msSetError( MS_MISCERR,  
                     "Unable to create SDE column info", 
@@ -1995,7 +2078,9 @@ int msSDELayerInitItemInfo(layerObj *layer)
 /* -------------------------------------------------------------------- */
 int msSDELayerGetItems(layerObj *layer) {
 #ifdef USE_SDE
-    int status = msSDELayerCreateItems(layer, 0);
+    int status;
+    status = msSDELayerCreateItems(layer, 0);
+
     if (status != MS_SUCCESS) {
         msSetError( MS_MISCERR,  
                     "Unable to create SDE column info", 
@@ -2066,7 +2151,7 @@ msSDELayerInitializeVirtualTable(layerObj *layer)
     /* layer->vtable->LayerApplyFilterToLayer, use default */
 
     /* SDE uses pooled connections, close from msCloseConnections */
-    /*layer->vtable->LayerCloseConnection = msSDELayerCloseConnection;*/
+    layer->vtable->LayerCloseConnection = msSDELayerCloseConnection;
 
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     layer->vtable->LayerCreateItems = msSDELayerCreateItems;
