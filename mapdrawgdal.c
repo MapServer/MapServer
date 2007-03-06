@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.54  2007/02/05 05:56:41  frank
  * Fix support for OFFSITE for simple greyscale rasters (bug 2024).
  *
@@ -276,7 +281,20 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                                               "COLOR_MATCH_THRESHOLD" )));
       }
   }
+#ifdef USE_AGG
+  else if( MS_RENDERER_AGG(image->format) )
+  {
+      gdImg = image->img.gd;
 
+      truecolor = gdImageTrueColor( gdImg );
+      if( CSLFetchNameValue( layer->processing, 
+                             "COLOR_MATCH_THRESHOLD" ) != NULL )
+      {
+          cmt = MAX(0,atoi(CSLFetchNameValue( layer->processing, 
+                                              "COLOR_MATCH_THRESHOLD" )));
+      }
+  }
+#endif
   src_xsize = GDALGetRasterXSize( hDS );
   src_ysize = GDALGetRasterYSize( hDS );
 

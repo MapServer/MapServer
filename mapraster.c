@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.138  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.137  2006/09/24 02:42:12  frank
  * handle upsidedown images through resample logic. (bug 1904)
  *
@@ -408,6 +413,13 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
 
   return op; /* Return newly allocated color */  
 }
+
+#ifdef USE_AGG
+int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
+{
+	 return msAddColorGD( map, img, cmt, r, g, b );
+}
+#endif
 
 /************************************************************************/
 /*                           readWorldFile()                            */
@@ -1318,6 +1330,10 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
   force_gdal = MS_FALSE;
   if(MS_RENDERER_GD(image->format))
     img = image->img.gd;
+#ifdef USE_AGG
+  else if(MS_RENDERER_AGG(image->format))
+    img = image->img.gd;
+#endif
   else {
     img = NULL;
     force_gdal = MS_TRUE;

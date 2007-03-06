@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.192  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.191  2007/01/22 14:47:24  sdlime
  * Fixed off-by-one computation issue when calculating cellsize and adjusting extents. (bug 2015)
  *
@@ -554,6 +559,18 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
             else
                 nReturnVal = msSaveImageGD(img->img.gd, filename, img->format);
         }
+#ifdef USE_AGG
+    else if( MS_DRIVER_AGG(img->format) )
+        {
+            if(map != NULL && filename != NULL )
+                nReturnVal = msSaveImageAGG(img->img.gd, 
+                                           msBuildPath(szPath, map->mappath, 
+                                                       filename), 
+                                           img->format );
+            else
+                nReturnVal = msSaveImageAGG(img->img.gd, filename, img->format);
+        }
+#endif
 	else if( MS_DRIVER_IMAGEMAP(img->format) )
             nReturnVal = msSaveImageIM(img, filename, img->format);
 #ifdef USE_GDAL
@@ -618,6 +635,11 @@ void msFreeImage(imageObj *image)
         if( MS_RENDERER_GD(image->format) ) {
             if( image->img.gd != NULL )
                 msFreeImageGD(image->img.gd);
+#ifdef USE_AGG
+        } else if( MS_RENDERER_AGG(image->format) ) {
+            if( image->img.gd != NULL )
+                msFreeImageAGG(image->img.gd);
+#endif
         } else if( MS_RENDERER_IMAGEMAP(image->format) )
             msFreeImageIM(image);
         else if( MS_RENDERER_RAWDATA(image->format) )
@@ -1165,7 +1187,14 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
                                 imagepath, imageurl);
         if( image != NULL && map) msImageInitGD( image, &map->imagecolor );
     }
-
+#ifdef USE_AGG	
+    else if( MS_RENDERER_AGG(format) )
+    {
+        image = msImageCreateAGG(width, height, format,
+                                imagepath, imageurl);
+        if( image != NULL && map) msImageInitAGG( image, &map->imagecolor );
+    }
+#endif
     else if( MS_RENDERER_RAWDATA(format) )
     {
         if( format->imagemode != MS_IMAGEMODE_INT16

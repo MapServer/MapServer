@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.473  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.472  2007/01/22 14:47:24  sdlime
  * Fixed off-by-one computation issue when calculating cellsize and adjusting extents. (bug 2015)
  *
@@ -369,6 +374,7 @@ extern "C" {
 #define MS_DRIVER_PDF(format) (strncasecmp((format)->driver,"pdf",3)==0)
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
 #define MS_DRIVER_SVG(format) (strncasecmp((format)->driver,"svg",3)==0)
+#define MS_DRIVER_AGG(format) (strncasecmp((format)->driver,"agg/",3)==0)
 
 
 #define MS_RENDER_WITH_GD 1
@@ -377,6 +383,7 @@ extern "C" {
 #define MS_RENDER_WITH_PDF  4
 #define MS_RENDER_WITH_IMAGEMAP 5
 #define MS_RENDER_WITH_SVG      6
+#define MS_RENDER_WITH_AGG      7
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
@@ -384,6 +391,7 @@ extern "C" {
 #define MS_RENDERER_PDF(format) ((format)->renderer == MS_RENDER_WITH_PDF)
 #define MS_RENDERER_IMAGEMAP(format) ((format)->renderer == MS_RENDER_WITH_IMAGEMAP)
 #define MS_RENDERER_SVG(format) ((format)->renderer == MS_RENDER_WITH_SVG)
+#define MS_RENDERER_AGG(format) ((format)->renderer == MS_RENDER_WITH_AGG)
 
 #define MS_CELLSIZE(min,max,d)    ((max - min)/(d-1))
 #define MS_MAP2IMAGE_X(x,minx,cx) (MS_NINT((x - minx)/cx))
@@ -1256,6 +1264,9 @@ typedef struct {
   char *imagepath, *imageurl;
 
   outputFormatObj *format;
+#ifdef USE_AGG
+  void *imageextra;
+#endif
 #ifdef SWIG
 %mutable;
 #endif
@@ -1781,6 +1792,44 @@ MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, i
 /* Modify the character encoding. */
 char *msGetEncodedString(const char *string, const char *encoding);
 
+#ifdef USE_AGG
+/* ==================================================================== */
+/*      Prototypes for functions in mapagg.cpp                          */
+/* ==================================================================== */
+#ifdef _cplusplus
+extern "C"
+{
+#endif
+MS_DLL_EXPORT imageObj *msImageLoadAGGCtx(gdIOCtx* ctx, const char *driver);
+MS_DLL_EXPORT void msPreAllocateColorsAGG(imageObj *image, mapObj *map);
+MS_DLL_EXPORT imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
+MS_DLL_EXPORT imageObj *msImageLoadAGG( const char *filename );
+MS_DLL_EXPORT void msImageInitAGG( imageObj *image, colorObj *background );
+MS_DLL_EXPORT int msImageSetPenAGG(gdImagePtr img, colorObj *color);
+
+#define RESOLVE_PEN_AGG(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenAGG( img, &(color) ); }
+
+MS_DLL_EXPORT gdIOCtx *msNewAGGFileCtx(FILE *file);
+MS_DLL_EXPORT int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format);
+MS_DLL_EXPORT unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *bufsize, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx* ctx, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageAGG_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
+MS_DLL_EXPORT void msFreeImageAGG(gdImagePtr img);
+
+MS_DLL_EXPORT void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image,shapeObj *p, styleObj *style, double scalefactor);
+
+MS_DLL_EXPORT int msDrawTextAGG(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawTextLineAGG(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map);
+#ifdef _cplusplus
+}
+#endif
+#endif  /* USE_AGG  */
+
 /* various JOIN functions (in mapjoin.c) */
 MS_DLL_EXPORT int msJoinConnect(layerObj *layer, joinObj *join);
 MS_DLL_EXPORT int msJoinPrepare(joinObj *join, shapeObj *shape);
@@ -1790,6 +1839,9 @@ MS_DLL_EXPORT int msJoinClose(joinObj *join);
 /*in mapraster.c */
 MS_DLL_EXPORT int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
+#ifdef USE_AGG
+MS_DLL_EXPORT int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
+#endif
 MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color);
 MS_DLL_EXPORT int msGetClass_Float(layerObj *layer, float fValue);
 

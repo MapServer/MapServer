@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.74  2007/02/13 04:39:07  frank
  * ensure that error stack is cleared after issing exceptions (bug 2025)
  *
@@ -1326,6 +1331,11 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   } else if( MS_RENDERER_GD(map->outputformat) ) {
     image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
     if( image != NULL ) msImageInitGD( image, &map->imagecolor );
+#ifdef USE_AGG
+  } else if( MS_RENDERER_AGG(map->outputformat) ) {
+    image = msImageCreateAGG(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
+    if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
+#endif
   } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {
     image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map);
   } else {

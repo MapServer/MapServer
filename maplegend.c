@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.62  2006/08/04 04:36:12  sdlime
  * Removed cut & paste artifact (oops).
  *
@@ -212,7 +217,7 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   outputFormatObj *format = NULL;
   int i = 0;
 
-  if(!map->outputformat || !MS_RENDERER_GD(map->outputformat) ) {
+  if(!map->outputformat || (!MS_RENDERER_GD(map->outputformat) && !MS_RENDERER_AGG(map->outputformat) )) {
     msSetError(MS_GDERR, "Map outputformat must be set to a GD format!", "msCreateLegendIcon()");
     return(NULL);
   }

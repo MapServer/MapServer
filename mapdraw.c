@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.110  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.109  2007/01/17 04:21:18  sdlime
  * Removed spurrious debugging statement in mapdraw.c (bug 2007).
  *
@@ -261,6 +266,15 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
         msPreAllocateColorsGD(image, map);
     }
+#ifdef USE_AGG
+    else if( MS_RENDERER_AGG(map->outputformat) )
+    {
+        image = msImageCreateAGG(map->width, map->height, map->outputformat, 
+				map->web.imagepath, map->web.imageurl);        
+        if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
+        msPreAllocateColorsAGG(image, map);
+    }
+#endif
     else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
     {
         image = msImageCreateIM(map->width, map->height, map->outputformat, 
@@ -488,10 +502,16 @@ imageObj *msDrawMap(mapObj *map)
             {
 #ifdef USE_WMS_LYR 
                 if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-                    status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
+                   status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
                                                numOWSRequests, 
                                                map, lp, image);
-                
+#ifdef USE_AGG
+                 else if( MS_RENDERER_AGG(image->format) )
+                   status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
+                                           numOWSRequests, 
+                                           map, lp, image);
+#endif
+
 #ifdef USE_MING_FLASH                
                 else if( MS_RENDERER_SWF(image->format) )
                     status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, 
@@ -616,11 +636,17 @@ imageObj *msDrawMap(mapObj *map)
     if (lp->connectiontype == MS_WMS)  
     { 
 #ifdef USE_WMS_LYR 
-      if( MS_RENDERER_GD(image->format) ||  MS_RENDERER_RAWDATA(image->format))
+      if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
         status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
                                    numOWSRequests, 
                                    map, lp, image);
 
+#ifdef USE_AGG               
+      else if( MS_RENDERER_AGG(image->format))
+        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
+                                   numOWSRequests, 
+                                   map, lp, image);
+#endif
 #ifdef USE_MING_FLASH                
       else if( MS_RENDERER_SWF(image->format) )
         status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, numOWSRequests, 
@@ -722,7 +748,13 @@ imageObj *msDrawQueryMap(mapObj *map)
       image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);      
       if( image != NULL ) msImageInitGD( image, &map->imagecolor );
   }
-  
+#ifdef USE_AGG
+  else if( MS_RENDERER_AGG(map->outputformat) )
+  {
+      image = msImageCreateAGG(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);      
+      if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
+  }
+#endif  
   if(!image) {
     msSetError(MS_GDERR, "Unable to initialize image.", "msDrawQueryMap()");
     return(NULL);
@@ -861,7 +893,33 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
         gdImageAlphaBlending(image->img.gd, 1);
     }
   }
+#ifdef USE_AGG
+  else if ( MS_RENDERER_AGG(image_draw->format) ) {
+    /* Create a temp image for this layer tranparency */
+    if (layer->transparency > 0 && layer->transparency <= 100) {
+      msApplyOutputFormat( &transFormat, image->format, 
+                           MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+      /* really we need an image format with transparency enabled, right? */
+      image_draw = msImageCreateAGG( image->width, image->height, 
+                                    transFormat,
+                                    image->imagepath, image->imageurl );
+      if(!image_draw) {
+        msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
+        return(MS_FAILURE);
+      }
+      msImageInitAGG(image_draw, &map->imagecolor);
+      /* We really just do this because gdImageCopyMerge() needs it later */
+      if( image_draw->format->imagemode == MS_IMAGEMODE_PC256 )
+          gdImageColorTransparent(image_draw->img.gd, 0);
+    }
 
+    /* Bug 490 - switch alpha blending on for a layer that requires it */
+    else if (layer->transparency == MS_GD_ALPHA) {
+        oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+        gdImageAlphaBlending(image->img.gd, 1);
+    }
+  }
+#endif
   /* Redirect procesing of some layer types. */
   if(layer->connectiontype == MS_WMS) 
   {
@@ -899,7 +957,26 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     msApplyOutputFormat( &transFormat, NULL, 
                          MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
+#ifdef USE_AGG
+  else if( MS_RENDERER_AGG(image_draw->format) && layer->transparency > 0 
+      && layer->transparency <= 100 ) {
 
+#if GD2_VERS > 1 
+    msImageCopyMerge(image->img.gd, image_draw->img.gd, 
+                     0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
+                     layer->transparency);
+#else
+    gdImageCopyMerge(image->img.gd, image_draw->img.gd, 
+                     0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
+                     layer->transparency);
+#endif
+    msFreeImage( image_draw );
+
+    /* deref and possibly free temporary transparent output format.  */
+    msApplyOutputFormat( &transFormat, NULL, 
+                         MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  }
+#endif
   /* restore original alpha blending */
   else if (layer->transparency == MS_GD_ALPHA) {
     gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
@@ -1258,6 +1335,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
     {
         if( MS_RENDERER_GD(image->format) )
             return msDrawRasterLayerLow(map, layer, image);
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            return msDrawRasterLayerLow(map, layer, image);
+#endif
         else if( MS_RENDERER_RAWDATA(image->format) )
             return msDrawRasterLayerLow(map, layer, image);
 #ifdef USE_MING_FLASH
@@ -1312,7 +1393,11 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
         if( MS_RENDERER_GD(image->format) )
             nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
                                         map, layer, image) ;
-
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
+                                        map, layer, image) ;
+#endif
         else if( MS_RENDERER_RAWDATA(image->format) )
             nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
                                         map, layer, image) ;
@@ -1879,6 +1964,10 @@ void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *
     {
         if( MS_RENDERER_GD(image->format) )
             msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            msCircleDrawLineSymbolAGG(symbolset, image->img.gd, p, r, style, scalefactor);
+#endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             msCircleDrawLineSymbolIM(symbolset, image, p, r, style, scalefactor);
         else
@@ -1893,6 +1982,10 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj 
     {
         if( MS_RENDERER_GD(image->format) )
             msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            msCircleDrawShadeSymbolAGG(symbolset, image->img.gd, p, r, style, scalefactor);
+#endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             msCircleDrawShadeSymbolIM(symbolset, image, p, r, style, scalefactor);
               
@@ -1909,6 +2002,10 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
    {
        if( MS_RENDERER_GD(image->format) )
            msDrawMarkerSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+#ifdef USE_AGG
+       else if( MS_RENDERER_AGG(image->format) )
+           msDrawMarkerSymbolAGG(symbolset, image, p, style, scalefactor);
+#endif
        else if( MS_RENDERER_IMAGEMAP(image->format) )
            msDrawMarkerSymbolIM(symbolset, image, p, style, scalefactor);
        
@@ -1932,6 +2029,10 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
     {
         if( MS_RENDERER_GD(image->format) )
             msDrawLineSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            msDrawLineSymbolAGG(symbolset, image, p, style, scalefactor);
+#endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             msDrawLineSymbolIM(symbolset, image, p, style, scalefactor);
 
@@ -1955,6 +2056,10 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
     {
         if( MS_RENDERER_GD(image->format) )
             msDrawShadeSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            msDrawShadeSymbolAGG(symbolset, image, p, style, scalefactor);
+#endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             msDrawShadeSymbolIM(symbolset, image, p, style, scalefactor);
 
@@ -2019,6 +2124,11 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
         if( MS_RENDERER_GD(image->format) )
             nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, 
                                      label, fontset, scalefactor);
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            nReturnVal = msDrawTextAGG(image->img.gd, labelPnt, string, 
+                                     label, fontset, scalefactor);
+#endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             nReturnVal = msDrawTextIM(image, labelPnt, string, 
                                      label, fontset, scalefactor);
@@ -2047,6 +2157,10 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
     {
         if( MS_RENDERER_GD(image->format) )
             nReturnVal = msDrawLabelCacheGD(image->img.gd, map);
+#ifdef USE_AGG
+        else if( MS_RENDERER_AGG(image->format) )
+            nReturnVal = msDrawLabelCacheAGG(image->img.gd, map);
+#endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             nReturnVal = msDrawLabelCacheIM(image, map);
 

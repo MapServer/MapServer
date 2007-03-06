@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2007/03/06 11:22:39  novak
+ * First AGG commit.
+ *
+ * Config and Makefile changes are necessary for a proper build.
+ *
  * Revision 1.36  2006/07/11 01:09:42  frank
  * msCloneOutputFormat() needs to propagate inmapfile flag (bug 1823).
  *
@@ -314,6 +319,76 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = MS_IMAGEMODE_PC256;
         format->extension = strdup("wbmp");
         format->renderer = MS_RENDER_WITH_GD;
+    }
+#endif
+
+    if( strcasecmp(driver,"AGG/PC256") == 0 )
+    {
+#ifdef USE_GD_GIF
+        return msCreateDefaultOutputFormat( map, "AGG/GIF" );
+#elif defined(USE_GD_PNG)
+        return msCreateDefaultOutputFormat( map, "AGG/PNG" );
+#else
+        return NULL;
+#endif
+    }
+
+#ifdef USE_GD_GIF
+    if( strcasecmp(driver,"AGG/GIF") == 0 )
+    {
+        format = msAllocOutputFormat( map, "gif", driver );
+        format->mimetype = strdup("image/gif");
+        format->imagemode = MS_IMAGEMODE_PC256;
+        format->extension = strdup("gif");
+        format->renderer = MS_RENDER_WITH_AGG;
+    }
+#endif
+
+#ifdef USE_GD_PNG
+    if( strcasecmp(driver,"AGG/PNG") == 0 )
+    {
+        format = msAllocOutputFormat( map, "png", driver );
+        format->mimetype = strdup("image/png");
+        format->imagemode = MS_IMAGEMODE_PC256;
+        format->extension = strdup("png");
+        format->renderer = MS_RENDER_WITH_AGG;
+    }
+#endif /* USE_GD_PNG */
+
+
+#if defined(USE_GD_PNG) && GD2_VERS > 1
+    if( strcasecmp(driver,"AGG/PNG24") == 0 )
+    {
+        format = msAllocOutputFormat( map, "png24", "AGG/PNG" );
+        format->mimetype = strdup("image/png; mode=24bit");
+        format->imagemode = MS_IMAGEMODE_RGB;
+        format->extension = strdup("png");
+        format->renderer = MS_RENDER_WITH_AGG;
+    }
+#endif /* USE_GD_PNG */
+
+#ifdef USE_GD_JPEG
+    if( strcasecmp(driver,"AGG/JPEG") == 0 )
+    {
+        format = msAllocOutputFormat( map, "jpeg", driver );
+        format->mimetype = strdup("image/jpeg");
+#if GD2_VERS > 1
+        format->imagemode = MS_IMAGEMODE_RGB;
+#else
+        format->imagemode = MS_IMAGEMODE_PC256;
+#endif
+        format->extension = strdup("jpg");
+        format->renderer = MS_RENDER_WITH_AGG;
+    }
+#endif
+#ifdef USE_GD_WBMP
+    if( strcasecmp(driver,"AGG/WBMP") == 0 )
+    {
+        format = msAllocOutputFormat( map, "wbmp", driver );
+        format->mimetype = strdup("image/wbmp");
+        format->imagemode = MS_IMAGEMODE_PC256;
+        format->extension = strdup("wbmp");
+        format->renderer = MS_RENDER_WITH_AGG;
     }
 #endif
 #ifdef USE_MING_FLASH
