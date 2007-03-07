@@ -27,58 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2007/03/07 20:56:13  sdlime
+ * Trimmed a bunch of unnecessary history from mapagg.cpp.
+ *
  * Revision 1.1  2007/03/06 11:05:00  novak
- * nitial Checkin
- *
- * Revision 1.137  2006/09/06 05:51:35  sdlime
- * Applied Bart's quick fix for bug 1776. Real fix is addressed by rounding width and height before calling createBrush. However, that might still be an issue due to the rounding issues mentioned in that bug. This is a safe alternative for now.
- *
- * Revision 1.136  2006/08/30 16:06:37  hobu
- * northwest airlines sucks.  I fixed the libiconv warning on my Memphis->Greenland->Boston leg of my trip to Italy
- *
- * Revision 1.135  2006/08/26 17:25:48  frank
- * use MS_NINT_GENERIC for symbol offset calculation (bug 1716)
- *
- * Revision 1.134  2006/08/22 13:47:23  hobu
- * make sure to cast the strings being passed into
- * gdImageString as (unsigned char *) to silence warnings
- * from the compiler
- *
- * Revision 1.133  2006/08/15 17:24:18  sdlime
- * Trimmed history...
- *
- * Revision 1.132  2006/05/16 05:36:02  sdlime
- * Fixed bug that required PIXMAP fills to define a bogus color.
- *
- * Revision 1.131  2006/04/26 03:25:47  sdlime
- * Applied most recent patch for curved labels. (bug 1620)
- *
- * Revision 1.130  2006/04/03 15:40:23  dan
- * Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
- *
- * Revision 1.129  2006/03/23 20:28:52  sdlime
- * Most recent patch for curved labels. (bug 1620)
- *
- * Revision 1.128  2006/03/21 06:28:28  sdlime
- * Fixed logic error so we use faster GD functions when we don't have to scale PIXMAP symbols.
- *
- * Revision 1.127  2006/03/16 04:45:24  sdlime
- * Reverted to old means of scaling symbols based solely on height. Fixed possiblity of memory leak with symbol rotation. Made rotation and scaling behavior more consistent across all GD rendering functions (point, line, polygon and circle). (bugs 1684 and 1705)
- *
- * Revision 1.126  2006/03/09 04:53:49  frank
- * added GD/PNG Quantize support
- *
- * Revision 1.125  2006/03/02 06:43:51  sdlime
- * Applied latest patch for curved labels. (bug 1620)
- *
- * Revision 1.124  2006/02/24 06:26:13  sdlime
- * Updated truetype shade symbols to use the symbol gap value to provide space around the symbol. Change affects both polygons and circles. The gap is not scaled yet. (bug 1674)
- *
- * Revision 1.123  2006/02/24 06:02:17  sdlime
- * Truetype shade symbols can now be antialiased using symbol-level or style-level ANTIALIAS TRUE.
- *
- * Revision 1.122  2006/02/18 20:59:13  sdlime
- * Initial code for curved labels. (bug 1620)
+ * Initial Checkin
  *
  */
 
