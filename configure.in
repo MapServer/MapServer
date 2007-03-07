@@ -728,6 +728,53 @@ ALL_INC="$PDF_INC $ALL_INC"
 ALL_LIB="$PDF_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
+dnl Optional AGG Support.
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING(if AGG support requested)
+AC_ARG_WITH(agg,
+[  --with-agg[=DIR]       Include AGG support (DIR is AGG's install dir).],,)
+
+if test "$with_agg" = "yes" ; then
+
+  AC_CHECK_LIB(agg, gpc_polygon_clip, AGG_ENABLED=-DUSE_AGG,,,)
+
+  if test -n "$AGG_ENABLED" ; then
+      AGG_LIB="-lagg"
+      AC_MSG_RESULT([using libagg from system libs.])
+  else
+      AC_MSG_RESULT([libagg not found. AGG support not included.])
+  fi
+
+elif test -n "$with_agg" -a "$with_agg" != "no" ; then
+
+  AC_EXPAND_PATH($with_agg, AGG_DIR)
+  test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include"
+
+  test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
+  test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
+
+  if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
+      AGG_ENABLED="-DUSE_AGG"
+      AGG_INC=-I$AGG_INCLUDE
+      AGG_LIB="-L$AGG_LIBDIR -lagg"
+      AC_ADD_RUNPATH("$AGG_LIBDIR")
+      AC_MSG_RESULT([yes])
+  else
+      AC_MSG_RESULT("could not find agg_rendering_buffer.h or libagg.a in $AGG_DIR.")
+  fi
+
+else
+
+  AC_MSG_RESULT([no])
+
+fi
+
+AC_SUBST(AGG_ENABLED,$AGG_ENABLED)
+AC_SUBST(AGG_INC,    $AGG_INC)
+AC_SUBST(AGG_LIB,    $AGG_LIB)
+
+dnl ---------------------------------------------------------------------
 dnl EPPL7 support (included by default)
 dnl ---------------------------------------------------------------------
 
