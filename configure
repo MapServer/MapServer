@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB AGG_ENABLED AGG_INC AGG_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -847,6 +847,7 @@ Optional Packages:
                           install dir).
   --without-pdf           Disable PDF support.
   --with-pdf=DIR        Include PDF support (DIR is PDFlib's install dir).
+  --with-agg=DIR       Include AGG support (DIR is AGG's install dir).
   --without-eppl        Disable EPPL7 support.
   --with-eppl           Include EPPL7 support.
   --with-proj=DIR       Include PROJ.4 support (DIR is PROJ.4's install dir).
@@ -7717,6 +7718,157 @@ ALL_INC="$PDF_INC $ALL_INC"
 ALL_LIB="$PDF_LIB $ALL_LIB"
 
 
+echo "$as_me:$LINENO: checking if AGG support requested" >&5
+echo $ECHO_N "checking if AGG support requested... $ECHO_C" >&6
+
+# Check whether --with-agg or --without-agg was given.
+if test "${with_agg+set}" = set; then
+  withval="$with_agg"
+
+fi;
+
+if test "$with_agg" = "yes" ; then
+
+  echo "$as_me:$LINENO: checking for gpc_polygon_clip in -lagg" >&5
+echo $ECHO_N "checking for gpc_polygon_clip in -lagg... $ECHO_C" >&6
+if test "${ac_cv_lib_agg_gpc_polygon_clip+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lagg  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gpc_polygon_clip ();
+int
+main ()
+{
+gpc_polygon_clip ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_agg_gpc_polygon_clip=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_agg_gpc_polygon_clip=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_agg_gpc_polygon_clip" >&5
+echo "${ECHO_T}$ac_cv_lib_agg_gpc_polygon_clip" >&6
+if test $ac_cv_lib_agg_gpc_polygon_clip = yes; then
+  AGG_ENABLED=-DUSE_AGG
+fi
+
+
+  if test -n "$AGG_ENABLED" ; then
+      AGG_LIB="-lagg"
+      echo "$as_me:$LINENO: result: using libagg from system libs." >&5
+echo "${ECHO_T}using libagg from system libs." >&6
+  else
+      echo "$as_me:$LINENO: result: libagg not found. AGG support not included." >&5
+echo "${ECHO_T}libagg not found. AGG support not included." >&6
+  fi
+
+elif test -n "$with_agg" -a "$with_agg" != "no" ; then
+
+
+  if test -z "$with_agg" || echo "$with_agg" | grep '^/' >/dev/null ; then
+    AGG_DIR="$with_agg"
+  else
+    AGG_DIR="`pwd`/$with_agg"
+  fi
+
+  test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include"
+
+  test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
+  test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
+
+  if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
+      AGG_ENABLED="-DUSE_AGG"
+      AGG_INC=-I$AGG_INCLUDE
+      AGG_LIB="-L$AGG_LIBDIR -lagg"
+
+  if test ""$AGG_LIBDIR"" != "/usr/lib"; then
+
+  if test -z ""$AGG_LIBDIR"" || echo ""$AGG_LIBDIR"" | grep '^/' >/dev/null ; then
+    ai_p=""$AGG_LIBDIR""
+  else
+    ai_p="`pwd`/"$AGG_LIBDIR""
+  fi
+
+
+  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
+  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
+  if test -n "$unique" && test "`eval $cmd`" = "" ; then
+    eval "LIBPATH$unique=set"
+
+      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
+        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
+
+  fi
+
+  fi
+
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  else
+      echo "$as_me:$LINENO: result: \"could not find agg_rendering_buffer.h or libagg.a in $AGG_DIR.\"" >&5
+echo "${ECHO_T}\"could not find agg_rendering_buffer.h or libagg.a in $AGG_DIR.\"" >&6
+  fi
+
+else
+
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+
+fi
+
+AGG_ENABLED=$AGG_ENABLED
+
+AGG_INC=$AGG_INC
+
+AGG_LIB=$AGG_LIB
+
+
+
 { echo "$as_me:$LINENO: checking whether we should include EPPL7 support..." >&5
 echo "$as_me: checking whether we should include EPPL7 support..." >&6;}
 
@@ -11669,6 +11821,9 @@ s,@MAKE_GD_CLEAN@,$MAKE_GD_CLEAN,;t t
 s,@PDF_ENABLED@,$PDF_ENABLED,;t t
 s,@PDF_INC@,$PDF_INC,;t t
 s,@PDF_LIB@,$PDF_LIB,;t t
+s,@AGG_ENABLED@,$AGG_ENABLED,;t t
+s,@AGG_INC@,$AGG_INC,;t t
+s,@AGG_LIB@,$AGG_LIB,;t t
 s,@EPPL_ENABLED@,$EPPL_ENABLED,;t t
 s,@EPPL_OBJ@,$EPPL_OBJ,;t t
 s,@PROJ_ENABLED@,$PROJ_ENABLED,;t t
