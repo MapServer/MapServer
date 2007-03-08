@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2007/03/08 22:41:12  assefa
+ * Correct polygon drawing.
+ *
  * Revision 1.2  2007/03/07 20:56:13  sdlime
  * Trimmed a bunch of unnecessary history from mapagg.cpp.
  *
@@ -121,7 +124,8 @@ imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char 
 		
 	pNewImage->imageextra	= (void *) pRowCache;
 	
-	pLogFile	= fopen( "/usr/local/src/mapserver-5.0.0/mapserver/debug.log", "w" );
+        pLogFile	= fopen( "/usr/local/src/mapserver-5.0.0/mapserver/debug.log", "w" );
+	//pLogFile	= fopen( "c:/tmp/debug.log", "w" );
 	
 	return pNewImage;
 }
@@ -167,6 +171,8 @@ void msImageInitAGG( imageObj *image, colorObj *background )
 
 		ren_base.clear( agg::rgba( background->red, background->green, background->blue ) );
 	}
+
+    msImageInitGD(image, background);
 }
 
 //------------------------------------------------------------------------------------------------------------
@@ -231,7 +237,7 @@ static gdImagePtr createFuzzyBrush(int size, int r, int g, int b)
 
       dx = x - c;
       dy = y - c;
-      d = sqrt(dx*dx + dy*dy);
+      d = sqrt((double)(dx*dx + dy*dy));
 
       if(d<min_d) continue; /* leave opaque */
 
@@ -533,10 +539,68 @@ private:
 	int			m_lineIndex;
 	shapeObj	*m_pShape;
 };
+static void imagePolyline( imageObj *image, shapeObj *p, colorObj *color, int width, int offsetx, int offsety)
+{
+    int i, j;
+
+    gdImagePtr img = image->img.gd;
+	
+    mapserv_row_ptr_cache<int>	*pRowCache = static_cast<mapserv_row_ptr_cache<int>	*>( image->imageextra );
+	
+    if( pRowCache == NULL )
+    {
+        fprintf( pLogFile, "imagePolyline pRowCache == NULL, extra is %08x\n", image->imageextra ); 
+        return;
+    }
+	
+    pixelFormat thePixelFormat( *pRowCache );
+    
+    agg::renderer_base< pixelFormat > rbase( thePixelFormat );
+            
+    agg::rasterizer_scanline_aa<> ras;
+    agg::path_storage ps;
+    agg::conv_stroke<agg::path_storage> pg(ps);
+    agg::scanline_p8 sl;
+
+    //ren_base.reset_clipping( true );
+
+
+
+    pg.width(width);
+    //pg.generator().line_cap(agg::butt_cap);
+    pg.generator().line_cap(agg::round_cap);
+    //pg.generator().line_cap(agg::square_cap);
+    //pg.generator().line_join(agg::miter_join);
+    //pg.generator().line_join(agg::miter_join_revert);
+    //pg.generator().line_join(agg::round_join);
+    //pg.generator().line_join(agg::bevel_join);
+    //pg.generator().line_join(agg::miter_join_round);
+
+    for (i = 0; i < p->numlines; i++)
+    {
+        ps.move_to(p->line[i].point[0].x, 
+                   p->line[i].point[0].y);
+        
+        for(j=1; j<p->line[i].numpoints; j++)
+        {
+            ps.line_to(p->line[i].point[j].x, 
+                       p->line[i].point[j].y);
+        }
+    }
+    ras.clip_box(0,0,image->width, image->height);
+    ras.add_path(pg);
+    agg::render_scanlines_aa_solid(ras, sl, rbase, 
+                                   agg::rgba( ((double) color->red) / 255.0, 
+                                              ((double) color->green) / 255.0, 
+                                              ((double) color->blue) / 255.0 ));
+                
+
+}
+
 
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
-static void imagePolyline( imageObj *image, shapeObj *p, colorObj *color, int width, int offsetx, int offsety)
+static void imagePolyline2( imageObj *image, shapeObj *p, colorObj *color, int width, int offsetx, int offsety)
 {
   int i, j;
 
@@ -631,7 +695,7 @@ static void imagePolyline( imageObj *image, shapeObj *p, colorObj *color, int wi
 }
 		
 //------------------------------------------------------------------------------------------------------------
-static void imageFilledPolygon( imageObj *image, shapeObj *p, colorObj *color, int offsetx, int offsety)
+static void imageFilledPolygon2( imageObj *image, shapeObj *p, colorObj *color, int offsetx, int offsety)
 {		
 	mapserv_row_ptr_cache<int>	*pRowCache = static_cast<mapserv_row_ptr_cache<int>	*>( image->imageextra );
 	
@@ -687,6 +751,50 @@ static void imageFilledPolygon( imageObj *image, shapeObj *p, colorObj *color, i
 			}
 		}	
 	}
+}
+static void imageFilledPolygon( imageObj *image, shapeObj *p, colorObj *color, int offsetx, int offsety)
+{		
+    mapserv_row_ptr_cache<int>	*pRowCache = static_cast<mapserv_row_ptr_cache<int>	*>( image->imageextra );
+	
+    if( pRowCache == NULL )
+      {
+        fprintf( pLogFile, "imageFilledPolygon pRowCache == NULL, extra is %08x\n", image->imageextra ); 
+        return;
+      }
+
+    pixelFormat thePixelFormat( *pRowCache );
+    agg::renderer_base< pixelFormat > ren_base( thePixelFormat );
+    
+    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa( ren_base );
+    agg::scanline_p8 sl;
+    agg::rasterizer_scanline_aa<> ras_aa;
+    
+    ren_base.reset_clipping( true );
+    
+    ren_aa.color(  agg::rgba( ((double) color->red) / 255.0, 
+                              ((double) color->green) / 255.0, 
+                              ((double) color->blue) / 255.0, 1 ) );
+
+    agg::path_storage	path;
+
+    for ( int i = 0; i < p->numlines; i++)  
+    {
+ 				
+        path.move_to( p->line[i].point[0].x, 
+                      p->line[i].point[0].y );
+										
+        for( int j=1; j<p->line[i].numpoints; j++)
+          path.line_to( p->line[i].point[j].x, 
+                        p->line[i].point[j].y);
+              
+        path.close_polygon();
+    }
+    ras_aa.add_path( path );
+              
+    agg::render_scanlines( ras_aa, sl, ren_aa );
+
+	
+
 }
 
 //------------------------------------------------------------------------------------------------------------
@@ -1056,15 +1164,33 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 	gdImagePtr img	= image->img.gd;
 		
 	int width;
+        int nwidth, size;
+        symbolObj *symbol;
+
+        symbol = &(symbolset->symbol[style->symbol]);
+         if(style->size == -1)
+           size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+         else
+           size = style->size;
+
+         size = MS_NINT(size*scalefactor);
+         size = MS_MAX(size, style->minsize);
+         size = MS_MIN(size, style->maxsize);
+
 
   	width = MS_NINT(style->width*scalefactor);
   	width = MS_MAX(width, style->minwidth);
   	width = MS_MIN(width, style->maxwidth);
 	
+        if(style->symbol == 0) 
+           nwidth = width;
+         else
+           nwidth = size;
+
 	fprintf( pLogFile, "msDrawLineSymbolAGG entry\n" ); 
 	
 	if( p->numlines > 0 )
-		imagePolyline( image, p, &style->color, width, 0, 0 );
+		imagePolyline( image, p, &style->color, nwidth, 0, 0 );
 	
 	return;
 #if 0	
