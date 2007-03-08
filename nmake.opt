@@ -225,6 +225,13 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 #MING_DIR=$(MS_BASE)\..\ming-0.2a
 
 
+# If you wish to use AGG 
+# The AGG (Ant-Grain Geometry) libraray http://www.antigrain.com/
+#is used in Mapserver to putput high class rendering
+#
+#AGG=-DUSE_AGG
+#AGG_DIR=$(MS_BASE)\..\agg-2.5
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PDF (Acrobat PDF support) 
 # ----------------------------------------------------------------------
@@ -628,6 +635,12 @@ MING_LIB= $(MING_DIR)/src/libming.lib
 #MING_VERSION=-DMING_VERSION_03
 !ENDIF
 
+# Setup AGG
+!IFDEF AGG
+AGG_INC=-I$(AGG_DIR)\include -I$(AGG_DIR)\include\platform\win32
+AGG_LIB= $(AGG_DIR)\src\agg.lib
+!ENDIF
+
 # Setup PDF includes and libs
 !IFDEF PDF
 PDF_LIB=$(PDF_DIR)/libs/pdflib/Release_DLL/pdflib.lib
@@ -684,7 +697,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
-     $(LIBXML_LIB)
+     $(LIBXML_LIB) $(AGG_LIB)
         
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
@@ -693,7 +706,8 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
-         $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC)
+         $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
+         $(AGG_INC)
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
@@ -703,7 +717,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
-          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)
+          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(AGG)
 
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32
 
