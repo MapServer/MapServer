@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.143  2007/03/09 21:40:02  hobu
+ * copy the string into our already allocated
+ * sde->row_id_column instead of allocating a new
+ * one and leaking
+ *
  * Revision 1.142  2007/03/09 17:24:13  hobu
  * declare the iterator counter
  *
@@ -398,7 +403,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
 
     }
     else {
-        full_column_name = strdup(column_name);
+        strcpy(full_column_name, column_name);
         msFree(column_name);
         }
         
