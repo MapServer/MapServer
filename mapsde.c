@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.142  2007/03/09 17:24:13  hobu
+ * declare the iterator counter
+ *
  * Revision 1.141  2007/03/09 17:23:01  hobu
  * clear out layer->items in FreeItemInfo
  *
@@ -2107,6 +2110,7 @@ void msSDELayerFreeItemInfo(layerObj *layer)
 {
 #ifdef USE_SDE
     msSDELayerInfo *sde = NULL;
+    int i;
     if (!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR,
                     "SDE layer has not been opened.",
