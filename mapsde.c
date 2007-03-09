@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.141  2007/03/09 17:23:01  hobu
+ * clear out layer->items in FreeItemInfo
+ *
  * Revision 1.140  2007/03/06 18:35:16  hobu
  * support GetFeatureInfo requests when there is a join
  *
@@ -2122,6 +2125,16 @@ void msSDELayerFreeItemInfo(layerObj *layer)
         msFree(layer->iteminfo);
         layer->iteminfo = NULL;
     }
+
+     if (layer->items) {
+         for (i=0; i< layer->numitems; i++) {
+             msFree(layer->items[i]);
+         }
+         msFree(layer->items);
+         layer->items = NULL;
+         layer->numitems = 0;
+     }
+
 #else
     msSetError( MS_MISCERR, 
                 "SDE support is not available.", 
