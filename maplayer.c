@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2007/03/09 15:58:53  sdlime
+ * Cleaned up comment for msLayerWhichItems, removed any tabs in that function too.
+ *
  * Revision 1.112  2006/08/22 13:56:58  hobu
  * ssh!  comment out "tile;" which was unused and
  * causing compiler to complain
@@ -412,20 +415,18 @@ int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *meta
 /*
 ** This function builds a list of items necessary to draw or query a particular layer by
 ** examining the contents of the various xxxxitem parameters and expressions. That list is
-** then used to set the iteminfo variable. SDE is kinda special, we always need to retrieve
-** the shape column and a virtual record number column. Most sources should not have to 
-** modify this function.
+** then used to set the iteminfo variable. 
 */
 int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata) 
 {
   int i, j, rv;
   int nt=0, ne=0;
 
-  if ( ! layer->vtable) {
-      rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS) {
-            return rv;
-      }
+  if (!layer->vtable) {
+    rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS) {
+      return rv;
+    }
   }
 
   /*  */
@@ -454,8 +455,8 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     for(i=0; i<layer->numclasses; i++) {
       for(j=0; j<layer->class[i].numstyles; j++) {
         if(layer->class[i].styles[j].angleitem) nt++;
-	if(layer->class[i].styles[j].sizeitem) nt++;
-	if(layer->class[i].styles[j].rangeitem) nt++;
+        if(layer->class[i].styles[j].sizeitem) nt++;
+        if(layer->class[i].styles[j].rangeitem) nt++;
       }
     }
 
@@ -463,18 +464,18 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     if(layer->filter.type == MS_EXPRESSION) {
       ne = countChars(layer->filter.string, '[');
       if(ne > 0) {
-	layer->filter.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
-	if(!(layer->filter.items)) {
-	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	  return(MS_FAILURE);
-	}
-	layer->filter.indexes = (int *)malloc(ne*sizeof(int));
-	if(!(layer->filter.indexes)) {
-	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	  return(MS_FAILURE);
-	}
-	layer->filter.numitems = 0;
-	nt += ne;
+	      layer->filter.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
+        if(!(layer->filter.items)) {
+          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+          return(MS_FAILURE);
+        }
+        layer->filter.indexes = (int *)malloc(ne*sizeof(int));
+        if(!(layer->filter.indexes)) {
+          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+          return(MS_FAILURE);
+        }
+        layer->filter.numitems = 0;
+        nt += ne;
       }
     }
   }
@@ -490,18 +491,18 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     if(classify && layer->class[i].expression.type == MS_EXPRESSION) { 
       ne = countChars(layer->class[i].expression.string, '[');
       if(ne > 0) {
-	layer->class[i].expression.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
-	if(!(layer->class[i].expression.items)) {
-	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	  return(MS_FAILURE);
-	}
-	layer->class[i].expression.indexes = (int *)malloc(ne*sizeof(int));
-	if(!(layer->class[i].expression.indexes)) {
-	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	  return(MS_FAILURE);
-	}
-	layer->class[i].expression.numitems = 0;
-	nt += ne;
+        layer->class[i].expression.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
+        if(!(layer->class[i].expression.items)) {
+          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+          return(MS_FAILURE);
+        }
+        layer->class[i].expression.indexes = (int *)malloc(ne*sizeof(int));
+        if(!(layer->class[i].expression.indexes)) {
+          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+          return(MS_FAILURE);
+        }
+        layer->class[i].expression.numitems = 0;
+        nt += ne;
       }
     }
 
@@ -509,25 +510,25 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     if(annotate && layer->class[i].text.type == MS_EXPRESSION) { 
       ne = countChars(layer->class[i].text.string, '[');
       if(ne > 0) {
-	layer->class[i].text.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
-	if(!(layer->class[i].text.items)) {
-	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	  return(MS_FAILURE);
-	}
-	layer->class[i].text.indexes = (int *)malloc(ne*sizeof(int));
-	if(!(layer->class[i].text.indexes)) {
-	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	  return(MS_FAILURE);
-	}
-	layer->class[i].text.numitems = 0;
-	nt += ne;
+        layer->class[i].text.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
+        if(!(layer->class[i].text.items)) {
+          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+          return(MS_FAILURE);
+        }
+        layer->class[i].text.indexes = (int *)malloc(ne*sizeof(int));
+        if(!(layer->class[i].text.indexes)) {
+          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+          return(MS_FAILURE);
+        }
+        layer->class[i].text.numitems = 0;
+        nt += ne;
       }
     }
   }
 
   rv = layer->vtable->LayerCreateItems(layer, nt);
   if (rv != MS_SUCCESS) {
-      return rv;
+    return rv;
   }
 
   if(nt > 0) {
@@ -536,11 +537,11 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
       if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
 
       for(i=0; i<layer->numclasses; i++) {
-	for(j=0; j<layer->class[i].numstyles; j++) {
-	  if(layer->class[i].styles[j].angleitem) layer->class[i].styles[j].angleitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].angleitem);
-	  if(layer->class[i].styles[j].sizeitem) layer->class[i].styles[j].sizeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].sizeitem); 
-	  if(layer->class[i].styles[j].rangeitem) layer->class[i].styles[j].rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].rangeitem); 
-	}
+        for(j=0; j<layer->class[i].numstyles; j++) {
+          if(layer->class[i].styles[j].angleitem) layer->class[i].styles[j].angleitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].angleitem);
+          if(layer->class[i].styles[j].sizeitem) layer->class[i].styles[j].sizeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].sizeitem); 
+          if(layer->class[i].styles[j].rangeitem) layer->class[i].styles[j].rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].rangeitem); 
+        }
       }
 
       if(layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));      
