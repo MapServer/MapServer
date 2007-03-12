@@ -7817,6 +7817,8 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
   fi
 
   test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include"
+  test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg"
+  test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg2"
 
   test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
