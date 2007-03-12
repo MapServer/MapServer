@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2007/03/12 20:21:30  assefa
+ * Remove unused function imagepolyline.
+ *
  * Revision 1.4  2007/03/09 17:22:37  sdlime
  * Clean-up of formatting (removed tabs, standardized indentation), removed a few meaningless functions, put pLogFile checks in.
  *
@@ -531,60 +534,11 @@ private:
   shapeObj  *m_pShape;
 };
 
+
+
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int width, int offsetx, int offsety)
-{
-    int i, j;
-
-    gdImagePtr img = image->img.gd;
-  
-    mapserv_row_ptr_cache<int> *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
-  
-    if(pRowCache == NULL) {
-      fprintf(pLogFile, "imagePolyline pRowCache == NULL, extra is %08x\n", image->imageextra); 
-      return;
-    }
-  
-    pixelFormat thePixelFormat(*pRowCache);
-    
-    agg::renderer_base< pixelFormat > rbase(thePixelFormat);
-            
-    agg::rasterizer_scanline_aa<> ras;
-    agg::path_storage ps;
-    agg::conv_stroke<agg::path_storage> pg(ps);
-    agg::scanline_p8 sl;
-
-    //ren_base.reset_clipping(true);
-
-    pg.width(width);
-    //pg.generator().line_cap(agg::butt_cap);
-    pg.generator().line_cap(agg::round_cap);
-    //pg.generator().line_cap(agg::square_cap);
-    //pg.generator().line_join(agg::miter_join);
-    //pg.generator().line_join(agg::miter_join_revert);
-    //pg.generator().line_join(agg::round_join);
-    //pg.generator().line_join(agg::bevel_join);
-    //pg.generator().line_join(agg::miter_join_round);
-
-    for (i = 0; i < p->numlines; i++) {
-      ps.move_to(p->line[i].point[0].x, p->line[i].point[0].y);
-        
-      for(j=1; j<p->line[i].numpoints; j++) {
-        ps.line_to(p->line[i].point[j].x, p->line[i].point[j].y);
-      }
-    }
-
-    ras.clip_box(0,0,image->width, image->height);
-    ras.add_path(pg);
-    agg::render_scanlines_aa_solid(ras, sl, rbase, 
-                                   agg::rgba(((double) color->red) / 255.0, 
-                                             ((double) color->green) / 255.0, 
-                                             ((double) color->blue) / 255.0));
-}
-
-
-//------------------------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------------------------
-static void imagePolyline2(imageObj *image, shapeObj *p, colorObj *color, int width, int offsetx, int offsety)
 {
   int i, j;
   gdImagePtr img = image->img.gd;
