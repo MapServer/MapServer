@@ -64,6 +64,7 @@ $(MS_DLL) $(MS_LIB_DLL):	$(MS_LIB)
 	link /dll $(LDEBUG) \
 	   $(MS_OBJS) $(EXTERNAL_LIBS) \
 	   /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
+	if exist $(MS_DLL).manifest mt -manifest $(MS_DLL).manifest -outputresource:$(MS_DLL);2   
 	
 $(MS_LIB):	$(MS_OBJS)
 	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
@@ -93,6 +94,7 @@ gd::
 !ELSE
         $(LINK) $(LDFLAGS) $*.obj $(LIBS)
 !ENDIF
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 clean:
 	del *.obj
@@ -103,6 +105,7 @@ clean:
 	del *.pdb
 	del *.exp
 	del *.ilk
+	del *.manifest
 !IFDEF DOT_NET
 	cd mapscript\csharp
 	nmake /f makefile.vc clean
