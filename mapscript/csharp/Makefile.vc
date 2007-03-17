@@ -61,6 +61,7 @@ interface: ../mapscript.i
 		
 $(MAPSCRIPT_DLL): $(MAPSCRIPT_OBJS)
 	$(LINK) $(LDFLAGS) /out:$(MAPSCRIPT_DLL) $(MAPSCRIPT_OBJS) $(MS_LIBS)
+	if exist $(MAPSCRIPT_DLL).manifest mt -manifest $(MAPSCRIPT_DLL).manifest -outputresource:$(MAPSCRIPT_DLL);2
 
 $(CSHARP_DLL)::
 	$(CSC) /t:library /out:mapscript_csharp.dll *.cs
@@ -90,4 +91,5 @@ clean:
 	del *.cs
 	del *.c
 	del *.exe
+	del *.manifest
 
