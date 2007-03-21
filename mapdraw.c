@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.111  2007/03/21 04:42:46  sdlime
+ * Cleaned up formatting for msDrawMap...
+ *
  * Revision 1.110  2007/03/06 11:22:39  novak
  * First AGG commit.
  *
@@ -394,329 +397,263 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
 
 imageObj *msDrawMap(mapObj *map)
 {
-    int i;
-    layerObj *lp=NULL;
-    int status = MS_FAILURE;
-    imageObj *image = NULL;
-    struct mstimeval mapstarttime, mapendtime;
-    struct mstimeval starttime, endtime;
-    int oldAlphaBlending;  /* allows toggling of gd alpha blending (bug 490) */
+  int i;
+  layerObj *lp=NULL;
+  int status = MS_FAILURE;
+  imageObj *image = NULL;
+  struct mstimeval mapstarttime, mapendtime;
+  struct mstimeval starttime, endtime;
+  int oldAlphaBlending;  /* allows toggling of gd alpha blending (bug 490) */
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    enum MS_CONNECTION_TYPE lastconnectiontype;
-    httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
-    int numOWSRequests=0;
-    wmsParamsObj sLastWMSParams;
+  enum MS_CONNECTION_TYPE lastconnectiontype;
+  httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
+  int numOWSRequests=0;
+  wmsParamsObj sLastWMSParams;
 
-    msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
-    msInitWmsParamsObj(&sLastWMSParams);
+  msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
+  msInitWmsParamsObj(&sLastWMSParams);
 #endif
 
-    if (map->debug)
-    {
-        msGettimeofday(&mapstarttime, NULL);
-    }
+  if(map->debug) msGettimeofday(&mapstarttime, NULL);
 
-    msApplyMapConfigOptions( map );
+  msApplyMapConfigOptions(map);
+  image = msPrepareImage(map, MS_TRUE);
 
-    image = msPrepareImage(map, MS_TRUE);
-
-    if(!image) {
-        msSetError(MS_IMGERR, "Unable to initialize image.", "msDrawMap()");
+  if(!image) {
+    msSetError(MS_IMGERR, "Unable to initialize image.", "msDrawMap()");
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-        msFreeWmsParamsObj(&sLastWMSParams);
-#endif
-        return(NULL);
-    }
-
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    /* Pre-download all WMS/WFS layers in parallel before starting to draw map */
-    lastconnectiontype = MS_SHAPEFILE;
-    for(i=0; i<map->numlayers; i++) 
-    {
-        if (map->layerorder[i] == -1 || 
-            !msLayerIsVisible(map, &(map->layers[map->layerorder[i]])))
-            continue;
-
-        lp = &(map->layers[ map->layerorder[i]]);
-
-#ifdef USE_WMS_LYR
-        if (lp->connectiontype == MS_WMS)
-        {
-            if ( msPrepareWMSLayerRequest(map->layerorder[i], map, lp,
-                                          lastconnectiontype, &sLastWMSParams,
-                                          asOWSReqInfo, 
-                                          &numOWSRequests) == MS_FAILURE)
-            {
-                msFreeWmsParamsObj(&sLastWMSParams);
-                msFreeImage(image);
-                return NULL;
-            }
-        }
-#endif
-#ifdef USE_WFS_LYR
-        if (lp->connectiontype == MS_WFS)
-        {
-            if ( msPrepareWFSLayerRequest(map->layerorder[i], map, lp,
-                                          asOWSReqInfo, 
-                                          &numOWSRequests) == MS_FAILURE)
-            {
-                msFreeWmsParamsObj(&sLastWMSParams);
-                msFreeImage(image);
-                return NULL;
-            }
-        }
-#endif
-        lastconnectiontype = lp->connectiontype;
-    }
-
-#ifdef USE_WMS_LYR
     msFreeWmsParamsObj(&sLastWMSParams);
 #endif
+    return(NULL);
+  }
 
-    if (numOWSRequests && 
-        msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE)
-    {
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+  /* Pre-download all WMS/WFS layers in parallel before starting to draw map */
+  lastconnectiontype = MS_SHAPEFILE;
+  for(i=0; i<map->numlayers; i++) {
+    if(map->layerorder[i] == -1 || !msLayerIsVisible(map, &(map->layers[map->layerorder[i]])))
+      continue;
+
+    lp = &(map->layers[ map->layerorder[i]]);
+
+#ifdef USE_WMS_LYR
+    if(lp->connectiontype == MS_WMS) {
+      if(msPrepareWMSLayerRequest(map->layerorder[i], map, lp, lastconnectiontype, &sLastWMSParams, asOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
+        msFreeWmsParamsObj(&sLastWMSParams);
         msFreeImage(image);
         return NULL;
+      }
     }
+#endif
+
+#ifdef USE_WFS_LYR
+    if(lp->connectiontype == MS_WFS) {
+      if(msPrepareWFSLayerRequest(map->layerorder[i], map, lp, asOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
+        msFreeWmsParamsObj(&sLastWMSParams);
+        msFreeImage(image);
+        return NULL;
+      }
+    }
+#endif
+
+    lastconnectiontype = lp->connectiontype;
+  }
+
+#ifdef USE_WMS_LYR
+  msFreeWmsParamsObj(&sLastWMSParams);
+#endif
+
+  if(numOWSRequests && msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE) {
+    msFreeImage(image);
+    return NULL;
+  }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
 
-    /* OK, now we can start drawing */
+  /* OK, now we can start drawing */
+  for(i=0; i<map->numlayers; i++) {
 
-    for(i=0; i<map->numlayers; i++) {
+    if(map->layerorder[i] != -1) {
+      lp = &(map->layers[ map->layerorder[i]]);
 
-        if (map->layerorder[i] != -1) {
-            lp = &(map->layers[ map->layerorder[i]]);
+      if(lp->postlabelcache) /* wait to draw */
+        continue;
 
-            if(lp->postlabelcache) /* wait to draw */
-                continue;
+      if(map->debug || lp->debug ) msGettimeofday(&starttime, NULL);
 
-            if (map->debug || lp->debug )
-                msGettimeofday(&starttime, NULL);
+      if(!msLayerIsVisible(map, lp)) continue;
 
-            if (!msLayerIsVisible(map, lp))
-                continue;
-
-            if (lp->connectiontype == MS_WMS) 
-            {
+      if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR 
-                if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-                   status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
-                                               numOWSRequests, 
-                                               map, lp, image);
+        if(MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
+          status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests,  map, lp, image);
 #ifdef USE_AGG
-                 else if( MS_RENDERER_AGG(image->format) )
-                   status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
-                                           numOWSRequests, 
-                                           map, lp, image);
+        else if(MS_RENDERER_AGG(image->format))
+          status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
-
 #ifdef USE_MING_FLASH                
-                else if( MS_RENDERER_SWF(image->format) )
-                    status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, 
-                                               numOWSRequests,
-                                               map, lp, image);
+        else if(MS_RENDERER_SWF(image->format))
+          status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 #ifdef USE_PDF
-                else if( MS_RENDERER_PDF(image->format) )
-                {
-                    status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, 
-                                               numOWSRequests,
-                                               map, lp, image);
-                }
+        else if(MS_RENDERER_PDF(image->format))
+          status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
-                else
-                {
-                    msSetError(MS_WMSCONNERR, 
-                               "Output format '%s' doesn't support WMS layers.", 
-                               "msDrawMap()", image->format->name);
-                    status = MS_FAILURE;
-                }
-                if(status == MS_FAILURE) {
-                    msSetError(MS_WMSCONNERR, 
-                               "Failed to draw WMS layer named '%s'. This most likely happened because "
-                               "the remote WMS server returned an invalid image, and XML exception "
-                               "or another unexpected result in response to the GetMap request. Also check "
-                               "and make sure that the layer's connection URL is valid.",
-                               "msDrawMap()", lp->name);
-                    msFreeImage(image);
-                    return(NULL);
-                }
+        else {
+          msSetError(MS_WMSCONNERR, "Output format '%s' doesn't support WMS layers.", "msDrawMap()", image->format->name);
+          status = MS_FAILURE;
+        }
+                
+        if(status == MS_FAILURE) {
+          msSetError(MS_WMSCONNERR, 
+                     "Failed to draw WMS layer named '%s'. This most likely happened because "
+                     "the remote WMS server returned an invalid image, and XML exception "
+                     "or another unexpected result in response to the GetMap request. Also check "
+                     "and make sure that the layer's connection URL is valid.",
+                     "msDrawMap()", lp->name);
+          msFreeImage(image);
+          return(NULL);
+        }
 
 
 #else /* ndef USE_WMS_LYR */
-                msSetError(MS_WMSCONNERR, 
-                           "MapServer not built with WMS Client support, unable to render layer '%s'.", 
-                           "msDrawMap()", lp->name);
-                msFreeImage(image);
-                return(NULL);
+        msSetError(MS_WMSCONNERR, "MapServer not built with WMS Client support, unable to render layer '%s'.", "msDrawMap()", lp->name);
+        msFreeImage(image);
+        return(NULL);
 #endif
-
-            }        
-            else 
-            {
-                /* Default case: anything but WMS layers */
-
-                status = msDrawLayer(map, lp, image);
-                if(status == MS_FAILURE) {
-                    msSetError(MS_IMGERR, "Failed to draw layer named '%s'.",
-                               "msDrawMap()", lp->name);
-                    msFreeImage(image);
-                    return(NULL);
-                }
-            }
+      } else { /* Default case: anything but WMS layers */
+        status = msDrawLayer(map, lp, image);
+        if(status == MS_FAILURE) {
+          msSetError(MS_IMGERR, "Failed to draw layer named '%s'.", "msDrawMap()", lp->name);
+          msFreeImage(image);
+          return(NULL);
         }
-
-        if (map->debug || lp->debug)
-        {
-            msGettimeofday(&endtime, NULL);
-            msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
-                    map->layerorder[i], lp->name?lp->name:"(null)",
-                    (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-                    (starttime.tv_sec+starttime.tv_usec/1.0e6) );
-        }
+      }
     }
 
-    
-  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
-  {
-      /* We need to temporarily restore the original extent for drawing */
-      /* the scalebar as it uses the extent to recompute cellsize. */
-      if( map->gt.need_geotransform )
-          msMapRestoreRealExtent( map );
+    if(map->debug || lp->debug) {
+      msGettimeofday(&endtime, NULL);
+      msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
+              map->layerorder[i], lp->name?lp->name:"(null)",
+              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+    }
+  }
 
-      /* fix for bug 490 - turn on alpha blending for embedded scalebar */
-      oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-      gdImageAlphaBlending(image->img.gd, 1);
-      
-      msEmbedScalebar(map, image->img.gd); /* TODO   */
+  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache) {
 
-      /* restore original alpha blending */
-      gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
-      
-      if( map->gt.need_geotransform )
-          msMapSetFakedExtent( map );
+    /* We need to temporarily restore the original extent for drawing */
+    /* the scalebar as it uses the extent to recompute cellsize. */
+    if(map->gt.need_geotransform)
+      msMapRestoreRealExtent(map);
+
+    /* fix for bug 490 - turn on alpha blending for embedded scalebar */
+    oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+    gdImageAlphaBlending(image->img.gd, 1);
+
+    msEmbedScalebar(map, image->img.gd); /* TODO   */
+
+    /* restore original alpha blending */
+    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
+
+    if(map->gt.need_geotransform)
+      msMapSetFakedExtent(map);
   }
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
-      msEmbedLegend(map, image->img.gd);
+    msEmbedLegend(map, image->img.gd);
 
-  if (map->debug)
-      msGettimeofday(&starttime, NULL);
+  if(map->debug) msGettimeofday(&starttime, NULL);
 
-  if(msDrawLabelCache(image, map) == -1)
-  {
+  if(msDrawLabelCache(image, map) == -1) {
     msFreeImage(image);
     return(NULL);
   }
 
-  if (map->debug)
-  {
-      msGettimeofday(&endtime, NULL);
-      msDebug("msDrawMap(): Drawing Label Cache, %.3fs\n", 
-              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  if(map->debug) {
+    msGettimeofday(&endtime, NULL);
+    msDebug("msDrawMap(): Drawing Label Cache, %.3fs\n", 
+            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
-
 
   for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
 
     lp = &(map->layers[map->layerorder[i]]);
 
-    if(!lp->postlabelcache)
-      continue;
+    if(!lp->postlabelcache) continue;
+    if(!msLayerIsVisible(map, lp)) continue;
 
-    if (!msLayerIsVisible(map, lp))
-      continue;
+    if(map->debug || lp->debug) msGettimeofday(&starttime, NULL);
 
-    if (map->debug || lp->debug)
-        msGettimeofday(&starttime, NULL);
-
-    if (lp->connectiontype == MS_WMS)  
-    { 
+    if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR 
-      if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
-                                   numOWSRequests, 
-                                   map, lp, image);
-
+      if(MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
+        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
 #ifdef USE_AGG               
-      else if( MS_RENDERER_AGG(image->format))
-        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, 
-                                   numOWSRequests, 
-                                   map, lp, image);
+      else if(MS_RENDERER_AGG(image->format))
+        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
-#ifdef USE_MING_FLASH                
-      else if( MS_RENDERER_SWF(image->format) )
-        status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, numOWSRequests, 
-                                   map, lp, image);
+#ifdef USE_MING_FLASH
+      else if(MS_RENDERER_SWF(image->format) )
+        status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 #ifdef USE_PDF
-      else if( MS_RENDERER_PDF(image->format) )
-      {
-          status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, 
-                                     numOWSRequests, 
-                                     map, lp, image);
-      }
+      else if(MS_RENDERER_PDF(image->format) )
+        status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 
 #else
-	status = MS_FAILURE;
+      status = MS_FAILURE;
 #endif
-    }
-    else 
-        status = msDrawLayer(map, lp, image);
-    if(status == MS_FAILURE)
-    {
-        msFreeImage(image);
-        return(NULL);
+    } else 
+      status = msDrawLayer(map, lp, image);
+
+    if(status == MS_FAILURE) {
+      msFreeImage(image);
+      return(NULL);
     }
 
-    if (map->debug || lp->debug)
-    {
-        msGettimeofday(&endtime, NULL);
-        msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
-                map->layerorder[i], lp->name?lp->name:"(null)",
-                (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-                (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+    if(map->debug || lp->debug) {
+      msGettimeofday(&endtime, NULL);
+      msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
+              map->layerorder[i], lp->name?lp->name:"(null)",
+              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
     }
 
   }
   
   /* Do we need to fake out stuff for rotated support? */
   /* This really needs to be done on every preceeding exit point too... */
-  if( map->gt.need_geotransform )
-      msMapRestoreRealExtent( map );
+  if(map->gt.need_geotransform)
+    msMapRestoreRealExtent(map);
 
-  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
-  {
-      /* msEmbedScalebar(map, image->img.gd); //TODO */
+  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache) {
 
-      /* fix for bug 490 - turn on alpha blending for embedded scalebar */
-      oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-      gdImageAlphaBlending(image->img.gd, 1);
-      
-      msEmbedScalebar(map, image->img.gd); /* TODO   */
+    /* fix for bug 490 - turn on alpha blending for embedded scalebar */
+    oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+    gdImageAlphaBlending(image->img.gd, 1);
 
-      /* restore original alpha blending */
-      gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
+    msEmbedScalebar(map, image->img.gd); /* TODO   */
+
+    /* restore original alpha blending */
+    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
   }
 
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
-      msEmbedLegend(map, image->img.gd); /* TODO */
+    msEmbedLegend(map, image->img.gd); /* TODO */
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   /* Cleanup WMS/WFS Request stuff */
   msHTTPFreeRequestObj(asOWSReqInfo, numOWSRequests);
 #endif
 
-  if (map->debug)
-  {
-      msGettimeofday(&mapendtime, NULL);
-      msDebug("msDrawMap() total time: %.3fs\n", 
-              (mapendtime.tv_sec+mapendtime.tv_usec/1.0e6)-
-              (mapstarttime.tv_sec+mapstarttime.tv_usec/1.0e6) );
+  if(map->debug) {
+    msGettimeofday(&mapendtime, NULL);
+    msDebug("msDrawMap() total time: %.3fs\n", 
+            (mapendtime.tv_sec+mapendtime.tv_usec/1.0e6)-
+            (mapstarttime.tv_sec+mapstarttime.tv_usec/1.0e6) );
   }
 
   return(image);
