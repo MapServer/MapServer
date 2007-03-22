@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.112  2007/03/22 04:40:24  sdlime
+ * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
+ *
  * Revision 1.111  2007/03/21 04:42:46  sdlime
  * Cleaned up formatting for msDrawMap...
  *
@@ -391,11 +394,12 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
 
 /*
  * Generic function to render the map file.
- * The type of the image created is based on the
- * imagetype parameter in the map file.
+ * The type of the image created is based on the imagetype parameter in the map file.
+ *
+ * mapObj *map - map object loaded in MapScript or via a mapfile to use
+ * int querymap - is this map the result of a query operation, MS_TRUE|MS_FALSE 
 */
-
-imageObj *msDrawMap(mapObj *map)
+imageObj *msDrawMap(mapObj *map, int querymap)
 {
   int i;
   layerObj *lp=NULL;
@@ -416,6 +420,12 @@ imageObj *msDrawMap(mapObj *map)
 #endif
 
   if(map->debug) msGettimeofday(&mapstarttime, NULL);
+
+  if(querymap) { /* use queryMapObj image dimensions */
+    if(map->querymap.width != -1) map->width = map->querymap.width;
+    if(map->querymap.height != -1) map->height = map->querymap.height;
+    if(map->querymap.style == MS_NORMAL) querymap = MS_FALSE; /* draw as normal */
+  }
 
   msApplyMapConfigOptions(map);
   image = msPrepareImage(map, MS_TRUE);
@@ -522,7 +532,10 @@ imageObj *msDrawMap(mapObj *map)
         return(NULL);
 #endif
       } else { /* Default case: anything but WMS layers */
-        status = msDrawLayer(map, lp, image);
+        if(querymap)
+          status = msDrawQueryLayer(map, lp, image);
+        else
+          status = msDrawLayer(map, lp, image);
         if(status == MS_FAILURE) {
           msSetError(MS_IMGERR, "Failed to draw layer named '%s'.", "msDrawMap()", lp->name);
           msFreeImage(image);
@@ -606,8 +619,12 @@ imageObj *msDrawMap(mapObj *map)
 #else
       status = MS_FAILURE;
 #endif
-    } else 
-      status = msDrawLayer(map, lp, image);
+    } else {
+      if(querymap)
+        status = msDrawQueryLayer(map, lp, image);
+      else
+        status = msDrawLayer(map, lp, image);
+    }
 
     if(status == MS_FAILURE) {
       msFreeImage(image);
@@ -655,96 +672,6 @@ imageObj *msDrawMap(mapObj *map)
             (mapendtime.tv_sec+mapendtime.tv_usec/1.0e6)-
             (mapstarttime.tv_sec+mapstarttime.tv_usec/1.0e6) );
   }
-
-  return(image);
-}
-
-/**
- * Utility method to render the query map.
- */
-imageObj *msDrawQueryMap(mapObj *map)
-{
-  int i, status;
-  imageObj *image = NULL;
-  layerObj *lp=NULL;
-
-  if(map->querymap.width != -1) map->width = map->querymap.width;
-  if(map->querymap.height != -1) map->height = map->querymap.height;
-
-  if(map->querymap.style == MS_NORMAL) return(msDrawMap(map)); /* no need to do anything fancy */
-
-  if(map->width == -1 || map->height == -1) {
-    msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawQueryMap()");
-    return(NULL);
-  }
-
-  msInitLabelCache(&(map->labelcache)); /* this clears any previously allocated cache */
-
-  if( MS_RENDERER_GD(map->outputformat) )
-  {
-      image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);      
-      if( image != NULL ) msImageInitGD( image, &map->imagecolor );
-  }
-#ifdef USE_AGG
-  else if( MS_RENDERER_AGG(map->outputformat) )
-  {
-      image = msImageCreateAGG(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);      
-      if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
-  }
-#endif  
-  if(!image) {
-    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawQueryMap()");
-    return(NULL);
-  }
-
-  map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
-  if(status != MS_SUCCESS) return(NULL);
-
-  /* compute layer scale factors now */
-  for(i=0;i<map->numlayers; i++) {
-    if(map->layers[i].sizeunits != MS_PIXELS)
-      map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
-    else if(map->layers[i].symbolscale > 0 && map->scale > 0)
-      map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
-    else
-      map->layers[i].scalefactor = 1;
-  }
-
-  for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[ map->layerorder[i]]);
-
-    if(lp->postlabelcache) /* wait to draw */
-      continue;
-
-    status = msDrawQueryLayer(map, lp, image); 
-    if(status != MS_SUCCESS) return(NULL);
-  }
-
-  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
-      msEmbedScalebar(map, image->img.gd); /* TODO */
-
-  if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
-      msEmbedLegend(map, image->img.gd); /* TODO */
-
-  if(msDrawLabelCache(image, map) == -1) /* TODO */
-    return(NULL);
-
-  for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
-    lp = &(map->layers[ map->layerorder[i]]);
-
-    if(!lp->postlabelcache)
-      continue;
-
-    status = msDrawQueryLayer(map, lp, image); /* TODO */
-    if(status != MS_SUCCESS) return(NULL);
-  }
-
-  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
-      msEmbedScalebar(map, image->img.gd); /* TODO */
-
-  if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
-      msEmbedLegend(map, image->img.gd); /* TODO */
 
   return(image);
 }

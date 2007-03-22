@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.125  2007/03/22 04:40:24  sdlime
+ * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
+ *
  * Revision 1.124  2006/12/19 18:58:05  sdlime
  * Fixed templating code to respect msJoinConnect return values for URL templates. (bug 1989)
  *
@@ -279,24 +282,21 @@ int checkWebScale(mapservObj *msObj)
 }
 
 
-int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,
-                          char **papszBuffer)
+int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, char **papszBuffer)
 {
-    imageObj *img = NULL;
-    int status;
-    char buffer[1024];
+  imageObj *img = NULL;
+  int status;
+  char buffer[1024];
 
-   if (!pszMimeType)
-   {
+   if (!pszMimeType) {
       msSetError(MS_WEBERR, "Mime type not specified.", "msReturnTemplateQuery()");
       return MS_FAILURE;
    }
    
-   if(msObj->Map->querymap.status)
-   {
+   if(msObj->Map->querymap.status) {
       checkWebScale(msObj);
 
-      img = msDrawQueryMap(msObj->Map);
+      img = msDrawMap(msObj->Map, MS_TRUE);
       if(!img) return MS_FAILURE;
 
       snprintf(buffer, 1024, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
@@ -3423,9 +3423,9 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
     if(msObj->Map->status == MS_ON) {
       imageObj *image = NULL;
       if(szQuery)
-        image = msDrawQueryMap(msObj->Map);
+        image = msDrawMap(msObj->Map, MS_TRUE);
       else
-        image = msDrawMap(msObj->Map);
+        image = msDrawMap(msObj->Map, MS_FALSE);
 
       if(image) { 
         sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2007/03/22 04:40:25  sdlime
+ * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
+ *
  * Revision 1.7  2005/06/14 16:03:35  dan
  * Updated copyright date to 2005
  *
@@ -178,18 +181,10 @@ int main(int argc, char *argv[])
      }
   }
 
-  /*img = msDrawMap(map);
-  if(!img) {
-    msWriteError(stderr);
-    exit(0);
-  }*/
-
-  /*msSaveImage(img, outfile, map->imagetype, map->transparent, map->interlace, map->imagequality);
-
   gdImageDestroy(img);*/
   map->height = PagePixelHeight-(2*PagePixelMargin);
   map->width = PagePixelWidth-(2*PagePixelMargin);
-  image = msDrawMap(map);
+  image = msDrawMap(map, MS_FALSE);
   msSaveImage(map, image, outfile);
     
   msFreeMap(map);

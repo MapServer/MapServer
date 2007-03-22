@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.104  2007/03/22 04:40:25  sdlime
+ * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
+ *
  * Revision 1.103  2006/12/13 16:41:15  dan
  * Added shapeObj.getLabelPoint() (bug 1979)
  *
@@ -209,11 +212,11 @@ imageObj *mapObj_prepareImage(mapObj* self) {
   }
 
 imageObj *mapObj_draw(mapObj* self) {
-    return msDrawMap(self);
+    return msDrawMap(self, MS_FALSE);
   }
 
 imageObj *mapObj_drawQuery(mapObj* self) {
-    return msDrawQueryMap(self);
+    return msDrawQueryMap(self, MS_TRUE);
   }
 
 imageObj *mapObj_drawLegend(mapObj* self) {

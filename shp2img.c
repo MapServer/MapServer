@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2007/03/22 04:40:25  sdlime
+ * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
+ *
  * Revision 1.20  2006/05/12 20:59:07  frank
  * Removed -t switch, it doesn't work.
  *
@@ -228,7 +231,7 @@ int main(int argc, char *argv[])
      }
   }
 
-  image = msDrawMap(map);
+  image = msDrawMap(map, MS_FALSE);
 
   if(!image) {
     msWriteError(stderr);

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.183  2007/03/22 04:40:25  sdlime
+ * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
+ *
  * Revision 1.182  2007/02/13 04:39:07  frank
  * ensure that error stack is cleared after issing exceptions (bug 2025)
  *
@@ -2206,7 +2209,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
 
   }
   else
-    img = msDrawMap(map);
+    img = msDrawMap(map, MS_FALSE);
   if (img == NULL)
       return msWMSException(map, nVersion, NULL);
 

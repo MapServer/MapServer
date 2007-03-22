@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.474  2007/03/22 04:40:24  sdlime
+ * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
+ *
  * Revision 1.473  2007/03/06 11:22:39  novak
  * First AGG commit.
  *
@@ -1698,8 +1701,7 @@ MS_DLL_EXPORT void msClearQueryMapPenValues(queryMapObj *querymap);
 MS_DLL_EXPORT void msClearPenValues(mapObj *map);
 
 MS_DLL_EXPORT imageObj *msPrepareImage(mapObj *map, int allow_nonsquare);
-MS_DLL_EXPORT imageObj *msDrawMap(mapObj *map);
-MS_DLL_EXPORT imageObj *msDrawQueryMap(mapObj *map);
+MS_DLL_EXPORT imageObj *msDrawMap(mapObj *map, int querymap);
 MS_DLL_EXPORT int msLayerIsVisible(mapObj *map, layerObj *layer);
 MS_DLL_EXPORT int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image);

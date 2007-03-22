@@ -165,12 +165,12 @@
 
   %newobject draw;
   imageObj *draw() {
-    return msDrawMap(self);
+    return msDrawMap(self, MS_FALSE);
   }
 
   %newobject drawQuery;
   imageObj *drawQuery() {
-    return msDrawQueryMap(self);
+    return msDrawMap(self, MS_TRUE);
   }
 
   %newobject drawLegend;
