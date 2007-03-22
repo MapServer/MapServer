@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.141  2007/03/22 06:03:21  sdlime
+ * Cleaned up formating for a couple of msImageSave...GD functions.
+ *
  * Revision 1.140  2007/02/13 16:46:17  sdlime
  * Removed busted code in mapgd.c that attempted to draw thick text outlines.
  *
@@ -3544,106 +3547,79 @@ int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
    ======================================================================== */
 int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 {
+  if( format->imagemode == MS_IMAGEMODE_RGBA )
+    gdImageSaveAlpha( img, 1 );
+  else if( format->imagemode == MS_IMAGEMODE_RGB )
+    gdImageSaveAlpha( img, 0 );
 
-    if ( format->imagemode == MS_IMAGEMODE_RGBA )
-        gdImageSaveAlpha( img, 1 );
-    else if ( format->imagemode == MS_IMAGEMODE_RGB )
-        gdImageSaveAlpha( img, 0 );
+  if( strcasecmp("ON", msGetOutputFormatOption( format, "INTERLACE", "ON" )) == 0 )
+    gdImageInterlace(img, 1);
 
-    if ( strcasecmp("ON", msGetOutputFormatOption( format, "INTERLACE", "ON" )) == 0 )
-        gdImageInterlace(img, 1);
+  if(format->transparent)
+    gdImageColorTransparent(img, 0);
 
-    if (format->transparent)
-        gdImageColorTransparent(img, 0);
-
-    if ( strcasecmp(format->driver,"gd/gif") == 0 )
-    {
+  if( strcasecmp(format->driver,"gd/gif") == 0 ) {
 #ifdef USE_GD_GIF
-        gdImageGifCtx( img, ctx );
+    gdImageGifCtx( img, ctx );
 #else
-        msSetError(MS_MISCERR, "GIF output is not available.",
-                   "msSaveImageGDCtx()");
-        return(MS_FAILURE);
+    msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImageGDCtx()");
+    return(MS_FAILURE);
 #endif
-    }
-    else if ( strcasecmp(format->driver,"gd/png") == 0 )
-    {
+  } else if( strcasecmp(format->driver,"gd/png") == 0 ) {
 #ifdef USE_GD_PNG
-        int force_pc256 = MS_FALSE;
+    int force_pc256 = MS_FALSE;
 
-        if( format->imagemode == MS_IMAGEMODE_RGB 
-            || format->imagemode == MS_IMAGEMODE_RGBA )
-        {
-            const char *force_string = 
-                msGetOutputFormatOption( format, "QUANTIZE_FORCE", "OFF" );
+    if( format->imagemode == MS_IMAGEMODE_RGB  || format->imagemode == MS_IMAGEMODE_RGBA ) {
+      const char *force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", "OFF" );
 
-            if( strcasecmp(force_string,"on") == 0 
-                || strcasecmp(force_string,"yes") == 0 
-                || strcasecmp(force_string,"true") == 0 )
-                force_pc256 = MS_TRUE;
-        }
+      if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
+        force_pc256 = MS_TRUE;
+    }
 
-        if( force_pc256 )
-        {
-            gdImagePtr gdPImg;
-            int dither, i;
-            int colorsWanted = 
-                atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
-            const char *dither_string = 
-                msGetOutputFormatOption( format, "QUANTIZE_DITHER", "YES");
+    if( force_pc256 ) {
+      gdImagePtr gdPImg;
+      int dither, i;
+      int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
+      const char *dither_string = msGetOutputFormatOption( format, "QUANTIZE_DITHER", "YES");
 
-            if( strcasecmp(dither_string,"on") == 0 
-                || strcasecmp(dither_string,"yes") == 0 
-                || strcasecmp(dither_string,"true") == 0 )
-                dither = 1;
-            else
-                dither = 0;
+      if( strcasecmp(dither_string,"on") == 0 || strcasecmp(dither_string,"yes") == 0 || strcasecmp(dither_string,"true") == 0 )
+        dither = 1;
+      else
+        dither = 0;
                    
-            gdPImg = gdImageCreatePaletteFromTrueColor(img,dither,colorsWanted);
-            /* It seems there is a bug in gd 2.0.33 and earlier that leaves the 
-               colors open[] flag set to one. */
-            for( i = 0; i < gdPImg->colorsTotal; i++ )
-                gdPImg->open[i] = 0;
-            gdImagePngCtx( gdPImg, ctx );
-            gdImageDestroy( gdPImg );
-        }
-        else
-            gdImagePngCtx( img, ctx );
+      gdPImg = gdImageCreatePaletteFromTrueColor(img,dither,colorsWanted);
+      /* It seems there is a bug in gd 2.0.33 and earlier that leaves the 
+         colors open[] flag set to one. */
+      for( i = 0; i < gdPImg->colorsTotal; i++ )
+        gdPImg->open[i] = 0;
+      gdImagePngCtx( gdPImg, ctx );
+      gdImageDestroy( gdPImg );
+    } else
+      gdImagePngCtx( img, ctx );
 #else
-        msSetError(MS_MISCERR, "PNG output is not available.",
-                   "msSaveImageGDCtx()");
-        return(MS_FAILURE);
+    msSetError(MS_MISCERR, "PNG output is not available.", "msSaveImageGDCtx()");
+    return(MS_FAILURE);
 #endif
-    }
-    else if ( strcasecmp(format->driver,"gd/jpeg") == 0 )
-    {
+  } else if( strcasecmp(format->driver,"gd/jpeg") == 0 ) {
 #ifdef USE_GD_JPEG
-        gdImageJpegCtx(img, ctx, 
-                       atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+    gdImageJpegCtx(img, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
 #else
-        msSetError(MS_MISCERR, "JPEG output is not available.", 
-                   "msSaveImageGDCtx()");
-        return(MS_FAILURE);
+    msSetError(MS_MISCERR, "JPEG output is not available.", "msSaveImageGDCtx()");
+    return(MS_FAILURE);
 #endif
-    }
-    else if ( strcasecmp(format->driver,"gd/wbmp") == 0 )
-    {
+  } else if( strcasecmp(format->driver,"gd/wbmp") == 0 ) {
 #ifdef USE_GD_WBMP
-        gdImageWBMPCtx(img, 1, ctx);
+    gdImageWBMPCtx(img, 1, ctx);
 #else
-        msSetError(MS_MISCERR, "WBMP output is not available.",
-                   "msSaveImageGDCtx()");
-        return(MS_FAILURE);
+    msSetError(MS_MISCERR, "WBMP output is not available.", "msSaveImageGDCtx()");
+    return(MS_FAILURE);
 #endif
-    }
-    else
-    {
-        msSetError(MS_MISCERR, "Unknown output image type driver: %s.", 
-                   "msSaveImageGDCtx()", format->driver );
-        return(MS_FAILURE);
-    }
+  } else {
+    msSetError(MS_MISCERR, "Unknown output image type driver: %s.", "msSaveImageGDCtx()", format->driver );
+    return(MS_FAILURE);
+  }
 
-    return(MS_SUCCESS);
+  return(MS_SUCCESS);
 }
 
 /* ===========================================================================
@@ -3655,63 +3631,55 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
    The returned buffer is owned by the caller. It should be freed with gdFree()
    ======================================================================== */
 
-unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr,
-                                   outputFormatObj *format)
+unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatObj *format)
 {
-    unsigned char *imgbytes;
+  unsigned char *imgbytes;
     
-    if (format->imagemode == MS_IMAGEMODE_RGBA) 
-        gdImageSaveAlpha(img, 1);
-    else if (format->imagemode == MS_IMAGEMODE_RGB)
-        gdImageSaveAlpha(img, 0);
+  if(format->imagemode == MS_IMAGEMODE_RGBA) 
+    gdImageSaveAlpha(img, 1);
+  else if(format->imagemode == MS_IMAGEMODE_RGB)
+    gdImageSaveAlpha(img, 0);
 
-    if (strcasecmp("ON", 
-        msGetOutputFormatOption(format, "INTERLACE", "ON" )) == 0) 
-        gdImageInterlace(img, 1);
+  if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON" )) == 0) 
+    gdImageInterlace(img, 1);
 
-    if (format->transparent)
-        gdImageColorTransparent(img, 0);
+  if(format->transparent)
+    gdImageColorTransparent(img, 0);
 
-    if (strcasecmp(format->driver, "gd/gif") == 0) {
+  if(strcasecmp(format->driver, "gd/gif") == 0) {
 #ifdef USE_GD_GIF
-        imgbytes = gdImageGifPtr(img, size_ptr);
+    imgbytes = gdImageGifPtr(img, size_ptr);
 #else
-        msSetError(MS_IMGERR, "GIF output is not available.", 
-                   "msSaveImageBufferGD()");
-        return NULL;
+    msSetError(MS_IMGERR, "GIF output is not available.", "msSaveImageBufferGD()");
+    return NULL;
 #endif
-    } else if (strcasecmp(format->driver, "gd/png") == 0) {
+  } else if (strcasecmp(format->driver, "gd/png") == 0) {
 #ifdef USE_GD_PNG
-        imgbytes = gdImagePngPtr(img, size_ptr);
+    imgbytes = gdImagePngPtr(img, size_ptr);
 #else
-        msSetError(MS_IMGERR, "PNG output is not available.", 
-                   "msSaveImageBufferGD()");
-        return NULL;
+    msSetError(MS_IMGERR, "PNG output is not available.", "msSaveImageBufferGD()");
+    return NULL;
 #endif
-    } else if (strcasecmp(format->driver, "gd/jpeg") == 0) {
+  } else if (strcasecmp(format->driver, "gd/jpeg") == 0) {
 #ifdef USE_GD_JPEG
-        imgbytes = gdImageJpegPtr(img, size_ptr, 
-            atoi(msGetOutputFormatOption(format, "QUALITY", "75" )));
+    imgbytes = gdImageJpegPtr(img, size_ptr, atoi(msGetOutputFormatOption(format, "QUALITY", "75" )));
 #else
-        msSetError(MS_IMGERR, "JPEG output is not available.", 
-                   "msSaveImageBufferGD()");
-        return NULL;
+    msSetError(MS_IMGERR, "JPEG output is not available.", "msSaveImageBufferGD()");
+    return NULL;
 #endif
-    } else if (strcasecmp(format->driver, "gd/wbmp") == 0) {
+  } else if (strcasecmp(format->driver, "gd/wbmp") == 0) {
 #ifdef USE_GD_WBMP
-        imgbytes = gdImageWBMPPtr(img, size_ptr, 1);
+    imgbytes = gdImageWBMPPtr(img, size_ptr, 1);
 #else
-        msSetError(MS_IMGERR, "WBMP output is not available.", 
-                  "msSaveImageBufferGD()");
-        return NULL;
+    msSetError(MS_IMGERR, "WBMP output is not available.", "msSaveImageBufferGD()");
+    return NULL;
 #endif
-    } else {
-        msSetError(MS_IMGERR, "Unknown output image type driver: %s.", 
-                   "msSaveImageBufferGD()", format->driver );
-        return NULL;
-    } 
+  } else {
+    msSetError(MS_IMGERR, "Unknown output image type driver: %s.", "msSaveImageBufferGD()", format->driver );
+    return NULL;
+  } 
 
-    return imgbytes;
+  return imgbytes;
 }
 
 
