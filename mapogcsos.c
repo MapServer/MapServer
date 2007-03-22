@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2007/03/22 20:18:09  assefa
+ * Ignore procedures that are repeated (bug 2050).
+ *
  * Revision 1.19  2007/03/22 15:12:38  assefa
  * Add support for procedure_item (Bug 2050)
  *
@@ -156,6 +159,20 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
     return MS_FAILURE;
 }
 
+static int _IsInList(char **papsProcedures, int nDistinctProcedures, char *pszProcedure)
+{
+    int i = 0;
+    if (papsProcedures && nDistinctProcedures > 0 && pszProcedure)
+    {
+        for (i=0; i<nDistinctProcedures; i++)
+        {
+            if (papsProcedures[i] && strcmp(papsProcedures[i], pszProcedure) == 0)
+              return 1;
+        }
+    }
+
+    return 0;
+}
 
 /************************************************************************/
 /*                        msSOSAddMetadataChildNode                     */
@@ -267,6 +284,8 @@ xmlNodePtr msSOSAddOperationNode(xmlNodePtr psParent, const char *pszName,
                                    BAD_CAST pszName, NULL);
         xmlSetNs(psReturnNode,  xmlNewNs(psReturnNode, BAD_CAST "http://www.opengis.net/ows",  BAD_CAST "ows"));
         psNode = xmlNewChild(psReturnNode, NULL, BAD_CAST "DCP", NULL);
+        /*TODO not need to set the nae space (NULL == inherits from parent). This was a bug in 
+          earlier version of libxml but works in version 2-2.6.23 */
         //xmlSetNs(psNode,  xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
         psNode = xmlNewChild(psNode, NULL, BAD_CAST "HTTP", NULL);
         //xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
@@ -945,7 +964,12 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
    
     xmlNsPtr psNs = NULL;
 
-    
+    char **papsProcedures = NULL;
+    int nDistinctProcedures =0;
+
+     FILE *stream=NULL;
+    FILE *ttt=NULL;
+
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "Capabilities");
@@ -1197,6 +1221,14 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                  }
 
                                  /*for each selected feature, grab the value of the prodedire_item*/
+                                 /* do not duplicate sensor ids if they are the same */
+
+                                 /*keep list of distinct procedures*/
+                                 papsProcedures = (char **)malloc(sizeof(char *) * lpTmp->resultcache->numresults);
+                                 nDistinctProcedures = 0;
+                                 for(k=0; k<lpTmp->resultcache->numresults; k++)
+                                   papsProcedures[k] = NULL;
+
                                  for(k=0; k<lpTmp->resultcache->numresults; k++)
                                  {      
                                       msInitShape(&sShape);     
@@ -1209,21 +1241,32 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                        if (sShape.values[iItemPosition])
                                        {
                                            pszProcedure = strcatalloc(pszProcedure, sShape.values[iItemPosition]);
-                                           sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
-                                           pszTmp = strcatalloc(pszTmp, szTmp);
-                                           pszTmp = strcatalloc(pszTmp, pszProcedure);
+                                           if (!_IsInList(papsProcedures, nDistinctProcedures, pszProcedure))
+                                           {
+                                               papsProcedures[nDistinctProcedures] = strdup(pszProcedure);
+                                               nDistinctProcedures++;
+                                               sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                                               pszTmp = strcatalloc(pszTmp, szTmp);
+                                               pszTmp = strcatalloc(pszTmp, pszProcedure);
 
-                                           psNode = 
-                                             xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
-                                           xmlNewNsProp(psNode,
-                                                        xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                                                 BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
-                                           msFree(pszTmp);
-                                           pszTmp = NULL;
+                                               psNode = 
+                                               xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
+                                               xmlNewNsProp(psNode,
+                                                            xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
+                                                                     BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+                                               msFree(pszTmp);
+                                               pszTmp = NULL;
+                                               
+                                           }
                                            msFree(pszProcedure);
                                            pszProcedure = NULL;
                                        } 
                                  }
+                                 for(k=0; k<lpTmp->resultcache->numresults; k++)
+                                   if (papsProcedures[k] != NULL)
+                                     msFree(papsProcedures[k]);
+                                 msFree(papsProcedures);
+                                  
                                  
                              }
                              else
@@ -1351,6 +1394,11 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
     /*xmlSaveFile("c:/msapps/reseau_sos/test.xml",psDoc);*/
 
+     if ( msIO_needBinaryStdout() == MS_FAILURE )
+       return MS_FAILURE;
+     
+     //stream = stdout;
+     stream = fopen("c:/temp/sos_test.xml", "w");
      msIO_printf("Content-type: text/xml%c%c",10,10);
     
     /*TODO* : check the encoding validity. Internally libxml2 uses UTF-8
@@ -1359,8 +1407,13 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                              "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                              "ISO-8859-1");
     */
-    xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     
+     /* this crashs ??? */
+     /*xmlDocDump(stream, psDoc);*/
     
+    
+
     nSize = sizeof(workbuffer);
     nSize = nSize-1; /* the last character for the '\0' */
     if (size > nSize)
@@ -1398,7 +1451,9 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      */
     xmlCleanupParser();
 
+
     return(MS_SUCCESS);
+
     
 
 
