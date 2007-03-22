@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2007/03/22 13:14:45  tkralidi
+ * closed off incomplete comment around /*gdImageDestroy(img);*/
+ *
  * Revision 1.8  2007/03/22 04:40:25  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
  *
@@ -181,7 +184,7 @@ int main(int argc, char *argv[])
      }
   }
 
-  gdImageDestroy(img);*/
+  /*gdImageDestroy(img);*/
   map->height = PagePixelHeight-(2*PagePixelMargin);
   map->width = PagePixelWidth-(2*PagePixelMargin);
   image = msDrawMap(map, MS_FALSE);
