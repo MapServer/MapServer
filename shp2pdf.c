@@ -27,8 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2007/03/22 13:51:44  tkralidi
+ * stripped comment tags from last commit comment
+ *
  * Revision 1.9  2007/03/22 13:14:45  tkralidi
- * closed off incomplete comment around /*gdImageDestroy(img);*/
+ * closed off incomplete comment around gdImageDestroy(img);
  *
  * Revision 1.8  2007/03/22 04:40:25  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
