@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2007/03/22 15:12:38  assefa
+ * Add support for procedure_item (Bug 2050)
+ *
  * Revision 1.18  2007/02/13 04:39:07  frank
  * ensure that error stack is cleared after issing exceptions (bug 2025)
  *
@@ -264,9 +267,9 @@ xmlNodePtr msSOSAddOperationNode(xmlNodePtr psParent, const char *pszName,
                                    BAD_CAST pszName, NULL);
         xmlSetNs(psReturnNode,  xmlNewNs(psReturnNode, BAD_CAST "http://www.opengis.net/ows",  BAD_CAST "ows"));
         psNode = xmlNewChild(psReturnNode, NULL, BAD_CAST "DCP", NULL);
-        xmlSetNs(psNode,  xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+        //xmlSetNs(psNode,  xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
         psNode = xmlNewChild(psNode, NULL, BAD_CAST "HTTP", NULL);
-        xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+        //xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
         if (pszGetURL)
         {
             psChildNode = 
@@ -917,9 +920,10 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     char *script_url=NULL, *script_url_encoded=NULL;
 
     int i,j,k;
-    layerObj *lp = NULL;
+    layerObj *lp = NULL, *lpTmp = NULL;
     const char *value = NULL;
     char *pszTmp = NULL;
+    char *pszProcedure = NULL;
     char szTmp[256]; 
 
      /* array of offering */
@@ -931,11 +935,16 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     char workbuffer[5000];
     int nSize = 0;
     int iIndice = 0;
- 
+    int iItemPosition = -1;
+    shapeObj sShape;
+    int status;
+
      /* for each layer it indicates the indice to be used in papsOfferings
         (to associate it with the offering) */
     int *panOfferingLayers = NULL;
-    
+   
+    xmlNsPtr psNs = NULL;
+
     
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
@@ -980,10 +989,11 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
         return msSOSException(map, "NoApplicableCode", "NoApplicableCode");
     }
 
+    psNs =  xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
     psMainNode = xmlNewChild(psRootNode,
-                             NULL,
+                             psNs,
                              BAD_CAST "OperationsMetadata", NULL);       
-    xmlSetNs(psMainNode,  xmlNewNs(psMainNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+    //xmlSetNs(psMainNode,  xmlNewNs(psMainNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
 
     /*get capabilities */
     psNode = msSOSAddOperationNode(psMainNode, "GetCapabilities",
@@ -1152,22 +1162,96 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  {
                      if (panOfferingLayers[j] == i)
                      {
+                         /* if a procedure_item is used, it means that the procedure (or sensor)
+                            need to be extracted from the data. Thus we need to query the layer
+                            and get the values from each feature */
                          value = msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
-                                             "procedure");
+                                             "procedure_item");
                          if (value)
-                         {      
-                             /*TODO review the urn output */
-                             sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
-                             pszTmp = strcatalloc(pszTmp, szTmp);
-                             pszTmp = strcatalloc(pszTmp, (char *)value);
+                         {
+                             lpTmp = &map->layers[j];
+                             if (lpTmp->template == NULL)
+                               lpTmp->template = strcatalloc(lpTmp->template, "ttt");
+                             msQueryByRect(map, j, map->extent);
 
-                             psNode = 
-                               xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
-                             xmlNewNsProp(psNode,
-                                          xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                                   BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
-                             msFree(pszTmp);
-                             pszTmp = NULL;
+                             /*check if the attribute specified in the procedure_item is available
+                               on the layer*/
+                             iItemPosition = -1;
+                             if (msLayerOpen(lpTmp) == MS_SUCCESS && 
+                                 msLayerGetItems(lpTmp) == MS_SUCCESS &&
+                                 lpTmp->resultcache && lpTmp->resultcache->numresults > 0)
+                             {
+                                 for(k=0; k<lpTmp->numitems; k++) 
+                                 {
+                                     if (strcasecmp(lpTmp->items[k], value) == 0)
+                                     {
+                                         iItemPosition = k;
+                                         break;
+                                     }
+                                 }
+                                 if (iItemPosition == -1)
+                                 {
+                                     msSetError(MS_SOSERR, "procedure_item %s could not be found on the layer %s",
+                                    "msSOSGetCapabilities()", value, lpTmp->name);
+                                     return msSOSException(map, "procedure_item", "InvalidValue");
+                                 }
+
+                                 /*for each selected feature, grab the value of the prodedire_item*/
+                                 for(k=0; k<lpTmp->resultcache->numresults; k++)
+                                 {      
+                                      msInitShape(&sShape);     
+                                      status = msLayerGetShape(lp, &sShape, 
+                                                               lpTmp->resultcache->results[k].tileindex, 
+                                                               lpTmp->resultcache->results[k].shapeindex);
+                                       if(status != MS_SUCCESS) 
+                                         continue;
+
+                                       if (sShape.values[iItemPosition])
+                                       {
+                                           pszProcedure = strcatalloc(pszProcedure, sShape.values[iItemPosition]);
+                                           sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                                           pszTmp = strcatalloc(pszTmp, szTmp);
+                                           pszTmp = strcatalloc(pszTmp, pszProcedure);
+
+                                           psNode = 
+                                             xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
+                                           xmlNewNsProp(psNode,
+                                                        xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
+                                                                 BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+                                           msFree(pszTmp);
+                                           pszTmp = NULL;
+                                           msFree(pszProcedure);
+                                           pszProcedure = NULL;
+                                       } 
+                                 }
+                                 
+                             }
+                             else
+                             {  
+                                 msSetError(MS_SOSERR, "procedure_item %s could not be found on the layer %s",
+                                            "msSOSGetCapabilities()", value, lpTmp->name);
+                                 return msSOSException(map, "procedure_item", "InvalidValue");
+                             }
+                         }
+                         else
+                         {
+                             value = msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
+                                                         "procedure");
+                             if (value)
+                             {      
+                                 /*TODO review the urn output */
+                                 sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                                 pszTmp = strcatalloc(pszTmp, szTmp);
+                                 pszTmp = strcatalloc(pszTmp, (char *)value);
+
+                                 psNode = 
+                                   xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
+                                 xmlNewNsProp(psNode,
+                                              xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
+                                                       BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+                                 msFree(pszTmp);
+                                 pszTmp = NULL;
+                             }
                          }
                      }
                  }
