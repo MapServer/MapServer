@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2007/03/23 15:26:29  assefa
+ * Add possiblity to do variable substitution on describesensor_url (bug 2051)
+ *
  * Revision 1.20  2007/03/22 20:18:09  assefa
  * Ignore procedures that are repeated (bug 2050).
  *
@@ -254,7 +257,7 @@ void msSOSAddOperationParametersNode(xmlNodePtr psParent, const char *pszName,
     if (psParent && pszName)
     {
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "Parameter", NULL);
-        xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows",  BAD_CAST "ows"));
+
 
         xmlNewProp(psNode, BAD_CAST "name", BAD_CAST pszName);
         if (bRequired)
@@ -265,7 +268,7 @@ void msSOSAddOperationParametersNode(xmlNodePtr psParent, const char *pszName,
         if (pszValue)
         {
             psNode = xmlNewChild(psNode, NULL, BAD_CAST "Value", BAD_CAST pszValue);
-            xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+
         }
     }
 }
@@ -282,18 +285,16 @@ xmlNodePtr msSOSAddOperationNode(xmlNodePtr psParent, const char *pszName,
         psReturnNode = xmlNewChild(psParent, 
                                    NULL, 
                                    BAD_CAST pszName, NULL);
-        xmlSetNs(psReturnNode,  xmlNewNs(psReturnNode, BAD_CAST "http://www.opengis.net/ows",  BAD_CAST "ows"));
         psNode = xmlNewChild(psReturnNode, NULL, BAD_CAST "DCP", NULL);
-        /*TODO not need to set the nae space (NULL == inherits from parent). This was a bug in 
+        /*TODO (cleanup): no need to set the nae space (NULL == inherits from parent). This was a bug in 
           earlier version of libxml but works in version 2-2.6.23 */
-        //xmlSetNs(psNode,  xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+        /*xmlSetNs(psNode,  xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));*/
         psNode = xmlNewChild(psNode, NULL, BAD_CAST "HTTP", NULL);
-        //xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+
         if (pszGetURL)
         {
             psChildNode = 
-              xmlNewChild(psNode, 
-                          xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows",BAD_CAST "ows"), 
+              xmlNewChild(psNode, NULL,
                           BAD_CAST "Get", NULL);  
             xmlNewNsProp(psChildNode,
                          xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
@@ -303,8 +304,7 @@ xmlNodePtr msSOSAddOperationNode(xmlNodePtr psParent, const char *pszName,
         if (pszPostURL)
         {
             psChildNode = 
-              xmlNewChild(psNode, 
-                          xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows",  BAD_CAST "ows"), 
+              xmlNewChild(psNode, NULL,
                           BAD_CAST "Get", NULL);  
             xmlNewNsProp(psChildNode,
                          xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
@@ -316,18 +316,17 @@ xmlNodePtr msSOSAddOperationNode(xmlNodePtr psParent, const char *pszName,
     return psReturnNode;
 }
 
-void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd)
+void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd,  xmlNsPtr psNsGml)
 {
     xmlNodePtr psNode, psTimeNode;
 
     if (psParent && pszStart)
     {
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "eventTime", NULL);
-        psTimeNode = xmlNewChild(psNode, NULL, BAD_CAST "TimePeriod", NULL);
-        xmlSetNs(psTimeNode,xmlNewNs(psTimeNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
+        psTimeNode = xmlNewChild(psNode, psNsGml, BAD_CAST "TimePeriod", NULL);
 
         psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
-        xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
+        
         
         if (pszEnd)
            psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
@@ -336,7 +335,7 @@ void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd)
             psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", NULL);
             xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
         }
-        xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml",  BAD_CAST "gml"));
+        
         
     }
 }
@@ -353,25 +352,22 @@ void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd)
 /*      </gml:boundedBy>                                                */
 /************************************************************************/
 void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx, 
-                    double maxy, const char *psEpsg)
+                    double maxy, const char *psEpsg, xmlNsPtr psNsGml)
 {               
     xmlNodePtr psNode, psEnvNode;
     char *pszTmp = NULL;
 
     if (psParent)
     {
-        psNode = xmlNewChild(psParent, 
-                             xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml",  BAD_CAST "gml"),
+      psNode = xmlNewChild(psParent, psNsGml,
                              BAD_CAST "boundedBy", NULL);
         
         psEnvNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
-        xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
 
         pszTmp = double2string(minx);
         pszTmp = strcatalloc(pszTmp, " ");
         pszTmp = strcatalloc(pszTmp, double2string(miny));
         psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
-        xmlSetNs(psNode,xmlNewNs(psEnvNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
         if (psEpsg)
         {
             
@@ -382,8 +378,7 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
         pszTmp = double2string(maxx);
         pszTmp = strcatalloc(pszTmp, " ");
         pszTmp = strcatalloc(pszTmp, double2string(maxy));
-        psNode = xmlNewChild(psEnvNode, 
-                             xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml",BAD_CAST "gml"), 
+        psNode = xmlNewChild(psEnvNode, NULL,
                              BAD_CAST "upperCorner", BAD_CAST pszTmp);
         
         if (psEpsg)
@@ -396,12 +391,13 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
     }
 }
 
-void msSOSAddPropertyNode(xmlNodePtr psParent, layerObj *lp)
+void msSOSAddPropertyNode(xmlNodePtr psParent, layerObj *lp,  xmlNsPtr  psNsGml)
 {
     const char *pszValue = NULL, *pszFullName = NULL;
     xmlNodePtr psCompNode, psNode;
     int i;
     char szTmp[256];
+    xmlNsPtr psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe");
 
     if (psParent && lp)
     {
@@ -410,16 +406,13 @@ void msSOSAddPropertyNode(xmlNodePtr psParent, layerObj *lp)
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
                                        "observedProperty_id");
         if (pszValue)/*should always be true */
-          xmlNewNsProp(psNode, 
-                       xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"),
+          xmlNewNsProp(psNode, psNsGml,
                        BAD_CAST "id", BAD_CAST pszValue);
 
           pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
                                          "observedProperty_name");
           if (pszValue)
-            psNode = xmlNewChild(psCompNode, 
-                                 xmlNewNs(NULL, 
-                                          BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"), 
+            psNode = xmlNewChild(psCompNode, psNsGml, 
                                  BAD_CAST "name", BAD_CAST pszValue);
 
           /* add componenets */
@@ -435,9 +428,7 @@ void msSOSAddPropertyNode(xmlNodePtr psParent, layerObj *lp)
                   pszValue = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
                   if (pszValue)
                   {
-                      psNode = xmlNewChild(psCompNode, 
-                                           xmlNewNs(NULL, 
-                                           BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe"), 
+                      psNode = xmlNewChild(psCompNode, psNsSwe,
                                            BAD_CAST "component", NULL);
 
                       //check if there is an alias/full name used
@@ -677,6 +668,8 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
     char *pszTmp = NULL;
     char *pszTime = NULL;
 
+    xmlNsPtr psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+
     if (psParent)
     {
         msInitShape(&sShape);
@@ -771,7 +764,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
           pszEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
 #endif        
         msSOSAddBBNode(psLayerNode, sShape.bounds.minx, sShape.bounds.miny, sShape.bounds.maxx, 
-                       sShape.bounds.maxy, pszEpsg);
+                       sShape.bounds.maxy, pszEpsg, psNsGml);
 
         /*geometry*/
         msSOSAddGeometryNode(psLayerNode, lp, &sShape, pszEpsg);
@@ -931,8 +924,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     xmlNodePtr psOfferingNode;
     xmlNodePtr psTmpNode;
 
-    xmlChar *buffer = NULL;
-    int size = 0;
 
     char *schemalocation = NULL;
     char *dtd_url = NULL;
@@ -951,9 +942,14 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     int nProperties = 0;
     char **papszProperties = NULL;
 
-    char workbuffer[5000];
-    int nSize = 0;
+    /*
+      char workbuffer[5000];
+      int nSize = 0;
     int iIndice = 0;
+    xmlChar *buffer = NULL;
+    int size = 0;
+    */
+
     int iItemPosition = -1;
     shapeObj sShape;
     int status;
@@ -967,14 +963,17 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     char **papsProcedures = NULL;
     int nDistinctProcedures =0;
 
-     FILE *stream=NULL;
-    FILE *ttt=NULL;
+    FILE *stream=NULL;
+
+    xmlNsPtr     psNsGml       = NULL;
 
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "Capabilities");
 
     xmlDocSetRootElement(psDoc, psRootNode);
+
+    psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
     /* name spaces */
     //psNameSpace = xmlNewNsProp(psRootNode, "url",  "sos");
@@ -1017,7 +1016,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psMainNode = xmlNewChild(psRootNode,
                              psNs,
                              BAD_CAST "OperationsMetadata", NULL);       
-    //xmlSetNs(psMainNode,  xmlNewNs(psMainNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
 
     /*get capabilities */
     psNode = msSOSAddOperationNode(psMainNode, "GetCapabilities",
@@ -1108,8 +1106,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
              {
                  psOfferingNode = 
                    xmlNewChild(psMainNode, NULL,BAD_CAST "ObservationOffering", NULL);
-                 xmlNewNsProp(psOfferingNode, 
-                              xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"),
+                 xmlNewNsProp(psOfferingNode, psNsGml,
                               BAD_CAST "id", BAD_CAST papsOfferings[i]);
                  for (j=0; j<map->numlayers; j++)
                  {
@@ -1120,8 +1117,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_name");
                  if (value)
                  {
-                     psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "name", BAD_CAST value);
-                     xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
+                     psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "name", BAD_CAST value);
                  }
                  
                  /*bounding box */
@@ -1142,7 +1138,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                               &(lp->metadata), "SO", MS_TRUE);
                      if (value)
                        msSOSAddBBNode(psOfferingNode, atof(tokens[0]), atof(tokens[1]),
-                                      atof(tokens[2]), atof(tokens[3]), value);
+                                      atof(tokens[2]), atof(tokens[3]), value, psNsGml);
                      msFreeCharArray(tokens, n);
                        
                  }
@@ -1153,9 +1149,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  if (value)
                  {
                      psNode = 
-                       xmlNewChild(psOfferingNode, NULL, BAD_CAST "description", BAD_CAST value);
-                     xmlSetNs(psNode,
-                              xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
+                       xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "description", BAD_CAST value);
                  }
 
                  /*time*/
@@ -1176,7 +1170,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (n == 2) /* end time is empty. It is going to be set as "now*/
                        pszEndTime = tokens[1];
 
-                     msSOSAddTimeNode(psOfferingNode, tokens[0], pszEndTime);
+                     msSOSAddTimeNode(psOfferingNode, tokens[0], pszEndTime, psNsGml);
                      msFreeCharArray(tokens, n);
                      
                  }
@@ -1195,7 +1189,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                          {
                              lpTmp = &map->layers[j];
                              if (lpTmp->template == NULL)
-                               lpTmp->template = strcatalloc(lpTmp->template, "ttt");
+                               lpTmp->template = strdup("ttt");
                              msQueryByRect(map, j, map->extent);
 
                              /*check if the attribute specified in the procedure_item is available
@@ -1266,7 +1260,8 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                    if (papsProcedures[k] != NULL)
                                      msFree(papsProcedures[k]);
                                  msFree(papsProcedures);
-                                  
+                                 
+                                 msLayerClose(lpTmp);
                                  
                              }
                              else
@@ -1327,7 +1322,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                  papszProperties[nProperties] = strdup(value);
                                  nProperties++;
                                  msSOSAddPropertyNode(psOfferingNode, 
-                                                         &(map->layers[j]));
+                                                         &(map->layers[j]), psNsGml);
                              }
                          }
                      }
@@ -1375,7 +1370,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                               NULL);
 
                          msSOSAddBBNode(psNode, atof(tokens[0]), atof(tokens[1]),
-                                        atof(tokens[2]), atof(tokens[3]), value);
+                                        atof(tokens[2]), atof(tokens[3]), value, psNsGml);
                      }
 
                      msFreeCharArray(tokens, n);
@@ -1397,8 +1392,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      if ( msIO_needBinaryStdout() == MS_FAILURE )
        return MS_FAILURE;
      
-     //stream = stdout;
-     stream = fopen("c:/temp/sos_test.xml", "w");
      msIO_printf("Content-type: text/xml%c%c",10,10);
     
     /*TODO* : check the encoding validity. Internally libxml2 uses UTF-8
@@ -1407,15 +1400,36 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                              "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                              "ISO-8859-1");
     */
-     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     /*xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);*/
      
-     /* this crashs ??? */
-     /*xmlDocDump(stream, psDoc);*/
-    
-    
+     /* xmlDocDump crashs withe the prebuild windows binaries distibutes at the libxml site???.
+      It works with locally build binaries*/
+     stream = stdout;
 
+     xmlDocDump(stream, psDoc);
+
+     /*free buffer and the document */
+     /*xmlFree(buffer);*/
+     xmlFreeDoc(psDoc);
+
+     free(dtd_url);
+     free(schemalocation);
+
+    /*
+     *Free the global variables that may
+     *have been allocated by the parser.
+     */
+     xmlCleanupParser();
+
+
+    return(MS_SUCCESS);
+
+    
+     /*
     nSize = sizeof(workbuffer);
-    nSize = nSize-1; /* the last character for the '\0' */
+    nSize = nSize-1;*/ /* the last character for the '\0' */
+     
+    /*
     if (size > nSize)
     {
          iIndice = 0;
@@ -1437,26 +1451,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     {
         msIO_printf("%s", buffer);
     }
-
-    /*free buffer and the document */
-    xmlFree(buffer);
-    xmlFreeDoc(psDoc);
-
-    free(dtd_url);
-    free(schemalocation);
-
-    /*
-     *Free the global variables that may
-     *have been allocated by the parser.
-     */
-    xmlCleanupParser();
-
-
-    return(MS_SUCCESS);
-
-    
-
-
+    */
 }
 
 /************************************************************************/
@@ -1482,21 +1477,19 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     FilterEncodingNode *psFilterNode = NULL;
     rectObj sBbox;
 
-    xmlChar *buffer = NULL;
-    int size = 0;
 
     xmlDocPtr psDoc = NULL;
     xmlNodePtr psRootNode,  psNode;
     char **tokens;
     int n;
     
-    char workbuffer[5000];
-    int nSize = 0;
-    int iIndice = 0;
+    xmlNsPtr     psNsGml       = NULL;
+
+    FILE *stream=NULL;
 
     sBbox = map->extent;
 
-    
+    psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
     for(i=0; i<numentries; i++) 
     {
@@ -1929,7 +1922,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         if (n == 2) /* end time is empty. It is going to be set as "now*/
           pszEndTime = tokens[1];
 
-        msSOSAddTimeNode(psRootNode, tokens[0], pszEndTime);
+        msSOSAddTimeNode(psRootNode, tokens[0], pszEndTime, psNsGml);
         msFreeCharArray(tokens, n);
                      
     }
@@ -1954,35 +1947,11 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     /* output results */    
      msIO_printf("Content-type: text/xml%c%c",10,10);
-     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     stream = stdout;
 
-     nSize = sizeof(workbuffer);
-     nSize = nSize-1; /* the last character for the '\0' */
-     if (size > nSize)
-     {
-         iIndice = 0;
-         while ((iIndice + nSize) <= size)
-         {
-             snprintf(workbuffer, (sizeof(workbuffer)-1), "%s", buffer+iIndice );
-             workbuffer[sizeof(workbuffer)-1] = '\0';
-             msIO_printf("%s", workbuffer);
+     xmlDocDump(stream, psDoc);
 
-             iIndice +=nSize;
-         }
-         if (iIndice < size)
-         {
-              sprintf(workbuffer, "%s", buffer+iIndice );
-              msIO_printf("%s", workbuffer);
-         }
-     }
-     else
-     {
-       //msIO_printf("size: %d",size);
-       msIO_printf("%s", buffer);
-     }
-
-    /*free buffer and the document */
-     xmlFree(buffer);
+    /*free  document */
      xmlFreeDoc(psDoc);
      /*
      *Free the global variables that may
@@ -2007,8 +1976,12 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
     char *pszSensorId=NULL;
     char *pszEncodedUrl = NULL;
     const char *pszId = NULL, *pszUrl = NULL;
-    int i = 0;
+    int i = 0, j=0, k=0;
     layerObj *lp = NULL;
+    int iItemPosition = -1;
+    shapeObj sShape;
+    int status;
+    char *tmpstr = NULL, *pszTmp = NULL;
 
     for(i=0; i<numentries; i++) 
     {
@@ -2028,16 +2001,111 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
     {
         lp = &map->layers[i];
         pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-        if (pszId && strcasecmp(pszId, pszSensorId) == 0)
+        if (pszId)
         {
-            pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
-            
-            if (pszUrl)
+            if (strcasecmp(pszId, pszSensorId) == 0)
             {
-                pszEncodedUrl = msEncodeHTMLEntities(pszUrl); 
-                msIO_printf("Location: %s\n\n", pszEncodedUrl); 
-                return(MS_SUCCESS);
+                pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
+                
+                if (pszUrl)
+                {
+                    pszTmp = strdup(pszUrl);
+                    for(k=0; k<numentries; k++) 
+                    {
+                        tmpstr = (char *)malloc(sizeof(char)*strlen(names[k]) + 3);
+                        sprintf(tmpstr,"%%%s%%", names[k]);
+                        if (stristr(pszUrl, tmpstr) != NULL)
+                        {
+                            pszTmp = gisub(pszTmp, tmpstr, values[k]);
+                            break;
+                        }
+                        msFree(tmpstr);
+                    }
+                    pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
+                    msIO_printf("Location: %s\n\n", pszEncodedUrl);
+                    msFree(pszTmp);
+                    return(MS_SUCCESS);
+                }
+                else
+                {
+                    msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s",
+                               "msSOSDescribeSensor()", lp->name);
+                    return msSOSException(map, "sos_describesensor_url", "MissingValue");
+                }
             }
+        }
+        else if (pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item"))
+        {   
+            iItemPosition = -1;
+            if (msLayerOpen(lp) == MS_SUCCESS && 
+                msLayerGetItems(lp) == MS_SUCCESS)
+            {
+                for(j=0; j<lp->numitems; j++) 
+                {
+                    if (strcasecmp(lp->items[j], pszId) == 0)
+                    {
+                        iItemPosition = j;
+                        break;
+                    }
+                }
+                msLayerClose(lp);
+            }
+            if (iItemPosition >=0)
+            {
+
+                if (lp->template == NULL)
+                  lp->template = strdup("ttt");
+                msQueryByRect(map, i, map->extent);
+                
+                msLayerOpen(lp);
+                msLayerGetItems(lp);
+                
+                if (lp->resultcache && lp->resultcache->numresults > 0)
+                {
+                    for(j=0; j<lp->resultcache->numresults; j++)
+                    {      
+                        msInitShape(&sShape);     
+                        status = msLayerGetShape(lp, &sShape, 
+                                                 lp->resultcache->results[j].tileindex, 
+                                                 lp->resultcache->results[j].shapeindex);
+                        if(status != MS_SUCCESS) 
+                          continue;
+
+                        if (sShape.values[iItemPosition] && 
+                            strcasecmp(sShape.values[iItemPosition], pszSensorId) == 0)
+                        {
+                            pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
+                            if (pszUrl)
+                            {   
+                                pszTmp = strdup(pszUrl);
+                                for(k=0; k<numentries; k++) 
+                                {
+                                    tmpstr = (char *)malloc(sizeof(char)*strlen(names[k]) + 3);
+                                    sprintf(tmpstr,"%%%s%%", names[k]);
+                                    if (stristr(pszUrl, tmpstr) != NULL)
+                                    {
+                                        pszTmp = gisub(pszTmp, tmpstr, values[k]);
+                                        break;
+                                    }
+                                    msFree(tmpstr);
+                                }
+                                pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
+                                msIO_printf("Location: %s\n\n", pszEncodedUrl);
+                                msFree(pszTmp);
+                                return(MS_SUCCESS);
+                            }
+                            else
+                            {
+                                msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s",
+                                           "msSOSDescribeSensor()", lp->name);
+                                return msSOSException(map, "sos_describesensor_url", "MissingValue");
+                            }
+                        }
+                    }
+                }
+                msLayerClose(lp);
+            }
+            
         }
     }
 
