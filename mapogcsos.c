@@ -1,4 +1,5 @@
 /**********************************************************************
+
  *
  * Name:     mapogsos.c
  * Project:  MapServer
@@ -28,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2007/03/23 16:23:20  tkralidi
+ * changed = to == in else if statement
+ *
  * Revision 1.21  2007/03/23 15:26:29  assefa
  * Add possiblity to do variable substitution on describesensor_url (bug 2051)
  *
@@ -2034,7 +2038,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                 }
             }
         }
-        else if (pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item"))
+        else if (pszId == msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item"))
         {   
             iItemPosition = -1;
             if (msLayerOpen(lp) == MS_SUCCESS && 
