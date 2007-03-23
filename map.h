@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.475  2007/03/23 15:23:58  assefa
+ * Add utility string function for case-incensitive searchs.
+ *
  * Revision 1.474  2007/03/22 04:40:24  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
  *
@@ -1502,6 +1505,7 @@ MS_DLL_EXPORT char *trimLeft(char *string);
 MS_DLL_EXPORT char *chop(char *string);
 MS_DLL_EXPORT void trimEOL(char *string);
 MS_DLL_EXPORT char *gsub(char *str, const char *old, const char *sznew);
+MS_DLL_EXPORT char *gisub(char *str, const char *old, const char *sznew);
 MS_DLL_EXPORT char *stripPath(char *fn);
 MS_DLL_EXPORT char *getPath(char *fn);
 MS_DLL_EXPORT char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path);
@@ -1520,6 +1524,7 @@ MS_DLL_EXPORT char *strcatalloc(char *pszDest, char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
+MS_DLL_EXPORT  const char *stristr(const char *haystack, const char *needle);
 
 #ifdef NEED_STRDUP
 MS_DLL_EXPORT char *strdup(char *s);

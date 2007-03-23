@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2007/03/23 15:23:58  assefa
+ * Add utility string function for case-incensitive searchs.
+ *
  * Revision 1.35  2006/08/16 14:05:07  sdlime
  * Removed any ambiguity with msCommifyString(). At the moment it only handles North American representaions of numbers (e.g. 2,345.678).
  *
@@ -932,4 +935,101 @@ char *msCommifyString(char *str)
   }
 
   return str;
+}
+
+
+/************************************************************************/
+/*                  case incensitive equivalent of strstr               */
+/************************************************************************/
+const char *stristr(const char *haystack, const char *needle)
+{   
+    if ( !*needle )   
+    {      
+        return haystack;   
+    }   
+    for ( ; *haystack; ++haystack )   
+    {      
+        if ( toupper(*haystack) == toupper(*needle) )      
+        {         
+            /*          * Matched starting char -- loop through remaining chars.          */
+            const char *h, *n;         
+            for ( h = haystack, n = needle; *h && *n; ++h, ++n )         
+            {            
+                if ( toupper(*h) != toupper(*n) )            
+                {
+                    break;            
+                }         
+            }         
+            if ( !*n ) /* matched all of 'needle' to null termination */         
+            {            
+                return haystack; /* return the start of the match */         
+            }      
+        }   
+    }   
+    return 0;
+}
+
+
+
+/* ------------------------------------------------------------------------------- */
+/*       Replace all occurances of old with new in str.                            */
+/*       It is assumed that str was dynamically created using malloc.              */
+/*       Same function as gsub but this is case incensitive                        */
+/* ------------------------------------------------------------------------------- */
+char *gisub(char *str, const char *old, const char *new)
+{
+      size_t str_len, old_len, new_len, tmp_offset;
+      char *tmp_ptr;
+
+      if(new == NULL)
+          new = "";
+
+      /*
+      ** If old is not found then leave str alone
+      */
+      if( (tmp_ptr = stristr(str, old)) == NULL)
+	return(str);
+
+      /*
+      ** Grab some info about incoming strings
+      */
+      str_len = strlen(str);
+      old_len = strlen(old);
+      new_len = strlen(new);
+
+      /*
+      ** Now loop until old is NOT found in new
+      */
+      while( tmp_ptr != NULL ) {
+
+	/*
+	** re-allocate memory for buf assuming 1 replacement of old with new
+        ** don't bother reallocating if old is larger than new)
+	*/
+        if (old_len < new_len) {
+          tmp_offset = tmp_ptr - str;
+          str_len = str_len - old_len + new_len;
+          str = (char *)realloc(str, (str_len + 1)); /* make new space for a copy */
+          tmp_ptr = str + tmp_offset;
+        }
+
+        /*
+        ** Move the trailing part of str to make some room unless old_len == new_len
+        */
+        if (old_len != new_len) {
+            memmove(tmp_ptr+new_len, tmp_ptr+old_len, strlen(tmp_ptr)-old_len+1);
+        }
+
+        /*
+        ** Now copy new over old
+        */
+        memcpy(tmp_ptr, new, new_len);
+
+        /*
+        ** And look for more matches in the rest of the string
+        */
+        tmp_ptr = stristr(tmp_ptr + new_len, old);
+      }
+
+      return(str);
 }
