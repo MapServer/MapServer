@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.105  2007/03/23 15:12:37  assefa
+ * Remove call to msDrawQueryMap (bug 2017).
+ *
  * Revision 1.104  2007/03/22 04:40:25  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
  *
@@ -216,7 +219,7 @@ imageObj *mapObj_draw(mapObj* self) {
   }
 
 imageObj *mapObj_drawQuery(mapObj* self) {
-    return msDrawQueryMap(self, MS_TRUE);
+    return msDrawMap(self, MS_TRUE);
   }
 
 imageObj *mapObj_drawLegend(mapObj* self) {
