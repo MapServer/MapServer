@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.338  2007/03/23 14:21:51  dan
+ * Fixed typo in ALPHACOLOR_ENABLED block of code (bug 2052)
+ *
  * Revision 1.337  2006/12/29 05:26:35  sdlime
  * Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the CGI program. (bug 1992)
  *
@@ -1612,7 +1615,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
 #if ALPHACOLOR_ENABLED
   if( label->color.alpha )
 	writeColorWithAlpha(&(label->color), stream, "  ALPHACOLOR", tab);
-  Else
+  else
 #endif
 	writeColor(&(label->color), stream, "  COLOR", tab);
   if(label->encoding) fprintf(stream, "  %sENCODING \"%s\"\n", tab, label->encoding);
