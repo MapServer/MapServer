@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2007/03/25 13:46:48  tkralidi
+ * updated resultFormat to specify o&m subtype
+ *
  * Revision 1.22  2007/03/23 16:23:20  tkralidi
  * changed = to == in else if statement
  *
@@ -1382,7 +1385,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  }
                  
                  psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "resultFormat", 
-                                      BAD_CAST "application/com-xml");
+                                      BAD_CAST "text/xml; subtype=\"om/0.14.7\"");
 
              }/*end of offerings*/
          }
