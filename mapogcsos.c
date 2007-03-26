@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.24  2007/03/26 03:22:12  assefa
+ * Support procedure_item for GetObservation (bug 2050)
+ *
  * Revision 1.23  2007/03/25 13:46:48  tkralidi
  * updated resultFormat to specify o&m subtype
  *
@@ -1489,10 +1492,9 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlNodePtr psRootNode,  psNode;
     char **tokens;
     int n;
-    
     xmlNsPtr     psNsGml       = NULL;
-
     FILE *stream=NULL;
+    char *pszBuffer = NULL;
 
     sBbox = map->extent;
 
@@ -1615,12 +1617,9 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                 if(map->layers[i].status == MS_ON)
                 {
                     pszValue =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
-                                                        "procedure");
-                    if (!pszValue)
-                    {
-                        map->layers[i].status = MS_OFF;
-                    }
-                    else
+                                                    "procedure");
+                    
+                    if (pszValue)
                     {
                         for (j=0; j<n; j++)
                         {
@@ -1630,7 +1629,47 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                         if (j == n) /*not found*/
                           map->layers[i].status = MS_OFF;
                     }
-                }
+                    else 
+                    {
+                         pszValue =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
+                                                         "procedure_item");
+                         if (!pszValue)
+                         {
+                             map->layers[i].status = MS_OFF;
+                         }
+                         else
+                         {
+                             lp = & map->layers[i];
+                             /*
+                             if (&lp->filter && lp->filter.type == MS_EXPRESSION)
+                             {
+                                 pszBuffer = strcatalloc(pszBuffer, "((");
+                                 pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
+                                 pszBuffer = strcatalloc(pszBuffer, ") and ");
+                             }
+                             else
+                              freeExpression(&lp->filter); 
+                             */
+                             if (&lp->filter)
+                               freeExpression(&lp->filter); 
+                             pszBuffer = strcatalloc(pszBuffer, "(");
+                             for (j=0; j<n; j++)
+                             {
+                                 if (j > 0)
+                                   pszBuffer = strcatalloc(pszBuffer, " OR ");
+                                 pszBuffer = strcatalloc(pszBuffer, "('[");
+                                 pszBuffer = strcatalloc(pszBuffer, (char *)pszValue);
+                                 pszBuffer = strcatalloc(pszBuffer, "]' = '");
+                                 pszBuffer = strcatalloc(pszBuffer,  tokens[j]);
+                                 pszBuffer = strcatalloc(pszBuffer,  "')");
+                             }
+                             pszBuffer = strcatalloc(pszBuffer, ")");
+                             loadExpressionString(&lp->filter, pszBuffer);
+                             if (pszBuffer)
+                               msFree(pszBuffer);
+                         }
+                    }
+                }       
             }
             
             msFreeCharArray(tokens, n);
@@ -2041,7 +2080,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                 }
             }
         }
-        else if (pszId == msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item"))
+        else if ((pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item")))
         {   
             iItemPosition = -1;
             if (msLayerOpen(lp) == MS_SUCCESS && 
