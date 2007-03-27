@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2007/03/27 03:49:48  tkralidi
+ * updated msOWSCommonOperationsMetadataParameter to accept a
+ * comma-seperated list of values
+ *
  * Revision 1.4  2007/03/27 01:39:48  tkralidi
  * Added functionality to handle OperationsMetadata
  *
@@ -277,12 +281,13 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *
  *
  * @param name name of the Parameter
  * @param use use policy for Parameter (0 for optional, 1 for required)
+ * @param values list of values (comma seperated list) or NULL if none
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *value) {
+xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *values) {
   xmlNsPtr   psNs       = NULL;
   xmlNodePtr psRootNode = NULL;
   xmlNodePtr psNode     = NULL;
@@ -300,10 +305,18 @@ xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *val
     xmlNewProp(psRootNode, BAD_CAST "use", BAD_CAST "optional");
   } 
 
-  if (value != NULL) {
-    psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Value", BAD_CAST value);
+  if (values != NULL) {
+    char **tokens = NULL;
+    int n = 0;
+    int i = 0;
+    tokens = split(values, ',', &n);
+    if (tokens && n > 0) {
+      for (i=0; i<n; i++) {
+        psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Value", BAD_CAST tokens[i]);
+      }
+      msFreeCharArray(tokens, n);
+    }
   }
-
   return psRootNode;
 }
 

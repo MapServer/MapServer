@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2007/03/27 03:49:48  tkralidi
+ * updated msOWSCommonOperationsMetadataParameter to accept a
+ * comma-seperated list of values
+ *
  * Revision 1.3  2007/03/27 01:39:48  tkralidi
  * Added functionality to handle OperationsMetadata
  *
@@ -88,7 +92,7 @@ xmlNodePtr msOWSCommonOperationsMetadata();
 
 xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *url);
 
-xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *value);
+xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *values);
 
 xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
 
