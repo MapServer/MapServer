@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2007/03/27 00:30:34  tkralidi
+ * typo in a few exception messages fixed
+ *
  * Revision 1.2  2006/11/10 18:38:36  frank
  * Added big ifdef USE_SOS_SVR for now.
  *
@@ -189,6 +192,88 @@ xmlNodePtr msOWSCommonServiceProvider(mapObj *map) {
   return psRootNode;
 
 }
+
+/**
+ * msOWSCommonOperationsMetadata()
+ *
+ * returns the root element of OperationsMetadata as per subclause 7.4.5
+ *
+ * @return psRootNode xmlNodePtr pointer of XML construct
+ *
+ */
+
+xmlNodePtr msOWSCommonOperationsMetadata() {
+  xmlNsPtr psNs = NULL;
+  xmlNodePtr psRootNode      = NULL;
+
+  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+  psRootNode = xmlNewNode(psNs, BAD_CAST "OperationsMetadata");
+  return psRootNode;
+}
+
+/**
+ * msOWSCommonOperationsMetadataOperation()
+ *
+ * returns an Operation element of OperationsMetadata as per subclause 7.4.5
+ *
+ * @param name name of the Operation
+ * @param method HTTP method (1 for GET only, 2 for POST only, 3 for GET and POST)
+ * @param url online resource URL
+ *
+ * @return psRootNode xmlNodePtr pointer of XML construct
+ *
+ */
+
+xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, *url) {
+  xmlNsPtr   psNs            = NULL;
+  xmlNsPtr   psNsXLink       = NULL;
+  xmlNodePtr psRootNode      = NULL;
+  xmlNodePtr psNode          = NULL;
+  xmlNodePtr psSubNode       = NULL;
+  xmlNodePtr psSubSubNode    = NULL;
+  xmlNodePtr psSubSubSubNode = NULL;
+
+  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
+  psNsXLink = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
+
+  psRootNode = xmlNewNode(psNs, BAD_CAST "Operation");
+
+  xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST "GetCapabilities");
+
+  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "DCP", NULL);
+
+  psSubNode = xmlNewChild(psNode, psNs, BAD_CAST "HTTP", NULL);
+
+  if (method < 2 || method > 2) {
+    psSubSubSubNode = xmlNewChild(psSubSubNode, psNs, BAD_CAST "Get", NULL);
+    
+    xmlNewNsProp(psSubSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
+
+    xmlNewNsProp(psSubSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
+  }
+
+    psSubSubSubNode = xmlNewChild(psSubSubNode, psNs, BAD_CAST "Post", NULL);
+
+    xmlNewNsProp(psSubSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
+
+  xmlNewNsProp(psSubSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
+
+  /* TODO Fetch all Parameters */
+
+  psSubNode   = xmlNewChild(psNode, psNs, BAD_CAST "Parameter", NULL);
+  
+  xmlNewProp(psSubNode, BAD_CAST "name", BAD_CAST "service");
+
+  xmlNewProp(psSubNode, BAD_CAST "use", BAD_CAST "required");
+
+  /* TODO If values, fetch all values */
+
+  psSubSubNode   = xmlNewChild(psSubNode, psNs, BAD_CAST "Value", BAD_CAST "iSOS");
+
+  return psRootNode;
+}
+
 
 /**
  * msOWSCommonExceptionReport()

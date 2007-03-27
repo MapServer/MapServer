@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.25  2007/03/27 00:30:33  tkralidi
+ * typo in a few exception messages fixed
+ *
  * Revision 1.24  2007/03/26 03:22:12  assefa
  * Support procedure_item for GetObservation (bug 2050)
  *
@@ -1522,17 +1525,17 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     /*TODO : validate for version number*/
 
-    /* validates manadatory request elements */
+    /* validates mandatory request elements */
     if (!pszOffering) 
     {
-        msSetError(MS_SOSERR, "Missing manadatory Offering parameter.",
+        msSetError(MS_SOSERR, "Missing mandatory Offering parameter.",
                    "msSOSGetObservation()");
         return msSOSException(map, "offering", "MissingParameterValue");
     }
 
     if (!pszProperty)
     {
-        msSetError(MS_SOSERR, "Missing manadatory ObservedProperty parameter.",
+        msSetError(MS_SOSERR, "Missing mandatory ObservedProperty parameter.",
                    "msSOSGetObservation()");
         return msSOSException(map, "observedproperty", "MissingParameterValue");
     }

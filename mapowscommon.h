@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2007/03/27 00:30:34  tkralidi
+ * typo in a few exception messages fixed
+ *
  * Revision 1.1  2006/11/10 01:37:59  tkralidi
  * Initial implementation (bug 1954)
  *
@@ -77,6 +80,14 @@
 xmlNodePtr msOWSCommonServiceIdentification(mapObj *map, const char *servicetype, const char *version);
 
 xmlNodePtr msOWSCommonServiceProvider(mapObj *map);
+
+xmlNodePtr msOWSCommonOperationsMetadata();
+
+xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *url);
+
+xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, char *use);
+
+xmlNodePtr msOWSCommonOperationsMetadataValue(char *name);
 
 xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
 
