@@ -29,6 +29,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26  2007/03/27 01:40:33  tkralidi
+ * - updated version to 0.1.2b
+ * - updated GetCapabilities OperationsMetadata to leverage abstract functions from mapowscommon.c
+ * - updated om.xsd to 0.14.7/om.xsd
+ *
  * Revision 1.25  2007/03/27 00:30:33  tkralidi
  * typo in a few exception messages fixed
  *
@@ -155,7 +160,7 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
 
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-    psRootNode = msOWSCommonExceptionReport(msEncodeHTMLEntities(msOWSGetSchemasLocation(map)), "0.0.31", msOWSGetLanguage(map, "exception"), exceptionCode, locator, msEncodeHTMLEntities(msGetErrorString("\n")));
+    psRootNode = msOWSCommonExceptionReport(msEncodeHTMLEntities(msOWSGetSchemasLocation(map)), "0.1.2b", msOWSGetLanguage(map, "exception"), exceptionCode, locator, msEncodeHTMLEntities(msGetErrorString("\n")));
 
     xmlDocSetRootElement(psDoc, psRootNode);
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows",  BAD_CAST "ows"));
@@ -971,8 +976,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
         (to associate it with the offering) */
     int *panOfferingLayers = NULL;
    
-    xmlNsPtr psNs = NULL;
-
     char **papsProcedures = NULL;
     int nDistinctProcedures =0;
 
@@ -1001,18 +1004,18 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     
 
     /*version fixed for now*/
-    xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST "0.0.31");
+    xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST "0.1.2b");
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     /*TODO : review this*/
     dtd_url = strdup("http://www.opengis.net/sos ");
     dtd_url = strcatalloc(dtd_url, schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/sos/0.0.31/sosGetCapabilities.xsd");
+    dtd_url = strcatalloc(dtd_url, "/sos/0.1.2b/sosGetCapabilities.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST dtd_url);
 
     /*service identification*/
-    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(map, "SOS", "0.0.31"));
+    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(map, "SOS", "0.1.2b"));
 
     /*service provider*/
     psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(map));
@@ -1025,46 +1028,28 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
         return msSOSException(map, "NoApplicableCode", "NoApplicableCode");
     }
 
-    psNs =  xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
-    psMainNode = xmlNewChild(psRootNode,
-                             psNs,
-                             BAD_CAST "OperationsMetadata", NULL);       
+    psMainNode = xmlAddChild(psRootNode, msOWSCommonOperationsMetadata());
+    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetCapabilities", 1, script_url_encoded));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 0, "0.1.2b"));
 
-    /*get capabilities */
-    psNode = msSOSAddOperationNode(psMainNode, "GetCapabilities",
-                                   script_url_encoded, NULL);
-    if (psNode)
-    {
-        msSOSAddOperationParametersNode(psNode, "service", "SOS", 1);
-        /*TODO : is version required ?*/
-        msSOSAddOperationParametersNode(psNode, "version", "0.0.31", 0);
-    }                        
-                             
-    /* GetObservation */
-    psNode = msSOSAddOperationNode(psMainNode, "GetObservation",
-                                   script_url_encoded, NULL);
-    if (psNode)
-    {   
-        msSOSAddOperationParametersNode(psNode, "service", "SOS", 1);
-        msSOSAddOperationParametersNode(psNode, "version", "0.0.31", 1);
-        msSOSAddOperationParametersNode(psNode, "offering", NULL, 1);
-        msSOSAddOperationParametersNode(psNode, "observedProperty", NULL, 1);
-        msSOSAddOperationParametersNode(psNode, "eventTime", NULL, 0);
-        msSOSAddOperationParametersNode(psNode, "procedure", NULL, 0);
-        msSOSAddOperationParametersNode(psNode, "featureOfInterest", NULL, 0);
-        msSOSAddOperationParametersNode(psNode, "Result", NULL, 0); /*filter*/
-    }   
-        
+    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("DescribeSensor", 1, script_url_encoded));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 0, "0.1.2b"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("sensorid", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, NULL));
 
-    /* DescribeSensor */
-    psNode = msSOSAddOperationNode(psMainNode, "DescribeSensor",
-                                   script_url_encoded, NULL);
-    if (psNode)
-    {                        
-        msSOSAddOperationParametersNode(psNode, "service", "SOS", 1);
-        msSOSAddOperationParametersNode(psNode, "version", "0.0.31", 1);
-        msSOSAddOperationParametersNode(psNode, "SensorID", NULL, 1);
-    }  
+    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetObservation", 1, script_url_encoded));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 0, "0.1.2b"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("offering", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("observedproperty", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("eventtime", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("procedure", 0, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("featureofinterest", 0, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("result", 0, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("responseFormat", 0, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, NULL));
 
     /*TODO : add <ogc:Filter_Capabilities> */
 
@@ -1942,7 +1927,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /*TODO : review this*/
     dtd_url = strdup("http://www.opengis.net/om ");
     dtd_url = strcatalloc(dtd_url, schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/om.xsd");
+    dtd_url = strcatalloc(dtd_url, "/0.14.7/om.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST dtd_url);
 
 
