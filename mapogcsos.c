@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.27  2007/03/27 02:20:04  tkralidi
+ * - msSOSDescribeSensor(): Added functionality to test for required parameter outputFormat.  Also checks that the correct outputFormat is passed, and matches what is advertised in Capabilities XML.
+ * - msSOSGetObservation(): Added functionality to test for required parameter responseFormat.  Also checks that the correct responseFormat is passed, and matches what is advertised in Capabilities XML.
+ *
  * Revision 1.26  2007/03/27 01:40:33  tkralidi
  * - updated version to 0.1.2b
  * - updated GetCapabilities OperationsMetadata to leverage abstract functions from mapowscommon.c
@@ -141,6 +145,9 @@ MS_CVSID("$Id$")
 #include "libxml/parser.h"
 #include "libxml/tree.h"
 
+
+char *pszSOSDescribeSensorMimeType = "text/xml; subtype=\"sensorML/1.0.0\"";
+char *pszSOSGetObservationMimeType = "text/xml; subtype=\"om/0.14.7\"";
 
 /*
 ** msSOSException()
@@ -264,74 +271,6 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
         }
     }
     return lp;
-}
-
-    
-void msSOSAddOperationParametersNode(xmlNodePtr psParent, const char *pszName,
-                                     char *pszValue, int bRequired)
-{
-    xmlNodePtr psNode;
-
-    if (psParent && pszName)
-    {
-        psNode = xmlNewChild(psParent, NULL, BAD_CAST "Parameter", NULL);
-
-
-        xmlNewProp(psNode, BAD_CAST "name", BAD_CAST pszName);
-        if (bRequired)
-          xmlNewProp(psNode, BAD_CAST "use", BAD_CAST "required");
-        else
-          xmlNewProp(psNode, BAD_CAST "use", BAD_CAST "optional");
-
-        if (pszValue)
-        {
-            psNode = xmlNewChild(psNode, NULL, BAD_CAST "Value", BAD_CAST pszValue);
-
-        }
-    }
-}
-
-
-
-xmlNodePtr msSOSAddOperationNode(xmlNodePtr psParent, const char *pszName,
-                                 char *pszGetURL, char *pszPostURL)
-{
-    xmlNodePtr psNode, psChildNode, psReturnNode=NULL;
-
-    if (psParent)
-    {
-        psReturnNode = xmlNewChild(psParent, 
-                                   NULL, 
-                                   BAD_CAST pszName, NULL);
-        psNode = xmlNewChild(psReturnNode, NULL, BAD_CAST "DCP", NULL);
-        /*TODO (cleanup): no need to set the nae space (NULL == inherits from parent). This was a bug in 
-          earlier version of libxml but works in version 2-2.6.23 */
-        /*xmlSetNs(psNode,  xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));*/
-        psNode = xmlNewChild(psNode, NULL, BAD_CAST "HTTP", NULL);
-
-        if (pszGetURL)
-        {
-            psChildNode = 
-              xmlNewChild(psNode, NULL,
-                          BAD_CAST "Get", NULL);  
-            xmlNewNsProp(psChildNode,
-                         xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                  BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszGetURL);
-                         
-        }
-        if (pszPostURL)
-        {
-            psChildNode = 
-              xmlNewChild(psNode, NULL,
-                          BAD_CAST "Get", NULL);  
-            xmlNewNsProp(psChildNode,
-                         xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                  BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszPostURL);
-            
-        }
-    }
-
-    return psReturnNode;
 }
 
 void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd,  xmlNsPtr psNsGml)
@@ -1029,6 +968,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     }
 
     psMainNode = xmlAddChild(psRootNode, msOWSCommonOperationsMetadata());
+
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetCapabilities", 1, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 0, "0.1.2b"));
@@ -1037,7 +977,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 0, "0.1.2b"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("sensorid", 1, NULL));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, pszSOSDescribeSensorMimeType));
 
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetObservation", 1, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
@@ -1048,7 +988,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("procedure", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("featureofinterest", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("result", 0, NULL));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("responseFormat", 0, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("responseFormat", 0, pszSOSGetObservationMimeType));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, NULL));
 
     /*TODO : add <ogc:Filter_Capabilities> */
@@ -1375,17 +1315,14 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                        
                  }
                  
-                 psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "resultFormat", 
-                                      BAD_CAST "text/xml; subtype=\"om/0.14.7\"");
+                 psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "responseFormat", 
+                                      BAD_CAST pszSOSGetObservationMimeType);
 
              }/*end of offerings*/
          }
              
 
      }/* end of offerings */
-       
-
-    /*xmlSaveFile("c:/msapps/reseau_sos/test.xml",psDoc);*/
 
      if ( msIO_needBinaryStdout() == MS_FAILURE )
        return MS_FAILURE;
@@ -1461,7 +1398,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                         char **values, int numentries)
 
 {
-    char *pszOffering=NULL, *pszProperty=NULL, *pszTime = NULL;
+    char *pszOffering=NULL, *pszProperty=NULL, *pszResponseFormat=NULL, *pszTime = NULL;
     char *pszFilter = NULL, *pszProdedure = NULL;
     char *pszBbox = NULL, *pszFeature=NULL;
 
@@ -1505,7 +1442,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
            pszFeature = values[i];
          else if (strcasecmp(names[i], "BBOX") == 0)
            pszBbox = values[i];
-         
+         else if (strcasecmp(names[i], "RESPONSEFORMAT") == 0)
+           pszResponseFormat = values[i];
      }
 
     /*TODO : validate for version number*/
@@ -1523,6 +1461,19 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         msSetError(MS_SOSERR, "Missing mandatory ObservedProperty parameter.",
                    "msSOSGetObservation()");
         return msSOSException(map, "observedproperty", "MissingParameterValue");
+    }
+
+    if (!pszResponseFormat)
+    {
+        msSetError(MS_SOSERR, "Missing mandatory responseFormat parameter.",
+                   "msSOSGetObservation()");
+        return msSOSException(map, "responseformat", "MissingParameterValue");
+    }
+
+    if (strcasecmp(pszResponseFormat, pszSOSGetObservationMimeType) != 0) {
+        msSetError(MS_SOSERR, "Invalid responseFormat parameter %s.  Allowable values are: %s",
+                   "msSOSDescribeSensor()", pszResponseFormat, pszSOSGetObservationMimeType);
+        return msSOSException(map, "responseformat", "InvalidParameterValue");
     }
 
     /*validate if offering exists*/
@@ -2001,13 +1952,14 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 /************************************************************************/
 /*                           msSOSDescribeSensor                        */
 /*                                                                      */
-/*      Describe sensor request handlerr.                               */
+/*      Describe sensor request handler.                               */
 /************************************************************************/
 int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                         char **values, int numentries)
 
 {
     char *pszSensorId=NULL;
+    char *pszOutputFormat=NULL;
     char *pszEncodedUrl = NULL;
     const char *pszId = NULL, *pszUrl = NULL;
     int i = 0, j=0, k=0;
@@ -2019,10 +1971,13 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
 
     for(i=0; i<numentries; i++) 
     {
-        if (strcasecmp(names[i], "SENSORID") == 0)
-          pszSensorId =  values[i];
+        if (strcasecmp(names[i], "SENSORID") == 0) {
+          pszSensorId = values[i];
+        }
+        if (strcasecmp(names[i], "OUTPUTFORMAT") == 0) {
+          pszOutputFormat = values[i];
+        }
     }
-
 
     if (!pszSensorId)
     {
@@ -2030,7 +1985,20 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                    "msSOSDescribeSensor()");
         return msSOSException(map, "sensorid", "MissingParameterValue");
     }
-    
+
+    if (!pszOutputFormat)
+    {
+        msSetError(MS_SOSERR, "Missing mandatory parameter outputFormat.",
+                   "msSOSDescribeSensor()");
+        return msSOSException(map, "outputformat", "MissingParameterValue");
+    }
+
+    if (strcasecmp(pszOutputFormat, pszSOSDescribeSensorMimeType) != 0) {
+        msSetError(MS_SOSERR, "Invalid outputformat parameter %s.  Allowable values are: %s",
+                   "msSOSDescribeSensor()", pszOutputFormat, pszSOSDescribeSensorMimeType);
+        return msSOSException(map, "outputformat", "InvalidParameterValue");
+    }
+ 
     for (i=0; i<map->numlayers; i++)
     {
         lp = &map->layers[i];
