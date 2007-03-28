@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2007/03/28 03:52:35  tkralidi
+ * made if logic more efficient in msOWSCommonOperationsMetadataOperation
+ *
  * Revision 1.5  2007/03/27 03:49:48  tkralidi
  * updated msOWSCommonOperationsMetadataParameter to accept a
  * comma-seperated list of values
@@ -251,26 +254,18 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *
 
   psSubNode = xmlNewChild(psNode, psNs, BAD_CAST "HTTP", NULL);
 
-  if (method  == 1) {
+  if (method  == 1 || method == 3) {
     psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Get", NULL);
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
   }
 
-  else if (method == 2) {
+  if (method == 2 || method == 3) {
     psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Post", NULL);
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
   }
 
-  else if (method == 3) {
-    psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Get", NULL);   
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
-    psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Post", NULL);
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
-  }
   return psRootNode;
 }
 
