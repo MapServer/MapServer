@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.31  2007/03/29 16:18:25  tkralidi
+ * added version checking for GetObservation and DescribeSensor
+ *
  * Revision 1.30  2007/03/29 15:55:55  tkralidi
  * - Cleaned up operation optional/required definitions in GetCapabilities
  * - Added functionality to check for mandatory VERSION param for msSOSDescribeSensor and msSOSGetObservation as per spec
@@ -155,7 +158,7 @@ MS_CVSID("$Id$")
 #include "libxml/parser.h"
 #include "libxml/tree.h"
 
-const char *pszSOSVersion                = "0.1.2b";
+const char *pszSOSVersion                = "0.1.2";
 const char *pszSOSDescribeSensorMimeType = "text/xml;subtype=\"sensorML/1.0.0\"";
 const char *pszSOSGetObservationMimeType = "text/xml;subtype=\"om/0.14.7\"";
 
@@ -1488,6 +1491,13 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         return msSOSException(map, "version", "MissingParameterValue");
     }
 
+    /* check version */
+    if (msOWSParseVersionString(pszVersion) != OWS_0_1_2) {
+        msSetError(MS_SOSERR, "Version %s not supported.  Supported versions are: %s.",
+                   "msSOSDescribeSensor()", pszVersion, pszSOSVersion);
+        return msSOSException(map, "version", "InvalidParameterValue");
+    }
+
     if (!pszOffering) 
     {
         msSetError(MS_SOSERR, "Missing mandatory Offering parameter.",
@@ -2067,6 +2077,13 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
         msSetError(MS_SOSERR, "Missing mandatory parameter version.",
                    "msSOSDescribeSensor()");
         return msSOSException(map, "version", "MissingParameterValue");
+    }
+
+    /* check version */
+    if (msOWSParseVersionString(pszVersion) != OWS_0_1_2) {
+        msSetError(MS_SOSERR, "Version %s not supported.  Supported versions are: %s.",
+                   "msSOSDescribeSensor()", pszVersion, pszSOSVersion);
+        return msSOSException(map, "version", "InvalidParameterValue");
     }
 
     if (!pszSensorId)
