@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.32  2007/03/29 17:17:15  tkralidi
+ * took out double quotes in MIME type decls.  IETF RFC 2045 allows either or, so
+ * I took them to reduce complexity when writing/reading XML, and passing / processing operations
+ *
  * Revision 1.31  2007/03/29 16:18:25  tkralidi
  * added version checking for GetObservation and DescribeSensor
  *
@@ -159,8 +163,8 @@ MS_CVSID("$Id$")
 #include "libxml/tree.h"
 
 const char *pszSOSVersion                = "0.1.2";
-const char *pszSOSDescribeSensorMimeType = "text/xml;subtype=\"sensorML/1.0.0\"";
-const char *pszSOSGetObservationMimeType = "text/xml;subtype=\"om/0.14.7\"";
+const char *pszSOSDescribeSensorMimeType = "text/xml; subtype=sensorML/1.0.0";
+const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/0.14.7";
 
 /*
 ** msSOSException()
