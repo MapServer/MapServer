@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.30  2007/03/29 15:55:55  tkralidi
+ * - Cleaned up operation optional/required definitions in GetCapabilities
+ * - Added functionality to check for mandatory VERSION param for msSOSDescribeSensor and msSOSGetObservation as per spec
+ *
  * Revision 1.29  2007/03/27 23:10:24  assefa
  * sos_procedure takes priority on sos_precedure_item (bug 2050).
  *
@@ -984,22 +988,20 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("DescribeSensor", 1, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 0, (char *)pszSOSVersion));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 1, (char *)pszSOSVersion));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("sensorid", 1, NULL));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1,  
-                                                                            (char *)pszSOSDescribeSensorMimeType));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, (char *)pszSOSDescribeSensorMimeType));
 
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetObservation", 1, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 0, (char *)pszSOSVersion));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 1, (char *)pszSOSVersion));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("offering", 1, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("observedproperty", 1, NULL));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("eventtime", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("eventtime", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("procedure", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("featureofinterest", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("result", 0, NULL));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("responseFormat", 0, (char *)pszSOSGetObservationMimeType));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("responseFormat", 1, (char *)pszSOSGetObservationMimeType));
 
     /*TODO : add <ogc:Filter_Capabilities> */
 
@@ -1425,7 +1427,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                         char **values, int numentries)
 
 {
-    char *pszOffering=NULL, *pszProperty=NULL, *pszResponseFormat=NULL, *pszTime = NULL;
+    char *pszOffering=NULL, *pszProperty=NULL, *pszResponseFormat=NULL, *pszTime = NULL, *pszVersion=NULL;
     char *pszFilter = NULL, *pszProdedure = NULL;
     char *pszBbox = NULL, *pszFeature=NULL;
 
@@ -1472,11 +1474,20 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
            pszBbox = values[i];
          else if (strcasecmp(names[i], "RESPONSEFORMAT") == 0)
            pszResponseFormat = values[i];
+         else if (strcasecmp(names[i], "VERSION") == 0)
+           pszVersion = values[i];
      }
 
     /*TODO : validate for version number*/
 
     /* validates mandatory request elements */
+    if (!pszVersion)
+    {
+        msSetError(MS_SOSERR, "Missing mandatory version parameter.",
+                   "msSOSGetObservation()");
+        return msSOSException(map, "version", "MissingParameterValue");
+    }
+
     if (!pszOffering) 
     {
         msSetError(MS_SOSERR, "Missing mandatory Offering parameter.",
@@ -2026,6 +2037,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                         char **values, int numentries)
 
 {
+    char *pszVersion=NULL;
     char *pszSensorId=NULL;
     char *pszOutputFormat=NULL;
     char *pszEncodedUrl = NULL;
@@ -2039,12 +2051,22 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
 
     for(i=0; i<numentries; i++) 
     {
+        if (strcasecmp(names[i], "VERSION") == 0) {
+          pszVersion = values[i];
+        }
         if (strcasecmp(names[i], "SENSORID") == 0) {
           pszSensorId = values[i];
         }
         if (strcasecmp(names[i], "OUTPUTFORMAT") == 0) {
           pszOutputFormat = values[i];
         }
+    }
+
+    if (!pszVersion)
+    {
+        msSetError(MS_SOSERR, "Missing mandatory parameter version.",
+                   "msSOSDescribeSensor()");
+        return msSOSException(map, "version", "MissingParameterValue");
     }
 
     if (!pszSensorId)
