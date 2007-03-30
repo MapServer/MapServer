@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.33  2007/03/30 00:48:38  assefa
+ * Encode values when outputing GetObservation values.
+ *
  * Revision 1.32  2007/03/29 17:17:15  tkralidi
  * took out double quotes in MIME type decls.  IETF RFC 2045 allows either or, so
  * I took them to reduce complexity when writing/reading XML, and passing / processing operations
@@ -641,6 +644,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
     const char *pszTimeField = NULL;
     char *pszTmp = NULL;
     char *pszTime = NULL;
+    char *pszValueShape = NULL;
 
     xmlNsPtr psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
@@ -769,21 +773,25 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                               parameter name : eg "sos_AMMON_DIS_alias" "Amonia"  */
                             sprintf(szTmp, "%s_alias", lpfirst->items[i]);
                             pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
+                            pszValueShape = msEncodeHTMLEntities(sShape.values[j]);
+                              
                             if (pszValue)
                             {
                               pszTmp = msEncodeHTMLEntities(pszValue);
-                              psNode = xmlNewChild(psLayerNode, NULL, BAD_CAST pszTmp, 
-                                                   BAD_CAST sShape.values[j]);
+                              psNode = xmlNewChild(psLayerNode, NULL, BAD_CAST pszValue, 
+                                                   BAD_CAST pszValueShape);
                               free(pszTmp);
                             } 
                             else
                             {
-                              pszTmp = msEncodeHTMLEntities(lpfirst->items[i]);
-                              psNode = xmlNewChild(psLayerNode, NULL, BAD_CAST lpfirst->items[i], 
-                                                   BAD_CAST sShape.values[j]);
+                                pszTmp = msEncodeHTMLEntities(lpfirst->items[i]);
+                                psNode = xmlNewChild(psLayerNode, NULL, 
+                                                     BAD_CAST lpfirst->items[i], 
+                                                     BAD_CAST pszValueShape);
                               free(pszTmp);
                             } 
 
+                            free(pszValueShape);
                             xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
                             break;
                         }
@@ -1457,6 +1465,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     FILE *stream=NULL;
     char *pszBuffer = NULL;
     const char *pszProcedureItem = NULL;
+    int bSpatialDB = 0;
 
     sBbox = map->extent;
 
@@ -1635,24 +1644,59 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                             if (pszProcedureItem)
                             {
                                 lp = & map->layers[i];
+                                pszBuffer = NULL;
                                 if (&lp->filter)
                                 {
                                     if (lp->filter.string && strlen(lp->filter.string) > 0)
                                       pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
                                     freeExpression(&lp->filter);
                                 } 
-                                pszBuffer = strcatalloc(pszBuffer, " (");
+                                
+                                /*The filter should reflect the underlying db*/
+                                /*for ogr with an already where clause in the fitler
+                                  treat it as db */
+                                bSpatialDB = 0;
+                                if (lp->connectiontype == MS_POSTGIS ||  
+                                    lp->connectiontype == MS_ORACLESPATIAL ||
+                                    lp->connectiontype == MS_SDE ||     
+                                    (lp->connectiontype == MS_OGR &&
+                                     pszBuffer && 
+                                     EQUALN(pszBuffer,"WHERE",5)))
+                                  bSpatialDB = 1;
+                                    
+                                    
+                                if (bSpatialDB && pszBuffer)
+                                {
+                                    if (lp->connectiontype != MS_OGR)
+                                      pszBuffer = strcatalloc(pszBuffer, " and (");
+                                    else
+                                      pszBuffer = strcatalloc(pszBuffer, " ");
+                                }
+                                else
+                                  pszBuffer = strcatalloc(pszBuffer, " (");
+                                
+
                                 for (j=0; j<n; j++)
                                 {
                                     if (j > 0)
-                                   pszBuffer = strcatalloc(pszBuffer, " OR ");
+                                      pszBuffer = strcatalloc(pszBuffer, " OR ");
+                                    
                                     pszBuffer = strcatalloc(pszBuffer, "(");
+
+                                    if (!bSpatialDB)
+                                      pszBuffer = strcatalloc(pszBuffer, "'[");
                                     pszBuffer = strcatalloc(pszBuffer, (char *)pszProcedureItem);
+                                    if (!bSpatialDB)
+                                      pszBuffer = strcatalloc(pszBuffer, "]'");
+                                    
                                     pszBuffer = strcatalloc(pszBuffer, " = '");
                                     pszBuffer = strcatalloc(pszBuffer,  tokens[j]);
                                     pszBuffer = strcatalloc(pszBuffer,  "')");
                                 }
-                                pszBuffer = strcatalloc(pszBuffer, ")");
+                                
+                                if (!bSpatialDB || lp->connectiontype != MS_OGR)
+                                  pszBuffer = strcatalloc(pszBuffer, ")");
+
                                 loadExpressionString(&lp->filter, pszBuffer);
                                 if (pszBuffer)
                                   msFree(pszBuffer);
@@ -1928,7 +1972,6 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         sBbox.maxy = atof(tokens[3]);
         msFreeCharArray(tokens, n);
     }
-
 
 
     /*do the query. use the same logic (?) as wfs. bbox and filer are incomaptible since bbox
