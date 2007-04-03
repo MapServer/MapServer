@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2007/04/03 23:01:06  frank
+ * Improve docs on -l option and multiple layers.
+ *
  * Revision 1.22  2007/04/01 15:42:01  frank
  * Improve usage message at Dan Jacobson's request.
  *
@@ -88,14 +91,14 @@ int main(int argc, char *argv[])
   if( argc < 3 ) {
     fprintf(stdout,
             "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy]\n"
-            "               [-l layers] [-i format] [-p n]\n"
+            "               [-l "layer1 [layers2...]]" [-i format] [-p n]\n"
             "               [-all_debug n] [-map_debug n] [-layer_debug n]\n");
 
     fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
     fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format.\n" );
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
-    fprintf(stdout,"  -l layers: layers to enable\n" );
+    fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed.\n" );
     fprintf(stdout,"  -all_debug n: Set debug level for map and all layers.\n" );
     fprintf(stdout,"  -map_debug n: Set map debug level.\n" );
     fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level.\n" );
