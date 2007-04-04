@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2007/04/04 18:39:45  assefa
+ * Remove divion by 2 of the line width in imagePolyline.
+ *
  * Revision 1.5  2007/03/12 20:21:30  assefa
  * Remove unused function imagepolyline.
  *
@@ -587,7 +590,7 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
         CMapServerLine aLine(p,i);
         agg::conv_stroke<CMapServerLine> stroke(aLine);
         
-        stroke.width(((float) width) / 2.0);
+        stroke.width(((float) width));
         stroke.line_cap(agg::round_cap);
         
         ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
