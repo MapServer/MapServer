@@ -65,7 +65,7 @@ Currently supported classes, properties and methods:
 
     Label positions:
         MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
-        MS_CC, MS_AUTO, MS_XY
+        MS_CC, MS_AUTO, MS_XY, MS_FOLLOW
 
     Bitmap font styles:
         MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT

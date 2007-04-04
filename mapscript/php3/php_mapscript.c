@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.263  2007/04/04 16:56:02  dan
+ * Added missing MS_FOLLOW constant in PHP MapScript (bug 2058)
+ *
  * Revision 1.262  2006/12/13 16:41:15  dan
  * Added shapeObj.getLabelPoint() (bug 1979)
  *
@@ -1178,6 +1181,7 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_CC",         MS_CC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
     REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
+    REGISTER_LONG_CONSTANT("MS_FOLLOW",     MS_FOLLOW,      const_flag);
 
     /* shape type constants*/
     REGISTER_LONG_CONSTANT("MS_SHAPE_POINT",MS_SHAPE_POINT, const_flag);
