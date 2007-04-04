@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.260.2.2  2007/04/04 16:55:04  dan
+ * Added missing MS_FOLLOW constant in PHP MapScript (bug 2058)
+ *
  * Revision 1.260.2.1  2006/11/22 19:34:45  assefa
  * Fixed setRotation() to check for MS_SUCCESS, not MS_TRUE (bug 1968)
  *
@@ -1173,6 +1176,7 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_CC",         MS_CC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
     REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
+    REGISTER_LONG_CONSTANT("MS_FOLLOW",     MS_FOLLOW,      const_flag);
 
     /* shape type constants*/
     REGISTER_LONG_CONSTANT("MS_SHAPE_POINT",MS_SHAPE_POINT, const_flag);
