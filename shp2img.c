@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2007/04/05 11:07:23  tkralidi
+ * fixed up quoting and escaping (code wasn't building)
+ *
  * Revision 1.23  2007/04/03 23:01:06  frank
  * Improve docs on -l option and multiple layers.
  *
@@ -91,7 +94,7 @@ int main(int argc, char *argv[])
   if( argc < 3 ) {
     fprintf(stdout,
             "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy]\n"
-            "               [-l "layer1 [layers2...]]" [-i format] [-p n]\n"
+            "               [-l layer1 \"[layers2...] ]\" [-i format] [-p n]\n"
             "               [-all_debug n] [-map_debug n] [-layer_debug n]\n");
 
     fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
