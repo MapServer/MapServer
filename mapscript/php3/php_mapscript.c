@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.264  2007/04/05 15:22:30  assefa
+ * Commit fix for the msSaveImageBufferAGG.
+ *
  * Revision 1.263  2007/04/04 16:56:02  dan
  * Added missing MS_FOLLOW constant in PHP MapScript (bug 2058)
  *
@@ -6095,6 +6098,8 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
         if( MS_DRIVER_GD(im->format) )
           iptr = (void *)msSaveImageBufferGD(im->img.gd, &size, im->format);
+        else if( MS_DRIVER_AGG(im->format) )
+          iptr = (void *)msSaveImageBufferAGG(im->img.gd, &size, im->format);
         else if (im->format->name && strcasecmp(im->format->name, "imagemap")==0)
         {
             iptr = im->img.imagemap;
@@ -11331,7 +11336,6 @@ DLEXPORT void php3_ms_shape_within(INTERNAL_FUNCTION_PARAMETERS)
     shapeObj     *self = NULL;
     shapeObj    *poShape;
     HashTable   *list=NULL;
-
 
     pThis = getThis();
 

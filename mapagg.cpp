@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2007/04/05 15:22:30  assefa
+ * Commit fix for the msSaveImageBufferAGG.
+ *
  * Revision 1.6  2007/04/04 18:39:45  assefa
  * Remove divion by 2 of the line width in imagePolyline.
  *
@@ -1250,6 +1253,7 @@ int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
   char cGDFormat[128];
   int   iReturn = 0;
   
+
   pFormatBuffer = format->driver;
   
   strcpy(cGDFormat, "gd/");
@@ -1304,7 +1308,25 @@ int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr,
                                    outputFormatObj *format)
 {
-  return msSaveImageBufferGD(img, size_ptr, format);
+    char *pFormatBuffer;
+    char *pszGDFormat = NULL;
+    unsigned char *buf = NULL;
+
+    pFormatBuffer = format->driver;
+
+    pszGDFormat = strcatalloc(pszGDFormat, "gd/");
+    pszGDFormat = strcatalloc(pszGDFormat, &(format->driver[4]));
+
+    format->driver = pszGDFormat;
+
+    buf = msSaveImageBufferGD(img, size_ptr, format);
+
+    format->driver = pFormatBuffer;
+
+    msFree(pszGDFormat);
+
+    return buf;
+    
 }
 
 //------------------------------------------------------------------------------------------------------------
