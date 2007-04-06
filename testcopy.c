@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2007/04/06 20:46:55  dan
+ * Report errors to stderr if loading tests/test.map fails
+ *
  * Revision 1.9  2007/04/06 19:32:30  dan
  * Fixed DOS line breaks
  *
@@ -58,6 +61,14 @@ int main(int argc, char *argv[]) {
     /* Load map file */
     original_map = msLoadMap("tests/test.map", NULL);
     
+    if (original_map ==  NULL)
+    {
+        /* Write errors */
+        msWriteError(stderr);
+        msResetErrorList();
+        exit(0);
+    }
+
     /* Dump out some attributes */
     printAtts(original_map, "Original"); 
 
