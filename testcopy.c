@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8.6.2  2007/04/06 19:29:56  dan
+ * Fixed a few more DOS linefeeds
+ *
  * Revision 1.8.6.1  2007/04/06 19:27:45  dan
  * Removed DOS linefeeds
  *
@@ -55,34 +58,27 @@ int main(int argc, char *argv[]) {
      * Test 1: free original before freeing clone
      * --------------------------------------------------------------------- */
 
-    /* Load map file 
- */
+    /* Load map file */
     original_map = msLoadMap("tests/test.map", NULL);
     
-    /* Dump out some attributes
- */
+    /* Dump out some attributes */
     printAtts(original_map, "Original"); 
 
-    /* Clone it
- */
+    /* Clone it */
     clone_map = msNewMapObj();
     msCopyMap(clone_map, original_map);
 
-    /* Write errors
- */
+    /* Write errors */
     msWriteError(stderr);
     msResetErrorList();
 
-    /* Free
- */
+    /* Free */
     msFreeMap(original_map);
 
-    /* Dump clone's attributes
- */
+    /* Dump clone's attributes */
     printAtts(clone_map, "Clone");
   
-    /* Free clone
- */
+    /* Free clone */
     msFreeMap(clone_map);
 
     exit(0);    
