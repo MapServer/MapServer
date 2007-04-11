@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.144  2007/04/11 15:25:07  hobu
+ * support UUID columns for the case where they exist
+ *
  * Revision 1.143  2007/03/09 21:40:02  hobu
  * copy the string into our already allocated
  * sde->row_id_column instead of allocating a new
@@ -773,7 +776,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             sprintf(shape->values[i], "%ld", shape->index);
             continue;
         }    
-    
+
     switch(itemdefs[i].sde_type) {
         case SE_SMALLINT_TYPE:
             /* changed by gdv */
@@ -876,6 +879,25 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                     return(MS_FAILURE);
                 }
                 break;
+#endif
+
+#ifdef SE_UUID_TYPE
+
+        case SE_UUID_TYPE:
+            shape->values[i] = (char *)malloc(itemdefs[i].size+1);
+            status = SE_stream_get_uuid  (  sde->stream, 
+                                            (short) (i+1), 
+                                            shape->values[i]);
+            if(status == SE_NULL_VALUE)
+                shape->values[i][0] = '\0'; /* empty string */
+            else if(status != SE_SUCCESS) {
+                sde_error(  status, 
+                            "sdeGetRecord()", 
+                            "SE_stream_get_uuid()");
+                return(MS_FAILURE);
+            }
+            break;
+            
 #endif
         case SE_BLOB_TYPE:
             status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
