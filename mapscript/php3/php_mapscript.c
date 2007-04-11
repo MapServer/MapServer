@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.265  2007/04/11 21:49:26  hobu
+ * #ifdef the use of AGG
+ *
  * Revision 1.264  2007/04/05 15:22:30  assefa
  * Commit fix for the msSaveImageBufferAGG.
  *
@@ -6098,8 +6101,10 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
         if( MS_DRIVER_GD(im->format) )
           iptr = (void *)msSaveImageBufferGD(im->img.gd, &size, im->format);
+#ifdef USE_AGG
         else if( MS_DRIVER_AGG(im->format) )
           iptr = (void *)msSaveImageBufferAGG(im->img.gd, &size, im->format);
+#endif
         else if (im->format->name && strcasecmp(im->format->name, "imagemap")==0)
         {
             iptr = im->img.imagemap;
