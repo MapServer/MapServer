@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2007/04/13 04:07:02  sdlime
+ * Added check for nan bounds to msSHPReadBounds(). Fixed return values for msSHPReadBounds() to be MS_SUCCESS/MS_FAILURE instead of 0/-1 (and updated any calls to that function elsewhere accordingly). (bug 1931)
+ *
  * Revision 1.74  2007/04/11 20:42:46  sdlime
  * Formatting clean up.
  *
@@ -1314,7 +1317,7 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   /* -------------------------------------------------------------------- */
   if( psSHP->nRecords <= 0 || hEntity < -1 || hEntity >= psSHP->nRecords ) {
     padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
-    return(-1);
+    return MS_FAILURE;
   }
 
   /* -------------------------------------------------------------------- */
@@ -1328,18 +1331,23 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   } else {    
     if( psSHP->panRecSize[hEntity] == 4 ) { /* NULL shape */
       padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
-      return(-1);
+      return MS_FAILURE;
     } 
     
     if( psSHP->nShapeType != SHP_POINT ) {
       fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
       fread( padBounds, sizeof(double)*4, 1, psSHP->fpSHP );
-      
+
       if( bBigEndian ) {
         SwapWord( 8, &(padBounds->minx) );
         SwapWord( 8, &(padBounds->miny) );
         SwapWord( 8, &(padBounds->maxx) );
         SwapWord( 8, &(padBounds->maxy) );
+      }
+
+      if(msIsNan(padBounds->minx)) { /* empty shape */
+        padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
+	return MS_FAILURE;
       }
     } else {
       /* -------------------------------------------------------------------- */
@@ -1360,7 +1368,7 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
     }
   }
 
-  return(0);
+  return MS_SUCCESS;
 }
 
 int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename)
@@ -1510,7 +1518,7 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
       }
       
       for(i=0;i<shpfile->numshapes;i++) {
-        if(!msSHPReadBounds(shpfile->hSHP, i, &shaperect))
+        if(msSHPReadBounds(shpfile->hSHP, i, &shaperect) == MS_SUCCESS)
           if(msRectOverlap(&shaperect, &rect) == MS_TRUE) msSetBit(shpfile->status, i, 1);
       }
     }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2007/04/13 04:07:02  sdlime
+ * Added check for nan bounds to msSHPReadBounds(). Fixed return values for msSHPReadBounds() to be MS_SUCCESS/MS_FAILURE instead of 0/-1 (and updated any calls to that function elsewhere accordingly). (bug 1931)
+ *
  * Revision 1.18  2006/04/19 16:36:18  hobu
  * don't throw an MS_IOERR when we're in debug mode when we don't find an index (bug 1752)
  *
@@ -251,7 +254,7 @@ treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth)
   tree->root = treeNodeCreate(shapefile->bounds);
 
   for(i=0; i<shapefile->numshapes; i++) {
-    if ( !msSHPReadBounds(shapefile->hSHP, i, &bounds))
+    if(msSHPReadBounds(shapefile->hSHP, i, &bounds) == MS_SUCCESS)
       treeAddShapeId(tree, i, bounds);
   }
 
@@ -787,9 +790,8 @@ void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect)
 
   for(i=0;i<shp->numshapes;i++) { /* for each shape */
     if(msGetBit(status, i)) {
-      if(!msSHPReadBounds(shp->hSHP, i, &shape_rect))
-	if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE)
-	  msSetBit(status, i, 0);
+      if(msSHPReadBounds(shp->hSHP, i, &shape_rect) == MS_SUCCESS)
+	if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE) msSetBit(status, i, 0);
     }
   }
 }
