@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.476  2007/04/13 03:48:20  sdlime
+ * Added wrapper for isnan (thanks to Frank).
+ *
  * Revision 1.475  2007/03/23 15:23:58  assefa
  * Add utility string function for case-incensitive searchs.
  *
@@ -327,6 +330,12 @@ extern "C" {
 #define MS_SGN(a) (((a)<0) ? -1 : 1)
 
 #define MS_NINT_GENERIC(x) ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
+
+#ifdef _MSC_VER
+#define msIsNan(x) _isnan(x)
+#else
+#define msIsNan(x) isnan(x)
+#endif
 
 /* see http://mega-nerd.com/FPcast/ for some discussion of fast
    conversion to nearest int.  We avoid lrint() for now because it
