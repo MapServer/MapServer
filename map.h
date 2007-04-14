@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.477  2007/04/14 20:25:31  sdlime
+ * Moved msGetEncodedString() from mapgd.c to mapstring.c.
+ *
  * Revision 1.476  2007/04/13 03:48:20  sdlime
  * Added wrapper for isnan (thanks to Frank).
  *
@@ -1533,7 +1536,8 @@ MS_DLL_EXPORT char *strcatalloc(char *pszDest, char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
-MS_DLL_EXPORT  const char *stristr(const char *haystack, const char *needle);
+MS_DLL_EXPORT const char *stristr(const char *haystack, const char *needle);
+MS_DLL_EXPORT char *msGetEncodedString(const char *string, const char *encoding);
 
 #ifdef NEED_STRDUP
 MS_DLL_EXPORT char *strdup(char *s);
@@ -1804,9 +1808,6 @@ MS_DLL_EXPORT int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label
 MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
-
-/* Modify the character encoding. */
-char *msGetEncodedString(const char *string, const char *encoding);
 
 #ifdef USE_AGG
 /* ==================================================================== */

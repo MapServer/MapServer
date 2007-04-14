@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2007/04/14 20:25:32  sdlime
+ * Moved msGetEncodedString() from mapgd.c to mapstring.c.
+ *
  * Revision 1.36  2007/03/23 15:23:58  assefa
  * Add utility string function for case-incensitive searchs.
  *
@@ -65,6 +68,10 @@
 MS_CVSID("$Id$")
 
 #include <ctype.h>
+
+#ifdef USE_ICONV
+#include <iconv.h>
+#endif
 
 #ifdef NEED_STRLCAT
 /*
@@ -1033,3 +1040,61 @@ char *gisub(char *str, const char *old, const char *new)
 
       return(str);
 }
+
+/*
+** Simple charset converter.
+** The return value must be freed by the caller.
+*/
+char *msGetEncodedString(const char *string, const char *encoding)
+{
+#ifdef USE_ICONV
+  iconv_t cd = NULL;
+  char *in, *inp;
+  char *outp, *out = NULL;
+  size_t len, bufsize, bufleft, status;
+
+  cd = iconv_open("UTF-8", encoding);
+  if(cd == (iconv_t)-1) {
+    msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).", 
+               "msGetEncodedString()", encoding);
+    return NULL;
+  }
+
+  len = strlen(string);
+  bufsize = len * 4;
+  in = strdup(string);
+  inp = in;
+  out = (char*) malloc(bufsize);
+  if(in == NULL || out == NULL){
+    msSetError(MS_MEMERR, NULL, "msGetEncodedString()");
+    msFree(in);
+    iconv_close(cd);
+    return NULL;
+  }
+  strcpy(out, in);
+  outp = out;
+
+  bufleft = bufsize;
+  status = -1;
+
+  while (len > 0){
+    status = iconv(cd, (const char**)&inp, &len, &outp, &bufleft);
+    if(status == -1){
+      msFree(in);
+      msFree(out);
+      iconv_close(cd);
+      return strdup(string);
+    }
+  }
+  out[bufsize - bufleft] = '\0';
+  
+  msFree(in);
+  iconv_close(cd);
+
+  return out;
+#else
+  msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.", "msGetEncodedString()");
+  return NULL;
+#endif
+}
+
