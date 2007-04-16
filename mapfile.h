@@ -1,6 +1,8 @@
 #ifndef MAPFILE_H
 #define MAPFILE_H
 
+enum MS_LEXER_STATES {MS_LEXER_DEFAULT=0, MS_LEXER_FILE, MS_LEXER_BUFFER, MS_LEXER_EXPRESSION, MS_LEXER_URL_ITEM, MS_LEXER_URL_VALUE};
+
 /*
 ** Keyword definitions for the mapfiles and symbolfiles (used by lexer)
 */
