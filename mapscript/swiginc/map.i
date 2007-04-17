@@ -102,13 +102,16 @@
     }
   }
 
+  %newobject getLayerByName;
   layerObj *getLayerByName(char *name) {
     int i;
 
     i = msGetLayerIndex(self, name);
 
-    if(i != -1)
+    if(i != -1) {
+      MS_REFCNT_INCR(self->layers[i]);
       return (self->layers[i]); /* returns an EXISTING layer */
+    }
     else
       return NULL;
   }

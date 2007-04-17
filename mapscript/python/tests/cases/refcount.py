@@ -160,6 +160,14 @@ class ReferenceCountingTestCase(unittest.TestCase):
 	assert layer.name == copy.name
 	assert copy.map == None
     
+    def testMapGetLayerByName(self):
+        """behave when parent (map) is null"""
+	self.initMap()
+        layer = self.map.getLayerByName("RASTER")
+	
+	assert layer.refcount == 2, layer.refcount
+	assert layer.thisown  == 1, layer.thisown
+    
     def testBehaveWhenParentIsNotNull(self):
         """behave when parent (map) is not null"""
 	self.initMap()
@@ -172,7 +180,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
 	clazz = mapscript.classObj()
 	assert clazz.refcount == 1, clazz.refcount
 
-    def testClassWithMapArgument(self):
+    def testClassWithArgument(self):
         """classObj constructor with not null layer"""
 	self.initMap()
 	clazz = mapscript.classObj(self.map.getLayer(0))
