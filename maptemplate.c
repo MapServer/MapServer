@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.126  2007/04/17 10:36:54  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.125  2007/03/22 04:40:24  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
  *
@@ -459,8 +462,8 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
    */
    for (i=0; i<map->numlayers-1; i++) {
       for (j=0; j<map->numlayers-1-i; j++) {
-         pszLegendOrder1 = msLookupHashTable(&(map->layers[map->layerorder[j+1]].metadata), pszMetadata);
-         pszLegendOrder2 = msLookupHashTable(&(map->layers[map->layerorder[j]].metadata), pszMetadata);
+         pszLegendOrder1 = msLookupHashTable(&(GET_LAYER(map, map->layerorder[j+1])->metadata), pszMetadata);
+         pszLegendOrder2 = msLookupHashTable(&(GET_LAYER(map, map->layerorder[j])->metadata), pszMetadata);
      
          if (!pszLegendOrder1 || !pszLegendOrder2)
            continue;
@@ -1101,6 +1104,9 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     msSetError(MS_WEBERR, "Invalid line pointer.", "processCoords()");
     return(MS_FAILURE);
   }
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
+  
 
   tagStart = findTag(*line, "shpxy");
 
@@ -1401,16 +1407,16 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          /* Create an image corresponding to the current class */
           imageObj *img=NULL;
 
-         if (map->layers[nIdxLayer].numclasses <= 0 || 
-             nIdxClass > map->layers[nIdxLayer].numclasses || nIdxClass < 0)
+         if (GET_LAYER(map, nIdxLayer)->numclasses <= 0 || 
+             nIdxClass > GET_LAYER(map, nIdxLayer)->numclasses || nIdxClass < 0)
          {
              /* Nonexistent class.  Create an empty image */
              img = msCreateLegendIcon(map, NULL, NULL, nWidth, nHeight);
          }
          else
          {
-            img = msCreateLegendIcon(map, &(map->layers[nIdxLayer]), 
-                                     &(map->layers[nIdxLayer].class[nIdxClass]), 
+            img = msCreateLegendIcon(map, GET_LAYER(map, nIdxLayer), 
+                                     GET_LAYER(map, nIdxLayer)->class[nIdxClass], 
                                      nWidth, nHeight);
          }
 
@@ -1522,24 +1528,24 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    bShowGroup = 0;
    for (j=0; j<map->numlayers; j++)
    {
-       if (map->layers[map->layerorder[j]].group && 
-           strcmp(map->layers[map->layerorder[j]].group, pszGroupName) == 0)
+       if (GET_LAYER(map, map->layerorder[j])->group && 
+           strcmp(GET_LAYER(map, map->layerorder[j])->group, pszGroupName) == 0)
        {
            /* dont display layer is off. */
            if( (nOptFlag & 2) == 0 && 
-               map->layers[map->layerorder[j]].status == MS_OFF )
+               GET_LAYER(map, map->layerorder[j])->status == MS_OFF )
                bShowGroup = 0;
            else
                bShowGroup = 1;
 
            /* dont display layer is query. */
            if( (nOptFlag & 4) == 0  && 
-               map->layers[map->layerorder[j]].type == MS_LAYER_QUERY )
+               GET_LAYER(map, map->layerorder[j])->type == MS_LAYER_QUERY )
                bShowGroup = 0;
 
            /* dont display layer is annotation. */
            if( (nOptFlag & 8) == 0 && 
-               map->layers[map->layerorder[j]].type == MS_LAYER_ANNOTATION )
+               GET_LAYER(map, map->layerorder[j])->type == MS_LAYER_ANNOTATION )
                bShowGroup = 0;
                
 
@@ -1547,11 +1553,11 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
            if ((nOptFlag & 1) == 0)
            {
                if(map->scale > 0) {
-                   if((map->layers[map->layerorder[j]].maxscale > 0) && 
-                      (map->scale > map->layers[map->layerorder[j]].maxscale))
+                   if((GET_LAYER(map, map->layerorder[j])->maxscale > 0) && 
+                      (map->scale > GET_LAYER(map, map->layerorder[j])->maxscale))
                        bShowGroup = 0;
-                   if((map->layers[map->layerorder[j]].minscale > 0) && 
-                      (map->scale <= map->layers[map->layerorder[j]].minscale))
+                   if((GET_LAYER(map, map->layerorder[j])->minscale > 0) && 
+                      (map->scale <= GET_LAYER(map, map->layerorder[j])->minscale))
                        bShowGroup = 0;
                }
            }
@@ -1591,20 +1597,20 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
     */
    for (j=0; j<map->numlayers; j++)
    {
-      if (map->layers[map->layerorder[j]].group && strcmp(map->layers[map->layerorder[j]].group, pszGroupName) == 0)
+      if (GET_LAYER(map, map->layerorder[j])->group && strcmp(GET_LAYER(map, map->layerorder[j])->group, pszGroupName) == 0)
       {
-         sprintf(pszStatus, "%d", map->layers[map->layerorder[j]].status);
+         sprintf(pszStatus, "%d", GET_LAYER(map, map->layerorder[j])->status);
          msInsertHashTable(myHashTable, "layer_status", pszStatus);
-         msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[map->layerorder[j]]))?"1":"0" );
+         msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, GET_LAYER(map, map->layerorder[j]))?"1":"0" );
          msInsertHashTable(myHashTable, "group_name", pszGroupName);
 
          if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
          
-         if (processIf(pszTemp, &(map->layers[map->layerorder[j]].metadata), MS_FALSE) != MS_SUCCESS)
+         if (processIf(pszTemp, &(GET_LAYER(map, map->layerorder[j])->metadata), MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
 
-         if (processMetadata(pszTemp, &(map->layers[map->layerorder[j]].metadata)) != MS_SUCCESS)
+         if (processMetadata(pszTemp, &GET_LAYER(map, map->layerorder[j])->metadata) != MS_SUCCESS)
            return MS_FAILURE;
 
          break;
@@ -1634,7 +1640,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    if (pszClassImg) {
       /* find first layer of this group */
       for (i=0; i<map->numlayers; i++)
-        if (map->layers[map->layerorder[i]].group && strcmp(map->layers[map->layerorder[i]].group, pszGroupName) == 0)
+        if (GET_LAYER(map, map->layerorder[i])->group && strcmp(GET_LAYER(map, map->layerorder[i])->group, pszGroupName) == 0)
           processIcon(map, map->layerorder[i], 0, pszTemp, pszPrefix);
    }      
       
@@ -1679,31 +1685,31 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
      nOptFlag = atoi(pszOptFlag);
 
    /* don't display deleted layers */
-   if (map->layers[nIdxLayer].status == MS_DELETE)
+   if (GET_LAYER(map, nIdxLayer)->status == MS_DELETE)
      return MS_SUCCESS;
 
    /* dont display layer is off. */
    /* check this if Opt flag is not set */
-   if((nOptFlag & 2) == 0 && map->layers[nIdxLayer].status == MS_OFF)
+   if((nOptFlag & 2) == 0 && GET_LAYER(map, nIdxLayer)->status == MS_OFF)
      return MS_SUCCESS;
 
    /* dont display layer is query. */
    /* check this if Opt flag is not set */
-   if ((nOptFlag & 4) == 0  && map->layers[nIdxLayer].type == MS_LAYER_QUERY)
+   if ((nOptFlag & 4) == 0  && GET_LAYER(map, nIdxLayer)->type == MS_LAYER_QUERY)
      return MS_SUCCESS;
 
    /* dont display layer is annotation. */
    /* check this if Opt flag is not set       */
-   if ((nOptFlag & 8) == 0 && map->layers[nIdxLayer].type == MS_LAYER_ANNOTATION)
+   if ((nOptFlag & 8) == 0 && GET_LAYER(map, nIdxLayer)->type == MS_LAYER_ANNOTATION)
      return MS_SUCCESS;      
 
    /* dont display layer if out of scale. */
    /* check this if Opt flag is not set             */
    if ((nOptFlag & 1) == 0) {
       if(map->scale > 0) {
-         if((map->layers[nIdxLayer].maxscale > 0) && (map->scale > map->layers[nIdxLayer].maxscale))
+         if((GET_LAYER(map, nIdxLayer)->maxscale > 0) && (map->scale > GET_LAYER(map, nIdxLayer)->maxscale))
            return MS_SUCCESS;
-         if((map->layers[nIdxLayer].minscale > 0) && (map->scale <= map->layers[nIdxLayer].minscale))
+         if((GET_LAYER(map, nIdxLayer)->minscale > 0) && (map->scale <= GET_LAYER(map, nIdxLayer)->minscale))
            return MS_SUCCESS;
       }
    }
@@ -1716,15 +1722,15 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    /*
     * Change layer tags
     */
-   *pszTemp = gsub(*pszTemp, "[leg_layer_name]", map->layers[nIdxLayer].name);
-   *pszTemp = gsub(*pszTemp, "[leg_layer_group]", map->layers[nIdxLayer].group);
+   *pszTemp = gsub(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
+   *pszTemp = gsub(*pszTemp, "[leg_layer_group]", GET_LAYER(map, nIdxLayer)->group);
 
    snprintf(szTmpstr, 128, "%d", nIdxLayer); 
    *pszTemp = gsub(*pszTemp, "[leg_layer_index]", szTmpstr);
 
-   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].minscale); 
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->minscale); 
    *pszTemp = gsub(*pszTemp, "[leg_layer_minscale]", szTmpstr);
-   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].maxscale); 
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->maxscale); 
    *pszTemp = gsub(*pszTemp, "[leg_layer_maxscale]", szTmpstr);
 
    /*
@@ -1736,20 +1742,20 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    /*
     * for now, only status and type is required by template
     */
-   sprintf(szStatus, "%d", map->layers[nIdxLayer].status);
+   sprintf(szStatus, "%d", GET_LAYER(map, nIdxLayer)->status);
    msInsertHashTable(myHashTable, "layer_status", szStatus);
 
-   sprintf(szType, "%d", map->layers[nIdxLayer].type);
+   sprintf(szType, "%d", GET_LAYER(map, nIdxLayer)->type);
    msInsertHashTable(myHashTable, "layer_type", szType);
 
-   msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
-   msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
-   msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[nIdxLayer]))?"1":"0" );
+   msInsertHashTable(myHashTable, "layer_name", GET_LAYER(map, nIdxLayer)->name);
+   msInsertHashTable(myHashTable, "layer_group", GET_LAYER(map, nIdxLayer)->group);
+   msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, GET_LAYER(map, nIdxLayer))?"1":"0" );
 
    if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, &(map->layers[nIdxLayer].metadata), MS_FALSE) != MS_SUCCESS)
+   if (processIf(pszTemp, &(GET_LAYER(map, nIdxLayer)->metadata), MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
    if (processIf(pszTemp, &(map->web.metadata), MS_TRUE) != MS_SUCCESS)
@@ -1770,7 +1776,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
     * only current layer and web object
     * metaddata are accessible
    */
-   if (processMetadata(pszTemp, &(map->layers[nIdxLayer].metadata)) != MS_SUCCESS)
+   if (processMetadata(pszTemp, &GET_LAYER(map, nIdxLayer)->metadata) != MS_SUCCESS)
       return MS_FAILURE;
 
    if (processMetadata(pszTemp, &(map->web.metadata)) != MS_SUCCESS)
@@ -1806,7 +1812,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
        !map || 
        nIdxLayer > map->numlayers ||
        nIdxLayer < 0 ||
-       nIdxClass > map->layers[nIdxLayer].numclasses ||
+       nIdxClass > GET_LAYER(map, nIdxLayer)->numclasses ||
        nIdxClass < 0) {
         
      msSetError(MS_WEBERR, "Invalid pointer.", "generateClassTemplate()");
@@ -1820,31 +1826,31 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
      nOptFlag = atoi(pszOptFlag);
       
    /* don't display deleted layers */
-   if (map->layers[nIdxLayer].status == MS_DELETE)
+   if (GET_LAYER(map, nIdxLayer)->status == MS_DELETE)
      return MS_SUCCESS;
 
    /* dont display class if layer is off. */
    /* check this if Opt flag is not set */
-   if((nOptFlag & 2) == 0 && map->layers[nIdxLayer].status == MS_OFF)
+   if((nOptFlag & 2) == 0 && GET_LAYER(map, nIdxLayer)->status == MS_OFF)
      return MS_SUCCESS;
 
    /* dont display class if layer is query. */
    /* check this if Opt flag is not set       */
-   if ((nOptFlag & 4) == 0 && map->layers[nIdxLayer].type == MS_LAYER_QUERY)
+   if ((nOptFlag & 4) == 0 && GET_LAYER(map, nIdxLayer)->type == MS_LAYER_QUERY)
      return MS_SUCCESS;
       
    /* dont display class if layer is annotation. */
    /* check this if Opt flag is not set       */
-   if ((nOptFlag & 8) == 0 && map->layers[nIdxLayer].type == MS_LAYER_ANNOTATION)
+   if ((nOptFlag & 8) == 0 && GET_LAYER(map, nIdxLayer)->type == MS_LAYER_ANNOTATION)
      return MS_SUCCESS;
       
    /* dont display layer if out of scale. */
    /* check this if Opt flag is not set */
    if ((nOptFlag & 1) == 0) {
       if(map->scale > 0) {
-         if((map->layers[nIdxLayer].maxscale > 0) && (map->scale > map->layers[nIdxLayer].maxscale))
+         if((GET_LAYER(map, nIdxLayer)->maxscale > 0) && (map->scale > GET_LAYER(map, nIdxLayer)->maxscale))
            return MS_SUCCESS;
-         if((map->layers[nIdxLayer].minscale > 0) && (map->scale <= map->layers[nIdxLayer].minscale))
+         if((GET_LAYER(map, nIdxLayer)->minscale > 0) && (map->scale <= GET_LAYER(map, nIdxLayer)->minscale))
            return MS_SUCCESS;
       }
    }
@@ -1858,16 +1864,16 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /*
     * Change class tags
     */
-   *pszTemp = gsub(*pszTemp, "[leg_class_name]", map->layers[nIdxLayer].class[nIdxClass].name);
-   *pszTemp = gsub(*pszTemp, "[leg_class_title]", map->layers[nIdxLayer].class[nIdxClass].title);
-   *pszTemp = gsub(*pszTemp, "[leg_layer_name]", map->layers[nIdxLayer].name);
+   *pszTemp = gsub(*pszTemp, "[leg_class_name]", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->name);
+   *pszTemp = gsub(*pszTemp, "[leg_class_title]", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->title);
+   *pszTemp = gsub(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
 
    snprintf(szTmpstr, 128, "%d", nIdxClass); 
    *pszTemp = gsub(*pszTemp, "[leg_class_index]", szTmpstr);
 
-   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].class[nIdxClass].minscale); 
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->minscale); 
    *pszTemp = gsub(*pszTemp, "[leg_class_minscale]", szTmpstr);
-   snprintf(szTmpstr, 128, "%g", map->layers[nIdxLayer].class[nIdxClass].maxscale); 
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->maxscale); 
    *pszTemp = gsub(*pszTemp, "[leg_class_maxscale]", szTmpstr);
 
    /*
@@ -1879,21 +1885,21 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /*
     * for now, only status, type, name and group are  required by template
     */
-   sprintf(szStatus, "%d", map->layers[nIdxLayer].status);
+   sprintf(szStatus, "%d", GET_LAYER(map, nIdxLayer)->status);
    msInsertHashTable(myHashTable, "layer_status", szStatus);
 
-   sprintf(szType, "%d", map->layers[nIdxLayer].type);
+   sprintf(szType, "%d", GET_LAYER(map, nIdxLayer)->type);
    msInsertHashTable(myHashTable, "layer_type", szType);   
    
-   msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
-   msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
-   msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[nIdxLayer]))?"1":"0" );
-   msInsertHashTable(myHashTable, "class_name", map->layers[nIdxLayer].class[nIdxClass].name);
+   msInsertHashTable(myHashTable, "layer_name", GET_LAYER(map, nIdxLayer)->name);
+   msInsertHashTable(myHashTable, "layer_group", GET_LAYER(map, nIdxLayer)->group);
+   msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, GET_LAYER(map, nIdxLayer))?"1":"0" );
+   msInsertHashTable(myHashTable, "class_name", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->name);
 
    if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, &(map->layers[nIdxLayer].metadata), MS_FALSE) != MS_SUCCESS)
+   if (processIf(pszTemp, &(GET_LAYER(map, nIdxLayer)->metadata), MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
    if (processIf(pszTemp, &(map->web.metadata), MS_TRUE) != MS_SUCCESS)
@@ -1913,7 +1919,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
     * only current layer and web object
     * metaddata are accessible
    */
-   if (processMetadata(pszTemp, &(map->layers[nIdxLayer].metadata)) != MS_SUCCESS)
+   if (processMetadata(pszTemp, &GET_LAYER(map, nIdxLayer)->metadata) != MS_SUCCESS)
       return MS_FAILURE;
    
    if (processMetadata(pszTemp, &(map->web.metadata)) != MS_SUCCESS)
@@ -2171,7 +2177,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                */
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if (pszOrderMetadata) {
-                 pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
+                 pszOrderValue = msLookupHashTable(&(GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->metadata), pszOrderMetadata);
                  if (pszOrderValue) {
                     nLegendOrder = atoi(pszOrderValue);
                     if (nLegendOrder < 0)
@@ -2179,7 +2185,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                  }
               }
 
-              if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
+              if (GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->group && strcmp(GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->group, papszGroups[i]) == 0) {
                  /* process all layer tags */
                  if (generateLayerTemplate(legLayerHtml, msObj->Map, msObj->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
                  {
@@ -2202,9 +2208,9 @@ char *generateLegendTemplate(mapservObj *msObj)
             
                  /* for all classes in layer */
                  if (legClassHtml) {
-                    for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
+                    for (k=0; k<GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->numclasses; k++) {
                        /* process all class tags */
-                       if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
+                       if (!GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->class[k]->name)
                          continue;
 
                        if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
@@ -2237,7 +2243,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                */
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if (pszOrderMetadata) {
-                 pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
+                 pszOrderValue = msLookupHashTable(&(GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->metadata), pszOrderMetadata);
                  if (pszOrderValue) {
                     nLegendOrder = atoi(pszOrderValue);
                     if (nLegendOrder < 0)
@@ -2245,12 +2251,12 @@ char *generateLegendTemplate(mapservObj *msObj)
                  }
               }
 
-              if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
+              if (GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->group && strcmp(GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->group, papszGroups[i]) == 0) {
                  /* for all classes in layer */
                  if (legClassHtml) {
-                    for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
+                    for (k=0; k<GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->numclasses; k++) {
                        /* process all class tags */
-                       if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
+                       if (!GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->class[k]->name)
                          continue;
 
                        if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
@@ -2286,7 +2292,7 @@ char *generateLegendTemplate(mapservObj *msObj)
              */
             pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
             if (pszOrderMetadata) {
-               pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
+               pszOrderValue = msLookupHashTable(&(GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->metadata), pszOrderMetadata);
                if (pszOrderValue) {
                   nLegendOrder = atoi(pszOrderValue);
                   if (nLegendOrder < 0)
@@ -2315,9 +2321,9 @@ char *generateLegendTemplate(mapservObj *msObj)
             
             /* for all classes in layer */
             if (legClassHtml) {
-               for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
+               for (k=0; k<GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->numclasses; k++) {
                   /* process all class tags */
-                  if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
+                  if (!GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->class[k]->name)
                     continue;
 
                   if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
@@ -2349,7 +2355,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                 */
                pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
                if (pszOrderMetadata) {
-                  pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
+                  pszOrderValue = msLookupHashTable(&(GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->metadata), pszOrderMetadata);
                   if (pszOrderValue) {
                      nLegendOrder = atoi(pszOrderValue);
                      if (nLegendOrder < 0)
@@ -2357,8 +2363,8 @@ char *generateLegendTemplate(mapservObj *msObj)
                   }
                }
 
-               for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
-                  if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
+               for (k=0; k<GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->numclasses; k++) {
+                  if (!GET_LAYER(msObj->Map, msObj->Map->layerorder[j])->class[k]->name)
                     continue;
                   
                   if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
@@ -2595,8 +2601,8 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   strcpy(repstr, ""); /* list of ALL layers that can be toggled */
   repstr[0] = '\0';
   for(i=0;i<msObj->Map->numlayers;i++) {
-    if(msObj->Map->layers[i].status != MS_DEFAULT && msObj->Map->layers[i].name != NULL) {
-      strlcat(repstr, msObj->Map->layers[i].name, sizeof(repstr));
+    if(GET_LAYER(msObj->Map, i)->status != MS_DEFAULT && GET_LAYER(msObj->Map, i)->name != NULL) {
+      strlcat(repstr, GET_LAYER(msObj->Map, i)->name, sizeof(repstr));
       strlcat(repstr, " ", sizeof(repstr));
     }
   }
@@ -2608,30 +2614,30 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   free(encodedstr);
   
   for(i=0;i<msObj->Map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */
-    if(isOn(msObj, msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) {
-      if(msObj->Map->layers[i].group) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].group);
+    if(isOn(msObj, GET_LAYER(msObj->Map, i)->name, GET_LAYER(msObj->Map, i)->group) == MS_TRUE) {
+      if(GET_LAYER(msObj->Map, i)->group) {
+        sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->group);
         outstr = gsub(outstr, substr, "selected=\"selected\"");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].group);
+        sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->group);
         outstr = gsub(outstr, substr, "checked=\"checked\"");
       }
-      if(msObj->Map->layers[i].name) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
+      if(GET_LAYER(msObj->Map, i)->name) {
+        sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->name);
         outstr = gsub(outstr, substr, "selected=\"selected\"");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
+        sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->name);
         outstr = gsub(outstr, substr, "checked=\"checked\"");
       }
     } else {
-      if(msObj->Map->layers[i].group) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].group);
+      if(GET_LAYER(msObj->Map, i)->group) {
+        sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->group);
         outstr = gsub(outstr, substr, "");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].group);
+        sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->group);
         outstr = gsub(outstr, substr, "");
       }
-      if(msObj->Map->layers[i].name) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
+      if(GET_LAYER(msObj->Map, i)->name) {
+        sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->name);
         outstr = gsub(outstr, substr, "");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
+        sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->name);
         outstr = gsub(outstr, substr, "");
       }
     }
@@ -2689,17 +2695,17 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   /* allow layer metadata access in template */
   for(i=0;i<msObj->Map->numlayers;i++) {
-    if(&(msObj->Map->layers[i].metadata) && msObj->Map->layers[i].name && strstr(outstr, msObj->Map->layers[i].name)) {
+    if(&(GET_LAYER(msObj->Map, i)->metadata) && GET_LAYER(msObj->Map, i)->name && strstr(outstr, GET_LAYER(msObj->Map, i)->name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
-        if(msObj->Map->layers[i].metadata.items[j] != NULL) {
-          for(tp=msObj->Map->layers[i].metadata.items[j]; tp!=NULL; tp=tp->next) {
-            sprintf(substr, "[%s_%s]", msObj->Map->layers[i].name, tp->key);
-            if(msObj->Map->layers[i].status == MS_ON)
+        if(GET_LAYER(msObj->Map, i)->metadata.items[j] != NULL) {
+          for(tp=GET_LAYER(msObj->Map, i)->metadata.items[j]; tp!=NULL; tp=tp->next) {
+            sprintf(substr, "[%s_%s]", GET_LAYER(msObj->Map, i)->name, tp->key);
+            if(GET_LAYER(msObj->Map, i)->status == MS_ON)
               outstr = gsub(outstr, substr, tp->data);
             else
               outstr = gsub(outstr, substr, "");
-            sprintf(substr, "[%s_%s_esc]", msObj->Map->layers[i].name, tp->key);
-            if(msObj->Map->layers[i].status == MS_ON) {
+            sprintf(substr, "[%s_%s_esc]", GET_LAYER(msObj->Map, i)->name, tp->key);
+            if(GET_LAYER(msObj->Map, i)->status == MS_ON) {
               encodedstr = msEncodeUrl(tp->data);
               outstr = gsub(outstr, substr, encodedstr);
               free(encodedstr);
@@ -3153,7 +3159,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
   if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { /* may need to handle a URL result set */
 
     for(i=(msObj->Map->numlayers-1); i>=0; i--) {
-      lp = &(msObj->Map->layers[i]);
+      lp = (GET_LAYER(msObj->Map, i));
 
       if(!lp->resultcache) continue;
       if(lp->resultcache->numresults > 0) break;
@@ -3161,8 +3167,8 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 
     if(i >= 0) { /* at least if no result found, mapserver will display an empty template. */
 
-      if(lp->resultcache->results[0].classindex >= 0 && lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
-        template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
+      if(lp->resultcache->results[0].classindex >= 0 && lp->class[(int)(lp->resultcache->results[0].classindex)]->template) 
+        template = lp->class[(int)(lp->resultcache->results[0].classindex)]->template;
       else 
         template = lp->template;
 
@@ -3211,7 +3217,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 
   msObj->NR = msObj->NL = 0;
   for(i=0; i<msObj->Map->numlayers; i++) { /* compute some totals */
-    lp = &(msObj->Map->layers[i]);
+    lp = (GET_LAYER(msObj->Map, i));
 
     if(!lp->resultcache) continue;
 
@@ -3244,7 +3250,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 
   msObj->RN = 1; /* overall result number */
   for(i=(msObj->Map->numlayers-1); i>=0; i--) {
-    msObj->ResultLayer = lp = &(msObj->Map->layers[i]);
+    msObj->ResultLayer = lp = (GET_LAYER(msObj->Map, i));
 
     if(!lp->resultcache) continue;
     if(lp->resultcache->numresults <= 0) continue;
@@ -3286,8 +3292,8 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
         }
       }
 
-      if(lp->resultcache->results[j].classindex >= 0 && lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
-        template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
+      if(lp->resultcache->results[j].classindex >= 0 && lp->class[(int)(lp->resultcache->results[j].classindex)]->template) 
+        template = lp->class[(int)(lp->resultcache->results[j].classindex)]->template;
       else 
         template = lp->template;
 

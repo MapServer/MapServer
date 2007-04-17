@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2007/04/17 10:36:55  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.24  2007/04/05 11:07:23  tkralidi
  * fixed up quoting and escaping (code wasn't building)
  *
@@ -167,9 +170,9 @@ int main(int argc, char *argv[])
 
     if(strcmp(argv[i],"-d") == 0) { /* swap layer data */
       for(j=0; j<map->numlayers; j++) {
-	 if(strcmp(map->layers[j].name, argv[i+1]) == 0) {
-	   free(map->layers[j].data);
-	   map->layers[j].data = strdup(argv[i+2]);
+	 if(strcmp(GET_LAYER(map, j)->name, argv[i+1]) == 0) {
+	   free(GET_LAYER(map, j)->data);
+	   GET_LAYER(map, j)->data = strdup(argv[i+2]);
 	   break;
 	 }
       }
@@ -182,7 +185,7 @@ int main(int argc, char *argv[])
 
         map->debug = debug_level;
         for(j=0; j<map->numlayers; j++) {
-            map->layers[j].debug = debug_level;
+            GET_LAYER(map, j)->debug = debug_level;
         }
         if( getenv( "MS_ERRORFILE" ) == NULL )
             putenv( "MS_ERRORFILE=stderr" );
@@ -200,8 +203,8 @@ int main(int argc, char *argv[])
         int got_layer = 0;
 
         for(j=0; j<map->numlayers; j++) {
-            if(strcmp(map->layers[j].name,layer_name) == 0 ) {
-                map->layers[j].debug = debug_level;
+            if(strcmp(GET_LAYER(map, j)->name,layer_name) == 0 ) {
+                GET_LAYER(map, j)->debug = debug_level;
                 got_layer = 1;
             }
         }
@@ -223,13 +226,13 @@ int main(int argc, char *argv[])
       layers = split(argv[i+1], ' ', &(num_layers));
 
       for(j=0; j<map->numlayers; j++) {
-	if(map->layers[j].status == MS_DEFAULT)
+	if(GET_LAYER(map, j)->status == MS_DEFAULT)
 	  continue;
 	else {
-	  map->layers[j].status = MS_OFF;
+	  GET_LAYER(map, j)->status = MS_OFF;
 	  for(k=0; k<num_layers; k++) {
-	    if(map->layers[j].name && strcmp(map->layers[j].name, layers[k]) == 0) {
-	      map->layers[j].status = MS_ON;
+	    if(GET_LAYER(map, j)->name && strcmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
+	      GET_LAYER(map, j)->status = MS_ON;
 	      break;
 	    }
 	  }

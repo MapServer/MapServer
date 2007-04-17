@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2007/04/17 10:36:54  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.75  2007/04/13 04:07:02  sdlime
  * Added check for nan bounds to msSHPReadBounds(). Fixed return values for msSHPReadBounds() to be MS_SUCCESS/MS_FAILURE instead of 0/-1 (and updated any calls to that function elsewhere accordingly). (bug 1931)
  *
@@ -1535,6 +1538,9 @@ int msTiledSHPOpenFile(layerObj *layer)
   char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
+  
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;  
 
   /* allocate space for a shapefileObj using layer->layerinfo	 */
   tSHP = (msTiledSHPLayerInfo *) malloc(sizeof(msTiledSHPLayerInfo));
@@ -1551,7 +1557,7 @@ int msTiledSHPOpenFile(layerObj *layer)
     int status;
     layerObj *tlp;
 
-    tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+    tlp = (GET_LAYER(layer->map, tSHP->tilelayerindex));
 
     if(tlp->connectiontype != MS_SHAPEFILE) {
 	  msSetError(MS_SDEERR, "Tileindex layer must be a shapefile.", "msTiledSHPOpenFile()");
@@ -1621,6 +1627,9 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
   char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
+  
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
 
   tSHP = layer->layerinfo;
   if(!tSHP) {
@@ -1634,7 +1643,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
     layerObj *tlp;
     shapeObj tshape;
 
-    tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+    tlp = (GET_LAYER(layer->map, tSHP->tilelayerindex));
     status= msLayerWhichShapes(tlp, rect);
     if(status != MS_SUCCESS) return(status); /* could be MS_DONE or MS_FAILURE */
 
@@ -1751,6 +1760,10 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
   char **values=NULL;
 
   msTiledSHPLayerInfo *tSHP=NULL;
+  
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
+  
 
   tSHP = layer->layerinfo;
   if(!tSHP) {
@@ -1770,7 +1783,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
         layerObj *tlp;
         shapeObj tshape;
 
-        tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+        tlp = (GET_LAYER(layer->map, tSHP->tilelayerindex));
 
         msInitShape(&tshape);
         while((status = msLayerNextShape(tlp, &tshape)) == MS_SUCCESS) {
@@ -1902,6 +1915,10 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
+  
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
+  
 
   tSHP = layer->layerinfo;
   if(!tSHP) {
@@ -1955,7 +1972,9 @@ void msTiledSHPClose(layerObj *layer)
   
     if(tSHP->tilelayerindex != -1) {
       layerObj *tlp;
-      tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+	  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	    return;
+      tlp = (GET_LAYER(layer->map, tSHP->tilelayerindex));
       msLayerClose(tlp);
     } else { 
       msSHPCloseFile(tSHP->tileshpfile);
@@ -2111,6 +2130,9 @@ int msShapeFileLayerOpen(layerObj *layer)
     msSetError(MS_MEMERR, "Error allocating shapefileObj structure.", "msLayerOpen()");
     return MS_FAILURE;
   }
+    if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+		return MS_FAILURE;
+    
 
   layer->layerinfo = shpfile;
 

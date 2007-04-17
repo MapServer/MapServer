@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.193  2007/04/17 10:36:54  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.192  2007/03/06 11:22:39  novak
  * First AGG commit.
  *
@@ -191,9 +194,9 @@ static int searchContextForTag(mapObj *map, char **ltags, char *tag, char *conte
   for(i=0; i<map->numlayers; i++) {
     if(strstr(context, ltags[i]) != NULL) { /* need to check this layer */
       if(requires == MS_TRUE) {
-        if(searchContextForTag(map, ltags, tag, map->layers[i].requires, MS_TRUE) == MS_SUCCESS) return MS_SUCCESS;
+        if(searchContextForTag(map, ltags, tag, GET_LAYER(map, i)->requires, MS_TRUE) == MS_SUCCESS) return MS_SUCCESS;
       } else {
-        if(searchContextForTag(map, ltags, tag, map->layers[i].labelrequires, MS_FALSE) == MS_SUCCESS) return MS_SUCCESS;      
+        if(searchContextForTag(map, ltags, tag, GET_LAYER(map, i)->labelrequires, MS_FALSE) == MS_SUCCESS) return MS_SUCCESS;      
       }
     }
   }
@@ -214,28 +217,28 @@ int msValidateContexts(mapObj *map)
 
   ltags = (char **) malloc(map->numlayers*sizeof(char *));
   for(i=0; i<map->numlayers; i++) {
-    if(map->layers[i].name == NULL) {
+    if(GET_LAYER(map, i)->name == NULL) {
       ltags[i] = strdup("[NULL]");
     } else {
-      ltags[i] = (char *) malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
-      sprintf(ltags[i], "[%s]", map->layers[i].name);
+      ltags[i] = (char *) malloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
+      sprintf(ltags[i], "[%s]", GET_LAYER(map, i)->name);
     }
   }
 
   /* check each layer's REQUIRES and LABELREQUIRES parameters */
   for(i=0; i<map->numlayers; i++) { 
-    /* printf("working on layer %s, looking for references to %s\n", map->layers[i].name, ltags[i]); */
-    if(searchContextForTag(map, ltags, ltags[i], map->layers[i].requires, MS_TRUE) == MS_SUCCESS) {
-      msSetError(MS_PARSEERR, "Recursion error found for REQUIRES parameter for layer %s.", "msValidateContexts", map->layers[i].name);
+    /* printf("working on layer %s, looking for references to %s\n", GET_LAYER(map, i)->name, ltags[i]); */
+    if(searchContextForTag(map, ltags, ltags[i], GET_LAYER(map, i)->requires, MS_TRUE) == MS_SUCCESS) {
+      msSetError(MS_PARSEERR, "Recursion error found for REQUIRES parameter for layer %s.", "msValidateContexts", GET_LAYER(map, i)->name);
       status = MS_FAILURE;
       break;
     }
-    if(searchContextForTag(map, ltags, ltags[i], map->layers[i].labelrequires, MS_FALSE) == MS_SUCCESS) {
-      msSetError(MS_PARSEERR, "Recursion error found for LABELREQUIRES parameter for layer %s.", "msValidateContexts", map->layers[i].name);
+    if(searchContextForTag(map, ltags, ltags[i], GET_LAYER(map, i)->labelrequires, MS_FALSE) == MS_SUCCESS) {
+      msSetError(MS_PARSEERR, "Recursion error found for LABELREQUIRES parameter for layer %s.", "msValidateContexts", GET_LAYER(map, i)->name);
       status = MS_FAILURE;
       break;
     }
-    /* printf("done layer %s\n", map->layers[i].name); */
+    /* printf("done layer %s\n", GET_LAYER(map, i)->name); */
   }
 
   /* clean up */
@@ -256,13 +259,13 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
   for(i=0; i<map->numlayers; i++) { /* step through all the layers */
     if(layer->index == i) continue; /* skip the layer in question */    
-    if (map->layers[i].name == NULL) continue; /* Layer without name cannot be used in contexts */
+    if (GET_LAYER(map, i)->name == NULL) continue; /* Layer without name cannot be used in contexts */
 
-    tmpstr2 = (char *)malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
-    sprintf(tmpstr2, "[%s]", map->layers[i].name);
+    tmpstr2 = (char *)malloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
+    sprintf(tmpstr2, "[%s]", GET_LAYER(map, i)->name);
 
     if(strstr(tmpstr1, tmpstr2)) {
-      if(msLayerIsVisible(map, &(map->layers[i])))
+      if(msLayerIsVisible(map, (GET_LAYER(map, i))))
 	tmpstr1 = gsub(tmpstr1, tmpstr2, "1");
       else
 	tmpstr1 = gsub(tmpstr1, tmpstr2, "0");
@@ -388,7 +391,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
  *   int i;
  * 
  *   for(i=0; i<layer->numclasses; i++) {
- *     if(layer->class[i].status != MS_DELETE && msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
+ *     if(layer->class[i]->status != MS_DELETE && msEvalExpression(&(layer->class[i]->expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
  *       return(i);
  *   }
  * 
@@ -406,9 +409,9 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
     if(shape->classindex < 0 || shape->classindex >= layer->numclasses) return(-1);
 
     if(scale > 0) {  /* verify scale here */
-      if((layer->class[shape->classindex].maxscale > 0) && (scale > layer->class[shape->classindex].maxscale))
+      if((layer->class[shape->classindex]->maxscale > 0) && (scale > layer->class[shape->classindex]->maxscale))
         return(-1); /* can skip this feature */
-      if((layer->class[shape->classindex].minscale > 0) && (scale <= layer->class[shape->classindex].minscale))
+      if((layer->class[shape->classindex]->minscale > 0) && (scale <= layer->class[shape->classindex]->minscale))
         return(-1); /* can skip this feature */
     }
 
@@ -418,13 +421,13 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
   for(i=0; i<layer->numclasses; i++) {
     
     if(scale > 0) {  /* verify scale here  */
-      if((layer->class[i].maxscale > 0) && (scale > layer->class[i].maxscale))
+      if((layer->class[i]->maxscale > 0) && (scale > layer->class[i]->maxscale))
         continue; /* can skip this one, next class */
-      if((layer->class[i].minscale > 0) && (scale <= layer->class[i].minscale))
+      if((layer->class[i]->minscale > 0) && (scale <= layer->class[i]->minscale))
         continue; /* can skip this one, next class */
     }
 
-    if(layer->class[i].status != MS_DELETE && msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
+    if(layer->class[i]->status != MS_DELETE && msEvalExpression(&(layer->class[i]->expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
       return(i);
   }
 
@@ -436,16 +439,16 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
   int i;
   char *tmpstr=NULL;
 
-  if(layer->class[shape->classindex].text.string) { /* test for global label first */
-    tmpstr = strdup(layer->class[shape->classindex].text.string);
-    switch(layer->class[shape->classindex].text.type) {
+  if(layer->class[shape->classindex]->text.string) { /* test for global label first */
+    tmpstr = strdup(layer->class[shape->classindex]->text.string);
+    switch(layer->class[shape->classindex]->text.type) {
     case(MS_STRING):
       break;
     case(MS_EXPRESSION):
-      tmpstr = strdup(layer->class[shape->classindex].text.string);
+      tmpstr = strdup(layer->class[shape->classindex]->text.string);
 
-      for(i=0; i<layer->class[shape->classindex].text.numitems; i++)
-	tmpstr = gsub(tmpstr, layer->class[shape->classindex].text.items[i], shape->values[layer->class[shape->classindex].text.indexes[i]]);
+      for(i=0; i<layer->class[shape->classindex]->text.numitems; i++)
+	tmpstr = gsub(tmpstr, layer->class[shape->classindex]->text.items[i], shape->values[layer->class[shape->classindex]->text.indexes[i]]);
       break;
     }
   } else {
@@ -694,9 +697,9 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
 
     for(i=0;i<map->numlayers; i++)
     {
-        if(!map->layers[i].group) /* skip it */
+        if(!GET_LAYER(map, i)->group) /* skip it */
             continue;
-        if(strcmp(groupname, map->layers[i].group) == 0)
+        if(strcmp(groupname, GET_LAYER(map, i)->group) == 0)
         {
             aiIndex[iLayer] = i;
             iLayer++;
@@ -1068,7 +1071,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
         for (i=0; i<nCount; i++)
         {
             layerObj *lp;
-            lp = &(map->layers[map->layerorder[i]]);
+            lp = (GET_LAYER(map, map->layerorder[i]));
 
             bFound = 0;
             if (lp->group && lp->status != MS_DELETE)
@@ -1437,4 +1440,27 @@ int msAlphaBlend (int dst, int src)
 /*      Return merged result.                                           */
 /* -------------------------------------------------------------------- */
     return ((alpha << 24) + (red << 16) + (green << 8) + blue);
+}
+
+/*
+ RFC 24: check if the parent pointer is NULL and raise an error otherwise
+*/
+int msCheckParentPointer(void* p, char *objname) {
+	char* fmt="The %s parent object is null";
+	char* msg=NULL;
+	if (p == NULL) {
+		if(objname != NULL) {
+			msg=malloc( sizeof(char) * ( ( strlen(fmt)+strlen(objname) ) ) );
+			if(msg == NULL) {
+				msg="A required parent object is null";
+			} else {
+				sprintf(msg, "The %s parent object is null", objname);
+			}
+		} else {
+			msg="A required parent object is null";
+		}
+		msSetError(MS_NULLPARENTERR, msg, "");
+		return MS_FAILURE;
+	}
+	return MS_SUCCESS;
 }

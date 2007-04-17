@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.29  2006/11/22 19:53:12  frank
  * ensure msMapComputeGeotransform() returns MS_FAILURE, not MS_FALSE (bug 1968)
  *
@@ -169,6 +172,13 @@ void msFreeMap(mapObj *map) {
   int i;
 
   if(!map) return;
+
+  /*printf("msFreeMap(): maybe freeing map at %p count=%d.\n",map, map->refcount);*/
+  if ( MS_REFCNT_IS_NOT_ZERO(map) ) { return; }
+  if (map->debug)
+     msDebug("msFreeMap(): freeing map at %p.",map);
+  /*printf("msFreeMap(): freeing map at %p.\n",map);*/
+  
   msCloseConnections(map);
 
   msFree(map->name);
@@ -203,8 +213,15 @@ void msFreeMap(mapObj *map) {
   freeReferenceMap(&(map->reference));
   freeLegend(&(map->legend));  
 
-  for(i=0; i<map->numlayers; i++)
-    freeLayer(&(map->layers[i]));
+  //for(i=0; i<map->numlayers; i++)
+  for(i=0; i<MS_MAXLAYERS; i++) {
+    if (GET_LAYER(map, i)!=NULL) {
+    	GET_LAYER(map, i)->map=NULL;
+    	if ( freeLayer((GET_LAYER(map, i))) == MS_SUCCESS) {
+	    	free(GET_LAYER(map, i));
+	}
+    }
+  }
   msFree(map->layers);
 
   if (map->layerorder)
@@ -475,7 +492,7 @@ int msMapSetFakedExtent( mapObj *map )
     map->projection.gt.geotransform[5] *= -1;
 
     for(i=0; i<map->numlayers; i++)
-        map->layers[i].project = MS_TRUE;
+        GET_LAYER(map, i)->project = MS_TRUE;
 
     return InvGeoTransform( map->projection.gt.geotransform, 
                             map->projection.gt.invgeotransform );
@@ -524,10 +541,12 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         return -1;
     }
     else if (nIndex < 0) { /* Insert at the end by default */
-        initLayer(&(map->layers[map->numlayers]), map);
-        msCopyLayer(&(map->layers[map->numlayers]), layer);
+        //initLayer((GET_LAYER(map, map->numlayers)), map);
+        //msCopyLayer((GET_LAYER(map, map->numlayers)), layer);
         map->layerorder[map->numlayers] = map->numlayers;
-        map->layers[map->numlayers].index = map->numlayers;
+        GET_LAYER(map, map->numlayers) = layer;
+        GET_LAYER(map, map->numlayers)->index = map->numlayers;
+	MS_REFCNT_INCR(layer);
         map->numlayers++;
         return map->numlayers-1;
     }
@@ -536,17 +555,19 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         /* Copy layers existing at the specified nIndex or greater */
         /* to an index one higher */
         for (i=map->numlayers; i>nIndex; i--) {
-            if (i<map->numlayers) freeLayer(&(map->layers[i]));
-            initLayer(&(map->layers[i]), map);
-            msCopyLayer(&(map->layers[i]), &(map->layers[i-1]));
-            map->layers[i].index = i;
+            //if (i<map->numlayers) freeLayer((GET_LAYER(map, i)));
+            //initLayer((GET_LAYER(map, i)), map);
+            //msCopyLayer((GET_LAYER(map, i)), (GET_LAYER(map, i-1)));
+	    GET_LAYER(map, i)=GET_LAYER(map, i-1);
+            GET_LAYER(map, i)->index = i;
         }
 
         /* copy new layer to specified index */
-        freeLayer(&(map->layers[nIndex]));
-        initLayer(&(map->layers[nIndex]), map);
-        msCopyLayer(&(map->layers[nIndex]), layer);
-        map->layers[nIndex].index = nIndex;
+        //freeLayer((GET_LAYER(map, nIndex)));
+        //initLayer((GET_LAYER(map, nIndex)), map);
+        //msCopyLayer((GET_LAYER(map, nIndex)), layer);
+	GET_LAYER(map, nIndex)=layer;
+        GET_LAYER(map, nIndex)->index = nIndex;
 
         /* adjust layers drawing order */
         for (i=map->numlayers; i>nIndex; i--) {
@@ -559,6 +580,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         map->layerorder[nIndex] = nIndex;
         
         /* increment number of layers and return */
+	MS_REFCNT_INCR(layer);
         map->numlayers++;
         return nIndex;
     }
@@ -583,26 +605,19 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
         return NULL;
     }
     else {
-        /* allocate a copy of the removed layer */
-        layer = (layerObj *) malloc(sizeof(layerObj));
-        if (!layer) {
-            msSetError(MS_MEMERR, 
-                       "Failed to allocate layerObj to return as removed Layer",
-                       "msRemoveLayer");
-            return NULL;
-        }
-        initLayer(layer, NULL);
-        msCopyLayer(layer, &(map->layers[nIndex]));
+    	layer=GET_LAYER(map, nIndex);
+        //msCopyLayer(layer, (GET_LAYER(map, nIndex)));
         
         /* Iteratively copy the higher index layers down one index */
         for (i=nIndex; i<map->numlayers-1; i++) {
-            freeLayer(&(map->layers[i]));
-            initLayer(&(map->layers[i]), map);
-            msCopyLayer(&map->layers[i], &map->layers[i+1]);
-            map->layers[i].index = i;
+            //freeLayer((GET_LAYER(map, i)));
+            //initLayer((GET_LAYER(map, i)), map);
+            //msCopyLayer(GET_LAYER(map, i), GET_LAYER(map, i+1));
+	    GET_LAYER(map, i)=GET_LAYER(map, i+1);
+            GET_LAYER(map, i)->index = i;
         }
         /* Free the extra layer at the end */
-        freeLayer(&(map->layers[map->numlayers-1]));
+        //freeLayer((GET_LAYER(map, map->numlayers-1)));
         
         /* Adjust drawing order */
         order_index = 0;
@@ -620,6 +635,8 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
         
         /* decrement number of layers and return copy of removed layer */
         map->numlayers--;
+	layer->map=NULL;
+	MS_REFCNT_DECR(layer);
         return layer;
     }
 }

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2007/04/17 10:36:55  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.10  2007/03/22 13:51:44  tkralidi
  * stripped comment tags from last commit comment
  *
@@ -143,9 +146,9 @@ int main(int argc, char *argv[])
 
     if(strncmp(argv[i],"-d",2) == 0) { /* swap layer data */
       for(j=0; j<map->numlayers; j++) {
-     if(strcmp(map->layers[j].name, argv[i+1]) == 0) {
-       free(map->layers[j].data);
-       map->layers[j].data = strdup(argv[i+2]);
+     if(strcmp(GET_LAYER(map, j)->name, argv[i+1]) == 0) {
+       free(GET_LAYER(map, j)->data);
+       GET_LAYER(map, j)->data = strdup(argv[i+2]);
        break;
      }
       }
@@ -169,13 +172,13 @@ int main(int argc, char *argv[])
       layers = split(argv[i+1], ' ', &(num_layers));
 
       for(j=0; j<map->numlayers; j++) {
-    if(map->layers[j].status == MS_DEFAULT)
+    if(GET_LAYER(map, j)->status == MS_DEFAULT)
       continue;
     else {
-      map->layers[j].status = MS_OFF;
+      GET_LAYER(map, j)->status = MS_OFF;
       for(k=0; k<num_layers; k++) {
-        if(strcmp(map->layers[j].name, layers[k]) == 0) {
-          map->layers[j].status = MS_ON;
+        if(strcmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
+          GET_LAYER(map, j)->status = MS_ON;
           break;
         }
       }

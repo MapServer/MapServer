@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.86  2006/09/06 05:26:18  sdlime
  * Fixed a bug with curved labels where character advance array was not being gdFree'd. (bug 1899)
  *
@@ -105,8 +108,8 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   }
 
   cachePtr = &(map->labelcache.labels[map->labelcache.numlabels]); /* set up a few pointers for clarity */
-  layerPtr = &(map->layers[layerindex]);
-  classPtr = &(map->layers[layerindex].class[classindex]);
+  layerPtr = (GET_LAYER(map, layerindex));
+  classPtr = GET_LAYER(map, layerindex)->class[classindex];
 
   if( label == NULL )
       label = &(classPtr->label);

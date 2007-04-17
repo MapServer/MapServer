@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.52  2006/08/26 22:04:13  novak
  * Enable support for TrueType fonts (bug 1882)
  *
@@ -452,38 +455,48 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     l = map->numlayers;
     map->numlayers++;
 
-    if(initLayer(&(map->layers[l]), map) == -1) return(-1);
-    map->layers[l].name = strdup("__embed__scalebar");
-    map->layers[l].type = MS_LAYER_ANNOTATION;
-
-    if(initClass(&(map->layers[l].class[0])) == -1) return(-1);
-    map->layers[l].numclasses = 1; /* so we make sure to free it */
+    GET_LAYER(map,l)=(layerObj*)malloc(sizeof(layerObj));
+    if (GET_LAYER(map, l) == NULL) {
+         msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
+         return(NULL);
+    }
+    if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
+    GET_LAYER(map, l)->name = strdup("__embed__scalebar");
+    GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
+      
+      GET_LAYER(map, l)->class[0]=(classObj*)malloc(sizeof(classObj));
+      if (GET_LAYER(map, l)->class[0]==NULL) {
+         msSetError(MS_MEMERR, "Malloc of a new class failed.", "msLoadMap()");
+	  return(NULL);
+      }
+    if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
+    GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */
     
     /* update the layer order list with the layer's index. */
     map->layerorder[l] = l;
   }
 
   /* to resolve bug 490 */
-  map->layers[l].transparency = MS_GD_ALPHA;
+  GET_LAYER(map, l)->transparency = MS_GD_ALPHA;
   
-  map->layers[l].status = MS_ON;
+  GET_LAYER(map, l)->status = MS_ON;
 
-  map->layers[l].class[0].numstyles = 1;
-  map->layers[l].class[0].styles[0].symbol = s;
-  map->layers[l].class[0].styles[0].color.pen = -1;
-  map->layers[l].class[0].label.force = MS_TRUE;
-  map->layers[l].class[0].label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
+  GET_LAYER(map, l)->class[0]->numstyles = 1;
+  GET_LAYER(map, l)->class[0]->styles[0].symbol = s;
+  GET_LAYER(map, l)->class[0]->styles[0].color.pen = -1;
+  GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
+  GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
 
   if(map->scalebar.postlabelcache) /* add it directly to the image //TODO */
   {
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(GET_LAYER(map, l)->class[0]->styles[0]), 1.0);
   }
   else
     msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or */
   /* with saving maps */
-  map->layers[l].status = MS_DELETE;
+  GET_LAYER(map, l)->status = MS_DELETE;
 
   /* Free image (but keep the GD image which is in the symbol cache now) */
   image->img.gd = NULL;

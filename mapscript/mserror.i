@@ -56,6 +56,9 @@
             case MS_CHILDERR:
                 SWIG_exception(SWIG_SystemError,ms_message);
                 break;
+            case MS_NULLPARENTERR:
+                SWIG_exception(SWIG_SystemError,ms_message);
+                break;
             default:
                 SWIG_exception(SWIG_UnknownError,ms_message);
                 break;

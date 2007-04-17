@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.76  2006/09/01 18:03:19  umberto
  * Removed USE_GEOS defines, bug #1890
  *
@@ -792,6 +795,9 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 void msOffsetPointRelativeTo(pointObj *point, layerObj *layer)
 {
   double x=0, y=0;
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return;
+  
 
   if(layer->transform == MS_TRUE) return; /* nothing to do */
 
@@ -852,6 +858,9 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
   double x=0, y=0;
 
   if(layer->transform == MS_TRUE) return; /* nothing to do */
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return;
+  
 
   if(layer->units == MS_PERCENTAGES) {
     for (i=0; i<shape->numlines; i++) {

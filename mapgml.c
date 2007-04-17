@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.96  2006/08/22 23:14:13  hobu
  * throw away the const qualifier of msOWSLookupMetadata when we set
  * the namespace_prefix which is not defined as constant
@@ -1424,7 +1427,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[map->layerorder[i]]);
+    lp = (GET_LAYER(map, map->layerorder[i]));
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
 
@@ -1575,7 +1578,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
 
-    lp = &(map->layers[map->layerorder[i]]);
+    lp = &(GET_LAYER(map, map->layerorder[i]));
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
       char *layerName;      

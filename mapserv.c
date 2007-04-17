@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.157  2007/04/17 10:36:54  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.156  2007/03/22 04:40:24  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
  *
@@ -315,7 +318,7 @@ mapObj *loadMap(void)
     sprintf(key,"%s_validation_pattern", msObj->request->ParamNames[i]);
 		
     for(j=0; j<map->numlayers; j++) {
-			value = msLookupHashTable(&(map->layers[j].metadata), key);
+			value = msLookupHashTable(&(GET_LAYER(map, j)->metadata), key);
       if(value) { /* validate parameter value */
         if(msEvalRegex(value, msObj->request->ParamValues[i]) == MS_FALSE) {
           msSetError(MS_WEBERR, "Parameter '%s' value fails to validate.", "loadMap()", msObj->request->ParamNames[i]);
@@ -323,17 +326,17 @@ mapObj *loadMap(void)
         }
       }
 
-      if(map->layers[j].data && (strstr(map->layers[j].data, tmpstr) != NULL)) 
-        map->layers[j].data = gsub(map->layers[j].data, tmpstr, msObj->request->ParamValues[i]);
-      if(map->layers[j].tileindex && (strstr(map->layers[j].tileindex, tmpstr) != NULL)) 
-        map->layers[j].tileindex = gsub(map->layers[j].tileindex, tmpstr, msObj->request->ParamValues[i]);
-      if(map->layers[j].connection && (strstr(map->layers[j].connection, tmpstr) != NULL)) 
-        map->layers[j].connection = gsub(map->layers[j].connection, tmpstr, msObj->request->ParamValues[i]);
-      if(map->layers[j].filter.string && (strstr(map->layers[j].filter.string, tmpstr) != NULL)) 
-        map->layers[j].filter.string = gsub(map->layers[j].filter.string, tmpstr, msObj->request->ParamValues[i]);
-      for(k=0; k<map->layers[j].numclasses; k++) {
-	      if(map->layers[j].class[k].expression.string && (strstr(map->layers[j].class[k].expression.string, tmpstr) != NULL)) 
-          map->layers[j].class[k].expression.string = gsub(map->layers[j].class[k].expression.string, tmpstr, msObj->request->ParamValues[i]);
+      if(GET_LAYER(map, j)->data && (strstr(GET_LAYER(map, j)->data, tmpstr) != NULL)) 
+        GET_LAYER(map, j)->data = gsub(GET_LAYER(map, j)->data, tmpstr, msObj->request->ParamValues[i]);
+      if(GET_LAYER(map, j)->tileindex && (strstr(GET_LAYER(map, j)->tileindex, tmpstr) != NULL)) 
+        GET_LAYER(map, j)->tileindex = gsub(GET_LAYER(map, j)->tileindex, tmpstr, msObj->request->ParamValues[i]);
+      if(GET_LAYER(map, j)->connection && (strstr(GET_LAYER(map, j)->connection, tmpstr) != NULL)) 
+        GET_LAYER(map, j)->connection = gsub(GET_LAYER(map, j)->connection, tmpstr, msObj->request->ParamValues[i]);
+      if(GET_LAYER(map, j)->filter.string && (strstr(GET_LAYER(map, j)->filter.string, tmpstr) != NULL)) 
+        GET_LAYER(map, j)->filter.string = gsub(GET_LAYER(map, j)->filter.string, tmpstr, msObj->request->ParamValues[i]);
+      for(k=0; k<GET_LAYER(map, j)->numclasses; k++) {
+	      if(GET_LAYER(map, j)->class[k]->expression.string && (strstr(GET_LAYER(map, j)->class[k]->expression.string, tmpstr) != NULL)) 
+          GET_LAYER(map, j)->class[k]->expression.string = gsub(GET_LAYER(map, j)->class[k]->expression.string, tmpstr, msObj->request->ParamValues[i]);
       }
     }
     
@@ -836,9 +839,9 @@ void loadForm(void)
 
           for(msObj->NumLayers=0; msObj->NumLayers < msObj->Map->numlayers; msObj->NumLayers++)
           {
-              if (msObj->Map->layers[msObj->NumLayers].name)
+              if (GET_LAYER(msObj->Map, msObj->NumLayers)->name)
               {
-                  msObj->Layers[msObj->NumLayers] = strdup(msObj->Map->layers[msObj->NumLayers].name);
+                  msObj->Layers[msObj->NumLayers] = strdup(GET_LAYER(msObj->Map, msObj->NumLayers)->name);
               }
               else
               {
@@ -1339,11 +1342,11 @@ int main(int argc, char *argv[]) {
     */
         
     for(i=0;i<msObj->Map->numlayers;i++) {
-      if((msObj->Map->layers[i].status != MS_DEFAULT)) {
-	if(isOn(msObj,  msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) /* Set layer status */
-	  msObj->Map->layers[i].status = MS_ON;
+      if((GET_LAYER(msObj->Map, i)->status != MS_DEFAULT)) {
+	if(isOn(msObj,  GET_LAYER(msObj->Map, i)->name, GET_LAYER(msObj->Map, i)->group) == MS_TRUE) /* Set layer status */
+	  GET_LAYER(msObj->Map, i)->status = MS_ON;
 	else
-	  msObj->Map->layers[i].status = MS_OFF;
+	  GET_LAYER(msObj->Map, i)->status = MS_OFF;
       }     
     }
 
@@ -1451,7 +1454,7 @@ int main(int argc, char *argv[]) {
       } else {
 
 	if((QueryLayerIndex = msGetLayerIndex(msObj->Map, QueryLayer)) != -1) /* force the query layer on */
-	  msObj->Map->layers[QueryLayerIndex].status = MS_ON;
+	  GET_LAYER(msObj->Map, QueryLayerIndex)->status = MS_ON;
 
         switch(msObj->Mode) {
 	case ITEMFEATUREQUERY:
@@ -1462,7 +1465,7 @@ int main(int argc, char *argv[]) {
 	    msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
 	    writeError();
 	  }
-	  msObj->Map->layers[SelectLayerIndex].status = MS_ON;
+	  GET_LAYER(msObj->Map, SelectLayerIndex)->status = MS_ON;
 
 	  if(QueryCoordSource != NONE && !msObj->UseShapes)
 	    setExtent(msObj); /* set user area of interest */
@@ -1484,7 +1487,7 @@ int main(int argc, char *argv[]) {
 	    msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
 	    writeError();
 	  }
-	  msObj->Map->layers[SelectLayerIndex].status = MS_ON;
+	  GET_LAYER(msObj->Map, SelectLayerIndex)->status = MS_ON;
 	  
 	  if(msObj->Mode == FEATUREQUERY || msObj->Mode == FEATUREQUERYMAP) {
 	    switch(QueryCoordSource) {

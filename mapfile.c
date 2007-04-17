@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.339  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.338  2007/03/23 14:21:51  dan
  * Fixed typo in ALPHACOLOR_ENABLED block of code (bug 2052)
  *
@@ -474,9 +477,9 @@ int msGetLayerIndex(mapObj *map, char *name)
   if(!name) return(-1);
 
   for(i=0;i<map->numlayers; i++) {
-    if(!map->layers[i].name) /* skip it */
+    if(!GET_LAYER(map, i)->name) /* skip it */
       continue;
-    if(strcmp(name, map->layers[i].name) == 0)
+    if(strcmp(name, GET_LAYER(map, i)->name) == 0)
       return(i);
   }
   return(-1);
@@ -2040,9 +2043,11 @@ void writeStyle(styleObj *style, FILE *stream) {
 int initClass(classObj *class)
 {
   int i;
+  /* printf("Init class at %p\n", class); */
 
   class->status = MS_ON;
   class->debug = MS_OFF;
+  MS_REFCNT_INIT(class);
 
   initExpression(&(class->expression));
   class->name = NULL;
@@ -2074,9 +2079,12 @@ int initClass(classObj *class)
   return(0);
 }
 
-void freeClass(classObj *class)
+int freeClass(classObj *class)
 {
   int i;
+
+  if( MS_REFCNT_IS_NOT_ZERO(class) ) { return MS_FAILURE; }
+  /* printf("Freeing class at %p (%s)\n", class, class->name); */
 
   freeLabel(&(class->label));
   freeExpression(&(class->expression));
@@ -2088,10 +2096,12 @@ void freeClass(classObj *class)
   if (&(class->metadata)) msFreeHashItems(&(class->metadata));
   
   
-  for(i=0;i<class->numstyles;i++) /* each style     */
+  /*for(i=0;i<class->numstyles;i++) LEAK: we should free MS_MAXSTYLES!!! */
+  for(i=0;i<MS_MAXSTYLES;i++) /* each style     */
     freeStyle(&(class->styles[i]));
   msFree(class->styles);
   msFree(class->keyimage);
+  return MS_SUCCESS;
 }
 
 /*
@@ -2443,12 +2453,21 @@ static void writeClass(classObj *class, FILE *stream)
 */
 int initLayer(layerObj *layer, mapObj *map)
 {
+  int i=0;
+  if (layer==NULL) {
+    msSetError(MS_MEMERR, "Layer is null", "initLayer()");
+    return(-1);
+  }
   layer->debug = MS_OFF;
+  MS_REFCNT_INIT(layer);
 
   layer->numclasses = 0;
-  if((layer->class = (classObj *)malloc(sizeof(classObj)*MS_MAXCLASSES)) == NULL) {
+  if((layer->class = (classObj **)malloc(sizeof(classObj*)*MS_MAXCLASSES)) == NULL) {
     msSetError(MS_MEMERR, NULL, "initLayer()");
     return(-1);
+  }
+  for (i=0;i<MS_MAXCLASSES;i++) {
+  	layer->class[i]=NULL;
   }
   
   layer->name = NULL;
@@ -2553,8 +2572,12 @@ int initLayer(layerObj *layer, mapObj *map)
   return(0);
 }
 
-void freeLayer(layerObj *layer) {
+int freeLayer(layerObj *layer) {
   int i;
+  if (!layer) return MS_FAILURE;
+  if( MS_REFCNT_IS_NOT_ZERO(layer) ) { return MS_FAILURE; }
+  if (layer->debug)
+     msDebug("freeLayer(): freeing layer at %p.",layer);
 
   msFree(layer->name);
   msFree(layer->group);
@@ -2574,11 +2597,17 @@ void freeLayer(layerObj *layer) {
   msFree(layer->connection);
   msFree(layer->vtable);
 
-
   msFreeProjection(&(layer->projection));
 
-  for(i=0;i<layer->numclasses;i++)
-    freeClass(&(layer->class[i]));
+  /*for(i=0;i<layer->numclasses;i++) {*/
+  for(i=0;i<MS_MAXCLASSES;i++) {
+    if (layer->class[i] != NULL) {
+    	layer->class[i]->layer=NULL;
+    	if ( freeClass(layer->class[i]) == MS_SUCCESS ) {
+		msFree(layer->class[i]);
+	}
+    }
+  }
   msFree(layer->class);
 
   if(layer->features)
@@ -2604,6 +2633,8 @@ void freeLayer(layerObj *layer) {
     freeJoin(&(layer->joins[i]));
   msFree(layer->joins);
   layer->numjoins = 0;
+
+  return MS_SUCCESS;
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -2623,9 +2654,14 @@ int loadLayer(layerObj *layer, mapObj *map)
 	msSetError(MS_IDENTERR, "Maximum number of classes reached.", "loadLayer()");
 	return(-1);
       }
-
-      if(loadClass(&(layer->class[layer->numclasses]), map, layer) == -1) return(-1);
-      if(layer->class[layer->numclasses].type == -1) layer->class[layer->numclasses].type = layer->type;
+      layer->class[layer->numclasses]=(classObj*)malloc(sizeof(classObj));
+      if (layer->class[layer->numclasses]==NULL) {
+	  msSetError(MS_MEMERR, NULL, "loadLayer()");
+	  return(-1);
+      }
+      /*initClass(layer->class[layer->numclasses]);*/
+      if(loadClass(layer->class[layer->numclasses], map, layer) == -1) return(-1);
+      if(layer->class[layer->numclasses]->type == -1) layer->class[layer->numclasses]->type = layer->type;
       layer->numclasses++;
       break;
     case(CLASSITEM):
@@ -2863,7 +2899,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       if((i < 0) || (i >= layer->numclasses))
         break;
     }
-    loadClassString(map, &(layer->class[i]), value, layer->type);
+    loadClassString(map, layer->class[i], value, layer->type);
     break;
   case(CLASSITEM):
     msFree(layer->classitem);
@@ -3085,10 +3121,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(MS_STRING):    
     for(i=0;i<layer->numclasses; i++) {
-      if(!layer->class[i].name) /* skip it */
+      if(!layer->class[i]->name) /* skip it */
 	continue;
-      if(strcmp(msyytext, layer->class[i].name) == 0) {	
-	loadClassString(map, &(layer->class[i]), value, layer->type);
+      if(strcmp(msyytext, layer->class[i]->name) == 0) {	
+	loadClassString(map, layer->class[i], value, layer->type);
 	break;
       }
     }
@@ -3236,7 +3272,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
 
   /* write potentially multiply occuring features last */
-  for(i=0; i<layer->numclasses; i++) writeClass(&(layer->class[i]), stream);
+  for(i=0; i<layer->numclasses; i++) writeClass(layer->class[i], stream);
 
   if( layer->layerinfo &&  layer->connectiontype == MS_GRATICULE)
     writeGrid( (graticuleObj *) layer->layerinfo, stream );
@@ -4339,10 +4375,15 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
 */
 int initMap(mapObj *map)
 {
+  int i=0;
+  MS_REFCNT_INIT(map);
   map->numlayers = 0;
-  if((map->layers = (layerObj *)malloc(sizeof(layerObj)*MS_MAXLAYERS)) == NULL) {
+  if((map->layers = (layerObj **)malloc(sizeof(layerObj*)*MS_MAXLAYERS)) == NULL) {
     msSetError(MS_MEMERR, NULL, "initMap()");
     return(-1);
+  }
+  for (i=0;i<MS_MAXLAYERS;i++) {
+	GET_LAYER(map, i)=NULL;
   }
 
   map->debug = MS_OFF;
@@ -4556,8 +4597,8 @@ int msSaveMap(mapObj *map, char *filename)
 
   for(i=0; i<map->numlayers; i++)
   {
-      writeLayer(&(map->layers[map->layerorder[i]]), stream);
-      /* writeLayer(&(map->layers[i]), stream); */
+      writeLayer((GET_LAYER(map, map->layerorder[i])), stream);
+      /* writeLayer(&(GET_LAYER(map, i)), stream); */
   }
 
   fprintf(stream, "END\n");
@@ -4663,11 +4704,11 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 
       /* step through layers and classes to resolve symbol names */
       for(i=0; i<map->numlayers; i++) {
-        for(j=0; j<map->layers[i].numclasses; j++){
-	  for(k=0; k<map->layers[i].class[j].numstyles; k++) {
-            if(map->layers[i].class[j].styles[k].symbolname) {
-              if((map->layers[i].class[j].styles[k].symbol =  msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].styles[k].symbolname, MS_TRUE)) == -1) {
-                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", map->layers[i].class[j].styles[k].symbolname, j, k, map->layers[i].name);
+        for(j=0; j<GET_LAYER(map, i)->numclasses; j++){
+	  for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
+            if(GET_LAYER(map, i)->class[j]->styles[k].symbolname) {
+              if((GET_LAYER(map, i)->class[j]->styles[k].symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k].symbolname, MS_TRUE)) == -1) {
+                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k].symbolname, j, k, GET_LAYER(map, i)->name);
                 return(NULL);
               }
             }
@@ -4733,8 +4774,15 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 	    msSetError(MS_IDENTERR, "Maximum number of layers reached.", "msLoadMap()");
 	    return(NULL);
       }
-      if(loadLayer(&(map->layers[map->numlayers]), map) == -1) return(NULL);
-      map->layers[map->numlayers].index = map->numlayers; /* save the index */
+      //printf("New layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
+      map->layers[map->numlayers]=(layerObj*)malloc(sizeof(layerObj));
+      //printf("After new layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
+      if (GET_LAYER(map, map->numlayers) == NULL) {
+           msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
+	   return(NULL);
+      }
+      if(loadLayer((GET_LAYER(map, map->numlayers)), map) == -1) return(NULL);
+      GET_LAYER(map, map->numlayers)->index = map->numlayers; /* save the index */
       /* Update the layer order list with the layer's index. */
       map->layerorder[map->numlayers] = map->numlayers;
       map->numlayers++;
@@ -4920,7 +4968,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     case(LAYER):      
       if(getInteger(&i) == -1) break;
       if(i>=map->numlayers || i<0) break;
-      loadLayerString(map, &(map->layers[i]), value);
+      loadLayerString(map, (GET_LAYER(map, i)), value);
       break;
     case(LEGEND):
       loadLegendString(map, &(map->legend), value);
@@ -4965,7 +5013,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     case(MS_STRING):
       i = msGetLayerIndex(map, msyytext);
       if(i>=map->numlayers || i<0) break;
-      loadLayerString(map, &(map->layers[i]), value);
+      loadLayerString(map, (GET_LAYER(map, i)), value);
       break;
     case(TRANSPARENT):
       msyystate = 2; msyystring = value;
@@ -5117,7 +5165,7 @@ void msCloseConnections(mapObj *map) {
   layerObj *lp;
 
   for (i=0;i<map->numlayers;i++) {
-    lp = &(map->layers[i]);
+    lp = (GET_LAYER(map, i));
 
     /* If the vtable is null, then the layer is never accessed or used -> skip it
      */

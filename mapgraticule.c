@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.18  2006/01/16 20:37:15  sdlime
  * Changed label size calls to not adjust baseline offset.
  *
@@ -128,7 +131,7 @@ int msGraticuleLayerOpen(layerObj *layer)
   pInfo->dwhichlongitude = -180.0;
   pInfo->bvertical = 1;
   
-  if( layer->class->label.size == -1 )
+  if( layer->class[0]->label.size == -1 )
     pInfo->blabelaxes = 0;
   else
     pInfo->blabelaxes = 1;
@@ -199,6 +202,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 	graticuleObj 		*pInfo			= (graticuleObj *) layer->layerinfo;
 	int					 iAxisTickCount	= 0;
 	rectObj				 rectMapCoordinates;
+
+	if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+		return MS_FAILURE;
 
 	pInfo->dstartlatitude			= rect.miny;
 	pInfo->dstartlongitude			= rect.minx;
@@ -686,6 +692,8 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
         msSetError(MS_MISCERR, "Assertion failed: Null shape or layerinfo!, ", "_AdjustLabelPosition()");
 		return MS_FAILURE;
     }
+	if ( msCheckParentPointer(pLayer->map,"map")==MS_FAILURE )
+		return MS_FAILURE;
 	
 	ptPoint			= pShape->line->point[0];
 
@@ -698,7 +706,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     if( pLayer->transform ) 
 		msTransformShapeToPixel( pShape, pLayer->map->extent, pLayer->map->cellsize );
 
-	if (msGetLabelSize( pShape->text, &pLayer->class[0].label, &rectLabel, &pLayer->map->fontset, 1.0, MS_FALSE) != 0)
+	if (msGetLabelSize( pShape->text, &pLayer->class[0]->label, &rectLabel, &pLayer->map->fontset, 1.0, MS_FALSE) != 0)
         return MS_FAILURE;  /* msSetError already called */
 
 	switch( ePosition )

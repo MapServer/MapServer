@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.29  2006/05/12 18:32:41  pramsey
  * Added support for postgresql joins (Bug 1570).
  *
@@ -188,6 +191,10 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
   msDBFJoinInfo *joininfo;
 
   if(join->joininfo) return(MS_SUCCESS); /* already open */
+  
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
+  
     
   /* allocate a msDBFJoinInfo struct */
   joininfo = (msDBFJoinInfo *) malloc(sizeof(msDBFJoinInfo));
@@ -345,6 +352,9 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   char buffer[MS_BUFFER_LENGTH];
 
   if(join->joininfo) return(MS_SUCCESS); /* already open */
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
+  
     
   /* allocate a msCSVJoinInfo struct */
   if((joininfo = (msCSVJoinInfo *) malloc(sizeof(msCSVJoinInfo))) == NULL) {

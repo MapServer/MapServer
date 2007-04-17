@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.29  2006/08/29 19:34:59  frank
  * Fix C++'ism (declare values after first statement in block).
  *
@@ -1877,7 +1880,7 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
     cachePtr = &(map->labelcache.labels[l]); /* point to right spot in the label cache */
 
-    layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
+    layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
     labelPtr = &(cachePtr->label);
 
     if(!cachePtr->text || strlen(cachePtr->text) == 0)

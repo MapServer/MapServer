@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.34  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.33  2007/03/30 00:48:38  assefa
  * Encode values when outputing GetObservation values.
  *
@@ -268,23 +271,23 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
         for (i=0; i<map->numlayers; i++)
         {
             pszTmp = 
-              msOWSLookupMetadata(&(map->layers[i].metadata), "S", "offering_id");
+              msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
             if (pszTmp && (strcasecmp(pszTmp, pszOffering) == 0))
             {
                 if (pszProperty)
                 {
                     pszTmp = 
-                      msOWSLookupMetadata(&(map->layers[i].metadata), "S", 
+                      msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", 
                                           "observedProperty_id");
                     if (pszTmp && (strcasecmp(pszTmp, pszProperty) == 0))
                     {
-                        lp = &(map->layers[i]);
+                        lp = &(GET_LAYER(map, i));
                         break;
                     }
                 }
                 else
                 {
-                    lp = &(map->layers[i]);
+                    lp = &(GET_LAYER(map, i));
                     break;
                 }
             }
@@ -1041,7 +1044,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
          
          for (i=0; i<map->numlayers; i++)
          {
-             lp = &(map->layers[i]);
+             lp = &(GET_LAYER(map, i));
              value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_id");
              if (value)
              {
@@ -1078,7 +1081,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (panOfferingLayers[j] == i) /*first layer of the offering */
                        break;
                  }
-                 lp = &(map->layers[j]); /*first layer*/
+                 lp = &(GET_LAYER(map, j)); /*first layer*/
                  value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_name");
                  if (value)
                  {
@@ -1145,9 +1148,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  {
                      if (panOfferingLayers[j] == i)
                      {
-                         
-                         
-                         value = msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
+                         value = msOWSLookupMetadata(&(GET_LAYER(map, j)->metadata), "S", 
                                                      "procedure");
                          if (value && strlen(value) > 0)
                          {   
@@ -1172,7 +1173,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                              }
                              msFreeCharArray(tokens, n);
                          }
-                         else if ((value = msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
+                         else if ((value = msOWSLookupMetadata(&(GET_LAYER(map,j)->metadata), "S", 
                                                                "procedure_item")))
                          {
                              /* if a procedure_item is used, it means that the procedure 
@@ -1180,7 +1181,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                 query the layer and get the values from each feature */
                           
 
-                             lpTmp = &map->layers[j];
+                             lpTmp = GET_LAYER(map,j);
                              if (lpTmp->template == NULL)
                                lpTmp->template = strdup("ttt");
                              msQueryByRect(map, j, map->extent);
@@ -1269,7 +1270,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                          else
                          {
                               msSetError(MS_SOSERR, "Manadatory metadata procedure could not be found on the layer %s",
-                                            "msSOSGetCapabilities()", map->layers[j].name);
+                                            "msSOSGetCapabilities()", GET_LAYER(map,j)->name);
                                  return msSOSException(map, "procedure_item", "MissingValue");
                          }
                          
@@ -1291,7 +1292,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (panOfferingLayers[j] == i)
                      {
                          if ((value = 
-                             msOWSLookupMetadata(&(map->layers[j].metadata), "S", 
+                             msOWSLookupMetadata(&(GET_LAYER(map, j)->metadata), "S", 
                                                  "observedProperty_id")))
                          {
                              for (k=0; k<nProperties; k++)
@@ -1304,7 +1305,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                  papszProperties[nProperties] = strdup(value);
                                  nProperties++;
                                  msSOSAddPropertyNode(psOfferingNode, 
-                                                         &(map->layers[j]), psNsGml);
+                                                         &(GET_LAYER(map, j)), psNsGml);
                              }
                          }
                      }
@@ -1541,7 +1542,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /*validate if offering exists*/
     for (i=0; i<map->numlayers; i++)
     {
-        pszTmp = msOWSLookupMetadata(&(map->layers[i].metadata), "S", "offering_id");
+        pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
         if (pszTmp && (strcasecmp(pszTmp, pszOffering) == 0))
           break;
     }
@@ -1564,11 +1565,11 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     
     for (i=0; i<map->numlayers; i++)
     {
-        pszTmp = msOWSLookupMetadata(&(map->layers[i].metadata), "S", "offering_id");
-        pszTmp2 = msOWSLookupMetadata(&(map->layers[i].metadata), "S", 
+        pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
+        pszTmp2 = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", 
                                       "observedproperty_id");
 
-        map->layers[i].status = MS_OFF;
+        GET_LAYER(map, i)->status = MS_OFF;
         
         if (pszTmp && pszTmp2)
         {
@@ -1580,10 +1581,10 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                     {
                         if(strcasecmp(pszTmp2, tokens[j]) == 0)
                         {
-                            map->layers[i].status = MS_ON;
+                            GET_LAYER(map, i)->status = MS_ON;
                             /* Force setting a template to enable query. */
-                            if (!map->layers[i].template)
-                              map->layers[i].template = strdup("ttt.html");
+                            if (!GET_LAYER(map, i)->template)
+                              GET_LAYER(map, i)->template = strdup("ttt.html");
                             bLayerFound = 1;
                             break;
                         }
@@ -1615,9 +1616,9 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         {
             for (i=0; i<map->numlayers; i++)
             {
-                if(map->layers[i].status == MS_ON)
+                if(GET_LAYER(map, i)->status == MS_ON)
                 {
-                    pszValue =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
+                    pszValue =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S",
                                                     "procedure");
                     
                     if (pszValue)
@@ -1636,14 +1637,14 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                               break;
                         }
                         if (j == n) /*not found*/
-                          map->layers[i].status = MS_OFF;
+                          GET_LAYER(map, i)->status = MS_OFF;
                         else
                         {
-                            pszProcedureItem =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
+                            pszProcedureItem =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S",
                                                                     "procedure_item");
                             if (pszProcedureItem)
                             {
-                                lp = & map->layers[i];
+                                lp = GET_LAYER(map, i);
                                 pszBuffer = NULL;
                                 if (&lp->filter)
                                 {
@@ -1707,15 +1708,15 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                     }
                     else 
                     {
-                         pszValue =  msOWSLookupMetadata(&(map->layers[i].metadata), "S",
+                         pszValue =  msOWSLookupMetadata(&(GET_LAYER(map,i)->metadata), "S",
                                                          "procedure_item");
                          if (!pszValue)
                          {
-                             map->layers[i].status = MS_OFF;
+                             GET_LAYER(map,i)->status = MS_OFF;
                          }
                          else
                          {
-                             lp = & map->layers[i];
+                             lp = GET_LAYER(map,i);
                              /*
                              if (&lp->filter && lp->filter.type == MS_EXPRESSION)
                              {
@@ -1801,20 +1802,20 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         }
         for (i=0; i<map->numlayers; i++)
         {
-            if (map->layers[i].status == MS_ON)
+            if (GET_LAYER(map, i)->status == MS_ON)
             {
                 /* the sos_offering_timeextent should be used for time validation*/
                 /*TODO : too documented  ?*/
                 lpfirst = 
                   msSOSGetFirstLayerForOffering(map, 
-                                                msOWSLookupMetadata(&(map->layers[i].metadata), "S", 
+                                                msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", 
                                                                     "offering_id"),
                                                 NULL);
                 if (lpfirst)
                   pszTimeExtent = 
                     msOWSLookupMetadata(&lpfirst->metadata, "S", "offering_timeextent");
 
-                pszTimeField =  msOWSLookupMetadata(&(map->layers[i].metadata), "SO",
+                pszTimeField =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "SO",
                                                     "timeitem");
 
             if (pszTimeField)
@@ -1823,11 +1824,11 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                   if (pszTimeExtent)
                   {
                       if (msValidateTimeValue(pszTimeString, pszTimeExtent) == MS_TRUE)
-                        msLayerSetTimeFilter(&(map->layers[i]), pszTimeString, 
+                        msLayerSetTimeFilter(&(GET_LAYER(map, i)), pszTimeString, 
                                              pszTimeField);
                   }
                   else
-                    msLayerSetTimeFilter(&(map->layers[i]), pszTimeString, 
+                    msLayerSetTimeFilter(&(GET_LAYER(map, i)), pszTimeString, 
                                          pszTimeField);
                 }
             }
@@ -1851,7 +1852,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         /* apply the filter to all layers thar are on*/
         for (i=0; i<map->numlayers; i++)
         {
-            if (map->layers[i].status == MS_ON)
+            if (GET_LAYER(map, i)->status == MS_ON)
               FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
         }
     }
@@ -1985,10 +1986,10 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /*get the first layers of the offering*/
     for (i=0; i<map->numlayers; i++)
     {
-        pszTmp = msOWSLookupMetadata(&(map->layers[i].metadata), "S", "offering_id");
+        pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
         if (pszTmp && (strcasecmp(pszTmp, pszOffering) == 0))
         {
-            lp = &(map->layers[i]);
+            lp = &(GET_LAYER(map, i));
             break;
         }
     }
@@ -2051,16 +2052,16 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /* output result members */
     for (i=0; i<map->numlayers; i++)
     {
-        if (map->layers[i].resultcache && map->layers[i].resultcache->numresults > 0)
+        if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
         {       
-            if(msLayerOpen(&(map->layers[i])) == MS_SUCCESS)
+            if(msLayerOpen(&(GET_LAYER(map, i))) == MS_SUCCESS)
             {
-                msLayerGetItems(&(map->layers[i]));
-                for(j=0; j<map->layers[i].resultcache->numresults; j++) 
+                msLayerGetItems(&(GET_LAYER(map, i)));
+                for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                 {
-                    msSOSAddMemberNode(psRootNode, map, &(map->layers[i]), j);
+                    msSOSAddMemberNode(psRootNode, map, &(GET_LAYER(map, i)), j);
                 }
-                msLayerClose(&(map->layers[i]));
+                msLayerClose(&(GET_LAYER(map, i)));
             }
         }
     }
@@ -2155,7 +2156,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
  
     for (i=0; i<map->numlayers; i++)
     {
-        lp = &map->layers[i];
+        lp = &GET_LAYER(map, i);
         pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
         if (pszId && strlen(pszId) > 0)
         {

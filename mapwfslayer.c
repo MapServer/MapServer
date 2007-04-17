@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.38  2007/04/17 10:36:55  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.37  2006/05/19 20:53:27  dan
  * Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
  *
@@ -704,7 +707,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         int iLayer;
         for(iLayer=0; iLayer < map->numlayers; iLayer++)
         {
-            if (&(map->layers[iLayer]) == lp)
+            if (&(GET_LAYER(map, iLayer)) == lp)
             {
                 nLayerId = iLayer;
                 break;
@@ -842,6 +845,9 @@ int msWFSLayerOpen(layerObj *lp,
 #ifdef USE_WFS_LYR
     int status = MS_SUCCESS;
     msWFSLayerInfo *psInfo = NULL;
+    
+    if ( msCheckParentPointer(lp->map,"map")==MS_FAILURE )
+		return MS_FAILURE;
 
     if (lp->wfslayerinfo != NULL)
     {
@@ -1002,6 +1008,10 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
     int status = MS_SUCCESS;
     const char *pszTmp;
     FILE *fp;
+    
+    if ( msCheckParentPointer(lp->map,"map")==MS_FAILURE )
+		return MS_FAILURE;
+    
 
     psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
 

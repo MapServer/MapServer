@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.23  2006/06/23 20:39:19  frank
  * fix time filter propogation to tileindex layer
  *
@@ -391,9 +394,9 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         else
         {
             rlinfo->qc_class[rlinfo->query_results] = p_class;
-            red   = layer->class[p_class].styles[0].color.red;
-            green = layer->class[p_class].styles[0].color.green;
-            blue  = layer->class[p_class].styles[0].color.blue;
+            red   = layer->class[p_class]->styles[0].color.red;
+            green = layer->class[p_class]->styles[0].color.green;
+            blue  = layer->class[p_class]->styles[0].color.blue;
         }
     }
 
@@ -1274,8 +1277,8 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
             else if( EQUAL(layer->items[i],"class") && rlinfo->qc_class ) 
             {
                 int p_class = rlinfo->qc_class[record];
-                if( layer->class[p_class].name != NULL )
-                    sprintf( szWork, "%.999s", layer->class[p_class].name );
+                if( layer->class[p_class]->name != NULL )
+                    sprintf( szWork, "%.999s", layer->class[p_class]->name );
                 else
                     sprintf( szWork, "%d", p_class );
             }
@@ -1397,7 +1400,9 @@ int msRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
 /*      Otherwise we invoke the tileindex layers SetTimeFilter          */
 /*      method.                                                         */
 /* -------------------------------------------------------------------- */
-    return msLayerSetTimeFilter( layer->map->layers + tilelayerindex,
+	if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+		return MS_FAILURE;
+    return msLayerSetTimeFilter( layer->GET_LAYER(map,tilelayerindex),
                                  timestring, timefield );
 }
 

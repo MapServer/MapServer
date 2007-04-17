@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.46  2006/05/26 21:46:27  tamas
  * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
  *
@@ -729,17 +732,24 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
     for (i = 0; i < dst->numclasses; i++) {
 #ifndef __cplusplus
-        initClass(&(dst->class[i]));
+	if ( ! dst->class[i] ) {
+		dst->class[i] = (classObj*) malloc(sizeof(classObj));
+        	if ( ! dst->class[i] ) {
+	            msSetError(MS_MEMERR, "Failed to allocate destination class.", "msCopyLayer()");
+        	    return MS_FAILURE;
+        	}
+	}
+        initClass(dst->class[i]);
 
-        return_value = msCopyClass(&(dst->class[i]), &(src->class[i]), dst);
+        return_value = msCopyClass(dst->class[i], src->class[i], dst);
         if (return_value != MS_SUCCESS) {
             msSetError(MS_MEMERR, "Failed to copy class.", "msCopyLayer()");
             return MS_FAILURE;
         }
 #else
-        initClass(&(dst->_class[i]));
+        initClass(dst->_class[i]);
 
-        return_value = msCopyClass(&(dst->_class[i]), &(src->_class[i]), dst);
+        return_value = msCopyClass(dst->_class[i], src->_class[i], dst);
         if (return_value != MS_SUCCESS) {
             msSetError(MS_MEMERR, "Failed to copy _class.", "msCopyLayer()");
             return MS_FAILURE;
@@ -878,9 +888,14 @@ int msCopyMap(mapObj *dst, mapObj *src)
     MS_COPYSTELEM(numlayers);
 
     for (i = 0; i < dst->numlayers; i++) {
-        initLayer(&(dst->layers[i]), dst);
+	GET_LAYER(dst, i) = (layerObj *) malloc(sizeof(layerObj));
+        if (GET_LAYER(dst, i) == NULL) {
+            msSetError(MS_MEMERR, "Failed to create destination layer.", "msCopyMap()");
+            return MS_FAILURE;
+        }
+        initLayer((GET_LAYER(dst, i)), dst);
 
-        return_value = msCopyLayer(&(dst->layers[i]), &(src->layers[i]));
+        return_value = msCopyLayer((GET_LAYER(dst, i)), (GET_LAYER(src, i)));
         if (return_value != MS_SUCCESS) {
             msSetError(MS_MEMERR, "Failed to copy layer.", "msCopyMap()");
             return MS_FAILURE;

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.91  2006/02/02 01:00:11  sdlime
  * Moved the code to free previous query results a bit higher in the msQueryByAttribute() function.
  *
@@ -76,7 +79,7 @@ int msIsLayerQueryable(layerObj *lp)
   if(lp->template && strlen(lp->template) > 0) return MS_TRUE;
 
   for(i=0; i<lp->numclasses; i++) {
-    if(lp->class[i].template && strlen(lp->class[i].template) > 0)
+    if(lp->class[i]->template && strlen(lp->class[i]->template) > 0)
         return MS_TRUE;
   }
 
@@ -126,17 +129,17 @@ int msSaveQuery(mapObj *map, char *filename) {
 
   /* count the number of layers with results */
   for(i=0; i<map->numlayers; i++)
-    if(map->layers[i].resultcache) n++;
+    if(GET_LAYER(map, i)->resultcache) n++;
   fwrite(&n, sizeof(int), 1, stream);
 
   /* now write the result set for each layer */
   for(i=0; i<map->numlayers; i++) {
-    if(map->layers[i].resultcache) {
+    if(GET_LAYER(map, i)->resultcache) {
       fwrite(&i, sizeof(int), 1, stream); /* layer index */
-      fwrite(&(map->layers[i].resultcache->numresults), sizeof(int), 1, stream); /* number of results */
-      fwrite(&(map->layers[i].resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
-      for(j=0; j<map->layers[i].resultcache->numresults; j++)
-	fwrite(&(map->layers[i].resultcache->results[j]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
+      fwrite(&(GET_LAYER(map, i)->resultcache->numresults), sizeof(int), 1, stream); /* number of results */
+      fwrite(&(GET_LAYER(map, i)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
+      for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++)
+	fwrite(&(GET_LAYER(map, i)->resultcache->results[j]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
     }
   }
 
@@ -171,17 +174,17 @@ int msLoadQuery(mapObj *map, char *filename) {
     }
     
     /* inialize the results for this layer */
-    map->layers[j].resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    GET_LAYER(map, j)->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
 
-    fread(&(map->layers[j].resultcache->numresults), sizeof(int), 1, stream); /* number of results    */
-    map->layers[j].resultcache->cachesize = map->layers[j].resultcache->numresults;
+    fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream); /* number of results    */
+    GET_LAYER(map, j)->resultcache->cachesize = GET_LAYER(map, j)->resultcache->numresults;
 
-    fread(&(map->layers[j].resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
+    fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
 
-    map->layers[j].resultcache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*map->layers[j].resultcache->numresults);
+    GET_LAYER(map, j)->resultcache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*GET_LAYER(map, j)->resultcache->numresults);
 
-    for(k=0; k<map->layers[j].resultcache->numresults; k++)
-      fread(&(map->layers[j].resultcache->results[k]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
+    for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++)
+      fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
   }
 
   fclose(stream);
@@ -202,7 +205,7 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
     return(MS_FAILURE);
   }
 
-  lp = &(map->layers[qlayer]);
+  lp = (GET_LAYER(map, qlayer));
 
   if(!msIsLayerQueryable(lp)) {
     msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByIndex()"); 
@@ -241,13 +244,13 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
   }
 
   shape.classindex = msShapeGetClass(lp, &shape, map->scale);
-  if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex].status == MS_OFF))) { /* not a valid shape */
+  if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
     msSetError(MS_NOTFOUND, "Shape %d not valid against layer classification.", "msQueryByIndex()", shapeindex);
     msFreeShape(&shape);
     return(MS_FAILURE);
   }
     
-  if(!(lp->template) && !(lp->class[shape.classindex].template)) { /* no valid template */
+  if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
     msFreeShape(&shape);
     msSetError(MS_NOTFOUND, "Shape does not have a valid template, no way to present results.", "msQueryByIndex()"); 
     return(MS_FAILURE);
@@ -297,7 +300,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
     return(MS_FAILURE);
   }
 
-  lp = &(map->layers[qlayer]);
+  lp = (GET_LAYER(map, qlayer));
 
   /* free any previous search results, do now in case one of the following tests fails */
   if(lp->resultcache) {
@@ -367,12 +370,12 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
     shape.classindex = msShapeGetClass(lp, &shape, map->scale);    
-    if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex].status == MS_OFF))) { /* not a valid shape */
+    if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
       msFreeShape(&shape);
       continue;
     }
     
-    if(!(lp->template) && !(lp->class[shape.classindex].template)) { /* no valid template */
+    if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
       msFreeShape(&shape);
       continue;
     }
@@ -452,7 +455,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     start = stop = qlayer;
 
   for(l=start; l>=stop; l--) {
-    lp = &(map->layers[l]);
+    lp = (GET_LAYER(map, l));
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -510,12 +513,12 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
       shape.classindex = msShapeGetClass(lp, &shape, map->scale);
-      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex].status == MS_OFF))) { /* not a valid shape */
+      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
       }
 
-      if(!(lp->template) && !(lp->class[shape.classindex].template)) { /* no valid template */
+      if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
 	msFreeShape(&shape);
 	continue;
       }
@@ -566,7 +569,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
  
   /* was anything found? */
   for(l=start; l>=stop; l--) {    
-    if(map->layers[l].resultcache && map->layers[l].resultcache->numresults > 0)
+    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
  
@@ -606,7 +609,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     msSetError(MS_QUERYERR, "Invalid selection layer index.", "msQueryByFeatures()");
     return(MS_FAILURE);
   }
-  slp = &(map->layers[slayer]);
+  slp = (GET_LAYER(map, slayer));
   if(!slp->resultcache) {
     msSetError(MS_QUERYERR, "Selection layer has not been queried.", "msQueryByFeatures()");
     return(MS_FAILURE);
@@ -623,7 +626,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   for(l=start; l>=stop; l--) {
     if(l == slayer) continue; /* skip the selection layer */
     
-    lp = &(map->layers[l]);
+    lp = (GET_LAYER(map, l));
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -726,12 +729,12 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	if(i > 0 && is_duplicate(lp->resultcache, shape.index, shape.tileindex)) continue;
 
 	shape.classindex = msShapeGetClass(lp, &shape, map->scale);
-	if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex].status == MS_OFF))) { /* not a valid shape */
+	if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	  msFreeShape(&shape);
 	  continue;
 	}
 
-	if(!(lp->template) && !(lp->class[shape.classindex].template)) { /* no valid template */
+	if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
 	  msFreeShape(&shape);
 	  continue;
 	}
@@ -806,7 +809,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   for(l=start; l>=stop; l--) {  
     if(l == slayer) continue; /* skip the selection layer */
 
-    if(map->layers[l].resultcache && map->layers[l].resultcache->numresults > 0)
+    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
 
@@ -836,7 +839,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     start = stop = qlayer;
 
   for(l=start; l>=stop; l--) {
-    lp = &(map->layers[l]);    
+    lp = (GET_LAYER(map, l));    
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -917,12 +920,12 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
       shape.classindex = msShapeGetClass(lp, &shape, map->scale);
-      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex].status == MS_OFF))) { /* not a valid shape */
+      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
       }
 
-      if(!(lp->template) && !(lp->class[shape.classindex].template)) { /* no valid template */
+      if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
 	msFreeShape(&shape);
 	continue;
       }
@@ -963,7 +966,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
   /* was anything found? */
   for(l=start; l>=stop; l--) {    
-    if(map->layers[l].resultcache && map->layers[l].resultcache->numresults > 0)
+    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
  
@@ -996,7 +999,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
   msComputeBounds(selectshape); /* make sure an accurate extent exists */
  
   for(l=start; l>=stop; l--) { /* each layer */
-    lp = &(map->layers[l]);
+    lp = (GET_LAYER(map, l));
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1077,12 +1080,12 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
       shape.classindex = msShapeGetClass(lp, &shape, map->scale);
-      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex].status == MS_OFF))) { /* not a valid shape */
+      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
       }
 
-      if(!(lp->template) && !(lp->class[shape.classindex].template)) { /* no valid template */
+      if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
 	msFreeShape(&shape);
 	continue;
       }
@@ -1142,7 +1145,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
 
   /* was anything found? */
   for(l=start; l>=stop; l--) {    
-    if(map->layers[l].resultcache && map->layers[l].resultcache->numresults > 0)
+    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
  
@@ -1163,7 +1166,7 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
   
   for(i=0; i<map->numlayers; i++) {
     layerObj *lp;
-    lp = &(map->layers[i]);
+    lp = (GET_LAYER(map, i));
 
     if(!lp->resultcache) continue;
     if(lp->resultcache->numresults <= 0) continue;
@@ -1199,7 +1202,7 @@ void msQueryFree(mapObj *map, int qlayer)
     start = stop = qlayer;
 
   for(l=start; l>=stop; l--) {
-    lp = &(map->layers[l]);
+    lp = (GET_LAYER(map, l));
         
     if(lp->resultcache) {
       if(lp->resultcache->results) 

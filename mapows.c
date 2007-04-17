@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.73  2007/02/13 23:18:57  frank
  * issue an error in msOWSDispatch for services not compiled in (bug 2025)
  *
@@ -382,22 +385,22 @@ int msOWSMakeAllLayersUnique(mapObj *map)
       int count=1;
       for(j=i+1; j<map->numlayers; j++)
       {
-          if (map->layers[i].name == NULL || map->layers[j].name == NULL)
+          if (GET_LAYER(map, i)->name == NULL || GET_LAYER(map, j)->name == NULL)
           {
               msSetError(MS_MISCERR, 
                          "At least one layer is missing a name in map file.", 
                          "msOWSMakeAllLayersUnique()");
               return MS_FAILURE;
           }
-          if (strcasecmp(map->layers[i].name, map->layers[j].name) == 0 &&
-              msRenameLayer(&(map->layers[j]), ++count) != MS_SUCCESS)
+          if (strcasecmp(GET_LAYER(map, i)->name, GET_LAYER(map, j)->name) == 0 &&
+              msRenameLayer((GET_LAYER(map, j)), ++count) != MS_SUCCESS)
           {
               return MS_FAILURE;
           }
       }
 
       /* Don't forget to rename the first layer if duplicates were found */
-      if (count > 1 && msRenameLayer(&(map->layers[i]), 1) != MS_SUCCESS)
+      if (count > 1 && msRenameLayer((GET_LAYER(map, i)), 1) != MS_SUCCESS)
       {
           return MS_FAILURE;
       }
@@ -895,9 +898,9 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 
     for (i=0; i<map->numlayers; i++)
     {
-       if (map->layers[i].group && (strcmp(map->layers[i].group, pszGroupName) == 0) && &(map->layers[i].metadata))
+       if (GET_LAYER(map, i)->group && (strcmp(GET_LAYER(map, i)->group, pszGroupName) == 0) && &(GET_LAYER(map, i)->metadata))
        {
-         if((value = msOWSLookupMetadata(&(map->layers[i].metadata), namespaces, name)))
+         if((value = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), namespaces, name)))
          { 
             encoded = msEncodeHTMLEntities(value);
             msIO_fprintf(stream, format, encoded);
@@ -1596,7 +1599,7 @@ int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         {
             layerObj *lp;
 
-            lp = &(map->layers[pasReqInfo[iReq].nLayerId]);
+            lp = GET_LAYER(map, pasReqInfo[iReq].nLayerId);
 
             if (lp->connectiontype == MS_WFS)
                 msWFSUpdateRequestInfo(lp, &(pasReqInfo[iReq]));

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.21  2006/05/26 21:46:27  tamas
  * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
  *
@@ -341,7 +344,7 @@ layerObj* msMYGISCheckConnection(layerObj * layer) {
 
   /* TODO: there is an issue with layer order since it's possible that layers to be rendered out of order */
   for (i=0;i<layer->index;i++) { 	/* check all layers previous to this one */
-    lp = &(layer->map->layers[i]);
+    lp = &(GET_LAYER(layer->map, i));
 
     if (lp == layer) continue;
 

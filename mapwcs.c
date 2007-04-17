@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2007/04/17 10:36:54  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.75  2007/03/06 11:22:39  novak
  * First AGG commit.
  *
@@ -706,7 +709,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
 
   for(i=0; i<map->numlayers; i++)
-    msWCSGetCapabilities_CoverageOfferingBrief(&(map->layers[i]), params);
+    msWCSGetCapabilities_CoverageOfferingBrief(&(GET_LAYER(map, i)), params);
 
   /* done */
   msIO_printf("</ContentMetadata>\n");
@@ -839,7 +842,11 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   coverageMetadataObj cm;
   int i, status;
 
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
+
   if(!msWCSIsLayerSupported(layer)) return MS_SUCCESS; /* not an error, this layer cannot be served via WCS */
+  
 
   status = msWCSGetCoverageMetadata(layer, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;
@@ -1034,11 +1041,11 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
     for( j = 0; params->coverages[j]; j++ ) {
       i = msGetLayerIndex(map, params->coverages[j]);
       if(i == -1) continue; /* skip this layer, could/should generate an error */
-      msWCSDescribeCoverage_CoverageOffering(&(map->layers[i]), params);
+      msWCSDescribeCoverage_CoverageOffering(&(GET_LAYER(map, i)), params);
     }
   } else { /* return all layers */
     for(i=0; i<map->numlayers; i++)
-      msWCSDescribeCoverage_CoverageOffering(&(map->layers[i]), params);
+      msWCSDescribeCoverage_CoverageOffering(&(GET_LAYER(map, i)), params);
   }
   
   /* done */
@@ -1079,7 +1086,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* find the layer we are working with.  */
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
-    if( EQUAL(map->layers[i].name, params->coverages[0]) ) {
+    if( EQUAL(GET_LAYER(map, i)->name, params->coverages[0]) ) {
       lp = map->layers + i;
       break;
     }
@@ -1164,7 +1171,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       return msWCSException(map, params->version);
     }
 
-    tlp = &(map->layers[tli]);
+    tlp = &(GET_LAYER(map, tli));
 
     /* make sure there is enough information to filter */
     value = msOWSLookupMetadata(&(lp->metadata), "COM", "timeitem");
@@ -1446,6 +1453,9 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 #ifdef USE_WCS_SVR
 static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 {
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+	return MS_FAILURE;
+
   /* get information that is "data" independent */
   if((cm->srs = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "COM", MS_TRUE)) == NULL) {
     if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "COM", MS_TRUE)) == NULL) {

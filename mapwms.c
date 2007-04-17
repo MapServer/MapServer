@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.184  2007/04/17 10:36:55  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.183  2007/03/22 04:40:25  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
  *
@@ -461,7 +464,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
     {
         for (i=0; i<map->numlayers; i++)
         {
-            lp = &(map->layers[i]);
+            lp = (GET_LAYER(map, i));
             if (lp->status != MS_ON && lp->status != MS_DEFAULT)
               continue;
             /* check if the layer is time aware */
@@ -602,8 +605,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       {
         /* Keep only layers with status=DEFAULT by default */
         /* Layer with status DEFAULT is drawn first. */
-        if (map->layers[j].status != MS_DEFAULT)
-           map->layers[j].status = MS_OFF;
+        if (GET_LAYER(map, j)->status != MS_DEFAULT)
+           GET_LAYER(map, j)->status = MS_OFF;
         else
            map->layerorder[nLayerOrder++] = j;
       }
@@ -614,12 +617,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           for (j=0; j<map->numlayers; j++)
           {
               /* Turn on selected layers only. */
-              if ((map->layers[j].name &&
-                   strcasecmp(map->layers[j].name, layers[k]) == 0) ||
+              if ((GET_LAYER(map, j)->name &&
+                   strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
                   (map->name && strcasecmp(map->name, layers[k]) == 0) ||
-                  (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
+                  (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0))
               {
-                  map->layers[j].status = MS_ON;
+                  GET_LAYER(map, j)->status = MS_ON;
                   map->layerorder[nLayerOrder++] = j;
                   validlayers++;
                   layerfound = 1;
@@ -633,7 +636,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       /* set all layers with status off at end of array */
       for (j=0; j<map->numlayers; j++)
       {
-         if (map->layers[j].status == MS_OFF)
+         if (GET_LAYER(map, j)->status == MS_OFF)
            map->layerorder[nLayerOrder++] = j;
       }
 
@@ -785,7 +788,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       {
           layerObj *lp = NULL;
 
-          lp = &(map->layers[i]);
+          lp = (GET_LAYER(map, i));
           if (lp->status != MS_ON && lp->status != MS_DEFAULT)
               continue;
 
@@ -855,10 +858,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           for (i=0; i<map->numlayers; i++)
           {
               epsgvalid = MS_FALSE;
-              if (map->layers[i].status == MS_ON)
+              if (GET_LAYER(map, i)->status == MS_ON)
               {
-                  projstring = msOWSGetEPSGProj(&(map->layers[i].projection),
-                                                &(map->layers[i].metadata),
+                  projstring = msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
+                                                &(GET_LAYER(map, i)->metadata),
                                                 "MO", MS_FALSE);
                   if (projstring)
                   {
@@ -956,9 +959,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
           for(i=0; i<map->numlayers; i++)
           {
-              if (map->layers[i].projection.numargs <= 0 &&
-                  map->layers[i].status != MS_OFF &&
-                  map->layers[i].transform == MS_TRUE)
+              if (GET_LAYER(map, i)->projection.numargs <= 0 &&
+                  GET_LAYER(map, i)->status != MS_OFF &&
+                  GET_LAYER(map, i)->transform == MS_TRUE)
               {
                   /* This layer is turned on and needs a projection */
 
@@ -966,13 +969,13 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                   if (original_srs == NULL)
                       original_srs = msGetProjectionString(&(map->projection));
 
-                  if (msLoadProjectionString(&(map->layers[i].projection),
+                  if (msLoadProjectionString(&(GET_LAYER(map, i)->projection),
                                              original_srs) != 0)
                   {
                       msFreeProjection(&newProj);
                       return msWMSException(map, nVersion, NULL);
                   }
-                  map->layers[i].project = MS_TRUE;
+                  GET_LAYER(map, i)->project = MS_TRUE;
               }
           }
 
@@ -1436,8 +1439,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                    int classnameset = 0, i=0;
                    for (i=0; i<lp->numclasses; i++)
                    {
-                       if (lp->class[i].name && 
-                           strlen(lp->class[i].name) > 0)
+                       if (lp->class[i]->name && 
+                           strlen(lp->class[i]->name) > 0)
                        {
                            classnameset = 1;
                            break;
@@ -1532,10 +1535,10 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
     nestedGroups[i] = NULL; /* default */
     numNestedGroups[i] = 0; /* default */
     
-    groups = msOWSLookupMetadata(&(map->layers[i].metadata), "MO", "layer_group");
+    groups = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "MO", "layer_group");
     if ((groups != NULL) && (strlen(groups) != 0))
     {
-      if (map->layers[i].group != NULL && strlen(map->layers[i].group) != 0)
+      if (GET_LAYER(map, i)->group != NULL && strlen(GET_LAYER(map, i)->group) != 0)
       {
         errorMsg = "It is not allowed to set both the GROUP and WMS_LAYER_GROUP for a layer";
         msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
@@ -1606,7 +1609,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
    if (numNestedGroups[index] <= level) /* no more subgroups */
    {
       /* we are at the deepest level of the group branchings, so add layer now. */
-      msDumpLayer(map, &map->layers[index], nVersion, script_url_encoded, "");
+      msDumpLayer(map, GET_LAYER(map, index), nVersion, script_url_encoded, "");
       pabLayerProcessed[index] = 1; /* done */
    }
    else /* not yet there, we have to deal with this group and possible subgroups and layers. */
@@ -1955,7 +1958,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      for(i=0; i<map->numlayers; i++)
      {
          layerObj *lp;
-         lp = &(map->layers[i]);
+         lp = (GET_LAYER(map, i));
 
          if (pabLayerProcessed[i])
              continue;  /* Layer has already been handled */
@@ -1998,10 +2001,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
              for(j=i; j<map->numlayers; j++)
              {
                  if (!pabLayerProcessed[j] &&
-                     map->layers[j].group &&
-                     strcmp(lp->group, map->layers[j].group) == 0 )
+                     GET_LAYER(map, j)->group &&
+                     strcmp(lp->group, GET_LAYER(map, j)->group) == 0 )
                  {
-                     msDumpLayer(map, &(map->layers[j]), nVersion, script_url_encoded, "  ");
+                     msDumpLayer(map, (GET_LAYER(map, j)), nVersion, script_url_encoded, "  ");
                      pabLayerProcessed[j] = 1;
                  }
              }
@@ -2162,7 +2165,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   {
       for (i=0; i<map->numlayers; i++)
       {
-          if (msLookupHashTable(&(map->layers[i].metadata), "tmp_wms_sld_query"))
+          if (msLookupHashTable(&(GET_LAYER(map, i)->metadata), "tmp_wms_sld_query"))
           {
               sldspatialfilter = MS_TRUE;
               break;
@@ -2180,31 +2183,31 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       
       /* compute layer scale factors now */
       for(i=0;i<map->numlayers; i++) {
-          if(map->layers[i].sizeunits != MS_PIXELS)
-            map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
-          else if(map->layers[i].symbolscale > 0 && map->scale > 0)
-            map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+          if(GET_LAYER(map, i)->sizeunits != MS_PIXELS)
+            GET_LAYER(map, i)->scalefactor = (msInchesPerUnit(GET_LAYER(map, i)->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
+          else if(GET_LAYER(map, i)->symbolscale > 0 && map->scale > 0)
+            GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscale/map->scale;
           else
-            map->layers[i].scalefactor = 1;
+            GET_LAYER(map, i)->scalefactor = 1;
       }
       for (i=0; i<map->numlayers; i++)
       {
-          if (msLookupHashTable(&(map->layers[i].metadata), "tmp_wms_sld_query") &&
-              (map->layers[i].type == MS_LAYER_POINT || 
-               map->layers[i].type == MS_LAYER_LINE ||
-               map->layers[i].type == MS_LAYER_POLYGON ||
-               map->layers[i].type == MS_LAYER_ANNOTATION ||
-               map->layers[i].type == MS_LAYER_TILEINDEX))
+          if (msLookupHashTable(&(GET_LAYER(map, i)->metadata), "tmp_wms_sld_query") &&
+              (GET_LAYER(map, i)->type == MS_LAYER_POINT || 
+               GET_LAYER(map, i)->type == MS_LAYER_LINE ||
+               GET_LAYER(map, i)->type == MS_LAYER_POLYGON ||
+               GET_LAYER(map, i)->type == MS_LAYER_ANNOTATION ||
+               GET_LAYER(map, i)->type == MS_LAYER_TILEINDEX))
                
           {
               /* make sure that there is a resultcache. If not just ignore */
               /* the layer */
-              if (map->layers[i].resultcache)
-                msDrawQueryLayer(map, &map->layers[i], img);
+              if (GET_LAYER(map, i)->resultcache)
+                msDrawQueryLayer(map, GET_LAYER(map, i), img);
           }
 
           else
-            msDrawLayer(map, &map->layers[i], img);
+            msDrawLayer(map, GET_LAYER(map, i), img);
       }
 
   }
@@ -2239,7 +2242,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
       const char *value;
 
       layerObj *lp;
-      lp = &(map->layers[i]);
+      lp = (GET_LAYER(map, i));
 
       if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0)
         continue;
@@ -2353,14 +2356,14 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
       for(j=0; j<map->numlayers; j++) {
         /* Force all layers OFF by default */
-	map->layers[j].status = MS_OFF;
+	GET_LAYER(map, j)->status = MS_OFF;
 
         for(k=0; k<numlayers; k++) {
-          if ((map->layers[j].name && strcasecmp(map->layers[j].name, layers[k]) == 0) ||
+          if ((GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
               (map->name && strcasecmp(map->name, layers[k]) == 0) ||
-              (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
+              (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0))
             {
-              map->layers[j].status = MS_ON;
+              GET_LAYER(map, j)->status = MS_ON;
               numlayers_found++;
             }
         }
@@ -2384,8 +2387,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
         int j;
         for(j=0; j<map->numlayers; j++)
         {
-            map->layers[j].tolerance = atoi(values[i]);
-            map->layers[j].toleranceunits = MS_PIXELS;
+            GET_LAYER(map, j)->tolerance = atoi(values[i]);
+            GET_LAYER(map, j)->toleranceunits = MS_PIXELS;
         }
     }
 
@@ -2411,7 +2414,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 /* -------------------------------------------------------------------- */
   for (i=0; i<map->numlayers; i++)
   {
-      if (map->layers[i].status == MS_ON && !msIsLayerQueryable(&map->layers[i]))
+      if (GET_LAYER(map, i)->status == MS_ON && !msIsLayerQueryable(GET_LAYER(map, i)))
       {
           msSetError(MS_WMSERR, "Requested layer(s) are not queryable.", "msWMSFeatureInfo()");
           return msWMSException(map, nVersion, "LayerNotQueryable");
@@ -2540,7 +2543,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
    {
        for(k=0; k<map->numlayers; k++)
        {
-         lp = &map->layers[k];
+         lp = GET_LAYER(map, k);
          if (lp->name && strcasecmp(lp->name, layers[j]) == 0)
          {
              /* Look for a WFS onlineresouce at the layer level and then at
@@ -2678,8 +2681,8 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      /* the group name. */
      for (i=0; i<map->numlayers; i++)
      {
-         if (map->layers[i].name &&
-             strcasecmp(map->layers[i].name, pszLayer) == 0)
+         if (GET_LAYER(map, i)->name &&
+             strcasecmp(GET_LAYER(map, i)->name, pszLayer) == 0)
          {
              iLayerIndex = i;
              break;
@@ -2713,9 +2716,9 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          for (i=0; i<map->numlayers; i++)
          {
              if (i == iLayerIndex)
-                 map->layers[i].status = MS_ON;
+                 GET_LAYER(map, i)->status = MS_ON;
              else
-                 map->layers[i].status = MS_OFF;
+                 GET_LAYER(map, i)->status = MS_OFF;
          }
 
          /* if SCALE was provided in request, calculate an extent and use a default width and height */
@@ -2748,15 +2751,15 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          /* RULE was specified. Get the class corresponding to the RULE */
          /* (RULE = class->name) */
          
-         for (i=0; i<map->layers[iLayerIndex].numclasses; i++)
+         for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++)
          {
-             if (map->layers[iLayerIndex].class[i].name && 
-                 strlen(map->layers[iLayerIndex].class[i].name) > 0 &&
-                 strcasecmp(map->layers[iLayerIndex].class[i].name,psRule) == 0)
+             if (GET_LAYER(map, iLayerIndex)->class[i]->name && 
+                 strlen(GET_LAYER(map, iLayerIndex)->class[i]->name) > 0 &&
+                 strcasecmp(GET_LAYER(map, iLayerIndex)->class[i]->name,psRule) == 0)
                break;
              
          }
-         if (i < map->layers[iLayerIndex].numclasses)
+         if (i < GET_LAYER(map, iLayerIndex)->numclasses)
          {
          /* set the map legend parameters */
              if (nWidth < 0)
@@ -2774,8 +2777,8 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
                    nHeight = 20;
              }
              
-             img = msCreateLegendIcon(map, &map->layers[iLayerIndex], 
-                                      &map->layers[iLayerIndex].class[i],
+             img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex), 
+                                      GET_LAYER(map, iLayerIndex)->class[i],
                                       nWidth, nHeight);
          }
          if (img == NULL)
@@ -2827,16 +2830,16 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
                 return msWMSException(map, nVersion, NULL);
             }
             for(j=0; j<map->numlayers; j++)
-               map->layers[j].status = MS_OFF;
+               GET_LAYER(map, j)->status = MS_OFF;
 
             for (k=0; k<numlayers; k++)
             {
                 for (j=0; j<map->numlayers; j++)
                 {
-                    if (map->layers[j].name &&
-                        strcasecmp(map->layers[j].name, layers[k]) == 0)
+                    if (GET_LAYER(map, j)->name &&
+                        strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0)
                     {
-                        map->layers[j].status = MS_ON;
+                        GET_LAYER(map, j)->status = MS_ON;
                         validlayer =1;
                     }
                 }

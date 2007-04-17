@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.36  2006/11/10 01:30:44  tkralidi
  * Added MS_ERROR_LANGUAGE #define for use by error handlers such as
  * msOWSCommonExceptionReport and msOWSGetLanguage
@@ -96,7 +99,8 @@ extern "C" {
 #define MS_TIMEERR 35
 #define MS_GMLERR 36
 #define MS_SOSERR 37
-#define MS_NUMERRORCODES 38
+#define MS_NULLPARENTERR 38
+#define MS_NUMERRORCODES 39
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

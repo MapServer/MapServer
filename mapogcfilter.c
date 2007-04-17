@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.71  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.70  2007/04/13 17:32:11  assefa
  * Fixed error when projecting rect bbox used for queries.
  *
@@ -369,17 +372,17 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         && !bPointQuery && !bShapeQuery && (bOnlySpatialFilter == MS_FALSE))
       return NULL;
 
-    lp = &(map->layers[iLayerIndex]);
+    lp = &(GET_LAYER(map, iLayerIndex));
 
     if (szExpression)
     {
         szClassItem = FLTGetMapserverExpressionClassItem(psNode);
                 
-        initClass(&(lp->class[0]));
+        initClass(&(lp->class[0]->);
 
-        lp->class[0].type = lp->type;
+        lp->class[0]->type = lp->type;
         lp->numclasses = 1;
-        msLoadExpressionString(&lp->class[0].expression, 
+        msLoadExpressionString(&lp->class[0]->expression, 
                                szExpression);
 /* -------------------------------------------------------------------- */
 /*      classitems are necessary for filter type PropertyIsLike         */
@@ -402,20 +405,20 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                   FLTGetMapserverIsPropertyExpression(psNode);
                 if (szExpression)
                 {
-                    initClass(&(lp->class[1]));
+                    initClass(&(lp->class[1]->);
                     
-                    lp->class[1].type = lp->type;
+                    lp->class[1]->type = lp->type;
                     lp->numclasses++;
-                    msLoadExpressionString(&lp->class[1].expression, 
+                    msLoadExpressionString(&lp->class[1]->expression, 
                                          szExpression);
-                    if (!lp->class[1].template)
-                      lp->class[1].template = strdup("ttt.html");
+                    if (!lp->class[1]->template)
+                      lp->class[1]->template = strdup("ttt.html");
                 }
             }
         }
 
-        if (!lp->class[0].template)
-          lp->class[0].template = strdup("ttt.html");
+        if (!lp->class[0]->template)
+          lp->class[0]->template = strdup("ttt.html");
 /* -------------------------------------------------------------------- */
 /*      Need to free the template so the all shapes's will not end      */
 /*      up being queried. The query is dependent on the class           */
@@ -653,7 +656,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
         iLayerIndex > map->numlayers-1)
       return;
 
-    psLayer = &(map->layers[iLayerIndex]);
+    psLayer = &(GET_LAYER(map, iLayerIndex));
     if (psLayer->resultcache)
     {
         if (psLayer->resultcache->results)
@@ -755,7 +758,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
     if (!map || iLayerIndex < 0 || iLayerIndex > map->numlayers-1)
       return NULL;
 
-     psLayer = &(map->layers[iLayerIndex]);
+     psLayer = &(GET_LAYER(map, iLayerIndex));
      if (psLayer->template == NULL)
        psLayer->template = strdup("ttt.html");
 
@@ -992,7 +995,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
     char *pszBuffer = NULL;
 
-    lp = &(map->layers[iLayerIndex]);
+    lp = &(GET_LAYER(map, iLayerIndex));
 
     /* if there is a bbox use it */
     szEPSG = FLTGetBBOX(psNode, &sQueryRect);
@@ -1041,9 +1044,9 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     }
 
     lp->numclasses = 1; /* set 1 so the query would work */
-    initClass(&(lp->class[0]));
-    lp->class[0].type = lp->type;
-    lp->class[0].template = strdup("ttt.html");
+    initClass(&(lp->class[0]->);
+    lp->class[0]->type = lp->type;
+    lp->class[0]->template = strdup("ttt.html");
 
     szExpression = FLTGetSQLExpression(psNode, lp->connectiontype);
     if (szExpression)
@@ -1190,7 +1193,7 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int nResults = 0;
     layerObj *psLayer = NULL;
 
-    psLayer = &(map->layers[iLayerIndex]);
+    psLayer = &(GET_LAYER(map, iLayerIndex));
     panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
                                     &nResults, bOnlySpatialFilter);
     if (panResults) 

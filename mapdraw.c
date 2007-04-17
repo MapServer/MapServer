@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.112  2007/03/22 04:40:24  sdlime
  * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
  *
@@ -161,16 +164,16 @@ void msClearLayerPenValues(layerObj *layer) {
   int i, j;  
 
   for(i=0; i<layer->numclasses; i++) {
-    layer->class[i].label.backgroundcolor.pen = MS_PEN_UNSET; /* set in billboardXX function */
-    layer->class[i].label.backgroundshadowcolor.pen = MS_PEN_UNSET;
-    layer->class[i].label.color.pen = MS_PEN_UNSET; /* set in MSXXDrawText function */
-    layer->class[i].label.outlinecolor.pen = MS_PEN_UNSET;
-    layer->class[i].label.shadowcolor.pen = MS_PEN_UNSET;      
+    layer->class[i]->label.backgroundcolor.pen = MS_PEN_UNSET; /* set in billboardXX function */
+    layer->class[i]->label.backgroundshadowcolor.pen = MS_PEN_UNSET;
+    layer->class[i]->label.color.pen = MS_PEN_UNSET; /* set in MSXXDrawText function */
+    layer->class[i]->label.outlinecolor.pen = MS_PEN_UNSET;
+    layer->class[i]->label.shadowcolor.pen = MS_PEN_UNSET;      
 
-    for(j=0; j<layer->class[i].numstyles; j++) {
-      layer->class[i].styles[j].backgroundcolor.pen = MS_PEN_UNSET; /* set in various symbol drawing functions */
-	  layer->class[i].styles[j].color.pen = MS_PEN_UNSET;
-      layer->class[i].styles[j].outlinecolor.pen = MS_PEN_UNSET; 
+    for(j=0; j<layer->class[i]->numstyles; j++) {
+      layer->class[i]->styles[j].backgroundcolor.pen = MS_PEN_UNSET; /* set in various symbol drawing functions */
+	  layer->class[i]->styles[j].color.pen = MS_PEN_UNSET;
+      layer->class[i]->styles[j].outlinecolor.pen = MS_PEN_UNSET; 
     }
   }
 }
@@ -228,7 +231,7 @@ void msClearPenValues(mapObj *map) {
   int i;
 
   for(i=0; i<map->numlayers; i++)
-    msClearLayerPenValues(&(map->layers[i]));
+    msClearLayerPenValues((GET_LAYER(map, i)));
 
   msClearLegendPenValues(&(map->legend));
   msClearScalebarPenValues(&(map->scalebar));
@@ -380,12 +383,12 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
 
     /* compute layer scale factors now */
     for(i=0;i<map->numlayers; i++) {
-      if(map->layers[i].sizeunits != MS_PIXELS)
-        map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / geo_cellsize;
-      else if(map->layers[i].symbolscale > 0 && map->scale > 0)
-        map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+      if(GET_LAYER(map, i)->sizeunits != MS_PIXELS)
+        GET_LAYER(map, i)->scalefactor = (msInchesPerUnit(GET_LAYER(map, i)->sizeunits,0)/msInchesPerUnit(map->units,0)) / geo_cellsize;
+      else if(GET_LAYER(map, i)->symbolscale > 0 && map->scale > 0)
+        GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscale/map->scale;
       else
-        map->layers[i].scalefactor = 1;
+        GET_LAYER(map, i)->scalefactor = 1;
     }
 
     return image;
@@ -442,10 +445,11 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   /* Pre-download all WMS/WFS layers in parallel before starting to draw map */
   lastconnectiontype = MS_SHAPEFILE;
   for(i=0; i<map->numlayers; i++) {
-    if(map->layerorder[i] == -1 || !msLayerIsVisible(map, &(map->layers[map->layerorder[i]])))
+    //if(map->layerorder[i] == -1 || !msLayerIsVisible(map, &(map->layers[map->layerorder[i]])))
+    if(map->layerorder[i] == -1 || !msLayerIsVisible(map, GET_LAYER(map,map->layerorder[i])))
       continue;
 
-    lp = &(map->layers[ map->layerorder[i]]);
+    lp = GET_LAYER(map,map->layerorder[i]);
 
 #ifdef USE_WMS_LYR
     if(lp->connectiontype == MS_WMS) {
@@ -484,7 +488,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   for(i=0; i<map->numlayers; i++) {
 
     if(map->layerorder[i] != -1) {
-      lp = &(map->layers[ map->layerorder[i]]);
+      lp = (GET_LAYER(map,  map->layerorder[i]));
 
       if(lp->postlabelcache) /* wait to draw */
         continue;
@@ -592,7 +596,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
   for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
 
-    lp = &(map->layers[map->layerorder[i]]);
+    lp = (GET_LAYER(map, map->layerorder[i]));
 
     if(!lp->postlabelcache) continue;
     if(!msLayerIsVisible(map, lp)) continue;
@@ -701,9 +705,9 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
     /* now check class scale boundaries (all layers *must* pass these tests) */
     if(layer->numclasses > 0) {
       for(i=0; i<layer->numclasses; i++) {
-        if((layer->class[i].maxscale > 0) && (map->scale > layer->class[i].maxscale))
+        if((layer->class[i]->maxscale > 0) && (map->scale > layer->class[i]->maxscale))
           continue; /* can skip this one, next class */
-        if((layer->class[i].minscale > 0) && (map->scale <= layer->class[i].minscale))
+        if((layer->class[i]->minscale > 0) && (map->scale <= layer->class[i]->minscale))
           continue; /* can skip this one, next class */
 
         break; /* can't skip this class (or layer for that matter) */
@@ -951,19 +955,19 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
     shape.classindex = msShapeGetClass(layer, &shape, map->scale);
-    if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
+    if((shape.classindex == -1) || (layer->class[shape.classindex]->status == MS_OFF)) {
        msFreeShape(&shape);
        continue;
     }
   
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex].numstyles > 1) 
+    if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex]->numstyles > 1) 
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
          
     /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
     /* style parameters for this shape. */
     if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0) {
-      if(msLayerGetAutoStyle(map, layer, &(layer->class[shape.classindex]), shape.tileindex, shape.index) != MS_SUCCESS) {
+      if(msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], shape.tileindex, shape.index) != MS_SUCCESS) {
         retcode = MS_FAILURE;
         break;
       }
@@ -972,7 +976,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       cache = MS_FALSE;
     }
   
-    if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
+    if(annotate && (layer->class[shape.classindex]->text.string || layer->labelitem) && layer->class[shape.classindex]->label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     if(cache)
@@ -997,7 +1001,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       }
     }  
 
-    maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex].numstyles);
+    maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex]->numstyles);
     msFreeShape(&shape);
   }
     
@@ -1011,8 +1015,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       
     for(s=1; s<maxnumstyles; s++) {
       for(current=shpcache; current; current=current->next) {        
-        if(layer->class[current->shape.classindex].numstyles > s)
-	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex].styles[s]), layer->scalefactor);
+        if(layer->class[current->shape.classindex]->numstyles > s)
+	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex]->styles[s]), layer->scalefactor);
       }
     }
     
@@ -1073,25 +1077,25 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
       if(layer->type == MS_LAYER_POLYGON) { /* alter BOTTOM style since that's almost always the fill */
-        if(MS_VALID_COLOR(layer->class[i].styles[0].color)) {
-          colorbuffer[i] = layer->class[i].styles[0].color; /* save the color from the BOTTOM style */
-          layer->class[i].styles[0].color = map->querymap.color;
-        } else if(MS_VALID_COLOR(layer->class[i].styles[0].outlinecolor)) {
-          colorbuffer[i] = layer->class[i].styles[0].outlinecolor; /* if no color, save the outlinecolor from the BOTTOM style */
-          layer->class[i].styles[0].outlinecolor = map->querymap.color;
+        if(MS_VALID_COLOR(layer->class[i]->styles[0].color)) {
+          colorbuffer[i] = layer->class[i]->styles[0].color; /* save the color from the BOTTOM style */
+          layer->class[i]->styles[0].color = map->querymap.color;
+        } else if(MS_VALID_COLOR(layer->class[i]->styles[0].outlinecolor)) {
+          colorbuffer[i] = layer->class[i]->styles[0].outlinecolor; /* if no color, save the outlinecolor from the BOTTOM style */
+          layer->class[i]->styles[0].outlinecolor = map->querymap.color;
         }
       } else {
-        if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color)) {
-          colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].color; /* save the color from the TOP style */
-          layer->class[i].styles[layer->class[i].numstyles-1].color = map->querymap.color;
-        } else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor)) {
-	  colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor; /* if no color, save the outlinecolor from the TOP style */
-          layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = map->querymap.color;
+        if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1].color)) {
+          colorbuffer[i] = layer->class[i]->styles[layer->class[i]->numstyles-1].color; /* save the color from the TOP style */
+          layer->class[i]->styles[layer->class[i]->numstyles-1].color = map->querymap.color;
+        } else if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1].outlinecolor)) {
+	  colorbuffer[i] = layer->class[i]->styles[layer->class[i]->numstyles-1].outlinecolor; /* if no color, save the outlinecolor from the TOP style */
+          layer->class[i]->styles[layer->class[i]->numstyles-1].outlinecolor = map->querymap.color;
         }
       }
 
-      mindistancebuffer[i] = layer->class[i].label.mindistance;
-      layer->class[i].label.mindistance = MS_MAX(0, layer->class[i].label.mindistance);
+      mindistancebuffer[i] = layer->class[i]->label.mindistance;
+      layer->class[i]->label.mindistance = MS_MAX(0, layer->class[i]->label.mindistance);
     }
   }
 
@@ -1119,16 +1123,16 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
      */
     if(shape.classindex==-1 
        || shape.classindex >= layer->numclasses
-       || layer->class[shape.classindex].status == MS_OFF) {
+       || layer->class[shape.classindex]->status == MS_OFF) {
       msFreeShape(&shape);
       continue;
     }
 
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex].numstyles > 1) 
+    if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex]->numstyles > 1) 
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
 
-    if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
+    if(annotate && (layer->class[shape.classindex]->text.string || layer->labelitem) && layer->class[shape.classindex]->label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     if(cache)
@@ -1149,7 +1153,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); /* problem adding to the cache */
     }
 
-    maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex].numstyles);
+    maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex]->numstyles);
     msFreeShape(&shape);
   }
 
@@ -1158,8 +1162,8 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   
     for(s=1; s<maxnumstyles; s++) {
       for(current=shpcache; current; current=current->next) {        
-        if(layer->class[current->shape.classindex].numstyles > s)
-	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex].styles[s]), layer->scalefactor);
+        if(layer->class[current->shape.classindex]->numstyles > s)
+	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex]->styles[s]), layer->scalefactor);
       }
     }
     
@@ -1171,18 +1175,18 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
       if(layer->type == MS_LAYER_POLYGON) {
-	if(MS_VALID_COLOR(layer->class[i].styles[0].color))
-          layer->class[i].styles[0].color = colorbuffer[i];
-        else if(MS_VALID_COLOR(layer->class[i].styles[0].outlinecolor))
-          layer->class[i].styles[0].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the BOTTOM style */
+	if(MS_VALID_COLOR(layer->class[i]->styles[0].color))
+          layer->class[i]->styles[0].color = colorbuffer[i];
+        else if(MS_VALID_COLOR(layer->class[i]->styles[0].outlinecolor))
+          layer->class[i]->styles[0].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the BOTTOM style */
       } else {
-        if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color))
-          layer->class[i].styles[layer->class[i].numstyles-1].color = colorbuffer[i];        
-        else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor))
-	  layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
+        if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1].color))
+          layer->class[i]->styles[layer->class[i]->numstyles-1].color = colorbuffer[i];        
+        else if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1].outlinecolor))
+	  layer->class[i]->styles[layer->class[i]->numstyles-1].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
       }
     }
-    layer->class[i].label.mindistance = mindistancebuffer[i];
+    layer->class[i]->label.mindistance = mindistancebuffer[i];
   }
 
   msLayerClose(layer);
@@ -1331,17 +1335,17 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 /* Before we do anything else, we will check for a rangeitem.
    If its there, we need to change the style's color to map
    the range to the shape */
-  for(s=0; s<layer->class[c].numstyles; s++)
+  for(s=0; s<layer->class[c]->numstyles; s++)
     {
-      if (layer->class[c].styles[s].rangeitem !=  NULL)
-	msShapeToRange(&(layer->class[c].styles[s]), shape);
+      if (layer->class[c]->styles[s].rangeitem !=  NULL)
+	msShapeToRange(&(layer->class[c]->styles[s]), shape);
     }
   
   /* changed when Tomas added CARTOLINE symbols */
-  if(layer->class[c].styles[0].size == -1)
-      csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c].styles[0].symbol]))) * layer->scalefactor) / 2.0);
+  if(layer->class[c]->styles[0].size == -1)
+      csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c]->styles[0].symbol]))) * layer->scalefactor) / 2.0);
   else
-      csz = MS_NINT((layer->class[c].styles[0].size*layer->scalefactor)/2.0);
+      csz = MS_NINT((layer->class[c]->styles[0].size*layer->scalefactor)/2.0);
   cliprect.minx = map->extent.minx - csz*map->cellsize;
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
@@ -1372,10 +1376,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
     /* shade symbol drawing will call outline function if color not set */
     if(style != -1)
-      msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[style]), layer->scalefactor);
+      msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c]->styles[style]), layer->scalefactor);
     else
-      for(s=0; s<layer->class[c].numstyles; s++)
-        msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[s]), layer->scalefactor);
+      for(s=0; s<layer->class[c]->numstyles; s++)
+        msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c]->styles[s]), layer->scalefactor);
 
     /* TO DO: need to handle circle annotation */
 
@@ -1400,15 +1404,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	msOffsetShapeRelativeTo(shape, layer);
 
       /* Bug #1620 implementation */
-      if ( layer->class[c].label.autofollow == MS_TRUE ) {
+      if ( layer->class[c]->label.autofollow == MS_TRUE ) {
 
-        annopath = msPolylineLabelPath(shape, layer->class[c].label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c].label), layer->scalefactor, &status);
+        annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
 
         if( annopath ) {
 
           labelObj label;
         
-          label = layer->class[c].label;
+          label = layer->class[c]->label;
           
           /* Label path derived from line overrides the rotation and position
              values, so ignore the specified angle and set the position to
@@ -1422,9 +1426,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           } else {
             /* FIXME: Not sure how this should work with the label path yet */
             /*
-              if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
-              for(s=0; s<layer->class[c].numstyles; s++)
-              msDrawMarkerSymbol(&map->symbolset, image, &(label_line->point[0]), &(layer->class[c].styles[s]), layer->scalefactor);
+              if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) {
+              for(s=0; s<layer->class[c]->numstyles; s++)
+              msDrawMarkerSymbol(&map->symbolset, image, &(label_line->point[0]), &(layer->class[c]->styles[s]), layer->scalefactor);
               }
             */
             /* FIXME: need to call msDrawTextLineGD() from here eventually */
@@ -1438,13 +1442,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
-      if ( layer->class[c].label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
+      if ( layer->class[c]->label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
         /* Regular labels */
-        if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
+        if(msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
         labelObj label;
         
-        label = layer->class[c].label;
+        label = layer->class[c]->label;
           
         if(layer->labelangleitemindex != -1) label.angle = atof(shape->values[layer->labelangleitemindex]);
         if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) label.size = atoi(shape->values[layer->labelsizeitemindex]);
@@ -1458,9 +1462,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if(layer->labelcache) {
             if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
-          if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
-            for(s=0; s<layer->class[c].numstyles; s++)
-              msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
+          if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) {
+            for(s=0; s<layer->class[c]->numstyles; s++)
+              msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c]->styles[s]), layer->scalefactor);
 	  }
 	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
 
@@ -1478,11 +1482,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       } else
 	msOffsetShapeRelativeTo(shape, layer);
 
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS) {
 
         labelObj label;
         
-        label = layer->class[c].label;
+        label = layer->class[c]->label;
 
         if(layer->labelangleitemindex != -1) label.angle = atof(shape->values[layer->labelangleitemindex]);
         if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) label.size = atoi(shape->values[layer->labelsizeitemindex]);
@@ -1493,9 +1497,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if(layer->labelcache) {
           if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
-	  if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
-            for(s=0; s<layer->class[c].numstyles; s++)
-	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
+	  if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) {
+            for(s=0; s<layer->class[c]->numstyles; s++)
+	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c]->styles[s]), layer->scalefactor);
 	  }
 	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
         }
@@ -1516,7 +1520,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  } else
             msOffsetPointRelativeTo(point, layer);
 
-          label = layer->class[c].label;
+          label = layer->class[c]->label;
 
 	  if(layer->labelangleitemindex != -1) 
               label.angle = atof(shape->values[layer->labelangleitemindex]);
@@ -1530,9 +1534,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	    if(layer->labelcache) {
 	      if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
-	      if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
-                for(s=0; s<layer->class[c].numstyles; s++)
-	          msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
+	      if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) {
+                for(s=0; s<layer->class[c]->numstyles; s++)
+	          msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c]->styles[s]), layer->scalefactor);
 	      }
 	      msDrawLabel(image, *point, shape->text, &label, &map->fontset, layer->scalefactor);
 	    }
@@ -1563,16 +1567,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	} else
           msOffsetPointRelativeTo(point, layer);
 
-	for(s=0; s<layer->class[c].numstyles; s++) {
-	  if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
-	  if(layer->class[c].styles[s].sizeitemindex != -1) layer->class[c].styles[s].size = atoi(shape->values[layer->class[c].styles[s].sizeitemindex]);      
-  	  msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
+	for(s=0; s<layer->class[c]->numstyles; s++) {
+	  if(layer->class[c]->styles[s].angleitemindex != -1) layer->class[c]->styles[s].angle = atof(shape->values[layer->class[c]->styles[s].angleitemindex]);
+	  if(layer->class[c]->styles[s].sizeitemindex != -1) layer->class[c]->styles[s].size = atoi(shape->values[layer->class[c]->styles[s].sizeitemindex]);      
+  	  msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c]->styles[s]), layer->scalefactor);
 	}
 
 	if(shape->text) {
           labelObj label;
 
-          label = layer->class[c].label;
+          label = layer->class[c]->label;
 
 	  if(layer->labelangleitemindex != -1) label.angle = atof(shape->values[layer->labelangleitemindex]);
 	  if((layer->labelsizeitemindex != -1) && (label.type == MS_TRUETYPE)) label.size = atoi(shape->values[layer->labelsizeitemindex]);
@@ -1610,28 +1614,28 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msOffsetShapeRelativeTo(shape, layer);
  
     if(style != -1) {
-      if(layer->class[c].styles[style].angleitemindex != -1) layer->class[c].styles[style].angle = atof(shape->values[layer->class[c].styles[style].angleitemindex]);
-      if(layer->class[c].styles[style].sizeitemindex != -1) layer->class[c].styles[style].size = atoi(shape->values[layer->class[c].styles[style].sizeitemindex]);
-      msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[style]), layer->scalefactor);
+      if(layer->class[c]->styles[style].angleitemindex != -1) layer->class[c]->styles[style].angle = atof(shape->values[layer->class[c]->styles[style].angleitemindex]);
+      if(layer->class[c]->styles[style].sizeitemindex != -1) layer->class[c]->styles[style].size = atoi(shape->values[layer->class[c]->styles[style].sizeitemindex]);
+      msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c]->styles[style]), layer->scalefactor);
     } else {
-      for(s=0; s<layer->class[c].numstyles; s++) {
-        if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
-        if(layer->class[c].styles[s].sizeitemindex != -1) layer->class[c].styles[s].size = atoi(shape->values[layer->class[c].styles[s].sizeitemindex]);
-        msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), layer->scalefactor);
+      for(s=0; s<layer->class[c]->numstyles; s++) {
+        if(layer->class[c]->styles[s].angleitemindex != -1) layer->class[c]->styles[s].angle = atof(shape->values[layer->class[c]->styles[s].angleitemindex]);
+        if(layer->class[c]->styles[s].sizeitemindex != -1) layer->class[c]->styles[s].size = atoi(shape->values[layer->class[c]->styles[s].sizeitemindex]);
+        msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c]->styles[s]), layer->scalefactor);
       }
     }
 
     if(shape->text) {
 
       /* Bug #1620 implementation */
-      if ( layer->class[c].label.autofollow == MS_TRUE ) {
+      if ( layer->class[c]->label.autofollow == MS_TRUE ) {
 
-        annopath = msPolylineLabelPath(shape, layer->class[c].label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c].label), layer->scalefactor, &status);
+        annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
         if( annopath ) {
 
           labelObj label;
 
-          label = layer->class[c].label;
+          label = layer->class[c]->label;
           /* Label path derived from line overrides the rotation and position
              values, so ignore the specified angle and set the position to
              auto. */
@@ -1653,10 +1657,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
-      if ( layer->class[c].label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
+      if ( layer->class[c]->label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
-      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
-        labelObj label = layer->class[c].label;
+      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
+        labelObj label = layer->class[c]->label;
 
 	if(layer->labelangleitemindex != -1) 
             label.angle = atof(shape->values[layer->labelangleitemindex]);
@@ -1716,15 +1720,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     } else
       msOffsetShapeRelativeTo(shape, layer);
  
-    for(s=0; s<layer->class[c].numstyles; s++) {
-      if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
-      if(layer->class[c].styles[s].sizeitemindex != -1) layer->class[c].styles[s].size = atoi(shape->values[layer->class[c].styles[s].sizeitemindex]);
-      msDrawShadeSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), layer->scalefactor);
+    for(s=0; s<layer->class[c]->numstyles; s++) {
+      if(layer->class[c]->styles[s].angleitemindex != -1) layer->class[c]->styles[s].angle = atof(shape->values[layer->class[c]->styles[s].angleitemindex]);
+      if(layer->class[c]->styles[s].sizeitemindex != -1) layer->class[c]->styles[s].size = atoi(shape->values[layer->class[c]->styles[s].sizeitemindex]);
+      msDrawShadeSymbol(&map->symbolset, image, shape, &(layer->class[c]->styles[s]), layer->scalefactor);
     }    
 
     if(shape->text) {
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {	
-        labelObj label = layer->class[c].label;
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS) {	
+        labelObj label = layer->class[c]->label;
 
 	if(layer->labelangleitemindex != -1) 
             label.angle = atof(shape->values[layer->labelangleitemindex]);
@@ -1781,11 +1785,11 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
       if(layer->labelcache) {
         if(msAddLabel(map, layer->index, c, -1, -1, point, NULL, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else {
-	if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
-          for(s=0; s<layer->class[c].numstyles; s++)
-  	    msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
+	if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) {
+          for(s=0; s<layer->class[c]->numstyles; s++)
+  	    msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c]->styles[s]), layer->scalefactor);
 	}
-	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, layer->scalefactor);
+	msDrawLabel(image, *point, labeltext, &layer->class[c]->label, &map->fontset, layer->scalefactor);
       }
     }
     break;
@@ -1798,14 +1802,14 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
     } else
       msOffsetPointRelativeTo(point, layer);
 
-    for(s=0; s<layer->class[c].numstyles; s++)
-      msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
+    for(s=0; s<layer->class[c]->numstyles; s++)
+      msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c]->styles[s]), layer->scalefactor);
 
     if(labeltext) {
       if(layer->labelcache) {
         if(msAddLabel(map, layer->index, c, -1, -1, point, NULL, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else
-	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, layer->scalefactor);
+	msDrawLabel(image, *point, labeltext, &layer->class[c]->label, &map->fontset, layer->scalefactor);
     }
     break;
   default:

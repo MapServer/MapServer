@@ -71,7 +71,9 @@
     %newobject removeLayer;
     layerObj *removeLayer(int index) 
     {
-        return msRemoveLayer(self, index);
+    	layerObj *layer=msRemoveLayer(self, index);
+	MS_REFCNT_INCR(layer);
+        return layer;
     }
     
     int setExtent(double minx, double miny, double maxx, double maxy) {	
@@ -89,12 +91,15 @@
     {
         return msMapSetRotation( self, rotation_angle );
     }
- 
+  
+  %newobject getLayer;
   layerObj *getLayer(int i) {
-    if(i >= 0 && i < self->numlayers)	
-      return &(self->layers[i]); /* returns an EXISTING layer */
-    else
+    if(i >= 0 && i < self->numlayers) {
+    	MS_REFCNT_INCR(self->layers[i]);
+      	return (self->layers[i]); /* returns an EXISTING layer */
+    } else {
       return NULL;
+    }
   }
 
   layerObj *getLayerByName(char *name) {
@@ -103,7 +108,7 @@
     i = msGetLayerIndex(self, name);
 
     if(i != -1)
-      return &(self->layers[i]); /* returns an EXISTING layer */
+      return (self->layers[i]); /* returns an EXISTING layer */
     else
       return NULL;
   }

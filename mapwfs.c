@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.89  2007/04/17 10:36:55  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.88  2007/02/13 04:39:07  frank
  * ensure that error stack is cleared after issing exceptions (bug 2025)
  *
@@ -481,7 +484,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   for(i=0; i<map->numlayers; i++)
   {
       layerObj *lp;
-      lp = &(map->layers[i]);
+      lp = &(GET_LAYER(map, i));
 
       /* List only vector layers in which DUMP=TRUE */
       if (msWFSIsLayerSupported(lp))
@@ -864,7 +867,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     layerObj *lp;
     int j, bFound = 0;
     
-    lp = &(map->layers[i]);
+    lp = &(GET_LAYER(map, i));
 
     for (j=0; j<numlayers && !bFound; j++) {
       if ( lp->name && strcasecmp(lp->name, layers[j]) == 0)
@@ -1084,7 +1087,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     for(j=0; j<map->numlayers; j++) {
       layerObj *lp;
       
-      lp = &(map->layers[j]);
+      lp = &(GET_LAYER(map, j));
       
       /* Keep only selected layers, set to OFF by default. */
       lp->status = MS_OFF;
@@ -1096,7 +1099,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       for (j=0; j<map->numlayers; j++) {
 	layerObj *lp;
 	
-	lp = &(map->layers[j]);
+	lp = &(GET_LAYER(map, j));
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
 	  const char *pszThisLayerSRS;
@@ -1431,7 +1434,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     
     /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
     for(i=0; i<map->numlayers; i++) {
-      if (map->layers[i].resultcache && map->layers[i].resultcache->numresults > 0)
+      if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
         break;
     }
     if ((i==map->numlayers) || (maxfeatures == 0)) {

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.11  2006/09/01 02:30:15  sdlime
  * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
  *
@@ -79,12 +82,11 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
     }
     else if (nIndex < 0) { /* Insert at the end by default */
 #ifndef __cplusplus
-        initClass(&(layer->class[layer->numclasses]));
-        msCopyClass(&(layer->class[layer->numclasses]), classobj, layer);
+        layer->class[layer->numclasses]=classobj;
 #else
-        initClass(&(layer->_class[layer->numclasses]));
-        msCopyClass(&(layer->_class[layer->numclasses]), classobj, layer);
+        layer->_class[layer->numclasses]=classobj;
 #endif
+	MS_REFCNT_INCR(classobj);
         layer->numclasses++;
         return layer->numclasses-1;
     }
@@ -94,19 +96,16 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
         /* to an index one higher */
 
 #ifndef __cplusplus
-        initClass(&(layer->class[layer->numclasses]));
         for (i=layer->numclasses-1; i>=nIndex; i--)
             layer->class[i+1] = layer->class[i];
-        initClass(&(layer->class[nIndex]));
-        msCopyClass(&(layer->class[nIndex]), classobj, layer);
+        layer->class[nIndex]=classobj;
 #else
-        initClass(&(layer->_class[layer->numclasses]));
         for (i=layer->numclasses-1; i>=nIndex; i--)
             layer->_class[i+1] = layer->_class[i];
-        initClass(&(layer->_class[nIndex]));
-        msCopyClass(&(layer->_class[nIndex]), classobj, layer);
+        layer->_class[nIndex]=classobj;
 #endif
 
+	MS_REFCNT_INCR(classobj);
         /* increment number of layers and return */
         layer->numclasses++;
         return nIndex;
@@ -145,29 +144,29 @@ classObj *msRemoveClass(layerObj *layer, int nIndex)
         }
         initClass(classobj);
 #ifndef __cplusplus
-        msCopyClass(classobj, &(layer->class[nIndex]), NULL);
+        msCopyClass(classobj, layer->class[nIndex], NULL);
 #else
-        msCopyClass(classobj, &(layer->_class[nIndex]), NULL);
+        msCopyClass(classobj, layer->_class[nIndex], NULL);
 #endif
 
         /* Iteratively copy the higher index classes down one index */
         for (i=nIndex; i<layer->numclasses-1; i++)
         {
 #ifndef __cplusplus
-            freeClass(&(layer->class[i]));
-            initClass(&(layer->class[i]));
-            msCopyClass(&layer->class[i], &layer->class[i+1], layer);
+            freeClass(layer->class[i]);
+            initClass(layer->class[i]);
+            msCopyClass(layer->class[i], layer->class[i+1], layer);
 #else
-            freeClass(&(layer->_class[i]));
-            initClass(&(layer->_class[i]));
-            msCopyClass(&layer->_class[i], &layer->_class[i+1], layer);
+            freeClass(layer->_class[i]);
+            initClass(layer->_class[i]);
+            msCopyClass(layer->_class[i], layer->_class[i+1], layer);
 #endif
         }
         /* Free the extra class at the end */
 #ifndef __cplusplus
-        freeClass(&(layer->class[layer->numclasses-1]));
+        freeClass(layer->class[layer->numclasses-1]);
 #else  
-        freeClass(&(layer->_class[layer->numclasses-1]));
+        freeClass(layer->_class[layer->numclasses-1]);
 #endif
         
         /* decrement number of layers and return copy of removed layer */
@@ -187,12 +186,12 @@ int msMoveClassUp(layerObj *layer, int nClassIndex)
         psTmpClass = (classObj *)malloc(sizeof(classObj));
         initClass(psTmpClass);
         
-        msCopyClass(psTmpClass, &layer->class[nClassIndex], layer);
+        msCopyClass(psTmpClass, layer->class[nClassIndex], layer);
 
-        msCopyClass(&layer->class[nClassIndex], 
-                    &layer->class[nClassIndex-1], layer);
+        msCopyClass(layer->class[nClassIndex],
+                    layer->class[nClassIndex-1], layer);
         
-        msCopyClass(&layer->class[nClassIndex-1], psTmpClass, layer);
+        msCopyClass(layer->class[nClassIndex-1], psTmpClass, layer);
 
         return(MS_SUCCESS);
     }
@@ -213,12 +212,12 @@ int msMoveClassDown(layerObj *layer, int nClassIndex)
         psTmpClass = (classObj *)malloc(sizeof(classObj));
         initClass(psTmpClass);
         
-        msCopyClass(psTmpClass, &layer->class[nClassIndex], layer);
+        msCopyClass(psTmpClass, layer->class[nClassIndex], layer);
 
-        msCopyClass(&layer->class[nClassIndex], 
-                    &layer->class[nClassIndex+1], layer);
+        msCopyClass(layer->class[nClassIndex], 
+                    layer->class[nClassIndex+1], layer);
         
-        msCopyClass(&layer->class[nClassIndex+1], psTmpClass, layer);
+        msCopyClass(layer->class[nClassIndex+1], psTmpClass, layer);
 
         return(MS_SUCCESS);
     }

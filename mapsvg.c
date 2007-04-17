@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2007/04/17 10:36:54  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.22  2006/01/16 20:21:18  sdlime
  * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
  *
@@ -1219,7 +1222,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 
     cachePtr = &(map->labelcache.labels[l]); /* point to right spot in the label cache */
 
-    layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
+    layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
     labelPtr = &(cachePtr->label);
 
     if(!cachePtr->text || strlen(cachePtr->text) == 0)

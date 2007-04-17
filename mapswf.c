@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2007/04/17 10:36:54  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.59  2006/05/29 18:07:49  assefa
  * Correct a missing argument when generating layer related Action scripts.
  *
@@ -1320,7 +1323,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(((SWFObj *)image->img.swf)->map->layers[((SWFObj *)image->img.swf)->nCurrentLayerIdx]);
+      &((GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
@@ -1783,7 +1786,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(((SWFObj *)image->img.swf)->map->layers[((SWFObj *)image->img.swf)->nCurrentLayerIdx]);
+      &(GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
@@ -1896,7 +1899,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(((SWFObj *)image->img.swf)->map->layers[((SWFObj *)image->img.swf)->nCurrentLayerIdx]);
+      &(GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
@@ -2284,7 +2287,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
         cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
 
-        layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
+        layerPtr = &(GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
 
 /* ==================================================================== */
 /*      set the current layer so the label will be drawn in the         */
@@ -3006,7 +3009,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
             
                 /* sprintf(szAction, "mapObj.layers[%d]=\"%s\";", i, gszFilename); */
                 sprintf(szAction, "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"%s\",\"%s\");", i, 
-                        map->layers[i].name, map->layers[i].type, gszFilename,
+                        GET_LAYER(map, i)->name, GET_LAYER(map, i)->type, gszFilename,
                         pszRelativeName);
             
                 oAction = compileSWFActionCode(szAction);
@@ -3036,7 +3039,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
             {
                 sprintf(szAction, 
                         "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"undefined\",\"undefined\");", i, 
-                        map->layers[i].name, map->layers[i].type);
+                        GET_LAYER(map, i)->name, GET_LAYER(map, i)->type);
             
                 oAction = compileSWFActionCode(szAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.63  2007/03/06 11:22:39  novak
  * First AGG commit.
  *
@@ -249,7 +252,7 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
       msDrawLegendIcon(map, lp, class, width, height, image->img.gd, 0, 0);
     } else {
       for (i=0; i<lp->numclasses; i++) {
-        msDrawLegendIcon(map, lp, &lp->class[i], width, height, image->img.gd, 0, 0);
+        msDrawLegendIcon(map, lp, lp->class[i], width, height, image->img.gd, 0, 0);
       }
     }
   }
@@ -294,13 +297,13 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   ** allocate heights array
   */
   for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[map->layerorder[i]]);
+    lp = (GET_LAYER(map, map->layerorder[i]));
 
     if((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
       continue;
 
     for(j=0;j<lp->numclasses;j++) {
-      if(!lp->class[j].name) continue; /* skip it */
+      if(!lp->class[j]->name) continue; /* skip it */
       n++;
     }
   }
@@ -315,7 +318,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   */
   n=0;
   for(i=0; i<map->numlayers; i++) { /* Need to find the longest legend label string */
-    lp = &(map->layers[map->layerorder[i]]);
+    lp = (GET_LAYER(map, map->layerorder[i]));
 
     if((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
       continue;
@@ -326,17 +329,17 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     }
  
     for(j=0;j<lp->numclasses;j++) {
-      if(!lp->class[j].name)
+      if(!lp->class[j]->name)
 	continue; /* skip it */
 
       if(!scale_independent && map->scale > 0) {  /* verify class scale here */
-	if((lp->class[j].maxscale > 0) && (map->scale > lp->class[j].maxscale))
+	if((lp->class[j]->maxscale > 0) && (map->scale > lp->class[j]->maxscale))
 	  continue;
-	if((lp->class[j].minscale > 0) && (map->scale <= lp->class[j].minscale))
+	if((lp->class[j]->minscale > 0) && (map->scale <= lp->class[j]->minscale))
 	  continue;
       }
 
-      if(msGetLabelSize(lp->class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
+      if(msGetLabelSize(lp->class[j]->name, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
 	return(NULL); /* something bad happened */
 
       maxheight = MS_MAX(maxheight, MS_NINT(rect.maxy - rect.miny));
@@ -380,7 +383,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     
   /* for(i=0; i<map->numlayers; i++) { */
   for(i=map->numlayers-1; i>=0; i--) {
-    lp = &(map->layers[map->layerorder[i]]); /* for brevity */
+    lp = (GET_LAYER(map, map->layerorder[i])); /* for brevity */
 
     if((lp->numclasses == 0) || (lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY))
       continue; /* skip this layer */
@@ -398,24 +401,24 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
     for(j=0; j<lp->numclasses; j++) { /* always at least 1 class */
 
-      if(!lp->class[j].name) continue; /* skip it */
+      if(!lp->class[j]->name) continue; /* skip it */
      
       if(!scale_independent && map->scale > 0) {  /* verify class scale here */
-        if((lp->class[j].maxscale > 0) && (map->scale > lp->class[j].maxscale))
+        if((lp->class[j]->maxscale > 0) && (map->scale > lp->class[j]->maxscale))
           continue;
-        if((lp->class[j].minscale > 0) && (map->scale <= lp->class[j].minscale))
+        if((lp->class[j]->minscale > 0) && (map->scale <= lp->class[j]->minscale))
           continue;
       }
  
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
       /* TODO */
-      if(msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, (int) pnt.y) != MS_SUCCESS)
+      if(msDrawLegendIcon(map, lp, lp->class[j],  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, (int) pnt.y) != MS_SUCCESS)
         return NULL;
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
       /* TODO */
-      msDrawLabel(image, pnt, lp->class[j].name, &(map->legend.label), &map->fontset, 1.0);
+      msDrawLabel(image, pnt, lp->class[j]->name, &(map->legend.label), &map->fontset, 1.0);
 
       pnt.y += map->legend.keyspacingy; /* bump y for next label */
 	
@@ -495,33 +498,33 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     l = map->numlayers;
     map->numlayers++;
 
-    if(initLayer(&(map->layers[l]), map) == -1) return(-1);
-    map->layers[l].name = strdup("__embed__legend");
-    map->layers[l].type = MS_LAYER_ANNOTATION;
+    if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
+    GET_LAYER(map, l)->name = strdup("__embed__legend");
+    GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
 
-    if(initClass(&(map->layers[l].class[0])) == -1) return(-1);
-    map->layers[l].numclasses = 1; /* so we make sure to free it */
+    if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
+    GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */
         
     /* update the layer order list with the layer's index. */
     map->layerorder[l] = l;
   }
 
-  map->layers[l].status = MS_ON;
+  GET_LAYER(map, l)->status = MS_ON;
 
-  map->layers[l].class[0].numstyles = 1;
-  map->layers[l].class[0].styles[0].symbol = s;
-  map->layers[l].class[0].styles[0].color.pen = -1;
-  map->layers[l].class[0].label.force = MS_TRUE;
-  map->layers[l].class[0].label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
+  GET_LAYER(map, l)->class[0]->numstyles = 1;
+  GET_LAYER(map, l)->class[0]->styles[0].symbol = s;
+  GET_LAYER(map, l)->class[0]->styles[0].color.pen = -1;
+  GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
+  GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
 
   if(map->legend.postlabelcache) /* add it directly to the image */
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(GET_LAYER(map, l)->class[0]->styles[0]), 1.0);
   else
     msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or */
   /* with saving maps */
-  map->layers[l].status = MS_DELETE;
+  GET_LAYER(map, l)->status = MS_DELETE;
 
   return(0);
 }

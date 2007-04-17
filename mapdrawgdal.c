@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.55  2007/03/06 11:22:39  novak
  * First AGG commit.
  *
@@ -453,17 +456,17 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       int s;
 
       /* change colour based on colour range? */
-      for(s=0; s<layer->class[i].numstyles; s++)
+      for(s=0; s<layer->class[i]->numstyles; s++)
       {
-          if( MS_VALID_COLOR(layer->class[i].styles[s].mincolor)
-              && MS_VALID_COLOR(layer->class[i].styles[s].maxcolor) )
+          if( MS_VALID_COLOR(layer->class[i]->styles[s].mincolor)
+              && MS_VALID_COLOR(layer->class[i]->styles[s].maxcolor) )
           {
               classified = TRUE;
               break;
           }
       }
       
-      if( layer->class[i].expression.string != NULL )
+      if( layer->class[i]->expression.string != NULL )
       {
           classified = TRUE;
           break;
@@ -572,7 +575,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   {
       int iClass;
       for( iClass = 0; iClass < layer->numclasses; iClass++ )
-          layer->class[iClass].styles[0].color.pen = MS_PEN_UNSET;
+          layer->class[iClass]->styles[0].color.pen = MS_PEN_UNSET;
   }
 
   /*
@@ -712,21 +715,21 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 /* change colour based on colour range?  Currently we 
                    only address the greyscale case properly. */
 
-                for(s=0; s<layer->class[c].numstyles; s++)
+                for(s=0; s<layer->class[c]->numstyles; s++)
                 {
-                    if( MS_VALID_COLOR(layer->class[c].styles[s].mincolor)
-                        && MS_VALID_COLOR(layer->class[c].styles[s].maxcolor) )
-                        msValueToRange(&layer->class[c].styles[s],
+                    if( MS_VALID_COLOR(layer->class[c]->styles[s].mincolor)
+                        && MS_VALID_COLOR(layer->class[c]->styles[s].maxcolor) )
+                        msValueToRange(&layer->class[c]->styles[s],
                                        sEntry.c1 );
                 }
 
-                RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
-                if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
+                RESOLVE_PEN_GD(gdImg, layer->class[c]->styles[0].color);
+                if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0].color) )
                     cmap[i] = -1;
-                else if( MS_VALID_COLOR(layer->class[c].styles[0].color))
+                else if( MS_VALID_COLOR(layer->class[c]->styles[0].color))
                 {
                     /* use class color */
-                    cmap[i] = layer->class[c].styles[0].color.pen;
+                    cmap[i] = layer->class[c]->styles[0].color.pen;
                 }
                 else /* Use raster color */
                     cmap[i] = msAddColorGD(map, gdImg, cmt,
@@ -2115,20 +2118,20 @@ msDrawRasterLayerGDAL_16BitClassification(
             int s;
 
             /* change colour based on colour range? */
-            for(s=0; s<layer->class[c].numstyles; s++)
+            for(s=0; s<layer->class[c]->numstyles; s++)
             {
-                if( MS_VALID_COLOR(layer->class[c].styles[s].mincolor)
-                    && MS_VALID_COLOR(layer->class[c].styles[s].maxcolor) )
-                    msValueToRange(&layer->class[c].styles[s],dfOriginalValue);
+                if( MS_VALID_COLOR(layer->class[c]->styles[s].mincolor)
+                    && MS_VALID_COLOR(layer->class[c]->styles[s].maxcolor) )
+                    msValueToRange(&layer->class[c]->styles[s],dfOriginalValue);
             }
 
-            RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
-            if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
+            RESOLVE_PEN_GD(gdImg, layer->class[c]->styles[0].color);
+            if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0].color) )
                 cmap[i] = -1;
-            else if( MS_VALID_COLOR(layer->class[c].styles[0].color))
+            else if( MS_VALID_COLOR(layer->class[c]->styles[0].color))
             {
                 /* use class color */
-                cmap[i] = layer->class[c].styles[0].color.pen;
+                cmap[i] = layer->class[c]->styles[0].color.pen;
             }
         }
     }

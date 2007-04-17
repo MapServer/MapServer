@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2007/04/17 10:36:53  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.39  2006/01/16 20:37:15  sdlime
  * Changed label size calls to not adjust baseline offset.
  *
@@ -552,7 +555,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         cachePtr = &(map->labelcache.labels[l]);
 
         /* set a couple of other pointers, avoids nasty references */
-        layerPtr = &(map->layers[cachePtr->layerindex]);
+        layerPtr = &(GET_LAYER(map, cachePtr->layerindex));
         /* classPtr = &(cachePtr->class); */
         labelPtr = &(cachePtr->label);
 

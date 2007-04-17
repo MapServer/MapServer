@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.478  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.477  2007/04/14 20:25:31  sdlime
  * Moved msGetEncodedString() from mapgd.c to mapstring.c.
  *
@@ -429,6 +432,13 @@ extern "C" {
 
 #define MS_ENCRYPTION_KEY_SIZE  16   /* Key size: 128 bits = 16 bytes */
 
+#define GET_LAYER(map, pos) map->layers[pos]
+#define MS_REFCNT_INCR(obj) obj->refcount++
+#define MS_REFCNT_DECR(obj) (--(obj->refcount))
+#define MS_REFCNT_INIT(obj) obj->refcount=1
+#define MS_REFCNT_IS_NOT_ZERO(obj) (MS_REFCNT_DECR(obj))>0
+#define MS_REFCNT_IS_ZERO(obj) (MS_REFCNT_DECR(obj))<=0
+
 #endif
 
 /* General enumerated types - needed by scripts */
@@ -792,6 +802,7 @@ typedef struct class_obj{
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
+  int refcount;
   struct layer_obj *layer;
 #ifdef SWIG
 %mutable;
@@ -1012,7 +1023,7 @@ typedef struct layer_obj {
   int annotate; /* boolean flag for annotation */
   double scalefactor; /* computed, not set */
 #ifndef __cplusplus
-  classObj *class; /* always at least 1 class */
+  classObj **class; /* always at least 1 class */
 #else /* __cplusplus */
   classObj *_class;
 #endif /* __cplusplus */
@@ -1021,6 +1032,8 @@ typedef struct layer_obj {
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
+  /* reference counting, RFC24 */
+  int refcount;
   int numclasses;
   int index;
   struct map_obj *map;
@@ -1159,12 +1172,14 @@ typedef struct map_obj{ /* structure for a map */
   int maxsize;
 
 #ifndef SWIG
-  layerObj *layers;
+  layerObj **layers;
 #endif /* SWIG */
 
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
+  /* reference counting, RFC24 */
+  int refcount;
   int numlayers; /* number of layers in mapfile */
 
   symbolSetObj symbolset;
@@ -1375,9 +1390,9 @@ MS_DLL_EXPORT int  hex2int(char *hex);
 MS_DLL_EXPORT void initSymbol(symbolObj *s);
 MS_DLL_EXPORT int initMap(mapObj *map);
 MS_DLL_EXPORT int initLayer(layerObj *layer, mapObj *map);
-MS_DLL_EXPORT void freeLayer( layerObj * );
+MS_DLL_EXPORT int freeLayer( layerObj * );
 MS_DLL_EXPORT int initClass(classObj *_class);
-MS_DLL_EXPORT void freeClass( classObj * );
+MS_DLL_EXPORT int freeClass( classObj * );
 MS_DLL_EXPORT void initLabel(labelObj *label);
 MS_DLL_EXPORT void resetClassStyle(classObj *_class);
 MS_DLL_EXPORT int initStyle(styleObj *style);
@@ -1921,6 +1936,8 @@ MS_DLL_EXPORT void msForceTmpFileBase( const char *new_base );
 MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 
 MS_DLL_EXPORT int msAlphaBlend (int dst, int src);
+
+MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
 
 
 /* ==================================================================== */

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.143  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.142  2007/04/14 20:25:32  sdlime
  * Moved msGetEncodedString() from mapgd.c to mapstring.c.
  *
@@ -186,10 +189,10 @@ void msPreAllocateColorsGD(imageObj *image, mapObj *map) {
   if(gdImageTrueColor(image->img.gd)) return;
 
   for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[i]);
+    lp = (GET_LAYER(map, i));
     if(lp->status == MS_ON || lp->status == MS_DEFAULT) {
       for(j=0; j<lp->numclasses; j++) {
-        cp = &(lp->class[j]);
+        cp = lp->class[j];
 	msImageSetPenGD(image->img.gd, &(cp->label.backgroundcolor));
 	msImageSetPenGD(image->img.gd, &(cp->label.backgroundshadowcolor));
 	msImageSetPenGD(image->img.gd, &(cp->label.color)); 
@@ -3193,7 +3196,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
     cachePtr = &(map->labelcache.labels[l]); /* point to right spot in the label cache */
 
-    layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
+    layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
     labelPtr = &(cachePtr->label);
 
     if(!cachePtr->text || strlen(cachePtr->text) == 0)

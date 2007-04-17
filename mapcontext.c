@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.80  2007/04/17 10:36:52  umberto
+ * RFC24: mapObj, layerObj, initial classObj support
+ *
  * Revision 1.79  2007/01/21 17:45:54  dan
  * Ignore MS_DELETE layers in msWriteMapContext() (bug 2011)
  *
@@ -1145,12 +1148,12 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   layerObj *layer;
 
   /* Init new layer */
-  layer = &(map->layers[map->numlayers]);
+  layer = &(GET_LAYER(map, map->numlayers));
   initLayer(layer, map);
   layer->map = (mapObj *)map;
   layer->type = MS_LAYER_RASTER;
   /* save the index */
-  map->layers[map->numlayers].index = map->numlayers;
+  GET_LAYER(map, map->numlayers)->index = map->numlayers;
   map->layerorder[map->numlayers] = map->numlayers;
   map->numlayers++;
   
@@ -1919,48 +1922,48 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   /* Loop on all layer   */
   for(i=0; i<map->numlayers; i++)
   {
-      if(map->layers[i].status != MS_DELETE && map->layers[i].connectiontype == MS_WMS)
+      if(GET_LAYER(map, i)->status != MS_DELETE && GET_LAYER(map, i)->connectiontype == MS_WMS)
       {
-          if(map->layers[i].status == MS_OFF)
+          if(GET_LAYER(map, i)->status == MS_OFF)
               nValue = 1;
           else
               nValue = 0;
           msIO_fprintf(stream, "    <Layer queryable=\"%d\" hidden=\"%d\">\n", 
-                  msIsLayerQueryable(&(map->layers[i])), nValue);
+                  msIsLayerQueryable(&(GET_LAYER(map, i))), nValue);
 
           /*  */
           /* Server definition */
           /*  */
           if(nVersion <= OWS_1_0_0 )
-              msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+              msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                        NULL, "wms_server_version", OWS_WARN,
                              "      <Server service=\"WMS\" version=\"%s\" ",
                                        "1.0.0");
           else
-              msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+              msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                        NULL, "wms_server_version", OWS_WARN,
                           "      <Server service=\"OGC:WMS\" version=\"%s\" ",
                                        "1.0.0");
-          if(map->layers[i].name)
-              msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+          if(GET_LAYER(map, i)->name)
+              msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                        NULL, "wms_title", OWS_NOERR, 
-                                       "title=\"%s\">\n", map->layers[i].name);
+                                       "title=\"%s\">\n", GET_LAYER(map, i)->name);
           else
           {
-              msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+              msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                        NULL, "wms_title", OWS_NOERR, 
                                        "title=\"%s\">\n", "");
           }
 
           /* Get base url of the online resource to be the default value */
-          if(map->layers[i].connection)
-              pszValue = strdup( map->layers[i].connection );
+          if(GET_LAYER(map, i)->connection)
+              pszValue = strdup( GET_LAYER(map, i)->connection );
           else
               pszValue = strdup( "" );
           pszChar = strchr(pszValue, '?');
           if( pszChar )
               pszValue[pszChar - pszValue] = '\0';
-          if(msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+          if(msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                       NULL, "wms_onlineresource", OWS_WARN, 
          "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                       pszValue) == OWS_WARN)
@@ -1973,15 +1976,15 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /*  */
           /* Layer information */
           /*  */
-          msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+          msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                              NULL, "wms_name", OWS_WARN, 
                              "      <Name>%s</Name>\n", 
-                             map->layers[i].name);
-          msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+                             GET_LAYER(map, i)->name);
+          msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                              NULL, "wms_title", OWS_WARN, 
                              "      <Title>%s</Title>\n", 
-                             map->layers[i].name);
-          msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+                             GET_LAYER(map, i)->name);
+          msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                              NULL, "wms_abstract", OWS_NOERR, 
                              "      <Abstract>%s</Abstract>\n", 
                              NULL);
@@ -1989,7 +1992,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /* DataURL */
           if(nVersion <= OWS_0_1_4)
           {
-              msOWSPrintEncodeMetadata(stream, &(map->layers[i].metadata), 
+              msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                  NULL, "wms_dataurl", OWS_NOERR, 
                                  "      <DataURL>%s</DataURL>\n", 
                                  NULL);
@@ -2002,7 +2005,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               /* Note: in version 0.1.7 the width and height are not included  */
               /* in the Context file, but they are included in the metadata for */
               /* for consistency with the URLType. */
-              msOWSPrintURLType(stream, &(map->layers[i].metadata), "MO", 
+              msOWSPrintURLType(stream, &(GET_LAYER(map, i)->metadata), "MO", 
                                 "dataurl", OWS_NOERR, NULL, "DataURL", NULL, 
                                 " width=\"%s\"", " height=\"%s\"",
                                 " format=\"%s\"", 
@@ -2016,7 +2019,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /* The MetadataURL have a width, height, format and an URL */
           /* The metadata will be structured like this:  */
           /* "width height format url" */
-          msOWSPrintURLType(stream, &(map->layers[i].metadata), "MO", 
+          msOWSPrintURLType(stream, &(GET_LAYER(map, i)->metadata), "MO", 
                             "metadataurl", OWS_NOERR, NULL, "MetadataURL",NULL,
                             " width=\"%s\"", " height=\"%s\""," format=\"%s\"",
                             "        <OnlineResource xlink:type=\"simple\""
@@ -2025,18 +2028,18 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                             MS_TRUE, NULL, NULL, NULL, NULL, NULL, "      ");
 
           /* MinScale && MaxScale */
-          if(nVersion >= OWS_1_1_0 && map->layers[i].minscale > 0)
+          if(nVersion >= OWS_1_1_0 && GET_LAYER(map, i)->minscale > 0)
               msIO_fprintf(stream, 
                "      <sld:MinScaleDenominator>%g</sld:MinScaleDenominator>\n",
-                           map->layers[i].minscale);
-          if(nVersion >= OWS_1_1_0 && map->layers[i].maxscale > 0)
+                           GET_LAYER(map, i)->minscale);
+          if(nVersion >= OWS_1_1_0 && GET_LAYER(map, i)->maxscale > 0)
               msIO_fprintf(stream, 
                "      <sld:MaxScaleDenominator>%g</sld:MaxScaleDenominator>\n",
-                           map->layers[i].maxscale);
+                           GET_LAYER(map, i)->maxscale);
 
           /* Layer SRS */
-          pszValue = (char*)msOWSGetEPSGProj(&(map->layers[i].projection), 
-                                             &(map->layers[i].metadata),
+          pszValue = (char*)msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection), 
+                                             &(GET_LAYER(map, i)->metadata),
                                              "MO", MS_FALSE);
           if(pszValue && (strcasecmp(pszValue, "(null)") != 0))
           {
@@ -2046,12 +2049,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           }
 
           /* Format */
-          if(msLookupHashTable(&(map->layers[i].metadata),"wms_formatlist")==NULL && 
-             msLookupHashTable(&(map->layers[i].metadata),"wms_format")==NULL)
+          if(msLookupHashTable(&(GET_LAYER(map, i)->metadata),"wms_formatlist")==NULL && 
+             msLookupHashTable(&(GET_LAYER(map, i)->metadata),"wms_format")==NULL)
           {
               pszURL = NULL;
-              if(map->layers[i].connection)
-                  pszURL = strdup( map->layers[i].connection );
+              if(GET_LAYER(map, i)->connection)
+                  pszURL = strdup( GET_LAYER(map, i)->connection );
               else
                   pszURL = strdup( "" );
               pszValue = pszURL;
@@ -2079,12 +2082,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               char **papszFormats;
               int numFormats, nForm;
 
-              pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+              pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                            "wms_formatlist");
               if(!pszValue)
-                  pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+                  pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                                "wms_format");
-              pszCurrent = msLookupHashTable(&(map->layers[i].metadata), 
+              pszCurrent = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                              "wms_format");
 
               papszFormats = split(pszValue, ',', &numFormats);
@@ -2111,14 +2114,14 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           }
           /* Style */
           /* First check the stylelist */
-          pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+          pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                        "wms_stylelist");
           if(pszValue == NULL || strlen(trimLeft(pszValue)) < 1)
           {
               /* Check if the style is in the connection URL */
               pszURL = "";
-              if(map->layers[i].connection)
-                  pszURL = strdup( map->layers[i].connection );
+              if(GET_LAYER(map, i)->connection)
+                  pszURL = strdup( GET_LAYER(map, i)->connection );
               else
                   pszURL = strdup( "" );
               pszValue = pszURL;
@@ -2132,8 +2135,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                       pszValue[pszChar - pszValue] = '\0';
 
                   /* Check the SLD string from the URL */
-                  if(map->layers[i].connection)
-                      pszSLD2 = strdup(map->layers[i].connection);
+                  if(GET_LAYER(map, i)->connection)
+                      pszSLD2 = strdup(GET_LAYER(map, i)->connection);
                   else
                       pszSLD2 = strdup( "" );
                   if(pszSLD2)
@@ -2215,9 +2218,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           {
               /* If the style information is not in the connection URL, */
               /* read the metadata. */
-              pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+              pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                            "wms_stylelist");
-              pszCurrent = msLookupHashTable(&(map->layers[i].metadata), 
+              pszCurrent = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                              "wms_style");
               msIO_fprintf( stream, "      <StyleList>\n");
               /* Loop in each style in the style list */
@@ -2238,12 +2241,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   /* Write SLDURL if it is in the metadata */
                   pszStyleItem = (char*)malloc(strlen(pszStyle)+10+10);
                   sprintf(pszStyleItem, "wms_style_%s_sld", pszStyle);
-                  if(msLookupHashTable(&(map->layers[i].metadata),
+                  if(msLookupHashTable(&(GET_LAYER(map, i)->metadata),
                                        pszStyleItem) != NULL)
                   {
                       msIO_fprintf(stream, "          <SLD>\n");
                       msOWSPrintEncodeMetadata(stream, 
-                                               &(map->layers[i].metadata),
+                                               &(GET_LAYER(map, i)->metadata),
                                                NULL, pszStyleItem, 
                                                OWS_NOERR, 
      "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
@@ -2255,11 +2258,11 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   {
                       /* If the URL is not there, check for SLDBody */
                       sprintf(pszStyleItem, "wms_style_%s_sld_body", pszStyle);
-                      if(msLookupHashTable(&(map->layers[i].metadata),
+                      if(msLookupHashTable(&(GET_LAYER(map, i)->metadata),
                                            pszStyleItem) != NULL)
                       {
                           msIO_fprintf(stream, "          <SLD>\n");
-                          msOWSPrintMetadata(stream,&(map->layers[i].metadata),
+                          msOWSPrintMetadata(stream,&(GET_LAYER(map, i)->metadata),
                                              NULL, pszStyleItem, OWS_NOERR, 
                                              "            %s\n", NULL);
                           msIO_fprintf(stream, "          </SLD>\n");
@@ -2279,7 +2282,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                           sprintf(pszStyleItem, "wms_style_%s_title",pszStyle);
                           /* Title */
                           msOWSPrintEncodeMetadata(stream, 
-                                                   &(map->layers[i].metadata), 
+                                                   &(GET_LAYER(map, i)->metadata), 
                                                    NULL, pszStyleItem, 
                                                    OWS_NOERR, 
                                         "          <Title>%s</Title>\n",
@@ -2290,7 +2293,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                           pszStyleItem = (char*)malloc(strlen(pszStyle)+10+20);
                           sprintf(pszStyleItem, "style_%s_legendurl",
                                   pszStyle);
-                          msOWSPrintURLType(stream, &(map->layers[i].metadata),
+                          msOWSPrintURLType(stream, &(GET_LAYER(map, i)->metadata),
                                             "M", pszStyleItem, OWS_NOERR, NULL,
                                             "LegendURL", NULL, " width=\"%s\"",
                                             " height=\"%s\""," format=\"%s\"",
@@ -2317,9 +2320,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /* Dimension element */;
           pszCurrent = NULL;
 
-          pszValue = msLookupHashTable(&(map->layers[i].metadata), 
+          pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                        "wms_dimensionlist");
-          pszCurrent = msLookupHashTable(&(map->layers[i].metadata), 
+          pszCurrent = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                          "wms_dimension");
           while(pszValue != NULL)
           {
@@ -2338,7 +2341,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               }
 
               /* From the dimension list, extract the required dimension */
-              msOWSGetDimensionInfo(&(map->layers[i]), pszDimension, 
+              msOWSGetDimensionInfo(&(GET_LAYER(map, i)), pszDimension, 
                                     &pszDimUserValue, &pszDimUnits, 
                                     &pszDimDefault, &pszDimNearValue, 
                                     &pszDimUnitSymbol, &pszDimMultiValue);

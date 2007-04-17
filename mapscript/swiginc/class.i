@@ -57,12 +57,21 @@
                            "classObj()");
                 return NULL;
             }
-            if (initClass(&(layer->class[layer->numclasses])) == -1)
+	    layer->class[layer->numclasses]=(classObj *) malloc(sizeof(classObj));
+            if ( layer->class[layer->numclasses] == NULL )
+            {
+                msSetError(MS_MEMERR,
+                    "Could not allocate memory for new classObj instance",
+                    "classObj()");
                 return NULL;
-            layer->class[layer->numclasses].type = layer->type;
-            layer->class[layer->numclasses].layer = layer;
+            }
+            if (initClass(layer->class[layer->numclasses]) == -1)
+                return NULL;
+            layer->class[layer->numclasses]->type = layer->type;
+            layer->class[layer->numclasses]->layer = layer;
+	    MS_REFCNT_INCR(layer->class[layer->numclasses]);
             layer->numclasses++;
-            return &(layer->class[layer->numclasses-1]);
+            return (layer->class[layer->numclasses-1]);
         }
 
         return NULL;
@@ -70,10 +79,11 @@
 
     ~classObj() 
     {
-        if (!self->layer)
+        if (self)
         {
-            freeClass(self);
-            free(self);
+            if (freeClass(self)==MS_SUCCESS) {
+            	free(self);
+	    }
         }
     }
 

@@ -62,22 +62,26 @@
                 return(NULL);
             }
 
-            if (initLayer(&(map->layers[map->numlayers]), map) == -1)
+      	    map->layers[map->numlayers]=(layerObj*)malloc(sizeof(layerObj));
+            if (initLayer((map->layers[map->numlayers]), map) == -1)
                 return(NULL);
 
-            map->layers[map->numlayers].index = map->numlayers;
+            map->layers[map->numlayers]->index = map->numlayers;
             map->layerorder[map->numlayers] = map->numlayers;
             map->numlayers++;
+	    MS_REFCNT_INCR(map->layers[map->numlayers-1]);
 
-            return &(map->layers[map->numlayers-1]);
+            return (map->layers[map->numlayers-1]);
         }
     }
 
     ~layerObj() 
     {
-        if (!self->map) {
-            freeLayer(self);
-            free(self);
+        /*if (!self->map) {*/
+        if (self) {
+            if(freeLayer(self)==MS_SUCCESS) {
+            	free(self);
+	    }
         }
     }
 
@@ -210,13 +214,15 @@
             return NULL;
     }
 
+    %newobject getClass;
     classObj *getClass(int i) 
     {
-
-        if (i >= 0 && i < self->numclasses)
-            return &(self->class[i]); 
-        else
-            return NULL;
+	classObj *result=NULL;
+        if (i >= 0 && i < self->numclasses) {
+            result=self->class[i]; 
+	    MS_REFCNT_INCR(result);
+	}
+	return result;
     }
 
     char *getItem(int i) 
