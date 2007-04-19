@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.81  2007/04/19 07:34:09  umberto
+ * RFC24: more fixes, allow php to build
+ *
  * Revision 1.80  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -448,9 +451,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                     iClass = 0;
                     for (k=0; k < pasLayers[j].numclasses; k++)
                     {
-                        initClass(&GET_LAYER(map, i)->class[iClass]->;
-                        msCopyClass(&GET_LAYER(map, i)->class[iClass]-> 
-                                    &pasLayers[j].class[k], NULL);
+                        initClass(GET_LAYER(map, i)->class[iClass]);
+                        msCopyClass(GET_LAYER(map, i)->class[iClass],
+                                    pasLayers[j].class[k], NULL);
                         GET_LAYER(map, i)->class[iClass]->layer = &GET_LAYER(map, i);
                         GET_LAYER(map, i)->class[iClass]->type = GET_LAYER(map, i)->type;
                         GET_LAYER(map, i)->numclasses++;
@@ -889,7 +892,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                     for (i=0; i<nNewClasses; i++)
                                     {
                                         msLoadExpressionString(&psLayer->
-                                                             class[psLayer->numclasses-1-i].
+                                                             class[psLayer->numclasses-1-i]->
                                                              expression, szExpression);
                                     }
                                     if (szClassItem)
@@ -1147,7 +1150,7 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         {
             if (bNewClass || psLayer->numclasses <= 0)
             {
-                initClass(&(psLayer->class[psLayer->numclasses]->);
+                initClass(psLayer->class[psLayer->numclasses]);
                 nClassId = psLayer->numclasses;
                 psLayer->numclasses++;
             }
@@ -1380,7 +1383,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         {
             if (bNewClass || psLayer->numclasses <= 0)
             {
-                initClass(&(psLayer->class[psLayer->numclasses]->);
+                initClass(psLayer->class[psLayer->numclasses]);
                 nClassId = psLayer->numclasses;
                 psLayer->numclasses++;
             }
@@ -1414,7 +1417,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             {
                 if (bNewClass || psLayer->numclasses <= 0)
                 {
-                    initClass(&(psLayer->class[psLayer->numclasses]->);
+                    initClass(psLayer->class[psLayer->numclasses]);
                     nClassId = psLayer->numclasses;
                     psLayer->numclasses++;
                 }
@@ -2179,7 +2182,7 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
     {
         if (bNewClass || psLayer->numclasses <= 0)
         {
-            initClass(&(psLayer->class[psLayer->numclasses]->);
+            initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
         }
@@ -2405,7 +2408,7 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
     {
         if (!bOtherSymboliser)
         {
-            initClass(&(psLayer->class[psLayer->numclasses]->);
+            initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
             initStyle(&(psLayer->class[nClassId]->styles[0]));
@@ -2421,7 +2424,7 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 
         if (nStyleId >= 0 && nClassId >= 0) /* should always be true */
           msSLDParseTextParams(psRoot, psLayer,
-                               &psLayer->class[nClassId]->;
+                               psLayer->class[nClassId]);
     }
 }
 
@@ -2552,7 +2555,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                         if (psLayer->numclasses < MS_MAXCLASSES)
                         {
-                            initClass(&(psLayer->class[psLayer->numclasses]->);
+                            initClass(psLayer->class[psLayer->numclasses]);
                             psLayer->numclasses++;
                             nClassId = psLayer->numclasses-1;
 
@@ -2619,7 +2622,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                 if (psLayer->numclasses < MS_MAXCLASSES)
                 {
-                    initClass(&(psLayer->class[psLayer->numclasses]->);
+                    initClass(psLayer->class[psLayer->numclasses]);
                     psLayer->numclasses++;
                     nClassId = psLayer->numclasses-1;
                     initStyle(&(psLayer->class[nClassId]->styles[0]));
@@ -3952,7 +3955,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 /* -------------------------------------------------------------------- */
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
-                pszFilter = msSLDGetFilter(&psLayer->class[i]-> 
+                pszFilter = msSLDGetFilter(&psLayer->class[i] ,
                                            pszWfsFilter);/* pszWfsFilterEncoded); */
                     
                 if (pszFilter)
@@ -4057,7 +4060,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     
                 }
                 /* label if it exists */
-                pszSLD = msSLDGenerateTextSLD(&psLayer->class[i]-> psLayer);
+                pszSLD = msSLDGenerateTextSLD(&psLayer->class[i], psLayer);
                 if (pszSLD)
                 {
                     pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);

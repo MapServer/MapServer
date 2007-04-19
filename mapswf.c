@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2007/04/19 07:34:09  umberto
+ * RFC24: more fixes, allow php to build
+ *
  * Revision 1.60  2007/04/17 10:36:54  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1323,7 +1326,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &((GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
+      &((GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx)));
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {

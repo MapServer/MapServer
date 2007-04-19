@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.106  2007/04/19 07:34:09  umberto
+ * RFC24: more fixes, allow php to build
+ *
  * Revision 1.105  2007/03/23 15:12:37  assefa
  * Remove call to msDrawQueryMap (bug 2017).
  *
@@ -177,7 +180,7 @@ int mapObj_setRotation(mapObj* self, double rotation_angle ) {
 
 layerObj *mapObj_getLayer(mapObj* self, int i) {
     if(i >= 0 && i < self->numlayers)	
-      return &(self->layers[i]); /* returns an EXISTING layer */
+      return (self->layers[i]); /* returns an EXISTING layer */
     else
       return NULL;
   }
@@ -188,7 +191,7 @@ layerObj *mapObj_getLayerByName(mapObj* self, char *name) {
     i = msGetLayerIndex(self, name);
 
     if(i != -1)
-      return &(self->layers[i]); /* returns an EXISTING layer */
+      return (self->layers[i]); /* returns an EXISTING layer */
     else
       return NULL;
   }
@@ -456,16 +459,16 @@ layerObj *layerObj_new(mapObj *map) {
     if(map->numlayers == MS_MAXLAYERS) // no room
       return(NULL);
 
-    if(initLayer(&(map->layers[map->numlayers]), map) == -1)
+    if(initLayer((map->layers[map->numlayers]), map) == -1)
       return(NULL);
 
-    map->layers[map->numlayers].index = map->numlayers;
+    map->layers[map->numlayers]->index = map->numlayers;
       //Update the layer order list with the layer's index.
     map->layerorder[map->numlayers] = map->numlayers;
 
     map->numlayers++;
 
-    return &(map->layers[map->numlayers-1]);
+    return (map->layers[map->numlayers-1]);
   }
 
 void layerObj_destroy(layerObj *self) {
@@ -520,7 +523,7 @@ resultCacheMemberObj *layerObj_getResult(layerObj *self, int i) {
 
 classObj *layerObj_getClass(layerObj *self, int i) { // returns an EXISTING class
     if(i >= 0 && i < self->numclasses)
-      return &(self->class[i]); 
+      return (self->class[i]); 
     else
       return(NULL);
   }
@@ -694,19 +697,19 @@ classObj *classObj_new(layerObj *layer, classObj *class) {
     if(layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
 
-    if(initClass(&(layer->class[layer->numclasses])) == -1)
+    if(initClass((layer->class[layer->numclasses])) == -1)
       return NULL;
 
     if (class){
-      msCopyClass(&(layer->class[layer->numclasses]), class, layer);
-      layer->class[layer->numclasses].layer = layer;
+      msCopyClass((layer->class[layer->numclasses]), class, layer);
+      layer->class[layer->numclasses]->layer = layer;
     }
 
-    layer->class[layer->numclasses].type = layer->type;
+    layer->class[layer->numclasses]->type = layer->type;
 
     layer->numclasses++;
 
-    return &(layer->class[layer->numclasses-1]);
+    return (layer->class[layer->numclasses-1]);
   }
 
 void  classObj_destroy(classObj *self) {

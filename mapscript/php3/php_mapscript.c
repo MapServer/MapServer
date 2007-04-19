@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.266  2007/04/19 07:34:09  umberto
+ * RFC24: more fixes, allow php to build
+ *
  * Revision 1.265  2007/04/11 21:49:26  hobu
  * #ifdef the use of AGG
  *
@@ -3900,7 +3903,7 @@ DLEXPORT void php3_ms_map_getAllLayerNames(INTERNAL_FUNCTION_PARAMETERS)
         nCount = self->numlayers;
         for (i=0; i<nCount; i++)
         {
-            add_next_index_string(return_value,  self->layers[i].name, 1);
+            add_next_index_string(return_value,  self->layers[i]->name, 1);
         }
     }
     else

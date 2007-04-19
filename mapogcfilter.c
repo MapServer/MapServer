@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.72  2007/04/19 07:34:08  umberto
+ * RFC24: more fixes, allow php to build
+ *
  * Revision 1.71  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -372,13 +375,13 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         && !bPointQuery && !bShapeQuery && (bOnlySpatialFilter == MS_FALSE))
       return NULL;
 
-    lp = &(GET_LAYER(map, iLayerIndex));
+    lp = GET_LAYER(map, iLayerIndex);
 
     if (szExpression)
     {
         szClassItem = FLTGetMapserverExpressionClassItem(psNode);
                 
-        initClass(&(lp->class[0]->);
+        initClass(lp->class[0]);
 
         lp->class[0]->type = lp->type;
         lp->numclasses = 1;
@@ -405,7 +408,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                   FLTGetMapserverIsPropertyExpression(psNode);
                 if (szExpression)
                 {
-                    initClass(&(lp->class[1]->);
+                    initClass(lp->class[1]);
                     
                     lp->class[1]->type = lp->type;
                     lp->numclasses++;
@@ -1044,7 +1047,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     }
 
     lp->numclasses = 1; /* set 1 so the query would work */
-    initClass(&(lp->class[0]->);
+    initClass(lp->class[0]);
     lp->class[0]->type = lp->type;
     lp->class[0]->template = strdup("ttt.html");
 
