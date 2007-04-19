@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.145  2007/04/19 15:17:45  hobu
+ * switch Create and Init
+ *
  * Revision 1.144  2007/04/11 15:25:07  hobu
  * support UUID columns for the case where they exist
  *
@@ -1191,8 +1194,10 @@ int msSDELayerOpen(layerObj *layer) {
 
         /* Decrypt any encrypted token in the connection string */
         conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
+
+        /* An error should already have been produced */
         if (conn_decrypted == NULL) {
-            return(MS_FAILURE);  /* An error should already have been produced */
+            return(MS_FAILURE);  
         }
         /* Split the connection parameters and make sure we have enough of them */
         params = split(conn_decrypted, ',', &numparams);
@@ -1931,9 +1936,8 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
     return(NULL);
 #endif
 }
-
 /* -------------------------------------------------------------------- */
-/* msSDELayerCreateItems                                                */
+/* msSDELayerInitItemInfo                                               */
 /* -------------------------------------------------------------------- */
 /* Connects to SDE and returns the column names and SDE's column        */
 /* descriptions.  It stores them on layer->items and layer->iteminfo    */
@@ -1941,8 +1945,7 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
 /* it's column definitions are appended to both lists.                  */
 /* -------------------------------------------------------------------- */
 int
-msSDELayerCreateItems(layerObj *layer,
-                      int nt) 
+msSDELayerInitItemInfo(layerObj *layer)
 {
 #ifdef USE_SDE
 
@@ -1955,21 +1958,22 @@ msSDELayerCreateItems(layerObj *layer,
     msSDELayerInfo *sde = NULL;
     nBaseColumns = 0;
     nJoinColumns = 0;
+    
 
     // Hop right out again if we've already gotten the layer->iteminfo
-    if (layer->iteminfo) {
+    if (layer->iteminfo && layer->items) {
         if (layer->debug)
             msDebug("Column information has already been gotten..." 
-                    " returning from msSDELayerCreateItems\n");
+                    " returning from msSDELayerInitItemInfo\n");
         return (MS_SUCCESS);  
     }
     if (layer->debug)
-        msDebug("Getting all column information in msSDELayerCreateItems\n");
+        msDebug("Getting all column information in msSDELayerInitItemInfo\n");
 
     if (!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR,
                     "SDE layer has not been opened.",
-                    "msSDELayerCreateItems()");
+                    "msSDELayerInitItemInfo()");
         return(MS_FAILURE);
     }
     
@@ -1981,7 +1985,7 @@ msSDELayerCreateItems(layerObj *layer,
     } else {
         // Don't think this should happen.  If it does, it'd be good to know why.
         if (layer->debug)
-            msDebug ("RowID column has already been gotten... msSDELayerCreateItems()\n");
+            msDebug ("RowID column has already been gotten... msSDELayerInitItemInfo\n");
     }
 
     status = SE_table_describe( sde->connection, 
@@ -1990,7 +1994,7 @@ msSDELayerCreateItems(layerObj *layer,
                                 &(sde->basedefs));
     if(status != SE_SUCCESS) {
         sde_error(  status, 
-                    "msSDELayerCreateItems()", 
+                    "msSDELayerInitItemInfo()", 
                     "SE_table_describe() (base table)");
         return(MS_FAILURE);
     }
@@ -2002,7 +2006,7 @@ msSDELayerCreateItems(layerObj *layer,
                                     &(sde->joindefs));
         if(status != SE_SUCCESS) {
             sde_error(  status, 
-                        "msSDELayerCreateItems()", 
+                        "msSDELayerInitItemInfo()", 
                         "SE_table_describe() (join table).  Did you specify the name of the join table properly?");
             return(MS_FAILURE);
         }     
@@ -2020,22 +2024,27 @@ msSDELayerCreateItems(layerObj *layer,
         if(!layer->iteminfo) {
             msSetError( MS_MEMERR, 
                         "Error allocating SDE item  information.", 
-                        "msSDELayerCreateItems()");
+                        "msSDELayerInitItemInfo()");
             return(MS_FAILURE);
         }
     } else {
         // Don't think this should happen.  If it does, it'd be good to know why.
-        if (layer->debug)
-            msDebug ("layer->iteminfo has already been initialized... msSDELayerCreateItems()\n");
+    if (layer->debug)
+        msDebug ("layer->iteminfo has already been initialized... msSDELayerInitItemInfo\n");
     }
-        
-    // gather up all of the column names and put them onto layer->items
-    layer->items = (char **)malloc(layer->numitems*sizeof(char *));
-    if(!layer->items) {
-        msSetError( MS_MEMERR, 
+    
+    if (!(layer->items)) {
+            
+        // gather up all of the column names and put them onto layer->items
+        layer->items = (char **)malloc(layer->numitems*sizeof(char *));
+        if(!layer->items) {
+            msSetError( MS_MEMERR, 
                     "Error allocating layer items array.",  
-                    "msSDELayerCreateItems()");
-        return(MS_FAILURE);
+                    "msSDELayerInitItemInfo()");
+            return(MS_FAILURE);
+        }
+    } else {
+       msDebug("layer->items has already been initialized!!!");
     }
     if (!sde->join_table) {
         for(i=0; i<layer->numitems; i++) layer->items[i] = strdup(all_itemdefs[i].column_name);
@@ -2072,7 +2081,8 @@ msSDELayerCreateItems(layerObj *layer,
     }
     // Tell the user which columns we've gotten
     if (layer->debug)
-        for(i=0; i<layer->numitems; i++) msDebug("msSDECreateItems(): getting info for %s\n", layer->items[i]);
+        for(i=0; i<layer->numitems; i++) 
+            msDebug("msSDELayerInitItemInfo(): getting info for %s\n", layer->items[i]);
     
     msFree(all_itemdefs);
     return MS_SUCCESS;
@@ -2080,28 +2090,29 @@ msSDELayerCreateItems(layerObj *layer,
 #else
     msSetError( MS_MISCERR, 
                 "SDE support is not available.", 
-                "msSDELayerCreateItems()");
+                "msSDELayerInitItemInfo()");
     return(MS_FAILURE);
 #endif
 }
 
+
+
 /* -------------------------------------------------------------------- */
-/* msSDELayerInitItemInfo                                               */
+/* msSDELayerCreateItems                                                */
 /* -------------------------------------------------------------------- */
 /*     Inits the stuff we'll be querying from SDE                       */
 /* -------------------------------------------------------------------- */
-int msSDELayerInitItemInfo(layerObj *layer)
-{
-    int status;
-    status = msSDELayerCreateItems(layer, 0);
-    if (status != MS_SUCCESS) {
-        msSetError( MS_MISCERR,  
-                    "Unable to create SDE column info", 
-                    "msSDELayerInitItemInfo()");
-        return(MS_FAILURE);     
-    }   
+int msSDELayerCreateItems(layerObj *layer, int nt){    
+    int status;    
+    //status = msSDELayerCreateItems(layer, 0);    
+    status = msSDELayerInitItemInfo(layer);
+    if (status != MS_SUCCESS) {        
+        msSetError( MS_MISCERR,                    
+                    "Unable to create SDE column info",
+                    "msSDELayerCreateItemsInfo()");       
+        return(MS_FAILURE);    
+    }    
     return (MS_SUCCESS);
-
 }
 
 /* -------------------------------------------------------------------- */
@@ -2112,7 +2123,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
 int msSDELayerGetItems(layerObj *layer) {
 #ifdef USE_SDE
     int status;
-    status = msSDELayerCreateItems(layer, 0);
+    status = msSDELayerInitItemInfo(layer);
 
     if (status != MS_SUCCESS) {
         msSetError( MS_MISCERR,  
