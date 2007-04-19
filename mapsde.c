@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.146  2007/04/19 15:21:11  hobu
+ * we can't use the name 'error' for the SE_ERROR structure
+ *
  * Revision 1.145  2007/04/19 15:17:45  hobu
  * switch Create and Init
  *
@@ -1139,7 +1142,7 @@ int msSDELayerOpen(layerObj *layer) {
     char *join_table=NULL;
     
     int numparams=0;
-    SE_ERROR error;
+    SE_ERROR hSDEError;
     SE_STATEINFO state;
     SE_VERSIONINFO version;
     
@@ -1204,7 +1207,7 @@ int msSDELayerOpen(layerObj *layer) {
         if(!params) {
             msSetError( MS_MEMERR, 
                         "Error spliting SDE connection information.", 
-                    "msSDELayerOpen()");
+                        "msSDELayerOpen()");
             msFree(conn_decrypted);
             return(MS_FAILURE);
         }
@@ -1224,7 +1227,7 @@ int msSDELayerOpen(layerObj *layer) {
                                       params[2], 
                                       params[3], 
                                       params[4], 
-                                      &error, 
+                                      &(hSDEError), 
                                       &(poolinfo->connection));
 
         if(status != SE_SUCCESS) {
