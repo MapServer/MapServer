@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.147  2007/04/19 16:05:20  hobu
+ * don't strdup the filter string when we pass it into SDE
+ *
  * Revision 1.146  2007/04/19 15:21:11  hobu
  * we can't use the name 'error' for the SE_ERROR structure
  *
@@ -1024,7 +1027,7 @@ static SE_QUERYINFO getSDEQueryInfo(layerObj *layer)
     else
         /* set to the layer's filter.string */
         status = SE_queryinfo_set_where_clause (query_info, 
-                                                (const CHAR * ) strdup(layer->filter.string));
+                                                (const CHAR * ) layer->filter.string);
     if(status != SE_SUCCESS) {
         sde_error(  status, 
                     "getSDEQueryInfo()", 
