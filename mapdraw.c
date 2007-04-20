@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114  2007/04/20 22:12:59  assefa
+ * Line of code should be insdie loop : could cause query highlight to crash.
+ *
  * Revision 1.113  2007/04/17 10:36:52  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1185,8 +1188,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
         else if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1].outlinecolor))
 	  layer->class[i]->styles[layer->class[i]->numstyles-1].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
       }
+    
+      layer->class[i]->label.mindistance = mindistancebuffer[i];
     }
-    layer->class[i]->label.mindistance = mindistancebuffer[i];
   }
 
   msLayerClose(layer);
