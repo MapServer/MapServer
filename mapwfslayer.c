@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.39  2007/04/20 13:48:41  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.38  2007/04/17 10:36:55  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -707,7 +710,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         int iLayer;
         for(iLayer=0; iLayer < map->numlayers; iLayer++)
         {
-            if (&(GET_LAYER(map, iLayer)) == lp)
+            if (GET_LAYER(map, iLayer) == lp)
             {
                 nLayerId = iLayer;
                 break;

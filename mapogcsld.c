@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.82  2007/04/20 13:48:40  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.81  2007/04/19 07:34:09  umberto
  * RFC24: more fixes, allow php to build
  *
@@ -451,10 +454,17 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                     iClass = 0;
                     for (k=0; k < pasLayers[j].numclasses; k++)
                     {
+		        if (GET_LAYER(map, i)->class[iClass]==NULL) {
+                		GET_LAYER(map, i)->class[iClass]=(classObj*)malloc(sizeof(classObj));
+		                if (GET_LAYER(map, i)->class[iClass]==NULL) {
+                		        msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+		                        return MS_FAILURE;
+                		}
+        		}	
                         initClass(GET_LAYER(map, i)->class[iClass]);
                         msCopyClass(GET_LAYER(map, i)->class[iClass],
                                     pasLayers[j].class[k], NULL);
-                        GET_LAYER(map, i)->class[iClass]->layer = &GET_LAYER(map, i);
+                        GET_LAYER(map, i)->class[iClass]->layer = GET_LAYER(map, i);
                         GET_LAYER(map, i)->class[iClass]->type = GET_LAYER(map, i)->type;
                         GET_LAYER(map, i)->numclasses++;
                         iClass++;
@@ -1150,6 +1160,13 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         {
             if (bNewClass || psLayer->numclasses <= 0)
             {
+        	if (psLayer->class[psLayer->numclasses]==NULL) {
+                	psLayer->class[psLayer->numclasses]=(classObj*)malloc(sizeof(classObj));
+                	if (psLayer->class[psLayer->numclasses]==NULL) {
+                        	msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+                        	return;
+                	}
+        	}
                 initClass(psLayer->class[psLayer->numclasses]);
                 nClassId = psLayer->numclasses;
                 psLayer->numclasses++;
@@ -1383,6 +1400,13 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         {
             if (bNewClass || psLayer->numclasses <= 0)
             {
+        	if (psLayer->class[psLayer->numclasses]==NULL) {
+                	psLayer->class[psLayer->numclasses]=(classObj*)malloc(sizeof(classObj));
+                	if (psLayer->class[psLayer->numclasses]==NULL) {
+                        	msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+                        	return;
+                	}
+        	}
                 initClass(psLayer->class[psLayer->numclasses]);
                 nClassId = psLayer->numclasses;
                 psLayer->numclasses++;
@@ -1417,6 +1441,13 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             {
                 if (bNewClass || psLayer->numclasses <= 0)
                 {
+        	    if (psLayer->class[psLayer->numclasses]==NULL) {
+                       	psLayer->class[psLayer->numclasses]=(classObj*)malloc(sizeof(classObj));
+                	if (psLayer->class[psLayer->numclasses]==NULL) {
+                        	msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+                        	return;
+                	}
+        	    }
                     initClass(psLayer->class[psLayer->numclasses]);
                     nClassId = psLayer->numclasses;
                     psLayer->numclasses++;
@@ -2182,6 +2213,13 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
     {
         if (bNewClass || psLayer->numclasses <= 0)
         {
+            if (psLayer->class[psLayer->numclasses]==NULL) {
+               	psLayer->class[psLayer->numclasses]=(classObj*)malloc(sizeof(classObj));
+               	if (psLayer->class[psLayer->numclasses]==NULL) {
+                       	msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+                       	return;
+               	}
+            }
             initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
@@ -2407,7 +2445,14 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
     if (psRoot && psLayer)
     {
         if (!bOtherSymboliser)
-        {
+        {	
+            if (psLayer->class[psLayer->numclasses]==NULL) {
+               	psLayer->class[psLayer->numclasses]=(classObj*)malloc(sizeof(classObj));
+               	if (psLayer->class[psLayer->numclasses]==NULL) {
+                       	msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+                       	return;
+               	}
+            }
             initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
@@ -2555,6 +2600,13 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                         if (psLayer->numclasses < MS_MAXCLASSES)
                         {
+            		    if (psLayer->class[psLayer->numclasses]==NULL) {
+		               	psLayer->class[psLayer->numclasses]=(classObj*)malloc(sizeof(classObj));
+               			if (psLayer->class[psLayer->numclasses]==NULL) {
+                       			msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+                       			return;
+               			}
+            		    }
                             initClass(psLayer->class[psLayer->numclasses]);
                             psLayer->numclasses++;
                             nClassId = psLayer->numclasses-1;
@@ -2622,6 +2674,13 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                 if (psLayer->numclasses < MS_MAXCLASSES)
                 {
+       		    if (psLayer->class[psLayer->numclasses]==NULL) {
+	               	psLayer->class[psLayer->numclasses]=(classObj*)malloc(sizeof(classObj));
+       			if (psLayer->class[psLayer->numclasses]==NULL) {
+       				msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+       				return;
+       			}
+       		    }
                     initClass(psLayer->class[psLayer->numclasses]);
                     psLayer->numclasses++;
                     nClassId = psLayer->numclasses-1;
@@ -3058,7 +3117,7 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
         {
             for (i=0; i<map->numlayers; i++)
             {
-                pszTmp = msSLDGenerateSLDLayer(&GET_LAYER(map, i));
+                pszTmp = msSLDGenerateSLDLayer(GET_LAYER(map, i));
                 if (pszTmp)
                 {
                     pszSLD= strcatalloc(pszSLD, pszTmp);
@@ -3068,7 +3127,7 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
         }
         else
         {
-             pszTmp = msSLDGenerateSLDLayer(&GET_LAYER(map, iLayer));
+             pszTmp = msSLDGenerateSLDLayer(GET_LAYER(map, iLayer));
              if (pszTmp)
              {
                  pszSLD = strcatalloc(pszSLD, pszTmp);
@@ -3955,7 +4014,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 /* -------------------------------------------------------------------- */
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
-                pszFilter = msSLDGetFilter(&psLayer->class[i] ,
+                pszFilter = msSLDGetFilter(psLayer->class[i] ,
                                            pszWfsFilter);/* pszWfsFilterEncoded); */
                     
                 if (pszFilter)
@@ -4060,7 +4119,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     
                 }
                 /* label if it exists */
-                pszSLD = msSLDGenerateTextSLD(&psLayer->class[i], psLayer);
+                pszSLD = msSLDGenerateTextSLD(psLayer->class[i], psLayer);
                 if (pszSLD)
                 {
                     pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);

@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2007/04/20 13:48:41  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.61  2007/04/19 07:34:09  umberto
  * RFC24: more fixes, allow php to build
  *
@@ -1326,7 +1329,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &((GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx)));
+      ((GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx)));
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
@@ -1789,7 +1792,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
+      (GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
@@ -1902,7 +1905,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /*      the attributes of the shape.                                    */
 /* -------------------------------------------------------------------- */
     psLayerTmp = 
-      &(GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
+      (GET_LAYER(((SWFObj *)image->img.swf)->map, ((SWFObj *)image->img.swf)->nCurrentLayerIdx));
 
     if (msLookupHashTable(&(psLayerTmp->metadata), "SWFDUMPATTRIBUTES"))
     {
@@ -2290,7 +2293,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
         cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
 
-        layerPtr = &(GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
+        layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
 
 /* ==================================================================== */
 /*      set the current layer so the label will be drawn in the         */

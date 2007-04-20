@@ -83,6 +83,7 @@
         {
             if (freeClass(self)==MS_SUCCESS) {
             	free(self);
+		self=NULL;
 	    }
         }
     }

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.81  2007/04/20 13:48:40  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.80  2007/04/17 10:36:52  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1148,7 +1151,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   layerObj *layer;
 
   /* Init new layer */
-  layer = &(GET_LAYER(map, map->numlayers));
+  layer = (GET_LAYER(map, map->numlayers));
   initLayer(layer, map);
   layer->map = (mapObj *)map;
   layer->type = MS_LAYER_RASTER;
@@ -1929,7 +1932,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           else
               nValue = 0;
           msIO_fprintf(stream, "    <Layer queryable=\"%d\" hidden=\"%d\">\n", 
-                  msIsLayerQueryable(&(GET_LAYER(map, i))), nValue);
+                  msIsLayerQueryable(GET_LAYER(map, i)), nValue);
 
           /*  */
           /* Server definition */
@@ -2341,7 +2344,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               }
 
               /* From the dimension list, extract the required dimension */
-              msOWSGetDimensionInfo(&(GET_LAYER(map, i)), pszDimension, 
+              msOWSGetDimensionInfo(GET_LAYER(map, i), pszDimension, 
                                     &pszDimUserValue, &pszDimUnits, 
                                     &pszDimDefault, &pszDimNearValue, 
                                     &pszDimUnitSymbol, &pszDimMultiValue);

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.73  2007/04/20 13:48:40  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.72  2007/04/19 07:34:08  umberto
  * RFC24: more fixes, allow php to build
  *
@@ -380,8 +383,15 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     if (szExpression)
     {
         szClassItem = FLTGetMapserverExpressionClassItem(psNode);
-                
-        initClass(lp->class[0]);
+        
+	if (lp->class[0]==NULL) {
+		lp->class[0]=(classObj*)malloc(sizeof(classObj));
+		if (lp->class[0]==NULL) {
+			msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+			return NULL;
+		}
+	}
+       	initClass(lp->class[0]);
 
         lp->class[0]->type = lp->type;
         lp->numclasses = 1;
@@ -408,6 +418,13 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                   FLTGetMapserverIsPropertyExpression(psNode);
                 if (szExpression)
                 {
+		    if (lp->class[1]==NULL) {
+                	lp->class[1]=(classObj*)malloc(sizeof(classObj));
+                	if (lp->class[1]==NULL) {
+                        	msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+                        	return NULL;
+                    	}
+		    }
                     initClass(lp->class[1]);
                     
                     lp->class[1]->type = lp->type;
@@ -659,7 +676,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
         iLayerIndex > map->numlayers-1)
       return;
 
-    psLayer = &(GET_LAYER(map, iLayerIndex));
+    psLayer = (GET_LAYER(map, iLayerIndex));
     if (psLayer->resultcache)
     {
         if (psLayer->resultcache->results)
@@ -761,7 +778,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
     if (!map || iLayerIndex < 0 || iLayerIndex > map->numlayers-1)
       return NULL;
 
-     psLayer = &(GET_LAYER(map, iLayerIndex));
+     psLayer = (GET_LAYER(map, iLayerIndex));
      if (psLayer->template == NULL)
        psLayer->template = strdup("ttt.html");
 
@@ -998,7 +1015,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
     char *pszBuffer = NULL;
 
-    lp = &(GET_LAYER(map, iLayerIndex));
+    lp = (GET_LAYER(map, iLayerIndex));
 
     /* if there is a bbox use it */
     szEPSG = FLTGetBBOX(psNode, &sQueryRect);
@@ -1047,6 +1064,13 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     }
 
     lp->numclasses = 1; /* set 1 so the query would work */
+    if (lp->class[0]==NULL) {
+	lp->class[0]=(classObj*)malloc(sizeof(classObj));
+	if (lp->class[0]==NULL) {
+		msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
+		return MS_FAILURE;
+	}
+    }
     initClass(lp->class[0]);
     lp->class[0]->type = lp->type;
     lp->class[0]->template = strdup("ttt.html");
@@ -1151,7 +1175,7 @@ int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex, int bOnlySpatialFilter)
 {
-    layerObj *layer = map->layers + iLayerIndex;
+    layerObj *layer = GET_LAYER(map, iLayerIndex);
 
     if ( ! layer->vtable) {
         int rv =  msInitializeVirtualTable(layer);
@@ -1196,7 +1220,7 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int nResults = 0;
     layerObj *psLayer = NULL;
 
-    psLayer = &(GET_LAYER(map, iLayerIndex));
+    psLayer = (GET_LAYER(map, iLayerIndex));
     panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
                                     &nResults, bOnlySpatialFilter);
     if (panResults) 

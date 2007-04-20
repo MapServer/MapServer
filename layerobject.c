@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2007/04/20 13:48:40  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.12  2007/04/17 10:36:52  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -135,38 +138,27 @@ classObj *msRemoveClass(layerObj *layer, int nIndex)
     }
     else 
     {
-        classobj = (classObj *) malloc(sizeof(classObj));
-        if (!classobj) {
-            msSetError(MS_MEMERR, 
-                       "Failed to allocate classObj to return as removed Class",
-                       "msRemoveClass");
-            return NULL;
-        }
-        initClass(classobj);
 #ifndef __cplusplus
-        msCopyClass(classobj, layer->class[nIndex], NULL);
+        classobj=layer->class[nIndex];
 #else
-        msCopyClass(classobj, layer->_class[nIndex], NULL);
+        classobj=layer->_class[nIndex];
 #endif
+	classobj->layer=NULL;
+	MS_REFCNT_DECR(classobj);
 
         /* Iteratively copy the higher index classes down one index */
         for (i=nIndex; i<layer->numclasses-1; i++)
         {
 #ifndef __cplusplus
-            freeClass(layer->class[i]);
-            initClass(layer->class[i]);
-            msCopyClass(layer->class[i], layer->class[i+1], layer);
+            layer->class[i]=layer->class[i+1];
 #else
-            freeClass(layer->_class[i]);
-            initClass(layer->_class[i]);
-            msCopyClass(layer->_class[i], layer->_class[i+1], layer);
+            layer->_class[i]=layer->_class[i+1];
 #endif
         }
-        /* Free the extra class at the end */
 #ifndef __cplusplus
-        freeClass(layer->class[layer->numclasses-1]);
-#else  
-        freeClass(layer->_class[layer->numclasses-1]);
+        layer->class[i]=NULL;
+#else
+        layer->_class[i]=NULL;
 #endif
         
         /* decrement number of layers and return copy of removed layer */
@@ -183,15 +175,11 @@ int msMoveClassUp(layerObj *layer, int nClassIndex)
     classObj *psTmpClass = NULL;
     if (layer && nClassIndex < layer->numclasses && nClassIndex >0)
     {
-        psTmpClass = (classObj *)malloc(sizeof(classObj));
-        initClass(psTmpClass);
-        
-        msCopyClass(psTmpClass, layer->class[nClassIndex], layer);
+        psTmpClass=layer->class[nClassIndex];
 
-        msCopyClass(layer->class[nClassIndex],
-                    layer->class[nClassIndex-1], layer);
+        layer->class[nClassIndex] = layer->class[nClassIndex-1];
         
-        msCopyClass(layer->class[nClassIndex-1], psTmpClass, layer);
+        layer->class[nClassIndex-1] = psTmpClass;
 
         return(MS_SUCCESS);
     }
@@ -209,15 +197,11 @@ int msMoveClassDown(layerObj *layer, int nClassIndex)
     classObj *psTmpClass = NULL;
     if (layer && nClassIndex < layer->numclasses-1 && nClassIndex >=0)
     {
-        psTmpClass = (classObj *)malloc(sizeof(classObj));
-        initClass(psTmpClass);
-        
-        msCopyClass(psTmpClass, layer->class[nClassIndex], layer);
+        psTmpClass=layer->class[nClassIndex];
 
-        msCopyClass(layer->class[nClassIndex], 
-                    layer->class[nClassIndex+1], layer);
-        
-        msCopyClass(layer->class[nClassIndex+1], psTmpClass, layer);
+        layer->class[nClassIndex] = layer->class[nClassIndex+1];
+
+        layer->class[nClassIndex+1] = psTmpClass;
 
         return(MS_SUCCESS);
     }

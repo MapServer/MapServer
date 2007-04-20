@@ -129,7 +129,11 @@
     %newobject removeClass;
     classObj *removeClass(int index) 
     {
-        return msRemoveClass(self, index);
+        classObj* c = msRemoveClass(self, index);
+	if (c != NULL) {
+		MS_REFCNT_INCR(c);
+	}
+	return c;
     }
 
     int open() 

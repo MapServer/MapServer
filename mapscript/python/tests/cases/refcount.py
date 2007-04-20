@@ -223,7 +223,16 @@ class ReferenceCountingTestCase(unittest.TestCase):
 	assert self.map.getLayer(1).getClass(idx).refcount == 3, self.map.getLayer(1).getClass(idx).refcount
 	assert self.map.getLayer(1).getClass(idx).thisown , self.map.getLayer(1).getClass(idx).thisown
 	assert self.map.getLayer(1).getClass(idx).minscale == 666, self.map.getLayer(1).getClass(idx).minscale
-    
+   
+    def testRemoveFirstClass(self):
+        """removal of first class"""
+	self.initMap()
+        clazz = self.map.getLayerByName("POLYGON").removeClass(0)
+        #assert clazz != None
+        #assert clazz.thisown == 1
+	#assert clazz.refcount == 1, clazz.refcount
+	#self.map.draw()
+
     def testMapClone(self):
         """cloning a mapObj"""
 	self.initMap()

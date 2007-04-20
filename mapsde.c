@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.148  2007/04/20 13:48:41  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.147  2007/04/19 16:05:20  hobu
  * don't strdup the filter string when we pass it into SDE
  *
@@ -1530,7 +1533,7 @@ int msSDELayerCloseConnection(layerObj *layer)
   msSetError( MS_MISCERR,
               "SDE support is not available.",
               "msSDELayerClose()");
-  return;
+  return MS_FAILURE;
 #endif
 
     return MS_SUCCESS;

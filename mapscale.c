@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2007/04/20 13:48:41  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.53  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -458,7 +461,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     GET_LAYER(map,l)=(layerObj*)malloc(sizeof(layerObj));
     if (GET_LAYER(map, l) == NULL) {
          msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
-         return(NULL);
+         return(MS_FAILURE);
     }
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
     GET_LAYER(map, l)->name = strdup("__embed__scalebar");
@@ -467,7 +470,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
       GET_LAYER(map, l)->class[0]=(classObj*)malloc(sizeof(classObj));
       if (GET_LAYER(map, l)->class[0]==NULL) {
          msSetError(MS_MEMERR, "Malloc of a new class failed.", "msLoadMap()");
-	  return(NULL);
+	  return(MS_FAILURE);
       }
     if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
     GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */

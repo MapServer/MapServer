@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2007/04/20 13:48:41  umberto
+ * moveClassUp/Down and various fixes, cleaner build
+ *
  * Revision 1.76  2007/04/17 10:36:54  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -709,7 +712,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
 
   for(i=0; i<map->numlayers; i++)
-    msWCSGetCapabilities_CoverageOfferingBrief(&(GET_LAYER(map, i)), params);
+    msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params);
 
   /* done */
   msIO_printf("</ContentMetadata>\n");
@@ -1041,11 +1044,11 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
     for( j = 0; params->coverages[j]; j++ ) {
       i = msGetLayerIndex(map, params->coverages[j]);
       if(i == -1) continue; /* skip this layer, could/should generate an error */
-      msWCSDescribeCoverage_CoverageOffering(&(GET_LAYER(map, i)), params);
+      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
     }
   } else { /* return all layers */
     for(i=0; i<map->numlayers; i++)
-      msWCSDescribeCoverage_CoverageOffering(&(GET_LAYER(map, i)), params);
+      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
   }
   
   /* done */
@@ -1087,7 +1090,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
     if( EQUAL(GET_LAYER(map, i)->name, params->coverages[0]) ) {
-      lp = map->layers + i;
+      lp = GET_LAYER(map, i);
       break;
     }
   }
@@ -1171,7 +1174,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       return msWCSException(map, params->version);
     }
 
-    tlp = &(GET_LAYER(map, tli));
+    tlp = (GET_LAYER(map, tli));
 
     /* make sure there is enough information to filter */
     value = msOWSLookupMetadata(&(lp->metadata), "COM", "timeitem");
