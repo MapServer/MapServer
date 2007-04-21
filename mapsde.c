@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.149  2007/04/21 02:22:00  hobu
+ * carry around column counts so we can determine if we
+ * should bail out if someone else has changed the columns list
+ * because it couldn't find an item.
+ *
  * Revision 1.148  2007/04/20 13:48:41  umberto
  * moveClassUp/Down and various fixes, cleaner build
  *
@@ -218,7 +223,8 @@ typedef struct {
   rectObj* extent;
   SE_COLUMN_DEF *basedefs;
   SE_COLUMN_DEF *joindefs;
-
+  short nBaseColumns;
+  short nJoinColumns;
 } msSDELayerInfo;
 
 typedef struct {
@@ -1959,26 +1965,15 @@ msSDELayerInitItemInfo(layerObj *layer)
 #ifdef USE_SDE
 
     int i,j;
-    short nBaseColumns, nJoinColumns;
+//    short nBaseColumns, nJoinColumns;
     long status;
 
     SE_COLUMN_DEF *all_itemdefs = NULL;
 
     msSDELayerInfo *sde = NULL;
-    nBaseColumns = 0;
-    nJoinColumns = 0;
-    
-
-    // Hop right out again if we've already gotten the layer->iteminfo
-    if (layer->iteminfo && layer->items) {
-        if (layer->debug)
-            msDebug("Column information has already been gotten..." 
-                    " returning from msSDELayerInitItemInfo\n");
-        return (MS_SUCCESS);  
-    }
-    if (layer->debug)
-        msDebug("Getting all column information in msSDELayerInitItemInfo\n");
-
+//    nBaseColumns = 0;
+//    nJoinColumns = 0;
+ 
     if (!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR,
                     "SDE layer has not been opened.",
@@ -1987,7 +1982,29 @@ msSDELayerInitItemInfo(layerObj *layer)
     }
     
     sde = layer->layerinfo;
-    
+      
+
+    // Hop right out again if we've already gotten the layer->iteminfo
+    if (layer->iteminfo && layer->items) {
+        if (layer->debug)
+            msDebug("Column information has already been gotten..." 
+                    " returning from msSDELayerInitItemInfo\n");
+        if (layer->numitems != ( sde->nBaseColumns+sde->nJoinColumns)) {
+           // if someone has modified the size of the items list,
+           // it is because it didn't find a column name (and we have 
+           // already given them all because we have iteminfo and items
+           // If this is the case, we can't continue.
+
+            msSetError( MS_SDEERR,
+                        "A specified CLASSITEM, FILTERITEM, or expression key cannot be found",
+                        "msSDELayerInitItemInfo()");
+            return(MS_FAILURE);
+        }
+        return (MS_SUCCESS);  
+    }
+    if (layer->debug)
+        msDebug("Getting all column information in msSDELayerInitItemInfo\n");
+
     if (!(sde->row_id_column)) {
         
         sde->row_id_column = msSDELayerGetRowIDColumn(layer);   
@@ -1999,7 +2016,7 @@ msSDELayerInitItemInfo(layerObj *layer)
 
     status = SE_table_describe( sde->connection, 
                                 sde->table, 
-                                &nBaseColumns,  
+                                &(sde->nBaseColumns),  
                                 &(sde->basedefs));
     if(status != SE_SUCCESS) {
         sde_error(  status, 
@@ -2011,7 +2028,7 @@ msSDELayerInitItemInfo(layerObj *layer)
     if (sde->join_table) {
         status = SE_table_describe( sde->connection, 
                                     sde->join_table, 
-                                    &nJoinColumns,  
+                                    &(sde->nJoinColumns),  
                                     &(sde->joindefs));
         if(status != SE_SUCCESS) {
             sde_error(  status, 
@@ -2021,12 +2038,12 @@ msSDELayerInitItemInfo(layerObj *layer)
         }     
     }
 
-    layer->numitems = nBaseColumns + nJoinColumns;
+    layer->numitems = sde->nBaseColumns + sde->nJoinColumns;
 
     // combine the itemdefs of both tables into one
     all_itemdefs = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
-    for(i=0;i<nBaseColumns;i++) all_itemdefs[i] = sde->basedefs[i];
-    for(i=0;i<nJoinColumns;i++) all_itemdefs[i+nBaseColumns]=sde->joindefs[i];    
+    for(i=0;i<sde->nBaseColumns;i++) all_itemdefs[i] = sde->basedefs[i];
+    for(i=0;i<sde->nJoinColumns;i++) all_itemdefs[i+sde->nBaseColumns]=sde->joindefs[i];    
 
     if (!layer->iteminfo){
         layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
@@ -2068,7 +2085,7 @@ msSDELayerInitItemInfo(layerObj *layer)
         }
     }
     else {
-        for(i=0;i<nBaseColumns;i++) {
+        for(i=0;i<sde->nBaseColumns;i++) {
             layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
             layer->items[i][0] = '\0';
             strcat(layer->items[i], sde->table);
@@ -2077,7 +2094,7 @@ msSDELayerInitItemInfo(layerObj *layer)
             ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[i];
 
         }
-        for(i=nBaseColumns;i<layer->numitems;i++) {
+        for(i=sde->nBaseColumns;i<layer->numitems;i++) {
             layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
             layer->items[i][0] = '\0';
 
