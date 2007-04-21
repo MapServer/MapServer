@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2007/04/21 02:31:26  tkralidi
+ * fixed XML error as per bug 2070
+ *
  * Revision 1.74  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1393,24 +1396,19 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
                             int nVersion, hashTableObj *metadata, 
                             const char *namespaces )
 {
-  int bEnableContact = 0;
-
   /* contact information is a required element in 1.0.7 but the */
   /* sub-elements such as ContactPersonPrimary, etc. are not! */
   /* In 1.1.0, ContactInformation becomes optional. */
   if (nVersion > OWS_1_0_0) 
   {
-    if(msOWSLookupMetadata(metadata, namespaces, "contactperson") ||
-       msOWSLookupMetadata(metadata, namespaces, "contactorganization")) 
-    {
-      if(bEnableContact == 0)
-      {
-          msIO_fprintf(stream, "%s<ContactInformation>\n", tabspace);
-          bEnableContact = 1;
-      }
+    msIO_fprintf(stream, "<ContactInformation>\n", tabspace); 
 
       /* ContactPersonPrimary is optional, but when present then all its  */
       /* sub-elements are mandatory */
+
+    if(msOWSLookupMetadata(metadata, namespaces, "contactperson") ||
+       msOWSLookupMetadata(metadata, namespaces, "contactorganization")) 
+    {
       msIO_fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
 
       msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactperson", 
@@ -1421,23 +1419,15 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       msIO_fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
     }
 
-    if(bEnableContact == 0)
+    if(msOWSLookupMetadata(metadata, namespaces, "contactposition"))
     {
-
-        if(msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactposition",
-                           OWS_NOERR, 
-     "    <ContactInformation>\n      <ContactPosition>%s</ContactPosition>\n",
-                              NULL) != 0)
-            bEnableContact = 1;
-    }
-    else
-    {
-
-        msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactposition", 
+      msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactposition", 
                     OWS_NOERR, "      <ContactPosition>%s</ContactPosition>\n",
                            NULL);
     }
 
+      /* ContactAdress is optional, but when present then all its  */
+      /* sub-elements are mandatory */
     if(msOWSLookupMetadata( metadata, namespaces, "addresstype" ) || 
        msOWSLookupMetadata( metadata, namespaces, "address" ) || 
        msOWSLookupMetadata( metadata, namespaces, "city" ) ||
@@ -1445,14 +1435,6 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
        msOWSLookupMetadata( metadata, namespaces, "postcode" ) ||
        msOWSLookupMetadata( metadata, namespaces, "country" )) 
     {
-      if(bEnableContact == 0)
-      {
-          msIO_fprintf(stream, "%s<ContactInformation>\n", tabspace);
-          bEnableContact = 1;
-      }
-
-      /* ContactAdress is optional, but when present then all its  */
-      /* sub-elements are mandatory */
       msIO_fprintf(stream, "%s  <ContactAddress>\n", tabspace);
 
       msOWSPrintEncodeMetadata(stream, metadata, namespaces,"addresstype", OWS_WARN,
@@ -1470,17 +1452,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       msIO_fprintf(stream, "%s  </ContactAddress>\n", tabspace);
     }
 
-
-    if(bEnableContact == 0)
-    {
-        if(msOWSPrintEncodeMetadata(stream, metadata, namespaces, 
-                                    "contactvoicetelephone", OWS_NOERR,
-                                    "    <ContactInformation>\n"
-                   "      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
-                                    NULL) != 0)
-            bEnableContact = 1;
-    }
-    else
+    if(msOWSLookupMetadata(metadata, namespaces, "contactvoicetelephone"))
     {
         msOWSPrintEncodeMetadata(stream, metadata, namespaces, 
                                  "contactvoicetelephone", OWS_NOERR,
@@ -1488,16 +1460,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
                            NULL);
     }
 
-    if(bEnableContact == 0)
-    {
-        if(msOWSPrintEncodeMetadata(stream, metadata,
-                           namespaces, "contactfacsimiletelephone", OWS_NOERR,
-                              "    <ContactInformation>\n     "
-                 "<ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n",
-                                    NULL) != 0)
-            bEnableContact = 1;
-    }
-    else
+    if(msOWSLookupMetadata(metadata, namespaces, "contactfacsimiletelephone"))
     {
         msOWSPrintEncodeMetadata(stream, metadata, 
                            namespaces, "contactfacsimiletelephone", OWS_NOERR,
@@ -1505,28 +1468,14 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
                                  NULL);
     }
 
-    if(bEnableContact == 0)
-    {
-        if(msOWSPrintEncodeMetadata(stream, metadata, 
-                           namespaces, "contactelectronicmailaddress", OWS_NOERR,
-                              "    <ContactInformation>\n     "
-           "<ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n",
-                                    NULL) != 0)
-            bEnableContact = 1;
-    }
-    else
+    if(msOWSLookupMetadata(metadata, namespaces, "contactelectronicmailaddress"))
     {
         msOWSPrintEncodeMetadata(stream, metadata, 
                            namespaces, "contactelectronicmailaddress", OWS_NOERR,
          "  <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n",
                                  NULL);
     }
-
-
-    if(bEnableContact == 1)
-    {
-        msIO_fprintf(stream, "%s</ContactInformation>\n", tabspace);
-    }
+    msIO_fprintf(stream, "%s</ContactInformation>\n", tabspace);
   }
 }
 
