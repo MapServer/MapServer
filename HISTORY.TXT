@@ -88,6 +88,9 @@ Version 4.99 (CVS HEAD)
  - mapdraw.c: Actually report that we aren't configure with wms client
    support if that is why we can't draw a layer.
 
+ - mapows.c: fixed XML error (bug 2070)
+
+
 Version 4.10.0 (2006-10-04)
 ---------------------------
 
