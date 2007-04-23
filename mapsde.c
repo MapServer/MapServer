@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.150  2007/04/23 21:10:02  hobu
+ * initialize our column counters
+ *
  * Revision 1.149  2007/04/21 02:22:00  hobu
  * carry around column counts so we can determine if we
  * should bail out if someone else has changed the columns list
@@ -2013,6 +2016,9 @@ msSDELayerInitItemInfo(layerObj *layer)
         if (layer->debug)
             msDebug ("RowID column has already been gotten... msSDELayerInitItemInfo\n");
     }
+
+    sde->nJoinColumns = 0;
+    sde->nBaseColumns = 0;
 
     status = SE_table_describe( sde->connection, 
                                 sde->table, 
