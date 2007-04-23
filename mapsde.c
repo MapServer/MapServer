@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.151  2007/04/23 21:13:26  hobu
+ * only get iteminfo for join columns if we have joins
+ *
  * Revision 1.150  2007/04/23 21:10:02  hobu
  * initialize our column counters
  *
@@ -2048,8 +2051,11 @@ msSDELayerInitItemInfo(layerObj *layer)
 
     // combine the itemdefs of both tables into one
     all_itemdefs = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
+
     for(i=0;i<sde->nBaseColumns;i++) all_itemdefs[i] = sde->basedefs[i];
-    for(i=0;i<sde->nJoinColumns;i++) all_itemdefs[i+sde->nBaseColumns]=sde->joindefs[i];    
+    if (sde->nJoinColumns)
+        for(i=0;i<=sde->nJoinColumns;i++) all_itemdefs[i+sde->nBaseColumns]=sde->joindefs[i];    
+
 
     if (!layer->iteminfo){
         layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
