@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2007/04/23 20:31:40  frank
+ * do not do anything to free null hash table, avoid setting error
+ *
  * Revision 1.16  2005/06/14 16:03:33  dan
  * Updated copyright date to 2005
  *
@@ -87,9 +90,12 @@ int initHashTable( hashTableObj *table )
 
 void msFreeHashTable( hashTableObj *table )
 {
-    msFreeHashItems(table);
-    free(table);
-    table = NULL;
+    if( table != NULL )
+    {
+        msFreeHashItems(table);
+        free(table);
+        table = NULL;
+    }
 }
 
 void msFreeHashItems( hashTableObj *table )
