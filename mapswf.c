@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2007/04/24 16:18:56  assefa
+ * SWF : use highlight color from querymap (2074)
+ *
  * Revision 1.62  2007/04/20 13:48:41  umberto
  * moveClassUp/Down and various fixes, cleaner build
  *
@@ -1315,10 +1318,11 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
     
 
-    /* TODO : this should come from the map file. */
-    sColorHighlightObj.red = 0xff;
-    sColorHighlightObj.green = 0;/* 0xff; */
-    sColorHighlightObj.blue = 0;
+    /* this comes from the map file querymap obj. */
+    
+    sColorHighlightObj.red = map->querymap.color.red;
+    sColorHighlightObj.green = map->querymap.color.green;
+    sColorHighlightObj.blue = map->querymap.color.blue;
 
 
 /* -------------------------------------------------------------------- */
@@ -1800,10 +1804,10 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         nShapeIndex = ((SWFObj *)image->img.swf)->nCurrentShapeIdx;
     }
 
-    /* TODO : this should come from the map file. */
-    sColorHighlightObj.red = 0xff;
-    sColorHighlightObj.green = 0;/* 0xff; */
-    sColorHighlightObj.blue = 0;
+    /* this comes from the map file querymap obj. */
+    sColorHighlightObj.red = map->querymap.color.red;
+    sColorHighlightObj.green =  map->querymap.color.green;
+    sColorHighlightObj.blue = map->querymap.color.blue;
 
     /* For now just draw lines without symbols. */
     /* if(sy == 0)  */
@@ -1932,9 +1936,9 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     
 
     /* TODO : this should come from the map file. */
-    sColorHighlightObj.red = 0xff;
-    sColorHighlightObj.green = 0;/* 0xff; */
-    sColorHighlightObj.blue = 0;
+    sColorHighlightObj.red = map->querymap.color.red;
+    sColorHighlightObj.green = map->querymap.color.green;
+    sColorHighlightObj.blue =  map->querymap.color.blue;
 
     if (MS_VALID_COLOR(sFc))
         psFillColor = &sFc;
