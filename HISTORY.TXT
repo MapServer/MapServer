@@ -27,6 +27,10 @@ Version 4.10.2
 
 - Added missing MS_FOLLOW constant to PHP MapScript (bug 2058)
 
+- maptemplate.c: Fixed handling of multiple rings/lines in processCoords()
+  so that imagemaps work properly for multipolygons (bug 2073).
+
+
 
 Version 4.10.1 (2007-02-15)
 ---------------------------

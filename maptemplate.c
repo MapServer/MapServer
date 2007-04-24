@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122.2.1  2007/04/24 18:16:33  frank
+ * fix error with multi-line/ring features in processCoords (bug #2073)
+ *
  * Revision 1.122  2006/09/29 20:52:05  sdlime
  * Updated error message about malformed template names to output the actual name. Makes debugging easier.
  *
@@ -1141,11 +1144,11 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     }
 
     /* build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't) */
-    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 1;
+    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 2;
     pointFormat1 = (char *) malloc(pointFormatLength);
     snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs); 
     pointFormat2 = (char *) malloc(pointFormatLength); 
-    snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
+    snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s ", xh, precision, xf, yh, precision, yf); 
  
     /* make a copy of the original shape or compute a centroid if necessary */
     msInitShape(&tShape);
