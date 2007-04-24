@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.54  2007/04/20 13:48:41  umberto
  * moveClassUp/Down and various fixes, cleaner build
  *
@@ -460,7 +463,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
     GET_LAYER(map,l)=(layerObj*)malloc(sizeof(layerObj));
     if (GET_LAYER(map, l) == NULL) {
-         msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
+         msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msEmbedScalebar()");
          return(MS_FAILURE);
     }
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
@@ -469,7 +472,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
       
       GET_LAYER(map, l)->class[0]=(classObj*)malloc(sizeof(classObj));
       if (GET_LAYER(map, l)->class[0]==NULL) {
-         msSetError(MS_MEMERR, "Malloc of a new class failed.", "msLoadMap()");
+         msSetError(MS_MEMERR, "Malloc of a new class failed.", "msEmbedScalebar()");
 	  return(MS_FAILURE);
       }
     if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
@@ -484,15 +487,23 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   
   GET_LAYER(map, l)->status = MS_ON;
 
+  if ( GET_LAYER(map, l)->class[0]->styles[0] == NULL ) {
+	GET_LAYER(map, l)->class[0]->styles[0]=(styleObj*)malloc(sizeof(styleObj));
+	if ( GET_LAYER(map, l)->class[0]->styles[0] == NULL ) {
+    		msSetError(MS_MEMERR, "Cannot allocate new style object", "msEmbedScalebar()");
+		return (-1);
+        }
+	initStyle(GET_LAYER(map, l)->class[0]->styles[0]);
+  }
   GET_LAYER(map, l)->class[0]->numstyles = 1;
-  GET_LAYER(map, l)->class[0]->styles[0].symbol = s;
-  GET_LAYER(map, l)->class[0]->styles[0].color.pen = -1;
+  GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
+  GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
   GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
   GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
 
   if(map->scalebar.postlabelcache) /* add it directly to the image //TODO */
   {
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(GET_LAYER(map, l)->class[0]->styles[0]), 1.0);
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   }
   else
     msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);

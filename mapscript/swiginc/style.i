@@ -36,43 +36,45 @@
     styleObj(classObj *parent_class=NULL) 
     {
     
-        styleObj *style;
+        styleObj *style = NULL;
         int result;
         
-        if (!parent_class) 
-        { 
-            style = (styleObj *) malloc(sizeof(styleObj));
-            if (!style) return NULL;
-            result = initStyle(style);
-            if (result == MS_SUCCESS) 
-            {
-                style->isachild = MS_FALSE;
-                return style;
-            }
-            else 
-            {
-                msSetError(MS_MISCERR, "Failed to initialize styleObj",
+        style = (styleObj *) malloc(sizeof(styleObj));
+        if (!style) { 
+                msSetError(MS_MEMERR, "Failed to allocate memory for new styleObj instance",
                                        "styleObj()");
-                return NULL;
-            }
-        }
-        else 
-        {
-            if (parent_class->numstyles == MS_MAXSTYLES) 
-            {
+		return NULL;
+	}
+        if ( initStyle(style) == MS_FAILURE ) {
+                msSetError(MS_MISCERR, "Failed to init new styleObj instance",
+                                       "initStyle()");
+		msFree(style);
+		return NULL;
+	}
+	if (parent_class!=NULL) {
+            if (parent_class->numstyles == MS_MAXSTYLES) {
                 msSetError(MS_CHILDERR, "Exceeded max number of styles: %d",
                            "styleObj()", MS_MAXSTYLES);
+		freeStyle(style);
+		msFree(style);
                 return NULL;
             }
+	    parent_class->styles[parent_class->numstyles]=style;
             parent_class->numstyles++;
-            return &(parent_class->styles[parent_class->numstyles-1]);
+	    style->isachild=MS_TRUE;
+	    MS_REFCNT_INCR(style);
         }
+	return style;
     }
    
     ~styleObj() 
     {
-        if (self->isachild == MS_FALSE) 
-            free(self);
+        if (self) { 
+		if ( freeStyle(self) == MS_SUCCESS ) {
+            		free(self);
+			self=NULL;
+		}
+	}
     }
 
 #ifdef SWIGJAVA

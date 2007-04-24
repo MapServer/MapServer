@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2007/04/24 08:55:31  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.6  2005/12/21 05:34:09  sdlime
  * Fixed small problem in msRemoveStyle where a temporary style was not being initialized after being malloc'd.
  *
@@ -60,12 +63,12 @@ int msMoveStyleUp(classObj *class, int nStyleIndex)
         psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
         initStyle(psTmpStyle);
         
-        msCopyStyle(psTmpStyle, &class->styles[nStyleIndex]);
+        msCopyStyle(psTmpStyle, class->styles[nStyleIndex]);
 
-        msCopyStyle(&class->styles[nStyleIndex], 
-                    &class->styles[nStyleIndex-1]);
+        msCopyStyle(class->styles[nStyleIndex], 
+                    class->styles[nStyleIndex-1]);
         
-        msCopyStyle(&class->styles[nStyleIndex-1], psTmpStyle);
+        msCopyStyle(class->styles[nStyleIndex-1], psTmpStyle);
 
         return(MS_SUCCESS);
     }
@@ -87,12 +90,12 @@ int msMoveStyleDown(classObj *class, int nStyleIndex)
         psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
         initStyle(psTmpStyle);
         
-        msCopyStyle(psTmpStyle, &class->styles[nStyleIndex]);
+        msCopyStyle(psTmpStyle, class->styles[nStyleIndex]);
 
-        msCopyStyle(&class->styles[nStyleIndex], 
-                    &class->styles[nStyleIndex+1]);
+        msCopyStyle(class->styles[nStyleIndex], 
+                    class->styles[nStyleIndex+1]);
         
-        msCopyStyle(&class->styles[nStyleIndex+1], psTmpStyle);
+        msCopyStyle(class->styles[nStyleIndex+1], psTmpStyle);
 
         return(MS_SUCCESS);
     }
@@ -126,7 +129,9 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
         return -1;
     }
     else if (nStyleIndex < 0) { /* Insert at the end by default */
-        msCopyStyle(&(class->styles[class->numstyles]), style);
+        class->styles[class->numstyles]=style;
+	MS_REFCNT_INCR(style);
+	style->isachild=MS_TRUE;
         class->numstyles++;
         return class->numstyles-1;
     }
@@ -136,7 +141,9 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
         for (i=class->numstyles-1; i>=nStyleIndex; i--) {
             class->styles[i+1] = class->styles[i];
         }
-        msCopyStyle(&(class->styles[nStyleIndex]), style);
+        class->styles[nStyleIndex]=style;
+	MS_REFCNT_INCR(style);
+	style->isachild=MS_TRUE;
         class->numstyles++;
         return nStyleIndex;
     }
@@ -158,18 +165,14 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
         return NULL;
     }
     else {
-        style = (styleObj *)malloc(sizeof(styleObj));
-        if (!style) {
-            msSetError(MS_MEMERR, "Failed to allocate styleObj to return as removed style", "msRemoveStyle");
-            return NULL;
-        }
-	initStyle(style);
-        msCopyStyle(style, &(class->styles[nStyleIndex]));
+        style=class->styles[nStyleIndex];
         style->isachild = MS_FALSE;
         for (i=nStyleIndex; i<class->numstyles-1; i++) {
-             msCopyStyle(&class->styles[i], &class->styles[i+1]);
+             class->styles[i]=class->styles[i+1];
         }
+	class->styles[class->numstyles-1]=NULL;
         class->numstyles--;
+	MS_REFCNT_DECR(style);
         return style;
     }
 }
@@ -185,7 +188,7 @@ int msDeleteStyle(classObj *class, int nStyleIndex)
     {
         for (i=nStyleIndex; i< class->numstyles-1; i++)
         {
-             msCopyStyle(&class->styles[i], &class->styles[i+1]);
+             msCopyStyle(class->styles[i], class->styles[i+1]);
         }
         class->numstyles--;
         return(MS_SUCCESS);

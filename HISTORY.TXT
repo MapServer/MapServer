@@ -16,7 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
- - RFC24: memory management for mapscript (initial support)
+ - RFC24: memory management for mapscript (supports: mapObj, layerObj, classObj,
+   styleObj)
 
  - Support for embedding manifests as resources for the VS2005 builds. (bug 2048)
  

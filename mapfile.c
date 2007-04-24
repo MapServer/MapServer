@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.340  2007/04/24 08:55:31  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.339  2007/04/17 10:36:52  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1862,6 +1865,7 @@ static void writeHashTable(hashTableObj *table, FILE *stream, char *tab, char *t
 ** Initialize, load and free a single style
 */
 int initStyle(styleObj *style) {
+  MS_REFCNT_INIT(style);
   MS_INIT_COLOR(style->color, -1,-1,-1); /* must explictly set colors */
   MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1);
   MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
@@ -1994,11 +1998,13 @@ int loadStyleString(styleObj *style) {
   return(MS_SUCCESS);
 }
 
-void freeStyle(styleObj *style) {
+int freeStyle(styleObj *style) {
+  if( MS_REFCNT_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
   msFree(style->symbolname);
   msFree(style->angleitem);
   msFree(style->sizeitem);
   msFree(style->rangeitem);
+  return MS_SUCCESS;
 }
 
 void writeStyle(styleObj *style, FILE *stream) {
@@ -2067,12 +2073,14 @@ int initClass(classObj *class)
   class->maxscale = class->minscale = -1.0;
 
   class->numstyles = 0;  
-  if((class->styles = (styleObj *)malloc(MS_MAXSTYLES*sizeof(styleObj))) == NULL) {
+  if((class->styles = (styleObj **)malloc(MS_MAXSTYLES*sizeof(styleObj*))) == NULL) {
     msSetError(MS_MEMERR, NULL, "initClass()");
     return(-1);
   }
-  for(i=0;i<MS_MAXSTYLES;i++) /* need to provide meaningful values */
-    initStyle(&(class->styles[i]));
+  for(i=0;i<MS_MAXSTYLES;i++) { /* need to provide meaningful values */
+    /* initStyle(&(class->styles[i])); */
+    class->styles[i]=NULL;
+  }
 
   class->keyimage = NULL;
 
@@ -2097,8 +2105,13 @@ int freeClass(classObj *class)
   
   
   /*for(i=0;i<class->numstyles;i++) LEAK: we should free MS_MAXSTYLES!!! */
-  for(i=0;i<MS_MAXSTYLES;i++) /* each style     */
-    freeStyle(&(class->styles[i]));
+  for(i=0;i<MS_MAXSTYLES;i++) { /* each style     */
+    if (class->styles[i]!=NULL) {
+    	if( freeStyle(class->styles[i]) == MS_SUCCESS ) {
+		msFree(class->styles[i]);
+	}
+    }
+  }
   msFree(class->styles);
   msFree(class->keyimage);
   return MS_SUCCESS;
@@ -2120,8 +2133,10 @@ void resetClassStyle(classObj *class)
 
   /* reset styles */
   class->numstyles = 0;
-  for(i=0; i<MS_MAXSTYLES; i++)
-    initStyle(&(class->styles[i]));
+  for(i=0; i<MS_MAXSTYLES; i++) {
+    if(class->styles[i]!=NULL)
+       initStyle(class->styles[i]);
+  }
 
   initLabel(&(class->label));
   class->label.size = -1; /* no default */
@@ -2178,7 +2193,15 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
         msSetError(MS_MISCERR, "Too many CLASS styles defined, only %d allowed. To change, edit value of MS_MAXSTYLES in map.h and recompile." , "loadClass()", MS_MAXSTYLES);
         return(-1);
       }
-      if(loadStyle(&(class->styles[class->numstyles])) != MS_SUCCESS) return(-1);
+      if ( class->styles[class->numstyles] == NULL ) {
+	class->styles[class->numstyles]=(styleObj*)malloc(sizeof(styleObj));
+	if ( class->styles[class->numstyles] == NULL ) {
+    		msSetError(MS_MEMERR, "Cannot allocate new style object", "loadClass()");
+		return (-1);
+        }
+	initStyle(class->styles[class->numstyles]);
+      }
+      if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) return(-1);
       class->numstyles++;
       break;
     case(TEMPLATE):
@@ -2202,37 +2225,37 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
     ** for backwards compatability, these are shortcuts for style 0
     */
     case(BACKGROUNDCOLOR):
-      if(loadColor(&(class->styles[0].backgroundcolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[0]->backgroundcolor)) != MS_SUCCESS) return(-1);
       break;
     case(COLOR):
-      if(loadColor(&(class->styles[0].color)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[0]->color)) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color or outlinecolor */
       break;
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
-      if(loadColorWithAlpha(&(class->styles[0].color)) != MS_SUCCESS) return(-1);
+      if(loadColorWithAlpha(&(class->styles[0]->color)) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
       break;
 #endif
     case(MAXSIZE):
-      if(getInteger(&(class->styles[0].maxsize)) == -1) return(-1);
+      if(getInteger(&(class->styles[0]->maxsize)) == -1) return(-1);
       break;
     case(MINSIZE):      
-      if(getInteger(&(class->styles[0].minsize)) == -1) return(-1);
+      if(getInteger(&(class->styles[0]->minsize)) == -1) return(-1);
       break;
     case(OUTLINECOLOR):            
-      if(loadColor(&(class->styles[0].outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[0]->outlinecolor)) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(SIZE):
-      if(getInteger(&(class->styles[0].size)) == -1) return(-1);
+      if(getInteger(&(class->styles[0]->size)) == -1) return(-1);
       break;
     case(SYMBOL):
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
-	class->styles[0].symbol = (int) msyynumber;
+	class->styles[0]->symbol = (int) msyynumber;
       else
-	class->styles[0].symbolname = strdup(msyytext);
+	class->styles[0]->symbolname = strdup(msyytext);
       class->numstyles = 1;
       break;
 
@@ -2240,31 +2263,31 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
     ** for backwards compatability, these are shortcuts for style 1
     */
     case(OVERLAYBACKGROUNDCOLOR):
-      if(loadColor(&(class->styles[1].backgroundcolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[1]->backgroundcolor)) != MS_SUCCESS) return(-1);
       break;
     case(OVERLAYCOLOR):
-      if(loadColor(&(class->styles[1].color)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[1]->color)) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYMAXSIZE):
-      if(getInteger(&(class->styles[1].maxsize)) == -1) return(-1);
+      if(getInteger(&(class->styles[1]->maxsize)) == -1) return(-1);
       break;
     case(OVERLAYMINSIZE):      
-      if(getInteger(&(class->styles[1].minsize)) == -1) return(-1);
+      if(getInteger(&(class->styles[1]->minsize)) == -1) return(-1);
       break;
     case(OVERLAYOUTLINECOLOR):      
-      if(loadColor(&(class->styles[1].outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[1]->outlinecolor)) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYSIZE):
-      if(getInteger(&(class->styles[1].size)) == -1) return(-1);
+      if(getInteger(&(class->styles[1]->size)) == -1) return(-1);
       break;
     case(OVERLAYSYMBOL):
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
-	class->styles[1].symbol = (int) msyynumber;
+	class->styles[1]->symbol = (int) msyynumber;
       else
-	class->styles[1].symbolname = strdup(msyytext);
+	class->styles[1]->symbolname = strdup(msyytext);
       class->numstyles = 2;
       break;
     default:
@@ -2329,42 +2352,42 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   */
   case(BACKGROUNDCOLOR):
     msyystate = 2; msyystring = value;
-    if(loadColor(&(class->styles[0].backgroundcolor)) != MS_SUCCESS) return;    
+    if(loadColor(&(class->styles[0]->backgroundcolor)) != MS_SUCCESS) return;    
     break;
   case(COLOR):
     msyystate = 2; msyystring = value;
-    if(loadColor(&(class->styles[0].color)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[0]->color)) != MS_SUCCESS) return;
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
     msyystate = 2; msyystring = value;
-    if(loadColorWithAlpha(&(class->styles[0].color)) != MS_SUCCESS) return;
+    if(loadColorWithAlpha(&(class->styles[0]->color)) != MS_SUCCESS) return;
     break;
 #endif
   case(MAXSIZE):
     msyystate = 2; msyystring = value;
-    getInteger(&(class->styles[0].maxsize));
+    getInteger(&(class->styles[0]->maxsize));
     break;
   case(MINSIZE):
     msyystate = 2; msyystring = value;
-    getInteger(&(class->styles[0].minsize));
+    getInteger(&(class->styles[0]->minsize));
     break;
   case(OUTLINECOLOR):
     msyystate = 2; msyystring = value;
-    if(loadColor(&(class->styles[0].outlinecolor)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[0]->outlinecolor)) != MS_SUCCESS) return;
     break;
   case(SIZE):
     msyystate = 2; msyystring = value;
-    getInteger(&(class->styles[0].size));
+    getInteger(&(class->styles[0]->size));
     break;
   case(SYMBOL):
     msyystate = 2; msyystring = value;
     if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
 
     if(state == MS_NUMBER)
-      class->styles[0].symbol = (int) msyynumber;
+      class->styles[0]->symbol = (int) msyynumber;
     else {
-      if((class->styles[0].symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
+      if((class->styles[0]->symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
 	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
     }
     break;
@@ -2374,36 +2397,36 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   */
   case(OVERLAYBACKGROUNDCOLOR):
     msyystate = 2; msyystring = value;
-    if(loadColor(&(class->styles[1].backgroundcolor)) != MS_SUCCESS) return;    
+    if(loadColor(&(class->styles[1]->backgroundcolor)) != MS_SUCCESS) return;    
     break;
   case(OVERLAYCOLOR):
     msyystate = 2; msyystring = value;
-    if(loadColor(&(class->styles[1].color)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[1]->color)) != MS_SUCCESS) return;
     break;
   case(OVERLAYMAXSIZE):
     msyystate = 2; msyystring = value;
-    getInteger(&(class->styles[1].maxsize));
+    getInteger(&(class->styles[1]->maxsize));
     break;
   case(OVERLAYMINSIZE):
     msyystate = 2; msyystring = value;
-    getInteger(&(class->styles[1].minsize));
+    getInteger(&(class->styles[1]->minsize));
     break;
   case(OVERLAYOUTLINECOLOR):
     msyystate = 2; msyystring = value;
-    if(loadColor(&(class->styles[1].outlinecolor)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[1]->outlinecolor)) != MS_SUCCESS) return;
     break;
   case(OVERLAYSIZE):
     msyystate = 2; msyystring = value;
-    getInteger(&(class->styles[1].size));
+    getInteger(&(class->styles[1]->size));
     break;
   case(OVERLAYSYMBOL):
     msyystate = 2; msyystring = value;
     if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
 
     if(state == MS_NUMBER)
-      class->styles[1].symbol = (int) msyynumber;
+      class->styles[1]->symbol = (int) msyynumber;
     else {
-      if((class->styles[1].symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
+      if((class->styles[1]->symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
 	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
     }
     break;
@@ -2436,7 +2459,7 @@ static void writeClass(classObj *class, FILE *stream)
   if(class->minscale > -1) fprintf(stream, "      MINSCALE %g\n", class->minscale);
   if(class->status == MS_OFF) fprintf(stream, "      STATUS OFF\n");
   for(i=0; i<class->numstyles; i++)
-    writeStyle(&(class->styles[i]), stream);
+    writeStyle(class->styles[i], stream);
   if(class->template) fprintf(stream, "      TEMPLATE \"%s\"\n", class->template);
   if(class->text.string) {
     fprintf(stream, "      TEXT ");
@@ -2577,7 +2600,7 @@ int freeLayer(layerObj *layer) {
   if (!layer) return MS_FAILURE;
   if( MS_REFCNT_IS_NOT_ZERO(layer) ) { return MS_FAILURE; }
   if (layer->debug)
-     msDebug("freeLayer(): freeing layer at %p.",layer);
+     msDebug("freeLayer(): freeing layer at %p.\n",layer);
 
   msFree(layer->name);
   msFree(layer->group);
@@ -4706,9 +4729,9 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       for(i=0; i<map->numlayers; i++) {
         for(j=0; j<GET_LAYER(map, i)->numclasses; j++){
 	  for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
-            if(GET_LAYER(map, i)->class[j]->styles[k].symbolname) {
-              if((GET_LAYER(map, i)->class[j]->styles[k].symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k].symbolname, MS_TRUE)) == -1) {
-                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k].symbolname, j, k, GET_LAYER(map, i)->name);
+            if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
+              if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
+                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
                 return(NULL);
               }
             }

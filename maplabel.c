@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.87  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -154,7 +157,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     if (classPtr->numstyles > 0) {
       for(i=0; i<classPtr->numstyles; i++) {
 	initStyle(&(cachePtr->styles[i]));
-	msCopyStyle(&(cachePtr->styles[i]), &(classPtr->styles[i]));
+	msCopyStyle(&(cachePtr->styles[i]), classPtr->styles[i]);
       }
     }
   }
@@ -189,7 +192,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     msInitShape(map->labelcache.markers[i].poly);
 
     /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
-    if(msGetMarkerSize(&map->symbolset, &(classPtr->styles[0]), &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
+    if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
       return(MS_FAILURE);
 
     rect.minx = MS_NINT(point->x - .5 * w);

@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2007/04/24 08:55:31  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.47  2007/04/17 10:36:52  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -449,7 +452,18 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     MS_COPYSTELEM(numstyles);
 
     for (i = 0; i < dst->numstyles; i++) {
-        if (msCopyStyle(&(dst->styles[i]), &(src->styles[i])) != MS_SUCCESS) {
+	if ( dst->styles[i] == NULL ) {
+		dst->styles[i] = (styleObj*) malloc(sizeof(styleObj));
+		if ( dst->styles[i] == NULL ) {
+           	 	msSetError(MS_MEMERR, "Failed to allocate memory for new style object.", "msCopyClass()");
+            		return MS_FAILURE;
+		}
+        	if (initStyle(dst->styles[i]) != MS_SUCCESS) {
+	            msSetError(MS_MEMERR, "Failed to init style.", "msCopyClass()");
+        	    return MS_FAILURE;
+	        }
+	}
+        if (msCopyStyle(dst->styles[i], src->styles[i]) != MS_SUCCESS) {
             msSetError(MS_MEMERR, "Failed to copy style.", "msCopyClass()");
             return MS_FAILURE;
         }

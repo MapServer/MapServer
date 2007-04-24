@@ -228,16 +228,72 @@ class ReferenceCountingTestCase(unittest.TestCase):
         """removal of first class"""
 	self.initMap()
         clazz = self.map.getLayerByName("POLYGON").removeClass(0)
-        #assert clazz != None
-        #assert clazz.thisown == 1
-	#assert clazz.refcount == 1, clazz.refcount
-	#self.map.draw()
+        assert clazz != None
+        assert clazz.thisown == 1
+	assert clazz.refcount == 1, clazz.refcount
+	self.map.draw()
 
     def testMapClone(self):
         """cloning a mapObj"""
 	self.initMap()
 	clone = self.map.clone()
 	assert clone.refcount == 1, clone.refcount
+
+    def testStyleGetter(self):
+        """styleObj getter"""
+        self.initMap()
+        style = self.map.getLayer(1).getClass(0).getStyle(0)
+        assert style.refcount == 2, style.refcount
+	assert style.thisown == 1, style.thisown
+
+    def testStyleConstructor(self):
+        """styleObj Constructor"""
+        self.initMap()
+        style = mapscript.styleObj( self.map.getLayer(1).getClass(0) )
+        assert style.refcount == 2, style.refcount
+	assert style.thisown == 1, style.thisown
+        style = mapscript.styleObj()
+        assert style.refcount == 1, style.refcount
+	assert style.thisown == 1, style.thisown
+    
+    def testRemoveStyleAtBeginning(self):
+        """styleObj remove first one"""
+        self.initMap()
+        style = mapscript.styleObj()
+        assert style.refcount == 1, style.refcount
+        assert style.thisown == 1, style.thisown
+	idx = self.map.getLayer(1).getClass(0).insertStyle(style)
+        assert style.refcount == 2, style.refcount
+        assert style.thisown == 1, style.thisown
+        style = self.map.getLayer(1).getClass(0).removeStyle(0)
+        assert style.refcount == 1, style.refcount
+	assert style.thisown == 1, style.thisown
+
+    def testInsertStyle(self):
+        """styleObj Insert"""
+        self.initMap()
+        style = mapscript.styleObj()
+        assert style.refcount == 1, style.refcount
+        assert style.thisown == 1, style.thisown
+	idx = self.map.getLayer(1).getClass(0).insertStyle(style)
+        assert style.refcount == 2, style.refcount
+        assert style.thisown == 1, style.thisown
+    
+    def testCloneStyle(self):
+        """styleObj Clone"""
+        self.initMap()
+        style = mapscript.styleObj()
+        assert style.refcount == 1, style.refcount
+        assert style.thisown == 1, style.thisown
+	clone = style.clone()
+        assert clone.refcount == 1, clone.refcount
+        assert clone.thisown == 1, clone.thisown
+        assert style.refcount == 1, style.refcount
+        assert style.thisown == 1, style.thisown
+        style = self.map.getLayer(1).getClass(0).getStyle(0)
+	clone = style.clone()
+        assert clone.refcount == 1, clone.refcount
+        assert clone.thisown == 1, clone.thisown
 
 # ===========================================================================
 # Run the tests outside of the main suite

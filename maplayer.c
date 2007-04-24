@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.115  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.114  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -457,9 +460,9 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 
     for(i=0; i<layer->numclasses; i++) {
       for(j=0; j<layer->class[i]->numstyles; j++) {
-        if(layer->class[i]->styles[j].angleitem) nt++;
-        if(layer->class[i]->styles[j].sizeitem) nt++;
-        if(layer->class[i]->styles[j].rangeitem) nt++;
+        if(layer->class[i]->styles[j]->angleitem) nt++;
+        if(layer->class[i]->styles[j]->sizeitem) nt++;
+        if(layer->class[i]->styles[j]->rangeitem) nt++;
       }
     }
 
@@ -541,9 +544,9 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 
       for(i=0; i<layer->numclasses; i++) {
         for(j=0; j<layer->class[i]->numstyles; j++) {
-          if(layer->class[i]->styles[j].angleitem) layer->class[i]->styles[j].angleitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j].angleitem);
-          if(layer->class[i]->styles[j].sizeitem) layer->class[i]->styles[j].sizeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j].sizeitem); 
-          if(layer->class[i]->styles[j].rangeitem) layer->class[i]->styles[j].rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j].rangeitem); 
+          if(layer->class[i]->styles[j]->angleitem) layer->class[i]->styles[j]->angleitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->angleitem);
+          if(layer->class[i]->styles[j]->sizeitem) layer->class[i]->styles[j]->sizeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->sizeitem); 
+          if(layer->class[i]->styles[j]->rangeitem) layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem); 
         }
       }
 

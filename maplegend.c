@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.64  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -141,7 +144,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     if(type == MS_LAYER_POLYGON) {
       type = MS_LAYER_LINE;
       for(i=0; i<class->numstyles; i++) {
-       if(MS_VALID_COLOR(class->styles[i].color)) { /* there is a fill */
+       if(MS_VALID_COLOR(class->styles[i]->color)) { /* there is a fill */
 	  type = MS_LAYER_POLYGON;
 	  break;
         }
@@ -164,7 +167,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
       marker.y = dstY + MS_NINT(height / 2.0);
 
       for(i=0; i<class->numstyles; i++)
-        msDrawMarkerSymbolGD(&map->symbolset, img, &marker, &(class->styles[i]), lp->scalefactor);          
+        msDrawMarkerSymbolGD(&map->symbolset, img, &marker, class->styles[i], lp->scalefactor);          
       break;
     case MS_LAYER_LINE:
       zigzag.line = (lineObj *)malloc(sizeof(lineObj));
@@ -183,7 +186,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
       zigzag.line[0].numpoints = 4;
 
       for(i=0; i<class->numstyles; i++)
-        msDrawLineSymbolGD(&map->symbolset, img, &zigzag, &(class->styles[i]), lp->scalefactor); 
+        msDrawLineSymbolGD(&map->symbolset, img, &zigzag, class->styles[i], lp->scalefactor); 
 
       free(zigzag.line[0].point);
       free(zigzag.line);	
@@ -192,7 +195,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     case MS_LAYER_RASTER:
     case MS_LAYER_POLYGON:
       for(i=0; i<class->numstyles; i++)     
-        msDrawShadeSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), lp->scalefactor);
+        msDrawShadeSymbolGD(&map->symbolset, img, &box, class->styles[i], lp->scalefactor);
       break;
     default:
       return MS_FAILURE;
@@ -512,13 +515,13 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   GET_LAYER(map, l)->status = MS_ON;
 
   GET_LAYER(map, l)->class[0]->numstyles = 1;
-  GET_LAYER(map, l)->class[0]->styles[0].symbol = s;
-  GET_LAYER(map, l)->class[0]->styles[0].color.pen = -1;
+  GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
+  GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
   GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
   GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
 
   if(map->legend.postlabelcache) /* add it directly to the image */
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(GET_LAYER(map, l)->class[0]->styles[0]), 1.0);
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   else
     msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);
 

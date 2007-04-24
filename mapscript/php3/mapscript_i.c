@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.107  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.106  2007/04/19 07:34:09  umberto
  * RFC24: more fixes, allow php to build
  *
@@ -1280,15 +1283,15 @@ styleObj *styleObj_new(classObj *class, styleObj *style) {
     if(class->numstyles == MS_MAXSTYLES) // no room
       return NULL;
 
-    if(initStyle(&(class->styles[class->numstyles])) == -1)
+    if(initStyle(class->styles[class->numstyles]) == -1)
       return NULL;
 
     if (style)
-      msCopyStyle(&(class->styles[class->numstyles]), style);
+      msCopyStyle(class->styles[class->numstyles], style);
         
     class->numstyles++;
 
-    return &(class->styles[class->numstyles-1]);
+    return class->styles[class->numstyles-1];
   }
 
 void  styleObj_destroy(styleObj *self) {

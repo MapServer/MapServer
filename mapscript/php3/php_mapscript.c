@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.267  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.266  2007/04/19 07:34:09  umberto
  * RFC24: more fixes, allow php to build
  *
@@ -9100,7 +9103,7 @@ DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS)
         php3_error(E_ERROR, "Invalid style index.");
     }
 
-    psStyle = &(self->styles[ pIndex->value.lval]);
+    psStyle = self->styles[ pIndex->value.lval ];
     
     class_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
     layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", 

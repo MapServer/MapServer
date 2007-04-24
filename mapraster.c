@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.140  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.139  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -630,10 +633,10 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	  if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	    cmap[i] = -1;
 	  else {
-            RESOLVE_PEN_GD(img, layer->class[c]->styles[0].color);
-	    if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) 
-	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0].color.red, layer->class[c]->styles[0].color.green, layer->class[c]->styles[0].color.blue); /* use class color */
-	    else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0].color)) 
+            RESOLVE_PEN_GD(img, layer->class[c]->styles[0]->color);
+	    if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) 
+	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0]->color.red, layer->class[c]->styles[0]->color.green, layer->class[c]->styles[0]->color.blue); /* use class color */
+	    else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color)) 
 	      cmap[i] = -1; /* make transparent */
 	    else
               cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); /* use raster color */
@@ -848,10 +851,10 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
 	else {
-          RESOLVE_PEN_GD(img, layer->class[c]->styles[0].color);
-          if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) 
-	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0].color.red, layer->class[c]->styles[0].color.green, layer->class[c]->styles[0].color.blue); /* use class color */
-	  else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0].color)) 
+          RESOLVE_PEN_GD(img, layer->class[c]->styles[0]->color);
+          if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) 
+	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0]->color.red, layer->class[c]->styles[0]->color.green, layer->class[c]->styles[0]->color.blue); /* use class color */
+	  else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color)) 
 	    cmap[i] = -1; /* make transparent */
 	  else
             cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); /* use raster color	   */
@@ -969,10 +972,10 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
         if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
 	else {
-          RESOLVE_PEN_GD(img, layer->class[c]->styles[0].color);
-          if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) 
-	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0].color.red, layer->class[c]->styles[0].color.green, layer->class[c]->styles[0].color.blue); /* use class color */
-	  else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0].color)) 
+          RESOLVE_PEN_GD(img, layer->class[c]->styles[0]->color);
+          if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) 
+	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0]->color.red, layer->class[c]->styles[0]->color.green, layer->class[c]->styles[0]->color.blue); /* use class color */
+	  else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color)) 
 	    cmap[i] = -1; /* make transparent */
 	  else
             cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); /* use raster color	   */
@@ -1216,10 +1219,10 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  if(c == -1) 
 	    cmap[i] = -1;
 	  else {
-            RESOLVE_PEN_GD(img, layer->class[c]->styles[0].color);
-	    if(MS_VALID_COLOR(layer->class[c]->styles[0].color)) 
-	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0].color.red, layer->class[c]->styles[0].color.green, layer->class[c]->styles[0].color.blue); /* use class color */
-	    else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0].color)) 
+            RESOLVE_PEN_GD(img, layer->class[c]->styles[0]->color);
+	    if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) 
+	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c]->styles[0]->color.red, layer->class[c]->styles[0]->color.green, layer->class[c]->styles[0]->color.blue); /* use class color */
+	    else if(MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color)) 
 	      cmap[i] = -1; /* make transparent */
 	    else {              
 	      clrget(&clr,i,&color);

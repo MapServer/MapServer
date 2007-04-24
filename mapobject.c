@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.30  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -618,6 +621,7 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
         }
         /* Free the extra layer at the end */
         //freeLayer((GET_LAYER(map, map->numlayers-1)));
+        GET_LAYER(map, map->numlayers-1)=NULL;
         
         /* Adjust drawing order */
         order_index = 0;

@@ -188,11 +188,12 @@
   } 
 
     /* See Bugzilla issue 548 for more details about the *Style methods */
-
+    %newobject getStyle;
     styleObj *getStyle(int i) {
-        if (i >= 0 && i < self->numstyles)	
-            return &(self->styles[i]);
-        else {
+        if (i >= 0 && i < self->numstyles) {
+	    MS_REFCNT_INCR(self->styles[i]);
+            return self->styles[i];
+	} else {
             msSetError(MS_CHILDERR, "Invalid index: %d", "getStyle()", i);
             return NULL;
         }
@@ -204,7 +205,10 @@
 
     %newobject removeStyle;
     styleObj *removeStyle(int index) {
-        return (styleObj *) msRemoveStyle(self, index);
+	styleObj* style = (styleObj *) msRemoveStyle(self, index);
+	if (style)
+		MS_REFCNT_INCR(style);
+        return style;
     }
 
     int moveStyleUp(int index) {

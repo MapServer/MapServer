@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.104  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.103  2006/10/22 17:48:24  tamas
  * Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString causing access violation.
  *
@@ -2277,22 +2280,22 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   // This is a multipart symbology, so pen defn goes in the
                   // overlaysymbol params (also set outlinecolor just in case)
-                  c->styles[0].outlinecolor = c->styles[1].outlinecolor = 
+                  c->styles[0]->outlinecolor = c->styles[1]->outlinecolor = 
                       oPenColor;
-                  c->styles[1].size = nPenSize;
-                  c->styles[1].symbol = nPenSymbol;
+                  c->styles[1]->size = nPenSize;
+                  c->styles[1]->symbol = nPenSymbol;
                   c->numstyles = 2;
               }
               else
               {
                   // Single part symbology
                   if(layer->type == MS_LAYER_POLYGON)
-                      c->styles[0].outlinecolor = c->styles[0].color = 
+                      c->styles[0]->outlinecolor = c->styles[0]->color = 
                           oPenColor;
                   else
-                      c->styles[0].color = oPenColor;
-                  c->styles[0].symbol = nPenSymbol;
-                  c->styles[0].size = nPenSize;
+                      c->styles[0]->color = oPenColor;
+                  c->styles[0]->symbol = nPenSymbol;
+                  c->styles[0]->size = nPenSize;
                   c->numstyles = 1;
               }
 
@@ -2308,7 +2311,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // If that's what we have then set fill color to -1
               if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
               {
-                  MS_INIT_COLOR(c->styles[0].color, -1, -1, -1);
+                  MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
               }
               else
               {
@@ -2316,14 +2319,14 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   const char *pszColor = poBrushStyle->ForeColor(bIsNull);
                   if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
                   {
-                      MS_INIT_COLOR(c->styles[0].color, r, g, b);
+                      MS_INIT_COLOR(c->styles[0]->color, r, g, b);
                       // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
                   }
 
                   pszColor = poBrushStyle->BackColor(bIsNull);
                   if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
                   {
-                      MS_INIT_COLOR(c->styles[0].backgroundcolor, r, g, b);
+                      MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
                   }
 
                   // Symbol name mapping:
@@ -2334,7 +2337,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   const char *pszName = poBrushStyle->Id(bIsNull);
                   if (bIsNull)
                   pszName = NULL;
-                  c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset), 
+                  c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
                                                          pszName, NULL);
               }
               c->numstyles = 1;
@@ -2346,10 +2349,10 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               const char *pszColor = poSymbolStyle->Color(bIsNull);
               if (!bIsNull && poSymbolStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
-                  MS_INIT_COLOR(c->styles[0].color, r, g, b);
+                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
               }
 
-              c->styles[0].size = (int)poSymbolStyle->Size(bIsNull);
+              c->styles[0]->size = (int)poSymbolStyle->Size(bIsNull);
 
               // Symbol name mapping:
               // First look for the native symbol name, then the ogr-...
@@ -2359,7 +2362,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (bIsNull)
                   pszName = NULL;
 
-              c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset),
+              c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                     pszName, 
                                                     "default-marker");
               c->numstyles = 1;

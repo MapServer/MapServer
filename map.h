@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.479  2007/04/24 08:55:31  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.478  2007/04/17 10:36:52  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -711,6 +714,14 @@ typedef struct {
 
 /* STYLE OBJECT - holds parameters for symbolization, multiple styles may be applied within a classObj */
 typedef struct {
+#ifdef SWIG
+%immutable;
+#endif /* SWIG */
+  int refcount;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
+
   colorObj color;
   colorObj backgroundcolor;
   colorObj outlinecolor;
@@ -762,7 +773,7 @@ typedef struct class_obj{
   int status;
 
 #ifndef SWIG
-  styleObj *styles;
+  styleObj **styles;
 #endif
 
   int numstyles;

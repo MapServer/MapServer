@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.83  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.82  2007/04/20 13:48:40  umberto
  * moveClassUp/Down and various fixes, cleaner build
  *
@@ -1175,10 +1178,10 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
               nClassId = psLayer->numclasses-1;
 
             iStyle = psLayer->class[nClassId]->numstyles;
-            initStyle(&(psLayer->class[nClassId]->styles[iStyle]));
+            initStyle(psLayer->class[nClassId]->styles[iStyle]);
             psLayer->class[nClassId]->numstyles++;
             
-            msSLDParseStroke(psStroke, &psLayer->class[nClassId]->styles[iStyle],
+            msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
                              psLayer->map, 0); 
         }
     }
@@ -1415,10 +1418,10 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                nClassId = psLayer->numclasses-1;
 
             iStyle = psLayer->class[nClassId]->numstyles;
-            initStyle(&(psLayer->class[nClassId]->styles[iStyle]));
+            initStyle((psLayer->class[nClassId]->styles[iStyle]));
             psLayer->class[nClassId]->numstyles++;
             
-            msSLDParsePolygonFill(psFill, &psLayer->class[nClassId]->styles[iStyle],
+            msSLDParsePolygonFill(psFill, psLayer->class[nClassId]->styles[iStyle],
                                   psLayer->map);
         }
         /* stroke wich corresponds to the outilne in mapserver */
@@ -1434,7 +1437,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             {
                 nClassId =psLayer->numclasses-1;
                 iStyle = psLayer->class[nClassId]->numstyles;
-                initStyle(&(psLayer->class[nClassId]->styles[iStyle]));
+                initStyle((psLayer->class[nClassId]->styles[iStyle]));
                 psLayer->class[nClassId]->numstyles++;
             }
             else
@@ -1456,11 +1459,11 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                   nClassId = psLayer->numclasses-1;
 
                 iStyle = psLayer->class[nClassId]->numstyles;
-                initStyle(&(psLayer->class[nClassId]->styles[iStyle]));
+                initStyle((psLayer->class[nClassId]->styles[iStyle]));
                 psLayer->class[nClassId]->numstyles++;
                 
             }
-            msSLDParseStroke(psStroke, &psLayer->class[nClassId]->styles[iStyle],
+            msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
                              psLayer->map, 1);
         }
     }
@@ -2228,17 +2231,17 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
           nClassId = psLayer->numclasses-1;
 
         iStyle = psLayer->class[nClassId]->numstyles;
-        initStyle(&(psLayer->class[nClassId]->styles[iStyle]));
+        initStyle((psLayer->class[nClassId]->styles[iStyle]));
         psLayer->class[nClassId]->numstyles++;
         
 
         /* set the default color */
-        psLayer->class[nClassId]->styles[iStyle].color.red = 128;
-        psLayer->class[nClassId]->styles[iStyle].color.green = 128;
-        psLayer->class[nClassId]->styles[iStyle].color.blue = 128;
+        psLayer->class[nClassId]->styles[iStyle]->color.red = 128;
+        psLayer->class[nClassId]->styles[iStyle]->color.green = 128;
+        psLayer->class[nClassId]->styles[iStyle]->color.blue = 128;
 
         msSLDParseGraphicFillOrStroke(psRoot, NULL,
-                                      &psLayer->class[nClassId]->styles[iStyle],
+                                      psLayer->class[nClassId]->styles[iStyle],
                                       psLayer->map, 1);
     }
 }
@@ -2456,7 +2459,7 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
-            initStyle(&(psLayer->class[nClassId]->styles[0]));
+            initStyle((psLayer->class[nClassId]->styles[0]));
             psLayer->class[nClassId]->numstyles = 1;
             nStyleId = 0;
         }
@@ -2618,14 +2621,14 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                             else
                               psLayer->class[nClassId]->name = strdup(pszPreviousQuality);
 
-                            initStyle(&(psLayer->class[nClassId]->styles[0]));
+                            initStyle(psLayer->class[nClassId]->styles[0]);
                             psLayer->class[nClassId]->numstyles = 1;
 
-                            psLayer->class[nClassId]->styles[0].color.red = 
+                            psLayer->class[nClassId]->styles[0]->color.red = 
                               sColor.red;
-                            psLayer->class[nClassId]->styles[0].color.green = 
+                            psLayer->class[nClassId]->styles[0]->color.green = 
                               sColor.green;
-                            psLayer->class[nClassId]->styles[0].color.blue = 
+                            psLayer->class[nClassId]->styles[0]->color.blue = 
                               sColor.blue;
 
                             if (psLayer->classitem && 
@@ -2684,17 +2687,17 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                     initClass(psLayer->class[psLayer->numclasses]);
                     psLayer->numclasses++;
                     nClassId = psLayer->numclasses-1;
-                    initStyle(&(psLayer->class[nClassId]->styles[0]));
+                    initStyle(psLayer->class[nClassId]->styles[0]);
                     if (pszLabel)
                       psLayer->class[nClassId]->name = strdup(pszLabel);
                     else
                       psLayer->class[nClassId]->name = strdup(pszQuantity);
                     psLayer->class[nClassId]->numstyles = 1;
-                    psLayer->class[nClassId]->styles[0].color.red = 
+                    psLayer->class[nClassId]->styles[0]->color.red = 
                       sColor.red;
-                    psLayer->class[nClassId]->styles[0].color.green = 
+                    psLayer->class[nClassId]->styles[0]->color.green = 
                               sColor.green;
-                    psLayer->class[nClassId]->styles[0].color.blue = 
+                    psLayer->class[nClassId]->styles[0]->color.blue = 
                       sColor.blue;
 
                     if (psLayer->classitem && 
@@ -4066,7 +4069,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 {
                     for (j=0; j<psLayer->class[i]->numstyles; j++)
                     {
-                        psStyle = &psLayer->class[i]->styles[j];
+                        psStyle = psLayer->class[i]->styles[j];
                         pszSLD = msSLDGenerateLineSLD(psStyle, psLayer);
                         if (pszSLD)
                         {
@@ -4080,7 +4083,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 {
                     for (j=0; j<psLayer->class[i]->numstyles; j++)
                     {
-                        psStyle = &psLayer->class[i]->styles[j];
+                        psStyle = psLayer->class[i]->styles[j];
                         pszSLD = msSLDGeneratePolygonSLD(psStyle, psLayer);
                         if (pszSLD)
                         {
@@ -4094,7 +4097,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 {
                     for (j=0; j<psLayer->class[i]->numstyles; j++)
                     {
-                        psStyle = &psLayer->class[i]->styles[j];
+                        psStyle = psLayer->class[i]->styles[j];
                         pszSLD = msSLDGeneratePointSLD(psStyle, psLayer);
                         if (pszSLD)
                         {
@@ -4108,7 +4111,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 {
                     for (j=0; j<psLayer->class[i]->numstyles; j++)
                     {
-                        psStyle = &psLayer->class[i]->styles[j];
+                        psStyle = psLayer->class[i]->styles[j];
                         pszSLD = msSLDGeneratePointSLD(psStyle, psLayer);
                         if (pszSLD)
                         {

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.144  2007/04/24 08:55:31  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.143  2007/04/17 10:36:52  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -200,7 +203,7 @@ void msPreAllocateColorsGD(imageObj *image, mapObj *map) {
 	msImageSetPenGD(image->img.gd, &(cp->label.shadowcolor));
 
 	for(k=0; k<cp->numstyles; k++) {
-          sp = &(cp->styles[k]);
+          sp = (cp->styles[k]);
 	  msImageSetPenGD(image->img.gd, &(sp->backgroundcolor));
           msImageSetPenGD(image->img.gd, &(sp->color));
 	  msImageSetPenGD(image->img.gd, &(sp->outlinecolor));

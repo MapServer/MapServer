@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2007/04/24 08:55:32  umberto
+ * RFC24: added styleObj support
+ *
  * Revision 1.24  2007/04/17 10:36:53  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -394,9 +397,9 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         else
         {
             rlinfo->qc_class[rlinfo->query_results] = p_class;
-            red   = layer->class[p_class]->styles[0].color.red;
-            green = layer->class[p_class]->styles[0].color.green;
-            blue  = layer->class[p_class]->styles[0].color.blue;
+            red   = layer->class[p_class]->styles[0]->color.red;
+            green = layer->class[p_class]->styles[0]->color.green;
+            blue  = layer->class[p_class]->styles[0]->color.blue;
         }
     }
 
