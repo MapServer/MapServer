@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.36  2007/04/24 23:54:13  assefa
+ * Set the filter of the layer using prodecure_item (bug 2050)
+ * use procedure_item when doing a GetObservation (bug 2054).
+ *
  * Revision 1.35  2007/04/20 13:48:40  umberto
  * moveClassUp/Down and various fixes, cleaner build
  *
@@ -696,8 +700,47 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
         /*TODO add location,*/
 
         /*precedure*/
-        pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-        if (pszValue)
+        /* if a procedure_item is defined, we should extract the value for the
+           attributes. If not dump what is found in the procedure metadata bug 2054*/
+        if ((pszValue =  msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item")))
+        {
+            lpfirst = msSOSGetFirstLayerForOffering(map, 
+                                                    msOWSLookupMetadata(&(lp->metadata), "S", 
+                                                                        "offering_id"), 
+                                                    msOWSLookupMetadata(&(lp->metadata), "S", 
+                                                                        "observedProperty_id"));
+
+            if (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS && 
+                msLayerGetItems(lpfirst) == MS_SUCCESS)
+            {   
+                for(i=0; i<lpfirst->numitems; i++) 
+                {
+                    if (strcasecmp(lpfirst->items[i], pszValue) == 0)
+                    {
+                        break;
+                    }
+                }
+                if (i < lpfirst->numitems)
+                {
+                    sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                    pszTmp = strcatalloc(pszTmp, szTmp);
+                    pszValueShape = msEncodeHTMLEntities(sShape.values[i]);
+                    pszTmp = strcatalloc(pszTmp, pszValueShape);
+            
+                        psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
+                        xmlNewNsProp(psNode,
+                                     xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
+                                              BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+                        msFree(pszTmp);
+                        pszTmp = NULL;
+                        msFree(pszValueShape);
+                }
+                /*else should we generate a warning !*/
+                msLayerClose(lpfirst);
+            }
+                
+        }
+        else if ((pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "procedure")))
         {
             sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
             pszTmp = strcatalloc(pszTmp, szTmp);
@@ -775,7 +818,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                     {
                         if (strcasecmp(lpfirst->items[i],  lpfirst->items[j]) == 0)
                         {
-                            /*if there is an alias used, use it to ooutput the
+                            /*if there is an alias used, use it to output the
                               parameter name : eg "sos_AMMON_DIS_alias" "Amonia"  */
                             sprintf(szTmp, "%s_alias", lpfirst->items[i]);
                             pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
@@ -1161,7 +1204,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                              tokens = split(value, ' ', &n);
                              for (k=0; k<n; k++)
                              {
-                             /*TODO review the urn output */
+                                 /*TODO review the urn output */
                                  sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
                                  pszTmp = strcatalloc(pszTmp, szTmp);
                                  pszTmp = strcatalloc(pszTmp, tokens[k]);
@@ -1641,113 +1684,70 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                         }
                         if (j == n) /*not found*/
                           GET_LAYER(map, i)->status = MS_OFF;
-                        else
-                        {
-                            pszProcedureItem =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S",
-                                                                    "procedure_item");
-                            if (pszProcedureItem)
-                            {
-                                lp = GET_LAYER(map, i);
-                                pszBuffer = NULL;
-                                if (&lp->filter)
-                                {
-                                    if (lp->filter.string && strlen(lp->filter.string) > 0)
-                                      pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
-                                    freeExpression(&lp->filter);
-                                } 
-                                
-                                /*The filter should reflect the underlying db*/
-                                /*for ogr with an already where clause in the fitler
-                                  treat it as db */
-                                bSpatialDB = 0;
-                                if (lp->connectiontype == MS_POSTGIS ||  
-                                    lp->connectiontype == MS_ORACLESPATIAL ||
-                                    lp->connectiontype == MS_SDE ||     
-                                    (lp->connectiontype == MS_OGR &&
-                                     pszBuffer && 
-                                     EQUALN(pszBuffer,"WHERE",5)))
-                                  bSpatialDB = 1;
-                                    
-                                    
-                                if (bSpatialDB && pszBuffer)
-                                {
-                                    if (lp->connectiontype != MS_OGR)
-                                      pszBuffer = strcatalloc(pszBuffer, " and (");
-                                    else
-                                      pszBuffer = strcatalloc(pszBuffer, " ");
-                                }
-                                else
-                                  pszBuffer = strcatalloc(pszBuffer, " (");
-                                
 
-                                for (j=0; j<n; j++)
-                                {
-                                    if (j > 0)
-                                      pszBuffer = strcatalloc(pszBuffer, " OR ");
-                                    
-                                    pszBuffer = strcatalloc(pszBuffer, "(");
-
-                                    if (!bSpatialDB)
-                                      pszBuffer = strcatalloc(pszBuffer, "'[");
-                                    pszBuffer = strcatalloc(pszBuffer, (char *)pszProcedureItem);
-                                    if (!bSpatialDB)
-                                      pszBuffer = strcatalloc(pszBuffer, "]'");
-                                    
-                                    pszBuffer = strcatalloc(pszBuffer, " = '");
-                                    pszBuffer = strcatalloc(pszBuffer,  tokens[j]);
-                                    pszBuffer = strcatalloc(pszBuffer,  "')");
-                                }
-                                
-                                if (!bSpatialDB || lp->connectiontype != MS_OGR)
-                                  pszBuffer = strcatalloc(pszBuffer, ")");
-
-                                loadExpressionString(&lp->filter, pszBuffer);
-                                if (pszBuffer)
-                                  msFree(pszBuffer);
-                            }
-                        }
-
-                        msFreeCharArray(tokens1, n1);
+                        if (tokens1)
+                          msFreeCharArray(tokens1, n1);
                     }
-                    else 
+                    
+                    /* if there is a procedure_item defined on the layer, we will 
+                     use it to set the filter parameter of the layer*/
+                    if ((GET_LAYER(map, i)->status == MS_ON) && 
+                        (pszProcedureItem =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S",
+                                                                 "procedure_item")))
                     {
-                         pszValue =  msOWSLookupMetadata(&(GET_LAYER(map,i)->metadata), "S",
-                                                         "procedure_item");
-                         if (!pszValue)
-                         {
-                             GET_LAYER(map,i)->status = MS_OFF;
-                         }
-                         else
-                         {
-                             lp = GET_LAYER(map,i);
-                             /*
-                             if (&lp->filter && lp->filter.type == MS_EXPRESSION)
-                             {
-                                 pszBuffer = strcatalloc(pszBuffer, "((");
-                                 pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
-                                 pszBuffer = strcatalloc(pszBuffer, ") and ");
-                             }
-                             else
-                              freeExpression(&lp->filter); 
-                             */
-                             if (&lp->filter)
-                               freeExpression(&lp->filter); 
-                             pszBuffer = strcatalloc(pszBuffer, "(");
-                             for (j=0; j<n; j++)
-                             {
-                                 if (j > 0)
-                                   pszBuffer = strcatalloc(pszBuffer, " OR ");
-                                 pszBuffer = strcatalloc(pszBuffer, "(");
-                                 pszBuffer = strcatalloc(pszBuffer, (char *)pszValue);
-                                 pszBuffer = strcatalloc(pszBuffer, " = '");
-                                 pszBuffer = strcatalloc(pszBuffer,  tokens[j]);
-                                 pszBuffer = strcatalloc(pszBuffer,  "')");
-                             }
-                             pszBuffer = strcatalloc(pszBuffer, ")");
-                             loadExpressionString(&lp->filter, pszBuffer);
-                             if (pszBuffer)
-                               msFree(pszBuffer);
-                         }
+                        lp = GET_LAYER(map, i);
+                        pszBuffer = NULL;
+                        if (&lp->filter)
+                        {
+                            if (lp->filter.string && strlen(lp->filter.string) > 0)
+                              freeExpression(&lp->filter);
+                        } 
+                                
+                        /*The filter should reflect the underlying db*/
+                        /*for ogr add a where clause */
+                        bSpatialDB = 0;
+                        if (lp->connectiontype == MS_POSTGIS ||  
+                            lp->connectiontype == MS_ORACLESPATIAL ||
+                            lp->connectiontype == MS_SDE ||     
+                            lp->connectiontype == MS_OGR)
+                          bSpatialDB = 1;
+                                    
+                                    
+                        if (bSpatialDB)
+                        {
+                            if (lp->connectiontype != MS_OGR)
+                              pszBuffer = strcatalloc(pszBuffer, "(");
+                            else
+                              pszBuffer = strcatalloc(pszBuffer, "WHERE ");
+                        }
+                        else
+                          pszBuffer = strcatalloc(pszBuffer, "(");
+                                
+
+                        for (j=0; j<n; j++)
+                        {
+                            if (j > 0)
+                              pszBuffer = strcatalloc(pszBuffer, " OR ");
+                            
+                            pszBuffer = strcatalloc(pszBuffer, "(");
+                            
+                            if (!bSpatialDB)
+                              pszBuffer = strcatalloc(pszBuffer, "'[");
+                            pszBuffer = strcatalloc(pszBuffer, (char *)pszProcedureItem);
+                            if (!bSpatialDB)
+                              pszBuffer = strcatalloc(pszBuffer, "]'");
+                                    
+                            pszBuffer = strcatalloc(pszBuffer, " = '");
+                            pszBuffer = strcatalloc(pszBuffer,  tokens[j]);
+                            pszBuffer = strcatalloc(pszBuffer,  "')");
+                        }
+                                
+                        if (!bSpatialDB || lp->connectiontype != MS_OGR)
+                          pszBuffer = strcatalloc(pszBuffer, ")");
+
+                        loadExpressionString(&lp->filter, pszBuffer);
+                        if (pszBuffer)
+                          msFree(pszBuffer);
                     }
                 }       
             }
@@ -1976,7 +1976,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         sBbox.maxy = atof(tokens[3]);
         msFreeCharArray(tokens, n);
     }
-
+    
 
     /*do the query. use the same logic (?) as wfs. bbox and filer are incomaptible since bbox
      can be given inside a filter*/
