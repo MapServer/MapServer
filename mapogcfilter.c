@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.74  2007/04/25 13:10:15  assefa
+ * sql ilike is only valid for postgis layers : bug 2075.
+ *
  * Revision 1.73  2007/04/20 13:48:40  umberto
  * moveClassUp/Down and various fixes, cleaner build
  *
@@ -3545,7 +3548,7 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
 
     /* attribute name */
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
-    if (bCaseInsensitive == 1 && connectiontype != MS_OGR)
+    if (bCaseInsensitive == 1 && connectiontype == MS_POSTGIS)
       strcat(szBuffer, " ilike '");
     else
       strcat(szBuffer, " like '");
