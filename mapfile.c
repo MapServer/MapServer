@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.341  2007/04/25 11:35:57  umberto
+ * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
+ *
  * Revision 1.340  2007/04/24 08:55:31  umberto
  * RFC24: added styleObj support
  *
@@ -2225,32 +2228,40 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
     ** for backwards compatability, these are shortcuts for style 0
     */
     case(BACKGROUNDCOLOR):
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if(loadColor(&(class->styles[0]->backgroundcolor)) != MS_SUCCESS) return(-1);
       break;
     case(COLOR):
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if(loadColor(&(class->styles[0]->color)) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color or outlinecolor */
       break;
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if(loadColorWithAlpha(&(class->styles[0]->color)) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
       break;
 #endif
     case(MAXSIZE):
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if(getInteger(&(class->styles[0]->maxsize)) == -1) return(-1);
       break;
     case(MINSIZE):      
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if(getInteger(&(class->styles[0]->minsize)) == -1) return(-1);
       break;
     case(OUTLINECOLOR):            
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if(loadColor(&(class->styles[0]->outlinecolor)) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(SIZE):
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if(getInteger(&(class->styles[0]->size)) == -1) return(-1);
       break;
     case(SYMBOL):
+      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
 	class->styles[0]->symbol = (int) msyynumber;
@@ -2263,26 +2274,33 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
     ** for backwards compatability, these are shortcuts for style 1
     */
     case(OVERLAYBACKGROUNDCOLOR):
+      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
       if(loadColor(&(class->styles[1]->backgroundcolor)) != MS_SUCCESS) return(-1);
       break;
     case(OVERLAYCOLOR):
+      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
       if(loadColor(&(class->styles[1]->color)) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYMAXSIZE):
+      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
       if(getInteger(&(class->styles[1]->maxsize)) == -1) return(-1);
       break;
     case(OVERLAYMINSIZE):      
+      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
       if(getInteger(&(class->styles[1]->minsize)) == -1) return(-1);
       break;
     case(OVERLAYOUTLINECOLOR):      
+      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
       if(loadColor(&(class->styles[1]->outlinecolor)) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYSIZE):
+      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
       if(getInteger(&(class->styles[1]->size)) == -1) return(-1);
       break;
     case(OVERLAYSYMBOL):
+      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
 	class->styles[1]->symbol = (int) msyynumber;

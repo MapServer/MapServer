@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.194  2007/04/25 11:35:57  umberto
+ * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
+ *
  * Revision 1.193  2007/04/17 10:36:54  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1461,6 +1464,31 @@ int msCheckParentPointer(void* p, char *objname) {
 		}
 		msSetError(MS_NULLPARENTERR, msg, "");
 		return MS_FAILURE;
+	}
+	return MS_SUCCESS;
+}
+
+int msMaybeAllocateStyle(classObj* c, int idx) {
+	if (c==NULL) return MS_FAILURE;
+
+	if ( idx < 0 || idx > c->numstyles ) {
+		msSetError(MS_MISCERR, "Invalid style index: %d (numstyles %d)", "msMaybeAllocateStyle()", idx, c->numstyles);
+		return MS_FAILURE;
+	}
+
+	if (c->styles[idx] == NULL) {
+		c->styles[idx]=(styleObj*)malloc(sizeof(styleObj));
+		if (c->styles[idx] == NULL) {
+    			msSetError(MS_MEMERR, "Cannot allocate memory for new styleObj", 
+               			"msMaybeAllocateStyle()");
+	    		return(MS_FAILURE);
+		}
+		if ( initStyle(c->styles[idx]) == MS_FAILURE ) {
+    			msSetError(MS_MISCERR, "Failed to init new styleObj", 
+               			"msMaybeAllocateStyle()");
+	    		return(MS_FAILURE);
+		}
+		c->numstyles++;
 	}
 	return MS_SUCCESS;
 }

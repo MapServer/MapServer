@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.480  2007/04/25 11:35:57  umberto
+ * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
+ *
  * Revision 1.479  2007/04/24 08:55:31  umberto
  * RFC24: added styleObj support
  *
@@ -1912,6 +1915,7 @@ MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
 MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
 MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
 MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
+MS_DLL_EXPORT int msMaybeAllocateStyle(classObj* c, int idx);
 
 /* Functions to chnage the drawing order of the layers. */
 /* Defined in mapobject.c */

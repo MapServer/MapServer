@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.84  2007/04/25 11:35:57  umberto
+ * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
+ *
  * Revision 1.83  2007/04/24 08:55:32  umberto
  * RFC24: added styleObj support
  *
@@ -1178,8 +1181,7 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
               nClassId = psLayer->numclasses-1;
 
             iStyle = psLayer->class[nClassId]->numstyles;
-            initStyle(psLayer->class[nClassId]->styles[iStyle]);
-            psLayer->class[nClassId]->numstyles++;
+	    msMaybeAllocateStyle(psLayer->class[nClassId], iStyle);
             
             msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
                              psLayer->map, 0); 
@@ -1418,8 +1420,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                nClassId = psLayer->numclasses-1;
 
             iStyle = psLayer->class[nClassId]->numstyles;
-            initStyle((psLayer->class[nClassId]->styles[iStyle]));
-            psLayer->class[nClassId]->numstyles++;
+  	    msMaybeAllocateStyle(psLayer->class[nClassId], iStyle);
             
             msSLDParsePolygonFill(psFill, psLayer->class[nClassId]->styles[iStyle],
                                   psLayer->map);
@@ -1437,8 +1438,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             {
                 nClassId =psLayer->numclasses-1;
                 iStyle = psLayer->class[nClassId]->numstyles;
-                initStyle((psLayer->class[nClassId]->styles[iStyle]));
-                psLayer->class[nClassId]->numstyles++;
+	 	msMaybeAllocateStyle(psLayer->class[nClassId], iStyle);
             }
             else
             {
@@ -1459,8 +1459,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                   nClassId = psLayer->numclasses-1;
 
                 iStyle = psLayer->class[nClassId]->numstyles;
-                initStyle((psLayer->class[nClassId]->styles[iStyle]));
-                psLayer->class[nClassId]->numstyles++;
+		msMaybeAllocateStyle(psLayer->class[nClassId], iStyle);
                 
             }
             msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
@@ -2231,8 +2230,7 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
           nClassId = psLayer->numclasses-1;
 
         iStyle = psLayer->class[nClassId]->numstyles;
-        initStyle((psLayer->class[nClassId]->styles[iStyle]));
-        psLayer->class[nClassId]->numstyles++;
+	msMaybeAllocateStyle(psLayer->class[nClassId], iStyle);
         
 
         /* set the default color */
@@ -2459,8 +2457,7 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
-            initStyle((psLayer->class[nClassId]->styles[0]));
-            psLayer->class[nClassId]->numstyles = 1;
+	    msMaybeAllocateStyle(psLayer->class[nClassId], 0);
             nStyleId = 0;
         }
         else
@@ -2621,8 +2618,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                             else
                               psLayer->class[nClassId]->name = strdup(pszPreviousQuality);
 
-                            initStyle(psLayer->class[nClassId]->styles[0]);
-                            psLayer->class[nClassId]->numstyles = 1;
+			    msMaybeAllocateStyle(psLayer->class[nClassId], 0);
 
                             psLayer->class[nClassId]->styles[0]->color.red = 
                               sColor.red;
@@ -2687,7 +2683,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                     initClass(psLayer->class[psLayer->numclasses]);
                     psLayer->numclasses++;
                     nClassId = psLayer->numclasses-1;
-                    initStyle(psLayer->class[nClassId]->styles[0]);
+		    msMaybeAllocateStyle(psLayer->class[nClassId], 0);
                     if (pszLabel)
                       psLayer->class[nClassId]->name = strdup(pszLabel);
                     else

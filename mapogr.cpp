@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.105  2007/04/25 11:35:57  umberto
+ * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
+ *
  * Revision 1.104  2007/04/24 08:55:32  umberto
  * RFC24: added styleObj support
  *
@@ -2135,6 +2138,9 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
  * the only members we don't touch are name, expression, and join/query stuff
  * ------------------------------------------------------------------ */
   resetClassStyle(c);
+  if (msMaybeAllocateStyle(c, 0)) {
+    	return(MS_FAILURE);
+  }
 
   // __TODO__ label cache incompatible with styleitem feature.
   layer->labelcache = MS_OFF;

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.116  2007/04/25 11:35:57  umberto
+ * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
+ *
  * Revision 1.115  2007/04/24 08:55:31  umberto
  * RFC24: added styleObj support
  *
@@ -1349,10 +1352,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
   
   /* changed when Tomas added CARTOLINE symbols */
-  if(layer->class[c]->styles[0]->size == -1)
-      csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]))) * layer->scalefactor) / 2.0);
-  else
-      csz = MS_NINT((layer->class[c]->styles[0]->size*layer->scalefactor)/2.0);
+  if ( layer->class[c]->styles[0] != NULL ) {
+	if(layer->class[c]->styles[0]->size == -1)
+      		csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]))) * layer->scalefactor) / 2.0);
+  	else
+      		csz = MS_NINT((layer->class[c]->styles[0]->size*layer->scalefactor)/2.0);
+  } else {
+	csz = 0;
+  }
   cliprect.minx = map->extent.minx - csz*map->cellsize;
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;

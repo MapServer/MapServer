@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2007/04/25 11:35:57  umberto
+ * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
+ *
  * Revision 1.65  2007/04/24 08:55:32  umberto
  * RFC24: added styleObj support
  *
@@ -500,11 +503,22 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   if(l == -1) {
     l = map->numlayers;
     map->numlayers++;
-
+    GET_LAYER(map, l)=(layerObj*)malloc(sizeof(layerObj));
+    if (GET_LAYER(map, l)==NULL) {
+	msSetError(MS_MISCERR, "Failed to init new layerObj",
+		"msEmbedLegend()");
+	return(MS_FAILURE);
+    }
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
     GET_LAYER(map, l)->name = strdup("__embed__legend");
     GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
 
+    GET_LAYER(map, l)->class[0]=(classObj*)malloc(sizeof(classObj));
+    if (GET_LAYER(map, l)->class[0]==NULL) {
+	msSetError(MS_MISCERR, "Failed to init new classObj",
+		"msEmbedLegend()");
+	return(MS_FAILURE);
+    }
     if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
     GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */
         
@@ -514,6 +528,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
 
   GET_LAYER(map, l)->status = MS_ON;
 
+  if (msMaybeAllocateStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->numstyles = 1;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
