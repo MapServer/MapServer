@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.152  2007/04/26 20:16:09  hobu
+ * use connPoolInfo pointers instead of carrying around our own (which were pointing to the same thing) for each layer
+ *
  * Revision 1.151  2007/04/23 21:13:26  hobu
  * only get iteminfo for join columns if we have joins
  *
@@ -385,7 +388,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         return(NULL);
     }
     
-    status = SE_registration_get_info ( sde->connection, 
+    status = SE_registration_get_info ( sde->connPoolInfo->connection, 
                                         sde->table, 
                                         registration);
     if(status != SE_SUCCESS) {
@@ -790,7 +793,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 
         // do something special 
         if(strcmp(layer->items[i],sde->row_id_column) == 0) {
-            status = SE_stream_get_integer(sde->stream, (short)(i+1), &shape->index);
+            status = SE_stream_get_integer(sde->connPoolInfo->stream, (short)(i+1), &shape->index);
             if(status != SE_SUCCESS) {
                 sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
                 return(MS_FAILURE);
@@ -804,7 +807,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     switch(itemdefs[i].sde_type) {
         case SE_SMALLINT_TYPE:
             /* changed by gdv */
-            status = SE_stream_get_smallint(sde->stream, 
+            status = SE_stream_get_smallint(sde->connPoolInfo->stream, 
                                             (short)(i+1), 
                                             &shortval); 
             if(status == SE_SUCCESS)
@@ -819,7 +822,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             }
             break;
         case SE_INTEGER_TYPE:
-            status = SE_stream_get_integer( sde->stream, 
+            status = SE_stream_get_integer( sde->connPoolInfo->stream, 
                                             (short)(i+1), 
                                             &longval);
             if(status == SE_SUCCESS)
@@ -834,7 +837,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             }      
             break;
         case SE_FLOAT_TYPE:
-            status = SE_stream_get_float(   sde->stream, 
+            status = SE_stream_get_float(   sde->connPoolInfo->stream, 
                                             (short)(i+1), 
                                             &floatval); 
             if(status == SE_SUCCESS)
@@ -849,7 +852,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             }
             break;
         case SE_DOUBLE_TYPE:
-            status = SE_stream_get_double(  sde->stream, 
+            status = SE_stream_get_double(  sde->connPoolInfo->stream, 
                                             (short) (i+1), 
                                             &doubleval);
             if(status == SE_SUCCESS)
@@ -865,7 +868,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             break;
         case SE_STRING_TYPE:
             shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-            status = SE_stream_get_string(  sde->stream, 
+            status = SE_stream_get_string(  sde->connPoolInfo->stream, 
                                             (short) (i+1), 
                                             shape->values[i]);
             if(status == SE_NULL_VALUE)
@@ -883,7 +886,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 memset(shape->values[i], 0, itemdefs[i].size*sizeof(char)+1);
                 wide = (SE_WCHAR *)malloc(itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
                 memset(wide, 0, itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
-                status = SE_stream_get_nstring( sde->stream, 
+                status = SE_stream_get_nstring( sde->connPoolInfo->stream, 
                                                 (short) (i+1), 
                                                 wide);
 
@@ -909,7 +912,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 
         case SE_UUID_TYPE:
             shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-            status = SE_stream_get_uuid  (  sde->stream, 
+            status = SE_stream_get_uuid  (  sde->connPoolInfo->stream, 
                                             (short) (i+1), 
                                             shape->values[i]);
             if(status == SE_NULL_VALUE)
@@ -924,7 +927,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             
 #endif
         case SE_BLOB_TYPE:
-            status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
+            status = SE_stream_get_blob(sde->connPoolInfo->stream, (short) (i+1), &blobval);
             if(status == SE_SUCCESS) {
                 shape->values[i] = (char *)malloc(sizeof(char)*blobval.blob_length);
                 shape->values[i] = memcpy(  shape->values[i],
@@ -943,7 +946,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             }
             break;
         case SE_DATE_TYPE:
-            status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
+            status = SE_stream_get_date(sde->connPoolInfo->stream, (short)(i+1), &dateval);
             if(status == SE_SUCCESS) {
                 shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
                 strftime(   shape->values[i], 
@@ -961,7 +964,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             }
             break;
         case SE_SHAPE_TYPE:
-            status = SE_stream_get_shape(sde->stream, (short)(i+1), shapeval);
+            status = SE_stream_get_shape(sde->connPoolInfo->stream, (short)(i+1), shapeval);
             if(status == SE_SUCCESS)
                 shape->values[i] = strdup(MS_SDE_SHAPESTRING);
             else if(status == SE_NULL_VALUE)
@@ -1454,12 +1457,7 @@ int msSDELayerOpen(layerObj *layer) {
     /* point to the SDE layer information  */
     /* (note this might actually be in another layer) */
     layer->layerinfo = sde; 
-    
-    sde->connection = poolinfo->connection;
-    sde->stream = poolinfo->stream;
-    sde->connPoolInfo = poolinfo;
-    
-    
+    sde->connPoolInfo = poolinfo;   
     return(MS_SUCCESS);
 #else
     msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
@@ -1499,8 +1497,6 @@ int  msSDELayerClose(layerObj *layer) {
     if (sde->extent) msFree(sde->extent);
 
     msConnPoolRelease( layer, sde->connPoolInfo );  
-    sde->connection = NULL;
-    sde->connPoolInfo = NULL;
     if (layer->layerinfo) msFree(layer->layerinfo);
     layer->layerinfo = NULL;
     return MS_SUCCESS;
@@ -1538,7 +1534,6 @@ int msSDELayerCloseConnection(layerObj *layer)
     msDebug("msSDELayerCloseConnection(): Closing connection for layer %s.\n", layer->name);
 
   msConnPoolRelease( layer, sde->connPoolInfo );
-  sde->connection = NULL;
   sde->connPoolInfo = NULL;
   return (MS_SUCCESS);
 #else
@@ -1651,7 +1646,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     }    
         
     /* reset the stream */
-    status = SE_stream_close(sde->stream, 1);
+    status = SE_stream_close(sde->connPoolInfo->stream, 1);
     if(status != SE_SUCCESS) {
         sde_error(  status, 
                     "msSDELayerGetShape()", 
@@ -1664,7 +1659,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
     if (sde->state_id != SE_DEFAULT_STATE_ID){
 
-        status =  SE_stream_set_state(sde->stream, 
+        status =  SE_stream_set_state(sde->connPoolInfo->stream, 
                                       sde->state_id, 
                                       sde->state_id, 
                                       SE_STATE_DIFF_NOCHECK); 
@@ -1677,7 +1672,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     } 
 
     if (!sql) {
-        status = SE_stream_query_with_info(sde->stream, query_info);
+        status = SE_stream_query_with_info(sde->connPoolInfo->stream, query_info);
         if(status != SE_SUCCESS) {
             sde_error(status, 
                       "msSDELayerWhichShapes()", 
@@ -1685,7 +1680,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
             return(MS_FAILURE);
         }
     } else {
-        status = SE_stream_query(sde->stream, layer->numitems, (const CHAR**) layer->items, sql);
+        status = SE_stream_query(sde->connPoolInfo->stream, layer->numitems, (const CHAR**) layer->items, sql);
         if(status != SE_SUCCESS) {
             sde_error(status, 
                       "msSDELayerWhichShapes()", 
@@ -1699,7 +1694,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     if(proc_value && strcasecmp(proc_value, "ATTRIBUTE") == 0)
         query_order = SE_ATTRIBUTE_FIRST;
 
-    status = SE_stream_set_spatial_constraints( sde->stream, 
+    status = SE_stream_set_spatial_constraints( sde->connPoolInfo->stream, 
                                                 query_order, 
                                                 FALSE, 
                                                 1, 
@@ -1713,7 +1708,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     }
   
     /* *should* be ready to step through shapes now */
-    status = SE_stream_execute(sde->stream); 
+    status = SE_stream_execute(sde->connPoolInfo->stream); 
     if(status != SE_SUCCESS) {
         sde_error(  status, 
                     "msSDELayerWhichShapes()", 
@@ -1755,7 +1750,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
     sde = layer->layerinfo;
     
     /* fetch the next record from the stream */
-    status = SE_stream_fetch(sde->stream);
+    status = SE_stream_fetch(sde->connPoolInfo->stream);
 
     if(status == SE_FINISHED)
         return(MS_DONE);
@@ -1852,7 +1847,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
     }
 
     /* reset the stream */
-    status = SE_stream_close(sde->stream, 1);
+    status = SE_stream_close(sde->connPoolInfo->stream, 1);
     if(status != SE_SUCCESS) {
         sde_error(  status, 
                     "msSDELayerGetShape()", 
@@ -1862,7 +1857,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
     if (!sde->join_table) {
 
-        status = SE_stream_fetch_row(   sde->stream, 
+        status = SE_stream_fetch_row(   sde->connPoolInfo->stream, 
                                         sde->table, 
                                         record, 
                                         (short)(layer->numitems), 
@@ -1877,7 +1872,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
     } else {
         sql = getSDESQLConstructInfo(layer, &record);
 
-        status = SE_stream_query(sde->stream, layer->numitems, (const CHAR**) layer->items, sql);
+        status = SE_stream_query(sde->connPoolInfo->stream, layer->numitems, (const CHAR**) layer->items, sql);
 ;
         if(status != SE_SUCCESS) {
             sde_error(status, 
@@ -1890,7 +1885,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
         SE_sql_construct_free(sql);
   
         /* *should* be ready to step through shapes now */
-        status = SE_stream_execute(sde->stream);  
+        status = SE_stream_execute(sde->connPoolInfo->stream);  
 
         if(status != SE_SUCCESS) {
             sde_error(status, 
@@ -1900,7 +1895,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
         } 
            
         /* fetch the next record from the stream */
-        status = SE_stream_fetch(sde->stream);
+        status = SE_stream_fetch(sde->connPoolInfo->stream);
 
     }
     status = sdeGetRecord(layer, shape);
@@ -2023,7 +2018,7 @@ msSDELayerInitItemInfo(layerObj *layer)
     sde->nJoinColumns = 0;
     sde->nBaseColumns = 0;
 
-    status = SE_table_describe( sde->connection, 
+    status = SE_table_describe( sde->connPoolInfo->connection, 
                                 sde->table, 
                                 &(sde->nBaseColumns),  
                                 &(sde->basedefs));
@@ -2035,7 +2030,7 @@ msSDELayerInitItemInfo(layerObj *layer)
     }
         
     if (sde->join_table) {
-        status = SE_table_describe( sde->connection, 
+        status = SE_table_describe( sde->connPoolInfo->connection, 
                                     sde->join_table, 
                                     &(sde->nJoinColumns),  
                                     &(sde->joindefs));
