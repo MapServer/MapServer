@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.158  2007/04/26 02:19:11  hobu
+ * exit(0) instead of exit(3) for the fastcgi cleanup
+ *
  * Revision 1.157  2007/04/17 10:36:54  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1123,7 +1126,7 @@ void msCleanupOnSignal( int nInData )
     msIO_installHandlers( NULL, NULL, NULL );
     msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
     msCleanup();
-    exit( 3 );
+    exit( 0 );
 }
 #endif
 
