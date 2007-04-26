@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.153  2007/04/26 21:56:36  hobu
+ * clean up a few small leaks
+ *
  * Revision 1.152  2007/04/26 20:16:09  hobu
  * use connPoolInfo pointers instead of carrying around our own (which were pointing to the same thing) for each layer
  *
@@ -372,9 +375,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
                     "SE_DEFAULT_STATE_ID, reverting to %s.\n", 
                     MS_SDE_ROW_ID_COLUMN);
         }
-        column_name = strdup(MS_SDE_ROW_ID_COLUMN);
-
-        //return(strdup(MS_SDE_ROW_ID_COLUMN));
+        strcpy(column_name,MS_SDE_ROW_ID_COLUMN);
     } 
     
     // if the state_id was not set to SE_DEFAULT_STATE_ID,
@@ -420,8 +421,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
                     "returning %s.\n", 
                     MS_SDE_ROW_ID_COLUMN);
         }
-        column_name = strdup(MS_SDE_ROW_ID_COLUMN);
-        //return (strdup(MS_SDE_ROW_ID_COLUMN));
+        strcpy(column_name, MS_SDE_ROW_ID_COLUMN);
     }
 
 
@@ -1397,9 +1397,11 @@ int msSDELayerOpen(layerObj *layer) {
             return(MS_FAILURE);
         }
         SE_stateinfo_free (state); 
-        msFreeCharArray(data_params, numparams);  
     } /* if (!(sde->state_id == SE_DEFAULT_STATE_ID)) */
-  
+ 
+
+    // done with the DATA stuff now 
+    msFreeCharArray(data_params, numparams);  
   
     status = SE_layerinfo_create(NULL, &(sde->layerinfo));
     if(status != SE_SUCCESS) {
