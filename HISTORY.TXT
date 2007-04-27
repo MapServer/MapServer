@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - Initial support for loading entire mapfiles via a string buffer (msLoadMapFromString).
+
  - SWF : use highlight color from querymap (2074)
 
  - RFC24: memory management for mapscript (supports: mapObj, layerObj, classObj,
