@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122.2.2  2007/04/27 04:12:01  sdlime
+ * Removing patch applied for bug 2073. Also set shpxy tag default part seperator to a space.
+ *
  * Revision 1.122.2.1  2007/04/24 18:16:33  frank
  * fix error with multi-line/ring features in processCoords (bug #2073)
  *
@@ -1073,7 +1076,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
   char *xh="", *xf=",";
   char *yh="", *yf="";
   char *cs=" "; /* coordinate */
-  char *ph="", *pf="", *ps=""; /* part */
+  char *ph="", *pf="", *ps=" "; /* part */
   char *sh="", *sf=""; /* shape */
 
   int centroid=MS_FALSE; /* output just the centroid */
@@ -1144,11 +1147,11 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     }
 
     /* build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't) */
-    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 2;
+    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 1;
     pointFormat1 = (char *) malloc(pointFormatLength);
     snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs); 
     pointFormat2 = (char *) malloc(pointFormatLength); 
-    snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s ", xh, precision, xf, yh, precision, yf); 
+    snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
  
     /* make a copy of the original shape or compute a centroid if necessary */
     msInitShape(&tShape);
