@@ -1,3 +1,4 @@
+
 /******************************************************************************
  *
  * Project:  MapServer
@@ -27,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.342  2007/04/27 03:29:06  sdlime
+ * Updated mapfile.c and a bit in the lexer to enable loading a mapObj from a string buffer. Also did some function clean-up related to the map_... processing via mapserv.c. Majority of change is mapfile.c, minor but extensive.
+ *
  * Revision 1.341  2007/04/25 11:35:57  umberto
  * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
  *
@@ -226,6 +230,8 @@ MS_CVSID("$Id$")
 
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
+extern int msyylex_destroy(void);
+
 extern double msyynumber;
 extern char *msyytext;
 extern int msyylineno;
@@ -234,6 +240,7 @@ extern FILE *msyyin;
 extern int msyystate;
 extern char *msyystring;
 extern char *msyybasepath;
+extern int msyyreturncomments;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
@@ -1454,13 +1461,13 @@ static int loadLabel(labelObj *label, mapObj *map)
   } /* next token */
 }
 
-static void loadLabelString(mapObj *map, labelObj *label, char *value)
+static void loadLabelValue(mapObj *map, labelObj *label, char *value)
 {
   int symbol;
 
   switch(msyylex()) {
   case(ANGLE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     label->autoangle = MS_FALSE;
     label->autofollow = MS_FALSE;
     if((symbol = getSymbol(3, MS_NUMBER,MS_AUTO,MS_FOLLOW)) == -1) 
@@ -1476,33 +1483,33 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
       label->autoangle = MS_TRUE;
     break;
   case(ANTIALIAS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((label->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;  
   case(BUFFER):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->buffer)) == -1) break;
     break;
   case(BACKGROUNDCOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(label->backgroundcolor)) != MS_SUCCESS) return;
     break;
   case(BACKGROUNDSHADOWCOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(label->backgroundshadowcolor)) != MS_SUCCESS) return;
     break;
   case(BACKGROUNDSHADOWSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->backgroundshadowsizex)) == -1) return;
     if(getInteger(&(label->backgroundshadowsizey)) == -1) return;
     break;
   case(COLOR):
-    msyystate = 2; msyystring = value;     
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;     
     if(loadColor(&(label->color)) != MS_SUCCESS) return;
     break;    
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
-    msyystate = 2; msyystring = value;     
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;     
     if(loadColorWithAlpha(&(label->color)) != MS_SUCCESS) return;
     break; 
 #endif
@@ -1516,63 +1523,63 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     label->font = strdup(value);
     
     if(!(msLookupHashTable(&(map->fontset.fonts), label->font))) {
-      msSetError(MS_IDENTERR, "Unknown font alias. (%s)", "loadLabelString()",
+      msSetError(MS_IDENTERR, "Unknown font alias. (%s)", "loadLabelValue()",
                  msyytext);      
       return;
     }
 #else
-    msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadLabelString()");    
+    msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadLabelValue()");    
     return;
 #endif
     break;
   case(FORCE):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if((label->force = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
       break; 
   case(MAXSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->maxsize)) == -1) return;
     break;
   case(MINDISTANCE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->mindistance)) == -1) return;
     break;
   case(MINFEATURESIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->minfeaturesize)) == -1) return;
     break;
   case(MINSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->minsize)) == -1) return;
     break;
   case(OFFSET):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->offsetx)) == -1) return;
     if(getInteger(&(label->offsety)) == -1) return;
     break;  
   case(OUTLINECOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(label->outlinecolor)) != MS_SUCCESS) return;
     break;
   case(PARTIALS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((label->partials = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
   case(POSITION):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((label->position = getSymbol(10, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR,MS_AUTO)) == -1) return;
     break;
   case(SHADOWCOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(label->shadowcolor)) != MS_SUCCESS) return;
     break;
   case(SHADOWSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(label->shadowsizex)) == -1) return;
     if(getInteger(&(label->shadowsizey)) == -1) return;
     break;
   case(SIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
     if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
     if(label->size == MS_NUMBER)
@@ -1582,7 +1589,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
 #endif    
     break;
   case(TYPE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return;
     break;    
   case(WRAP):    
@@ -1721,7 +1728,7 @@ int msLoadExpressionString(expressionObj *exp, char *value)
 
 int loadExpressionString(expressionObj *exp, char *value)
 {
-  msyystate = 2; msyystring = value;
+  msyystate = MS_TOKENIZE_VALUE; msyystring = value;
 
   freeExpression(exp); /* we're totally replacing the old expression so free then init to start over */
   /* initExpression(exp); */
@@ -1996,8 +2003,8 @@ int loadStyle(styleObj *style) {
   }
 }
 
-int loadStyleString(styleObj *style) {
-  /* use old shortcut names instead (see loadClassString)... */
+int loadStyleValue(styleObj *style) {
+  /* use old shortcut names instead (see loadClassValue)... */
   return(MS_SUCCESS);
 }
 
@@ -2316,7 +2323,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
   }
 }
 
-static void loadClassString(mapObj *map, classObj *class, char *value, int type)
+static void loadClassValue(mapObj *map, classObj *class, char *value, int type)
 {
   int state;
 
@@ -2330,14 +2337,14 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     class->keyimage = strdup(value);
     break;
   case(LABEL):
-    loadLabelString(map, &(class->label), value);
+    loadLabelValue(map, &(class->label), value);
     break;
   case(MAXSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getDouble(&(class->maxscale));
     break;
   case(MINSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getDouble(&(class->minscale));
     break;
   case(NAME):
@@ -2345,7 +2352,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     class->name = strdup(value);
     break;
   case(STATUS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
     break;  
   case(TEMPLATE):
@@ -2361,7 +2368,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     class->title = strdup(value);
     break;
   case(TYPE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return;
     break;
 
@@ -2369,44 +2376,44 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   ** for backwards compatability, these are shortcuts for style 0
   */
   case(BACKGROUNDCOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(class->styles[0]->backgroundcolor)) != MS_SUCCESS) return;    
     break;
   case(COLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(class->styles[0]->color)) != MS_SUCCESS) return;
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColorWithAlpha(&(class->styles[0]->color)) != MS_SUCCESS) return;
     break;
 #endif
   case(MAXSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(class->styles[0]->maxsize));
     break;
   case(MINSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(class->styles[0]->minsize));
     break;
   case(OUTLINECOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(class->styles[0]->outlinecolor)) != MS_SUCCESS) return;
     break;
   case(SIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(class->styles[0]->size));
     break;
   case(SYMBOL):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
 
     if(state == MS_NUMBER)
       class->styles[0]->symbol = (int) msyynumber;
     else {
       if((class->styles[0]->symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
-	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassValue()");
     }
     break;
 
@@ -2414,38 +2421,38 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   ** for backwards compatability, these are shortcuts for style 1
   */
   case(OVERLAYBACKGROUNDCOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(class->styles[1]->backgroundcolor)) != MS_SUCCESS) return;    
     break;
   case(OVERLAYCOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(class->styles[1]->color)) != MS_SUCCESS) return;
     break;
   case(OVERLAYMAXSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(class->styles[1]->maxsize));
     break;
   case(OVERLAYMINSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(class->styles[1]->minsize));
     break;
   case(OVERLAYOUTLINECOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(class->styles[1]->outlinecolor)) != MS_SUCCESS) return;
     break;
   case(OVERLAYSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(class->styles[1]->size));
     break;
   case(OVERLAYSYMBOL):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
 
     if(state == MS_NUMBER)
       class->styles[1]->symbol = (int) msyynumber;
     else {
       if((class->styles[1]->symbol = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
-	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassValue()");
     }
     break;
 
@@ -2929,7 +2936,7 @@ int loadLayer(layerObj *layer, mapObj *map)
   } /* next token */
 }
 
-static void loadLayerString(mapObj *map, layerObj *layer, char *value)
+static void loadLayerValue(mapObj *map, layerObj *layer, char *value)
 {
   int i=0;
 
@@ -2940,7 +2947,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       if((i < 0) || (i >= layer->numclasses))
         break;
     }
-    loadClassString(map, layer->class[i], value, layer->type);
+    loadClassValue(map, layer->class[i], value, layer->type);
     break;
   case(CLASSITEM):
     msFree(layer->classitem);
@@ -2966,7 +2973,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
 
       switch(msyylex()) {      
       case(POINTS):
-	msyystate = 2; msyystring = value;
+	msyystate = MS_TOKENIZE_VALUE; msyystring = value;
 	
 	/* 
 	** create a new shape from the supplied points and add it to the feature list 
@@ -2979,7 +2986,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
 	shape->numlines = 1;
 
 	if((shape->line[0].point = (pointObj *) malloc(sizeof(pointObj)*MS_FEATUREINITSIZE)) == NULL) {
-	  msSetError(MS_MEMERR, NULL, "loadLayerString()");
+	  msSetError(MS_MEMERR, NULL, "loadLayerValue()");
 	  return;
 	}
 	shape->line[0].numpoints = 0;
@@ -3064,7 +3071,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       layer->labelangleitem = strdup(value); 
     break;
   case(LABELCACHE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->labelcache = getSymbol(2, MS_ON, MS_OFF)) == -1) return;
     break;
   case(LABELITEM):
@@ -3075,11 +3082,11 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       layer->labelitem = strdup(value);
     break;
   case(LABELMAXSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(layer->labelmaxscale)) == -1) return;
     break;
   case(LABELMINSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(layer->labelminscale)) == -1) return;
     break;    
   case(LABELREQUIRES):
@@ -3094,15 +3101,15 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       layer->labelsizeitem = strdup(value);
     break;
   case(MAXFEATURES):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(layer->maxfeatures)) == -1) return;
     break;
   case(MAXSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(layer->maxscale)) == -1) return;
     break;
   case(MINSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(layer->minscale)) == -1) return;
     break;
   case(NAME):
@@ -3110,11 +3117,11 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->name = strdup(value);
     break; 
   case(OFFSITE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(layer->offsite)) != MS_SUCCESS) return;
     break;
   case(POSTLABELCACHE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->postlabelcache = getSymbol(2, MS_TRUE, MS_FALSE)) == -1) return;
     if(layer->postlabelcache)
       layer->labelcache = MS_OFF;
@@ -3153,11 +3160,11 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->requires = strdup(value);
     break;
   case(SIZEUNITS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->sizeunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
     break;
   case(STATUS): /* enables turning a layer OFF */
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return;
     break;
   case(MS_STRING):    
@@ -3165,7 +3172,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       if(!layer->class[i]->name) /* skip it */
 	continue;
       if(strcmp(msyytext, layer->class[i]->name) == 0) {	
-	loadClassString(map, layer->class[i], value, layer->type);
+	loadClassValue(map, layer->class[i], value, layer->type);
 	break;
       }
     }
@@ -3175,7 +3182,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->styleitem = strdup(value);
     break;
   case(SYMBOLSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(layer->symbolscale)) == -1) return;
     break;
   case(TEMPLATE):
@@ -3187,30 +3194,30 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->tileindex = strdup(value);
     break;
   case(TOLERANCE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(layer->tolerance)) == -1) return;
     break;
   case(TOLERANCEUNITS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->toleranceunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
     break;
   case(TRANSFORM):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->transform = getSymbol(11, MS_TRUE,MS_FALSE, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) return;
     break;
   case (TRANSPARENCY):
     /* Should we check if transparency is supported by outputformat or
        if transparency for this layer is already set??? */
     /* layers can now specify ALPHA transparency */
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if (getIntegerOrSymbol(&(layer->transparency), 1, MS_GD_ALPHA) == -1) return;
     break;
   case(TYPE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,MS_LAYER_TILEINDEX)) == -1) return;
     break;
   case(UNITS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->units = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return;
     break;
   default:
@@ -3432,13 +3439,13 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
   } /* next token */
 }
 
-static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *value)
+static void loadReferenceMapValue(mapObj *map, referenceMapObj *ref, char *value)
 {
   int state;
 
   switch(msyylex()) {
   case(COLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(ref->color.red)) == -1) return;
     if(getInteger(&(ref->color.green)) == -1) return;
     if(getInteger(&(ref->color.blue)) == -1) return;
@@ -3448,7 +3455,7 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(ref->color.red)) == -1) return;
     if(getInteger(&(ref->color.green)) == -1) return;
     if(getInteger(&(ref->color.blue)) == -1) return;
@@ -3456,58 +3463,58 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     break;
 #endif
   case(EXTENT):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(ref->extent.minx)) == -1) return;
     if(getDouble(&(ref->extent.miny)) == -1) return;
     if(getDouble(&(ref->extent.maxx)) == -1) return;
     if(getDouble(&(ref->extent.maxy)) == -1) return;
     if (!MS_VALID_EXTENT(ref->extent)) {
     	msSetError(MS_MISCERR, "Given reference extent is invalid. Check that it " \
-        "is in the form: minx, miny, maxx, maxy", "loadReferenceMapString()"); 
+        "is in the form: minx, miny, maxx, maxy", "loadReferenceMapValue()"); 
       return;
     }
     break;  
   case(IMAGE):
     msFree(ref->image); ref->image = NULL;
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getString(&ref->image) == MS_FAILURE) return;
     break;
   case(OUTLINECOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(ref->outlinecolor.red)) == -1) return;
     if(getInteger(&(ref->outlinecolor.green)) == -1) return;
     if(getInteger(&(ref->outlinecolor.blue)) == -1) return;
     break;
   case(SIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(ref->width)) == -1) return;
     if(getInteger(&(ref->height)) == -1) return;
     break;          
   case(STATUS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((ref->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;
     break;
   case(MARKER):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
 
     if(state == MS_NUMBER)
       ref->marker = (int) msyynumber;
     else {
       if((ref->marker = msGetSymbolIndex(&(map->symbolset), msyytext, MS_TRUE)) == -1)
-	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassValue()");
     }
     break;
   case(MARKERSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(ref->markersize));
     break;
   case(MAXBOXSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(ref->maxboxsize));
     break;
   case(MINBOXSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     getInteger(&(ref->minboxsize));
     break;
   default:
@@ -3834,41 +3841,41 @@ int loadLegend(legendObj *legend, mapObj *map)
   } /* next token */
 }
 
-static void loadLegendString(mapObj *map, legendObj *legend, char *value)
+static void loadLegendValue(mapObj *map, legendObj *legend, char *value)
 {
   switch(msyylex()) {
   case(IMAGECOLOR):
-    msyystate = 2; msyystring = value;    
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;    
     loadColor(&(legend->imagecolor));
     break;
   case(KEYSIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(legend->keysizex)) == -1) return;
     if(getInteger(&(legend->keysizey)) == -1) return;
     break;      
   case(KEYSPACING):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(legend->keyspacingx)) == -1) return;
     if(getInteger(&(legend->keyspacingy)) == -1) return;
     break;  
   case(LABEL):
-    loadLabelString(map, &(legend->label), value);
+    loadLabelValue(map, &(legend->label), value);
     legend->label.angle = 0; /* force */
     break;
   case(OUTLINECOLOR):
-    msyystate = 2; msyystring = value;    
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;    
     loadColor(&(legend->outlinecolor));
     break;
   case(POSITION):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((legend->position = getSymbol(6, MS_UL,MS_UR,MS_LL,MS_LR,MS_UC,MS_LC)) == -1) return;
     break;
   case(POSTLABELCACHE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((legend->postlabelcache = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
   case(STATUS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((legend->status = getSymbol(3, MS_ON,MS_OFF,MS_EMBED)) == -1) return;      
     break;   
   case(TEMPLATE):
@@ -3996,63 +4003,63 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
   } /* next token */
 }
 
-static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
+static void loadScalebarValue(mapObj *map, scalebarObj *scalebar, char *value)
 {
   switch(msyylex()) {
   case(BACKGROUNDCOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     loadColor(&(scalebar->backgroundcolor));
     break;
   case(COLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     loadColor(&(scalebar->color));
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     loadColorWithAlpha(&(scalebar->color));
     break;
 #endif
   case(IMAGECOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     loadColor(&(scalebar->imagecolor));
     break;
   case(INTERVALS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(scalebar->intervals)) == -1) return;
     break;
   case(LABEL):
-    msyystate = 2; msyystring = value;
-    loadLabelString(map, &(scalebar->label), value);
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
+    loadLabelValue(map, &(scalebar->label), value);
     scalebar->label.angle = 0;
     break;
   case(OUTLINECOLOR):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     loadColor(&(scalebar->outlinecolor));
     break;
   case(POSITION):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((scalebar->position = getSymbol(4, MS_UL,MS_UR,MS_LL,MS_LR)) == -1) return;
     break;
   case(POSTLABELCACHE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((scalebar->postlabelcache = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
   case(SIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(scalebar->width)) == -1) return;
     if(getInteger(&(scalebar->height)) == -1) return;
     break;
   case(STATUS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((scalebar->status = getSymbol(3, MS_ON,MS_OFF,MS_EMBED)) == -1) return;      
     break;
   case(STYLE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(scalebar->style)) == -1) return;
     break;  
   case(UNITS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((scalebar->units = getSymbol(5, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS)) == -1) return;
     break;
   default:
@@ -4128,30 +4135,30 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map)
   }
 }
 
-static void loadQueryMapString(mapObj *map, queryMapObj *querymap, char *value)
+static void loadQueryMapValue(mapObj *map, queryMapObj *querymap, char *value)
 {
   switch(msyylex()) {
   case(COLOR):
-    msyystate = 2; msyystring = value;    
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;    
     loadColor(&(querymap->color));
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
-    msyystate = 2; msyystring = value;    
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;    
     loadColorWithAlpha(&(querymap->color));
     break;
 #endif
   case(SIZE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getInteger(&(querymap->width)) == -1) return;
     if(getInteger(&(querymap->height)) == -1) return;
     break;
   case(STATUS):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((querymap->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
     break;
   case(STYLE):      
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((querymap->style = getSymbol(3, MS_NORMAL,MS_HILITE,MS_SELECTED)) == -1) return;
     break;      
   }
@@ -4325,7 +4332,7 @@ int loadWeb(webObj *web, mapObj *map)
   }
 }
 
-static void loadWebString(mapObj *map, webObj *web, char *value)
+static void loadWebValue(mapObj *map, webObj *web, char *value)
 {
   switch(msyylex()) {
   case(BROWSEFORMAT):
@@ -4341,7 +4348,7 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     web->error = strdup(value);
     break;
   case(EXTENT):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&(web->extent.minx)) == -1) return;
     if(getDouble(&(web->extent.miny)) == -1) return;
     if(getDouble(&(web->extent.maxx)) == -1) return;
@@ -4375,7 +4382,7 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     web->legendformat = strdup(value);
     break;
   case(MAXSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&web->maxscale) == -1) return;
     break;
   case(MAXTEMPLATE):
@@ -4384,7 +4391,7 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     web->maxtemplate = strdup(value);
     break;
   case(MINSCALE):
-    msyystate = 2; msyystring = value;
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(getDouble(&web->minscale) == -1) return;
     break;
   case(MINTEMPLATE):
@@ -4649,11 +4656,301 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
-static mapObj *loadMapInternal(char *filename, char *new_mappath)
+static int loadMapInternal(mapObj *map)
 {
-  mapObj *map=NULL;
   int i,j,k;
+
+  for(;;) {
+
+    switch(msyylex()) {   
+
+    case(CONFIG):
+    {
+        char *key=NULL, *value=NULL;
+
+        if( getString(&key) == MS_FAILURE )
+            return MS_FAILURE;
+
+        if( getString(&value) == MS_FAILURE )
+            return MS_FAILURE;
+
+        msSetConfigOption( map, key, value );
+        free( key ); key=NULL;
+        free( value ); value=NULL;
+    }
+    break;
+
+    case(DATAPATTERN):
+      if(getString(&map->datapattern) == MS_FAILURE) return MS_FAILURE;
+      break;
+    case(DEBUG):
+      if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
+      break;
+    case(END):
+      if(msyyin) fclose(msyyin);
+
+      /*** Make config options current ***/
+      msApplyMapConfigOptions( map );
+
+      /*** Compute rotated extent info if applicable ***/
+      msMapComputeGeotransform( map );
+                                            
+      /*** OUTPUTFORMAT related setup ***/
+      if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
+          return MS_FAILURE;
+
+      if(loadSymbolSet(&(map->symbolset), map) == -1) return MS_FAILURE;
+
+      /* step through layers and classes to resolve symbol names */
+      for(i=0; i<map->numlayers; i++) {
+        for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
+	  for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
+            if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
+              if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
+                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
+                return(NULL);
+              }
+            }
+          }              
+        }
+      }
+
+#if defined (USE_GD_TTF) || defined (USE_GD_FT)
+      if(msLoadFontSet(&(map->fontset), map) == -1) return MS_FAILURE;
+#endif
+
+      return MS_SUCCESS;
+      break;
+    case(EOF):
+      msSetError(MS_EOFERR, NULL, "msLoadMap()");
+      return MS_FAILURE;
+    case(EXTENT):
+    {
+       if(getDouble(&(map->extent.minx)) == -1) return MS_FAILURE;
+       if(getDouble(&(map->extent.miny)) == -1) return MS_FAILURE;
+       if(getDouble(&(map->extent.maxx)) == -1) return MS_FAILURE;
+       if(getDouble(&(map->extent.maxy)) == -1) return MS_FAILURE;
+       if (!MS_VALID_EXTENT(map->extent)) {
+    	 msSetError(MS_MISCERR, "Given map extent is invalid. Check that it " \
+        "is in the form: minx, miny, maxx, maxy", "loadMapInternal()"); 
+      	 return MS_FAILURE;
+       }
+    }
+    break;
+    case(ANGLE):
+    {
+        double rotation_angle;
+        if(getDouble(&(rotation_angle)) == -1) return MS_FAILURE;
+        msMapSetRotation( map, rotation_angle );
+    }
+    break;
+    case(TEMPLATEPATTERN):
+      if(getString(&map->templatepattern) == MS_FAILURE) return MS_FAILURE;
+      break;
+    case(FONTSET):
+      if(getString(&map->fontset.filename) == MS_FAILURE) return MS_FAILURE;
+      break;
+    case(IMAGECOLOR):
+      if(getInteger(&(map->imagecolor.red)) == -1) return MS_FAILURE;
+      if(getInteger(&(map->imagecolor.green)) == -1) return MS_FAILURE;
+      if(getInteger(&(map->imagecolor.blue)) == -1) return MS_FAILURE;
+      break; 
+    case(IMAGEQUALITY):
+      if(getInteger(&(map->imagequality)) == -1) return MS_FAILURE;
+      break;
+    case(IMAGETYPE):
+      map->imagetype = getToken();
+      break;
+    case(INTERLACE):
+      if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
+      break;
+    case(LATLON):
+      msFreeProjection(&map->latlon);
+      if(loadProjection(&map->latlon) == -1) return MS_FAILURE;
+      break;
+    case(LAYER):
+      if(map->numlayers == MS_MAXLAYERS) { 
+        msSetError(MS_IDENTERR, "Maximum number of layers reached.", "msLoadMap()");
+        return MS_FAILURE;
+      }
+      //printf("New layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
+      map->layers[map->numlayers]=(layerObj*)malloc(sizeof(layerObj));
+      //printf("After new layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
+      if (GET_LAYER(map, map->numlayers) == NULL) {
+           msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
+	   return(NULL);
+      }
+      if(loadLayer((GET_LAYER(map, map->numlayers)), map) == -1) return(NULL);
+      GET_LAYER(map, map->numlayers)->index = map->numlayers; /* save the index */
+      /* Update the layer order list with the layer's index. */
+      map->layerorder[map->numlayers] = map->numlayers;
+      map->numlayers++;
+      break;
+    case(OUTPUTFORMAT):
+      if(loadOutputFormat(map) == -1) return MS_FAILURE;
+      break;
+    case(LEGEND):
+      if(loadLegend(&(map->legend), map) == -1) return MS_FAILURE;
+      break;
+    case(MAP):
+      break;   
+    case(MAXSIZE):
+      if(getInteger(&(map->maxsize)) == -1) return MS_FAILURE;
+      break;
+    case(NAME):
+      free(map->name); map->name = NULL; /* erase default */
+      if(getString(&map->name) == MS_FAILURE) return MS_FAILURE;
+      break;
+    case(PROJECTION):
+      if(loadProjection(&map->projection) == -1) return MS_FAILURE;
+      break;
+    case(QUERYMAP):
+      if(loadQueryMap(&(map->querymap), map) == -1) return MS_FAILURE;
+      break;
+    case(REFERENCE):
+      if(loadReferenceMap(&(map->reference), map) == -1) return MS_FAILURE;
+      break;
+    case(RESOLUTION):
+      if(getDouble(&(map->resolution)) == -1) return MS_FAILURE;
+      break;
+    case(SCALE):
+      if(getDouble(&(map->scale)) == -1) return MS_FAILURE;
+      break;
+    case(SCALEBAR):
+      if(loadScalebar(&(map->scalebar), map) == -1) return MS_FAILURE;
+      break;   
+    case(SHAPEPATH):
+      if(getString(&map->shapepath) == MS_FAILURE) return MS_FAILURE;
+      break;
+    case(SIZE):
+      if(getInteger(&(map->width)) == -1) return MS_FAILURE;
+      if(getInteger(&(map->height)) == -1) return MS_FAILURE;
+      break;
+    case(STATUS):
+      if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
+      break;
+    case(SYMBOL):
+      if(map->symbolset.numsymbols == MS_MAXSYMBOLS) { 
+	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadMap()");
+	return MS_FAILURE;
+      }
+      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols]), map->mappath) == -1)) return MS_FAILURE;
+      map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
+      map->symbolset.numsymbols++;
+      break;
+    case(SYMBOLSET):
+      if(getString(&map->symbolset.filename) == MS_FAILURE) return MS_FAILURE;
+      break;
+    case(TRANSPARENT):
+      if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
+      break;
+    case(UNITS):
+      if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) return MS_FAILURE;
+      break;
+    case(WEB):
+      if(loadWeb(&(map->web), map) == -1) return MS_FAILURE;
+      break;
+    default:
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadMap()", 
+                 msyytext, msyylineno);
+      return MS_FAILURE;
+    }
+  } /* next token */
+}
+
+/*
+** Sets up string-based mapfile loading and calls loadMapInternal to do the work.
+*/
+mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
+{
+  mapObj *map;
+  struct mstimeval starttime, endtime;
   char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
+  char *mappath=NULL;
+
+#ifdef ENABLE_STDERR_DEBUG
+  /* In debug mode, track time spent loading/parsing mapfile.
+   * In all other cases we use a 'if (map->debug)' to enable this 
+   * feature, but since the mapObjs isn't loaded yet we can't, 
+   * so we rely on a #ifdef for that.
+   */
+  msGettimeofday(&starttime, NULL);
+#endif
+
+  if(!buffer) {
+    msSetError(MS_MISCERR, "No buffer to load.", "msLoadMapFromString()");
+    return(NULL);
+  }
+
+  /*
+  ** Allocate mapObj structure
+  */
+  map = (mapObj *)calloc(sizeof(mapObj),1);
+  if(!map) {
+    msSetError(MS_MEMERR, NULL, "msLoadMap()");
+    return(NULL);
+  }
+
+  msyystate = MS_TOKENIZE_STRING;
+  msyystring = buffer;
+  msyylex(); /* sets things up, but doesn't process any tokens */
+
+  msyylineno = 1; /* start at line 1 (do lines mean anything here?) */
+
+  if(initMap(map) == -1) /* initialize this map */
+    return(NULL);
+
+  /* If new_mappath is provided then use it, otherwise use the CWD */
+  getcwd(szCWDPath, MS_MAXPATHLEN);
+  if (new_mappath)
+  {
+    mappath = strdup(new_mappath);
+    map->mappath = strdup(msBuildPath(szPath, szCWDPath, mappath));
+  }
+  else
+    map->mappath = strdup(szCWDPath);
+
+  msyybasepath = map->mappath; /* for INCLUDEs */
+
+  msAcquireLock( TLOCK_PARSER ); /* might need to move this lock a bit higher */
+  if(loadMapInternal(map) != MS_SUCCESS) {
+    msFreeMap(map);
+    if (mappath != NULL) free(mappath);
+    return NULL;
+  }
+  msReleaseLock( TLOCK_PARSER );
+
+#ifdef ENABLE_STDERR_DEBUG
+  if (map->debug) {
+    msGettimeofday(&endtime, NULL);
+    msDebug("msLoadMap(): %.3fs\n", 
+            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  }
+#endif
+
+  if (mappath != NULL) free(mappath);
+  msyylex_destroy();
+  return map;
+}
+
+/*
+** Sets up file-based mapfile loading and calls loadMapInternal to do the work.
+*/
+mapObj *msLoadMap(char *filename, char *new_mappath)
+{
+  mapObj *map;
+  struct mstimeval starttime, endtime;
+  char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
+
+#ifdef ENABLE_STDERR_DEBUG
+  /* In debug mode, track time spent loading/parsing mapfile.
+   * In all other cases we use a 'if (map->debug)' to enable this 
+   * feature, but since the mapObjs isn't loaded yet we can't, 
+   * so we rely on a #ifdef for that.
+   */
+  msGettimeofday(&starttime, NULL);
+#endif
 
   if(!filename) {
     msSetError(MS_MISCERR, "Filename is undefined.", "msLoadMap()");
@@ -4680,10 +4977,11 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
     return(NULL);
   }
 
-  msyystate = 5; /* restore lexer state to INITIAL */
-  msyylex();
-  msyyrestart(msyyin);
-  msyylineno = 1;  /* Start at line #1 */
+  msyystate = MS_TOKENIZE_FILE;
+  msyylex(); /* sets things up, but doesn't process any tokens */
+
+  msyyrestart(msyyin); /* start at line begining, line 1 */
+  msyylineno = 1;
 
   if(initMap(map) == -1) /* initialize this map */
     return(NULL);
@@ -4699,252 +4997,38 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
     if( path ) free( path );
   }
 
-  msyybasepath = map->mappath; /* for includes */
+  msyybasepath = map->mappath; /* for INCLUDEs */
 
-  for(;;) {
-
-    switch(msyylex()) {   
-
-    case(CONFIG):
-    {
-        char *key=NULL, *value=NULL;
-
-        if( getString(&key) == MS_FAILURE )
-            return NULL;
-
-        if( getString(&value) == MS_FAILURE )
-            return NULL;
-
-        msSetConfigOption( map, key, value );
-        free( key ); key=NULL;
-        free( value ); value=NULL;
-    }
-    break;
-
-    case(DATAPATTERN):
-      if(getString(&map->datapattern) == MS_FAILURE) return(NULL);
-      break;
-    case(DEBUG):
-      if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
-      break;
-    case(END):
-      fclose(msyyin);      
-
-
-      /*** Make config options current ***/
-      msApplyMapConfigOptions( map );
-
-      /*** Compute rotated extent info if applicable ***/
-      msMapComputeGeotransform( map );
-                                            
-      /*** OUTPUTFORMAT related setup ***/
-      if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
-          return NULL;
-
-      if(loadSymbolSet(&(map->symbolset), map) == -1) return(NULL);
-
-      /* step through layers and classes to resolve symbol names */
-      for(i=0; i<map->numlayers; i++) {
-        for(j=0; j<GET_LAYER(map, i)->numclasses; j++){
-	  for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
-            if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
-              if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
-                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
-                return(NULL);
-              }
-            }
-          }              
-        }
-      }
-
-#if defined (USE_GD_TTF) || defined (USE_GD_FT)
-      if(msLoadFontSet(&(map->fontset), map) == -1) return(NULL);
-#endif
-
-      return(map);
-      break;
-    case(EOF):
-      msSetError(MS_EOFERR, NULL, "msLoadMap()");
-      return(NULL);
-    case(EXTENT):
-    {
-       if(getDouble(&(map->extent.minx)) == -1) return(NULL);
-       if(getDouble(&(map->extent.miny)) == -1) return(NULL);
-       if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
-       if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
-       if (!MS_VALID_EXTENT(map->extent)) {
-    	 msSetError(MS_MISCERR, "Given map extent is invalid. Check that it " \
-        "is in the form: minx, miny, maxx, maxy", "loadMapInternal()"); 
-      	 return(NULL);
-       }
-    }
-    break;
-    case(ANGLE):
-    {
-        double rotation_angle;
-        if(getDouble(&(rotation_angle)) == -1) return(NULL);
-        msMapSetRotation( map, rotation_angle );
-    }
-    break;
-    case(TEMPLATEPATTERN):
-      if(getString(&map->templatepattern) == MS_FAILURE) return(NULL);
-      break;
-    case(FONTSET):
-      if(getString(&map->fontset.filename) == MS_FAILURE) return(NULL);
-      break;
-    case(IMAGECOLOR):
-      if(getInteger(&(map->imagecolor.red)) == -1) return(NULL);
-      if(getInteger(&(map->imagecolor.green)) == -1) return(NULL);
-      if(getInteger(&(map->imagecolor.blue)) == -1) return(NULL);
-      break; 
-    case(IMAGEQUALITY):
-      if(getInteger(&(map->imagequality)) == -1) return(NULL);
-      break;
-    case(IMAGETYPE):
-      map->imagetype = getToken();
-      break;
-    case(INTERLACE):
-      if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
-      break;
-    case(LATLON):
-      msFreeProjection(&map->latlon);
-      if(loadProjection(&map->latlon) == -1) return(NULL);
-      break;
-    case(LAYER):
-      if(map->numlayers == MS_MAXLAYERS) { 
-	    msSetError(MS_IDENTERR, "Maximum number of layers reached.", "msLoadMap()");
-	    return(NULL);
-      }
-      //printf("New layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
-      map->layers[map->numlayers]=(layerObj*)malloc(sizeof(layerObj));
-      //printf("After new layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
-      if (GET_LAYER(map, map->numlayers) == NULL) {
-           msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
-	   return(NULL);
-      }
-      if(loadLayer((GET_LAYER(map, map->numlayers)), map) == -1) return(NULL);
-      GET_LAYER(map, map->numlayers)->index = map->numlayers; /* save the index */
-      /* Update the layer order list with the layer's index. */
-      map->layerorder[map->numlayers] = map->numlayers;
-      map->numlayers++;
-      break;
-    case(OUTPUTFORMAT):
-      if(loadOutputFormat(map) == -1) return(NULL);
-      break;
-    case(LEGEND):
-      if(loadLegend(&(map->legend), map) == -1) return(NULL);
-      break;
-    case(MAP):
-      break;   
-    case(MAXSIZE):
-      if(getInteger(&(map->maxsize)) == -1) return(NULL);
-      break;
-    case(NAME):
-      free(map->name); map->name = NULL; /* erase default */
-      if(getString(&map->name) == MS_FAILURE) return(NULL);
-      break;
-    case(PROJECTION):
-      if(loadProjection(&map->projection) == -1) return(NULL);
-      break;
-    case(QUERYMAP):
-      if(loadQueryMap(&(map->querymap), map) == -1) return(NULL);
-      break;
-    case(REFERENCE):
-      if(loadReferenceMap(&(map->reference), map) == -1) return(NULL);
-      break;
-    case(RESOLUTION):
-      if(getDouble(&(map->resolution)) == -1) return(NULL);
-      break;
-    case(SCALE):
-      if(getDouble(&(map->scale)) == -1) return(NULL);
-      break;
-    case(SCALEBAR):
-      if(loadScalebar(&(map->scalebar), map) == -1) return(NULL);
-      break;   
-    case(SHAPEPATH):
-      if(getString(&map->shapepath) == MS_FAILURE) return(NULL);
-      break;
-    case(SIZE):
-      if(getInteger(&(map->width)) == -1) return(NULL);
-      if(getInteger(&(map->height)) == -1) return(NULL);
-      break;
-    case(STATUS):
-      if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
-      break;
-    case(SYMBOL):
-      if(map->symbolset.numsymbols == MS_MAXSYMBOLS) { 
-	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadMap()");
-	return(NULL);
-      }
-      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols]), map->mappath) == -1)) return(NULL);
-      map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
-      map->symbolset.numsymbols++;
-      break;
-    case(SYMBOLSET):
-      if(getString(&map->symbolset.filename) == MS_FAILURE) return(NULL);
-      break;
-    case(TRANSPARENT):
-      if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
-      break;
-    case(UNITS):
-      if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) return(NULL);
-      break;
-    case(WEB):
-      if(loadWeb(&(map->web), map) == -1) return(NULL);
-      break;
-    default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadMap()", 
-                 msyytext, msyylineno);
-      return(NULL);
-    }
-  } /* next token */
-}
-
-/*  */
-/* Wraps loadMapInternal */
-/*  */
-mapObj *msLoadMap(char *filename, char *new_mappath)
-{
-    mapObj *map;
-    struct mstimeval starttime, endtime;
+  msAcquireLock( TLOCK_PARSER );  /* might need to move this lock a bit higher */
+  if(loadMapInternal(map) != MS_SUCCESS) {
+    msFreeMap(map);
+    return NULL;
+  }
+  msReleaseLock( TLOCK_PARSER );
 
 #ifdef ENABLE_STDERR_DEBUG
-    /* In debug mode, track time spent loading/parsing mapfile.
-     * In all other cases we use a 'if (map->debug)' to enable this 
-     * feature, but since the mapObjs isn't loaded yet we can't, 
-     * so we rely on a #ifdef for that.
-     */
-    msGettimeofday(&starttime, NULL);
+  if (map->debug) {
+    msGettimeofday(&endtime, NULL);
+    msDebug("msLoadMap(): %.3fs\n", 
+            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  }
 #endif
 
-    msAcquireLock( TLOCK_PARSER );
-    map = loadMapInternal( filename, new_mappath );
-    msReleaseLock( TLOCK_PARSER );
-
-#ifdef ENABLE_STDERR_DEBUG
-    if (map && map->debug)
-    {
-        msGettimeofday(&endtime, NULL);
-        msDebug("msLoadMap(): %.3fs\n", 
-                (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-                (starttime.tv_sec+starttime.tv_usec/1.0e6) );
-    }
-#endif
-
-    return map;
+  return map;
 }
 
 
 /*
-** READ FROM STRINGS INSTEAD OF FILE - ASSUMES A MAP FILE HAS ALREADY BEEN LOADED
+** Loads a single mapfile parameter (e.g. scalebar units) from an name/value pair.
 */
-int msLoadMapString(mapObj *map, char *object, char *value)
+int msLoadMapParameter(mapObj *map, char *name, char *value)
 {
   int i;
   errorObj *ms_error;
 
-  msyystate = 1; /* set lexer state */
-  msyystring = object;
+  msyystate = MS_TOKENIZE_NAME; /* set lexer state and input to tokenize */
+  msyystring = name;
 
   ms_error = msGetErrorObj();
   ms_error->code = MS_NOERR; /* init error code */
@@ -4955,64 +5039,59 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     case(CONFIG): {
         char *key=NULL, *value=NULL;
 
-        if((getString(&key) != MS_FAILURE) && (getString(&value) != MS_FAILURE))
-        {
-            msSetConfigOption( map, key, value );
-            free( key ); key=NULL;
-            free( value ); value=NULL;
+        if((getString(&key) != MS_FAILURE) && (getString(&value) != MS_FAILURE)) {
+          msSetConfigOption( map, key, value );
+          free( key ); key=NULL;
+          free( value ); value=NULL;
         }
       } break;
     case(EXTENT):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if(getDouble(&(map->extent.minx)) == -1) break;
       if(getDouble(&(map->extent.miny)) == -1) break;
       if(getDouble(&(map->extent.maxx)) == -1) break;
       if(getDouble(&(map->extent.maxy)) == -1) break;
       if (!MS_VALID_EXTENT(map->extent)) {
-          msSetError(MS_MISCERR, "Given map extent is invalid. Check that it " \
-        "is in the form: minx, miny, maxx, maxy", "msLoadMapString()"); 
-          break;
+        msSetError(MS_MISCERR, "Given map extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "msLoadMapParameterFromUrl()"); 
+        break;
       }
       msMapComputeGeotransform( map );
       break;
-    case(ANGLE):
-    {
+    case(ANGLE): {
         double rotation_angle;
 
-        msyystate = 2; msyystring = value;
+        msyystate = MS_TOKENIZE_VALUE; msyystring = value;
         if(getDouble(&(rotation_angle)) == -1) break;
-
         msMapSetRotation( map, rotation_angle );
-    }
-    break;
+      } break;
     case(INTERLACE):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
       msPostMapParseOutputFormatSetup( map );
       break;
     case(IMAGECOLOR):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if(getInteger(&(map->imagecolor.red)) == -1) break;
       if(getInteger(&(map->imagecolor.green)) == -1) break;
       if(getInteger(&(map->imagecolor.blue)) == -1) break;
       break;
     case(IMAGEQUALITY):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if(getInteger(&(map->imagequality)) == -1) break;
       msPostMapParseOutputFormatSetup( map );
       break;
     case(IMAGETYPE):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       map->imagetype = getToken();
       msPostMapParseOutputFormatSetup( map );
       break;
     case(LAYER):      
       if(getInteger(&i) == -1) break;
       if(i>=map->numlayers || i<0) break;
-      loadLayerString(map, (GET_LAYER(map, i)), value);
+      loadLayerValue(map, (GET_LAYER(map, i)), value);
       break;
     case(LEGEND):
-      loadLegendString(map, &(map->legend), value);
+      loadLegendValue(map, &(map->legend), value);
       break;
     case(MAXSIZE):
       break; /* not allowed to change this via a string */
@@ -5020,25 +5099,25 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       msLoadProjectionString(&(map->projection), value);
       break;
     case(QUERYMAP):
-      loadQueryMapString(map, &(map->querymap), value);
+      loadQueryMapValue(map, &(map->querymap), value);
       break;
     case(REFERENCE):
-      loadReferenceMapString(map, &(map->reference), value);
+      loadReferenceMapValue(map, &(map->reference), value);
       break;
     case(RESOLUTION):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if(getDouble(&(map->resolution)) == -1) break;      
       break;
     case(SCALEBAR):
-      loadScalebarString(map, &(map->scalebar), value);
+      loadScalebarValue(map, &(map->scalebar), value);
       break;
     case(SIZE):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if(getInteger(&(map->width)) == -1) break;
       if(getInteger(&(map->height)) == -1) break;
 
       if(map->width > map->maxsize || map->height > map->maxsize || map->width < 0 || map->height < 0) {
-	msSetError(MS_WEBERR, "Image size out of range.", "msLoadMapString()");
+	msSetError(MS_WEBERR, "Image size out of range.", "msLoadMapParameterFromUrl()");
 	break;
       }
       msMapComputeGeotransform( map );
@@ -5048,25 +5127,25 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       map->shapepath = strdup(value);
       break;
     case(STATUS):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
       break;
     case(MS_STRING):
       i = msGetLayerIndex(map, msyytext);
       if(i>=map->numlayers || i<0) break;
-      loadLayerString(map, (GET_LAYER(map, i)), value);
+      loadLayerValue(map, (GET_LAYER(map, i)), value);
       break;
     case(TRANSPARENT):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
       msPostMapParseOutputFormatSetup( map );
       break;
     case(UNITS):
-      msyystate = 2; msyystring = value;
+      msyystate = MS_TOKENIZE_VALUE; msyystring = value;
       if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) break;
       break;
     case(WEB):
-      loadWebString(map, &(map->web), value);
+      loadWebValue(map, &(map->web), value);
       break;      
     default:
       break; /* malformed string */
@@ -5076,8 +5155,8 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     break;
   }
 
-  msyystate = 3; /* restore lexer state */
-  msyylex();
+  // msyystate = 3; /* restore lexer state */
+  // msyylex();
 
   if(ms_error->code != MS_NOERR) return(-1);
 
@@ -5089,12 +5168,12 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 ** Returns an array with one entry per mapfile token.  Useful to manipulate
 ** mapfiles in MapScript.
 **
-** The returned array should be freed using msFreeCharArray()
+** The returned array should be freed using msFreeCharArray().
 */
 static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
 {
-  char   **tokens = NULL;
-  int    numtokens=0, numtokens_allocated=0;
+  char **tokens = NULL;
+  int  numtokens=0, numtokens_allocated=0;
 
   *ret_numtokens = 0;
 
@@ -5117,88 +5196,81 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
     return NULL;
   }
 
-  msyystate = 6; /* restore lexer state to INITIAL, and do return comments */
+  msyystate = MS_TOKENIZE_FILE; /* restore lexer state to INITIAL, and do return comments */
   msyylex();
-  msyyrestart(msyyin);
-  msyylineno = 1;  /* Start at line #1 */
+  msyyreturncomments = 1; /* want all tokens, including comments */
 
-  /* we start with room for 256 tokens and will double size of the array  */
-  /* every time we reach the limit */
+  msyyrestart(msyyin); /* start at line begining, line 1 */
+  msyylineno = 1;
+
   numtokens = 0;
   numtokens_allocated = 256; 
-  tokens = (char **)malloc(numtokens_allocated*sizeof(char*));
-  if (tokens == NULL)
-  {
-      msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
-      return NULL;
+  tokens = (char **) malloc(numtokens_allocated*sizeof(char*));
+  if(tokens == NULL) {
+    msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+    return NULL;
   }
 
   for(;;) {
 
-    if (numtokens_allocated <= numtokens)
-    {
-        /* double size of the array every time we reach the limit */
-        numtokens_allocated *= 2; 
-        tokens = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
-        if (tokens == NULL)
-        {
-            msSetError(MS_MEMERR, "Realloc() error.", "msTokenizeMap()");
-            return NULL;
-        }
+    if(numtokens_allocated <= numtokens) {        
+      numtokens_allocated *= 2; /* double size of the array every time we reach the limit */
+      tokens = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
+      if(tokens == NULL) {
+        msSetError(MS_MEMERR, "Realloc() error.", "msTokenizeMap()");
+        return NULL;
+      }
     }
  
     switch(msyylex()) {   
-      case(EOF):
-        /* This is the normal way out... cleanup and exit */
+      case(EOF): /* This is the normal way out... cleanup and exit */        
         fclose(msyyin);      
         *ret_numtokens = numtokens;
         return(tokens);
         break;
       case(MS_STRING):
-        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
-        if (tokens[numtokens])
-            sprintf(tokens[numtokens], "\"%s\"", msyytext);
+        tokens[numtokens] = (char*) malloc((strlen(msyytext)+3)*sizeof(char));
+        if(tokens[numtokens])
+          sprintf(tokens[numtokens], "\"%s\"", msyytext);
         break;
       case(MS_EXPRESSION):
-        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
-        if (tokens[numtokens])
-            sprintf(tokens[numtokens], "(%s)", msyytext);
+        tokens[numtokens] = (char*)malloc ((strlen(msyytext)+3)*sizeof(char));
+        if(tokens[numtokens])
+          sprintf(tokens[numtokens], "(%s)", msyytext);
         break;
       case(MS_REGEX):
-        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
-        if (tokens[numtokens])
-            sprintf(tokens[numtokens], "/%s/", msyytext);
+        tokens[numtokens] = (char*)malloc ((strlen(msyytext)+3)*sizeof(char));
+        if(tokens[numtokens])
+          sprintf(tokens[numtokens], "/%s/", msyytext);
         break;
       default:
         tokens[numtokens] = strdup(msyytext);
         break;
     }
 
-    if (tokens[numtokens] == NULL)
-    {
-        msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
-        return NULL;
+    if(tokens[numtokens] == NULL) {
+      msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+      return NULL;
     }
 
     numtokens++;
   }
 
-  /* We should never get here. */
-  return NULL;
+  return NULL;   /* should never get here */
 }
 
-/*  */
-/* Wraps tokenizeMapInternal */
-/*  */
+/*
+** Wraps tokenizeMapInternal
+*/
 char **msTokenizeMap(char *filename, int *numtokens)
 {
-    char **tokens;
+  char **tokens;
 
-    msAcquireLock( TLOCK_PARSER );
-    tokens = tokenizeMapInternal( filename, numtokens );
-    msReleaseLock( TLOCK_PARSER );
+  msAcquireLock( TLOCK_PARSER );
+  tokens = tokenizeMapInternal( filename, numtokens );
+  msReleaseLock( TLOCK_PARSER );
 
-    return tokens;
+  return tokens;
 }
 
 void msCloseConnections(mapObj *map) {

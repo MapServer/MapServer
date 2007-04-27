@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.159  2007/04/27 03:29:06  sdlime
+ * Updated mapfile.c and a bit in the lexer to enable loading a mapObj from a string buffer. Also did some function clean-up related to the map_... processing via mapserv.c. Majority of change is mapfile.c, minor but extensive.
+ *
  * Revision 1.158  2007/04/26 02:19:11  hobu
  * exit(0) instead of exit(3) for the fastcgi cleanup
  *
@@ -308,7 +311,7 @@ mapObj *loadMap(void)
   /* services can take advantage of these "vendor specific" extensions */
   for(i=0;i<msObj->request->NumParams;i++) {
     if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0) { /* check to see if there are any additions to the mapfile */
-      if(msLoadMapString(map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) == -1) writeError();
+      if(msLoadMapParameter(map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) == -1) writeError();
       continue;
     }
 
@@ -929,13 +932,6 @@ void loadForm(void)
 
       continue;
     }
-
-    /* check to see if there are any additions to the mapfile, this has been moved to loadMap() */
-    /* if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0) {  */
-    /* if(msLoadMapString(msObj->Map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) == -1) */
-    /* writeError(); */
-    /* continue; */
-    /* } */
 
 /* -------------------------------------------------------------------- */
 /*      The following code is used to support the rosa applet (for      */

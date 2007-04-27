@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.195  2007/04/27 03:29:07  sdlime
+ * Updated mapfile.c and a bit in the lexer to enable loading a mapObj from a string buffer. Also did some function clean-up related to the map_... processing via mapserv.c. Majority of change is mapfile.c, minor but extensive.
+ *
  * Revision 1.194  2007/04/25 11:35:57  umberto
  * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
  *
@@ -146,6 +149,7 @@
 #include "map.h"
 #include "mapparser.h"
 #include "mapthread.h"
+#include "mapfile.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -278,7 +282,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
   }
 
   msAcquireLock( TLOCK_PARSER );
-  msyystate = 4; msyystring = tmpstr1;
+  msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;
   status = msyyparse();
   result = msyyresult;
   msReleaseLock( TLOCK_PARSER );

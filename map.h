@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.481  2007/04/27 03:29:06  sdlime
+ * Updated mapfile.c and a bit in the lexer to enable loading a mapObj from a string buffer. Also did some function clean-up related to the map_... processing via mapserv.c. Majority of change is mapfile.c, minor but extensive.
+ *
  * Revision 1.480  2007/04/25 11:35:57  umberto
  * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
  *
@@ -1382,6 +1385,7 @@ MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
 MS_DLL_EXPORT int msSetup(void);
 MS_DLL_EXPORT void msCleanup(void);
+MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath);
 
 /* Function prototypes, not wrapable */
 
@@ -1431,15 +1435,11 @@ MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 
 MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);
 
-
-
 /* For maplabel and mappdf */
 int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
 pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
 double dist(pointObj a, pointObj b);
-
-
    
 /*
 ** Main API Functions
@@ -1476,7 +1476,7 @@ MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addima
 MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
 MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
 MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
-MS_DLL_EXPORT int msLoadMapString(mapObj *map, char *object, char *value);
+MS_DLL_EXPORT int msLoadMapParameter(mapObj *map, char *name, char *value);
 MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
 MS_DLL_EXPORT void msFree(void *p);
 MS_DLL_EXPORT char **msTokenizeMap(char *filename, int *numtokens);
