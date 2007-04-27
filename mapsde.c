@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.154  2007/04/27 02:13:58  hobu
+ * add an OBJECTID PROCESSING option to allow the override of the rowid column.  This will have performance benefits in certain cases.
+ *
  * Revision 1.153  2007/04/26 21:56:36  hobu
  * clean up a few small leaks
  *
@@ -359,10 +362,17 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
                     "msSDELayerGetRowIDColumn()");
         return NULL;
     }
-  
+
     column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
     column_name[0]='\0';
 
+    strcpy(column_name,msLayerGetProcessingKey(layer,"OBJECTID"));  
+
+    if (column_name) {
+       if (layer->debug)
+          msDebug("msSDELayerGetRowIDColumn(): Column was manually set to %s\n", column_name);
+       return column_name;
+    }
     full_column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
     full_column_name[0]='\0';
     
