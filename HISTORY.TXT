@@ -95,6 +95,8 @@ Version 4.99 (CVS HEAD)
 
  - mapows.c: fixed XML error (bug 2070)
 
+ - mapwms.c: Fixed text/plain output duplicate (bug 1379)
+
 
 Version 4.10.0 (2006-10-04)
 ---------------------------

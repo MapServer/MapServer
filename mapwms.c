@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.185  2007/04/28 01:01:04  tkralidi
+ * Fixed text/plain output duplicate as per bug 1379
+ *
  * Revision 1.184  2007/04/17 10:36:55  umberto
  * RFC24: mapObj, layerObj, initial classObj support
  *
@@ -1837,17 +1840,27 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     pszMimeType = msOWSLookupMetadata(&(map->web.metadata), "MO", 
                                       "feature_info_mime_type");
 
-    if (pszMimeType)
-      msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
-                           "text/plain",
-                           pszMimeType,
-                           "application/vnd.ogc.gml",
-                           NULL);
-    else
+    if (pszMimeType) {
+      if (strcasecmp(pszMimeType, "text/plain") == 0) {
+        msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+                             pszMimeType,
+                             "application/vnd.ogc.gml",
+                             NULL);
+      }
+      else {
+        msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+                             "text/plain",
+                             pszMimeType,
+                             "application/vnd.ogc.gml",
+                             NULL);
+      }
+    }
+    else {
        msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
                        "text/plain",
                        "application/vnd.ogc.gml",
                        NULL);
+    }
 
     msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded,
                          "text/xml",
