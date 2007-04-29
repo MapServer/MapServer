@@ -99,6 +99,7 @@ Version 4.99 (CVS HEAD)
 
  - mapwms.c: Attribution element output in GetCapabilities only 1.0.7 and higher (bug 2080)
 
+ - mapwms.c: UserDefinedSymbolization element output in GetCapabilities only 1.0.7 and higher (bug 2081)
 
 
 Version 4.10.0 (2006-10-04)
