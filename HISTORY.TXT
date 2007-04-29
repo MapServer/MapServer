@@ -101,6 +101,8 @@ Version 4.99 (CVS HEAD)
 
  - mapwms.c: UserDefinedSymbolization element output in GetCapabilities only 1.0.7 and higher (bug 2081)
 
+ - mapwms.c: GetLegendGraphic and GetStyles only appear in 1.1.1 and higher responses (bug 1826)
+
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
