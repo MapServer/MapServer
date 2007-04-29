@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.187  2007/04/29 02:52:09  tkralidi
+ *
+ * UserDefinedSymbolization element output in GetCapabilities only 1.0.7 and higher (bug 2081)
+ *
  * Revision 1.186  2007/04/29 02:46:48  tkralidi
  * Attribution element output in GetCapabilities only 1.0.7 and higher (bug 2080)
  *
@@ -1904,7 +1908,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msIO_printf("  <VendorSpecificCapabilities />\n"); /* nothing yet */
 
   /* SLD support */
-  msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
+  if (nVersion >= OWS_1_0_7) {
+    msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
+  }
 
   /* Top-level layer with map extents and SRS, encloses all map layers */
   msIO_printf("  <Layer>\n");
