@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.186  2007/04/29 02:46:48  tkralidi
+ * Attribution element output in GetCapabilities only 1.0.7 and higher (bug 2080)
+ *
  * Revision 1.185  2007/04/28 01:01:04  tkralidi
  * Fixed text/plain output duplicate as per bug 1379
  *
@@ -1341,7 +1344,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
    }
 
-   msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
+  if (nVersion >= OWS_1_0_7) {
+    msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
+  }
 
    if(nVersion >= OWS_1_1_0)
        msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl", 
@@ -1941,7 +1946,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
                          &(map->web.metadata), "MO" );
 
-  msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
+  if (nVersion >= OWS_1_0_7) {
+    msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
+  }
 
   msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale,
                       map->resolution);
