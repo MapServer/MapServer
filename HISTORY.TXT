@@ -97,6 +97,9 @@ Version 4.99 (CVS HEAD)
 
  - mapwms.c: Fixed text/plain output duplicate (bug 1379)
 
+ - mapwms.c: Attribution element output in GetCapabilities only 1.0.7 and higher (bug 2080)
+
+
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
