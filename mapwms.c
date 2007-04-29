@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.188  2007/04/29 02:59:36  tkralidi
+ * GetLegendGraphic and GetStyles only appear in 1.1.1 and higher responses.
+ *
  * Revision 1.187  2007/04/29 02:52:09  tkralidi
  *
  * UserDefinedSymbolization element output in GetCapabilities only 1.0.7 and higher (bug 2081)
@@ -1876,7 +1879,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                          NULL);
 
     msGetOutputFormatMimeListGD(map,mime_list,sizeof(mime_list)/sizeof(char*));
-    msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
+
+    if (nVersion >= OWS_1_1_1) {
+      msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
                     mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                     mime_list[4], mime_list[5], mime_list[6], mime_list[7],
                     mime_list[8], mime_list[9], mime_list[10], mime_list[11],
@@ -1884,9 +1889,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                     mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                     NULL );
 
-    msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded,
-                         "text/xml",
-                         NULL);
+      msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
+    }
 
   }
 
