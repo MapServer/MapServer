@@ -103,6 +103,9 @@ Version 4.99 (CVS HEAD)
 
  - mapwms.c: GetLegendGraphic and GetStyles only appear in 1.1.1 and higher responses (bug 1826)
 
+ - mapwcs.c:
+  - msWCSDescribeCoverage: throw Exception if Coverage doesn't exist (bug 649)
+  - msWCSException: updated as per WCS 1.0 Appendix A.6
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
