@@ -182,6 +182,8 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     long status, column_type; 
     char* column_name;
     char* full_column_name;
+    char* proc_key;
+
     SE_REGINFO registration;
     
     msSDELayerInfo *sde=NULL;
@@ -197,9 +199,11 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
     column_name[0]='\0';
 
-    strcpy(column_name,msLayerGetProcessingKey(layer,"OBJECTID"));  
+    proc_key = msLayerGetProcessingKey(layer,"OBJECTID");
+    if (proc_key)
+       strcpy(column_name,proc_key);
 
-    if (column_name) {
+    if (proc_key) {
        if (layer->debug)
           msDebug("msSDELayerGetRowIDColumn(): Column was manually set to %s\n", column_name);
        return column_name;
