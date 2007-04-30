@@ -1937,7 +1937,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /*  */
           /* Server definition */
           /*  */
-          if(nVersion <= OWS_1_0_0 )
+          if(nVersion < OWS_1_0_0 )
               msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                        NULL, "wms_server_version", OWS_WARN,
                              "      <Server service=\"WMS\" version=\"%s\" ",
