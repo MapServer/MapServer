@@ -655,6 +655,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
     char *pszTmp = NULL;
     char *pszTime = NULL;
     char *pszValueShape = NULL;
+    const char *pszFeatureId  = NULL;
 
     xmlNsPtr psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
@@ -670,7 +671,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
 
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "member", NULL);
         
-        psObsNode = xmlNewChild(psNode, NULL, BAD_CAST BAD_CAST "Observation", BAD_CAST pszValue);
+        psObsNode = xmlNewChild(psNode, NULL, BAD_CAST "Observation", BAD_CAST pszValue);
         
 
         /* order of elements is time, location, procedure, observedproperty
@@ -781,6 +782,25 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
 
         /*TODO : add namespaces like wfs " ms and a url to mapserve ? */
         psLayerNode = xmlNewChild(psNode, NULL, BAD_CAST lp->name, NULL);
+
+        /* fetch gml:id */
+
+        pszFeatureId = msOWSLookupMetadata(&(lp->metadata), "OSG", "featureid");
+
+        if(pszFeatureId && msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
+        { /* find the featureid amongst the items for this layer */
+          for(j=0; j<lp->numitems; j++) {
+            if(strcasecmp(lp->items[j], pszFeatureId) == 0) { /* found it  */
+              break;
+            }
+          }
+          if (j<lp->numitems)
+            xmlNewNsProp(psNode, psNsGml, BAD_CAST "id", BAD_CAST  sShape.values[j]);
+          msLayerClose(lp);
+        }
+
+        if(pszFeatureId && msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
+
         xmlSetNs(psLayerNode,xmlNewNs(psLayerNode, NULL,  NULL));
         
         /*bbox*/
