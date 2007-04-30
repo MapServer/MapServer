@@ -37,6 +37,13 @@
 # Section I: Mapserver Compilation Options
 ########################################################################
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Check for external options file to include
+# nmake -f makefile.vc EXT_NMAKE_OPT=mynmake.opt
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!IFDEF EXT_NMAKE_OPT
+!INCLUDE $(EXT_NMAKE_OPT)
+!ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # File locations and where to install things
@@ -45,8 +52,10 @@
 # relative to this directory throughout this option file.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Set the following to point to the current directory. 
+# Set the following to point to the current directory.
+!IFNDEF MS_BASE 
 MS_BASE =   c:\projects\mapserver
+!ENDIF
 
 BINDIR = $(MS_BASE)\..\bin
 
