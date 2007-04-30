@@ -107,6 +107,8 @@ Version 4.99 (CVS HEAD)
   - msWCSDescribeCoverage: throw Exception if Coverage doesn't exist (bug 649)
   - msWCSException: updated as per WCS 1.0 Appendix A.6
 
+ - mapogcsos.c: Added ability to output gml:id via MAP/LAYER/METADATA/ows/sos/gml_featureid (bug 1754)
+
 Version 4.10.0 (2006-10-04)
 ---------------------------
 
