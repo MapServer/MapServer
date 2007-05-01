@@ -3434,6 +3434,61 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
   return(0);
 }
 
+static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst) 
+{
+  int x, y;
+  int w, h;
+  int c;
+
+  if(!src || !dst) return MS_FAILURE;
+  if(gdImageSX(src) != gdImageSX(dst) || gdImageSY(src) != gdImageSY(dst)) return MS_FAILURE;
+  if(!gdImageTrueColor(src) || gdImageTrueColor(dst)) return MS_FAILURE; /* 24-bit to 8-bit */
+
+  w = gdImageSX(src);
+  h = gdImageSY(src);
+
+  for (y = 0; (y < h); y++) {
+    for (x = 0; (x < w); x++) {
+      c = gdImageGetPixel(src, x, y);
+      gdImageSetPixel(dst, x, y, gdImageColorClosestHWB(dst, gdTrueColorGetRed(c), gdTrueColorGetGreen(c), gdTrueColorGetBlue(c)));
+    }
+  }
+
+  return MS_SUCCESS;
+} 
+
+static gdImagePtr msImageCreateWithPaletteGD(const char *palette, int sx, int sy) 
+{
+  gdImagePtr img;
+  FILE *stream=NULL;
+  char buffer[MS_BUFFER_LENGTH];
+  int r,g,b;
+
+  if(!palette) return NULL;
+  if(sx < 1 || sy < 1) return NULL;
+
+  stream = fopen(palette, "r");
+  if(!stream) {
+    msSetError(MS_IOERR, "Error opening palette file %s.", "msImageCreateWithPaletteGD()", palette);
+    return NULL;
+  }
+
+  img = gdImageCreate(sx, sy);
+  if(!img) {
+    msSetError(MS_IMGERR, "Error creating GD image.", "msImageCreateWithPaletteGD()");
+    return NULL;
+  }
+
+  while(fgets(buffer, MS_BUFFER_LENGTH, stream)) { /* while there are colors to load */
+    if(buffer[0] == '#' || buffer[0] == '\n' || buffer[0] == '\r')
+      continue; /* skip comments and blank lines */
+    sscanf(buffer,"%d,%d,%d", &r, &g, &b);    
+    gdImageColorAllocate(img, r, g, b);
+  }
+
+  return img;
+}
+
 /* ===========================================================================
    msSaveImageGD
    
@@ -3515,15 +3570,28 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
   } else if( strcasecmp(format->driver,"gd/png") == 0 ) {
 #ifdef USE_GD_PNG
     int force_pc256 = MS_FALSE;
+    int force_palette = MS_FALSE;
 
     if( format->imagemode == MS_IMAGEMODE_RGB  || format->imagemode == MS_IMAGEMODE_RGBA ) {
       const char *force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", "OFF" );
-
       if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
         force_pc256 = MS_TRUE;
+
+      force_string = msGetOutputFormatOption( format, "PALETTE_FORCE", "OFF" );
+      if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
+        force_palette = MS_TRUE;
     }
 
-    if( force_pc256 ) {
+    if( force_palette ) {
+      gdImagePtr gdPImg;
+      const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
+
+      gdPImg = msImageCreateWithPaletteGD(palette, gdImageSX(img), gdImageSY(img));
+      msImageCopyForcePaletteGD(img, gdPImg);
+
+      gdImagePngCtx(gdPImg, ctx);
+      gdImageDestroy(gdPImg);
+    } else if( force_pc256 ) {
       gdImagePtr gdPImg;
       int dither, i;
       int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
