@@ -1414,6 +1414,7 @@ MS_DLL_EXPORT int freeClass( classObj * );
 MS_DLL_EXPORT void initLabel(labelObj *label);
 MS_DLL_EXPORT void resetClassStyle(classObj *_class);
 MS_DLL_EXPORT int initStyle(styleObj *style);
+MS_DLL_EXPORT int freeStyle(styleObj *style);
 MS_DLL_EXPORT void initReferenceMap(referenceMapObj *ref);
 MS_DLL_EXPORT void initScalebar(scalebarObj *scalebar);
 MS_DLL_EXPORT void initGrid( graticuleObj *pGraticule );
