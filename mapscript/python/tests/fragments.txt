@@ -1,0 +1,58 @@
+Functional tests of mapfile fragment loading
+============================================
+
+Setup
+-----
+
+Use pkg_resources to maintain sanity with setuptools develop builds
+
+    >>> try:
+    ...     import pkg_resources
+    ...     pkg_resources.require('mapscript')
+    ... except:
+    ...     pass
+
+Read in the standard mapserver fixture, and verify quickly
+
+    >>> import os
+    >>> mapfile = os.path.abspath('../../../tests/test.map')
+    >>> f = file(mapfile, 'rb')
+    >>> mapstring = f.read()
+    >>> f.close()
+    >>> mapstring.startswith('MAP')
+    True
+
+Massage the mapfile to use absolute paths to resources
+
+    >>> maproot = os.path.abspath("%s/.." % mapfile)
+    >>> absmapstr = mapstring.replace('FONTSET "', 'FONTSET "%s/' % maproot)
+    >>> absmapstr = absmapstr.replace('SYMBOLSET "', 'SYMBOLSET "%s/' % maproot)
+    >>> absmapstr = absmapstr.replace('DATA "', 'DATA "%s/' % maproot)
+
+Loading a MAP string
+--------------------
+
+With no map path
+
+    >>> from mapscript import msLoadMapFromString
+    >>> mo = msLoadMapFromString(absmapstr, None)
+    >>> mo.__class__
+    <class 'mapscript.mapObj'>
+    >>> mo.name
+    'Testing'
+    >>> mo.numlayers
+    7
+
+    # Delete so next tests get a clean slate
+    >>> del mo
+
+Using an explicit map path root
+
+    >>> mo = msLoadMapFromString(mapstring, maproot)
+    >>> mo.__class__
+    <class 'mapscript.mapObj'>
+    >>> mo.name
+    'Testing'
+    >>> mo.numlayers
+    7
+
