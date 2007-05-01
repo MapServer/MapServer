@@ -267,7 +267,7 @@ php3_mapscript:: $(LIBMAP_STATIC)
 maplexer.o: maplexer.c map.h mapfile.h
 
 maplexer.c: maplexer.l
-	$(LEX) -Pmsyy -i -omaplexer.c maplexer.l
+	$(LEX) --nounistd -Pmsyy -i -omaplexer.c maplexer.l
 
 mapparser.o: mapparser.c map.h
 
