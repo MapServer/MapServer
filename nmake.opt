@@ -46,6 +46,16 @@
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Check compiler version given in command line
+# nmake -f makefile.vc MSVC_VER=xxxx
+# 1310 = 7.1 (2003)   1400 = 8.0 (2005)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!IFNDEF MSVC_VER
+#assume msvc 7.1
+MSVC_VER=1310
+!ENDIF
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # File locations and where to install things
 # ----------------------------------------------------------------------
 # If you are using the MapServer Build Kit, almost everything should be 
@@ -63,15 +73,19 @@ BINDIR = $(MS_BASE)\..\bin
 # Optmization, debug, and related compile flags.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+!IF $(MSVC_VER) == 1400
+# Optimized, with using MSVCRT. 
+OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+# Debug with MSVCRT
+#OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ELSE
 # Optimized, with using MSVCRT. 
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
-
-# For MSVC8
-#OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
-
 # Debug with MSVCRT
 #OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
 #LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ENDIF
 
 # Uncomment the following to link mapserv.exe with a dll.  In almost 
 # all cases you will want to do this.
