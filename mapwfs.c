@@ -484,7 +484,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   for(i=0; i<map->numlayers; i++)
   {
       layerObj *lp;
-      lp = &(GET_LAYER(map, i));
+      lp = GET_LAYER(map, i);
 
       /* List only vector layers in which DUMP=TRUE */
       if (msWFSIsLayerSupported(lp))
@@ -867,7 +867,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     layerObj *lp;
     int j, bFound = 0;
     
-    lp = &(GET_LAYER(map, i));
+    lp = GET_LAYER(map, i);
 
     for (j=0; j<numlayers && !bFound; j++) {
       if ( lp->name && strcasecmp(lp->name, layers[j]) == 0)
@@ -1087,7 +1087,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     for(j=0; j<map->numlayers; j++) {
       layerObj *lp;
       
-      lp = &(GET_LAYER(map, j));
+      lp = GET_LAYER(map, j);
       
       /* Keep only selected layers, set to OFF by default. */
       lp->status = MS_OFF;
@@ -1099,7 +1099,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       for (j=0; j<map->numlayers; j++) {
 	layerObj *lp;
 	
-	lp = &(GET_LAYER(map, j));
+	lp = GET_LAYER(map, j);
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
 	  const char *pszThisLayerSRS;

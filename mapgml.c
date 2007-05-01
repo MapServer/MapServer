@@ -1578,7 +1578,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
 
-    lp = &(GET_LAYER(map, map->layerorder[i]));
+    lp = GET_LAYER(map, map->layerorder[i]);
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
       char *layerName;      
