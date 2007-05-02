@@ -128,6 +128,7 @@
 
 #include <assert.h>
 #include "map.h"
+#include "mapfile.h"
 #include "mapresample.h"
 #include "mapthread.h"
 
