@@ -596,6 +596,31 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
    msAdjustExtent(&(map->extent), map->width, map->height);
 
+   /* check/apply should be done prior to applying other wms parameters such BBOX/SRS. 
+    Bug 2079 */
+#ifdef USE_OGR
+   for(i=0; map && i<numentries; i++)
+   {
+/* -------------------------------------------------------------------- */
+/*      SLD support :                                                   */
+/*        - check if the SLD parameter is there. it is supposed to      */
+/*      refer a valid URL containing an SLD document.                   */
+/*        - check the SLD_BODY parameter that should contain the SLD    */
+/*      xml string.                                                     */
+/* -------------------------------------------------------------------- */
+       if (strcasecmp(names[i], "SLD") == 0 &&
+           values[i] && strlen(values[i]) > 0) 
+       {
+           msSLDApplySLDURL(map, values[i], -1, NULL);
+       }
+       else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
+               values[i] && strlen(values[i]) > 0) 
+       {
+           msSLDApplySLD(map, values[i], -1, NULL);
+       }
+   }
+#endif
+
    for(i=0; map && i<numentries; i++)
    {
     /* getMap parameters */
@@ -762,25 +787,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       map->imagecolor.green = (c/0x100)&0xff;
       map->imagecolor.blue = c&0xff;
     }
-#ifdef USE_OGR
-/* -------------------------------------------------------------------- */
-/*      SLD support :                                                   */
-/*        - check if the SLD parameter is there. it is supposed to      */
-/*      refer a valid URL containing an SLD document.                   */
-/*        - check the SLD_BODY parameter that should contain the SLD    */
-/*      xml string.                                                     */
-/* -------------------------------------------------------------------- */
-    else if (strcasecmp(names[i], "SLD") == 0 &&
-             values[i] && strlen(values[i]) > 0) {
-          msSLDApplySLDURL(map, values[i], -1, NULL);
-    }
-    else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
-               values[i] && strlen(values[i]) > 0) {
-          msSLDApplySLD(map, values[i], -1, NULL);
-    }
-#endif
-
-
 
     /* value of time can be empty. We should look for a default value */
     /* see function msWMSApplyTime */
