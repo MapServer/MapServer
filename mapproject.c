@@ -117,10 +117,20 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   }
 
 /* -------------------------------------------------------------------- */
+/*      If the source and destination are simple and equal, then do     */
+/*      nothing.                                                        */
+/* -------------------------------------------------------------------- */
+  if( in && in->numargs == 1 && out && out->numargs == 1
+      && strcmp(in->args[0],out->args[0]) == 0 )
+  {
+      /* do nothing, no transformation required */
+  }
+
+/* -------------------------------------------------------------------- */
 /*      If we have a fully defined input coordinate system and          */
 /*      output coordinate system, then we will use pj_transform.        */
 /* -------------------------------------------------------------------- */
-  if( in && in->proj && out && out->proj )
+  else if( in && in->proj && out && out->proj )
   {
       double	z = 0.0;
 
