@@ -1766,6 +1766,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                             " id=\"%s\"", NULL);
 
   msIO_fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  msIO_fprintf( stream, " xmlns:ogc=\"http://www.opengis.net/ogc\"");
 
   if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 )
   {
