@@ -324,12 +324,9 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
       return(MS_FALSE);
     }
-    if(expression->flags & MS_EXP_INSENSITIVE)
-    {
+    if(expression->flags & MS_EXP_INSENSITIVE) {
       if(strcasecmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
-    }
-    else
-    {
+    } else {
       if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
     }
     break;
@@ -340,7 +337,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
       tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
 
     msAcquireLock( TLOCK_PARSER );
-    msyystate = 4;
+    msyystate = MS_TOKENIZE_EXPRESSION;
     msyystring = tmpstr; /* set lexer state to EXPRESSION_STRING */
     status = msyyparse();
     expresult = msyyresult;
