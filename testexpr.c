@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  msyystate = 4; 
+  msyystate = MS_TOKENIZE_EXPRESSION; 
   msyystring = argv[1];
 
   status = msyyparse();
