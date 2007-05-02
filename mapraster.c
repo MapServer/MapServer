@@ -227,7 +227,7 @@ int msGetClass(layerObj *layer, colorObj *color)
       tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
 
       msAcquireLock( TLOCK_PARSER );
-      msyystate = 4; msyystring = tmpstr1;
+      msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;
       status = msyyparse();
       expresult = msyyresult;
       msReleaseLock( TLOCK_PARSER );
@@ -289,7 +289,7 @@ int msGetClass_Float(layerObj *layer, float fValue)
             tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
 
             msAcquireLock( TLOCK_PARSER );
-            msyystate = 4; msyystring = tmpstr1;
+            msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;
             status = msyyparse();
             expresult = msyyresult;
             msReleaseLock( TLOCK_PARSER );
