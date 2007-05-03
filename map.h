@@ -631,7 +631,7 @@ enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE};
 /* ATTRIBUTE BINDING OBJECT - holds parameters necessary to bind an item to mapfile property (e.g. style size) */
 typedef struct {
   char *item;
-  char index;
+  int index;
 } attributeBindingObj;
 #endif
 

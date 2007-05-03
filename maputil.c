@@ -170,6 +170,67 @@ extern int msyyresult; /* result of parsing, true/false */
 extern int msyystate;
 extern char *msyystring;
 
+/*
+** Helper functions to convert from strings to other types or objects.
+*/
+static int bindIntegerAttribute(char *value, int i)
+{
+  if(!value || strlen(value) == 0) return i;
+  return (atoi(value));
+}
+
+static double bindDoubleAttribute(char *value, double d)
+{
+  if(!value || strlen(value) == 0) return d;
+  return (atof(value));
+}
+
+static colorObj bindColorAttribute(char *value, colorObj c)
+{
+  if(!value || strlen(value) == 0) return c;
+  return c;
+}
+
+/*
+** Function to bind various layer properties to shape attributes.
+*/
+int msBindLayerToShape(layerObj *layer, shapeObj *shape)
+{
+  int i, j;
+  labelObj *label; /* for brevity */
+  styleObj *style;
+
+  if(!layer || !shape) return MS_FAILURE;
+
+  for(i=0; i<layer->numclasses; i++) {
+
+    /* check the styleObj's */
+    for(j=0; j<layer->class[i]->numstyles; j++) {
+      style = layer->class[i]->styles[j];
+
+      if(style->numbindings > 0) {
+        if(style->bindings[MS_STYLE_BINDING_ANGLE].index != -1)
+          style->angle = bindDoubleAttribute(shape->values[style->bindings[MS_STYLE_BINDING_ANGLE].index], 0.0);
+
+        if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1)
+          style->size = bindDoubleAttribute(shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index], 1.0);
+      }
+    } /* next styleObj */
+
+    /* check the labelObj */
+    label = &(layer->class[i]->label);
+
+    if(label->numbindings > 0) {
+      if(label->bindings[MS_LABEL_BINDING_ANGLE].index != -1)
+        label->angle = bindDoubleAttribute(shape->values[label->bindings[MS_LABEL_BINDING_ANGLE].index], 0.0);
+
+      if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1)
+        label->size = bindDoubleAttribute(shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index], 1.0);
+    }
+  } /* next classObj */
+
+  return MS_SUCCESS;
+}
 
 /*
  * Used to get red, green, blue integers separately based upon the color index
