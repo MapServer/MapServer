@@ -516,7 +516,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
     }
 
-    msSaveMap(map, "c:/temp/bug1925.map");
     if (bSuccess)
       return MS_SUCCESS;
 
