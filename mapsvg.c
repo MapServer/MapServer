@@ -728,7 +728,7 @@ static void imageFillPolygon(FILE *fp, int bCompressed,
                            psOutlineColor->red, psOutlineColor->green, 
                            psOutlineColor->blue,
                            size, pszDashArray);*/
-                msIO_fprintfgz(fp,  bCompressed, "<path stroke=\"#%02x%02x%02x\" stroke-width=\"%d\"%s d=\"",
+                msIO_fprintfgz(fp,  bCompressed, "<path stroke=\"#%02x%02x%02x\" stroke-width=\"%d\"%s style=\"fill:none\" d=\"",
                            psOutlineColor->red, psOutlineColor->green, 
                            psOutlineColor->blue,
                            size, pszDashArray);
