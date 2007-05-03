@@ -46,7 +46,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Set the following to point to the current directory. 
-MS_BASE =   c:\projects\mapserver
+MS_BASE =   c:\projects\mapserver-buildkit-022607\mapserver-4.10.x
 
 BINDIR = $(MS_BASE)\..\bin
 
@@ -56,6 +56,7 @@ BINDIR = $(MS_BASE)\..\bin
 
 # Optimized, with using MSVCRT. 
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
+
 
 # For MSVC8
 #OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
@@ -129,7 +130,9 @@ USE_POINT_Z_M=
 # GD is a required support library for MapServer 4.x.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GD_DIR=$(MS_BASE)\..\gd-2.0.33
-GD_LIB=$(GD_DIR)/bgd_i.lib
+#GD_LIB=$(GD_DIR)/bgd_i.lib
+GD_LIB=$(GD_DIR)/gd.lib
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # GD JPEG support
@@ -221,8 +224,8 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 # http://ming.sourceforge.net for the support library and more 
 # information
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#MING=-DUSE_MING_FLASH
-#MING_DIR=$(MS_BASE)\..\ming-0.2a
+MING=-DUSE_MING_FLASH
+MING_DIR=$(MS_BASE)\..\ming-0.2a
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -233,8 +236,8 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 # See http://www.pdflib.com/products/pdflib/download-source.html to 
 # download the support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PDF=-DUSE_PDF
-#PDF_DIR=$(MS_BASE)\..\PDFlib-Lite-6.0.2
+PDF=-DUSE_PDF
+PDF_DIR=$(MS_BASE)\..\PDFlib-Lite-6.0.2
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -244,8 +247,8 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 # operations.  It can only be compiled on Windows with MSVC 7.0 or 
 # greater (or the cygwin/mingw stack).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#GEOS=-DUSE_GEOS
-#GEOS_DIR=$(MS_BASE)\..\geos-2.2.1
+GEOS=-DUSE_GEOS
+GEOS_DIR=$(MS_BASE)\..\geos-2.2.3
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -266,8 +269,8 @@ ZLIB_INC=-I$(ZLIB_DIR)
 #libiconv support is used for to support double bytes (see bug 911).
 #uncomment the following to build with libiconv support.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ICONV=-DUSE_ICONV
-#ICONV_DIR=$(MS_BASE)\..\libiconv-1.9.1
+ICONV=-DUSE_ICONV
+ICONV_DIR=$(MS_BASE)\..\libiconv-1.9.1
 
 
 ########################################################################
@@ -282,8 +285,8 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # http://www.gdal.org/.  Once built, enable the GDAL flag, and point 
 # GDAL_DIR to the directory where GDAL was built. 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#GDAL=-DUSE_GDAL
-#GDAL_DIR=$(MS_BASE)\..\gdal
+GDAL=-DUSE_GDAL
+GDAL_DIR=$(MS_BASE)\..\gdal_1_4_0
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,8 +303,8 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # want to use GDAL/OGR for both raster and vector support, but GDAL_DIR 
 # needs only be defined once.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#OGR=-DUSE_OGR
-#GDAL_DIR=$(MS_BASE)\..\gdal
+OGR=-DUSE_OGR
+GDAL_DIR=$(MS_BASE)\..\gdal_1_4_0
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -325,16 +328,16 @@ JPEG_INC = -I$(JPEG_DIR)
 # Postgresql native Win32 client library.
 # See http://www.postgresql.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#POSTGIS =-DUSE_POSTGIS
-#POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.1.2
+POSTGIS =-DUSE_POSTGIS
+POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.2.3
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Direct connectivity to Oracle Spatial.
 # ----------------------------------------------------------------------
 # Point this to where your ORACLE_HOME directory lives.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ORACLE_DIR = c:\Oracle\Ora81
-#ORACLE=-DUSE_ORACLESPATIAL
+ORACLE_DIR = $(MS_BASE)\..\oracle-10.2.0.1.0
+ORACLE=-DUSE_ORACLESPATIAL
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -373,7 +376,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Server
 # ----------------------------------------------------------------------
-#WMS=-DUSE_WMS_SVR
+WMS=-DUSE_WMS_SVR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Client
@@ -387,30 +390,31 @@ JPEG_INC = -I$(JPEG_DIR)
 # Set the full path to the curl project directory.
 # You may also need to the full path to the windows socket library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#WMSCLIENT= -DUSE_WMS_LYR
-#CURL_DIR=$(MS_BASE)\..\curl-7.15.0
+WMSCLIENT= -DUSE_WMS_LYR
+CURL_DIR=$(MS_BASE)\..\curl-7.15.1
 #WINSOCK_LIB = "WSOCK32.LIB"
 #WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
-#WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WS2_32.Lib"
+WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WS2_32.Lib"
+#WINSOCK_LIB ="C:\PROGRA~1\MICROS~2.NET\Vc7\PlatformSDK\Lib\WS2_32.Lib"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Client
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
-#WFSCLIENT= -DUSE_WFS_LYR
+WFSCLIENT= -DUSE_WFS_LYR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_SVR to compile with WFS server 
 # support, requires OGR and PROJ4
-#WFS=-DUSE_WFS_SVR
+WFS=-DUSE_WFS_SVR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WCS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WCS_SVR to compile with WCS server support, requires GDAL.
-#WCS=-DUSE_WCS_SVR
+WCS=-DUSE_WCS_SVR
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -421,8 +425,8 @@ JPEG_INC = -I$(JPEG_DIR)
 #It also needs ICONV support since the libxml windows binaries 
 #are built with it 
 #http://xmlsoft.org/index.html
-#SOS=-DUSE_SOS_SVR
-#LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.13.win32
+SOS=-DUSE_SOS_SVR
+LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.23.win32
 
 
 ########################################################################
@@ -439,7 +443,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # make any MapScript bindings, eg. "nmake /f makefile.vc python", you 
 # will need to have SWIG installed.  
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#SWIG = $(MS_BASE)\..\SWIG-1.3.27\swig
+SWIG = $(MS_BASE)\..\SWIG-1.3.29\swig
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Java MapScript
@@ -447,7 +451,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # Java MapScript very likely requires USE_THREAD to be defined.  It is 
 # known to work with both JDK 1.5 and JDK 1.4
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#JAVA_HOME = "C:\Progra~1\Java\jdk1.5.0"
+JAVA_HOME = "C:\Progra~1\Java\jdk1.5.0_11"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Python MapScript
@@ -455,7 +459,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # Python MapScript very likely requires USE_THREAD to be defined.  
 # Python 2.2 and above are supported.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PYTHON_HOME = "$(MS_BASE)\..\Python-2.4.2"
+PYTHON_HOME = "$(MS_BASE)\..\Python-2.4.4"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PHP MapScript
@@ -463,8 +467,8 @@ JPEG_INC = -I$(JPEG_DIR)
 # The PHP_REGEX hack allows you to use PHP's regex system rather than 
 # the normal GNU regex library.  This should normally not be needed.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PHP_HOME = $(MS_BASE)\..\php-4.4.2
-#PHP_REGEX=1
+PHP_HOME = $(MS_BASE)\..\php-5.2.1
+PHP_REGEX=1
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # .NET/C# MapScript
@@ -472,7 +476,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # .NET will of course only work with MSVC 7.0 and 7.1.  Also note that
 # you will definitely want USE_THREAD defined.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#DOT_NET = YES
+DOT_NET = YES
 
 
 
@@ -488,8 +492,8 @@ JPEG_INC = -I$(JPEG_DIR)
 # Proj.4 distribution (cartographic projection routines).  PROJ.4 is
 # also required for all OGC services (WMS, WFS, and WCS). 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
-#PROJ_DIR=$(MS_BASE)\..\proj-4.4.9
+PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
+PROJ_DIR=$(MS_BASE)\..\proj-4.4.9
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -512,8 +516,8 @@ REGEX_DIR=$(MS_BASE)\..\regex-0.12
 # FastCGI Support
 # ----------------------------------------------------------------------
 # Uncomment, and update accordingly. 
-#FCGIDEF=-DUSE_FASTCGI
-#FCGIDIR=$(MS_BASE)\..\fcgi-2.4.0
+FCGIDEF=-DUSE_FASTCGI
+FCGIDIR=$(MS_BASE)\..\fcgi-2.4.0
 
 
 ########################################################################
@@ -534,7 +538,7 @@ PROJ_LIB=$(PROJ_DIR)/src/proj_i.lib
 # CURL include and library
 !IFDEF WMSCLIENT
 CURL_INC = -I$(CURL_DIR)/include
-CURL_LIB = $(CURL_DIR)/libcurl.lib
+CURL_LIB = $(CURL_DIR)/libcurl_imp.lib
 !ENDIF
 
 # LIBXML include and library
@@ -565,7 +569,7 @@ FT_LIB=$(FT_DIR)/objs/freetype2110.lib
 
 # GD include and library
 GD_INC= -I$(GD_DIR)
-GD_LIBS= $(GD_LIB) $(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
+GD_LIBS= $(GD_DIR)/gd.lib $(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
 GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT) $(GD_HAS_GETBITMAPFONT) $(GD_HAS_FTEX_XSHOW)
 
 # Tiff library on input
@@ -636,8 +640,8 @@ PDF_INC=-I$(PDF_DIR)/libs/pdflib
 
 #Oracle support
 !IFDEF ORACLE
-ORACLE_INC=-I$(ORACLE_DIR)/oci/include
-ORACLE_LIB=$(ORACLE_DIR)/oci/lib/msvc/oci.lib
+ORACLE_INC=-I$(ORACLE_DIR)/include
+ORACLE_LIB=$(ORACLE_DIR)/lib/msvc/oci.lib
 !ENDIF
 
 #libiconv support

@@ -15,6 +15,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.10.2
 ---------------------------
 
+- WMS : fixed request with a BBOX and and SLD containing Filter encoding (#2079)
+
+- Argument sequence wrong in msProjectRect calls in ogc filter (#2082)
+
+- when reading an SLD, sequence of classes is reversed (#1925)
+
 - Support for embedding manifests as resources for the VS2005 builds.(bug 2048)
 
 - Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString 
