@@ -419,7 +419,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                     map->layers[i].type = pasLayers[j].type;
                     map->layers[i].numclasses = 0;
                     iClass = 0;
-                    for (k=pasLayers[j].numclasses-1; k>=0; k--)
+                    for (k=0; k < pasLayers[j].numclasses; k++)
                     {
                         initClass(&map->layers[i].class[iClass]);
                         msCopyClass(&map->layers[i].class[iClass], 
@@ -516,6 +516,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
     }
 
+    msSaveMap(map, "c:/temp/bug1925.map");
     if (bSuccess)
       return MS_SUCCESS;
 
@@ -791,31 +792,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                         continue;
                     }
 
-                    psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
-/* -------------------------------------------------------------------- */
-/*      First parse rules with the else filter. These rules will        */
-/*      create the classes that are placed at the end of class          */
-/*      list. (See how classes are applied to layers in function        */
-/*      msSLDApplySLD).                                                 */
-/* -------------------------------------------------------------------- */
-                    while (psRule)
-                    {
-                        if (!psRule->pszValue || 
-                            strcasecmp(psRule->pszValue, "Rule") != 0)
-                        {
-                            psRule = psRule->psNext;
-                            continue;
-                        }
-                        psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
-                        if (psElseFilter)
-                        {
-                            msSLDParseRule(psRule, psLayer);
-                            _SLDApplyRuleValues(psRule, psLayer, 1);
-                        }
-                        psRule = psRule->psNext;
-
-                        
-                    }
 /* -------------------------------------------------------------------- */
 /*      Parse rules with no Else filter.                                */
 /* -------------------------------------------------------------------- */
@@ -905,6 +881,32 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                         psRule = psRule->psNext;
 
                     }
+/* -------------------------------------------------------------------- */
+/*      First parse rules with the else filter. These rules will        */
+/*      create the classes that are placed at the end of class          */
+/*      list. (See how classes are applied to layers in function        */
+/*      msSLDApplySLD).                                                 */
+/* -------------------------------------------------------------------- */
+                    psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
+                    while (psRule)
+                    {
+                        if (!psRule->pszValue || 
+                            strcasecmp(psRule->pszValue, "Rule") != 0)
+                        {
+                            psRule = psRule->psNext;
+                            continue;
+                        }
+                        psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
+                        if (psElseFilter)
+                        {
+                            msSLDParseRule(psRule, psLayer);
+                            _SLDApplyRuleValues(psRule, psLayer, 1);
+                        }
+                        psRule = psRule->psNext;
+
+                        
+                    }
+
                     psFeatureTypeStyle = psFeatureTypeStyle->psNext;
                 }
             }
