@@ -621,6 +621,20 @@ typedef struct {
         colorObj color;
     } queryMapObj;
 
+/* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
+#ifndef SWIG
+#define MS_STYLE_BINDING_LENGTH 2
+enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_ANGLE};
+#define MS_LABEL_BINDING_LENGTH 2
+enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE};
+
+/* ATTRIBUTE BINDING OBJECT - holds parameters necessary to bind an item to mapfile property (e.g. style size) */
+typedef struct {
+  char *item;
+  char index;
+} attributeBindingObj;
+#endif
+
 /* LABEL OBJECT - parameters needed to annotate a layer, legend or scalebar */
     typedef struct {
         char *font;
@@ -662,6 +676,11 @@ typedef struct {
 
   char *encoding;
 
+#ifndef SWIG
+  attributeBindingObj bindings[MS_LABEL_BINDING_LENGTH];
+  int numbindings;
+#endif
+
 } labelObj;
 
 /* WEB OBJECT - holds parameters for a mapserver/mapscript interface */
@@ -702,21 +721,6 @@ typedef struct {
 #endif /* SWIG */
 
 } webObj;
-
-
-/* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
-#ifndef SWIG
-#define MS_STYLE_BINDING_LENGTH 2
-enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_ANGLE};
-#define MS_LABEL_BINDING_LENGTH 2
-enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE};
-
-/* ATTRIBUTE BINDING OBJECT - holds parameters necessary to bind an item to mapfile property (e.g. style size) */
-typedef struct {
-  char *item;
-  char index;
-} attributeBindingObj;
-#endif
 
 /* STYLE OBJECT - holds parameters for symbolization, multiple styles may be applied within a classObj */
 typedef struct {
@@ -762,6 +766,11 @@ typedef struct {
    * application.
    */
   int isachild;
+#endif
+
+#ifndef SWIG
+  attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];
+  int numbindings;
 #endif
 
   char *angleitem, *sizeitem;
