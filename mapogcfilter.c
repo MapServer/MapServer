@@ -451,7 +451,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
             sprintf(szTmp, "init=epsg:%s",tokens[1]);
             msInitProjection(&sProjTmp);
             if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-              msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+              msProjectRect(&sProjTmp, &map->projection,  &sQueryRect);
         }
         else if (tokens &&  nTokens == 1)
         {
@@ -476,7 +476,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 sprintf(szTmp, "init=epsg:%d",nEpsgTmp);
                 msInitProjection(&sProjTmp);
                 if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-                  msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+                  msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
             }
         }
         if (tokens)
@@ -998,7 +998,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
             sprintf(szTmp, "init=epsg:%s",tokens[1]);
             msInitProjection(&sProjTmp);
             if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-              msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+              msProjectRect(&sProjTmp, &map->projection,  &sQueryRect);
         }
         else if (tokens &&  nTokens == 1)
         {
@@ -1023,7 +1023,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
                 sprintf(szTmp, "init=epsg:%d",nEpsgTmp);
                 msInitProjection(&sProjTmp);
                 if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-                  msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+                  msProjectRect( &sProjTmp, &map->projection, &sQueryRect);
             }
         }
         if (tokens)
