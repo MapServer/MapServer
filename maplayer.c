@@ -397,7 +397,7 @@ int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *meta
 
   /* allocate space for the various item lists */
   if(classify && layer->filter.type == MS_EXPRESSION) { 
-    numchars = countChars(layer->filter.string, '[');
+    numchars = msCountChars(layer->filter.string, '[');
     if(numchars > 0) {
       layer->filter.items = (char **)calloc(numchars, sizeof(char *)); /* should be more than enough space */
       if(!(layer->filter.items)) {
@@ -468,7 +468,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 
     ne = 0;
     if(layer->filter.type == MS_EXPRESSION) {
-      ne = countChars(layer->filter.string, '[');
+      ne = msCountChars(layer->filter.string, '[');
       if(ne > 0) {
 	      layer->filter.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
         if(!(layer->filter.items)) {
@@ -495,7 +495,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   for(i=0; i<layer->numclasses; i++) {
     ne = 0;
     if(classify && layer->class[i]->expression.type == MS_EXPRESSION) { 
-      ne = countChars(layer->class[i]->expression.string, '[');
+      ne = msCountChars(layer->class[i]->expression.string, '[');
       if(ne > 0) {
         layer->class[i]->expression.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
         if(!(layer->class[i]->expression.items)) {
@@ -514,7 +514,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 
     ne = 0;
     if(annotate && layer->class[i]->text.type == MS_EXPRESSION) { 
-      ne = countChars(layer->class[i]->text.string, '[');
+      ne = msCountChars(layer->class[i]->text.string, '[');
       if(ne > 0) {
         layer->class[i]->text.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
         if(!(layer->class[i]->text.items)) {
@@ -570,7 +570,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     int j;
     int bFound = 0;
       
-    tokens = split(metadata, ',', &n);
+    tokens = msStringSplit(metadata, ',', &n);
     if(tokens) {
       for(i=0; i<n; i++) {
         bFound = 0;
@@ -773,9 +773,9 @@ makeTimeFilter(layerObj *lp,
                the time. If not just free it */
             if (lp->filter.type == MS_EXPRESSION)
             {
-                pszBuffer = strcatalloc(pszBuffer, "((");
-                pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
-                pszBuffer = strcatalloc(pszBuffer, ") and ");
+                pszBuffer = msStringConcatenate(pszBuffer, "((");
+                pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+                pszBuffer = msStringConcatenate(pszBuffer, ") and ");
             }
             else
             {
@@ -783,37 +783,37 @@ makeTimeFilter(layerObj *lp,
             }
         }
         
-        pszBuffer = strcatalloc(pszBuffer, "(");
+        pszBuffer = msStringConcatenate(pszBuffer, "(");
         if (addtimebacktics)
-          pszBuffer = strcatalloc(pszBuffer,  "`");
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
         if (addtimebacktics)
-           pszBuffer = strcatalloc(pszBuffer, "[");
-        pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
+           pszBuffer = msStringConcatenate(pszBuffer, "[");
+        pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
         if (addtimebacktics)
-          pszBuffer = strcatalloc(pszBuffer, "]");
+          pszBuffer = msStringConcatenate(pszBuffer, "]");
         if (addtimebacktics)
-          pszBuffer = strcatalloc(pszBuffer,  "`");
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
          
-        pszBuffer = strcatalloc(pszBuffer, " = ");
+        pszBuffer = msStringConcatenate(pszBuffer, " = ");
         if (addtimebacktics)
-          pszBuffer = strcatalloc(pszBuffer,  "`");
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
         else
-          pszBuffer = strcatalloc(pszBuffer,  "'");
+          pszBuffer = msStringConcatenate(pszBuffer,  "'");
 
-        pszBuffer = strcatalloc(pszBuffer, (char *)timestring);
+        pszBuffer = msStringConcatenate(pszBuffer, (char *)timestring);
         if (addtimebacktics)
-          pszBuffer = strcatalloc(pszBuffer,  "`");
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
         else
-          pszBuffer = strcatalloc(pszBuffer,  "'");
+          pszBuffer = msStringConcatenate(pszBuffer,  "'");
 
-        pszBuffer = strcatalloc(pszBuffer, ")");
+        pszBuffer = msStringConcatenate(pszBuffer, ")");
         
         /* if there was a filter, It was concatenate with an And ans should be closed*/
         if(&lp->filter && lp->filter.type == MS_EXPRESSION)
         {
-            pszBuffer = strcatalloc(pszBuffer, ")");
+            pszBuffer = msStringConcatenate(pszBuffer, ")");
         }
 
         loadExpressionString(&lp->filter, pszBuffer);
@@ -824,7 +824,7 @@ makeTimeFilter(layerObj *lp,
         return MS_TRUE;
     }
     
-    atimes = split (timestring, ',', &numtimes);
+    atimes = msStringSplit(timestring, ',', &numtimes);
     if (atimes == NULL || numtimes < 1)
       return MS_FALSE;
 
@@ -832,9 +832,9 @@ makeTimeFilter(layerObj *lp,
     {
         if (&lp->filter && lp->filter.type == MS_EXPRESSION)
         {
-            pszBuffer = strcatalloc(pszBuffer, "((");
-            pszBuffer = strcatalloc(pszBuffer, lp->filter.string);
-            pszBuffer = strcatalloc(pszBuffer, ") and ");
+            pszBuffer = msStringConcatenate(pszBuffer, "((");
+            pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+            pszBuffer = msStringConcatenate(pszBuffer, ") and ");
             /*this flag is used to indicate that the buffer contains only the 
               existing filter. It is set to 0 when time filter parts are
               added to the buffer */
@@ -844,114 +844,114 @@ makeTimeFilter(layerObj *lp,
           freeExpression(&lp->filter);
 
         /* check to see if we have ranges by parsing the first entry */
-        tokens = split(atimes[0],  '/', &ntmp);
+        tokens = msStringSplit(atimes[0],  '/', &ntmp);
         if (ntmp == 2) /* ranges */
         {
             msFreeCharArray(tokens, ntmp);
             for (i=0; i<numtimes; i++)
             {
-                 tokens = split(atimes[i],  '/', &ntmp);
+                 tokens = msStringSplit(atimes[i],  '/', &ntmp);
                  if (ntmp == 2)
                  {
                      if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
-                       pszBuffer = strcatalloc(pszBuffer, " OR ");
+                       pszBuffer = msStringConcatenate(pszBuffer, " OR ");
                      else
-                       pszBuffer = strcatalloc(pszBuffer, "(");
+                       pszBuffer = msStringConcatenate(pszBuffer, "(");
 
                      bOnlyExistingFilter = 0;
 
-                     pszBuffer = strcatalloc(pszBuffer, "(");
+                     pszBuffer = msStringConcatenate(pszBuffer, "(");
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer, "[");
-                     pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
+                       pszBuffer = msStringConcatenate(pszBuffer, "[");
+                     pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer, "]");
+                       pszBuffer = msStringConcatenate(pszBuffer, "]");
                      
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
-                     pszBuffer = strcatalloc(pszBuffer, " >= ");
+                     pszBuffer = msStringConcatenate(pszBuffer, " >= ");
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
                      else
-                       pszBuffer = strcatalloc(pszBuffer,  "'");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
 
-                     pszBuffer = strcatalloc(pszBuffer, tokens[0]);
+                     pszBuffer = msStringConcatenate(pszBuffer, tokens[0]);
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
                      else
-                       pszBuffer = strcatalloc(pszBuffer,  "'");
-                     pszBuffer = strcatalloc(pszBuffer, " AND ");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
+                     pszBuffer = msStringConcatenate(pszBuffer, " AND ");
 
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer, "[");
-                     pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
+                       pszBuffer = msStringConcatenate(pszBuffer, "[");
+                     pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer, "]");
+                       pszBuffer = msStringConcatenate(pszBuffer, "]");
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
-                     pszBuffer = strcatalloc(pszBuffer, " <= ");
+                     pszBuffer = msStringConcatenate(pszBuffer, " <= ");
                      
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
                      else
-                       pszBuffer = strcatalloc(pszBuffer,  "'");
-                     pszBuffer = strcatalloc(pszBuffer, tokens[1]);
+                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
+                     pszBuffer = msStringConcatenate(pszBuffer, tokens[1]);
                      if (addtimebacktics)
-                       pszBuffer = strcatalloc(pszBuffer,  "`");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
                      else
-                       pszBuffer = strcatalloc(pszBuffer,  "'");
-                     pszBuffer = strcatalloc(pszBuffer, ")");
+                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
+                     pszBuffer = msStringConcatenate(pszBuffer, ")");
                  }
                  
                   msFreeCharArray(tokens, ntmp);
             }
             if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
-              pszBuffer = strcatalloc(pszBuffer, ")");
+              pszBuffer = msStringConcatenate(pszBuffer, ")");
         }
         else if (ntmp == 1) /* multiple times */
         {
             msFreeCharArray(tokens, ntmp);
-            pszBuffer = strcatalloc(pszBuffer, "(");
+            pszBuffer = msStringConcatenate(pszBuffer, "(");
             for (i=0; i<numtimes; i++)
             {
                 if (i > 0)
-                  pszBuffer = strcatalloc(pszBuffer, " OR ");
+                  pszBuffer = msStringConcatenate(pszBuffer, " OR ");
 
-                pszBuffer = strcatalloc(pszBuffer, "(");
+                pszBuffer = msStringConcatenate(pszBuffer, "(");
                 if (addtimebacktics)
-                  pszBuffer = strcatalloc(pszBuffer, "`");
+                  pszBuffer = msStringConcatenate(pszBuffer, "`");
                   
                 if (addtimebacktics)
-                  pszBuffer = strcatalloc(pszBuffer, "[");
-                pszBuffer = strcatalloc(pszBuffer, (char *)timefield);
+                  pszBuffer = msStringConcatenate(pszBuffer, "[");
+                pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
                 if (addtimebacktics)
-                  pszBuffer = strcatalloc(pszBuffer, "]");
+                  pszBuffer = msStringConcatenate(pszBuffer, "]");
 
                 if (addtimebacktics)
-                  pszBuffer = strcatalloc(pszBuffer, "`");
+                  pszBuffer = msStringConcatenate(pszBuffer, "`");
 
-                pszBuffer = strcatalloc(pszBuffer, " = ");
+                pszBuffer = msStringConcatenate(pszBuffer, " = ");
                   
                 if (addtimebacktics)
-                  pszBuffer = strcatalloc(pszBuffer, "`");
+                  pszBuffer = msStringConcatenate(pszBuffer, "`");
                 else
-                  pszBuffer = strcatalloc(pszBuffer,  "'");
-                pszBuffer = strcatalloc(pszBuffer, atimes[i]);
+                  pszBuffer = msStringConcatenate(pszBuffer,  "'");
+                pszBuffer = msStringConcatenate(pszBuffer, atimes[i]);
                 if (addtimebacktics)
-                  pszBuffer = strcatalloc(pszBuffer,  "`");
+                  pszBuffer = msStringConcatenate(pszBuffer,  "`");
                 else
-                  pszBuffer = strcatalloc(pszBuffer,  "'");
-                pszBuffer = strcatalloc(pszBuffer, ")");
+                  pszBuffer = msStringConcatenate(pszBuffer,  "'");
+                pszBuffer = msStringConcatenate(pszBuffer, ")");
             } 
-            pszBuffer = strcatalloc(pszBuffer, ")");
+            pszBuffer = msStringConcatenate(pszBuffer, ")");
         }
         else
         {
@@ -965,7 +965,7 @@ makeTimeFilter(layerObj *lp,
         if (pszBuffer && strlen(pszBuffer) > 0)
         {
             if(&lp->filter && lp->filter.type == MS_EXPRESSION)
-              pszBuffer = strcatalloc(pszBuffer, ")");
+              pszBuffer = msStringConcatenate(pszBuffer, ")");
             /*
             if(lp->filteritem) 
               free(lp->filteritem);

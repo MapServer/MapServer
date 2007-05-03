@@ -129,7 +129,7 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
     }
 
     i = 0;
-    path = getPath(fontset->filename);
+    path = msGetPath(fontset->filename);
 
     while(fgets(buffer, MS_BUFFER_LENGTH, stream))
     { /* while there's something to load */

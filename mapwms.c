@@ -421,10 +421,10 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
         }
         else
         {
-            atimes = split (timestring, ',', &numtimes);
+            atimes = msStringSplit (timestring, ',', &numtimes);
             if (numtimes >=1 && atimes)
             {
-                tokens = split(atimes[0],  '/', &ntmp);
+                tokens = msStringSplit(atimes[0],  '/', &ntmp);
                 if (ntmp == 2 && tokens) /* range */
                 {
                     time = strdup(tokens[0]);
@@ -440,15 +440,15 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
         /* get the pattern to use */
         if (time)
         {
-            tokens = split(timepatternstring, ',', &ntmp);
+            tokens = msStringSplit(timepatternstring, ',', &ntmp);
             if (tokens && ntmp >= 1)
             {
                 for (i=0; i<ntmp; i++)
                 {
                   if (tokens[i] && strlen(tokens[i]) > 0)
                   {
-                      trimBlanks(tokens[i]);
-                      tmpstr = trimLeft(tokens[i]);
+                      msStringTrimBlanks(tokens[i]);
+                      tmpstr = msStringTrimLeft(tokens[i]);
                       if (msTimeMatchPattern(time, tmpstr) == MS_TRUE)
                       {
                           msSetLimitedPattersToUse(tmpstr);
@@ -628,7 +628,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     {
       int  j, k, iLayer;
 
-      layers = split(values[i], ',', &numlayers);
+      layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || numlayers < 1) {
         msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                    "msWMSLoadGetMapParams()");
@@ -729,7 +729,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     else if (strcasecmp(names[i], "BBOX") == 0) {
       char **tokens;
       int n;
-      tokens = split(values[i], ',', &n);
+      tokens = msStringSplit(values[i], ',', &n);
       if (tokens==NULL || n != 4) {
         msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.",
                    "msWMSLoadGetMapParams()");
@@ -858,7 +858,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                                     "MO", MS_FALSE);
       if (projstring)
       {
-          tokens = split(projstring, ' ', &n);
+          tokens = msStringSplit(projstring, ' ', &n);
           if (tokens && n > 0)
           {
               for(i=0; i<n; i++)
@@ -884,7 +884,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                                                 "MO", MS_FALSE);
                   if (projstring)
                   {
-                      tokens = split(projstring, ' ', &n);
+                      tokens = msStringSplit(projstring, ' ', &n);
                       if (tokens && n > 0)
                       {
                           for(j=0; j<n; j++)
@@ -1028,7 +1028,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       char **tokens;
       int n=0, i=0;
       
-      tokens = split(styles, ',' ,&n);
+      tokens = msStringSplit(styles, ',' ,&n);
       for (i=0; i<n; i++)
       {
           if (tokens[i] && strlen(tokens[i]) > 0 && 
@@ -1578,7 +1578,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
         else
         {
           /* split into subgroups. Start at adres + 1 because the first '/' would cause an extra emtpy group */
-          nestedGroups[i] = split(groups + 1, '/', &numNestedGroups[i]); 
+          nestedGroups[i] = msStringSplit(groups + 1, '/', &numNestedGroups[i]); 
         }
       }
     }
@@ -1692,27 +1692,27 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   if (nVersion < OWS_1_0_7) {
     nVersion = OWS_1_0_0;
     dtd_url = strdup(schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/wms/1.0.0/capabilities_1_0_0.dtd");
+    dtd_url = msStringConcatenate(dtd_url, "/wms/1.0.0/capabilities_1_0_0.dtd");
   }
 
   else if (nVersion < OWS_1_1_0) {
     nVersion = OWS_1_0_7;
     dtd_url = strdup(schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/wms/1.0.7/capabilities_1_0_7.dtd");
+    dtd_url = msStringConcatenate(dtd_url, "/wms/1.0.7/capabilities_1_0_7.dtd");
   }
   else if (nVersion == OWS_1_1_0) {
     nVersion = OWS_1_1_0;
     dtd_url = strdup(schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/wms/1.1.0/capabilities_1_1_0.dtd");
+    dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.0/capabilities_1_1_0.dtd");
   }
   else {
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
     if (strcasecmp(schemalocation, OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
-      dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
+      dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
     else
-      dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
+      dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
   }
 
   /* We need this server's onlineresource. */
@@ -2113,7 +2113,7 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
          int tok;
          int j;
 
-         layers = split(values[i], ',', &tok);
+         layers = msStringSplit(values[i], ',', &tok);
 
          for (j=0; j<tok; j++)
          {
@@ -2133,7 +2133,7 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
          int tok;
          int j;
 
-         layers = split(values[i], ',', &tok);
+         layers = msStringSplit(values[i], ',', &tok);
 
          for (j=0; j<tok; j++)
          {
@@ -2151,9 +2151,9 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
       {
          char *imgext;
 
-         /* Note gsub() works on the string itself, so we need to make a copy */
+         /* Note msReplaceSubstring() works on the string itself, so we need to make a copy */
          imgext = strdup(values[i]);
-         imgext = gsub(imgext, ",", " ");
+         imgext = msReplaceSubstring(imgext, ",", " ");
 
          values[tmpNumentries] = imgext;
          names[tmpNumentries] = strdup("imgext");
@@ -2293,11 +2293,11 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
        */
       /* get a list of items that should be excluded in output */
       if((value = msOWSLookupMetadata(&(lp->metadata), "MO", "include_items")) != NULL)  
-          incitems = split(value, ',', &numincitems);
+          incitems = msStringSplit(value, ',', &numincitems);
 
       /* get a list of items that should be excluded in output */
       if((value = msOWSLookupMetadata(&(lp->metadata), "MO", "exclude_items")) != NULL)  
-          excitems = split(value, ',', &numexcitems);
+          excitems = msStringSplit(value, ',', &numexcitems);
 
       itemvisible = (int*)malloc(lp->numitems*sizeof(int));
       for(k=0; k<lp->numitems; k++)
@@ -2384,8 +2384,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
       query_layer = 1; /* flag set if QUERY_LAYERS is the request */
 
-      layers = split(values[i], ',', &numlayers);
-      if(layers==NULL || numlayers < 1 || strlen(trimLeft(values[i])) < 1) {
+      layers = msStringSplit(values[i], ',', &numlayers);
+      if(layers==NULL || numlayers < 1 || strlen(msStringTrimLeft(values[i])) < 1) {
         msSetError(MS_WMSERR, "At least one layer name required in QUERY_LAYERS.", "msWMSFeatureInfo()");
         return msWMSException(map, nVersion, "LayerNotDefined");
       }
@@ -2552,7 +2552,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
    for(i=0; map && i<numentries; i++) {
      if(strcasecmp(names[i], "LAYERS") == 0) {
 
-      layers = split(values[i], ',', &numlayers);
+      layers = msStringSplit(values[i], ',', &numlayers);
      }
    }
 
@@ -2859,7 +2859,7 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
         /* getMap parameters */
         if (strcasecmp(names[i], "LAYERS") == 0)
         {
-            layers = split(values[i], ',', &numlayers);
+            layers = msStringSplit(values[i], ',', &numlayers);
             if (layers==NULL || numlayers < 1) {
                 msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                    "msWMSGetStyles()");

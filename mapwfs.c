@@ -738,14 +738,14 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     /*  */
     /* __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4" */
     /*  */
-    layers = split(paramsObj->pszTypeName, ',', &numlayers);
+    layers = msStringSplit(paramsObj->pszTypeName, ',', &numlayers);
     if (numlayers > 0) {
       /* strip namespace if there is one :ex TYPENAME=cdf:Other */
-      tokens = split(layers[0], ':', &n);
+      tokens = msStringSplit(layers[0], ':', &n);
       if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
         msFreeCharArray(tokens, n);
         for (i=0; i<numlayers; i++) {
-            tokens = split(layers[i], ':', &n);
+            tokens = msStringSplit(layers[i], ':', &n);
             if (tokens && n==2) {
                 free(layers[i]);
                 layers[i] = strdup(tokens[1]);
@@ -1052,7 +1052,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     /*  */
     /* __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4" */
     /*  */
-    layers = split(typename, ',', &numlayers);
+    layers = msStringSplit(typename, ',', &numlayers);
     
     /* ==================================================================== */
     /*      TODO: check if the typename contains namespaces (ex cdf:Other), */
@@ -1064,12 +1064,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       return msWFSException(map, paramsObj->pszVersion);
     }
     
-    tokens = split(layers[0], ':', &n);
+    tokens = msStringSplit(layers[0], ':', &n);
     if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
       /* pszNameSpace = strdup(tokens[0]); */
       msFreeCharArray(tokens, n);
       for (i=0; i<numlayers; i++) {
-	tokens = split(layers[i], ':', &n);
+	tokens = msStringSplit(layers[i], ':', &n);
 	if (tokens && n==2) {
 	  free(layers[i]);
 	  layers[i] = strdup(tokens[1]);
@@ -1193,7 +1193,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   } else if (paramsObj->pszBbox) {
     char **tokens;
     int n;
-    tokens = split(paramsObj->pszBbox, ',', &n);
+    tokens = msStringSplit(paramsObj->pszBbox, ',', &n);
     if (tokens==NULL || n != 4) {
       msSetError(MS_WFSERR, "Wrong number of arguments for BBOX.", "msWFSGetFeature()");
       return msWFSException(map, paramsObj->pszVersion);
@@ -1250,7 +1250,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       /* -------------------------------------------------------------------- */
       nFilters = 0;
       if (strlen(pszFilter) > 0 && pszFilter[0] == '(') {
-	tokens = split(pszFilter+1, '(', &nFilters);
+	tokens = msStringSplit(pszFilter+1, '(', &nFilters);
 	
 	if (tokens == NULL || nFilters <=0 || nFilters != numlayers) {
 	  msSetError(MS_WFSERR, "Wrong number of FILTER attributes",

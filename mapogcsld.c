@@ -1811,7 +1811,7 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
     if (pszDashArray)
     {
         nDash = 0;
-        aszValues = split(pszDashArray, ' ', &nDash);
+        aszValues = msStringSplit(pszDashArray, ' ', &nDash);
         if (nDash > 0)
         {
             psSymbol->stylelength = nDash;
@@ -1941,7 +1941,7 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         if (pszDashValue)
         {
             nDash = 0;
-            aszValues = split(pszDashValue, ' ', &nDash);
+            aszValues = msStringSplit(pszDashValue, ' ', &nDash);
             if (nDash > 0)
             {
                 psSymbol->stylelength = nDash;
@@ -2753,11 +2753,11 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                 {
                     //open bracket to get valid expression
                     if (pszClassText == NULL)
-                      pszClassText = strcatalloc(pszClassText, "(");
+                      pszClassText = msStringConcatenate(pszClassText, "(");
                     
                     if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
                     {
-                        pszClassText = strcatalloc(pszClassText, psTmpNode->pszValue);
+                        pszClassText = msStringConcatenate(pszClassText, psTmpNode->pszValue);
                     }
                     else if (psTmpNode->eType == CXT_Element && 
                              strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
@@ -2765,23 +2765,23 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                              psTmpNode->psChild->pszValue)
                     {
                         sprintf(szTmp, "[%s]", psTmpNode->psChild->pszValue);
-                        pszClassText = strcatalloc(pszClassText, szTmp);
+                        pszClassText = msStringConcatenate(pszClassText, szTmp);
                     }
                     psTmpNode = psTmpNode->psNext;
                 
                 }
                 //close bracket to get valid expression
                 if (pszClassText != NULL)
-                  pszClassText = strcatalloc(pszClassText, ")");
+                  pszClassText = msStringConcatenate(pszClassText, ")");
             }
             else
             {
                 //supports  - <TextSymbolizer><Label>MY_COLUMN</Label>
                 if (psLabel->psChild && psLabel->psChild->pszValue)
                 {
-                    pszClassText = strcatalloc(pszClassText, "([");
-                    pszClassText = strcatalloc(pszClassText, psLabel->psChild->pszValue);
-                    pszClassText = strcatalloc(pszClassText, "])");
+                    pszClassText = msStringConcatenate(pszClassText, "([");
+                    pszClassText = msStringConcatenate(pszClassText, psLabel->psChild->pszValue);
+                    pszClassText = msStringConcatenate(pszClassText, "])");
                 }
             }
             /*
@@ -3111,7 +3111,7 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
         sprintf(szTmp, "<StyledLayerDescriptor version=\"1.0.0\" xmlns=\"http://www.opengis.net/sld\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/sld %s/sld/1.0.0/StyledLayerDescriptor.xsd\">\n",schemalocation );
         free(schemalocation);
 
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
         if (iLayer < 0 || iLayer > map->numlayers -1)
         {
             for (i=0; i<map->numlayers; i++)
@@ -3119,7 +3119,7 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
                 pszTmp = msSLDGenerateSLDLayer(GET_LAYER(map, i));
                 if (pszTmp)
                 {
-                    pszSLD= strcatalloc(pszSLD, pszTmp);
+                    pszSLD= msStringConcatenate(pszSLD, pszTmp);
                     free(pszTmp);
                 }
             }
@@ -3129,12 +3129,12 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
              pszTmp = msSLDGenerateSLDLayer(GET_LAYER(map, iLayer));
              if (pszTmp)
              {
-                 pszSLD = strcatalloc(pszSLD, pszTmp);
+                 pszSLD = msStringConcatenate(pszSLD, pszTmp);
                  free(pszTmp);
              }
         }
         sprintf(szTmp, "%s", "</StyledLayerDescriptor>\n");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
 
     return pszSLD;
@@ -3236,16 +3236,16 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         colorObj sTmpColor;
 
                         sprintf(szTmp, "%s\n", "<Graphic>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         
 
                         sprintf(szTmp, "%s\n", "<Mark>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         sprintf(szTmp, "<WellKnownName>%s</WellKnownName>\n",
                                 pszSymbolName);
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         
                         if (psStyle->color.red != -1 && 
@@ -3280,7 +3280,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                             if (psSymbol->filled)
                             {
                                 sprintf(szTmp, "%s\n", "<Fill>");
-                                pszSLD = strcatalloc(pszSLD, szTmp);
+                                pszSLD = msStringConcatenate(pszSLD, szTmp);
                                 sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
                                         sTmpColor.red,
                                         sTmpColor.green,
@@ -3289,7 +3289,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                             else
                             {
                                 sprintf(szTmp, "%s\n", "<Stroke>");
-                                pszSLD = strcatalloc(pszSLD, szTmp);
+                                pszSLD = msStringConcatenate(pszSLD, szTmp);
                                 sprintf(szTmp, "<CssParameter name=\"stroke\">#%02x%02x%02x</CssParameter>\n",
                                         sTmpColor.red,
                                         sTmpColor.green,
@@ -3301,7 +3301,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                             if (bFillColor)
                             {
                                 sprintf(szTmp, "%s\n", "<Fill>");
-                                pszSLD = strcatalloc(pszSLD, szTmp);
+                                pszSLD = msStringConcatenate(pszSLD, szTmp);
                                 sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
                                         sTmpColor.red,
                                         sTmpColor.green,
@@ -3310,33 +3310,33 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                             else
                             {
                                 sprintf(szTmp, "%s\n", "<Stroke>");
-                                pszSLD = strcatalloc(pszSLD, szTmp);
+                                pszSLD = msStringConcatenate(pszSLD, szTmp);
                                 sprintf(szTmp, "<CssParameter name=\"stroke\">#%02x%02x%02x</CssParameter>\n",
                                         sTmpColor.red,
                                         sTmpColor.green,
                                         sTmpColor.blue);
                             }
                         }
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         if ((psLayer->type == MS_LAYER_POINT && psSymbol->filled) || 
                             bFillColor)
                            sprintf(szTmp, "%s\n", "</Fill>");
                         else
                           sprintf(szTmp, "%s\n", "</Stroke>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         sprintf(szTmp, "%s\n", "</Mark>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
                     
                         if (psStyle->size > 0)
                         {
                             sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
-                            pszSLD = strcatalloc(pszSLD, szTmp);
+                            pszSLD = msStringConcatenate(pszSLD, szTmp);
                         }
 
                         sprintf(szTmp, "%s\n", "</Graphic>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         if (pszSymbolName)
                           free(pszSymbolName);
@@ -3356,16 +3356,16 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                     if (pszURL)
                     {
                         sprintf(szTmp, "%s\n", "<Graphic>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         
 
                         sprintf(szTmp, "%s\n", "<ExternalGraphic>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
                         
                         sprintf(szTmp, "<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s%s\"/>\n", 
                                 pszURL,psSymbol->imagepath);
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
                         /* TODO : extract format from symbol */
 
                         szFormat[0] = '\0';
@@ -3388,17 +3388,17 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         else
                           sprintf(szTmp, "<Format>%s</Format>\n", "image/gif");
                             
-                        pszSLD = strcatalloc(pszSLD, szTmp);  
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);  
 
                         sprintf(szTmp, "%s\n",  "</ExternalGraphic>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         if (psStyle->size > 0)
                           sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         sprintf(szTmp, "%s\n", "</Graphic>");
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                     }
                 }
@@ -3408,16 +3408,16 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
         if (bGenerateDefaultSymbol) /* genrate a default square symbol */
         {
             sprintf(szTmp, "%s\n", "<Graphic>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             
 
             sprintf(szTmp, "%s\n", "<Mark>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             sprintf(szTmp, "<WellKnownName>%s</WellKnownName>\n",
                     "square");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             bColorAvailable = 0;
             if (psStyle->color.red != -1 && 
@@ -3425,14 +3425,14 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                 psStyle->color.blue != -1)
             {
                 sprintf(szTmp, "%s\n", "<Fill>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
                         psStyle->color.red,
                         psStyle->color.green,
                         psStyle->color.blue);
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 sprintf(szTmp, "%s\n", "</Fill>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 bColorAvailable = 1;
             }
             if (psStyle->outlinecolor.red != -1 && 
@@ -3440,14 +3440,14 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                 psStyle->outlinecolor.blue != -1)    
             {
                 sprintf(szTmp, "%s\n", "<Stroke>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 sprintf(szTmp, "<CssParameter name=\"Stroke\">#%02x%02x%02x</CssParameter>\n",
                         psStyle->outlinecolor.red,
                         psStyle->outlinecolor.green,
                         psStyle->outlinecolor.blue);
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 sprintf(szTmp, "%s\n", "</Stroke>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 bColorAvailable = 1;
             }
             if (!bColorAvailable)
@@ -3456,22 +3456,22 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                 sprintf(szTmp, 
                         "<CssParameter name=\"fill\">%s</CssParameter>\n",
                         "#808080");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 sprintf(szTmp, "%s\n", "</Fill>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
             }
 
             sprintf(szTmp, "%s\n", "</Mark>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             if (psStyle->size > 0)
               sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
             else
               sprintf(szTmp, "<Size>%d</Size>\n", 1);
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             sprintf(szTmp, "%s\n", "</Graphic>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
             
         
         }
@@ -3504,21 +3504,21 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
 		return NULL;
 
     sprintf(szTmp, "%s\n",  "<LineSymbolizer>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     sprintf(szTmp, "%s\n",  "<Stroke>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     /* TODO : does not work (color is not picked) */
     /* pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer); */
     if (pszGraphicSLD)
     {
         sprintf(szTmp, "%s\n",  "<GraphicFill>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
         
-        pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+        pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
         sprintf(szTmp, "%s\n",  "</GraphicFill>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
              
         free(pszGraphicSLD);
         pszGraphicSLD = NULL;
@@ -3530,7 +3530,7 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
     sprintf(szTmp, 
             "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
             szHexColor);
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
                             
     nSymbol = -1;
 
@@ -3550,7 +3550,7 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
     sprintf(szTmp, 
             "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
             nSize);
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
                             
 /* -------------------------------------------------------------------- */
 /*      dash array                                                      */
@@ -3565,22 +3565,22 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
             for (i=0; i<psSymbol->stylelength; i++)
             {
                 sprintf(szTmp, "%d ", psSymbol->style[i]);
-                pszDashArray = strcatalloc(pszDashArray, szTmp);
+                pszDashArray = msStringConcatenate(pszDashArray, szTmp);
             }
             sprintf(szTmp, 
                     "<CssParameter name=\"stroke-dasharray\">%s</CssParameter>\n", 
                     pszDashArray);
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
         }  
                                            
     }
 
     
     sprintf(szTmp, "%s\n",  "</Stroke>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     sprintf(szTmp, "%s\n",  "</LineSymbolizer>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     return pszSLD;
 
@@ -3600,14 +3600,14 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
     char *pszGraphicSLD = NULL;
 
     sprintf(szTmp, "%s\n",  "<PolygonSymbolizer>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
     /* fill */
     if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
         psStyle->color.blue != -1)
     {
 
         sprintf(szTmp, "%s\n",  "<Fill>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
         
         
 
@@ -3615,11 +3615,11 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         if (pszGraphicSLD)
         {
              sprintf(szTmp, "%s\n",  "<GraphicFill>");
-             pszSLD = strcatalloc(pszSLD, szTmp);
+             pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-             pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+             pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
              sprintf(szTmp, "%s\n",  "</GraphicFill>");
-             pszSLD = strcatalloc(pszSLD, szTmp);
+             pszSLD = msStringConcatenate(pszSLD, szTmp);
              
              free(pszGraphicSLD);
              pszGraphicSLD = NULL;
@@ -3631,10 +3631,10 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         sprintf(szTmp, 
                 "<CssParameter name=\"fill\">#%s</CssParameter>\n", 
                 szHexColor);
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "</Fill>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
     /* stroke */
     if (psStyle->outlinecolor.red != -1 && 
@@ -3642,7 +3642,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         psStyle->outlinecolor.blue != -1)
     {
         sprintf(szTmp, "%s\n",  "<Stroke>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         
 
@@ -3655,11 +3655,11 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
             if (pszGraphicSLD)
             {
                 sprintf(szTmp, "%s\n",  "<GraphicFill>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-                pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+                pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
                 sprintf(szTmp, "%s\n",  "</GraphicFill>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
              
                 free(pszGraphicSLD);
                 pszGraphicSLD = NULL;
@@ -3673,14 +3673,14 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         sprintf(szTmp, 
                 "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
                 szHexColor);
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "</Stroke>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
 
     sprintf(szTmp, "%s\n",  "</PolygonSymbolizer>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     return pszSLD;
 }
@@ -3697,17 +3697,17 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer)
     char szTmp[100];
 
     sprintf(szTmp, "%s\n",  "<PointSymbolizer>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 1);
     if (pszGraphicSLD)
     {
-        pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
+        pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
         free(pszGraphicSLD);
     }
     
     sprintf(szTmp, "%s\n",  "</PointSymbolizer>");
-    pszSLD = strcatalloc(pszSLD, szTmp);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     return pszSLD;
 }
@@ -3736,10 +3736,10 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
         strlen(psLayer->labelitem) > 0)
     {
         sprintf(szTmp, "%s\n",  "<TextSymbolizer>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         sprintf(szTmp, "<Label>%s</Label>\n",  psLayer->labelitem);
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
 /* -------------------------------------------------------------------- */
 /*      only true type fonta are exported. Font name should be          */
@@ -3750,17 +3750,17 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
 /* -------------------------------------------------------------------- */
         if (psClass->label.type == MS_TRUETYPE && psClass->label.font)
         {
-            aszFontsParts = split(psClass->label.font, '-', &nFontParts);
+            aszFontsParts = msStringSplit(psClass->label.font, '-', &nFontParts);
             if (nFontParts > 0)
             {
                 sprintf(szTmp, "%s\n",  "<Font>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                 /* assuming first one is font-family */
                 sprintf(szTmp, 
                         "<CssParameter name=\"font-family\">%s</CssParameter>\n",
                         aszFontsParts[0]);
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 for (i=1; i<nFontParts; i++)
                 {
                     if (strcasecmp(aszFontsParts[i], "italic") == 0 ||
@@ -3769,14 +3769,14 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
                         sprintf(szTmp, 
                         "<CssParameter name=\"font-style\">%s</CssParameter>\n",
                         aszFontsParts[i]);
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
                     }
                     else if (strcasecmp(aszFontsParts[i], "bold") == 0)
                     {
                         sprintf(szTmp, 
                         "<CssParameter name=\"font-weight\">%s</CssParameter>\n",
                         aszFontsParts[i]);
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        pszSLD = msStringConcatenate(pszSLD, szTmp);
                     }
                 }
                 /* size */
@@ -3785,10 +3785,10 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
                     sprintf(szTmp, 
                             "<CssParameter name=\"font-size\">%d</CssParameter>\n",
                             psClass->label.size);
-                    pszSLD = strcatalloc(pszSLD, szTmp);
+                    pszSLD = msStringConcatenate(pszSLD, szTmp);
                 }
                 sprintf(szTmp, "%s\n",  "</Font>");
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                 msFreeCharArray(aszFontsParts, nFontParts);
             }
@@ -3797,10 +3797,10 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
         
         /* label placement */
         sprintf(szTmp, "%s\n%s\n",  "<LabelPlacement>", "<PointPlacement>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "<AnchorPoint>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         if (psClass->label.position == MS_LL)
         {
@@ -3850,47 +3850,47 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
             dfAnchorY = 1;
         }
         sprintf(szTmp, "<AnchorPointX>%.1f</AnchorPointX>\n", dfAnchorX);
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
         sprintf(szTmp, "<AnchorPointY>%.1f</AnchorPointY>\n", dfAnchorY);
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "</AnchorPoint>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         /* displacement */
         if (psClass->label.offsetx > 0 || psClass->label.offsety > 0)
         {
             sprintf(szTmp, "%s\n",  "<Displacement>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             if (psClass->label.offsetx > 0)
             {
                 sprintf(szTmp, "<DisplacementX>%d</DisplacementX>\n", 
                         psClass->label.offsetx);
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
             }
             if (psClass->label.offsety > 0)
             {
                 sprintf(szTmp, "<DisplacementY>%d</DisplacementY>\n", 
                         psClass->label.offsety);
-                pszSLD = strcatalloc(pszSLD, szTmp);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
             }
 
             sprintf(szTmp, "%s\n",  "</Displacement>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
         /* rotation */
         if (psClass->label.angle > 0)
         {
             sprintf(szTmp, "<Rotation>%.2f</Rotation>\n", 
                         psClass->label.angle);
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
 
          /* TODO : support Halo parameter => shadow */
 
         sprintf(szTmp, "%s\n%s\n",  "</PointPlacement>", "</LabelPlacement>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
 
         /* color */
@@ -3913,7 +3913,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
         if (nColorRed >= 0 && nColorGreen >= 0  && nColorBlue >=0)
         {
             sprintf(szTmp, "%s\n",  "<Fill>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
             
             sprintf(szHexColor,"%02x%02x%02x",nColorRed,
                     nColorGreen, nColorBlue);
@@ -3921,14 +3921,14 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
             sprintf(szTmp, 
                     "<CssParameter name=\"fill\">#%s</CssParameter>\n", 
                     szHexColor);
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             sprintf(szTmp, "%s\n",  "</Fill>");
-            pszSLD = strcatalloc(pszSLD, szTmp);
+            pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
         
         sprintf(szTmp, "%s\n",  "</TextSymbolizer>");
-        pszSLD = strcatalloc(pszSLD, szTmp);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
     return pszSLD;
 
@@ -3965,7 +3965,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     psLayer->type == MS_LAYER_ANNOTATION))
     {
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
-        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
         pszTmp = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
         if (pszTmp)
@@ -3983,13 +3983,13 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         else
           sprintf(szTmp, "<Name>%s</Name>\n", "NamedLayer");
 
-        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "<UserStyle>");
-        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "<FeatureTypeStyle>");
-        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
         pszWfsFilter = msLookupHashTable(&(psLayer->metadata), "wfs_filter");
         if (pszWfsFilter)
@@ -3999,7 +3999,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
             for (i=psLayer->numclasses-1; i>=0; i--)
             {
                 sprintf(szTmp, "%s\n",  "<Rule>");
-                pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
                 /* if class has a name, use it as the RULE name */
                 if (psLayer->class[i]->name)
@@ -4008,7 +4008,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     sprintf(szTmp, "<Name>%s</Name>\n",  pszEncoded);
                     msFree(pszEncoded);
 
-                    pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
                 }
 /* -------------------------------------------------------------------- */
 /*      get the Filter if there is a class expression.                  */
@@ -4018,7 +4018,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     
                 if (pszFilter)
                 {
-                    pszFinalSLD = strcatalloc(pszFinalSLD, pszFilter);
+                    pszFinalSLD = msStringConcatenate(pszFinalSLD, pszFilter);
                     free(pszFilter);
                 }
 /* -------------------------------------------------------------------- */
@@ -4035,7 +4035,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 {
                      sprintf(szTmp, "<MinScaleDenominator>%f</MinScaleDenominator>\n",  
                              dfMinScale);
-                     pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                     pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
                 }
                
                 dfMaxScale = -1.0;
@@ -4049,7 +4049,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 {
                      sprintf(szTmp, "<MaxScaleDenominator>%f</MaxScaleDenominator>\n",  
                              dfMaxScale);
-                     pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                     pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
                 }
                  
 
@@ -4069,7 +4069,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                         pszSLD = msSLDGenerateLineSLD(psStyle, psLayer);
                         if (pszSLD)
                         {
-                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
                             free(pszSLD);
                         }
                     }
@@ -4083,7 +4083,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                         pszSLD = msSLDGeneratePolygonSLD(psStyle, psLayer);
                         if (pszSLD)
                         {
-                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
                             free(pszSLD);
                         }
                     } 
@@ -4097,7 +4097,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                         pszSLD = msSLDGeneratePointSLD(psStyle, psLayer);
                         if (pszSLD)
                         {
-                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
                             free(pszSLD);
                         }
                     } 
@@ -4111,7 +4111,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                         pszSLD = msSLDGeneratePointSLD(psStyle, psLayer);
                         if (pszSLD)
                         {
-                            pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                            pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
                             free(pszSLD);
                         }
                     } 
@@ -4121,11 +4121,11 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 pszSLD = msSLDGenerateTextSLD(psLayer->class[i], psLayer);
                 if (pszSLD)
                 {
-                    pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                    pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
                     free(pszSLD);
                 }
                 sprintf(szTmp, "%s\n",  "</Rule>");
-                pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
                 
             
             }
@@ -4133,13 +4133,13 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         if (pszWfsFilterEncoded)
           msFree(pszWfsFilterEncoded);
         sprintf(szTmp, "%s\n",  "</FeatureTypeStyle>");
-        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "</UserStyle>");
-        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "</NamedLayer>");
-        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
         
     }
     return pszFinalSLD;
@@ -4492,7 +4492,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
 
     if (bOneCharCompare == 1)
     {
-        aszValues= split (pszExpression, cCompare, &nTokens);
+        aszValues= msStringSplit (pszExpression, cCompare, &nTokens);
         if (nTokens >= 1)
         {
             pszAttributeName = strdup(aszValues[0]);
@@ -4988,13 +4988,13 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
               (psNode->psRightNode && psNode->psRightNode->pszValue)))
     {
         sprintf(szTmp, "<ogc:%s>", psNode->pszValue);
-        pszExpression = strcatalloc(pszExpression, szTmp);
+        pszExpression = msStringConcatenate(pszExpression, szTmp);
         if (psNode->psLeftNode)
         {
             pszTmp = msSLDBuildFilterEncoding(psNode->psLeftNode);
             if (pszTmp)
             {
-                pszExpression = strcatalloc(pszExpression, pszTmp); 
+                pszExpression = msStringConcatenate(pszExpression, pszTmp); 
                 free(pszTmp);
             }
         }
@@ -5003,12 +5003,12 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
             pszTmp = msSLDBuildFilterEncoding(psNode->psRightNode);
             if (pszTmp)
             {
-                pszExpression = strcatalloc(pszExpression, pszTmp); 
+                pszExpression = msStringConcatenate(pszExpression, pszTmp); 
                 free(pszTmp);
             }
         }
         sprintf(szTmp, "</ogc:%s>", psNode->pszValue);
-        pszExpression = strcatalloc(pszExpression, szTmp);
+        pszExpression = msStringConcatenate(pszExpression, szTmp);
     }
     return pszExpression;
 }
@@ -5033,18 +5033,18 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
         pszFLTExpression = msSLDBuildFilterEncoding(psNode);
         if (pszFLTExpression)
         {
-            pszTmp = strcatalloc(pszTmp, "<ogc:Filter>");
+            pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
             if (pszWfsFilter)
             {
-                pszTmp = strcatalloc(pszTmp, "<ogc:And>");
-                pszTmp = strcatalloc(pszTmp, (char *)pszWfsFilter);
+                pszTmp = msStringConcatenate(pszTmp, "<ogc:And>");
+                pszTmp = msStringConcatenate(pszTmp, (char *)pszWfsFilter);
             }
-            pszTmp = strcatalloc(pszTmp, pszFLTExpression);
+            pszTmp = msStringConcatenate(pszTmp, pszFLTExpression);
 
             if (pszWfsFilter)
-              pszTmp = strcatalloc(pszTmp, "</ogc:And>");
+              pszTmp = msStringConcatenate(pszTmp, "</ogc:And>");
 
-            pszTmp = strcatalloc(pszTmp, "</ogc:Filter>\n");
+            pszTmp = msStringConcatenate(pszTmp, "</ogc:Filter>\n");
 
             free(pszFLTExpression);
             pszFLTExpression = pszTmp;
@@ -5079,7 +5079,7 @@ char *msSLDParseExpression(char *pszExpression)
 
     nLength = strlen(pszExpression);
 
-    aszElements = split(pszExpression, ' ', &nElements);
+    aszElements = msStringSplit(pszExpression, ' ', &nElements);
 
     szFinalAtt[0] = '\0';
     szFinalValue[0] = '\0';

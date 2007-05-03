@@ -1542,31 +1542,31 @@ MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode,
                          pointObj p, double buffer );
 
 
-MS_DLL_EXPORT void trimBlanks(char *string); /* in mapstring.c */
-MS_DLL_EXPORT char *trimLeft(char *string);
-MS_DLL_EXPORT char *chop(char *string);
-MS_DLL_EXPORT void trimEOL(char *string);
-MS_DLL_EXPORT char *gsub(char *str, const char *old, const char *sznew);
-MS_DLL_EXPORT char *gisub(char *str, const char *old, const char *sznew);
-MS_DLL_EXPORT char *stripPath(char *fn);
-MS_DLL_EXPORT char *getPath(char *fn);
+MS_DLL_EXPORT void msStringTrimBlanks(char *string); /* in mapstring.c */
+MS_DLL_EXPORT char *msStringTrimLeft(char *string);
+MS_DLL_EXPORT char *msStringChop(char *string);
+MS_DLL_EXPORT void msStringTrimEOL(char *string);
+MS_DLL_EXPORT char *msReplaceSubstring(char *str, const char *old, const char *sznew);
+MS_DLL_EXPORT char *msCaseReplaceSubstring(char *str, const char *old, const char *sznew);
+MS_DLL_EXPORT char *msStripPath(char *fn);
+MS_DLL_EXPORT char *msGetPath(char *fn);
 MS_DLL_EXPORT char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path);
 MS_DLL_EXPORT char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1, const char *path2);
 MS_DLL_EXPORT char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path);
 MS_DLL_EXPORT char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path1, const char *path2);
-MS_DLL_EXPORT char **split(const char *string, char cd, int *num_tokens);
-MS_DLL_EXPORT int countChars(char *str, char ch);
-MS_DLL_EXPORT char *long2string(long value);
-MS_DLL_EXPORT char *double2string(double value);
+MS_DLL_EXPORT char **msStringSplit(const char *string, char cd, int *num_tokens);
+MS_DLL_EXPORT int msCountChars(char *str, char ch);
+MS_DLL_EXPORT char *msLongToString(long value);
+MS_DLL_EXPORT char *msDoubleToString(double value);
 MS_DLL_EXPORT char *msEncodeUrl(const char*);
 MS_DLL_EXPORT char *msEncodeHTMLEntities(const char *string);
 MS_DLL_EXPORT void msDecodeHTMLEntities(const char *string);
 MS_DLL_EXPORT int msIsXMLTagValid(const char *string);
-MS_DLL_EXPORT char *strcatalloc(char *pszDest, char *pszSrc);
+MS_DLL_EXPORT char *msStringConcatenate(char *pszDest, char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
-MS_DLL_EXPORT const char *stristr(const char *haystack, const char *needle);
+MS_DLL_EXPORT const char *msCaseFindSubstring(const char *haystack, const char *needle);
 MS_DLL_EXPORT char *msGetEncodedString(const char *string, const char *encoding);
 
 #ifdef NEED_STRDUP

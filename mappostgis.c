@@ -2101,13 +2101,13 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
       tmpstimestring = strdup(timestring);
     else
     {
-        atimes = split (timestring, ',', &numtimes);
+        atimes = msStringSplit (timestring, ',', &numtimes);
         if (atimes == NULL || numtimes < 1)
           return MS_FALSE;
 
         if (numtimes >= 1)
         {
-            tokens = split(atimes[0],  '/', &ntmp);
+            tokens = msStringSplit(atimes[0],  '/', &ntmp);
             if (ntmp == 2) /* ranges */
             {
                 tmpstimestring = strdup(tokens[0]);
@@ -2235,20 +2235,20 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
         return MS_TRUE;
     }
     
-    atimes = split (timestring, ',', &numtimes);
+    atimes = msStringSplit (timestring, ',', &numtimes);
     if (atimes == NULL || numtimes < 1)
       return MS_FALSE;
 
     if (numtimes >= 1)
     {
         /* check to see if we have ranges by parsing the first entry */
-        tokens = split(atimes[0],  '/', &ntmp);
+        tokens = msStringSplit(atimes[0],  '/', &ntmp);
         if (ntmp == 2) /* ranges */
         {
             msFreeCharArray(tokens, ntmp);
             for (i=0; i<numtimes; i++)
             {
-                tokens = split(atimes[i],  '/', &ntmp);
+                tokens = msStringSplit(atimes[i],  '/', &ntmp);
                 if (ntmp == 2)
                 {
                     if (strlen(buffer) > 0)

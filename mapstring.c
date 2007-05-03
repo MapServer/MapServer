@@ -205,21 +205,21 @@ int strcasecmp(const char *s1, const char *s2)
 }
 #endif
 
-char *long2string(long value) {
+char *msLongToString(long value) {
   char buffer[256]; /* plenty of space */
 
   sprintf(buffer, "%ld", value);
   return(strdup(buffer));
 }
 
-char *double2string(double value) {
+char *msDoubleToString(double value) {
   char buffer[256]; /* plenty of space */
 
   sprintf(buffer, "%g", value);
   return(strdup(buffer));
 }
 
-char *chop(char *string) {  
+char *msStringChop(char *string) {  
   int n;
 
   n = strlen(string);
@@ -233,7 +233,7 @@ char *chop(char *string) {
  * remove leading white spaces and shif evey thing to the left
  */
 
-char *trimLeft(char *string)
+char *msStringTrimLeft(char *string)
 {
     char *read, *write;
     int i, length;
@@ -269,7 +269,7 @@ char *trimLeft(char *string)
 /* ------------------------------------------------------------------------------- */
 /*       Trims leading blanks from a string                                        */
 /* ------------------------------------------------------------------------------- */
-void trimBlanks(char *string)
+void msStringTrimBlanks(char *string)
 {
    int i,n;
 
@@ -286,7 +286,7 @@ void trimBlanks(char *string)
 /*       Trims end-of-line marker from a string                                    */
 /*       Usefull in conjunction with fgets() calls                                 */
 /* ------------------------------------------------------------------------------- */
-void trimEOL(char *string)
+void msStringTrimEOL(char *string)
 {
   int i;
 
@@ -302,7 +302,7 @@ void trimEOL(char *string)
 /*       Replace all occurances of old with new in str.                            */
 /*       It is assumed that str was dynamically created using malloc.              */
 /* ------------------------------------------------------------------------------- */
-char *gsub(char *str, const char *old, const char *new)
+char *msReplaceSubstring(char *str, const char *old, const char *new)
 {
       size_t str_len, old_len, new_len, tmp_offset;
       char *tmp_ptr;
@@ -363,7 +363,7 @@ char *gsub(char *str, const char *old, const char *new)
 /*
 ** how many times does ch occur in str
 */
-int countChars(char *str, char ch) 
+int msCountChars(char *str, char ch) 
 {
   int i, l, n=0;
 
@@ -377,7 +377,7 @@ int countChars(char *str, char ch)
 /* ------------------------------------------------------------------------------- */
 /*       Strip filename from a full path                                           */
 /* ------------------------------------------------------------------------------- */
-char *stripPath(char *fn)
+char *msStripPath(char *fn)
 {
   char *str;
 
@@ -391,7 +391,7 @@ char *stripPath(char *fn)
 /*
 ** Returns the *path* portion of the filename fn. Memory is allocated using malloc.
 */
-char *getPath(char *fn)
+char *msGetPath(char *fn)
 {
   char *str;
   int i, length;
@@ -539,7 +539,7 @@ char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path
 /*
 ** Splits a string into multiple strings based on ch. Consecutive ch's are ignored.
 */
-char **split(const char *string, char ch, int *num_tokens) 
+char **msStringSplit(const char *string, char ch, int *num_tokens) 
 {
   int i,j,k;
   int length,n;
@@ -808,7 +808,7 @@ int msIsXMLTagValid(const char *string)
 /*
  * Concatenate pszSrc to pszDest and reallocate memory if necessary.
 */
-char *strcatalloc(char *pszDest, char *pszSrc)
+char *msStringConcatenate(char *pszDest, char *pszSrc)
 {
    int nLen;
    
@@ -831,7 +831,7 @@ char *strcatalloc(char *pszDest, char *pszSrc)
          pszDest[nLen] = '\0';
       }
       else {
-         msSetError(MS_MEMERR, "Error while reallocating memory.", "strcatalloc()");
+         msSetError(MS_MEMERR, "Error while reallocating memory.", "msStringConcatenate()");
          return NULL;
       }        
    }
@@ -905,7 +905,7 @@ char *msCommifyString(char *str)
 
   if(!str) return NULL;
 
-  num_decimal_points = countChars(str, decimal_point);
+  num_decimal_points = msCountChars(str, decimal_point);
   if(num_decimal_points > 1) return str;
 
   old_length = strlen(str);
@@ -948,7 +948,7 @@ char *msCommifyString(char *str)
 /************************************************************************/
 /*                  case incensitive equivalent of strstr               */
 /************************************************************************/
-const char *stristr(const char *haystack, const char *needle)
+const char *msCaseFindSubstring(const char *haystack, const char *needle)
 {   
     if ( !*needle )   
     {      
@@ -981,9 +981,9 @@ const char *stristr(const char *haystack, const char *needle)
 /* ------------------------------------------------------------------------------- */
 /*       Replace all occurances of old with new in str.                            */
 /*       It is assumed that str was dynamically created using malloc.              */
-/*       Same function as gsub but this is case incensitive                        */
+/*       Same function as msReplaceSubstring but this is case incensitive                        */
 /* ------------------------------------------------------------------------------- */
-char *gisub(char *str, const char *old, const char *new)
+char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
 {
       size_t str_len, old_len, new_len, tmp_offset;
       char *tmp_ptr;
@@ -994,7 +994,7 @@ char *gisub(char *str, const char *old, const char *new)
       /*
       ** If old is not found then leave str alone
       */
-      if( (tmp_ptr = stristr(str, old)) == NULL)
+      if( (tmp_ptr = msCaseFindSubstring(str, old)) == NULL)
 	return(str);
 
       /*
@@ -1035,7 +1035,7 @@ char *gisub(char *str, const char *old, const char *new)
         /*
         ** And look for more matches in the rest of the string
         */
-        tmp_ptr = stristr(tmp_ptr + new_len, old);
+        tmp_ptr = msCaseFindSubstring(tmp_ptr + new_len, old);
       }
 
       return(str);

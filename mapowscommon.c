@@ -101,7 +101,7 @@ xmlNodePtr msOWSCommonServiceIdentification(mapObj *map, const char *servicetype
     char **tokens = NULL;
     int n = 0;
     int i = 0;
-    tokens = split(keywords, ',', &n);
+    tokens = msStringSplit(keywords, ',', &n);
     if (tokens && n > 0) {
       for (i=0; i<n; i++) {
         psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Keyword", BAD_CAST tokens[i]);
@@ -304,7 +304,7 @@ xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *val
     char **tokens = NULL;
     int n = 0;
     int i = 0;
-    tokens = split(values, ',', &n);
+    tokens = msStringSplit(values, ',', &n);
     if (tokens && n > 0) {
       for (i=0; i<n; i++) {
         psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Value", BAD_CAST tokens[i]);
@@ -356,9 +356,9 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
   }
 
   xsi_schemaLocation = strdup(MS_OWSCOMMON_OWS_NAMESPACE_URI);
-  xsi_schemaLocation = strcatalloc(xsi_schemaLocation, " ");
-  xsi_schemaLocation = strcatalloc(xsi_schemaLocation, (char *)schemas_location);
-  xsi_schemaLocation = strcatalloc(xsi_schemaLocation, "/ows/1.0.0/owsExceptionReport.xsd");
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)schemas_location);
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/1.0.0/owsExceptionReport.xsd");
 
   /* add namespace'd attributes to root element */
   xmlNewNsProp(psRootNode, psNsXsi, BAD_CAST "schemaLocation", BAD_CAST xsi_schemaLocation);

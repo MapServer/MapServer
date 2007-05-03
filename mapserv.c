@@ -165,7 +165,7 @@ int writeLog(int show_error)
   }
 
   t = time(NULL);
-  fprintf(stream,"%s,",chop(ctime(&t)));
+  fprintf(stream,"%s,",msStringChop(ctime(&t)));
   fprintf(stream,"%d,",(int)getpid());
   
   if(getenv("REMOTE_ADDR") != NULL)
@@ -333,16 +333,16 @@ mapObj *loadMap(void)
       }
 
       if(GET_LAYER(map, j)->data && (strstr(GET_LAYER(map, j)->data, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->data = gsub(GET_LAYER(map, j)->data, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->data = msReplaceSubstring(GET_LAYER(map, j)->data, tmpstr, msObj->request->ParamValues[i]);
       if(GET_LAYER(map, j)->tileindex && (strstr(GET_LAYER(map, j)->tileindex, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->tileindex = gsub(GET_LAYER(map, j)->tileindex, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->tileindex = msReplaceSubstring(GET_LAYER(map, j)->tileindex, tmpstr, msObj->request->ParamValues[i]);
       if(GET_LAYER(map, j)->connection && (strstr(GET_LAYER(map, j)->connection, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->connection = gsub(GET_LAYER(map, j)->connection, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->connection = msReplaceSubstring(GET_LAYER(map, j)->connection, tmpstr, msObj->request->ParamValues[i]);
       if(GET_LAYER(map, j)->filter.string && (strstr(GET_LAYER(map, j)->filter.string, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->filter.string = gsub(GET_LAYER(map, j)->filter.string, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->filter.string = msReplaceSubstring(GET_LAYER(map, j)->filter.string, tmpstr, msObj->request->ParamValues[i]);
       for(k=0; k<GET_LAYER(map, j)->numclasses; k++) {
 	      if(GET_LAYER(map, j)->class[k]->expression.string && (strstr(GET_LAYER(map, j)->class[k]->expression.string, tmpstr) != NULL)) 
-          GET_LAYER(map, j)->class[k]->expression.string = gsub(GET_LAYER(map, j)->class[k]->expression.string, tmpstr, msObj->request->ParamValues[i]);
+          GET_LAYER(map, j)->class[k]->expression.string = msReplaceSubstring(GET_LAYER(map, j)->class[k]->expression.string, tmpstr, msObj->request->ParamValues[i]);
       }
     }
     
@@ -432,7 +432,7 @@ void loadForm(void)
     }
     
     if(strcasecmp(msObj->request->ParamNames[i],"imgext") == 0) { /* extent of an existing image in a web application */
-      tokens = split(msObj->request->ParamValues[i], ' ', &n);
+      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -468,7 +468,7 @@ void loadForm(void)
       if(strncasecmp(msObj->request->ParamValues[i],"shape",5) == 0)
         msObj->UseShapes = MS_TRUE;
       else {
-	tokens = split(msObj->request->ParamValues[i], ' ', &n);
+	tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 	
 	if(!tokens) {
 	  msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -532,7 +532,7 @@ void loadForm(void)
       if(strncasecmp(msObj->request->ParamValues[i],"shape",5) == 0) {
         msObj->UseShapes = MS_TRUE;	
       } else {
-	tokens = split(msObj->request->ParamValues[i], ' ', &n);
+	tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
 	if(!tokens) {
 	  msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -571,7 +571,7 @@ void loadForm(void)
       char **tmp=NULL;
       int n, j;
       
-      tmp = split(msObj->request->ParamValues[i], ' ', &n);
+      tmp = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -630,7 +630,7 @@ void loadForm(void)
       if(msObj->CoordSource == FROMIMGPNT)
 	    continue;
 
-      tokens = split(msObj->request->ParamValues[i], ' ', &n);
+      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	    msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -660,7 +660,7 @@ void loadForm(void)
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"imgbox") == 0) { /* selection box (eg. mouse drag) */
-      tokens = split(msObj->request->ParamValues[i], ' ', &n);
+      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
       
       if(!tokens) {
 	    msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -691,7 +691,7 @@ void loadForm(void)
       char **tmp=NULL;
       int n, j;
       
-      tmp = split(msObj->request->ParamValues[i], ' ', &n);
+      tmp = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -736,7 +736,7 @@ void loadForm(void)
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"refxy") == 0) { /* mouse click in reference image, single variable */
-      tokens = split(msObj->request->ParamValues[i], ' ', &n);
+      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	    msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -781,7 +781,7 @@ void loadForm(void)
     }
     
     if(strcasecmp(msObj->request->ParamNames[i],"imgsize") == 0) { /* size of existing image (pixels) */
-      tokens = split(msObj->request->ParamValues[i], ' ', &n);
+      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -807,7 +807,7 @@ void loadForm(void)
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"mapsize") == 0) { /* size of new map (pixels) */
-      tokens = split(msObj->request->ParamValues[i], ' ', &n);
+      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	    msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -860,7 +860,7 @@ void loadForm(void)
           int num_layers=0, l;
           char **layers=NULL;
 
-          layers = split(msObj->request->ParamValues[i], ' ', &(num_layers));
+          layers = msStringSplit(msObj->request->ParamValues[i], ' ', &(num_layers));
           for(l=0; l<num_layers; l++)
               msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
           msObj->NumLayers += l;

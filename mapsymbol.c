@@ -664,7 +664,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
     return(-1);
   }
 
-  pszSymbolPath = getPath(szPath);
+  pszSymbolPath = msGetPath(szPath);
 
   msyylineno = 0; /* reset line counter */
   msyyrestart(msyyin); /* flush the scanner - there's a better way but this works for now */

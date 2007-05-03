@@ -604,7 +604,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
             }
 
             /* put all arguments seperate by space in a hash table */
-            papszArgs = split(pszArgs, ' ', &nArgs);
+            papszArgs = msStringSplit(pszArgs, ' ', &nArgs);
 
             /* msReturnTemplateQuerycheck all argument if they have values */
             for (i=0; i<nArgs; i++) {
@@ -615,7 +615,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
 
                if (strchr(papszArgs[i], '='))
                {
-                  papszVarVal = split(papszArgs[i], '=', &nDummy);
+                  papszVarVal = msStringSplit(papszArgs[i], '=', &nDummy);
                
                   /* ']' are in fact '=' (See above). */
                   if(strchr(papszVarVal[1],']'))
@@ -826,22 +826,22 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
          if (strcmp(pszOperator, "neq") == 0) {
              if (pszValue && pszHTValue && strcasecmp(pszValue, pszHTValue) != 0)
              {
-                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, pszThen);
              }
              else if (pszHTValue)
              {
-                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, "");
                  bEmpty = 1;
              }
          }
          else if (strcmp(pszOperator, "eq") == 0) {
              if (pszValue && pszHTValue && strcasecmp(pszValue, pszHTValue) == 0)
              {
-                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, pszThen);
              }
              else if (pszHTValue)
              {
-                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, "");
                  bEmpty = 1;
              }
          }
@@ -849,25 +849,25 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
              if (pszHTValue != NULL)
              {
                  /* We met a non-null value... condition is false */
-                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, "");
                  bEmpty = 1;
              }
              else if (bLastPass)
              {
                  /* On last pass, if value is still null then condition is true */
-                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, pszThen);
              }
          }
          else if (strcmp(pszOperator, "isset") == 0) {
              if (pszHTValue != NULL)
              {
                  /* Found a non-null value... condition is true */
-                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, pszThen);
              }
              else if (bLastPass)
              {
                  /* On last pass, if value still not set then condition is false */
-                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                 *pszInstr = msReplaceSubstring(*pszInstr, pszIfTag, "");
                  bEmpty = 1;
              }
          }
@@ -1015,7 +1015,7 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
           for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
       
         tagValue = strdup(format);
-        tagValue = gsub(tagValue, "$value", itemValue);
+        tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
         msFree(itemValue);
 
         if(!tagValue) {
@@ -1041,14 +1041,14 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
     switch(escape) {
     case ESCAPE_HTML:
       encodedTagValue = msEncodeHTMLEntities(tagValue);
-      *line = gsub(*line, tag, encodedTagValue);
+      *line = msReplaceSubstring(*line, tag, encodedTagValue);
       break;
     case ESCAPE_URL:
       encodedTagValue = msEncodeUrl(tagValue);
-      *line = gsub(*line, tag, encodedTagValue);
+      *line = msReplaceSubstring(*line, tag, encodedTagValue);
       break;	
     case ESCAPE_NONE:
-      *line = gsub(*line, tag, tagValue);
+      *line = msReplaceSubstring(*line, tag, tagValue);
       break;
     default:
       break;
@@ -1234,7 +1234,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     /* TODO: add thinning support here */
       
     /* build the coordinate string */
-    if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
+    if(strlen(sh) > 0) coords = msStringConcatenate(coords, sh);
     for(i=0; i<tShape.numlines; i++) { /* e.g. part */
 
       /* skip degenerate parts, really should only happen with pixel output */ 
@@ -1242,17 +1242,17 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
 	      (tShape.type == MS_SHAPE_POLYGON && tShape.line[i].numpoints < 3))
 	      continue;
 
-      if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
+      if(strlen(ph) > 0) coords = msStringConcatenate(coords, ph);
       for(j=0; j<tShape.line[i].numpoints-1; j++) {
         snprintf(point, 128, pointFormat1, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
-        coords = strcatalloc(coords, point);  
+        coords = msStringConcatenate(coords, point);  
       }
       snprintf(point, 128, pointFormat2, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
-      coords = strcatalloc(coords, point);  
-      if(strlen(pf) > 0) coords = strcatalloc(coords, pf);
-      if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = strcatalloc(coords, ps);
+      coords = msStringConcatenate(coords, point);  
+      if(strlen(pf) > 0) coords = msStringConcatenate(coords, pf);
+      if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = msStringConcatenate(coords, ps);
     }
-    if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
+    if(strlen(sf) > 0) coords = msStringConcatenate(coords, sf);
 
     msFreeShape(&tShape);
     
@@ -1267,7 +1267,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     tag[tagLength] = '\0';
 
     /* do the replacement */
-    *line = gsub(*line, tag, coords);
+    *line = msReplaceSubstring(*line, tag, coords);
 
     /* clean up */
     free(tag); tag = NULL;
@@ -1333,7 +1333,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
            strncpy(pszMetadataTag, pszStart, nLength);
            pszMetadataTag[nLength] = '\0';
 
-           *pszInstr = gsub(*pszInstr, pszMetadataTag, pszHashValue);
+           *pszInstr = msReplaceSubstring(*pszInstr, pszMetadataTag, pszHashValue);
 
            free(pszMetadataTag);
            pszMetadataTag=NULL;
@@ -1468,7 +1468,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          strcpy(pszFullImgFname, map->web.imageurl);
          strcat(pszFullImgFname, szImgFname);
 
-         *pszInstr = gsub(*pszInstr, pszTag, pszFullImgFname);
+         *pszInstr = msReplaceSubstring(*pszInstr, pszTag, pszFullImgFname);
 
          msFree(pszFullImgFname);
          pszFullImgFname = NULL;
@@ -1587,7 +1587,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    /*
     * Change group tags
     */
-   *pszTemp = gsub(*pszTemp, "[leg_group_name]", pszGroupName);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_group_name]", pszGroupName);
 
    
    /*
@@ -1728,16 +1728,16 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    /*
     * Change layer tags
     */
-   *pszTemp = gsub(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
-   *pszTemp = gsub(*pszTemp, "[leg_layer_group]", GET_LAYER(map, nIdxLayer)->group);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_group]", GET_LAYER(map, nIdxLayer)->group);
 
    snprintf(szTmpstr, 128, "%d", nIdxLayer); 
-   *pszTemp = gsub(*pszTemp, "[leg_layer_index]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_index]", szTmpstr);
 
    snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->minscale); 
-   *pszTemp = gsub(*pszTemp, "[leg_layer_minscale]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_minscale]", szTmpstr);
    snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->maxscale); 
-   *pszTemp = gsub(*pszTemp, "[leg_layer_maxscale]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_maxscale]", szTmpstr);
 
    /*
     * Create a hash table that contain info
@@ -1870,17 +1870,17 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /*
     * Change class tags
     */
-   *pszTemp = gsub(*pszTemp, "[leg_class_name]", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->name);
-   *pszTemp = gsub(*pszTemp, "[leg_class_title]", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->title);
-   *pszTemp = gsub(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_name]", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->name);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_title]", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->title);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
 
    snprintf(szTmpstr, 128, "%d", nIdxClass); 
-   *pszTemp = gsub(*pszTemp, "[leg_class_index]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_index]", szTmpstr);
 
    snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->minscale); 
-   *pszTemp = gsub(*pszTemp, "[leg_class_minscale]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_minscale]", szTmpstr);
    snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->maxscale); 
-   *pszTemp = gsub(*pszTemp, "[leg_class_maxscale]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_maxscale]", szTmpstr);
 
    /*
     * Create a hash table that contain info
@@ -2014,14 +2014,14 @@ char *generateLegendTemplate(mapservObj *msObj)
    if(i == msObj->request->NumParams)
    {
        if ( getenv("MS_MAPFILE"))
-           pszMapFname = strcatalloc(pszMapFname, getenv("MS_MAPFILE"));
+           pszMapFname = msStringConcatenate(pszMapFname, getenv("MS_MAPFILE"));
    }
    else 
    {
       if(getenv(msObj->request->ParamValues[i])) /* an environment references the actual file to use */
-        pszMapFname = strcatalloc(pszMapFname, getenv(msObj->request->ParamValues[i]));
+        pszMapFname = msStringConcatenate(pszMapFname, getenv(msObj->request->ParamValues[i]));
       else
-        pszMapFname = strcatalloc(pszMapFname, msObj->request->ParamValues[i]);
+        pszMapFname = msStringConcatenate(pszMapFname, msObj->request->ParamValues[i]);
    }
    
    if (pszMapFname)
@@ -2054,7 +2054,7 @@ char *generateLegendTemplate(mapservObj *msObj)
        char pszTime[20];
        
        snprintf(pszTime, 20, "%ld", (long)time(NULL));      
-       pszPrefix = strcatalloc(pszPrefix, pszTime);
+       pszPrefix = msStringConcatenate(pszPrefix, pszTime);
    }
 
        /* open template */
@@ -2116,7 +2116,7 @@ char *generateLegendTemplate(mapservObj *msObj)
      return(NULL);
    
    /* start with the header if present */
-   if(legHeaderHtml) pszResult = strcatalloc(pszResult, legHeaderHtml);
+   if(legHeaderHtml) pszResult = msStringConcatenate(pszResult, legHeaderHtml);
 
    /********************************************************************/
 
@@ -2156,7 +2156,7 @@ char *generateLegendTemplate(mapservObj *msObj)
          }
             
          /* concatenate it to final result */
-         pszResult = strcatalloc(pszResult, legGroupHtmlCopy);
+         pszResult = msStringConcatenate(pszResult, legGroupHtmlCopy);
 
 /*         
          if (!pszResult)
@@ -2203,7 +2203,7 @@ char *generateLegendTemplate(mapservObj *msObj)
               
                   
                  /* concatenate to final result */
-                 pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
+                 pszResult = msStringConcatenate(pszResult, legLayerHtmlCopy);
 
                  if (legLayerHtmlCopy)
                  {
@@ -2229,7 +2229,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                  
                
                        /* concatenate to final result */
-                       pszResult = strcatalloc(pszResult, legClassHtmlCopy);
+                       pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
 
                        if (legClassHtmlCopy) {
                          free(legClassHtmlCopy);
@@ -2275,7 +2275,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                  
                
                        /* concatenate to final result */
-                       pszResult = strcatalloc(pszResult, legClassHtmlCopy);
+                       pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
 
                        if (legClassHtmlCopy) {
                          free(legClassHtmlCopy);
@@ -2318,7 +2318,7 @@ char *generateLegendTemplate(mapservObj *msObj)
             }
               
             /* concatenate to final result */
-            pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
+            pszResult = msStringConcatenate(pszResult, legLayerHtmlCopy);
 
             if (legLayerHtmlCopy) {
                free(legLayerHtmlCopy);
@@ -2342,7 +2342,7 @@ char *generateLegendTemplate(mapservObj *msObj)
           
                
                   /* concatenate to final result */
-                  pszResult = strcatalloc(pszResult, legClassHtmlCopy);
+                  pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
   
                   if (legClassHtmlCopy) {
                     free(legClassHtmlCopy);
@@ -2382,7 +2382,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                   }
       
                
-                  pszResult = strcatalloc(pszResult, legClassHtmlCopy);
+                  pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
 
                   if (legClassHtmlCopy) {
                     free(legClassHtmlCopy);
@@ -2395,7 +2395,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    }
    
    /* finish with the footer if present */
-   if(legFooterHtml) pszResult = strcatalloc(pszResult, legFooterHtml);
+   if(legFooterHtml) pszResult = msStringConcatenate(pszResult, legFooterHtml);
 
    /*
     * if we reach this point, that mean no error was generated.
@@ -2403,7 +2403,7 @@ char *generateLegendTemplate(mapservObj *msObj)
     */
    if (pszResult == NULL)
    {
-      pszResult = strcatalloc(pszResult, " ");
+      pszResult = msStringConcatenate(pszResult, " ");
    }
    
    
@@ -2474,7 +2474,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
         }
 
         /* echo file to the output buffer, no substitutions */
-        while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = strcatalloc(outbuf, line);
+        while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = msStringConcatenate(outbuf, line);
 
         fclose(stream);
       }
@@ -2491,10 +2491,10 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
       if(strchr(line, '[') != NULL) {
         tmpline = processLine(msObj, line, QUERY);
         if(!tmpline) return NULL;
-        outbuf = strcatalloc(outbuf, tmpline);
+        outbuf = msStringConcatenate(outbuf, tmpline);
         free(tmpline);
       } else /* no subs, just echo */
-        outbuf = strcatalloc(outbuf, line);
+        outbuf = msStringConcatenate(outbuf, line);
     }
       
     rewind(stream);
@@ -2507,7 +2507,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
     }
 
     /* echo file to the output buffer, no substitutions */
-    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = strcatalloc(outbuf, line);
+    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = msStringConcatenate(outbuf, line);
     
     fclose(stream);
   }
@@ -2534,19 +2534,19 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   outstr = strdup(instr); /* work from a copy */
 
-  if(strstr(outstr, "[version]")) outstr = gsub(outstr, "[version]",  msGetVersion());
+  if(strstr(outstr, "[version]")) outstr = msReplaceSubstring(outstr, "[version]",  msGetVersion());
 
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
-  outstr = gsub(outstr, "[img]", repstr);
+  outstr = msReplaceSubstring(outstr, "[img]", repstr);
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sref%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
-  outstr = gsub(outstr, "[ref]", repstr);
+  outstr = msReplaceSubstring(outstr, "[ref]", repstr);
 
   if(strstr(outstr, "[errmsg")) {
     char *errmsg = msGetErrorString(";");
     if(!errmsg) errmsg = strdup("Error message buffer is empty."); /* should never happen, but just in case... */
-    outstr = gsub(outstr, "[errmsg]", errmsg);
+    outstr = msReplaceSubstring(outstr, "[errmsg]", errmsg);
     encodedstr = msEncodeUrl(errmsg);
-    outstr = gsub(outstr, "[errmsg_esc]", encodedstr);
+    outstr = msReplaceSubstring(outstr, "[errmsg_esc]", encodedstr);
     free(errmsg);
     free(encodedstr);
   }
@@ -2558,7 +2558,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
         legendTemplate = generateLegendTemplate(msObj);
         if (legendTemplate) {
-          outstr = gsub(outstr, "[legend]", legendTemplate);
+          outstr = msReplaceSubstring(outstr, "[legend]", legendTemplate);
      
            free(legendTemplate);
         }
@@ -2567,41 +2567,41 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
      }
      else { /* if not display gif image with all legend icon */
         snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sleg%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
-        outstr = gsub(outstr, "[legend]", repstr);
+        outstr = msReplaceSubstring(outstr, "[legend]", repstr);
      }
   }
    
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s%ssb%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
-  outstr = gsub(outstr, "[scalebar]", repstr);
+  outstr = msReplaceSubstring(outstr, "[scalebar]", repstr);
 
   if(msObj->SaveQuery) {
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
-    outstr = gsub(outstr, "[queryfile]", repstr);
+    outstr = msReplaceSubstring(outstr, "[queryfile]", repstr);
   }
   
   if(msObj->SaveMap) {
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
-    outstr = gsub(outstr, "[map]", repstr);
+    outstr = msReplaceSubstring(outstr, "[map]", repstr);
   }
 
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST")); 
-  outstr = gsub(outstr, "[host]", repstr);
+  outstr = msReplaceSubstring(outstr, "[host]", repstr);
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("SERVER_PORT"));
-  outstr = gsub(outstr, "[port]", repstr);
+  outstr = msReplaceSubstring(outstr, "[port]", repstr);
   
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s", msObj->Id);
-  outstr = gsub(outstr, "[id]", repstr);
+  outstr = msReplaceSubstring(outstr, "[id]", repstr);
   
   repstr[0] = '\0'; /* Layer list for a "POST" request */
   for(i=0;i<msObj->NumLayers;i++) {    
     strlcat(repstr, msObj->Layers[i], sizeof(repstr));
     strlcat(repstr, " ", sizeof(repstr));
   }
-  trimBlanks(repstr);
-  outstr = gsub(outstr, "[layers]", repstr);
+  msStringTrimBlanks(repstr);
+  outstr = msReplaceSubstring(outstr, "[layers]", repstr);
 
   encodedstr = msEncodeUrl(repstr);
-  outstr = gsub(outstr, "[layers_esc]", encodedstr);
+  outstr = msReplaceSubstring(outstr, "[layers_esc]", encodedstr);
   free(encodedstr);
 
   strcpy(repstr, ""); /* list of ALL layers that can be toggled */
@@ -2612,39 +2612,39 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       strlcat(repstr, " ", sizeof(repstr));
     }
   }
-  trimBlanks(repstr);
-  outstr = gsub(outstr, "[toggle_layers]", repstr);
+  msStringTrimBlanks(repstr);
+  outstr = msReplaceSubstring(outstr, "[toggle_layers]", repstr);
 
   encodedstr = msEncodeUrl(repstr);
-  outstr = gsub(outstr, "[toggle_layers_esc]", encodedstr);
+  outstr = msReplaceSubstring(outstr, "[toggle_layers_esc]", encodedstr);
   free(encodedstr);
   
   for(i=0;i<msObj->Map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */
     if(isOn(msObj, GET_LAYER(msObj->Map, i)->name, GET_LAYER(msObj->Map, i)->group) == MS_TRUE) {
       if(GET_LAYER(msObj->Map, i)->group) {
         sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->group);
-        outstr = gsub(outstr, substr, "selected=\"selected\"");
+        outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
         sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->group);
-        outstr = gsub(outstr, substr, "checked=\"checked\"");
+        outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
       }
       if(GET_LAYER(msObj->Map, i)->name) {
         sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->name);
-        outstr = gsub(outstr, substr, "selected=\"selected\"");
+        outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
         sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->name);
-        outstr = gsub(outstr, substr, "checked=\"checked\"");
+        outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
       }
     } else {
       if(GET_LAYER(msObj->Map, i)->group) {
         sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->group);
-        outstr = gsub(outstr, substr, "");
+        outstr = msReplaceSubstring(outstr, substr, "");
         sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->group);
-        outstr = gsub(outstr, substr, "");
+        outstr = msReplaceSubstring(outstr, substr, "");
       }
       if(GET_LAYER(msObj->Map, i)->name) {
         sprintf(substr, "[%s_select]", GET_LAYER(msObj->Map, i)->name);
-        outstr = gsub(outstr, substr, "");
+        outstr = msReplaceSubstring(outstr, substr, "");
         sprintf(substr, "[%s_check]", GET_LAYER(msObj->Map, i)->name);
-        outstr = gsub(outstr, substr, "");
+        outstr = msReplaceSubstring(outstr, substr, "");
       }
     }
   }
@@ -2652,28 +2652,28 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   for(i=-1;i<=1;i++) { /* make zoom direction persistant */
     if(msObj->ZoomDirection == i) {
       sprintf(substr, "[zoomdir_%d_select]", i);
-      outstr = gsub(outstr, substr, "selected=\"selected\"");
+      outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
       sprintf(substr, "[zoomdir_%d_check]", i);
-      outstr = gsub(outstr, substr, "checked=\"checked\"");
+      outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
     } else {
       sprintf(substr, "[zoomdir_%d_select]", i);
-      outstr = gsub(outstr, substr, "");
+      outstr = msReplaceSubstring(outstr, substr, "");
       sprintf(substr, "[zoomdir_%d_check]", i);
-      outstr = gsub(outstr, substr, "");
+      outstr = msReplaceSubstring(outstr, substr, "");
     }
   }
   
   for(i=MINZOOM;i<=MAXZOOM;i++) { /* make zoom persistant */
     if(msObj->Zoom == i) {
       sprintf(substr, "[zoom_%d_select]", i);
-      outstr = gsub(outstr, substr, "selected=\"selected\"");
+      outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
       sprintf(substr, "[zoom_%d_check]", i);
-      outstr = gsub(outstr, substr, "checked=\"checked\"");
+      outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
     } else {
       sprintf(substr, "[zoom_%d_select]", i);
-      outstr = gsub(outstr, substr, "");
+      outstr = msReplaceSubstring(outstr, substr, "");
       sprintf(substr, "[zoom_%d_check]", i);
-      outstr = gsub(outstr, substr, "");
+      outstr = msReplaceSubstring(outstr, substr, "");
     }
   }
 
@@ -2688,11 +2688,11 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       if (msObj->Map->web.metadata.items[j] != NULL) {
         for(tp=msObj->Map->web.metadata.items[j]; tp!=NULL; tp=tp->next) {
           sprintf(substr, "[web_%s]", tp->key);
-          outstr = gsub(outstr, substr, tp->data);  
+          outstr = msReplaceSubstring(outstr, substr, tp->data);  
           sprintf(substr, "[web_%s_esc]", tp->key);
 
           encodedstr = msEncodeUrl(tp->data);
-          outstr = gsub(outstr, substr, encodedstr);
+          outstr = msReplaceSubstring(outstr, substr, encodedstr);
           free(encodedstr);
         }
       }
@@ -2707,16 +2707,16 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
           for(tp=GET_LAYER(msObj->Map, i)->metadata.items[j]; tp!=NULL; tp=tp->next) {
             sprintf(substr, "[%s_%s]", GET_LAYER(msObj->Map, i)->name, tp->key);
             if(GET_LAYER(msObj->Map, i)->status == MS_ON)
-              outstr = gsub(outstr, substr, tp->data);
+              outstr = msReplaceSubstring(outstr, substr, tp->data);
             else
-              outstr = gsub(outstr, substr, "");
+              outstr = msReplaceSubstring(outstr, substr, "");
             sprintf(substr, "[%s_%s_esc]", GET_LAYER(msObj->Map, i)->name, tp->key);
             if(GET_LAYER(msObj->Map, i)->status == MS_ON) {
               encodedstr = msEncodeUrl(tp->data);
-              outstr = gsub(outstr, substr, encodedstr);
+              outstr = msReplaceSubstring(outstr, substr, encodedstr);
               free(encodedstr);
             } else
-              outstr = gsub(outstr, substr, "");
+              outstr = msReplaceSubstring(outstr, substr, "");
           }
         }
       }
@@ -2724,43 +2724,43 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   }
 
   sprintf(repstr, "%f", msObj->MapPnt.x);
-  outstr = gsub(outstr, "[mapx]", repstr);
+  outstr = msReplaceSubstring(outstr, "[mapx]", repstr);
   sprintf(repstr, "%f", msObj->MapPnt.y);
-  outstr = gsub(outstr, "[mapy]", repstr);
+  outstr = msReplaceSubstring(outstr, "[mapy]", repstr);
   
   sprintf(repstr, "%f", msObj->Map->extent.minx); /* Individual mapextent elements for spatial query building  */
-  outstr = gsub(outstr, "[minx]", repstr);
+  outstr = msReplaceSubstring(outstr, "[minx]", repstr);
   sprintf(repstr, "%f", msObj->Map->extent.maxx);
-  outstr = gsub(outstr, "[maxx]", repstr);
+  outstr = msReplaceSubstring(outstr, "[maxx]", repstr);
   sprintf(repstr, "%f", msObj->Map->extent.miny);
-  outstr = gsub(outstr, "[miny]", repstr);
+  outstr = msReplaceSubstring(outstr, "[miny]", repstr);
   sprintf(repstr, "%f", msObj->Map->extent.maxy);
-  outstr = gsub(outstr, "[maxy]", repstr);
+  outstr = msReplaceSubstring(outstr, "[maxy]", repstr);
   sprintf(repstr, "%f %f %f %f", msObj->Map->extent.minx, msObj->Map->extent.miny,  msObj->Map->extent.maxx, msObj->Map->extent.maxy);
-  outstr = gsub(outstr, "[mapext]", repstr);
+  outstr = msReplaceSubstring(outstr, "[mapext]", repstr);
    
   encodedstr =  msEncodeUrl(repstr);
-  outstr = gsub(outstr, "[mapext_esc]", encodedstr);
+  outstr = msReplaceSubstring(outstr, "[mapext_esc]", encodedstr);
   free(encodedstr);
   
   sprintf(repstr, "%f", (msObj->Map->extent.maxx-msObj->Map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
-  outstr = gsub(outstr, "[dx]", repstr);
+  outstr = msReplaceSubstring(outstr, "[dx]", repstr);
   sprintf(repstr, "%f", (msObj->Map->extent.maxy-msObj->Map->extent.miny));
-  outstr = gsub(outstr, "[dy]", repstr);
+  outstr = msReplaceSubstring(outstr, "[dy]", repstr);
 
   sprintf(repstr, "%f", msObj->RawExt.minx); /* Individual raw extent elements for spatial query building */
-  outstr = gsub(outstr, "[rawminx]", repstr);
+  outstr = msReplaceSubstring(outstr, "[rawminx]", repstr);
   sprintf(repstr, "%f", msObj->RawExt.maxx);
-  outstr = gsub(outstr, "[rawmaxx]", repstr);
+  outstr = msReplaceSubstring(outstr, "[rawmaxx]", repstr);
   sprintf(repstr, "%f", msObj->RawExt.miny);
-  outstr = gsub(outstr, "[rawminy]", repstr);
+  outstr = msReplaceSubstring(outstr, "[rawminy]", repstr);
   sprintf(repstr, "%f", msObj->RawExt.maxy);
-  outstr = gsub(outstr, "[rawmaxy]", repstr);
+  outstr = msReplaceSubstring(outstr, "[rawmaxy]", repstr);
   sprintf(repstr, "%f %f %f %f", msObj->RawExt.minx, msObj->RawExt.miny,  msObj->RawExt.maxx, msObj->RawExt.maxy);
-  outstr = gsub(outstr, "[rawext]", repstr);
+  outstr = msReplaceSubstring(outstr, "[rawext]", repstr);
   
   encodedstr = msEncodeUrl(repstr);
-  outstr = gsub(outstr, "[rawext_esc]", encodedstr);
+  outstr = msReplaceSubstring(outstr, "[rawext_esc]", encodedstr);
   free(encodedstr);
     
 #ifdef USE_PROJ
@@ -2773,23 +2773,23 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     msProjectPoint(&(msObj->Map->projection), &(msObj->Map->latlon), &llpoint);
 
     sprintf(repstr, "%f", llpoint.x);
-    outstr = gsub(outstr, "[maplon]", repstr);
+    outstr = msReplaceSubstring(outstr, "[maplon]", repstr);
     sprintf(repstr, "%f", llpoint.y);
-    outstr = gsub(outstr, "[maplat]", repstr);
+    outstr = msReplaceSubstring(outstr, "[maplat]", repstr);
     
     sprintf(repstr, "%f", llextent.minx); /* map extent as lat/lon */
-    outstr = gsub(outstr, "[minlon]", repstr);
+    outstr = msReplaceSubstring(outstr, "[minlon]", repstr);
     sprintf(repstr, "%f", llextent.maxx);
-    outstr = gsub(outstr, "[maxlon]", repstr);
+    outstr = msReplaceSubstring(outstr, "[maxlon]", repstr);
     sprintf(repstr, "%f", llextent.miny);
-    outstr = gsub(outstr, "[minlat]", repstr);
+    outstr = msReplaceSubstring(outstr, "[minlat]", repstr);
     sprintf(repstr, "%f", llextent.maxy);
-    outstr = gsub(outstr, "[maxlat]", repstr);    
+    outstr = msReplaceSubstring(outstr, "[maxlat]", repstr);    
     sprintf(repstr, "%f %f %f %f", llextent.minx, llextent.miny,  llextent.maxx, llextent.maxy);
-    outstr = gsub(outstr, "[mapext_latlon]", repstr);
+    outstr = msReplaceSubstring(outstr, "[mapext_latlon]", repstr);
      
     encodedstr = msEncodeUrl(repstr);
-    outstr = gsub(outstr, "[mapext_latlon_esc]", encodedstr);
+    outstr = msReplaceSubstring(outstr, "[mapext_latlon_esc]", encodedstr);
     free(encodedstr);
   }
 #endif
@@ -2797,68 +2797,68 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   /* submitted by J.F (bug 1102) */
   if (msObj->Map->reference.status == MS_ON) {
     sprintf(repstr, "%f", msObj->Map->reference.extent.minx); /* Individual reference map extent elements for spatial query building */
-    outstr = gsub(outstr, "[refminx]", repstr);
+    outstr = msReplaceSubstring(outstr, "[refminx]", repstr);
     sprintf(repstr, "%f", msObj->Map->reference.extent.maxx);
-    outstr = gsub(outstr, "[refmaxx]", repstr);
+    outstr = msReplaceSubstring(outstr, "[refmaxx]", repstr);
     sprintf(repstr, "%f", msObj->Map->reference.extent.miny);
-    outstr = gsub(outstr, "[refminy]", repstr);
+    outstr = msReplaceSubstring(outstr, "[refminy]", repstr);
     sprintf(repstr, "%f", msObj->Map->reference.extent.maxy);
-    outstr = gsub(outstr, "[refmaxy]", repstr);
+    outstr = msReplaceSubstring(outstr, "[refmaxy]", repstr);
     sprintf(repstr, "%f %f %f %f", msObj->Map->reference.extent.minx, msObj->Map->reference.extent.miny, msObj->Map->reference.extent.maxx, msObj->Map->reference.extent.maxy);
-    outstr = gsub(outstr, "[refext]", repstr);
+    outstr = msReplaceSubstring(outstr, "[refext]", repstr);
 
     encodedstr =  msEncodeUrl(repstr);
-    outstr = gsub(outstr, "[refext_esc]", encodedstr);
+    outstr = msReplaceSubstring(outstr, "[refext_esc]", encodedstr);
     free(encodedstr); 
   }
 
   sprintf(repstr, "%d %d", msObj->Map->width, msObj->Map->height);
-  outstr = gsub(outstr, "[mapsize]", repstr);
+  outstr = msReplaceSubstring(outstr, "[mapsize]", repstr);
    
   encodedstr = msEncodeUrl(repstr);
-  outstr = gsub(outstr, "[mapsize_esc]", encodedstr);
+  outstr = msReplaceSubstring(outstr, "[mapsize_esc]", encodedstr);
   free(encodedstr);
 
   sprintf(repstr, "%d", msObj->Map->width);
-  outstr = gsub(outstr, "[mapwidth]", repstr);
+  outstr = msReplaceSubstring(outstr, "[mapwidth]", repstr);
   sprintf(repstr, "%d", msObj->Map->height);
-  outstr = gsub(outstr, "[mapheight]", repstr);
+  outstr = msReplaceSubstring(outstr, "[mapheight]", repstr);
   
   sprintf(repstr, "%f", msObj->Map->scale);
-  outstr = gsub(outstr, "[scale]", repstr);
+  outstr = msReplaceSubstring(outstr, "[scale]", repstr);
   sprintf(repstr, "%f", msObj->Map->cellsize);
-  outstr = gsub(outstr, "[cellsize]", repstr);
+  outstr = msReplaceSubstring(outstr, "[cellsize]", repstr);
   
   sprintf(repstr, "%.1f %.1f", (msObj->Map->width)/2.0, (msObj->Map->height)/2.0); /* not subtracting 1 from image dimensions (see bug 633) */
-  outstr = gsub(outstr, "[center]", repstr);
+  outstr = msReplaceSubstring(outstr, "[center]", repstr);
   sprintf(repstr, "%.1f", (msObj->Map->width)/2.0);
-  outstr = gsub(outstr, "[center_x]", repstr);
+  outstr = msReplaceSubstring(outstr, "[center_x]", repstr);
   sprintf(repstr, "%.1f", (msObj->Map->height)/2.0);
-  outstr = gsub(outstr, "[center_y]", repstr);      
+  outstr = msReplaceSubstring(outstr, "[center_y]", repstr);      
 
   /* These are really for situations with multiple result sets only, but often used in header/footer   */
   sprintf(repstr, "%d", msObj->NR); /* total number of results */
-  outstr = gsub(outstr, "[nr]", repstr);  
+  outstr = msReplaceSubstring(outstr, "[nr]", repstr);  
   sprintf(repstr, "%d", msObj->NL); /* total number of layers with results */
-  outstr = gsub(outstr, "[nl]", repstr);
+  outstr = msReplaceSubstring(outstr, "[nl]", repstr);
 
   if(msObj->ResultLayer) {    
     if(strstr(outstr, "[items]") != NULL) {
       char *itemstr=NULL;
 
       itemstr = msJoinStrings(msObj->ResultLayer->items, msObj->ResultLayer->numitems, ",");
-      outstr = gsub(outstr, "[items]", itemstr);
+      outstr = msReplaceSubstring(outstr, "[items]", itemstr);
       free(itemstr);
     }
 
     sprintf(repstr, "%d", msObj->NLR); /* total number of results within this layer */
-    outstr = gsub(outstr, "[nlr]", repstr);
+    outstr = msReplaceSubstring(outstr, "[nlr]", repstr);
     sprintf(repstr, "%d", msObj->RN); /* sequential (eg. 1..n) result number within all layers */
-    outstr = gsub(outstr, "[rn]", repstr);
+    outstr = msReplaceSubstring(outstr, "[rn]", repstr);
     sprintf(repstr, "%d", msObj->LRN); /* sequential (eg. 1..n) result number within this layer */
-    outstr = gsub(outstr, "[lrn]", repstr);
-    outstr = gsub(outstr, "[cl]", msObj->ResultLayer->name); /* current layer name     */
-    /* if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description     */
+    outstr = msReplaceSubstring(outstr, "[lrn]", repstr);
+    outstr = msReplaceSubstring(outstr, "[cl]", msObj->ResultLayer->name); /* current layer name     */
+    /* if(ResultLayer->description) outstr = msReplaceSubstring(outstr, "[cd]", ResultLayer->description); // current layer description     */
   }
 
   if(mode == QUERY) { /* return shape and/or values	*/
@@ -2869,11 +2869,11 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
         if(msObj->ResultLayer->metadata.items[i] != NULL) {
           for(tp=msObj->ResultLayer->metadata.items[i]; tp!=NULL; tp=tp->next) {
             sprintf(substr, "[metadata_%s]", tp->key);
-            outstr = gsub(outstr, substr, tp->data);
+            outstr = msReplaceSubstring(outstr, substr, tp->data);
      
             sprintf(substr, "[metadata_%s_esc]", tp->key);
             encodedstr = msEncodeUrl(tp->data);
-            outstr = gsub(outstr, substr, encodedstr);
+            outstr = msReplaceSubstring(outstr, substr, encodedstr);
             free(encodedstr);
           }
         }
@@ -2881,45 +2881,45 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     }
     
     sprintf(repstr, "%f %f", (msObj->ResultShape.bounds.maxx + msObj->ResultShape.bounds.minx)/2, (msObj->ResultShape.bounds.maxy + msObj->ResultShape.bounds.miny)/2); 
-    outstr = gsub(outstr, "[shpmid]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpmid]", repstr);
     sprintf(repstr, "%f", (msObj->ResultShape.bounds.maxx + msObj->ResultShape.bounds.minx)/2);
-    outstr = gsub(outstr, "[shpmidx]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpmidx]", repstr);
     sprintf(repstr, "%f", (msObj->ResultShape.bounds.maxy + msObj->ResultShape.bounds.miny)/2);
-    outstr = gsub(outstr, "[shpmidy]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpmidy]", repstr);
     
     sprintf(repstr, "%f %f %f %f", msObj->ResultShape.bounds.minx, msObj->ResultShape.bounds.miny,  msObj->ResultShape.bounds.maxx, msObj->ResultShape.bounds.maxy);
-    outstr = gsub(outstr, "[shpext]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpext]", repstr);
      
     encodedstr = msEncodeUrl(repstr);
-    outstr = gsub(outstr, "[shpext_esc]", encodedstr);
+    outstr = msReplaceSubstring(outstr, "[shpext_esc]", encodedstr);
     free(encodedstr);
      
     sprintf(repstr, "%d", msObj->ResultShape.classindex);
-    outstr = gsub(outstr, "[shpclass]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpclass]", repstr);
 
     if(processCoords(msObj->ResultLayer, &outstr, &msObj->ResultShape) != MS_SUCCESS)
       return(NULL);
 
     sprintf(repstr, "%f", msObj->ResultShape.bounds.minx);
-    outstr = gsub(outstr, "[shpminx]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpminx]", repstr);
     sprintf(repstr, "%f", msObj->ResultShape.bounds.miny);
-    outstr = gsub(outstr, "[shpminy]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpminy]", repstr);
     sprintf(repstr, "%f", msObj->ResultShape.bounds.maxx);
-    outstr = gsub(outstr, "[shpmaxx]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpmaxx]", repstr);
     sprintf(repstr, "%f", msObj->ResultShape.bounds.maxy);
-    outstr = gsub(outstr, "[shpmaxy]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpmaxy]", repstr);
     
     sprintf(repstr, "%ld", msObj->ResultShape.index);
-    outstr = gsub(outstr, "[shpidx]", repstr);
+    outstr = msReplaceSubstring(outstr, "[shpidx]", repstr);
     sprintf(repstr, "%d", msObj->ResultShape.tileindex);
-    outstr = gsub(outstr, "[tileidx]", repstr);  
+    outstr = msReplaceSubstring(outstr, "[tileidx]", repstr);  
 
     /* return ALL attributes in one delimeted list */
     if(strstr(outstr, "[values]") != NULL) {
       char *valuestr=NULL;
 
       valuestr = msJoinStrings(msObj->ResultShape.values, msObj->ResultLayer->numitems, ",");
-      outstr = gsub(outstr, "[values]", valuestr);
+      outstr = msReplaceSubstring(outstr, "[values]", valuestr);
       free(valuestr);
     }
 
@@ -2928,7 +2928,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       sprintf(substr, "[%s]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeHTMLEntities(msObj->ResultShape.values[i]);
-        outstr = gsub(outstr, substr, encodedstr);
+        outstr = msReplaceSubstring(outstr, substr, encodedstr);
         free(encodedstr);
       }
 
@@ -2936,14 +2936,14 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       sprintf(substr, "[%s_esc]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeUrl(msObj->ResultShape.values[i]);
-        outstr = gsub(outstr, substr, encodedstr);
+        outstr = msReplaceSubstring(outstr, substr, encodedstr);
         free(encodedstr);
       }
 
       /* or you might want to access the attributes unaltered */
       sprintf(substr, "[%s_raw]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL)
-        outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
+        outstr = msReplaceSubstring(outstr, substr, msObj->ResultShape.values[i]);
     }
     
     if(processItem(msObj->ResultLayer, &outstr, &msObj->ResultShape) != MS_SUCCESS)
@@ -2957,7 +2957,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
           sprintf(substr, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeHTMLEntities(msObj->ResultLayer->joins[i].values[j]);
-            outstr = gsub(outstr, substr, encodedstr);
+            outstr = msReplaceSubstring(outstr, substr, encodedstr);
             free(encodedstr);
           }
 
@@ -2965,14 +2965,14 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
           sprintf(substr, "[%s_%s_esc]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeUrl(msObj->ResultLayer->joins[i].values[j]);
-            outstr = gsub(outstr, substr, encodedstr);
+            outstr = msReplaceSubstring(outstr, substr, encodedstr);
             free(encodedstr);
           }
 
           /* or you might want to access the attributes unaltered */
           sprintf(substr, "[%s_%s_raw]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL)
-            outstr = gsub(outstr, substr, msObj->ResultLayer->joins[i].values[j]);
+            outstr = msReplaceSubstring(outstr, substr, msObj->ResultLayer->joins[i].values[j]);
         }
       } else if(msObj->ResultLayer->joins[i].type ==  MS_JOIN_ONE_TO_MANY){ /* one-to-many join */
         char *joinTemplate=NULL;
@@ -2981,7 +2981,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
         if(strstr(outstr, substr) != NULL) {
           joinTemplate = processOneToManyJoin(msObj, &(msObj->ResultLayer->joins[i]));
           if(joinTemplate) {
-            outstr = gsub(outstr, substr, joinTemplate);     
+            outstr = msReplaceSubstring(outstr, substr, joinTemplate);     
             free(joinTemplate);
           } else
             return NULL;
@@ -2993,11 +2993,11 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   for(i=0;i<msObj->request->NumParams;i++) {
     sprintf(substr, "[%s]", msObj->request->ParamNames[i]);
-    outstr = gsub(outstr, substr, msObj->request->ParamValues[i]);
+    outstr = msReplaceSubstring(outstr, substr, msObj->request->ParamValues[i]);
     sprintf(substr, "[%s_esc]", msObj->request->ParamNames[i]);
 
     encodedstr = msEncodeUrl(msObj->request->ParamValues[i]);
-    outstr = gsub(outstr, substr, encodedstr);
+    outstr = msReplaceSubstring(outstr, substr, encodedstr);
     free(encodedstr);
   }
 

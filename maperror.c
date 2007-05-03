@@ -358,11 +358,11 @@ char *msGetErrorCodeString(int code) {
 /* -------------------------------------------------------------------- */
 char *msAddErrorDisplayString(char *source, errorObj *error)
 {
-	if((source = strcatalloc(source, error->routine)) == NULL) return(NULL);
-	if((source = strcatalloc(source, ": ")) == NULL) return(NULL);
-	if((source = strcatalloc(source, ms_errorCodes[error->code])) == NULL) return(NULL);
-	if((source = strcatalloc(source, " ")) == NULL) return(NULL);
-	if((source = strcatalloc(source, error->message)) == NULL) return(NULL);
+	if((source = msStringConcatenate(source, error->routine)) == NULL) return(NULL);
+	if((source = msStringConcatenate(source, ": ")) == NULL) return(NULL);
+	if((source = msStringConcatenate(source, ms_errorCodes[error->code])) == NULL) return(NULL);
+	if((source = msStringConcatenate(source, " ")) == NULL) return(NULL);
+	if((source = msStringConcatenate(source, error->message)) == NULL) return(NULL);
 	return source;
 }
 
@@ -378,7 +378,7 @@ char *msGetErrorString(char *delimiter)
     if((errstr = msAddErrorDisplayString(errstr, error)) == NULL) return(NULL);
 	 
 	if(error->next && error->next->code != MS_NOERR) { /* (peek ahead) more errors, use delimiter */
-		if((errstr = strcatalloc(errstr, delimiter)) == NULL) return(NULL);
+		if((errstr = msStringConcatenate(errstr, delimiter)) == NULL) return(NULL);
 	}
     error = error->next;   
   }
@@ -422,7 +422,7 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
       errstream = fopen(errfile, "a");
     if(!errstream) return;
     errtime = time(NULL);
-    fprintf(errstream, "%s - %s: %s %s\n", chop(ctime(&errtime)), ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+    fprintf(errstream, "%s - %s: %s %s\n", msStringChop(ctime(&errtime)), ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
     if( errstream != stderr && errstream != stdout )
         fclose(errstream);
   }
@@ -672,7 +672,7 @@ void msDebug( const char * pszFormat, ... )
         struct timeval tv;
         msGettimeofday(&tv, NULL);
         msIO_fprintf(stderr, "[%s].%ld ", 
-                     chop(ctime(&(tv.tv_sec))), (long)tv.tv_usec);
+                     msStringChop(ctime(&(tv.tv_sec))), (long)tv.tv_usec);
     }
 #endif
 

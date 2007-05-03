@@ -1064,7 +1064,7 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
         if( (metadata=msLookupHashTable(&(layer->metadata),"SWFDUMPATTRIBUTES"))
              != NULL )
         {
-            tokens = split(metadata, ',', &n);
+            tokens = msStringSplit(metadata, ',', &n);
             if (tokens && n > 0)
             {
                 sprintf(gszAction, "nAttributes=%d;", n);
@@ -1123,7 +1123,7 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
         {
             char **tokens;
             int n = 0;
-            tokens = split(metadata, ',', &n);
+            tokens = msStringSplit(metadata, ',', &n);
             if (tokens && n > 0)
             {
                 panIndex = (int *)malloc(sizeof(int)*n);

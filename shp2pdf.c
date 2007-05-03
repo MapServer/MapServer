@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
     map->outputformat = format;
 
     if(strncmp(argv[i],"-l",2) == 0) { /* load layer list */
-      layers = split(argv[i+1], ' ', &(num_layers));
+      layers = msStringSplit(argv[i+1], ' ', &(num_layers));
 
       for(j=0; j<map->numlayers; j++) {
     if(GET_LAYER(map, j)->status == MS_DEFAULT)

@@ -2958,7 +2958,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
 
     if(label->wrap != '\0') {
-      if((token = split(string, label->wrap, &(num_tokens))) == NULL) {
+      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL) {
         if(label->encoding != NULL) msFree(string);
 	return(-1);
       }

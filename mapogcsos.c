@@ -351,9 +351,9 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
         
         psEnvNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
 
-        pszTmp = double2string(minx);
-        pszTmp = strcatalloc(pszTmp, " ");
-        pszTmp = strcatalloc(pszTmp, double2string(miny));
+        pszTmp = msDoubleToString(minx);
+        pszTmp = msStringConcatenate(pszTmp, " ");
+        pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
         psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
         if (psEpsg)
         {
@@ -362,9 +362,9 @@ void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx,
         }
         free(pszTmp);
 
-        pszTmp = double2string(maxx);
-        pszTmp = strcatalloc(pszTmp, " ");
-        pszTmp = strcatalloc(pszTmp, double2string(maxy));
+        pszTmp = msDoubleToString(maxx);
+        pszTmp = msStringConcatenate(pszTmp, " ");
+        pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
         psNode = xmlNewChild(psEnvNode, NULL,
                              BAD_CAST "upperCorner", BAD_CAST pszTmp);
         
@@ -481,10 +481,10 @@ void  msSOSAddGeometryNode(xmlNodePtr psParent, layerObj *lp, shapeObj *psShape,
                   if (pszEpsg)
                     xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST pszEpsg);
 
-                  pszTmp = double2string(psShape->line[0].point[0].x);
-                  pszTmp = strcatalloc(pszTmp, ",");
-                  pszTmp = strcatalloc(pszTmp, 
-                                       double2string(psShape->line[0].point[0].y));
+                  pszTmp = msDoubleToString(psShape->line[0].point[0].x);
+                  pszTmp = msStringConcatenate(pszTmp, ",");
+                  pszTmp = msStringConcatenate(pszTmp, 
+                                       msDoubleToString(psShape->line[0].point[0].y));
                   psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
                   xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
                   free(pszTmp);
@@ -534,12 +534,12 @@ void  msSOSAddGeometryNode(xmlNodePtr psParent, layerObj *lp, shapeObj *psShape,
                   pszTmp = NULL;
                   for(j=0; j<psShape->line[i].numpoints; j++)
                   {
-                      pszTmp = strcatalloc(pszTmp, 
-                                           double2string(psShape->line[i].point[j].x));
-                      pszTmp = strcatalloc(pszTmp, ",");
-                      pszTmp = strcatalloc(pszTmp, 
-                                           double2string(psShape->line[i].point[j].y));
-                      pszTmp = strcatalloc(pszTmp, " ");
+                      pszTmp = msStringConcatenate(pszTmp, 
+                                           msDoubleToString(psShape->line[i].point[j].x));
+                      pszTmp = msStringConcatenate(pszTmp, ",");
+                      pszTmp = msStringConcatenate(pszTmp, 
+                                           msDoubleToString(psShape->line[i].point[j].y));
+                      pszTmp = msStringConcatenate(pszTmp, " ");
                   }
                   psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
                   xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
@@ -603,13 +603,13 @@ void  msSOSAddGeometryNode(xmlNodePtr psParent, layerObj *lp, shapeObj *psShape,
                   {
   
                       pszTmp = 
-                        strcatalloc(pszTmp, 
-                                    double2string(psShape->line[i].point[j].x));
-                      pszTmp = strcatalloc(pszTmp, ",");
+                        msStringConcatenate(pszTmp, 
+                                    msDoubleToString(psShape->line[i].point[j].x));
+                      pszTmp = msStringConcatenate(pszTmp, ",");
                       pszTmp = 
-                        strcatalloc(pszTmp, 
-                                    double2string(psShape->line[i].point[j].y));
-                      pszTmp = strcatalloc(pszTmp, " ");
+                        msStringConcatenate(pszTmp, 
+                                    msDoubleToString(psShape->line[i].point[j].y));
+                      pszTmp = msStringConcatenate(pszTmp, " ");
                   }
                   psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
                   xmlSetNs(psNode,xmlNewNs(psNode, 
@@ -688,7 +688,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                 {
                     if (sShape.values[i] && strlen(sShape.values[i]) > 0)
                     {
-                        pszTime = strcatalloc(pszTime, sShape.values[i]);
+                        pszTime = msStringConcatenate(pszTime, sShape.values[i]);
                         psNode = xmlNewChild(psObsNode, NULL, BAD_CAST "time", BAD_CAST pszTime);
 
                         xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
@@ -724,9 +724,9 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                 if (i < lpfirst->numitems)
                 {
                     sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
-                    pszTmp = strcatalloc(pszTmp, szTmp);
+                    pszTmp = msStringConcatenate(pszTmp, szTmp);
                     pszValueShape = msEncodeHTMLEntities(sShape.values[i]);
-                    pszTmp = strcatalloc(pszTmp, pszValueShape);
+                    pszTmp = msStringConcatenate(pszTmp, pszValueShape);
             
                         psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
                         xmlNewNsProp(psNode,
@@ -744,8 +744,8 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
         else if ((pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "procedure")))
         {
             sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
-            pszTmp = strcatalloc(pszTmp, szTmp);
-            pszTmp = strcatalloc(pszTmp, (char *)pszValue);
+            pszTmp = msStringConcatenate(pszTmp, szTmp);
+            pszTmp = msStringConcatenate(pszTmp, (char *)pszValue);
             
             psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
             xmlNewNsProp(psNode,
@@ -951,8 +951,8 @@ char *msSOSParseTimeGML(char *pszGmlTime)
                     if (pszBegin && pszEnd)
                     {
                         pszReturn = strdup(pszBegin);
-                        pszReturn = strcatalloc(pszReturn, "/");
-                        pszReturn = strcatalloc(pszReturn, pszEnd);
+                        pszReturn = msStringConcatenate(pszReturn, "/");
+                        pszReturn = msStringConcatenate(pszReturn, pszEnd);
                     }
                 }
             }
@@ -1044,10 +1044,10 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     /*TODO : review this*/
     dtd_url = strdup("http://www.opengis.net/sos ");
-    dtd_url = strcatalloc(dtd_url, schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/sos/");
-    dtd_url = strcatalloc(dtd_url, (char *)pszSOSVersion);
-    dtd_url = strcatalloc(dtd_url, "/sosGetCapabilities.xsd");
+    dtd_url = msStringConcatenate(dtd_url, schemalocation);
+    dtd_url = msStringConcatenate(dtd_url, "/sos/");
+    dtd_url = msStringConcatenate(dtd_url, (char *)pszSOSVersion);
+    dtd_url = msStringConcatenate(dtd_url, "/sosGetCapabilities.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST dtd_url);
 
     /*service identification*/
@@ -1162,7 +1162,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  {
                      char **tokens;
                      int n;
-                     tokens = split(value, ',', &n);
+                     tokens = msStringSplit(value, ',', &n);
                      if (tokens==NULL || n != 4) {
                          msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
                                     "msSOSGetCapabilities()");
@@ -1194,7 +1194,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      char **tokens;
                      int n;
                      char *pszEndTime = NULL;
-                     tokens = split(value, '/', &n);
+                     tokens = msStringSplit(value, '/', &n);
                      if (tokens==NULL || (n != 1 && n!=2)) {
                          msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
                                     "msSOSGetCapabilities()");
@@ -1221,13 +1221,13 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                              /*value could be a list of procedure*/
                              char **tokens;
                              int n = 0;
-                             tokens = split(value, ' ', &n);
+                             tokens = msStringSplit(value, ' ', &n);
                              for (k=0; k<n; k++)
                              {
                                  /*TODO review the urn output */
                                  sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
-                                 pszTmp = strcatalloc(pszTmp, szTmp);
-                                 pszTmp = strcatalloc(pszTmp, tokens[k]);
+                                 pszTmp = msStringConcatenate(pszTmp, szTmp);
+                                 pszTmp = msStringConcatenate(pszTmp, tokens[k]);
 
                                  psNode = 
                                    xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
@@ -1296,14 +1296,14 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
                                      if (sShape.values[iItemPosition])
                                      {
-                                         pszProcedure = strcatalloc(pszProcedure, sShape.values[iItemPosition]);
+                                         pszProcedure = msStringConcatenate(pszProcedure, sShape.values[iItemPosition]);
                                          if (!_IsInList(papsProcedures, nDistinctProcedures, pszProcedure))
                                          {
                                                papsProcedures[nDistinctProcedures] = strdup(pszProcedure);
                                                nDistinctProcedures++;
                                                sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
-                                               pszTmp = strcatalloc(pszTmp, szTmp);
-                                               pszTmp = strcatalloc(pszTmp, pszProcedure);
+                                               pszTmp = msStringConcatenate(pszTmp, szTmp);
+                                               pszTmp = msStringConcatenate(pszTmp, pszProcedure);
 
                                                psNode = 
                                                xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
@@ -1405,7 +1405,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  {
                      char **tokens;
                      int n;
-                     tokens = split(value, ',', &n);
+                     tokens = msStringSplit(value, ',', &n);
                      if (tokens==NULL || n != 4) {
                          msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
                                     "msSOSGetCapabilities()");
@@ -1627,7 +1627,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
       should be given for each property too) */
 
     bLayerFound = 0;
-    tokens = split(pszProperty, ',', &n);
+    tokens = msStringSplit(pszProperty, ',', &n);
     
     for (i=0; i<map->numlayers; i++)
     {
@@ -1676,7 +1676,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
      by the  offering,observedproperty filter done above */
     if (pszProdedure)
     {
-        tokens = split(pszProdedure, ',', &n);
+        tokens = msStringSplit(pszProdedure, ',', &n);
         
         if (tokens && n > 0)
         {
@@ -1690,7 +1690,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                     if (pszValue)
                     {
                         /* the procedure metadata can be a list "sensor1 sensor2..."*/
-                        tokens1 = split(pszValue, ' ', &n1);
+                        tokens1 = msStringSplit(pszValue, ' ', &n1);
                         
                         for (j=0; j<n; j++)
                         {
@@ -1736,34 +1736,34 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                         if (bSpatialDB)
                         {
                             if (lp->connectiontype != MS_OGR)
-                              pszBuffer = strcatalloc(pszBuffer, "(");
+                              pszBuffer = msStringConcatenate(pszBuffer, "(");
                             else
-                              pszBuffer = strcatalloc(pszBuffer, "WHERE ");
+                              pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
                         }
                         else
-                          pszBuffer = strcatalloc(pszBuffer, "(");
+                          pszBuffer = msStringConcatenate(pszBuffer, "(");
                                 
 
                         for (j=0; j<n; j++)
                         {
                             if (j > 0)
-                              pszBuffer = strcatalloc(pszBuffer, " OR ");
+                              pszBuffer = msStringConcatenate(pszBuffer, " OR ");
                             
-                            pszBuffer = strcatalloc(pszBuffer, "(");
+                            pszBuffer = msStringConcatenate(pszBuffer, "(");
                             
                             if (!bSpatialDB)
-                              pszBuffer = strcatalloc(pszBuffer, "'[");
-                            pszBuffer = strcatalloc(pszBuffer, (char *)pszProcedureItem);
+                              pszBuffer = msStringConcatenate(pszBuffer, "'[");
+                            pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
                             if (!bSpatialDB)
-                              pszBuffer = strcatalloc(pszBuffer, "]'");
+                              pszBuffer = msStringConcatenate(pszBuffer, "]'");
                                     
-                            pszBuffer = strcatalloc(pszBuffer, " = '");
-                            pszBuffer = strcatalloc(pszBuffer,  tokens[j]);
-                            pszBuffer = strcatalloc(pszBuffer,  "')");
+                            pszBuffer = msStringConcatenate(pszBuffer, " = '");
+                            pszBuffer = msStringConcatenate(pszBuffer,  tokens[j]);
+                            pszBuffer = msStringConcatenate(pszBuffer,  "')");
                         }
                                 
                         if (!bSpatialDB || lp->connectiontype != MS_OGR)
-                          pszBuffer = strcatalloc(pszBuffer, ")");
+                          pszBuffer = msStringConcatenate(pszBuffer, ")");
 
                         loadExpressionString(&lp->filter, pszBuffer);
                         if (pszBuffer)
@@ -1801,7 +1801,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         int numtimes = 0;
         char *pszTimeString = NULL, *pszTmp = NULL;
 
-        apszTimes = split (pszTime, ',', &numtimes);
+        apszTimes = msStringSplit (pszTime, ',', &numtimes);
         if (numtimes >=1)
         {
             for (i=0; i<numtimes; i++)
@@ -1810,8 +1810,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                 if (pszTmp)
                 {
                     if (pszTimeString)
-                      pszTimeString = strcatalloc(pszTimeString, ",");
-                    pszTimeString = strcatalloc(pszTimeString, pszTmp);
+                      pszTimeString = msStringConcatenate(pszTimeString, ",");
+                    pszTimeString = msStringConcatenate(pszTimeString, pszTmp);
                     msFree(pszTmp);
                 }
             }
@@ -1944,7 +1944,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
                 if (pszLowerCorner && pszUpperCorner)
                 {
-                    tokens = split(pszLowerCorner, ' ', &n);
+                    tokens = msStringSplit(pszLowerCorner, ' ', &n);
                     if (tokens && n == 2)
                     {
                         sBbox.minx = atof(tokens[0]);
@@ -1952,7 +1952,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
                          msFreeCharArray(tokens, n);
 
-                         tokens = split(pszUpperCorner, ' ', &n);
+                         tokens = msStringSplit(pszUpperCorner, ' ', &n);
                          if (tokens && n == 2)
                          {
                              sBbox.maxx = atof(tokens[0]);
@@ -1984,7 +1984,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         int n;
 
 
-        tokens = split(pszBbox, ',', &n);
+        tokens = msStringSplit(pszBbox, ',', &n);
         if (tokens==NULL || n != 4) 
         {
             msSetError(MS_SOSERR, "Wrong number of arguments for bounding box.", "msSOSGetObservation()");
@@ -2037,8 +2037,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     /*TODO : review this*/
     dtd_url = strdup("http://www.opengis.net/om ");
-    dtd_url = strcatalloc(dtd_url, schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/0.14.7/om.xsd");
+    dtd_url = msStringConcatenate(dtd_url, schemalocation);
+    dtd_url = msStringConcatenate(dtd_url, "/0.14.7/om.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST dtd_url);
 
 
@@ -2057,7 +2057,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         char **tokens;
         int n;
         char *pszEndTime = NULL;
-        tokens = split(pszTmp, '/', &n);
+        tokens = msStringSplit(pszTmp, '/', &n);
         if (tokens==NULL || (n != 1 && n!=2)) {
             msSetError(MS_WMSERR, "Wrong number of arguments for offering_timeextent.",
                        "msSOSGetCapabilities()");
@@ -2187,7 +2187,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
             char **tokens = NULL;
             int n=0;
             int bFound = 0;
-            tokens = split(pszId, ' ', &n);
+            tokens = msStringSplit(pszId, ' ', &n);
             for (k=0; k<n; k++)
             {
                 if (tokens[k] && strlen(tokens[k]) > 0 &&
@@ -2208,9 +2208,9 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                     {
                         tmpstr = (char *)malloc(sizeof(char)*strlen(names[k]) + 3);
                         sprintf(tmpstr,"%%%s%%", names[k]);
-                        if (stristr(pszUrl, tmpstr) != NULL)
+                        if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
                         {
-                            pszTmp = gisub(pszTmp, tmpstr, values[k]);
+                            pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, values[k]);
                             break;
                         }
                         msFree(tmpstr);
@@ -2276,9 +2276,9 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                                 {
                                     tmpstr = (char *)malloc(sizeof(char)*strlen(names[k]) + 3);
                                     sprintf(tmpstr,"%%%s%%", names[k]);
-                                    if (stristr(pszUrl, tmpstr) != NULL)
+                                    if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
                                     {
-                                        pszTmp = gisub(pszTmp, tmpstr, values[k]);
+                                        pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, values[k]);
                                         break;
                                     }
                                     msFree(tmpstr);

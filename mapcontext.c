@@ -717,7 +717,7 @@ int msLoadMapContextLayerFormat(CPLXMLNode *psFormat, layerObj *layer)
       pszValue = msLookupHashTable(&(layer->metadata), 
                                    "wms_formatlist");
 
-      papszList = split(pszValue, ',', &numformats);
+      papszList = msStringSplit(pszValue, ',', &numformats);
       for(i=0; i < numformats; i++)
       {
           if (
@@ -1854,7 +1854,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
           pszValue = msLookupHashTable(&(map->web.metadata), 
                                        "wms_keywordlist");
-          papszKeywords = split(pszValue, ',', &nKeywords);
+          papszKeywords = msStringSplit(pszValue, ',', &nKeywords);
           if(nKeywords > 0 && papszKeywords)
           {
               msIO_fprintf( stream, "    <KeywordList>\n");
@@ -2094,7 +2094,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               pszCurrent = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                              "wms_format");
 
-              papszFormats = split(pszValue, ',', &numFormats);
+              papszFormats = msStringSplit(pszValue, ',', &numFormats);
               if(numFormats > 0 && papszFormats)
               {
                   msIO_fprintf( stream, "      <FormatList>\n");
@@ -2120,7 +2120,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           /* First check the stylelist */
           pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata), 
                                        "wms_stylelist");
-          if(pszValue == NULL || strlen(trimLeft(pszValue)) < 1)
+          if(pszValue == NULL || strlen(msStringTrimLeft(pszValue)) < 1)
           {
               /* Check if the style is in the connection URL */
               pszURL = "";

@@ -1035,7 +1035,7 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
         int n;
         rectObj ext;
 
-        tokens = split(pszTmp, ' ', &n);
+        tokens = msStringSplit(pszTmp, ' ', &n);
         if (tokens==NULL || n != 4) {
             msSetError(MS_WFSCONNERR, "Wrong number of values in 'wfs_latlonboundingbox' metadata.",
                        "msWFSLayerWhichShapes()");

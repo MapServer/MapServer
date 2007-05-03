@@ -1314,8 +1314,8 @@ unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr,
 
     pFormatBuffer = format->driver;
 
-    pszGDFormat = strcatalloc(pszGDFormat, "gd/");
-    pszGDFormat = strcatalloc(pszGDFormat, &(format->driver[4]));
+    pszGDFormat = msStringConcatenate(pszGDFormat, "gd/");
+    pszGDFormat = msStringConcatenate(pszGDFormat, &(format->driver[4]));
 
     format->driver = pszGDFormat;
 

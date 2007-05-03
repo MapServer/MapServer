@@ -273,9 +273,9 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
     if(strstr(tmpstr1, tmpstr2)) {
       if(msLayerIsVisible(map, (GET_LAYER(map, i))))
-	tmpstr1 = gsub(tmpstr1, tmpstr2, "1");
+	tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "1");
       else
-	tmpstr1 = gsub(tmpstr1, tmpstr2, "0");
+	tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "0");
     }
 
     free(tmpstr2);
@@ -334,7 +334,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     tmpstr = strdup(expression->string);
 
     for(i=0; i<expression->numitems; i++)      
-      tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
+      tmpstr = msReplaceSubstring(tmpstr, expression->items[i], items[expression->indexes[i]]);
 
     msAcquireLock( TLOCK_PARSER );
     msyystate = MS_TOKENIZE_EXPRESSION;
@@ -452,7 +452,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
       tmpstr = strdup(layer->class[shape->classindex]->text.string);
 
       for(i=0; i<layer->class[shape->classindex]->text.numitems; i++)
-	tmpstr = gsub(tmpstr, layer->class[shape->classindex]->text.items[i], shape->values[layer->class[shape->classindex]->text.indexes[i]]);
+	tmpstr = msReplaceSubstring(tmpstr, layer->class[shape->classindex]->text.items[i], shape->values[layer->class[shape->classindex]->text.indexes[i]]);
       break;
     }
   } else {

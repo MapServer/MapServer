@@ -418,7 +418,7 @@ static void imagePolyline(FILE *fp, int bCompressed, shapeObj *p,
                 else
                   sprintf(szTmp, "%d", symbolstyle[k]);
                 
-                pszDashArray = strcatalloc(pszDashArray, szTmp);
+                pszDashArray = msStringConcatenate(pszDashArray, szTmp);
             }
             
             msIO_fprintfgz(fp, bCompressed, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\" stroke-width=\"%d\" stroke-dasharray=\"%s\" points=\"",color->red, color->green, 
@@ -691,11 +691,11 @@ static void imageFillPolygon(FILE *fp, int bCompressed,
     {
         if (i == 0)
         {
-            pszDashArray = strcatalloc(pszDashArray,"");
+            pszDashArray = msStringConcatenate(pszDashArray,"");
             if (symbolstylelength > 0 && symbolstyle)
             {
                 sprintf(szTmp, "stroke-dasharray=\"");
-                pszDashArray = strcatalloc(pszDashArray, szTmp);
+                pszDashArray = msStringConcatenate(pszDashArray, szTmp);
                 for (k=0; k<symbolstylelength; k++)
                 {
                     if (k < symbolstylelength-1)
@@ -703,7 +703,7 @@ static void imageFillPolygon(FILE *fp, int bCompressed,
                     else
                       sprintf(szTmp, "%d\"", symbolstyle[k]);
 
-                    pszDashArray = strcatalloc(pszDashArray, szTmp);
+                    pszDashArray = msStringConcatenate(pszDashArray, szTmp);
                 }
             }
             if (max > 2)
@@ -942,24 +942,24 @@ static void drawSVGText(FILE *fp, int bCompressed, int x, int y,
     /*    char *next; */
     /*    int len, i, ch; */
 
-    pszFontStyleString = strcatalloc(pszFontStyleString, "");
-    pszFontWeightString = strcatalloc(pszFontWeightString, "");
-    pszAngleString = strcatalloc(pszAngleString, "");
-    pszAngleAnchorString = strcatalloc(pszAngleAnchorString, "");
+    pszFontStyleString = msStringConcatenate(pszFontStyleString, "");
+    pszFontWeightString = msStringConcatenate(pszFontWeightString, "");
+    pszAngleString = msStringConcatenate(pszAngleString, "");
+    pszAngleAnchorString = msStringConcatenate(pszAngleAnchorString, "");
 
     if (pszFontStyle)
     {
         sprintf(szTmp, " font-style=\"%s\"", pszFontStyle);
-        pszFontStyleString = strcatalloc(pszFontStyleString, szTmp);
+        pszFontStyleString = msStringConcatenate(pszFontStyleString, szTmp);
     }
 
     if (pszFontWeight)
     {
         sprintf(szTmp, " font-weight=\"%s\"", pszFontWeight);
-        pszFontWeightString = strcatalloc(pszFontWeightString, szTmp);
+        pszFontWeightString = msStringConcatenate(pszFontWeightString, szTmp);
     }
  
-    pszFillString =  strcatalloc(pszFillString, "");
+    pszFillString =  msStringConcatenate(pszFillString, "");
     if (psColor)
     {
         if (MS_VALID_COLOR(*psColor))
@@ -968,15 +968,15 @@ static void drawSVGText(FILE *fp, int bCompressed, int x, int y,
         else
           sprintf(szTmp," fill=\"none\"");
 
-        pszFillString = strcatalloc(pszFillString, szTmp);
+        pszFillString = msStringConcatenate(pszFillString, szTmp);
     }
 
-    pszStrokeString =  strcatalloc(pszStrokeString, "");
+    pszStrokeString =  msStringConcatenate(pszStrokeString, "");
     if (psOutlineColor && MS_VALID_COLOR(*psOutlineColor))
     {
         sprintf(szTmp, " stroke=\"#%02x%02x%02x\" stroke-width=\"0.5\"",
                 psOutlineColor->red, psOutlineColor->green  , psOutlineColor->blue);
-        pszStrokeString = strcatalloc(pszStrokeString, szTmp);
+        pszStrokeString = msStringConcatenate(pszStrokeString, szTmp);
     }
 
     /* angle */
@@ -984,7 +984,7 @@ static void drawSVGText(FILE *fp, int bCompressed, int x, int y,
     {
         sprintf(szTmp, " transform=\"rotate(%f %d %d)\"",
                 -dfAngle, x, y);
-        pszAngleString = strcatalloc(pszAngleString, szTmp);
+        pszAngleString = msStringConcatenate(pszAngleString, szTmp);
     }
 
     /* anchor point */
@@ -992,24 +992,24 @@ static void drawSVGText(FILE *fp, int bCompressed, int x, int y,
         nAnchorPosition == MS_LL)
     {
         sprintf(szTmp, " text-anchor=\"end\"");
-        pszAngleAnchorString = strcatalloc(pszAngleAnchorString, szTmp);
+        pszAngleAnchorString = msStringConcatenate(pszAngleAnchorString, szTmp);
     }
     else if (nAnchorPosition == MS_UC || nAnchorPosition == MS_CC ||
              nAnchorPosition == MS_LC)
     {
         sprintf(szTmp, " text-anchor=\"middle\"");
-        pszAngleAnchorString = strcatalloc(pszAngleAnchorString, szTmp);
+        pszAngleAnchorString = msStringConcatenate(pszAngleAnchorString, szTmp);
     }
     else if (nAnchorPosition == MS_UR || nAnchorPosition == MS_CR ||
              nAnchorPosition == MS_LR)
     {
         sprintf(szTmp, " text-anchor=\"start\"");
-        pszAngleAnchorString = strcatalloc(pszAngleAnchorString, szTmp);
+        pszAngleAnchorString = msStringConcatenate(pszAngleAnchorString, szTmp);
     }
 
 /*    if (bEncoding)
     {
-        pszTmpStr = strcatalloc(pszTmpStr, string);
+        pszTmpStr = msStringConcatenate(pszTmpStr, string);
         next = pszTmpStr;
         for (i=0; *next; i++)
         {
@@ -1020,7 +1020,7 @@ static void drawSVGText(FILE *fp, int bCompressed, int x, int y,
             next += len;
         
             sprintf(szTmp, "&#x%x;",ch);
-            pszFinalString = strcatalloc(pszFinalString, szTmp);
+            pszFinalString = msStringConcatenate(pszFinalString, szTmp);
         }
     }
     else*/
@@ -1158,7 +1158,7 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
 /*        - font-weight (normal | bold | bolder | lighter | 100 | 200 ..*/
 /* -------------------------------------------------------------------- */
         /* parse font string :  */
-        aszFontsParts = split(label->font, '_', &nFontParts);
+        aszFontsParts = msStringSplit(label->font, '_', &nFontParts);
  
         pszFontFamily = aszFontsParts[0];
         if (nFontParts == 3)
@@ -1510,7 +1510,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 /*        - font-weight (normal | bold | bolder | lighter | 100 | 200 ..*/
 /* -------------------------------------------------------------------- */
             /* parse font string :  */
-            aszFontsParts = split(symbol->font, '_', &nFontParts);
+            aszFontsParts = msStringSplit(symbol->font, '_', &nFontParts);
  
             pszFontFamily = aszFontsParts[0];
             if (nFontParts == 3)
@@ -1550,26 +1550,26 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
             y = MS_NINT(p->y  + style->offsety);
 
             /*TODO : style->angle */
-            pszFill = strcatalloc(pszFill,"");
+            pszFill = msStringConcatenate(pszFill,"");
             if (MS_VALID_COLOR(style->color) && symbol->filled)
             {
                 sprintf(szTmp, "fill=\"#%02x%02x%02x\"",style->color.red, 
                         style->color.green,
                         style->color.blue);
-                pszFill = strcatalloc(pszFill, szTmp);
+                pszFill = msStringConcatenate(pszFill, szTmp);
             }
             else
             {
-                pszFill = strcatalloc(pszFill,"fill=\"none\"");
+                pszFill = msStringConcatenate(pszFill,"fill=\"none\"");
                 bFillSetToNone =1;
             }
-            pszStroke = strcatalloc(pszStroke, "");
+            pszStroke = msStringConcatenate(pszStroke, "");
             if (MS_VALID_COLOR(style->outlinecolor))
             {
                 sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",style->outlinecolor.red, 
                         style->outlinecolor.green,
                         style->outlinecolor.blue);
-                pszStroke = strcatalloc(pszStroke, szTmp);
+                pszStroke = msStringConcatenate(pszStroke, szTmp);
             } 
             else if (bFillSetToNone)
             {
@@ -1577,7 +1577,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                 the outline color is not set, set the stroke to black. 
                 This is the way the gd outputs reacts to this case */
                 sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",0,0,0);
-                pszStroke = strcatalloc(pszStroke, szTmp);
+                pszStroke = msStringConcatenate(pszStroke, szTmp);
             }
             
 
@@ -1593,28 +1593,28 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
             offset_x = MS_NINT(p->x - d*.5*symbol->sizex +  style->offsetx);
             offset_y = MS_NINT(p->y - d*.5*symbol->sizey +  style->offsety);
 
-            pszFill = strcatalloc(pszFill,"");
+            pszFill = msStringConcatenate(pszFill,"");
             if (MS_VALID_COLOR(style->color) && symbol->filled)
             {
                 sprintf(szTmp, "fill=\"#%02x%02x%02x\"",
                         style->color.red, 
                         style->color.green,
                         style->color.blue);
-                pszFill = strcatalloc(pszFill, szTmp);
+                pszFill = msStringConcatenate(pszFill, szTmp);
             }
             else
             {
                 bFillSetToNone = 1;
-                pszFill = strcatalloc(pszFill,"fill=\"none\"");
+                pszFill = msStringConcatenate(pszFill,"fill=\"none\"");
             }
-            pszStroke = strcatalloc(pszStroke, "");
+            pszStroke = msStringConcatenate(pszStroke, "");
             if (MS_VALID_COLOR(style->outlinecolor))
             {
                 sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",
                         style->outlinecolor.red, 
                         style->outlinecolor.green,
                         style->outlinecolor.blue);
-                pszStroke = strcatalloc(pszStroke, szTmp);
+                pszStroke = msStringConcatenate(pszStroke, szTmp);
             }
             else if (bFillSetToNone)
             {
@@ -1622,7 +1622,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                 the outline color is not set, set the stroke to black. 
                 This is the way the gd outputs reacts to this case */
                 sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",0,0,0);
-                pszStroke = strcatalloc(pszStroke, szTmp);
+                pszStroke = msStringConcatenate(pszStroke, szTmp);
             }
             if (width <= 0)
               width = 1;

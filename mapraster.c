@@ -218,14 +218,14 @@ int msGetClass(layerObj *layer, colorObj *color)
       tmpstr1 = strdup(layer->class[i]->expression.string);
 
       sprintf(tmpstr2, "%d", color->red);
-      tmpstr1 = gsub(tmpstr1, "[red]", tmpstr2);
+      tmpstr1 = msReplaceSubstring(tmpstr1, "[red]", tmpstr2);
       sprintf(tmpstr2, "%d", color->green);
-      tmpstr1 = gsub(tmpstr1, "[green]", tmpstr2);
+      tmpstr1 = msReplaceSubstring(tmpstr1, "[green]", tmpstr2);
       sprintf(tmpstr2, "%d", color->blue);
-      tmpstr1 = gsub(tmpstr1, "[blue]", tmpstr2);
+      tmpstr1 = msReplaceSubstring(tmpstr1, "[blue]", tmpstr2);
 
       sprintf(tmpstr2, "%d", color->pen);
-      tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
+      tmpstr1 = msReplaceSubstring(tmpstr1, "[pixel]", tmpstr2);
 
       msAcquireLock( TLOCK_PARSER );
       msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;
@@ -287,7 +287,7 @@ int msGetClass_Float(layerObj *layer, float fValue)
             tmpstr1 = strdup(layer->class[i]->expression.string);
 
             sprintf(tmpstr2, "%18g", fValue);
-            tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
+            tmpstr1 = msReplaceSubstring(tmpstr1, "[pixel]", tmpstr2);
 
             msAcquireLock( TLOCK_PARSER );
             msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;

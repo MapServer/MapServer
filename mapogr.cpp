@@ -2069,7 +2069,7 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
     int   nSymbol = -1;
 
     if (pszSymbolId && pszSymbolId[0] != '\0' &&
-        (params = split(pszSymbolId, '.', &numparams))!=NULL)
+        (params = msStringSplit(pszSymbolId, '.', &numparams))!=NULL)
     {
         for(int j=0; j<numparams && nSymbol == -1; j++)
         {

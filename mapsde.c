@@ -656,7 +656,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                             (short)(i+1), 
                                             &shortval); 
             if(status == SE_SUCCESS)
-                shape->values[i] = long2string(shortval);
+                shape->values[i] = msLongToString(shortval);
             else if(status == SE_NULL_VALUE)
                 shape->values[i] = strdup(MS_SDE_NULLSTRING);
             else {
@@ -671,7 +671,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                             (short)(i+1), 
                                             &longval);
             if(status == SE_SUCCESS)
-                shape->values[i] = long2string(longval);
+                shape->values[i] = msLongToString(longval);
             else if(status == SE_NULL_VALUE)
                 shape->values[i] = strdup(MS_SDE_NULLSTRING);
             else {
@@ -686,7 +686,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                             (short)(i+1), 
                                             &floatval); 
             if(status == SE_SUCCESS)
-                shape->values[i] = double2string(floatval);
+                shape->values[i] = msDoubleToString(floatval);
             else if(status == SE_NULL_VALUE)
                 shape->values[i] = strdup(MS_SDE_NULLSTRING);
             else {     
@@ -701,7 +701,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                             (short) (i+1), 
                                             &doubleval);
             if(status == SE_SUCCESS)
-                shape->values[i] = double2string(doubleval);
+                shape->values[i] = msDoubleToString(doubleval);
             else if(status == SE_NULL_VALUE)
                 shape->values[i] = strdup(MS_SDE_NULLSTRING);
             else {     
@@ -962,7 +962,7 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
     // If we were given an ID *and* we have a join, we need to 
     // set our FILTER statement to reflect this.
     if ((sde->join_table) && (id != NULL)) {
-        pszId = long2string(*id);
+        pszId = msLongToString(*id);
         strcat(full_filter, layer->filter.string);
         strcat(full_filter, " AND ");
         strcat(full_filter, sde->row_id_column);
@@ -1069,10 +1069,10 @@ int msSDELayerOpen(layerObj *layer) {
             return(MS_FAILURE);  
         }
         /* Split the connection parameters and make sure we have enough of them */
-        params = split(conn_decrypted, ',', &numparams);
+        params = msStringSplit(conn_decrypted, ',', &numparams);
         if(!params) {
             msSetError( MS_MEMERR, 
-                        "Error spliting SDE connection information.", 
+                        "Error splitting SDE connection information.", 
                         "msSDELayerOpen()");
             msFree(conn_decrypted);
             return(MS_FAILURE);
@@ -1137,10 +1137,10 @@ int msSDELayerOpen(layerObj *layer) {
     /* Split the DATA member into its parameters using the comma */
     /* Periods (.) are used to denote table names and schemas in SDE,  */
     /* as are underscores (_). */
-    data_params = split(layer->data, ',', &numparams);
+    data_params = msStringSplit(layer->data, ',', &numparams);
     if(!data_params) {
         msSetError( MS_MEMERR, 
-                    "Error spliting SDE layer information.", 
+                    "Error splitting SDE layer information.", 
                     "msSDELayerOpen()");
         return(MS_FAILURE);
     }

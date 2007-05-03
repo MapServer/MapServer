@@ -187,7 +187,7 @@ static char *msWCSConvertRangeSetToString(const char *value) {
   char buf1[128], *buf2=NULL;
 
   if(strchr(value, '/')) { /* value is min/max/res */
-    tokens = split(value, '/', &numtokens);
+    tokens = msStringSplit(value, '/', &numtokens);
     if(tokens==NULL || numtokens != 3) {
       msFreeCharArray(tokens, numtokens);
       return NULL; /* not a set of equally spaced intervals */
@@ -203,7 +203,7 @@ static char *msWCSConvertRangeSetToString(const char *value) {
         snprintf(buf1, 128, "%g", val);     
       else
         snprintf(buf1, 128, ",%g", val);
-      buf2 = strcatalloc(buf2, buf1);
+      buf2 = msStringConcatenate(buf2, buf1);
     }
    
     return buf2;
@@ -422,7 +422,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          char **tokens;
          int n;
           
-         tokens = split(request->ParamValues[i], ',', &n);
+         tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n != 4) {
            msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.", "msWCSParseRequest()");
            return msWCSException(map, params->version, "InvalidParameterValue", "bbox");
@@ -822,7 +822,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
     char **tokens;
     int numtokens;
 
-     tokens = split(value, '/', &numtokens);
+     tokens = msStringSplit(value, '/', &numtokens);
      if(tokens && numtokens > 0) {
        msIO_printf("            <interval>\n");
        if(numtokens >= 1) msIO_printf("            <min>%s</min>\n", tokens[0]); /* TODO: handle closure */
@@ -964,7 +964,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   
   /* compound range sets */
   if((value = msOWSLookupMetadata(&(layer->metadata), "COM", "rangeset_axes")) != NULL) {
-     tokens = split(value, ',', &numtokens);
+     tokens = msStringSplit(value, ',', &numtokens);
      if(tokens && numtokens > 0) {
        for(i=0; i<numtokens; i++)
          msWCSDescribeCoverage_AxisDescription(layer, tokens[i]);
@@ -980,14 +980,14 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   
   /* requestResposeCRSs: check the layer metadata/projection, and then the map metadata/projection if necessary (should never get to the error message) */
   if((value = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "COM", MS_FALSE)) != NULL) {
-    tokens = split(value, ' ', &numtokens);
+    tokens = msStringSplit(value, ' ', &numtokens);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", tokens[i]);
       msFreeCharArray(tokens, numtokens);
     }
   } else if((value = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "COM", MS_FALSE)) != NULL) {
-    tokens = split(value, ' ', &numtokens);
+    tokens = msStringSplit(value, ' ', &numtokens);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", tokens[i]);
@@ -1224,7 +1224,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     char tag[100];
     const char *rangeitem;
 
-    tokens = split(value, ',', &numtokens);
+    tokens = msStringSplit(value, ',', &numtokens);
     for(i=0; i<numtokens; i++) {
       if((value = msWCSGetRequestParameter(request, tokens[i])) == NULL) continue; /* next rangeset parameter */
        
@@ -1353,7 +1353,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
  
   msLayerSetProcessingKey(lp, "BANDS", bandlist);
-  sprintf(numbands, "%d", countChars(bandlist, ',')+1);
+  sprintf(numbands, "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
                
   /* create the image object  */
@@ -1511,7 +1511,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
       char **tokens;
       int n;
             
-      tokens = split(value, ' ', &n);
+      tokens = msStringSplit(value, ' ', &n);
       if( tokens == NULL || n != 2 ) {
         msSetError( MS_WCSERR, "Wrong number of arguments for wcs|ows_resolution metadata.", "msWCSGetCoverageMetadata()");
         msFreeCharArray( tokens, n );
@@ -1529,7 +1529,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
       char **tokens;
       int n;
             
-      tokens = split(value, ' ', &n);
+      tokens = msStringSplit(value, ' ', &n);
       if( tokens == NULL || n != 2 ) {
         msSetError( MS_WCSERR, "Wrong number of arguments for wcs|ows_size metadata.", "msWCSGetCoverageDomain()");
         msFreeCharArray( tokens, n );

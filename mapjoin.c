@@ -389,8 +389,8 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   /* load the rows */
   i = 0;
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {  
-    trimEOL(buffer);  
-    joininfo->rows[i] = split(buffer, ',', &(join->numitems));
+    msStringTrimEOL(buffer);  
+    joininfo->rows[i] = msStringSplit(buffer, ',', &(join->numitems));
     i++;
   }
   fclose(stream);

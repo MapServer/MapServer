@@ -1820,7 +1820,7 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
       return(-1);
 
     if(label->wrap != '\0') {
-      if((token = split(string, label->wrap, &(num_tokens))) == NULL)
+      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL)
 	return(-1);
 
       y -= fontPtr->h*num_tokens;

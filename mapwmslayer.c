@@ -355,7 +355,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
         /* Look for the first format in list that matches */
         char **papszTok;
         int i, n;
-        papszTok = split(pszFormatList, ',', &n);
+        papszTok = msStringSplit(pszFormatList, ',', &n);
 
         for(i=0; pszFormat==NULL && i<n; i++)
         {
@@ -875,7 +875,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         int n;
         rectObj ext;
 
-        tokens = split(pszTmp, ' ', &n);
+        tokens = msStringSplit(pszTmp, ' ', &n);
         if (tokens==NULL || n != 4) {
             msSetError(MS_WMSCONNERR, "Wrong number of arguments for 'wms_latlonboundingbox' metadata.",
                        "msDrawWMSLayer()");

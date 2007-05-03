@@ -609,7 +609,7 @@ int msOWSParseVersionString(const char *pszVersion)
     if (pszVersion)
     {
         int nVersion = 0;
-        digits = split(pszVersion, '.', &numDigits);
+        digits = msStringSplit(pszVersion, '.', &numDigits);
         if (digits == NULL || numDigits < 2 || numDigits > 3)
         {
             msSetError(MS_WMSERR, 
@@ -1222,7 +1222,7 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
       char **keywords;
       int numkeywords;
       
-      keywords = split(value, ',', &numkeywords);
+      keywords = msStringSplit(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
         int kw;
 	    if(startTag) msIO_fprintf(stream, "%s", startTag);
@@ -1255,7 +1255,7 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
       char **keywords;
       int numkeywords;
       
-      keywords = split(value, ',', &numkeywords);
+      keywords = msStringSplit(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
         int kw;
 	    if(startTag) msIO_fprintf(stream, "%s", startTag);
@@ -1289,7 +1289,7 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
     int numitems = 0, i;
 
     if(value && strlen(value) > 0)
-        items = split(value, delimiter, &numitems);
+        items = msStringSplit(value, delimiter, &numitems);
     else
     {
         if (action_if_not_found == OWS_WARN)
@@ -1299,7 +1299,7 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
         }
 
         if (default_value)
-            items = split(default_value, delimiter, &numitems);
+            items = msStringSplit(default_value, delimiter, &numitems);
     }
 
     if(items && numitems > 0)
@@ -1496,7 +1496,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectO
     char **tokens;
     int n;
 
-    tokens = split(value, ' ', &n);
+    tokens = msStringSplit(value, ' ', &n);
     if (tokens==NULL || n != 4) {
       msSetError(MS_WMSERR, "Wrong number of arguments for EXTENT metadata.",
                  "msOWSGetLayerExtent()");

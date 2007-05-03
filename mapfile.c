@@ -1003,7 +1003,7 @@ static int _msProcessAutoProjection(projectionObj *p)
     char szProjBuf[512]="";
 
     /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
-    args = split(p->args[0], ',', &numargs);
+    args = msStringSplit(p->args[0], ',', &numargs);
     if (numargs != 4 || strncasecmp(args[0], "AUTO:", 5) != 0)
     {
         msSetError(MS_PROJERR, 
@@ -1088,7 +1088,7 @@ static int _msProcessAutoProjection(projectionObj *p)
     /* msDebug("%s = %s\n", p->args[0], szProjBuf); */
 
     /* OK, pass the definition to pj_init() */
-    args = split(szProjBuf, '+', &numargs);
+    args = msStringSplit(szProjBuf, '+', &numargs);
 
     msAcquireLock( TLOCK_PROJ );
     if( !(p->proj = pj_init(numargs, args)) ) {
@@ -1238,7 +1238,7 @@ int msLoadProjectionString(projectionObj *p, char *value)
       }
       trimmed[i_out] = '\0';
       
-      p->args = split(trimmed,'+', &p->numargs);
+      p->args = msStringSplit(trimmed,'+', &p->numargs);
       free( trimmed );
   }
   else if (strncasecmp(value, "AUTO:", 5) == 0)
@@ -1255,7 +1255,7 @@ int msLoadProjectionString(projectionObj *p, char *value)
    */
   else
   {
-      p->args = split(value,',', &p->numargs);
+      p->args = msStringSplit(value,',', &p->numargs);
   }
 
   return msProcessProjection( p );
@@ -4992,7 +4992,7 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   if (new_mappath)
     map->mappath = strdup(msBuildPath(szPath, szCWDPath, strdup(new_mappath)));
   else {
-    char *path = getPath(filename);
+    char *path = msGetPath(filename);
     map->mappath = strdup(msBuildPath(szPath, szCWDPath, path));
     if( path ) free( path );
   }

@@ -906,7 +906,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_nam
   geometryList->numgeometries = 0;
 
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "geometries")) != NULL) {
-    names = split(value, ',', &numnames);
+    names = msStringSplit(value, ',', &numnames);
 
     /* allocation an array of gmlGeometryObj's */
     geometryList->numgeometries = numnames;
@@ -929,7 +929,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_nam
         char **occur;
         int numoccur;
 
-        occur = split(value, ',', &numoccur);
+        occur = msStringSplit(value, ',', &numoccur);
         if(numoccur == 2) { /* continue (TODO: throw an error if != 2) */
           geometry->occurmin = atof(occur[0]);
           if(strcasecmp(occur[1], "UNBOUNDED") == 0)
@@ -981,15 +981,15 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
 
   /* get a list of items that should be included in output */
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "include_items")) != NULL)  
-    incitems = split(value, ',', &numincitems);
+    incitems = msStringSplit(value, ',', &numincitems);
 
   /* get a list of items that should be excluded in output */
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "exclude_items")) != NULL)  
-    excitems = split(value, ',', &numexcitems);
+    excitems = msStringSplit(value, ',', &numexcitems);
 
   /* get a list of items that need don't get encoded */
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "xml_items")) != NULL)  
-    xmlitems = split(value, ',', &numxmlitems);
+    xmlitems = msStringSplit(value, ',', &numxmlitems);
 
   /* allocate memory and iinitialize the item collection */
   itemList = (gmlItemListObj *) malloc(sizeof(gmlItemListObj));
@@ -1109,8 +1109,8 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const ch
     char *tag = NULL;
 
     tag = strdup(item->template);
-    tag = gsub(tag, "$value", encoded_value);
-    if(namespace) tag = gsub(tag, "$namespace", namespace);
+    tag = msReplaceSubstring(tag, "$value", encoded_value);
+    if(namespace) tag = msReplaceSubstring(tag, "$namespace", namespace);
     msIO_fprintf(stream, "%s%s\n", tab, tag);
     free(tag);
   }
@@ -1139,7 +1139,7 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web, const char *metadata_namesp
 
   /* list of constants (TODO: make this automatic by parsing metadata) */
   if((value = msOWSLookupMetadata(&(web->metadata), metadata_namespaces, "external_namespace_prefixes")) != NULL) {
-    prefixes = split(value, ',', &numprefixes);
+    prefixes = msStringSplit(value, ',', &numprefixes);
 
     /* allocation an array of gmlNamespaceObj's */
     namespaceList->numnamespaces = numprefixes;
@@ -1201,7 +1201,7 @@ gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_name
 
   /* list of constants (TODO: make this automatic by parsing metadata) */
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "constants")) != NULL) {
-    names = split(value, ',', &numnames);
+    names = msStringSplit(value, ',', &numnames);
 
     /* allocation an array of gmlConstantObj's */
     constantList->numconstants = numnames;
@@ -1284,7 +1284,7 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces
 
   /* list of groups (TODO: make this automatic by parsing metadata) */
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "groups")) != NULL) {
-    names = split(value, ',', &numnames);
+    names = msStringSplit(value, ',', &numnames);
 
     /* allocation an array of gmlGroupObj's */
     groupList->numgroups = numnames;
@@ -1300,7 +1300,7 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces
 
       snprintf(tag, 64, "%s_group", group->name);
       if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL)
-        group->items = split(value, ',', &group->numitems);
+        group->items = msStringSplit(value, ',', &group->numitems);
 
       snprintf(tag, 64, "%s_type", group->name);
       if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 

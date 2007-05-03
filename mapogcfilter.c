@@ -479,7 +479,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     {
 #ifdef USE_PROJ
         nTokens = 0;
-        tokens = split(szEPSG,'#', &nTokens);
+        tokens = msStringSplit(szEPSG,'#', &nTokens);
         if (tokens && nTokens == 2)
         {
             char szTmp[32];
@@ -494,7 +494,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
               msFreeCharArray(tokens, nTokens);
             nTokens = 0;
 
-            tokens = split(szEPSG,':', &nTokens);
+            tokens = msStringSplit(szEPSG,':', &nTokens);
             nEpsgTmp = -1;
             if (tokens &&  nTokens == 1)
             {
@@ -603,7 +603,7 @@ int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
             psCoordinates->psChild->pszValue)
         {
             pszTmpCoord = psCoordinates->psChild->pszValue;
-            szCoords = split(pszTmpCoord, ',', &nCoords);
+            szCoords = msStringSplit(pszTmpCoord, ',', &nCoords);
             if (szCoords && nCoords >= 2)
             {
                 line.numpoints = 1;
@@ -1026,7 +1026,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     {
 #ifdef USE_PROJ
         nTokens = 0;
-        tokens = split(szEPSG,'#', &nTokens);
+        tokens = msStringSplit(szEPSG,'#', &nTokens);
         if (tokens && nTokens == 2)
         {
             char szTmp[32];
@@ -1041,7 +1041,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
               msFreeCharArray(tokens, nTokens);
             nTokens = 0;
 
-            tokens = split(szEPSG,':', &nTokens);
+            tokens = msStringSplit(szEPSG,':', &nTokens);
             nEpsgTmp = -1;
             if (tokens &&  nTokens == 1)
             {
@@ -1657,14 +1657,14 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     if (psCoordChild && psCoordChild->pszValue)
                     {
                         pszTmpCoord = psCoordChild->pszValue;
-                        szCoords = split(pszTmpCoord, ' ', &nCoords);
+                        szCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
                         if (szCoords && nCoords == 2)
                         {
                             szCoords1 = strdup(szCoords[0]);
                             szCoords2 = strdup(szCoords[1]);
-                            szMin = split(szCoords1, ',', &nCoords);
+                            szMin = msStringSplit(szCoords1, ',', &nCoords);
                             if (szMin && nCoords == 2)
-                              szMax = split(szCoords2, ',', &nCoords);
+                              szMax = msStringSplit(szCoords2, ',', &nCoords);
                             if (szMax && nCoords == 2)
                               bCoordinatesValid =1;
 
@@ -2513,7 +2513,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                 if unit is there syntax is "URI#unit" (eg http://..../#m)
                 or just "unit"
                 */
-                tokens = split(psNode->pszValue,';', &nTokens);
+                tokens = msStringSplit(psNode->pszValue,';', &nTokens);
                 if (tokens && nTokens >= 1)
                 {
                     *pdfDistance = atof(tokens[0]);
@@ -2523,7 +2523,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                         szUnitStr = strdup(tokens[1]);
                         msFreeCharArray(tokens, nTokens);
                         nTokens = 0;
-                        tokens = split(szUnitStr,'#', &nTokens);
+                        tokens = msStringSplit(szUnitStr,'#', &nTokens);
                         if (tokens && nTokens >= 1)
                         {
                             if (nTokens ==1)
@@ -3228,7 +3228,7 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 /* -------------------------------------------------------------------- */
 /*      Get the bounds value which are stored like boundmin;boundmax    */
 /* -------------------------------------------------------------------- */
-    aszBounds = split(psFilterNode->psRightNode->pszValue, ';', &nBounds);
+    aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
     if (nBounds != 2)
       return NULL;
 /* -------------------------------------------------------------------- */
@@ -3324,7 +3324,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /* -------------------------------------------------------------------- */
 /*      Get the bounds value which are stored like boundmin;boundmax    */
 /* -------------------------------------------------------------------- */
-    aszBounds = split(psFilterNode->psRightNode->pszValue, ';', &nBounds);
+    aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
     if (nBounds != 2)
       return NULL;
 /* -------------------------------------------------------------------- */

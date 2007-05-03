@@ -145,7 +145,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   if(label->type != MS_BITMAP && label->wrap != '\0') {
     wrap[0] = label->wrap;
     wrap[1] = '\0';
-    cachePtr->text = gsub(cachePtr->text, wrap, "\r\n");
+    cachePtr->text = msReplaceSubstring(cachePtr->text, wrap, "\r\n");
   }
 
   /* copy the styles (only if there is an accompanying marker) */
@@ -254,7 +254,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
   fontset->map = (mapObj *)map;
 
-  path = getPath(fontset->filename);
+  path = msGetPath(fontset->filename);
 
   /* fontset->fonts = msCreateHashTable(); // create font hash */
   /* if(!fontset->fonts) { */
@@ -378,7 +378,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
       return(-1);
 
     if(label->wrap != '\0') {
-      if((token = split(string, label->wrap, &(num_tokens))) == NULL)
+      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL)
 	return(0);
 
       for(t=0; t<num_tokens; t++) /* what's the longest token */

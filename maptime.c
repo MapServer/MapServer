@@ -227,7 +227,7 @@ void msSetLimitedPattersToUse(char *patternstring)
 
     if (patternstring)
     {
-        patterns = split(patternstring, ',', &ntmp);
+        patterns = msStringSplit(patternstring, ',', &ntmp);
         if (patterns && ntmp >= 1)
         {
             
@@ -351,7 +351,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
        or a range */
     
     numelements = 0;
-    atimeelements = split (timestring, '/', &numelements);
+    atimeelements = msStringSplit (timestring, '/', &numelements);
     msTimeInit(&tmtimestart);
     msTimeInit(&tmtimeend);
 
@@ -394,7 +394,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
     */
     
     numextents = 0;
-    atimeextents = split (timeextent, ',', &numextents);
+    atimeextents = msStringSplit (timeextent, ',', &numextents);
     if (atimeextents == NULL || numextents <= 0)
       return MS_FALSE;
     
@@ -408,7 +408,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
         msTimeInit(&tmend);
         
         numranges = 0;
-        atimerange = split (atimeextents[i], '/', &numranges);
+        atimerange = msStringSplit (atimeextents[i], '/', &numranges);
         /* - one value 2004-09-21 */
         if (numranges == 1)
         {
@@ -469,10 +469,10 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
     }
     else
     {
-        atimes = split (timestring, ',', &numtimes);
+        atimes = msStringSplit (timestring, ',', &numtimes);
         if (numtimes >=1) /* multiple times */
         {
-            tokens = split(atimes[0],  '/', &ntmp);
+            tokens = msStringSplit(atimes[0],  '/', &ntmp);
             if (ntmp == 1) /* multiple descrete times */
             {
               /*msFreeCharArray(tokens, ntmp);*/
