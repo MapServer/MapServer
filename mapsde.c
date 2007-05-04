@@ -1,5 +1,5 @@
 /******************************************************************************
- *  
+ *   
  * Project:  MapServer
  * Purpose:  Implements SDE CONNECTIONTYPE.
  * Author:   Steve Lime and Howard Butler
