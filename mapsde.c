@@ -69,8 +69,8 @@ typedef struct {
   rectObj* extent;
   SE_COLUMN_DEF *basedefs;
   SE_COLUMN_DEF *joindefs;
-  short nBaseColumns;
-  short nJoinColumns;
+  short *nBaseColumns;
+  short *nJoinColumns;
 } msSDELayerInfo;
 
 typedef struct {
@@ -890,7 +890,7 @@ static SE_QUERYINFO getSDEQueryInfo(layerObj *layer)
     else
         /* set to the layer's filter.string */
         status = SE_queryinfo_set_where_clause (query_info, 
-                                                (const CHAR * ) layer->filter.string);
+                                                (const CHAR * ) (layer->filter.string));
     if(status != SE_SUCCESS) {
         sde_error(  status, 
                     "getSDEQueryInfo()", 
@@ -1036,6 +1036,11 @@ int msSDELayerOpen(layerObj *layer) {
     sde->basedefs = NULL;
     sde->joindefs = NULL;
     sde->extent = (rectObj *) malloc(sizeof(rectObj));
+
+    sde->nBaseColumns = (short *) malloc(1*sizeof(short));
+    *(sde->nBaseColumns) = 0;
+    sde->nJoinColumns = (short *) malloc(1*sizeof(short));
+    *(sde->nJoinColumns) = 0;
 
     if(!sde->extent) {
         msSetError( MS_MEMERR, 
@@ -1342,6 +1347,8 @@ int  msSDELayerClose(layerObj *layer) {
     if (sde->row_id_column) msFree(sde->row_id_column);
     if (sde->join_table) msFree(sde->join_table);
     if (sde->extent) msFree(sde->extent);
+    if (sde->nBaseColumns) msFree(sde->nBaseColumns);
+    if (sde->nJoinColumns) msFree(sde->nJoinColumns);
 
     msConnPoolRelease( layer, sde->connPoolInfo );  
     if (layer->layerinfo) msFree(layer->layerinfo);
@@ -1815,7 +1822,7 @@ msSDELayerInitItemInfo(layerObj *layer)
     int i,j;
 //    short nBaseColumns, nJoinColumns;
     long status;
-
+short nbasecol, njoincol;
     SE_COLUMN_DEF *all_itemdefs = NULL;
 
     msSDELayerInfo *sde = NULL;
@@ -1830,14 +1837,23 @@ msSDELayerInitItemInfo(layerObj *layer)
     }
     
     sde = layer->layerinfo;
-      
+    
+    // This insanity is because we keep around the number of 
+    // columns we have along with the layer info.  If the total 
+    // number of columns that we have doesn't match when we're 
+    // called the second time around, we have to throw an error or
+    // msWhichShape will add an item onto our layer->items list, which 
+    // in turn doesn't match the layer->iteminfo list of SDE column definitions.
+
+    nbasecol =*(sde->nBaseColumns);
+    njoincol =*(sde->nJoinColumns);
 
     // Hop right out again if we've already gotten the layer->iteminfo
     if (layer->iteminfo && layer->items) {
         if (layer->debug)
             msDebug("Column information has already been gotten..." 
                     " returning from msSDELayerInitItemInfo\n");
-        if (layer->numitems != ( sde->nBaseColumns+sde->nJoinColumns)) {
+        if (layer->numitems != ( nbasecol+ njoincol)) {
            // if someone has modified the size of the items list,
            // it is because it didn't find a column name (and we have 
            // already given them all because we have iteminfo and items
@@ -1862,12 +1878,9 @@ msSDELayerInitItemInfo(layerObj *layer)
             msDebug ("RowID column has already been gotten... msSDELayerInitItemInfo\n");
     }
 
-    sde->nJoinColumns = 0;
-    sde->nBaseColumns = 0;
-
     status = SE_table_describe( sde->connPoolInfo->connection, 
                                 sde->table, 
-                                &(sde->nBaseColumns),  
+                                (short*)&(nbasecol),  
                                 &(sde->basedefs));
     if(status != SE_SUCCESS) {
         sde_error(  status, 
@@ -1879,8 +1892,9 @@ msSDELayerInitItemInfo(layerObj *layer)
     if (sde->join_table) {
         status = SE_table_describe( sde->connPoolInfo->connection, 
                                     sde->join_table, 
-                                    &(sde->nJoinColumns),  
+                                    (short*)&(njoincol),  
                                     &(sde->joindefs));
+
         if(status != SE_SUCCESS) {
             sde_error(  status, 
                         "msSDELayerInitItemInfo()", 
@@ -1889,15 +1903,18 @@ msSDELayerInitItemInfo(layerObj *layer)
         }     
     }
 
-    layer->numitems = sde->nBaseColumns + sde->nJoinColumns;
+    layer->numitems = nbasecol + njoincol;
 
     // combine the itemdefs of both tables into one
     all_itemdefs = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
 
-    for(i=0;i<sde->nBaseColumns;i++) all_itemdefs[i] = sde->basedefs[i];
-    if (sde->nJoinColumns)
-        for(i=0;i<=sde->nJoinColumns;i++) all_itemdefs[i+sde->nBaseColumns]=sde->joindefs[i];    
+    for(i=0;i<nbasecol;i++) all_itemdefs[i] = sde->basedefs[i];
 
+    if (njoincol > 0) {
+        for(i=0;i<njoincol;i++) {
+           all_itemdefs[i+nbasecol]=sde->joindefs[i];    
+        }
+    }
 
     if (!layer->iteminfo){
         layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
@@ -1914,7 +1931,6 @@ msSDELayerInitItemInfo(layerObj *layer)
     }
     
     if (!(layer->items)) {
-            
         // gather up all of the column names and put them onto layer->items
         layer->items = (char **)malloc(layer->numitems*sizeof(char *));
         if(!layer->items) {
@@ -1939,7 +1955,7 @@ msSDELayerInitItemInfo(layerObj *layer)
         }
     }
     else {
-        for(i=0;i<sde->nBaseColumns;i++) {
+        for(i=0;i<nbasecol;i++) {
             layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
             layer->items[i][0] = '\0';
             strcat(layer->items[i], sde->table);
@@ -1948,7 +1964,7 @@ msSDELayerInitItemInfo(layerObj *layer)
             ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = all_itemdefs[i];
 
         }
-        for(i=sde->nBaseColumns;i<layer->numitems;i++) {
+        for(i=nbasecol;i<layer->numitems;i++) {
             layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
             layer->items[i][0] = '\0';
 
@@ -1963,7 +1979,9 @@ msSDELayerInitItemInfo(layerObj *layer)
     if (layer->debug)
         for(i=0; i<layer->numitems; i++) 
             msDebug("msSDELayerInitItemInfo(): getting info for %s\n", layer->items[i]);
-    
+   
+    *(sde->nJoinColumns) = njoincol;
+    *(sde->nBaseColumns) = nbasecol; 
     msFree(all_itemdefs);
     return MS_SUCCESS;
 
