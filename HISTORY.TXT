@@ -37,6 +37,7 @@ Version 4.10.2
 - maptemplate.c: Fixed handling of multiple rings/lines in processCoords()
   so that imagemaps work properly for multipolygons (bug 2073).
 
+- Don't call pj_transform() if the projections are equal (bug #2084)
 
 
 Version 4.10.1 (2007-02-15)
