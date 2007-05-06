@@ -577,8 +577,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( gdImg && !truecolor )
   {
       int iClass;
+      int iStyle;
       for( iClass = 0; iClass < layer->numclasses; iClass++ )
-          layer->class[iClass]->styles[0]->color.pen = MS_PEN_UNSET;
+      {
+          for (iStyle=0; iStyle<layer->class[iClass]->numstyles; iStyle++)
+            layer->class[iClass]->styles[iStyle]->color.pen = MS_PEN_UNSET;
+      }
   }
 
   /*
