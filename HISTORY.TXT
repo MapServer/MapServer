@@ -10,7 +10,7 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Version 4.10.2
+Version 4.10.2 (2007-05-07)
 ---------------------------
 
 - SVG : Polygons should not be filled if color is not given (#2055)
@@ -38,6 +38,9 @@ Version 4.10.2
   so that imagemaps work properly for multipolygons (bug 2073).
 
 - Don't call pj_transform() if the projections are equal (bug #2084)
+
+- Note that starting with this release the source code is now managed 
+  in Subversion (SVN) instead of CVS.
 
 
 Version 4.10.1 (2007-02-15)
