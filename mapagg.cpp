@@ -75,6 +75,7 @@
 
 #include "agg_conv_transform.h"
 #include "agg_conv_stroke.h"
+#include "agg_conv_dash.h"
 
 #include "agg_scanline_p.h"
 #include "agg_scanline_u.h"
@@ -544,9 +545,11 @@ private:
 
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
-static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int width, int offsetx, int offsety)
+static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int width, 
+                          int offsetx, int offsety,
+                          int dashstylelength, int *dashstyle)
 {
-  int i, j;
+  int i, j,k;
   gdImagePtr img = image->img.gd;
   
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
@@ -589,20 +592,43 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
                         (int)p->line[i].point[j].y << 8,
                         true);
         }        
-      } else {
-        CMapServerLine aLine(p,i);
-        agg::conv_stroke<CMapServerLine> stroke(aLine);
+      } 
+      else 
+      {
+          CMapServerLine aLine(p,i);
+
+          agg::conv_stroke<CMapServerLine> stroke(aLine);
+
+          agg::conv_dash<CMapServerLine> dash(aLine);
+          agg::conv_stroke<agg::conv_dash<CMapServerLine> > stroke_dash(dash);     
+          
+          if (dashstylelength <=0)
+          {
+              
+              stroke.width(((float) width));
+              stroke.line_cap(agg::round_cap);
+              ras_aa.add_path(stroke);
+          }
+          else
+          {
+              for (k=0; k<dashstylelength; k=k+2)
+              {
+                  if (k < dashstylelength-1)
+                    dash.add_dash(dashstyle[k], dashstyle[k+1]);
+              }
+              stroke_dash.width(((float) width));
+              stroke_dash.line_cap(agg::round_cap);
+              ras_aa.add_path(stroke_dash);
+          }
         
-        stroke.width(((float) width));
-        stroke.line_cap(agg::round_cap);
         
-        ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
-                                ((double) color->green) / 255.0, 
-                                ((double) color->blue) / 255.0));
+          ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
+                                  ((double) color->green) / 255.0, 
+                                  ((double) color->blue) / 255.0));
                     
-        ras_aa.add_path(stroke);
+          
         
-        agg::render_scanlines(ras_aa, sl, ren_aa);
+          agg::render_scanlines(ras_aa, sl, ren_aa);
       }
     }    
 
@@ -903,7 +929,7 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, doubl
           if(fc >= 0)
             imageFilledPolygon(image, &theShape, &(style->color), offset_x, offset_y);
           if(oc >= 0)
-            imagePolyline(image, &theShape, &(style->outlinecolor), width, offset_x, offset_y);
+            imagePolyline(image, &theShape, &(style->outlinecolor), width, offset_x, offset_y, 0, NULL);
         }
 
           k = 0; /* reset point counter */
@@ -919,7 +945,7 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, doubl
     if(fc >= 0)
       imageFilledPolygon(image, &theShape, &(style->color), offset_x, offset_y);
     if(oc >= 0)
-      imagePolyline(image, &theShape, &(style->outlinecolor), width, offset_x, offset_y);
+      imagePolyline(image, &theShape, &(style->outlinecolor), width, offset_x, offset_y, 0, NULL);
 
   } else  { /* NOT filled */     
 
@@ -1076,30 +1102,44 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
   symbolObj *symbol;
 
   symbol = &(symbolset->symbol[style->symbol]);
-  if(style->size == -1)
-    size = (int)msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
+
+  /*use agg for styles using symbol 0 and a width or symbol of type ellipse 
+    (using circle symbol and size still seems to be the most common way of
+    doing thikc lines) */
+  if(style->symbol >=0 && (style->symbol == 0 || symbol->type == MS_SYMBOL_ELLIPSE))
+  { 
+      if(style->size == -1)
+        size = (int)msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
+      else
+        size = style->size;
+
+      size = MS_NINT(size*scalefactor);
+      size = MS_MAX(size, style->minsize);
+      size = MS_MIN(size, style->maxsize);
+
+      width = MS_NINT(style->width*scalefactor);
+      width = MS_MAX(width, style->minwidth);
+      width = MS_MIN(width, style->maxwidth);
+  
+      if(style->symbol == 0) 
+        nwidth = width;
+      else
+        nwidth = size;
+
+      if(pLogFile) fprintf(pLogFile, "msDrawLineSymbolAGG entry\n"); 
+  
+      if(p->numlines > 0)
+      {
+          if (symbol->stylelength > 0)
+            imagePolyline(image, p, &style->color, nwidth, 0, 0, symbol->stylelength, symbol->style); 
+          else
+             imagePolyline(image, p, &style->color, nwidth, 0, 0, 0, NULL); 
+          
+      }
+  }
   else
-    size = style->size;
+    msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
 
-  size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
-
-  width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
-  
-  if(style->symbol == 0) 
-    nwidth = width;
-  else
-    nwidth = size;
-
-  if(pLogFile) fprintf(pLogFile, "msDrawLineSymbolAGG entry\n"); 
-  
-  if(p->numlines > 0)
-    imagePolyline(image, p, &style->color, nwidth, 0, 0);
-  
-  return;
 #if 0  
   if(style->symbol == 0) {
     if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */      
@@ -1201,11 +1241,11 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
       // imagePolyline(image, p, gdAntiAliased, ox, oy);
       colorObj thefc2 = { (fc & 0xff000000 >> 24),(fc & 0x00ff0000 >> 16),(fc & 0x0000ff00 >> 8),fc & 0x000000ff };
-      imagePolyline(image, p, &thefc2, width, ox, oy);
+      imagePolyline(image, p, &thefc2, width, ox, oy, 0, NULL);
     } else {
       imageFilledPolygon(image, p, &(style->color), ox, oy); /* fill is NOT anti-aliased, the outline IS */
       if(oc>-1) {
-        imagePolyline(image, p, &(style->outlinecolor), width, ox, oy);
+        imagePolyline(image, p, &(style->outlinecolor), width, ox, oy, 0, NULL);
       }
     }
 
