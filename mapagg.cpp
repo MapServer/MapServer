@@ -863,13 +863,15 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, doubl
 {
   int fc, oc, j, k, width;
   gdPoint oldpnt,newpnt;
-  gdPoint mPoints[MS_MAXVECTORPOINTS];
+
 
   shapeObj theShape;
     
   theShape.numlines = 1;
   theShape.type = MS_SHAPE_LINE;
-  theShape.line = (lineObj *) malloc(sizeof(lineObj) * MS_MAXVECTORPOINTS);
+  theShape.line = (lineObj *) malloc(sizeof(lineObj));
+  theShape.line[0].point = (pointObj *)malloc(sizeof(pointObj)*MS_MAXVECTORPOINTS);
+  theShape.line[0].numpoints = 0;
 
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
@@ -943,9 +945,10 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, doubl
                                   ((double) style->color.green) / 255.0, 
                                    ((double) style->color.blue) / 255.0, 0.0));
 
-    ren_prim.fill_color(agg::rgba(((double) style->outlinecolor.red) / 255.0, 
-                                  ((double) style->outlinecolor.green) / 255.0, 
-                                  ((double) style->outlinecolor.blue) / 255.0, 0.0));
+    if (symbol->filled && oc >=0)
+      ren_prim.fill_color(agg::rgba(((double) style->outlinecolor.red) / 255.0, 
+                                    ((double) style->outlinecolor.green) / 255.0, 
+                                    ((double) style->outlinecolor.blue) / 255.0, 0.0));
 
     oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); /* convert first point in marker */
     oldpnt.y = MS_NINT(d*symbol->points[0].y + offset_y);
@@ -1074,7 +1077,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 
   symbol = &(symbolset->symbol[style->symbol]);
   if(style->size == -1)
-    size = msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
+    size = (int)msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
   else
     size = style->size;
 
@@ -1137,18 +1140,15 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     
   char bRotated=MS_FALSE;
   symbolObj *symbol;
-  int i, k;
-  gdPoint oldpnt, newpnt;
-  gdPoint sPoints[MS_MAXVECTORPOINTS];
   gdImagePtr tile=NULL;
-  int x, y, ox, oy;
+  int ox, oy;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
-  double size, d, angle, angle_radians;
+  double size, angle, angle_radians;
   int width;
   
-  int bbox[8];
-  rectObj rect;
+
+
   char *font=NULL;
 
   if(!p) return;
@@ -1340,5 +1340,6 @@ void msFreeImageAGG(gdImagePtr img)
 
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
+
 
 #endif
