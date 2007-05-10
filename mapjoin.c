@@ -23,29 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.30  2007/04/17 10:36:52  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.29  2006/05/12 18:32:41  pramsey
- * Added support for postgresql joins (Bug 1570).
- *
- * Revision 1.28  2005/12/07 16:47:43  sdlime
- * Fixed potential segfault in mapjoin.c. (bug 1556)
- *
- * Revision 1.27  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.26  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.25  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

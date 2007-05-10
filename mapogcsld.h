@@ -26,56 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- * $Log$
- * Revision 1.14  2006/12/12 15:05:15  assefa
- * Use the url as symbol name for external symbols (bug 1985)
- *
- * Revision 1.13  2005/05/01 15:15:47  sean
- * Previous commit mangled revision 1.12, now repaired (bug 1337)
- *
- * Revision 1.12  2005/05/01 15:05:09  sean
- * Moved prototypes for 3 functions outside the #ifdef USE_OGR block to allow builds without GDAL/OGR (bug 1337)
- *
- * Revision 1.11  2004/07/29 21:50:19  assefa
- * Use wfs_filter metedata when generating an SLD (Bug 782)
- *
- * Revision 1.10  2004/04/12 18:38:24  assefa
- * Add dll export support for windows.
- *
- * Revision 1.9  2004/02/06 02:23:01  assefa
- * Make sure that point symbolizers always initialize the color
- * parameter of the style.
- *
- * Revision 1.8  2004/01/05 21:17:53  assefa
- * ApplySLD and ApplySLDURL on a layer can now take a NamedLayer name as argument.
- *
- * Revision 1.7  2003/12/05 04:02:34  assefa
- * Add generation of SLD for points and text.
- *
- * Revision 1.6  2003/12/03 18:52:21  assefa
- * Add partly support for SLD generation.
- *
- * Revision 1.5  2003/12/01 16:10:13  assefa
- * Add #ifdef USE_OGR for sld functions available to mapserver.
- *
- * Revision 1.4  2003/11/30 16:30:04  assefa
- * Support mulitple symbolisers in a Rule.
- *
- * Revision 1.3  2003/11/25 03:21:44  assefa
- * Add test support.
- * Add filter support.
- *
- * Revision 1.2  2003/11/07 21:35:07  assefa
- * Add PointSymbolizer.
- * Add External Graphic symbol support.
- *
- * Revision 1.1  2003/11/06 23:09:25  assefa
- * OGC SLD support.
- *
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include "map.h"
 

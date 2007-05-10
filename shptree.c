@@ -23,17 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.10  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 #include "maptree.h"

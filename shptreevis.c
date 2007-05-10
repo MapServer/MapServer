@@ -23,21 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.13  2005/04/26 03:37:50  frank
- * Fixed setting of this_rec from hDBF->nRecords, was screwing up dbf file.
- * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1332
- *
- * Revision 1.12  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 
 #include "map.h"

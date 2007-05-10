@@ -23,23 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.17  2007/04/23 20:31:40  frank
- * do not do anything to free null hash table, avoid setting error
- *
- * Revision 1.16  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.15  2004/11/21 00:16:22  sean
- * prevent array lookup of NULL hash table items, simplify msFreeHashTable (bug 1077).
- *
- * Revision 1.14  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include <ctype.h>
 

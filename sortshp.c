@@ -23,23 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2005/07/15 13:57:50  frank
- * bug 1418: fixed memory leak of shapes
- *
- * Revision 1.5  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.4  2005/01/28 06:16:54  sdlime
- * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
- *
- * Revision 1.3  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>

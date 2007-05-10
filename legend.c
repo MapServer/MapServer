@@ -23,21 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.10  2004/10/28 18:16:16  dan
- * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
- * when requested layer was out of scale (bug 1006)
- *
- * Revision 1.9  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

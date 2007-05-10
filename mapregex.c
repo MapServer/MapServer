@@ -24,22 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2005/05/27 20:51:43  assefa
- * Change define of off_t instead of _off_t since It seems off_t
- * is always defined as long on windows and that _off_t seems to create
- * build problems for some.
- *
- * Revision 1.3  2005/05/27 17:50:33  assefa
- * Add a define to fix build on windows (Bug 1354).
- *
- * Revision 1.2  2005/05/27 15:00:12  dan
- * New regex wrappers to solve issues with previous version (bug 1354)
- *
- */
+ ****************************************************************************/
 
 /* we can't include map.h, so we need our own basics */
 

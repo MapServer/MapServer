@@ -35,62 +35,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.48  2007/04/24 08:55:31  umberto
- * RFC24: added styleObj support
- *
- * Revision 1.47  2007/04/17 10:36:52  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.46  2006/05/26 21:46:27  tamas
- * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
- *
- * Revision 1.45  2005/12/14 19:13:47  sdlime
- * Patched mapfile read/write/copy routines to deal with browseformat and legendformat.
- *
- * Revision 1.44  2005/11/28 04:32:42  sdlime
- * Updated msCopyLabel() to copy encoding as well.
- *
- * Revision 1.43  2005/11/28 04:22:54  sdlime
- * Removed some unnecessary and potentially harmful if statements in msCopyStyle(). The macros should be cufficient.
- *
- * Revision 1.42  2005/06/29 14:14:23  sean
- * no longer copying layer and join items, as these will be initialized on opening of layer and joining of data (bug 1403)
- *
- * Revision 1.41  2005/06/28 16:33:23  sean
- * Fixed copy of layer processing directives with use of msLayerGetProcessing and msLayerAddProcessing (bug 1399). Also caught error in the upper bounds of looping over layer joins.
- *
- * Revision 1.40  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.39  2005/04/25 06:41:55  sdlime
- * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
- *
- * Revision 1.38  2005/04/15 18:44:31  sdlime
- * Updated msCopyStyle to account for the various item indexes.
- *
- * Revision 1.37  2005/04/15 17:50:20  sdlime
- * Updated style copy function to handle the new gradient parameters (bug 1305).
- *
- * Revision 1.36  2005/02/18 03:06:45  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.35  2005/01/26 06:14:53  sdlime
- * Added style maxwidth/minwidth read/write/copy.
- *
- * Revision 1.34  2005/01/26 05:21:19  sdlime
- * Added support for reading/writing/copying a style width.
- *
- * Revision 1.33  2004/11/15 19:16:53  sean
- * Do not copy layerinfo, wfslayerinfo, or ogrlayerinfo in msCopyLayer (bug 1055).
- *
- * Revision 1.32  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include <assert.h>
 #include "map.h"

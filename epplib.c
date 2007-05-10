@@ -23,21 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/08/22 23:11:08  hobu
- * cast the first argument of the call to swap2 on line 231 to
- * short * as the function prototype expects
- *
- * Revision 1.3  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.2  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>

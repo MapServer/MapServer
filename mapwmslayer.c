@@ -1,11 +1,11 @@
-/**********************************************************************
+/*****************************************************************************
  * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of WMS CONNECTIONTYPE - client to WMS servers
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
- **********************************************************************
+ *****************************************************************************
  * Copyright (c) 2001-2004, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,102 +25,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- * $Log$
- * Revision 1.80  2007/01/04 19:00:22  dan
- * Fixed problem with WMS CONNECTION strings that contains a layer name
- * with a "." in them (bug 1996)
- *
- * Revision 1.79  2006/02/09 16:57:14  julien
- * Support SLD_BODY in Web Map Context
- *
- * Revision 1.78  2005/10/26 17:51:28  frank
- * avoid warnings about unused functions
- *
- * Revision 1.77  2005/09/26 18:55:20  assefa
- * use transparency set at the layer level on wms client layers  (Bug 1458).
- *
- * Revision 1.76  2005/05/13 17:23:34  dan
- * First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
- * layers. Still needs some work. (bug 1246)
- *
- * Revision 1.75  2005/02/18 03:06:48  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.74  2005/02/14 04:33:32  sdlime
- * Changed %.17g to %.15g for WMS/WFS server code.
- *
- * Revision 1.73  2004/11/18 21:18:36  assefa
- * Make sure that msDrawWMSLayerLow calls msDrawLayer instead of msDrawRasterLayerLow
- * directly ensuring that some logic (transparency) that are in msDrawLayer are
- * applied (Bug 541).
- *
- * Revision 1.72  2004/11/16 21:57:49  dan
- * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
- * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
- *
- * Revision 1.71  2004/11/12 17:05:01  assefa
- * Use %.17g instrad of %f when output bbox values (Bug 678)
- *
- * Revision 1.70  2004/11/11 22:08:17  frank
- * fix off-by-half-pixel error in wms worldfile - bug 1050
- *
- * Revision 1.69  2004/08/03 23:43:31  dan
- * Cleanup OWS version tests in the code (bug 799)
- *
- * Revision 1.68  2004/07/28 17:52:16  dan
- * Pass FEATURE_COUNT instead of FEATURECOUNT in GetFeatureInfo (bug 790)
- *
- * Revision 1.67  2004/07/13 20:39:37  dan
- * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
- *
- * Revision 1.66  2004/06/22 20:55:21  sean
- * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
- *
- * Revision 1.65  2004/04/17 06:33:24  dan
- * Increased precision of values written to .wld file for WMS layers (bug 446)
- *
- * Revision 1.64  2004/04/05 21:57:06  assefa
- * Fix bug in msWMSGetFeatureInfoURL not passing a wmsparams structure to the
- * msBuildWMSLayerURL.
- *
- * Revision 1.63  2004/03/30 15:44:20  dan
- * Fixed leak of pszURL when merging multiple WMS layers
- *
- * Revision 1.62  2004/03/30 14:55:44  dan
- * Added wms_force_separate_request metadata to prevent a WMS layer from
- * being included in multi-layer request.
- *
- * Revision 1.61  2004/03/30 00:12:28  dan
- * Added ability to combine multiple WMS connections to the same server
- * into a single request when the layers are adjacent and compatible.(bug 116)
- *
- * Revision 1.60  2004/03/25 21:59:23  sean
- * Undoing accidental changes to mapwmslayer.c
- *
- * Revision 1.58  2004/02/13 15:28:56  assefa
- * Use wms_sld_url to send sld request.
- *
- * Revision 1.57  2004/02/11 20:45:38  assefa
- * When generating the SLD, generate only for the layer and not the whole map.
- *
- * Revision 1.56  2004/02/02 20:47:39  assefa
- * Use of wms_sld_body url.
- * Make sure that the layer type is preserved after a msDrawWMSLayerLow call.
- *
- * Revision 1.55  2004/01/08 20:44:21  assefa
- * Add #ifdef for windows to be able to use snprintf.
- *
- * Revision 1.54  2003/11/03 15:45:29  assefa
- * Do not delete the temporary file comming from the server if we are in debug
- * mode. (DEBUG ON on the layer)
- *
- * ...
- *
- * Revision 1.1  2001/08/14 21:26:54  dan
- * Initial revision - only loads and draws WMS CONNECTION URL for now.
- *
- **********************************************************************/
+ *****************************************************************************/
 
 #include "map.h"
 #include "maperror.h"

@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2003/02/24 21:25:00  frank
- * include cpl_string.h
- *
- * Revision 1.3  2002/10/29 16:40:59  frank
- * removed prototype for function that is now static
- *
- * Revision 1.2  2002/06/21 18:33:45  frank
- * added INT16 and FLOAT image mode support
- *
- * Revision 1.1  2001/03/14 17:39:16  frank
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef RESAMPLE_H
 #define RESAMPLE_H

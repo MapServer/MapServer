@@ -28,56 +28,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.76  2007/04/17 10:36:54  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.75  2007/04/13 04:07:02  sdlime
- * Added check for nan bounds to msSHPReadBounds(). Fixed return values for msSHPReadBounds() to be MS_SUCCESS/MS_FAILURE instead of 0/-1 (and updated any calls to that function elsewhere accordingly). (bug 1931)
- *
- * Revision 1.74  2007/04/11 20:42:46  sdlime
- * Formatting clean up.
- *
- * Revision 1.73  2006/07/12 06:17:17  sdlime
- * Added debug statements to output information when tiles tiles are not found (mimicing mapraster.c). Useful when debuging tileindex problems.
- *
- * Revision 1.72  2006/06/20 17:26:40  dan
- * Fixed 3 more instances of the same shapefile leak in tiled layers (bug 1802)
- *
- * Revision 1.71  2006/06/14 12:42:41  dan
- * Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
- *
- * Revision 1.70  2006/05/15 19:09:10  frank
- * Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
- *
- * Revision 1.69  2005/10/28 01:09:42  jani
- * MS RFC 3: Layer vtable architecture (bug 1477)
- *
- * Revision 1.68  2005/08/25 14:20:16  sdlime
- * Applied patch for bug 1440.
- *
- * Revision 1.67  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.66  2005/04/21 15:09:28  julien
- * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
- *
- * Revision 1.65  2005/04/14 15:17:14  julien
- * Bug 1244: Remove Z and M from point by default to gain performance.
- *
- * Revision 1.64  2005/03/02 17:00:06  sdlime
- * Fixed shapefile boundary initialization error. (bug 1265).
- *
- * Revision 1.63  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.62  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include <limits.h>
 #include <assert.h>

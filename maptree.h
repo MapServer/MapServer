@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2005/08/25 14:20:16  sdlime
- * Applied patch for bug 1440.
- *
- * Revision 1.9  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.8  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.7  2004/10/21 04:30:56  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifndef MAPTREE_H
 #define MAPTREE_H

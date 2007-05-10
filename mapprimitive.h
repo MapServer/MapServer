@@ -23,38 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.21  2006/09/01 18:03:19  umberto
- * Removed USE_GEOS defines, bug #1890
- *
- * Revision 1.20  2006/06/27 06:53:08  sdlime
- * Excluded shapeObj geometry member from Swig wrapping.
- *
- * Revision 1.19  2006/02/22 05:04:34  sdlime
- * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
- *
- * Revision 1.18  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.17  2005/04/21 15:09:28  julien
- * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
- *
- * Revision 1.16  2005/04/14 15:17:14  julien
- * Bug 1244: Remove Z and M from point by default to gain performance.
- *
- * Revision 1.15  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.14  2004/11/29 15:09:34  sean
- * hide itemObj and geotransformObj from swig, these are not ready for use
- *
- * Revision 1.13  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifndef MAPPRIMITIVE_H
 #define MAPPRIMITIVE_H

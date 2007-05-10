@@ -23,47 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.55  2007/04/24 08:55:32  umberto
- * RFC24: added styleObj support
- *
- * Revision 1.54  2007/04/20 13:48:41  umberto
- * moveClassUp/Down and various fixes, cleaner build
- *
- * Revision 1.53  2007/04/17 10:36:53  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.52  2006/08/26 22:04:13  novak
- * Enable support for TrueType fonts (bug 1882)
- *
- * Revision 1.51  2006/03/27 05:48:03  sdlime
- * Fixed symbol initialization error with embedded scalebars and legends. (bug 1725)
- *
- * Revision 1.50  2006/02/18 20:59:13  sdlime
- * Initial code for curved labels. (bug 1620)
- *
- * Revision 1.49  2005/09/27 15:27:18  sean
- * Fixed typo to prevent extra scalebar layer creation (bug 1480)
- *
- * Revision 1.48  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.47  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.46  2005/01/11 00:24:07  frank
- * added labelObj arg to msAddLabel()
- *
- * Revision 1.45  2004/11/05 19:22:19  frank
- * ensure state is initialized in msDrawScalebar() (all cases)
- *
- * Revision 1.44  2004/10/21 04:30:56  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

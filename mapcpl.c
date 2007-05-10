@@ -30,20 +30,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/10/29 02:03:43  jani
- * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
- *
- * Revision 1.4  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.3  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 /* $Id$ */
 

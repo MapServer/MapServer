@@ -23,77 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.115  2007/04/24 08:55:32  umberto
- * RFC24: added styleObj support
- *
- * Revision 1.114  2007/04/17 10:36:53  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.113  2007/03/09 15:58:53  sdlime
- * Cleaned up comment for msLayerWhichItems, removed any tabs in that function too.
- *
- * Revision 1.112  2006/08/22 13:56:58  hobu
- * ssh!  comment out "tile;" which was unused and
- * causing compiler to complain
- *
- * Revision 1.111  2006/04/27 04:05:17  sdlime
- * Initial support for relative coordinates. (bug 1547)
- *
- * Revision 1.110  2006/03/28 17:31:30  assefa
- * When setting the time filter, do not override existing Filter paramter
- * if possible (Bug 1261).
- *
- * Revision 1.109  2006/01/31 17:06:10  assefa
- * Add connectiontype initialization logic when the layer's virtual
- * table is initialized (Bug 1615)
- *
- * Revision 1.108  2005/10/29 02:03:43  jani
- * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
- *
- * Revision 1.107  2005/10/28 01:09:41  jani
- * MS RFC 3: Layer vtable architecture (bug 1477)
- *
- * Revision 1.106  2005/07/16 19:07:38  jerryp
- * Bug 1420: PostGIS connector no longer needs two layer close functions.
- *
- * Revision 1.105  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.104  2005/04/25 06:41:56  sdlime
- * Applied Bill's newest gradient patch, more concise in the mapfile and potential to use via MapScript.
- *
- * Revision 1.103  2005/04/15 17:10:36  sdlime
- * Applied Bill Benko's patch for bug 1305, gradient support.
- *
- * Revision 1.102  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.101  2005/01/12 21:11:21  frank
- * removed LABELS_ROTATE_WITH_MAP, rotate labels if angle!=0 or labelangleitem
- *
- * Revision 1.100  2005/01/11 00:24:59  frank
- * added msLayerLabelsRotateWithMap
- *
- * Revision 1.99  2004/11/16 19:18:43  assefa
- * Make sure that the timestring is complete for pg layers (Bug 837)
- *
- * Revision 1.98  2004/11/15 21:11:23  dan
- * Moved the layer->getExtent() logic down to msLayerGetExtent() (bug 1051)
- *
- * Revision 1.97  2004/11/15 20:35:02  dan
- * Added msLayerIsOpen() to all vector layer types (bug 1051)
- *
- * Revision 1.96  2004/10/21 10:54:17  assefa
- * Add postgis date_trunc support.
- *
- * Revision 1.95  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 #include "maptime.h"

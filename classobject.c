@@ -25,23 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.7  2007/04/24 08:55:31  umberto
- * RFC24: added styleObj support
- *
- * Revision 1.6  2005/12/21 05:34:09  sdlime
- * Fixed small problem in msRemoveStyle where a temporary style was not being initialized after being malloc'd.
- *
- * Revision 1.5  2005/02/18 03:06:44  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.4  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

@@ -23,78 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.78  2006/12/04 00:04:10  hobu
- * make sure to declare errormsg at the top of the function for msvc
- *
- * Revision 1.77  2006/11/29 05:27:17  sdlime
- * Applied patch supplied with bug 1963.
- *
- * Revision 1.76  2006/11/24 22:02:22  frank
- * fix closing of stderr/stdout after writing error msg (bug 1970)
- *
- * Revision 1.75  2006/03/16 22:28:38  tamas
- * Fixed msGetErrorString so as not to truncate the length of the error messages
- * Added msAddErrorDisplayString to read the displayable messages separatedly
- *
- * Revision 1.74  2006/03/15 18:17:14  dan
- * Added SUPPORTS=SOS_SERVER to msGetVersion() (bug 1710)
- *
- * Revision 1.73  2006/03/14 03:17:19  assefa
- * Add SOS error code (Bug 1710).
- * Correct error codes numbers for MS_TIMEERR and MS_GMLERR.
- *
- * Revision 1.72  2006/02/18 21:11:35  hobu
- * make sure we cast the tv_sec to a long because on os x, the type is
- * really __darwin_suseconds_t, which is ultimately a long.
- *
- * Revision 1.71  2005/12/12 16:57:56  sean
- * write whether point/shape z and m is supported in version message
- *
- * Revision 1.70  2005/11/17 14:38:21  assefa
- * Correct function msGetVersion to indicate if mapserver was build with
- * MYGIS support.
- *
- * Revision 1.69  2005/09/13 23:43:31  frank
- * fix leak in threaded case of error object
- *
- * Revision 1.68  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.67  2005/04/07 21:51:22  frank
- * added SUPPORTS=THREADS to version info
- *
- * Revision 1.66  2005/04/07 17:23:16  assefa
- * Remove #ifdef USE_SVG. It was added during development.
- *
- * Revision 1.65  2005/04/07 13:46:46  frank
- * added report of SVG support
- *
- * Revision 1.64  2005/02/22 07:40:27  sdlime
- * A bunch of updates to GEOS integration. Can move many primatives between MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon). Added buffer method to mapscript (mapscript/shape.i).
- *
- * Revision 1.63  2005/02/18 03:06:45  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.62  2005/02/02 02:21:50  sdlime
- * Applied Jerry/Dan patch for bug 1194.
- *
- * Revision 1.61  2005/01/28 06:16:53  sdlime
- * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
- *
- * Revision 1.60  2005/01/26 14:42:13  frank
- * Removed msWebDebug() ... really this time!
- *
- * Revision 1.59  2005/01/07 18:51:09  sdlime
- * Added MS_GMLERR code.
- *
- * Revision 1.58  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 #include "maperror.h"

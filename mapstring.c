@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.37  2007/04/14 20:25:32  sdlime
- * Moved msGetEncodedString() from mapgd.c to mapstring.c.
- *
- * Revision 1.36  2007/03/23 15:23:58  assefa
- * Add utility string function for case-incensitive searchs.
- *
- * Revision 1.35  2006/08/16 14:05:07  sdlime
- * Removed any ambiguity with msCommifyString(). At the moment it only handles North American representaions of numbers (e.g. 2,345.678).
- *
- * Revision 1.34  2006/01/31 17:09:28  sdlime
- * Added function to 'commify' a number stored as a string. (supports bug 1636)
- *
- * Revision 1.33  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.32  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.31  2005/02/04 14:06:46  sdlime
- * Fixed bug 1207, thread safety issue in mapstring.c
- *
- * Revision 1.30  2004/11/19 19:28:13  hobu
- * check for null inputs in strncasecmp and strcasecmp
- *
- * Revision 1.29  2004/11/12 00:12:22  sdlime
- * Fixed bug 1040 so when escaping for HTML we use &#39; instead of &apos; for an apostrophe.
- *
- * Revision 1.28  2004/10/21 19:19:44  assefa
- * Add utility function trimLeft.
- *
- * Revision 1.27  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

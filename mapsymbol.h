@@ -24,33 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.23  2005/12/15 05:42:05  sdlime
- * Fixed a problem in the symbol reader that basically turned TYPE SIMPLE into TYPE TRUETYPE. Fix what to start the symbol type enum at some larger value (e.g. 1000).
- *
- * Revision 1.22  2005/11/24 04:35:50  dan
- * Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
- * static limitation on the STYLE argument values. (bug 1539)
- *
- * Revision 1.21  2005/10/14 05:05:19  sdlime
- * Added MS_MAXPATTERNSIZE.
- *
- * Revision 1.20  2005/09/23 03:47:56  sdlime
- * Made symbol->imagepath readonly within SWIG-based scripts. Use setImagepath instead. (bug 1472)
- *
- * Revision 1.19  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.18  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.17  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifndef MAPSYMBOL_H
 #define MAPSYMBOL_H

@@ -24,76 +24,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.66  2007/04/25 11:35:57  umberto
- * RFC24: fix segfaults due to unchecked access to array items (styles, classes)
- *
- * Revision 1.65  2007/04/24 08:55:32  umberto
- * RFC24: added styleObj support
- *
- * Revision 1.64  2007/04/17 10:36:53  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.63  2007/03/06 11:22:39  novak
- * First AGG commit.
- *
- * Config and Makefile changes are necessary for a proper build.
- *
- * Revision 1.62  2006/08/04 04:36:12  sdlime
- * Removed cut & paste artifact (oops).
- *
- * Revision 1.61  2006/08/04 04:33:45  sdlime
- * Fixed a problem with full-image legends where layer sizeunits were not taken into account when rendering a legend. (bug 1147)
- *
- * Revision 1.60  2006/03/27 05:48:03  sdlime
- * Fixed symbol initialization error with embedded scalebars and legends. (bug 1725)
- *
- * Revision 1.59  2006/02/18 20:59:13  sdlime
- * Initial code for curved labels. (bug 1620)
- *
- * Revision 1.58  2006/01/16 20:21:18  sdlime
- * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
- *
- * Revision 1.57  2005/11/17 05:56:30  sdlime
- * Updated msDrawLegend to respect class min/max scale values. (bug 1524)
- *
- * Revision 1.56  2005/10/31 06:03:26  sdlime
- * Updated msDrawLegend() to consider layer order. (bug 1484)
- *
- * Revision 1.55  2005/09/14 00:11:35  frank
- * fixed leak of imageObj when embedding legends
- *
- * Revision 1.54  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.53  2005/02/18 18:57:26  sean
- * turn on GD alpha blending for legend icon images if specified by the target layer (bugs 490, 1250)
- *
- * Revision 1.52  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.51  2005/01/11 00:24:07  frank
- * added labelObj arg to msAddLabel()
- *
- * Revision 1.50  2004/11/22 03:43:54  sdlime
- * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
- *
- * Revision 1.49  2004/11/05 19:19:05  frank
- * avoid casting warning i msDrawLegendIcon call
- *
- * Revision 1.48  2004/11/04 21:33:08  frank
- * Removed unused variable.
- *
- * Revision 1.47  2004/10/28 18:16:17  dan
- * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
- * when requested layer was out of scale (bug 1006)
- *
- * Revision 1.46  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ *****************************************************************************/
 
 #include "map.h"
 

@@ -25,29 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.23  2006/08/22 13:54:37  hobu
- * cast the second argument to char* that we're passing into strncopy
- *
- * Revision 1.22  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.21  2005/04/22 14:11:30  frank
- * Bug 791: initialize some fields in msDBFCreate()
- *
- * Revision 1.20  2005/02/18 03:06:48  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.19  2005/02/07 18:37:43  frank
- * Removed dangerous junk in leading space trimmer.
- *
- * Revision 1.18  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 #include <stdlib.h> /* for atof() and atoi() */

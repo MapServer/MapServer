@@ -28,23 +28,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.5  2005/04/21 15:09:27  julien
- * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
- *
- * Revision 1.4  2005/04/14 15:17:14  julien
- * Bug 1244: Remove Z and M from point by default to gain performance.
- *
- * Revision 1.3  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 /* Following works for GCC and MSVC.  That's ~98% of our users, if Tyler
  * Mitchell's survey is correct

@@ -23,27 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/06/02 20:34:24  dan
- * REmoved msDebug() call in msReadEncryptionKeyFromFile()
- *
- * Revision 1.3  2006/06/02 18:58:09  dan
- * Doc update: Buffer passed to msEncryptStringWithKey() has to be
- * strlen(in)+16+1 bytes and not strlen(in)+8+1 to account for hex encoding of
- * padding bytes
- *
- * Revision 1.2  2006/06/01 20:51:02  dan
- * Fixed possible buffer overflow in msDecryptStringTokens() and improved
- * error message if key file could not be read.
- *
- * Revision 1.1  2006/06/01 19:56:31  dan
- * Added ability to encrypt tokens (passwords, etc.) in database connection
- * strings (MS-RFC-18, bug 1792)
- *
- */
+ ****************************************************************************/
 
 #include <assert.h>
 #include <ctype.h>    /* isxdigit() */

@@ -23,44 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.92  2007/04/17 10:36:53  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.91  2006/02/02 01:00:11  sdlime
- * Moved the code to free previous query results a bit higher in the msQueryByAttribute() function.
- *
- * Revision 1.90  2006/02/02 00:53:16  sdlime
- * Fixed bug when doing repeated queries where you make a layer not queryable then it is possible the results for that layer can persist. (bug 1550)
- *
- * Revision 1.89  2006/01/01 02:42:39  sdlime
- * The bounds that are part of the result cache are projected so there is no need to do any projection when computing the overall result set bounds.
- *
- * Revision 1.88  2005/12/21 23:31:19  sdlime
- * Fixed an error that occurs when doing attribute queries against layers with a FILTER. The code to cache the existing filter blindly called strdup on a value that could be NULL.
- *
- * Revision 1.87  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.86  2005/04/27 16:52:35  assefa
- * Bug 1335 : missing call to msInitShape in function msQueryByShape.
- *
- * Revision 1.85  2005/04/15 19:32:33  julien
- * Bug 1103: Set the default tolerance value based on the layer type.
- *
- * Revision 1.84  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.83  2004/11/11 19:06:36  sdlime
- * Applied patch for bug 1003 (mapshape and projected layers).
- *
- * Revision 1.82  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

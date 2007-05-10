@@ -23,41 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2006/08/16 13:27:59  dan
- * Added TLOCK_TMPFILE (bug 1322)
- *
- * Revision 1.12  2006/07/05 05:54:53  frank
- * implement per-thread io contexts
- *
- * Revision 1.11  2005/10/29 02:03:43  jani
- * MS RFC 8: Pluggable External Feature Layer Providers (bug 1477).
- *
- * Revision 1.10  2005/07/15 13:36:46  frank
- * Added comment on lock_names[] in mapthread.c.
- *
- * Revision 1.9  2005/07/14 21:20:44  hobu
- * added TLOCK_OWS definition
- *
- * Revision 1.8  2005/07/07 14:38:00  frank
- * added TLOCK_ORACLE and TLOCK_SDE definitions
- *
- * Revision 1.7  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.6  2005/02/02 17:42:55  frank
- * added TLOCK_POOL
- *
- * Revision 1.5  2005/01/28 06:16:54  sdlime
- * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
- *
- * Revision 1.4  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifndef MAPTHREAD_H
 #define MAPTHREAD_H

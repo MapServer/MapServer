@@ -23,59 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.88  2007/04/24 08:55:32  umberto
- * RFC24: added styleObj support
- *
- * Revision 1.87  2007/04/17 10:36:53  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.86  2006/09/06 05:26:18  sdlime
- * Fixed a bug with curved labels where character advance array was not being gdFree'd. (bug 1899)
- *
- * Revision 1.85  2006/08/17 04:32:16  sdlime
- * Disable path following labels unless GD 2.0.29 or greater is available.
- *
- * Revision 1.84  2006/03/23 20:28:52  sdlime
- * Most recent patch for curved labels. (bug 1620)
- *
- * Revision 1.83  2006/03/22 23:31:20  sdlime
- * Applied latest patch for curved labels. (bug 1620)
- *
- * Revision 1.82  2006/02/18 20:59:13  sdlime
- * Initial code for curved labels. (bug 1620)
- *
- * Revision 1.81  2006/01/16 20:21:18  sdlime
- * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
- *
- * Revision 1.80  2006/01/12 05:26:23  sdlime
- * Fixed spelling error in module name and replaced a // style comment.
- *
- * Revision 1.79  2005/11/28 04:24:59  sdlime
- * Changed msAddLabel() to use msCopyStyle() rather than doing on its own. This should fix some de-allocation errors folks have been having. (bug 1398)
- *
- * Revision 1.78  2005/08/31 18:30:03  sdlime
- * Applied patch suggested to adjust TTF baselines (bug 1449).
- *
- * Revision 1.77  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.76  2005/05/19 04:09:34  sdlime
- * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
- *
- * Revision 1.75  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.74  2005/01/11 00:24:28  frank
- * added labelObj arg to msAddLabel()
- *
- * Revision 1.73  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 /*
 ** maplabel.c: Routines to enable text drawing, BITMAP or TRUETYPE.

@@ -23,52 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.30  2007/04/17 10:36:52  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.29  2006/08/29 19:34:59  frank
- * Fix C++'ism (declare values after first statement in block).
- *
- * Revision 1.28  2006/08/29 19:23:39  frank
- * fixed syntax error in mapimagemap.c - affects vc++
- *
- * Revision 1.27  2006/08/29 02:51:24  sdlime
- * Applied patch supplied by Vilson Farias for extra commas with imagemap output (bug 770).
- *
- * Revision 1.26  2006/02/18 21:24:42  hobu
- * strlen(img->img.imagemap) is a size_t on osx.  Cast to
- * int on os x.
- *
- * Revision 1.25  2006/01/25 16:11:34  dan
- * Prevent systematic buffer overflow in imagemap code when vsnprintf()
- * is not available (bug 1613)
- *
- * Revision 1.24  2006/01/16 20:21:18  sdlime
- * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
- *
- * Revision 1.23  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.22  2005/05/19 04:09:34  sdlime
- * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
- *
- * Revision 1.21  2005/02/18 03:06:45  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.20  2005/02/02 19:36:12  frank
- * Preliminary implementation of MS_SYMBOL_VECTOR in msDrawMarkerSymbolIM
- *
- * Revision 1.19  2004/11/23 17:09:05  frank
- * check if we have vsnprintf before using it
- *
- * Revision 1.18  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 #include "dxfcolor.h"

@@ -24,61 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/02/18 16:00:54  hobu
- * Fix for mapthread.c to check for the non-existence of _WIN32 rather
- * than unix to use posix threads (bug 1672).
- *
- * Revision 1.15  2005/12/30 23:05:10  jani
- * mapthread.c: Added missing lock_name "LAYER_VTABLE", this should go to
- * 4.8.0 release.
- *
- * Revision 1.14  2005/07/15 13:37:07  frank
- * Added OWS lock name.
- *
- * Revision 1.13  2005/07/07 14:38:00  frank
- * added TLOCK_ORACLE and TLOCK_SDE definitions
- *
- * Revision 1.12  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.11  2005/04/18 14:37:32  frank
- * Bug 1319: Fixed win32 mutex creation in mapthread.c
- *
- * Revision 1.10  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.9  2005/02/03 04:55:17  frank
- * Added POOL lock name.
- *
- * Revision 1.8  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- * Revision 1.7  2004/01/27 21:08:45  ned
- * Minor edits for compiling under Win32
- *
- * Revision 1.6  2003/02/27 21:26:47  frank
- * Added TLOCK_TTF
- *
- * Revision 1.5  2003/02/19 14:13:38  frank
- * cleanup warnings
- *
- * Revision 1.4  2002/11/16 21:17:41  frank
- * added debugging support
- *
- * Revision 1.3  2002/01/09 19:15:17  frank
- * added untested windows mutex implementation
- *
- * Revision 1.2  2002/01/09 17:46:08  frank
- * added documentation
- *
- * Revision 1.1  2002/01/09 05:19:28  frank
- * New
- *
- */
+ ****************************************************************************/
 
 /******************************************************************************
  

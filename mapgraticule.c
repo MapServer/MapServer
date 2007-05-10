@@ -26,56 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- * $Log$
- * Revision 1.19  2007/04/17 10:36:52  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.18  2006/01/16 20:37:15  sdlime
- * Changed label size calls to not adjust baseline offset.
- *
- * Revision 1.17  2006/01/16 20:21:18  sdlime
- * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
- *
- * Revision 1.16  2006/01/11 04:45:36  sdlime
- * Argh! Friggin' typos on my part. Fixed bug 1256.
- *
- * Revision 1.15  2005/11/30 21:42:43  julien
- * Use MIN/MAXINTERVAL value when we define grid layers (bug1530)
- *
- * Revision 1.14  2005/10/28 01:09:41  jani
- * MS RFC 3: Layer vtable architecture (bug 1477)
- *
- * Revision 1.13  2005/06/08 23:57:43  dan
- * Propagate msGetlabelSize() errors in msGraticuleLayerNextShape() (part of
- * bug 828)
- *
- * Revision 1.12  2005/05/19 05:57:08  sdlime
- * Added explicit DD format for grid labeling. Only shows the number of degrees, nothing more (bug 1256).
- *
- * Revision 1.11  2005/05/19 05:32:00  sdlime
- * Changed default format for graticule labels to %5.2g from %5.2f which should remove trailing zeros. Partially addresses bug 1256.
- *
- * Revision 1.10  2005/02/18 03:06:45  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.9  2004/11/15 20:35:02  dan
- * Added msLayerIsOpen() to all vector layer types (bug 1051)
- *
- * Revision 1.8  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- * Revision 1.7  2003/03/25 09:28:39  novak
- * Fix crash when no labels specified.
- *
- * Revision 1.6  2003/03/18 04:56:28  sdlime
- * Updating vendor specific layer code to use a common layerinfo (void *) rather than one named for each silly connection type. A bit cleaner code. This is just renaming a layerObj parameter nothing more.Done are sde, osi, mygis, graticules and postgis. Dan will have to deal with OGR and WMS/WFS since he has some merging to do. Renamed the joinObj tableinfo to joininfo. There is a method to my madness- dynamic joins just around the corner.
- *
- * Revision 1.5  2003/03/10 17:15:36  novak
- * Fix hang when no projection specified on graticule layer
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include "map.h"
 #include <assert.h>

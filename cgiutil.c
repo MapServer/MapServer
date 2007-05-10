@@ -23,39 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.27  2006/12/26 16:33:35  sdlime
- * Standardized formatting.
- *
- * Revision 1.26  2006/08/29 01:56:53  sdlime
- * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
- *
- * Revision 1.25  2006/05/08 20:28:43  frank
- * force stdin into binary mode when reading from stdin on win32 (bug 1768)
- *
- * Revision 1.24  2006/02/18 21:35:35  hobu
- * be explicit about the assignment when getting the
- * CONTENT_TYPE on line 137
- *
- * Revision 1.23  2006/02/02 00:29:36  sdlime
- * Fixed bug with default content-type and POST requests. (bug 1628)
- *
- * Revision 1.22  2005/07/22 17:26:11  frank
- * bug 1259: fixed POST support in fastcgi mode
- *
- * Revision 1.21  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.20  2005/02/18 03:06:44  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.19  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -26,52 +26,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/06/05 20:07:25  hobu
- * only print debug output for unreferenced closes if debug is
- * set for the connection
- *
- * Revision 1.13  2006/06/05 16:39:28  hobu
- * don't output connection details into debug output
- *
- * Revision 1.12  2005/07/16 21:18:34  jerryp
- * msConnPoolClose now only copies connections when needed.
- *
- * Revision 1.11  2005/07/07 14:51:25  frank
- * bug1402: any thread can release a connection
- *
- * Revision 1.10  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.9  2005/02/22 00:35:25  frank
- * More fixes for locking.
- *
- * Revision 1.8  2005/02/22 00:26:52  frank
- * fixed some lock acquisition flaws
- *
- * Revision 1.7  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.6  2005/02/03 04:54:47  frank
- * Fixed lock releaseing in msConnPoolRelease().
- *
- * Revision 1.5  2005/02/02 17:57:48  frank
- * Added multithreading safety support for pool
- *
- * Revision 1.4  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- * Revision 1.3  2004/10/15 18:36:46  frank
- * Set connections to NULL after it is freed.
- *
- * Revision 1.2  2004/10/01 22:24:13  frank
- * Added details to the handle confusion error.
- *
- * Revision 1.1  2004/10/01 19:03:35  frank
- * New
- *
- ******************************************************************************
 
              New MapServer Connection Pooling 
              ================================

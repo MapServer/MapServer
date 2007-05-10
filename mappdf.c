@@ -24,50 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.40  2007/04/17 10:36:53  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.39  2006/01/16 20:37:15  sdlime
- * Changed label size calls to not adjust baseline offset.
- *
- * Revision 1.38  2006/01/16 20:21:18  sdlime
- * Fixed error with image legends (shifted text) introduced by the 1449 bug fix. (bug 1607)
- *
- * Revision 1.37  2005/12/14 01:21:38  assefa
- * Add dash line support (bug 492).
- *
- * Revision 1.36  2005/12/12 17:02:07  assefa
- * Segfault on annotation layer when no style is set (Bug 1559)
- *
- * Revision 1.35  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.34  2005/05/19 04:09:34  sdlime
- * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
- *
- * Revision 1.33  2005/04/21 04:34:03  dan
- * Fixed old problem with labels occasionally drawn upside down (bug 564)
- *
- * Revision 1.32  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.31  2004/12/07 00:38:51  dan
- * Fixed segmentation fault when generating PDF output (bug 1105)
- *
- * Revision 1.30  2004/11/04 21:46:36  frank
- * Commented out unused variable.
- *
- * Revision 1.29  2004/11/04 21:06:09  frank
- * centralize 'stdout binary mode setting' for win32, add for gdal output
- *
- * Revision 1.28  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifdef USE_PDF
 

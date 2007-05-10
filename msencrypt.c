@@ -23,19 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2006/06/02 18:56:24  dan
- * Fixed buffer overflow when encrypting string (buffer passed to
- * msEncryptStringWithKey() didn't include enough room for padding)
- *
- * Revision 1.1  2006/06/01 19:56:31  dan
- * Added ability to encrypt tokens (passwords, etc.) in database connection
- * strings (MS-RFC-18, bug 1792)
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

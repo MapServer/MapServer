@@ -24,14 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2005/05/27 15:00:12  dan
- * New regex wrappers to solve issues with previous version (bug 1354)
- *
- */
+ ****************************************************************************/
 
 #ifndef MAP_REGEX_H
 #define MAP_REGEX_H

@@ -29,74 +29,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.63  2007/04/24 16:18:56  assefa
- * SWF : use highlight color from querymap (2074)
- *
- * Revision 1.62  2007/04/20 13:48:41  umberto
- * moveClassUp/Down and various fixes, cleaner build
- *
- * Revision 1.61  2007/04/19 07:34:09  umberto
- * RFC24: more fixes, allow php to build
- *
- * Revision 1.60  2007/04/17 10:36:54  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.59  2006/05/29 18:07:49  assefa
- * Correct a missing argument when generating layer related Action scripts.
- *
- * Revision 1.58  2006/04/11 14:57:03  assefa
- * Remove } preventing build.
- *
- * Revision 1.57  2006/04/10 15:16:01  assefa
- * msDrawStartShapeUsingIdxSWF needs to check return value from
- * msLayerGetShape (Bug 1744)
- *
- * Revision 1.56  2006/04/05 12:59:52  assefa
- * Adding format option to turn off loading  movies automatically (Bug 1696).
- *
- * Revision 1.55  2005/09/23 21:18:58  assefa
- * Remove call to ming.h inside map.h (Bug 1479)
- *
- * Revision 1.54  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.53  2005/05/19 04:09:35  sdlime
- * Removed the LINE_VERT_THRESHOLD test (bug 564) from PDF/SWF/SVG/imagemap drivers.
- *
- * Revision 1.52  2005/04/27 15:30:15  assefa
- * Correct Bug 804 : Make sure that the layer index is consistent when saving
- * movies if some of the layers are not drawn (because the status if off or
- * out of scale ...).
- *
- * Revision 1.51  2005/04/21 23:35:29  assefa
- * Add support style's width parameter for line and polygon layers : Bug 1328.
- *
- * Revision 1.50  2005/04/21 15:09:28  julien
- * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
- *
- * Revision 1.49  2005/04/21 04:34:03  dan
- * Fixed old problem with labels occasionally drawn upside down (bug 564)
- *
- * Revision 1.48  2005/04/14 15:17:14  julien
- * Bug 1244: Remove Z and M from point by default to gain performance.
- *
- * Revision 1.47  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.46  2004/11/12 21:43:59  assefa
- * Remove warnings (Bug 912).
- *
- * Revision 1.45  2004/11/05 16:33:56  assefa
- * set output to binary in saveimage (msIO_needBinaryStdout) : Bug 781.
- *
- * Revision 1.44  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifdef USE_MING_FLASH
 

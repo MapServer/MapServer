@@ -25,26 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.13  2007/04/20 13:48:40  umberto
- * moveClassUp/Down and various fixes, cleaner build
- *
- * Revision 1.12  2007/04/17 10:36:52  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.11  2006/09/01 02:30:15  sdlime
- * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
- *
- * Revision 1.10  2005/02/18 03:06:44  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.9  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

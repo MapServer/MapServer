@@ -23,54 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.25  2007/04/17 10:36:55  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.24  2007/04/05 11:07:23  tkralidi
- * fixed up quoting and escaping (code wasn't building)
- *
- * Revision 1.23  2007/04/03 23:01:06  frank
- * Improve docs on -l option and multiple layers.
- *
- * Revision 1.22  2007/04/01 15:42:01  frank
- * Improve usage message at Dan Jacobson's request.
- *
- * Revision 1.21  2007/03/22 04:40:25  sdlime
- * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
- *
- * Revision 1.20  2006/05/12 20:59:07  frank
- * Removed -t switch, it doesn't work.
- *
- * Revision 1.19  2006/02/10 05:51:45  sdlime
- * Applied patch to resolve issue with layers with no names if -l option is specified. (bug 1655)
- *
- * Revision 1.18  2006/02/01 04:08:35  sdlime
- * Converted strncmp to strcmp in shp2img.c to avoid parameter confusion and for consistency. (bug 1635)
- *
- * Revision 1.17  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.16  2005/02/18 03:06:48  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.15  2004/11/05 02:28:39  frank
- * Reorganize error cases a bit to cleanup properly so we can test error
- * logic leak issues, such as in bug 139.
- *
- * Revision 1.14  2004/11/04 21:08:45  frank
- * added -p flag
- *
- * Revision 1.13  2004/10/28 02:14:16  frank
- * Also enable MS_ERRORFILE if -all_debug selected.
- *
- * Revision 1.12  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

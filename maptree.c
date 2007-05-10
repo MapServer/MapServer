@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2007/04/13 04:07:02  sdlime
- * Added check for nan bounds to msSHPReadBounds(). Fixed return values for msSHPReadBounds() to be MS_SUCCESS/MS_FAILURE instead of 0/-1 (and updated any calls to that function elsewhere accordingly). (bug 1931)
- *
- * Revision 1.18  2006/04/19 16:36:18  hobu
- * don't throw an MS_IOERR when we're in debug mode when we don't find an index (bug 1752)
- *
- * Revision 1.17  2005/08/25 14:20:16  sdlime
- * Applied patch for bug 1440.
- *
- * Revision 1.16  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.15  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.14  2004/10/21 04:30:56  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 #include "maptree.h"

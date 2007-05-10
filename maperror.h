@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.37  2007/04/17 10:36:52  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.36  2006/11/10 01:30:44  tkralidi
- * Added MS_ERROR_LANGUAGE #define for use by error handlers such as
- * msOWSCommonExceptionReport and msOWSGetLanguage
- *
- * Revision 1.35  2006/03/16 22:28:38  tamas
- * Fixed msGetErrorString so as not to truncate the length of the error messages
- * Added msAddErrorDisplayString to read the displayable messages separatedly
- *
- * Revision 1.34  2006/03/14 03:17:19  assefa
- * Add SOS error code (Bug 1710).
- * Correct error codes numbers for MS_TIMEERR and MS_GMLERR.
- *
- * Revision 1.33  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.32  2005/01/07 18:51:09  sdlime
- * Added MS_GMLERR code.
- *
- * Revision 1.31  2004/10/21 04:30:56  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifndef MAPERROR_H
 #define MAPERROR_H

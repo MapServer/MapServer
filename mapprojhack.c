@@ -23,37 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.8  2005/10/26 18:03:22  frank
- * don't include ConvertProj func without USE_PROJ
- *
- * Revision 1.7  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.6  2005/01/24 14:30:14  frank
- * Avoid pj_units init warnings.
- *
- * Revision 1.5  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- * Revision 1.4  2004/09/03 14:23:07  frank
- * make internal copy of pj_units for easier build on win32
- *
- * Revision 1.3  2001/12/10 22:31:27  sdlime
- * Added include for string.h to mapprojhack.c to avoid a compiler warning.
- *
- * Revision 1.2  2001/10/17 14:13:49  dan
- * Hopefully fixed conflict between projects.h and proj_api.h includes.
- *
- * Revision 1.1  2001/10/17 13:12:35  assefa
- * Add functions to set the unis of the map when the projection
- * is changed.
- *
- *
- **********************************************************************/
+ ****************************************************************************/
 
 /* ==================================================================== 
       This file includes only mapproject.h (which includes projects.h)

@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2006/08/29 01:56:53  sdlime
- * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
- *
- * Revision 1.18  2006/02/22 05:04:34  sdlime
- * Applied patch for bug 1660 to hide certain structures from Swig-based MapScript.
- *
- * Revision 1.17  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.16  2005/02/18 03:06:44  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.15  2004/10/21 04:30:54  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #ifndef CGIUTIL_H
 #define CGIUTIL_H

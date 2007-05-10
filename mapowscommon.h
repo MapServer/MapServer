@@ -25,25 +25,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- *
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2007/03/27 03:49:48  tkralidi
- * updated msOWSCommonOperationsMetadataParameter to accept a
- * comma-seperated list of values
- *
- * Revision 1.3  2007/03/27 01:39:48  tkralidi
- * Added functionality to handle OperationsMetadata
- *
- * Revision 1.2  2007/03/27 00:30:34  tkralidi
- * typo in a few exception messages fixed
- *
- * Revision 1.1  2006/11/10 01:37:59  tkralidi
- * Initial implementation (bug 1954)
- *
- *
- ******************************************************************************/
+ ****************************************************************************/
 
 #ifndef MAPOWSCOMMON_H
 #define MAPOWSCOMMON_H

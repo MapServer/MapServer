@@ -23,62 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.51  2006/02/18 21:18:02  frank
- * Avoid warning about lastPoint.
- *
- * Revision 1.50  2005/12/23 05:52:48  sdlime
- * Added function to recompute a shape bounds after reprojection. (bug 1586)
- *
- * Revision 1.49  2005/11/23 19:23:54  frank
- * fixed bug in line splitting logic in msProjectShapeLine
- *
- * Revision 1.48  2005/11/15 18:59:01  frank
- * fixed hang on small rects in msProjectRect() - bug 1526
- *
- * Revision 1.47  2005/10/26 17:42:10  frank
- * Avoid warnings if USE_PROJ not defined.
- *
- * Revision 1.46  2005/10/20 19:37:19  frank
- * ensure reprojected polygons are closed
- *
- * Revision 1.45  2005/10/20 16:43:04  frank
- * msProjectShapeLine() implements RFC 5 line/polygon clipping at horizon
- *
- * Revision 1.44  2005/10/18 03:21:15  frank
- * fixed iteration in msProjectShape()
- *
- * Revision 1.43  2005/10/18 03:12:53  frank
- * delete unprojectable lines, NULL empty shapes (bug 411)
- *
- * Revision 1.42  2005/06/14 16:03:34  dan
- * Updated copyright date to 2005
- *
- * Revision 1.41  2005/04/21 15:09:28  julien
- * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
- *
- * Revision 1.40  2005/04/14 15:17:14  julien
- * Bug 1244: Remove Z and M from point by default to gain performance.
- *
- * Revision 1.39  2005/03/08 18:08:01  frank
- * fixed msProjectPoint() to return MS_FAILURE in missing case: bug 1273
- *
- * Revision 1.38  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.37  2004/11/16 21:56:18  dan
- * msGetEPSGProj() obsolete, replaced by msOWSGetEPSGProj() (bug 568)
- *
- * Revision 1.36  2004/10/29 20:27:06  dan
- * Rewritten msGetProjectionString() to avoid multiple reallocs
- *
- * Revision 1.35  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 #include "mapproject.h"

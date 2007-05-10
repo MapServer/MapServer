@@ -23,41 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.22  2007/04/17 10:36:53  umberto
- * RFC24: mapObj, layerObj, initial classObj support
- *
- * Revision 1.21  2006/05/26 21:46:27  tamas
- * Moving layerObj.sameconnection and msCheckConnection() internal to the MYGIS data provider.
- *
- * Revision 1.20  2005/10/28 01:09:41  jani
- * MS RFC 3: Layer vtable architecture (bug 1477)
- *
- * Revision 1.19  2005/06/14 16:03:33  dan
- * Updated copyright date to 2005
- *
- * Revision 1.18  2005/04/21 15:09:27  julien
- * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
- *
- * Revision 1.17  2005/04/14 15:17:14  julien
- * Bug 1244: Remove Z and M from point by default to gain performance.
- *
- * Revision 1.16  2005/02/18 03:06:46  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.15  2004/12/07 16:56:31  dan
- * Fixed build error introduced by adding msLayerIsOpen() (bug 1116)
- *
- * Revision 1.14  2004/11/15 20:35:02  dan
- * Added msLayerIsOpen() to all vector layer types (bug 1051)
- *
- * Revision 1.13  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include "map.h"
 

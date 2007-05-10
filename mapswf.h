@@ -4,16 +4,7 @@
  * Project:  MapServer
  * Purpose:  header file for Ming support (swf flash output) in Mapserver
  * Author:   Assefa Yewondwossen (yassefa@dmsolutions.ca)
- *
- ******************************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota.
- *
- * $Log$
- * Revision 1.1  2005/09/23 21:17:51  assefa
- * Header file for swf file.
- *
- *
- */
+ ****************************************************************************/
 
 
 #ifdef USE_MING_FLASH

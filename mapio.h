@@ -24,42 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/08/09 14:27:00  frank
- * fixed data length handling in strip content header
- *
- * Revision 1.9  2006/07/13 20:18:12  frank
- * added msIO_stripStdoutBufferContentType
- *
- * Revision 1.8  2006/07/05 05:54:53  frank
- * implement per-thread io contexts
- *
- * Revision 1.7  2006/06/19 15:13:37  frank
- * add io context labelling, avoid depending on function pointer compares
- *
- * Revision 1.6  2006/05/22 19:20:59  frank
- * added some of the RFC 16 entry points
- *
- * Revision 1.5  2006/05/08 20:28:43  frank
- * force stdin into binary mode when reading from stdin on win32 (bug 1768)
- *
- * Revision 1.4  2005/07/22 17:26:11  frank
- * bug 1259: fixed POST support in fastcgi mode
- *
- * Revision 1.3  2004/11/04 21:06:09  frank
- * centralize 'stdout binary mode setting' for win32, add for gdal output
- *
- * Revision 1.2  2004/10/26 15:54:35  sean
- * replace empty arg lists with ( void ) to eliminate swig warnings, and move
- * MS_DLL_EXPORT symbol ahead of function types.
- *
- * Revision 1.1  2004/10/01 19:03:35  frank
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef MAPIO_H
 #define MAPIO_H

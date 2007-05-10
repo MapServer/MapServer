@@ -23,33 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2006/03/14 03:43:30  assefa
- * Move msValidateTimeValue to maptime so it can be used by WMS and SOS.
- * (Bug 1710)
- *
- * Revision 1.18  2005/09/26 14:51:40  assefa
- * Correct typo in  ms_timeFormats (Bug 1478).
- *
- * Revision 1.17  2005/06/14 16:03:35  dan
- * Updated copyright date to 2005
- *
- * Revision 1.16  2005/05/27 15:00:12  dan
- * New regex wrappers to solve issues with previous version (bug 1354)
- *
- * Revision 1.15  2005/02/18 03:06:47  dan
- * Turned all C++ (//) comments into C comments (bug 1238)
- *
- * Revision 1.14  2004/10/21 10:54:17  assefa
- * Add postgis date_trunc support.
- *
- * Revision 1.13  2004/10/21 04:30:55  frank
- * Added standardized headers.  Added MS_CVSID().
- *
- */
+ ****************************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>
