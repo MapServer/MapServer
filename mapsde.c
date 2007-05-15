@@ -2079,6 +2079,39 @@ void msSDELayerFreeItemInfo(layerObj *layer)
 #endif
 }
 
+#ifdef USE_SDE_PLUGIN
+MS_DLL_EXPORT  int
+PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(vtable != NULL);
+    
+
+    vtable->LayerInitItemInfo = msSDELayerInitItemInfo;
+    vtable->LayerFreeItemInfo = msSDELayerFreeItemInfo;
+    vtable->LayerOpen = msSDELayerOpen;
+    vtable->LayerIsOpen = msSDELayerIsOpen;
+    vtable->LayerWhichShapes = msSDELayerWhichShapes;
+    vtable->LayerNextShape = msSDELayerNextShape;
+    vtable->LayerGetShape = msSDELayerGetShapeVT;
+    vtable->LayerClose = msSDELayerClose;
+    vtable->LayerGetItems = msSDELayerGetItems;
+    vtable->LayerGetExtent = msSDELayerGetExtent;
+
+    /* layer->vtable->LayerGetAutoStyle, use default */
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+
+    /* SDE uses pooled connections, close from msCloseConnections */
+    vtable->LayerCloseConnection = msSDELayerCloseConnection;
+
+    vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+    vtable->LayerCreateItems = msSDELayerCreateItems;
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+    return MS_SUCCESS;
+}
+
+#endif
 
 int
 msSDELayerInitializeVirtualTable(layerObj *layer)
@@ -2109,4 +2142,6 @@ msSDELayerInitializeVirtualTable(layerObj *layer)
 
     return MS_SUCCESS;
 }
+
+
 
