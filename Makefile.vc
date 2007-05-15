@@ -199,3 +199,12 @@ php: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
 !ELSE
 php:
 !ENDIF
+
+!IFDEF SDE_OPT
+plugins:  $(MS_DLL) $(MS_LIB_DLL)
+		-del mapsde.obj
+		$(CC) $(CFLAGS) -DUSE_SDE /c mapsde.c /Fomapsde.obj
+    link /dll /out:msplugin_sde_$(SDE_VERSION).dll mapsde.obj mapthread.obj mapserver_i.lib $(SDE_LIB)
+!ELSE
+plugins:
+!ENDIF
