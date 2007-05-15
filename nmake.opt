@@ -275,7 +275,7 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 # greater (or the cygwin/mingw stack).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #GEOS=-DUSE_GEOS
-#GEOS_DIR=$(MS_BASE)\..\geos-2.2.1
+#GEOS_DIR=$(MS_BASE)\..\geos-2.2.3
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -375,9 +375,12 @@ JPEG_INC = -I$(JPEG_DIR)
 # The support library for ArcSDE (the ArcSDE C API/SDK) is typically 
 # only available for those with a full license of ArcSDE.  It is not 
 # available for download.
+# Either set USE_SDE or USE_SDE_PLUGIN, not both.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#SDE_OPT=-DUSE_SDE 
-#SDE_VERSION = 90
+#SDE_OPT=-DUSE_SDE
+#SDE_OPT= -DUSE_SDE_PLUGIN
+
+#SDE_VERSION = 91
 #SDE_DIR = C:\arcgis\arcsde
 #SDE_INC = -I$(SDE_SDK)\include 
 
