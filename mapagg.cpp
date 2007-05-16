@@ -55,6 +55,7 @@
 #include "map.h"
 #include "mapthread.h"
 
+
 #include <time.h>
 
 #ifdef USE_ICONV
@@ -93,7 +94,13 @@
 #include "agg_ellipse_bresenham.h"
 #include "mapagg.h"
 
+#ifdef CPL_MSB
+	typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
+#else
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
+//	typedef agg::pixfmt_alpha_blend_rgba<agg::blender_rgba32,mapserv_row_ptr_cache<int>,int> pixelFormat;
+#endif
+
 
 MS_CVSID("$Id$")
 
@@ -1280,6 +1287,7 @@ int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map)
   return msDrawLabelCacheGD(img, map);
 }
 
+static double nmsTransformShapeAGG = 0;
 //------------------------------------------------------------------------------------------------------------
 /* ===========================================================================
    msSaveImageGD
@@ -1293,7 +1301,6 @@ int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
   char cGDFormat[128];
   int   iReturn = 0;
   
-
   pFormatBuffer = format->driver;
   
   strcpy(cGDFormat, "gd/");
@@ -1378,6 +1385,52 @@ void msFreeImageAGG(gdImagePtr img)
   msFreeImageGD(img);
 }
 
+
+void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
+{
+    int i,j,k; /* loop counters */
+    double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
+
+
+    if(shape->numlines == 0) return; /* nothing to transform */
+
+    if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove co-linear vertices */
+  
+      for(i=0; i<shape->numlines; i++) { /* for each part */
+      
+        shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[0].x, extent.minx, inv_cs);
+        shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[0].y, extent.maxy, inv_cs);
+      
+        for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
+	
+          shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[j].x, extent.minx, inv_cs);
+          shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[j].y, extent.maxy, inv_cs);
+
+          if(k == 1) {
+            if((shape->line[i].point[0].x != shape->line[i].point[1].x) || (shape->line[i].point[0].y != shape->line[i].point[1].y))
+              k++;
+          } else {
+            if((shape->line[i].point[k-1].x != shape->line[i].point[k].x) || (shape->line[i].point[k-1].y != shape->line[i].point[k].y)) {
+              if(((shape->line[i].point[k-2].y - shape->line[i].point[k-1].y)*(shape->line[i].point[k-1].x - shape->line[i].point[k].x)) == ((shape->line[i].point[k-2].x - shape->line[i].point[k-1].x)*(shape->line[i].point[k-1].y - shape->line[i].point[k].y))) {	    
+                shape->line[i].point[k-1].x = shape->line[i].point[k].x;
+                shape->line[i].point[k-1].y = shape->line[i].point[k].y;	
+              } else {
+                k++;
+              }
+            }
+          }
+        }
+        shape->line[i].numpoints = k; /* save actual number kept */
+      }
+    } else { /* points or untyped shapes */
+      for(i=0; i<shape->numlines; i++) { /* for each part */
+        for(j=1; j < shape->line[i].numpoints; j++ ) {
+          shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+          shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
+        }
+      }
+    }
+}
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
 

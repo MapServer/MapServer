@@ -288,6 +288,9 @@ extern "C" {
 #define MS_MAP2IMAGE_X_IC(x,minx,icx) (MS_NINT((x - minx)*icx))
 #define MS_MAP2IMAGE_Y_IC(y,maxy,icy) (MS_NINT((maxy - y)*icy))
 
+#define MS_MAP2IMAGE_X_IC_DBL(x,minx,icx) ((x - minx)*icx)
+#define MS_MAP2IMAGE_Y_IC_DBL(y,maxy,icy) ((maxy - y)*icy)
+
 /* For CARTO symbols */
 #define MS_PI    3.14159265358979323846
 #define MS_PI2   1.57079632679489661923  /* (MS_PI / 2) */
@@ -1736,6 +1739,9 @@ MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image
 MS_DLL_EXPORT int msDrawTextAGG(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawTextLineAGG(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map);
+
+MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);
+
 #ifdef _cplusplus
 }
 #endif

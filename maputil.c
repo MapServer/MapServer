@@ -498,6 +498,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 {
     int nReturnVal = -1;
     char szPath[MS_MAXPATHLEN];
+
     if (img)
     {
         if( MS_DRIVER_GD(img->format) )
@@ -1269,6 +1270,14 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 
         return;
     }
+#ifdef USE_AGG
+    if (image != NULL && MS_RENDERER_AGG(image->format) )
+    {
+        msTransformShapeAGG(shape, extent, cellsize);
+
+        return;
+    }
+#endif
 
     msTransformShapeToPixel(shape, extent, cellsize);
 }
