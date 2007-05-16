@@ -865,10 +865,8 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
 */
 static int drawVectorSymbolGD(gdImagePtr img, symbolObj *symbol, styleObj *style, int ox, int oy) 
 {
-  int i, j; /* loop counters */
+  int j; /* loop counters */
   int fc, oc; /* colors */
-
-  gdImagePtr brush=NULL; /* only used for anti-aliasing (e.g. fuzzy brush) */
 
   if(symbol->type != MS_SYMBOL_VECTOR) {
     msSetError(MS_GDERR, "Incorrect symbol type, expected MS_SYMBOL_VECTOR.", "drawVectorSymbolGD()");
