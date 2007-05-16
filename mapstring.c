@@ -957,7 +957,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
       /*
       ** If old is not found then leave str alone
       */
-      if( (tmp_ptr = msCaseFindSubstring(str, old)) == NULL)
+      if( (tmp_ptr = (char *) msCaseFindSubstring(str, old)) == NULL)
 	return(str);
 
       /*
@@ -998,7 +998,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
         /*
         ** And look for more matches in the rest of the string
         */
-        tmp_ptr = msCaseFindSubstring(tmp_ptr + new_len, old);
+        tmp_ptr = (char *) msCaseFindSubstring(tmp_ptr + new_len, old);
       }
 
       return(str);
