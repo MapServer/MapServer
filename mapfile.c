@@ -4522,7 +4522,7 @@ static int loadMapInternal(mapObj *map)
             if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
               if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
                 msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
-                return(NULL);
+                return MS_FAILURE;
               }
             }
           }              
@@ -4592,9 +4592,9 @@ static int loadMapInternal(mapObj *map)
       //printf("After new layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
       if (GET_LAYER(map, map->numlayers) == NULL) {
            msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
-	   return(NULL);
+	   return MS_FAILURE;
       }
-      if(loadLayer((GET_LAYER(map, map->numlayers)), map) == -1) return(NULL);
+      if(loadLayer((GET_LAYER(map, map->numlayers)), map) == -1) return MS_FAILURE;
       GET_LAYER(map, map->numlayers)->index = map->numlayers; /* save the index */
       /* Update the layer order list with the layer's index. */
       map->layerorder[map->numlayers] = map->numlayers;
