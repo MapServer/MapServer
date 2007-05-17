@@ -59,7 +59,6 @@ const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/0.14.7";
 ** passes SOS specific info.
 ** 
 */
-
 static int msSOSException(mapObj *map, char *locator, char *exceptionCode) 
 {
     xmlDocPtr  psDoc      = NULL;   
@@ -104,6 +103,56 @@ static int _IsInList(char **papsProcedures, int nDistinctProcedures, char *pszPr
     return 0;
 }
 
+static void msSOSReplacePropertyName(FilterEncodingNode *psFilterNode,
+                                     const char *pszOldName, char *pszNewName)
+{
+    if (psFilterNode && pszOldName && pszNewName)
+    {
+        if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
+        {
+            if (psFilterNode->pszValue && 
+                strcasecmp(psFilterNode->pszValue, pszOldName) == 0)
+            {
+                msFree(psFilterNode->pszValue);
+                psFilterNode->pszValue = strdup(pszNewName);
+            }
+        }
+        if (psFilterNode->psLeftNode)
+          msSOSReplacePropertyName(psFilterNode->psLeftNode, pszOldName,
+                                   pszNewName);
+        if (psFilterNode->psRightNode)
+          msSOSReplacePropertyName(psFilterNode->psRightNode, pszOldName,
+                                   pszNewName);
+    }
+}
+
+static void msSOSPreParseFilterForAlias(FilterEncodingNode *psFilterNode, 
+                                        mapObj *map, int i)
+{
+    layerObj *lp=NULL;
+    char szTmp[256];
+    const char *pszFullName = NULL;
+
+    if (psFilterNode && map && i>=0 && i<map->numlayers)
+    {
+        lp = GET_LAYER(map, i);
+        if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
+        {
+            for(i=0; i<lp->numitems; i++) 
+            {
+                if (!lp->items[i] || strlen(lp->items[i]) <= 0)
+                    continue;
+                sprintf(szTmp, "%s_alias", lp->items[i]);
+                pszFullName = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
+                if (pszFullName)
+                {
+                    msSOSReplacePropertyName(psFilterNode, pszFullName, 
+                                             lp->items[i]);
+                }
+            }
+        }
+    }    
+}
 /************************************************************************/
 /*                        msSOSAddMetadataChildNode                     */
 /*                                                                      */
@@ -1734,10 +1783,11 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /* apply filter */
     if (pszFilter)
     {
-        //TODO : preparse parser so that alias for fields can be used
+        
         
         psFilterNode = FLTParseFilterEncoding(pszFilter);
-	
+	  
+
 	if (!psFilterNode) {
 	  msSetError(MS_SOSERR, 
 		     "Invalid or Unsupported FILTER in GetObservation", 
@@ -1748,7 +1798,11 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         for (i=0; i<map->numlayers; i++)
         {
             if (GET_LAYER(map, i)->status == MS_ON)
-              FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
+            {
+                //preparse parser so that alias for fields can be used
+                msSOSPreParseFilterForAlias(psFilterNode, map, i);
+                FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
+            }
         }
     }
  
