@@ -44,7 +44,7 @@
 #define MS_SDE_NULLSTRING "<null>"
 #define MS_SDE_SHAPESTRING "<shape>"
 #define MS_SDE_TIMEFMTSIZE 128 /* bytes */
-#define MS_SDE_TIMEFMT "%T %m/%d/%Y"
+#define MS_SDE_TIMEFMT "%H:%M:%S %m/%d/%Y"
 #define MS_SDE_ROW_ID_COLUMN "SE_ROW_ID"
 
 typedef struct {
