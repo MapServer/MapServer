@@ -1552,12 +1552,12 @@ elif test "$with_wfsclient" = "yes" ; then
 fi
 
 dnl ---------------------------------------------------------------------
-dnl OGC SOS Server support - Requires libxml2 and PROJ4
+dnl OGC SOS Server support - Requires libxml2 and PROJ4 and OGR
 dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include OGC SOS Server support)
 AC_ARG_WITH(sos,
-[  --with-sos              Enable OGC SOS Server Support (libxml2 required).],,)
+[  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and OGR required).],,)
 
 if test "$with_sos" = "no" ; then
 
@@ -1565,7 +1565,7 @@ if test "$with_sos" = "no" ; then
 
 elif test -z "$PROJ_ENABLED" ; then
 
-  AC_MSG_RESULT([        OGC SOS Support not enabled (PROJ.4 and libxml2 required).])
+  AC_MSG_RESULT([        OGC SOS Support not enabled (libxml2 and PROJ4 and OGR required).])
 
 elif test "$with_sos" = "yes" ; then
 

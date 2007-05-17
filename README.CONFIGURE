@@ -77,7 +77,7 @@ Here is the list of available options as returned by "./configure --help":
                           required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
-  --with-sos              Enable OGC SOS Server Support (libxml2 required).
+  --with-sos              Enable OGC SOS Server Support (libxml2, PROJ4, OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-xml2-config=PATH Specify path to xml2-config.
   --enable-ignore-missing-data   Ignore missing data file errors at runtime

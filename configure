@@ -871,7 +871,7 @@ Optional Packages:
                           required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
-  --with-sos              Enable OGC SOS Server Support (libxml2 required).
+  --with-sos              Enable OGC SOS Server Support (libxml2, PROJ4, OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-xml2-config=PATH Specify path to xml2-config.
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
