@@ -28,12 +28,18 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  ****************************************************************************/
 
+
 #ifdef USE_OGR
 
 #include "map.h"
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
+#ifdef USE_SOS_SVR
+
+#include<libxml/parser.h>
+#include<libxml/tree.h>
+#endif
 
 
 typedef struct
@@ -47,69 +53,72 @@ typedef struct
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
-FilterEncodingNode *FLTCreateFilterEncodingNode(void);
-int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
+MS_DLL_EXPORT FilterEncodingNode *FLTCreateFilterEncodingNode(void);
+MS_DLL_EXPORT int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                          int iLayerIndex, int bOnlySpatialFilter);
 
-int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+MS_DLL_EXPORT int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                                      int iLayerIndex, int bOnlySpatialFilter);
-int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+MS_DLL_EXPORT int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                                    int iLayerIndex, int bOnlySpatialFilter);
 
-int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+MS_DLL_EXPORT int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                                  int iLayerIndex);
 
-void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
 
-int FLTValidFilterNode(FilterEncodingNode *psFilterNode);
-int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode);
-int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, 
+MS_DLL_EXPORT int FLTValidFilterNode(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, 
                           const char *szType);
-int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode);
-int FLTIsPointFilter(FilterEncodingNode *psFilterNode);
-int FLTIsLineFilter(FilterEncodingNode *psFilterNode);
-int FLTIsPolygonFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTIsPointFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTIsLineFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTIsPolygonFilter(FilterEncodingNode *psFilterNode);
 
-int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
-char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode);
-int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode);
 
-void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
+MS_DLL_EXPORT void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                             CPLXMLNode *psXMLNode);
-int FLTIsLogicalFilterType(char *pszValue);
-int FLTIsBinaryComparisonFilterType(char *pszValue);
-int FLTIsComparisonFilterType(char *pszValue);
-int FLTIsSpatialFilterType(char *pszValue);
-int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
+MS_DLL_EXPORT int FLTIsLogicalFilterType(char *pszValue);
+MS_DLL_EXPORT int FLTIsBinaryComparisonFilterType(char *pszValue);
+MS_DLL_EXPORT int FLTIsComparisonFilterType(char *pszValue);
+MS_DLL_EXPORT int FLTIsSpatialFilterType(char *pszValue);
+MS_DLL_EXPORT int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
 
-char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode);
-char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
-char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode);
-char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
+MS_DLL_EXPORT char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
 
-shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
+MS_DLL_EXPORT shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                       int *pnUnit);
 
-char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode);
-int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 
 
 /*SQL expressions related functions.*/
-int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
+MS_DLL_EXPORT int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex);
 
-char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,int connectiontype);
-char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
+MS_DLL_EXPORT char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,int connectiontype);
+MS_DLL_EXPORT char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
                                        int connectiontype);
-char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
+MS_DLL_EXPORT char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
                                             int connectiontype);
-int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
+#ifdef USE_SOS_SVR
+MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities();
+#endif
 
 #endif

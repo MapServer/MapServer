@@ -35,6 +35,7 @@
 
 #include "mapogcfilter.h"
 #include "map.h"
+#include "mapowscommon.h"
 
 MS_CVSID("$Id$")
 
@@ -3396,5 +3397,32 @@ int FLTHasSpatialFilter(FilterEncodingNode *psNode)
     return MS_FALSE;
 }
 
+#ifdef USE_SOS_SVR
 
+xmlNodePtr FLTGetCapabilities()
+{
+    xmlNodePtr   psRootNode = NULL, psNode = NULL;
+    xmlNsPtr     psNsOgc       = NULL;
+    
+    psNsOgc = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, 
+                    BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX);
+    
+    psRootNode = xmlNewNode(xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX), BAD_CAST "Filter_Capabilities");
+    
+    psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Spatial_Capabilities", NULL);
+    psNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "Spatial_Operators", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Intersect", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "DWithin", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "BBOX", NULL);
+
+    psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Scalar_Capabilities", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Logical_Operators", NULL);
+    psNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "Comparison_Operators", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Simple_Comparisons", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Like", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Between", NULL);
+    
+    return psRootNode;
+}
+#endif
 #endif

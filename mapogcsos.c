@@ -998,6 +998,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/2001/XMLSchema-instance", BAD_CAST "xsi"));
     xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/sos", BAD_CAST "sos"));
+    xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX ));
     
 
     /*version fixed for now*/
@@ -1050,7 +1051,8 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("result", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("responseFormat", 1, (char *)pszSOSGetObservationMimeType));
 
-    /*TODO : add <ogc:Filter_Capabilities> */
+    /*<ogc:Filter_Capabilities> */
+    psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities());
 
     /*Offerings */
      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Content", NULL);
