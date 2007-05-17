@@ -103,6 +103,47 @@ static int _IsInList(char **papsProcedures, int nDistinctProcedures, char *pszPr
     return 0;
 }
 
+/************************************************************************/
+/*                           msSOSValidateFilter                        */
+/*                                                                      */
+/*      Look if the filter's property names have an equivalent          */
+/*      layre's attribute.                                              */
+/************************************************************************/
+static int msSOSValidateFilter(FilterEncodingNode *psFilterNode, 
+                                            layerObj *lp)
+{
+    int i=0, bFound =0;
+    /* assuming here that the layer is opened*/
+    if (psFilterNode && lp)
+    {
+        if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
+        {
+            for (i=0; i<lp->numitems; i++) 
+            {
+                if (strcasecmp(lp->items[i], psFilterNode->pszValue) == 0)
+                {
+                    bFound = 1;
+                    break;
+                }
+            }
+            if (!bFound)
+              return MS_FALSE;
+        }
+        if (psFilterNode->psLeftNode)
+        {
+            if (msSOSValidateFilter(psFilterNode->psLeftNode, lp) == MS_FALSE)
+              return MS_FALSE;
+        }
+        if (psFilterNode->psRightNode)
+        {
+            if (msSOSValidateFilter(psFilterNode->psRightNode, lp) == MS_FALSE)
+              return MS_FALSE;
+        }
+    }
+
+    return MS_TRUE;
+}
+
 static void msSOSReplacePropertyName(FilterEncodingNode *psFilterNode,
                                      const char *pszOldName, char *pszNewName)
 {
@@ -150,6 +191,7 @@ static void msSOSPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
                                              lp->items[i]);
                 }
             }
+            msLayerClose(lp);
         }
     }    
 }
@@ -1797,10 +1839,22 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         /* apply the filter to all layers thar are on*/
         for (i=0; i<map->numlayers; i++)
         {
-            if (GET_LAYER(map, i)->status == MS_ON)
+            lp = GET_LAYER(map, i);
+            if (lp->status == MS_ON)
             {
                 //preparse parser so that alias for fields can be used
                 msSOSPreParseFilterForAlias(psFilterNode, map, i);
+                //vaidate that the property names used are valid 
+                //(there is a corresponding later attribute)
+                if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
+                {
+                    if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE)
+                    {
+                        msSetError(MS_SOSERR, "Invalid component name in ogc filter statement", "msSOSGetObservation()");
+                        return msSOSException(map, "filter", "InvalidParameterValue");
+                    }
+                    msLayerClose(lp);
+                }
                 FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
             }
         }
