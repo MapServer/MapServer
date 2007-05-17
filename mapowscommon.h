@@ -30,6 +30,8 @@
 #ifndef MAPOWSCOMMON_H
 #define MAPOWSCOMMON_H
 
+#ifdef USE_SOS_SVR
+
 #include<libxml/parser.h>
 #include<libxml/tree.h>
 
@@ -81,5 +83,7 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
 xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, double miny, double maxx, double maxy);
 
 xmlNodePtr msOWSCommonWGS84BoundingBox(int dimensions, double minx, double miny, double maxx, double maxy);
+
+#endif /* defined(USE_SOS_SVR) */
 
 #endif /* MAPOWSCOMMON_H */
