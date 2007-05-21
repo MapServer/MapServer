@@ -961,21 +961,21 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                         {
                             if (iColorParam == 0)
                             {
-                                psStyle->color.red = hex2int(psColor+1);
-                                psStyle->color.green = hex2int(psColor+3);
-                                psStyle->color.blue= hex2int(psColor+5);
+                                psStyle->color.red = msHexToInt(psColor+1);
+                                psStyle->color.green = msHexToInt(psColor+3);
+                                psStyle->color.blue= msHexToInt(psColor+5);
                             }
                             else if (iColorParam == 1)
                             {
-                                psStyle->outlinecolor.red = hex2int(psColor+1);
-                                psStyle->outlinecolor.green = hex2int(psColor+3);
-                                psStyle->outlinecolor.blue= hex2int(psColor+5);
+                                psStyle->outlinecolor.red = msHexToInt(psColor+1);
+                                psStyle->outlinecolor.green = msHexToInt(psColor+3);
+                                psStyle->outlinecolor.blue= msHexToInt(psColor+5);
                             }
                             else if (iColorParam == 2)
                             {
-                                psStyle->backgroundcolor.red = hex2int(psColor+1);
-                                psStyle->backgroundcolor.green = hex2int(psColor+3);
-                                psStyle->backgroundcolor.blue= hex2int(psColor+5);
+                                psStyle->backgroundcolor.red = msHexToInt(psColor+1);
+                                psStyle->backgroundcolor.green = msHexToInt(psColor+3);
+                                psStyle->backgroundcolor.blue= msHexToInt(psColor+5);
                             }
                         }
                     }
@@ -1232,9 +1232,9 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
                         /* expecting hexadecimal ex : #aaaaff */
                         if (nLength == 7 && psColor[0] == '#')
                         {
-                            psStyle->color.red = hex2int(psColor+1);
-                            psStyle->color.green = hex2int(psColor+3);
-                            psStyle->color.blue= hex2int(psColor+5);
+                            psStyle->color.red = msHexToInt(psColor+1);
+                            psStyle->color.green = msHexToInt(psColor+3);
+                            psStyle->color.blue= msHexToInt(psColor+5);
                         }
                     }
                 }
@@ -2292,9 +2292,9 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                         pszPreviousColor[0] == '#' &&
                         strlen(pszColor) == 7 && pszColor[0] == '#')
                     {
-                        sColor.red = hex2int(pszPreviousColor+1);
-                        sColor.green= hex2int(pszPreviousColor+3);
-                        sColor.blue = hex2int(pszPreviousColor+5);
+                        sColor.red = msHexToInt(pszPreviousColor+1);
+                        sColor.green= msHexToInt(pszPreviousColor+3);
+                        sColor.blue = msHexToInt(pszPreviousColor+5);
 
                         /* pszQuantity and pszPreviousQuality may be integer or float */
 			pchPrevious=strchr(pszPreviousQuality,'.');
@@ -2383,9 +2383,9 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         {
             if (strlen(pszColor) == 7 && pszColor[0] == '#')
             {
-                sColor.red = hex2int(pszColor+1);
-                sColor.green= hex2int(pszColor+3);
-                sColor.blue = hex2int(pszColor+5);
+                sColor.red = msHexToInt(pszColor+1);
+                sColor.green= msHexToInt(pszColor+3);
+                sColor.blue = msHexToInt(pszColor+5);
 
 		/* pszQuantity may be integer or float */
 		pch=strchr(pszQuantity,'.');
@@ -2647,9 +2647,9 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                                     /* expecting hexadecimal ex : #aaaaff */
                                     if (nLength == 7 && pszColor[0] == '#')
                                     {
-                                        psClass->label.color.red = hex2int(pszColor+1);
-                                        psClass->label.color.green = hex2int(pszColor+3);
-                                        psClass->label.color.blue = hex2int(pszColor+5);
+                                        psClass->label.color.red = msHexToInt(pszColor+1);
+                                        psClass->label.color.green = msHexToInt(pszColor+3);
+                                        psClass->label.color.blue = msHexToInt(pszColor+5);
                                     }
                                 }
                             }
@@ -2794,9 +2794,9 @@ void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
         psHexColor[0] == '#')
     {
         
-        psColor->red = hex2int(psHexColor+1);
-        psColor->green = hex2int(psHexColor+3);
-        psColor->blue= hex2int(psHexColor+5);
+        psColor->red = msHexToInt(psHexColor+1);
+        psColor->green = msHexToInt(psHexColor+3);
+        psColor->blue= msHexToInt(psHexColor+5);
     }
 }   
 

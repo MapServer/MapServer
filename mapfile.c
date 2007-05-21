@@ -358,13 +358,13 @@ int loadColorWithAlpha(colorObj *color) {
     if(msyytext[0] == '#' && strlen(msyytext) == 7) { /* got a hex color */
       hex[0] = msyytext[1];
       hex[1] = msyytext[2];
-      color->red = hex2int(hex);      
+      color->red = msHexToInt(hex);      
       hex[0] = msyytext[3];
       hex[1] = msyytext[4];
-      color->green = hex2int(hex);
+      color->green = msHexToInt(hex);
       hex[0] = msyytext[5];
       hex[1] = msyytext[6];
-      color->blue = hex2int(hex);
+      color->blue = msHexToInt(hex);
 	  color->alpha = 0;
 
       return(MS_SUCCESS);
@@ -372,16 +372,16 @@ int loadColorWithAlpha(colorObj *color) {
     else if(msyytext[0] == '#' && strlen(msyytext) == 9) { /* got a hex color with alpha */
       hex[0] = msyytext[1];
       hex[1] = msyytext[2];
-      color->red = hex2int(hex);      
+      color->red = msHexToInt(hex);      
       hex[0] = msyytext[3];
       hex[1] = msyytext[4];
-      color->green = hex2int(hex);
+      color->green = msHexToInt(hex);
       hex[0] = msyytext[5];
       hex[1] = msyytext[6];
-      color->blue = hex2int(hex);
+      color->blue = msHexToInt(hex);
       hex[0] = msyytext[7];
       hex[1] = msyytext[8];
-      color->alpha = hex2int(hex);
+      color->alpha = msHexToInt(hex);
       return(MS_SUCCESS);
     }
     return(MS_FAILURE);
