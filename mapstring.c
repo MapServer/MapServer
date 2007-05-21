@@ -1004,6 +1004,20 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
       return(str);
 }
 
+/* 
+** Converts a 2 character hexidecimal string to an integer.
+*/
+int msHexToInt(char *hex) {
+  int number;
+
+  number = (hex[0] >= 'A' ? ((hex[0] & 0xdf) - 'A')+10 : (hex[0] - '0'));
+  number *= 16;
+  number += (hex[1] >= 'A' ? ((hex[1] & 0xdf) - 'A')+10 : (hex[1] - '0'));
+   
+  return(number);
+}
+
+
 /*
 ** Simple charset converter.
 ** The return value must be freed by the caller.

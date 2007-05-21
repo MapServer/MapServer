@@ -367,13 +367,13 @@ char path[MS_MAXPATHLEN];
 <INITIAL,VALUE_STRING>wms                      { return(MS_WMS); }
 <INITIAL,VALUE_STRING>alpha                    { return(MS_GD_ALPHA); }
 
-<NAME_STRING>\[*\]                           {
+<INITIAL,VALUE_STRING>\[.*\]                   {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_BINDING);
                                                }
 
-<NAME_STRING>[0-9]+                          {
+<NAME_STRING>[0-9]+                            {
                                                  msyynumber = atof(msyytext);
                                                  return(MS_NUMBER);
                                                }

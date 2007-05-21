@@ -481,10 +481,10 @@ typedef struct {
 
 /* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
 #ifndef SWIG
-#define MS_STYLE_BINDING_LENGTH 2
-enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_ANGLE};
-#define MS_LABEL_BINDING_LENGTH 2
-enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE};
+#define MS_STYLE_BINDING_LENGTH 5
+enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL};
+#define MS_LABEL_BINDING_LENGTH 4
+enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR};
 
 /* ATTRIBUTE BINDING OBJECT - holds parameters necessary to bind an item to mapfile property (e.g. style size) */
 typedef struct {
@@ -1434,6 +1434,7 @@ MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *del
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
 MS_DLL_EXPORT const char *msCaseFindSubstring(const char *haystack, const char *needle);
+MS_DLL_EXPORT int msHexToInt(char *hex);
 MS_DLL_EXPORT char *msGetEncodedString(const char *string, const char *encoding);
 
 #ifdef NEED_STRDUP
@@ -1777,6 +1778,7 @@ MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pb
 /* ==================================================================== */
 /* For mappdf */
 MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); /* maputil.c */
+MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
 MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems);

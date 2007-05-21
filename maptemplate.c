@@ -1050,7 +1050,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
 
-       argValue = msLookupHashTable(tagArgs, "centroid");
+      argValue = msLookupHashTable(tagArgs, "centroid");
       if(argValue) 
         if(strcasecmp(argValue,"true") == 0) centroid = MS_TRUE;
 

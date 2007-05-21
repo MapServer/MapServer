@@ -56,22 +56,57 @@ extern char *msyystring;
 /*
 ** Helper functions to convert from strings to other types or objects.
 */
-static int bindIntegerAttribute(char *value, int i)
+static int bindIntegerAttribute(int *attribute, char *value)
 {
-  if(!value || strlen(value) == 0) return i;
-  return (atoi(value));
+  if(!value || strlen(value) == 0) return MS_FAILURE;
+  *attribute = atoi(value);
+  return MS_SUCCESS;
 }
 
-static double bindDoubleAttribute(char *value, double d)
+static int bindDoubleAttribute(double *attribute, char *value)
 {
-  if(!value || strlen(value) == 0) return d;
-  return (atof(value));
+  if(!value || strlen(value) == 0) return MS_FAILURE;
+  *attribute = atof(value);
+  return MS_SUCCESS;
 }
 
-static colorObj bindColorAttribute(char *value, colorObj c)
+static int bindColorAttribute(colorObj *attribute, char *value)
 {
-  if(!value || strlen(value) == 0) return c;
-  return c;
+  if(!value || strlen(value) == 0) return MS_FAILURE;
+
+  if(value[0] == '#' && strlen(value) == 7) { /* got a hex color */
+    char hex[2];
+
+    hex[0] = value[1];
+    hex[1] = value[2];
+    attribute->red = msHexToInt(hex);
+    hex[0] = value[3];
+    hex[1] = value[4];
+    attribute->green = msHexToInt(hex);
+    hex[0] = value[5];
+    hex[1] = value[6];
+    attribute->blue = msHexToInt(hex);
+
+    return MS_SUCCESS;
+  } else { /* try a space delimited string */
+    char **tokens=NULL;
+    int numtokens=0;
+
+    tokens = msStringSplit(value, ' ', &numtokens);
+    if(tokens==NULL || numtokens != 3) {
+      msFreeCharArray(tokens, numtokens);
+      return MS_FAILURE; /* punt */
+    }
+
+    attribute->red = atof(tokens[0]);
+    attribute->blue = atof(tokens[1]);
+    attribute->green = atof(tokens[2]);
+    msFreeCharArray(tokens, numtokens);
+
+    return MS_SUCCESS;
+  }
+
+  return MS_FAILURE; /* shouldn't get here */
 }
 
 /*
@@ -92,11 +127,25 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
       style = layer->class[i]->styles[j];
 
       if(style->numbindings > 0) {
-        if(style->bindings[MS_STYLE_BINDING_ANGLE].index != -1)
-          style->angle = bindDoubleAttribute(shape->values[style->bindings[MS_STYLE_BINDING_ANGLE].index], 0.0);
+        if(style->bindings[MS_STYLE_BINDING_ANGLE].index != -1) {
+          style->angle = 0;
+          bindDoubleAttribute(&style->angle, shape->values[style->bindings[MS_STYLE_BINDING_ANGLE].index]);
+	}
 
-        if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1)
-          style->size = bindDoubleAttribute(shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index], 1.0);
+        if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
+          style->size = 1.0;
+          bindIntegerAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
+        }
+
+	if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1) {
+	  MS_INIT_COLOR(style->color, -1,-1,-1);
+	  bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
+	}
+
+	if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1) {
+	  MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
+	  bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
+	}
       }
     } /* next styleObj */
 
@@ -104,11 +153,25 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
     label = &(layer->class[i]->label);
 
     if(label->numbindings > 0) {
-      if(label->bindings[MS_LABEL_BINDING_ANGLE].index != -1)
-        label->angle = bindDoubleAttribute(shape->values[label->bindings[MS_LABEL_BINDING_ANGLE].index], 0.0);
+      if(label->bindings[MS_LABEL_BINDING_ANGLE].index != -1) {
+        label->angle = 0.0;
+        bindDoubleAttribute(&label->angle, shape->values[label->bindings[MS_LABEL_BINDING_ANGLE].index]);
+      }
 
-      if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1)
-        label->size = bindDoubleAttribute(shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index], 1.0);
+      if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1) {
+        label->size = 1.0;
+        bindIntegerAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
+      }
+
+      if(label->bindings[MS_LABEL_BINDING_COLOR].index != -1) {
+        MS_INIT_COLOR(label->color, -1,-1,-1);
+        bindColorAttribute(&label->color, shape->values[label->bindings[MS_LABEL_BINDING_COLOR].index]);
+      }
+
+      if(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index != -1) {
+        MS_INIT_COLOR(label->outlinecolor, -1,-1,-1);
+        bindColorAttribute(&label->outlinecolor, shape->values[label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index]);
+      }
     }
   } /* next classObj */
 

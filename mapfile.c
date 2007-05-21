@@ -312,43 +312,42 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
-/* converts a 2 character hexidecimal string to an integer */
-int hex2int(char *hex) {
-  int number;
-
-  number = (hex[0] >= 'A' ? ((hex[0] & 0xdf) - 'A')+10 : (hex[0] - '0'));
-  number *= 16;
-  number += (hex[1] >= 'A' ? ((hex[1] & 0xdf) - 'A')+10 : (hex[1] - '0'));
-   
-  return(number);
-}
-
-int loadColor(colorObj *color) {
+int loadColor(colorObj *color, attributeBindingObj *binding) {
+  int symbol;
   char hex[2];
 
-  if(getInteger(&(color->red)) == -1) {
+  if(binding) {
+    if((symbol = getSymbol(3, MS_NUMBER, MS_BINDING, MS_STRING)) == -1) return MS_FAILURE;
+  } else {
+    if((symbol = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;
+  }
+
+  if(symbol == MS_NUMBER) {
+    color->red = (int) msyynumber;
+    if(getInteger(&(color->green)) == -1) return MS_FAILURE;
+    if(getInteger(&(color->blue)) == -1) return MS_FAILURE;
+  } else if(symbol == MS_STRING) {
     if(msyytext[0] == '#' && strlen(msyytext) == 7) { /* got a hex color */
       hex[0] = msyytext[1];
       hex[1] = msyytext[2];
-      color->red = hex2int(hex);      
+      color->red = msHexToInt(hex);
       hex[0] = msyytext[3];
       hex[1] = msyytext[4];
-      color->green = hex2int(hex);
+      color->green = msHexToInt(hex);
       hex[0] = msyytext[5];
       hex[1] = msyytext[6];
-      color->blue = hex2int(hex);
-#if ALPHACOLOR_ENABLED
-	  color->alpha = 0;
-#endif
-	  
-      return(MS_SUCCESS);
+      color->blue = msHexToInt(hex);
+      return MS_SUCCESS;
     }
-    return(MS_FAILURE);
-  }
-  if(getInteger(&(color->green)) == -1) return(MS_FAILURE);
-  if(getInteger(&(color->blue)) == -1) return(MS_FAILURE);
 
-  return(MS_SUCCESS);
+    /* TODO: consider named colors here */
+    return MS_FAILURE;
+  } else {
+    binding->item = strdup(msyytext);
+    binding->index = -1;
+  }
+
+  return MS_SUCCESS;
 }
 
 #if ALPHACOLOR_ENABLED
@@ -1099,6 +1098,8 @@ static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
 */
 void initLabel(labelObj *label)
 {
+  int i;
+
   label->antialias = -1; /* off  */
 
   MS_INIT_COLOR(label->color, 0,0,0);  
@@ -1134,13 +1135,24 @@ void initLabel(labelObj *label)
 
   label->force = MS_FALSE;
 
+  label->numbindings = 0;
+  for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
+    label->bindings[i].item = NULL;
+    label->bindings[i].index = -1;
+  }
+
   return;
 }
 
 static void freeLabel(labelObj *label)
 {
+  int i;
+
   msFree(label->font);
   msFree(label->encoding);
+
+  for(i=0; i<MS_LABEL_BINDING_LENGTH; i++)
+    msFree(label->bindings[i].item);
 }
 
 static int loadLabel(labelObj *label, mapObj *map)
@@ -1150,12 +1162,15 @@ static int loadLabel(labelObj *label, mapObj *map)
   for(;;) {
     switch(msyylex()) {
     case(ANGLE):
-      if((symbol = getSymbol(3, MS_NUMBER,MS_AUTO,MS_FOLLOW)) == -1) 
+      if((symbol = getSymbol(4, MS_NUMBER,MS_AUTO,MS_FOLLOW,MS_BINDING)) == -1) 
 	return(-1);
 
       if(symbol == MS_NUMBER)
 	label->angle = msyynumber;
-      else if ( symbol == MS_FOLLOW ) {
+      else if(symbol == MS_BINDING) {
+        label->bindings[MS_LABEL_BINDING_ANGLE].item = strdup(msyytext);
+        label->numbindings++;
+      } else if ( symbol == MS_FOLLOW ) {
 #ifndef GD_HAS_FTEX_XSHOW
 	msSetError(MS_IDENTERR, "Keyword FOLLOW is not valid without TrueType font support and GD version 2.0.29 or higher.", "loadlabel()");
 	return(-1);
@@ -1171,10 +1186,10 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
       break;
     case(BACKGROUNDCOLOR):
-      if(loadColor(&(label->backgroundcolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(label->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(BACKGROUNDSHADOWCOLOR):
-      if(loadColor(&(label->backgroundshadowcolor)) != MS_SUCCESS) return(-1);      
+      if(loadColor(&(label->backgroundshadowcolor), NULL) != MS_SUCCESS) return(-1);      
       break;
    case(BACKGROUNDSHADOWSIZE):
       if(getInteger(&(label->backgroundshadowsizex)) == -1) return(-1);
@@ -1189,7 +1204,8 @@ static int loadLabel(labelObj *label, mapObj *map)
       break;
 #endif
     case(COLOR): 
-      if(loadColor(&(label->color)) != MS_SUCCESS) return(-1);      
+      if(loadColor(&(label->color), &(label->bindings[MS_LABEL_BINDING_COLOR])) != MS_SUCCESS) return(-1);      
+      if(label->bindings[MS_LABEL_BINDING_COLOR].item) label->numbindings++;
       break;
     case(ENCODING):
       if((getString(&label->encoding)) == MS_FAILURE) return(-1);
@@ -1222,19 +1238,20 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
 
       if(symbol == MS_NUMBER)
-	      label->minfeaturesize = (int)msyynumber;
+	label->minfeaturesize = (int)msyynumber;
       else
-	      label->autominfeaturesize = MS_TRUE;
+	label->autominfeaturesize = MS_TRUE;
       break;
     case(MINSIZE):
       if(getInteger(&(label->minsize)) == -1) return(-1);
-        break;
+      break;
     case(OFFSET):
       if(getInteger(&(label->offsetx)) == -1) return(-1);
       if(getInteger(&(label->offsety)) == -1) return(-1);
       break;
     case(OUTLINECOLOR):
-      if(loadColor(&(label->outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(label->outlinecolor), &(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(-1);      
+      if(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item) label->numbindings++;
       break;    
     case(PARTIALS):
       if((label->partials = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
@@ -1244,7 +1261,7 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
       break;
     case(SHADOWCOLOR):
-      if(loadColor(&(label->shadowcolor)) != MS_SUCCESS) return(-1);      
+      if(loadColor(&(label->shadowcolor), NULL) != MS_SUCCESS) return(-1);      
       break;
     case(SHADOWSIZE):
       if(getInteger(&(label->shadowsizex)) == -1) return(-1);
@@ -1252,13 +1269,20 @@ static int loadLabel(labelObj *label, mapObj *map)
       break;
     case(SIZE):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
-      if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
+      if((symbol = getSymbol(7, MS_NUMBER,MS_BINDING,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	return(-1);
-      if(label->size == MS_NUMBER)
-	      label->size = (int)msyynumber;
+
+      if(symbol == MS_NUMBER) {
+        label->size = (int) msyynumber;
+      } else if(symbol == MS_BINDING) {
+        label->bindings[MS_LABEL_BINDING_SIZE].item = strdup(msyytext);
+        label->numbindings++;
+        label->size = 0;
+      } else
+        label->size = symbol;
 #else
       if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
-	      return(-1);
+        return(-1);
 #endif
       break; 
     case(TYPE):
@@ -1268,8 +1292,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getCharacter(&(label->wrap)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadlabel()", 
-                 msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadlabel()", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1306,11 +1329,11 @@ static void loadLabelValue(mapObj *map, labelObj *label, char *value)
     break;
   case(BACKGROUNDCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(label->backgroundcolor)) != MS_SUCCESS) return;
+    if(loadColor(&(label->backgroundcolor), NULL) != MS_SUCCESS) return;
     break;
   case(BACKGROUNDSHADOWCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(label->backgroundshadowcolor)) != MS_SUCCESS) return;
+    if(loadColor(&(label->backgroundshadowcolor), NULL) != MS_SUCCESS) return;
     break;
   case(BACKGROUNDSHADOWSIZE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -1319,7 +1342,7 @@ static void loadLabelValue(mapObj *map, labelObj *label, char *value)
     break;
   case(COLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;     
-    if(loadColor(&(label->color)) != MS_SUCCESS) return;
+    if(loadColor(&(label->color), NULL) != MS_SUCCESS) return;
     break;    
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
@@ -1373,7 +1396,7 @@ static void loadLabelValue(mapObj *map, labelObj *label, char *value)
     break;  
   case(OUTLINECOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(label->outlinecolor)) != MS_SUCCESS) return;
+    if(loadColor(&(label->outlinecolor), NULL) != MS_SUCCESS) return;
     break;
   case(PARTIALS):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -1385,7 +1408,7 @@ static void loadLabelValue(mapObj *map, labelObj *label, char *value)
     break;
   case(SHADOWCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(label->shadowcolor)) != MS_SUCCESS) return;
+    if(loadColor(&(label->shadowcolor), NULL) != MS_SUCCESS) return;
     break;
   case(SHADOWSIZE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -1689,6 +1712,8 @@ static void writeHashTable(hashTableObj *table, FILE *stream, char *tab, char *t
 ** Initialize, load and free a single style
 */
 int initStyle(styleObj *style) {
+  int i;
+
   MS_REFCNT_INIT(style);
   MS_INIT_COLOR(style->color, -1,-1,-1); /* must explictly set colors */
   MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1);
@@ -1716,19 +1741,25 @@ int initStyle(styleObj *style) {
   style->angleitem = style->sizeitem = NULL;
   style->angleitemindex = style->sizeitemindex = -1;
 
+  style->numbindings = 0;
+  for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
+    style->bindings[i].item = NULL;
+    style->bindings[i].index = -1;
+  }
+
   return MS_SUCCESS;
 }
 
 int loadStyle(styleObj *style) {
-  int state;
+  int symbol;
 
   for(;;) {
     switch(msyylex()) {
   /* New Color Range fields*/
     case (COLORRANGE):
       /*These are both in one line now*/
-      if(loadColor(&(style->mincolor)) != MS_SUCCESS) return(MS_FAILURE);
-      if(loadColor(&(style->maxcolor)) != MS_SUCCESS) return(MS_FAILURE);
+      if(loadColor(&(style->mincolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
+      if(loadColor(&(style->maxcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
       break;
     case(DATARANGE):
       /*These are both in one line now*/
@@ -1740,7 +1771,15 @@ int loadStyle(styleObj *style) {
       break;
   /* End Range fields*/
     case(ANGLE):
-      if(getDouble(&(style->angle)) == -1) return(MS_FAILURE);
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+
+      if(symbol == MS_NUMBER)
+        style->angle = (double) msyynumber;
+      else {
+        style->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(msyytext);
+        style->numbindings++;
+        style->angle = 0.0;
+      }
       break;
     case(ANGLEITEM):
       if(getString(&style->angleitem) == MS_FAILURE) return(MS_FAILURE);
@@ -1750,10 +1789,11 @@ int loadStyle(styleObj *style) {
 	return(MS_FAILURE);
       break;
     case(BACKGROUNDCOLOR):
-      if(loadColor(&(style->backgroundcolor)) != MS_SUCCESS) return(MS_FAILURE);
+      if(loadColor(&(style->backgroundcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
       break;
     case(COLOR):
-      if(loadColor(&(style->color)) != MS_SUCCESS) return(MS_FAILURE);
+      if(loadColor(&(style->color), &(style->bindings[MS_STYLE_BINDING_COLOR])) != MS_SUCCESS) return(MS_FAILURE);
+      if(style->bindings[MS_STYLE_BINDING_COLOR].item) style->numbindings++;
       break;
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
@@ -1788,17 +1828,26 @@ int loadStyle(styleObj *style) {
       if(getInteger(&(style->offsety)) == -1) return(MS_FAILURE);
       break;
     case(OUTLINECOLOR):
-      if(loadColor(&(style->outlinecolor)) != MS_SUCCESS) return(MS_FAILURE);
+      if(loadColor(&(style->outlinecolor), &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(MS_FAILURE);
+      if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item) style->numbindings++;
       break;
     case(SIZE):
-      if(getInteger(&(style->size)) == -1) return(MS_FAILURE);
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+
+      if(symbol == MS_NUMBER)
+        style->size = (int) msyynumber;
+      else {
+	style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
+        style->numbindings++;
+        style->size = 0;
+      }
       break;
     case(SIZEITEM):
       if(getString(&style->sizeitem) == MS_FAILURE) return(MS_FAILURE);
       break;
     case(SYMBOL):
-      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(MS_FAILURE);
-      if(state == MS_NUMBER)
+      if((symbol = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER)
 	style->symbol = (int) msyynumber;
       else
 	style->symbolname = strdup(msyytext);
@@ -1823,11 +1872,18 @@ int loadStyleValue(styleObj *style) {
 }
 
 int freeStyle(styleObj *style) {
+  int i;
+
   if( MS_REFCNT_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
+
   msFree(style->symbolname);
   msFree(style->angleitem);
   msFree(style->sizeitem);
   msFree(style->rangeitem);
+
+  for(i=0; i<MS_STYLE_BINDING_LENGTH; i++)
+    msFree(style->bindings[i].item);
+
   return MS_SUCCESS;
 }
 
@@ -2050,11 +2106,11 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
     */
     case(BACKGROUNDCOLOR):
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
-      if(loadColor(&(class->styles[0]->backgroundcolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[0]->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(COLOR):
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
-      if(loadColor(&(class->styles[0]->color)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[0]->color), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color or outlinecolor */
       break;
 #if ALPHACOLOR_ENABLED
@@ -2074,7 +2130,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(OUTLINECOLOR):            
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
-      if(loadColor(&(class->styles[0]->outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[0]->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(SIZE):
@@ -2096,11 +2152,11 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
     */
     case(OVERLAYBACKGROUNDCOLOR):
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
-      if(loadColor(&(class->styles[1]->backgroundcolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[1]->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(OVERLAYCOLOR):
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
-      if(loadColor(&(class->styles[1]->color)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[1]->color), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYMAXSIZE):
@@ -2113,7 +2169,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(OVERLAYOUTLINECOLOR):      
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
-      if(loadColor(&(class->styles[1]->outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(class->styles[1]->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYSIZE):
@@ -2191,11 +2247,11 @@ static void loadClassValue(mapObj *map, classObj *class, char *value, int type)
   */
   case(BACKGROUNDCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(class->styles[0]->backgroundcolor)) != MS_SUCCESS) return;    
+    if(loadColor(&(class->styles[0]->backgroundcolor), NULL) != MS_SUCCESS) return;    
     break;
   case(COLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(class->styles[0]->color)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[0]->color), NULL) != MS_SUCCESS) return;
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
@@ -2213,7 +2269,7 @@ static void loadClassValue(mapObj *map, classObj *class, char *value, int type)
     break;
   case(OUTLINECOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(class->styles[0]->outlinecolor)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[0]->outlinecolor), NULL) != MS_SUCCESS) return;
     break;
   case(SIZE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -2236,11 +2292,11 @@ static void loadClassValue(mapObj *map, classObj *class, char *value, int type)
   */
   case(OVERLAYBACKGROUNDCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(class->styles[1]->backgroundcolor)) != MS_SUCCESS) return;    
+    if(loadColor(&(class->styles[1]->backgroundcolor), NULL) != MS_SUCCESS) return;    
     break;
   case(OVERLAYCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(class->styles[1]->color)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[1]->color), NULL) != MS_SUCCESS) return;
     break;
   case(OVERLAYMAXSIZE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -2252,7 +2308,7 @@ static void loadClassValue(mapObj *map, classObj *class, char *value, int type)
     break;
   case(OVERLAYOUTLINECOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(class->styles[1]->outlinecolor)) != MS_SUCCESS) return;
+    if(loadColor(&(class->styles[1]->outlinecolor), NULL) != MS_SUCCESS) return;
     break;
   case(OVERLAYSIZE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -2664,7 +2720,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getString(&layer->name) == MS_FAILURE) return(-1);
       break;
     case(OFFSITE):
-      if(loadColor(&(layer->offsite)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(layer->offsite), NULL) != MS_SUCCESS) return(-1);
       break;
     case(MS_PLUGIN): 
     {
@@ -2932,7 +2988,7 @@ static void loadLayerValue(mapObj *map, layerObj *layer, char *value)
     break; 
   case(OFFSITE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if(loadColor(&(layer->offsite)) != MS_SUCCESS) return;
+    if(loadColor(&(layer->offsite), NULL) != MS_SUCCESS) return;
     break;
   case(POSTLABELCACHE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -3197,7 +3253,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       return(0);
       break;
     case(COLOR):
-      if(loadColor(&(ref->color)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(ref->color), NULL) != MS_SUCCESS) return(-1);
       break;
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
@@ -3219,7 +3275,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       if(getString(&ref->image) == MS_FAILURE) return(-1);
       break;
     case(OUTLINECOLOR):
-      if(loadColor(&(ref->outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(ref->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(SIZE):
       if(getInteger(&(ref->width)) == -1) return(-1);
@@ -3613,7 +3669,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       return(0);
       break;
     case(IMAGECOLOR):      
-      if(loadColor(&(legend->imagecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(legend->imagecolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(INTERLACE):
       if((legend->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -3631,7 +3687,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       legend->label.angle = 0; /* force */
       break;
     case(OUTLINECOLOR):     
-      if(loadColor(&(legend->outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(legend->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(POSITION):
       if((legend->position = getSymbol(6, MS_UL,MS_UR,MS_LL,MS_LR,MS_UC,MS_LC)) == -1) return(-1);
@@ -3660,7 +3716,7 @@ static void loadLegendValue(mapObj *map, legendObj *legend, char *value)
   switch(msyylex()) {
   case(IMAGECOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;    
-    loadColor(&(legend->imagecolor));
+    loadColor(&(legend->imagecolor), NULL);
     break;
   case(KEYSIZE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -3678,7 +3734,7 @@ static void loadLegendValue(mapObj *map, legendObj *legend, char *value)
     break;
   case(OUTLINECOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;    
-    loadColor(&(legend->outlinecolor));
+    loadColor(&(legend->outlinecolor), NULL);
     break;
   case(POSITION):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -3754,10 +3810,10 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
   for(;;) {
     switch(msyylex()) {
     case(BACKGROUNDCOLOR):            
-      if(loadColor(&(scalebar->backgroundcolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(scalebar->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(COLOR):
-      if(loadColor(&(scalebar->color)) != MS_SUCCESS) return(-1);   
+      if(loadColor(&(scalebar->color), NULL) != MS_SUCCESS) return(-1);   
       break;
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
@@ -3771,7 +3827,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       return(0);
       break;
     case(IMAGECOLOR):      
-      if(loadColor(&(scalebar->imagecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(scalebar->imagecolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(INTERLACE):
       if((scalebar->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -3784,7 +3840,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       scalebar->label.angle = 0;
       break;
     case(OUTLINECOLOR):      
-      if(loadColor(&(scalebar->outlinecolor)) != MS_SUCCESS) return(-1);
+      if(loadColor(&(scalebar->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(POSITION):
       if((scalebar->position = getSymbol(6, MS_UL,MS_UR,MS_LL,MS_LR,MS_UC,MS_LC)) == -1) 
@@ -3822,11 +3878,11 @@ static void loadScalebarValue(mapObj *map, scalebarObj *scalebar, char *value)
   switch(msyylex()) {
   case(BACKGROUNDCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    loadColor(&(scalebar->backgroundcolor));
+    loadColor(&(scalebar->backgroundcolor), NULL);
     break;
   case(COLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    loadColor(&(scalebar->color));
+    loadColor(&(scalebar->color), NULL);
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):
@@ -3836,7 +3892,7 @@ static void loadScalebarValue(mapObj *map, scalebarObj *scalebar, char *value)
 #endif
   case(IMAGECOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    loadColor(&(scalebar->imagecolor));
+    loadColor(&(scalebar->imagecolor), NULL);
     break;
   case(INTERVALS):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -3849,7 +3905,7 @@ static void loadScalebarValue(mapObj *map, scalebarObj *scalebar, char *value)
     break;
   case(OUTLINECOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    loadColor(&(scalebar->outlinecolor));
+    loadColor(&(scalebar->outlinecolor), NULL);
     break;
   case(POSITION):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -3922,7 +3978,7 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map)
   for(;;) {
     switch(msyylex()) {
     case(COLOR):      
-      loadColor(&(querymap->color));
+      loadColor(&(querymap->color), NULL);
       break;
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):      
@@ -3954,7 +4010,7 @@ static void loadQueryMapValue(mapObj *map, queryMapObj *querymap, char *value)
   switch(msyylex()) {
   case(COLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;    
-    loadColor(&(querymap->color));
+    loadColor(&(querymap->color), NULL);
     break;
 #if ALPHACOLOR_ENABLED
   case(ALPHACOLOR):

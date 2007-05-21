@@ -1210,28 +1210,30 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   c = shape->classindex;
 
-/* Before we do anything else, we will check for a rangeitem.
-   If its there, we need to change the style's color to map
-   the range to the shape */
-  for(s=0; s<layer->class[c]->numstyles; s++)
-    {
-      if (layer->class[c]->styles[s]->rangeitem !=  NULL)
-	msShapeToRange((layer->class[c]->styles[s]), shape);
-    }
+  /* Before we do anything else, we will check for a rangeitem.
+     If its there, we need to change the style's color to map
+     the range to the shape */
+  for(s=0; s<layer->class[c]->numstyles; s++) {
+    if(layer->class[c]->styles[s]->rangeitem !=  NULL)
+      msShapeToRange((layer->class[c]->styles[s]), shape);
+  }
   
   /* changed when Tomas added CARTOLINE symbols */
-  if ( layer->class[c]->styles[0] != NULL ) {
-	if(layer->class[c]->styles[0]->size == -1)
-      		csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]))) * layer->scalefactor) / 2.0);
-  	else
-      		csz = MS_NINT((layer->class[c]->styles[0]->size*layer->scalefactor)/2.0);
+  if(layer->class[c]->styles[0] != NULL) {
+    if(layer->class[c]->styles[0]->size == -1)
+      csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]))) * layer->scalefactor) / 2.0);
+    else
+      csz = MS_NINT((layer->class[c]->styles[0]->size*layer->scalefactor)/2.0);
   } else {
-	csz = 0;
+    csz = 0;
   }
   cliprect.minx = map->extent.minx - csz*map->cellsize;
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
   cliprect.maxy = map->extent.maxy + csz*map->cellsize;
+
+  if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
+    return MS_FAILURE; /* error message is set in msBindLayerToShape() */
 
   switch(layer->type) {
   case MS_LAYER_CIRCLE:
