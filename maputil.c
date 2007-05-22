@@ -127,8 +127,14 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
       style = layer->class[i]->styles[j];
 
       if(style->numbindings > 0) {
+
+        if(style->bindings[MS_STYLE_BINDING_SYMBOL].index != -1) {
+          style->symbol = msGetSymbolIndex(&(layer->map->symbolset), shape->values[style->bindings[MS_STYLE_BINDING_SYMBOL].index], MS_TRUE);
+          if(style->symbol == -1) style->symbol = 0; /* a reasonable default (perhaps should throw an error?) */
+        }
+
         if(style->bindings[MS_STYLE_BINDING_ANGLE].index != -1) {
-          style->angle = 0;
+          style->angle = 360.0;
           bindDoubleAttribute(&style->angle, shape->values[style->bindings[MS_STYLE_BINDING_ANGLE].index]);
 	}
 

@@ -1277,7 +1277,6 @@ static int loadLabel(labelObj *label, mapObj *map)
       } else if(symbol == MS_BINDING) {
         label->bindings[MS_LABEL_BINDING_SIZE].item = strdup(msyytext);
         label->numbindings++;
-        label->size = 0;
       } else
         label->size = symbol;
 #else
@@ -1778,7 +1777,6 @@ int loadStyle(styleObj *style) {
       else {
         style->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(msyytext);
         style->numbindings++;
-        style->angle = 0.0;
       }
       break;
     case(ANGLEITEM):
@@ -1839,18 +1837,21 @@ int loadStyle(styleObj *style) {
       else {
 	style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
         style->numbindings++;
-        style->size = 0;
       }
       break;
     case(SIZEITEM):
       if(getString(&style->sizeitem) == MS_FAILURE) return(MS_FAILURE);
       break;
     case(SYMBOL):
-      if((symbol = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(MS_FAILURE);
+      if((symbol = getSymbol(3, MS_NUMBER,MS_STRING,MS_BINDING)) == -1) return(MS_FAILURE);
       if(symbol == MS_NUMBER)
 	style->symbol = (int) msyynumber;
-      else
+      else if(symbol == MS_STRING)
 	style->symbolname = strdup(msyytext);
+      else {
+        style->bindings[MS_STYLE_BINDING_SYMBOL].item = strdup(msyytext);
+        style->numbindings++;
+      }
       break;
     case(WIDTH):
       if(getInteger(&(style->width)) == -1) return(MS_FAILURE);
