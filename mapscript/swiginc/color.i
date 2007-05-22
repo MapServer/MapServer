@@ -76,9 +76,9 @@
     {
         int red, green, blue;
         if (psHexColor && strlen(psHexColor)== 7 && psHexColor[0] == '#') {
-            red = hex2int(psHexColor+1);
-            green = hex2int(psHexColor+3);
-            blue= hex2int(psHexColor+5);
+            red = msHexToInt(psHexColor+1);
+            green = msHexToInt(psHexColor+3);
+            blue= msHexToInt(psHexColor+5);
             if (red > 255 || green > 255 || blue > 255) {
                 msSetError(MS_MISCERR, "Invalid color index.", "setHex()");
                 return MS_FAILURE;
