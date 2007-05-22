@@ -83,10 +83,10 @@ MS_CVSID("$Id$")
  *
  **********************************************************************/
 
-static void encipher(const unsigned long *const v,unsigned long *const w,
-                     const unsigned long *const k)
+static void encipher(const ms_uint32 *const v, ms_uint32 *const w,
+                     const ms_uint32 *const k)
 {
-   register unsigned long       y=v[0],z=v[1],sum=0,delta=0x9E3779B9,n=32;
+   register ms_uint32   y=v[0],z=v[1],sum=0,delta=0x9E3779B9,n=32;
 
    while(n-->0)
    {
@@ -98,11 +98,10 @@ static void encipher(const unsigned long *const v,unsigned long *const w,
    w[0]=y; w[1]=z;
 }
 
-static void decipher(const unsigned long *const v,unsigned long *const w,
-                     const unsigned long *const k)
+static void decipher(const ms_uint32 *const v, ms_uint32 *const w,
+                     const ms_uint32 *const k)
 {
-   register unsigned long       y=v[0],z=v[1],sum=0xC6EF3720,
-				delta=0x9E3779B9,n=32;
+   register ms_uint32       y=v[0],z=v[1],sum=0xC6EF3720, delta=0x9E3779B9,n=32;
 
    /* sum = delta<<5, in general sum = delta * n */
 
@@ -302,14 +301,14 @@ static int msLoadEncryptionKey(mapObj *map)
 
 void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out)
 {
-    unsigned long v[4], w[4];
-    const unsigned long *k;
+    ms_uint32 v[4], w[4];
+    const ms_uint32 *k;
     int last_block = MS_FALSE;
     
     /* Casting the key this way is safe only as long as longs are 4 bytes
      * on this platform */
-    assert(sizeof(unsigned long) == 4);
-    k = (const unsigned long *) key;
+    assert(sizeof(ms_uint32) == 4);
+    k = (const ms_uint32 *) key;
     
     while(!last_block)
     {
@@ -364,14 +363,14 @@ void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out)
 
 void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out)
 {
-    unsigned long v[4], w[4];
-    const unsigned long *k;
+    ms_uint32 v[4], w[4];
+    const ms_uint32 *k;
     int last_block = MS_FALSE;
     
     /* Casting the key this way is safe only as long as longs are 4 bytes
      * on this platform */
-    assert(sizeof(unsigned long) == 4);
-    k = (const unsigned long *) key;
+    assert(sizeof(ms_uint32) == 4);
+    k = (const ms_uint32 *) key;
     
     while(!last_block)
     {

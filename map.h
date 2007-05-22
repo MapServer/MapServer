@@ -61,12 +61,20 @@ static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid );
 #define  MS_DLL_EXPORT
 #endif
 
-#if UINT_MAX == 65535
-typedef long ms_int32;
+/* definition of  ms_int32/ms_uint32 */
+#include <limits.h>
+#if ULONG_MAX == 0xffffffff
+typedef long            ms_int32;
+typedef unsigned long   ms_uint32;
+#elif UINT_MAX == 0xffffffff
+typedef int             ms_uint32;
+typedef unsigned int    ms_uint32;
 #else
-typedef int ms_int32;
+#include <stdint.h>
+typedef int32_t         ms_int32;
+typedef uint32_t        ms_uint32;
 #endif
-    
+
 #include "maperror.h"
 #include "mapprimitive.h"
 #include "mapshape.h"
