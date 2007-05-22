@@ -6464,8 +6464,6 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_long(return_value,   "labelcache", player->labelcache);
     add_property_long(return_value,   "postlabelcache",player->postlabelcache);
     PHPMS_ADD_PROP_STR(return_value,  "labelitem",  player->labelitem);
-    PHPMS_ADD_PROP_STR(return_value,  "labelsizeitem",player->labelsizeitem);
-    PHPMS_ADD_PROP_STR(return_value,  "labelangleitem",player->labelangleitem);
     PHPMS_ADD_PROP_STR(return_value,  "tileitem",   player->tileitem);
     PHPMS_ADD_PROP_STR(return_value,  "tileindex",  player->tileindex);
     PHPMS_ADD_PROP_STR(return_value,  "header",     player->header);
@@ -6623,8 +6621,6 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "labelcache", self->labelcache)
     else IF_SET_LONG(  "postlabelcache", self->postlabelcache)
     else IF_SET_STRING("labelitem",  self->labelitem)
-    else IF_SET_STRING("labelsizeitem",self->labelsizeitem)
-    else IF_SET_STRING("labelangleitem",self->labelangleitem)
     else IF_SET_STRING("tileitem",   self->tileitem)
     else IF_SET_STRING("tileindex",  self->tileindex)
     else IF_SET_STRING("header",     self->header)
@@ -13386,8 +13382,6 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     add_property_long(return_value,   "offsetx",       pstyle->offsetx);
     add_property_long(return_value,   "offsety",       pstyle->offsety);
     add_property_double(return_value,   "angle",       pstyle->angle);
-    PHPMS_ADD_PROP_STR(return_value,  "angleitem", pstyle->angleitem);
-    PHPMS_ADD_PROP_STR(return_value,  "sizeitem", pstyle->sizeitem);
     add_property_long(return_value,   "antialias",  pstyle->antialias);
     add_property_double(return_value,   "minvalue", pstyle->minvalue);
     add_property_double(return_value,   "maxvalue", pstyle->maxvalue);
@@ -13531,8 +13525,6 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG( "offsetx",        self->offsetx)
     else IF_SET_LONG( "offsety",        self->offsety)
     else IF_SET_DOUBLE("angle",         self->angle)
-    else IF_SET_STRING( "angleitem",    self->angleitem)
-    else IF_SET_STRING( "sizeitem",     self->sizeitem)
     else IF_SET_LONG(  "antialias",     self->antialias)
     else IF_SET_DOUBLE("minvalue",      self->minvalue)
     else IF_SET_DOUBLE("maxvalue",      self->maxvalue)
