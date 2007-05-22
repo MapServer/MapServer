@@ -599,13 +599,7 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 /* } */
 /* if (layer->labelitem) */
 /* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelitem); */
-/* if (layer->labelangleitem) */
-/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelangleitem); */
-/* if (layer->labelsizeitem) */
-/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelsizeitem); */
-/* if (layer->labelsizeitem) */
-/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelsizeitem); */
-	sprintf(attribselect,", %s%s, %s%s, %s%s", layer->labelitem ? "feature." : "", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? "feature." : "", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? "feature." : "", layer->labelsizeitem ? layer->labelsizeitem: "''");
+	sprintf(attribselect,", %s%s", layer->labelitem ? "feature." : "", layer->labelitem ? layer->labelitem: "''");
 	}
 	if (wkbdata){
 		layerinfo->attriboffset = 3;
@@ -1410,20 +1404,13 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 						    if (layer->labelitem && strlen(row[layerinfo->attriboffset+0]) > 0){
 						    	shape->values[layer->labelitemindex]=strdup(row[layerinfo->attriboffset+0]);
 						    }
-						    if (layer->labelangleitem && strlen(row[layerinfo->attriboffset+1]) > 0){
-						    	shape->values[layer->labelangleitemindex]=strdup(row[layerinfo->attriboffset+1]);
-						    }
-						    if (layer->labelsizeitem && strlen(row[layerinfo->attriboffset+2]) > 0){
-						    	shape->values[layer->labelsizeitemindex]=strdup(row[layerinfo->attriboffset+2]);
-						    }
 					} else {
 
 
 
 
 /* sprintf(tmpstr,"select attribute, value from shape_attr where shape_attr.shape='%d'", shape->index); */
-					sprintf(tmpstr,"SELECT %s, %s, %s FROM %s feature WHERE feature.id='%li'", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->feature ? layerinfo->feature : "feature", shape->index);
-/* sprintf(tmpstr,"SELECT %s, %s, %s FROM %s WHERE feature.id='%d' AND feature.GID=geometry.GID GROUP BY feature.id", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->table ? layerinfo->table : "feature", shape->index); */
+					sprintf(tmpstr,"SELECT %s FROM %s feature WHERE feature.id='%li'", layer->labelitem ? layer->labelitem: "''", layerinfo->feature ? layerinfo->feature : "feature", shape->index);
 
 					   if (layerinfo->query2_result != NULL) /* query leftover  */
 					   {
@@ -1453,15 +1440,9 @@ if (MYDEBUG)					printf("%s<BR>\n", tmpstr);
 								printf("attr_nullfetch(%s-%d/%d)<BR>\n",tmpstr,t,numrows2);
 /* return(MS_DONE); */
 							}
-/* printf("%s,%s,%s/%s,%s<BR>\n", layer->labelitem, layer->labelsizeitem, layer->labelangleitem, row_attr[0], row_attr[1]); */
+/* printf("%s/%s,%s<BR>\n", layer->labelitem, row_attr[0], row_attr[1]); */
 						    if (layer->labelitem && strlen(row_attr[0]) > 0){
 						    	shape->values[layer->labelitemindex]=strdup(row_attr[0]);
-						    }
-						    if (layer->labelangleitem && strlen(row_attr[1]) > 0){
-						    	shape->values[layer->labelangleitemindex]=strdup(row_attr[1]);
-						    }
-						    if (layer->labelsizeitem && strlen(row_attr[2]) > 0){
-						    	shape->values[layer->labelsizeitemindex]=strdup(row_attr[2]);
 						    }
 						}
 					   }

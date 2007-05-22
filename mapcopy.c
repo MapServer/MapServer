@@ -365,13 +365,10 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(minvalue);
     MS_COPYSTELEM(maxvalue);
 
-    MS_COPYSTRING(dst->angleitem, src->angleitem);
-    MS_COPYSTRING(dst->sizeitem, src->sizeitem);
     MS_COPYSTRING(dst->rangeitem, src->rangeitem);
-
-    MS_COPYSTELEM(angleitemindex);
-    MS_COPYSTELEM(sizeitemindex);
     MS_COPYSTELEM(rangeitemindex);
+
+    /* TODO: add copy for bindings */
 
     return MS_SUCCESS;
 }
@@ -750,12 +747,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTELEM(postlabelcache); 
 
     MS_COPYSTRING(dst->labelitem, src->labelitem);
-    MS_COPYSTRING(dst->labelsizeitem, src->labelsizeitem);
-    MS_COPYSTRING(dst->labelangleitem, src->labelangleitem);
-
     MS_COPYSTELEM(labelitemindex);
-    MS_COPYSTELEM(labelsizeitemindex);
-    MS_COPYSTELEM(labelangleitemindex);
 
     MS_COPYSTRING(dst->tileitem, src->tileitem);
     MS_COPYSTELEM(tileitemindex);

@@ -1737,9 +1737,6 @@ int initStyle(styleObj *style) {
   style->isachild = MS_TRUE;
   style->angle = 360;
 
-  style->angleitem = style->sizeitem = NULL;
-  style->angleitemindex = style->sizeitemindex = -1;
-
   style->numbindings = 0;
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
     style->bindings[i].item = NULL;
@@ -1778,9 +1775,6 @@ int loadStyle(styleObj *style) {
         style->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(msyytext);
         style->numbindings++;
       }
-      break;
-    case(ANGLEITEM):
-      if(getString(&style->angleitem) == MS_FAILURE) return(MS_FAILURE);
       break;
     case(ANTIALIAS):
       if((style->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1)
@@ -1839,9 +1833,6 @@ int loadStyle(styleObj *style) {
         style->numbindings++;
       }
       break;
-    case(SIZEITEM):
-      if(getString(&style->sizeitem) == MS_FAILURE) return(MS_FAILURE);
-      break;
     case(SYMBOL):
       if((symbol = getSymbol(3, MS_NUMBER,MS_STRING,MS_BINDING)) == -1) return(MS_FAILURE);
       if(symbol == MS_NUMBER)
@@ -1878,8 +1869,6 @@ int freeStyle(styleObj *style) {
   if( MS_REFCNT_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
 
   msFree(style->symbolname);
-  msFree(style->angleitem);
-  msFree(style->sizeitem);
   msFree(style->rangeitem);
 
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++)
@@ -1891,7 +1880,6 @@ int freeStyle(styleObj *style) {
 void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
   if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
-  if(style->angleitem) fprintf(stream, "        ANGLEITEM \"%s\"\n", style->angleitem);
   if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
   writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
 
@@ -1907,7 +1895,6 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);  
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
   if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
-  if(style->sizeitem) fprintf(stream, "        SIZEITEM \"%s\"\n", style->sizeitem);
   if(style->symbolname)
     fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
   else
@@ -2428,8 +2415,8 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->labelcache = MS_ON;
   layer->postlabelcache = MS_FALSE;
 
-  layer->labelitem = layer->labelsizeitem = layer->labelangleitem = NULL;
-  layer->labelitemindex = layer->labelsizeitemindex = layer->labelangleitemindex = -1;
+  layer->labelitem = NULL;
+  layer->labelitemindex = -1;
 
   layer->labelmaxscale = -1;
   layer->labelminscale = -1;
@@ -2503,8 +2490,6 @@ int freeLayer(layerObj *layer) {
   msFree(layer->data);
   msFree(layer->classitem);
   msFree(layer->labelitem);
-  msFree(layer->labelsizeitem);
-  msFree(layer->labelangleitem);
   msFree(layer->header);
   msFree(layer->footer);
   msFree(layer->template);
@@ -2684,9 +2669,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(loadJoin(&(layer->joins[layer->numjoins])) == -1) return(-1);
       layer->numjoins++;
       break;
-    case(LABELANGLEITEM):
-      if(getString(&layer->labelangleitem) == MS_FAILURE) return(-1);
-      break;
     case(LABELCACHE):
       if((layer->labelcache = getSymbol(2, MS_ON, MS_OFF)) == -1) return(-1);
       break;
@@ -2701,9 +2683,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;    
     case(LABELREQUIRES):
       if(getString(&layer->labelrequires) == MS_FAILURE) return(-1);
-      break;
-    case(LABELSIZEITEM):
-      if(getString(&layer->labelsizeitem) == MS_FAILURE) return(-1);
       break;
     case(MAXFEATURES):
       if(getInteger(&(layer->maxfeatures)) == -1) return(-1);
@@ -2934,13 +2913,6 @@ static void loadLayerValue(mapObj *map, layerObj *layer, char *value)
     msFree(layer->header);
     layer->header = strdup(value);
     break;
-  case(LABELANGLEITEM):
-    msFree(layer->labelangleitem);
-    if(strcasecmp(value, "null") == 0) 
-      layer->labelangleitem = NULL;
-    else
-      layer->labelangleitem = strdup(value); 
-    break;
   case(LABELCACHE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->labelcache = getSymbol(2, MS_ON, MS_OFF)) == -1) return;
@@ -2963,13 +2935,6 @@ static void loadLayerValue(mapObj *map, layerObj *layer, char *value)
   case(LABELREQUIRES):
     msFree(layer->labelrequires);
     layer->labelrequires = strdup(value);
-    break;
-  case(LABELSIZEITEM):
-    msFree(layer->labelsizeitem);
-    if(strcasecmp(value, "null") == 0) 
-      layer->labelsizeitem = NULL;
-    else
-      layer->labelsizeitem = strdup(value);
     break;
   case(MAXFEATURES):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -3147,13 +3112,11 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->header) fprintf(stream, "    HEADER \"%s\"\n", layer->header);
   for(i=0; i<layer->numjoins; i++)
     writeJoin(&(layer->joins[i]), stream);
-  if(layer->labelangleitem) fprintf(stream, "    LABELANGLEITEM \"%s\"\n", layer->labelangleitem);
   if(!layer->labelcache) fprintf(stream, "    LABELCACHE OFF\n");
   if(layer->labelitem) fprintf(stream, "    LABELITEM \"%s\"\n", layer->labelitem);
   if(layer->labelmaxscale > -1) fprintf(stream, "    LABELMAXSCALE %g\n", layer->labelmaxscale);
   if(layer->labelminscale > -1) fprintf(stream, "    LABELMINSCALE %g\n", layer->labelminscale);
   if(layer->labelrequires) fprintf(stream, "    LABELREQUIRES \"%s\"\n", layer->labelrequires);
-  if(layer->labelsizeitem) fprintf(stream, "    LABELSIZEITEM \"%s\"\n", layer->labelsizeitem);
   if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
   if(layer->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", layer->maxscale); 
   if(&(layer->metadata)) writeHashTable(&(layer->metadata), stream, "      ", "METADATA");

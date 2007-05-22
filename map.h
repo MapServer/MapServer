@@ -630,11 +630,6 @@ typedef struct {
   attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];
   int numbindings;
 #endif
-
-  char *angleitem, *sizeitem;
-#ifndef SWIG
-  int angleitemindex, sizeitemindex;
-#endif
 } styleObj;
 
 /* CLASS OBJECT - basic symbolization and classification information */
@@ -957,9 +952,9 @@ typedef struct layer_obj {
 
   int labelcache, postlabelcache; /* on or off */
 
-  char *labelitem, *labelsizeitem, *labelangleitem;
+  char *labelitem;
 #ifndef SWIG
-  int labelitemindex, labelsizeitemindex, labelangleitemindex;
+  int labelitemindex;
 #endif /* not SWIG */
 
   char *tileitem;

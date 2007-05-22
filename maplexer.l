@@ -137,7 +137,6 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,NAME_STRING>alphacolor              { return(ALPHACOLOR); }
 <INITIAL,NAME_STRING>angle                   { return(ANGLE); }
-<INITIAL,NAME_STRING>angleitem               { return(ANGLEITEM); }
 <INITIAL,NAME_STRING>antialias               { return(ANTIALIAS); }
 <INITIAL,NAME_STRING>backgroundcolor         { return(BACKGROUNDCOLOR); }
 <INITIAL,NAME_STRING>backgroundshadowcolor   { return(BACKGROUNDSHADOWCOLOR); }
@@ -195,14 +194,12 @@ char path[MS_MAXPATHLEN];
 <INITIAL,NAME_STRING>keysize                 { return(KEYSIZE); }
 <INITIAL,NAME_STRING>keyspacing              { return(KEYSPACING); }
 <INITIAL,NAME_STRING>label                   { return(LABEL); }
-<INITIAL,NAME_STRING>labelangleitem          { return(LABELANGLEITEM); }
 <INITIAL,NAME_STRING>labelcache              { return(LABELCACHE); }
 <INITIAL,NAME_STRING>labelformat             { return(LABELFORMAT); }
 <INITIAL,NAME_STRING>labelitem               { return(LABELITEM); }
 <INITIAL,NAME_STRING>labelmaxscale           { return(LABELMAXSCALE); }
 <INITIAL,NAME_STRING>labelminscale           { return(LABELMINSCALE); }
 <INITIAL,NAME_STRING>labelrequires           { return(LABELREQUIRES); }
-<INITIAL,NAME_STRING>labelsizeitem           { return(LABELSIZEITEM); }
 <INITIAL,NAME_STRING>latlon                  { return(LATLON); }
 <INITIAL,NAME_STRING>layer                   { return(LAYER); }
 <INITIAL,NAME_STRING>legend                  { return(LEGEND); }
@@ -265,7 +262,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL,NAME_STRING>shadowsize              { return(SHADOWSIZE); }
 <INITIAL,NAME_STRING>shapepath               { return(SHAPEPATH); }
 <INITIAL,NAME_STRING>size                    { return(SIZE); }
-<INITIAL,NAME_STRING>sizeitem                { return(SIZEITEM); }
 <INITIAL,NAME_STRING>sizeunits               { return(SIZEUNITS); }
 <INITIAL,NAME_STRING>status                  { return(STATUS); }
 <INITIAL,NAME_STRING>style                   { return(STYLE); }
@@ -278,7 +274,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,NAME_STRING>templatepattern         { return(TEMPLATEPATTERN); }
 <INITIAL,NAME_STRING>text                    { return(TEXT); }
 <INITIAL,NAME_STRING>tileindex               { return(TILEINDEX); }
-<VALUE_STRING>tileindex                        { return(MS_LAYER_TILEINDEX); }
+<VALUE_STRING>tileindex                      { return(MS_LAYER_TILEINDEX); }
 <INITIAL,NAME_STRING>tileitem                { return(TILEITEM); }
 <INITIAL,NAME_STRING>title                   { return(TITLE); }
 <INITIAL,NAME_STRING>to                      { return(TO); }
