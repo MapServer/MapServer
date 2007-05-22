@@ -1307,21 +1307,21 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
         }
 
-        /* write the item/values */
+        /* write any item/values */
         for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);  
           if(msItemInGroups(item->name, groupList) == MS_FALSE) 
             msGMLWriteItem(stream, item, shape.values[k], NULL, "\t\t\t");
         }
 
-        /* write the constants */
+        /* write any constants */
         for(k=0; k<constantList->numconstants; k++) {
           constant = &(constantList->constants[k]);  
           if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
             msGMLWriteConstant(stream, constant, NULL, "\t\t\t");
         }
 
-        /* write the groups */
+        /* write any groups */
         for(k=0; k<groupList->numgroups; k++)
           msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, NULL, "\t\t\t");
 
@@ -1426,12 +1426,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
           }
         }
 
-        /* Produce a warning if a featureid was set but the corresponding
-         * item is not found. 
-         */
-        if (featureIdIndex == -1) {
-            msIO_fprintf(stream, "<!-- WARNING: FeatureId item '%s' not found in typename '%s'. -->\n", value, lp->name);
-        }
+        /* Produce a warning if a featureid was set but the corresponding item is not found. */
+        if (featureIdIndex == -1)
+          msIO_fprintf(stream, "<!-- WARNING: FeatureId item '%s' not found in typename '%s'. -->\n", value, lp->name);
       }
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
@@ -1440,9 +1437,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       groupList = msGMLGetGroups(lp, "OFG");
       geometryList = msGMLGetGeometries(lp, "OFG");
 
-      /* set the layer name */
-      /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername");
-         if(!value) value = lp->name; */
       if (namespace_prefix) {
         layerName = (char *) malloc(strlen(namespace_prefix)+strlen(lp->name)+2);
         sprintf(layerName, "%s:%s", namespace_prefix, lp->name);
@@ -1464,23 +1458,19 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
         /* 
         ** start this feature 
         */
-
         msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layerName) == MS_FALSE)
           msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
-        if(featureIdIndex != -1) 
-        {
-            if (outputformat == OWS_GML2)
-                msIO_fprintf(stream, "      <%s fid=\"%s\">\n", layerName, shape.values[featureIdIndex]);
-            else  /* OWS_GML3 */
-                msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, shape.values[featureIdIndex]);
-        }
-        else
+        if(featureIdIndex != -1) {
+          if(outputformat == OWS_GML2)
+            msIO_fprintf(stream, "      <%s fid=\"%s.%s\">\n", layerName, layerName, shape.values[featureIdIndex]);
+          else  /* OWS_GML3 */
+            msIO_fprintf(stream, "      <%s gml:id=\"%s.%s\">\n", layerName, layerName, shape.values[featureIdIndex]);
+        } else
           msIO_fprintf(stream, "      <%s>\n", layerName);
                     
         /* write the feature geometry and bounding box */
         if(!(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0)) {
-
 #ifdef USE_PROJ
           if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) { /* use the map projection first*/
             gmlWriteBounds(stream, outputformat, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
@@ -1495,21 +1485,21 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
 #endif
         }
 
-        /* write the item/values */
+        /* write any item/values */
         for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);  
           if(msItemInGroups(item->name, groupList) == MS_FALSE) 
             msGMLWriteItem(stream, item, shape.values[k], namespace_prefix, "        ");
         }
 
-        /* write the constants */
+        /* write any constants */
         for(k=0; k<constantList->numconstants; k++) {
           constant = &(constantList->constants[k]);  
           if(msItemInGroups(constant->name, groupList) == MS_FALSE) 
             msGMLWriteConstant(stream, constant, namespace_prefix, "        ");
         }
 
-        /* write the groups */
+        /* write any groups */
         for(k=0; k<groupList->numgroups; k++)
           msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, namespace_prefix, "        ");
 
