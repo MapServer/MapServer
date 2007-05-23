@@ -1463,9 +1463,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
           msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
         if(featureIdIndex != -1) {
           if(outputformat == OWS_GML2)
-            msIO_fprintf(stream, "      <%s fid=\"%s.%s\">\n", layerName, layerName, shape.values[featureIdIndex]);
+            msIO_fprintf(stream, "      <%s fid=\"%s.%s\">\n", layerName, lp->name, shape.values[featureIdIndex]);
           else  /* OWS_GML3 */
-            msIO_fprintf(stream, "      <%s gml:id=\"%s.%s\">\n", layerName, layerName, shape.values[featureIdIndex]);
+            msIO_fprintf(stream, "      <%s gml:id=\"%s.%s\">\n", layerName, lp->name, shape.values[featureIdIndex]);
         } else
           msIO_fprintf(stream, "      <%s>\n", layerName);
                     
