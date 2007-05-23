@@ -771,7 +771,10 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
     MS_COPYSTRING(dst->connection, src->connection);
     MS_COPYSTELEM(connectiontype);
-    
+
+    MS_COPYSTRING(dst->plugin_library, src->plugin_library);
+    MS_COPYSTRING(dst->plugin_library_original, src->plugin_library_original);
+        
     /* Do not copy *layerinfo, items, or iteminfo. these are all initialized
        when the copied layer is opened */
 
