@@ -627,9 +627,13 @@ OGR_LIB = $(GDAL_DIR)/gdal_i.lib
 # Setup ESRI SDE support.
 !IFDEF SDE_OPT
 SDE_INC=-I$(SDE_DIR)/include
+!IF "$(SDE_OPT)" != "-DUSE_SDE_PLUGIN"
 SDE_LIB = $(SDE_DIR)\lib\pe$(SDE_VERSION).lib \
           $(SDE_DIR)\lib\sde$(SDE_VERSION).lib \
           $(SDE_DIR)\lib\sg$(SDE_VERSION).lib    
+!ELSE
+SDE_LIB = 
+!ENDIF
 !ENDIF
 
 # Setup REGEX object and includes
