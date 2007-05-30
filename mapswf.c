@@ -1018,6 +1018,7 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
                 sprintf(szAction, "%s", "Element=new Array();");
                 oAction = compileSWFActionCode(szAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
+                msFreeCharArray(tokens, n);
             }
         }
     }
