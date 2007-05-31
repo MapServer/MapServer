@@ -67,7 +67,7 @@ static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid );
 typedef long            ms_int32;
 typedef unsigned long   ms_uint32;
 #elif UINT_MAX == 0xffffffff
-typedef int             ms_uint32;
+typedef int             ms_int32;
 typedef unsigned int    ms_uint32;
 #else
 #include <stdint.h>
