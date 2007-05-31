@@ -462,6 +462,10 @@ layerObj *layerObj_new(mapObj *map) {
     if(map->numlayers == MS_MAXLAYERS) // no room
       return(NULL);
 
+    map->layers[map->numlayers] = (layerObj *)malloc(sizeof(layerObj));
+    if(map->layers[map->numlayers] == NULL)
+      return(NULL); 
+
     if(initLayer((map->layers[map->numlayers]), map) == -1)
       return(NULL);
 
@@ -700,6 +704,10 @@ classObj *classObj_new(layerObj *layer, classObj *class) {
     if(layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
 
+    layer->class[layer->numclasses] = (classObj *)malloc(sizeof(classObj));
+    if (layer->class[layer->numclasses] == NULL)
+      return NULL;
+ 
     if(initClass((layer->class[layer->numclasses])) == -1)
       return NULL;
 
@@ -1281,6 +1289,10 @@ DBFFieldType DBFInfo_getFieldType(DBFInfo *self, int iField) {
  **********************************************************************/
 styleObj *styleObj_new(classObj *class, styleObj *style) {
     if(class->numstyles == MS_MAXSTYLES) // no room
+      return NULL;
+
+    class->styles[class->numstyles] = (styleObj *)malloc(sizeof(styleObj));
+    if (class->styles[class->numstyles] == NULL)
       return NULL;
 
     if(initStyle(class->styles[class->numstyles]) == -1)
