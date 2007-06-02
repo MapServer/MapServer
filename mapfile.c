@@ -4797,11 +4797,6 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
     if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) return(NULL);
   }
   
-  if((msyyin = fopen(filename,"r")) == NULL) {
-    msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
-    return(NULL);
-  }
-
   /*
   ** Allocate mapObj structure
   */
@@ -4811,14 +4806,24 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
     return(NULL);
   }
 
+  if(initMap(map) == -1) { /* initialize this map */
+    msFree(map);
+    return(NULL);
+  }
+  
+  msAcquireLock( TLOCK_PARSER );  /* Steve: might need to move this lock a bit higher; Umberto: done */
+  
+  if((msyyin = fopen(filename,"r")) == NULL) {
+    msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
+    msReleaseLock( TLOCK_PARSER );
+    return(NULL);
+  }
+
   msyystate = MS_TOKENIZE_FILE;
   msyylex(); /* sets things up, but doesn't process any tokens */
 
   msyyrestart(msyyin); /* start at line begining, line 1 */
   msyylineno = 1;
-
-  if(initMap(map) == -1) /* initialize this map */
-    return(NULL);
 
   /* If new_mappath is provided then use it, otherwise use the location */
   /* of the mapfile as the default path */
@@ -4833,9 +4838,9 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
 
   msyybasepath = map->mappath; /* for INCLUDEs */
 
-  msAcquireLock( TLOCK_PARSER );  /* might need to move this lock a bit higher */
   if(loadMapInternal(map) != MS_SUCCESS) {
     msFreeMap(map);
+    msReleaseLock( TLOCK_PARSER );
     return NULL;
   }
   msReleaseLock( TLOCK_PARSER );
