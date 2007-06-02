@@ -14,18 +14,20 @@ class DrawQuery
 {
     public static void usage() 
     { 
-	    Console.WriteLine("usage: QueryMap {mapfile} {query string} {outfile}");
+	    Console.WriteLine("usage: QueryMap {mapfile} {query string} {outfile} {-zoom}");
 	    System.Environment.Exit(-1);
     }
     		  
     public static void Main(string[] args)
     {
-        if (args.Length != 3) usage();
+        if (args.Length < 3 || args.Length > 4) usage();
         
+        bool ZoomToResults = (args.Length == 4 && args[3] == "-zoom");
+
 	    mapObj map = new mapObj(args[0]);	
-	    Console.WriteLine ("# Map layers " + map.numlayers + "; Map name = " + map.name);	
-    	
-        QueryByAttribute(args[1], map);
+	    Console.WriteLine ("# Map layers " + map.numlayers + "; Map name = " + map.name);
+        
+        QueryByAttribute(args[1], map, ZoomToResults);
 
         map.querymap.status = mapscript.MS_ON;
         map.querymap.color.setRGB(0,0,255);
@@ -42,21 +44,43 @@ class DrawQuery
         }
     }
 
-    public static void QueryByAttribute(string qstring, mapObj map)
+    public static void QueryByAttribute(string qstring, mapObj map, bool zoomToResults)
     {
         Console.WriteLine("\nPerforming QueryByAttribute:");
         try
         {
         	layerObj layer;
-        	for (int i = 0; i < map.numlayers; i++)
-        	{
-        		layer = map.getLayer(i);
+            rectObj query_bounds = null;
+            for (int i = 0; i < map.numlayers; i++)
+            {
+                layer = map.getLayer(i);
                 if (layer.connection != null)
-        		{
-        			Console.WriteLine("Layer [" + i + "] name: " + layer.name);
+                {
+                    Console.WriteLine("Layer [" + i + "] name: " + layer.name);
                     BuildQuery(layer, qstring);
-        		}
-        	}
+                    // zoom to the query results
+                    using (resultCacheObj results = layer.getResults())
+                    {
+                        if (results != null && results.numresults > 0)
+                        {
+                            // calculating the extent of the results
+                            if (query_bounds == null)
+                                query_bounds = new rectObj(results.bounds.minx, results.bounds.miny,
+                                    results.bounds.maxx, results.bounds.maxy,0);
+                            else
+                            {
+                                if (results.bounds.minx < query_bounds.minx) query_bounds.minx = results.bounds.minx;
+                                if (results.bounds.miny < query_bounds.miny) query_bounds.miny = results.bounds.miny;
+                                if (results.bounds.maxx > query_bounds.maxx) query_bounds.maxx = results.bounds.maxx;
+                                if (results.bounds.maxy > query_bounds.maxy) query_bounds.maxy = results.bounds.maxy;
+                            }
+                        }
+                    }
+                }
+            }
+            // setting the map extent to the result bounds
+            if (zoomToResults)
+                map.setExtent(query_bounds.minx, query_bounds.miny, query_bounds.maxx, query_bounds.maxy);
         }
         catch (Exception e)
         {
