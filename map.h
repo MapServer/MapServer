@@ -336,6 +336,7 @@ enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_M
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, MS_IMAGEMODE_NULL };
 
+enum MS_GEOS_OPERATOR {MS_GEOS_EQUALS, MS_GEOS_DISJOINT, MS_GEOS_TOUCHES, MS_GEOS_OVERLAPS, MS_GEOS_CROSSES, MS_GEOS_INTERSECTS, MS_GEOS_WITHIN, MS_GEOS_CONTAINS, MS_GEOS_BEYOND};
 #define MS_FILE_DEFAULT MS_FILE_MAP   
 
 #ifndef SWIG
@@ -1403,6 +1404,8 @@ MS_DLL_EXPORT int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, 
 MS_DLL_EXPORT int msQueryByRect(mapObj *map, int qlayer, rectObj rect);
 MS_DLL_EXPORT int msQueryByFeatures(mapObj *map, int qlayer, int slayer);
 MS_DLL_EXPORT int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape);
+MS_DLL_EXPORT int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape, 
+                                    int  geos_operator);
 MS_DLL_EXPORT int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 MS_DLL_EXPORT int msIsLayerQueryable(layerObj *lp);
 MS_DLL_EXPORT void msQueryFree(mapObj *map, int qlayer);

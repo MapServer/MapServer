@@ -73,6 +73,44 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape)
 
     return MS_FALSE;
 }
+
+int FLTGetGeosOperator(char *pszValue)
+{
+    if (!pszValue)
+      return -1;
+
+    if (strcasecmp(pszValue, "Equals") == 0)
+      return MS_GEOS_EQUALS;
+    else if (strcasecmp(pszValue, "Intersect") == 0 ||
+             strcasecmp(pszValue, "Intersects") == 0)
+      return MS_GEOS_INTERSECTS;
+    else if (strcasecmp(pszValue, "Disjoint") == 0)
+      return MS_GEOS_DISJOINT;
+     else if (strcasecmp(pszValue, "Touches") == 0)
+      return MS_GEOS_TOUCHES;
+     else if (strcasecmp(pszValue, "Crosses") == 0)
+      return MS_GEOS_CROSSES;
+     else if (strcasecmp(pszValue, "Within") == 0 ||
+              strcasecmp(pszValue, "DWithin") == 0)
+      return MS_GEOS_WITHIN;
+     else if (strcasecmp(pszValue, "Contains") == 0)
+      return MS_GEOS_CONTAINS;
+     else if (strcasecmp(pszValue, "Overlaps") == 0)
+      return MS_GEOS_OVERLAPS;
+     else if (strcasecmp(pszValue, "Beyond") == 0)
+      return MS_GEOS_BEYOND;
+
+    return -1;
+}
+
+int FLTIsGeosNode(char *pszValue)
+{
+    if (FLTGetGeosOperator(pszValue) == -1)
+      return MS_FALSE;
+
+    return MS_TRUE;
+}
+    
 /************************************************************************/
 /*                        FLTGetQueryResultsForNode                     */
 /*                                                                      */
@@ -100,6 +138,9 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     double dfDistance = -1;
     double dfCurrentTolerance = 0;
     int nUnit = -1;
+    int bUseGeos = 0;
+    int geos_operator = -1;
+    shapeObj *psTmpShape = NULL;
 
     if (!psNode || !map || iLayerIndex < 0 ||
         iLayerIndex > map->numlayers-1)
@@ -109,6 +150,12 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
       szExpression = FLTGetMapserverExpression(psNode);
 
     bIsBBoxFilter = FLTIsBBoxFilter(psNode);
+    bUseGeos = 1;
+    if (strcasecmp(psNode->pszValue, "BBOX") == 0)
+      bUseGeos = 0;
+    else
+      geos_operator = FLTGetGeosOperator(psNode->pszValue);
+
     if (bIsBBoxFilter)
       szEPSG = FLTGetBBOX(psNode, &sQueryRect);
     else if ((bPointQuery = FLTIsPointFilter(psNode)))
@@ -119,6 +166,8 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     {
         bShapeQuery = 1;
         psQueryShape = FLTGetShape(psNode, &dfDistance, &nUnit);
+        
+            
     }
 
     if (!szExpression && !szEPSG && !bIsBBoxFilter 
@@ -270,39 +319,79 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0 && dfDistance >=0)
     {
-        /*Set the tolerance to the distance value or 0 is invalid
-         set the the unit if unit is valid.
-        Bug 1342 for details*/
-        lp->tolerance = 0;
-        if (dfDistance > 0)
+        if (bUseGeos)
         {
-            lp->tolerance = dfDistance;
-            if (nUnit >=0)
-              lp->toleranceunits = nUnit;
-        }
+            if ((strcasecmp(psNode->pszValue, "DWithin") == 0 ||
+                 strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
+                dfDistance > 0)
+            {
+                msGEOSSetup();
+                psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
+                if (psTmpShape)
+                {
+                    msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
+                    msFreeShape(psTmpShape);
+                }
+                msGEOSCleanup();
+            }
+        } 
+        else
+        {
+            /*Set the tolerance to the distance value or 0 is invalid
+              set the the unit if unit is valid.
+              Bug 1342 for details*/
+            lp->tolerance = 0;
+            if (dfDistance > 0)
+            {
+                lp->tolerance = dfDistance;
+                if (nUnit >=0)
+                  lp->toleranceunits = nUnit;
+            }
 
-        msQueryByPoint(map, lp->index, MS_MULTIPLE, 
-                       psQueryShape->line[0].point[0], 0);
+            msQueryByPoint(map, lp->index, MS_MULTIPLE, 
+                           psQueryShape->line[0].point[0], 0);
+        }
     }
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0)
     {
-        /* disable any tolerance value already set for the layer (Bug 768)
-        Set the tolerance to the distance value or 0 is invalid
-         set the the unit if unit is valid.
-        Bug 1342 for details */
-
-        dfCurrentTolerance = lp->tolerance;
-        lp->tolerance = 0;
-        if (dfDistance > 0)
+        if (bUseGeos)
         {
-            lp->tolerance = dfDistance;
-            if (nUnit >=0)
-              lp->toleranceunits = nUnit;
+            if ((strcasecmp(psNode->pszValue, "DWithin") == 0 ||
+                 strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
+                dfDistance > 0)
+            {
+                msGEOSSetup();            
+                psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
+                if (psTmpShape)
+                {
+                    msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
+                    msFreeShape(psTmpShape);
+                }
+                msGEOSCleanup();
+            } 
+            else
+              msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
         }
-        msQueryByShape(map, lp->index,  psQueryShape);
+        else
+        {
+            /* disable any tolerance value already set for the layer (Bug 768)
+               Set the tolerance to the distance value or 0 is invalid
+               set the the unit if unit is valid.
+               Bug 1342 for details */
+
+            dfCurrentTolerance = lp->tolerance;
+            lp->tolerance = 0;
+            if (dfDistance > 0)
+            {
+                lp->tolerance = dfDistance;
+                if (nUnit >=0)
+                  lp->toleranceunits = nUnit;
+            }
+            msQueryByShape(map, lp->index,  psQueryShape);
       
-        lp->tolerance = dfCurrentTolerance;
+            lp->tolerance = dfCurrentTolerance;
+        }
     }
 
     if (szExpression)
@@ -849,8 +938,15 @@ int FLTIsSimpleFilter(FilterEncodingNode *psNode)
     {
         if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
             FLTNumberOfFilterType(psNode, "Intersect") == 0 &&
-            FLTNumberOfFilterType(psNode, "Intersects") == 0)
-            
+            FLTNumberOfFilterType(psNode, "Intersects") == 0 &&
+            FLTNumberOfFilterType(psNode, "Equals") == 0 &&
+            FLTNumberOfFilterType(psNode, "Disjoint") == 0 &&
+            FLTNumberOfFilterType(psNode, "Touches") == 0 &&
+            FLTNumberOfFilterType(psNode, "Crosses") == 0 &&
+            FLTNumberOfFilterType(psNode, "Within") == 0 &&
+            FLTNumberOfFilterType(psNode, "Contains") == 0 &&
+            FLTNumberOfFilterType(psNode, "Overlaps") == 0 &&
+            FLTNumberOfFilterType(psNode, "Beyond") == 0)
           return TRUE;
     }
 
@@ -1489,7 +1585,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     free(szMax);
                 }
             }
-            else if (strcasecmp(psXMLNode->pszValue, "DWithin") == 0)
+            else if (strcasecmp(psXMLNode->pszValue, "DWithin") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Beyond") == 0)
+ 
             {
                 shapeObj *psShape = NULL;
                 int bPoint = 0, bLine = 0, bPolygon = 0;
@@ -1556,7 +1654,14 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                   psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
             }
             else if (strcasecmp(psXMLNode->pszValue, "Intersect") == 0 ||
-                     strcasecmp(psXMLNode->pszValue, "Intersects") == 0)
+                     strcasecmp(psXMLNode->pszValue, "Intersects") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Equals") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Disjoint") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Touches") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Crosses") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Within") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Contains") == 0 ||
+                     strcasecmp(psXMLNode->pszValue, "Overlaps") == 0)
             {
                 shapeObj *psShape = NULL;
                 int  bLine = 0, bPolygon = 0;
@@ -1962,7 +2067,15 @@ int FLTIsSpatialFilterType(char *pszValue)
         if ( strcasecmp(pszValue, "BBOX") == 0 ||
              strcasecmp(pszValue, "DWithin") == 0 ||
              strcasecmp(pszValue, "Intersect") == 0 ||
-             strcasecmp(pszValue, "Intersects") == 0)
+             strcasecmp(pszValue, "Intersects") == 0 ||
+             strcasecmp(pszValue, "Equals") == 0 ||
+             strcasecmp(pszValue, "Disjoint") == 0 ||
+             strcasecmp(pszValue, "Touches") == 0 ||
+             strcasecmp(pszValue, "Crosses") == 0 ||
+             strcasecmp(pszValue, "Within") == 0 ||
+             strcasecmp(pszValue, "Contains") == 0 ||
+             strcasecmp(pszValue, "Overlaps") == 0 ||
+             strcasecmp(pszValue, "Beyond") == 0)
           return MS_TRUE;
     }
 
@@ -2625,19 +2738,18 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /*      special case for BBOX node.                                     */
 /* ==================================================================== */
     if (psFilterNode->psLeftNode && psFilterNode->psRightNode &&
-        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") == 0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") == 0) ||
-         (strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") == 0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "DWithin") == 0) ||
-         (strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") == 0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "Intersects") == 0)))
+        (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") == 0 ||
+         strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") == 0 ||
+         FLTIsGeosNode(psFilterNode->psLeftNode->pszValue) ||
+         FLTIsGeosNode(psFilterNode->psRightNode->pszValue)))
+         
+         
     {
         
         /*strcat(szBuffer, " (");*/
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0 &&
             strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") != 0 &&
-            (strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") != 0 ||
-             strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersects") != 0))
+            FLTIsGeosNode(psFilterNode->psLeftNode->pszValue) == MS_FALSE)
           pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
         else
           pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
@@ -3411,8 +3523,17 @@ xmlNodePtr FLTGetCapabilities()
     
     psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Spatial_Capabilities", NULL);
     psNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "Spatial_Operators", NULL);
+#ifdef USE_GEOS
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Equals", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Disjoint", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Touches", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Within", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Overlaps", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Crosses", NULL);
     xmlNewChild(psNode, psNsOgc, BAD_CAST "Intersect", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "Contains", NULL);
     xmlNewChild(psNode, psNsOgc, BAD_CAST "DWithin", NULL);
+#endif
     xmlNewChild(psNode, psNsOgc, BAD_CAST "BBOX", NULL);
 
     psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Scalar_Capabilities", NULL);

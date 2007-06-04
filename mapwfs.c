@@ -407,8 +407,17 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   msIO_printf("<ogc:Filter_Capabilities>\n");
   msIO_printf("  <ogc:Spatial_Capabilities>\n");
   msIO_printf("    <ogc:Spatial_Operators>\n");
+#ifdef USE_GEOS
+  msIO_printf("      <ogc:Equals/>\n");
+  msIO_printf("      <ogc:Disjoint/>\n");
+  msIO_printf("      <ogc:Touches/>\n");
+  msIO_printf("      <ogc:Within/>\n");
+  msIO_printf("      <ogc:Overlaps/>\n");
+  msIO_printf("      <ogc:Crosses/>\n");
   msIO_printf("      <ogc:Intersect/>\n");
+  msIO_printf("      <ogc:Contains/>\n");
   msIO_printf("      <ogc:DWithin/>\n");
+#endif
   msIO_printf("      <ogc:BBOX/>\n");
   msIO_printf("    </ogc:Spatial_Operators>\n");
   msIO_printf("  </ogc:Spatial_Capabilities>\n");
