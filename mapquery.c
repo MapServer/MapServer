@@ -1240,49 +1240,49 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
         { 
           case MS_GEOS_EQUALS:
             status = msGEOSEquals(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
         
           case MS_GEOS_DISJOINT:
             status = msGEOSDisjoint(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
 
           case MS_GEOS_TOUCHES:
             status = msGEOSTouches(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
 
           case MS_GEOS_OVERLAPS:
             status = msGEOSOverlaps(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
 
           case MS_GEOS_CROSSES:
             status = msGEOSCrosses(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
         
           case MS_GEOS_INTERSECTS:
             status = msGEOSIntersects(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE || status != MS_FALSE)
               status = MS_FALSE;
             break;
 
           case MS_GEOS_WITHIN:
             status = msGEOSWithin(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
           
           case MS_GEOS_CONTAINS:
             status = msGEOSContains(&shape, selectshape);
-            if (status != MS_TRUE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
 
@@ -1290,7 +1290,7 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
               see ticket 2105*/
           case MS_GEOS_BEYOND:
             status = msGEOSWithin(&shape, selectshape);
-            if (status != MS_TRUE || status != MS_FALSE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             else
               status = !status;
