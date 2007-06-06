@@ -248,6 +248,12 @@ int msCopyQueryMap(queryMapObj *dst, queryMapObj *src)
 
 int msCopyLabel(labelObj *dst, labelObj *src) 
 {
+  int i;
+
+  for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
+    MS_COPYSTRING(dst->bindings[i].item, src->bindings[i].item);
+    dst->bindings[i].index = src->bindings[i].index; /* no way to use the macros */
+  }
 
     MS_COPYSTRING(dst->font, src->font);
     MS_COPYSTELEM(type);
@@ -340,6 +346,12 @@ int msCopyWeb(webObj *dst, webObj *src, mapObj *map)
 
 int msCopyStyle(styleObj *dst, styleObj *src) 
 {
+  int i;
+
+  for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
+    MS_COPYSTRING(dst->bindings[i].item, src->bindings[i].item);
+    dst->bindings[i].index = src->bindings[i].index; /* no way to use the macros */
+  }
 
     MS_COPYCOLOR(&(dst->color), &(src->color));
     MS_COPYCOLOR(&(dst->outlinecolor),&(src->outlinecolor));
