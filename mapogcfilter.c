@@ -325,14 +325,18 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                  strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
                 dfDistance > 0)
             {
+#ifdef USE_GEOS
                 msGEOSSetup();
+#endif
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
                     msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
                     msFreeShape(psTmpShape);
                 }
+#ifdef USE_GEOS
                 msGEOSCleanup();
+#endif
             }
         } 
         else
@@ -361,14 +365,18 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                  strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
                 dfDistance > 0)
             {
-                msGEOSSetup();            
+#ifdef USE_GEOS
+                msGEOSSetup();   
+#endif         
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
                     msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
                     msFreeShape(psTmpShape);
                 }
+#ifdef USE_GEOS
                 msGEOSCleanup();
+#endif
             } 
             else
               msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
