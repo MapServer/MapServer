@@ -1,0 +1,39 @@
+usage()
+{
+	cat <<EOF
+Usage: mapserver-config [OPTIONS]
+Options:
+	[--libs]
+	[--dep-libs]
+	[--cflags]
+	[--version]
+EOF
+	exit $1
+}
+
+if test $# -eq 0; then
+	usage 1 1>&2
+fi
+
+case $1 in 
+  --libs)
+    echo $CONFIG_LIBS
+    ;;
+
+  --dep-libs)
+    echo $CONFIG_DEP_LIBS
+    ;;
+
+  --cflags)
+    echo $CONFIG_CFLAGS
+    ;;
+
+  --version)
+    echo $CONFIG_VERSION
+    ;;
+
+  *)
+    usage 1 1>&2
+    ;;
+
+esac
