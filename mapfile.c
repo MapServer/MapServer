@@ -4725,31 +4725,33 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
     return(NULL);
   }
 
+  if(initMap(map) == -1) { /* initialize this map */
+    msFree(map);
+    return(NULL);
+  }
+
+  msAcquireLock( TLOCK_PARSER ); /* might need to move this lock a bit higher, yup (bug 2108) */
+
   msyystate = MS_TOKENIZE_STRING;
   msyystring = buffer;
   msyylex(); /* sets things up, but doesn't process any tokens */
 
   msyylineno = 1; /* start at line 1 (do lines mean anything here?) */
 
-  if(initMap(map) == -1) /* initialize this map */
-    return(NULL);
-
   /* If new_mappath is provided then use it, otherwise use the CWD */
   getcwd(szCWDPath, MS_MAXPATHLEN);
-  if (new_mappath)
-  {
+  if (new_mappath) {
     mappath = strdup(new_mappath);
     map->mappath = strdup(msBuildPath(szPath, szCWDPath, mappath));
-  }
-  else
+  } else
     map->mappath = strdup(szCWDPath);
 
   msyybasepath = map->mappath; /* for INCLUDEs */
 
-  msAcquireLock( TLOCK_PARSER ); /* might need to move this lock a bit higher */
   if(loadMapInternal(map) != MS_SUCCESS) {
     msFreeMap(map);
-    if (mappath != NULL) free(mappath);
+    msReleaseLock( TLOCK_PARSER );
+    if(mappath != NULL) free(mappath);
     return NULL;
   }
   msReleaseLock( TLOCK_PARSER );
