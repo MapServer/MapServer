@@ -35,6 +35,38 @@ print $libs."\n";
 print $static_libs."\n";
 print $ms_version."\n";
 
+my $swigInterfaceFile = "../mapscript.i";
+my $swigWrapperFile   = "mapscript_wrap.c";
+
+########################################################################
+
+sub runSwigAutogeneration{
+  print "Autogenerating wrappers from SWIG interface " . $swigInterfaceFile . "\n";
+  my $command = "swig -perl5 -shadow -outdir . $define -o $swigWrapperFile $swigInterfaceFile";
+  system($command);
+  if ($?){
+      print "An error occurred when generating the wrappers from the SWIG interface :\n$!\n";
+      print "The command that was run was:\n\n$command\n\n";
+      print "Perl mascript cannot be built.\n";
+      exit;
+  }
+}
+
+########################################################################
+
+sub existsAndUpToDate{
+  my ($sourceFile, $destFile) = @_;
+  if (!(-e $destFile)) { return 0; }
+  my $sourceMtime = (stat $sourceFile)[9];
+  my $destMtime = (stat $destFile)[9];
+  return $destMtime >= $sourceMtime;
+}
+
+########################################################################
+
+runSwigAutogeneration() unless
+  existsAndUpToDate($swigInterfaceFile, $swigWrapperFile);
+
 WriteMakefile(
 	      'NAME' 		=> 'mapscript',
 	      'DEFINE' 		=> $define,
