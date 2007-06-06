@@ -65,6 +65,7 @@ class LayerConstructorTestCase(MapLayerTestCase):
         assert str(t) == "<class 'mapscript.layerObj'>", t
         assert layer.thisown == 1
         assert layer.index == -1
+	assert layer.map == None, layer.map
     
     def testLayerConstructorMapArg(self):
         """test layer constructor with map argument"""
@@ -73,6 +74,8 @@ class LayerConstructorTestCase(MapLayerTestCase):
         assert str(t) == "<class 'mapscript.layerObj'>", t
         assert layer.thisown == 1
         assert str(layer) == str(self.map.getLayer(self.map.numlayers-1))
+	assert layer.map != None, layer.map
+    
      
 
 class LayerCloningTestCase(MapLayerTestCase):

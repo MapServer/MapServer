@@ -445,11 +445,10 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         return -1;
     }
     else if (nIndex < 0) { /* Insert at the end by default */
-        //initLayer((GET_LAYER(map, map->numlayers)), map);
-        //msCopyLayer((GET_LAYER(map, map->numlayers)), layer);
         map->layerorder[map->numlayers] = map->numlayers;
         GET_LAYER(map, map->numlayers) = layer;
         GET_LAYER(map, map->numlayers)->index = map->numlayers;
+	GET_LAYER(map, map->numlayers)->map = map;
 	MS_REFCNT_INCR(layer);
         map->numlayers++;
         return map->numlayers-1;
@@ -466,12 +465,10 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
             GET_LAYER(map, i)->index = i;
         }
 
-        /* copy new layer to specified index */
-        //freeLayer((GET_LAYER(map, nIndex)));
-        //initLayer((GET_LAYER(map, nIndex)), map);
-        //msCopyLayer((GET_LAYER(map, nIndex)), layer);
+        /* assign new layer to specified index */
 	GET_LAYER(map, nIndex)=layer;
         GET_LAYER(map, nIndex)->index = nIndex;
+	GET_LAYER(map, nIndex)->map = map;
 
         /* adjust layers drawing order */
         for (i=map->numlayers; i>nIndex; i--) {
