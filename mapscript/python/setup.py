@@ -108,6 +108,9 @@ for item in ms_includes:
 #extras.append("-static")
 #extras.append("-lgd")
 
+if not os.path.exists('mapscript_wrap.c') :
+	os.system('swig -python -shadow -modern %s -o mapscript_wrap.c ../mapscript.i' % " ".join(ms_macros))
+
 setup(name = "mapscript",
       version = ms_version,
       description = "Python interface to MapServer",
