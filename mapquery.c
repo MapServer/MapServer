@@ -1270,7 +1270,7 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
         
           case MS_GEOS_INTERSECTS:
             status = msGEOSIntersects(&shape, selectshape);
-            if (status != MS_TRUE || status != MS_FALSE)
+            if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
 
