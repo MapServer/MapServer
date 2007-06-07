@@ -3629,7 +3629,48 @@ unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatOb
 #endif
   } else if (strcasecmp(format->driver, "gd/png") == 0) {
 #ifdef USE_GD_PNG
-    imgbytes = gdImagePngPtr(img, size_ptr);
+    int force_pc256 = MS_FALSE;
+    int force_palette = MS_FALSE;
+
+    if( format->imagemode == MS_IMAGEMODE_RGB  || format->imagemode == MS_IMAGEMODE_RGBA ) {
+      const char *force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", "OFF" );
+      if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
+        force_pc256 = MS_TRUE;
+
+      force_string = msGetOutputFormatOption( format, "PALETTE_FORCE", "OFF" );
+      if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
+        force_palette = MS_TRUE;
+    }
+
+    if( force_palette ) {
+      gdImagePtr gdPImg;
+      const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
+
+      gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
+
+      msImageCopyForcePaletteGD(img, gdPImg);
+      imgbytes = gdImagePngPtr(gdPImg, size_ptr);
+    }
+    else if ( force_pc256 ) {
+      gdImagePtr gdPImg;
+      int dither, i;
+      int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
+      const char *dither_string = msGetOutputFormatOption( format, "QUANTIZE_DITHER", "YES");
+
+      if( strcasecmp(dither_string,"on") == 0 || strcasecmp(dither_string,"yes") == 0 || strcasecmp(dither_string,"true") == 0 )
+        dither = 1;
+      else
+        dither = 0;
+      
+      gdPImg = gdImageCreatePaletteFromTrueColor(img,dither,colorsWanted);
+      /* It seems there is a bug in gd 2.0.33 and earlier that leaves the 
+         colors open[] flag set to one. */
+      for( i = 0; i < gdPImg->colorsTotal; i++ )
+        gdPImg->open[i] = 0;
+      imgbytes = gdImagePngPtr(gdPImg, size_ptr);
+    }
+    else
+      imgbytes = gdImagePngPtr(img, size_ptr);
 #else
     msSetError(MS_IMGERR, "PNG output is not available.", "msSaveImageBufferGD()");
     return NULL;
