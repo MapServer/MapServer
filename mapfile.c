@@ -1736,6 +1736,7 @@ int initStyle(styleObj *style) {
   style->antialias = MS_FALSE;
   style->isachild = MS_TRUE;
   style->angle = 360;
+  style->opacity = 0;
 
   style->numbindings = 0;
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
@@ -1819,6 +1820,9 @@ int loadStyle(styleObj *style) {
       if(getInteger(&(style->offsetx)) == -1) return(MS_FAILURE);
       if(getInteger(&(style->offsety)) == -1) return(MS_FAILURE);
       break;
+    case(OPACITY):
+      if(getInteger(&(style->opacity)) == -1) return(MS_FAILURE);
+      break;
     case(OUTLINECOLOR):
       if(loadColor(&(style->outlinecolor), &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(MS_FAILURE);
       if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item) style->numbindings++;
@@ -1893,6 +1897,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %d\n", style->minsize);
   if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %d\n", style->maxwidth);
   if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);  
+  if(style->opacity > 0) fprintf(stream, "        OPACITY %d\n", style->opacity);
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
   if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
   if(style->symbolname)
@@ -2460,7 +2465,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
 
-  layer->transparency = 0;
+  layer->opacity = 0;
   
   layer->numprocessing = 0;
   layer->processing = NULL;
@@ -2702,6 +2707,11 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(OFFSITE):
       if(loadColor(&(layer->offsite), NULL) != MS_SUCCESS) return(-1);
       break;
+    case(OPACITY):
+    case(TRANSPARENCY): /* keyword supported for mapfile backwards compatability */
+      if (getIntegerOrSymbol(&(layer->opacity), 1, MS_GD_ALPHA) == -1)
+        return(-1);
+      break;
     case(MS_PLUGIN): 
     {
         int rv;
@@ -2723,11 +2733,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       free(value); value=NULL;
     }
     break;
-    case(TRANSPARENCY):
-      /* layers can now specify ALPHA transparency */
-      if (getIntegerOrSymbol(&(layer->transparency), 1, MS_GD_ALPHA) == -1)
-        return(-1);
-      break;
     case(POSTLABELCACHE):
       if((layer->postlabelcache = getSymbol(2, MS_TRUE, MS_FALSE)) == -1) return(-1);
       if(layer->postlabelcache)
@@ -2956,6 +2961,11 @@ static void loadLayerValue(mapObj *map, layerObj *layer, char *value)
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(layer->offsite), NULL) != MS_SUCCESS) return;
     break;
+  case(OPACITY):
+  case(TRANSPARENCY):
+    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
+    if (getIntegerOrSymbol(&(layer->opacity), 1, MS_GD_ALPHA) == -1) return;
+    break;
   case(POSTLABELCACHE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->postlabelcache = getSymbol(2, MS_TRUE, MS_FALSE)) == -1) return;
@@ -3040,13 +3050,6 @@ static void loadLayerValue(mapObj *map, layerObj *layer, char *value)
   case(TRANSFORM):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((layer->transform = getSymbol(11, MS_TRUE,MS_FALSE, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) return;
-    break;
-  case (TRANSPARENCY):
-    /* Should we check if transparency is supported by outputformat or
-       if transparency for this layer is already set??? */
-    /* layers can now specify ALPHA transparency */
-    msyystate = MS_TOKENIZE_VALUE; msyystring = value;
-    if (getIntegerOrSymbol(&(layer->transparency), 1, MS_GD_ALPHA) == -1) return;
     break;
   case(TYPE):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
@@ -3144,10 +3147,10 @@ static void writeLayer(layerObj *layer, FILE *stream)
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
 
-  if(layer->transparency == MS_GD_ALPHA) 
-      fprintf(stream, "    TRANSPARENCY ALPHA\n");
-  else if(layer->transparency > 0) 
-      fprintf(stream, "    TRANSPARENCY %d\n", layer->transparency);
+  if(layer->opacity == MS_GD_ALPHA) 
+      fprintf(stream, "    OPACITY ALPHA\n");
+  else if(layer->opacity > 0) 
+      fprintf(stream, "    OPACITY %d\n", layer->opacity);
 
   if (layer->type != -1)
     fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);

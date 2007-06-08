@@ -603,6 +603,8 @@ typedef struct {
   colorObj backgroundcolor;
   colorObj outlinecolor;
 
+  int opacity;
+
   /* Stuff to handle Color Range Styles */
   colorObj mincolor;
   colorObj maxcolor;
@@ -622,7 +624,7 @@ typedef struct {
 
   int offsetx, offsety; /* for shadows, hollow symbols, etc... */
 
-  double angle; /* for future use */
+  double angle;
 
   int antialias;
 
@@ -1028,7 +1030,7 @@ typedef struct layer_obj {
 %mutable;
 #endif /* SWIG */
 
-  int transparency; /* transparency value 0-100 */
+  int opacity; /* opacity (was transparency) value 0-100 */
   
   int dump;
   int debug;

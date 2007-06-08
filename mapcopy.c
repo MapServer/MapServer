@@ -376,6 +376,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(angle);
     MS_COPYSTELEM(minvalue);
     MS_COPYSTELEM(maxvalue);
+    MS_COPYSTELEM(opacity);
 
     MS_COPYSTRING(dst->rangeitem, src->rangeitem);
     MS_COPYSTELEM(rangeitemindex);
@@ -809,7 +810,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
         msCopyHashTable(&(dst->metadata), &(src->metadata));
     }
 
-    MS_COPYSTELEM(transparency);
+    MS_COPYSTELEM(opacity);
     MS_COPYSTELEM(dump);
     MS_COPYSTELEM(debug);
 

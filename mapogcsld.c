@@ -216,10 +216,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                         GET_LAYER(map, i)->classitem = strdup(pasLayers[j].classitem);
                     }
                     
-                    /* transparency for sld raster (opacity parameter) */
+                    /* opacity for sld raster */
                     if (GET_LAYER(map, i)->type == MS_LAYER_RASTER && 
-                        pasLayers[j].transparency != -1)
-                      GET_LAYER(map, i)->transparency = pasLayers[j].transparency;
+                        pasLayers[j].opacity != -1)
+                      GET_LAYER(map, i)->opacity = pasLayers[j].opacity;
 
                     /* mark as auto-generate SLD */
                     if (GET_LAYER(map, i)->connectiontype == MS_WMS)
@@ -2252,12 +2252,12 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
       return;
 
 /* ==================================================================== */
-/*      The defulat transparency value is 0 : we set it here to -1      */
+/*      The default opacity value is 0 : we set it here to -1           */
 /*      so that when testing the values in msSLDApplySLD (to be         */
 /*      applied on the layer), we can assume that a value of 0 comes    */
 /*      from the sld.                                                   */
 /* ==================================================================== */
-    psLayer->transparency = -1;
+    psLayer->opacity = -1;
 
     psOpacity = CPLGetXMLNode(psRoot, "Opacity");
     if (psOpacity)
@@ -2267,7 +2267,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         
         /* values in sld goes from 0.0 (for transparent) to 1.0 (for full opacity); */
         if (dfOpacity >=0.0 && dfOpacity <=1.0)
-          psLayer->transparency = (int)(dfOpacity * 100);
+          psLayer->opacity = (int)(dfOpacity * 100);
         else
         {
             msSetError(MS_WMSERR, "Invalid opacity value. Values should be between 0.0 and 1.0", "msSLDParseRasterSymbolizer()");

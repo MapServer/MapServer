@@ -614,11 +614,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   msImageStartLayer(map, layer, image);
 
   if ( MS_RENDERER_GD(image_draw->format) ) {
-    /* Create a temp image for this layer tranparency */
-    if (layer->transparency > 0 && layer->transparency <= 100) {
+    /* Create a temp image for this layer opacity */
+    if (layer->opacity > 0 && layer->opacity <= 100) {
       msApplyOutputFormat( &transFormat, image->format, 
                            MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-      /* really we need an image format with transparency enabled, right? */
+      /* really we need an image format with opacity enabled, right? */
       image_draw = msImageCreateGD( image->width, image->height, 
                                     transFormat,
                                     image->imagepath, image->imageurl );
@@ -633,7 +633,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     /* Bug 490 - switch alpha blending on for a layer that requires it */
-    else if (layer->transparency == MS_GD_ALPHA) {
+    else if (layer->opacity == MS_GD_ALPHA) {
         oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
         gdImageAlphaBlending(image->img.gd, 1);
     }
@@ -641,10 +641,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 #ifdef USE_AGG
   else if ( MS_RENDERER_AGG(image_draw->format) ) {
     /* Create a temp image for this layer tranparency */
-    if (layer->transparency > 0 && layer->transparency <= 100) {
+    if (layer->opacity > 0 && layer->opacity <= 100) {
       msApplyOutputFormat( &transFormat, image->format, 
                            MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-      /* really we need an image format with transparency enabled, right? */
+      /* really we need an image format with opacity enabled, right? */
       image_draw = msImageCreateAGG( image->width, image->height, 
                                     transFormat,
                                     image->imagepath, image->imageurl );
@@ -659,7 +659,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     /* Bug 490 - switch alpha blending on for a layer that requires it */
-    else if (layer->transparency == MS_GD_ALPHA) {
+    else if (layer->opacity == MS_GD_ALPHA) {
         oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
         gdImageAlphaBlending(image->img.gd, 1);
     }
@@ -684,17 +684,17 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   /* Destroy the temp image for this layer tranparency */
-  if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 
-      && layer->transparency <= 100 ) {
+  if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 
+      && layer->opacity <= 100 ) {
 
 #if GD2_VERS > 1 
     msImageCopyMerge(image->img.gd, image_draw->img.gd, 
                      0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->transparency);
+                     layer->opacity);
 #else
     gdImageCopyMerge(image->img.gd, image_draw->img.gd, 
                      0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->transparency);
+                     layer->opacity);
 #endif
     msFreeImage( image_draw );
 
@@ -703,17 +703,17 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
                          MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 #ifdef USE_AGG
-  else if( MS_RENDERER_AGG(image_draw->format) && layer->transparency > 0 
-      && layer->transparency <= 100 ) {
+  else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 
+      && layer->opacity <= 100 ) {
 
 #if GD2_VERS > 1 
     msImageCopyMerge(image->img.gd, image_draw->img.gd, 
                      0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->transparency);
+                     layer->opacity);
 #else
     gdImageCopyMerge(image->img.gd, image_draw->img.gd, 
                      0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->transparency);
+                     layer->opacity);
 #endif
     msFreeImage( image_draw );
 
@@ -723,12 +723,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 #endif
   /* restore original alpha blending */
-  else if (layer->transparency == MS_GD_ALPHA) {
+  else if (layer->opacity == MS_GD_ALPHA) {
     gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
-  }
-  else
-  {
-      assert( image == image_draw );
+  } else {
+    assert( image == image_draw );
   }
 
   return(retcode);

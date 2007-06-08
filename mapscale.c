@@ -443,7 +443,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   }
 
   /* to resolve bug 490 */
-  GET_LAYER(map, l)->transparency = MS_GD_ALPHA;
+  GET_LAYER(map, l)->opacity = MS_GD_ALPHA;
   
   GET_LAYER(map, l)->status = MS_ON;
 

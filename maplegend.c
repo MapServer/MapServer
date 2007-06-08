@@ -90,9 +90,8 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     */     
 
     /* Bug 490 - switch alpha blending on for a layer that requires it */
-    if (lp->transparency == MS_GD_ALPHA) {
-        gdImageAlphaBlending(img, 1);
-    }
+    if(lp->opacity == MS_GD_ALPHA)
+      gdImageAlphaBlending(img, 1);
 
     switch(type) {
     case MS_LAYER_ANNOTATION:
