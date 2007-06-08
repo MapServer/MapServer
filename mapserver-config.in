@@ -6,6 +6,8 @@ Options:
 	[--libs]
 	[--dep-libs]
 	[--cflags]
+	[--defines]
+	[--includes]
 	[--version]
 EOF
 	exit $1
@@ -18,6 +20,14 @@ fi
 case $1 in 
   --libs)
     echo $CONFIG_LIBS
+    ;;
+
+  --defines)
+    echo $CONFIG_DEFINES
+    ;;
+
+  --includes)
+    echo $CONFIG_INCLUDES
     ;;
 
   --dep-libs)
