@@ -235,6 +235,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,NAME_STRING>name                    { return(NAME); }
 <INITIAL,NAME_STRING>offset                  { return(OFFSET); }
 <INITIAL,NAME_STRING>offsite                 { return(OFFSITE); }
+<INITIAL,NAME_STRING>opacity                 { return(OPACITY); }
 <INITIAL,NAME_STRING>outlinecolor            { return(OUTLINECOLOR); }
 <INITIAL,NAME_STRING>outputformat            { return(OUTPUTFORMAT); }
 <INITIAL,NAME_STRING>overlaybackgroundcolor  { return(OVERLAYBACKGROUNDCOLOR); }
