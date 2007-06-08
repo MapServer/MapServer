@@ -33,19 +33,6 @@ char *msyybasepath=NULL;
 
 int msyyreturncomments = 0;
 
-void lexer_cleanup(void) {
-#ifndef YY_CURRENT_BUFFER_LVALUE
-    /* yy_current_buffer was there only in older versions (e.g. 2.5.4)
-     * but is gone in newer versions (e.g. 2.5.31)
-     */
-    if( yy_current_buffer != NULL )
-    {
-        yy_delete_buffer( yy_current_buffer );
-        yy_current_buffer = 0;
-    }
-#endif
-}
-
 #define MAX_INCLUDE_DEPTH 5
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;

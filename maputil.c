@@ -1382,13 +1382,11 @@ int msSetup()
   
 /* This is intended to be a function to cleanup anything that "hangs around"
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
-extern void lexer_cleanup(void);
-
 void msCleanup()
 {
   msForceTmpFileBase( NULL );
   msConnPoolFinalCleanup();
-  lexer_cleanup();
+  msyylex_destroy();
 
 #ifdef USE_OGR
   msOGRCleanup();
