@@ -1401,6 +1401,13 @@ void msCleanup()
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   msHTTPCleanup();
 #endif
+
+#ifdef USE_GD_FT
+  if (gdFontCacheShutdown() != 0) { 
+    return MS_FAILURE;
+   }
+#endif
+
 #ifdef USE_GEOS
   msGEOSCleanup();
 #endif
