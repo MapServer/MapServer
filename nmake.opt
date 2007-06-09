@@ -151,8 +151,10 @@ USE_POINT_Z_M=
 # Mapserver 4.x only supports GD 2.x and greater.
 # GD is a required support library for MapServer 4.x.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!IFNDEF GD_DIR
 GD_DIR=$(MS_BASE)\..\gd-2.0.33
 GD_LIB=$(GD_DIR)/bgd_i.lib
+!ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # GD JPEG support
