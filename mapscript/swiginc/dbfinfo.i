@@ -34,7 +34,6 @@
 */
 %extend DBFInfo 
 {
-    
     char *getFieldName(int iField) 
     {
         static char pszFieldName[1000];

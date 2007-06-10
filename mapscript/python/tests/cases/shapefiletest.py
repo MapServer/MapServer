@@ -45,6 +45,15 @@ class AddShapeTestCase(unittest.TestCase):
         sf = mapscript.shapefileObj('testAddDud.shp', 1)
         so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
         self.assertRaises(mapscript.MapServerError, sf.add, so)
-        
+    
+    def testGetDBFInfo(self):
+	"""Fetch dbf information from shapefile"""
+        sf = mapscript.shapefileObj('../../../../tests/polygon.shp')
+	assert sf.getDBF() != None, sf.getDBF()
+	assert sf.getDBF().nFields == 2, sf.getDBF().nFields
+	assert sf.getDBF().getFieldName(0) == 'FID', sf.getDBF().getFieldName(0)
+	assert sf.getDBF().getFieldName(1) == 'FNAME', sf.getDBF().getFieldName(1)
+    
+    
 if __name__ == '__main__':
     unittest.main()

@@ -186,7 +186,7 @@ class InsertClassTestCase(MapLayerTestCase):
         assert new_index == n
         assert self.layer.numclasses == n + 1
         c = self.layer.getClass(new_index)
-        assert c.thisown == 0
+        assert c.thisown == 1 
         assert c.name == new_class.name
         
     def testLayerInsertClassAtZero(self):
@@ -198,7 +198,7 @@ class InsertClassTestCase(MapLayerTestCase):
         assert new_index == 0
         assert self.layer.numclasses == n + 1
         c = self.layer.getClass(new_index)
-        assert c.thisown == 0
+        assert c.thisown == 1 
         assert c.name == new_class.name
 
     def testInsertNULLClass(self):
@@ -278,6 +278,16 @@ class ExpressionTestCase(MapLayerTestCase):
         self.layer.setFilter('([foo] >= 2)')
         fs = self.layer.getFilterString()
         assert fs == '([foo] >= 2)', fs
+       
+    def testSetCompoundLogicalExpression(self):
+        """layer expression can be a compound logical expression"""
+	#filter = '( ([fid] >= 2) AND (\'[fname]\' == \'A Polygon\' ))'
+	filter = '( ([fid] >= 2) AND ([fname] == \'A Polygon\' ))'
+	excode = self.layer.setFilter(filter)
+        assert excode == mapscript.MS_SUCCESS, excode
+        fs = self.layer.getFilterString()
+        assert fs == filter, fs
+	self.map.draw()
        
 
 class LayerQueryTestCase(MapLayerTestCase):

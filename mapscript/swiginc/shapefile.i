@@ -136,5 +136,9 @@
         return msSHPWritePoint(self->hSHP, point);	
     }
     
+    DBFInfo *getDBF() {
+    	return self->hDBF;
+    }
+    
 }
 
