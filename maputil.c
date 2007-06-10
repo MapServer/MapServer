@@ -1403,9 +1403,7 @@ void msCleanup()
 #endif
 
 #ifdef USE_GD_FT
-  if (gdFontCacheShutdown() != 0) { 
-    return MS_FAILURE;
-   }
+  gdFontCacheShutdown(); 
 #endif
 
 #ifdef USE_GEOS
