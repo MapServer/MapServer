@@ -253,41 +253,48 @@ class ExpressionTestCase(MapLayerTestCase):
         """layer expression can be properly cleared"""
         self.layer.setFilter('')
         fs = self.layer.getFilterString()
-        assert fs == '"(null)"', fs
+        assert fs == None, fs
     
     def testSetStringExpression(self):
         """layer expression can be set to string"""
         self.layer.setFilter('foo')
         fs = self.layer.getFilterString()
+        self.layer.filteritem = 'fid'
         assert fs == '"foo"', fs
+        self.map.draw()
     
     def testSetQuotedStringExpression(self):
         """layer expression string can be quoted"""
         self.layer.setFilter('"foo"')
         fs = self.layer.getFilterString()
+        self.layer.filteritem = 'fid'
         assert fs == '"foo"', fs
+        self.map.draw()
     
     def testSetRegularExpression(self):
         """layer expression can be regular expression"""
         self.layer.setFilter('/foo/')
+        self.layer.filteritem = 'fid'
         fs = self.layer.getFilterString()
         assert fs == '/foo/', fs
+        self.map.draw()
     
     def testSetLogicalExpression(self):
         """layer expression can be logical expression"""
-        self.layer.setFilter('([foo] >= 2)')
+        self.layer.setFilter('([fid] >= 2)')
         fs = self.layer.getFilterString()
-        assert fs == '([foo] >= 2)', fs
+        assert fs == '([fid] >= 2)', fs
+        self.map.draw()
        
     def testSetCompoundLogicalExpression(self):
         """layer expression can be a compound logical expression"""
 	#filter = '( ([fid] >= 2) AND (\'[fname]\' == \'A Polygon\' ))'
-	filter = '( ([fid] >= 2) AND ([fname] == \'A Polygon\' ))'
-	excode = self.layer.setFilter(filter)
+        flt = """( ([fid] >= 2) AND ("[fname]" == 'A Polygon' ))"""
+        excode = self.layer.setFilter(flt)
         assert excode == mapscript.MS_SUCCESS, excode
         fs = self.layer.getFilterString()
-        assert fs == filter, fs
-	self.map.draw()
+        assert fs == flt, fs
+        self.map.draw()
        
 
 class LayerQueryTestCase(MapLayerTestCase):
