@@ -297,7 +297,7 @@ static shapeObj *msGEOSGeometry2Shape_point(GEOSGeom g)
   shape->line[0].numpoints = 1;
   shape->geometry = (GEOSGeom) g;
 
-  coords = GEOSGeom_getCoordSeq(g);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(g);
 
   GEOSCoordSeq_getX(coords, 0, &(shape->line[0].point[0].x));
   GEOSCoordSeq_getY(coords, 0, &(shape->line[0].point[0].y));
@@ -329,8 +329,8 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   for(i=0; i<numPoints; i++) {
-    point = GEOSGetGeometryN(g, i);
-    coords = GEOSGeom_getCoordSeq(point);
+    point = (GEOSGeom) GEOSGetGeometryN(g, i);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(point);
 
     GEOSCoordSeq_getX(coords, 0, &(shape->line[0].point[i].x));
     GEOSCoordSeq_getY(coords, 0, &(shape->line[0].point[i].y));
@@ -350,7 +350,7 @@ static shapeObj *msGEOSGeometry2Shape_line(GEOSGeom g)
 
   if(!g) return NULL;
   numPoints = GEOSGetNumCoordinates(g);
-  coords = GEOSGeom_getCoordSeq(g);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(g);
 
   shape = (shapeObj *) malloc(sizeof(shapeObj));
   msInitShape(shape);
@@ -391,9 +391,9 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   for(j=0; j<numLines; j++) {
-    lineString = GEOSGetGeometryN(g, j);
+    lineString = (GEOSGeom) GEOSGetGeometryN(g, j);
     numPoints = GEOSGetNumCoordinates(lineString);
-    coords = GEOSGeom_getCoordSeq(lineString);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(lineString);
 
     line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     line.numpoints = numPoints;
@@ -428,9 +428,9 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   /* exterior ring */
-  ring = GEOSGetExteriorRing(g);
+  ring = (GEOSGeom) GEOSGetExteriorRing(g);
   numPoints = GEOSGetNumCoordinates(ring);
-  coords = GEOSGeom_getCoordSeq(ring);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
   
   line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
   line.numpoints = numPoints;
@@ -445,11 +445,11 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
   /* interior rings */
   numRings = GEOSGetNumInteriorRings(g);
   for(j=0; j<numRings; j++) {
-    ring = GEOSGetInteriorRingN(g, j);
+    ring = (GEOSGeom) GEOSGetInteriorRingN(g, j);
     if(GEOSisRing(ring) != 1) continue; /* skip it */
 
     numPoints = GEOSGetNumCoordinates(ring);
-    coords = GEOSGeom_getCoordSeq(ring);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
 
     line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     line.numpoints = numPoints;
@@ -484,12 +484,12 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   for(k=0; k<numPolygons; k++) { /* for each polygon */
-    polygon = GEOSGetGeometryN(g, k);
+    polygon = (GEOSGeom) GEOSGetGeometryN(g, k);
 
     /* exterior ring */
-    ring = GEOSGetExteriorRing(polygon);
+    ring = (GEOSGeom) GEOSGetExteriorRing(polygon);
     numPoints = GEOSGetNumCoordinates(ring);
-    coords = GEOSGeom_getCoordSeq(ring);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
 
     line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     line.numpoints = numPoints;
@@ -505,11 +505,11 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
     numRings = GEOSGetNumInteriorRings(polygon);
 
     for(j=0; j<numRings; j++) {
-      ring = GEOSGetInteriorRingN(polygon, j);
+      ring = (GEOSGeom) GEOSGetInteriorRingN(polygon, j);
       if(GEOSisRing(ring) != 1) continue; /* skip it */      
 
       numPoints = GEOSGetNumCoordinates(ring);
-      coords = GEOSGeom_getCoordSeq(ring);	  
+      coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);	  
 
       line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
       line.numpoints = numPoints;
@@ -711,7 +711,7 @@ pointObj *msGEOSGetCentroid(shapeObj *shape)
 
   point = (pointObj *) malloc(sizeof(pointObj));
 
-  coords = GEOSGeom_getCoordSeq(g2);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(g2);
 
   GEOSCoordSeq_getX(coords, 0, &(point->x));
   GEOSCoordSeq_getY(coords, 0, &(point->y));
