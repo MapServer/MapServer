@@ -5053,6 +5053,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
   tokens = (char **) malloc(numtokens_allocated*sizeof(char*));
   if(tokens == NULL) {
     msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+    fclose(msyyin);
     return NULL;
   }
 
@@ -5063,6 +5064,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
       tokens = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
       if(tokens == NULL) {
         msSetError(MS_MEMERR, "Realloc() error.", "msTokenizeMap()");
+        fclose(msyyin);
         return NULL;
       }
     }
@@ -5095,6 +5097,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
 
     if(tokens[numtokens] == NULL) {
       msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+      fclose(msyyin);
       return NULL;
     }
 
