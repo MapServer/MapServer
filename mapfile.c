@@ -4846,6 +4846,7 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   if(loadMapInternal(map) != MS_SUCCESS) {
     msFreeMap(map);
     msReleaseLock( TLOCK_PARSER );
+    fclose(msyyin);
     return NULL;
   }
   msReleaseLock( TLOCK_PARSER );
