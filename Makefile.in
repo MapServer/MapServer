@@ -15,7 +15,7 @@ MS_VERSION=	@MS_VERSION@
 #
 # Name of static and shared libs to produce
 #
-LIBMAP_STATIC=	libmap.a
+LIBMAP_STATIC=	libmapserver.a
 LIBMAP_SHARED=	libmapserver.@SO_EXT@
 LIBMAP_SH_VER=	libmapserver.$(MS_VERSION).@SO_EXT@
 
@@ -237,7 +237,7 @@ SUP_LIBS =  $(GD_LIB) $(AGG_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)
 
-EXE_LDFLAGS =	$(RUNPATHS) -L. -lmap $(SUP_LIBS) $(STATIC_LIBS)
+EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
@@ -250,7 +250,7 @@ EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: $(MAKE_GD) libmap.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
+all: $(MAKE_GD) libmapserver.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
 
 #
 # Non-gnumake's don't seem to use this pattern rule, 
@@ -277,8 +277,8 @@ mapparser.c: mapparser.y
 	$(YACC) -p msyy -d -omapparser.c mapparser.y
 
 lib:    $(LIBMAP_STATIC)
-libmap: $(LIBMAP_STATIC)
-libmap.a: map.h $(OBJS) map.h
+libmapserver: $(LIBMAP_STATIC)
+libmapserver.a: map.h $(OBJS) map.h
 	$(AR) $(LIBMAP_STATIC) $(OBJS)
 	$(RANLIB) $(LIBMAP_STATIC)
 
