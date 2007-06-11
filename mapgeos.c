@@ -614,8 +614,7 @@ char *msGEOSShapeToWKT(shapeObj *shape)
     return NULL;
     
   /* if we have a geometry, we should update it*/
-  if(shape->geometry) 
-    msFree(shape->geometry);
+  msGEOSFreeGeometry(shape->geometry);
 
   shape->geometry = (GEOSGeom) msGEOSShape2Geometry(shape);
   g = (GEOSGeom) shape->geometry;
