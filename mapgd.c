@@ -2784,10 +2784,6 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);
 
-  if( label->encoding != NULL ) { /* converting the label encoding */
-      string = msGetEncodedString(string, label->encoding);
-      if(string == NULL) return(-1);
-  }
   x = MS_NINT(labelPnt.x);
   y = MS_NINT(labelPnt.y);
 
@@ -2808,27 +2804,23 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 #ifdef USE_GD_FT
     if(!fontset) {
       msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextGD()");
-      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
     if(!label->font) {
       msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextGD()");
-      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
     font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
       msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextGD()", label->font);
-      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
-    if( gdImageTrueColor(img) )
-    {
-        oldAlphaBlending = img->alphaBlendingFlag;
-        gdImageAlphaBlending( img, 1 );
+    if(gdImageTrueColor(img)) {
+      oldAlphaBlending = img->alphaBlendingFlag;
+      gdImageAlphaBlending(img, 1);
     }
 
     if(label->outlinecolor.pen >= 0) { /* handle the outline color */
@@ -2837,8 +2829,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
         if(gdImageTrueColor(img))
           gdImageAlphaBlending( img, oldAlphaBlending );
         msSetError(MS_TTFERR, error, "msDrawTextGD()");
-        if(label->encoding != NULL) msFree(string);
-	      return(-1);
+        return(-1);
       }
 
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y+1, string);
@@ -2862,12 +2853,11 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 
     gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
 
-    if( gdImageTrueColor(img) )
-        gdImageAlphaBlending( img, oldAlphaBlending );
+    if(gdImageTrueColor(img))
+      gdImageAlphaBlending(img, oldAlphaBlending);
 
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextGD()");
-    if(label->encoding != NULL) msFree(string);
     return(-1);
 #endif
 
@@ -2876,16 +2866,12 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     int t, num_tokens;
     gdFontPtr fontPtr;
 
-    if((fontPtr = msGetBitmapFont(label->size)) == NULL) {
-      if(label->encoding != NULL) msFree(string);
+    if((fontPtr = msGetBitmapFont(label->size)) == NULL)
       return(-1);
-    }
 
     if(label->wrap != '\0') {
-      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL) {
-        if(label->encoding != NULL) msFree(string);
+      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL)
 	return(-1);
-      }
 
       y -= fontPtr->h*num_tokens;
       for(t=0; t<num_tokens; t++) {
@@ -2930,8 +2916,6 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
   }
 
-  if(label->encoding != NULL) msFree(string);
-
   return(0);
 }
 
@@ -2948,11 +2932,6 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
   if ( !string ) return(0); /* do nothing */
   if ( strlen(string) == 0 ) return(0); /* do nothing */
 
-  if( label->encoding != NULL ) { /* converting the label encoding */
-      string = msGetEncodedString(string, label->encoding);
-      if(string == NULL) return(-1);
-  }
-  
   if(label->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->color));
   if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->outlinecolor));
   if(label->shadowcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->shadowcolor));
@@ -2968,25 +2947,21 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
 #ifdef USE_GD_FT
     if(!fontset) {
       msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextLineGD()");
-      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
     if(!label->font) {
       msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextLineGD()");
-      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
     font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
       msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextLineGD()", label->font);
-      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
-    if( gdImageTrueColor(img) )
-    {
+    if(gdImageTrueColor(img)) {
       oldAlphaBlending = img->alphaBlendingFlag;
       gdImageAlphaBlending( img, 1 );
     }
@@ -3007,7 +2982,6 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
                                 labelpath->path.point[i].y+label->shadowsizey, s);
         if(error) {
           msSetError(MS_TTFERR, error, "msDrawTextLineGD()");
-          if(label->encoding != NULL) msFree(string);
           return(-1);
         }
       }
@@ -3033,7 +3007,6 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
           if( gdImageTrueColor(img) )
             gdImageAlphaBlending( img, oldAlphaBlending );
           msSetError(MS_TTFERR, error, "msDrawTextLineGD()");
-          if(label->encoding != NULL) msFree(string);
           return(-1);
         }
       
@@ -3067,19 +3040,13 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
     
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextGD()");
-    if(label->encoding != NULL) msFree(string);
     return(-1);
 #endif
     
   } else {  /* MS_BITMAP */
-
     msSetError(MS_TTFERR, "TrueType font support is not available and is required for angled text rendering.", "msDrawTextGD()");
-    if(label->encoding != NULL) msFree(string);
     return(-1);
-    
   }
-  
-  if(label->encoding != NULL) msFree(string);
   
   return(0);
   

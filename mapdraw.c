@@ -1233,6 +1233,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
     return MS_FAILURE; /* error message is set in msBindLayerToShape() */
 
+  if(shape->text && layer->class[c]->label.encoding) {
+    char *encodedText = msGetEncodedString(shape->text, layer->class[c]->label.encoding);
+    if(!encodedText) return MS_FAILURE;
+    free(shape->text); shape->text = encodedText;
+  }
+
   switch(layer->type) {
   case MS_LAYER_CIRCLE:
     if(shape->numlines != 1) return(MS_SUCCESS); /* invalid shape */
