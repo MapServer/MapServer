@@ -158,7 +158,7 @@ int main( int argc, char ** argv )
 #endif
 
     printf ("This %s %s index supports a shapefile with %d shapes, %d depth \n",
-	(qix->version ? "new": "old"), (qix->LSB_order? "LSB": "MSB"), qix->nShapes, qix->nDepth);
+	(qix->version ? "new": "old"), (qix->LSB_order? "LSB": "MSB"), (int) qix->nShapes, (int) qix->nDepth);
 
 
 /* -------------------------------------------------------------------- */
