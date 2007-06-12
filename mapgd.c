@@ -1878,8 +1878,18 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     fc = 1; bc = 0;
     break;
   case(MS_SYMBOL_PIXMAP):
-    msImagePixmapPolyline(symbolset, img, p, style, scalefactor);
-    return;
+    if (symbol->gap != 0)
+    {
+        msImagePixmapPolyline(symbolset, img, p, style, scalefactor);
+        return;
+    }
+    else
+    {
+        /* todo: add scaling, offset and rotation */
+        gdImageSetBrush(img, symbol->img);
+        fc = 1; bc = 0;
+        break;
+    }
     
   case(MS_SYMBOL_VECTOR):
     if(bc == -1) bc = gdTransparent;
