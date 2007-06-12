@@ -108,7 +108,7 @@ int main( int argc, char ** argv )
     }
 
     printf ("This %s %s index supports a shapefile with %d shapes, %d depth \n",
-	(qix->version ? "new": "old"), (qix->LSB_order? "LSB": "MSB"), qix->nShapes, qix->nDepth);
+	(qix->version ? "new": "old"), (qix->LSB_order? "LSB": "MSB"), (int) qix->nShapes, (int) qix->nDepth);
 
 /* -------------------------------------------------------------------- */
 /*	Skim over the list of shapes, printing all the vertices.	*/
@@ -126,7 +126,7 @@ int main( int argc, char ** argv )
       node = readTreeNode (qix);
       if (node )
       {
-        fprintf (stdout,"shapes %d, node %d, %f,%f,%f,%f \n",node->numshapes,node->numsubnodes,node->rect.minx, node->rect.miny, node->rect.maxx, node->rect.maxy);
+        fprintf (stdout,"shapes %d, node %d, %f,%f,%f,%f \n",(int) node->numshapes,node->numsubnodes,node->rect.minx, node->rect.miny, node->rect.maxx, node->rect.maxy);
             
       }
       else 
