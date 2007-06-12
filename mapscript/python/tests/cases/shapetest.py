@@ -98,8 +98,8 @@ class ShapeValuesTestCase(unittest.TestCase):
 
     def testNullValue(self):
         so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
-        assert so.numvalues == 4
-        assert so.getValue(0) == ''
+        assert so.numvalues == 0
+        assert so.getValue(0) == None
     
     def testSetValue(self):
         so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
@@ -112,8 +112,8 @@ class ShapeValuesTestCase(unittest.TestCase):
 class ShapeWKTTestCase(unittest.TestCase):
     
     # define a pair of coords, and WKT as class data
-    point_xy = (-105.5, 40.0)
-    point_wkt = 'POINT (-105.5 40.0)'
+    point_xy = (-105.5000000000000000, 40.0000000000000000)
+    point_wkt = 'POINT (-105.5000000000000000 40.0000000000000000)'
     
     def testSetPointWKT(self):
         # Create new instance and set/init from WKT
