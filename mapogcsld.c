@@ -3942,7 +3942,7 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
 
     pszAnd = strstr(pszExpression, " AND "); 
     if (!pszAnd)
-      strstr(pszExpression, " and ");
+      pszAnd = strstr(pszExpression, " and ");
   
     if (pszAnd)
       return strdup(pszAnd+4);
@@ -3950,7 +3950,7 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
     {
         pszOr = strstr(pszExpression, " OR "); 
         if (!pszOr)
-          strstr(pszExpression, " or ");
+          pszOr = strstr(pszExpression, " or ");
 
         if (pszOr)
           return strdup(pszOr+3);
@@ -3960,9 +3960,9 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
             if (!pszNot)
               pszNot = strstr(pszExpression, "not ");
             if (!pszNot)
-              strstr(pszExpression, "NOT(");
+              pszNot = strstr(pszExpression, "NOT(");
             if (!pszNot)
-              strstr(pszExpression, "not(");
+              pszNot = strstr(pszExpression, "not(");
 
             if (pszNot)
               return strdup(pszNot+4);
@@ -4090,7 +4090,7 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
         
         pszOr = strstr(pszExpression, "OR(");
         if (!pszOr)
-          strstr(pszExpression, "or(");
+          pszOr = strstr(pszExpression, "or(");
     }
 
     if (!pszAnd && !pszOr && !pszNot)
@@ -4108,7 +4108,7 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
 
         pszSecondOr = strstr(pszAnd+3, " OR ");
         if (!pszSecondOr)
-          strstr(pszAnd+3, " or ");
+          pszSecondOr = strstr(pszAnd+3, " or ");
     }
     else if (pszOr)
     {
