@@ -41,6 +41,130 @@ MS_CVSID("$Id$")
 static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
 static unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
+
+/*
+ * This function is simlar to msImageTruetypePolyline. It renders pixmap symbols
+ * along a line. Uses the GAP parameter for distances betewwn symbols.
+ */
+int msImagePixmapPolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, 
+                          double scalefactor)
+{
+    int i,j,offset_x, offset_y, width, height;
+    double theta, length, current_length;
+    pointObj point;
+    int symbol_width;
+    int position, rot, gap, in;
+    double rx, ry, size, angle,d;
+    int bScaled=MS_FALSE;
+    gdImagePtr imgSymbol;
+  
+
+    symbolObj *symbol;
+
+    symbol = &(symbolset->symbol[style->symbol]);
+
+    rot = (symbol->gap < 0);
+
+    if(style->size == -1) {
+        size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+        size = MS_NINT(size*scalefactor);
+    } else
+      size = MS_NINT(style->size*scalefactor);
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
+
+    gap = MS_ABS(symbol->gap)* (int) scalefactor;  
+
+    if (symbol->sizey)
+      d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+    else
+      d = 1;
+
+    if (d != 1)
+    {
+        bScaled = MS_TRUE;
+        width = MS_NINT(symbol->img->sx*d);
+        height = MS_NINT(symbol->img->sy*d);
+        if (width <=0)
+          width =1;
+        if (height <=0)
+          height =1;
+
+        if (gdImageTrueColor(symbol->img)) {
+            imgSymbol = gdImageCreateTrueColor(width, height);
+            gdImageAlphaBlending(imgSymbol, 0);
+        } 
+        else 
+        {
+            imgSymbol = gdImageCreate(width, height);	
+        }
+        gdImageCopyResampled(imgSymbol, symbol->img, 0, 0, 0, 0, width, height, symbol->img->sx, symbol->img->sy);
+    }
+    else
+      imgSymbol = symbol->img;
+
+    
+    symbol_width = imgSymbol->sx;
+
+    for(i=0; i<p->numlines; i++) 
+    {
+        current_length = gap+symbol_width/2.0; /* initial padding for each line */
+    
+        for(j=1;j<p->line[i].numpoints;j++) 
+        {
+            length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
+            if(length==0)continue;
+            rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
+            ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;  
+            position = symbol->position;
+            theta = asin(ry);
+            if(rx < 0) {
+                if(rot){
+                    theta += MS_PI;
+                }
+            }
+            else theta = -theta;        
+
+            angle = MS_RAD_TO_DEG * theta;
+
+      
+            in = 0;
+            while(current_length <= length) {
+                point.x = MS_NINT(p->line[i].point[j-1].x + current_length*rx);
+                point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
+
+                if (angle != 0.0 && angle != 360.0)
+                {
+                    gdImageCopyRotated(img, imgSymbol, point.x, point.y, 0, 0, imgSymbol->sx, 
+                                       imgSymbol->sy, (int)angle);
+                }
+                else
+                {
+                    offset_x = MS_NINT(point.x - .5*symbol->img->sx);
+                    offset_y = MS_NINT(point.y - .5*symbol->img->sy);
+                    gdImageCopy(img, imgSymbol, offset_x, offset_y, 0, 0, imgSymbol->sx, imgSymbol->sy);
+                }
+                current_length += symbol_width + gap;
+                in = 1;
+            }
+
+            if(in)
+            {
+                current_length -= length + symbol_width/2.0;
+            }         
+            else current_length -= length;
+        }
+      
+    }
+
+    if (bScaled)
+      gdFree(imgSymbol);
+
+    return(0);
+
+}
+
+
 int msImageSetPenGD(gdImagePtr img, colorObj *color) 
 {
   if(MS_VALID_COLOR(*color))
@@ -1754,10 +1878,9 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     fc = 1; bc = 0;
     break;
   case(MS_SYMBOL_PIXMAP):
-    /* todo: add scaling, offset and rotation */
-    gdImageSetBrush(img, symbol->img);
-    fc = 1; bc = 0;
-    break;
+    msImagePixmapPolyline(symbolset, img, p, style, scalefactor);
+    return;
+    
   case(MS_SYMBOL_VECTOR):
     if(bc == -1) bc = gdTransparent;
     
@@ -3880,4 +4003,6 @@ static long fileTell (struct gdIOCtx *ctx)
 
   return ftell (fctx->f);
 }
+
+
 
