@@ -42,6 +42,17 @@ renamed OPACITY. TRANSPARENCY is still recognized by the mapfile parser
 but is depricated and should be avoided. 
 
 ----------------------------------------------------
+Styling/Symbolgy changes
+----------------------------------------------------
+Prior to MapsServer 5.0, if a pixmap symbol was used in style on a Line
+Layer, the symbol was used as a brush to draw the line. In MapServer 5.0, 
+it is possible to draw the pixmap symbol along the line (Note that this 
+was available using a true type symbol). To achieve  this, the user needs 
+to use the parameter GAP with it's pixmap symbol definition in the symbol
+file. The GAP represents the distance between the symbols. If the GAP is not
+given, the pixmap symbol will be used as a brush.   
+
+----------------------------------------------------
 SWIG MapScript (Python, Perl, Csharp, Java) changes
 ----------------------------------------------------
 
