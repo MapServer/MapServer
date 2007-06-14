@@ -1,0 +1,108 @@
+:Date: 2007/05/22
+:Author: Daniel Morissette
+:Contact: dmorissette@mapgears.com
+:Last Edited: 2007/05/24
+:Status: Draft
+:Version: MapServer 5.0
+
+Overview
+--------
+
+MapServer 4.10 and older used a last in first out (LIFO) mechanism to plot labels on a map. This resulted in excessive use of ANNOTATION layers to make certain labels more prominent. This RFC introduces a new PRIORITY parameter on the LABEL object to control the order in which labels are rendered.
+
+Technical Solution
+------------------
+
+PRIORITY is a new LABEL parameter that takes an integer value between 1 (lowest) and MS_MAX_LABEL_PRIORITY (highest). The default value is 1.
+
+MS_MAX_LABEL_PRIORITY is defined and can be altered in map.h, its default value is 10.
+
+The prioritization is handled by maintaining an array of MS_MAX_LABEL_PRIORITY cache lists in the label cache. When a label is added to the label cache, its priority index is used to decide in which cache list it should be added.
+
+Then at rendering time, we loop through the cache lists, starting with the highest priority list.
+
+Specifying an out of range PRIORITY value inside a map file will result in a parsing error. An out of range value set via MapScript or coming from a shape attribute will be clamped to the min/max values in msAddLabel().
+
+There is no expected impact on performance for using label priorities.
+
+Support for attribute binding
+-----------------------------
+
+The PRIORITY parameter can also be bound to an attribute using the attribute bindings mechanism defined in RFC-19. This means two ways to set LABEL PRIORITY:
+
+::
+
+  ...
+  LABEL
+    PRIORITY 5
+    ...
+  END
+  ...
+
+or
+
+::
+
+  ...
+  LABEL
+    PRIORITY [someattribute]
+    ...
+  END
+  ...
+
+
+Modifications to the source code
+--------------------------------
+
+* PRIORITY will be added to the LABEL object in map.h, in the mapfile parser/writer (mapfile.c) and in MapScript
+
+* A MS_IS_VALID_LABEL_PRIORITY() macro will be defined to validate priority ranges in a consistent way everywhere.
+
+* The label cache code (maplabel.c) will be modified to work with an array of MS_MAX_LABEL_PRIORITY cache lists instead of a single list
+
+* The various msDrawLabelCacheXX() functions will be modified to replace the current loop on cache items with two nested loops: the outer loop will iterate on cache lists (from highest to lowest), and the inner loop will iterate on the cache items inside each list.
+
+* msBindLayerToShape() will be updated to support binding PRIORITY to a shape attribute field.
+
+MapScript Implications
+----------------------
+
+The labelObj will have a new priority property of type integer.
+
+Files affected
+--------------
+
+::
+
+ map.h
+ mapfile.c
+ maplabel.c
+ maputil.c
+ mapgd.c        (msDrawLabelCacheGD)
+ mapimagemap.c  (msDrawLabelCacheIM)
+ mappdf.c       (msDrawLabelCachePDF)
+ mapsvg.c       (msDrawLabelCacheSVG)
+ mapswf.c       (msDrawLabelCacheSWF)
+ mapagg.cpp     (msDrawLabelCacheAGG)
+
+Backwards compatibility issues
+------------------------------
+
+None.
+
+Bug ID
+------
+
+* 1619: https://trac.osgeo.org/mapserver/ticket/1619
+
+* Bug 206 also made mention of label priority but has been closed as duplicate of 1619: https://trac.osgeo.org/mapserver/ticket/206
+
+Voting history
+--------------
+
+No vote yet.
+
+Questions/Comments from the review period
+-----------------------------------------
+
+* Q: Why use an array of cache lists instead of doing a quicksort on all cache entries?  A: Mainly for performance reason, but it was also pointed out that quicksort is not stable and could result in different orderings depending on the set of labels.
