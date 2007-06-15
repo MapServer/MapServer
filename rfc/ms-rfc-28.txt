@@ -1,0 +1,204 @@
+====================================================
+  MS RFC 28: Redesign of LOG/DEBUG output mechanisms
+====================================================
+
+:Date: 2007/06/14
+:Author: Daniel Morissette
+:Contact: dmorissette@mapgears.com
+:Last Edited: 2007/06/15
+:Status: Draft
+:Version: MapServer 5.0
+
+Overview
+--------
+
+MapServer 4.10 and older used to have multiple LOG/DEBUG output mechanisms that did not play well together. In order to improve the usability of the software this RFC proposes a new LOG/DEBUG output mechanism with more control on the output location (logfile or stderr) and that works under all supported web servers.
+
+Inventory of existing mechanisms
+--------------------------------
+
+MapServer 4.10 and older support the following LOG/DEBUG systems:
+
+* LOG [filename] in the WEB object:
+
+  From the documentation: "File to log MapServer activity in. Must be writable
+  by the user the web server is running as." 
+
+  More specifically, the function writeLog() in mapserv.c logs information 
+  about the mapserv CGI request results at the end of its execution.
+  This option has no effect with MapScript.
+
+* MS_ERRORFILE environment variable:
+
+  If set then all calls to msSetError() are logged to this file.
+
+* msDebug() with DEBUG ON/OFF at the MAP and LAYER level:
+
+  There are msDebug() calls in various areas of the code that generate 
+  information that may be useful in tuning and troubleshooting apps. 
+  The DEBUG ON/OFF statements in the MAP and LAYER objects are used to 
+  enable/disable the msDebug() calls. The msDebug() mechanism is also disabled 
+  by default and enabled only by the -DENABLE_STDERR_DEBUG compile-time option.
+  Users could benefit from easier access to this and more debug information.
+
+  The output of msDebug() is sent to stderr and cannot be redirected.    
+  In addition to not being very flexible, this is a problem under IIS   
+  where stderr output goes to stdout and the msDebug() output corrupt 
+  MapServer's output.
+
+
+Questions
+---------
+
+* Is the mapserv-specific LOG option really used by anyone? Do we need to 
+  maintain it, should we get rid of it, or perhaps extend it? At a minimum 
+  this option should be better documented to avoid confusion with the other 
+  mechanisms described in this RFC.
+
+
+Technical Solution
+------------------
+
+We will essentially merge the MS_ERRORFILE and DEBUG/msDebug() mechanisms.
+The variable MS_ERRORFILE will specify the location of the output, with
+possible values being either a file path on disk, or one of "stderr" or
+"stdout". 
+
+The current DEBUG ON/OFF mechanism that controls msDebug() output will
+also be extended to support multiple DEBUG levels.
+
+In order to keep the implementation relatively simple and efficient, the 
+output file handle will be kept open with a reference to it in a global 
+variable and will be closed only in msCleanup(). This means that if two 
+mapfiles are loaded with different MS_ERRORFILE settings then errors/debug
+statements for both will go to the same file (and the output file will change
+when the second mapfile is read).
+
+Setting MS_ERRORFILE
+--------------------
+
+The variable MS_ERRORFILE will specify the location of the output, with
+possible values being either a file path on disk, or one of "stderr" or
+"stdout". 
+
+It will be possible to specify MS_ERRORFILE either as an environment variable
+or via a CONFIG directive inside a mapfile:
+
+::
+
+  CONFIG  "MS_ERRORFILE" "/tmp/mapserver.log"
+
+or
+
+::
+
+  CONFIG  "MS_ERRORFILE" "stderr"
+
+
+If both the MS_ERRORFILE environment variable is set and a CONFIG MS_ERRORFILE
+is also set, then the CONFIG directive takes precedence.
+
+If MS_ERRORFILE is not set then error/debug logging is disabled. During 
+parsing of a mapfile, error/debug logging may become available only *after*
+the MS_ERRORFILE directive has been parsed.
+
+
+DEBUG levels
+------------
+
+The current DEBUG ON/OFF mechanism, at the layer and map level will be 
+extended to support multiple debug levels as follows. The default is 
+DEBUG OFF (Level 0):
+
+
+* Level 0: Errors only (DEBUG OFF, or DEBUG 0)
+
+  In level 0, only msSetError() calls are logged to 
+  MS_ERORFILE. No msDebug() output at all. This is the default and 
+  corresponds to the original behavior of MS_ERRORFILE in MapServer 4.x
+
+* Level 1: Errors and Notices (DEBUG ON, or DEBUG 1)
+
+  Level 1 includes all output from Level 0 plus msDebug() warnings 
+  about common pitfalls, failed assertions or non-fatal error situations 
+  (e.g. missing or invalid values for some parameters, missing shapefiles 
+  in tileindex, timeout error from remote WMS/WFS servers, etc.)
+
+* Level 2: Map Tuning (DEBUG 2)
+
+  Level 2 includes all output from Level 1 plus notices and timing information
+  useful for tuning mapfiles and applications
+
+* Level 3: Verbose Debug (DEBUG 3)
+
+  All of Level 2 plus some debug output useful in troubleshooting problems
+  such as WMS connection URLs being called, database connection calls, etc.
+
+* Level 4: Very Verbose Debug (DEBUG 4)
+
+  Level 3 plus even more details...
+
+* Level 5: Very Very Verbose Debug (DEBUG 5)
+
+  Level 4 plus any msDebug() output that might be more useful to 
+  the developers than to the users.
+
+
+Modifications to the source code
+--------------------------------
+
+...TODO...
+
+MapScript Implications
+----------------------
+
+No direct implication. Setting MS_ERRORFILE will enable debug output in 
+MapScript as well.
+
+Note that output to stderr or stdout may not work as expected in some 
+scripting environments and we do not plan to make any special efforts to
+support those special cases as part of this RFC. However, logging to a file
+on disk will work with all MapScript flavours.
+
+
+Files affected
+--------------
+
+::
+
+ map.h
+ mapfile.c
+ maperror.c
+
+
+Several source files with msDebug() calls in them may also need to be 
+edited to adjust the debug level at which the various msDebug() calls kick in.
+
+
+Backwards compatibility issues
+------------------------------
+
+* The MapServer 4.x and older MS_ERRORFILE continues to work as before by 
+  default
+
+* The DEBUG ON/OFF mechanism continues to work as before. However some 
+  msDebug() output from previous versions of MapServer may require a higher
+  debug level in order to be enabled.
+
+Bug ID
+------
+
+* 709: https://trac.osgeo.org/mapserver/ticket/709
+
+* 1333: https://trac.osgeo.org/mapserver/ticket/1333
+
+* 1783: https://trac.osgeo.org/mapserver/ticket/1783
+
+Voting history
+--------------
+
+No vote yet.
+
+Questions/Comments from the review period
+-----------------------------------------
+
