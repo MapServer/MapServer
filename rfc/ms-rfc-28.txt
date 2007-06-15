@@ -12,7 +12,11 @@
 Overview
 --------
 
-MapServer 4.10 and older used to have multiple LOG/DEBUG output mechanisms that did not play well together. In order to improve the usability of the software this RFC proposes a new LOG/DEBUG output mechanism with more control on the output location (logfile or stderr) and that works under all supported web servers.
+MapServer 4.10 and older used to have multiple LOG/DEBUG output mechanisms
+that did not play well together. In order to improve the usability of the
+software this RFC proposes a new LOG/DEBUG output mechanism with more
+control on the output location (logfile or stderr) and that works under
+all supported web servers.
 
 Inventory of existing mechanisms
 --------------------------------
@@ -69,17 +73,32 @@ also be extended to support multiple DEBUG levels.
 
 In order to keep the implementation relatively simple and efficient, the 
 output file handle will be kept open with a reference to it in a global 
-variable and will be closed only in msCleanup(). This means that if two 
-mapfiles are loaded with different MS_ERRORFILE settings then errors/debug
+variable in the context of the current request and will be closed only in 
+msCleanup(). This means that if two mapfiles are loaded 
+in the same request with different MS_ERRORFILE settings then errors/debug
 statements for both will go to the same file (and the output file will change
 when the second mapfile is read).
+
+Note: the output file handle will be global in the context of the current
+request only and not global across threads, this will be done using the same
+mechanism currently used by msGetErrorObj() in maperror.c.
 
 Setting MS_ERRORFILE
 --------------------
 
 The variable MS_ERRORFILE will specify the location of the output, with
-possible values being either a file path on disk, or one of "stderr" or
-"stdout". 
+possible values being either a file path on disk, or one of the following 
+special values:
+
+* "stderr" to send output to standard error (under Apache that's the Apache
+  error_log file).
+
+* "stdout" to send output to standard output, combined with the rest of 
+  MapServer's output
+
+* "windowsdebug" to send output to the Windows OutputDebugString API, allowing
+  the use of external programs like SysInternals debugview to display the 
+  debug output.
 
 It will be possible to specify MS_ERRORFILE either as an environment variable
 or via a CONFIG directive inside a mapfile:
@@ -194,6 +213,8 @@ Bug ID
 
 * 1783: https://trac.osgeo.org/mapserver/ticket/1783
 
+* 2124: http://trac.osgeo.org/mapserver/ticket/2124
+
 Voting history
 --------------
 
@@ -201,4 +222,5 @@ No vote yet.
 
 Questions/Comments from the review period
 -----------------------------------------
+
 
