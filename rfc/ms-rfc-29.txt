@@ -1,0 +1,142 @@
+====================================================
+  MS RFC 29: Dynamic Charting Capability
+====================================================
+
+:Date: 2007/06/15
+:Author: Daniel Morissette
+:Contact: dmorissette@mapgears.com
+:Last Edited: 2007/06/15
+:Status: Draft
+:Version: MapServer 5.0
+
+Overview
+--------
+
+This RFC proposes the addition of simple dynamic charting capability in 
+MapServer 5.0 by integrating the patch proposed by Thomas Bonfort in 
+ticket #1800.
+
+Note: this is already implemented and working (as a patch in ticket 1800).
+This RFC is to document the new feature and (hopefully) include it in the
+MapServer 5.0 release.
+
+Technical Solution
+------------------
+
+A new CHART layer type is created and the initial implementation would
+support pie and bar charts.
+
+PROCESSING directives are used to set the layer's CHART_TYPE (pie or bar) and 
+CHART_SIZE,
+
+Then we have one class for each pie slice or bar from the chart. Inside each 
+class, the STYLE COLOR defines the color of the pie slice or bar, and the
+STYLE SIZE is used to set the size (value) of each pie slice or bar. 
+This is mostly useful in combination with attribute binding of course. e.g.
+
+Example:
+
+::
+
+  LAYER
+      NAME "Ages"
+      TYPE CHART
+      CONNECTIONTYPE postgis
+      CONNECTION "blabla"
+      DATA "the_geom from demo"
+      PROCESSING "CHART_TYPE=pie"
+      PROCESSING "CHART_SIZE=30"
+      STATUS ON
+      CLASS
+        NAME "Population Age 0-19"
+        STYLE
+          SIZE [v1006]
+          COLOR 255 244 237
+        END
+      END
+      CLASS
+        NAME "Population Age 20-39"
+        STYLE
+          SIZE [v1007]
+          COLOR 255 217 191
+        END
+      END
+      CLASS
+        NAME "Population Age 40-59"
+        STYLE
+          SIZE [v1008]
+          COLOR 255 186 140
+        END
+      END 
+  END
+
+The following attachment to ticket 1800 contains a sample map produced
+by the layer definition above:
+
+https://trac.osgeo.org/mapserver/attachment/ticket/1800/chart-test.jpg
+
+The layer's legend behaves as usual and produces one color sample per class.
+
+Issues and limitations
+----------------------
+
+* The initial implementation supports only GD output formats. However 
+  Thomas Bonfort has offered to implement an AGG version once support 
+  for it is available. This is considered a future enhancement outside 
+  of the scope of this RFC.
+
+* Should we use special keywords instead of PROCESSING parameters to specify
+  the chart type and size?
+
+* The values of each class are taken from the SIZE of the corresponding STYLE,
+  which is semantically awkward (but that saves us from creating new keywords)
+
+
+MapScript Implications
+----------------------
+
+The new CHART type (constant) would be exposed via MapScript. There are no
+other MapScript implications.
+
+
+Files affected
+--------------
+
+::
+
+ map.h          (new MS_LAYER_CHART constant)
+ mapfile.c
+ maplexer.l     (new CHART keyword)
+ mapdraw.c      (hooks to call chart rendering code)
+ mapchart.c     (implementation of chart rendering)
+ maplegend.c    (add case for chart layer type)
+ Makefile.in    (addition of mapchart.o)
+ makefile.vc    (addition of mapchart.obj)
+
+
+Note:
+
+The patch from ticket 1800 also contains changes to mappostgis.c and 
+mapmygis.c to treat layer type CHART the same way as POLYGON but I'm not
+exactly sure why or if the same needs to be done for other data sources.
+This will need further review before being released.
+
+Backwards compatibility issues
+------------------------------
+
+None. This is a new feature.
+
+Bug ID
+------
+
+* 1800: https://trac.osgeo.org/mapserver/ticket/1800
+
+
+Voting history
+--------------
+
+No vote yet.
+
+Questions/Comments from the review period
+-----------------------------------------
+
