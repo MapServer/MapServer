@@ -6,7 +6,7 @@
  * Author:   Tom Kralidis (tomkralidis@hotmail.com)
  *
  ******************************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota.
+ * Copyright (c) 2006 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
