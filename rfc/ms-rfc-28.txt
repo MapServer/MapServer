@@ -204,6 +204,9 @@ Backwards compatibility issues
   msDebug() output from previous versions of MapServer may require a higher
   debug level in order to be enabled.
 
+* DEBUG=MSDEBUG will disappear from the version string since debugging 
+  will always be compiled in
+
 Bug ID
 ------
 
@@ -223,4 +226,9 @@ No vote yet.
 Questions/Comments from the review period
 -----------------------------------------
 
+* Can we catch the output of OGR/GDAL's CPLDebug calls, perhaps when
+  the map-level debug level is >= 3?
 
+* It would be helpful if it were possible to turn DEBUG ON right from the
+  start, so debug/log messages could be generated during the loading and
+  parsing of the map file. (Perhaps a MS_DEBUGLEVEL environment variable?)
