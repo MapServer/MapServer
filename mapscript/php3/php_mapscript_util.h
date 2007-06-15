@@ -27,38 +27,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.9  2005/01/04 22:55:27  assefa
- * Add PHP5 support for windows (Bug 1100).
- *
- * Revision 1.8  2004/03/09 04:04:44  dan
- * Added ability to set string class members to null (bug 591)
- *
- * Revision 1.7  2002/08/15 20:47:56  dan
- * Fixed IF_SET_DOUBLE and IF_SET_STRING macros to convert param type
- *
- * Revision 1.6  2002/03/08 23:16:41  assefa
- * Add PHP4.1 support.
- *
- * Revision 1.5  2002/03/07 22:31:01  assefa
- * Add template processing functions.
- *
- * Revision 1.4  2001/09/13 20:56:27  dan
- * Added _phpms_fetch_property_resource().
- *
- * Revision 1.3  2001/01/09 05:24:41  dan
- * Fixes to build with PHP 4.0.4
- *
- * Revision 1.2  2000/09/08 21:27:54  dan
- * Added _phpms_object_init()
- *
- * Revision 1.1  2000/09/06 19:44:07  dan
- * Ported module to PHP4
- *
- *
- */
+ **********************************************************************/
+ 
 
 #if defined (PHP4) || defined (PHP5)
 #include "php.h"

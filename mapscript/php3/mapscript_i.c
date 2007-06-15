@@ -6,139 +6,27 @@
  *
  * $Id$
  *
- * $Log$
- * Revision 1.107  2007/04/24 08:55:32  umberto
- * RFC24: added styleObj support
+ **********************************************************************
+ * Copyright (c) 2000, 2007, Daniel Morissette, DM Solutions Group
  *
- * Revision 1.106  2007/04/19 07:34:09  umberto
- * RFC24: more fixes, allow php to build
- *
- * Revision 1.105  2007/03/23 15:12:37  assefa
- * Remove call to msDrawQueryMap (bug 2017).
- *
- * Revision 1.104  2007/03/22 04:40:25  sdlime
- * Merged msDrawMap and msDrawQueryMap, fixes bug 2017.
- *
- * Revision 1.103  2006/12/13 16:41:15  dan
- * Added shapeObj.getLabelPoint() (bug 1979)
- *
- * Revision 1.102  2006/09/01 02:30:15  sdlime
- * Dan beat me to the bug 1428 fix. I took a bit futher by removing msLayerGetFilterString() from layerobject.c and refer to that in the mapscript getFilter/getFilterString methods.
- *
- * Revision 1.101  2006/08/31 20:48:47  dan
- * Fixed MapScript getExpressionString() that was failing on expressions
- * longer that 256 chars (SWIG) and 512 chars (PHP). Also moved all that
- * code to a msGetExpressionString() in mapfile.c (bug 1428)
- *
- * Revision 1.100  2006/08/29 01:56:53  sdlime
- * Fixed buffer overflow with POSTs and huge numbers of name/value pairs. Reduced MAX_PARAMS (now MS_MAX_CGI_PARAMS) from 10,000 to 100.
- *
- * Revision 1.99  2006/08/22 15:55:03  assefa
- * Adding geos functions to php mapscript (Bug 1327)
- *
- * Revision 1.98  2006/05/29 19:02:01  assefa
- * Update PHP mapscript to support addition of MapScript WxS Services
- * (RFC 16, Bug 1790)
- *
- * Revision 1.97  2006/05/17 16:04:55  assefa
- * Add geos functions union, difference and intersection (Bug 1778)
- *
- * Revision 1.96  2006/01/20 15:03:35  assefa
- * Add containsshape function using uderlying GEOS function (Bug 1623).
- *
- * Revision 1.95  2005/10/13 16:00:36  assefa
- * Add support for whichshape and nextshape (Bug 1491)
- * Adsd support for config setting/getting at the map level (Bug 1487).
- *
- * Revision 1.94  2005/09/08 19:24:50  assefa
- * Expose GEOS operations through PHP Mapscript (Bug 1327).
- * Initially only functions buffer and convexhull on a shape object
- * are available.
- *
- * Revision 1.93  2005/06/06 05:48:20  dan
- * Added $layerObj->removeClass() (was already in SWIG MapScript)
- * Added $layerObj->removeClass() to PHP MapScript (was already in SWIG
- * MapScript, bug 1373)
- *
- * Revision 1.92  2005/04/21 15:09:29  julien
- * Bug1244: Replace USE_SHAPE_Z_M by USE_POINT_Z_M
- *
- * Revision 1.91  2005/04/14 15:17:15  julien
- * Bug 1244: Remove Z and M from point by default to gain performance.
- *
- * Revision 1.90  2004/11/12 18:43:01  assefa
- * rectObj memebers are initialized ot -1 (Bug 788).
- *
- * Revision 1.89  2004/11/02 21:03:36  assefa
- * Add a 2nd optional argument to LoadMapContext function (Bug 1023).
- *
- * Revision 1.88  2004/10/28 18:16:17  dan
- * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
- * when requested layer was out of scale (bug 1006)
- *
- * Revision 1.87  2004/10/26 17:42:48  dan
- * Temporarily force layer status to MS_ON in layer->query*() methods and
- * restore status before returning (bug 925)
- *
- * Revision 1.86  2004/10/09 18:22:41  sean
- * towards resolving bug 339, have implemented a mutex acquiring wrapper for
- * the loadExpressionString function.  the new msLoadExpressionString should be
- * used everywhere outside of the mapfile loading phase, and the previous
- * loadExpressionString function should be used within the mapfile loading
- * phase.
- *
- * Revision 1.85  2004/10/08 22:40:07  dan
- * Moved mapscript's prepareImage() logic into msPrepareImage() which is
- * also going to be used by msDrawMap(). (bug 945)
- *
- * Revision 1.84  2004/08/12 17:18:26  assefa
- * Check if string is null in classObj_getExpressionString.
- *
- * Revision 1.83  2004/07/28 22:03:50  dan
- * Added layer->getFilter() to PHP MapScript (bug 787)
- *
- * Revision 1.82  2004/07/28 21:45:10  assefa
- * Function msImageCreate have an additional argument (map object).
- *
- * Revision 1.81  2004/07/22 19:44:10  assefa
- * Function names have cganhed to use the ms prefix.
- *
- * Revision 1.80  2004/06/23 20:17:57  dan
- * Updated current methods for changes to the hashTableObj (bug 737)
- *
- * Revision 1.79  2004/05/31 15:35:03  dan
- * Added setRotation() (bug 702) and fixed layer->drawQuery() (bug 695)
- *
- * Revision 1.78  2004/04/16 20:19:39  dan
- * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
- *
- * Revision 1.77  2004/02/16 19:19:20  dan
- * Free expression in setExpression() if expression is null or empty.
- *
- * Revision 1.76  2004/01/30 17:01:12  assefa
- * Add function deletestyle on a class object.
- *
- * Revision 1.75  2004/01/13 23:52:39  assefa
- * Add functions to move styles up and down.
- * Add function to clone style.
- *
- * Revision 1.74  2004/01/12 19:56:18  assefa
- * Add moveclassup and moveclassdown on a layer object.
- * Add clone function for the class object.
- * Add a 2nd optional argument for function ms_newclassobj to be able
- * to pass a class as argument.
- *
- * Revision 1.73  2004/01/05 21:27:14  assefa
- * applySLDURL and applySLD on a layer object can now take an optional
- * argument which is the name of the NamedLayer to use to style the layer.
- *
- * ...
- *
- * Revision 1.3  2000/03/11 21:53:27  daniel
- * Ported extension to MapServer version 3.3.008
- *
- */
-
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies of this Software or works derived from this Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+ **********************************************************************/ 
 
 #include "php_mapscript.h"
 
