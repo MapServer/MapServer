@@ -1,0 +1,94 @@
+====================================================
+  MS RFC 30: Support for WMS 1.3.0
+====================================================
+
+:Date: 2007/06/15
+:Author: Daniel Morissette
+:Contact: dmorissette@mapgears.com
+:Last Edited: 2007/06/15
+:Status: Draft
+:Version: MapServer 5.0
+
+Overview
+--------
+
+This RFC documents the changes required in order to upgrade MapServer's OGC
+WMS support to version 1.3.0 of the specification.
+
+MapServer already includes mechanisms to support multiple WMS versions (and
+already supports WMS versions 1.0.0, 1.1.0 and 1.1.1) so in theory this 
+upgrade should be straightforward and shouldn't require a RFC. 
+Unfortunately, WMS 1.3.0 contains some tricky changes that while they are 
+not exactly backwards incompatible are likely to make the life of users of
+WMS miserable.
+
+This RFC is mostly to document those changes and the way MapServer deals 
+with them.
+
+Technical Solution
+------------------
+
+The main issue introduced by WMS 1.3.0 is the change in the way it handles
+axis order for several SRS. This has an impact on the way the
+BBOX is specified in WMS requests and in Capabilities documents and in
+how the CONNECTIONTYPE WMS code interacts with remote servers.
+
+In previous versions of WMS, for any SRS the first axis
+was the easting (x or lon) and the second axis was the northing (y or lat). 
+Starting with WMS 1.3.0, some SRS such as the very popular
+EPSG:4326 have their axis reversed and the axis order becomes lon, lat 
+instead of lat, lon. This change in WMS 1.3.0 was done in order to align 
+with the definitions from the EPSG database (a requirement to make WMS
+an ISO specification).
+
+This change is sure to confuse simple clients that used to treat all 
+SRS the same way. MapServer and PROJ will need to be extended to carry
+information about the axis order of all EPSG SRS codes and treat them
+using the correct axis order.
+
+New SRS codes in the CRS:xxxx space have also been added by WMS 1.3.0
+that will need to be supported by MapServer
+
+All the above need to be done in a way that allows continued support for
+older versions of the WMS specification (1.0.0 to 1.1.1) and will have 
+the least impact on existing WMS services.
+
+At this point the exact implementation details have not all been sorted out.
+They will be documented here as we refine them.
+
+
+MapScript Implications
+----------------------
+
+None. This affects only the WMS server interface and WMS CONNECTION type.
+
+Files affected
+--------------
+
+::
+
+ mapwms.c
+ mapwmslayer.c
+ ...
+
+
+Backwards compatibility issues
+------------------------------
+
+* The change in the way the axis order is handled is likely to cause lots
+  of confusion.
+
+Bug ID
+------
+
+* TBD
+
+
+Voting history
+--------------
+
+No vote yet.
+
+Questions/Comments from the review period
+-----------------------------------------
+
