@@ -23,7 +23,15 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- ****************************************************************************/
+ ******************************************************************************
+ *
+ * Derivation From GD
+ * ------------------
+ * Some code (notably msImageCopyMerge()) are directly derived from GD.  See
+ * The mapserver/GD-COPYING file for the GD license.  Use of this code in this
+ * manner is compatible with the MapServer license.
+ *
+ */
 
 #include "map.h"
 #include "mapthread.h"
