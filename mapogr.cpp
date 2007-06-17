@@ -2286,6 +2286,9 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   // This is a multipart symbology, so pen defn goes in the
                   // overlaysymbol params (also set outlinecolor just in case)
+                  if (msMaybeAllocateStyle(c, 1)) {
+                      return(MS_FAILURE);
+                  }
                   c->styles[0]->outlinecolor = c->styles[1]->outlinecolor = 
                       oPenColor;
                   c->styles[1]->size = nPenSize;
