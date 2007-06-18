@@ -3538,6 +3538,7 @@ static gdImagePtr msImageCreateWithPaletteGD( gdImagePtr img24, const char *pale
                                gdPImgPalette->green[c],  
                                gdPImgPalette->blue[c]);
       }
+      gdImageDestroy(gdPImgPalette);
   }
   /*add colors from the palette file*/
   for (i=0; i<ncolors;i++)
