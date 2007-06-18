@@ -2059,6 +2059,9 @@ int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
 
 {
     FILE *stream;
+    char workbuffer[5000];
+    int nSize=0, size=0, iIndice=0,i; 
+
 DEBUG_IF printf("msSaveImageIM\n<BR>");
 
 if(filename != NULL && strlen(filename) > 0) {
@@ -2100,7 +2103,27 @@ DEBUG_IF printf("FLEN %d<BR>\n", (int)strlen(img->img.imagemap));
 	  } else {
 	    msIO_fprintf(stream, "<map name=\"%s\" width=\"%d\" height=\"%d\">\n", mapName, img->width, img->height);
     	  }
-	  msIO_fprintf(stream, img->img.imagemap);
+          nSize = sizeof(workbuffer);
+
+          size = strlen(img->img.imagemap);
+          if (size > nSize)
+          {
+              iIndice = 0;
+              while ((iIndice + nSize) <= size)
+              {
+                  snprintf(workbuffer, sizeof(workbuffer), "%s", img->img.imagemap+iIndice );
+                  workbuffer[nSize-1] = '\0';
+                  msIO_fprintf(stream, workbuffer);
+                  iIndice +=nSize-1;
+              }
+              if (iIndice < size)
+              {
+                  sprintf(workbuffer, "%s", img->img.imagemap+iIndice );
+                  msIO_fprintf(stream, workbuffer);
+              }
+          }
+          else
+            msIO_fprintf(stream, img->img.imagemap);
 	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0){
 		  if (dxf == 2)
 			  msIO_fprintf(stream, "END");
