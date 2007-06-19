@@ -71,7 +71,7 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
     psRootNode = msOWSCommonExceptionReport(msEncodeHTMLEntities(msOWSGetSchemasLocation(map)), pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, msEncodeHTMLEntities(msGetErrorString("\n")));
 
     xmlDocSetRootElement(psDoc, psRootNode);
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows",  BAD_CAST "ows"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
 
     msIO_printf("Content-type: text/xml%c%c",10,10);
     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
@@ -993,7 +993,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     //psNameSpace = xmlNewNs(psRootNode, "http://www.opengis.net/sos",  "sos");
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/2001/XMLSchema-instance", BAD_CAST "xsi"));
@@ -2005,7 +2005,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     psRootNode = xmlNewNode(NULL, BAD_CAST "ObservationCollection");
     xmlDocSetRootElement(psDoc, psRootNode);
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/2001/XMLSchema-instance", BAD_CAST "xsi"));
