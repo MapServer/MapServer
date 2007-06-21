@@ -5,7 +5,7 @@
 :Date: 2007/06/15
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/06/15
+:Last Edited: 2007/06/20
 :Status: Draft
 :Version: MapServer 5.0
 
@@ -31,7 +31,7 @@ CHART_SIZE,
 
 Then we have one class for each pie slice or bar from the chart. Inside each 
 class, the STYLE COLOR defines the color of the pie slice or bar, and the
-STYLE SIZE is used to set the size (value) of each pie slice or bar. 
+STYLE SIZE is used to set the relative size (value) of each pie slice or bar. 
 This is mostly useful in combination with attribute binding of course. e.g.
 
 Example:
@@ -69,6 +69,9 @@ Example:
         END
       END 
   END
+
+
+In the example above, if for a given shape we have v1006=1000, v1007=600 and v1008=400 then the actual pie slices for each class will be respectively 50%, 30% and 20% of the total pie size. If we produced bar charts then the values would represent the relative height of the bars with the largest value (highest bar) being 100% of the chart height.
 
 The following attachment to ticket 1800 contains a sample map produced
 by the layer definition above:
@@ -140,3 +143,12 @@ No vote yet.
 Questions/Comments from the review period
 -----------------------------------------
 
+* Q: Does this assume a POLYGON data type input only? Can LINE and POINT data sources also be supported?
+
+  A: The current implementation works only for polygon data sources. I could extend it to work on point data sources as well fairly easily I think.
+
+  I'm not sure about line data sources though. I guess we could do like we do for ANNOTATION layers and use msPolylineLabelPoint() to determine the location of the chart. 
+
+* Q: Could we support attribute binding in CHART_SIZE = [size]? This would allow you to show the relative size of hits at a point and have the chart show the percentage contributions in the wedges.
+
+  A: While this would be a nice feature, we will keep it as a potential enhancement for a future release since attribute binding is not available for PROCESSING directives.
