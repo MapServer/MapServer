@@ -5,7 +5,7 @@
 :Date: 2007/06/15
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/06/15
+:Last Edited: 2007/06/21
 :Status: Draft
 :Version: MapServer 5.0
 
@@ -81,7 +81,8 @@ Backwards compatibility issues
 Bug ID
 ------
 
-* TBD
+* 473: http://trac.osgeo.org/mapserver/ticket/473
+
 
 
 Voting history
@@ -92,3 +93,8 @@ No vote yet.
 Questions/Comments from the review period
 -----------------------------------------
 
+* Q: Can libxml2 be used to generate XML responses to continue the work started in mapowscommon.c?
+
+  A: I'll keep libxml2 in mind during the implementation, but I do not plan to refactor and risk breaking any code to convert it to libxml2 as part of this upgrade.
+
+  Since WMS 1.3.0 doesn't implement OWS common, it won't benefit from any of the code that's already using libxml2. It will actually mostly reuse existing printf-based code that's already well tested and working. I think the right time to switch to libxml2 for WMS would be when it will support OWS common and then there will be real benefits by reusing functions from mapowscommon.c. 
