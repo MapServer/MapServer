@@ -317,7 +317,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         (bOnlySpatialFilter && !bIsBBoxFilter && !bPointQuery && !bShapeQuery))
       msQueryByRect(map, lp->index, sQueryRect);
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
-             && psQueryShape->line[0].numpoints > 0 && dfDistance >=0)
+             && psQueryShape->line[0].numpoints > 0)// && dfDistance >=0)
     {
         if (bUseGeos)
         {
@@ -338,6 +338,8 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 msGEOSCleanup();
 #endif
             }
+            else
+              msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
         } 
         else
         {
@@ -1672,7 +1674,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                      strcasecmp(psXMLNode->pszValue, "Overlaps") == 0)
             {
                 shapeObj *psShape = NULL;
-                int  bLine = 0, bPolygon = 0;
+                int  bLine = 0, bPolygon = 0, bPoint=0;
 
                 
                 CPLXMLNode *psGMLElement = NULL;
@@ -1681,13 +1683,19 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 psGMLElement = CPLGetXMLNode(psXMLNode, "Polygon");
                 if (psGMLElement)
                   bPolygon = 1;
-                else
+                else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
                 {
-                    psGMLElement= CPLGetXMLNode(psXMLNode, "LineString");
                     if (psGMLElement)
                       bLine = 1;
-                }		
-                
+                }
+		else
+                {
+                     psGMLElement = CPLGetXMLNode(psXMLNode, "Point");
+                     if (!psGMLElement)
+                       psGMLElement =  CPLGetXMLNode(psXMLNode, "PointType");
+                     if (psGMLElement)
+                       bPoint =1;
+                }
 
                 if (psGMLElement)
                 {
@@ -1704,6 +1712,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                         psFilterNode->psLeftNode->pszValue = strdup("Geometry");
 
                         psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
+                        if (bPoint)
+                          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POINT;
                         if (bLine)
                           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_LINE;
                         else if (bPolygon)
