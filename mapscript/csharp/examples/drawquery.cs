@@ -44,6 +44,21 @@ class DrawQuery
         }
     }
 
+    private static bool IsLayerQueryable(layerObj layer)
+    {
+        if ( layer.type == MS_LAYER_TYPE.MS_LAYER_TILEINDEX )
+            return false;
+
+        if(layer.template != null && layer.template.Length > 0) return true;
+
+        for(int i=0; i<layer.numclasses; i++) 
+        {
+            if(layer.getClass(i).template != null && layer.getClass(i).template.Length > 0)
+                                                        return true;
+        }
+        return false;
+    }
+
     public static void QueryByAttribute(string qstring, mapObj map, bool zoomToResults)
     {
         Console.WriteLine("\nPerforming QueryByAttribute:");
@@ -54,7 +69,7 @@ class DrawQuery
             for (int i = 0; i < map.numlayers; i++)
             {
                 layer = map.getLayer(i);
-                if (layer.connection != null)
+                if (layer.connection != null && IsLayerQueryable(layer))
                 {
                     Console.WriteLine("Layer [" + i + "] name: " + layer.name);
                     BuildQuery(layer, qstring);
@@ -92,7 +107,7 @@ class DrawQuery
     {
         if (layer != null && layer.map != null)
         {
-            layer.open();
+            /*layer.open();
             string qs = "";
             string att = "";
             for (int i=0; i < layer.numitems; i++)
@@ -109,7 +124,9 @@ class DrawQuery
                 qs += "'[" + layer.getItem(i) + "]'='" + qstring + "'";
             }
             qs += ")";
-            layer.close();
+            layer.close();*/
+            string qs = qstring;
+            string att = null;
 
             Console.WriteLine("Query string: " + qs);
             
