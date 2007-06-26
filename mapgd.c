@@ -36,7 +36,6 @@
 #include "map.h"
 #include "mapthread.h"
 
-
 #include <time.h>
 
 #ifdef _WIN32
@@ -49,13 +48,11 @@ MS_CVSID("$Id$")
 static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
 static unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
-
 /*
  * This function is simlar to msImageTruetypePolyline. It renders pixmap symbols
  * along a line. Uses the GAP parameter for distances betewwn symbols.
  */
-int msImagePixmapPolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, 
-                          double scalefactor)
+int msImagePixmapPolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
     int i,j,offset_x, offset_y, width, height;
     double theta, length, current_length;
@@ -2976,7 +2973,6 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x, y+1, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y, string);
-      
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);      
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
@@ -3069,9 +3065,9 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
   double size;
   int bbox[8];
   int i;
-  
-  if ( !string ) return(0); /* do nothing */
-  if ( strlen(string) == 0 ) return(0); /* do nothing */
+
+  if (!string) return(0); /* do nothing */
+  if (strlen(string) == 0) return(0); /* do nothing */
 
   if(label->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->color));
   if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->outlinecolor));
@@ -3079,7 +3075,8 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
 
   if(label->type == MS_TRUETYPE) {
     char *error=NULL, *font=NULL;
-    char s[2];
+    wchar_t *wstring=NULL;
+    char s[7]; /* UTF-8 characters can be up to 6 bytes wide */
     
     size = label->size*scalefactor;
     size = MS_MAX(size, label->minsize);
@@ -3107,43 +3104,34 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
       gdImageAlphaBlending( img, 1 );
     }
       
-
     /* Iterate over the label line and draw each letter.  First we render
        the shadow, then the outline, and finally the text.  This keeps the
        entire shadow or entire outline below the foreground. */
+    wstring = (wchar_t *) malloc((labelpath->path.numpoints + 1)*sizeof(wchar_t));
+    mbstowcs(wstring, string, (labelpath->path.numpoints + 1));
     
     for (i = 0; i < labelpath->path.numpoints; i++) {
-      s[0] = string[i];
-      s[1] = '\0';
-      
+      int x, y;
+      double theta;
+      int numbytes;
+
+      numbytes = wctomb(s, wstring[i]);
+      s[numbytes] = '\0';
+
+      theta = labelpath->angles[i];
+      x = MS_NINT(labelpath->path.point[i].x);
+      y = MS_NINT(labelpath->path.point[i].y);
+
       if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
-        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size,
-                                labelpath->angles[i],
-                                labelpath->path.point[i].x+label->shadowsizex,
-                                labelpath->path.point[i].y+label->shadowsizey, s);
+        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, theta, x+label->shadowsizex, y+label->shadowsizey, s);
         if(error) {
           msSetError(MS_TTFERR, error, "msDrawTextLineGD()");
           return(-1);
         }
       }
-    }
 
-    /* Render the outline */
-    for (i = 0; i < labelpath->path.numpoints; i++) {
-      int x, y;
-      double theta;
-      s[0] = string[i];
-      s[1] = '\0';
-
-      theta = labelpath->angles[i];
-      x = MS_NINT(labelpath->path.point[i].x);
-      y = MS_NINT(labelpath->path.point[i].y);
-      
       if(label->outlinecolor.pen >= 0) { /* handle the outline color */
-        int os; /* outline distance */
-        os = MS_NINT(ceil(size/10.0));
-
-        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x, y-os, s);
+        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x, y-1, s);
         if(error) {
           if( gdImageTrueColor(img) )
             gdImageAlphaBlending( img, oldAlphaBlending );
@@ -3151,34 +3139,26 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
           return(-1);
         }
       
-        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x, y+os, s);
-        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+os, y, s);
-        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-os, y, s);
-      
-        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-os, y-os, s);      
-        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-os, y+os, s);
-        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+os, y-os, s);
-        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+os, y+os, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x, y+1, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+1, y, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-1, y, s);      
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-1, y-1, s);      
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x-1, y+1, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+1, y-1, s);
+        gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, theta, x+1, y+1, s);
       }
 
-    }
-
-    /* Render the foreground */
-    for (i = 0; i < labelpath->path.numpoints; i++) {      
-      s[0] = string[i];
-      s[1] = '\0';
-    
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, labelpath->angles[i], labelpath->path.point[i].x, labelpath->path.point[i].y, s);
-      
+      /* Render the foreground */
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, theta, x, y, s);     
     }    
 
-    /* Uncomment this to see the label bounds */
-/*     imagePolyline(img, &(labelpath->bounds), label->color.pen, 0,0); */
-    
-    if( gdImageTrueColor(img) )
-      gdImageAlphaBlending( img, oldAlphaBlending );
+    free(wstring);
 
-    
+    /* Uncomment this to see the label bounds */
+    /* imagePolyline(img, &labelpath->bounds, label->color.pen, 0,0); */
+
+    if(gdImageTrueColor(img))
+      gdImageAlphaBlending( img, oldAlphaBlending );
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextGD()");
     return(-1);
