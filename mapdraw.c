@@ -606,30 +606,30 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   int retcode=MS_SUCCESS;
   int oldAlphaBlending=0;  /* allow toggling of gd alpha blending (bug 490) */
 
-  if (!msLayerIsVisible(map, layer))
-      return MS_SUCCESS;  /* Nothing to do, layer is either turned off, out of */
-                          /* scale, has no classes, etc. */
+  if(!msLayerIsVisible(map, layer))
+    return MS_SUCCESS;  
 
-  /* Inform the rendering device that layer draw is starting. */
+  /* inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
 
-  if ( MS_RENDERER_GD(image_draw->format) ) {
-    /* Create a temp image for this layer opacity */
-    if (layer->opacity > 0 && layer->opacity <= 100) {
-      msApplyOutputFormat( &transFormat, image->format, 
-                           MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-      /* really we need an image format with opacity enabled, right? */
-      image_draw = msImageCreateGD( image->width, image->height, 
-                                    transFormat,
-                                    image->imagepath, image->imageurl );
+
+  if(MS_RENDERER_GD(image_draw->format)) {
+
+    /* 
+    ** for layer-level opacity we render to a temp image
+    */
+    if(layer->opacity > 0 && layer->opacity) {
+      msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+      
+      image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl );
       if(!image_draw) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
         return(MS_FAILURE);
       }
       msImageInitGD(image_draw, &map->imagecolor);
-      /* We really just do this because gdImageCopyMerge() needs it later */
-      if( image_draw->format->imagemode == MS_IMAGEMODE_PC256 )
-          gdImageColorTransparent(image_draw->img.gd, 0);
+      
+      if(image_draw->format->imagemode == MS_IMAGEMODE_PC256) /* gdImageCopyMerge() needs this later */
+        gdImageColorTransparent(image_draw->img.gd, 0);
     }
 
     /* Bug 490 - switch alpha blending on for a layer that requires it */
@@ -639,89 +639,76 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
   }
 #ifdef USE_AGG
-  else if ( MS_RENDERER_AGG(image_draw->format) ) {
-    /* Create a temp image for this layer tranparency */
-    if (layer->opacity > 0 && layer->opacity <= 100) {
-      msApplyOutputFormat( &transFormat, image->format, 
-                           MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-      /* really we need an image format with opacity enabled, right? */
-      image_draw = msImageCreateAGG( image->width, image->height, 
-                                    transFormat,
-                                    image->imagepath, image->imageurl );
+  else if(MS_RENDERER_AGG(image_draw->format)) {
+    
+    /* 
+    ** for layer-level opacity we render to a temp image
+    */
+    if(layer->opacity > 0 && layer->opacity <= 100) {
+      msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+
+      image_draw = msImageCreateAGG(image->width, image->height, transFormat, image->imagepath, image->imageurl);
       if(!image_draw) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
         return(MS_FAILURE);
       }
       msImageInitAGG(image_draw, &map->imagecolor);
-      /* We really just do this because gdImageCopyMerge() needs it later */
-      if( image_draw->format->imagemode == MS_IMAGEMODE_PC256 )
-          gdImageColorTransparent(image_draw->img.gd, 0);
+
+      if(image_draw->format->imagemode == MS_IMAGEMODE_PC256) /* gdImageCopyMerge() needs this later */
+        gdImageColorTransparent(image_draw->img.gd, 0);
     }
 
     /* Bug 490 - switch alpha blending on for a layer that requires it */
     else if (layer->opacity == MS_GD_ALPHA) {
-        oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-        gdImageAlphaBlending(image->img.gd, 1);
+      oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+      gdImageAlphaBlending(image->img.gd, 1);
     }
   }
 #endif
-  /* Redirect procesing of some layer types. */
-  if(layer->connectiontype == MS_WMS) 
-  {
+
+  /* 
+  ** redirect procesing of some layer types. 
+  */
+  if(layer->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
-      retcode = msDrawWMSLayer(map, layer, image_draw);
+    retcode = msDrawWMSLayer(map, layer, image_draw);
 #else  
-      retcode = MS_FAILURE;
+    retcode = MS_FAILURE;
 #endif
-  }
-  else if(layer->type == MS_LAYER_RASTER) 
-  {
-      retcode = msDrawRasterLayer(map, layer, image_draw);
-  }
-  /* Must be a Vector layer */
-  else {
-      retcode = msDrawVectorLayer(map, layer, image_draw);
+  } else if(layer->type == MS_LAYER_RASTER) {
+    retcode = msDrawRasterLayer(map, layer, image_draw);
+  } else { /* vector layer */
+    retcode = msDrawVectorLayer(map, layer, image_draw);
   }
 
   /* Destroy the temp image for this layer tranparency */
-  if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 
-      && layer->opacity <= 100 ) {
+  if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 && layer->opacity <= 100 ) {
 
 #if GD2_VERS > 1 
-    msImageCopyMerge(image->img.gd, image_draw->img.gd, 
-                     0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->opacity);
+    msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
 #else
-    gdImageCopyMerge(image->img.gd, image_draw->img.gd, 
-                     0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->opacity);
+    gdImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
 #endif
-    msFreeImage( image_draw );
+    msFreeImage(image_draw);
 
     /* deref and possibly free temporary transparent output format.  */
-    msApplyOutputFormat( &transFormat, NULL, 
-                         MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+    msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 #ifdef USE_AGG
-  else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 
-      && layer->opacity <= 100 ) {
+  else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 && layer->opacity <= 100 ) {
 
 #if GD2_VERS > 1 
-    msImageCopyMerge(image->img.gd, image_draw->img.gd, 
-                     0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->opacity);
+    msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
 #else
-    gdImageCopyMerge(image->img.gd, image_draw->img.gd, 
-                     0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
-                     layer->opacity);
+    gdImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
 #endif
     msFreeImage( image_draw );
 
     /* deref and possibly free temporary transparent output format.  */
-    msApplyOutputFormat( &transFormat, NULL, 
-                         MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+    msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 #endif
+
   /* restore original alpha blending */
   else if (layer->opacity == MS_GD_ALPHA) {
     gdImageAlphaBlending(image->img.gd, oldAlphaBlending);

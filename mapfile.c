@@ -1155,7 +1155,7 @@ static void freeLabel(labelObj *label)
     msFree(label->bindings[i].item);
 }
 
-static int loadLabel(labelObj *label, mapObj *map)
+static int loadLabel(labelObj *label)
 {
   int symbol;
 
@@ -2044,7 +2044,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(LABEL):
       class->label.size = MS_MEDIUM; /* only set a default if the LABEL section is present */
-      if(loadLabel(&(class->label), map) == -1) return(-1);
+      if(loadLabel(&(class->label)) == -1) return(-1);
       break;
     case(MAXSCALE):      
       if(getDouble(&(class->maxscale)) == -1) return(-1);
@@ -3650,7 +3650,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       if(getInteger(&(legend->keyspacingy)) == -1) return(-1);
       break;  
     case(LABEL):
-      if(loadLabel(&(legend->label), map) == -1) return(-1);
+      if(loadLabel(&(legend->label)) == -1) return(-1);
       legend->label.angle = 0; /* force */
       break;
     case(OUTLINECOLOR):     
@@ -3803,7 +3803,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       if(getInteger(&(scalebar->intervals)) == -1) return(-1);
       break;
     case(LABEL):
-      if(loadLabel(&(scalebar->label), map) == -1) return(-1);
+      if(loadLabel(&(scalebar->label)) == -1) return(-1);
       scalebar->label.angle = 0;
       break;
     case(OUTLINECOLOR):      
