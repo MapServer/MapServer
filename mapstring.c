@@ -1030,6 +1030,9 @@ char *msGetEncodedString(const char *string, const char *encoding)
   char *outp, *out = NULL;
   size_t len, bufsize, bufleft, status;
 
+  if (encoding && strcasecmp(encoding, "UTF-8")==0)
+      return strdup(string);    /* Nothing to do: string already in UTF-8 */
+
   cd = iconv_open("UTF-8", encoding);
   if(cd == (iconv_t)-1) {
     msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).", 
