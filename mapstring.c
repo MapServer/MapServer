@@ -1075,3 +1075,93 @@ char *msGetEncodedString(const char *string, const char *encoding)
 #endif
 }
 
+/*
+** Returns the next UTF-8 char in string and advances *in_ptr to the next
+** character.
+**
+** If out_string is not NULL then the character (bytes) is copied to this 
+** buffer and null-terminated. out_string must be a pre-allocated buffer of
+** at least 7 bytes.
+**
+** The function returns the number of bytes in this UTF-8 character.
+**
+** In UTF-8, the number of leading 1 bits in the first byte specifies the 
+** number of bytes in the entire sequence.
+** Source: http://www.cl.cam.ac.uk/~mgk25/unicode.html#utf-8
+**
+** U-00000000 U-0000007F: 0xxxxxxx
+** U-00000080 U-000007FF: 110xxxxx 10xxxxxx
+** U-00000800 U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
+** U-00010000 U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+** U-00200000 U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+** U-04000000 U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+*/
+int msGetNextUTF8Char(const char **in_ptr, char *out_string)
+{
+    unsigned char in;
+    int numbytes=0;
+    int i;
+
+    in = (unsigned char)**in_ptr;
+
+    if (in == 0)
+        return -1;  /* Empty string */
+
+    if (in < 0x80)
+    {
+        numbytes = 1;   /* 0xxxxxxx */
+    }
+    else if ((in & 0xC0) == 0x80)
+    {
+        /* 10xxxxxx - this is not the first byte of a UTF-8 char, we need to 
+         * resynchronize . For now just return -1.
+         */
+        numbytes = 1;
+        return -1;
+    }
+    else if ((in & 0xE0) == 0xC0)
+    {
+        numbytes = 2;   /* 110xxxxx 10xxxxxx */
+    }
+    else if ((in & 0xF0) == 0xE0)
+    {
+        numbytes = 3;   /* 1110xxxx 10xxxxxx 10xxxxxx */
+    }
+    else if ((in & 0xF8) == 0xF0)
+    {
+        numbytes = 4;   /* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
+    }
+    else if ((in & 0xFC) == 0xF8)
+    {
+        numbytes = 5;   /* 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
+    }
+    else if ((in & 0xFE) == 0xFC)
+    {
+        numbytes = 6;   /* 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
+    }
+
+    /* Advance input buffer and copy the bytes to out_string if one is set */
+    for(i=0; i<numbytes && **in_ptr != '\0'; i++)
+    {
+        if (out_string)
+            out_string[i] = **in_ptr;
+        (*in_ptr)++;
+    }
+    if (out_string)
+        out_string[i] = '\0';
+
+    return numbytes;
+}
+
+/*
+** Returns the number of UTF-8 chars in string
+*/
+int msGetNumUTF8Chars(const char *in_ptr)
+{
+    int numchars=0;
+
+    while( msGetNextUTF8Char(&in_ptr, NULL) != -1 )
+        numchars++;
+
+    return numchars;
+}

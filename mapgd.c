@@ -3075,9 +3075,9 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
 
   if(label->type == MS_TRUETYPE) {
     char *error=NULL, *font=NULL;
-    wchar_t *wstring=NULL;
+    const char *string_ptr;  /* We use this to walk through 'string'*/
     char s[7]; /* UTF-8 characters can be up to 6 bytes wide */
-    
+
     size = label->size*scalefactor;
     size = MS_MAX(size, label->minsize);
     size = MS_MIN(size, label->maxsize);
@@ -3107,16 +3107,24 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
     /* Iterate over the label line and draw each letter.  First we render
        the shadow, then the outline, and finally the text.  This keeps the
        entire shadow or entire outline below the foreground. */
-    wstring = (wchar_t *) malloc((labelpath->path.numpoints + 1)*sizeof(wchar_t));
-    mbstowcs(wstring, string, (labelpath->path.numpoints + 1));
-    
+    string_ptr = string; 
+
     for (i = 0; i < labelpath->path.numpoints; i++) {
       int x, y;
       double theta;
-      int numbytes;
 
-      numbytes = wctomb(s, wstring[i]);
-      s[numbytes] = '\0';
+      /* If the labelObj has an encodiing set then we expect UTF-8 as input, otherwise
+       * we treat the string as a regular array of chars 
+       */
+      if (label->encoding) {
+          if (msGetNextUTF8Char(&string_ptr, s) == -1)
+              break;  /* Premature end of string??? */
+      } else {
+          if ((s[0] = *string_ptr) == '\0')
+              break;  /* Premature end of string??? */
+          s[1] = '\0';
+          string_ptr++;
+      }
 
       theta = labelpath->angles[i];
       x = MS_NINT(labelpath->path.point[i].x);
@@ -3151,8 +3159,6 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
       /* Render the foreground */
       gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, theta, x, y, s);     
     }    
-
-    free(wstring);
 
     /* Uncomment this to see the label bounds */
     /* imagePolyline(img, &labelpath->bounds, label->color.pen, 0,0); */
