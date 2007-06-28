@@ -1019,18 +1019,20 @@ int msHexToInt(char *hex) {
 
 
 /*
-** Simple charset converter.
+** Simple charset converter. Converts string from specified encoding to UTF-8.
 ** The return value must be freed by the caller.
 */
 char *msGetEncodedString(const char *string, const char *encoding)
 {
 #ifdef USE_ICONV
   iconv_t cd = NULL;
-  char *in, *inp;
+  const char *inp;
   char *outp, *out = NULL;
   size_t len, bufsize, bufleft, status;
 
-  if (encoding && strcasecmp(encoding, "UTF-8")==0)
+  len = strlen(string);
+
+  if (len == 0 || (encoding && strcasecmp(encoding, "UTF-8")==0))
       return strdup(string);    /* Nothing to do: string already in UTF-8 */
 
   cd = iconv_open("UTF-8", encoding);
@@ -1040,27 +1042,23 @@ char *msGetEncodedString(const char *string, const char *encoding)
     return NULL;
   }
 
-  len = strlen(string);
-  bufsize = len * 4;
-  in = strdup(string);
-  inp = in;
+  bufsize = len * 6 + 1; /* Each UTF-8 char can be up to 6 bytes */
+  inp = string;
   out = (char*) malloc(bufsize);
-  if(in == NULL || out == NULL){
+  if(out == NULL){
     msSetError(MS_MEMERR, NULL, "msGetEncodedString()");
-    msFree(in);
     iconv_close(cd);
     return NULL;
   }
-  strcpy(out, in);
+  strcpy(out, string);
   outp = out;
 
   bufleft = bufsize;
   status = -1;
 
   while (len > 0){
-    status = iconv(cd, (const char**)&inp, &len, &outp, &bufleft);
+    status = iconv(cd, &inp, &len, &outp, &bufleft);
     if(status == -1){
-      msFree(in);
       msFree(out);
       iconv_close(cd);
       return strdup(string);
@@ -1068,7 +1066,6 @@ char *msGetEncodedString(const char *string, const char *encoding)
   }
   out[bufsize - bufleft] = '\0';
   
-  msFree(in);
   iconv_close(cd);
 
   return out;
