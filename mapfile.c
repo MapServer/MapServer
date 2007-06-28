@@ -4524,7 +4524,10 @@ static int loadMapInternal(mapObj *map)
       if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
       break;
     case(END):
-      if(msyyin) fclose(msyyin);
+      if(msyyin) {
+          fclose(msyyin);
+          msyyin = NULL;
+      }
 
       /*** Make config options current ***/
       msApplyMapConfigOptions( map );
@@ -4846,7 +4849,10 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   if(loadMapInternal(map) != MS_SUCCESS) {
     msFreeMap(map);
     msReleaseLock( TLOCK_PARSER );
-    fclose(msyyin);
+    if( msyyin ) {
+        fclose(msyyin);
+        msyyin = NULL;
+    }
     return NULL;
   }
   msReleaseLock( TLOCK_PARSER );
