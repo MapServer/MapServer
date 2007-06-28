@@ -10,6 +10,12 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
+Version 4.10.3 (svn...)
+---------------------------
+
+- Fixed size of output buffer in msGetEncodedString() (#2132)
+
+
 Version 4.10.2 (2007-05-07)
 ---------------------------
 

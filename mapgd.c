@@ -2885,7 +2885,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   }
 
   len = strlen(string);
-  bufsize = len * 4;
+  bufsize = len * 6 + 1; /* Each UTF-8 char can be up to 6 bytes */
   in = strdup(string);
   inp = in;
   out = (char*) malloc(bufsize);
