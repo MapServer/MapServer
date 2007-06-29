@@ -106,6 +106,14 @@ Currently supported classes, properties and methods:
         MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, 
         MS_IMAGEMODE_NULL
 
+    Style/Attribue binding
+        MS_STYLE_BINDING_SIZE,  MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR,
+        MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL
+
+    Label/Attribute binding
+        MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR,
+        MS_LABEL_BINDING_OUTLINECOLOR      
+
  Functions:
  ----------
 
@@ -1041,7 +1049,19 @@ Currently supported classes, properties and methods:
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
 
-        
+   int setBinding(const labelbinding, string value)
+       Set the attribute binding for a specfiled label property. Returns true on success.
+
+        Example:
+           $oLabel->setbinding(MS_LABEL_BINDING_COLOR, "FIELD_NAME_COLOR");
+           This would bind the color parameter with the data (ie will extract
+           the value of the color from the field called "FIELD_NAME_COLOR"
+   
+   int removeBinding(const labelbinding)
+        Remove the attribute binding for a specfiled style property. Returns true on success.  
+        Example:
+           $oStyle->removebinding(MS_LABEL_BINDING_COLOR);
+     
  webObj Class
  -----------
 
@@ -1622,6 +1642,19 @@ Constructor:
  
    styleObj clone()
      Returns a cloned copy of the style.  
+
+   int setBinding(const stylebinding, string value)
+       Set the attribute binding for a specfiled style property. Returns true on success.
+
+        Example:
+           $oStyle->setbinding(MS_STYLE_BINDING_COLOR, "FIELD_NAME_COLOR");
+           This would bind the color parameter with the data (ie will extract
+           the value of the color from the field called "FIELD_NAME_COLOR"
+   
+   int removeBinding(const stylebinding)
+        Remove the attribute binding for a specfiled style property. Returns true on success.  
+        Example:
+           $oStyle->removebinding(MS_STYLE_BINDING_COLOR);
 
  OutputformatObj Class:
  ----------------------

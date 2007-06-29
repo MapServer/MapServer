@@ -229,6 +229,8 @@ DLEXPORT void php3_ms_class_moveStyleDown(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_deleteStyle(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_label_setBinding(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_label_removeBinding(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -319,6 +321,8 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_clone(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_style_setBinding(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_style_removeBinding(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -781,6 +785,8 @@ function_entry php_layer_class_functions[] = {
 
 function_entry php_label_class_functions[] = {
     {"set",             php3_ms_label_setProperty,      NULL},    
+    {"setbinding",      php3_ms_label_setBinding,      NULL},    
+    {"removebinding",   php3_ms_label_removeBinding,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -874,6 +880,8 @@ function_entry php_projection_class_functions[] = {
 function_entry php_style_class_functions[] = {
     {"set",             php3_ms_style_setProperty,      NULL},    
     {"clone",           php3_ms_style_clone,            NULL},    
+    {"setbinding",      php3_ms_style_setBinding,       NULL},    
+    {"removebinding",      php3_ms_style_removeBinding,       NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -1217,7 +1225,19 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_IMAGEMODE_BYTE", MS_IMAGEMODE_BYTE, const_flag);
     REGISTER_LONG_CONSTANT("MS_IMAGEMODE_NULL", MS_IMAGEMODE_NULL, const_flag);
 
-
+    /*binding types*/
+    REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_SIZE", MS_STYLE_BINDING_SIZE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_ANGLE", MS_STYLE_BINDING_ANGLE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_COLOR", MS_STYLE_BINDING_COLOR, const_flag);
+    REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_OUTLINECOLOR", MS_STYLE_BINDING_OUTLINECOLOR, const_flag);
+    REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_SYMBOL", MS_STYLE_BINDING_SYMBOL, const_flag);
+      
+    REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_SIZE", MS_LABEL_BINDING_SIZE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_ANGLE", MS_LABEL_BINDING_ANGLE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_COLOR", MS_LABEL_BINDING_COLOR, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_OUTLINECOLOR", MS_LABEL_BINDING_OUTLINECOLOR, const_flag);
+    
+       
     INIT_CLASS_ENTRY(tmp_class_entry, "ms_map_obj", php_map_class_functions);
     map_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
@@ -8467,6 +8487,94 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 
+
+/* {{{ proto int label.setbinding(const bindingid, string value)
+   Set the attribute binding for a specfiled label property. Returns true on success. */
+
+DLEXPORT void php3_ms_label_setBinding(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pThis = NULL;
+    labelObj *self = NULL;
+    HashTable   *list=NULL;
+    pval   *pBindingId, *pValue;
+
+    pThis = getThis();
+
+    if (pThis == NULL || 
+        getParameters(ht, 2, &pBindingId, &pValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (labelObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+       php3_error(E_ERROR, "Invalid label object.");
+
+    convert_to_string(pValue);
+    convert_to_long(pBindingId);
+
+    if (pBindingId->value.lval < 0 || pBindingId->value.lval > MS_LABEL_BINDING_LENGTH)
+       php3_error(E_ERROR, "Invalid binding id given for setbinding function.");
+
+    if (!pValue->value.str.val || strlen(pValue->value.str.val) <= 0)
+       php3_error(E_ERROR, "Invalid binding value given for setbinding function.");
+
+    if(self->bindings[pBindingId->value.lval].item) 
+    {
+        msFree(self->bindings[pBindingId->value.lval].item);
+        self->bindings[pBindingId->value.lval].index = -1; 
+        self->numbindings--;
+    }
+    self->bindings[pBindingId->value.lval].item = strdup(pValue->value.str.val); 
+    self->numbindings++;
+
+    RETURN_TRUE;
+}
+
+
+/* {{{ proto int label.removebinding(const bindingid)
+   Remove attribute binding for a specfiled label property. Returns true on success. */
+
+DLEXPORT void php3_ms_label_removeBinding(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pThis = NULL;
+    labelObj *self = NULL;
+    HashTable   *list=NULL;
+    pval   *pBindingId;
+
+    pThis = getThis();
+
+    if (pThis == NULL || 
+        getParameters(ht, 1, &pBindingId) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (labelObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+       php3_error(E_ERROR, "Invalid label object.");
+
+    convert_to_long(pBindingId);
+
+    if (pBindingId->value.lval < 0 || pBindingId->value.lval > MS_LABEL_BINDING_LENGTH)
+       php3_error(E_ERROR, "Invalid binding id given for setbinding function.");
+
+
+    if(self->bindings[pBindingId->value.lval].item) 
+    {
+        msFree(self->bindings[pBindingId->value.lval].item);
+        self->bindings[pBindingId->value.lval].index = -1; 
+        self->numbindings--;
+    }
+
+    RETURN_TRUE;
+}
+
+
 /*=====================================================================
  *                 PHP function wrappers - classObj class
  *====================================================================*/
@@ -13492,6 +13600,93 @@ DLEXPORT void php3_ms_style_clone(INTERNAL_FUNCTION_PARAMETERS)
                               return_value TSRMLS_CC);
 }
 
+
+
+/* {{{ proto int style.setbinding(const bindingid, string value)
+   Set the attribute binding for a specfiled style property. Returns true on success. */
+
+DLEXPORT void php3_ms_style_setBinding(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pThis = NULL;
+    styleObj *self = NULL;
+    HashTable   *list=NULL;
+    pval   *pBindingId, *pValue;
+
+    pThis = getThis();
+
+    if (pThis == NULL || 
+        getParameters(ht, 2, &pBindingId, &pValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (styleObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+       php3_error(E_ERROR, "Invalid style object.");
+
+    convert_to_string(pValue);
+    convert_to_long(pBindingId);
+
+    if (pBindingId->value.lval < 0 || pBindingId->value.lval > MS_STYLE_BINDING_LENGTH)
+       php3_error(E_ERROR, "Invalid binding id given for setbinding function.");
+
+    if (!pValue->value.str.val || strlen(pValue->value.str.val) <= 0)
+       php3_error(E_ERROR, "Invalid binding value given for setbinding function.");
+
+    if(self->bindings[pBindingId->value.lval].item) 
+    {
+        msFree(self->bindings[pBindingId->value.lval].item);
+        self->bindings[pBindingId->value.lval].index = -1; 
+        self->numbindings--;
+    }
+    self->bindings[pBindingId->value.lval].item = strdup(pValue->value.str.val); 
+    self->numbindings++;
+
+    RETURN_TRUE;
+}
+
+
+/* {{{ proto int style.removebinding(const bindingid)
+   Remove attribute binding for a specfiled style property. Returns true on success. */
+
+DLEXPORT void php3_ms_style_removeBinding(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pThis = NULL;
+    styleObj *self = NULL;
+    HashTable   *list=NULL;
+    pval   *pBindingId;
+
+    pThis = getThis();
+
+    if (pThis == NULL || 
+        getParameters(ht, 1, &pBindingId) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (styleObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+       php3_error(E_ERROR, "Invalid style object.");
+
+    convert_to_long(pBindingId);
+
+    if (pBindingId->value.lval < 0 || pBindingId->value.lval > MS_STYLE_BINDING_LENGTH)
+       php3_error(E_ERROR, "Invalid binding id given for setbinding function.");
+
+
+    if(self->bindings[pBindingId->value.lval].item) 
+    {
+        msFree(self->bindings[pBindingId->value.lval].item);
+        self->bindings[pBindingId->value.lval].index = -1; 
+        self->numbindings--;
+    }
+
+    RETURN_TRUE;
+}
 
 /* }}} */
 
