@@ -5,8 +5,8 @@
 :Date: 2007/06/14
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/06/15
-:Status: Draft
+:Last Edited: 2007/06/29
+:Status: Pending Vote
 :Version: MapServer 5.0
 
 Overview
@@ -54,10 +54,13 @@ MapServer 4.10 and older support the following LOG/DEBUG systems:
 Questions
 ---------
 
-* Is the mapserv-specific LOG option really used by anyone? Do we need to 
+* Q: Is the mapserv-specific LOG option really used by anyone? Do we need to 
   maintain it, should we get rid of it, or perhaps extend it? At a minimum 
   this option should be better documented to avoid confusion with the other 
   mechanisms described in this RFC.
+
+
+  A: The LOG option will be left untouched by this RFC.
 
 
 Technical Solution
@@ -163,10 +166,15 @@ DEBUG OFF (Level 0):
   the developers than to the users.
 
 
-Modifications to the source code
---------------------------------
+The MS_DEBUGLEVEL environment variable
+--------------------------------------
 
-...TODO...
+Debug level can also be set using the (optional) MS_DEBUGLEVEL environment variable. 
+
+When set, this value is used as the default debug level value for all map and layer objects as they are loaded by the mapfile parser. This option also sets the debug level for any msDebug() call located outside of the context of a map or layer object, for instance for debug statements relating to initialization before a map is loaded.  If a DEBUG value is also specified in the mapfile in some map or layer objects then the local value (in the mapfile) takes precedence over the value of the environment variable.
+
+This option is mostly useful when tuning applications by enabling timing/debug output before the map is loaded, to capture the full process initialization and map loading time, for instance.
+
 
 MapScript Implications
 ----------------------
@@ -204,9 +212,6 @@ Backwards compatibility issues
   msDebug() output from previous versions of MapServer may require a higher
   debug level in order to be enabled.
 
-* DEBUG=MSDEBUG will disappear from the version string since debugging 
-  will always be compiled in
-
 Bug ID
 ------
 
@@ -229,6 +234,3 @@ Questions/Comments from the review period
 * Can we catch the output of OGR/GDAL's CPLDebug calls, perhaps when
   the map-level debug level is >= 3?
 
-* It would be helpful if it were possible to turn DEBUG ON right from the
-  start, so debug/log messages could be generated during the loading and
-  parsing of the map file. (Perhaps a MS_DEBUGLEVEL environment variable?)
