@@ -1446,17 +1446,25 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[label->size]);
     fprintf(stream, "  %sTYPE BITMAP\n", tab);
   } else {
-    if (label->autofollow) 
-      fprintf(stream, "  %sANGLE FOLLOW\n", tab);
-    else if(label->autoangle)
-      fprintf(stream, "  %sANGLE AUTO\n", tab);
+    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
+       fprintf(stream, "  %sANGLE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_ANGLE].item);
     else
-      fprintf(stream, "  %sANGLE %f\n", tab, label->angle);
+    {
+      if (label->autofollow) 
+        fprintf(stream, "  %sANGLE FOLLOW\n", tab);
+      else if(label->autoangle)
+        fprintf(stream, "  %sANGLE AUTO\n", tab);
+      else
+        fprintf(stream, "  %sANGLE %f\n", tab, label->angle);
+    }
     if(label->antialias) fprintf(stream, "  %sANTIALIAS TRUE\n", tab);
     fprintf(stream, "  %sFONT \"%s\"\n", tab, label->font);
     fprintf(stream, "  %sMAXSIZE %d\n", tab, label->maxsize);
     fprintf(stream, "  %sMINSIZE %d\n", tab, label->minsize);
-    fprintf(stream, "  %sSIZE %d\n", tab, label->size);
+
+    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
+       fprintf(stream, "  %sSIZE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_SIZE].item);
+    else fprintf(stream, "  %sSIZE %d\n", tab, label->size);
     fprintf(stream, "  %sTYPE TRUETYPE\n", tab);
   }  
 
@@ -1469,7 +1477,10 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
 	writeColorWithAlpha(&(label->color), stream, "  ALPHACOLOR", tab);
   else
 #endif
-	writeColor(&(label->color), stream, "  COLOR", tab);
+    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_COLOR].item)
+      fprintf(stream, "  %sCOLOR [%s]\n", tab, label->bindings[MS_LABEL_BINDING_COLOR].item);
+    else writeColor(&(label->color), stream, "  COLOR", tab);
+
   if(label->encoding) fprintf(stream, "  %sENCODING \"%s\"\n", tab, label->encoding);
   fprintf(stream, "  %sFORCE %s\n", tab, msTrueFalse[label->force]);
   fprintf(stream, "  %sMINDISTANCE %d\n", tab, label->mindistance);
@@ -1478,7 +1489,11 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   else
     fprintf(stream, "  %sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
-  writeColor(&(label->outlinecolor), stream, "  OUTLINECOLOR", tab);  
+
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item)
+    fprintf(stream, "  %sOUTLINECOLOR [%s]\n", tab, label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item);
+  else writeColor(&(label->outlinecolor), stream, "  OUTLINECOLOR", tab);  
+
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   if (label->position != MS_XY)   /* MS_XY is an internal value used only for legend labels... never write it */
     fprintf(stream, "  %sPOSITION %s\n", tab, msPositionsText[label->position - MS_UL]);
@@ -1883,7 +1898,10 @@ int freeStyle(styleObj *style) {
 
 void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
-  if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_ANGLE].item)
+     fprintf(stream, "        ANGLE [%s]\n", style->bindings[MS_STYLE_BINDING_ANGLE].item);
+  else if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
+
   if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
   writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
 
@@ -1892,18 +1910,33 @@ void writeStyle(styleObj *style, FILE *stream) {
     writeColorWithAlpha(&(style->color), stream, "ALPHACOLOR", "        ");
   else
 #endif
-    writeColor(&(style->color), stream, "COLOR", "        ");
+    if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
+      fprintf(stream, "        COLOR [%s]\n", style->bindings[MS_STYLE_BINDING_COLOR].item);
+  else writeColor(&(style->color), stream, "COLOR", "        ");
+    
   if(style->maxsize != MS_MAXSYMBOLSIZE) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
   if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %d\n", style->minsize);
   if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %d\n", style->maxwidth);
   if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);  
   if(style->opacity > 0) fprintf(stream, "        OPACITY %d\n", style->opacity);
-  writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
-  if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
-  if(style->symbolname)
-    fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
+
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item)
+      fprintf(stream, "        OUTLINECOLOR [%s]\n", style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item);
+  else writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
+
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SIZE].item)
+      fprintf(stream, "        SIZE [%s]\n", style->bindings[MS_STYLE_BINDING_SIZE].item);
+  else if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
+
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SYMBOL].item)
+     fprintf(stream, "        SYMBOL [%s]\n", style->bindings[MS_STYLE_BINDING_SYMBOL].item);
   else
-    fprintf(stream, "        SYMBOL %d\n", style->symbol);
+  {
+    if(style->symbolname)
+      fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
+    else
+      fprintf(stream, "        SYMBOL %d\n", style->symbol);
+  }
   if(style->width > 1) fprintf(stream, "        WIDTH %d\n", style->width);
   if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
 
