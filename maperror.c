@@ -512,6 +512,9 @@ char *msGetVersion() {
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
 #endif
+#ifdef USE_AGG
+  strcat(version, " SUPPORTS=AGG");
+#endif
 #ifdef USE_GD_FT
   strcat(version, " SUPPORTS=FREETYPE");
 #endif
