@@ -8507,7 +8507,7 @@ DLEXPORT void php3_ms_label_setBinding(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (labelObj *)_phpms_fetch_handle(pThis,
-                                           PHPMS_GLOBAL(le_msstyle),
+                                           PHPMS_GLOBAL(le_mslabel),
                                            list TSRMLS_CC);
     if (self == NULL)
        php3_error(E_ERROR, "Invalid label object.");
@@ -8553,7 +8553,7 @@ DLEXPORT void php3_ms_label_removeBinding(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (labelObj *)_phpms_fetch_handle(pThis,
-                                           PHPMS_GLOBAL(le_msstyle),
+                                           PHPMS_GLOBAL(le_mslabel),
                                            list TSRMLS_CC);
     if (self == NULL)
        php3_error(E_ERROR, "Invalid label object.");
