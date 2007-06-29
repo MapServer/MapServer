@@ -1851,11 +1851,18 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
     }
     
     msSHPReadShape(tSHP->shpfile->hSHP, i, shape); /* ok to read the data now */
-    if(shape->type == MS_SHAPE_NULL) continue; /* skip NULL shapes */
-
+    if(shape->type == MS_SHAPE_NULL) 
+    {
+      msFreeShape(shape);
+      continue; /* skip NULL shapes */
+    }
     shape->tileindex = tSHP->tileshpfile->lastshape;
     shape->values = values;
     shape->numvalues = layer->numitems;
+
+    if (!filter_passed)
+       msFreeShape(shape);
+
   } while(!filter_passed);  /* Loop until both spatial and attribute filters match  */
 
   return(MS_SUCCESS);
