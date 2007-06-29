@@ -1,12 +1,8 @@
-====================================================
-  MS RFC 27: Label Priority
-====================================================
-
 :Date: 2007/05/22
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/05/24
-:Status: Draft
+:Last Edited: 2007/06/29
+:Status: Adopted (2007/05/25) - Under development
 :Version: MapServer 5.0
 
 Overview
@@ -104,7 +100,9 @@ Bug ID
 Voting history
 --------------
 
-No vote yet.
+Vote completed on 2007-05-25:
+
++1 from DanielM, SteveW, SteveL, YAssefa, UmbertoN and FrankW
 
 Questions/Comments from the review period
 -----------------------------------------
