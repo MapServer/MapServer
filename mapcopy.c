@@ -321,6 +321,7 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     MS_COPYSTELEM(offsety);
     MS_COPYSTELEM(angle);
     MS_COPYSTELEM(autoangle);
+    MS_COPYSTELEM(autofollow);
     MS_COPYSTELEM(buffer);
     MS_COPYSTELEM(antialias);
     MS_COPYSTELEM(wrap);
