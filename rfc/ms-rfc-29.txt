@@ -5,8 +5,8 @@
 :Date: 2007/06/15
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/06/20
-:Status: Draft
+:Last Edited: 2007/07/03
+:Status: Pending Vote
 :Version: MapServer 5.0
 
 Overview
@@ -151,4 +151,4 @@ Questions/Comments from the review period
 
 * Q: Could we support attribute binding in CHART_SIZE = [size]? This would allow you to show the relative size of hits at a point and have the chart show the percentage contributions in the wedges.
 
-  A: While this would be a nice feature, we will keep it as a potential enhancement for a future release since attribute binding is not available for PROCESSING directives.
+  A: While this would be a nice feature, we will keep it as a potential enhancement for a future release. See ticket #2136: https://trac.osgeo.org/mapserver/ticket/2136
