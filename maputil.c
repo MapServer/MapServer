@@ -178,6 +178,11 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
         MS_INIT_COLOR(label->outlinecolor, -1,-1,-1);
         bindColorAttribute(&label->outlinecolor, shape->values[label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index]);
       }
+
+      if(label->bindings[MS_LABEL_BINDING_FONT].index != -1) {
+        msFree(label->font);
+        label->font = strdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
+      }
     }
   } /* next classObj */
 

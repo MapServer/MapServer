@@ -129,7 +129,7 @@ int getSymbol(int n, ...) {
   va_start(argp, n);
   while(i<n) { /* check each symbol in the list */
     if(symbol == va_arg(argp, int)) {
-      va_end(argp);
+      va_end(argp);      
       return(symbol);
     }
     i++;
@@ -1218,7 +1218,15 @@ static int loadLabel(labelObj *label)
       return(-1);
     case(FONT):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
-      if(getString(&label->font) == MS_FAILURE) return(-1);
+      if((symbol = getSymbol(2, MS_STRING, MS_BINDING)) == -1)
+        return(-1);
+
+      if(symbol == MS_STRING) {
+        label->font = strdup(msyytext);
+      } else {
+        label->bindings[MS_LABEL_BINDING_FONT].item = strdup(msyytext);
+        label->numbindings++;
+      }
 #else
       msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadlabel()");    
       return(-1);
@@ -1447,9 +1455,8 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sTYPE BITMAP\n", tab);
   } else {
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
-       fprintf(stream, "  %sANGLE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_ANGLE].item);
-    else
-    {
+      fprintf(stream, "  %sANGLE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_ANGLE].item);
+    else {
       if (label->autofollow) 
         fprintf(stream, "  %sANGLE FOLLOW\n", tab);
       else if(label->autoangle)
@@ -1458,12 +1465,14 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
         fprintf(stream, "  %sANGLE %f\n", tab, label->angle);
     }
     if(label->antialias) fprintf(stream, "  %sANTIALIAS TRUE\n", tab);
-    fprintf(stream, "  %sFONT \"%s\"\n", tab, label->font);
+    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
+      fprintf(stream, "  %sFONT [%s]\n", tab, label->bindings[MS_LABEL_BINDING_FONT].item);
+    else fprintf(stream, "  %sFONT \"%s\"\n", tab, label->font);
     fprintf(stream, "  %sMAXSIZE %d\n", tab, label->maxsize);
     fprintf(stream, "  %sMINSIZE %d\n", tab, label->minsize);
 
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
-       fprintf(stream, "  %sSIZE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_SIZE].item);
+      fprintf(stream, "  %sSIZE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_SIZE].item);
     else fprintf(stream, "  %sSIZE %d\n", tab, label->size);
     fprintf(stream, "  %sTYPE TRUETYPE\n", tab);
   }  
@@ -1474,7 +1483,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   fprintf(stream, "  %sBUFFER %d\n", tab, label->buffer);
 #if ALPHACOLOR_ENABLED
   if( label->color.alpha )
-	writeColorWithAlpha(&(label->color), stream, "  ALPHACOLOR", tab);
+    writeColorWithAlpha(&(label->color), stream, "  ALPHACOLOR", tab);
   else
 #endif
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_COLOR].item)
