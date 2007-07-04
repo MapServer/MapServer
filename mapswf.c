@@ -1961,11 +1961,11 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     char        *font=NULL;
     /* int         nTmp = 0; */
 
-    colorObj    sColor;
+    colorObj    sColor, sShadowColor;
     mapObj     *map = NULL;
-    SWFText     oText = NULL;
+    SWFText     oText = NULL, oShadowText=NULL;
     double         size = 0;
-    
+    int         drawShadow=0;
     char szPath[MS_MAXPATHLEN];
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
@@ -2034,23 +2034,43 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
         sColor.green = label->outlinecolor.green;
         sColor.blue = label->outlinecolor.blue;
     }
-    else if (MS_VALID_COLOR(label->shadowcolor))
-    {
-        sColor.red = label->shadowcolor.red;
-        sColor.green = label->shadowcolor.green;
-        sColor.blue = label->shadowcolor.blue;
-    }
     else
     {
         msSetError(MS_TTFERR, "Invalid color", "draw_textSWF()");
 	return(-1);
     }
+    if (MS_VALID_COLOR(label->shadowcolor))
+    {
+        sShadowColor.red = label->shadowcolor.red;
+        sShadowColor.green = label->shadowcolor.green;
+        sShadowColor.blue = label->shadowcolor.blue;
+        drawShadow = 1; 
+    }
+    
 
 /* ==================================================================== */
 /*      Create a text object at "0,0".. this sets it's rotation         */
 /*      axis.... We will then move the text SWFDisplayItem_moveTo       */
 /*      and rotate it.                                                  */
 /* ==================================================================== */
+    /* first  draw the shadow with a x+1,y+1 position or using the shadowsize if defined*/
+    if (drawShadow) 
+    {
+        oShadowText = DrawText(string, 0, 0, msBuildPath(szPath, fontset->filename, font), size, &sShadowColor);
+        if (oShadowText)
+        {
+            SWFDisplayItem oShadowDisplay;
+            /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
+            oShadowDisplay = SWFMovie_add(GetCurrentMovie(map, image), oShadowText);
+            if (label->shadowsizex > 0 && label->shadowsizey > 0)
+              SWFDisplayItem_moveTo(oShadowDisplay, (float)x + label->shadowsizex, 
+                                    (float)y + label->shadowsizey);
+            else
+               SWFDisplayItem_moveTo(oShadowDisplay, (float)x + 1, (float)y + 1);
+
+            SWFDisplayItem_rotate(oShadowDisplay, (float)label->angle);
+        }
+    } 
     /* oText = DrawText(string, x, y, msBuildPath(szPath, fontset->filename, font), size, &sColor); */
     oText = DrawText(string, 0, 0, msBuildPath(szPath, fontset->filename, font), size, &sColor);
     if (oText)
