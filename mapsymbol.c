@@ -360,6 +360,8 @@ void writeSymbol(symbolObj *s, FILE *stream)
   case(MS_SYMBOL_PIXMAP):
     fprintf(stream, "    TYPE PIXMAP\n");
     if(s->imagepath != NULL) fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
+    if (s->gap != 0)
+      fprintf(stream, "    GAP %d\n", s->gap);
     fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
     break;
   case(MS_SYMBOL_TRUETYPE):
