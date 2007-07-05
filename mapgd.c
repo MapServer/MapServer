@@ -3179,42 +3179,6 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
   
 }
 
-/* msTestLabelCacheDuplicate()
-**
-** Compares current label against labels already drawn from cache and discards it
-** by setting its status to MS_FALSE if it is a duplicate or collides with another label.
-*/
-void msTestLabelCacheDuplicate(labelCacheObj *labelcache, labelObj *labelPtr, 
-                               labelCacheMemberObj *cachePtr, int current_slot, int current_label)
-{
-    int i, p;
-
-    p = current_slot;
-    i = current_label+1;
-
-    for(p=current_slot; p<MS_MAX_LABEL_PRIORITY; p++) {
-        labelCacheSlotObj *cacheslot;
-        cacheslot = &(labelcache->slots[p]);
-
-        for(  ; i < cacheslot->numlabels; i++) { /* compare against rendered labels */
-            if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-
-                if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
-                    cachePtr->status = MS_FALSE;
-                    return;
-                }
-
-                if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                    cachePtr->status = MS_FALSE;
-                    return;
-                }
-            }
-        } /* i */
-
-        i = 0; /* Start over with 1st label of next slot */
-    } /* p */
-}
-
 /* To DO: fix returned values to be MS_SUCCESS/MS_FAILURE */
 int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 {
@@ -3301,43 +3265,9 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
           msFreeShape(&(cachePtr->labelpath->bounds));
           
           
-          do {
-            int mp;
-
-            /* Check the bounds against the image */
-            if ( !labelPtr->partials ) {
-              if ( labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer + map_edge_buffer) == MS_FALSE) {
-                cachePtr->status = MS_FALSE;
-                break;
-              }
-            }
-
-            /* Compare against all rendered markers from this priority level and higher.
-            ** Labels can overlap their own marker and markers from lower priority levels
-            */
-            for (mp=priority; mp < MS_MAX_LABEL_PRIORITY; mp++) {
-              labelCacheSlotObj *markerslot;
-              markerslot = &(map->labelcache.slots[mp]);
-
-              for ( i = 0; i < markerslot->nummarkers; i++ ) {
-                if ( !(mp == priority && l == markerslot->markers[i].id) ) {  /* labels can overlap their own marker */
-                  if ( intersectLabelPolygons(markerslot->markers[i].poly, cachePtr->poly ) == MS_TRUE ) {
-                    cachePtr->status = MS_FALSE;  /* polys intersect */
-                    break;
-                  }
-                }
-              }
-            }
-
-            if ( !cachePtr->status )
-              break;
-              
-            /* Compare against rendered labels */
-            msTestLabelCacheDuplicate(&(map->labelcache), labelPtr, cachePtr, priority, l);
-
-            /* Done */
-
-          } while ( 0 );
+          /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+          msTestLabelCacheCollisions(&(map->labelcache), labelPtr, img->sx, img->sy, 
+                                     labelPtr->buffer + map_edge_buffer, cachePtr, priority, l);
           
         } else { 
 
@@ -3355,8 +3285,6 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
         }
 
         for(pos = first_pos; pos <= last_pos; pos++) {
-          int mp;
-
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
@@ -3365,36 +3293,10 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-	  if(!labelPtr->partials) { /* check against image first */
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer+map_edge_buffer) == MS_FALSE) {
-	      cachePtr->status = MS_FALSE;
-	      continue; /* next position */
-	    }
-	  }
-
-          /* Compare against all rendered markers from this priority level and higher.
-          ** Labels can overlap their own marker and markers from lower priority levels
-          */
-          for (mp=priority; mp < MS_MAX_LABEL_PRIORITY; mp++) {
-            labelCacheSlotObj *markerslot;
-            markerslot = &(map->labelcache.slots[mp]);
-
-            for ( i = 0; i < markerslot->nummarkers; i++ ) {
-              if ( !(mp == priority && l == markerslot->markers[i].id) ) { /* labels can overlap their own marker */
-                if ( intersectLabelPolygons(markerslot->markers[i].poly, cachePtr->poly ) == MS_TRUE ) {
-                  cachePtr->status = MS_FALSE;  /* polys intersect */
-                  break;
-                }
-              }
-            }
-          }
-
-	  if(!cachePtr->status)
-	    continue; /* next position */
-
-          /* Compare against rendered labels */
-          msTestLabelCacheDuplicate(&(map->labelcache), labelPtr, cachePtr, priority, l);
-
+          /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+          msTestLabelCacheCollisions(&(map->labelcache), labelPtr, img->sx, img->sy, 
+                                     labelPtr->buffer + map_edge_buffer, cachePtr, priority, l);
+          
 	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
 
@@ -3417,38 +3319,10 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
       if(!labelPtr->force) { /* no need to check anything else */
-        int mp;
 
-	if(!labelPtr->partials) {
-	  if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer+map_edge_buffer) == MS_FALSE)
-	    cachePtr->status = MS_FALSE;
-	}
-
-	if(!cachePtr->status)
-	  continue; /* next label */
-
-        /* Compare against all rendered markers from this priority level and higher.
-        ** Labels can overlap their own marker and markers from lower priority levels
-        */
-        for (mp=priority; mp < MS_MAX_LABEL_PRIORITY; mp++) {
-          labelCacheSlotObj *markerslot;
-          markerslot = &(map->labelcache.slots[mp]);
-
-          for ( i = 0; i < markerslot->nummarkers; i++ ) {
-            if ( !(mp == priority && l == markerslot->markers[i].id) ) {  /* labels can overlap their own marker */
-              if ( intersectLabelPolygons(markerslot->markers[i].poly, cachePtr->poly ) == MS_TRUE ) {
-                cachePtr->status = MS_FALSE;  /* polys intersect */
-                break;
-              }
-            }
-          }
-        }
-
-	if(!cachePtr->status)
-	  continue; /* next label */
-
-        /* Compare against rendered labels */
-        msTestLabelCacheDuplicate(&(map->labelcache), labelPtr, cachePtr, priority, l);
+        /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+        msTestLabelCacheCollisions(&(map->labelcache), labelPtr, img->sx, img->sy, 
+                                   labelPtr->buffer + map_edge_buffer, cachePtr, priority, l);
 
       }
     } /* end position if-then-else */

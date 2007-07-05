@@ -2348,40 +2348,10 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     if(draw_marker)
                         msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-                    if(!labelPtr->partials) { /* check against image first */
-                        if(labelInImage(map->width, map->height, cachePtr->poly,
-                                        labelPtr->buffer) == MS_FALSE) {
-                            cachePtr->status = MS_FALSE;
-                            continue; /* next angle */
-                        }
-                    }
-
-                    for(i=0; i<cacheslot->nummarkers; i++) { /* compare against points already drawn */
-                        if(l != cacheslot->markers[i].id) { /* labels can overlap their own marker */
-                            if(intersectLabelPolygons(cacheslot->markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                                cachePtr->status = MS_FALSE;
-                                break;
-                            }
-                        }
-                    }
-
-                    if(!cachePtr->status)
-                        continue; /* next angle */
-
-                    for(i=l+1; i<cacheslot->numlabels; i++) { /* compare against rendered labels */
-                        if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-
-                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
-                                cachePtr->status = MS_FALSE;
-                                break;
-                            }
-
-                            if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                                cachePtr->status = MS_FALSE;
-                                break;
-                            }
-                        }
-                    }
+                    /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+                    msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
+                                               map->width, map->height, 
+                                               labelPtr->buffer, cachePtr, priority, l);
 
                     if(cachePtr->status) /* found a suitable place for this label */
                         break;
@@ -2399,39 +2369,10 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     if(draw_marker)
                         msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-                    if(!labelPtr->partials) { /* check against image first */
-                        if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
-                            cachePtr->status = MS_FALSE;
-                            continue; /* next position */
-                        }
-                    }
-
-                    for(i=0; i<cacheslot->nummarkers; i++) { /* compare against points already drawn */
-                        if(l != cacheslot->markers[i].id) { /* labels can overlap their own marker */
-                            if(intersectLabelPolygons(cacheslot->markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                                cachePtr->status = MS_FALSE;
-                                break;
-                            }
-                        }
-                    }
-
-                    if(!cachePtr->status)
-                        continue; /* next position */
-
-                    for(i=l+1; i<cacheslot->numlabels; i++) { /* compare against rendered labels */
-                        if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                            
-                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
-                                cachePtr->status = MS_FALSE;
-                                break;
-                            }
-
-                            if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                                cachePtr->status = MS_FALSE;
-                                break;
-                            }
-                        }
-                    }
+                    /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+                    msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
+                                               map->width, map->height, 
+                                               labelPtr->buffer, cachePtr, priority, l);
 
                     if(cachePtr->status) /* found a suitable place for this label */
                         break;
@@ -2454,40 +2395,10 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
             if(!labelPtr->force) { /* no need to check anything else */
 
-                if(!labelPtr->partials) {
-                    if(labelInImage(map->width, map->height, cachePtr->poly, 
-                                    labelPtr->buffer) == MS_FALSE)
-                        cachePtr->status = MS_FALSE;
-                }
-
-                if(!cachePtr->status)
-                    continue; /* next label */
-
-                for(i=0; i<cacheslot->nummarkers; i++) { /* compare against points already drawn */
-                    if(l != cacheslot->markers[i].id) { /* labels can overlap their own marker */
-                        if(intersectLabelPolygons(cacheslot->markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                            cachePtr->status = MS_FALSE;
-                            break;
-                        }
-                    }
-                }
-
-                if(!cachePtr->status)
-                    continue; /* next label */
-
-                for(i=l+1; i<cacheslot->numlabels; i++) { /* compare against rendered label */
-                    if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                        if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text, cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
-                            cachePtr->status = MS_FALSE;
-                            break;
-                        }
-
-                        if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                            cachePtr->status = MS_FALSE;
-                            break;
-                        }
-                    }
-                }
+              /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
+                                           map->width, map->height, 
+                                           labelPtr->buffer, cachePtr, priority, l);
             }
         } /* end position if-then-else */
 

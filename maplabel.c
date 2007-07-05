@@ -170,6 +170,75 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   return(MS_SUCCESS);
 }
 
+
+/* msTestLabelCacheCollisions()
+**
+** Compares current label against labels already drawn and markers from cache and discards it
+** by setting cachePtr->status=MS_FALSE if it is a duplicate, collides with another label,
+** or collides with a marker.
+**
+** This function is used by the various msDrawLabelCacheXX() implementations.
+*/
+void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, 
+                                int mapwidth, int mapheight, int buffer,
+                                labelCacheMemberObj *cachePtr, int current_priority, int current_label)
+{
+    int i, p;
+
+    /* Check against image bounds first 
+    ** Pass mapwidth=-1 to skip this test
+     */
+    if(!labelPtr->partials && mapwidth > 0 && mapheight > 0) {
+        if(labelInImage(mapwidth, mapheight, cachePtr->poly, buffer) == MS_FALSE) {
+	    cachePtr->status = MS_FALSE;
+            return;
+        }
+    }
+
+    /* Compare against all rendered markers from this priority level and higher.
+    ** Labels can overlap their own marker and markers from lower priority levels
+    */
+    for (p=current_priority; p < MS_MAX_LABEL_PRIORITY; p++) {
+        labelCacheSlotObj *markerslot;
+        markerslot = &(labelcache->slots[p]);
+
+        for ( i = 0; i < markerslot->nummarkers; i++ ) {
+            if ( !(p == current_priority && current_label == markerslot->markers[i].id) ) {  /* labels can overlap their own marker */
+                if ( intersectLabelPolygons(markerslot->markers[i].poly, cachePtr->poly ) == MS_TRUE ) {
+                    cachePtr->status = MS_FALSE;  /* polys intersect */
+                    return;
+                }
+            }
+        }
+    }
+
+    /* compare against rendered labels */
+    i = current_label+1;
+
+    for(p=current_priority; p<MS_MAX_LABEL_PRIORITY; p++) {
+        labelCacheSlotObj *cacheslot;
+        cacheslot = &(labelcache->slots[p]);
+
+        for(  ; i < cacheslot->numlabels; i++) { 
+            if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+
+                if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+                    cachePtr->status = MS_FALSE;
+                    return;
+                }
+
+                if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                    cachePtr->status = MS_FALSE;
+                    return;
+                }
+            }
+        } /* i */
+
+        i = 0; /* Start over with 1st label of next slot */
+    } /* p */
+}
+
+
 /* msGetLabelCacheMember()
 **
 ** Returns label cache members by index, making all members of the cache

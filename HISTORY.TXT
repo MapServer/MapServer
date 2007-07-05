@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Version 4.99 (CVS HEAD)
 -----------------------
+
+ - RFC-27: Added support for label priority (#1619)
+
  - GD : draw symbols along a line using pixmap symbols (#2121)
 
  - SVG : Polygons should not be filled if color is not given (#2055)
