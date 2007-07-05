@@ -183,6 +183,11 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
         msFree(label->font);
         label->font = strdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
       }
+
+      if(label->bindings[MS_LABEL_BINDING_PRIORITY].index != -1) {
+        label->priority = MS_DEFAULT_LABEL_PRIORITY;
+        bindIntegerAttribute(&label->priority, shape->values[label->bindings[MS_LABEL_BINDING_PRIORITY].index]);
+      }
     }
   } /* next classObj */
 

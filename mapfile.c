@@ -1270,12 +1270,19 @@ static int loadLabel(labelObj *label)
 	return(-1);
       break;
     case(PRIORITY):
-      if(getInteger(&(label->priority)) == -1) return(-1);
-      if(label->priority < 1 || label->priority > MS_MAX_LABEL_PRIORITY) {
-        msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , "loadStyle()", MS_MAX_LABEL_PRIORITY);
-        return(-1);
-      }
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
 
+      if(symbol == MS_NUMBER) {
+        label->priority = (int) msyynumber;
+        if(label->priority < 1 || label->priority > MS_MAX_LABEL_PRIORITY) {
+            msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , 
+                       "loadStyle()", MS_MAX_LABEL_PRIORITY);
+            return(-1);
+        }
+      } else {
+	label->bindings[MS_LABEL_BINDING_PRIORITY].item = strdup(msyytext);
+        label->numbindings++;
+      }
       break;
     case(SHADOWCOLOR):
       if(loadColor(&(label->shadowcolor), NULL) != MS_SUCCESS) return(-1);      
@@ -1522,7 +1529,9 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   if (label->position != MS_XY)   /* MS_XY is an internal value used only for legend labels... never write it */
     fprintf(stream, "  %sPOSITION %s\n", tab, msPositionsText[label->position - MS_UL]);
-  if (label->priority != MS_DEFAULT_LABEL_PRIORITY)
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_PRIORITY].item)
+    fprintf(stream, "  %sPRIORITY [%s]\n", tab, label->bindings[MS_LABEL_BINDING_PRIORITY].item);
+  else if (label->priority != MS_DEFAULT_LABEL_PRIORITY)
     fprintf(stream, "  %sPRIORITY %d\n", tab, label->priority);
   writeColor(&(label->shadowcolor), stream, "  SHADOWCOLOR", tab);
   if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
