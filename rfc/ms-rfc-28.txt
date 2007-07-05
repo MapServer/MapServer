@@ -5,8 +5,8 @@
 :Date: 2007/06/14
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/06/29
-:Status: Pending Vote
+:Last Edited: 2007/07/05
+:Status: Adopted (2007-06-29) - Under development
 :Version: MapServer 5.0
 
 Overview
@@ -226,11 +226,14 @@ Bug ID
 Voting history
 --------------
 
-No vote yet.
+Vote completed on 2007-06-29:
+
++1 from DanielM, TomK, FrankW, TamasS, JeffM, SteveL and AssefaY.
 
 Questions/Comments from the review period
 -----------------------------------------
 
-* Can we catch the output of OGR/GDAL's CPLDebug calls, perhaps when
+* Q: Can we catch the output of OGR/GDAL's CPLDebug calls, perhaps when
   the map-level debug level is >= 3?
 
+  A: Frank suggests that we keep this for a later phase.
