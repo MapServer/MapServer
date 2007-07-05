@@ -2020,6 +2020,12 @@ nextLabel( ) : labelCacheMemberObj_
     Return the next label from the map's labelcache, allowing iteration
     over labels.
 
+.. note:: nextLabel() is deprecated and will be removed 
+          in a future version. Replaced by getLabel().
+
+getLabel( int labelindex ) : labelCacheMemberObj_
+    Return label at specified index from the map's labelcache.
+
 OWSDispatch( OWSRequest req ) : int
     Processes and executes the passed OpenGIS Web Services request on the 
     map.  Returns MS_DONE (2) if there is no valid OWS request in the req 

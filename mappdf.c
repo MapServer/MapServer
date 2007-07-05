@@ -476,7 +476,7 @@ int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
 int msDrawLabelCachePDF(imageObj *image, mapObj *map)
 {
     pointObj p;
-    int i, j, l;
+    int i, j, l, priority;
     rectObj r;
     labelCacheMemberObj *cachePtr=NULL;
     layerObj *layerPtr=NULL;
@@ -489,7 +489,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
     
     imageObj    *imagetmp = NULL;
 
-    /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
 /*      if not PDF, return.                                             */
 /* -------------------------------------------------------------------- */
     if (image == NULL || map == NULL || !MS_DRIVER_PDF(image->format))
@@ -506,10 +506,16 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         msDrawLabelCacheGD(imagetmp->img.gd, map);
         return 0;
     }
-    for(l=map->labelcache.numlabels-1; l>=0; l--)
+
+    for(priority=MS_MAX_LABEL_PRIORITY-1; priority>=0; priority--) {
     {
+      labelCacheSlotObj *cacheslot;
+      cacheslot = &(map->labelcache.slots[priority]);
+
+      for(l=cacheslot->numlabels-1; l>=0; l--)
+      {
         /* point to right spot in cache */
-        cachePtr = &(map->labelcache.labels[l]);
+        cachePtr = &(cacheslot->labels[l]);
 
         /* set a couple of other pointers, avoids nasty references */
         layerPtr = &(GET_LAYER(map, cachePtr->layerindex));
@@ -592,13 +598,13 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     }
 
                     /* compare against points already drawn*/
-                    for(i=0; i<map->labelcache.nummarkers; i++)
+                    for(i=0; i<cacheslot->nummarkers; i++)
                     {
                         /* labels can overlap their own marker*/
-                        if(l != map->labelcache.markers[i].id)
+                        if(l != cacheslot->markers[i].id)
                         {
                             /* see if polys intersect */
-                            if(intersectLabelPolygons(map->labelcache.markers[i].poly,
+                            if(intersectLabelPolygons(cacheslot->markers[i].poly,
                                                       cachePtr->poly) == MS_TRUE)
                             {
                                 cachePtr->status = MS_FALSE;
@@ -612,23 +618,23 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                         continue;
 
                     /* compare against rendered labels*/
-                    for(i=l+1; i<map->labelcache.numlabels; i++)
+                    for(i=l+1; i<cacheslot->numlabels; i++)
                     {
                         /* compare bounding polygons and check for duplicates */
-                        if(map->labelcache.labels[i].status == MS_TRUE)
+                        if(cacheslot->labels[i].status == MS_TRUE)
                         {
                             /* check if label is a duplicate */
                             if((labelPtr->mindistance != -1) &&
-                                (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
-                                (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) &&
-                                (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance))
+                                (cachePtr->classindex == cacheslot->labels[i].classindex) &&
+                                (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) &&
+                                (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance))
                             {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
 
                             /* see if polys intersect */
-                            if(intersectLabelPolygons(map->labelcache.labels[i].poly,
+                            if(intersectLabelPolygons(cacheslot->labels[i].poly,
                                                       cachePtr->poly) == MS_TRUE)
                             {
                                 cachePtr->status = MS_FALSE;
@@ -681,13 +687,13 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     }
 
                     /* compare against points already drawn*/
-                    for(i=0; i<map->labelcache.nummarkers; i++)
+                    for(i=0; i<cacheslot->nummarkers; i++)
                     {
                         /* labels can overlap their own marker*/
-                        if(l != map->labelcache.markers[i].id)
+                        if(l != cacheslot->markers[i].id)
                         {
                             /* test if polys intersect */
-                            if(intersectLabelPolygons(map->labelcache.markers[i].poly,
+                            if(intersectLabelPolygons(cacheslot->markers[i].poly,
                                                       cachePtr->poly) == MS_TRUE)
                             {
                                 cachePtr->status = MS_FALSE;
@@ -700,24 +706,24 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                         continue; /*go to next position*/
 
                     /* compare against rendered labels*/
-                    for(i=l+1; i<map->labelcache.numlabels; i++)
+                    for(i=l+1; i<cacheslot->numlabels; i++)
                     {
                         /* compare bounding polygons and check for duplicates */
-                        if(map->labelcache.labels[i].status == MS_TRUE)
+                        if(cacheslot->labels[i].status == MS_TRUE)
                         {
 
                             /* check if label is a duplicate */
                             if((labelPtr->mindistance != -1) &&
-                               (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
-                               (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) &&
-                               (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance))
+                               (cachePtr->classindex == cacheslot->labels[i].classindex) &&
+                               (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) &&
+                               (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance))
                             {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
 
                             /* polys intersect? */
-                            if(intersectLabelPolygons(map->labelcache.labels[i].poly,
+                            if(intersectLabelPolygons(cacheslot->labels[i].poly,
                                                       cachePtr->poly) == MS_TRUE)
                             {
                                 cachePtr->status = MS_FALSE;
@@ -784,13 +790,13 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     continue; /*goto next label*/
 
                 /*compare against points already drawn*/
-                for(i=0; i<map->labelcache.nummarkers; i++)
+                for(i=0; i<cacheslot->nummarkers; i++)
                 {
                     /* labels can overlap their own marker*/
-                    if(l != map->labelcache.markers[i].id)
+                    if(l != cacheslot->markers[i].id)
                     {
                         /* check if polys intersect */
-                        if(intersectLabelPolygons(map->labelcache.markers[i].poly,
+                        if(intersectLabelPolygons(cacheslot->markers[i].poly,
                                                   cachePtr->poly) == MS_TRUE)
                         {
                             cachePtr->status = MS_FALSE;
@@ -803,23 +809,23 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     continue; /*goto next label*/
 
                 /* compare against rendered label*/
-                for(i=l+1; i<map->labelcache.numlabels; i++)
+                for(i=l+1; i<cacheslot->numlabels; i++)
                 {
                     /* compare bounding polygons and check for duplicates */
-                    if(map->labelcache.labels[i].status == MS_TRUE)
+                    if(cacheslot->labels[i].status == MS_TRUE)
                     {
                         /* check if label is a duplicate */
                         if((labelPtr->mindistance != -1) &&
-                           (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
-                           (strcmp(cachePtr->text, map->labelcache.labels[i].text) == 0) &&
-                           (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point))
+                           (cachePtr->classindex == cacheslot->labels[i].classindex) &&
+                           (strcmp(cachePtr->text, cacheslot->labels[i].text) == 0) &&
+                           (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point))
                                                         <= labelPtr->mindistance))
                         {
                             cachePtr->status = MS_FALSE;
                             break;
                         }
 
-                        if(intersectLabelPolygons(map->labelcache.labels[i].poly,
+                        if(intersectLabelPolygons(cacheslot->labels[i].poly,
                                                   cachePtr->poly) == MS_TRUE)
                         {
                             cachePtr->status = MS_FALSE;
@@ -853,7 +859,8 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         msDrawTextPDF(image, p, cachePtr->text,
                       labelPtr, &(map->fontset), layerPtr->scalefactor);
 
-    } /* next in cache */
+      } /* next in cache */
+    } /* next priority */
 
     return(0);
 }

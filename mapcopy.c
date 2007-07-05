@@ -289,6 +289,7 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     MS_COPYSTELEM(mindistance);
     MS_COPYSTELEM(partials);
     MS_COPYSTELEM(force);
+    MS_COPYSTELEM(priority);
 
     MS_COPYSTRING(dst->encoding, src->encoding);
 
@@ -509,13 +510,13 @@ int msCopyMarkerCacheMember(markerCacheMemberObj *dst,
 }
 
 /***********************************************************************
- * msCopyLabelCache()                                                  *
+ * msCopyLabelCacheSlot()                                                  *
  **********************************************************************/
 
-int msCopyLabelCache(labelCacheObj *dst, labelCacheObj *src) 
+int msCopyLabelCacheSlot(labelCacheSlotObj *dst, labelCacheSlotObj *src) 
 {
     int i;
-    MS_COPYSTELEM(numlabels);
+
     for (i = 0; i < dst->numlabels; i++) {
         msCopyLabelCacheMember(&(dst->labels[i]), &(src->labels[i]));
     }
@@ -524,8 +525,23 @@ int msCopyLabelCache(labelCacheObj *dst, labelCacheObj *src)
     for (i = 0; i < dst->nummarkers; i++) {
         msCopyMarkerCacheMember(&(dst->markers[i]), &(src->markers[i]));
     }
-
     MS_COPYSTELEM(markercachesize);
+
+    return MS_SUCCESS;
+}
+
+/***********************************************************************
+ * msCopyLabelCache()                                                  *
+ **********************************************************************/
+
+int msCopyLabelCache(labelCacheObj *dst, labelCacheObj *src) 
+{
+    int p;
+    MS_COPYSTELEM(numlabels);
+
+    for (p=0; p<MS_MAX_LABEL_PRIORITY; p++) {
+        msCopyLabelCacheSlot(&(dst->slots[p]), &(src->slots[p]));
+    }
 
     return MS_SUCCESS;
 }

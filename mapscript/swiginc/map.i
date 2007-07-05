@@ -209,17 +209,14 @@
   }
 
   labelCacheMemberObj *getLabel(int i) {
-    if(i >= 0 && i < self->labelcache.numlabels)	
-      return &(self->labelcache.labels[i]);
-    else
-      return NULL;
+    return msGetLabelCacheMember(&(self->labelcache), i);
   }
 
   labelCacheMemberObj *nextLabel() {
     static int i=0;
 
     if(i<self->labelcache.numlabels)
-      return &(self->labelcache.labels[i++]);
+      return msGetLabelCacheMember(&(self->labelcache), i++);
     else
       return NULL;	
   }

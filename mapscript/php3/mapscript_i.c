@@ -143,15 +143,6 @@ int mapObj_drawLabelCache(mapObj* self, imageObj *img) {
     return msDrawLabelCache(img, self);
   }
 
-labelCacheMemberObj *mapObj_nextLabel(mapObj* self) {
-    static int i=0;
-
-    if(i<self->labelcache.numlabels)
-      return &(self->labelcache.labels[i++]);
-    else
-      return NULL;	
-  }
-
 int mapObj_queryByPoint(mapObj* self, pointObj *point, 
                          int mode, double buffer) {
     return msQueryByPoint(self, -1, mode, *point, buffer);

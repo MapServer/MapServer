@@ -42,6 +42,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 {
   int i;
   char wrap[2];
+  labelCacheSlotObj *cacheslot;
 
   labelCacheMemberObj *cachePtr=NULL;
   layerObj *layerPtr=NULL;
@@ -49,16 +50,24 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
   if(!string) return(MS_SUCCESS); /* not an error */ 
 
-  if(map->labelcache.numlabels == map->labelcache.cachesize) { /* just add it to the end */
-    map->labelcache.labels = (labelCacheMemberObj *) realloc(map->labelcache.labels, sizeof(labelCacheMemberObj)*(map->labelcache.cachesize+MS_LABELCACHEINCREMENT));
-    if(!map->labelcache.labels) {
+  /* Validate label priority value and get ref on label cache for it */
+  if (label->priority < 1)
+      label->priority = 1;
+  else if (label->priority > MS_MAX_LABEL_PRIORITY)
+      label->priority = MS_MAX_LABEL_PRIORITY;
+
+  cacheslot = &(map->labelcache.slots[label->priority-1]);
+
+  if(cacheslot->numlabels == cacheslot->cachesize) { /* just add it to the end */
+    cacheslot->labels = (labelCacheMemberObj *) realloc(cacheslot->labels, sizeof(labelCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT));
+    if(!cacheslot->labels) {
       msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
       return(MS_FAILURE);
     }
-    map->labelcache.cachesize += MS_LABELCACHEINCREMENT;
+   cacheslot->cachesize += MS_LABELCACHEINCREMENT;
   }
 
-  cachePtr = &(map->labelcache.labels[map->labelcache.numlabels]); /* set up a few pointers for clarity */
+  cachePtr = &(cacheslot->labels[cacheslot->numlabels]); /* set up a few pointers for clarity */
   layerPtr = (GET_LAYER(map, layerindex));
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
 
@@ -125,19 +134,19 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     rectObj rect;
     int w, h;
 
-    if(map->labelcache.nummarkers == map->labelcache.markercachesize) { /* just add it to the end */
-      map->labelcache.markers = (markerCacheMemberObj *) realloc(map->labelcache.markers, sizeof(markerCacheMemberObj)*(map->labelcache.cachesize+MS_LABELCACHEINCREMENT));
-      if(!map->labelcache.markers) {
+    if(cacheslot->nummarkers == cacheslot->markercachesize) { /* just add it to the end */
+      cacheslot->markers = (markerCacheMemberObj *) realloc(cacheslot->markers, sizeof(markerCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT));
+      if(!cacheslot->markers) {
 	msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
 	return(MS_FAILURE);
       }
-      map->labelcache.markercachesize+=MS_LABELCACHEINCREMENT;
+      cacheslot->markercachesize+=MS_LABELCACHEINCREMENT;
     }
 
-    i = map->labelcache.nummarkers;
+    i = cacheslot->nummarkers;
 
-    map->labelcache.markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
-    msInitShape(map->labelcache.markers[i].poly);
+    cacheslot->markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
+    msInitShape(cacheslot->markers[i].poly);
 
     /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
     if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
@@ -147,16 +156,45 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     rect.miny = MS_NINT(point->y - .5 * h);
     rect.maxx = rect.minx + (w-1);
     rect.maxy = rect.miny + (h-1);
-    msRectToPolygon(rect, map->labelcache.markers[i].poly);    
-    map->labelcache.markers[i].id = map->labelcache.numlabels;
+    msRectToPolygon(rect, cacheslot->markers[i].poly);    
+    cacheslot->markers[i].id = cacheslot->numlabels;
 
-    map->labelcache.nummarkers++;
+    cacheslot->nummarkers++;
   }
 
+  cacheslot->numlabels++;
+
+  /* Maintain main labelCacheObj.numlabels only for backwards compatibility */
   map->labelcache.numlabels++;
 
   return(MS_SUCCESS);
 }
+
+/* msGetLabelCacheMember()
+**
+** Returns label cache members by index, making all members of the cache
+** appear as if they were stored in a single array indexed from 0 to numlabels.
+**
+** Returns NULL if requested index is out of range.
+*/
+labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i)
+{
+    if(i >= 0 && i < labelcache->numlabels)
+    {
+        int p;
+        for(p=0; p<MS_MAX_LABEL_PRIORITY; p++)
+        {
+            if (i < labelcache->slots[p].numlabels )
+                return &(labelcache->slots[p].labels[i]); /* Found it */
+            else
+                i -= labelcache->slots[p].numlabels; /* Check next slots */
+        }
+    }
+
+    /* Out of range / not found */
+    return NULL;
+}
+
 
 int msInitFontSet(fontSetObj *fontset)
 {

@@ -1134,6 +1134,7 @@ void initLabel(labelObj *label)
   label->encoding = NULL;
 
   label->force = MS_FALSE;
+  label->priority = MS_DEFAULT_LABEL_PRIORITY;
 
   label->numbindings = 0;
   for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
@@ -1267,6 +1268,14 @@ static int loadLabel(labelObj *label)
     case(POSITION):
       if((label->position = getSymbol(10, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR,MS_AUTO)) == -1) 
 	return(-1);
+      break;
+    case(PRIORITY):
+      if(getInteger(&(label->priority)) == -1) return(-1);
+      if(label->priority < 1 || label->priority > MS_MAX_LABEL_PRIORITY) {
+        msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , "loadStyle()", MS_MAX_LABEL_PRIORITY);
+        return(-1);
+      }
+
       break;
     case(SHADOWCOLOR):
       if(loadColor(&(label->shadowcolor), NULL) != MS_SUCCESS) return(-1);      
@@ -1413,6 +1422,13 @@ static void loadLabelValue(mapObj *map, labelObj *label, char *value)
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if((label->position = getSymbol(10, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR,MS_AUTO)) == -1) return;
     break;
+  case(PRIORITY):
+    if(getInteger(&(label->priority)) == -1) return;
+    if(label->priority < 1 || label->priority > MS_MAX_LABEL_PRIORITY) {
+      msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , "loadStyle()", MS_MAX_LABEL_PRIORITY);
+      return;
+    }
+    break;
   case(SHADOWCOLOR):
     msyystate = MS_TOKENIZE_VALUE; msyystring = value;
     if(loadColor(&(label->shadowcolor), NULL) != MS_SUCCESS) return;
@@ -1506,6 +1522,8 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   if (label->position != MS_XY)   /* MS_XY is an internal value used only for legend labels... never write it */
     fprintf(stream, "  %sPOSITION %s\n", tab, msPositionsText[label->position - MS_UL]);
+  if (label->priority != MS_DEFAULT_LABEL_PRIORITY)
+    fprintf(stream, "  %sPRIORITY %d\n", tab, label->priority);
   writeColor(&(label->shadowcolor), stream, "  SHADOWCOLOR", tab);
   if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   if(label->wrap) fprintf(stream, "  %sWRAP '%c'\n", tab, label->wrap);
@@ -4350,12 +4368,15 @@ int initMap(mapObj *map)
   map->interlace = MS_NOOVERRIDE;
   map->imagequality = MS_NOOVERRIDE;
 
-  map->labelcache.labels = NULL; /* cache is initialize at draw time */
-  map->labelcache.cachesize = 0;
+  for(i=0; i<MS_MAX_LABEL_PRIORITY; i++) {
+      map->labelcache.slots[i].labels = NULL; /* cache is initialize at draw time */
+      map->labelcache.slots[i].cachesize = 0;
+      map->labelcache.slots[i].numlabels = 0;
+      map->labelcache.slots[i].markers = NULL;
+      map->labelcache.slots[i].markercachesize = 0;
+      map->labelcache.slots[i].nummarkers = 0;
+  }
   map->labelcache.numlabels = 0;
-  map->labelcache.markers = NULL;
-  map->labelcache.markercachesize = 0;
-  map->labelcache.nummarkers = 0;
 
   map->fontset.filename = NULL;
   map->fontset.numfonts = 0;  
@@ -4396,59 +4417,86 @@ int initMap(mapObj *map)
   return(0);
 }
 
-int msInitLabelCache(labelCacheObj *cache) {
+int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
+  int i, j;
 
-  if(cache->labels || cache->markers) msFreeLabelCache(cache);
-
-  cache->labels = (labelCacheMemberObj *)malloc(sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE);
-  if(cache->labels == NULL) {
-    msSetError(MS_MEMERR, NULL, "msInitLabelCache()");
-    return(MS_FAILURE);
+  /* free the labels */
+  for(i=0; i<cacheslot->numlabels; i++) {
+      msFree(cacheslot->labels[i].text);
+      if( cacheslot->labels[i].label.font != NULL )
+          msFree( cacheslot->labels[i].label.font );
+      msFreeShape(cacheslot->labels[i].poly); /* empties the shape */
+      msFree(cacheslot->labels[i].poly); /* free's the pointer */
+      for(j=0;j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
+      msFree(cacheslot->labels[i].styles);
   }
-  cache->cachesize = MS_LABELCACHEINITSIZE;
-  cache->numlabels = 0;
-
-  cache->markers = (markerCacheMemberObj *)malloc(sizeof(markerCacheMemberObj)*MS_LABELCACHEINITSIZE);
-  if(cache->markers == NULL) {
-    msSetError(MS_MEMERR, NULL, "msInitLabelCache()");
-    return(MS_FAILURE);
+  msFree(cacheslot->labels);
+  cacheslot->labels = NULL;
+  cacheslot->cachesize = 0;
+  cacheslot->numlabels = 0;
+  
+  /* free the markers */
+  for(i=0; i<cacheslot->nummarkers; i++) {
+      msFreeShape(cacheslot->markers[i].poly);
+      msFree(cacheslot->markers[i].poly);
   }
-  cache->markercachesize = MS_LABELCACHEINITSIZE;
-  cache->nummarkers = 0;
+  msFree(cacheslot->markers);
+  cacheslot->markers = NULL;
+  cacheslot->markercachesize = 0;
+  cacheslot->nummarkers = 0;
 
   return(MS_SUCCESS);
 }
 
 int msFreeLabelCache(labelCacheObj *cache) {
-  int i, j;
+  int p;
 
-  /* free the labels */
-  for(i=0; i<cache->numlabels; i++) {
-    msFree(cache->labels[i].text);
-    if( cache->labels[i].label.font != NULL )
-        msFree( cache->labels[i].label.font );
-    msFreeShape(cache->labels[i].poly); /* empties the shape */
-    msFree(cache->labels[i].poly); /* free's the pointer */
-    for(j=0;j<cache->labels[i].numstyles; j++) freeStyle(&(cache->labels[i].styles[j]));
-    msFree(cache->labels[i].styles);
+  for(p=0; p<MS_MAX_LABEL_PRIORITY; p++) {
+      if (msFreeLabelCacheSlot(&(cache->slots[p])) != MS_SUCCESS)
+          return MS_FAILURE;
   }
-  msFree(cache->labels);
-  cache->labels = NULL;
-  cache->cachesize = 0;
+
   cache->numlabels = 0;
-  
-  /* free the markers */
-  for(i=0; i<cache->nummarkers; i++) {
-    msFreeShape(cache->markers[i].poly);
-    msFree(cache->markers[i].poly);
+
+  return MS_SUCCESS;
+}
+
+int msInitLabelCacheSlot(labelCacheSlotObj *cacheslot) {
+
+  if(cacheslot->labels || cacheslot->markers) 
+      msFreeLabelCacheSlot(cacheslot);
+
+  cacheslot->labels = (labelCacheMemberObj *)malloc(sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE);
+  if(cacheslot->labels == NULL) {
+      msSetError(MS_MEMERR, NULL, "msInitLabelCacheSlot()");
+      return(MS_FAILURE);
   }
-  msFree(cache->markers);
-  cache->markers = NULL;
-  cache->markercachesize = 0;
-  cache->nummarkers = 0;
+  cacheslot->cachesize = MS_LABELCACHEINITSIZE;
+  cacheslot->numlabels = 0;
+
+  cacheslot->markers = (markerCacheMemberObj *)malloc(sizeof(markerCacheMemberObj)*MS_LABELCACHEINITSIZE);
+  if(cacheslot->markers == NULL) {
+      msSetError(MS_MEMERR, NULL, "msInitLabelCacheSlot()");
+      return(MS_FAILURE);
+  }
+  cacheslot->markercachesize = MS_LABELCACHEINITSIZE;
+  cacheslot->nummarkers = 0;
 
   return(MS_SUCCESS);
 }
+
+int msInitLabelCache(labelCacheObj *cache) {
+  int p;
+
+  for(p=0; p<MS_MAX_LABEL_PRIORITY; p++) {
+      if (msInitLabelCacheSlot(&(cache->slots[p])) != MS_SUCCESS)
+          return MS_FAILURE;
+  }
+  cache->numlabels = 0;
+
+  return MS_SUCCESS;
+}
+
 
 int msSaveMap(mapObj *map, char *filename)
 {

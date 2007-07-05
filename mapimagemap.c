@@ -1819,7 +1819,7 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
 int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 {
   pointObj p;
-  int i, j, l;
+  int i, j, l, priority;
   rectObj r;
   
   labelCacheMemberObj *cachePtr=NULL;
@@ -1830,10 +1830,14 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
 
-DEBUG_IF printf("msDrawLabelCacheIM\n<BR>");
-for(l=map->labelcache.numlabels-1; l>=0; l--) {
+  DEBUG_IF printf("msDrawLabelCacheIM\n<BR>");
+  for(priority=MS_MAX_LABEL_PRIORITY-1; priority>=0; priority--) {
+   labelCacheSlotObj *cacheslot;
+   cacheslot = &(map->labelcache.slots[priority]);
 
-    cachePtr = &(map->labelcache.labels[l]); /* point to right spot in the label cache */
+   for(l=cacheslot->numlabels-1; l>=0; l--) {
+
+    cachePtr = &(cacheslot->labels[l]); /* point to right spot in the label cache */
 
     layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
     labelPtr = &(cachePtr->label);
@@ -1899,9 +1903,9 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 /* } */
 	  }
 
-	  for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
-	    if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
-	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+	  for(i=0; i<cacheslot->nummarkers; i++) { /* compare against points already drawn */
+	    if(l != cacheslot->markers[i].id) { /* labels can overlap their own marker */
+	      if(intersectLabelPolygons(cacheslot->markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -1911,15 +1915,15 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	  if(!cachePtr->status)
 	    continue; /* next angle */
 
-	  for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered labels */
-	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+	  for(i=l+1; i<cacheslot->numlabels; i++) { /* compare against rendered labels */
+	    if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 
-	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+	      if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -1949,9 +1953,9 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 /* } */
 	  }
 
-	  for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
-	    if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
-	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+	  for(i=0; i<cacheslot->nummarkers; i++) { /* compare against points already drawn */
+	    if(l != cacheslot->markers[i].id) { /* labels can overlap their own marker */
+	      if(intersectLabelPolygons(cacheslot->markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -1961,15 +1965,15 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	  if(!cachePtr->status)
 	    continue; /* next position */
 
-	  for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered labels */
-	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+	  for(i=l+1; i<cacheslot->numlabels; i++) { /* compare against rendered labels */
+	    if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 
-	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+	      if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -2005,9 +2009,9 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	if(!cachePtr->status)
 	  continue; /* next label */
 
-	for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
-	  if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
-	    if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+	for(i=0; i<cacheslot->nummarkers; i++) { /* compare against points already drawn */
+	  if(l != cacheslot->markers[i].id) { /* labels can overlap their own marker */
+	    if(intersectLabelPolygons(cacheslot->markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
@@ -2017,14 +2021,14 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	if(!cachePtr->status)
 	  continue; /* next label */
 
-	for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered label */
-	  if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-	    if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text, map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+	for(i=l+1; i<cacheslot->numlabels; i++) { /* compare against rendered label */
+	  if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+	    if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text, cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
 
-	    if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+	    if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
@@ -2046,7 +2050,8 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 /* if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardIM(img, cachePtr->poly, labelPtr); */
     msDrawTextIM(img, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label, we scaled it in msAddLabel */
 
-  } /* next label in cache */
+   } /* next label in cache */
+  } /* next priority */
 
   return(0);
 }
@@ -2060,7 +2065,7 @@ int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
 {
     FILE *stream;
     char workbuffer[5000];
-    int nSize=0, size=0, iIndice=0,i; 
+    int nSize=0, size=0, iIndice=0; 
 
 DEBUG_IF printf("msSaveImageIM\n<BR>");
 

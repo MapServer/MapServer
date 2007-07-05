@@ -236,6 +236,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,NAME_STRING>points                  { return(POINTS); }
 <INITIAL,NAME_STRING>position                { return(POSITION); }
 <INITIAL,NAME_STRING>postlabelcache          { return(POSTLABELCACHE); }
+<INITIAL,NAME_STRING>priority                { return(PRIORITY); }
 <INITIAL,NAME_STRING>processing              { return(PROCESSING); }
 <INITIAL,NAME_STRING>projection              { return(PROJECTION); }
 <INITIAL,NAME_STRING>queryformat             { return(QUERYFORMAT); }

@@ -140,6 +140,9 @@ extern "C" {
 #define MS_MAXSTYLES 5
 #define MS_MAXLAYERS 200
 
+#define MS_MAX_LABEL_PRIORITY     10
+#define MS_DEFAULT_LABEL_PRIORITY 1
+
 /* General defines, not wrapable */
 #ifndef SWIG
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
@@ -503,35 +506,35 @@ typedef struct {
 #endif
 
 /* LABEL OBJECT - parameters needed to annotate a layer, legend or scalebar */
-    typedef struct {
-        char *font;
-        enum MS_FONT_TYPE type;
+typedef struct {
+  char *font;
+  enum MS_FONT_TYPE type;
+    
+  colorObj color;
+  colorObj outlinecolor;
 
-        colorObj color;
-        colorObj outlinecolor;
+  colorObj shadowcolor;
+  int shadowsizex, shadowsizey;
 
-        colorObj shadowcolor;
-        int shadowsizex, shadowsizey;
+  colorObj backgroundcolor;
+  colorObj backgroundshadowcolor;
+  int backgroundshadowsizex, backgroundshadowsizey;
 
-        colorObj backgroundcolor;
-        colorObj backgroundshadowcolor;
-        int backgroundshadowsizex, backgroundshadowsizey;
+  int size;
+  int minsize, maxsize;
 
-        int size;
-        int minsize, maxsize;
+  int position;
+  int offsetx, offsety;
 
-        int position;
-        int offsetx, offsety;
+  double angle;
+  int autoangle; /* true or false */
+  int autofollow;  /* true or false, bug #1620 implementation */
 
-        double angle;
-        int autoangle; /* true or false */
-        int autofollow;  /* true or false, bug #1620 implementation */
+  int buffer; /* space to reserve around a label */
 
-        int buffer; /* space to reserve around a label */
+  int antialias;
 
-        int antialias;
-
-        char wrap;
+  char wrap;
 
   int minfeaturesize; /* minimum feature size (in pixels) to label */
   int autominfeaturesize; /* true or false */
@@ -542,6 +545,8 @@ typedef struct {
   int force; /* labels *must* be drawn */
 
   char *encoding;
+
+  int priority;  /* Priority level 1 to MS_MAX_LABEL_PRIORITY, default=1 */
 
 #ifndef SWIG
   attributeBindingObj bindings[MS_LABEL_BINDING_LENGTH];
@@ -742,6 +747,16 @@ typedef struct {
   markerCacheMemberObj *markers;
   int nummarkers;
   int markercachesize;
+} labelCacheSlotObj;
+
+typedef struct {
+    /* One labelCacheSlotObj for each priority level */
+    labelCacheSlotObj slots[MS_MAX_LABEL_PRIORITY];
+    /* numlabels is deprecated, maintained only for backwards compatibility
+     * between MS 4.10 and 5.0 and should be removed in a future release.
+     * The slots[].numlabels are the real values to rely on.
+     */
+    int numlabels;
 } labelCacheObj;
 
 typedef struct {
@@ -1501,6 +1516,7 @@ MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
 MS_DLL_EXPORT int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline, double **offsets);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
+MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
 MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
