@@ -507,7 +507,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         return 0;
     }
 
-    for(priority=MS_MAX_LABEL_PRIORITY-1; priority>=0; priority--) {
+    for(priority=MS_MAX_LABEL_PRIORITY-1; priority>=0; priority--)
     {
       labelCacheSlotObj *cacheslot;
       cacheslot = &(map->labelcache.slots[priority]);
