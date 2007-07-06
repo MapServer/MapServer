@@ -88,8 +88,6 @@ debugInfoObj *msGetDebugInfoObj()
     else if( link == NULL || link->next == NULL )
     {
         debugInfoObj *new_link;
-        debugInfoObj debuginfo = {MS_DEBUGLEVEL_ERRORSONLY,
-                                     MS_DEBUGMODE_OFF, NULL, NULL };
 
         new_link = (debugInfoObj *) malloc(sizeof(debugInfoObj));
         new_link->next = debuginfo_list;
@@ -105,7 +103,7 @@ debugInfoObj *msGetDebugInfoObj()
     /* If the link is not already at the head of the list, promote it */
     else if( link != NULL && link->next != NULL )
     {
-        debugInfobj *target = link->next;
+        debugInfoObj *target = link->next;
 
         link->next = link->next->next;
         target->next = debuginfo_list;
