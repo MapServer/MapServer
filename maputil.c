@@ -1377,6 +1377,10 @@ int msSetup()
    msThreadInit();
 #endif
 
+  /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
+  if (msDebugInitFromEnv() != MS_SUCCESS)
+    return MS_FAILURE;
+
 #ifdef USE_GD_FT
   if (gdFontCacheSetup() != 0) {
     return MS_FAILURE;
@@ -1422,6 +1426,9 @@ void msCleanup()
   msIO_Cleanup();
 
   msResetErrorList();
+
+  /* Close/cleanup log/debug output. Keep this at the very end. */
+  msDebugCleanup();
 }
 
 /************************************************************************/

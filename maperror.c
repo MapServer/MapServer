@@ -39,10 +39,6 @@
 #endif
 #include <stdarg.h>
 
-#ifdef NEED_NONBLOCKING_STDERR
-#include <fcntl.h>
-#endif
-
 MS_CVSID("$Id$")
 
 static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
@@ -317,9 +313,6 @@ char *msGetErrorString(char *delimiter)
 
 void msSetError(int code, const char *message_fmt, const char *routine, ...)
 {
-  char *errfile=NULL;
-  FILE *errstream;
-  time_t errtime;
   errorObj *ms_error = msInsertErrorObj();
   va_list args;
 
@@ -341,20 +334,9 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
     va_end(args);
   }
 
-  errfile = getenv("MS_ERRORFILE");
-  if(errfile) {
-    if(strcmp(errfile, "stderr") == 0)
-      errstream = stderr;
-    else if(strcmp(errfile, "stdout") == 0)
-      errstream = stdout;
-    else
-      errstream = fopen(errfile, "a");
-    if(!errstream) return;
-    errtime = time(NULL);
-    fprintf(errstream, "%s - %s: %s %s\n", msStringChop(ctime(&errtime)), ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
-    if( errstream != stderr && errstream != stdout )
-        fclose(errstream);
-  }
+  /* Log a copy of errors to MS_ERRORFILE if set (handled automatically inside msDebug()) */
+  msDebug("%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+
 }
 
 void msWriteError(FILE *stream)
@@ -576,41 +558,6 @@ char *msGetVersion() {
   strcat(version, " INPUT=MYGIS");
 #endif
   strcat(version, " INPUT=SHAPEFILE");
-#ifdef ENABLE_STDERR_DEBUG
-  strcat(version, " DEBUG=MSDEBUG");
-#endif
   return(version);
-}
-
-void msDebug( const char * pszFormat, ... )
-{
-#ifdef ENABLE_STDERR_DEBUG
-    va_list args;
-
-#if defined(NEED_NONBLOCKING_STDERR) && !defined(USE_MAPIO) && !defined(_WIN32)
-    static char nonblocking_set = 0;
-    if (!nonblocking_set)
-    {
-        fcntl(fileno(stderr), F_SETFL, O_NONBLOCK);
-        nonblocking_set = 1;
-    }
-#endif
-
-#if !defined(USE_FASTCGI) && !defined(_WIN32)
-    /* It seems the FastCGI stuff inserts a timestamp anyways, so  */
-    /* we might as well skip this one.  And the struct timeval doesn't */
-    /* appear to exist on win32.  */
-    {
-        struct timeval tv;
-        msGettimeofday(&tv, NULL);
-        msIO_fprintf(stderr, "[%s].%ld ", 
-                     msStringChop(ctime(&(tv.tv_sec))), (long)tv.tv_usec);
-    }
-#endif
-
-    va_start(args, pszFormat);
-    msIO_vfprintf(stderr, pszFormat, args);
-    va_end(args);
-#endif
 }
 

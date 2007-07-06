@@ -33,6 +33,10 @@
 extern "C" {
 #endif
 
+/*====================================================================
+ *   maperror.c
+ *====================================================================*/
+
 #define MS_NOERR 0 /* general error codes */
 #define MS_IOERR 1 
 #define MS_MEMERR 2
@@ -95,11 +99,6 @@ typedef struct error_obj {
 } errorObj;
 
 /*
-** Global variables
-*/
-/* extern errorObj ms_error; */
-
-/*
 ** Function prototypes
 */
 MS_DLL_EXPORT errorObj *msGetErrorObj(void);
@@ -117,8 +116,51 @@ MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
 struct map_obj;
 MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
 
+#endif /* SWIG */
+
+/*====================================================================
+ *   mapdebug.c (See also MS-RFC-28)
+ *====================================================================*/
+
+typedef enum { MS_DEBUGLEVEL_ERRORSONLY = 0,  /* DEBUG OFF, log fatal errors */
+               MS_DEBUGLEVEL_DEBUG      = 1,  /* DEBUG ON */
+               MS_DEBUGLEVEL_TUNING     = 2,  /* Reports timing info */
+               MS_DEBUGLEVEL_V          = 3,  /* Verbose */
+               MS_DEBUGLEVEL_VV         = 4,  /* Very verbose */
+               MS_DEBUGLEVEL_VVV        = 5   /* Very very verbose */
+} debugLevel;
+
+#ifndef SWIG
+
+typedef enum { MS_DEBUGMODE_OFF,
+               MS_DEBUGMODE_FILE,
+               MS_DEBUGMODE_STDERR,
+               MS_DEBUGMODE_STDOUT,
+               MS_DEBUGMODE_WINDOWSDEBUG
+} debugMode;
+
+typedef struct debug_info_obj 
+{
+    debugLevel  global_debug_level;
+    debugMode   debug_mode;
+    char        *errorfile;
+    FILE        *fp;
+    /* The following 2 members are used only with USE_THREAD (but we won't #ifndef them) */
+    int         thread_id;
+    struct debug_info_obj *next;
+} debugInfoObj;
+
+
 MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
-#endif
+MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile);
+MS_DLL_EXPORT void msCloseErrorFile();
+MS_DLL_EXPORT const char *msGetErrorFile();
+MS_DLL_EXPORT void msSetGlobalDebugLevel(int level);
+MS_DLL_EXPORT debugLevel msGetGlobalDebugLevel();
+MS_DLL_EXPORT int msDebugInitFromEnv();
+MS_DLL_EXPORT void msDebugCleanup();
+
+#endif /* SWIG */
 
 #ifdef __cplusplus
 }

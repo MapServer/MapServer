@@ -961,7 +961,11 @@ PHP_MINIT_FUNCTION(phpms)
     int const_flag = CONST_CS|CONST_PERSISTENT;
 
     /* Init MapServer resources */
-    msSetup();
+    if (msSetup() != MS_SUCCESS)
+    {
+        php_error(E_ERROR, "msSetup(): MapScript initialization failed.");
+        return FAILURE;
+    }
 
     /* If you have defined globals, uncomment this line
     ZEND_INIT_MODULE_GLOBALS(phpms, phpms_init_globals, NULL);

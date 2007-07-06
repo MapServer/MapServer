@@ -2108,8 +2108,9 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
     case(CLASS):
       break; /* for string loads */
     case(DEBUG):
-      if((class->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
-      break;      
+      if((class->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
+      if(class->debug == MS_NUMBER) class->debug = (int) msyynumber;
+      break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadClass()");
       return(-1);
@@ -2414,7 +2415,7 @@ static void writeClass(classObj *class, FILE *stream)
 
   fprintf(stream, "    CLASS\n");
   if(class->name) fprintf(stream, "      NAME \"%s\"\n", class->name);
-  if(class->debug) fprintf(stream, "      DEBUG ON\n");
+  if(class->debug) fprintf(stream, "      DEBUG %d\n", class->debug);
   if(class->expression.string) {
     fprintf(stream, "      EXPRESSION ");
     writeExpression(&(class->expression), stream);
@@ -2449,7 +2450,7 @@ int initLayer(layerObj *layer, mapObj *map)
     msSetError(MS_MEMERR, "Layer is null", "initLayer()");
     return(-1);
   }
-  layer->debug = MS_OFF;
+  layer->debug = (int)msGetGlobalDebugLevel();
   MS_REFCNT_INIT(layer);
 
   layer->numclasses = 0;
@@ -2666,7 +2667,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getString(&layer->data) == MS_FAILURE) return(-1);
       break;
     case(DEBUG):
-      if((layer->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
+      if((layer->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
+      if(layer->debug == MS_NUMBER) layer->debug = (int) msyynumber;
       break;
     case(DUMP):
       if((layer->dump = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
@@ -3182,7 +3184,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   }
 
   if(layer->data) fprintf(stream, "    DATA \"%s\"\n", layer->data);
-  if(layer->debug) fprintf(stream, "    DEBUG ON\n");
+  if(layer->debug) fprintf(stream, "    DEBUG %d\n", layer->debug);
   if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
 
   if(layer->filter.string) {
@@ -4359,7 +4361,7 @@ int initMap(mapObj *map)
 	GET_LAYER(map, i)=NULL;
   }
 
-  map->debug = MS_OFF;
+  map->debug = (int)msGetGlobalDebugLevel();
   map->status = MS_ON;
   map->name = strdup("MS");
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
@@ -4580,7 +4582,7 @@ int msSaveMap(mapObj *map, char *filename)
                key, msLookupHashTable( &(map->configoptions), key ) );
   }
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
-  if(map->debug) fprintf(stream, "  DEBUG ON\n");
+  if(map->debug) fprintf(stream, "  DEBUG %d\n", map->debug);
 
   writeOutputformat(map, stream);
 
@@ -4629,7 +4631,9 @@ static int loadMapInternal(mapObj *map)
         if( getString(&value) == MS_FAILURE )
             return MS_FAILURE;
 
-        msSetConfigOption( map, key, value );
+        if (msSetConfigOption( map, key, value ) == MS_FAILURE)
+            return MS_FAILURE;
+
         free( key ); key=NULL;
         free( value ); value=NULL;
     }
@@ -4639,7 +4643,8 @@ static int loadMapInternal(mapObj *map)
       if(getString(&map->datapattern) == MS_FAILURE) return MS_FAILURE;
       break;
     case(DEBUG):
-      if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
+      if((map->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return MS_FAILURE;
+      if(map->debug == MS_NUMBER) map->debug = (int) msyynumber;
       break;
     case(END):
       if(msyyin) {
@@ -4825,15 +4830,15 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   struct mstimeval starttime, endtime;
   char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
   char *mappath=NULL;
+  int debuglevel;
 
-#ifdef ENABLE_STDERR_DEBUG
-  /* In debug mode, track time spent loading/parsing mapfile.
-   * In all other cases we use a 'if (map->debug)' to enable this 
-   * feature, but since the mapObjs isn't loaded yet we can't, 
-   * so we rely on a #ifdef for that.
-   */
-  msGettimeofday(&starttime, NULL);
-#endif
+  debuglevel = (int)msGetGlobalDebugLevel();
+
+  if (debuglevel >= MS_DEBUGLEVEL_TUNING)
+  {
+      /* In debug mode, track time spent loading/parsing mapfile. */
+      msGettimeofday(&starttime, NULL);
+  }
 
   if(!buffer) {
     msSetError(MS_MISCERR, "No buffer to load.", "msLoadMapFromString()");
@@ -4880,14 +4885,14 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   }
   msReleaseLock( TLOCK_PARSER );
 
-#ifdef ENABLE_STDERR_DEBUG
-  if (map->debug) {
-    msGettimeofday(&endtime, NULL);
-    msDebug("msLoadMap(): %.3fs\n", 
-            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  if (debuglevel >= MS_DEBUGLEVEL_TUNING)
+  {
+      /* In debug mode, report time spent loading/parsing mapfile. */
+      msGettimeofday(&endtime, NULL);
+      msDebug("msLoadMap(): %.3fs\n", 
+              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
-#endif
 
   if (mappath != NULL) free(mappath);
   msyylex_destroy();
@@ -4902,15 +4907,15 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   mapObj *map;
   struct mstimeval starttime, endtime;
   char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
+  int debuglevel;
 
-#ifdef ENABLE_STDERR_DEBUG
-  /* In debug mode, track time spent loading/parsing mapfile.
-   * In all other cases we use a 'if (map->debug)' to enable this 
-   * feature, but since the mapObjs isn't loaded yet we can't, 
-   * so we rely on a #ifdef for that.
-   */
-  msGettimeofday(&starttime, NULL);
-#endif
+  debuglevel = (int)msGetGlobalDebugLevel();
+
+  if (debuglevel >= MS_DEBUGLEVEL_TUNING)
+  {
+      /* In debug mode, track time spent loading/parsing mapfile. */
+      msGettimeofday(&starttime, NULL);
+  }
 
   if(!filename) {
     msSetError(MS_MISCERR, "Filename is undefined.", "msLoadMap()");
@@ -4975,14 +4980,14 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   }
   msReleaseLock( TLOCK_PARSER );
 
-#ifdef ENABLE_STDERR_DEBUG
-  if (map->debug) {
-    msGettimeofday(&endtime, NULL);
-    msDebug("msLoadMap(): %.3fs\n", 
-            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  if (debuglevel >= MS_DEBUGLEVEL_TUNING)
+  {
+      /* In debug mode, report time spent loading/parsing mapfile. */
+      msGettimeofday(&endtime, NULL);
+      msDebug("msLoadMap(): %.3fs\n", 
+              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
-#endif
 
   return map;
 }

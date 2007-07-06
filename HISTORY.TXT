@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - RFC-28: Merged DEBUG and MS_ERRORFILE logging mechanisms. Added 
+   support for multiple debug levels and more control on output location.
+   (Resolves tickets #2124, #1783, #1333, #709)
+
  - SLD: Support of Graphic Stroke for a Linesymbolizer (#2139)
 
  - RFC-27: Added support for label priority (#1619)

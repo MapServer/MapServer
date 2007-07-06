@@ -299,7 +299,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   msInitWmsParamsObj(&sLastWMSParams);
 #endif
 
-  if(map->debug) msGettimeofday(&mapstarttime, NULL);
+  if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&mapstarttime, NULL);
 
   if(querymap) { /* use queryMapObj image dimensions */
     if(map->querymap.width != -1) map->width = map->querymap.width;
@@ -370,7 +370,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
       if(lp->postlabelcache) /* wait to draw */
         continue;
 
-      if(map->debug || lp->debug ) msGettimeofday(&starttime, NULL);
+      if(map->debug >= MS_DEBUGLEVEL_TUNING || lp->debug >= MS_DEBUGLEVEL_TUNING ) msGettimeofday(&starttime, NULL);
 
       if(!msLayerIsVisible(map, lp)) continue;
 
@@ -425,7 +425,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
       }
     }
 
-    if(map->debug || lp->debug) {
+    if(map->debug >= MS_DEBUGLEVEL_TUNING || lp->debug >= MS_DEBUGLEVEL_TUNING) {
       msGettimeofday(&endtime, NULL);
       msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
               map->layerorder[i], lp->name?lp->name:"(null)",
@@ -457,14 +457,14 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, image->img.gd);
 
-  if(map->debug) msGettimeofday(&starttime, NULL);
+  if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
   if(msDrawLabelCache(image, map) == -1) {
     msFreeImage(image);
     return(NULL);
   }
 
-  if(map->debug) {
+  if(map->debug >= MS_DEBUGLEVEL_TUNING) {
     msGettimeofday(&endtime, NULL);
     msDebug("msDrawMap(): Drawing Label Cache, %.3fs\n", 
             (endtime.tv_sec+endtime.tv_usec/1.0e6)-
@@ -478,7 +478,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(!lp->postlabelcache) continue;
     if(!msLayerIsVisible(map, lp)) continue;
 
-    if(map->debug || lp->debug) msGettimeofday(&starttime, NULL);
+    if(map->debug >= MS_DEBUGLEVEL_TUNING || lp->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
     if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR 
@@ -512,7 +512,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
       return(NULL);
     }
 
-    if(map->debug || lp->debug) {
+    if(map->debug >= MS_DEBUGLEVEL_TUNING || lp->debug >= MS_DEBUGLEVEL_TUNING) {
       msGettimeofday(&endtime, NULL);
       msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
               map->layerorder[i], lp->name?lp->name:"(null)",
@@ -547,7 +547,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   msHTTPFreeRequestObj(asOWSReqInfo, numOWSRequests);
 #endif
 
-  if(map->debug) {
+  if(map->debug >= MS_DEBUGLEVEL_TUNING) {
     msGettimeofday(&mapendtime, NULL);
     msDebug("msDrawMap() total time: %.3fs\n", 
             (mapendtime.tv_sec+mapendtime.tv_usec/1.0e6)-

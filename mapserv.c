@@ -48,6 +48,7 @@ int writeLog(int show_error)
   time_t t;
   char szPath[MS_MAXPATHLEN];
 
+  if(!msObj) return(0);
   if(!msObj->Map) return(0);
   if(!msObj->Map->web.log) return(0);
   
@@ -94,7 +95,7 @@ void writeError(void)
 
   writeLog(MS_TRUE);
 
-  if(!msObj->Map) {
+  if(!msObj || !msObj->Map) {
     msIO_printf("Content-type: text/html%c%c",10,10);
     msIO_printf("<HTML>\n");
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -102,7 +103,8 @@ void writeError(void)
     msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
     msWriteError(stdout);
     msIO_printf("</BODY></HTML>");
-    msFreeMapServObj(msObj);
+    if (msObj) 
+        msFreeMapServObj(msObj);
     msCleanup();
     exit(0);
   }
@@ -1046,6 +1048,14 @@ int main(int argc, char *argv[]) {
     char buffer[1024];
     imageObj *img=NULL;
     int status;
+
+    /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
+    if ( msDebugInitFromEnv() != MS_SUCCESS )
+    {
+        writeError();
+        msCleanup();
+        exit(0);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process arguments.  In normal use as a cgi-bin there are no     */

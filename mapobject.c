@@ -79,7 +79,7 @@ void msFreeMap(mapObj *map) {
 
   /*printf("msFreeMap(): maybe freeing map at %p count=%d.\n",map, map->refcount);*/
   if ( MS_REFCNT_IS_NOT_ZERO(map) ) { return; }
-  if (map->debug)
+  if (map->debug >= MS_DEBUGLEVEL_VV)
      msDebug("msFreeMap(): freeing map at %p.",map);
   /*printf("msFreeMap(): freeing map at %p.\n",map);*/
   
@@ -151,7 +151,7 @@ const char *msGetConfigOption( mapObj *map, const char *key)
 /*                         msSetConfigOption()                          */
 /************************************************************************/
 
-void msSetConfigOption( mapObj *map, const char *key, const char *value)
+int msSetConfigOption( mapObj *map, const char *key, const char *value)
 
 {
     /* We have special "early" handling of this so that it will be */
@@ -159,9 +159,19 @@ void msSetConfigOption( mapObj *map, const char *key, const char *value)
     if( strcasecmp(key,"PROJ_LIB") == 0 )
         msSetPROJ_LIB( value );
 
+    /* Same for MS_ERRORFILE, we want it to kick in as early as possible
+     * to catch parsing errors */
+    if( strcasecmp(key,"MS_ERRORFILE") == 0 )
+    {
+        if (msSetErrorFile( value ) != MS_SUCCESS)
+            return MS_FAILURE;
+    }
+
     if( msLookupHashTable( &(map->configoptions), key ) != NULL )
         msRemoveHashTable( &(map->configoptions), key );
     msInsertHashTable( &(map->configoptions), key, value );
+
+    return MS_SUCCESS;
 }
 
 /************************************************************************/
@@ -204,9 +214,7 @@ void msApplyMapConfigOptions( mapObj *map )
         }
         else if( strcasecmp(key,"MS_ERRORFILE") == 0 )
         {
-            char *ms_error = (char *) malloc(strlen(value) + 40);
-            sprintf( ms_error, "MS_ERRORFILE=%s", value);
-            putenv( ms_error ); 
+            msSetErrorFile( value );
         }
         else 
         {

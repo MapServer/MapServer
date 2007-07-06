@@ -66,12 +66,21 @@ int main(int argc, char *argv[])
     exit(0);
   }
   
+  /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
+  if ( msDebugInitFromEnv() != MS_SUCCESS )
+  {
+      msWriteError(stderr);
+      msCleanup();
+      exit(0);
+  }
+
   for(i=1;i<argc;i++) { /* Step though the user arguments, 1st to find map file */
  
     if(strcmp(argv[i],"-m") == 0) {
       map = msLoadMap(argv[i+1], NULL);
       if(!map) {
 	msWriteError(stderr);
+        msCleanup();
 	exit(0);
       }
     }
@@ -79,6 +88,7 @@ int main(int argc, char *argv[])
   
   if(!map) {
     fprintf(stderr, "Mapfile (-m) option not specified.\n");
+    msCleanup();
     exit(0);
   }
 
@@ -140,13 +150,21 @@ int main(int argc, char *argv[])
         for(j=0; j<map->numlayers; j++) {
             GET_LAYER(map, j)->debug = debug_level;
         }
-        if( getenv( "MS_ERRORFILE" ) == NULL )
-            putenv( "MS_ERRORFILE=stderr" );
+
+        msSetGlobalDebugLevel(debug_level);
+
+        /* Send output to stderr by default */ 
+        if (msGetErrorFile() == NULL)
+            msSetErrorFile("stderr");
     }
     
     if(strcmp(argv[i], "-map_debug") == 0) /* debug */
     {
         map->debug = atoi(argv[++i]);
+
+        /* Send output to stderr by default */ 
+        if (msGetErrorFile() == NULL)
+            msSetErrorFile("stderr");
     }
     
     if(strcmp(argv[i], "-layer_debug") == 0) /* debug */
@@ -165,6 +183,10 @@ int main(int argc, char *argv[])
             fprintf( stderr, 
                      " Did not find layer '%s' from -layer_debug switch.\n", 
                      layer_name );
+
+        /* Send output to stderr by default */ 
+        if (msGetErrorFile() == NULL)
+            msSetErrorFile("stderr");
     }
     
     if(strcmp(argv[i],"-e") == 0) { /* change extent */

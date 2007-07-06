@@ -1339,7 +1339,7 @@ double dist(pointObj a, pointObj b);
 MS_DLL_EXPORT void msFreeMap(mapObj *map);
 MS_DLL_EXPORT mapObj *msNewMapObj(void);
 MS_DLL_EXPORT const char *msGetConfigOption( mapObj *map, const char *key);
-MS_DLL_EXPORT void msSetConfigOption( mapObj *map, const char *key, const char *value);
+MS_DLL_EXPORT int msSetConfigOption( mapObj *map, const char *key, const char *value);
 MS_DLL_EXPORT int msTestConfigOption( mapObj *map, const char *key, 
                                       int default_result );
 MS_DLL_EXPORT void msApplyMapConfigOptions( mapObj *map );
