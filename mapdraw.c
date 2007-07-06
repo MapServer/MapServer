@@ -612,13 +612,12 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
 
-
   if(MS_RENDERER_GD(image_draw->format)) {
 
     /* 
     ** for layer-level opacity we render to a temp image
     */
-    if(layer->opacity > 0 && layer->opacity) {
+    if(layer->opacity > 0 && layer->opacity <= 100) {
       msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
       
       image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl );
