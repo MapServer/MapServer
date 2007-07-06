@@ -1855,7 +1855,8 @@ extern unsigned char PNGsig[8];
 /*      Create a symbol entry for an inmap pixmap symbol. Returns       */
 /*      the symbol id.                                                  */
 /************************************************************************/
-int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName)
+int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
+                          int nGap)
 {
     FILE *fp;
     char bytes[8];
@@ -1905,7 +1906,13 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName)
                     psSymbol->sizey = 1; 
                     psSymbol->type = MS_SYMBOL_PIXMAP;
                     psSymbol->name = strdup(extGraphicName);
-  
+                    psSymbol->imagepath = strdup(pszFileName);
+                    psSymbol->sizex = img->sx;
+                    psSymbol->sizey = img->sy;
+                    
+                    /* gap is set to 2 times the size*/
+                    psSymbol->gap = nGap;
+                    
                     psSymbol->img = img;
                 }
             }
@@ -2034,7 +2041,13 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
 
                         if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) == MS_SUCCESS)
                         {
-                            psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL);
+                            /* the lats parameter is used to set the GAP size in the symbol. 
+                               It is harcoded to be 2 * the size set for the symbol. This is
+                               used when using graphic strokes with line symblizers (symbols
+                               along the line) */
+                               
+                            psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL,
+                                                                    2 * psStyle->size);
                             if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
                               psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol].name);
 

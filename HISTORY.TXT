@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - SLD: Support of Graphic Stroke for a Linesymbolizer (#2139)
+
  - RFC-27: Added support for label priority (#1619)
 
  - GD : draw symbols along a line using pixmap symbols (#2121)
