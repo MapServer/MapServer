@@ -1733,6 +1733,7 @@ MS_DLL_EXPORT int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label
 MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
+MS_DLL_EXPORT void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent);
 
 #ifdef USE_AGG
 /* ==================================================================== */

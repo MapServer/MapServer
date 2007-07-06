@@ -1758,6 +1758,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   gdPoint points[MS_MAXVECTORPOINTS];
   gdPoint oldpnt, newpnt;
 
+  int oldAlphaBlending = img->alphaBlendingFlag;
+
   if(!p) return;
   if(p->numlines <= 0) return;
 
@@ -1807,11 +1809,13 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 	symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
       }
       gdImageSetBrush(img, brush);
+      gdImageAlphaBlending(img, 1);
       imagePolyline(img, p, gdBrushed, ox, oy);
     } else {
       gdImageSetThickness(img, width);
       if(style->antialias == MS_TRUE) { 
 	gdImageSetAntiAliased(img, fc);
+        gdImageAlphaBlending(img, 1);
 	imagePolyline(img, p, gdAntiAliased, ox, oy);
 	gdImageSetAntiAliased(img, -1);
       } else
@@ -1819,6 +1823,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       gdImageSetThickness(img, 1);
     }
 
+    gdImageAlphaBlending(img, oldAlphaBlending);
     return; /* done with easiest case */
   }
 
@@ -1829,6 +1834,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
         brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
         symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
       }
+      gdImageAlphaBlending(img, 1);
       gdImageSetBrush(img, brush);
       fc = 1; bc = 0;
     } else {
@@ -1838,10 +1844,12 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     break;
   case(MS_SYMBOL_TRUETYPE):
     msImageTruetypePolyline(symbolset, img, p, style, scalefactor);
+    gdImageAlphaBlending(img, oldAlphaBlending);
     return;
     break;
   case(MS_SYMBOL_CARTOLINE):
     msImageCartographicPolyline(img, p, style, symbol, fc, size, scalefactor);
+    gdImageAlphaBlending(img, oldAlphaBlending);
     return;
     break;
   case(MS_SYMBOL_ELLIPSE):
@@ -1860,6 +1868,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
         brush = createFuzzyBrush(x, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
         symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, x, brush);
       }
+      gdImageAlphaBlending(img, 1);
     } else {
 
       /* create the brush image if not already in the cache */
@@ -1883,17 +1892,15 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     fc = 1; bc = 0;
     break;
   case(MS_SYMBOL_PIXMAP):
-    if (symbol->gap != 0)
-    {
-        msImagePixmapPolyline(symbolset, img, p, style, scalefactor);
-        return;
-    }
-    else
-    {
-        /* todo: add scaling, offset and rotation */
-        gdImageSetBrush(img, symbol->img);
-        fc = 1; bc = 0;
-        break;
+    if(symbol->gap != 0) {
+      msImagePixmapPolyline(symbolset, img, p, style, scalefactor);
+      gdImageAlphaBlending(img, oldAlphaBlending);
+      return;
+    } else {
+      /* todo: add scaling, offset and rotation */
+      gdImageSetBrush(img, symbol->img);
+      fc = 1; bc = 0;
+      break;
     }
     
   case(MS_SYMBOL_VECTOR):
@@ -2005,6 +2012,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   }
 
   /* clean up */
+  gdImageAlphaBlending(img, oldAlphaBlending);
   gdImageSetThickness(img, 1);
   if(oldsymbol) {
     msFreeSymbol(symbol); /* delete rotated version */
@@ -3703,76 +3711,111 @@ void msFreeImageGD(gdImagePtr img)
   gdImageDestroy(img);
 }
 
+/*
+** Use for merging a vector layer image with a base image. The vector drawing routines always blend so
+** the alpha channel of the src image is not used.
+*/
+void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent)
+{
+  int x, y;
+  int oldAlphaBlending=0;
+
+  /* 
+  ** for most cases the GD copy is fine 
+  */
+  if(!gdImageTrueColor(dst) || !gdImageTrueColor(src)) {
+    gdImageCopyMerge( dst, src, dstX, dstY, srcX, srcY, w, h, pct );
+    return;
+  }
+
+  /* 
+  ** Turn off blending in output image to prevent it doing it's own attempt
+  ** at blending instead of using our result. 
+  */
+  oldAlphaBlending = dst->alphaBlendingFlag;
+  gdImageAlphaBlending( dst, 0 );
+
+  for (y = 0; (y < h); y++) {
+    for (x = 0; (x < w); x++) {
+      int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
+      int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
+      int red, green, blue;
+
+      if(gdTrueColorGetRed(src_c) == transparent->red && gdTrueColorGetBlue(src_c) == transparent->blue && gdTrueColorGetGreen(src_c) == transparent->green)
+        continue;
+
+      red = gdImageRed (src, src_c) * (pct / 100.0) + gdImageRed (dst, dst_c) * ((100 - pct) / 100.0);
+      green = gdImageGreen (src, src_c) * (pct / 100.0) + gdImageGreen (dst, dst_c) * ((100 - pct) / 100.0);
+      blue = gdImageBlue (src, src_c) * (pct / 100.0) + gdImageBlue (dst, dst_c) * ((100 - pct) / 100.0);
+            
+      gdImageSetPixel(dst,dstX+x,dstY+y, gdTrueColorAlpha( red, green, blue, gdTrueColorGetAlpha(dst_c)));
+    }
+  }
+
+  /*
+  ** Restore original alpha blending flag. 
+  */
+  gdImageAlphaBlending( dst, oldAlphaBlending );
+}
+
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct)
 {
-    int x, y;
-    int oldAlphaBlending=0;
+  int x, y;
+  int oldAlphaBlending=0;
 
-    /* for most cases the GD copy is fine */
-    if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) )
-    {
-        gdImageCopyMerge( dst, src, dstX, dstY, srcX, srcY, w, h, pct );
-        return;
-    }
+  /* 
+  ** for most cases the GD copy is fine 
+  */
+  if(!gdImageTrueColor(dst) || !gdImageTrueColor(src)) {
+    gdImageCopyMerge( dst, src, dstX, dstY, srcX, srcY, w, h, pct );
+    return;
+  }
 
-    /* 
-    ** Turn off blending in output image to prevent it doing it's own attempt
-    ** at blending instead of using our result. 
-    */
+  /* 
+  ** Turn off blending in output image to prevent it doing it's own attempt
+  ** at blending instead of using our result. 
+  */
+  oldAlphaBlending = dst->alphaBlendingFlag;
+  gdImageAlphaBlending( dst, 0 );
 
-    oldAlphaBlending = dst->alphaBlendingFlag;
-    gdImageAlphaBlending( dst, 0 );
+  for (y = 0; (y < h); y++) {
+    for (x = 0; (x < w); x++) {
+      int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
+      int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
+      int red, green, blue, res_alpha;
+      int src_alpha = (127-gdTrueColorGetAlpha(src_c));
+      int dst_alpha = (127-gdTrueColorGetAlpha(dst_c));
 
-    /* gdImageAlphaBlending( dst, 0 ); */
+      if( gdTrueColorGetAlpha(src_c) == gdAlphaTransparent )
+        continue;
+ 
+      /* Adjust dst alpha according to percentages */
+      dst_alpha = dst_alpha * ((100-pct)*src_alpha/127) / 100;
 
-    for (y = 0; (y < h); y++)
-    {
-        for (x = 0; (x < w); x++)
-        {
-            int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
-            int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
-            int red, green, blue, res_alpha;
-            int src_alpha = (127-gdTrueColorGetAlpha(src_c));
-            int dst_alpha = (127-gdTrueColorGetAlpha(dst_c));
+      /* adjust source according to transparency percentage */
+      src_alpha = src_alpha * (pct) / 100;
 
-            if( gdTrueColorGetAlpha(src_c) == gdAlphaTransparent )
-                continue;
-
-            /* Adjust dst alpha according to percentages */
-            dst_alpha = dst_alpha * ((100-pct)*src_alpha/127) / 100;
-
-            /* adjust source according to transparency percentage */
-            src_alpha = src_alpha * (pct) / 100;
-
-            /* Use simple additive model for resulting transparency */
-            res_alpha = src_alpha + dst_alpha;
-            if( res_alpha > 127 )
-                res_alpha = 127;
+      /* Use simple additive model for resulting transparency */
+      res_alpha = src_alpha + dst_alpha;
+      if( res_alpha > 127 )
+        res_alpha = 127;
             
-            if( src_alpha + dst_alpha == 0 )
-                dst_alpha = 1;
+      if( src_alpha + dst_alpha == 0 )
+        dst_alpha = 1;
 
-            red = ((gdTrueColorGetRed( src_c ) * src_alpha)
-                   + (gdTrueColorGetRed( dst_c ) * dst_alpha))
-                / (src_alpha+dst_alpha);
-            green = ((gdTrueColorGetGreen( src_c ) * src_alpha)
-                     + (gdTrueColorGetGreen( dst_c ) * dst_alpha))
-                / (src_alpha+dst_alpha);
-            blue = ((gdTrueColorGetBlue( src_c ) * src_alpha)
-                    + (gdTrueColorGetBlue( dst_c ) * dst_alpha))
-                / (src_alpha+dst_alpha);
+      red = ((gdTrueColorGetRed( src_c ) * src_alpha) + (gdTrueColorGetRed( dst_c ) * dst_alpha)) / (src_alpha+dst_alpha);
+      green = ((gdTrueColorGetGreen( src_c ) * src_alpha) + (gdTrueColorGetGreen( dst_c ) * dst_alpha)) / (src_alpha+dst_alpha);
+      blue = ((gdTrueColorGetBlue( src_c ) * src_alpha) + (gdTrueColorGetBlue( dst_c ) * dst_alpha)) / (src_alpha+dst_alpha);
             
-            gdImageSetPixel(dst,dstX+x,dstY+y,
-                            gdTrueColorAlpha( red, green, blue, 
-                                              127-res_alpha ));
-        }
+      gdImageSetPixel(dst,dstX+x,dstY+y, gdTrueColorAlpha( red, green, blue, 127-res_alpha ));
     }
+  }
 
-    /*
-    ** Restore original alpha blending flag. 
-    */
-    /* gdImageAlphaBlending( dst, 0 ); */
-    gdImageAlphaBlending( dst, oldAlphaBlending );
+  /*
+  ** Restore original alpha blending flag. 
+  */
+  /* gdImageAlphaBlending( dst, 0 ); */
+  gdImageAlphaBlending( dst, oldAlphaBlending );
 }
 
 /* Code from gd_io_file.c has been brought into mapserver itself so that we
