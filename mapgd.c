@@ -3487,9 +3487,10 @@ int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
         if ( msIO_needBinaryStdout() == MS_FAILURE )
             return MS_FAILURE;
         stream = stdout;
-        ctx = (gdIOCtx *) msNewGDFileCtx(stream);
 #ifdef USE_MAPIO
         ctx = msIO_getGDIOCtx( stream );
+#else
+        ctx = (gdIOCtx *) msNewGDFileCtx(stream);
 #endif
     
         /* we wrap msSaveImageGDCtx in the same way that 
