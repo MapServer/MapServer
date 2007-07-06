@@ -73,7 +73,7 @@ int msSLDGetLineSymbol(mapObj *map);
 int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray);
 int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
                        char *pszDashValue);
-int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName, char *extGraphicName);
+int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName, char *extGraphicName, int nGap);
 
 void msSLDSetColorObject(char *psHexColor, colorObj *psColor);
 
