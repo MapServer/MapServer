@@ -280,8 +280,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
             }
             if (bUseSpecificLayer)
               break;
-          
-              
         }
 
     }
@@ -3246,15 +3244,14 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
     sprintf(szTmp, "%s\n",  "<Stroke>");
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-    /* TODO : does not work (color is not picked) */
-    /* pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer); */
+    pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0);
     if (pszGraphicSLD)
     {
-        sprintf(szTmp, "%s\n",  "<GraphicFill>");
+        sprintf(szTmp, "%s\n",  "<GraphicStroke>");
         pszSLD = msStringConcatenate(pszSLD, szTmp);
         
         pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
-        sprintf(szTmp, "%s\n",  "</GraphicFill>");
+        sprintf(szTmp, "%s\n",  "</GraphicStroke>");
         pszSLD = msStringConcatenate(pszSLD, szTmp);
              
         free(pszGraphicSLD);
@@ -3271,18 +3268,23 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
                             
     nSymbol = -1;
 
-    if (psStyle->symbol > 0)
+    if (psStyle->symbol >= 0)
       nSymbol = psStyle->symbol;
     else if (psStyle->symbolname)
       nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
                                  psStyle->symbolname, MS_FALSE);
                             
-    /* if no symbol or symbol 0 is used, size is set to 1 */
-    /* which is the way mapserver works */
-    if (nSymbol <=0)
+    if (nSymbol <0)
       nSize = 1;
     else
-      nSize = psStyle->size;
+    {
+        if (psStyle->size > 0)
+          nSize = psStyle->size;
+        else if (psStyle->width > 0)
+          nSize = psStyle->width;
+        else
+          nSize = 1;
+    }
 
     sprintf(szTmp, 
             "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
