@@ -494,6 +494,8 @@ int loadJoin(joinObj *join)
     case(HEADER):
       if(getString(&join->header) == MS_FAILURE) return(-1);
       break;
+    case(JOIN):
+      break; /* for string loads */
     case(NAME):
       if(getString(&join->name) == MS_FAILURE) return(-1);
       break;
@@ -653,6 +655,8 @@ static int loadFeature(layerObj	*player, int type)
       msFree(shape);
 
       return(status);
+    case(FEATURE):
+      break; /* for string loads */
     case(POINTS):
       if(loadFeaturePoints(&points) == MS_FAILURE) return(MS_FAILURE); /* no clean up necessary, just return */
       status = msAddLine(shape, &points);
@@ -717,7 +721,9 @@ static int loadGrid( layerObj *pLayer )
       msSetError(MS_EOFERR, NULL, "loadGrid()");     
       return(-1);      
     case(END):
-      return(0);      
+      return(0);
+    case(GRID):
+      break; /* for string loads */
     case( LABELFORMAT ):
       if(getString(&((graticuleObj *)pLayer->layerinfo)->labelformat) == MS_FAILURE) {
 	if(strcasecmp(msyytext, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */
@@ -1005,13 +1011,12 @@ static int loadProjection(projectionObj *p)
       else
           return 0;
       }
-      break;    
+      break;
     case(MS_STRING):
     case(MS_AUTO):
       p->args[i] = strdup(msyytext);
       i++;
       break;
-
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadProjection()",
                  msyytext, msyylineno);
@@ -1236,6 +1241,8 @@ static int loadLabel(labelObj *label)
     case(FORCE):
       if((label->force = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
+    case(LABEL):
+      break; /* for string loads */
     case(MAXSIZE):      
       if(getInteger(&(label->maxsize)) == -1) return(-1);
       break;
@@ -1888,6 +1895,8 @@ int loadStyle(styleObj *style) {
         style->numbindings++;
       }
       break;
+    case(STYLE):
+      break; /* for string loads */
     case(SYMBOL):
       if((symbol = getSymbol(3, MS_NUMBER,MS_STRING,MS_BINDING)) == -1) return(MS_FAILURE);
       if(symbol == MS_NUMBER)
@@ -2096,6 +2105,8 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
 
   for(;;) {
     switch(msyylex()) {
+    case(CLASS):
+      break; /* for string loads */
     case(DEBUG):
       if((class->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;      
@@ -2758,6 +2769,8 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(LABELREQUIRES):
       if(getString(&layer->labelrequires) == MS_FAILURE) return(-1);
       break;
+    case(LAYER):
+      break; /* for string loads */
     case(MAXFEATURES):
       if(getInteger(&(layer->maxfeatures)) == -1) return(-1);
       break;
@@ -3337,6 +3350,8 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
     case(MAXBOXSIZE):
       if(getInteger(&(ref->maxboxsize)) == -1) return(-1);
       break;
+    case(REFERENCE):
+      break; /* for string loads */
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadReferenceMap()", 
                  msyytext, msyylineno);
@@ -3722,6 +3737,8 @@ int loadLegend(legendObj *legend, mapObj *map)
       if(loadLabel(&(legend->label)) == -1) return(-1);
       legend->label.angle = 0; /* force */
       break;
+    case(LEGEND):
+      break; /* for string loads */
     case(OUTLINECOLOR):     
       if(loadColor(&(legend->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       break;
@@ -3885,6 +3902,8 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
     case(POSTLABELCACHE):
       if((scalebar->postlabelcache = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
+    case(SCALEBAR):
+      break; /* for string loads */
     case(SIZE):
       if(getInteger(&(scalebar->width)) == -1) return(-1);
       if(getInteger(&(scalebar->height)) == -1) return(-1);
