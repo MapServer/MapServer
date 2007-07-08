@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using OSGeo.MapServer;
 
 /**
  * <p>Title: Mapscript shapeinfo example.</p>

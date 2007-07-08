@@ -1,4 +1,5 @@
 using System;
+using OSGeo.MapServer;
 
 /**
  * <p>Title: Mapscript shape dump example.</p>

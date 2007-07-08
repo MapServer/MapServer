@@ -1,4 +1,5 @@
 using System;
+using OSGeo.MapServer;
 	
 /**
  * <p>Title: Mapscript query map example.</p>

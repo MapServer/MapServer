@@ -213,7 +213,7 @@ CC= @CC@
 all: interface mapscript_so mapscript_csharp dll_config
 
 interface: ../mapscript.i
-	$(SWIG) -csharp $(FLAGS) -o mapscript_wrap.c ../mapscript.i
+	$(SWIG) -csharp -namespace OSGeo.MapServer $(FLAGS) -o mapscript_wrap.c ../mapscript.i
 
 mapscript_so: mapscript_wrap.c
 	$(CC) -fpic -c $(CCFLAGS) mapscript_wrap.c

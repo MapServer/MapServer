@@ -53,11 +53,24 @@ file. The GAP represents the distance between the symbols. If the GAP is not
 given, the pixmap symbol will be used as a brush.   
 
 ----------------------------------------------------
-SWIG MapScript (Python, Perl, Csharp, Java) changes
+SWIG MapScript (Python, Perl, CSharp, Java) changes
 ----------------------------------------------------
 
 Layer Transparency: The layerObj transparency parameter is now called
 opacity. Scripts setting that value in code must be updated.
+
+CSharp related changes
+-----------------------
+
+The MapScript C# classes are now placed into the OSGeo.MapServer namespace
+The scripts should use the fully qualified names of the classes or apply 
+the 
+
+::
+
+  using OSGeo.MapServer;
+  
+or the corresponding language equivalent. 
 
 ----------------------------------------------------
 PHP/MapScript changes
