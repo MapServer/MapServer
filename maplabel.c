@@ -50,6 +50,12 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
   if(!string) return(MS_SUCCESS); /* not an error */ 
 
+  layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
+  classPtr = GET_LAYER(map, layerindex)->class[classindex];
+
+  if( label == NULL )
+      label = &(classPtr->label);
+
   /* Validate label priority value and get ref on label cache for it */
   if (label->priority < 1)
       label->priority = 1;
@@ -67,12 +73,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
    cacheslot->cachesize += MS_LABELCACHEINCREMENT;
   }
 
-  cachePtr = &(cacheslot->labels[cacheslot->numlabels]); /* set up a few pointers for clarity */
-  layerPtr = (GET_LAYER(map, layerindex));
-  classPtr = GET_LAYER(map, layerindex)->class[classindex];
-
-  if( label == NULL )
-      label = &(classPtr->label);
+  cachePtr = &(cacheslot->labels[cacheslot->numlabels]);
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
   cachePtr->classindex = classindex;

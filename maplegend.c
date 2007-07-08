@@ -464,6 +464,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
   GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
   GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
+  GET_LAYER(map, l)->class[0]->label.priority = MS_MAX_LABEL_PRIORITY;
 
   if(map->legend.postlabelcache) /* add it directly to the image */
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
