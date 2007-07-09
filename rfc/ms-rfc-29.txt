@@ -5,8 +5,8 @@
 :Date: 2007/06/15
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/07/03
-:Status: Pending Vote
+:Last Edited: 2007/07/09
+:Status: Adopted (2007/07/05) - Completed (2007/07/09)
 :Version: MapServer 5.0
 
 Overview
@@ -134,11 +134,17 @@ Bug ID
 
 * 1800: https://trac.osgeo.org/mapserver/ticket/1800
 
+Future enhancements:
+
+* 2136: https://trac.osgeo.org/mapserver/ticket/2136
+* 2145: https://trac.osgeo.org/mapserver/ticket/2145
 
 Voting history
 --------------
 
-No vote yet.
+Vote completed on 2007/07/05:
+
++1 from DanielM, SteveW, AssefaY
 
 Questions/Comments from the review period
 -----------------------------------------
@@ -148,6 +154,8 @@ Questions/Comments from the review period
   A: The current implementation works only for polygon data sources. I could extend it to work on point data sources as well fairly easily I think.
 
   I'm not sure about line data sources though. I guess we could do like we do for ANNOTATION layers and use msPolylineLabelPoint() to determine the location of the chart. 
+
+  Ticket #2145 has been opened to track this enhancement: https://trac.osgeo.org/mapserver/ticket/2145
 
 * Q: Could we support attribute binding in CHART_SIZE = [size]? This would allow you to show the relative size of hits at a point and have the chart show the percentage contributions in the wedges.
 
