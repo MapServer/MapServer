@@ -464,8 +464,8 @@ char path[MS_MAXPATHLEN];
 											   
 <EXPRESSION_STRING>\"|\'     		       {
 						/* Beginning of a new String, skip the quote and enter the MSSTR context */
-						msyytext++;
 						int idx=0;
+						msyytext++;
 						for(idx=0; idx<1024; string_buf[idx++]='\0');
 						string_buf_ptr = string_buf;
 						BEGIN(MSSTR);
