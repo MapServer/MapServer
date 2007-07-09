@@ -290,6 +290,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>butt                                  { return(MS_CJC_BUTT); }
 <INITIAL>cartoline                             { return(MS_SYMBOL_CARTOLINE); }
 <INITIAL,VALUE_STRING>cc                       { return(MS_CC); }
+<INITIAL,VALUE_STRING>chart                    { return(MS_LAYER_CHART); }
 <INITIAL,VALUE_STRING>circle                   { return(MS_LAYER_CIRCLE); }
 <INITIAL,VALUE_STRING>cl                       { return(MS_CL); }
 <INITIAL,VALUE_STRING>cr                       { return(MS_CR); }

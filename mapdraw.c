@@ -674,10 +674,19 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 #else  
     retcode = MS_FAILURE;
 #endif
-  } else if(layer->type == MS_LAYER_RASTER) {
-    retcode = msDrawRasterLayer(map, layer, image_draw);
-  } else { /* vector layer */
-    retcode = msDrawVectorLayer(map, layer, image_draw);
+  }
+  else if(layer->type == MS_LAYER_RASTER) 
+  {
+      retcode = msDrawRasterLayer(map, layer, image_draw);
+  }
+  else if(layer->type == MS_LAYER_CHART)
+  {
+      retcode = msDrawChartLayer(map, layer, image_draw);
+  }
+  /* Must be a Vector layer */
+  else 
+  {
+      retcode = msDrawVectorLayer(map, layer, image_draw);
   }
 
   /* Destroy the temp image for this layer tranparency */
@@ -1083,6 +1092,21 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     return MS_FAILURE;
 }
+
+/**
+ * Generic function to render chart layers.
+ */
+int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image) 
+{
+    if (image && map && layer)
+    {
+        if( MS_RENDERER_GD(image->format) )
+            return msDrawChartLayerGD(map, layer, image);
+    }
+
+    return MS_FAILURE;
+}
+
 
 /**
  * msDrawWMSLayer()

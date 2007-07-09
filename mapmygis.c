@@ -1362,6 +1362,7 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 						wkb_force_to_lines(wkb, shape) :
 						force_to_lines(row, layerinfo->query_result, shape, record);
 					break;
+				case MS_LAYER_CHART:
 				case MS_LAYER_POLYGON:
 					result = wkbdata ?
 						wkb_force_to_polygons(wkb, shape) :

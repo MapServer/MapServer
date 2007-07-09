@@ -51,7 +51,7 @@ Currently supported classes, properties and methods:
     Layer types:
         MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, 
         MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY,
-        MS_LAYER_CIRCLE  MS_LAYER_TILEINDEX
+        MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX, MS_LAYER_CHART
 
     Layer/Legend/Scalebar/Class Status:
         MS_ON, MS_OFF, MS_DEFAULT, MS_EMBED, MS_DELETE

@@ -323,7 +323,7 @@ extern "C" {
 enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS, MS_PERCENTAGES};
 enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
-enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX};
+enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX, MS_LAYER_CHART};
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 
 #define MS_POSITIONS_LENGTH 12
@@ -1796,6 +1796,10 @@ MS_DLL_EXPORT int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *
 MS_DLL_EXPORT int msGetGDALGeoTransform(void *hDS, mapObj *map, layerObj *layer, double *padfGeoTransform );
 MS_DLL_EXPORT int *msGetGDALBandList( layerObj *layer, void *hDS, int max_bands, int *band_count );
 MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pbGotNoData );
+
+/* in mapchart.c */
+MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image);
+MS_DLL_EXPORT int msDrawChartLayerGD(mapObj *map, layerObj *layer, imageObj *image);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */

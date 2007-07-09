@@ -126,6 +126,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
       break;
     case MS_LAYER_CIRCLE:
     case MS_LAYER_RASTER:
+    case MS_LAYER_CHART:
     case MS_LAYER_POLYGON:
       for(i=0; i<class->numstyles; i++)     
         msDrawShadeSymbolGD(&map->symbolset, img, &box, class->styles[i], lp->scalefactor);
