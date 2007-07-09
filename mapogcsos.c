@@ -979,6 +979,9 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
     xmlNsPtr     psNsGml       = NULL;
 
+    xmlChar *buffer = NULL;
+    int size = 0;
+    msIOContext *context = NULL;
 
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
@@ -1415,9 +1418,17 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      
      /* xmlDocDump crashs withe the prebuild windows binaries distibutes at the libxml site???.
       It works with locally build binaries*/
+     
+     /* this would not work for WxS wrap functions used with mapscript 
      stream = stdout;
-
      xmlDocDump(stream, psDoc);
+     */
+
+     context = msIO_getHandler(stdout);
+
+     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     msIO_contextWrite(context, buffer, size);
+     xmlFree(buffer);
 
      /*free buffer and the document */
      /*xmlFree(buffer);*/
@@ -1498,8 +1509,13 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     char *pszBuffer = NULL;
     const char *pszProcedureItem = NULL;
     int bSpatialDB = 0;
+    xmlChar *buffer = NULL;
+    int size = 0;
+    msIOContext *context = NULL;
 
     sBbox = map->extent;
+
+    
 
     psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
@@ -2074,9 +2090,18 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     /* output results */    
      msIO_printf("Content-type: text/xml%c%c",10,10);
+     
+     /* this would not work for WxS wrap functions used with mapscript 
      stream = stdout;
-
      xmlDocDump(stream, psDoc);
+     */
+
+     context = msIO_getHandler(stdout);
+     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     msIO_contextWrite(context, buffer, size);
+     xmlFree(buffer);
+
+
 
     /*free  document */
      xmlFreeDoc(psDoc);
