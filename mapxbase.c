@@ -447,6 +447,38 @@ int	msDBFAddField(DBFHandle psDBF, const char * pszFieldName, DBFFieldType eType
 }
 
 /************************************************************************/
+/*                         DBFIsValueNULL()                             */
+/*                                                                      */
+/*      Return TRUE if value is NULL (in DBF terms).                    */
+/*                                                                      */
+/*      Based on DBFIsAttributeNULL of shapelib                         */
+/************************************************************************/
+
+int DBFIsValueNULL( const char* pszValue, char type )
+
+{   
+    switch(type)
+    {
+      case 'N':
+      case 'F':
+        /* NULL numeric fields have value "****************" */
+        return pszValue[0] == '*';
+
+      case 'D':
+        /* NULL date fields have value "00000000" */
+        return strncmp(pszValue,"00000000",8) == 0;
+
+      case 'L':
+        /* NULL boolean fields have value "?" */
+        return pszValue[0] == '?';
+
+      default:
+        /* empty string fields are considered NULL */
+        return strlen(pszValue) == 0;
+    }
+}
+
+/************************************************************************/
 /*                          msDBFReadAttribute()                        */
 /*                                                                      */
 /*      Read one of the attribute fields of a record.                   */
@@ -489,6 +521,8 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     }
 
     pabyRec = (uchar *) psDBF->pszCurrentRecord;
+    /* DEBUG */
+    /* printf("CurrentRecord(%c):%s\n", psDBF->pachFieldType[iField], pabyRec); */
 
     /* -------------------------------------------------------------------- */
     /*	Ensure our field buffer is large enough to hold this buffer.	    */
@@ -530,6 +564,11 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     else
         pReturnField = psDBF->pszStringField;
 
+    /*  detect null values */
+    if ( DBFIsValueNULL( pReturnField, psDBF->pachFieldType[iField] )  ) {
+	if (psDBF->pachFieldType[iField] == 'N' || psDBF->pachFieldType[iField] == 'F' || psDBF->pachFieldType[iField] == 'D')
+		pReturnField="0";	
+    }	
     return( pReturnField );
 }
 

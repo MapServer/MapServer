@@ -43,8 +43,12 @@ char path[MS_MAXPATHLEN];
 %s VALUE_STRING
 %s EXPRESSION_STRING
 %s INCLUDE
+%s MSSTR
 
 %%
+       char string_buf[1024];
+       char *string_buf_ptr=NULL;
+
        switch(msyystate) {
        case(MS_TOKENIZE_DEFAULT):
          break;
@@ -456,13 +460,48 @@ char path[MS_MAXPATHLEN];
                                                  return(ISTRING);
                                                }
 
-<EXPRESSION_STRING>\"[^\"]*\"|\'[^\']*\'       {
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 /* msyylval.strval = strdup(msyytext);*/
-                                                 msyylval.strval = msyytext;
-                                                 return(STRING);
+											   
+<EXPRESSION_STRING>\"|\'     		       {
+						/* Beginning of a new String, skip the quote and enter the MSSTR context */
+						msyytext++;
+						int idx=0;
+						for(idx=0; idx<1024; string_buf[idx++]='\0');
+						string_buf_ptr = string_buf;
+						BEGIN(MSSTR);
                                                }
+											   
+<MSSTR>\\(.|\n)  				{
+						/* Escape code: skip the slash and use the escaped char */
+						if (strlen(string_buf) < (1024-2))
+							*string_buf_ptr++ = msyytext[1];
+						}
+
+<MSSTR>\"|\'        				{
+						 /*
+						  this is the closing quote - we're done
+					 	  Umberto: it should be possible to use yy_pop_stack to allow for this string
+					 	  parsing routine to be used in more places, but I can't make it work
+						 */
+						 BEGIN(EXPRESSION_STRING);
+						 *string_buf_ptr = '\0';
+						 msyylval.strval = strdup(string_buf);
+						 msyytext++;
+						 return(STRING);
+						}
+
+<MSSTR>[^\\\"\\\']+        			{
+						char *yptr = msyytext;
+							
+						/*
+						when the text is longer than the buffer we simply discard it.
+						TODO: This should be improved.
+						*/
+						while ( *yptr && strlen(string_buf) < (1024-1) ) {
+							*string_buf_ptr = *yptr;
+							string_buf_ptr++;
+							yptr++;
+						}
+						}
 
 <INITIAL>[a-z/\.][a-z0-9/\._\-\=]*             { return(MS_STRING); }
 <NAME_STRING>[a-z/\.][a-z0-9/\.\-\=]*        { return(MS_STRING); }

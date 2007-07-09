@@ -356,24 +356,25 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
   case(MS_EXPRESSION):
     tmpstr = strdup(expression->string);
 
-    for(i=0; i<expression->numitems; i++)      
-      tmpstr = msReplaceSubstring(tmpstr, expression->items[i], items[expression->indexes[i]]);
-
+    for(i=0; i<expression->numitems; i++) {
+		items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\'", "\\\'");
+		items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\"", "\\\"");
+		tmpstr = msReplaceSubstring(tmpstr, expression->items[i], items[expression->indexes[i]]);
+    }
     msAcquireLock( TLOCK_PARSER );
     msyystate = MS_TOKENIZE_EXPRESSION;
     msyystring = tmpstr; /* set lexer state to EXPRESSION_STRING */
     status = msyyparse();
     expresult = msyyresult;
     msReleaseLock( TLOCK_PARSER );
-    free(tmpstr);
 
     if (status != 0)
     {
-        msSetError(MS_PARSEERR, "Failed to parse expression",
-                                "msEvalExpression");
+        msSetError(MS_PARSEERR, "Failed to parse expression: %s", "msEvalExpression", tmpstr);
+        free(tmpstr);
         return MS_FALSE;
     }
-
+    free(tmpstr);
     return expresult;
     
     break;
