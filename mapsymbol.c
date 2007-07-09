@@ -137,7 +137,7 @@ void initSymbol(symbolObj *s)
   s->inmapfile = MS_FALSE;
   s->antialias = MS_FALSE;
   s->font = NULL;
-  s->character = '\0';
+  s->character = NULL;
   s->position = MS_CC;
 
   s->linecap = MS_CJC_BUTT;
@@ -151,6 +151,7 @@ void msFreeSymbol(symbolObj *s) {
   if(s->img) gdImageDestroy(s->img);
   if(s->font) free(s->font);
   if(s->imagepath) free(s->imagepath);
+  if(s->character) free(s->character);
 }
 
 int loadSymbol(symbolObj *s, char *symbolpath)
