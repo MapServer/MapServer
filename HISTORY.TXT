@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - single and double quotes escaping in string expressions used by FILTER.
+   (Resolves tickets #2123 and #2141)
+
  - RFC-29: Added dynamic charting (pie and bar charts, ticket #1800)
 
  - RFC-28: Merged DEBUG and MS_ERRORFILE logging mechanisms. Added 
