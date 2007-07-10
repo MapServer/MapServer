@@ -1,13 +1,13 @@
-===============================
-MS RFC 17: Dynamic Array Sizing
-===============================
+====================================================================
+MS RFC 17: Dynamic Allocation of layers, styles, classes and symbols
+====================================================================
 
 :Date:  2006/05/12
-:Author: Frank Warmerdam
-:Contact: warmerdam@pobox.com
-:Last Edited: May 15, 2006
+:Author: Frank Warmerdam, with edits from Daniel Morissette
+:Contact: warmerdam@pobox.com, dmorissette@mapgears.com
+:Last Edited: 2007/07/10
 :Status: proposed
-:Version: MapServer 4.9
+:Version: MapServer 5.0
 
 Purpose
 --------
@@ -29,11 +29,13 @@ becomes::
 
   int numsymbols;
   int maxsymbols; 
-  symbolObj *symbol;
+  symbolObj **symbol;
 
 Add the following function to ensure there is at least one free entry in 
 the symbol array in the symbolSetObj.  This function will only grow the
-allocated array if needed (if maxsymbols == numsymbols).  The new entries
+allocated array of pointers if needed (if maxsymbols == numsymbols) and 
+will then allocate a new symbolObj if symbol[numsymbols] == NULL.  The new 
+entries in the array will be set to NULL and the new symbolObj[numsymbols]
 will be all set to zero bytes.  
 
 ::
@@ -44,8 +46,12 @@ will be all set to zero bytes.
   there is space.  These locations can be fairly easily identified by 
   greping on MS_MAXSYMBOLS.
 
+* Modify all places that access symbols by index to use the proper way
+  to reference symbols in the new array, possibly using a GET_SYMBOL() macro
+  similar to the GET_LAYER() added in MS-RFC-24 for layers.
+
 * mapsymbol.c: Modify msInitSymbolSet() to initially setup the symbol set with 
-  an array of just one symbols.
+  an array of just one symbol.
 
 * There should be no swig mapscript changes required as it already uses 
   msAppendSymbol().  
@@ -54,9 +60,10 @@ will be all set to zero bytes.
 MS_MAXLAYERS
 ------------
 
-* map.h: Add "int maxlayers;" to mapObj to indicate the current allocation
-  size of layers array.  Note that this also determines the size of the 
-  mapObj layerorder array.
+* map.h: Since RFC-24 already converted the array of layers in a mapObj to 
+  an array of pointers, we only need to add "int maxlayers;" to mapObj to 
+  indicate the current allocation size of layers array.  Note that this 
+  also determines the size of the mapObj layerorder array.
 
 * mapdraw.c: Change msDrawMap() to use map->numlayers in place of current 
   MS_MAXLAYERS for asOWSReqInfo array.
@@ -68,7 +75,8 @@ MS_MAXLAYERS
 * mapobject.c: modify msInsertLayer() to use msGrowMapLayers().
 
 * mapfile.c: set maxlayers to MS_MAXLAYERS and allocate layers accordingly in
-  initMap().  Use msGrowMapLayers() before calling initLayer() when parsing.
+  initMap().  Use msGrowMapLayers() before calling loadLayer() and 
+  loadLayerValue() when parsing.
 
 * mappluginlayer.c: make dynamic.  I'm not exactly sure what there is a
   static factory with entries dimensioned by the number of layers. 
@@ -82,7 +90,8 @@ MS_MAXLAYERS
 MS_MAXCLASSES
 -------------
 
-* map.h: add maxclasses field in layerObj.
+* map.h: Add maxclasses field in layerObj (RFC-24 already converted the 
+  array of classes in a layerObj to an array of pointers).
 
 * layerobject.c: Modify msInsertClass() to use msGrowLayerClasses(). 
 
@@ -101,7 +110,8 @@ MS_MAXCLASSES
 MS_MAXSTYLES
 ------------
 
-* map.h: add maxstyles field to classObj.
+* map.h: add maxstyles field to classObj (RFC-24 already converted the 
+  array of styles in a classObj to an array of pointers).
 
 * mapfile.c: set maxstyles to MS_MAXSTYLES and allocate accordingly in 
   initClass().  Use msGrowClassStyles() as apppriate. 
@@ -129,22 +139,19 @@ Files and objects affected
 Backwards compatibility issues
 ------------------------------
 
-* Because mapscript application often explicitly initialize "blank" layers,
+* Has the following issue already been dealt with by RFC-24 since the code
+  already allocates less than MS_MAX_LAYERS in initMap()? Did RFC-24
+  make it a formal requirement to use the proper insert/add methods to 
+  add layers, styles and classes?
+
+  "Because mapscript application often explicitly initialize "blank" layers,
   classes and styles directly, and then increment the count, we can't depend
   on all access going through the proper insert/add methods.  For this
   reason we preserve the old MS_MAX values to establish the initial allocation.
   This should mean that existing applications will continue to work at some
   cost in unused memory.  But well behaved mapscript applications using 
   insert methods to increase sizes will be able to grow beyond the initial 
-  allocation.
-
-* Whenever the grow functions actually force a reallocation to grow the number 
-  of layers/classes/styles, the actual objects will move in memory.  If a
-  mapscript application is preserving a pointer to the old objects it will 
-  be invalidated by the move, likely resulting in a crash if it is used.  
-  Applications that fetch based on layer/class/style indexes as needed 
-  should still be ok.
-
+  allocation."
 
 
 Test suite
