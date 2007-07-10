@@ -86,6 +86,7 @@ typedef uint32_t        ms_uint32;
 #include "mapproject.h"
 #include "cgiutil.h"
 
+
 #include <gd.h>
 
 #if defined USE_PDF
@@ -1864,26 +1865,6 @@ MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
 /*      End of prototypes for functions in maputil.c                    */
 /* ==================================================================== */
 
-/* ==================================================================== */
-/*      prototypes for functions in mapswf.c                            */
-/* ==================================================================== */
-#ifdef USE_MING_FLASH
-MS_DLL_EXPORT imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
-MS_DLL_EXPORT void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
-MS_DLL_EXPORT int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCacheSWF(imageObj *image, mapObj *map);
-MS_DLL_EXPORT void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
-MS_DLL_EXPORT int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj*image);
-/* int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, int numRequests, mapObj *map, layerObj *layer, imageObj *image); */
-MS_DLL_EXPORT void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize);
-MS_DLL_EXPORT int msSaveImageSWF(imageObj *image, char *filename);
-MS_DLL_EXPORT void msFreeImageSWF(imageObj *image);
-MS_DLL_EXPORT int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
-#endif /* USE_MING_FLASH */
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapswf.c                     */
@@ -1891,30 +1872,6 @@ MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *i
 
 /* ==================================================================== */
 
-/* ==================================================================== */
-/*      prototypes for functions in mappdf.c                            */
-/* ==================================================================== */
-#ifdef USE_PDF
-MS_DLL_EXPORT PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash);
-MS_DLL_EXPORT imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
-MS_DLL_EXPORT void msImageStartLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
-MS_DLL_EXPORT int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCachePDF(imageObj *image, mapObj *map);
-MS_DLL_EXPORT void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
-MS_DLL_EXPORT int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image);
-MS_DLL_EXPORT void msTransformShapePDF(shapeObj *shape, rectObj extent, double cellsize);
-MS_DLL_EXPORT int msSaveImagePDF(imageObj *image, char *filename);
-MS_DLL_EXPORT void msFreeImagePDF(imageObj *image);
-MS_DLL_EXPORT int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
-#endif /* USE_PDF */
-
-/* ==================================================================== */
-/*      End of prototypes for functions in mappdf.c                     */
-/* ==================================================================== */
 
 /* ==================================================================== */
 /*      prototypes for functions in mapsvg.c                            */
@@ -2080,6 +2037,60 @@ MS_DLL_EXPORT char *msDecryptStringTokens(mapObj *map, const char *in);
 MS_DLL_EXPORT void msHexEncode(const unsigned char *in, char *out, int numbytes);
 MS_DLL_EXPORT int msHexDecode(const char *in, unsigned char *out, int numchars);
 
+
+/* ==================================================================== */
+/*      prototypes for functions in mapswf.c                            */
+/* ==================================================================== */
+#ifdef USE_MING_FLASH
+MS_DLL_EXPORT imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
+MS_DLL_EXPORT void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
+MS_DLL_EXPORT int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawLabelCacheSWF(imageObj *image, mapObj *map);
+MS_DLL_EXPORT void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
+MS_DLL_EXPORT int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj*image);
+#ifdef USE_WMS_LYR 
+MS_DLL_EXPORT int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, int numRequests, mapObj *map, 
+                                   layerObj *layer, imageObj *image);
+#endif
+MS_DLL_EXPORT void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT int msSaveImageSWF(imageObj *image, char *filename);
+MS_DLL_EXPORT void msFreeImageSWF(imageObj *image);
+MS_DLL_EXPORT int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
+#endif /* USE_MING_FLASH */
+
+/* ==================================================================== */
+/*      prototypes for functions in mappdf.c                            */
+/* ==================================================================== */
+#ifdef USE_PDF
+MS_DLL_EXPORT PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash);
+MS_DLL_EXPORT imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
+MS_DLL_EXPORT void msImageStartLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
+MS_DLL_EXPORT int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawLabelCachePDF(imageObj *image, mapObj *map);
+MS_DLL_EXPORT void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
+MS_DLL_EXPORT int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image);
+MS_DLL_EXPORT void msTransformShapePDF(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT int msSaveImagePDF(imageObj *image, char *filename);
+MS_DLL_EXPORT void msFreeImagePDF(imageObj *image);
+MS_DLL_EXPORT int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
+#ifdef USE_WMS_LYR 
+MS_DLL_EXPORT int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo, 
+                      int numRequests, mapObj *map, layerObj *layer, imageObj *image);
+#endif
+
+#endif /* USE_PDF */
+
+/* ==================================================================== */
+/*      End of prototypes for functions in mappdf.c                     */
+/* ==================================================================== */
 
 #endif
 
