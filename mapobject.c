@@ -78,7 +78,7 @@ void msFreeMap(mapObj *map) {
   if(!map) return;
 
   /*printf("msFreeMap(): maybe freeing map at %p count=%d.\n",map, map->refcount);*/
-  if ( MS_REFCNT_IS_NOT_ZERO(map) ) { return; }
+  if ( MS_REFCNT_DECR_IS_NOT_ZERO(map) ) { return; }
   if (map->debug >= MS_DEBUGLEVEL_VV)
      msDebug("msFreeMap(): freeing map at %p.",map);
   /*printf("msFreeMap(): freeing map at %p.\n",map);*/

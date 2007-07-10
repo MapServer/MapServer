@@ -1930,7 +1930,7 @@ int loadStyleValue(styleObj *style) {
 int freeStyle(styleObj *style) {
   int i;
 
-  if( MS_REFCNT_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
+  if( MS_REFCNT_DECR_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
 
   msFree(style->symbolname);
   msFree(style->rangeitem);
@@ -2042,7 +2042,7 @@ int freeClass(classObj *class)
 {
   int i;
 
-  if( MS_REFCNT_IS_NOT_ZERO(class) ) { return MS_FAILURE; }
+  if( MS_REFCNT_DECR_IS_NOT_ZERO(class) ) { return MS_FAILURE; }
   /* printf("Freeing class at %p (%s)\n", class, class->name); */
 
   freeLabel(&(class->label));
@@ -2567,7 +2567,7 @@ int initLayer(layerObj *layer, mapObj *map)
 int freeLayer(layerObj *layer) {
   int i;
   if (!layer) return MS_FAILURE;
-  if( MS_REFCNT_IS_NOT_ZERO(layer) ) { return MS_FAILURE; }
+  if( MS_REFCNT_DECR_IS_NOT_ZERO(layer) ) { return MS_FAILURE; }
 //  if (layer->debug)
 //     msDebug("freeLayer(): freeing layer at %p.\n",layer);
 

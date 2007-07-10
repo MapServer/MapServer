@@ -314,8 +314,8 @@ extern "C" {
 #define MS_REFCNT_INCR(obj) obj->refcount++
 #define MS_REFCNT_DECR(obj) (--(obj->refcount))
 #define MS_REFCNT_INIT(obj) obj->refcount=1
-#define MS_REFCNT_IS_NOT_ZERO(obj) (MS_REFCNT_DECR(obj))>0
-#define MS_REFCNT_IS_ZERO(obj) (MS_REFCNT_DECR(obj))<=0
+#define MS_REFCNT_DECR_IS_NOT_ZERO(obj) (MS_REFCNT_DECR(obj))>0
+#define MS_REFCNT_DECR_IS_ZERO(obj) (MS_REFCNT_DECR(obj))<=0
 
 #endif
 
