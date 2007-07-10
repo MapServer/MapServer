@@ -15,6 +15,7 @@ Version 4.10.3 (svn...)
 
 - Fixed size of output buffer in msGetEncodedString() (#2132)
 
+- SOS : backport fixes related to large xml outputs (#1938, #2146)
 
 Version 4.10.2 (2007-05-07)
 ---------------------------

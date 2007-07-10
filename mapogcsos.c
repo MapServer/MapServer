@@ -938,6 +938,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
         (to associate it with the offering) */
     int *panOfferingLayers = NULL;
     
+     msIOContext *context = NULL;
     
     psDoc = xmlNewDoc("1.0");
 
@@ -1373,6 +1374,9 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
     /*xmlSaveFile("c:/msapps/reseau_sos/test.xml",psDoc);*/
 
+     if ( msIO_needBinaryStdout() == MS_FAILURE )
+       return MS_FAILURE;
+
      msIO_printf("Content-type: text/xml%c%c",10,10);
     
     /*TODO* : check the encoding validity. Internally libxml2 uses UTF-8
@@ -1381,12 +1385,15 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                              "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                              "ISO-8859-1");
     */
-    xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+
+     context = msIO_getHandler(stdout);
+
+     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     msIO_contextWrite(context, buffer, size);
+     xmlFree(buffer);
     
-    msIO_printf("%s", buffer);
 
     /*free buffer and the document */
-    xmlFree(buffer);
     xmlFreeDoc(psDoc);
 
     free(dtd_url);
@@ -1438,6 +1445,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     char workbuffer[5000];
     int nSize = 0;
     int iIndice = 0;
+    msIOContext *context = NULL;
 
     sBbox = map->extent;
 
@@ -1899,34 +1907,13 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     /* output results */    
      msIO_printf("Content-type: text/xml%c%c",10,10);
+
+     context = msIO_getHandler(stdout);
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
-
-     nSize = sizeof(workbuffer);
-     if (size > sizeof(workbuffer))
-     {
-         iIndice = 0;
-         while ((iIndice + nSize) <= size)
-         {
-             snprintf(workbuffer, (sizeof(workbuffer)-1), "%s", buffer+iIndice );
-             workbuffer[sizeof(workbuffer)-1] = '\0';
-             msIO_printf("%s", workbuffer);
-
-             iIndice +=nSize;
-         }
-         if (iIndice < size)
-         {
-              sprintf(workbuffer, "%s", buffer+iIndice );
-              msIO_printf("%s", workbuffer);
-         }
-     }
-     else
-     {
-       //msIO_printf("size: %d",size);
-       msIO_printf("%s", buffer);
-     }
-
-    /*free buffer and the document */
+     msIO_contextWrite(context, buffer, size);
      xmlFree(buffer);
+
+    /*free the document */
      xmlFreeDoc(psDoc);
      /*
      *Free the global variables that may
