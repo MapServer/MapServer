@@ -1,0 +1,171 @@
+===============================
+MS RFC 17: Dynamic Array Sizing
+===============================
+
+:Date:  2006/05/12
+:Author: Frank Warmerdam
+:Contact: warmerdam@pobox.com
+:Last Edited: May 15, 2006
+:Status: proposed
+:Version: MapServer 4.9
+
+Purpose
+--------
+
+Modify the MapServer core libraries so that lists of layers, classes
+and styles are dynamic, not fixed to compile limits MS_MAXCLASSES, 
+MS_MAXSTYLES, MS_MAXLAYERS and MS_MAXSYMBOLS.
+
+
+MS_MAXSYMBOLS
+-------------
+
+Change symbolSetObj so that this::
+
+  int numsymbols;
+  symbolObj symbol[MS_MAXSYMBOLS];
+
+becomes::
+
+  int numsymbols;
+  int maxsymbols; 
+  symbolObj *symbol;
+
+Add the following function to ensure there is at least one free entry in 
+the symbol array in the symbolSetObj.  This function will only grow the
+allocated array if needed (if maxsymbols == numsymbols).  The new entries
+will be all set to zero bytes.  
+
+::
+
+  symbolObj *msGrowSymbolSet( symbolSetObj * );
+
+* Modify all places that add new symbols to call msGrowSymbolsSet() to ensure
+  there is space.  These locations can be fairly easily identified by 
+  greping on MS_MAXSYMBOLS.
+
+* mapsymbol.c: Modify msInitSymbolSet() to initially setup the symbol set with 
+  an array of just one symbols.
+
+* There should be no swig mapscript changes required as it already uses 
+  msAppendSymbol().  
+
+
+MS_MAXLAYERS
+------------
+
+* map.h: Add "int maxlayers;" to mapObj to indicate the current allocation
+  size of layers array.  Note that this also determines the size of the 
+  mapObj layerorder array.
+
+* mapdraw.c: Change msDrawMap() to use map->numlayers in place of current 
+  MS_MAXLAYERS for asOWSReqInfo array.
+
+* mapobject.c: Add msGrowMapLayers(mapObj*) function to ensure there is room
+  for at least one more layer on the map.  This grows layers, and layerorder
+  arrays.
+
+* mapobject.c: modify msInsertLayer() to use msGrowMapLayers().
+
+* mapfile.c: set maxlayers to MS_MAXLAYERS and allocate layers accordingly in
+  initMap().  Use msGrowMapLayers() before calling initLayer() when parsing.
+
+* mappluginlayer.c: make dynamic.  I'm not exactly sure what there is a
+  static factory with entries dimensioned by the number of layers. 
+
+* It looks like swig mapscript already has an mapObj.insertLayer() method
+  using msInsertLayer() which should be safe.  Do mapscript applications
+  sometimes just update the layers and numlayers directly?  If so we may
+  have issues!
+
+
+MS_MAXCLASSES
+-------------
+
+* map.h: add maxclasses field in layerObj.
+
+* layerobject.c: Modify msInsertClass() to use msGrowLayerClasses(). 
+
+* layerobject.c: Add msGrowLayerClasses() to ensure there is at least one
+  extra class in the classes list. 
+
+* mapdraw.c: colorbuffer and mindistancebuffer in msDrawQueryLayer() will need
+  to be dynamically sized and allocated on the heap. 
+
+* mapfile.c: initLayer() will need to initialize maxclasses to MS_MAXCLASSES, 
+  and allocate class list accordingly.
+
+* mapogcsld.c: modify to use msGrowLayerClasses() instead of checking limit. 
+
+
+MS_MAXSTYLES
+------------
+
+* map.h: add maxstyles field to classObj.
+
+* mapfile.c: set maxstyles to MS_MAXSTYLES and allocate accordingly in 
+  initClass().  Use msGrowClassStyles() as apppriate. 
+
+* classoject.c: Add msGrowClassStyles() to ensure there is an unused class. 
+
+* classobject.c: Use msGrowClassStyles() in msInsertStyle(). 
+
+
+Files and objects affected
+--------------------------
+
+::
+
+ map.h
+ mapfile.c
+ mapsymbol.c
+ mapdraw.c
+ mapobject.c
+ mappluginlayer.c
+ layerobject.c
+ mapogcsld.c 
+ classobject.c 
+
+Backwards compatibility issues
+------------------------------
+
+* Because mapscript application often explicitly initialize "blank" layers,
+  classes and styles directly, and then increment the count, we can't depend
+  on all access going through the proper insert/add methods.  For this
+  reason we preserve the old MS_MAX values to establish the initial allocation.
+  This should mean that existing applications will continue to work at some
+  cost in unused memory.  But well behaved mapscript applications using 
+  insert methods to increase sizes will be able to grow beyond the initial 
+  allocation.
+
+* Whenever the grow functions actually force a reallocation to grow the number 
+  of layers/classes/styles, the actual objects will move in memory.  If a
+  mapscript application is preserving a pointer to the old objects it will 
+  be invalidated by the move, likely resulting in a crash if it is used.  
+  Applications that fetch based on layer/class/style indexes as needed 
+  should still be ok.
+
+
+
+Test suite
+----------
+
+Python unit test entries will be added to exceed the builtin maximums
+for all of layers, classes, styles and symbols.  An msautotest entry with
+a large number of classes will also be added. 
+
+
+Bug ID
+------
+
+
+
+Voting history
+--------------
+
+
+
+Open questions
+--------------
+
+None
