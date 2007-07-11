@@ -1794,7 +1794,7 @@ int initStyle(styleObj *style) {
   style->antialias = MS_FALSE;
   style->isachild = MS_TRUE;
   style->angle = 360;
-  style->opacity = 0;
+  style->opacity = 100; /* fully opaque */
 
   style->numbindings = 0;
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
@@ -2546,7 +2546,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
 
-  layer->opacity = 0;
+  layer->opacity = 100; /* fully opaque */
   
   layer->numprocessing = 0;
   layer->processing = NULL;

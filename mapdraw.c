@@ -609,6 +609,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(!msLayerIsVisible(map, layer))
     return MS_SUCCESS;  
 
+  if(layer->opacity == 0) return MS_SUCCESS; /* layer is completely transparent, skip it */
+
   /* inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
 
@@ -617,7 +619,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     /* 
     ** for layer-level opacity we render to a temp image
     */
-    if(layer->opacity > 0 && layer->opacity <= 100) {
+    if(layer->opacity > 0 && layer->opacity < 100) {
       msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
       
       image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl );
@@ -643,7 +645,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     /* 
     ** for layer-level opacity we render to a temp image
     */
-    if(layer->opacity > 0 && layer->opacity <= 100) {
+    if(layer->opacity > 0 && layer->opacity < 100) {
       msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
       image_draw = msImageCreateAGG(image->width, image->height, transFormat, image->imagepath, image->imageurl);
@@ -690,7 +692,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   /* Destroy the temp image for this layer tranparency */
-  if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 && layer->opacity <= 100 ) {
+  if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
 
     if(layer->type == MS_LAYER_RASTER)
       msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
@@ -702,7 +704,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 #ifdef USE_AGG
-  else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 && layer->opacity <= 100 ) {
+  else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
 
     if(layer->type == MS_LAYER_RASTER)
       msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
