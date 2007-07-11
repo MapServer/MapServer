@@ -108,26 +108,24 @@ static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 
 static unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
 static FILE *pLogFile = NULL;
-//------------------------------------------------------------------------------------------------------------
 int msImageSetPenAGG(gdImagePtr img, colorObj *color) 
 {
   return msImageSetPenGD(img, color);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /*
- * Take a pass through the mapObj and pre-allocate colors for layers that are ON or DEFAULT. This replicates the pre-4.0 behavior of
- * MapServer and should be used only with paletted images.
- */
+** Take a pass through the mapObj and pre-allocate colors for layers that are ON or DEFAULT. This replicates the pre-4.0 behavior of
+** MapServer and should be used only with paletted images.
+**/
 void msPreAllocateColorsAGG(imageObj *image, mapObj *map) {
   msPreAllocateColorsGD(image, map);
 }
 
-//------------------------------------------------------------------------------------------------------------
+
 /*
- * Utility function to create a GD image. Returns
- * a pointer to an imageObj structure.
- */  
+** Utility function to create a GD image. Returns
+** a pointer to an imageObj structure.
+*/  
 imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl) 
 {
   imageObj *pNewImage = NULL;
@@ -151,15 +149,12 @@ imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char 
   return pNewImage;
 }
 
-//------------------------------------------------------------------------------------------------------------
-/**
- * Utility function to initialize the color of an image.  The background
- * color is passed, but the outputFormatObj is consulted to see if the
- * transparency should be set (for RGBA images).   Note this function only
- * affects TrueColor images. 
- */  
-
-//------------------------------------------------------------------------------------------------------------
+/*
+** Utility function to initialize the color of an image.  The background
+** color is passed, but the outputFormatObj is consulted to see if the
+** transparency should be set (for RGBA images).   Note this function only
+** affects TrueColor images. 
+*/  
 void msImageInitAGG(imageObj *image, colorObj *background)
 {
   if(image->format->imagemode == MS_IMAGEMODE_PC256) {
@@ -178,12 +173,12 @@ void msImageInitAGG(imageObj *image, colorObj *background)
   
   if(image->format->imagemode == MS_IMAGEMODE_RGBA) {
     agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> thePixelFormat(*pRowCache);
-     agg::renderer_base< agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> > ren_base(thePixelFormat);
+    agg::renderer_base< agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> > ren_base(thePixelFormat);
 
     ren_base.clear(agg::rgba(background->red / 255.0, background->green / 255.0, background->blue / 255.0, 0.0));
   } else {
     agg::pixfmt_alpha_blend_rgb< ms_blender_bgr24, mapserv_row_ptr_cache<int> > thePixelFormat(*pRowCache);
-     agg::renderer_base< agg::pixfmt_alpha_blend_rgb< ms_blender_bgr24, mapserv_row_ptr_cache<int> > > ren_base(thePixelFormat);
+    agg::renderer_base< agg::pixfmt_alpha_blend_rgb< ms_blender_bgr24, mapserv_row_ptr_cache<int> > > ren_base(thePixelFormat);
 
     ren_base.clear(agg::rgba(background->red, background->green, background->blue));
   }
@@ -191,7 +186,6 @@ void msImageInitAGG(imageObj *image, colorObj *background)
   msImageInitGD(image, background);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* ===========================================================================
    msImageLoadGDCtx
    
@@ -204,281 +198,12 @@ imageObj *msImageLoadAGGCtx(gdIOCtx* ctx, const char *driver)
   return msImageLoadGDCtx(ctx, driver);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* msImageLoadAGG now calls msImageLoadAGGCtx to do the work, change
  * made as part of the resolution of bugs 550 and 1047 */
 imageObj *msImageLoadAGG(const char *filename) 
 {
   return msImageLoadGD(filename); 
 }
-
-//------------------------------------------------------------------------------------------------------------
-static gdImagePtr createFuzzyBrush(int size, int r, int g, int b)
-{
-  gdImagePtr brush;
-  int x, y, c, dx, dy;
-  long bgcolor, color;
-  int a;
-  double d, min_d, max_d;
-  double hardness=.5;
-  
-  if(pLogFile) fprintf(pLogFile, "createFuzzyBrush entry\n");
-
-  if(size % 2 == 0) /* requested an even-sized brush, subtract one from size */
-    size--;
-
-  brush = gdImageCreateTrueColor(size+2, size+2);
-  gdImageAlphaBlending(brush, 0); /* don't blend */
-
-  bgcolor = gdImageColorAllocateAlpha(brush, 255, 255, 255, 127); /* fill the brush as transparent */
-  gdImageFilledRectangle(brush, 0, 0, gdImageSX(brush), gdImageSY(brush), bgcolor);
-
-  c = (gdImageSX(brush)-1)/2; /* center coordinate (x=y) */
-
-  min_d = hardness*(size/2.0) - 0.5;
-  max_d = gdImageSX(brush)/2.0;
-
-  color = gdImageColorAllocateAlpha(brush, r, g, b, 0);
-  gdImageFilledEllipse(brush, c, c, gdImageSX(brush), gdImageSY(brush), color); /* draw the base circle as opaque */
-
-  for(y=0; y<gdImageSY(brush); y++) { /* each row */
-    for(x=0; x<gdImageSX(brush); x++) { /* each column */
-      color = gdImageGetPixel(brush, x, y);
-      if(color == bgcolor) continue;
-
-      dx = x - c;
-      dy = y - c;
-      d = sqrt((double)(dx*dx + dy*dy));
-
-      if(d<min_d) continue; /* leave opaque */
-
-      a = MS_NINT(127*(d/max_d));
-
-      color = gdImageColorAllocateAlpha(brush, r, g, b, a);
-      gdImageSetPixel(brush, x, y, color);
-    }
-  }
-
-  return brush;
-}
-
-//------------------------------------------------------------------------------------------------------------
-static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
-{
-  gdImagePtr brush;
-  
-  if(pLogFile) fprintf(pLogFile, "createBrush entry\n");
-
-  if(width == 0) width = 1; /* quick fix for bug 1776, should really handle with rounding when calling this function */
-  if(height == 0) height = 1;
-
-  if(!gdImageTrueColor(img)) {
-    brush = gdImageCreate(width, height);
-    if(style->backgroundcolor.pen >= 0)
-      *bgcolor = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      *bgcolor = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));          
-      gdImageColorTransparent(brush,0);
-    }
-    if(style->color.pen >= 0)
-      *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
-    else /* try outline color */
-      *fgcolor = gdImageColorAllocate(brush, style->outlinecolor.red, style->outlinecolor.green, style->outlinecolor.blue); 
-  } else {
-    brush = gdImageCreateTrueColor(width, height);
-    gdImageAlphaBlending(brush, 0);
-    if(style->backgroundcolor.pen >= 0)
-      *bgcolor = gdTrueColor(style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);      
-    else
-      *bgcolor = -1;      
-    gdImageFilledRectangle(brush, 0, 0, width, height, *bgcolor);
-    if(style->color.pen >= 0)
-      *fgcolor = gdTrueColor(style->color.red, style->color.green, style->color.blue);
-    else /* try outline color */
-      *fgcolor = gdTrueColor(style->outlinecolor.red, style->outlinecolor.green, style->outlinecolor.blue);
-  }
-
-  return(brush);
-}
-
-//------------------------------------------------------------------------------------------------------------
-/* Function to create a custom hatch symbol. */
-static gdImagePtr createHatch(gdImagePtr img, int sx, int sy, rectObj *clip, styleObj *style, double scalefactor)
-{
-  gdImagePtr hatch;
-  int x1, x2, y1, y2;
-  int size, width;
-  double angle;
-  int fg, bg;
-
-  if(pLogFile) fprintf(pLogFile, "createHatch entry\n");
-
-  hatch = createBrush(img, sx, sy, style, &fg, &bg);
-
-  if(style->antialias == MS_TRUE) {
-    gdImageSetAntiAliased(hatch, fg);
-    fg = gdAntiAliased;
-  }
-
-  if(style->size == -1)
-    size = 1; /* TODO: Can we use msSymbolGetDefaultSize() here? See bug 751. */
-  else
-    size = style->size;
-
-  size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
-
-  width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
-  gdImageSetThickness(hatch, width);
-
-  /* normalize the angle (180 to 0, 0 is east, 90 is north 180 is west) */
-  angle = fmod(style->angle, 360.0);
-  if(angle < 0) angle += 360;
-  if(angle >= 180) angle -= 180;
-
-  if(angle >= 45 && angle <= 90) {
-    x2 = (int)clip->minx; /* 0 */
-    y2 = (int)clip->miny; /* 0 */
-    y1 = (int)clip->maxy-1; /* sy-1  */
-    x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
-
-    size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
-
-    while(x1 < clip->maxx) { /* sx */
-      gdImageLine(hatch, x1, y1, x2, y2, fg);
-      x1+=size;
-      x2+=size; 
-    }
-  } else if(angle <= 135 && angle > 90) {
-    x2 = (int)clip->minx; /* 0 */
-    y2 = (int)clip->maxy-1; /* sy-1 */
-    y1 = (int)clip->miny; /* 0 */
-    x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
-
-    size = MS_ABS(MS_NINT(size/sin(MS_DEG_TO_RAD*(angle))));
-
-    while(x1 < clip->maxx) { /* sx */
-      gdImageLine(hatch, x1, y1, x2, y2, fg);
-      x1+=size;
-      x2+=size;
-    }
-  } else if(angle >= 0 && angle < 45) {    
-    x1 = (int)clip->minx; /* 0 */
-    y1 = (int)clip->miny; /* 0 */
-    x2 = (int)clip->maxx-1; /* sx-1 */
-    y2 = (int)(y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
-
-    size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
-
-    while(y2 < clip->maxy) { /* sy */
-      gdImageLine(hatch, x1, y1, x2, y2, fg);
-      y1+=size;
-      y2+=size;
-    }
-  } else if(angle < 180 && angle > 135) {
-    x2 = (int)clip->maxx-1; /* sx-1 */
-    y2 = (int)clip->miny; /* 0 */
-    x1 = (int)clip->minx; /* 0 */
-    y1 = (int) (y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
-
-    size = MS_ABS(MS_NINT(size/cos(MS_DEG_TO_RAD*(angle))));
-
-    while(y1 < clip->maxy) { /* sy */
-      gdImageLine(hatch, x1, y1, x2, y2, fg);
-      y1+=size;
-      y2+=size;
-    }
-  }
-
-  gdImageSetThickness(hatch, 1);
-  return(hatch);
-}
-
-//------------------------------------------------------------------------------------------------------------
-static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
-{
-  int i, j, first;
-  int dx, dy, dx0=0, dy0=0, ox=0, oy=0, limit;
-  double x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
-  float par=(float)0.71;
-  
-  if(pLogFile) fprintf(pLogFile, "imageOffsetPolyline entry\n");
-
-  if(offsety == -99) {
-    limit = offsetx*offsetx/4;
-    for (i = 0; i < p->numlines; i++) {
-      first = 1;
-      for(j=1; j<p->line[i].numpoints; j++) {        
-        ox=0; oy=0;
-        dx = (int)(p->line[i].point[j].x - p->line[i].point[j-1].x);
-        dy = (int)(p->line[i].point[j].y - p->line[i].point[j-1].y);
-
-        /* offset setting - quick approximation, may be changed with goniometric functions */
-        if(dx==0) { /* vertical line */
-          if(dy==0) continue; /* checking unique points */
-          ox=(dy>0) ? -offsetx : offsetx;
-        } else {
-          k = (double)dy/(double)dx;
-          if(MS_ABS(k)<0.5) {
-            oy = (dx>0) ? offsetx : -offsetx;
-          } else {
-            if (MS_ABS(k)<2.1) {
-              oy = (int) ((dx>0) ? offsetx*par : -offsetx*par);
-              ox = (int) ((dy>0) ? -offsetx*par : offsetx*par);
-            } else
-              ox = (int)((dy>0) ? -offsetx : offsetx);
-          }
-          q = p->line[i].point[j-1].y+oy - k*(p->line[i].point[j-1].x+ox);
-        }
-
-        /* offset line points computation */
-        if(first==1) { /* first point */
-          first = 0;
-          x = p->line[i].point[j-1].x+ox;
-          y = p->line[i].point[j-1].y+oy;
-        } else { /* middle points */
-          if((dx*dx+dy*dy)>limit){ /* if the points are too close */
-            if(dx0==0) { /* checking verticals */
-              if(dx==0) continue;
-              x = x0;
-              y = k*x + q;
-            } else {
-              if(dx==0) {
-                x = p->line[i].point[j-1].x+ox;
-                y = k0*x + q0;
-              } else {
-                if(k==k0) continue; /* checking equal direction */
-                x = (q-q0)/(k0-k);
-                y = k*x+q;
-              }
-            }
-          }else{/* need to be refined */
-            x = p->line[i].point[j-1].x+ox;
-            y = p->line[i].point[j-1].y+oy;
-          }
-          gdImageLine(img, (int)x0, (int)y0, (int)x, (int)y, color);
-        }
-        dx0 = dx; dy0 = dy; x0 = x, y0 = y; k0 = k; q0=q;
-      }
-      /* last point */
-      if(first==0)gdImageLine(img, (int)x0, (int)y0, (int)(p->line[i].point[p->line[i].numpoints-1].x+ox), (int)(p->line[i].point[p->line[i].numpoints-1].y+oy), color);
-    }
-  } else { /* normal offset (eg. drop shadow) */
-    for (i = 0; i < p->numlines; i++)
-      for(j=1; j<p->line[i].numpoints; j++)
-        gdImageLine(img, (int)p->line[i].point[j-1].x+offsetx, (int)p->line[i].point[j-1].y+offsety, (int)p->line[i].point[j].x+offsetx, (int)p->line[i].point[j].y+offsety, color);
-  }
-}
-
-typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
-
-#define CLIP_CHECK(min, a, max) ((a) < (min) ? CLIP_LEFT : ((a) > (max) ? CLIP_RIGHT : CLIP_MIDDLE));
-#define ROUND(a)       ((a) + 0.5)
-#define SWAP(a, b, t) ((t) = (a), (a) = (b), (b) = (t))
-#define EDGE_CHECK(x0, x, x1) ((x) < MS_MIN((x0), (x1)) ? CLIP_LEFT : ((x) > MS_MAX((x0), (x1)) ? CLIP_RIGHT : CLIP_MIDDLE))
 
 //------------------------------------------------------------------------------------------------------------
 class CMapServerLine
@@ -548,8 +273,6 @@ private:
   shapeObj  *m_pShape;
 };
 
-
-
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
 static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int width, 
@@ -567,8 +290,7 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
   }
   
   // if(image->format->imagemode == MS_IMAGEMODE_RGBA)
-  {
-    
+  {    
     pixelFormat thePixelFormat(*pRowCache);
     agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
     agg::renderer_primitives< agg::renderer_base< pixelFormat > > ren_prim(ren_base);
@@ -599,68 +321,40 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
                         (int)p->line[i].point[j].y << 8,
                         true);
         }        
-      } 
-      else 
-      {
-          CMapServerLine aLine(p,i);
+      } else {
+        CMapServerLine aLine(p,i);
 
-          agg::conv_stroke<CMapServerLine> stroke(aLine);
+        agg::conv_stroke<CMapServerLine> stroke(aLine);
 
-          agg::conv_dash<CMapServerLine> dash(aLine);
-          agg::conv_stroke<agg::conv_dash<CMapServerLine> > stroke_dash(dash);     
+        agg::conv_dash<CMapServerLine> dash(aLine);
+        agg::conv_stroke<agg::conv_dash<CMapServerLine> > stroke_dash(dash);     
           
-          if (dashstylelength <=0)
-          {
-              
-              stroke.width(((float) width));
-              stroke.line_cap(agg::round_cap);
-              ras_aa.add_path(stroke);
+        if (dashstylelength <= 0) {
+          stroke.width(((float) width));
+          stroke.line_cap(agg::round_cap);
+          ras_aa.add_path(stroke);
+        } else {
+          for (k=0; k<dashstylelength; k=k+2) {
+            if (k < dashstylelength-1)
+              dash.add_dash(dashstyle[k], dashstyle[k+1]);
           }
-          else
-          {
-              for (k=0; k<dashstylelength; k=k+2)
-              {
-                  if (k < dashstylelength-1)
-                    dash.add_dash(dashstyle[k], dashstyle[k+1]);
-              }
-              stroke_dash.width(((float) width));
-              stroke_dash.line_cap(agg::round_cap);
-              ras_aa.add_path(stroke_dash);
-          }
+          stroke_dash.width(((float) width));
+          stroke_dash.line_cap(agg::round_cap);
+          ras_aa.add_path(stroke_dash);
+        }
         
+        ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
+                                ((double) color->green) / 255.0, 
+                                ((double) color->blue) / 255.0));
         
-          ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
-                                  ((double) color->green) / 255.0, 
-                                  ((double) color->blue) / 255.0));
-                    
-          
-        
-          agg::render_scanlines(ras_aa, sl, ren_aa);
+        agg::render_scanlines(ras_aa, sl, ren_aa);
       }
     }    
 
     return;
   }
-
-#if 0
-  if(offsetx != 0 || offsety != 0) 
-    imageOffsetPolyline(img, p, color, offsetx, offsety);
-  else {
-    for (i = 0; i < p->numlines; i++) {
-      // line_color(color);
-      for(j=1; j<p->line[i].numpoints; j++)
-        // line(x1, y1, y1, y2, islast);
-        gdImageLine(img, (int)p->line[i].point[j-1].x, 
-                         (int)p->line[i].point[j-1].y, 
-                         (int)p->line[i].point[j].x, 
-                         (int)p->line[i].point[j].y, 
-                         color);
-    }
-  }  
-#endif
 }
-    
-//------------------------------------------------------------------------------------------------------------
+
 static void imageFilledPolygon2(imageObj *image, shapeObj *p, colorObj *color, int offsetx, int offsety)
 {    
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
@@ -746,7 +440,6 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
   agg::render_scanlines(ras_aa, sl, ren_aa);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* ---------------------------------------------------------------------------*/
 /*       Stroke an ellipse with a line symbol of the specified size and color */
 /* ---------------------------------------------------------------------------*/
@@ -756,7 +449,6 @@ void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj
   msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* ------------------------------------------------------------------------------- */
 /*       Fill a circle with a shade symbol of the specified size and color         */
 /* ------------------------------------------------------------------------------- */
@@ -766,7 +458,6 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointOb
   msCircleDrawShadeSymbolGD(symbolset, img, p, r, style, scalefactor);
 }
 
-//------------------------------------------------------------------------------------------------------------
 void msDrawMarkerSymbolAGGTrueType(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
     int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p, symbolSetObj *symbolset, double angle_radians)
 {
@@ -809,7 +500,6 @@ void msDrawMarkerSymbolAGGTrueType(symbolObj *symbol, double d, double size, dou
 #endif
 }
 
-//------------------------------------------------------------------------------------------------------------
 void msDrawMarkerSymbolAGGPixmap(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
     int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p)
 {
@@ -839,7 +529,6 @@ void msDrawMarkerSymbolAGGPixmap(symbolObj *symbol, double d, double size, doubl
   }
 }
 
-//------------------------------------------------------------------------------------------------------------
 void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
     int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p)
 {
@@ -890,13 +579,11 @@ void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double d, double size, doub
   }
 }
 
-//------------------------------------------------------------------------------------------------------------
 void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
     int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p, imageObj *image )
 {
   int fc, oc, j, k, width;
   gdPoint oldpnt,newpnt;
-
 
   shapeObj theShape;
     
@@ -917,7 +604,7 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, doubl
   }
 
   /* 
-	** We avoid MS_NINT in this context because the potentially variable
+  ** We avoid MS_NINT in this context because the potentially variable
   ** handling of 0.5 rounding is often a problem for symbols which are
   ** often an odd size (ie. 7 pixels) and so if "p" is integral the 
   ** value is always on a 0.5 boundary - bug 1716 
@@ -1072,31 +759,26 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
   }  
 
   switch(symbol->type) {
-    case(MS_SYMBOL_TRUETYPE): /* TODO: Need to leverage the image cache! */
-      msDrawMarkerSymbolAGGTrueType(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p, symbolset, angle_radians);
+  case(MS_SYMBOL_TRUETYPE): /* TODO: Need to leverage the image cache! */
+    msDrawMarkerSymbolAGGTrueType(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p, symbolset, angle_radians);
+    break;    
+  case(MS_SYMBOL_PIXMAP):
+    msDrawMarkerSymbolAGGPixmap(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p);
+    break;    
+  case(MS_SYMBOL_ELLIPSE):
+    msDrawMarkerSymbolAGGEllipse(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p);
+    break;    
+  case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
+    msDrawMarkerSymbolAGGVector(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p, image);
     break;
-    
-    case(MS_SYMBOL_PIXMAP):
-      msDrawMarkerSymbolAGGPixmap(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p);
-    break;
-    
-    case(MS_SYMBOL_ELLIPSE):
-      msDrawMarkerSymbolAGGEllipse(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p);
-    break;
-    
-    case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
-      msDrawMarkerSymbolAGGVector(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p, image);
-    break;
-
   default:
-    break;
-    
+    break; 
   }
-          
+
+  /* fall back on GD */
   msDrawMarkerSymbolGD(symbolset, img, p, style, scalefactor);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* ------------------------------------------------------------------------------- */
 /*       Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------------- */
@@ -1110,74 +792,44 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 
   symbol = &(symbolset->symbol[style->symbol]);
 
-  /*use agg for styles using symbol 0 and a width or symbol of type ellipse 
-    (using circle symbol and size still seems to be the most common way of
-    doing thikc lines) */
-  if(style->symbol >=0 && (style->symbol == 0 || symbol->type == MS_SYMBOL_ELLIPSE))
-  { 
-      if(style->size == -1)
-        size = (int)msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
-      else
-        size = style->size;
+  /*
+  ** use agg for styles using symbol 0 and a width or symbol of type ellipse 
+  ** (using circle symbol and size still seems to be the most common way of
+  ** doing thick lines) 
+  */
+  if(style->symbol >= 0 && (style->symbol == 0 || symbol->type == MS_SYMBOL_ELLIPSE)) {
+    if(style->size == -1)
+      size = (int) msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
+    else
+      size = style->size;
 
-      size = MS_NINT(size*scalefactor);
-      size = MS_MAX(size, style->minsize);
-      size = MS_MIN(size, style->maxsize);
+    size = MS_NINT(size*scalefactor);
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
-      width = MS_NINT(style->width*scalefactor);
-      width = MS_MAX(width, style->minwidth);
-      width = MS_MIN(width, style->maxwidth);
+    width = MS_NINT(style->width*scalefactor);
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
   
-      if(style->symbol == 0) 
-        nwidth = width;
-      else
-        nwidth = size;
+    if(style->symbol == 0) 
+      nwidth = width;
+    else
+      nwidth = size;
 
-      if(pLogFile) fprintf(pLogFile, "msDrawLineSymbolAGG entry\n"); 
+    if(pLogFile) fprintf(pLogFile, "msDrawLineSymbolAGG entry\n"); 
   
-      if(p->numlines > 0)
-      {
-          if (symbol->stylelength > 0)
-            imagePolyline(image, p, &style->color, nwidth, 0, 0, symbol->stylelength, symbol->style); 
-          else
-             imagePolyline(image, p, &style->color, nwidth, 0, 0, 0, NULL); 
-          
-      }
-  }
-  else
-    msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
-
-#if 0  
-  if(style->symbol == 0) {
-    if(gdImageTrueColor(img) && width > 1 && style->antialias == MS_TRUE) { /* use a fuzzy brush */      
-      if((brush = searchImageCache(symbolset->imagecache, style, width)) == NULL) {
-        brush = createFuzzyBrush(width, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc)); 
-        symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, width, brush);
-      }
-      
-      gdImageSetBrush(img, brush);
-      imagePolyline(img, p, gdBrushed, ox, oy);
-    } else {
-      gdImageSetThickness(img, width);
-          
-      if(style->antialias == MS_TRUE) { 
-        gdImageSetAntiAliased(img, fc);
-        imagePolyline(image, p, gdAntiAliased, ox, oy);
-        gdImageSetAntiAliased(img, -1);
-      } else
-        imagePolyline(image, p, fc, ox, oy);
-          
-      gdImageSetThickness(img, 1); /* reset */
+    if(p->numlines > 0) {
+      if(symbol->stylelength > 0)
+        imagePolyline(image, p, &style->color, nwidth, 0, 0, symbol->stylelength, symbol->style); 
+      else
+       imagePolyline(image, p, &style->color, nwidth, 0, 0, 0, NULL);           
     }
-
-    return; /* done with easiest case */
+  } else { 
+    /* fall back on GD */
+    msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
   }
-
-  msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
-#endif    
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* ------------------------------------------------------------------------------- */
 /*       Draw a shade symbol of the specified size and color                       */
 /* ------------------------------------------------------------------------------- */
@@ -1193,8 +845,6 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
   int fc, bc, oc;
   double size, angle, angle_radians;
   int width;
-  
-
 
   char *font=NULL;
 
@@ -1262,7 +912,6 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
   msDrawShadeSymbolGD(symbolset, img, p, style, scalefactor);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /*
 ** Simply draws a label based on the label point and the supplied label object.
 */
@@ -1271,7 +920,6 @@ int msDrawTextAGG(gdImagePtr img, pointObj labelPnt, char *string, labelObj *lab
   return msDrawTextGD(img, labelPnt, string, label, fontset, scalefactor);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /*
  * Draw a label curved along a line
  */
@@ -1280,7 +928,6 @@ int msDrawTextLineAGG(gdImagePtr img, char *string, labelObj *label, labelPathOb
   return msDrawTextLineGD(img, string, label, labelpath, fontset, scalefactor);
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* To DO: fix returned values to be MS_SUCCESS/MS_FAILURE */
 int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map)
 {
@@ -1288,7 +935,6 @@ int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map)
 }
 
 static double nmsTransformShapeAGG = 0;
-//------------------------------------------------------------------------------------------------------------
 /* ===========================================================================
    msSaveImageGD
    
@@ -1315,7 +961,6 @@ int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
   return iReturn;
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* ===========================================================================
    msSaveImageGDCtx
 
@@ -1342,7 +987,6 @@ int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
   return iReturn;
 }
 
-//------------------------------------------------------------------------------------------------------------
 /* ===========================================================================
    msSaveImageBufferGD
 
@@ -1351,88 +995,79 @@ int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 
    The returned buffer is owned by the caller. It should be freed with gdFree()
    ======================================================================== */
-
-unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr,
-                                   outputFormatObj *format)
+unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr, outputFormatObj *format)
 {
-    char *pFormatBuffer;
-    char *pszGDFormat = NULL;
-    unsigned char *buf = NULL;
+  char *pFormatBuffer;
+  char *pszGDFormat = NULL;
+  unsigned char *buf = NULL;
 
-    pFormatBuffer = format->driver;
+  pFormatBuffer = format->driver;
 
-    pszGDFormat = msStringConcatenate(pszGDFormat, "gd/");
-    pszGDFormat = msStringConcatenate(pszGDFormat, &(format->driver[4]));
+  pszGDFormat = msStringConcatenate(pszGDFormat, "gd/");
+  pszGDFormat = msStringConcatenate(pszGDFormat, &(format->driver[4]));
 
-    format->driver = pszGDFormat;
+  format->driver = pszGDFormat;
 
-    buf = msSaveImageBufferGD(img, size_ptr, format);
+  buf = msSaveImageBufferGD(img, size_ptr, format);
 
-    format->driver = pFormatBuffer;
+  format->driver = pFormatBuffer;
 
-    msFree(pszGDFormat);
+  msFree(pszGDFormat);
 
-    return buf;
-    
+  return buf;
 }
 
-//------------------------------------------------------------------------------------------------------------
-/**
- * Free gdImagePtr
- */
+/*
+** Free gdImagePtr
+*/
 void msFreeImageAGG(gdImagePtr img)
 {
   msFreeImageGD(img);
 }
 
-
 void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
 {
-    int i,j,k; /* loop counters */
-    double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
+  int i,j,k; /* loop counters */
+  double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
 
+  if(shape->numlines == 0) return; /* nothing to transform */
 
-    if(shape->numlines == 0) return; /* nothing to transform */
-
-    if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove co-linear vertices */
+  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove co-linear vertices */
   
-      for(i=0; i<shape->numlines; i++) { /* for each part */
+    for(i=0; i<shape->numlines; i++) { /* for each part */
       
-        shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[0].x, extent.minx, inv_cs);
-        shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[0].y, extent.maxy, inv_cs);
+      shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[0].x, extent.minx, inv_cs);
+      shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[0].y, extent.maxy, inv_cs);
       
-        for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
+      for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
 	
-          shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[j].x, extent.minx, inv_cs);
-          shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[j].y, extent.maxy, inv_cs);
+        shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[j].x, extent.minx, inv_cs);
+        shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[j].y, extent.maxy, inv_cs);
 
-          if(k == 1) {
-            if((shape->line[i].point[0].x != shape->line[i].point[1].x) || (shape->line[i].point[0].y != shape->line[i].point[1].y))
+        if(k == 1) {
+          if((shape->line[i].point[0].x != shape->line[i].point[1].x) || (shape->line[i].point[0].y != shape->line[i].point[1].y))
+            k++;
+        } else {
+          if((shape->line[i].point[k-1].x != shape->line[i].point[k].x) || (shape->line[i].point[k-1].y != shape->line[i].point[k].y)) {
+            if(((shape->line[i].point[k-2].y - shape->line[i].point[k-1].y)*(shape->line[i].point[k-1].x - shape->line[i].point[k].x)) == ((shape->line[i].point[k-2].x - shape->line[i].point[k-1].x)*(shape->line[i].point[k-1].y - shape->line[i].point[k].y))) {	    
+              shape->line[i].point[k-1].x = shape->line[i].point[k].x;
+              shape->line[i].point[k-1].y = shape->line[i].point[k].y;	
+            } else {
               k++;
-          } else {
-            if((shape->line[i].point[k-1].x != shape->line[i].point[k].x) || (shape->line[i].point[k-1].y != shape->line[i].point[k].y)) {
-              if(((shape->line[i].point[k-2].y - shape->line[i].point[k-1].y)*(shape->line[i].point[k-1].x - shape->line[i].point[k].x)) == ((shape->line[i].point[k-2].x - shape->line[i].point[k-1].x)*(shape->line[i].point[k-1].y - shape->line[i].point[k].y))) {	    
-                shape->line[i].point[k-1].x = shape->line[i].point[k].x;
-                shape->line[i].point[k-1].y = shape->line[i].point[k].y;	
-              } else {
-                k++;
-              }
             }
           }
         }
-        shape->line[i].numpoints = k; /* save actual number kept */
       }
-    } else { /* points or untyped shapes */
-      for(i=0; i<shape->numlines; i++) { /* for each part */
-        for(j=1; j < shape->line[i].numpoints; j++ ) {
-          shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
-          shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
-        }
+      shape->line[i].numpoints = k; /* save actual number kept */
+    }
+  } else { /* points or untyped shapes */
+    for(i=0; i<shape->numlines; i++) { /* for each part */
+      for(j=1; j < shape->line[i].numpoints; j++ ) {
+        shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+        shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
       }
     }
+  }
 }
-//------------------------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------------------------
-
 
 #endif
