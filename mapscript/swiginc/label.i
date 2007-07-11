@@ -42,7 +42,7 @@
     return MS_SUCCESS;
   }
 
-  int addBinding(int binding, char *item) 
+  int setBinding(int binding, char *item) 
   {
     if(!item) return MS_FAILURE;
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;
