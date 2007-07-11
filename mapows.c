@@ -1149,7 +1149,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
   /* In 1.1.0, ContactInformation becomes optional. */
   if (nVersion > OWS_1_0_0) 
   {
-    msIO_fprintf(stream, "<ContactInformation>\n", tabspace); 
+    msIO_fprintf(stream, "%s<ContactInformation>\n", tabspace); 
 
       /* ContactPersonPrimary is optional, but when present then all its  */
       /* sub-elements are mandatory */
