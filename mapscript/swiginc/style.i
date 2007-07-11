@@ -119,5 +119,35 @@
         if (symbolname) self->symbolname = strdup(symbolname);
         else self->symbolname = 0;
         return self->symbol;
-	}
+    }
+
+  int removeBinding(int binding) 
+  {
+    if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
+
+    if(self->bindings[binding].item) {
+      free(self->bindings[binding].item);
+      self->bindings[binding].index = -1;
+      self->numbindings--;
+    }
+
+    return MS_SUCCESS;
+  }
+
+  int addBinding(int binding, char *item) 
+  {
+    if(!item) return MS_FAILURE;
+    if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
+
+    if(self->bindings[binding].item) {
+      free(self->bindings[binding].item);
+      self->bindings[binding].index = -1;
+      self->numbindings--;
+    }
+
+    self->bindings[binding].item = strdup(item);
+    self->numbindings++;
+
+    return MS_SUCCESS;
+  }
 }

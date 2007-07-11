@@ -261,6 +261,7 @@ typedef struct {
 %include "../swiginc/connpool.i"
 %include "../swiginc/msio.i"
 %include "../swiginc/web.i"
+%include "../swiginc/label.i"
 
 /* 
 =============================================================================
