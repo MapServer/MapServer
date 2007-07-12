@@ -595,6 +595,7 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
  *      MS_ANNOTATION layer - return real feature type
  * ------------------------------------------------------------------ */
     case MS_LAYER_ANNOTATION:
+    case MS_LAYER_CHART:
     case MS_LAYER_QUERY:
       switch(poGeom->getGeometryType())
       {
