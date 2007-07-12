@@ -112,7 +112,8 @@ Currently supported classes, properties and methods:
 
     Label/Attribute binding
         MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR,
-        MS_LABEL_BINDING_OUTLINECOLOR      
+        MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, 
+        MS_LABEL_BINDING_PRIORITY 
 
  Functions:
  ----------
