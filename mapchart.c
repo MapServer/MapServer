@@ -2,7 +2,7 @@
  *
  * Project:  MapServer
  * Purpose:  Implementation of dynamic charting (MS-RFC-29)
- * Author:   Thomas Bonfort
+ * Author:   Thomas Bonfort ( thomas.bonfort[at]gmail.com )
  *
  ******************************************************************************
  * Copyright (c) 1996-2007 Regents of the University of Minnesota.
@@ -28,7 +28,7 @@
 
 #include "map.h"
 
-MS_CVSID("$Id: $")
+MS_CVSID("$Id$")
 
 int msDrawBarChartGD(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image,
                      int width, int height, float maxVal, float minVal, int barWidth)
@@ -97,6 +97,74 @@ int msDrawBarChartGD(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *im
     return MS_SUCCESS;
 }
 
+/*
+** check if an object of width w and height h placed at point x,y can fit in an image of width mw and height mh
+*/
+#define MS_CHART_FITS(x,y,w,h,mw,mh) (((x)-(w)/2>0)&&((x)+(w)/2<(mw))&&((y)-(h)/2>0)&&((y)+(h)/2)<(mh))
+
+/*
+** find a point on a shape. check if it fits in image
+** returns 
+**  MS_SUCCESS and point coordinates in 'p' if chart fits in image
+**  MS_FAILURE if no point could be found
+*/
+int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj *center) {
+    switch(shape->type) {
+      case MS_SHAPE_POINT:
+        center->x=MS_MAP2IMAGE_X(shape->line[0].point[0].x, map->extent.minx, map->cellsize);
+        center->y=MS_MAP2IMAGE_Y(shape->line[0].point[0].y, map->extent.maxy, map->cellsize);
+        if(MS_CHART_FITS(center->x,center->y,width,height,map->width,map->height))
+            return MS_SUCCESS;
+        else
+            return MS_FAILURE;
+        break;
+      case MS_SHAPE_LINE:
+        //loop through line segments starting from middle (alternate between before and after middle point)
+        //first segment that fits is chosen
+        {
+          int middle=shape->line[0].numpoints/2; //start with middle segment of line
+          int numpoints=shape->line[0].numpoints;
+          int idx,offset;
+          for(offset=1;offset<=middle;offset++) {
+              idx=middle+offset;
+              if(idx<numpoints) {
+                  center->x=(shape->line[0].point[idx-1].x+shape->line[0].point[idx].x)/2;
+                  center->x=MS_MAP2IMAGE_X(center->x, map->extent.minx, map->cellsize);
+                  center->y=(shape->line[0].point[idx-1].y+shape->line[0].point[idx].y)/2;
+                  center->y=MS_MAP2IMAGE_Y(center->y, map->extent.maxy, map->cellsize);
+                  if(MS_CHART_FITS(center->x,center->y,width,height,map->width,map->height))
+                      return MS_SUCCESS;
+						
+                  break;
+              }
+              idx=middle-offset;
+              if(idx>=0) {
+                  center->x=(shape->line[0].point[idx].x+shape->line[0].point[idx+1].x)/2;
+                  center->x=MS_MAP2IMAGE_X(center->x, map->extent.minx, map->cellsize);
+                  center->y=(shape->line[0].point[idx].y+shape->line[0].point[idx+1].y)/2;
+                  center->y=MS_MAP2IMAGE_Y(center->y, map->extent.maxy, map->cellsize);
+                  if(MS_CHART_FITS(center->x,center->y,width,height,map->width,map->height))
+                      return MS_SUCCESS;
+                  break;
+              }
+          }
+          return MS_FAILURE;
+        }
+      break;
+      case MS_SHAPE_POLYGON:
+        msPolygonLabelPoint(shape, center, -1);
+        center->x = MS_MAP2IMAGE_X(center->x, map->extent.minx, map->cellsize);
+        center->y = MS_MAP2IMAGE_Y(center->y, map->extent.maxy, map->cellsize);
+        if(MS_CHART_FITS(center->x,center->y,width,height,map->width,map->height))
+            return MS_SUCCESS;
+        else
+            return MS_FAILURE;
+        break;
+      default:
+        return MS_FAILURE;
+    }	
+}
+
 int msDrawPieChartGD(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image,
                      int width, int height)
 {
@@ -112,15 +180,13 @@ int msDrawPieChartGD(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *im
     else
         layer->project = MS_FALSE;
 #endif
-    /*center.x=(shape->bounds.minx+shape->bounds.maxx)/2.;
-      center.y=(shape->bounds.miny+shape->bounds.maxy)/2.;*/
-    msPolygonLabelPoint(shape, &center, 10);
-    if(layer->transform == MS_TRUE) {
-        if(!msPointInRect(&center, &map->extent)) return MS_SUCCESS; /* next point */
-        center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
-        center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
-    } else
-        msOffsetPointRelativeTo(&center, layer);
+	
+    /*
+      msOffsetPointRelativeTo(&center, layer); 
+      why???
+    */
+    if(findChartPoint(map, shape, width, height, &center)==MS_FAILURE)
+        return MS_SUCCESS; /*next shape*/
 	
     if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
         return MS_FAILURE; /* error message is set in msBindLayerToShape() */

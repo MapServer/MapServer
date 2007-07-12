@@ -1058,12 +1058,12 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
                     break;
 
                 case MS_LAYER_POLYGON:
-                case MS_LAYER_CHART:
                     result = force_to_polygons(wkb, shape);
                     break;
 
                 case MS_LAYER_ANNOTATION:
                 case MS_LAYER_QUERY:
+                case MS_LAYER_CHART:
                     result = dont_force(wkb, shape);
                     break;
 
@@ -1253,7 +1253,6 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
         wkb = (char *) PQgetvalue(query_result, 0, layer->numitems);  
         /* layer->numitems is the wkt column */
         switch(layer->type) {
-            case MS_LAYER_CHART:
             case MS_LAYER_POINT:
                 result = force_to_points(wkb, shape);
                 break;
@@ -1268,6 +1267,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
             case MS_LAYER_ANNOTATION:
             case MS_LAYER_QUERY:
+            case MS_LAYER_CHART:
                 result = dont_force(wkb,shape);
                 break;
 
