@@ -1,0 +1,121 @@
+========================================================
+  MS RFC 34: MapServer Release Manager and Release Cycle
+========================================================
+
+:Date: 2007/07/13
+:Author: Daniel Morissette
+:Contact: dmorissette@mapgears.com
+:Last Edited: 2007/07/13
+:Status: Pending vote
+
+Overview
+--------
+
+This RFC documents the MapServer Release Manager role and the phases of
+MapServer's Release Cycle.
+
+The MapServer Release Manager Role
+----------------------------------
+
+For every release of MapServer, the PSC elects a release manager (this
+is usually done with a motion and vote on the mapserver-dev list).
+
+The overall role of the release manager is to coordinate the efforts
+of the developers, testers, documentation and other contributors to
+lead to a release of the best possible quality within the scheduled
+timeframe. 
+
+The PSC delegates to the release manager the responsibility and 
+authority to make certain final decisions for a release, including:
+
+- Approving or not the release of each beta, release candidate and 
+  final release
+- Approving or rejecting non-trivial bug fixes or changes after the 
+  feature freeze
+- Maintaining the release schedule (timeline) and making changes as required
+
+When in doubt or for tough decisions (e.g. pushing the release date by
+several weeks) the release manager is free to ask the PSC to vote in 
+support of some decisions, but this is not a requirement for the areas of 
+responsibility above.
+
+The release manager's role also includes the following tasks:
+
+- Setup and maintain the Release Plan section of the website for
+  this release
+- Coordinate with the developers team
+- Coordinate with the QA/testers team
+- Coordinate with the docs/website team
+- Keep track of progress via Trac (make use of Trac milestones and ensure
+  tickets are properly targeted, push some tickets to a later release if 
+  required, etc.)
+- Organize regular IRC meetings (including agenda and minutes)
+- Tag source code in SVN for each beta, RC and release
+- Branch source code in SVN after the final release (trunk becomes the next
+  dev version)
+- Update map.h and HISTORY.TXT for each beta/RC/release
+- Update appropriate website/download page for each beta/RC/release
+- Make announcements on mapserver-users and mapserver-announce for 
+  each release
+- Produce/coordinate bugfix releases as needed during the 6 months period
+  that follows the final release (i.e. until the next release) 
+
+Any of the above tasks can be delegated but they still remain the ultimate
+responsibility of the release manager.
+
+
+The MapServer release cycle
+---------------------------
+
+(Credit: Inspired by the Plone release process at 
+http://plone.org/documentation/manual/plone-developer-reference/overview/release-process)
+
+MapServer uses a time-based release cycle, trying to aim for one
+release every 6 months.
+
+The normal development cycle of a MapServer release consists of various 
+phases.
+
+- Development phase
+
+  The development phase usually lasts around 4 months. New features are
+  proposed via RFCs voted by the MapServer PSC.
+
+- RFC freeze date
+
+  For each release there is a certain date by which all new feature 
+  proposals (RFCs) must have been submitted for review. After this date no 
+  features will be accepted anymore for this particular release.
+
+- Feature freeze date / Beta releases
+
+  By this date all features must have been completed and all code has 
+  to be integrated. Only non-invasive changes, user interface work and 
+  bug fixes are done now. We usually plan for 3-4 betas and a couple of
+  release candidates over a 6 weeks period before the final release.
+
+- Release Candidate
+
+  Ideally, the last beta that was bug free. No changes to the code. 
+  Should not require any migration steps apart from the ones required 
+  in the betas. If any problems are found and fixed, a new release 
+  candidate is issued.
+
+- Final release / Expected release date
+
+  Normally the last release candidate that was issued without any 
+  show-stopper bugs.
+
+- Bug fix releases
+
+  No software is perfect. Once a sufficient large or critical number 
+  of bugs have been found for a certain release, the release manager 
+  releases a new bug fix release a.k.a. third-dot release (for example 4.10.2).
+
+
+Voting history
+--------------
+
+Pending vote.
+
+
