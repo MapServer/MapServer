@@ -3416,7 +3416,8 @@ static gdImagePtr msImageCreateWithPaletteGD( gdImagePtr img24, const char *pale
       ncolors++;
       
   }
-  
+  fclose(stream);
+
   img = gdImageCreate(sx, sy);
  
   /*if the palette file contains less than 256, fill the rest
