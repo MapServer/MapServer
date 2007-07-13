@@ -54,6 +54,7 @@ The release manager's role also includes the following tasks:
 - Branch source code in SVN after the final release (trunk becomes the next
   dev version)
 - Update map.h and HISTORY.TXT for each beta/RC/release
+- Package source code distribution for each beta/RC/release
 - Update appropriate website/download page for each beta/RC/release
 - Make announcements on mapserver-users and mapserver-announce for 
   each release
