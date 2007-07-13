@@ -1,6 +1,6 @@
-========================================================
-  MS RFC 34: MapServer Release Manager and Release Cycle
-========================================================
+==========================================================
+  MS RFC 34: MapServer Release Manager and Release Process
+==========================================================
 
 :Date: 2007/07/13
 :Author: Daniel Morissette
@@ -12,7 +12,7 @@ Overview
 --------
 
 This RFC documents the MapServer Release Manager role and the phases of
-MapServer's Release Cycle.
+MapServer's Release Process.
 
 The MapServer Release Manager Role
 ----------------------------------
@@ -64,8 +64,8 @@ Any of the above tasks can be delegated but they still remain the ultimate
 responsibility of the release manager.
 
 
-The MapServer release cycle
----------------------------
+The MapServer Release Process
+-----------------------------
 
 (Credit: Inspired by the Plone release process at 
 http://plone.org/documentation/manual/plone-developer-reference/overview/release-process)
@@ -73,7 +73,7 @@ http://plone.org/documentation/manual/plone-developer-reference/overview/release
 MapServer uses a time-based release cycle, trying to aim for one
 release every 6 months.
 
-The normal development cycle of a MapServer release consists of various 
+The normal development process of a MapServer release consists of various 
 phases.
 
 - Development phase
@@ -117,5 +117,4 @@ Voting history
 --------------
 
 Pending vote.
-
 
