@@ -1229,7 +1229,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   /* changed when Tomas added CARTOLINE symbols */
   if(layer->class[c]->styles[0] != NULL) {
     if(layer->class[c]->styles[0]->size == -1)
-      csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]))) * layer->scalefactor) / 2.0);
+      csz = MS_NINT(((msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol])) * layer->scalefactor) / 2.0);
     else
       csz = MS_NINT((layer->class[c]->styles[0]->size*layer->scalefactor)/2.0);
   } else {

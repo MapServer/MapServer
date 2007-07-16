@@ -66,12 +66,12 @@ int msImagePixmapPolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, 
 
     symbolObj *symbol;
 
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
 
     rot = (symbol->gap < 0);
 
     if(style->size == -1) {
-        size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+        size = msSymbolGetDefaultSize(  symbolset->symbol[style->symbol] );
         size = MS_NINT(size*scalefactor);
     } else
       size = MS_NINT(style->size*scalefactor);
@@ -1092,14 +1092,14 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
   
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
   width = style->width;
 
   if(style->size == -1)
-    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) );
   else
     size = style->size;
 
@@ -1294,7 +1294,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
 
   if(!p) return;
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
 
   if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolGD() instead (POLYLINE) */
     msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
@@ -1312,7 +1312,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   oy = style->offsety;
 
   if(style->size == -1) {
-    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) );
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
@@ -1524,7 +1524,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
@@ -1532,7 +1532,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   oy = style->offsety;
 
   if(style->size == -1) {
-    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) );
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
@@ -1767,14 +1767,14 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
   width = style->width;
 
   if(style->size == -1)
-    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) );
   else
     size = style->size;
 
@@ -2052,13 +2052,13 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
 
   if(style->size == -1) {
-      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+      size = msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) );
       size = MS_NINT(size*scalefactor);
   } else
       size = MS_NINT(style->size*scalefactor);

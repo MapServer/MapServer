@@ -53,12 +53,12 @@
 
     ~symbolObj() 
     {
-        if (!self) return;
-        if (self->name) free(self->name);
-        if (self->img) gdImageDestroy(self->img);
-        if (self->font) free(self->font);
-        if (self->imagepath) free(self->imagepath);
-        free(self);
+		if (self) {
+            if (msFreeSymbol(self)==MS_SUCCESS) {
+            	free(self);
+				self=NULL;
+			}
+        }
     }
 
     int setImagepath(const char *imagefile) {

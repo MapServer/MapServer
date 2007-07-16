@@ -366,7 +366,7 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         return;
 
 #if PDFLIB_MAJORVERSION >= 6
-     if(symbolset && symbolset->symbol[style->symbol].stylelength)
+     if(symbolset && symbolset->symbol[style->symbol]->stylelength)
        drawDashedPolylinePDF(pdf, p, &(symbolset->symbol[style->symbol]), 
                              &(style->color),size);
      else

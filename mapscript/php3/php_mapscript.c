@@ -3180,7 +3180,7 @@ DLEXPORT void php3_ms_map_getSymbolObjectById(INTERNAL_FUNCTION_PARAMETERS)
 
     map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR TSRMLS_CC);
 
-    psSymbol = &self->symbolset.symbol[pSymId->value.lval];
+    psSymbol = self->symbolset.symbol[pSymId->value.lval];
     /* Return style object */
     _phpms_build_symbol_object(psSymbol, map_id,  list, return_value TSRMLS_CC);
 }

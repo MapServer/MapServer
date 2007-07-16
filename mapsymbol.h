@@ -86,6 +86,7 @@ typedef struct {
 #ifdef SWIG
   %immutable;
 #endif /* SWIG */
+  int refcount;
   int numpoints;
 #ifdef SWIG
   %mutable;

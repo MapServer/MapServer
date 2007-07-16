@@ -55,14 +55,18 @@
         free(self);
     }
 
+	%newobject getSymbol;
     symbolObj *getSymbol(int i) 
     {
-        if (i >= 0 && i < self->numsymbols)	
-            return (symbolObj *) &(self->symbol[i]);
-        else
+        if (i >= 0 && i < self->numsymbols) {
+			symbolObj *s=self->symbol[i];
+			MS_REFCNT_INCR(s);
+            return s;
+        } else
             return NULL;
     }
 
+	%newobject getSymbolByName;
     symbolObj *getSymbolByName(char *symbolname) 
     {
         int i;
@@ -72,8 +76,10 @@
         i = msGetSymbolIndex(self, symbolname, MS_TRUE);
         if (i == -1)
             return NULL;
-        else
-            return (symbolObj *) &(self->symbol[i]);
+		else {
+			MS_REFCNT_INCR(self->symbol[i]);
+            return self->symbol[i];
+		}
     }
 
     int index(char *symbolname) 
@@ -89,7 +95,11 @@
     %newobject removeSymbol;
     symbolObj *removeSymbol(int index) 
     {
-        return (symbolObj *) msRemoveSymbol(self, index);
+        symbolObj *s=msRemoveSymbol(self, index);
+		if (s!=NULL) {
+			MS_REFCNT_INCR(s);
+		}
+        return s;
     }
 
     int save(const char *filename) {

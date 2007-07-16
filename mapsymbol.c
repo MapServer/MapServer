@@ -122,6 +122,7 @@ double msSymbolGetDefaultSize(symbolObj *s) {
 
 void initSymbol(symbolObj *s)
 {
+  MS_REFCNT_INIT(s);
   s->type = MS_SYMBOL_VECTOR;
   s->transparent = MS_FALSE;
   s->transparentcolor = 0;
@@ -145,13 +146,19 @@ void initSymbol(symbolObj *s)
   s->linejoinmaxsize = 3;
 }
 
-void msFreeSymbol(symbolObj *s) {
-  if(!s) return;
+int msFreeSymbol(symbolObj *s) {
+  if(!s) return MS_FAILURE;
+  if( MS_REFCNT_DECR_IS_NOT_ZERO(s) ) {
+  	return MS_FAILURE;
+  }
+  
   if(s->name) free(s->name);
   if(s->img) gdImageDestroy(s->img);
   if(s->font) free(s->font);
   if(s->imagepath) free(s->imagepath);
   if(s->character) free(s->character);
+  
+  return MS_SUCCESS;
 }
 
 int loadSymbol(symbolObj *s, char *symbolpath)
@@ -450,7 +457,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   }
   i = symbolset->numsymbols;  
 
-  initSymbol(&symbolset->symbol[i]);
+  initSymbol(symbolset->symbol[i]);
 
   fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
   rewind(stream); /* reset the image for the readers */
@@ -458,7 +465,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 #ifdef USE_GD_GIF
     gdIOCtx *ctx;
     ctx = msNewGDFileCtx(stream);
-    symbolset->symbol[i].img = gdImageCreateFromGifCtx(ctx);
+    symbolset->symbol[i]->img = gdImageCreateFromGifCtx(ctx);
     ctx->gd_free(ctx);
 #else
     msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msAddImageSymbol()");
@@ -469,7 +476,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 #ifdef USE_GD_PNG
     gdIOCtx *ctx;
     ctx = msNewGDFileCtx(stream);
-    symbolset->symbol[i].img = gdImageCreateFromPngCtx(ctx);
+    symbolset->symbol[i]->img = gdImageCreateFromPngCtx(ctx);
     ctx->gd_free(ctx);
 #else
     msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msAddImageSymbol()");
@@ -480,34 +487,43 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   fclose(stream);
   
-  if(!symbolset->symbol[i].img) {
+  if(!symbolset->symbol[i]->img) {
     msSetError(MS_GDERR, NULL, "msAddImageSymbol()");
     return(-1);
   }
 
-  symbolset->symbol[i].name = strdup(filename);
-  symbolset->symbol[i].imagepath = strdup(filename);
-  symbolset->symbol[i].type = MS_SYMBOL_PIXMAP;
-  symbolset->symbol[i].sizex = symbolset->symbol[i].img->sx;
-  symbolset->symbol[i].sizey = symbolset->symbol[i].img->sy;
+  symbolset->symbol[i]->name = strdup(filename);
+  symbolset->symbol[i]->imagepath = strdup(filename);
+  symbolset->symbol[i]->type = MS_SYMBOL_PIXMAP;
+  symbolset->symbol[i]->sizex = symbolset->symbol[i]->img->sx;
+  symbolset->symbol[i]->sizey = symbolset->symbol[i]->img->sy;
   symbolset->numsymbols++;
 
   return(i);
 }
 
-void msFreeSymbolSet(symbolSetObj *symbolset)
+int msFreeSymbolSet(symbolSetObj *symbolset)
 {
   int i;
 
   freeImageCache(symbolset->imagecache);
-  for(i=1; i<symbolset->numsymbols; i++)
-    msFreeSymbol(&(symbolset->symbol[i]));
+  for(i=0; i<symbolset->numsymbols; i++) {
+	  if (symbolset->symbol[i]!=NULL) {
+		  if ( msFreeSymbol((symbolset->symbol[i])) == MS_SUCCESS ) {
+			  msFree(symbolset->symbol[i]);
+			  symbolset->symbol[i]=NULL;
+		  }
+	  }
+  }
+  msFree(symbolset->symbol);
 
   /* no need to deal with fontset, it's a pointer */
+  return MS_SUCCESS;
 }
 
 void msInitSymbolSet(symbolSetObj *symbolset)
 {
+  int i=0;
   symbolset->filename = NULL;
   symbolset->numsymbols = 1; /* always 1 symbol */
   symbolset->imagecache = NULL;
@@ -515,7 +531,21 @@ void msInitSymbolSet(symbolSetObj *symbolset)
 
   symbolset->fontset = NULL;
   symbolset->map = NULL;
-  memset( symbolset->symbol, 0, sizeof(symbolObj) );
+  symbolset->symbol = (symbolObj**) malloc(sizeof(symbolObj*)*MS_MAXSYMBOLS);
+  if (symbolset->symbol==NULL) {
+    msSetError(MS_MEMERR, "Failed to allocate symbols array", "msInitSymbolSet");
+  } else {
+	symbolset->symbol[0]=(symbolObj*)malloc(sizeof(symbolObj));
+	if (symbolset->symbol[0]==NULL) {
+		msSetError(MS_MEMERR, "Failed to allocate memory for first symbolObj", "msInitSymbolSet()");
+		return;
+	}
+	initSymbol(symbolset->symbol[0]);
+
+    for (i=1; i<MS_MAXSYMBOLS; i++) {
+		symbolset->symbol[i]=NULL;
+    } 
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -583,8 +613,15 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadSymbolSet()");
 	status = -1;      
       }
-      if((loadSymbol(&(symbolset->symbol[symbolset->numsymbols]), pszSymbolPath) == -1)) 
-	status = -1;
+	  if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+		  symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
+		  if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+			  msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
+			  return MS_FAILURE;
+		  }
+      }
+      if((loadSymbol((symbolset->symbol[symbolset->numsymbols]), pszSymbolPath) == -1)) 
+	  status = -1;
       symbolset->numsymbols++;
       break;
     case(SYMBOLSET):
@@ -625,7 +662,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
 
   if(style->size == -1) {
       size = MS_NINT(
-          msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) )
+          msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) )
           * scalefactor );
   }
   else
@@ -633,14 +670,14 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
-  switch(symbolset->symbol[style->symbol].type) {  
+  switch(symbolset->symbol[style->symbol]->type) {  
    
 #ifdef USE_GD_FT
   case(MS_SYMBOL_TRUETYPE):
-    font = msLookupHashTable(&(symbolset->fontset->fonts), symbolset->symbol[style->symbol].font);
+    font = msLookupHashTable(&symbolset->fontset->fonts, symbolset->symbol[style->symbol]->font);
     if(!font) return(MS_FAILURE);
 
-    if(msGetCharacterSize(symbolset->symbol[style->symbol].character, size, 
+    if(msGetCharacterSize(symbolset->symbol[style->symbol]->character, size, 
                           (char *) font, &rect) != MS_SUCCESS) 
       return(MS_FAILURE);
 
@@ -652,20 +689,20 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
 
   case(MS_SYMBOL_PIXMAP):
     if(size == 1) {        
-      *width = MS_MAX(*width, symbolset->symbol[style->symbol].img->sx);
-      *height = MS_MAX(*height, symbolset->symbol[style->symbol].img->sy);
+      *width = MS_MAX(*width, symbolset->symbol[style->symbol]->img->sx);
+      *height = MS_MAX(*height, symbolset->symbol[style->symbol]->img->sy);
     } else {
-      *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[style->symbol].img->sy) * symbolset->symbol[style->symbol].img->sx));
+      *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[style->symbol]->img->sy) * symbolset->symbol[style->symbol]->img->sx));
       *height = MS_MAX(*height, size);
     }
     break;
   default: /* vector and ellipses, scalable */
     if(style->size > 0) {
-      *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[style->symbol].sizey) * symbolset->symbol[style->symbol].sizex));
+      *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[style->symbol]->sizey) * symbolset->symbol[style->symbol]->sizex));
       *height = MS_MAX(*height, size);
     } else { /* use symbol defaults */
-      *width = (int) MS_MAX(*width, symbolset->symbol[style->symbol].sizex);
-      *height = (int) MS_MAX(*height, symbolset->symbol[style->symbol].sizey);
+      *width = (int) MS_MAX(*width, symbolset->symbol[style->symbol]->sizex);
+      *height = (int) MS_MAX(*height, symbolset->symbol[style->symbol]->sizey);
     }
     break;
   }  
@@ -695,8 +732,8 @@ int msAddNewSymbol(mapObj *map, char *name)
         return(-1);
     }
     i = map->symbolset.numsymbols;  
-    initSymbol(&map->symbolset.symbol[i]);
-    map->symbolset.symbol[i].name = strdup(name);
+    initSymbol( map->symbolset.symbol[i] );
+    map->symbolset.symbol[i]->name = strdup(name);
 
     map->symbolset.numsymbols++;
 
@@ -715,7 +752,8 @@ int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
         return -1;
     }
     symbolset->numsymbols++;
-    msCopySymbol(&(symbolset->symbol[symbolset->numsymbols-1]), symbol, NULL);
+    symbolset->symbol[symbolset->numsymbols-1]=symbol;
+	MS_REFCNT_INCR(symbol);
     return symbolset->numsymbols-1;
 }
 
@@ -732,12 +770,13 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
         return NULL;
     }
     else {
-        symbol = (symbolObj *)malloc(sizeof(symbolObj));
-        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]), NULL);
+        symbol=symbolset->symbol[nSymbolIndex];
         for (i=nSymbolIndex+1; i<symbolset->numsymbols; i++) {
             symbolset->symbol[i-1] = symbolset->symbol[i];
         }
+		symbolset->symbol[i-1]=NULL;
         symbolset->numsymbols--;
+		MS_REFCNT_DECR(symbol);
         return symbol;
     }
 }
@@ -750,8 +789,8 @@ int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
     }
     /* Don't ever write out the default symbol at index 0 */
     for (i=1; i<symbolset->numsymbols; i++) {
-        symbolset->symbol[i].inmapfile = MS_TRUE;
-        writeSymbol(&(symbolset->symbol[i]), stream);
+        symbolset->symbol[i]->inmapfile = MS_TRUE;
+        writeSymbol((symbolset->symbol[i]), stream);
     }
     return MS_SUCCESS;
 }
@@ -927,7 +966,13 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
  
   /* Copy child symbols */
   for (i = 0; i < dst->numsymbols; i++) {
-    return_value = msCopySymbol(&(dst->symbol[i]), &(src->symbol[i]), map);
+	dst->symbol[i]=(symbolObj*)malloc(sizeof(symbolObj));
+	if (dst->symbol[i]==NULL) {
+		msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msEmbedLegend()");
+		return MS_FAILURE;
+	}
+
+    return_value = msCopySymbol(dst->symbol[i], src->symbol[i], map);
     if (return_value != MS_SUCCESS) {
       msSetError(MS_MEMERR,"Failed to copy symbol.","msCopySymbolSet()");
       return(MS_FAILURE);

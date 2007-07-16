@@ -524,7 +524,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     if(p->numlines <= 0) return;
 
     if(style->size == -1) {
-      size = (int)msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+      size = (int)msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
     }
     else
       size = style->size;
@@ -551,7 +551,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     ox = MS_NINT(style->offsetx*scalefactor);
     oy = (style->offsety == -99) ? -99 : (int)(style->offsety*scalefactor);
 
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
 
 
     /* TODO : all lines are draw as filled lines.  */
@@ -710,11 +710,11 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
       return;
 
 
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
 
     if(style->size == -1) 
     {
-        size = (int)msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+        size = (int)msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
         size = MS_NINT(size*scalefactor);
     }
     else
@@ -1301,11 +1301,11 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
    
     if(!p) return;
 
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
 
  
     if(style->size == -1) {
-    size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+    size = msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
     size = MS_NINT(size*scalefactor);
     } else
       size = MS_NINT(style->size*scalefactor);

@@ -994,7 +994,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                             if (psStyle->symbol > 0 &&
                                 psStyle->symbol < map->symbolset.numsymbols)
                               psStyle->symbolname = 
-                                strdup(map->symbolset.symbol[psStyle->symbol].name);
+                                strdup(map->symbolset.symbol[psStyle->symbol]->name);
                         }
                     }
                 }
@@ -1012,7 +1012,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                         if ( psStyle->symbol > 0 && 
                              psStyle->symbol < map->symbolset.numsymbols)
                           psStyle->symbolname = 
-                            strdup(map->symbolset.symbol[psStyle->symbol].name);
+                            strdup(map->symbolset.symbol[psStyle->symbol]->name);
                     }
                 }
             }
@@ -1422,7 +1422,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                 if (psStyle->symbol > 0 &&
                     psStyle->symbol < map->symbolset.numsymbols)
                   psStyle->symbolname = 
-                    strdup(map->symbolset.symbol[psStyle->symbol].name);
+                    strdup(map->symbolset.symbol[psStyle->symbol]->name);
                     
             }
             else
@@ -1461,7 +1461,7 @@ int msSLDGetLineSymbol(mapObj *map)
         return 0; /* returs 0 for no symbol */
     }
 
-    psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
+    psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
     map->symbolset.numsymbols++;
 
  
@@ -1506,7 +1506,7 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
         return 0; /* returs 0 for no symbol */
     }
 
-    psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
+    psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
     map->symbolset.numsymbols++;
 
  
@@ -1652,7 +1652,7 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
                        "msSLDGetMarkSymbol()");
             return 0; /* returs 0 for no symbol */
         }
-        psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
+        psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
         nSymbolId = map->symbolset.numsymbols;
         map->symbolset.numsymbols++;
         initSymbol(psSymbol);
@@ -1895,7 +1895,7 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
 
                 if (img)
                 {
-                    psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
+                    psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
                     nSymbolId = map->symbolset.numsymbols;
                     map->symbolset.numsymbols++;
                     initSymbol(psSymbol);
@@ -2047,7 +2047,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                             psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL,
                                                                     2 * psStyle->size);
                             if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
-                              psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol].name);
+                              psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol]->name);
 
                             /* set the color parameter if not set. Does not make sense */
                             /* for pixmap but mapserver needs it. */
@@ -2062,7 +2062,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                     else 
                     {
                         if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
-                          psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol].name);
+                          psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol]->name);
 
                         /* set the color parameter if not set. Does not make sense */
                         /* for pixmap but mapserver needs it. */
@@ -2930,7 +2930,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
         if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
         {
-            psSymbol =  &psLayer->map->symbolset.symbol[nSymbol];
+            psSymbol =  psLayer->map->symbolset.symbol[nSymbol];
             if (psSymbol->type == MS_SYMBOL_VECTOR || 
                 psSymbol->type == MS_SYMBOL_ELLIPSE)
             {
@@ -3298,7 +3298,7 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
                             
     if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
     {
-        psSymbol =  &psLayer->map->symbolset.symbol[nSymbol];
+        psSymbol =  psLayer->map->symbolset.symbol[nSymbol];
         if (psSymbol->stylelength > 0)
         {
             for (i=0; i<psSymbol->stylelength; i++)

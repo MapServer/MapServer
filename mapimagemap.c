@@ -597,7 +597,7 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
   
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
@@ -754,7 +754,7 @@ DEBUG_IF printf("msCircleDrawShadeSymbolIM<BR>\n");
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
@@ -973,7 +973,7 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
 /* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
 /* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
@@ -1183,7 +1183,7 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 /* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
 /* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
@@ -1396,7 +1396,7 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
 /* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
 /* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
 /* bc = style->backgroundcolor.pen; */
 /* fc = style->color.pen; */
 /* oc = style->outlinecolor.pen; */
@@ -1875,7 +1875,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
       for(i=0; i<cachePtr->numstyles; i++) {
         if(cachePtr->styles[i].size == -1)
           cachePtr->styles[i].size = (int) msSymbolGetDefaultSize( 
-              &( map->symbolset.symbol[cachePtr->styles[i].symbol] ) );
+              map->symbolset.symbol[cachePtr->styles[i].symbol] );
 	cachePtr->styles[i].size = (int)
             ( cachePtr->styles[i].size * layerPtr->scalefactor);
       }

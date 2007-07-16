@@ -284,8 +284,8 @@ int msGetSymbolIndex(symbolSetObj *symbols, char *name, int try_addimage_if_notf
 
   /* symbol 0 has no name */
   for(i=1; i<symbols->numsymbols; i++) {
-    if(symbols->symbol[i].name)
-      if(strcasecmp(symbols->symbol[i].name, name) == 0) return(i);
+    if(symbols->symbol[i]->name)
+      if(strcasecmp(symbols->symbol[i]->name, name) == 0) return(i);
   }
 
   if (try_addimage_if_notfound)
@@ -4589,7 +4589,7 @@ int msSaveMap(mapObj *map, char *filename)
   /* write symbol with INLINE tag in mapfile */
   for(i=0; i<map->symbolset.numsymbols; i++)
   {
-      writeSymbol(&(map->symbolset.symbol[i]), stream);
+      writeSymbol(map->symbolset.symbol[i], stream);
   }
 
   writeProjection(&(map->projection), stream, "  ");
@@ -4797,8 +4797,15 @@ static int loadMapInternal(mapObj *map)
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadMap()");
 	return MS_FAILURE;
       }
-      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols]), map->mappath) == -1)) return MS_FAILURE;
-      map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
+	  if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+		  map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
+		  if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+			  msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
+			  return MS_FAILURE;
+		  }
+      }
+      if((loadSymbol(map->symbolset.symbol[map->symbolset.numsymbols], map->mappath) == -1)) return MS_FAILURE;
+      map->symbolset.symbol[map->symbolset.numsymbols]->inmapfile = MS_TRUE;
       map->symbolset.numsymbols++;
       break;
     case(SYMBOLSET):

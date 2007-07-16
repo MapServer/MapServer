@@ -796,11 +796,12 @@ typedef struct {
 #ifdef SWIG
   %immutable;
 #endif /* SWIG */
+  int refcount;
   int numsymbols;
 #ifdef SWIG
   %mutable;
 #endif /* SWIG */
-  symbolObj symbol[MS_MAXSYMBOLS];
+  symbolObj** symbol;
 #ifndef SWIG
   struct map_obj *map;
   fontSetObj *fontset; /* a pointer to the main mapObj version */
@@ -1488,8 +1489,8 @@ MS_DLL_EXPORT int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map);
 MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map);
 MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
 MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
-MS_DLL_EXPORT void msFreeSymbolSet(symbolSetObj *symbolset);
-MS_DLL_EXPORT void msFreeSymbol(symbolObj *symbol);
+MS_DLL_EXPORT int msFreeSymbolSet(symbolSetObj *symbolset);
+MS_DLL_EXPORT int msFreeSymbol(symbolObj *symbol);
 MS_DLL_EXPORT int msAddNewSymbol(mapObj *map, char *name);
 MS_DLL_EXPORT int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol);
 MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);

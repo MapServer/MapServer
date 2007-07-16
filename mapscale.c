@@ -366,53 +366,60 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
   s = msGetSymbolIndex(&(map->symbolset), "scalebar", MS_FALSE);
   if(s == -1) {
+	if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+		map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
+		if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+			msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msEmbedScalebar()");
+			return MS_FAILURE;
+		}
+	}
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;
-    initSymbol(&(map->symbolset.symbol[s]));
+    initSymbol(map->symbolset.symbol[s]);
   } else {
-    if(map->symbolset.symbol[s].img) 
-      gdImageDestroy(map->symbolset.symbol[s].img);
+    if(map->symbolset.symbol[s]->img) 
+      gdImageDestroy(map->symbolset.symbol[s]->img);
   }
   
   image = msDrawScalebar(map);
-  map->symbolset.symbol[s].img =  image->img.gd; /* TODO  */
-  if(!map->symbolset.symbol[s].img) return(-1); /* something went wrong creating scalebar */
+  map->symbolset.symbol[s]->img =  image->img.gd; /* TODO  */
+  if(!map->symbolset.symbol[s]->img) return(-1); /* something went wrong creating scalebar */
 
-  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; /* intialize a few things */
-  map->symbolset.symbol[s].name = strdup("scalebar");  
-  map->symbolset.symbol[s].sizex = map->symbolset.symbol[s].img->sx;
-  map->symbolset.symbol[s].sizey = map->symbolset.symbol[s].img->sy;
+  map->symbolset.symbol[s]->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
+  map->symbolset.symbol[s]->name = strdup("scalebar");  
+  map->symbolset.symbol[s]->sizex = map->symbolset.symbol[s]->img->sx;
+  map->symbolset.symbol[s]->sizey = map->symbolset.symbol[s]->img->sy;
 
   /* in 8 bit, mark 0 as being transparent.  In 24bit hopefully already
      have transparency enabled ... */
   if(map->scalebar.transparent == MS_ON 
      && !gdImageTrueColor(image->img.gd ) )
-    gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
+    gdImageColorTransparent(map->symbolset.symbol[s]->img, 0);
 
   switch(map->scalebar.position) {
   case(MS_LL):
-    point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
-    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+    point.x = MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
     break;
   case(MS_LR):
-    point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
-    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+    point.x = map->width - MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
     break;
   case(MS_LC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+    point.y = map->height - MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
     break;
   case(MS_UR):
-    point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
-    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+    point.x = map->width - MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
     break;
   case(MS_UL):
-    point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
-    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+    point.x = MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
     break;
   case(MS_UC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+    point.y = MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
     break;
   }
 

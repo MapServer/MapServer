@@ -753,7 +753,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
 
   msInitShape(&label_poly);
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
 
   initLabel(&label);
   rot = (symbol->gap < 0);

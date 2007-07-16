@@ -114,7 +114,7 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
 
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
 	    font = msLookupHashTable(&(symbolset->fontset->fonts), 
-				     symbolset->symbol[sy].font);
+				     symbolset->symbol[sy]->font);
 	    if(!font) 
 	        return NULL;
 

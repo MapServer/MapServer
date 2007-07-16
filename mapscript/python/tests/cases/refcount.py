@@ -294,6 +294,34 @@ class ReferenceCountingTestCase(unittest.TestCase):
 	clone = style.clone()
         assert clone.refcount == 1, clone.refcount
         assert clone.thisown == 1, clone.thisown
+    
+    def testBasicSymbolRefcounting(self):
+        """symbolObj refcounting """
+        self.initMap()
+	symb = self.map.symbolset.getSymbol(0)
+        assert symb.refcount == 2, symb.refcount
+        assert symb.thisown == 1, symb.thisown
+	symb = self.map.symbolset.getSymbolByName("home-png")
+        assert symb.refcount == 2, symb.refcount
+        assert symb.thisown == 1, symb.thisown
+	symb2 = self.map.symbolset.getSymbolByName("home-png")
+        assert symb2.refcount == 3, symb2.refcount
+        assert symb2.thisown == 1, symb2.thisown
+
+    def testSymbolAppendRemove(self):
+        """appendSymbolObj refcounting """
+        self.initMap()
+	symb = mapscript.symbolObj("ANEWSYMBOL")
+        assert symb.refcount == 1, symb.refcount
+        assert symb.thisown == 1, symb.thisown
+	idx = self.map.symbolset.appendSymbol(symb)
+        assert symb.refcount == 2, symb.refcount
+        assert symb.thisown == 1, symb.thisown
+	symb = self.map.symbolset.removeSymbol(idx)
+        assert symb.refcount == 1, symb.refcount
+        assert symb.thisown == 1, symb.thisown
+
+
 
 # ===========================================================================
 # Run the tests outside of the main suite

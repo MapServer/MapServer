@@ -148,8 +148,8 @@ int main(int argc, char *argv[])
 	break;
       }
 
-      if(symbolSet.symbol[n].name)
-	sprintf(buffer, "%d - %s", n, symbolSet.symbol[n].name);
+      if(symbolSet.symbol[n]->name)
+	sprintf(buffer, "%d - %s", n, symbolSet.symbol[n]->name);
       else
 	sprintf(buffer, "%d", n);
       gdImageString(img, gdFontTiny, j+1, i+1, buffer, black);
