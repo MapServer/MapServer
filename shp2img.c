@@ -65,7 +65,13 @@ int main(int argc, char *argv[])
 
     exit(0);
   }
-  
+
+  if ( msSetup() != MS_SUCCESS )
+  {
+      msWriteError(stderr);
+      exit(1);
+  }
+ 
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if ( msDebugInitFromEnv() != MS_SUCCESS )
   {
