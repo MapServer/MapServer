@@ -24,31 +24,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2007/04/05 15:22:30  assefa
- * Commit fix for the msSaveImageBufferAGG.
- *
- * Revision 1.6  2007/04/04 18:39:45  assefa
- * Remove divion by 2 of the line width in imagePolyline.
- *
- * Revision 1.5  2007/03/12 20:21:30  assefa
- * Remove unused function imagepolyline.
- *
- * Revision 1.4  2007/03/09 17:22:37  sdlime
- * Clean-up of formatting (removed tabs, standardized indentation), removed a few meaningless functions, put pLogFile checks in.
- *
- * Revision 1.3  2007/03/08 22:41:12  assefa
- * Correct polygon drawing.
- *
- * Revision 1.2  2007/03/07 20:56:13  sdlime
- * Trimmed a bunch of unnecessary history from mapagg.cpp.
- *
- * Revision 1.1  2007/03/06 11:05:00  novak
- * Initial Checkin
- *
- */
+ *****************************************************************************/
 
 #ifdef USE_AGG
 
