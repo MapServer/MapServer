@@ -281,6 +281,11 @@ libmapserver: $(LIBMAP_STATIC)
 libmapserver.a: map.h $(OBJS) map.h
 	$(AR) $(LIBMAP_STATIC) $(OBJS)
 	$(RANLIB) $(LIBMAP_STATIC)
+	# We don't want to let the shared library get out of sync with the
+	# static library if it exists. 
+	if test -r $(LIBMAP_SHARED) ; then \
+	  make shared ; \
+	fi
 
 shared:	$(LIBMAP_SHARED)
 $(LIBMAP_SHARED):	$(LIBMAP_STATIC)
