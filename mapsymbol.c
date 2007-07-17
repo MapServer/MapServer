@@ -621,7 +621,8 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
     case(SYMBOL):
       if(symbolset->numsymbols == MS_MAXSYMBOLS) { 
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadSymbolSet()");
-	status = -1;      
+	status = -1;
+        break;
       }
       if (symbolset->symbol[symbolset->numsymbols]==NULL) {
           symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
@@ -645,6 +646,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   } /* end for */
 
   fclose(msyyin);
+  msyyin = NULL;
   free(pszSymbolPath);
   return(status);
 }
