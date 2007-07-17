@@ -104,9 +104,6 @@ typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_c
 
 MS_CVSID("$Id$")
 
-static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
-static unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
-
 static FILE *pLogFile = NULL;
 int msImageSetPenAGG(gdImagePtr img, colorObj *color) 
 {
@@ -234,9 +231,9 @@ public:
   }
   
 private:
-  int      m_index;
-  int      m_lineIndex;
   shapeObj  *m_pShape;
+  int      m_lineIndex;
+  int      m_index;
 };
 
 //------------------------------------------------------------------------------------------------------------
@@ -268,9 +265,9 @@ public:
   }
   
 private:
-  int      m_index;
-  int      m_lineIndex;
   shapeObj  *m_pShape;
+  int      m_lineIndex;
+  int      m_index;
 };
 
 //------------------------------------------------------------------------------------------------------------
@@ -280,7 +277,6 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
                           int dashstylelength, int *dashstyle)
 {
   int i, j,k;
-  gdImagePtr img = image->img.gd;
   
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
@@ -727,7 +723,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
@@ -735,7 +731,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
   oy = style->offsety;
 
   if(style->size == -1) {
-    size = msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
+    size = msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
@@ -790,7 +786,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
   int nwidth, size;
   symbolObj *symbol;
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
 
   /*
   ** use agg for styles using symbol 0 and a width or symbol of type ellipse 
@@ -799,7 +795,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
   */
   if(style->symbol >= 0 && (style->symbol == 0 || symbol->type == MS_SYMBOL_ELLIPSE)) {
     if(style->size == -1)
-      size = (int) msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
+      size = (int) msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
     else
       size = style->size;
 
@@ -837,16 +833,11 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 {
   gdImagePtr img  = image->img.gd;
     
-  char bRotated=MS_FALSE;
   symbolObj *symbol;
-  gdImagePtr tile=NULL;
   int ox, oy;
-  int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
   double size, angle, angle_radians;
   int width;
-
-  char *font=NULL;
 
   if(!p) return;
   if(p->numlines <= 0) return;
@@ -855,13 +846,13 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
 
-  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = symbolset->symbol[style->symbol];
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
 
   if(style->size == -1) {
-    size = msSymbolGetDefaultSize(&(symbolset->symbol[style->symbol]));
+    size = msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
