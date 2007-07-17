@@ -3367,8 +3367,10 @@ static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst)
 {
   int x, y;
   int w, h;
-  int c;
-
+  int c, r, g, b;
+  int R[10], G[10], B[10], C[10];
+  int i, color, nCache = 0, iCache =0, maxCache=10;
+  
   if(!src || !dst) return MS_FAILURE;
   if(gdImageSX(src) != gdImageSX(dst) || gdImageSY(src) != gdImageSY(dst)) return MS_FAILURE;
   if(!gdImageTrueColor(src) || gdImageTrueColor(dst)) return MS_FAILURE; /* 24-bit to 8-bit */
@@ -3379,11 +3381,46 @@ static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst)
   for (y = 0; (y < h); y++) {
     for (x = 0; (x < w); x++) {
       c = gdImageGetPixel(src, x, y);
-      /*gdImageSetPixel(dst, x, y, gdImageColorClosestHWB(dst, gdTrueColorGetRed(c), gdTrueColorGetGreen(c), gdTrueColorGetBlue(c)));*/
-       gdImageSetPixel(dst, x, y, gdImageColorClosest(dst, gdTrueColorGetRed(c), gdTrueColorGetGreen(c), gdTrueColorGetBlue(c)));
+      r =  gdTrueColorGetRed(c);
+      g = gdTrueColorGetGreen(c);
+      b = gdTrueColorGetBlue(c);
+      color = -1;
+      iCache = 0;
+
+      /* adding a simple cache to keep colors instead of always calling gdImageColorClosest
+         seems to reduce significantly the time passed in this function 
+         spcially with large images (bug 2096)*/
+      for (i=0; i<nCache; i++)
+      {
+          if (R[i] == r)
+          {
+              if (G[i] == g && B[i] == b)
+              {
+                  color = C[i];
+                  break;
+              }
+          }
+      }
+
+      if (color == -1)
+      {
+          color = gdImageColorClosest(dst, r, g, b);
+          R[iCache] = r;
+          G[iCache] = g;
+          B[iCache] = b;
+          C[iCache] = color;
+          nCache++;
+          if (nCache >= maxCache)
+            nCache = maxCache;
+          
+          iCache++;
+          if (iCache == maxCache)
+            iCache = 0;
+      }
+
+      gdImageSetPixel(dst, x, y, color);
     }
   }
-
   return MS_SUCCESS;
 } 
 
