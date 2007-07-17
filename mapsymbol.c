@@ -455,6 +455,16 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
       return(-1);
     }
   }
+
+  /* Allocate memory for new symbol if needed */
+  if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+      symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
+      if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+          msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
+          return MS_FAILURE;
+      }
+  }
+
   i = symbolset->numsymbols;  
 
   initSymbol(symbolset->symbol[i]);
@@ -613,12 +623,12 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadSymbolSet()");
 	status = -1;      
       }
-	  if (symbolset->symbol[symbolset->numsymbols]==NULL) {
-		  symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
-		  if (symbolset->symbol[symbolset->numsymbols]==NULL) {
-			  msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
-			  return MS_FAILURE;
-		  }
+      if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+          symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
+          if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+              msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
+              return MS_FAILURE;
+          }
       }
       if((loadSymbol((symbolset->symbol[symbolset->numsymbols]), pszSymbolPath) == -1)) 
 	  status = -1;
@@ -731,6 +741,16 @@ int msAddNewSymbol(mapObj *map, char *name)
                    "msAddNewSymbol()");
         return(-1);
     }
+
+    /* Allocate memory for new symbol if needed */
+    if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+        map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
+        if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadMap->Symbolset()");
+            return MS_FAILURE;
+        }
+    }
+
     i = map->symbolset.numsymbols;  
     initSymbol( map->symbolset.symbol[i] );
     map->symbolset.symbol[i]->name = strdup(name);
