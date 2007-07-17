@@ -461,7 +461,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
       symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
       if (symbolset->symbol[symbolset->numsymbols]==NULL) {
           msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
-          return MS_FAILURE;
+          return -1;
       }
   }
 
@@ -628,7 +628,8 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
           symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
           if (symbolset->symbol[symbolset->numsymbols]==NULL) {
               msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
-              return MS_FAILURE;
+              status = -1;
+              break;
           }
       }
       if((loadSymbol((symbolset->symbol[symbolset->numsymbols]), pszSymbolPath) == -1)) 
@@ -749,7 +750,7 @@ int msAddNewSymbol(mapObj *map, char *name)
         map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
         if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
             msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadMap->Symbolset()");
-            return MS_FAILURE;
+            return -1;
         }
     }
 

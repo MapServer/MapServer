@@ -375,13 +375,13 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
 
   s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
   if(s == -1) {
-	if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-		map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
-		if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-			msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msEmbedLegend()");
-			return MS_FAILURE;
-		}
-	}
+    if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+      map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
+      if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
+        msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msEmbedLegend()");
+        return -1;
+      }
+    }
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;
     initSymbol(map->symbolset.symbol[s]);
