@@ -773,7 +773,7 @@ int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
     }
     symbolset->numsymbols++;
     symbolset->symbol[symbolset->numsymbols-1]=symbol;
-	MS_REFCNT_INCR(symbol);
+    MS_REFCNT_INCR(symbol);
     return symbolset->numsymbols-1;
 }
 
@@ -796,7 +796,7 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
         }
 		symbolset->symbol[i-1]=NULL;
         symbolset->numsymbols--;
-		MS_REFCNT_DECR(symbol);
+        MS_REFCNT_DECR(symbol);
         return symbol;
     }
 }
