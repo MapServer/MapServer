@@ -566,13 +566,12 @@ symbolObj *msGrowSymbolSet( symbolSetObj *symbolset )
             /* Initial allocation of array */
             symbolset->maxsymbols += MS_SYMBOL_ALLOCSIZE;
             symbolset->numsymbols = 0;
-            symbolset->symbol = (symbolObj**)calloc(symbolset->maxsymbols,
-                                                    sizeof(symbolObj**));
+            symbolset->symbol = (symbolObj**)malloc(symbolset->maxsymbols*sizeof(symbolObj*));
         } else {
             /* realloc existing array */
             symbolset->maxsymbols += MS_SYMBOL_ALLOCSIZE;
             symbolset->symbol = (symbolObj**)realloc(symbolset->symbol,
-                                                     symbolset->maxsymbols*sizeof(symbolObj**));
+                                                     symbolset->maxsymbols*sizeof(symbolObj*));
         }
 
         if (symbolset->symbol == NULL) {
@@ -585,7 +584,7 @@ symbolObj *msGrowSymbolSet( symbolSetObj *symbolset )
     }
 
     if (symbolset->symbol[symbolset->numsymbols]==NULL) {
-        symbolset->symbol[symbolset->numsymbols]=(symbolObj*)calloc(1,sizeof(symbolObj));
+        symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
         if (symbolset->symbol[symbolset->numsymbols]==NULL) {
           msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msGrowSymbolSet()");
           return NULL;
