@@ -4793,17 +4793,8 @@ static int loadMapInternal(mapObj *map)
       if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
       break;
     case(SYMBOL):
-      if(map->symbolset.numsymbols == MS_MAXSYMBOLS) { 
-	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadMap()");
-	return MS_FAILURE;
-      }
-	  if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-		  map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
-		  if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-			  msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
-			  return MS_FAILURE;
-		  }
-      }
+      if(msGrowSymbolSet(&(map->symbolset)) == NULL)
+          return MS_FAILURE;
       if((loadSymbol(map->symbolset.symbol[map->symbolset.numsymbols], map->mappath) == -1)) return MS_FAILURE;
       map->symbolset.symbol[map->symbolset.numsymbols]->inmapfile = MS_TRUE;
       map->symbolset.numsymbols++;

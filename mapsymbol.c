@@ -438,11 +438,9 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   if(!filename || strlen(filename) == 0) return(-1);
 
-  if(symbolset->numsymbols == MS_MAXSYMBOLS) { /* no room */
-    msSetError(MS_SYMERR, "Maximum number of symbols reached.", "msAddImageSymbol()");
-    return(-1);
-  }
-
+  /* Allocate/init memory for new symbol if needed */
+  if (msGrowSymbolSet(symbolset) == NULL)
+      return -1;
   
   if(symbolset->map) {
     if((stream = fopen(msBuildPath(szPath, symbolset->map->mappath, filename), "rb")) == NULL) {
@@ -456,18 +454,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
     }
   }
 
-  /* Allocate memory for new symbol if needed */
-  if (symbolset->symbol[symbolset->numsymbols]==NULL) {
-      symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
-      if (symbolset->symbol[symbolset->numsymbols]==NULL) {
-          msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
-          return -1;
-      }
-  }
-
   i = symbolset->numsymbols;  
-
-  initSymbol(symbolset->symbol[i]);
 
   fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
   rewind(stream); /* reset the image for the readers */
@@ -533,30 +520,79 @@ int msFreeSymbolSet(symbolSetObj *symbolset)
 
 void msInitSymbolSet(symbolSetObj *symbolset)
 {
-  int i=0;
   symbolset->filename = NULL;
-  symbolset->numsymbols = 1; /* always 1 symbol */
+
   symbolset->imagecache = NULL;
   symbolset->imagecachesize = 0; /* 0 symbols in the cache */
 
   symbolset->fontset = NULL;
   symbolset->map = NULL;
-  symbolset->symbol = (symbolObj**) malloc(sizeof(symbolObj*)*MS_MAXSYMBOLS);
-  if (symbolset->symbol==NULL) {
-    msSetError(MS_MEMERR, "Failed to allocate symbols array", "msInitSymbolSet");
-  } else {
-	symbolset->symbol[0]=(symbolObj*)malloc(sizeof(symbolObj));
-	if (symbolset->symbol[0]==NULL) {
-		msSetError(MS_MEMERR, "Failed to allocate memory for first symbolObj", "msInitSymbolSet()");
-		return;
-	}
-	initSymbol(symbolset->symbol[0]);
 
-    for (i=1; i<MS_MAXSYMBOLS; i++) {
-		symbolset->symbol[i]=NULL;
-    } 
-  }
+  symbolset->numsymbols = 0;
+  symbolset->maxsymbols = 0;
+  symbolset->symbol = NULL;
+
+  /* Alloc symbol[] and ensure there is at least 1 symbol */
+  if (msGrowSymbolSet(symbolset) == NULL)
+      return; /* alloc failed */
+
 }
+
+
+/*
+** Ensure there is at least one free entry in the symbol array of this
+** symbolSetObj. Grow the allocated symbol[] array if necessary and 
+** allocate a new symbol for symbol[numsymbols] if there is not already one
+** and call initSymbol() on it.
+**
+** This function is safe to use for the initial allocation of the symbol[]
+** array as well (i.e. when maxsymbols==0 and symbol==NULL)
+**
+** Returns a reference to the new symbolObj on success, NULL on error.
+*/
+symbolObj *msGrowSymbolSet( symbolSetObj *symbolset )
+{
+    /* Do we need to increase the size of symbol[] by MS_SYMBOL_ALLOCSIZE? */
+    if (symbolset->numsymbols == symbolset->maxsymbols) {
+        int i;
+        if (symbolset->maxsymbols == 0) {
+            /* Initial allocation of array */
+            symbolset->maxsymbols += MS_SYMBOL_ALLOCSIZE;
+            symbolset->numsymbols = 0;
+            symbolset->symbol = (symbolObj**)calloc(symbolset->maxsymbols,
+                                                    sizeof(symbolObj**));
+        } else {
+            /* realloc existing array */
+            symbolset->maxsymbols += MS_SYMBOL_ALLOCSIZE;
+            symbolset->symbol = (symbolObj**)realloc(symbolset->symbol,
+                                                     symbolset->maxsymbols*sizeof(symbolObj**));
+        }
+
+        if (symbolset->symbol == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for symbol array.", "msGrowSymbolSet()");
+            return NULL;
+        }
+
+        for(i=symbolset->numsymbols; i<symbolset->maxsymbols; i++)
+            symbolset->symbol[i] = NULL;
+    }
+
+    if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+        symbolset->symbol[symbolset->numsymbols]=(symbolObj*)calloc(1,sizeof(symbolObj));
+        if (symbolset->symbol[symbolset->numsymbols]==NULL) {
+          msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msGrowSymbolSet()");
+          return NULL;
+        }
+    }
+
+    /* Always call initSymbol() even if we didn't allocate a new symbolObj
+     * Since it's possible to dynamically remove/reuse symbols */
+    initSymbol(symbolset->symbol[symbolset->numsymbols]);
+
+    return symbolset->symbol[symbolset->numsymbols];
+}
+
+
 
 /* ---------------------------------------------------------------------------
    msLoadSymbolSet and loadSymbolSet
@@ -619,22 +655,14 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
       status = 0;
       break;
     case(SYMBOL):
-      if(symbolset->numsymbols == MS_MAXSYMBOLS) { 
-	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadSymbolSet()");
+      /* Allocate/init memory for new symbol if needed */
+      if (msGrowSymbolSet(symbolset) == NULL) {
 	status = -1;
-        break;
       }
-      if (symbolset->symbol[symbolset->numsymbols]==NULL) {
-          symbolset->symbol[symbolset->numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
-          if (symbolset->symbol[symbolset->numsymbols]==NULL) {
-              msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadSymbolSet()");
-              status = -1;
-              break;
-          }
-      }
-      if((loadSymbol((symbolset->symbol[symbolset->numsymbols]), pszSymbolPath) == -1)) 
+      else if((loadSymbol((symbolset->symbol[symbolset->numsymbols]), pszSymbolPath) == -1)) 
 	  status = -1;
-      symbolset->numsymbols++;
+      else
+          symbolset->numsymbols++;
       break;
     case(SYMBOLSET):
       break;
@@ -738,24 +766,11 @@ int msAddNewSymbol(mapObj *map, char *name)
     if (i >= 0)
       return i;
 
-    if (map->symbolset.numsymbols == MS_MAXSYMBOLS) 
-    {
-        msSetError(MS_SYMERR, "Maximum number of symbols reached.", 
-                   "msAddNewSymbol()");
-        return(-1);
-    }
-
     /* Allocate memory for new symbol if needed */
-    if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-        map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
-        if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msLoadMap->Symbolset()");
-            return -1;
-        }
-    }
+    if (msGrowSymbolSet(&(map->symbolset)) == NULL)
+        return -1;
 
     i = map->symbolset.numsymbols;  
-    initSymbol( map->symbolset.symbol[i] );
     map->symbolset.symbol[i]->name = strdup(name);
 
     map->symbolset.numsymbols++;
@@ -769,11 +784,9 @@ int msAddNewSymbol(mapObj *map, char *name)
 
 
 int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
-    /* Possible to add another symbol? */
-    if (symbolset->numsymbols == MS_MAXSYMBOLS) {
-        msSetError(MS_CHILDERR, "Maximum number of symbols, %d, has been reached", "msAppendSymbol()", MS_MAXSYMBOLS);
+    /* Allocate memory for new symbol if needed */
+    if (msGrowSymbolSet(symbolset) == NULL)
         return -1;
-    }
     symbolset->numsymbols++;
     symbolset->symbol[symbolset->numsymbols-1]=symbol;
     MS_REFCNT_INCR(symbol);
@@ -1276,3 +1289,4 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
   return newSymbol;
 }
+

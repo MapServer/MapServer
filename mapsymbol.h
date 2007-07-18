@@ -33,7 +33,7 @@
 
 enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE, MS_SYMBOL_HATCH};
 
-#define MS_MAXSYMBOLS 64            /* maximum number of symbols in a symbol file */
+#define MS_SYMBOL_ALLOCSIZE 64      /* number of symbolObj ptrs to allocate for a symbolset at once */
 #define MS_MAXVECTORPOINTS 100      /* shade, marker and line symbol parameters */
 #define MS_MAXSTYLELENGTH 10
 

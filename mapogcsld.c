@@ -1455,21 +1455,9 @@ int msSLDGetLineSymbol(mapObj *map)
     if (nSymbolId >= 0)
       return nSymbolId;
 
-    if(map->symbolset.numsymbols == MS_MAXSYMBOLS) 
-    { 
-	msSetError(MS_SYMERR, "Too many symbols defined.", "msSLDGetLineSymbol()");
-        return 0; /* returs 0 for no symbol */
-    }
+    if( (psSymbol = msGrowSymbolSet(&(map->symbolset))) == NULL)
+        return 0; /* returns 0 for no symbol */
 
-    psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
-    if ( psSymbol == NULL ) {
-      psSymbol=(symbolObj*)malloc(sizeof(symbolObj));
-      if (psSymbol==NULL) {
-          msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msSLDGetLineSymbol()");
-          return MS_FAILURE;
-      }
-    }
-    map->symbolset.symbol[map->symbolset.numsymbols] = psSymbol;
     map->symbolset.numsymbols++;
 
  
@@ -1508,21 +1496,9 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
     int nDash, i;
 
 
-    if(map->symbolset.numsymbols == MS_MAXSYMBOLS) 
-    { 
-	msSetError(MS_SYMERR, "Too many symbols defined.", "msSLDGetDashLineSymbol()");
-        return 0; /* returs 0 for no symbol */
-    }
+    if( (psSymbol = msGrowSymbolSet(&(map->symbolset))) == NULL)
+        return 0; /* returns 0 for no symbol */
 
-    psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
-    if ( psSymbol == NULL ) {
-      psSymbol=(symbolObj*)malloc(sizeof(symbolObj));
-      if (psSymbol==NULL) {
-          msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msSLDGetLineSymbol()");
-          return MS_FAILURE;
-      }
-    }
-    map->symbolset.symbol[map->symbolset.numsymbols] = psSymbol;
     map->symbolset.numsymbols++;
 
  
@@ -1662,22 +1638,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
 
     if (nSymbolId <= 0)
     {
-        if(map->symbolset.numsymbols == MS_MAXSYMBOLS) 
-        {    
-            msSetError(MS_SYMERR, "Too many symbols defined.", 
-                       "msSLDGetMarkSymbol()");
-            return 0; /* returs 0 for no symbol */
-        }
-        psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
-        if ( psSymbol == NULL ) {
-           psSymbol=(symbolObj*)malloc(sizeof(symbolObj));
-           if (psSymbol==NULL) {
-               msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msSLDGetMarkSymbol()");
-               return MS_FAILURE;
-           }
-        }
+        if( (psSymbol = msGrowSymbolSet(&(map->symbolset))) == NULL)
+            return 0; /* returns 0 for no symbol */
 
-        map->symbolset.symbol[map->symbolset.numsymbols] = psSymbol;
         nSymbolId = map->symbolset.numsymbols;
         map->symbolset.numsymbols++;
         initSymbol(psSymbol);
@@ -1892,11 +1855,8 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
     {
         if (nSymbolId <= 0)
         {
-            if(map->symbolset.numsymbols == MS_MAXSYMBOLS) 
-            {    
-                 msSetError(MS_SYMERR, "Too many symbols defined.", "msSLDGetGraphicSymbol()");
-                 return 0; /* returs 0 for no symbol */
-            }
+            if( (psSymbol = msGrowSymbolSet(&(map->symbolset))) == NULL)
+                return 0; /* returns 0 for no symbol */
 
             /* check if a symbol of a  */
             fp = fopen(pszFileName, "rb");
@@ -1920,15 +1880,6 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
 
                 if (img)
                 {
-                    psSymbol = map->symbolset.symbol[map->symbolset.numsymbols];
-                    if ( psSymbol == NULL ) {
-                      psSymbol=(symbolObj*)malloc(sizeof(symbolObj));
-                      if (psSymbol==NULL) {
-                          msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msSLDGetGraphicSymbol()");
-                          return MS_FAILURE;
-                      }
-                    }
-                    map->symbolset.symbol[map->symbolset.numsymbols] = psSymbol;
                     nSymbolId = map->symbolset.numsymbols;
                     map->symbolset.numsymbols++;
                     initSymbol(psSymbol);
