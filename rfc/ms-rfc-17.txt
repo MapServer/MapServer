@@ -5,8 +5,8 @@ MS RFC 17: Dynamic Allocation of layers, styles, classes and symbols
 :Date:  2006/05/12
 :Author: Frank Warmerdam, with edits from Daniel Morissette and Umberto Nicoletti
 :Contact: warmerdam@pobox.com, dmorissette@mapgears.com, umberto.nicoletti@gmail.com
-:Last Edited: 2007/07/13
-:Status: proposed
+:Last Edited: 2007/07/18
+:Status: Adopted (2007/07/18) - Under development.
 :Version: MapServer 5.0
 
 Purpose
@@ -158,15 +158,17 @@ a large number of classes will also be added.
 Bug ID
 ------
 
-TBD.
+* 302: https://trac.osgeo.org/mapserver/ticket/302
 
 Voting history
 --------------
 
-Pending vote.
+Vote completed on 2007-07-19:
 
-Questions from the review period
---------------------------------
++1 from DanielM, SteveL, FrankW, SteveW, UmbertoN, TamasS, AssefaY
+
+Comments/Questions from the review period
+------------------------------------------
 
 * Has the following issue already been dealt with by RFC-24 since the code
   already allocates less than MS_MAX_LAYERS in initMap()? Did RFC-24
@@ -207,3 +209,9 @@ I'm not aware of any mapscript way to bypass the insert or the constructors
 It there was such way (which I doubt) I suggest
 that we forbid it by explicitly changing the MS_MAX_* names and making required fields immutable in swig.
 
+* Comment from Tamas: 
+  The mappluginlayer stuff should be concretized a bit. That static
+  repository of the vtables would prevent from loading the same library
+  twice. That array should also be allocated dynamically since I don't
+  think we will ever have MS_MAXLAYERS number of different plugin
+  layers.
