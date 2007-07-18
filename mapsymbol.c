@@ -532,9 +532,16 @@ void msInitSymbolSet(symbolSetObj *symbolset)
   symbolset->maxsymbols = 0;
   symbolset->symbol = NULL;
 
-  /* Alloc symbol[] and ensure there is at least 1 symbol */
+  /* Alloc symbol[] array and ensure there is at least 1 symbol:
+   * symbol 0 which is the default symbol with all default params.
+   */
   if (msGrowSymbolSet(symbolset) == NULL)
       return; /* alloc failed */
+
+  /* Just increment numsymbols to reserve symbol 0.
+   * initSymbol() has already been called
+   */
+  symbolset->numsymbols = 1;
 
 }
 
