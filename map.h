@@ -1760,6 +1760,8 @@ MS_DLL_EXPORT int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx* ctx, outputFormatOb
 MS_DLL_EXPORT int msSaveImageAGG_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
 MS_DLL_EXPORT void msFreeImageAGG(gdImagePtr img);
 
+MS_DLL_EXPORT void msPieSliceAGG(imageObj *image, styleObj *style, double center_x, double center_y, double diameter, double start, double end);
+MS_DLL_EXPORT void msFilledRectangleAGG (imageObj *image, styleObj *style, double c1_x, double c1_y, double c2_x, double c2_y );
 MS_DLL_EXPORT void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
@@ -1800,7 +1802,6 @@ MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pb
 
 /* in mapchart.c */
 MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image);
-MS_DLL_EXPORT int msDrawChartLayerGD(mapObj *map, layerObj *layer, imageObj *image);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */

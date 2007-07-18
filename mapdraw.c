@@ -1095,20 +1095,6 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
     return MS_FAILURE;
 }
 
-/**
- * Generic function to render chart layers.
- */
-int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image) 
-{
-    if (image && map && layer)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            return msDrawChartLayerGD(map, layer, image);
-    }
-
-    return MS_FAILURE;
-}
-
 
 /**
  * msDrawWMSLayer()

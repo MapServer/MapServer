@@ -53,6 +53,7 @@
 #include "agg_conv_transform.h"
 #include "agg_conv_stroke.h"
 #include "agg_conv_dash.h"
+#include "agg_conv_curve.h"
 
 #include "agg_scanline_p.h"
 #include "agg_scanline_u.h"
@@ -66,8 +67,10 @@
 #include "agg_pixfmt_rgb.h"
 #include "agg_pixfmt_rgba.h"
 
+#include "agg_arc.h"
 #include "agg_dda_line.h"
 #include "agg_ellipse_bresenham.h"
+
 #include "mapagg.h"
 
 #ifdef CPL_MSB
@@ -900,6 +903,132 @@ int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map)
 {
   return msDrawLabelCacheGD(img, map);
 }
+
+/*
+ * draw a filled pie slice centered on center_x,center_y
+ * start and end angles are given clockwise in degrees; 0 is horizontal to the right ( -> ) 
+ * the slice is filled with the styleObj's color and outlinecolor if specified
+ * the styleObj's width parameter defines the width of the outline if appropriate
+ * if the style contains an offset (first value used only), the slice will be offset
+ * along the appropriate radius with respect to the center of the pie 
+ */
+void msPieSliceAGG ( imageObj *image, styleObj *style, double center_x, double center_y, double radius, double start, double end )
+{
+    mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *> ( image->imageextra );
+
+    if ( pRowCache == NULL )
+    {
+        fprintf ( pLogFile, "imageFilledPolygon pRowCache == NULL, extra is %08x\n", (int)image->imageextra );
+        return;
+    }
+
+    pixelFormat thePixelFormat ( *pRowCache );
+    agg::renderer_base< pixelFormat > ren_base ( thePixelFormat );
+    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa ( ren_base );
+    agg::scanline_p8 sl;
+    agg::rasterizer_scanline_aa<> ras_aa;
+    ren_base.reset_clipping ( true );
+    ren_aa.color ( agg::rgba ( ( ( double ) style->color.red ) / 255.0,
+                   ( ( double ) style->color.green ) / 255.0,
+                       ( ( double ) style->color.blue ) / 255.0,1.0 ) );
+
+    /* 
+     * offset the center of the slice
+     * NOTE: agg angles are anti-trigonometric
+     * formula before simplification is (-(start+end)/2)*M_PI/180 which is direction of offset
+     */
+    if(style->offsetx>0) {
+        center_x+=style->offsetx*cos(((-start-end)*M_PI/360.));
+        center_y-=style->offsetx*sin(((-start-end)*M_PI/360.));
+    }
+
+    /*create a path with pie slice*/
+    agg::path_storage path;
+    path.move_to ( center_x,center_y );
+    /*NOTE: agg angles are anti-trigonometric*/
+    agg::arc arc ( center_x,center_y,radius,radius,start*M_PI/180.,end*M_PI/180.,true );
+    arc.approximation_scale ( 1 );
+    path.concat_path(arc);
+    path.line_to ( center_x,center_y );
+    path.close_polygon();
+
+    /*paint the fill of the slice*/
+    ras_aa.add_path ( path );
+    agg::render_scanlines ( ras_aa, sl, ren_aa );
+
+    /*draw an outline of the slice*/
+    if(MS_VALID_COLOR(style->outlinecolor)) {
+        ras_aa.reset();
+        agg::conv_stroke<agg::path_storage> stroke(path);
+        stroke.width(1);
+        if(style->width!=-1)
+            stroke.width(style->width);
+        stroke.line_join(agg::miter_join);
+        stroke.line_cap(agg::butt_cap);
+        ras_aa.add_path(stroke);
+        ren_aa.color ( agg::rgba ( ( ( double ) style->outlinecolor.red ) / 255.0,
+                       ( ( double ) style->outlinecolor.green ) / 255.0,
+                           ( ( double ) style->outlinecolor.blue ) / 255.0,1.0 ) );
+        agg::render_scanlines(ras_aa, sl, ren_aa);
+    }
+}
+
+/*
+ * draw a rectangle from point c1_x,c1_y to corner c2_x,c2_y
+ * processes the styleObj's color and outlinecolor
+ * styleObj's width defines width of outline
+ */
+void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, double c1_y, 
+                            double c2_x, double c2_y )
+{
+    mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *> ( image->imageextra );
+
+    if ( pRowCache == NULL )
+    {
+        fprintf ( pLogFile, "imageFilledPolygon pRowCache == NULL, extra is %08x\n", (int)image->imageextra );
+        return;
+    }
+
+    pixelFormat thePixelFormat ( *pRowCache );
+    agg::renderer_base< pixelFormat > ren_base ( thePixelFormat );
+    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa ( ren_base );
+    agg::scanline_p8 sl;
+    agg::rasterizer_scanline_aa<> ras_aa;
+    ren_base.reset_clipping ( true );
+    ren_aa.color ( agg::rgba ( ( ( double ) style->color.red ) / 255.0,
+                   ( ( double ) style->color.green ) / 255.0,
+                       ( ( double ) style->color.blue ) / 255.0,1.0 ) );
+
+    /*create the path of the rectangle*/
+    agg::path_storage path;
+    path.move_to ( c1_x,c1_y );
+    path.line_to ( c2_x,c1_y );
+    path.line_to ( c2_x,c2_y );
+    path.line_to ( c1_x,c2_y );
+    path.close_polygon();
+
+    /*paint the fill of the slice*/
+    ras_aa.add_path ( path );
+    agg::render_scanlines ( ras_aa, sl, ren_aa );
+
+    /*draw an outline of the slice*/
+    if(MS_VALID_COLOR(style->outlinecolor)) {
+        ras_aa.reset();
+        agg::conv_stroke<agg::path_storage> stroke(path);
+        stroke.width(1);
+        if(style->width!=-1)
+            stroke.width(style->width);
+        stroke.line_join(agg::miter_join);
+        stroke.line_cap(agg::butt_cap);
+        ras_aa.add_path(stroke);
+        ren_aa.color ( agg::rgba ( ( ( double ) style->outlinecolor.red ) / 255.0,
+                       ( ( double ) style->outlinecolor.green ) / 255.0,
+                           ( ( double ) style->outlinecolor.blue ) / 255.0,1.0 ) );
+        agg::render_scanlines(ras_aa, sl, ren_aa);
+    }
+}
+
+
 
 static double nmsTransformShapeAGG = 0;
 /* ===========================================================================
