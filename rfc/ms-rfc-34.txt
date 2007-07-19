@@ -5,8 +5,8 @@
 :Date: 2007/07/13
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/07/13
-:Status: Pending vote
+:Last Edited: 2007/07/19
+:Status: Adopted (2007/07/19)
 
 Overview
 --------
@@ -113,6 +113,7 @@ phases.
   of bugs have been found for a certain release, the release manager 
   releases a new bug fix release a.k.a. third-dot release (for example 4.10.2).
 
+
 MapServer Version Numbering
 ---------------------------
 
@@ -142,8 +143,12 @@ example, a MapServer version number of 4.2.5 can be decoded as such:
   Revisions are bug fixes only. No new functionality is provided in revisions.
 
 
+
 Voting history
 --------------
 
-Pending vote.
+Vote completed on 2007/07/19.
+
++1 from DanielM, SteveL, SteveW, FrankW, TamasS, AssefaY, JeffM, PericlesN, UmbertoN and HowardB.
+
 
