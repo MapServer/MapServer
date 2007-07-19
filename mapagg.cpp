@@ -935,18 +935,18 @@ void msPieSliceAGG ( imageObj *image, styleObj *style, double center_x, double c
     /* 
      * offset the center of the slice
      * NOTE: agg angles are anti-trigonometric
-     * formula before simplification is (-(start+end)/2)*M_PI/180 which is direction of offset
+     * formula before simplification is (-(start+end)/2)*MS_PI/180 which is direction of offset
      */
     if(style->offsetx>0) {
-        center_x+=style->offsetx*cos(((-start-end)*M_PI/360.));
-        center_y-=style->offsetx*sin(((-start-end)*M_PI/360.));
+        center_x+=style->offsetx*cos(((-start-end)*MS_PI/360.));
+        center_y-=style->offsetx*sin(((-start-end)*MS_PI/360.));
     }
 
     /*create a path with pie slice*/
     agg::path_storage path;
     path.move_to ( center_x,center_y );
     /*NOTE: agg angles are anti-trigonometric*/
-    agg::arc arc ( center_x,center_y,radius,radius,start*M_PI/180.,end*M_PI/180.,true );
+    agg::arc arc ( center_x,center_y,radius,radius,start*MS_PI/180.,end*MS_PI/180.,true );
     arc.approximation_scale ( 1 );
     path.concat_path(arc);
     path.line_to ( center_x,center_y );
