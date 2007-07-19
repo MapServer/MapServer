@@ -27,7 +27,6 @@
 
 
 #include "map.h"
-#include <values.h>
 
 MS_CVSID("$Id$")
 
@@ -141,7 +140,7 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
 
     pointObj center;
     float upperLimit,lowerLimit;
-    float *values,shapeMaxVal=MINFLOAT,shapeMinVal=MAXFLOAT,pixperval;
+    float *values,shapeMaxVal,shapeMinVal,pixperval;
     int c,color;
     float vertOrigin,vertOriginClipped,horizStart,y;
     float left,top,bottom; /*shortcut to pixel boundaries of the chart*/
@@ -168,11 +167,14 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
         return MS_FAILURE; /* error message is set in msBindLayerToShape() */
 
     values=(float*)calloc(layer->numclasses,sizeof(float));
-    
+
+    shapeMaxVal=shapeMinVal=0;
     for(c=0;c<layer->numclasses;c++)
     {
         values[c]=(layer->class[c]->styles[0]->size);
         if(maxVal==NULL || minVal==NULL) { /*compute bounds if not specified*/
+            if(c==0)
+                shapeMaxVal=shapeMinVal=values[0];
             if(values[c]>shapeMaxVal)
                 shapeMaxVal=values[c];
             if(values[c]<shapeMinVal)
