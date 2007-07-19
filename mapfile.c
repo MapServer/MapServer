@@ -4352,16 +4352,17 @@ int initMap(mapObj *map)
 {
   int i=0;
   MS_REFCNT_INIT(map);
-  map->numlayers = 0;
-  if((map->layers = (layerObj **)malloc(sizeof(layerObj*)*MS_MAXLAYERS)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initMap()");
-    return(-1);
-  }
-  for (i=0;i<MS_MAXLAYERS;i++) {
-	GET_LAYER(map, i)=NULL;
-  }
 
   map->debug = (int)msGetGlobalDebugLevel();
+
+  /* Set maxlayers = 0, layers[] and layerorder[] will be allocated as needed,
+   * on the first call to msGrowMapLayers()
+   */
+  map->numlayers = 0;
+  map->maxlayers = 0;
+  map->layers = NULL;
+  map->layerorder = NULL; /* used to modify the order in which the layers are drawn */
+
   map->status = MS_ON;
   map->name = strdup("MS");
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
@@ -4436,9 +4437,6 @@ int initMap(mapObj *map)
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
 #endif
 
-  /* Initialize the layer order list (used to modify the order in which the layers are drawn). */
-  map->layerorder = (int *)malloc(sizeof(int)*MS_MAXLAYERS);
-
   map->templatepattern = map->datapattern = NULL;
 
   /* Encryption key information - see mapcrypto.c */
@@ -4446,6 +4444,67 @@ int initMap(mapObj *map)
 
   return(0);
 }
+
+/*
+** Ensure there is at least one free entry in the layers and layerorder 
+** arrays of this mapObj. Grow the allocated layers/layerorder arrays if 
+** necessary and allocate a new layer for layers[numlayers] if there is 
+** not already one setting its contents to all zero bytes (i.e. does not
+** call initLayer() on it).
+**
+** This function is safe to use for the initial allocation of the layers[]
+** and layerorder[] arrays as well (i.e. when maxlayers==0 and layers==NULL)
+**
+** Returns a reference to the new layerObj on success, NULL on error.
+*/
+layerObj *msGrowMapLayers( mapObj *map )
+{
+    /* Do we need to increase the size of layers/layerorder by 
+     * MS_LAYER_ALLOCSIZE?
+     */
+    if (map->numlayers == map->maxlayers) {
+        layerObj **newLayersPtr;
+        int *newLayerorderPtr;
+        int i, newsize;
+
+        newsize = map->maxlayers + MS_LAYER_ALLOCSIZE;
+
+        /* Alloc/realloc layers */
+        newLayersPtr = (layerObj**)realloc(map->layers,
+                                           newsize*sizeof(layerObj*));
+        if (newLayersPtr == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for layers array.", "msGrowMapLayers()");
+            return NULL;
+        }
+        map->layers = newLayersPtr;
+
+        /* Alloc/realloc layerorder */
+        newLayerorderPtr = (int *)realloc(map->layerorder,
+                                          newsize*sizeof(int));
+        if (newLayerorderPtr == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for layerorder array.", "msGrowMapLayers()");
+            return NULL;
+        }
+        map->layerorder = newLayerorderPtr;
+
+        map->maxlayers = newsize;
+        for(i=map->numlayers; i<map->maxlayers; i++) {
+            map->layers[i] = NULL;
+            map->layerorder[i] = 0;
+        }
+    }
+
+    if (map->layers[map->numlayers]==NULL) {
+        map->layers[map->numlayers]=(layerObj*)calloc(1,sizeof(layerObj));
+        if (map->layers[map->numlayers]==NULL) {
+          msSetError(MS_MEMERR, "Failed to allocate memory for a layerObj", "msGrowMapLayers()");
+          return NULL;
+        }
+    }
+
+    return map->layers[map->numlayers];
+}
+
 
 int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
   int i, j;
@@ -4732,17 +4791,8 @@ static int loadMapInternal(mapObj *map)
       if(loadProjection(&map->latlon) == -1) return MS_FAILURE;
       break;
     case(LAYER):
-      if(map->numlayers == MS_MAXLAYERS) { 
-        msSetError(MS_IDENTERR, "Maximum number of layers reached.", "msLoadMap()");
-        return MS_FAILURE;
-      }
-      //printf("New layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
-      map->layers[map->numlayers]=(layerObj*)malloc(sizeof(layerObj));
-      //printf("After new layer=%d %p\n",map->numlayers,map->layers[map->numlayers]);
-      if (GET_LAYER(map, map->numlayers) == NULL) {
-           msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msLoadMap()");
-	   return MS_FAILURE;
-      }
+      if(msGrowMapLayers(map) == NULL)
+          return MS_FAILURE;
       if(loadLayer((GET_LAYER(map, map->numlayers)), map) == -1) return MS_FAILURE;
       GET_LAYER(map, map->numlayers)->index = map->numlayers; /* save the index */
       /* Update the layer order list with the layer's index. */

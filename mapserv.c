@@ -740,6 +740,9 @@ void loadForm(void)
 
           for(msObj->NumLayers=0; msObj->NumLayers < msObj->Map->numlayers; msObj->NumLayers++)
           {
+              if (msGrowMapservLayers(msObj) == MS_FAILURE)
+                  writeError();
+
               if (GET_LAYER(msObj->Map, msObj->NumLayers)->name)
               {
                   msObj->Layers[msObj->NumLayers] = strdup(GET_LAYER(msObj->Map, msObj->NumLayers)->name);
@@ -757,8 +760,11 @@ void loadForm(void)
 
           layers = msStringSplit(msObj->request->ParamValues[i], ' ', &(num_layers));
           for(l=0; l<num_layers; l++)
-              msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
-          msObj->NumLayers += l;
+          {
+              if (msGrowMapservLayers(msObj) == MS_FAILURE)
+                  writeError();
+              msObj->Layers[msObj->NumLayers++] = strdup(layers[l]);
+          }
 
           msFreeCharArray(layers, num_layers);
           num_layers = 0;
@@ -768,6 +774,8 @@ void loadForm(void)
     }
 
     if(strncasecmp(msObj->request->ParamNames[i],"layer", 5) == 0) { /* turn a single layer/group on */
+      if (msGrowMapservLayers(msObj) == MS_FAILURE)
+          writeError();
       msObj->Layers[msObj->NumLayers] = strdup(msObj->request->ParamValues[i]);
       msObj->NumLayers++;
       continue;

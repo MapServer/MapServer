@@ -291,11 +291,20 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   enum MS_CONNECTION_TYPE lastconnectiontype;
-  httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
+  httpRequestObj *pasOWSReqInfo;
   int numOWSRequests=0;
   wmsParamsObj sLastWMSParams;
 
-  msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
+  /* Alloc and init pasOWSReqInfo... for now we alloc numlayers+1 entries
+   * but this could definitely be optimized
+   */
+  pasOWSReqInfo = (httpRequestObj *)malloc((map->numlayers+1)*sizeof(httpRequestObj));
+  if (pasOWSReqInfo == NULL) {
+    msSetError(MS_MEMERR, "Allocation of httpRequestObj failed.", "msDrawMap()");
+    return NULL;
+  }
+
+  msHTTPInitRequestObj(pasOWSReqInfo, map->numlayers+1);
   msInitWmsParamsObj(&sLastWMSParams);
 #endif
 
@@ -314,6 +323,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     msSetError(MS_IMGERR, "Unable to initialize image.", "msDrawMap()");
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     msFreeWmsParamsObj(&sLastWMSParams);
+    msFree(pasOWSReqInfo);
 #endif
     return(NULL);
   }
@@ -330,9 +340,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 #ifdef USE_WMS_LYR
     if(lp->connectiontype == MS_WMS) {
-      if(msPrepareWMSLayerRequest(map->layerorder[i], map, lp, lastconnectiontype, &sLastWMSParams, asOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
+      if(msPrepareWMSLayerRequest(map->layerorder[i], map, lp, lastconnectiontype, &sLastWMSParams, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
         msFreeWmsParamsObj(&sLastWMSParams);
         msFreeImage(image);
+        msFree(pasOWSReqInfo);
         return NULL;
       }
     }
@@ -340,9 +351,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 #ifdef USE_WFS_LYR
     if(lp->connectiontype == MS_WFS) {
-      if(msPrepareWFSLayerRequest(map->layerorder[i], map, lp, asOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
+      if(msPrepareWFSLayerRequest(map->layerorder[i], map, lp, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
         msFreeWmsParamsObj(&sLastWMSParams);
         msFreeImage(image);
+        msFree(pasOWSReqInfo);
         return NULL;
       }
     }
@@ -355,8 +367,9 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   msFreeWmsParamsObj(&sLastWMSParams);
 #endif
 
-  if(numOWSRequests && msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE) {
+  if(numOWSRequests && msOWSExecuteRequests(pasOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE) {
     msFreeImage(image);
+    msFree(pasOWSReqInfo);
     return NULL;
   }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
@@ -377,18 +390,18 @@ imageObj *msDrawMap(mapObj *map, int querymap)
       if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR 
         if(MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-          status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests,  map, lp, image);
+          status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests,  map, lp, image);
 #ifdef USE_AGG
         else if(MS_RENDERER_AGG(image->format))
-          status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
+          status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 #ifdef USE_MING_FLASH                
         else if(MS_RENDERER_SWF(image->format))
-          status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
+          status = msDrawWMSLayerSWF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 #ifdef USE_PDF
         else if(MS_RENDERER_PDF(image->format))
-          status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
+          status = msDrawWMSLayerPDF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
         else {
           msSetError(MS_WMSCONNERR, "Output format '%s' doesn't support WMS layers.", "msDrawMap()", image->format->name);
@@ -403,6 +416,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
                      "and make sure that the layer's connection URL is valid.",
                      "msDrawMap()", lp->name);
           msFreeImage(image);
+          msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+          msFree(pasOWSReqInfo);
           return(NULL);
         }
 
@@ -420,6 +435,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
         if(status == MS_FAILURE) {
           msSetError(MS_IMGERR, "Failed to draw layer named '%s'.", "msDrawMap()", lp->name);
           msFreeImage(image);
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+          msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+          msFree(pasOWSReqInfo);
+#endif /* USE_WMS_LYR || USE_WFS_LYR */
           return(NULL);
         }
       }
@@ -461,6 +480,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
   if(msDrawLabelCache(image, map) == -1) {
     msFreeImage(image);
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+    msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+    msFree(pasOWSReqInfo);
+#endif /* USE_WMS_LYR || USE_WFS_LYR */
     return(NULL);
   }
 
@@ -483,18 +506,18 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR 
       if(MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
+        status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #ifdef USE_AGG               
       else if(MS_RENDERER_AGG(image->format))
-        status = msDrawWMSLayerLow(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
+        status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 #ifdef USE_MING_FLASH
       else if(MS_RENDERER_SWF(image->format) )
-        status = msDrawWMSLayerSWF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
+        status = msDrawWMSLayerSWF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 #ifdef USE_PDF
       else if(MS_RENDERER_PDF(image->format) )
-        status = msDrawWMSLayerPDF(map->layerorder[i], asOWSReqInfo, numOWSRequests, map, lp, image);
+        status = msDrawWMSLayerPDF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 
 #else
@@ -509,6 +532,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
     if(status == MS_FAILURE) {
       msFreeImage(image);
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+      msFree(pasOWSReqInfo);
+#endif /* USE_WMS_LYR || USE_WFS_LYR */
       return(NULL);
     }
 
@@ -544,7 +571,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   /* Cleanup WMS/WFS Request stuff */
-  msHTTPFreeRequestObj(asOWSReqInfo, numOWSRequests);
+  msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+  msFree(pasOWSReqInfo);
 #endif
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) {

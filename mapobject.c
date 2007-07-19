@@ -117,8 +117,7 @@ void msFreeMap(mapObj *map) {
   freeReferenceMap(&(map->reference));
   freeLegend(&(map->legend));  
 
-  //for(i=0; i<map->numlayers; i++)
-  for(i=0; i<MS_MAXLAYERS; i++) {
+  for(i=0; i<map->maxlayers; i++) {
     if (GET_LAYER(map, i)!=NULL) {
     	GET_LAYER(map, i)->map=NULL;
     	if ( freeLayer((GET_LAYER(map, i))) == MS_SUCCESS) {
@@ -432,28 +431,20 @@ int msMapRestoreRealExtent( mapObj *map )
  
 int msInsertLayer(mapObj *map, layerObj *layer, int nIndex) 
 {
-    int i;
-
     if (!layer)
     {
         msSetError(MS_CHILDERR, "Can't insert a NULL Layer", "msInsertLayer()");
         return -1;
     }
 
-    /* Possible to add another? */
-    if (map->numlayers == MS_MAXLAYERS) {
-        msSetError(MS_CHILDERR, "Maximum number of Layer, %d, has been reached",
-                   "msInsertLayer()", MS_MAXLAYERS);
+    /* Ensure there is room for a new layer */
+    if (msGrowMapLayers(map) == NULL)
         return -1;
-    }
-    /* Catch attempt to insert past end of styles array */
-    else if (nIndex >= MS_MAXLAYERS) {
-        msSetError(MS_CHILDERR, "Cannot insert Layer beyond index %d",
-                   "msInsertLayer()", MS_MAXLAYERS-1);
-        return -1;
-    }
-    else if (nIndex < 0) { /* Insert at the end by default */
+
+    if (nIndex < 0) { /* Insert at the end by default */
         map->layerorder[map->numlayers] = map->numlayers;
+        if ( freeLayer((GET_LAYER(map, map->numlayers))) == MS_SUCCESS)
+            free(GET_LAYER(map, map->numlayers));
         GET_LAYER(map, map->numlayers) = layer;
         GET_LAYER(map, map->numlayers)->index = map->numlayers;
 	GET_LAYER(map, map->numlayers)->map = map;
@@ -461,14 +452,11 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         map->numlayers++;
         return map->numlayers-1;
     }
-    else if (nIndex >= 0 && nIndex < MS_MAXLAYERS) {
-    
-        /* Copy layers existing at the specified nIndex or greater */
+    else if (nIndex >= 0) {
+        /* Move existing layers at the specified nIndex or greater */
         /* to an index one higher */
+        int i;
         for (i=map->numlayers; i>nIndex; i--) {
-            //if (i<map->numlayers) freeLayer((GET_LAYER(map, i)));
-            //initLayer((GET_LAYER(map, i)), map);
-            //msCopyLayer((GET_LAYER(map, i)), (GET_LAYER(map, i-1)));
 	    GET_LAYER(map, i)=GET_LAYER(map, i-1);
             GET_LAYER(map, i)->index = i;
         }

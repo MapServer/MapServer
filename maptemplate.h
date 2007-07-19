@@ -64,10 +64,12 @@ typedef struct
 
    mapObj *Map;
 
-   char *Layers[MS_MAXLAYERS];
+   char **Layers;
    
    /* number of layers specfied by a use */
    int NumLayers;
+   /* Allocated size of Layers[] array */
+   int MaxLayers;
 
    layerObj *ResultLayer;
    

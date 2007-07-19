@@ -338,18 +338,14 @@ int mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req )
  * class extensions for layerObj, always within the context of a map
  **********************************************************************/
 layerObj *layerObj_new(mapObj *map) {
-    if(map->numlayers == MS_MAXLAYERS) // no room
+    if(msGrowMapLayers(map) == NULL)
       return(NULL);
-
-    map->layers[map->numlayers] = (layerObj *)malloc(sizeof(layerObj));
-    if(map->layers[map->numlayers] == NULL)
-      return(NULL); 
 
     if(initLayer((map->layers[map->numlayers]), map) == -1)
       return(NULL);
 
     map->layers[map->numlayers]->index = map->numlayers;
-      //Update the layer order list with the layer's index.
+    //Update the layer order list with the layer's index.
     map->layerorder[map->numlayers] = map->numlayers;
 
     map->numlayers++;

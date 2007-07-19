@@ -139,7 +139,7 @@ extern "C" {
    to mapscript (bug 1522) */
 #define MS_MAXCLASSES 250
 #define MS_MAXSTYLES 5
-#define MS_MAXLAYERS 200
+#define MS_LAYER_ALLOCSIZE 64  /* number of layerObj ptrs to allocate for a mapObj at once */
 
 #define MS_MAX_LABEL_PRIORITY     10
 #define MS_DEFAULT_LABEL_PRIORITY 1
@@ -1086,6 +1086,7 @@ typedef struct map_obj{ /* structure for a map */
   /* reference counting, RFC24 */
   int refcount;
   int numlayers; /* number of layers in mapfile */
+  int maxlayers; /* allocated size of layers[] array */
 
   symbolSetObj symbolset;
   fontSetObj fontset;
@@ -1295,6 +1296,7 @@ MS_DLL_EXPORT int  hex2int(char *hex);
 
 MS_DLL_EXPORT void initSymbol(symbolObj *s);
 MS_DLL_EXPORT int initMap(mapObj *map);
+MS_DLL_EXPORT layerObj *msGrowMapLayers( mapObj *map );
 MS_DLL_EXPORT int initLayer(layerObj *layer, mapObj *map);
 MS_DLL_EXPORT int freeLayer( layerObj * );
 MS_DLL_EXPORT int initClass(classObj *_class);

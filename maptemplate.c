@@ -3229,6 +3229,8 @@ mapservObj*  msAllocMapServObj()
    msObj->Map=NULL;
 
    msObj->NumLayers=0; /* number of layers specfied by a user */
+   msObj->MaxLayers=0; /* allocated size of Layers[] array */
+   msObj->Layers = NULL;
 
    msObj->RawExt.minx=-1;
    msObj->RawExt.miny=-1;
@@ -3296,11 +3298,53 @@ void msFreeMapServObj(mapservObj* msObj)
     msFreeCgiObj(msObj->request);
     msObj->request = NULL;
 
-    for(i=0;i<msObj->NumLayers;i++) free(msObj->Layers[i]);
+    for(i=0;i<msObj->NumLayers;i++) 
+        msFree(msObj->Layers[i]);
+    msFree(msObj->Layers);
 
-    free(msObj);
+    msFree(msObj);
   }
 }
+
+
+/*
+** Ensure there is at least one free entry in the Layers array.
+**
+** This function is safe to use for the initial allocation of the Layers[]
+** array as well (i.e. when MaxLayers==0 and Layers==NULL)
+**
+** Returns MS_SUCCESS/MS_FAILURE
+*/
+int msGrowMapservLayers( mapservObj* msObj )
+{
+    /* Do we need to increase the size of Layers[] by MS_LAYER_ALLOCSIZE? */
+    if (msObj->NumLayers == msObj->MaxLayers) {
+        int i;
+        if (msObj->MaxLayers == 0) {
+            /* Initial allocation of array */
+            msObj->MaxLayers += MS_LAYER_ALLOCSIZE;
+            msObj->NumLayers = 0;
+            msObj->Layers = (char**)malloc(msObj->MaxLayers*sizeof(char*));
+        } else {
+            /* realloc existing array */
+            msObj->MaxLayers += MS_LAYER_ALLOCSIZE;
+            msObj->Layers = (char**)realloc(msObj->Layers,
+                                            msObj->MaxLayers*sizeof(char*));
+        }
+
+        if (msObj->Layers == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for Layers array.", "msGrowMappservLayers()");
+            return MS_FAILURE;
+        }
+
+        for(i=msObj->NumLayers; i<msObj->MaxLayers; i++) {
+            msObj->Layers[i] = NULL;
+        }
+    }
+
+    return MS_SUCCESS;
+}
+
 
 
 /*

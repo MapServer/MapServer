@@ -40,10 +40,10 @@ typedef struct {
 typedef struct {
     unsigned int size;
     unsigned int first_free;
-    VTFactoryItemObj * vtItems[MS_MAXLAYERS];
+    VTFactoryItemObj ** vtItems;
 } VTFactoryObj;
 
-static VTFactoryObj gVirtualTableFactory = {MS_MAXLAYERS, 0, {NULL}};
+static VTFactoryObj gVirtualTableFactory = {0, 0, NULL};
 
 
 static VTFactoryItemObj *
@@ -89,13 +89,32 @@ static int
 insertNewVTFItem(VTFactoryObj *pVTFactory, 
                  VTFactoryItemObj *pVTFI)
 {
-    unsigned int first_free = pVTFactory->first_free;
-    if (first_free < pVTFactory->size) {
-        pVTFactory->vtItems[first_free] = pVTFI;
-        pVTFactory->first_free++;
-        return MS_SUCCESS;
+    /* Ensure there is room for one more item in the array 
+     * (safe to use for initial alloc of the array as well)
+     */
+    if (pVTFactory->first_free == pVTFactory->size) {
+        int i;
+        VTFactoryItemObj **vtItemPtr;
+        vtItemPtr = (VTFactoryItemObj**)realloc(pVTFactory->vtItems,
+                                                (pVTFactory->size+MS_LAYER_ALLOCSIZE)*sizeof(VTFactoryItemObj*));
+
+        if (vtItemPtr == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for array of VTFactoryItemObj", "insertNewVTFItem()");
+            return MS_FAILURE;
+        }
+
+        pVTFactory->size += MS_LAYER_ALLOCSIZE;
+        pVTFactory->vtItems = vtItemPtr;
+
+        for (i=pVTFactory->first_free; i<pVTFactory->size; i++)
+            pVTFactory->vtItems[i] = NULL;
     }
-    return MS_FAILURE;
+
+    /* Insert item */
+    pVTFactory->vtItems[pVTFactory->first_free] = pVTFI;
+    pVTFactory->first_free++;
+
+    return MS_SUCCESS;
 }
 
 static VTFactoryItemObj *
@@ -171,7 +190,7 @@ msPluginLayerInitializeVirtualTable(layerObj *layer)
             msReleaseLock(TLOCK_LAYER_VTABLE);
             return MS_FAILURE;            
         }
-        if (insertNewVTFItem(&gVirtualTableFactory, pVTFI)) {
+        if (insertNewVTFItem(&gVirtualTableFactory, pVTFI) != MS_SUCCESS) {
             destroyVTFItem(&pVTFI);
             msReleaseLock(TLOCK_LAYER_VTABLE);
             return MS_FAILURE;
@@ -181,4 +200,25 @@ msPluginLayerInitializeVirtualTable(layerObj *layer)
 
     copyVirtualTable(layer->vtable, &pVTFI->vtable);
     return MS_SUCCESS;
+}
+
+/* msPluginFreeVirtualTableFactory()
+** Called by msCleanup() to free the virtual table factory 
+*/
+void
+msPluginFreeVirtualTableFactory()
+{
+    int i;
+    msAcquireLock(TLOCK_LAYER_VTABLE);
+
+    for (i=0; i<gVirtualTableFactory.size; i++) {
+        if (gVirtualTableFactory.vtItems[i])
+            destroyVTFItem(&(gVirtualTableFactory.vtItems[i]));
+    }
+    free(gVirtualTableFactory.vtItems);
+    gVirtualTableFactory.vtItems = NULL;
+    gVirtualTableFactory.size = 0;
+    gVirtualTableFactory.first_free = 0;
+
+    msReleaseLock(TLOCK_LAYER_VTABLE);
 }

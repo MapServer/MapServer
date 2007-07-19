@@ -56,13 +56,9 @@
             }
         }
         else {
-            if (map->numlayers == MS_MAXLAYERS) {
-                msSetError(MS_CHILDERR, "Max number of layers exceeded",
-                                        "layerObj()");
+            if(msGrowMapLayers(map) == NULL)
                 return(NULL);
-            }
 
-      	    map->layers[map->numlayers]=(layerObj*)malloc(sizeof(layerObj));
             if (initLayer((map->layers[map->numlayers]), map) == -1)
                 return(NULL);
 
