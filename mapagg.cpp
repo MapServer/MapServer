@@ -433,8 +433,8 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointOb
   msCircleDrawShadeSymbolGD(symbolset, img, p, r, style, scalefactor);
 }
 
-void msDrawMarkerSymbolAGGTrueType(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
-    int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p, symbolSetObj *symbolset, double angle_radians)
+void msDrawMarkerSymbolAGGTrueType(symbolObj *symbol, double size, double angle, char bRotated, styleObj *style,
+    int ox, int oy, gdImagePtr img, pointObj *p, symbolSetObj *symbolset, double angle_radians)
 {
   char *error=NULL;
   char *font=NULL;
@@ -475,9 +475,12 @@ void msDrawMarkerSymbolAGGTrueType(symbolObj *symbol, double d, double size, dou
 #endif
 }
 
-void msDrawMarkerSymbolAGGPixmap(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
-    int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p)
+void msDrawMarkerSymbolAGGPixmap(symbolObj *symbol,  double size, double angle, char bRotated, styleObj *style,
+    int ox, int oy, gdImagePtr img, pointObj *p)
 {
+  int offset_x, offset_y;
+  double d;
+
   if (symbol->sizey)
     d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
   else
@@ -504,8 +507,8 @@ void msDrawMarkerSymbolAGGPixmap(symbolObj *symbol, double d, double size, doubl
   }
 }
 
-void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
-    int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p)
+void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double size, double angle, char bRotated, styleObj *style,
+    int ox, int oy, gdImagePtr img, pointObj *p)
 {
   int fc, oc, w, h, x, y;
 
@@ -554,10 +557,13 @@ void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double d, double size, doub
   }
 }
 
-void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, double angle, char bRotated, styleObj *style,
-    int offset_x, int offset_y, int ox, int oy, gdImagePtr img, pointObj *p, imageObj *image )
+void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double size, double angle, char bRotated, styleObj *style,
+    int ox, int oy, gdImagePtr img, pointObj *p, imageObj *image )
 {
-  int fc, oc, j, k, width;
+  int fc, oc, j, k;
+  int offset_x, offset_y;
+  double d;
+
   gdPoint oldpnt,newpnt;
 
   shapeObj theShape;
@@ -597,8 +603,9 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, doubl
         if(k>2) {
           if(fc >= 0)
             imageFilledPolygon(image, &theShape, &(style->color), offset_x, offset_y);
-          if(oc >= 0)
-            imagePolyline(image, &theShape, &(style->outlinecolor), width, offset_x, offset_y, 0, NULL);
+          if(oc >= 0) 
+            /*drawing a 1 pixel width outline. This is the same as the gd implementation*/
+            imagePolyline(image, &theShape, &(style->outlinecolor), 1, offset_x, offset_y, 0, NULL);
         }
 
           k = 0; /* reset point counter */
@@ -614,7 +621,8 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double d, double size, doubl
     if(fc >= 0)
       imageFilledPolygon(image, &theShape, &(style->color), offset_x, offset_y);
     if(oc >= 0)
-      imagePolyline(image, &theShape, &(style->outlinecolor), width, offset_x, offset_y, 0, NULL);
+      /*drawing a 1 pixel width outline. This is the same as the gd implementation*/
+      imagePolyline(image, &theShape, &(style->outlinecolor), 1, offset_x, offset_y, 0, NULL);
 
   } else  { /* NOT filled */     
 
@@ -687,9 +695,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     
   char bRotated=MS_FALSE;
   symbolObj *symbol;
-  int offset_x, offset_y;
 
-  double size, d, angle, angle_radians;
+  double size, angle, angle_radians;
   int width;
 
   int ox, oy, bc, fc, oc;
@@ -735,16 +742,16 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
 
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE): /* TODO: Need to leverage the image cache! */
-    msDrawMarkerSymbolAGGTrueType(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p, symbolset, angle_radians);
+    msDrawMarkerSymbolAGGTrueType(symbol, size, angle, bRotated, style, ox, oy, img, p, symbolset, angle_radians);
     break;    
   case(MS_SYMBOL_PIXMAP):
-    msDrawMarkerSymbolAGGPixmap(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p);
+    msDrawMarkerSymbolAGGPixmap(symbol, size, angle, bRotated, style,  ox, oy, img, p);
     break;    
   case(MS_SYMBOL_ELLIPSE):
-    msDrawMarkerSymbolAGGEllipse(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p);
+    msDrawMarkerSymbolAGGEllipse(symbol, size, angle, bRotated, style,  ox, oy, img, p);
     break;    
   case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
-    msDrawMarkerSymbolAGGVector(symbol, d, size, angle, bRotated, style, offset_x, offset_y, ox, oy, img, p, image);
+    msDrawMarkerSymbolAGGVector(symbol, size, angle, bRotated, style, ox, oy, img, p, image);
     break;
   default:
     break; 
