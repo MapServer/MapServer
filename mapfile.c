@@ -2445,7 +2445,6 @@ static void writeClass(classObj *class, FILE *stream)
 */
 int initLayer(layerObj *layer, mapObj *map)
 {
-  int i=0;
   if (layer==NULL) {
     msSetError(MS_MEMERR, "Layer is null", "initLayer()");
     return(-1);
@@ -2453,14 +2452,12 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->debug = (int)msGetGlobalDebugLevel();
   MS_REFCNT_INIT(layer);
 
+  /* Set maxclasses = 0, class[] will be allocated as needed on first call 
+   * to msGrowLayerClasses()
+   */
   layer->numclasses = 0;
-  if((layer->class = (classObj **)malloc(sizeof(classObj*)*MS_MAXCLASSES)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initLayer()");
-    return(-1);
-  }
-  for (i=0;i<MS_MAXCLASSES;i++) {
-  	layer->class[i]=NULL;
-  }
+  layer->maxclasses = 0;
+  layer->class = NULL;
   
   layer->name = NULL;
   layer->group = NULL;
@@ -2556,11 +2553,11 @@ int initLayer(layerObj *layer, mapObj *map)
     return(-1);
   }
 
-	layer->extent.minx = -1.0;
-	layer->extent.miny = -1.0;
-	layer->extent.maxx = -1.0;
-	layer->extent.maxy = -1.0;
-	
+  layer->extent.minx = -1.0;
+  layer->extent.miny = -1.0;
+  layer->extent.maxx = -1.0;
+  layer->extent.maxy = -1.0;
+
   return(0);
 }
 
@@ -2589,8 +2586,7 @@ int freeLayer(layerObj *layer) {
 
   msFreeProjection(&(layer->projection));
 
-  /*for(i=0;i<layer->numclasses;i++) {*/
-  for(i=0;i<MS_MAXCLASSES;i++) {
+  for(i=0;i<layer->maxclasses;i++) {
     if (layer->class[i] != NULL) {
     	layer->class[i]->layer=NULL;
     	if ( freeClass(layer->class[i]) == MS_SUCCESS ) {
@@ -2627,6 +2623,56 @@ int freeLayer(layerObj *layer) {
   return MS_SUCCESS;
 }
 
+/*
+** Ensure there is at least one free entry in the class array of this 
+** layerObj. Grow the allocated class array if necessary and allocate 
+** a new class for class[numclasses] if there is not already one, 
+** setting its contents to all zero bytes (i.e. does not call initClass()
+** on it).
+**
+** This function is safe to use for the initial allocation of the class[]
+** array as well (i.e. when maxclasses==0 and class==NULL)
+**
+** Returns a reference to the new classObj on success, NULL on error.
+*/
+classObj *msGrowLayerClasses( layerObj *layer )
+{
+    /* Do we need to increase the size of class[] by  MS_CLASS_ALLOCSIZE?
+     */
+    if (layer->numclasses == layer->maxclasses) {
+        classObj **newClassPtr;
+        int i, newsize;
+
+        newsize = layer->maxclasses + MS_CLASS_ALLOCSIZE;
+
+        /* Alloc/realloc classes */
+        newClassPtr = (classObj**)realloc(layer->class,
+                                          newsize*sizeof(classObj*));
+        if (newClassPtr == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for class array.", "msGrowLayerClasses()");
+            return NULL;
+        }
+
+        layer->class = newClassPtr;
+        layer->maxclasses = newsize;
+        for(i=layer->numclasses; i<layer->maxclasses; i++) {
+            layer->class[i] = NULL;
+        }
+    }
+
+    if (layer->class[layer->numclasses]==NULL) {
+        layer->class[layer->numclasses]=(classObj*)calloc(1,sizeof(classObj));
+        if (layer->class[layer->numclasses]==NULL) {
+          msSetError(MS_MEMERR, "Failed to allocate memory for a classObj", "msGrowLayerClasses()");
+          return NULL;
+        }
+    }
+
+    return layer->class[layer->numclasses];
+}
+
+
+
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int type;
@@ -2639,16 +2685,8 @@ int loadLayer(layerObj *layer, mapObj *map)
   for(;;) {
     switch(msyylex()) {
     case(CLASS):
-
-      if(layer->numclasses == MS_MAXCLASSES) { /* no room */
-	msSetError(MS_IDENTERR, "Maximum number of classes reached.", "loadLayer()");
+      if (msGrowLayerClasses(layer) == NULL)
 	return(-1);
-      }
-      layer->class[layer->numclasses]=(classObj*)malloc(sizeof(classObj));
-      if (layer->class[layer->numclasses]==NULL) {
-	  msSetError(MS_MEMERR, NULL, "loadLayer()");
-	  return(-1);
-      }
       /*initClass(layer->class[layer->numclasses]);*/
       if(loadClass(layer->class[layer->numclasses], map, layer) == -1) return(-1);
       if(layer->class[layer->numclasses]->type == -1) layer->class[layer->numclasses]->type = layer->type;
@@ -4449,7 +4487,7 @@ int initMap(mapObj *map)
 ** Ensure there is at least one free entry in the layers and layerorder 
 ** arrays of this mapObj. Grow the allocated layers/layerorder arrays if 
 ** necessary and allocate a new layer for layers[numlayers] if there is 
-** not already one setting its contents to all zero bytes (i.e. does not
+** not already one, setting its contents to all zero bytes (i.e. does not
 ** call initLayer() on it).
 **
 ** This function is safe to use for the initial allocation of the layers[]

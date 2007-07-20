@@ -137,7 +137,7 @@ extern "C" {
 
 /* Bounds on the lengths of layer, class, and style arrays are now exposed
    to mapscript (bug 1522) */
-#define MS_MAXCLASSES 250
+#define MS_CLASS_ALLOCSIZE 8
 #define MS_MAXSTYLES 5
 #define MS_LAYER_ALLOCSIZE 64  /* number of layerObj ptrs to allocate for a mapObj at once */
 
@@ -930,7 +930,7 @@ typedef struct layer_obj {
 #ifndef __cplusplus
   classObj **class; /* always at least 1 class */
 #else /* __cplusplus */
-  classObj *_class;
+  classObj **_class;
 #endif /* __cplusplus */
 #endif /* not SWIG */
 
@@ -940,6 +940,7 @@ typedef struct layer_obj {
   /* reference counting, RFC24 */
   int refcount;
   int numclasses;
+  int maxclasses;
   int index;
   struct map_obj *map;
 #ifdef SWIG
@@ -1299,6 +1300,7 @@ MS_DLL_EXPORT int initMap(mapObj *map);
 MS_DLL_EXPORT layerObj *msGrowMapLayers( mapObj *map );
 MS_DLL_EXPORT int initLayer(layerObj *layer, mapObj *map);
 MS_DLL_EXPORT int freeLayer( layerObj * );
+MS_DLL_EXPORT classObj *msGrowLayerClasses( layerObj *layer );
 MS_DLL_EXPORT int initClass(classObj *_class);
 MS_DLL_EXPORT int freeClass( classObj * );
 MS_DLL_EXPORT void initLabel(labelObj *label);

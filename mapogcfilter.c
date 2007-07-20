@@ -180,13 +180,12 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     {
         szClassItem = FLTGetMapserverExpressionClassItem(psNode);
         
-	if (lp->class[0]==NULL) {
-		lp->class[0]=(classObj*)malloc(sizeof(classObj));
-		if (lp->class[0]==NULL) {
-			msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
-			return NULL;
-		}
-	}
+        /* TODO: Doesn't this code leak the contents of any pre-existing class
+         * in the layer???
+         */
+        if (lp->numclasses == 0 &&
+            msGrowLayerClasses(lp) == NULL)
+            return NULL;
        	initClass(lp->class[0]);
 
         lp->class[0]->type = lp->type;
@@ -214,16 +213,16 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                   FLTGetMapserverIsPropertyExpression(psNode);
                 if (szExpression)
                 {
-		    if (lp->class[1]==NULL) {
-                	lp->class[1]=(classObj*)malloc(sizeof(classObj));
-                	if (lp->class[1]==NULL) {
-                        	msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
-                        	return NULL;
-                    	}
-		    }
+                    /* TODO: Doesn't this code leak the contents of any 
+                     * pre-existing class in the layer???
+                     */
+                    if (lp->numclasses <2 &&
+                        msGrowLayerClasses(lp) == NULL)
+                        return NULL;
                     initClass(lp->class[1]);
                     
                     lp->class[1]->type = lp->type;
+                    // TODO: if numclasses was already > 1 then this increment is wrong and leaves class[numclasses] non-initialized
                     lp->numclasses++;
                     msLoadExpressionString(&lp->class[1]->expression, 
                                          szExpression);
@@ -909,14 +908,13 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 #endif
     }
 
+    /* TODO: Doesn't this code leak the contents of any pre-existing class
+     * in the layer???
+     */
+    if (lp->numclasses == 0 &&
+        msGrowLayerClasses(lp) == NULL)
+        return MS_FAILURE;
     lp->numclasses = 1; /* set 1 so the query would work */
-    if (lp->class[0]==NULL) {
-	lp->class[0]=(classObj*)malloc(sizeof(classObj));
-	if (lp->class[0]==NULL) {
-		msSetError(MS_MEMERR, NULL, "Cannot allocate new class object");
-		return MS_FAILURE;
-	}
-    }
     initClass(lp->class[0]);
     lp->class[0]->type = lp->type;
     lp->class[0]->template = strdup("ttt.html");

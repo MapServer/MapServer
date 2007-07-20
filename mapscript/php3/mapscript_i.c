@@ -576,13 +576,9 @@ classObj *layerObj_removeClass(layerObj *self, int index)
  * class extensions for classObj, always within the context of a layer
  **********************************************************************/
 classObj *classObj_new(layerObj *layer, classObj *class) {
-    if(layer->numclasses == MS_MAXCLASSES) // no room
+    if(msGrowLayerClasses(layer) == NULL)
       return NULL;
 
-    layer->class[layer->numclasses] = (classObj *)malloc(sizeof(classObj));
-    if (layer->class[layer->numclasses] == NULL)
-      return NULL;
- 
     if(initClass((layer->class[layer->numclasses])) == -1)
       return NULL;
 

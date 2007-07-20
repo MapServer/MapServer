@@ -440,8 +440,13 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     /* Ensure there is room for a new layer */
     if (msGrowMapLayers(map) == NULL)
         return -1;
-
-    if (nIndex < 0) { /* Insert at the end by default */
+    /* Catch attempt to insert past end of layers array */
+    else if (nIndex >= map->numlayers) {
+        msSetError(MS_CHILDERR, "Cannot insert layer beyond index %d",
+                   "msInsertLayer()", map->numlayers-1);
+        return -1;
+    }
+    else if (nIndex < 0) { /* Insert at the end by default */
         map->layerorder[map->numlayers] = map->numlayers;
         if ( freeLayer((GET_LAYER(map, map->numlayers))) == MS_SUCCESS)
             free(GET_LAYER(map, map->numlayers));
@@ -452,7 +457,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         map->numlayers++;
         return map->numlayers-1;
     }
-    else if (nIndex >= 0) {
+    else if (nIndex >= 0 && nIndex < map->numlayers) {
         /* Move existing layers at the specified nIndex or greater */
         /* to an index one higher */
         int i;

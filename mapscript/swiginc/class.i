@@ -51,20 +51,8 @@
         }
         else
         {
-            if (layer->numclasses == MS_MAXCLASSES)
-            {
-                msSetError(MS_CHILDERR, "Max number of classes reached",
-                           "classObj()");
+            if(msGrowLayerClasses(layer) == NULL)
                 return NULL;
-            }
-	    layer->class[layer->numclasses]=(classObj *) malloc(sizeof(classObj));
-            if ( layer->class[layer->numclasses] == NULL )
-            {
-                msSetError(MS_MEMERR,
-                    "Could not allocate memory for new classObj instance",
-                    "classObj()");
-                return NULL;
-            }
             if (initClass(layer->class[layer->numclasses]) == -1)
                 return NULL;
             layer->class[layer->numclasses]->type = layer->type;

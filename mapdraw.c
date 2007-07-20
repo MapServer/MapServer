@@ -939,8 +939,8 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
-  colorObj colorbuffer[MS_MAXCLASSES];
-  int mindistancebuffer[MS_MAXCLASSES];
+  colorObj *colorbuffer = NULL;
+  int *mindistancebuffer = NULL;
 
   if(!layer->resultcache || map->querymap.style == MS_NORMAL)
     return(msDrawLayer(map, layer, image));
@@ -973,6 +973,16 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   /* if MS_HILITE, alter the one style (always at least 1 style), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
+    if (layer->numclasses > 0) {
+        colorbuffer = (colorObj*)malloc(layer->numclasses*sizeof(colorObj));
+        mindistancebuffer = (int*)malloc(layer->numclasses*sizeof(int));
+
+        if (colorbuffer == NULL || mindistancebuffer == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for colorbuffer/mindistancebuffer", "msDrawQueryLayer()");
+            return MS_FAILURE;
+        }
+    }
+
     for(i=0; i<layer->numclasses; i++) {
       if(layer->type == MS_LAYER_POLYGON) { /* alter BOTTOM style since that's almost always the fill */
         if(MS_VALID_COLOR(layer->class[i]->styles[0]->color)) {
@@ -999,17 +1009,29 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   /* open this layer */
   status = msLayerOpen(layer);
-  if(status != MS_SUCCESS) return(MS_FAILURE);
+  if(status != MS_SUCCESS) {
+      msFree(colorbuffer);
+      msFree(mindistancebuffer);
+      return(MS_FAILURE);
+  }
 
   /* build item list */
   status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL); /* FIX: results have already been classified (this may change) */
-  if(status != MS_SUCCESS) return(MS_FAILURE);
+  if(status != MS_SUCCESS) {
+      msFree(colorbuffer);
+      msFree(mindistancebuffer);
+      return(MS_FAILURE);
+  }
 
   msInitShape(&shape);
 
   for(i=0; i<layer->resultcache->numresults; i++) {
     status = msLayerGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+        msFree(colorbuffer);
+        msFree(mindistancebuffer);
+        return(MS_FAILURE);
+    }
 
     shape.classindex = layer->resultcache->results[i].classindex;
     /* classindex may be -1 here if there was a template at the top level
@@ -1039,7 +1061,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       status = msDrawShape(map, layer, &shape, image, -1); /* all styles  */
     if(status != MS_SUCCESS) {
       msLayerClose(layer);
-      return MS_FAILURE;
+      msFree(colorbuffer);
+      msFree(mindistancebuffer);
+      return(MS_FAILURE);
     }
 
     if(shape.numlines == 0) { /* once clipped the shape didn't need to be drawn */
@@ -1086,6 +1110,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     
       layer->class[i]->label.mindistance = mindistancebuffer[i];
     }
+
+    msFree(colorbuffer);
+    msFree(mindistancebuffer);
   }
 
   msLayerClose(layer);

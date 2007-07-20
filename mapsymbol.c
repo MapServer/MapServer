@@ -1004,21 +1004,16 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
   dst->map = map;
   dst->fontset = &(map->fontset);
   
-  MS_COPYSTELEM(numsymbols);
- 
   /* Copy child symbols */
-  for (i = 0; i < dst->numsymbols; i++) {
-	dst->symbol[i]=(symbolObj*)malloc(sizeof(symbolObj));
-	if (dst->symbol[i]==NULL) {
-		msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msEmbedLegend()");
-		return MS_FAILURE;
-	}
-
+  for (i = 0; i < src->numsymbols; i++) {
+    if (msGrowSymbolSet(dst) == NULL)
+        return MS_FAILURE;
     return_value = msCopySymbol(dst->symbol[i], src->symbol[i], map);
     if (return_value != MS_SUCCESS) {
       msSetError(MS_MEMERR,"Failed to copy symbol.","msCopySymbolSet()");
       return(MS_FAILURE);
     }
+    dst->numsymbols++;
   }
 
   /* MS_COPYSTELEM(imagecachesize); */

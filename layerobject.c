@@ -52,16 +52,14 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
         return -1;
     }
         
-    /* Possible to add another? */
-    if (layer->numclasses == MS_MAXCLASSES) {
-        msSetError(MS_CHILDERR, "Max number of classes, %d, has been reached",
-                   "msInsertClass()", MS_MAXCLASSES);
+    /* Ensure there is room for a new class */
+    if (msGrowLayerClasses(layer) == NULL) {
         return -1;
     }
     /* Catch attempt to insert past end of styles array */
-    else if (nIndex >= MS_MAXCLASSES) {
+    else if (nIndex >= layer->numclasses) {
         msSetError(MS_CHILDERR, "Cannot insert class beyond index %d",
-                   "msInsertClass()", MS_MAXCLASSES-1);
+                   "msInsertClass()", layer->numclasses-1);
         return -1;
     }
     else if (nIndex < 0) { /* Insert at the end by default */
@@ -74,7 +72,7 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
         layer->numclasses++;
         return layer->numclasses-1;
     }
-    else if (nIndex >= 0 && nIndex < MS_MAXCLASSES) {
+    else if (nIndex >= 0 && nIndex < layer->numclasses) {
     
         /* Copy classes existing at the specified nIndex or greater */
         /* to an index one higher */
@@ -90,7 +88,7 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
 #endif
 
 	MS_REFCNT_INCR(classobj);
-        /* increment number of layers and return */
+        /* increment number of classes and return */
         layer->numclasses++;
         return nIndex;
     }

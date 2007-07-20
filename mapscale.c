@@ -366,13 +366,8 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
   s = msGetSymbolIndex(&(map->symbolset), "scalebar", MS_FALSE);
   if(s == -1) {
-    if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-      map->symbolset.symbol[map->symbolset.numsymbols]=(symbolObj*)malloc(sizeof(symbolObj));
-      if (map->symbolset.symbol[map->symbolset.numsymbols]==NULL) {
-        msSetError(MS_MEMERR, "Failed to allocate memory for a symbolObj", "msEmbedScalebar()");
+    if (msGrowSymbolSet(&map->symbolset) == NULL)
         return -1;
-      }
-    }
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;
     initSymbol(map->symbolset.symbol[s]);
@@ -425,23 +420,17 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
   l = msGetLayerIndex(map, "__embed__scalebar");
   if(l == -1) {
+    if (msGrowMapLayers(map) == NULL)
+        return(-1);
     l = map->numlayers;
     map->numlayers++;
-
-    GET_LAYER(map,l)=(layerObj*)malloc(sizeof(layerObj));
-    if (GET_LAYER(map, l) == NULL) {
-         msSetError(MS_MEMERR, "Malloc of a new layer failed.", "msEmbedScalebar()");
-         return(-1);
-    }
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
     GET_LAYER(map, l)->name = strdup("__embed__scalebar");
     GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
-      
-      GET_LAYER(map, l)->class[0]=(classObj*)malloc(sizeof(classObj));
-      if (GET_LAYER(map, l)->class[0]==NULL) {
-         msSetError(MS_MEMERR, "Malloc of a new class failed.", "msEmbedScalebar()");
-	  return(-1);
-      }
+
+    if (msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
+        return(-1);
+
     if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
     GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */
     
@@ -454,6 +443,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   
   GET_LAYER(map, l)->status = MS_ON;
 
+/* TODO: Change this when we get rid of MS_MAXSTYLES */
   if ( GET_LAYER(map, l)->class[0]->styles[0] == NULL ) {
       GET_LAYER(map, l)->class[0]->styles[0]=(styleObj*)malloc(sizeof(styleObj));
       if ( GET_LAYER(map, l)->class[0]->styles[0] == NULL ) {

@@ -408,6 +408,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     MS_COPYSTELEM(status);
     MS_COPYSTELEM(numstyles);
 
+/* TODO: Change this when we get rid of MS_MAXSTYLES */
     for (i = 0; i < dst->numstyles; i++) {
 	if ( dst->styles[i] == NULL ) {
 		dst->styles[i] = (styleObj*) malloc(sizeof(styleObj));
@@ -714,33 +715,22 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTRING(dst->classitem, src->classitem);
 
     MS_COPYSTELEM(classitemindex);
-    MS_COPYSTELEM(numclasses);
 
-    for (i = 0; i < dst->numclasses; i++) {
+    for (i = 0; i < src->numclasses; i++) {
+        if (msGrowLayerClasses(dst) == NULL)
+            return MS_FAILURE;
 #ifndef __cplusplus
-	if ( ! dst->class[i] ) {
-		dst->class[i] = (classObj*) malloc(sizeof(classObj));
-        	if ( ! dst->class[i] ) {
-	            msSetError(MS_MEMERR, "Failed to allocate destination class.", "msCopyLayer()");
-        	    return MS_FAILURE;
-        	}
-	}
         initClass(dst->class[i]);
-
         return_value = msCopyClass(dst->class[i], src->class[i], dst);
+#else
+        initClass(dst->_class[i]);
+        return_value = msCopyClass(dst->_class[i], src->_class[i], dst);
+#endif
         if (return_value != MS_SUCCESS) {
             msSetError(MS_MEMERR, "Failed to copy class.", "msCopyLayer()");
             return MS_FAILURE;
         }
-#else
-        initClass(dst->_class[i]);
-
-        return_value = msCopyClass(dst->_class[i], src->_class[i], dst);
-        if (return_value != MS_SUCCESS) {
-            msSetError(MS_MEMERR, "Failed to copy _class.", "msCopyLayer()");
-            return MS_FAILURE;
-        }
-#endif
+        dst->numclasses++;
     }
     MS_COPYSTRING(dst->header, src->header);
     MS_COPYSTRING(dst->footer, src->footer);
@@ -869,14 +859,10 @@ int msCopyMap(mapObj *dst, mapObj *src)
     MS_COPYSTELEM(status);
     MS_COPYSTELEM(height);
     MS_COPYSTELEM(width);
-    MS_COPYSTELEM(numlayers);
 
-    for (i = 0; i < dst->numlayers; i++) {
-	GET_LAYER(dst, i) = (layerObj *) malloc(sizeof(layerObj));
-        if (GET_LAYER(dst, i) == NULL) {
-            msSetError(MS_MEMERR, "Failed to create destination layer.", "msCopyMap()");
+    for (i = 0; i < src->numlayers; i++) {
+        if (msGrowMapLayers(dst) == NULL)
             return MS_FAILURE;
-        }
         initLayer((GET_LAYER(dst, i)), dst);
 
         return_value = msCopyLayer((GET_LAYER(dst, i)), (GET_LAYER(src, i)));
@@ -884,6 +870,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
             msSetError(MS_MEMERR, "Failed to copy layer.", "msCopyMap()");
             return MS_FAILURE;
         }
+        dst->numlayers++;
     }
     
     return_value = msCopyFontSet(&(dst->fontset), &(src->fontset), dst);
