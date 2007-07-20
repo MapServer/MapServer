@@ -778,6 +778,10 @@ AC_SUBST(AGG_ENABLED,$AGG_ENABLED)
 AC_SUBST(AGG_INC,    $AGG_INC)
 AC_SUBST(AGG_LIB,    $AGG_LIB)
 
+ALL_ENABLED="$AGG_ENABLED $ALL_ENABLED"
+ALL_INC="$AGG_INC $ALL_INC"
+ALL_LIB="$AGG_LIB $ALL_LIB"
+
 dnl ---------------------------------------------------------------------
 dnl EPPL7 support (included by default)
 dnl ---------------------------------------------------------------------

@@ -7812,6 +7812,10 @@ AGG_INC=$AGG_INC
 AGG_LIB=$AGG_LIB
 
 
+ALL_ENABLED="$AGG_ENABLED $ALL_ENABLED"
+ALL_INC="$AGG_INC $ALL_INC"
+ALL_LIB="$AGG_LIB $ALL_LIB"
+
 
 { echo "$as_me:$LINENO: checking whether we should include EPPL7 support..." >&5
 echo "$as_me: checking whether we should include EPPL7 support..." >&6;}
