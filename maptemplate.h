@@ -163,6 +163,8 @@ MS_DLL_EXPORT char *msProcessQueryTemplate(mapObj *map,
                              char **names, char **values, 
                              int numentries);
 
+MS_DLL_EXPORT int msGrowMapservLayers( mapservObj* msObj );
+
 #endif
 
 
