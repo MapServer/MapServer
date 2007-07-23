@@ -1007,6 +1007,15 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                             strdup(map->symbolset.symbol[psStyle->symbol]->name);
                     }
                 }
+                else if (strcasecmp(psStrkName, "stroke-opacity") == 0)
+                {
+                    if(psCssParam->psChild &&  psCssParam->psChild->psNext && 
+                       psCssParam->psChild->psNext->pszValue)
+                    {
+                        psStyle->opacity = 
+                          (int)(atof(psCssParam->psChild->psNext->pszValue) * 100);
+                    }
+                }
             }
             psCssParam = psCssParam->psNext;
         }
@@ -1216,6 +1225,15 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
                             psStyle->color.green = msHexToInt(psColor+3);
                             psStyle->color.blue= msHexToInt(psColor+5);
                         }
+                    }
+                }
+                else if (strcasecmp(psFillName, "fill-opacity") == 0)
+                {
+                    if(psCssParam->psChild &&  psCssParam->psChild->psNext && 
+                       psCssParam->psChild->psNext->pszValue)
+                    {
+                        psStyle->opacity = 
+                          (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
                     }
                 }
             }
@@ -3211,6 +3229,11 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
             "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
             szHexColor);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+    sprintf(szTmp, 
+            "<CssParameter name=\"stroke-opacity\">%.2f</CssParameter>\n", 
+            (float)psStyle->opacity/100);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
                             
     nSymbol = -1;
 
@@ -3317,6 +3340,12 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
                 "<CssParameter name=\"fill\">#%s</CssParameter>\n", 
                 szHexColor);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+        sprintf(szTmp, 
+            "<CssParameter name=\"fill-opacity\">%.2f</CssParameter>\n", 
+                ((float)psStyle->opacity)/100);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
+
 
         sprintf(szTmp, "%s\n",  "</Fill>");
         pszSLD = msStringConcatenate(pszSLD, szTmp);
