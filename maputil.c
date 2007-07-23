@@ -136,22 +136,22 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
         if(style->bindings[MS_STYLE_BINDING_ANGLE].index != -1) {
           style->angle = 360.0;
           bindDoubleAttribute(&style->angle, shape->values[style->bindings[MS_STYLE_BINDING_ANGLE].index]);
-	}
+        }
 
         if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
           style->size = 1.0;
           bindIntegerAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
         }
 
-	if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1) {
-	  MS_INIT_COLOR(style->color, -1,-1,-1);
-	  bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
-	}
+        if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1) {
+          MS_INIT_COLOR(style->color, -1,-1,-1);
+          bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
+        }
 
-	if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1) {
-	  MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
-	  bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
-	}
+        if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1) {
+          MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
+          bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
+        }
       }
     } /* next styleObj */
 
@@ -296,9 +296,9 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
     if(strstr(tmpstr1, tmpstr2)) {
       if(msLayerIsVisible(map, (GET_LAYER(map, i))))
-	tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "1");
+          tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "1");
       else
-	tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "0");
+          tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "0");
     }
 
     free(tmpstr2);
@@ -357,9 +357,9 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     tmpstr = strdup(expression->string);
 
     for(i=0; i<expression->numitems; i++) {
-		items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\'", "\\\'");
-		items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\"", "\\\"");
-		tmpstr = msReplaceSubstring(tmpstr, expression->items[i], items[expression->indexes[i]]);
+        items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\'", "\\\'");
+        items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\"", "\\\"");
+        tmpstr = msReplaceSubstring(tmpstr, expression->items[i], items[expression->indexes[i]]);
     }
     msAcquireLock( TLOCK_PARSER );
     msyystate = MS_TOKENIZE_EXPRESSION;
@@ -476,7 +476,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
       tmpstr = strdup(layer->class[shape->classindex]->text.string);
 
       for(i=0; i<layer->class[shape->classindex]->text.numitems; i++)
-	tmpstr = msReplaceSubstring(tmpstr, layer->class[shape->classindex]->text.items[i], shape->values[layer->class[shape->classindex]->text.indexes[i]]);
+        tmpstr = msReplaceSubstring(tmpstr, layer->class[shape->classindex]->text.items[i], shape->values[layer->class[shape->classindex]->text.indexes[i]]);
       break;
     }
   } else {
@@ -592,7 +592,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
                 nReturnVal = msSaveImageGD(img->img.gd, filename, img->format);
         }
 #ifdef USE_AGG
-    else if( MS_DRIVER_AGG(img->format) )
+        else if( MS_DRIVER_AGG(img->format) )
         {
             if(map != NULL && filename != NULL )
                 nReturnVal = msSaveImageAGG(img->img.gd, 
@@ -603,7 +603,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
                 nReturnVal = msSaveImageAGG(img->img.gd, filename, img->format);
         }
 #endif
-	else if( MS_DRIVER_IMAGEMAP(img->format) )
+        else if( MS_DRIVER_IMAGEMAP(img->format) )
             nReturnVal = msSaveImageIM(img, filename, img->format);
 #ifdef USE_GDAL
         else if( MS_DRIVER_GDAL(img->format) )
@@ -1219,7 +1219,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
                                 imagepath, imageurl);
         if( image != NULL && map) msImageInitGD( image, &map->imagecolor );
     }
-#ifdef USE_AGG	
+#ifdef USE_AGG
     else if( MS_RENDERER_AGG(format) )
     {
         image = msImageCreateAGG(width, height, format,
@@ -1493,46 +1493,46 @@ int msAlphaBlend (int dst, int src)
  RFC 24: check if the parent pointer is NULL and raise an error otherwise
 */
 int msCheckParentPointer(void* p, char *objname) {
-	char* fmt="The %s parent object is null";
-	char* msg=NULL;
-	if (p == NULL) {
-		if(objname != NULL) {
-			msg=malloc( sizeof(char) * ( ( strlen(fmt)+strlen(objname) ) ) );
-			if(msg == NULL) {
-				msg="A required parent object is null";
-			} else {
-				sprintf(msg, "The %s parent object is null", objname);
-			}
-		} else {
-			msg="A required parent object is null";
-		}
-		msSetError(MS_NULLPARENTERR, msg, "");
-		return MS_FAILURE;
-	}
-	return MS_SUCCESS;
+    char* fmt="The %s parent object is null";
+    char* msg=NULL;
+    if (p == NULL) {
+        if(objname != NULL) {
+            msg=malloc( sizeof(char) * ( ( strlen(fmt)+strlen(objname) ) ) );
+            if(msg == NULL) {
+                msg="A required parent object is null";
+            } else {
+                sprintf(msg, "The %s parent object is null", objname);
+            }
+        } else {
+            msg="A required parent object is null";
+        }
+        msSetError(MS_NULLPARENTERR, msg, "");
+        return MS_FAILURE;
+    }
+    return MS_SUCCESS;
 }
 
 int msMaybeAllocateStyle(classObj* c, int idx) {
-	if (c==NULL) return MS_FAILURE;
+    if (c==NULL) return MS_FAILURE;
 
-	if ( idx < 0 || idx > c->numstyles ) {
-		msSetError(MS_MISCERR, "Invalid style index: %d (numstyles %d)", "msMaybeAllocateStyle()", idx, c->numstyles);
-		return MS_FAILURE;
-	}
+    if ( idx < 0 || idx > c->numstyles ) {
+        msSetError(MS_MISCERR, "Invalid style index: %d (numstyles %d)", "msMaybeAllocateStyle()", idx, c->numstyles);
+        return MS_FAILURE;
+    }
 
-	if (c->styles[idx] == NULL) {
-		c->styles[idx]=(styleObj*)malloc(sizeof(styleObj));
-		if (c->styles[idx] == NULL) {
-    			msSetError(MS_MEMERR, "Cannot allocate memory for new styleObj", 
-               			"msMaybeAllocateStyle()");
-	    		return(MS_FAILURE);
-		}
-		if ( initStyle(c->styles[idx]) == MS_FAILURE ) {
-    			msSetError(MS_MISCERR, "Failed to init new styleObj", 
-               			"msMaybeAllocateStyle()");
-	    		return(MS_FAILURE);
-		}
-		c->numstyles++;
-	}
-	return MS_SUCCESS;
+    if (c->styles[idx] == NULL) {
+        c->styles[idx]=(styleObj*)malloc(sizeof(styleObj));
+        if (c->styles[idx] == NULL) {
+            msSetError(MS_MEMERR, "Cannot allocate memory for new styleObj", 
+                       "msMaybeAllocateStyle()");
+            return(MS_FAILURE);
+        }
+        if ( initStyle(c->styles[idx]) == MS_FAILURE ) {
+            msSetError(MS_MISCERR, "Failed to init new styleObj", 
+                       "msMaybeAllocateStyle()");
+            return(MS_FAILURE);
+        }
+        c->numstyles++;
+    }
+    return MS_SUCCESS;
 }
