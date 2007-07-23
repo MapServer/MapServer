@@ -141,7 +141,7 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
     pointObj center;
     float upperLimit,lowerLimit;
     float *values,shapeMaxVal,shapeMinVal,pixperval;
-    int c,color;
+    int c,color,outlinecolor,outlinewidth;
     float vertOrigin,vertOriginClipped,horizStart,y;
     float left,top,bottom; /*shortcut to pixel boundaries of the chart*/
     msDrawStartShape(map, layer, image, shape);
@@ -193,7 +193,6 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
     vertOrigin=bottom+lowerLimit*pixperval;
     vertOriginClipped=(vertOrigin<top) ? top : 
                         (vertOrigin>bottom) ? bottom : vertOrigin;
-    
     horizStart=left;
     /*
     color = gdImageColorAllocate(image->img.gd, 0,0,0);
@@ -201,21 +200,39 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
     */
     for(c=0;c<layer->numclasses;c++)
     {
-        int barHeight;
-        color = gdImageColorAllocate(image->img.gd, layer->class[c]->styles[0]->color.red,
-                                    layer->class[c]->styles[0]->color.green,
-                                    layer->class[c]->styles[0]->color.blue);
-        
-        barHeight=values[c]*pixperval;
+        int barHeight=values[c]*pixperval;
         /*clip bars*/
         y=((vertOrigin-barHeight)<top) ? top : 
                     (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
         if(y!=vertOriginClipped) { /*don't draw bars of height == 0 (i.e. either values==0, or clipped)*/
             if( MS_RENDERER_GD(map->outputformat) ) {
-                if(values[c]>0)
-                    gdImageFilledRectangle(image->img.gd, horizStart,y, horizStart+barWidth-1 , vertOriginClipped,color);
-                else 
-                    gdImageFilledRectangle(image->img.gd, horizStart, vertOriginClipped, horizStart+barWidth-1 , y,color);
+                color = gdImageColorAllocate(image->img.gd, layer->class[c]->styles[0]->color.red,
+                        layer->class[c]->styles[0]->color.green,
+                        layer->class[c]->styles[0]->color.blue);
+                outlinecolor=-1;outlinewidth=1;
+                if(MS_VALID_COLOR(layer->class[c]->styles[0]->outlinecolor)) {
+                    outlinecolor = gdImageColorAllocate(image->img.gd, layer->class[c]->styles[0]->outlinecolor.red,
+                            layer->class[c]->styles[0]->outlinecolor.green,
+                            layer->class[c]->styles[0]->outlinecolor.blue);
+                }
+                if(layer->class[c]->styles[0]->width!=-1)
+                    outlinewidth=layer->class[c]->styles[0]->width;
+                if(values[c]>0) {
+                    if(outlinecolor==-1) {
+                        gdImageFilledRectangle(image->img.gd, horizStart,y, horizStart+barWidth-1 , vertOriginClipped,color);
+                    } else {
+                        gdImageFilledRectangle(image->img.gd, horizStart,y, horizStart+barWidth-1 , vertOriginClipped,outlinecolor);
+                        gdImageFilledRectangle(image->img.gd, horizStart+outlinewidth,y+outlinewidth, horizStart+barWidth-1-outlinewidth , vertOriginClipped-outlinewidth,color);
+                    }
+                }
+                else {
+                    if(outlinecolor==-1) {
+                        gdImageFilledRectangle(image->img.gd, horizStart, vertOriginClipped, horizStart+barWidth-1 , y,color);
+                    } else {
+                        gdImageFilledRectangle(image->img.gd, horizStart, vertOriginClipped, horizStart+barWidth-1 , y,outlinecolor);
+                        gdImageFilledRectangle(image->img.gd, horizStart+outlinewidth, vertOriginClipped+outlinewidth, horizStart+barWidth-1-outlinewidth , y-outlinewidth,color);  
+                    }
+                }
                     
             }
             #ifdef USE_AGG
@@ -230,18 +247,17 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
         horizStart+=barWidth;
     }
     free(values);
-    
 
     return MS_SUCCESS;
 }
 
-int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int radius)
+int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int diameter)
 {
-    int i,c,color;
+    int i,c,color,outlinecolor,outlinewidth;
     pointObj center;
     float *values;
-    float dTotal=0.,start=0;
-                                            
+    float dTotal=0.,start=0,center_x,center_y;
+
     msDrawStartShape(map, layer, image, shape);
 #ifdef USE_PROJ
     if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
@@ -250,9 +266,8 @@ int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
         layer->project = MS_FALSE;
 #endif
 
-    
     if(layer->transform == MS_TRUE) {
-      if(findChartPoint(map, shape, radius, radius, &center)==MS_FAILURE)
+      if(findChartPoint(map, shape, diameter, diameter, &center)==MS_FAILURE)
         return MS_SUCCESS; /*next shape*/
     } else {
         /* why would this ever be used? */
@@ -275,20 +290,48 @@ int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
 
     for(i=0; i < layer->numclasses; i++)
     {
+        if(values[i]==0) continue; /*no need to draw. causes artifacts with outlines*/
         values[i]*=360.0/dTotal;
-        color = gdImageColorAllocate(image->img.gd, layer->class[i]->styles[0]->color.red,
-                                    layer->class[i]->styles[0]->color.green,
-                                    layer->class[i]->styles[0]->color.blue);
         if( MS_RENDERER_GD(map->outputformat) )
         {
-            gdImageSetAntiAliased(image->img.gd, color);
-            gdImageFilledArc(image->img.gd, center.x, center.y, radius, radius, (int)start, (int)(start+values[i]), gdAntiAliased, gdPie);
-            gdImageSetAntiAliased(image->img.gd, -1);
+            color = gdImageColorAllocate(image->img.gd, layer->class[i]->styles[0]->color.red,
+                                                layer->class[i]->styles[0]->color.green,
+                                                layer->class[i]->styles[0]->color.blue);
+            outlinecolor=-1;outlinewidth=1;
+            if(MS_VALID_COLOR(layer->class[i]->styles[0]->outlinecolor)) {
+                outlinecolor = gdImageColorAllocate(image->img.gd, layer->class[i]->styles[0]->outlinecolor.red,
+                        layer->class[i]->styles[0]->outlinecolor.green,
+                        layer->class[i]->styles[0]->outlinecolor.blue);
+            }
+            if(layer->class[i]->styles[0]->width!=-1)
+                outlinewidth=layer->class[i]->styles[0]->width;
+            /* 
+             * offset the center of the slice
+             * NOTE: angles are anti-trigonometric
+             * 
+             */
+            if(layer->class[i]->styles[0]->offsetx>0) {
+                center_x=center.x+layer->class[i]->styles[0]->offsetx*cos(((-start-values[i]/2)*MS_PI/180.));
+                center_y=center.y-layer->class[i]->styles[0]->offsetx*sin(((-start-values[i]/2)*MS_PI/180.));
+            } else {
+                center_x=center.x;
+                center_y=center.y;
+            }
+            
+            if(outlinecolor==-1) {
+                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+values[i]), color, gdPie);               
+            }
+            else {
+                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+values[i]), color, gdPie);
+                gdImageSetThickness(image->img.gd, outlinewidth);
+                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+values[i]), outlinecolor,gdNoFill|gdEdged);
+                gdImageSetThickness(image->img.gd, 1);                              
+            }
         }
         #ifdef USE_AGG
         else if( MS_RENDERER_AGG(map->outputformat) )
         {
-            msPieSliceAGG(image, layer->class[i]->styles[0], center.x, center.y, radius, start, start+values[i]);
+            msPieSliceAGG(image, layer->class[i]->styles[0], center.x, center.y, diameter/2., start, start+values[i]);
         }
         #endif
 
