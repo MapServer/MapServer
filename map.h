@@ -135,11 +135,12 @@ extern "C" {
    with RGB map images */
 #define MS_GD_ALPHA 1000
 
-/* Bounds on the lengths of layer, class, and style arrays are now exposed
-   to mapscript (bug 1522) */
+/* Number of layer, class and style ptrs to alloc at once in the 
+   corresponding msGrow...() functions. Replaces former MS_MAXLAYERS, 
+   MS_MAXCLASSES and MS_MAXSTYLES with dynamic allocation (see RFC-17). */
+#define MS_LAYER_ALLOCSIZE 64
 #define MS_CLASS_ALLOCSIZE 8
-#define MS_MAXSTYLES 5
-#define MS_LAYER_ALLOCSIZE 64  /* number of layerObj ptrs to allocate for a mapObj at once */
+#define MS_STYLE_ALLOCSIZE 4
 
 #define MS_MAX_LABEL_PRIORITY     10
 #define MS_DEFAULT_LABEL_PRIORITY 1
@@ -659,6 +660,7 @@ typedef struct class_obj{
 
 #ifndef SWIG
   styleObj **styles;
+  int maxstyles;
 #endif
 
   int numstyles;
@@ -1302,6 +1304,8 @@ MS_DLL_EXPORT int freeLayer( layerObj * );
 MS_DLL_EXPORT classObj *msGrowLayerClasses( layerObj *layer );
 MS_DLL_EXPORT int initClass(classObj *_class);
 MS_DLL_EXPORT int freeClass( classObj * );
+MS_DLL_EXPORT styleObj *msGrowClassStyles( classObj *_class );
+MS_DLL_EXPORT int msMaybeAllocateStyle(classObj* c, int idx);
 MS_DLL_EXPORT void initLabel(labelObj *label);
 MS_DLL_EXPORT void resetClassStyle(classObj *_class);
 MS_DLL_EXPORT int initStyle(styleObj *style);
@@ -1834,7 +1838,6 @@ MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
 MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
 MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
 MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
-MS_DLL_EXPORT int msMaybeAllocateStyle(classObj* c, int idx);
 
 /* Functions to chnage the drawing order of the layers. */
 /* Defined in mapobject.c */

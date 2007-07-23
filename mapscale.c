@@ -444,15 +444,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   GET_LAYER(map, l)->status = MS_ON;
 
 /* TODO: Change this when we get rid of MS_MAXSTYLES */
-  if ( GET_LAYER(map, l)->class[0]->styles[0] == NULL ) {
-      GET_LAYER(map, l)->class[0]->styles[0]=(styleObj*)malloc(sizeof(styleObj));
-      if ( GET_LAYER(map, l)->class[0]->styles[0] == NULL ) {
-          msSetError(MS_MEMERR, "Cannot allocate new style object", "msEmbedScalebar()");
-          return (-1);
-      }
-      initStyle(GET_LAYER(map, l)->class[0]->styles[0]);
-  }
-  GET_LAYER(map, l)->class[0]->numstyles = 1;
+  if (msMaybeAllocateStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
   GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;

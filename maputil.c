@@ -1512,27 +1512,3 @@ int msCheckParentPointer(void* p, char *objname) {
     return MS_SUCCESS;
 }
 
-int msMaybeAllocateStyle(classObj* c, int idx) {
-    if (c==NULL) return MS_FAILURE;
-
-    if ( idx < 0 || idx > c->numstyles ) {
-        msSetError(MS_MISCERR, "Invalid style index: %d (numstyles %d)", "msMaybeAllocateStyle()", idx, c->numstyles);
-        return MS_FAILURE;
-    }
-
-    if (c->styles[idx] == NULL) {
-        c->styles[idx]=(styleObj*)malloc(sizeof(styleObj));
-        if (c->styles[idx] == NULL) {
-            msSetError(MS_MEMERR, "Cannot allocate memory for new styleObj", 
-                       "msMaybeAllocateStyle()");
-            return(MS_FAILURE);
-        }
-        if ( initStyle(c->styles[idx]) == MS_FAILURE ) {
-            msSetError(MS_MISCERR, "Failed to init new styleObj", 
-                       "msMaybeAllocateStyle()");
-            return(MS_FAILURE);
-        }
-        c->numstyles++;
-    }
-    return MS_SUCCESS;
-}

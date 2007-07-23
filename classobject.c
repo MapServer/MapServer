@@ -102,14 +102,13 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
         return -1;
     }
 
-    /* Possible to add another style? */
-    if (class->numstyles == MS_MAXSTYLES) {
-        msSetError(MS_CHILDERR, "Maximum number of class styles, %d, has been reached", "insertStyle()", MS_MAXSTYLES);
+    /* Ensure there is room for a new style */
+    if (msGrowClassStyles(class) == NULL) {
         return -1;
     }
     /* Catch attempt to insert past end of styles array */
-    else if (nStyleIndex >= MS_MAXSTYLES) {
-        msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", MS_MAXSTYLES-1);
+    else if (nStyleIndex >= class->numstyles) {
+        msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", class->numstyles-1);
         return -1;
     }
     else if (nStyleIndex < 0) { /* Insert at the end by default */
@@ -119,7 +118,7 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
         class->numstyles++;
         return class->numstyles-1;
     }
-    else if (nStyleIndex >= 0 && nStyleIndex < MS_MAXSTYLES) {
+    else if (nStyleIndex >= 0 && nStyleIndex < class->numstyles) {
         /* Move styles existing at the specified nStyleIndex or greater */
         /* to a higher nStyleIndex */
         for (i=class->numstyles-1; i>=nStyleIndex; i--) {
@@ -170,10 +169,13 @@ int msDeleteStyle(classObj *class, int nStyleIndex)
     int i = 0;
     if (class && nStyleIndex < class->numstyles && nStyleIndex >=0)
     {
+        if (freeStyle(class->styles[nStyleIndex]) == MS_SUCCESS)
+            msFree(class->styles[nStyleIndex]);
         for (i=nStyleIndex; i< class->numstyles-1; i++)
         {
-             msCopyStyle(class->styles[i], class->styles[i+1]);
+            class->styles[i] = class->styles[i+1];
         }
+        class->styles[class->numstyles-1] = NULL;
         class->numstyles--;
         return(MS_SUCCESS);
     }

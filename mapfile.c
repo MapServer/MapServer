@@ -1999,7 +1999,6 @@ void writeStyle(styleObj *style, FILE *stream) {
 */
 int initClass(classObj *class)
 {
-  int i;
   /* printf("Init class at %p\n", class); */
 
   class->status = MS_ON;
@@ -2023,15 +2022,12 @@ int initClass(classObj *class)
   
   class->maxscale = class->minscale = -1.0;
 
+  /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
+   * to msGrowClassStyles()
+   */
   class->numstyles = 0;  
-  if((class->styles = (styleObj **)malloc(MS_MAXSTYLES*sizeof(styleObj*))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initClass()");
-    return(-1);
-  }
-  for(i=0;i<MS_MAXSTYLES;i++) { /* need to provide meaningful values */
-    /* initStyle(&(class->styles[i])); */
-    class->styles[i]=NULL;
-  }
+  class->maxstyles = 0;  
+  class->styles = NULL;  
 
   class->keyimage = NULL;
 
@@ -2055,8 +2051,7 @@ int freeClass(classObj *class)
   if (&(class->metadata)) msFreeHashItems(&(class->metadata));
   
   
-  /*for(i=0;i<class->numstyles;i++) LEAK: we should free MS_MAXSTYLES!!! */
-  for(i=0;i<MS_MAXSTYLES;i++) { /* each style     */
+  for(i=0;i<class->numstyles;i++) { /* each style     */
     if (class->styles[i]!=NULL) {
     	if( freeStyle(class->styles[i]) == MS_SUCCESS ) {
 		msFree(class->styles[i]);
@@ -2067,6 +2062,88 @@ int freeClass(classObj *class)
   msFree(class->keyimage);
   return MS_SUCCESS;
 }
+
+/*
+** Ensure there is at least one free entry in the sttyles array of this 
+** classObj. Grow the allocated styles array if necessary and allocate 
+** a new style for styles[numstyles] if there is not already one, 
+** setting its contents to all zero bytes (i.e. does not call initStyle()
+** on it).
+**
+** This function is safe to use for the initial allocation of the styles[]
+** array as well (i.e. when maxstyles==0 and styles==NULL)
+**
+** Returns a reference to the new styleObj on success, NULL on error.
+*/
+styleObj *msGrowClassStyles( classObj *class )
+{
+    /* Do we need to increase the size of styles[] by  MS_STYLE_ALLOCSIZE?
+     */
+    if (class->numstyles == class->maxstyles) {
+        styleObj **newStylePtr;
+        int i, newsize;
+
+        newsize = class->maxstyles + MS_STYLE_ALLOCSIZE;
+
+        /* Alloc/realloc styles */
+        newStylePtr = (styleObj**)realloc(class->styles,
+                                          newsize*sizeof(styleObj*));
+        if (newStylePtr == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for styles array.", "msGrowClassStyles()");
+            return NULL;
+        }
+
+        class->styles = newStylePtr;
+        class->maxstyles = newsize;
+        for(i=class->numstyles; i<class->maxstyles; i++) {
+            class->styles[i] = NULL;
+        }
+    }
+
+    if (class->styles[class->numstyles]==NULL) {
+        class->styles[class->numstyles]=(styleObj*)calloc(1,sizeof(styleObj));
+        if (class->styles[class->numstyles]==NULL) {
+          msSetError(MS_MEMERR, "Failed to allocate memory for a styleObj", "msGrowClassStyles()");
+          return NULL;
+        }
+    }
+
+    return class->styles[class->numstyles];
+}
+
+
+/* msMaybeAllocateStyle()
+**
+** Ensure that requested style index exists and has been initialized.
+**
+** Returns MS_SUCCESS/MS_FAILURE.
+*/
+int msMaybeAllocateStyle(classObj* c, int idx) {
+    if (c==NULL) return MS_FAILURE;
+
+    if ( idx < 0 ) {
+        msSetError(MS_MISCERR, "Invalid style index: %d", "msMaybeAllocateStyle()", idx);
+        return MS_FAILURE;
+    }
+
+    /* Alloc empty styles as needed up to idx.
+     * Nothing to do if requested style already exists
+     */
+    while(c->numstyles <= idx) {
+        if (msGrowClassStyles(c) == NULL)
+            return MS_FAILURE;
+
+        if ( initStyle(c->styles[c->numstyles]) == MS_FAILURE ) {
+            msSetError(MS_MISCERR, "Failed to init new styleObj", 
+                       "msMaybeAllocateStyle()");
+            return(MS_FAILURE);
+        }
+        c->numstyles++;
+    }
+    return MS_SUCCESS;
+}
+
+
 
 /*
  * Reset style info in the class to defaults
@@ -2083,11 +2160,13 @@ void resetClassStyle(classObj *class)
   initExpression(&(class->text));
 
   /* reset styles */
-  class->numstyles = 0;
-  for(i=0; i<MS_MAXSTYLES; i++) {
-    if(class->styles[i]!=NULL)
-       initStyle(class->styles[i]);
+  for(i=0; i<class->numstyles; i++) {
+    if(class->styles[i] != NULL) {
+      freeStyle(class->styles[i]);
+      class->styles[i] = NULL;
+    }
   }
+  class->numstyles = 0;
 
   initLabel(&(class->label));
   class->label.size = -1; /* no default */
@@ -2143,18 +2222,9 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;    
     case(STYLE):
-      if(class->numstyles == MS_MAXSTYLES) {
-        msSetError(MS_MISCERR, "Too many CLASS styles defined, only %d allowed. To change, edit value of MS_MAXSTYLES in map.h and recompile." , "loadClass()", MS_MAXSTYLES);
+      if(msGrowClassStyles(class) == NULL)
         return(-1);
-      }
-      if ( class->styles[class->numstyles] == NULL ) {
-	class->styles[class->numstyles]=(styleObj*)malloc(sizeof(styleObj));
-	if ( class->styles[class->numstyles] == NULL ) {
-    		msSetError(MS_MEMERR, "Cannot allocate new style object", "loadClass()");
-		return (-1);
-        }
-	initStyle(class->styles[class->numstyles]);
-      }
+      initStyle(class->styles[class->numstyles]);
       if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) return(-1);
       class->numstyles++;
       break;

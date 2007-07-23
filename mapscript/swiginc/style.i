@@ -39,32 +39,33 @@
         styleObj *style = NULL;
         int result;
         
-        style = (styleObj *) malloc(sizeof(styleObj));
-        if (!style) { 
-                msSetError(MS_MEMERR, "Failed to allocate memory for new styleObj instance",
-                                       "styleObj()");
-		return NULL;
-	}
-        if ( initStyle(style) == MS_FAILURE ) {
+        if (parent_class!=NULL) {
+            if ((style = msGrowClassStyles(parent_class)) == NULL)
+                return NULL;
+
+            if ( initStyle(style) == MS_FAILURE ) {
                 msSetError(MS_MISCERR, "Failed to init new styleObj instance",
                                        "initStyle()");
-		msFree(style);
-		return NULL;
-	}
-	if (parent_class!=NULL) {
-            if (parent_class->numstyles == MS_MAXSTYLES) {
-                msSetError(MS_CHILDERR, "Exceeded max number of styles: %d",
-                           "styleObj()", MS_MAXSTYLES);
-		freeStyle(style);
-		msFree(style);
+            }
+            parent_class->numstyles++;
+            style->isachild=MS_TRUE;
+            MS_REFCNT_INCR(style);
+        }
+        else {
+            style = (styleObj *) malloc(sizeof(styleObj));
+            if (!style) { 
+                msSetError(MS_MEMERR, "Failed to allocate memory for new styleObj instance",
+                                       "styleObj()");
                 return NULL;
             }
-	    parent_class->styles[parent_class->numstyles]=style;
-            parent_class->numstyles++;
-	    style->isachild=MS_TRUE;
-	    MS_REFCNT_INCR(style);
+            if ( initStyle(style) == MS_FAILURE ) {
+                msSetError(MS_MISCERR, "Failed to init new styleObj instance",
+                                       "initStyle()");
+                msFree(style);
+                return NULL;
+	    }
         }
-	return style;
+        return style;
     }
    
     ~styleObj() 

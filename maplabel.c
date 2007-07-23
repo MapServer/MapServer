@@ -106,7 +106,9 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     cachePtr->text = msReplaceSubstring(cachePtr->text, wrap, "\r\n");
   }
 
-  /* copy the styles (only if there is an accompanying marker) */
+  /* copy the styles (only if there is an accompanying marker)
+   * We cannot simply keeep refs because the rendering code alters some members of the style objects
+   */
   cachePtr->styles = NULL;
   cachePtr->numstyles = 0;
   if((layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) {

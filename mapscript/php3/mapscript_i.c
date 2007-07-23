@@ -1159,11 +1159,7 @@ DBFFieldType DBFInfo_getFieldType(DBFInfo *self, int iField) {
  * class extensions for styleObj, always within the context of a class
  **********************************************************************/
 styleObj *styleObj_new(classObj *class, styleObj *style) {
-    if(class->numstyles == MS_MAXSTYLES) // no room
-      return NULL;
-
-    class->styles[class->numstyles] = (styleObj *)malloc(sizeof(styleObj));
-    if (class->styles[class->numstyles] == NULL)
+    if(msGrowClassStyles(class) == NULL)
       return NULL;
 
     if(initStyle(class->styles[class->numstyles]) == -1)

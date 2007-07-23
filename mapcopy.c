@@ -406,21 +406,14 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     }
 
     MS_COPYSTELEM(status);
-    MS_COPYSTELEM(numstyles);
 
-/* TODO: Change this when we get rid of MS_MAXSTYLES */
-    for (i = 0; i < dst->numstyles; i++) {
-	if ( dst->styles[i] == NULL ) {
-		dst->styles[i] = (styleObj*) malloc(sizeof(styleObj));
-		if ( dst->styles[i] == NULL ) {
-           	 	msSetError(MS_MEMERR, "Failed to allocate memory for new style object.", "msCopyClass()");
-            		return MS_FAILURE;
-		}
-        	if (initStyle(dst->styles[i]) != MS_SUCCESS) {
-	            msSetError(MS_MEMERR, "Failed to init style.", "msCopyClass()");
-        	    return MS_FAILURE;
-	        }
-	}
+    for (i = 0; i < src->numstyles; i++) {
+        if (msGrowClassStyles(dst) == NULL)
+            return MS_FAILURE;
+        if (initStyle(dst->styles[i]) != MS_SUCCESS) {
+            msSetError(MS_MEMERR, "Failed to init style.", "msCopyClass()");
+            return MS_FAILURE;
+        }
         if (msCopyStyle(dst->styles[i], src->styles[i]) != MS_SUCCESS) {
             msSetError(MS_MEMERR, "Failed to copy style.", "msCopyClass()");
             return MS_FAILURE;

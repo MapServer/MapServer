@@ -2287,18 +2287,20 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   // This is a multipart symbology, so pen defn goes in the
                   // overlaysymbol params (also set outlinecolor just in case)
-                  if (msMaybeAllocateStyle(c, 1)) {
+                  if (msMaybeAllocateStyle(c, 1))
                       return(MS_FAILURE);
-                  }
+
                   c->styles[0]->outlinecolor = c->styles[1]->outlinecolor = 
                       oPenColor;
                   c->styles[1]->size = nPenSize;
                   c->styles[1]->symbol = nPenSymbol;
-                  c->numstyles = 2;
               }
               else
               {
                   // Single part symbology
+                  if (msMaybeAllocateStyle(c, 0))
+                      return(MS_FAILURE);
+
                   if(layer->type == MS_LAYER_POLYGON)
                       c->styles[0]->outlinecolor = c->styles[0]->color = 
                           oPenColor;
@@ -2306,7 +2308,6 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                       c->styles[0]->color = oPenColor;
                   c->styles[0]->symbol = nPenSymbol;
                   c->styles[0]->size = nPenSize;
-                  c->numstyles = 1;
               }
 
           }
@@ -2316,6 +2317,10 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               const char *pszBrushName = poBrushStyle->Id(bIsNull);
               if (bIsNull) pszBrushName = NULL;
+
+              /* We need 1 style */
+              if (msMaybeAllocateStyle(c, 0))
+                  return(MS_FAILURE);
 
               // Check for Brush Pattern "ogr-brush-1": the invisible fill
               // If that's what we have then set fill color to -1
@@ -2350,11 +2355,14 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
                                                          pszName, NULL);
               }
-              c->numstyles = 1;
           }
           else if (poStylePart->GetType() == OGRSTCSymbol)
           {
               OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
+
+              /* We need 1 style */
+              if (msMaybeAllocateStyle(c, 0))
+                  return(MS_FAILURE);
 
               const char *pszColor = poSymbolStyle->Color(bIsNull);
               if (!bIsNull && poSymbolStyle->GetRGBFromString(pszColor,r,g,b,t))
@@ -2375,7 +2383,6 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                     pszName, 
                                                     "default-marker");
-              c->numstyles = 1;
           }
 
           delete poStylePart;
