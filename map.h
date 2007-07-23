@@ -1375,7 +1375,7 @@ MS_DLL_EXPORT int msUpdateReferenceMapFromString(referenceMapObj *ref, char *str
 MS_DLL_EXPORT int msUpdateLegendFromString(legendObj *legend, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateWebFromString(webObj *web, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateStyleFromString(styleObj *style, char *string, int url_string);
-MS_DLL_EXPORT int msUpdateClassFromString(classObj *class, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateClassFromString(classObj *_class, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateLayerFromString(layerObj *layer, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateMapFromURL(mapObj *map, char *variable, char *string);
 MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
