@@ -205,8 +205,8 @@ mapObj *loadMap(void)
   /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
   /* services can take advantage of these "vendor specific" extensions */
   for(i=0;i<msObj->request->NumParams;i++) {
-    if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0) { /* check to see if there are any additions to the mapfile */
-      if(msLoadMapParameter(map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) == -1) writeError();
+    if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0 || strncasecmp(msObj->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
+      if(msUpdateMapFromURL(map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) != MS_SUCCESS) writeError();
       continue;
     }
 

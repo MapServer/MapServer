@@ -39,8 +39,8 @@ int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
 %}
 
-%s NAME_STRING
-%s VALUE_STRING
+%s URL_VARIABLE
+%s URL_STRING
 %s EXPRESSION_STRING
 %s INCLUDE
 %s MSSTR
@@ -67,26 +67,27 @@ char path[MS_MAXPATHLEN];
          msyyreturncomments=0;
          return(0);
          break;
+       case(MS_TOKENIZE_URL_VARIABLE):
+         BEGIN(URL_VARIABLE);
+         msyy_scan_string(msyystring);
+         msyystate=MS_TOKENIZE_DEFAULT;
+         msyyreturncomments=0; 
+         (void) yyunput; /* just to avoid warning about it being unrefed */
+         break;
+       case(MS_TOKENIZE_URL_STRING):
+         BEGIN(URL_STRING);
+         msyystate=MS_TOKENIZE_DEFAULT;
+         msyy_scan_string(msyystring);
+         msyyin=NULL;
+         msyyreturncomments=0; 
+         return(0);
+         break;
        case(MS_TOKENIZE_EXPRESSION):
          BEGIN(EXPRESSION_STRING);
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyystate=MS_TOKENIZE_DEFAULT;
          msyyreturncomments=0;
-         break;
-       case(MS_TOKENIZE_NAME):         
-         BEGIN(NAME_STRING);
-         msyy_scan_string(msyystring);
-         msyystate=MS_TOKENIZE_DEFAULT;
-         msyyreturncomments=0; 
-         (void) yyunput; /* just to avoid warning about it being unrefed */
-         break;
-       case(MS_TOKENIZE_VALUE):
-         BEGIN(VALUE_STRING);
-         msyy_delete_buffer(YY_CURRENT_BUFFER);
-         msyy_scan_string(msyystring);
-         msyystate=MS_TOKENIZE_DEFAULT;
-         msyyreturncomments=0; 
          break;
        case(99):
          BEGIN(INITIAL); /* may not need this one */
@@ -100,11 +101,11 @@ char path[MS_MAXPATHLEN];
          break;
        }
 
-<INITIAL,VALUE_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
+<INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
 <INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
 
-<NAME_STRING>_+                                          ;
+<URL_VARIABLE>_|\.                             ;
 
 <EXPRESSION_STRING>or|\|\|                     { return(OR); }
 <EXPRESSION_STRING>and|&&                      { return(AND); }
@@ -121,254 +122,259 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>length                      { return(LENGTH); }
 <EXPRESSION_STRING>ieq                         { return(IEQ); }
 
-<INITIAL,NAME_STRING>colorrange              { return(COLORRANGE); }
-<INITIAL,NAME_STRING>alphacolorrange         { return(ALPHACOLORRANGE); }
-<INITIAL,NAME_STRING>datarange               { return(DATARANGE); }
-<INITIAL,NAME_STRING>rangeitem               { return(RANGEITEM); }
+<INITIAL>colorrange                            { return(COLORRANGE); }
+<INITIAL>alphacolorrange                       { return(ALPHACOLORRANGE); }
+<INITIAL>datarange                             { return(DATARANGE); }
+<INITIAL>rangeitem                             { return(RANGEITEM); }
 
-<INITIAL,NAME_STRING>alphacolor              { return(ALPHACOLOR); }
-<INITIAL,NAME_STRING>angle                   { return(ANGLE); }
-<INITIAL,NAME_STRING>antialias               { return(ANTIALIAS); }
-<INITIAL,NAME_STRING>backgroundcolor         { return(BACKGROUNDCOLOR); }
-<INITIAL,NAME_STRING>backgroundshadowcolor   { return(BACKGROUNDSHADOWCOLOR); }
-<INITIAL,NAME_STRING>backgroundshadowsize    { return(BACKGROUNDSHADOWSIZE); }
-<INITIAL,NAME_STRING>bandsitem               { return(BANDSITEM); }
-<INITIAL,NAME_STRING>browseformat            { return(BROWSEFORMAT); }
-<INITIAL,NAME_STRING>buffer                  { return(BUFFER); }
+<INITIAL>alphacolor                            { return(ALPHACOLOR); }
+<INITIAL,URL_STRING>angle                      { return(ANGLE); }
+<INITIAL,URL_STRING>antialias                  { return(ANTIALIAS); }
+<INITIAL,URL_STRING>backgroundcolor            { return(BACKGROUNDCOLOR); }
+<INITIAL,URL_STRING>backgroundshadowcolor      { return(BACKGROUNDSHADOWCOLOR); }
+<INITIAL,URL_STRING>backgroundshadowsize       { return(BACKGROUNDSHADOWSIZE); }
+<INITIAL>bandsitem                             { return(BANDSITEM); }
+<INITIAL>browseformat                          { return(BROWSEFORMAT); }
+<INITIAL>buffer                                { return(BUFFER); }
 <INITIAL>character                             { return(CHARACTER); }
-<INITIAL,NAME_STRING>class                   { return(CLASS); }
-<INITIAL,NAME_STRING>classitem               { return(CLASSITEM); }
-<INITIAL,NAME_STRING>color                   { return(COLOR); }
-<INITIAL,NAME_STRING>config                  { return(CONFIG); }
-<INITIAL,NAME_STRING>connection              { return(CONNECTION); }
-<INITIAL,NAME_STRING>connectiontype          { return(CONNECTIONTYPE); }
-<INITIAL,NAME_STRING>data                    { return(DATA); }
-<INITIAL,NAME_STRING>datapattern             { return(DATAPATTERN); }
-<INITIAL,NAME_STRING>debug                   { return(DEBUG); }
-<INITIAL,NAME_STRING>driver                  { return(DRIVER); }
-<INITIAL,NAME_STRING>dump                    { return(DUMP); }
-<INITIAL,NAME_STRING>empty                   { return(EMPTY); }
-<INITIAL,NAME_STRING>encoding                { return(ENCODING); }
-<INITIAL>end                                   { return(END); }
-<INITIAL,NAME_STRING>error                   { return(ERROR); }
-<INITIAL,NAME_STRING>expression              { return(EXPRESSION); }
-<INITIAL,NAME_STRING>extent                  { return(EXTENT); }
-<INITIAL,NAME_STRING>extension               { return(EXTENSION); }
-<INITIAL,NAME_STRING>feature                 { return(FEATURE); }
+<INITIAL,URL_VARIABLE>class                    { return(CLASS); }
+<INITIAL>classitem                             { return(CLASSITEM); }
+<INITIAL,URL_STRING>color                      { return(COLOR); }
+<INITIAL>config                                { return(CONFIG); }
+<INITIAL>connection                            { return(CONNECTION); }
+<INITIAL>connectiontype                        { return(CONNECTIONTYPE); }
+<INITIAL>data                                  { return(DATA); }
+<INITIAL>datapattern                           { return(DATAPATTERN); }
+<INITIAL>debug                                 { return(DEBUG); }
+<INITIAL>driver                                { return(DRIVER); }
+<INITIAL>dump                                  { return(DUMP); }
+<INITIAL>empty                                 { return(EMPTY); }
+<INITIAL>encoding                              { return(ENCODING); }
+<INITIAL,URL_STRING>end                        { return(END); }
+<INITIAL>error                                 { return(ERROR); }
+<INITIAL>expression                            { return(EXPRESSION); }
+<INITIAL,URL_STRING>extent                     { return(EXTENT); }
+<INITIAL>extension                             { return(EXTENSION); }
+<INITIAL,URL_STRING>feature                    { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
-<INITIAL,NAME_STRING>filter                  { return(FILTER); }
-<INITIAL,NAME_STRING>filteritem              { return(FILTERITEM); }
-<INITIAL,NAME_STRING>footer                  { return(FOOTER); }
-<INITIAL,NAME_STRING>font                    { return(FONT); }
+<INITIAL>filter                                { return(FILTER); }
+<INITIAL>filteritem                            { return(FILTERITEM); }
+<INITIAL>footer                                { return(FOOTER); }
+<INITIAL,URL_STRING>font                       { return(FONT); }
 <INITIAL>fontset                               { return(FONTSET); }
-<INITIAL,NAME_STRING>force                   { return(FORCE); }
-<INITIAL,NAME_STRING>formatoption            { return(FORMATOPTION); }
-<INITIAL,NAME_STRING>from                    { return(FROM); }
+<INITIAL>force                                 { return(FORCE); }
+<INITIAL>formatoption                          { return(FORMATOPTION); }
+<INITIAL>from                                  { return(FROM); }
 <INITIAL>gap                                   { return(GAP); }
-<INITIAL,NAME_STRING>grid                    { return(GRID); }
-<INITIAL,NAME_STRING>graticule               { return(GRATICULE); }
-<INITIAL,NAME_STRING>group                   { return(GROUP); }
-<INITIAL,NAME_STRING>header                  { return(HEADER); }
-<INITIAL,NAME_STRING>image                   { return(IMAGE); }
-<INITIAL,NAME_STRING>imagecolor              { return(IMAGECOLOR); }
-<INITIAL,NAME_STRING>imagetype               { return(IMAGETYPE); }
-<INITIAL,NAME_STRING>imagequality            { return(IMAGEQUALITY); }
-<INITIAL,NAME_STRING>imagemode               { return(IMAGEMODE); }
-<INITIAL,NAME_STRING>imagepath               { return(IMAGEPATH); }
-<INITIAL,NAME_STRING>imageurl                { return(IMAGEURL); }
+<INITIAL>grid                                  { return(GRID); }
+<INITIAL>graticule                             { return(GRATICULE); }
+<INITIAL>group                                 { return(GROUP); }
+<INITIAL>header                                { return(HEADER); }
+<INITIAL>image                                 { return(IMAGE); }
+<INITIAL,URL_VARIABLE>imagecolor               { return(IMAGECOLOR); }
+<INITIAL,URL_VARIABLE>imagetype                { return(IMAGETYPE); }
+<INITIAL>imagequality                          { return(IMAGEQUALITY); }
+<INITIAL>imagemode                             { return(IMAGEMODE); }
+<INITIAL,URL_STRING>imagepath                  { return(IMAGEPATH); }
+<INITIAL,URL_STRING>imageurl                   { return(IMAGEURL); }
 <INITIAL>include                               { BEGIN(INCLUDE); }
-<INITIAL,NAME_STRING>index                   { return(INDEX); }
-<INITIAL,NAME_STRING>interlace               { return(INTERLACE); }
-<INITIAL,NAME_STRING>intervals               { return(INTERVALS); } 
-<INITIAL,NAME_STRING>join                    { return(JOIN); }
-<INITIAL,NAME_STRING>keyimage                { return(KEYIMAGE); }
-<INITIAL,NAME_STRING>keysize                 { return(KEYSIZE); }
-<INITIAL,NAME_STRING>keyspacing              { return(KEYSPACING); }
-<INITIAL,NAME_STRING>label                   { return(LABEL); }
-<INITIAL,NAME_STRING>labelcache              { return(LABELCACHE); }
-<INITIAL,NAME_STRING>labelformat             { return(LABELFORMAT); }
-<INITIAL,NAME_STRING>labelitem               { return(LABELITEM); }
-<INITIAL,NAME_STRING>labelmaxscale           { return(LABELMAXSCALE); }
-<INITIAL,NAME_STRING>labelminscale           { return(LABELMINSCALE); }
-<INITIAL,NAME_STRING>labelrequires           { return(LABELREQUIRES); }
-<INITIAL,NAME_STRING>latlon                  { return(LATLON); }
-<INITIAL,NAME_STRING>layer                   { return(LAYER); }
-<INITIAL,NAME_STRING>legend                  { return(LEGEND); }
-<INITIAL,NAME_STRING>legendformat            { return(LEGENDFORMAT); }
+<INITIAL>index                                 { return(INDEX); }
+<INITIAL>interlace                             { return(INTERLACE); }
+<INITIAL>intervals                             { return(INTERVALS); } 
+<INITIAL>join                                  { return(JOIN); }
+<INITIAL>keyimage                              { return(KEYIMAGE); }
+<INITIAL>keysize                               { return(KEYSIZE); }
+<INITIAL>keyspacing                            { return(KEYSPACING); }
+<INITIAL,URL_STRING>label                      { return(LABEL); }
+<INITIAL>labelcache                            { return(LABELCACHE); }
+<INITIAL>labelformat                           { return(LABELFORMAT); }
+<INITIAL,URL_STRING>labelitem                  { return(LABELITEM); }
+<INITIAL>labelmaxscale                         { return(LABELMAXSCALE); }
+<INITIAL>labelminscale                         { return(LABELMINSCALE); }
+<INITIAL>labelrequires                         { return(LABELREQUIRES); }
+<INITIAL>latlon                                { return(LATLON); }
+<INITIAL,URL_VARIABLE>layer                    { return(LAYER); }
+<INITIAL,URL_VARIABLE>legend                   { return(LEGEND); }
+<INITIAL>legendformat                          { return(LEGENDFORMAT); }
 <INITIAL>linecap                               { return(LINECAP); }
 <INITIAL>linejoin                              { return(LINEJOIN); }
 <INITIAL>linejoinmaxsize                       { return(LINEJOINMAXSIZE); }
 <INITIAL>log                                   { return(LOG); }
-<INITIAL,NAME_STRING>map                     { return(MAP); }
-<INITIAL,NAME_STRING>marker                  { return(MARKER); }
-<INITIAL,NAME_STRING>markersize              { return(MARKERSIZE); }
-<INITIAL,NAME_STRING>maxarcs                 { return(MAXARCS); }
-<INITIAL,NAME_STRING>maxboxsize              { return(MAXBOXSIZE); }
-<INITIAL,NAME_STRING>maxfeatures             { return(MAXFEATURES); }
-<INITIAL,NAME_STRING>maxinterval             { return(MAXINTERVAL); }
-<INITIAL,NAME_STRING>maxscale                { return(MAXSCALE); }
-<INITIAL,NAME_STRING>maxsize                 { return(MAXSIZE); }
-<INITIAL,NAME_STRING>maxsubdivide            { return(MAXSUBDIVIDE); }
-<INITIAL,NAME_STRING>maxtemplate             { return(MAXTEMPLATE); }
-<INITIAL,NAME_STRING>maxwidth                { return(MAXWIDTH); }
-<INITIAL,NAME_STRING>metadata                { return(METADATA); }
-<INITIAL,NAME_STRING>mimetype                { return(MIMETYPE); }
-<INITIAL,NAME_STRING>minarcs                 { return(MINARCS); }
-<INITIAL,NAME_STRING>minboxsize              { return(MINBOXSIZE); }
-<INITIAL,NAME_STRING>mindistance             { return(MINDISTANCE); }
-<INITIAL,NAME_STRING>minfeaturesize          { return(MINFEATURESIZE); }
-<INITIAL,NAME_STRING>mininterval             { return(MININTERVAL); }
-<INITIAL,NAME_STRING>minscale                { return(MINSCALE); }
-<INITIAL,NAME_STRING>minsize                 { return(MINSIZE); }
-<INITIAL,NAME_STRING>minsubdivide            { return(MINSUBDIVIDE); }
-<INITIAL,NAME_STRING>mintemplate             { return(MINTEMPLATE); }
-<INITIAL,NAME_STRING>minwidth                { return(MINWIDTH); }
-<INITIAL,NAME_STRING>name                    { return(NAME); }
-<INITIAL,NAME_STRING>offset                  { return(OFFSET); }
-<INITIAL,NAME_STRING>offsite                 { return(OFFSITE); }
-<INITIAL,NAME_STRING>opacity                 { return(OPACITY); }
-<INITIAL,NAME_STRING>outlinecolor            { return(OUTLINECOLOR); }
-<INITIAL,NAME_STRING>outputformat            { return(OUTPUTFORMAT); }
-<INITIAL,NAME_STRING>overlaybackgroundcolor  { return(OVERLAYBACKGROUNDCOLOR); }
-<INITIAL,NAME_STRING>overlaycolor            { return(OVERLAYCOLOR); }
-<INITIAL,NAME_STRING>overlaymaxsize          { return(OVERLAYMAXSIZE); }
-<INITIAL,NAME_STRING>overlayminsize          { return(OVERLAYMINSIZE); }
-<INITIAL,NAME_STRING>overlayoutlinecolor     { return(OVERLAYOUTLINECOLOR); }
-<INITIAL,NAME_STRING>overlaysize             { return(OVERLAYSIZE); }
-<INITIAL,NAME_STRING>overlaysymbol           { return(OVERLAYSYMBOL); }
-<INITIAL,NAME_STRING>partials                { return(PARTIALS); }
-<INITIAL,NAME_STRING>points                  { return(POINTS); }
-<INITIAL,NAME_STRING>position                { return(POSITION); }
-<INITIAL,NAME_STRING>postlabelcache          { return(POSTLABELCACHE); }
-<INITIAL,NAME_STRING>priority                { return(PRIORITY); }
-<INITIAL,NAME_STRING>processing              { return(PROCESSING); }
-<INITIAL,NAME_STRING>projection              { return(PROJECTION); }
-<INITIAL,NAME_STRING>queryformat             { return(QUERYFORMAT); }
-<INITIAL,NAME_STRING>querymap                { return(QUERYMAP); }
-<INITIAL,NAME_STRING>reference               { return(REFERENCE); }
-<INITIAL,NAME_STRING>relativeto              { return(RELATIVETO); }
-<INITIAL,NAME_STRING>requires                { return(REQUIRES); }
-<INITIAL,NAME_STRING>resolution              { return(RESOLUTION); }
-<INITIAL,NAME_STRING>scale                   { return(SCALE); }
-<INITIAL,NAME_STRING>scalebar                { return(SCALEBAR); }
-<INITIAL,NAME_STRING>shadowcolor             { return(SHADOWCOLOR); }
-<INITIAL,NAME_STRING>shadowsize              { return(SHADOWSIZE); }
-<INITIAL,NAME_STRING>shapepath               { return(SHAPEPATH); }
-<INITIAL,NAME_STRING>size                    { return(SIZE); }
-<INITIAL,NAME_STRING>sizeunits               { return(SIZEUNITS); }
-<INITIAL,NAME_STRING>status                  { return(STATUS); }
-<INITIAL,NAME_STRING>style                   { return(STYLE); }
-<INITIAL,NAME_STRING>styleitem               { return(STYLEITEM); }
-<INITIAL,NAME_STRING>symbol                  { return(SYMBOL); }
-<INITIAL,NAME_STRING>symbolscale             { return(SYMBOLSCALE); }
-<INITIAL,NAME_STRING>symbolset               { return(SYMBOLSET); }
-<INITIAL,NAME_STRING>table                   { return(TABLE); }
-<INITIAL,NAME_STRING>template                { return(TEMPLATE); }
-<INITIAL,NAME_STRING>templatepattern         { return(TEMPLATEPATTERN); }
-<INITIAL,NAME_STRING>text                    { return(TEXT); }
-<INITIAL,NAME_STRING>tileindex               { return(TILEINDEX); }
-<VALUE_STRING>tileindex                      { return(MS_LAYER_TILEINDEX); }
-<INITIAL,NAME_STRING>tileitem                { return(TILEITEM); }
-<INITIAL,NAME_STRING>title                   { return(TITLE); }
-<INITIAL,NAME_STRING>to                      { return(TO); }
-<INITIAL,NAME_STRING>tolerance               { return(TOLERANCE); }
-<INITIAL,NAME_STRING>toleranceunits          { return(TOLERANCEUNITS); }
-<INITIAL,NAME_STRING>transparency            { return(TRANSPARENCY); }
-<INITIAL,NAME_STRING>transparent             { return(TRANSPARENT); }
-<INITIAL,NAME_STRING>transform               { return(TRANSFORM); }
-<INITIAL,NAME_STRING>type                    { return(TYPE); }
-<INITIAL,NAME_STRING>units                   { return(UNITS); }
-<INITIAL,NAME_STRING>web                     { return(WEB); }
-<INITIAL,NAME_STRING>width                   { return(WIDTH); }
-<INITIAL,NAME_STRING>wkt                     { return(WKT); }
-<INITIAL,NAME_STRING>wrap                    { return(WRAP); }
+<INITIAL,URL_VARIABLE>map                      { return(MAP); }
+<INITIAL>marker                                { return(MARKER); }
+<INITIAL>markersize                            { return(MARKERSIZE); }
+<INITIAL>maxarcs                               { return(MAXARCS); }
+<INITIAL>maxboxsize                            { return(MAXBOXSIZE); }
+<INITIAL>maxfeatures                           { return(MAXFEATURES); }
+<INITIAL>maxinterval                           { return(MAXINTERVAL); }
+<INITIAL>maxscale                              { return(MAXSCALE); }
+<INITIAL>maxsize                               { return(MAXSIZE); }
+<INITIAL>maxsubdivide                          { return(MAXSUBDIVIDE); }
+<INITIAL>maxtemplate                           { return(MAXTEMPLATE); }
+<INITIAL>maxwidth                              { return(MAXWIDTH); }
+<INITIAL>metadata                              { return(METADATA); }
+<INITIAL>mimetype                              { return(MIMETYPE); }
+<INITIAL>minarcs                               { return(MINARCS); }
+<INITIAL>minboxsize                            { return(MINBOXSIZE); }
+<INITIAL>mindistance                           { return(MINDISTANCE); }
+<INITIAL>minfeaturesize                        { return(MINFEATURESIZE); }
+<INITIAL>mininterval                           { return(MININTERVAL); }
+<INITIAL>minscale                              { return(MINSCALE); }
+<INITIAL>minsize                               { return(MINSIZE); }
+<INITIAL>minsubdivide                          { return(MINSUBDIVIDE); }
+<INITIAL>mintemplate                           { return(MINTEMPLATE); }
+<INITIAL>minwidth                              { return(MINWIDTH); }
+<INITIAL>name                                  { return(NAME); }
+<INITIAL>offset                                { return(OFFSET); }
+<INITIAL>offsite                               { return(OFFSITE); }
+<INITIAL,URL_STRING>opacity                    { return(OPACITY); }
+<INITIAL,URL_STRING>outlinecolor               { return(OUTLINECOLOR); }
+<INITIAL>outputformat                          { return(OUTPUTFORMAT); }
+<INITIAL,URL_STRING>overlaybackgroundcolor     { return(OVERLAYBACKGROUNDCOLOR); }
+<INITIAL,URL_STRING>overlaycolor               { return(OVERLAYCOLOR); }
+<INITIAL>overlaymaxsize                        { return(OVERLAYMAXSIZE); }
+<INITIAL>overlayminsize                        { return(OVERLAYMINSIZE); }
+<INITIAL,URL_STRING>overlayoutlinecolor        { return(OVERLAYOUTLINECOLOR); }
+<INITIAL,URL_STRING>overlaysize                { return(OVERLAYSIZE); }
+<INITIAL,URL_STRING>overlaysymbol              { return(OVERLAYSYMBOL); }
+<INITIAL>partials                              { return(PARTIALS); }
+<INITIAL,URL_STRING>points                     { return(POINTS); }
+<INITIAL,URL_STRING>position                   { return(POSITION); }
+<INITIAL>postlabelcache                        { return(POSTLABELCACHE); }
+<INITIAL>priority                              { return(PRIORITY); }
+<INITIAL>processing                            { return(PROCESSING); }
+<INITIAL,URL_STRING>projection                 { return(PROJECTION); }
+<INITIAL>queryformat                           { return(QUERYFORMAT); }
+<INITIAL,URL_VARIABLE>querymap                 { return(QUERYMAP); }
+<INITIAL,URL_VARIABLE>reference                { return(REFERENCE); }
+<INITIAL>relativeto                            { return(RELATIVETO); }
+<INITIAL>requires                              { return(REQUIRES); }
+<INITIAL,URL_VARIABLE>resolution               { return(RESOLUTION); }
+<INITIAL>scale                                 { return(SCALE); }
+<INITIAL,URL_VARIABLE>scalebar                 { return(SCALEBAR); }
+<INITIAL,URL_STRING>shadowcolor                { return(SHADOWCOLOR); }
+<INITIAL,URL_STRING>shadowsize                 { return(SHADOWSIZE); }
+<INITIAL>shapepath                             { return(SHAPEPATH); }
+<INITIAL,URL_STRING>size                       { return(SIZE); }
+<INITIAL>sizeunits                             { return(SIZEUNITS); }
+<INITIAL,URL_STRING>status                     { return(STATUS); }
+<INITIAL,URL_VARIABLE>style                    { return(STYLE); }
+<INITIAL>styleitem                             { return(STYLEITEM); }
+<INITIAL,URL_STRING>symbol                     { return(SYMBOL); }
+<INITIAL>symbolscale                           { return(SYMBOLSCALE); }
+<INITIAL>symbolset                             { return(SYMBOLSET); }
+<INITIAL>table                                 { return(TABLE); }
+<INITIAL>template                              { return(TEMPLATE); }
+<INITIAL>templatepattern                       { return(TEMPLATEPATTERN); }
+<INITIAL,URL_STRING>text                       { return(TEXT); }
+<INITIAL>tileindex                             { return(TILEINDEX); }
+<INITIAL>tileitem                              { return(TILEITEM); }
+<INITIAL>title                                 { return(TITLE); }
+<INITIAL>to                                    { return(TO); }
+<INITIAL,URL_STRING>tolerance                  { return(TOLERANCE); }
+<INITIAL>toleranceunits                        { return(TOLERANCEUNITS); }
+<INITIAL>transparency                          { return(TRANSPARENCY); }
+<INITIAL>transparent                           { return(TRANSPARENT); }
+<INITIAL>transform                             { return(TRANSFORM); }
+<INITIAL>type                                  { return(TYPE); }
+<INITIAL,URL_STRING>units                      { return(UNITS); }
+<INITIAL,URL_VARIABLE>web                      { return(WEB); }
+<INITIAL,URL_STRING>width                      { return(WIDTH); }
+<INITIAL,URL_STRING>wkt                        { return(WKT); }
+<INITIAL>wrap                                  { return(WRAP); }
 
-<INITIAL,VALUE_STRING>annotation               { return(MS_LAYER_ANNOTATION); }
-<INITIAL,VALUE_STRING>auto                     { return(MS_AUTO); }
+<INITIAL,URL_STRING>annotation                 { return(MS_LAYER_ANNOTATION); }
+<INITIAL,URL_STRING>auto                       { return(MS_AUTO); }
 <INITIAL>bevel                                 { return(MS_CJC_BEVEL); }
 <INITIAL>bitmap                                { return(MS_BITMAP); }
 <INITIAL>butt                                  { return(MS_CJC_BUTT); }
 <INITIAL>cartoline                             { return(MS_SYMBOL_CARTOLINE); }
-<INITIAL,VALUE_STRING>cc                       { return(MS_CC); }
-<INITIAL,VALUE_STRING>chart                    { return(MS_LAYER_CHART); }
-<INITIAL,VALUE_STRING>circle                   { return(MS_LAYER_CIRCLE); }
-<INITIAL,VALUE_STRING>cl                       { return(MS_CL); }
-<INITIAL,VALUE_STRING>cr                       { return(MS_CR); }
-<INITIAL,VALUE_STRING>csv                      { return(MS_DB_CSV); }
-<INITIAL,VALUE_STRING>mysql                    { return(MS_DB_MYSQL); }
-<INITIAL,VALUE_STRING>postgresql               { return(MS_DB_POSTGRES); }
-<INITIAL,VALUE_STRING>default                  { return(MS_DEFAULT); }
-<INITIAL,VALUE_STRING>dd                       { return(MS_DD); }
+<INITIAL,URL_STRING>cc                         { return(MS_CC); }
+<INITIAL>chart                                 { return(MS_LAYER_CHART); }
+<INITIAL>circle                                { return(MS_LAYER_CIRCLE); }
+<INITIAL,URL_STRING>cl                         { return(MS_CL); }
+<INITIAL,URL_STRING>cr                         { return(MS_CR); }
+<INITIAL>csv                                   { return(MS_DB_CSV); }
+<INITIAL>mysql                                 { return(MS_DB_MYSQL); }
+<INITIAL>postgresql                            { return(MS_DB_POSTGRES); }
+<INITIAL,URL_STRING>default                    { return(MS_DEFAULT); }
+<INITIAL,URL_STRING>dd                         { return(MS_DD); }
 <INITIAL>ellipse                               { return(MS_SYMBOL_ELLIPSE); }
-<INITIAL,VALUE_STRING>embed                    { return(MS_EMBED); }
-<INITIAL,VALUE_STRING>false                    { return(MS_FALSE); }
-<INITIAL,VALUE_STRING>feet                     { return(MS_FEET); }
-<INITIAL,VALUE_STRING>follow                   { return(MS_FOLLOW); }
-<INITIAL,VALUE_STRING>giant                    { return(MS_GIANT); }
+<INITIAL,URL_STRING>embed                      { return(MS_EMBED); }
+<INITIAL,URL_STRING>false                      { return(MS_FALSE); }
+<INITIAL,URL_STRING>feet                       { return(MS_FEET); }
+<INITIAL,URL_STRING>follow                     { return(MS_FOLLOW); }
+<INITIAL>giant                                 { return(MS_GIANT); }
 <INITIAL>hatch                                 { return(MS_SYMBOL_HATCH); }
-<INITIAL,VALUE_STRING>hilite                   { return(MS_HILITE); }
-<INITIAL,VALUE_STRING>inches                   { return(MS_INCHES); }
-<INITIAL,VALUE_STRING>kilometers               { return(MS_KILOMETERS); }
-<INITIAL,VALUE_STRING>large                    { return(MS_LARGE); }
-<INITIAL,VALUE_STRING>lc                       { return(MS_LC); }
-<INITIAL,VALUE_STRING>line                     { return(MS_LAYER_LINE); }
-<INITIAL,VALUE_STRING>ll                       { return(MS_LL); }
-<INITIAL,VALUE_STRING>lr                       { return(MS_LR); }
-<INITIAL,VALUE_STRING>medium                   { return(MS_MEDIUM); }
-<INITIAL,VALUE_STRING>meters                   { return(MS_METERS); }
-<INITIAL,VALUE_STRING>miles                    { return(MS_MILES); }
-<INITIAL,VALUE_STRING>miter                    { return(MS_CJC_MITER); }
-<INITIAL,VALUE_STRING>multiple                 { return(MS_MULTIPLE); }
-
+<INITIAL>hilite                                { return(MS_HILITE); }
+<INITIAL,URL_STRING>inches                     { return(MS_INCHES); }
+<INITIAL,URL_STRING>kilometers                 { return(MS_KILOMETERS); }
+<INITIAL>large                                 { return(MS_LARGE); }
+<INITIAL,URL_STRING>lc                         { return(MS_LC); }
+<INITIAL>line                                  { return(MS_LAYER_LINE); }
+<INITIAL,URL_STRING>ll                         { return(MS_LL); }
+<INITIAL,URL_STRING>lr                         { return(MS_LR); }
+<INITIAL>medium                                { return(MS_MEDIUM); }
+<INITIAL,URL_STRING>meters                     { return(MS_METERS); }
+<INITIAL,URL_STRING>miles                      { return(MS_MILES); }
+<INITIAL>miter                                 { return(MS_CJC_MITER); }
+<INITIAL>multiple                              { return(MS_MULTIPLE); }
 <INITIAL>none                                  { return(MS_CJC_NONE); }
-<INITIAL,VALUE_STRING>normal                   { return(MS_NORMAL); }
-<INITIAL,VALUE_STRING>off                      { return(MS_OFF); }
-<INITIAL,VALUE_STRING>ogr                      { return(MS_OGR); }
-<INITIAL,VALUE_STRING>on                       { return(MS_ON); }
-<INITIAL,VALUE_STRING>one-to-one               { return(MS_JOIN_ONE_TO_ONE); }
-<INITIAL,VALUE_STRING>one-to-many              { return(MS_JOIN_ONE_TO_MANY); }
-<INITIAL,VALUE_STRING>oraclespatial            { return(MS_ORACLESPATIAL); }
-<INITIAL,VALUE_STRING>percentages              { return(MS_PERCENTAGES); }
+<INITIAL>normal                                { return(MS_NORMAL); }
+<INITIAL,URL_STRING>off                        { return(MS_OFF); }
+<INITIAL>ogr                                   { return(MS_OGR); }
+<INITIAL,URL_STRING>on                         { return(MS_ON); }
+<INITIAL>one-to-one                            { return(MS_JOIN_ONE_TO_ONE); }
+<INITIAL>one-to-many                           { return(MS_JOIN_ONE_TO_MANY); }
+<INITIAL>oraclespatial                         { return(MS_ORACLESPATIAL); }
+<INITIAL>percentages                           { return(MS_PERCENTAGES); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
-<INITIAL,VALUE_STRING>pixels                   { return(MS_PIXELS); }
-<INITIAL,VALUE_STRING>point                    { return(MS_LAYER_POINT); }
-<INITIAL,VALUE_STRING>polygon                  { return(MS_LAYER_POLYGON); }
-<INITIAL,VALUE_STRING>postgis                  { return(MS_POSTGIS); }
-<INITIAL,VALUE_STRING>mygis                    { return(MS_MYGIS); }
-<INITIAL,VALUE_STRING>plugin                   { return(MS_PLUGIN); }
-<INITIAL,VALUE_STRING>query                    { return(MS_LAYER_QUERY); }
-<INITIAL,VALUE_STRING>raster                   { return(MS_LAYER_RASTER); }
-<INITIAL,VALUE_STRING>round                    { return(MS_CJC_ROUND); }
-<INITIAL,VALUE_STRING>sde                      { return(MS_SDE); }
-<INITIAL,VALUE_STRING>selected                 { return(MS_SELECTED); }
+<INITIAL>pixels                                { return(MS_PIXELS); }
+<INITIAL>point                                 { return(MS_LAYER_POINT); }
+<INITIAL>polygon                               { return(MS_LAYER_POLYGON); }
+<INITIAL>postgis                               { return(MS_POSTGIS); }
+<INITIAL>mygis                                 { return(MS_MYGIS); }
+<INITIAL>plugin                                { return(MS_PLUGIN); }
+<INITIAL>query                                 { return(MS_LAYER_QUERY); }
+<INITIAL>raster                                { return(MS_LAYER_RASTER); }
+<INITIAL>round                                 { return(MS_CJC_ROUND); }
+<INITIAL>sde                                   { return(MS_SDE); }
+<INITIAL>selected                              { return(MS_SELECTED); }
 <INITIAL>simple                                { return(MS_SYMBOL_SIMPLE); }
-<INITIAL,VALUE_STRING>single                   { return(MS_SINGLE); }
-<INITIAL,VALUE_STRING>small                    { return(MS_SMALL); }
-<INITIAL,VALUE_STRING>square                   { return(MS_CJC_SQUARE); }
-<INITIAL,VALUE_STRING>tiny                     { return(MS_TINY); }
-<INITIAL,VALUE_STRING>triangle                 { return(MS_CJC_TRIANGLE); }
-<INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }
-<INITIAL,VALUE_STRING>truetype                 { return(MS_TRUETYPE); }
-<INITIAL,VALUE_STRING>uc                       { return(MS_UC); }
-<INITIAL,VALUE_STRING>ul                       { return(MS_UL); }
-<INITIAL,VALUE_STRING>ur                       { return(MS_UR); }
+<INITIAL>single                                { return(MS_SINGLE); }
+<INITIAL>small                                 { return(MS_SMALL); }
+<INITIAL>square                                { return(MS_CJC_SQUARE); }
+<INITIAL>tiny                                  { return(MS_TINY); }
+<INITIAL>triangle                              { return(MS_CJC_TRIANGLE); }
+<INITIAL,URL_STRING>true                       { return(MS_TRUE); }
+<INITIAL>truetype                              { return(MS_TRUETYPE); }
+<INITIAL,URL_STRING>uc                         { return(MS_UC); }
+<INITIAL,URL_STRING>ul                         { return(MS_UL); }
+<INITIAL,URL_STRING>ur                         { return(MS_UR); }
 <INITIAL>vector                                { return(MS_SYMBOL_VECTOR); }
-<INITIAL,VALUE_STRING>wfs                      { return(MS_WFS); }
-<INITIAL,VALUE_STRING>wms                      { return(MS_WMS); }
-<INITIAL,VALUE_STRING>alpha                    { return(MS_GD_ALPHA); }
+<INITIAL>wfs                                   { return(MS_WFS); }
+<INITIAL>wms                                   { return(MS_WMS); }
+<INITIAL>alpha                                 { return(MS_GD_ALPHA); }
 
-<INITIAL,VALUE_STRING>\[.*\]                   {
+<URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=]*\]     {
+                                                 msyytext++;
+                                                 msyytext[strlen(msyytext)-1] = '\0';
+                                                 return(MS_STRING);
+                                               }
+<URL_VARIABLE>\[[0-9]*\]                       {
+                                                 msyytext++;
+                                                 msyytext[strlen(msyytext)-1] = '\0';                                                 
+                                                 msyynumber = atof(msyytext);
+                                                 return(MS_NUMBER);
+                                               }
+
+<INITIAL>\[.*\]                                {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_BINDING);
                                                }
 
-<NAME_STRING>[0-9]+                            {
-                                                 msyynumber = atof(msyytext);
-                                                 return(MS_NUMBER);
-                                               }
-
-<INITIAL,VALUE_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
+<INITIAL,URL_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
                                                  msyynumber = atof(msyytext);
                                                  return(MS_NUMBER); 
                                                }
@@ -387,7 +393,7 @@ char path[MS_MAXPATHLEN];
                                                  return(TIME);
                                                }
 
-<INITIAL,VALUE_STRING>\/[^\/]*\/i              {
+<INITIAL>\/[^\/]*\/i                           {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  return(MS_IREGEX);
@@ -400,7 +406,7 @@ char path[MS_MAXPATHLEN];
                                                  return(IREGEX);
                                                }
 
-<INITIAL,VALUE_STRING>\/[^\/]*\/               {
+<INITIAL>\/[^\/]*\/                            {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_REGEX);
@@ -413,13 +419,13 @@ char path[MS_MAXPATHLEN];
                                                  return(REGEX);
                                                }
 
-<INITIAL,VALUE_STRING>\(.*\)                   {
+<INITIAL>\(.*\)                                {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_EXPRESSION);
                                                }
 
-<INITIAL,VALUE_STRING>\"[^\"]*\"i|\'[^\']*\'i  {                                                 
+<INITIAL>\"[^\"]*\"i|\'[^\']*\'i               {                                                 
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  return(MS_ISTRING);
@@ -447,7 +453,7 @@ char path[MS_MAXPATHLEN];
                                                  BEGIN(INITIAL);
                                                }
 
-<INITIAL,VALUE_STRING>\"[^\"]*\"|\'[^\']*\'    {
+<INITIAL,URL_STRING>\"[^\"]*\"|\'[^\']*\'      {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_STRING);
@@ -460,72 +466,69 @@ char path[MS_MAXPATHLEN];
                                                  msyylval.strval = msyytext;
                                                  return(ISTRING);
                                                }
-
 											   
 <EXPRESSION_STRING>\"|\'     		       {
-						/* Beginning of a new String, skip the quote and enter the MSSTR context */
-						int idx=0;
-						msyytext++;
-						for(idx=0; idx<1024; string_buf[idx++]='\0');
-						string_buf_ptr = string_buf;
-						BEGIN(MSSTR);
+						 /* Beginning of a new String, skip the quote and enter the MSSTR context */
+						 int idx=0;
+						 msyytext++;
+						 for(idx=0; idx<1024; string_buf[idx++]='\0');
+						 string_buf_ptr = string_buf;
+						 BEGIN(MSSTR);
                                                }
 											   
-<MSSTR>\\(.|\n)  				{
-						/* Escape code: skip the slash and use the escaped char */
-						if (strlen(string_buf) < (1024-2))
-							*string_buf_ptr++ = msyytext[1];
+<MSSTR>\\(.|\n)  			       {
+						  /* Escape code: skip the slash and use the escaped char */
+						  if(strlen(string_buf) < (1024-2))
+						    *string_buf_ptr++ = msyytext[1];
 						}
 
 <MSSTR>\"|\'        				{
-						 /*
-						  this is the closing quote - we're done
-					 	  Umberto: it should be possible to use yy_pop_stack to allow for this string
-					 	  parsing routine to be used in more places, but I can't make it work
-						 */
-						 BEGIN(EXPRESSION_STRING);
-						 *string_buf_ptr = '\0';
-						 msyylval.strval = strdup(string_buf);
-						 msyytext++;
-						 return(STRING);
+						  /*
+						   this is the closing quote - we're done
+					 	   Umberto: it should be possible to use yy_pop_stack to allow for this string
+					 	   parsing routine to be used in more places, but I can't make it work
+						  */
+						  BEGIN(EXPRESSION_STRING);
+						  *string_buf_ptr = '\0';
+						  msyylval.strval = strdup(string_buf);
+						  msyytext++;
+						  return(STRING);
 						}
 
 <MSSTR>[^\\\"\\\']+        			{
-						char *yptr = msyytext;
+						  char *yptr = msyytext;
 							
-						/*
-						when the text is longer than the buffer we simply discard it.
-						TODO: This should be improved.
-						*/
-						while ( *yptr && strlen(string_buf) < (1024-1) ) {
-							*string_buf_ptr = *yptr;
-							string_buf_ptr++;
-							yptr++;
+						  /*
+						    when the text is longer than the buffer we simply discard it.
+						    TODO: This should be improved.
+						  */
+						  while ( *yptr && strlen(string_buf) < (1024-1) ) {
+						    *string_buf_ptr = *yptr;
+						    string_buf_ptr++;
+						    yptr++;
+						  }
 						}
-						}
 
-<INITIAL>[a-z/\.][a-z0-9/\._\-\=]*             { return(MS_STRING); }
-<NAME_STRING>[a-z/\.][a-z0-9/\.\-\=]*        { return(MS_STRING); }
-<VALUE_STRING>[a-z/\.][a-z0-9/\. \-\=]*        { return(MS_STRING); }
+<INITIAL,URL_STRING>[a-z/\.][a-z0-9/\._\-\=]*   { return(MS_STRING); }
 
-<INITIAL>\n                                    { msyylineno++; }
+<INITIAL>\n                                     { msyylineno++; }
 
-<INITIAL><<EOF>>                               {
-                                                 if( --include_stack_ptr < 0 )
-                                                   return(EOF); /* end of main file */
-                                                 else {
-                                                   fclose(YY_CURRENT_BUFFER->yy_input_file);
-                                                   msyy_delete_buffer( YY_CURRENT_BUFFER );
-                                                   msyy_switch_to_buffer(include_stack[include_stack_ptr]);
-                                                 }
-                                               }
+<INITIAL><<EOF>>                                {
+                                                  if( --include_stack_ptr < 0 )
+                                                    return(EOF); /* end of main file */
+                                                  else {
+                                                    fclose(YY_CURRENT_BUFFER->yy_input_file);
+                                                    msyy_delete_buffer( YY_CURRENT_BUFFER );
+                                                    msyy_switch_to_buffer(include_stack[include_stack_ptr]);
+                                                  }
+                                                }
 
-<EXPRESSION_STRING,VALUE_STRING,NAME_STRING>[\r|\n|\0] { 
+<EXPRESSION_STRING,URL_VARIABLE,URL_STRING>[\r|\n|\0] { 
                                                  return(0); 
-                                               }
+                                                }
 
-<INITIAL,NAME_STRING,VALUE_STRING>.          { return(0); }
-<EXPRESSION_STRING>.                           { return(msyytext[0]); }
+<INITIAL,URL_VARIABLE,URL_STRING>.              { return(0); }
+<EXPRESSION_STRING>.                            { return(msyytext[0]); }
 %%
 
 /*

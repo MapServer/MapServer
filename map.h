@@ -1269,7 +1269,6 @@ struct layerVTable {
 };
 #endif /*SWIG*/
 
-
 /* Function prototypes, wrapable */
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
@@ -1369,7 +1368,16 @@ MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addima
 MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
 MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
 MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
-MS_DLL_EXPORT int msLoadMapParameter(mapObj *map, char *name, char *value);
+MS_DLL_EXPORT int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateQueryMapFromString(queryMapObj *querymap, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateLabelFromString(labelObj *label, char *string);
+MS_DLL_EXPORT int msUpdateReferenceMapFromString(referenceMapObj *ref, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateLegendFromString(legendObj *legend, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateWebFromString(webObj *web, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateStyleFromString(styleObj *style, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateClassFromString(classObj *class, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateLayerFromString(layerObj *layer, char *string, int url_string);
+MS_DLL_EXPORT int msUpdateMapFromURL(mapObj *map, char *variable, char *string);
 MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
 MS_DLL_EXPORT void msFree(void *p);
 MS_DLL_EXPORT char **msTokenizeMap(char *filename, int *numtokens);
