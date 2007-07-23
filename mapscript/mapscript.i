@@ -262,6 +262,10 @@ typedef struct {
 %include "../swiginc/msio.i"
 %include "../swiginc/web.i"
 %include "../swiginc/label.i"
+%include "../swiginc/scalebar.i"
+%include "../swiginc/legend.i"
+%include "../swiginc/referencemap.i"
+%include "../swiginc/querymap.i"
 
 /* 
 =============================================================================

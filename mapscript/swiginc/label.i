@@ -29,6 +29,11 @@
 
 %extend labelObj
 {
+  int updateFromString(char *snippet)
+  {
+    return msUpdateLabelFromString(self, snippet);
+  }
+
   int removeBinding(int binding) 
   {
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;

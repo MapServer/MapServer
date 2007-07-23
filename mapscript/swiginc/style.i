@@ -77,6 +77,11 @@
 	}
     }
 
+    int updateFromString(char *snippet)
+    {
+        return msUpdateStyleFromString(self, snippet, MS_FALSE);
+    }
+
 #ifdef SWIGJAVA
     %newobject cloneStyle;
     styleObj *cloneStyle() 

@@ -76,6 +76,11 @@
         }
     }
 
+    int updateFromString(char *snippet)
+    {
+        return msUpdateClassFromString(self, snippet, MS_FALSE);
+    }
+
 #ifdef SWIGJAVA
     %newobject cloneClass;
     classObj *cloneClass() 

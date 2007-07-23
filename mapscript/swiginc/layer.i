@@ -1,3 +1,4 @@
+
 /* ===========================================================================
    $Id$
  
@@ -114,6 +115,11 @@
         layer->index = -1;
         
         return layer;
+    }
+
+    int updateFromString(char *snippet)
+    {
+        return msUpdateLayerFromString(self, snippet, MS_FALSE);
     }
 
     int insertClass(classObj *classobj, int index=-1)
