@@ -918,6 +918,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   char   *pszFilter = NULL;
   int bFilterSet = 0;
   int bBBOXSet = 0;
+  int bFeatureIdSet = 0;
+  char *pszFeatureId = NULL;
+
   char *pszNameSpace = NULL;
   const char *value;
   const char *user_namespace_prefix = "ms";
@@ -1103,7 +1106,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   if (paramsObj->pszFilter) {
     bFilterSet = 1;
     pszFilter = paramsObj->pszFilter;
-  } else if (paramsObj->pszBbox) {
+  } 
+  if (paramsObj->pszBbox) {
     char **tokens;
     int n;
     tokens = msStringSplit(paramsObj->pszBbox, ',', &n);
@@ -1116,9 +1120,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     bbox.maxx = atof(tokens[2]);
     bbox.maxy = atof(tokens[3]);
     msFreeCharArray(tokens, n);
-    
+    bBBOXSet = 1;
     /* Note: BBOX SRS is implicit, it is the SRS of the selected */
     /* feature types, see pszOutputSRS in TYPENAMES above. */
+  }
+  if (paramsObj->pszFeatureId) {
+    bFeatureIdSet = 1;
   }
 
 #ifdef USE_OGR
@@ -1147,6 +1154,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       if (bBBOXSet) {
 	msSetError(MS_WFSERR, 
                    "BBOX parameter and FILTER parameter are mutually exclusive in GetFeature.", 
+                   "msWFSGetFeature()");
+	return msWFSException(map, paramsObj->pszVersion);
+      }
+
+      if (bFeatureIdSet) {
+	msSetError(MS_WFSERR, 
+                   "FEATUREID parameter and FILTER parameter are mutually exclusive in GetFeature.", 
                    "msWFSGetFeature()");
 	return msWFSException(map, paramsObj->pszVersion);
       }
@@ -1580,6 +1594,8 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
           free(wfsparams->pszTypeName);
         if (wfsparams->pszFilter)
           free(wfsparams->pszFilter);
+        if (wfsparams->pszFeatureId)
+          free(wfsparams->pszFeatureId);
     }
 }
 
@@ -1625,6 +1641,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 
                 else if (strcasecmp(request->ParamNames[i], "OUTPUTFORMAT") == 0)
                   wfsparams->pszOutputFormat = strdup(request->ParamValues[i]);
+
+                 else if (strcasecmp(request->ParamNames[i], "FEATUREID") == 0)
+                  wfsparams->pszFeatureId = strdup(request->ParamValues[i]);
             }
         }
         /* version is optional is the GetCapabilities. If not */

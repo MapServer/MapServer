@@ -616,7 +616,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                 if (FLTHasSpatialFilter(psNode))
                                   psLayer->layerinfo = (void *)psNode;
 
-                                szExpression = FLTGetMapserverExpression(psNode);
+                                szExpression = FLTGetMapserverExpression(psNode, psLayer);
 
                                 if (szExpression)
                                 {
