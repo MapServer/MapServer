@@ -1268,7 +1268,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   }
   
   /* changed when Tomas added CARTOLINE symbols */
-  if(layer->class[c]->styles[0] != NULL) {
+  if(layer->class[c]->numstyles > 0 && layer->class[c]->styles[0] != NULL) {
     if(layer->class[c]->styles[0]->size == -1)
       csz = MS_NINT(((msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol])) * layer->scalefactor) / 2.0);
     else
@@ -1389,7 +1389,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if(layer->labelcache) {
             if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
-          if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
+          if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
             for(s=0; s<layer->class[c]->numstyles; s++)
               msDrawMarkerSymbol(&map->symbolset, image, &annopnt, (layer->class[c]->styles[s]), layer->scalefactor);
 	  }
@@ -1418,7 +1418,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if(layer->labelcache) {
           if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
-	  if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
+	  if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
             for(s=0; s<layer->class[c]->numstyles; s++)
 	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, (layer->class[c]->styles[s]), layer->scalefactor);
 	  }
@@ -1447,7 +1447,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	    if(layer->labelcache) {
 	      if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
-	      if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
+	      if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
                 for(s=0; s<layer->class[c]->numstyles; s++)
 	          msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
 	      }
@@ -1665,7 +1665,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
       if(layer->labelcache) {
         if(msAddLabel(map, layer->index, c, -1, -1, point, NULL, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else {
-	if(MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
+	if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
           for(s=0; s<layer->class[c]->numstyles; s++)
   	    msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
 	}
