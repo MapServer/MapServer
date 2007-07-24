@@ -281,21 +281,21 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
      int i, j;
     int optlistlength=14;
     char *optlist=NULL;
-     for(i=0;i<s->stylelength;i++) {
-       if(!s->style[i]) /*in case length is zero*/ 
+     for(i=0;i<s->patternlength;i++) {
+       if(!s->pattern[i]) /*in case length is zero*/ 
          optlistlength+=2;
        else
-        if(s->style[i]>0)
-         optlistlength+=(int)(log10(s->style[i]))+2;
+        if(s->pattern[i]>0)
+         optlistlength+=(int)(log10(s->pattern[i]))+2;
         else{
-        	msSetError(MS_SYMERR, "Symbol styles must be positive", "drawDashedPolylinePDF()");
-        	return;
-        	}
+          msSetError(MS_SYMERR, "Symbol patterns must be positive", "drawDashedPolylinePDF()");
+          return;
+        }
      }
      optlist = (char*)malloc(optlistlength*sizeof(char));
      sprintf(optlist,"dasharray={");
-     for(i=0;i<s->stylelength;i++)
-       sprintf(optlist,"%s %d",optlist,s->style[i]);
+     for(i=0;i<s->patternlength;i++)
+       sprintf(optlist,"%s %d",optlist,s->pattern[i]);
      sprintf(optlist,"%s }",optlist);
      PDF_setdashpattern(pdf,optlist);
      
@@ -366,7 +366,7 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         return;
 
 #if PDFLIB_MAJORVERSION >= 6
-     if(symbolset && symbolset->symbol[style->symbol]->stylelength)
+     if(symbolset && symbolset->symbol[style->symbol]->patternlength)
        drawDashedPolylinePDF(pdf, p, &(symbolset->symbol[style->symbol]), 
                              &(style->color),size);
      else
