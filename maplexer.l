@@ -190,7 +190,9 @@ char path[MS_MAXPATHLEN];
 <INITIAL>labelformat                           { return(LABELFORMAT); }
 <INITIAL,URL_STRING>labelitem                  { return(LABELITEM); }
 <INITIAL>labelmaxscale                         { return(LABELMAXSCALE); }
+<INITIAL>labelmaxscaledenom                    { return(LABELMAXSCALEDENOM); }
 <INITIAL>labelminscale                         { return(LABELMINSCALE); }
+<INITIAL>labelminscaledenom                    { return(LABELMINSCALEDENOM); }
 <INITIAL>labelrequires                         { return(LABELREQUIRES); }
 <INITIAL>latlon                                { return(LATLON); }
 <INITIAL,URL_VARIABLE>layer                    { return(LAYER); }
@@ -208,6 +210,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>maxfeatures                           { return(MAXFEATURES); }
 <INITIAL>maxinterval                           { return(MAXINTERVAL); }
 <INITIAL>maxscale                              { return(MAXSCALE); }
+<INITIAL>maxscaledenom                         { return(MAXSCALEDENOM); }
 <INITIAL>maxsize                               { return(MAXSIZE); }
 <INITIAL>maxsubdivide                          { return(MAXSUBDIVIDE); }
 <INITIAL>maxtemplate                           { return(MAXTEMPLATE); }
@@ -220,6 +223,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>minfeaturesize                        { return(MINFEATURESIZE); }
 <INITIAL>mininterval                           { return(MININTERVAL); }
 <INITIAL>minscale                              { return(MINSCALE); }
+<INITIAL>minscaledenom                         { return(MINSCALEDENOM); }
 <INITIAL>minsize                               { return(MINSIZE); }
 <INITIAL>minsubdivide                          { return(MINSUBDIVIDE); }
 <INITIAL>mintemplate                           { return(MINTEMPLATE); }
@@ -252,6 +256,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>requires                              { return(REQUIRES); }
 <INITIAL,URL_VARIABLE>resolution               { return(RESOLUTION); }
 <INITIAL>scale                                 { return(SCALE); }
+<INITIAL>scaledenom                            { return(SCALEDENOM); }
 <INITIAL,URL_VARIABLE>scalebar                 { return(SCALEBAR); }
 <INITIAL,URL_STRING>shadowcolor                { return(SHADOWCOLOR); }
 <INITIAL,URL_STRING>shadowsize                 { return(SHADOWSIZE); }
@@ -263,6 +268,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>styleitem                             { return(STYLEITEM); }
 <INITIAL,URL_STRING>symbol                     { return(SYMBOL); }
 <INITIAL>symbolscale                           { return(SYMBOLSCALE); }
+<INITIAL>symbolscaledenom                      { return(SYMBOLSCALEDENOM); }
 <INITIAL>symbolset                             { return(SYMBOLSET); }
 <INITIAL>table                                 { return(TABLE); }
 <INITIAL>template                              { return(TEMPLATE); }

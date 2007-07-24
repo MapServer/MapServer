@@ -484,9 +484,9 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
             for (i=0; i<nNewClasses; i++)
             {
                 if (dfMinScale > 0)
-                  psLayer->class[psLayer->numclasses-1-i]->minscale = dfMinScale;
+                  psLayer->class[psLayer->numclasses-1-i]->minscaledenom = dfMinScale;
                 if (dfMaxScale)
-                  psLayer->class[psLayer->numclasses-1-i]->maxscale = dfMaxScale;
+                  psLayer->class[psLayer->numclasses-1-i]->maxscaledenom = dfMaxScale;
             }                           
         }
 /* -------------------------------------------------------------------- */
@@ -3739,12 +3739,12 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 /*      generate the min/max scale.                                     */
 /* -------------------------------------------------------------------- */
                 dfMinScale = -1.0;
-                if (psLayer->class[i]->minscale > 0)
-                  dfMinScale = psLayer->class[i]->minscale;      
-                else if (psLayer->minscale > 0)
-                  dfMinScale = psLayer->minscale;
-                else if (psLayer->map && psLayer->map->web.minscale > 0)
-                  dfMinScale = psLayer->map->web.minscale;
+                if (psLayer->class[i]->minscaledenom > 0)
+                  dfMinScale = psLayer->class[i]->minscaledenom;      
+                else if (psLayer->minscaledenom > 0)
+                  dfMinScale = psLayer->minscaledenom;
+                else if (psLayer->map && psLayer->map->web.minscaledenom > 0)
+                  dfMinScale = psLayer->map->web.minscaledenom;
                 if (dfMinScale > 0)
                 {
                      sprintf(szTmp, "<MinScaleDenominator>%f</MinScaleDenominator>\n",  
@@ -3753,12 +3753,12 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 }
                
                 dfMaxScale = -1.0;
-                if (psLayer->class[i]->maxscale > 0)
-                  dfMaxScale = psLayer->class[i]->maxscale;      
-                else if (psLayer->maxscale > 0)
-                  dfMaxScale = psLayer->maxscale;
-                else if (psLayer->map && psLayer->map->web.maxscale > 0)
-                  dfMaxScale = psLayer->map->web.maxscale;
+                if (psLayer->class[i]->maxscaledenom > 0)
+                  dfMaxScale = psLayer->class[i]->maxscaledenom;      
+                else if (psLayer->maxscaledenom > 0)
+                  dfMaxScale = psLayer->maxscaledenom;
+                else if (psLayer->map && psLayer->map->web.maxscaledenom > 0)
+                  dfMaxScale = psLayer->map->web.maxscaledenom;
                 if (dfMaxScale > 0)
                 {
                      sprintf(szTmp, "<MaxScaleDenominator>%f</MaxScaleDenominator>\n",  

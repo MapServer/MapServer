@@ -250,7 +250,7 @@ int msMapSetExtent( mapObj *map,
     /* if the map size is also set, recompute scale, ignore errors? */
     if( map->width != -1 || map->height != -1 )
         msCalculateScale(map->extent, map->units, map->width, map->height, 
-                         map->resolution, &(map->scale));
+                         map->resolution, &(map->scaledenom));
 
     return msMapComputeGeotransform( map );
 }

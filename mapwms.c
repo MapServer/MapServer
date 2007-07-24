@@ -956,24 +956,24 @@ void msWMSPrintAttribution(FILE *stream, const char *tabspace,
 ** the central pixel of a map.  ScaleHint values are the min and max
 ** recommended values of that diagonal.
 */
-void msWMSPrintScaleHint(const char *tabspace, double minscale,
-                         double maxscale, double resolution)
+void msWMSPrintScaleHint(const char *tabspace, double minscaledenom,
+                         double maxscaledenom, double resolution)
 {
   double scalehintmin=0.0, scalehintmax=0.0, diag;
 
   diag = sqrt(2.0);
 
-  if (minscale > 0)
-    scalehintmin = diag*(minscale/resolution)/msInchesPerUnit(MS_METERS,0);
-  if (maxscale > 0)
-    scalehintmax = diag*(maxscale/resolution)/msInchesPerUnit(MS_METERS,0);
+  if (minscaledenom > 0)
+    scalehintmin = diag*(minscaledenom/resolution)/msInchesPerUnit(MS_METERS,0);
+  if (maxscaledenom > 0)
+    scalehintmax = diag*(maxscaledenom/resolution)/msInchesPerUnit(MS_METERS,0);
 
   if (scalehintmin > 0.0 || scalehintmax > 0.0)
   {
       msIO_printf("%s<ScaleHint min=\"%.15g\" max=\"%.15g\" />\n",
              tabspace, scalehintmin, scalehintmax);
       if (scalehintmax == 0.0)
-          msIO_printf("%s<!-- WARNING: Only MINSCALE and no MAXSCALE specified in "
+          msIO_printf("%s<!-- WARNING: Only MINSCALEDENOM and no MAXSCALEDENOM specified in "
                  "the mapfile. A default value of 0 has been returned for the "
                  "Max ScaleHint but this is probably not what you want. -->\n",
                  tabspace);
@@ -1303,7 +1303,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    
    msFree(pszMetadataName);
 
-   msWMSPrintScaleHint("        ", lp->minscale, lp->maxscale, map->resolution);
+   msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
 
    msIO_printf("%s    </Layer>\n", indent);
 
@@ -1734,7 +1734,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
   }
 
-  msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale,
+  msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
                       map->resolution);
 
 
@@ -1989,8 +1989,8 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       for(i=0;i<map->numlayers; i++) {
           if(GET_LAYER(map, i)->sizeunits != MS_PIXELS)
             GET_LAYER(map, i)->scalefactor = (msInchesPerUnit(GET_LAYER(map, i)->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
-          else if(GET_LAYER(map, i)->symbolscale > 0 && map->scale > 0)
-            GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscale/map->scale;
+          else if(GET_LAYER(map, i)->symbolscaledenom > 0 && map->scaledenom > 0)
+            GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscaledenom/map->scaledenom;
           else
             GET_LAYER(map, i)->scalefactor = 1;
       }

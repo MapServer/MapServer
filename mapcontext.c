@@ -980,13 +980,13 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   pszValue = (char*)CPLGetXMLValue(psLayer, "sld:MinScaleDenominator", NULL);
   if(pszValue != NULL)
   {
-      layer->minscale = atof(pszValue);
+      layer->minscaledenom = atof(pszValue);
   }
 
   pszValue = (char*)CPLGetXMLValue(psLayer, "sld:MaxScaleDenominator", NULL);
   if(pszValue != NULL)
   {
-      layer->maxscale = atof(pszValue);
+      layer->maxscaledenom = atof(pszValue);
   }
 
   /*  */
@@ -1772,14 +1772,14 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                             MS_TRUE, NULL, NULL, NULL, NULL, NULL, "      ");
 
           /* MinScale && MaxScale */
-          if(nVersion >= OWS_1_1_0 && GET_LAYER(map, i)->minscale > 0)
+          if(nVersion >= OWS_1_1_0 && GET_LAYER(map, i)->minscaledenom > 0)
               msIO_fprintf(stream, 
                "      <sld:MinScaleDenominator>%g</sld:MinScaleDenominator>\n",
-                           GET_LAYER(map, i)->minscale);
-          if(nVersion >= OWS_1_1_0 && GET_LAYER(map, i)->maxscale > 0)
+                           GET_LAYER(map, i)->minscaledenom);
+          if(nVersion >= OWS_1_1_0 && GET_LAYER(map, i)->maxscaledenom > 0)
               msIO_fprintf(stream, 
                "      <sld:MaxScaleDenominator>%g</sld:MaxScaleDenominator>\n",
-                           GET_LAYER(map, i)->maxscale);
+                           GET_LAYER(map, i)->maxscaledenom);
 
           /* Layer SRS */
           pszValue = (char*)msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection), 

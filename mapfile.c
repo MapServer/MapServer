@@ -1941,7 +1941,7 @@ int initClass(classObj *class)
   /* class->metadata = NULL; */
   initHashTable(&(class->metadata));
   
-  class->maxscale = class->minscale = -1.0;
+  class->maxscaledenom = class->minscaledenom = -1.0;
 
   /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
    * to msGrowClassStyles()
@@ -2126,14 +2126,16 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       class->label.size = MS_MEDIUM; /* only set a default if the LABEL section is present */
       if(loadLabel(&(class->label)) == -1) return(-1);
       break;
-    case(MAXSCALE):      
-      if(getDouble(&(class->maxscale)) == -1) return(-1);
+    case(MAXSCALE):
+    case(MAXSCALEDENOM):
+      if(getDouble(&(class->maxscaledenom)) == -1) return(-1);
       break;    
     case(METADATA):
       if(loadHashTable(&(class->metadata)) != MS_SUCCESS) return(-1);
       break;
-    case(MINSCALE):      
-      if(getDouble(&(class->minscale)) == -1) return(-1);
+    case(MINSCALE):
+    case(MINSCALEDENOM):
+      if(getDouble(&(class->minscaledenom)) == -1) return(-1);
       break;
     case(NAME):
       if(getString(&class->name) == MS_FAILURE) return(-1);
@@ -2302,9 +2304,9 @@ static void writeClass(classObj *class, FILE *stream)
   }
   if(class->keyimage) fprintf(stream, "      KEYIMAGE \"%s\"\n", class->keyimage);
   writeLabel(&(class->label), stream, "      ");
-  if(class->maxscale > -1) fprintf(stream, "      MAXSCALE %g\n", class->maxscale);
+  if(class->maxscaledenom > -1) fprintf(stream, "      MAXSCALEDENOM %g\n", class->maxscaledenom);
   if(&(class->metadata)) writeHashTable(&(class->metadata), stream, "      ", "METADATA");
-  if(class->minscale > -1) fprintf(stream, "      MINSCALE %g\n", class->minscale);
+  if(class->minscaledenom > -1) fprintf(stream, "      MINSCALEDENOM %g\n", class->minscaledenom);
   if(class->status == MS_OFF) fprintf(stream, "      STATUS OFF\n");
   for(i=0; i<class->numstyles; i++)
     writeStyle(class->styles[i], stream);
@@ -2352,10 +2354,10 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->toleranceunits = MS_PIXELS;
   layer->tolerance = -1; /* perhaps this should have a different value based on type */
 
-  layer->symbolscale = -1.0; /* -1 means nothing is set */
+  layer->symbolscaledenom = -1.0; /* -1 means nothing is set */
   layer->scalefactor = 1.0;
-  layer->maxscale = -1.0;
-  layer->minscale = -1.0;
+  layer->maxscaledenom = -1.0;
+  layer->minscaledenom = -1.0;
 
   layer->sizeunits = MS_PIXELS;
 
@@ -2380,8 +2382,8 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->labelitem = NULL;
   layer->labelitemindex = -1;
 
-  layer->labelmaxscale = -1;
-  layer->labelminscale = -1;
+  layer->labelmaxscaledenom = -1;
+  layer->labelminscaledenom = -1;
 
   layer->tileitem = strdup("location");
   layer->tileitemindex = -1;
@@ -2676,11 +2678,13 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(LABELITEM):
       if(getString(&layer->labelitem) == MS_FAILURE) return(-1);
       break;
-    case(LABELMAXSCALE):      
-      if(getDouble(&(layer->labelmaxscale)) == -1) return(-1);
+    case(LABELMAXSCALE):
+    case(LABELMAXSCALEDENOM):
+      if(getDouble(&(layer->labelmaxscaledenom)) == -1) return(-1);
       break;
-    case(LABELMINSCALE):      
-      if(getDouble(&(layer->labelminscale)) == -1) return(-1);
+    case(LABELMINSCALE):
+    case(LABELMINSCALEDENOM):
+      if(getDouble(&(layer->labelminscaledenom)) == -1) return(-1);
       break;    
     case(LABELREQUIRES):
       if(getString(&layer->labelrequires) == MS_FAILURE) return(-1);
@@ -2690,14 +2694,16 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(MAXFEATURES):
       if(getInteger(&(layer->maxfeatures)) == -1) return(-1);
       break;
-    case(MAXSCALE):      
-      if(getDouble(&(layer->maxscale)) == -1) return(-1);
+    case(MAXSCALE):
+    case(MAXSCALEDENOM):
+      if(getDouble(&(layer->maxscaledenom)) == -1) return(-1);
       break;
     case(METADATA):
       if(loadHashTable(&(layer->metadata)) != MS_SUCCESS) return(-1);
       break;
-    case(MINSCALE):      
-      if(getDouble(&(layer->minscale)) == -1) return(-1);
+    case(MINSCALE):
+    case(MINSCALEDENOM):
+      if(getDouble(&(layer->minscaledenom)) == -1) return(-1);
       break;
     case(NAME):
       if(getString(&layer->name) == MS_FAILURE) return(-1);
@@ -2752,8 +2758,9 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(STYLEITEM):
       if(getString(&layer->styleitem) == MS_FAILURE) return(-1);
       break;
-    case(SYMBOLSCALE):      
-      if(getDouble(&(layer->symbolscale)) == -1) return(-1);
+    case(SYMBOLSCALE):
+    case(SYMBOLSCALEDENOM):
+      if(getDouble(&(layer->symbolscaledenom)) == -1) return(-1);
       break;
     case(TEMPLATE):
       if(getString(&layer->template) == MS_FAILURE) return(-1);
@@ -2868,13 +2875,13 @@ static void writeLayer(layerObj *layer, FILE *stream)
     writeJoin(&(layer->joins[i]), stream);
   if(!layer->labelcache) fprintf(stream, "    LABELCACHE OFF\n");
   if(layer->labelitem) fprintf(stream, "    LABELITEM \"%s\"\n", layer->labelitem);
-  if(layer->labelmaxscale > -1) fprintf(stream, "    LABELMAXSCALE %g\n", layer->labelmaxscale);
-  if(layer->labelminscale > -1) fprintf(stream, "    LABELMINSCALE %g\n", layer->labelminscale);
+  if(layer->labelmaxscaledenom > -1) fprintf(stream, "    LABELMAXSCALEDENOM %g\n", layer->labelmaxscaledenom);
+  if(layer->labelminscaledenom > -1) fprintf(stream, "    LABELMINSCALEDENOM %g\n", layer->labelminscaledenom);
   if(layer->labelrequires) fprintf(stream, "    LABELREQUIRES \"%s\"\n", layer->labelrequires);
   if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
-  if(layer->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", layer->maxscale); 
+  if(layer->maxscaledenom > -1) fprintf(stream, "    MAXSCALEDENOM %g\n", layer->maxscaledenom); 
   if(&(layer->metadata)) writeHashTable(&(layer->metadata), stream, "    ", "METADATA");
-  if(layer->minscale > -1) fprintf(stream, "    MINSCALE %g\n", layer->minscale);
+  if(layer->minscaledenom > -1) fprintf(stream, "    MINSCALEDENOM %g\n", layer->minscaledenom);
   fprintf(stream, "    NAME \"%s\"\n", layer->name);
   writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
@@ -2887,7 +2894,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->sizeunits != MS_PIXELS) fprintf(stream, "    SIZEUNITS %s\n", msUnits[layer->sizeunits]);
   fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
   if(layer->styleitem) fprintf(stream, "    STYLEITEM \"%s\"\n", layer->styleitem);
-  if(layer->symbolscale > -1) fprintf(stream, "    SYMBOLSCALE %g\n", layer->symbolscale);
+  if(layer->symbolscaledenom > -1) fprintf(stream, "    SYMBOLSCALEDENOM %g\n", layer->symbolscaledenom);
   if(layer->template) fprintf(stream, "    TEMPLATE \"%s\"\n", layer->template);
   if(layer->tileindex) {
     fprintf(stream, "    TILEINDEX \"%s\"\n", layer->tileindex);
@@ -3671,7 +3678,7 @@ void initWeb(webObj *web)
   web->header = web->footer = NULL;
   web->error =  web->empty = NULL;
   web->mintemplate = web->maxtemplate = NULL;
-  web->minscale = web->maxscale = -1;
+  web->minscaledenom = web->maxscaledenom = -1;
   web->log = NULL;
   web->imagepath = strdup("");
   web->imageurl = strdup("");
@@ -3717,10 +3724,10 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->imagepath) fprintf(stream, "    IMAGEPATH \"%s\"\n", web->imagepath);
   if(web->imageurl) fprintf(stream, "    IMAGEURL \"%s\"\n", web->imageurl);
   if(web->log) fprintf(stream, "    LOG \"%s\"\n", web->log);
-  if(web->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", web->maxscale);
+  if(web->maxscaledenom > -1) fprintf(stream, "    MAXSCALEDENOM %g\n", web->maxscaledenom);
   if(web->maxtemplate) fprintf(stream, "    MAXTEMPLATE \"%s\"\n", web->maxtemplate);
   if(&(web->metadata)) writeHashTable(&(web->metadata), stream, "    ", "METADATA");
-  if(web->minscale > -1) fprintf(stream, "    MINSCALE %g\n", web->minscale);
+  if(web->minscaledenom > -1) fprintf(stream, "    MINSCALEDENOM %g\n", web->minscaledenom);
   if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
   if(web->queryformat != NULL) fprintf(stream, "    QUERYFORMAT %s\n", web->queryformat);
   if(web->legendformat != NULL) fprintf(stream, "    LEGENDFORMAT %s\n", web->legendformat);
@@ -3784,7 +3791,8 @@ int loadWeb(webObj *web, mapObj *map)
       if(getString(&web->log) == MS_FAILURE) return(-1);
       break;
     case(MAXSCALE):
-      if(getDouble(&web->maxscale) == -1) return(-1);
+    case(MAXSCALEDENOM):
+      if(getDouble(&web->maxscaledenom) == -1) return(-1);
       break;
     case(MAXTEMPLATE):
       if(getString(&web->maxtemplate) == MS_FAILURE) return(-1);
@@ -3793,7 +3801,8 @@ int loadWeb(webObj *web, mapObj *map)
       if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
       break;
     case(MINSCALE):
-      if(getDouble(&web->minscale) == -1) return(-1);
+    case(MINSCALEDENOM):
+      if(getDouble(&web->minscaledenom) == -1) return(-1);
       break;
     case(MINTEMPLATE):
       if(getString(&web->mintemplate) == MS_FAILURE) return(-1);
@@ -3866,7 +3875,7 @@ int initMap(mapObj *map)
   map->name = strdup("MS");
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
 
-  map->scale = -1.0;
+  map->scaledenom = -1.0;
   map->resolution = 72.0; /* pixels per inch */
  
   map->height = map->width = -1;
@@ -4327,7 +4336,8 @@ static int loadMapInternal(mapObj *map)
       if(getDouble(&(map->resolution)) == -1) return MS_FAILURE;
       break;
     case(SCALE):
-      if(getDouble(&(map->scale)) == -1) return MS_FAILURE;
+    case(SCALEDENOM):
+      if(getDouble(&(map->scaledenom)) == -1) return MS_FAILURE;
       break;
     case(SCALEBAR):
       if(loadScalebar(&(map->scalebar)) == -1) return MS_FAILURE;

@@ -105,8 +105,8 @@
         msAdjustExtent(&oNewGeorefExt, self->width, self->height);
         msCalculateScale(oNewGeorefExt, self->units, self->width, self->height, self->resolution, &dfNewScale);
     
-        if (self->web.maxscale > 0) {
-            if (zoomfactor < 0 && dfNewScale > self->web.maxscale) {
+        if (self->web.maxscaledenom > 0) {
+            if (zoomfactor < 0 && dfNewScale > self->web.maxscaledenom) {
                 return MS_FAILURE;
             }
         }
@@ -115,9 +115,9 @@
         /*  we do a spcial case for zoom in : we try to zoom as much as */
         /*  possible using the mincale set in the .map.                 */
         /* ============================================================ */
-        if (self->web.minscale > 0 && dfNewScale < self->web.minscale && zoomfactor > 1) {
-            dfDeltaExt = (self->web.minscale * self->width)/(self->resolution * msInchesPerUnit(self->units,0));
-            /* dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscale, self->units, dfGeoPosY, self->width, self->resolution); */
+        if (self->web.minscaledenom > 0 && dfNewScale < self->web.minscaledenom && zoomfactor > 1) {
+            dfDeltaExt = (self->web.minscaledenom * self->width)/(self->resolution * msInchesPerUnit(self->units,0));
+            /* dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, dfGeoPosY, self->width, self->resolution); */
             if (dfDeltaExt > 0.0) {
                 oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
                 oNewGeorefExt.miny = dfGeoPosY - (dfDeltaExt/2);
@@ -191,7 +191,7 @@
             }
         }
     
-        msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &(self->scale));
+        msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &(self->scaledenom));
 
         return MS_SUCCESS;
     }
@@ -275,15 +275,15 @@
         /* ------------------------------------------------------------ */
         msCalculateScale(oNewGeorefExt, self->units, self->width, self->height, self->resolution, &dfNewScale);
 
-        if (self->web.maxscale > 0 &&  dfNewScale > self->web.maxscale)
+        if (self->web.maxscaledenom > 0 &&  dfNewScale > self->web.maxscaledenom)
             return MS_FAILURE;
 
-        if (self->web.minscale > 0 && dfNewScale <  self->web.minscale) {
+        if (self->web.minscaledenom > 0 && dfNewScale <  self->web.minscaledenom) {
             dfMiddleX = oNewGeorefExt.minx + ((oNewGeorefExt.maxx - oNewGeorefExt.minx)/2);
             dfMiddleY = oNewGeorefExt.miny + ((oNewGeorefExt.maxy - oNewGeorefExt.miny)/2);
         
-            dfDeltaExt = (self->web.minscale * self->width) / (self->resolution * msInchesPerUnit(self->units,0));
-            /* dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscale, self->units, dfMiddleY, self->width, self->resolution); */
+            dfDeltaExt = (self->web.minscaledenom * self->width) / (self->resolution * msInchesPerUnit(self->units,0));
+            /* dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, dfMiddleY, self->width, self->resolution); */
 
             if (dfDeltaExt > 0.0) {
                 oNewGeorefExt.minx = dfMiddleX - (dfDeltaExt/2);
@@ -355,7 +355,7 @@
             }
         }
 
-        msCalculateScale(self->extent, self->units, self->width,  self->height, self->resolution, &(self->scale));
+        msCalculateScale(self->extent, self->units, self->width,  self->height, self->resolution, &(self->scaledenom));
 
         return MS_SUCCESS;
     }
@@ -465,8 +465,8 @@
         msAdjustExtent(&oNewGeorefExt, self->width, self->height);
         msCalculateScale(oNewGeorefExt, self->units, self->width, self->height, self->resolution, &dfNewScale);
 
-        if (self->web.maxscale > 0) {
-            if (dfCurrentScale < dfNewScale && dfNewScale >  self->web.maxscale) {
+        if (self->web.maxscaledenom > 0) {
+            if (dfCurrentScale < dfNewScale && dfNewScale >  self->web.maxscaledenom) {
                 return MS_FAILURE;
             }
         }
@@ -475,7 +475,7 @@
         /* we do a special case for zoom in : we try to zoom as much as */
         /* possible using the mincale set in the .map.                  */
         /* ============================================================ */
-        if (self->web.minscale > 0 && dfNewScale <  self->web.minscale && dfCurrentScale > dfNewScale) {
+        if (self->web.minscaledenom > 0 && dfNewScale <  self->web.minscaledenom && dfCurrentScale > dfNewScale) {
             dfDeltaExt=scale*nTmp/(self->resolution*msInchesPerUnit(self->units,0));
             if (dfDeltaExt > 0.0) {
                 oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
@@ -547,7 +547,7 @@
             }
         }
 
-        msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &(self->scale));
+        msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &(self->scaledenom));
 
         return MS_SUCCESS;
     }

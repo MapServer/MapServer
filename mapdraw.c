@@ -230,8 +230,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     else
         map->cellsize = msAdjustExtent(&(map->extent),map->width,map->height);
 
-    status = msCalculateScale(map->extent,map->units,map->width,map->height,
-                              map->resolution, &map->scale);
+    status = msCalculateScale(map->extent,map->units,map->width,map->height, map->resolution, &map->scaledenom);
     if(status != MS_SUCCESS) {
         msFreeImage(image);
         return(NULL);
@@ -262,8 +261,8 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     for(i=0;i<map->numlayers; i++) {
       if(GET_LAYER(map, i)->sizeunits != MS_PIXELS)
         GET_LAYER(map, i)->scalefactor = (msInchesPerUnit(GET_LAYER(map, i)->sizeunits,0)/msInchesPerUnit(map->units,0)) / geo_cellsize;
-      else if(GET_LAYER(map, i)->symbolscale > 0 && map->scale > 0)
-        GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscale/map->scale;
+      else if(GET_LAYER(map, i)->symbolscaledenom > 0 && map->scaledenom > 0)
+        GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscaledenom/map->scaledenom;
       else
         GET_LAYER(map, i)->scalefactor = 1;
     }
@@ -601,18 +600,18 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);
   if(msEvalContext(map, layer, layer->requires) == MS_FALSE) return(MS_FALSE);
 
-  if(map->scale > 0) {
+  if(map->scaledenom > 0) {
     
     /* layer scale boundaries should be checked first */
-    if((layer->maxscale > 0) && (map->scale > layer->maxscale)) return(MS_FALSE);
-    if((layer->minscale > 0) && (map->scale <= layer->minscale)) return(MS_FALSE);
+    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) return(MS_FALSE);
+    if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) return(MS_FALSE);
 
     /* now check class scale boundaries (all layers *must* pass these tests) */
     if(layer->numclasses > 0) {
       for(i=0; i<layer->numclasses; i++) {
-        if((layer->class[i]->maxscale > 0) && (map->scale > layer->class[i]->maxscale))
+        if((layer->class[i]->maxscaledenom > 0) && (map->scaledenom > layer->class[i]->maxscaledenom))
           continue; /* can skip this one, next class */
-        if((layer->class[i]->minscale > 0) && (map->scale <= layer->class[i]->minscale))
+        if((layer->class[i]->minscaledenom > 0) && (map->scaledenom <= layer->class[i]->minscaledenom))
           continue; /* can skip this one, next class */
 
         break; /* can't skip this class (or layer for that matter) */
@@ -797,9 +796,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 #endif
 
   annotate = msEvalContext(map, layer, layer->labelrequires);
-  if(map->scale > 0) {
-    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale)) annotate = MS_FALSE;
-    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
+  if(map->scaledenom > 0) {
+    if((layer->labelmaxscaledenom != -1) && (map->scaledenom >= layer->labelmaxscaledenom)) annotate = MS_FALSE;
+    if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
   }
 
   /* reset layer pen values just in case the map has been previously processed */
@@ -852,7 +851,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
-    shape.classindex = msShapeGetClass(layer, &shape, map->scale);
+    shape.classindex = msShapeGetClass(layer, &shape, map->scaledenom);
     if((shape.classindex == -1) || (layer->class[shape.classindex]->status == MS_OFF)) {
        msFreeShape(&shape);
        continue;
@@ -960,12 +959,12 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(msEvalContext(map, layer, layer->requires) == MS_FALSE) return(MS_SUCCESS);
   annotate = msEvalContext(map, layer, layer->labelrequires);
 
-  if(map->scale > 0) {
-    if((layer->maxscale > 0) && (map->scale > layer->maxscale)) return(MS_SUCCESS);
-    if((layer->minscale > 0) && (map->scale <= layer->minscale)) return(MS_SUCCESS);
+  if(map->scaledenom > 0) {
+    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) return(MS_SUCCESS);
+    if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) return(MS_SUCCESS);
 
-    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale)) annotate = MS_FALSE;
-    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
+    if((layer->labelmaxscaledenom != -1) && (map->scaledenom >= layer->labelmaxscaledenom)) annotate = MS_FALSE;
+    if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
   }
 
   /* reset layer pen values just in case the map has been previously processed */

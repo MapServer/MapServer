@@ -222,7 +222,7 @@ imageObj *msDrawScalebar(mapObj *map)
   if(!fontPtr) return(NULL);
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
+  status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
   if(status != MS_SUCCESS)
   { 	
     if( iFreeGDFont ) free( fontPtr );

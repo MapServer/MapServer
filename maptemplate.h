@@ -95,7 +95,7 @@ typedef struct
    char Id[IDSIZE]; 
    
    int CoordSource;
-   double Scale; /* used to create a map extent around a point */
+   double ScaleDenom; /* used to create a map extent around a point */
 
    int ImgRows, ImgCols;
    rectObj ImgExt; /* Existing image's mapextent */

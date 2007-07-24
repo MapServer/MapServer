@@ -457,9 +457,9 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
     
         annotate = msEvalContext(map, layer, layer->labelrequires);
-        if(map->scale > 0) {
-            if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale)) annotate = MS_FALSE;
-            if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
+        if(map->scaledenom > 0) {
+            if((layer->labelmaxscaledenom != -1) && (map->scaledenom >= layer->labelmaxscaledenom)) annotate = MS_FALSE;
+            if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
         }
     
         /* open this layer */

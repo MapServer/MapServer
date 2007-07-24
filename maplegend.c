@@ -224,7 +224,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
   if (!scale_independent) {
     map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-    status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
+    status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
     if(status != MS_SUCCESS) return(NULL);
   }
 
@@ -260,19 +260,19 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     if((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
       continue;
 
-    if(!scale_independent && map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    if(!scale_independent && map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->maxscaledenom > 0) && (map->scaledenom <= lp->maxscaledenom)) continue;
     }
  
     for(j=0;j<lp->numclasses;j++) {
       if(!lp->class[j]->name)
 	continue; /* skip it */
 
-      if(!scale_independent && map->scale > 0) {  /* verify class scale here */
-	if((lp->class[j]->maxscale > 0) && (map->scale > lp->class[j]->maxscale))
+      if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
+	if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
 	  continue;
-	if((lp->class[j]->minscale > 0) && (map->scale <= lp->class[j]->minscale))
+	if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom <= lp->class[j]->maxscaledenom))
 	  continue;
       }
 
@@ -325,10 +325,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     if((lp->numclasses == 0) || (lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY))
       continue; /* skip this layer */
 
-    if(!scale_independent && map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale))
+    if(!scale_independent && map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom))
 	continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale))
+      if((lp->maxscaledenom > 0) && (map->scaledenom <= lp->maxscaledenom))
 	continue;
 
       /* Should we also consider lp->symbolscale? I don't think so. Showing the "standard" size makes the most sense. */
@@ -340,10 +340,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
       if(!lp->class[j]->name) continue; /* skip it */
      
-      if(!scale_independent && map->scale > 0) {  /* verify class scale here */
-        if((lp->class[j]->maxscale > 0) && (map->scale > lp->class[j]->maxscale))
+      if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
+        if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
           continue;
-        if((lp->class[j]->minscale > 0) && (map->scale <= lp->class[j]->minscale))
+        if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom <= lp->class[j]->maxscaledenom))
           continue;
       }
  

@@ -1224,13 +1224,13 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     return(0);
   }
 
-  if(map->scale > 0) {
-    if((layer->maxscale > 0) && (map->scale > layer->maxscale)) {
-      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g > MAXSCALE=%g\n", layer->name, map->scale, layer->maxscale );
+  if(map->scaledenom > 0) {
+    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) {
+      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g > MAXSCALEDENOM=%g\n", layer->name, map->scaledenom, layer->maxscaledenom );
       return(0);
     }
-    if((layer->minscale > 0) && (map->scale <= layer->minscale)) {
-      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g < MINSCALE=%g\n", layer->name, map->scale, layer->minscale );
+    if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) {
+      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g < MINSCALEDENOM=%g\n", layer->name, map->scaledenom, layer->minscaledenom );
       return(0);
     }
   }

@@ -123,8 +123,8 @@
   void prepareQuery() {
     int status;
 
-    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
-    if(status != MS_SUCCESS) self->scale = -1;
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scaledenom);
+    if(status != MS_SUCCESS) self->scaledenom = -1;
   }
 
   %newobject prepareImage;

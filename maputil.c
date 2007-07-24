@@ -427,7 +427,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
  * }
  */
 
-int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
+int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom)
 {
   int i;
 
@@ -436,10 +436,10 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
   if(layer->connectiontype == MS_INLINE) {
     if(shape->classindex < 0 || shape->classindex >= layer->numclasses) return(-1);
 
-    if(scale > 0) {  /* verify scale here */
-      if((layer->class[shape->classindex]->maxscale > 0) && (scale > layer->class[shape->classindex]->maxscale))
+    if(scaledenom > 0) {  /* verify scaledenom here */
+      if((layer->class[shape->classindex]->maxscaledenom > 0) && (scaledenom > layer->class[shape->classindex]->maxscaledenom))
         return(-1); /* can skip this feature */
-      if((layer->class[shape->classindex]->minscale > 0) && (scale <= layer->class[shape->classindex]->minscale))
+      if((layer->class[shape->classindex]->minscaledenom > 0) && (scaledenom <= layer->class[shape->classindex]->minscaledenom))
         return(-1); /* can skip this feature */
     }
 
@@ -448,10 +448,10 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
 
   for(i=0; i<layer->numclasses; i++) {
     
-    if(scale > 0) {  /* verify scale here  */
-      if((layer->class[i]->maxscale > 0) && (scale > layer->class[i]->maxscale))
+    if(scaledenom > 0) {  /* verify scaledenom here  */
+      if((layer->class[i]->maxscaledenom > 0) && (scaledenom > layer->class[i]->maxscaledenom))
         continue; /* can skip this one, next class */
-      if((layer->class[i]->minscale > 0) && (scale <= layer->class[i]->minscale))
+      if((layer->class[i]->minscaledenom > 0) && (scaledenom <= layer->class[i]->minscaledenom))
         continue; /* can skip this one, next class */
     }
 

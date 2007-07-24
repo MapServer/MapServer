@@ -206,7 +206,7 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
     return(MS_FAILURE);
   }
 
-  shape.classindex = msShapeGetClass(lp, &shape, map->scale);
+  shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
   if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
     msSetError(MS_NOTFOUND, "Shape %d not valid against layer classification.", "msQueryByIndex()", shapeindex);
     msFreeShape(&shape);
@@ -332,7 +332,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   
   while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-    shape.classindex = msShapeGetClass(lp, &shape, map->scale);    
+    shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);    
     if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
       msFreeShape(&shape);
       continue;
@@ -430,9 +430,9 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
 
-    if(map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    if(map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }    
 
     /* Raster layers are handled specially. */
@@ -475,7 +475,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scale);
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -601,9 +601,9 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     if(!msIsLayerQueryable(lp)) continue;    
     if(lp->status == MS_OFF) continue;
     
-    if(map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    if(map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
 
     /* Get the layer tolerance
@@ -691,7 +691,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	/* check for dups when there are multiple selection shapes */
 	if(i > 0 && is_duplicate(lp->resultcache, shape.index, shape.tileindex)) continue;
 
-	shape.classindex = msShapeGetClass(lp, &shape, map->scale);
+	shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
 	if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	  msFreeShape(&shape);
 	  continue;
@@ -814,9 +814,9 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
 
-    if(map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    if(map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
 
     /* Raster layers are handled specially.  */
@@ -882,7 +882,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scale);
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -974,9 +974,9 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
     
-    if(map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    if(map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
 
     /* Raster layers are handled specially. */
@@ -1042,7 +1042,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
 
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scale);
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -1166,9 +1166,9 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
       if(!msIsLayerQueryable(lp)) continue;
       if(lp->status == MS_OFF) continue;
     
-      if(map->scale > 0) {
-        if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
-        if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+      if(map->scaledenom > 0) {
+        if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+        if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
       }
 
       /* Raster layers are handled specially. */
@@ -1218,7 +1218,7 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
 
       while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-        shape.classindex = msShapeGetClass(lp, &shape, map->scale);
+        shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
         if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
           msFreeShape(&shape);
           continue;

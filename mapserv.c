@@ -664,9 +664,9 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"scale") == 0) { /* scale for new map */
-      msObj->Scale = getNumeric(msObj->request->ParamValues[i]);      
-      if(msObj->Scale <= 0) {
+    if(strcasecmp(msObj->request->ParamNames[i],"scale") == 0 || strcasecmp(msObj->request->ParamNames[i],"scaledenom") == 0) { /* scale for new map */
+      msObj->ScaleDenom = getNumeric(msObj->request->ParamValues[i]);      
+      if(msObj->ScaleDenom <= 0) {
         msSetError(MS_WEBERR, "Scale out of range.", "loadForm()");
         writeError();
       }
@@ -945,8 +945,8 @@ void setExtentFromShapes(void) {
   tmpext.miny -= dy*EXTENT_PADDING/2.0;
   tmpext.maxy += dy*EXTENT_PADDING/2.0;
 
-  if(msObj->Scale != 0) { /* apply the scale around the center point (tmppnt) */
-    cellsize = (msObj->Scale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
+  if(msObj->ScaleDenom != 0) { /* apply the scale around the center point (tmppnt) */
+    cellsize = (msObj->ScaleDenom/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
     tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;
     tmpext.miny = tmppnt.y - cellsize*msObj->Map->height/2.0;
     tmpext.maxx = tmppnt.x + cellsize*msObj->Map->width/2.0;
@@ -960,8 +960,8 @@ void setExtentFromShapes(void) {
 
   /* in case we don't get  usable extent at this point (i.e. single point result) */
   if(!MS_VALID_EXTENT(tmpext)) {
-    if(msObj->Map->web.minscale > 0) { /* try web object minscale first */
-      cellsize = (msObj->Map->web.minscale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
+    if(msObj->Map->web.minscaledenom > 0) { /* try web object minscale first */
+      cellsize = (msObj->Map->web.minscaledenom/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
       tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;
       tmpext.miny = tmppnt.y - cellsize*msObj->Map->height/2.0;
       tmpext.maxx = tmppnt.x + cellsize*msObj->Map->width/2.0;
@@ -1463,20 +1463,20 @@ int main(int argc, char *argv[]) {
 	    if(SearchMap) { /* compute new extent, pan etc then search that extent */
 	      setExtent(msObj);
 	      msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();
+	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
 	      if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
 	    } else {
 	      msObj->Map->extent = msObj->ImgExt; /* use the existing image parameters */
 	      msObj->Map->width = msObj->ImgCols;
 	      msObj->Map->height = msObj->ImgRows;
-	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();	 
+	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();	 
 	      if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_MULTIPLE, msObj->MapPnt, 0)) != MS_SUCCESS) writeError();
 	    }
 	    break;	  
 	  case FROMIMGBOX:	  
 	    if(SearchMap) { /* compute new extent, pan etc then search that extent */
 	      setExtent(msObj);
-	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();
+	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
 	      msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
 	      if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
 	    } else {
@@ -1485,7 +1485,7 @@ int main(int argc, char *argv[]) {
 	      msObj->Map->extent = msObj->ImgExt; /* use the existing image parameters */
 	      msObj->Map->width = msObj->ImgCols;
 	      msObj->Map->height = msObj->ImgRows;
-	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();	  
+	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();	  
 	    
 	      cellx = MS_CELLSIZE(msObj->ImgExt.minx, msObj->ImgExt.maxx, msObj->ImgCols); /* calculate the new search extent */
 	      celly = MS_CELLSIZE(msObj->ImgExt.miny, msObj->ImgExt.maxy, msObj->ImgRows);
@@ -1502,7 +1502,7 @@ int main(int argc, char *argv[]) {
 	    msObj->Map->width = msObj->ImgCols;
 	    msObj->Map->height = msObj->ImgRows;
 	    msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-	    if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();
+	    if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
 	  
 	    /* convert from image to map coordinates here (see setCoordinate) */
 	    for(i=0; i<msObj->SelectShape.numlines; i++) {
@@ -1521,7 +1521,7 @@ int main(int argc, char *argv[]) {
 	    } else {
 	      setExtent(msObj);
 	      if(SearchMap) { /* the extent should be tied to a map, so we need to "adjust" it */
-		if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();
+		if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
 		msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); 
 	      }
 	      if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
@@ -1534,7 +1534,7 @@ int main(int argc, char *argv[]) {
 	  default: /* from an extent of some sort */
 	    setExtent(msObj);
 	    if(SearchMap) { /* the extent should be tied to a map, so we need to "adjust" it */
-	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();
+	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
 	      msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); 
 	    }	    
 	    if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
@@ -1549,7 +1549,7 @@ int main(int argc, char *argv[]) {
 	    msObj->Map->extent = msObj->ImgExt; /* use the existing image parameters */
 	    msObj->Map->width = msObj->ImgCols;
 	    msObj->Map->height = msObj->ImgRows;
-	    if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();	 	  
+	    if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();	 	  
 	    if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_SINGLE, msObj->MapPnt, 0)) != MS_SUCCESS) writeError();
 	    break;
 	  

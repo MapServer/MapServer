@@ -544,11 +544,11 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
     if (status != MS_SUCCESS) 
       return;
     annotate = msEvalContext(map, psLayer, psLayer->labelrequires);
-    if(map->scale > 0) 
+    if(map->scaledenom > 0) 
     {
-        if((psLayer->labelmaxscale != -1) && (map->scale >= psLayer->labelmaxscale)) 
+        if((psLayer->labelmaxscaledenom != -1) && (map->scaledenom >= psLayer->labelmaxscaledenom)) 
           annotate = MS_FALSE;
-        if((psLayer->labelminscale != -1) && (map->scale < psLayer->labelminscale)) 
+        if((psLayer->labelminscaledenom != -1) && (map->scaledenom < psLayer->labelminscaledenom)) 
           annotate = MS_FALSE;
     }
     status = msLayerWhichItems(psLayer, MS_TRUE, annotate, NULL);
@@ -562,7 +562,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
         if (status != MS_SUCCESS)
           nClassIndex = -1;
         else
-          nClassIndex = msShapeGetClass(psLayer, &shape, map->scale);
+          nClassIndex = msShapeGetClass(psLayer, &shape, map->scaledenom);
         
         addResult(psLayer->resultcache, nClassIndex, anValues[i], -1);
 

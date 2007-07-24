@@ -580,7 +580,7 @@ typedef struct {
   char *header, *footer;
   char *empty, *error; /* error handling */
   rectObj extent; /* clipping extent */
-  double minscale, maxscale;
+  double minscaledenom, maxscaledenom;
   char *mintemplate, *maxtemplate;
 
   char *queryformat; /* what format is the query to be returned, given as a MIME type */
@@ -697,7 +697,7 @@ typedef struct class_obj{
 %mutable;
 #endif /* SWIG */
 
-  double minscale, maxscale;
+  double minscaledenom, maxscaledenom;
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
@@ -969,9 +969,9 @@ typedef struct layer_obj {
   double tolerance; /* search buffer for point and line queries (in toleranceunits) */
   int toleranceunits;
 
-  double symbolscale; /* scale at which symbols are default size */
-  double minscale, maxscale;
-  double labelminscale, labelmaxscale;
+  double symbolscaledenom; /* scale at which symbols are default size */
+  double minscaledenom, maxscaledenom;
+  double labelminscaledenom, labelmaxscaledenom;
   int sizeunits; /* applies to all classes */
 
   int maxfeatures;
@@ -1114,7 +1114,7 @@ typedef struct map_obj{ /* structure for a map */
   rectObj saved_extent;
 
   enum MS_UNITS units; /* units of the projection */
-  double scale; /* scale of the output image */
+  double scaledenom; /* scale of the output image */
   double resolution;
 
   char *shapepath; /* where are the shape files located */
@@ -1401,10 +1401,9 @@ MS_DLL_EXPORT void msGDALInitialize(void);
    
 
 MS_DLL_EXPORT imageObj *msDrawScalebar(mapObj *map); /* in mapscale.c */
-MS_DLL_EXPORT int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scale);
+MS_DLL_EXPORT int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scaledenom);
 MS_DLL_EXPORT double msInchesPerUnit(int units, double center_lat);
 MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, gdImagePtr img);
-
 
 MS_DLL_EXPORT int msPointInRect(pointObj *p, rectObj *rect); /* in mapsearch.c */
 MS_DLL_EXPORT int msRectOverlap(rectObj *a, rectObj *b);
@@ -1833,7 +1832,7 @@ MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
 MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems);
-MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale);
+MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom);
 MS_DLL_EXPORT char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
 MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);

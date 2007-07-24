@@ -41,6 +41,13 @@ been backwards and in an effort to resolve that the parameter has been
 renamed OPACITY. TRANSPARENCY is still recognized by the mapfile parser
 but is depricated and should be avoided. 
 
+Scale Paramters: MapServer's handling of scale has long been a source
+for confusion. The values use in a layer MINSCALE are really the denominators
+from a representative fraction (e.g. 1:24000). To help clarify this all
+scale parameters are now end with DENOM. So MINSCALE => MINSCALEDENOM,
+SYMBOLSCALE => SYMBOLSCALEDENOM, and so on. The mapfile parser still
+recognizes the older keywords but they are depricated and should be avoided. 
+
 --------------
 Symbol file changes
 --------------

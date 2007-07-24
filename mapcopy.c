@@ -322,8 +322,8 @@ int msCopyWeb(webObj *dst, webObj *src, mapObj *map)
 
     MS_COPYRECT(&(dst->extent), &(src->extent));
 
-    MS_COPYSTELEM(minscale);
-    MS_COPYSTELEM(maxscale);
+    MS_COPYSTELEM(minscaledenom);
+    MS_COPYSTELEM(maxscaledenom);
     MS_COPYSTRING(dst->mintemplate, src->mintemplate);
     MS_COPYSTRING(dst->maxtemplate, src->maxtemplate);
 
@@ -446,8 +446,8 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
         msCopyHashTable(&(dst->metadata), &(src->metadata));
     }
 
-    MS_COPYSTELEM(minscale);
-    MS_COPYSTELEM(maxscale);
+    MS_COPYSTELEM(minscaledenom);
+    MS_COPYSTELEM(maxscaledenom);
     MS_COPYSTELEM(layer);
     MS_COPYSTELEM(debug);
 
@@ -742,13 +742,13 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTELEM(annotate);
     MS_COPYSTELEM(tolerance);
     MS_COPYSTELEM(toleranceunits);
-    MS_COPYSTELEM(symbolscale);
+    MS_COPYSTELEM(symbolscaledenom);
     MS_COPYSTELEM(scalefactor);
-    MS_COPYSTELEM(minscale);
-    MS_COPYSTELEM(maxscale);
+    MS_COPYSTELEM(minscaledenom);
+    MS_COPYSTELEM(maxscaledenom);
 
-    MS_COPYSTELEM(labelminscale);
-    MS_COPYSTELEM(labelmaxscale);
+    MS_COPYSTELEM(labelminscaledenom);
+    MS_COPYSTELEM(labelmaxscaledenom);
 
     MS_COPYSTELEM(sizeunits);
     MS_COPYSTELEM(maxfeatures);
@@ -887,7 +887,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
 
     MS_COPYSTELEM(cellsize);
     MS_COPYSTELEM(units);
-    MS_COPYSTELEM(scale);
+    MS_COPYSTELEM(scaledenom);
     MS_COPYSTELEM(resolution);
     MS_COPYSTRING(dst->shapepath, src->shapepath); 
     MS_COPYSTRING(dst->mappath, src->mappath); 

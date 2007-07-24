@@ -103,7 +103,7 @@ int setExtent(mapservObj *msObj)
      msObj->Map->extent.maxy = msObj->MapPnt.y + msObj->Buffer;
      break;
    case FROMSCALE: 
-     cellsize = (msObj->Scale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
+     cellsize = (msObj->ScaleDenom/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale denominator */
      msObj->Map->extent.minx = msObj->MapPnt.x - cellsize*msObj->Map->width/2.0;
      msObj->Map->extent.miny = msObj->MapPnt.y - cellsize*msObj->Map->height/2.0;
      msObj->Map->extent.maxx = msObj->MapPnt.x + cellsize*msObj->Map->width/2.0;
@@ -131,9 +131,9 @@ int checkWebScale(mapservObj *msObj)
    int status;
 
    msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); /* we do this cause we need a scale */
-   if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) return status;
+   if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) return status;
 
-   if((msObj->Map->scale < msObj->Map->web.minscale) && (msObj->Map->web.minscale > 0)) {
+   if((msObj->Map->scaledenom < msObj->Map->web.minscaledenom) && (msObj->Map->web.minscaledenom > 0)) {
       if(msObj->Map->web.mintemplate) { /* use the template provided */
          if(TEMPLATE_TYPE(msObj->Map->web.mintemplate) == MS_FILE) {
             if ((status = msReturnPage(msObj, msObj->Map->web.mintemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
@@ -148,16 +148,16 @@ int checkWebScale(mapservObj *msObj)
          msObj->fZoom = msObj->Zoom = 1;
          msObj->ZoomDirection = 0;
          msObj->CoordSource = FROMSCALE;
-         msObj->Scale = msObj->Map->web.minscale;
+         msObj->ScaleDenom = msObj->Map->web.minscaledenom;
          msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; /* use center of bad extent */
          msObj->MapPnt.y = (msObj->Map->extent.maxy + msObj->Map->extent.miny)/2;
          setExtent(msObj);
          msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);      
-         if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) return status;
+         if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) return status;
       }
    } 
    else 
-   if((msObj->Map->scale > msObj->Map->web.maxscale) && (msObj->Map->web.maxscale > 0)) {
+   if((msObj->Map->scaledenom > msObj->Map->web.maxscaledenom) && (msObj->Map->web.maxscaledenom > 0)) {
      if(msObj->Map->web.maxtemplate) { /* use the template provided */
          if(TEMPLATE_TYPE(msObj->Map->web.maxtemplate) == MS_FILE) {
             if ((status = msReturnPage(msObj, msObj->Map->web.maxtemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
@@ -169,12 +169,12 @@ int checkWebScale(mapservObj *msObj)
          msObj->fZoom = msObj->Zoom = 1;
          msObj->ZoomDirection = 0;
          msObj->CoordSource = FROMSCALE;
-         msObj->Scale = msObj->Map->web.maxscale;
+         msObj->ScaleDenom = msObj->Map->web.maxscaledenom;
          msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; /* use center of bad extent */
          msObj->MapPnt.y = (msObj->Map->extent.maxy + msObj->Map->extent.miny)/2;
          setExtent(msObj);
          msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-         if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) return status;
+         if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) return status;
       }
    }
    
@@ -1449,12 +1449,12 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
            /* dont display layer if out of scale. */
            if ((nOptFlag & 1) == 0)
            {
-               if(map->scale > 0) {
-                   if((GET_LAYER(map, map->layerorder[j])->maxscale > 0) && 
-                      (map->scale > GET_LAYER(map, map->layerorder[j])->maxscale))
+               if(map->scaledenom > 0) {
+                   if((GET_LAYER(map, map->layerorder[j])->maxscaledenom > 0) && 
+                      (map->scaledenom > GET_LAYER(map, map->layerorder[j])->maxscaledenom))
                        bShowGroup = 0;
-                   if((GET_LAYER(map, map->layerorder[j])->minscale > 0) && 
-                      (map->scale <= GET_LAYER(map, map->layerorder[j])->minscale))
+                   if((GET_LAYER(map, map->layerorder[j])->minscaledenom > 0) && 
+                      (map->scaledenom <= GET_LAYER(map, map->layerorder[j])->minscaledenom))
                        bShowGroup = 0;
                }
            }
@@ -1603,10 +1603,10 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    /* dont display layer if out of scale. */
    /* check this if Opt flag is not set             */
    if ((nOptFlag & 1) == 0) {
-      if(map->scale > 0) {
-         if((GET_LAYER(map, nIdxLayer)->maxscale > 0) && (map->scale > GET_LAYER(map, nIdxLayer)->maxscale))
+      if(map->scaledenom > 0) {
+         if((GET_LAYER(map, nIdxLayer)->maxscaledenom > 0) && (map->scaledenom > GET_LAYER(map, nIdxLayer)->maxscaledenom))
            return MS_SUCCESS;
-         if((GET_LAYER(map, nIdxLayer)->minscale > 0) && (map->scale <= GET_LAYER(map, nIdxLayer)->minscale))
+         if((GET_LAYER(map, nIdxLayer)->minscaledenom > 0) && (map->scaledenom <= GET_LAYER(map, nIdxLayer)->minscaledenom))
            return MS_SUCCESS;
       }
    }
@@ -1625,10 +1625,12 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    snprintf(szTmpstr, 128, "%d", nIdxLayer); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_index]", szTmpstr);
 
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->minscale); 
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->minscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_minscale]", szTmpstr);
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->maxscale); 
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_minscaledenom]", szTmpstr);
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->maxscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_maxscale]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_maxscaledenom]", szTmpstr);
 
    /*
     * Create a hash table that contain info
@@ -1744,10 +1746,10 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /* dont display layer if out of scale. */
    /* check this if Opt flag is not set */
    if ((nOptFlag & 1) == 0) {
-      if(map->scale > 0) {
-         if((GET_LAYER(map, nIdxLayer)->maxscale > 0) && (map->scale > GET_LAYER(map, nIdxLayer)->maxscale))
+      if(map->scaledenom > 0) {
+         if((GET_LAYER(map, nIdxLayer)->maxscaledenom > 0) && (map->scaledenom > GET_LAYER(map, nIdxLayer)->maxscaledenom))
            return MS_SUCCESS;
-         if((GET_LAYER(map, nIdxLayer)->minscale > 0) && (map->scale <= GET_LAYER(map, nIdxLayer)->minscale))
+         if((GET_LAYER(map, nIdxLayer)->minscaledenom > 0) && (map->scaledenom <= GET_LAYER(map, nIdxLayer)->minscaledenom))
            return MS_SUCCESS;
       }
    }
@@ -1768,10 +1770,12 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    snprintf(szTmpstr, 128, "%d", nIdxClass); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_index]", szTmpstr);
 
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->minscale); 
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->minscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_minscale]", szTmpstr);
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->maxscale); 
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_minscaledenom]", szTmpstr);
+   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->maxscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_maxscale]", szTmpstr);
+   *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_maxscaledenom]", szTmpstr);
 
    /*
     * Create a hash table that contain info
@@ -2003,7 +2007,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                                          msObj->Map->height);
    if(msCalculateScale(msObj->Map->extent, msObj->Map->units, 
                        msObj->Map->width, msObj->Map->height, 
-                       msObj->Map->resolution, &msObj->Map->scale) != MS_SUCCESS)
+                       msObj->Map->resolution, &msObj->Map->scaledenom) != MS_SUCCESS)
      return(NULL);
    
    /* start with the header if present */
@@ -2715,8 +2719,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%d", msObj->Map->height);
   outstr = msReplaceSubstring(outstr, "[mapheight]", repstr);
   
-  sprintf(repstr, "%f", msObj->Map->scale);
+  sprintf(repstr, "%f", msObj->Map->scaledenom);
   outstr = msReplaceSubstring(outstr, "[scale]", repstr);
+  outstr = msReplaceSubstring(outstr, "[scaledenom]", repstr);
   sprintf(repstr, "%f", msObj->Map->cellsize);
   outstr = msReplaceSubstring(outstr, "[cellsize]", repstr);
   
@@ -3254,7 +3259,7 @@ mapservObj*  msAllocMapServObj()
    sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid());
    
    msObj->CoordSource=NONE;
-   msObj->Scale=0;
+   msObj->ScaleDenom=0;
    
    msObj->ImgRows=-1;
    msObj->ImgCols=-1;
@@ -3485,7 +3490,7 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
     /* -------------------------------------------------------------------- */
     /*      process the template.                                           */
     /*                                                                      */
-    /*      TODO : use webminscale/maxscale depending on the scale.         */
+    /*      TODO : use web minscaledenom/maxscaledenom depending on the scale.         */
     /* -------------------------------------------------------------------- */
     if(msReturnPage(msObj, msObj->Map->web.template, BROWSE, &pszBuffer) != MS_SUCCESS) {
       msFree(pszBuffer);
