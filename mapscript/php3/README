@@ -182,7 +182,8 @@ Currently supported classes, properties and methods:
    rectObj      extent; 
    double       cellsize
    int          units (map units type)
-   double       scale (read-only, set by drawMap())
+   double       scaledenom (read-only, set by drawMap())
+   double       scale      (Deprecated in v5.0. Use scaledenom instead)
    string       shapepath
    int          keysizex
    int          keysizey
@@ -220,7 +221,7 @@ Currently supported classes, properties and methods:
         the symbol object reference section for more details.
 
    void preparequery()
-        Calculate the scale of the map and assign it to the map->scale.
+        Calculate the scale of the map and set map->scaledenom.
              
    imageObj prepareImage()
         Return handle on blank image object.
@@ -318,14 +319,15 @@ Currently supported classes, properties and methods:
         - Height : Height in pixel of the current image. 
         - Georef extent (rectObj) : current georef extents.
 
-   void zoomscale(double nScale, pointObj oPixelPos, int nImageWidth, 
+   void zoomscale(double nScaleDenom, pointObj oPixelPos, int nImageWidth, 
                   int nImageHeight, rectObj oGeorefExt [, rectObj oMaxGeorefExt])
 
     Zoom in or out to a given XY position so that the map is displayed
         at specified scale.
 
     Parmeters are :                                                 
-       - Scale : Scale at which the map should be displayed.
+       - ScaleDenom : Scale denominator of the scale at which the map 
+                      should be displayed.
        - Pixel position (pointObj) : x, y coordinates of the click, 
                                      with (0,0) at the top-left
        - Width : width in pixel of the current image.                 
@@ -461,7 +463,7 @@ Currently supported classes, properties and methods:
         The processing consists of opening the template file and replace
         all the tags found in it.
         Only tags that have an equivalent element in the map object are
-        replaced (ex [scale]). 
+        replaced (ex [scaledenom]). 
         The are two expetions to the previous statement :
           - [img], [scalebar], [ref], [legend] would be replaced with the 
             appropriate url if the parameter generateimages is set to 
@@ -599,11 +601,16 @@ Currently supported classes, properties and methods:
    double tolerance
    int    toleranceunits
    int    sizeunits
-   double symbolscale
-   double minscale
-   double maxscale
-   double labelminscale
-   double labelmaxscale
+   double symbolscaledenom
+   double minscaledenom
+   double maxscaledenom
+   double labelminscaledenom
+   double labelmaxscaledenom
+   double symbolscale   (Deprecated in v5.0, use symbolscaledenom instead)
+   double minscale      (Deprecated in v5.0, use minscaledenom instead)
+   double maxscale      (Deprecated in v5.0, use maxscaledenom instead)
+   double labelminscale (Deprecated in v5.0, use labelminscaledenom instead)
+   double labelmaxscale (Deprecated in v5.0, use labelmaxscaledenom instead)
    int    maxfeatures
    colorObj    offsite
    int    annotate
@@ -886,8 +893,10 @@ Currently supported classes, properties and methods:
    string title
    int    type
    int    status      (MS_ON, MS_OFF or MS_DELETE)
-   double    minscale
-   double    maxscale
+   double    minscaledenom
+   double    maxscaledenom
+   double    minscale  (Deprecated in v5.0, use minscaledenom instead)
+   double    maxscale  (Deprecated in v5.0, use maxscaledenom instead)
    string template
    labelObj label
    int    numstyles
@@ -1082,8 +1091,10 @@ Currently supported classes, properties and methods:
    string error     (read-only)
    string mintemplate
    string maxtemplate
-   double minscale
-   double maxscale
+   double minscaledenom
+   double maxscaledenom
+   double minscale  (Deprecated in v5.0, use minscaledenom instead)
+   double maxscale  (Deprecated in v5.0, use maxscaledenom instead)
    rectObj extent   (read-only)
    string queryformat
 
@@ -1820,14 +1831,15 @@ Constructor:
     double sizey
     int numpoints
     int filled;
-    int stylelength;
+    int patternlength;
+    int stylelength;  (Deprecated in v5.0, use patternlength instead.)
 
   Methods:
 
-     int set(string property_name, new_value)
+    int set(string property_name, new_value)
         Set object property to a new value.
 
-     int setpoints(array double)
+    int setpoints(array double)
         Set the points of the symbol. Note that the values passed if an
         array containing the x and y values of the points. Example
         array[0] = 1  : x value of the first point
@@ -1835,21 +1847,28 @@ Constructor:
         array[2] = 1 : x value of the 2nd point
         ....
 
-     int setstyle(array int)
-        Set the style of the symbol (used for dash patterns)
+    int setpattern(array int)
+        Set the pattern of the symbol (used for dash patterns)
 
-      array getpointsarray()
-         Returns an array containing the points of the symbol. Refer
-         to setpoints to see how the array should be interpreted.
+    array getpointsarray()
+        Returns an array containing the points of the symbol. Refer
+        to setpoints to see how the array should be interpreted.
 
-      array getstylearray()  
-        Returns an array containing the style.
+    array getpatternarray()  
+        Returns an array containing the pattern.
             
-      int setimagepath(char filename)
+    int setimagepath(char filename)
         Loads a pixmap symbol specified by the filename. 
         The file should be of either  Gif or Png format.
 
-  
+    int setstyle(array int)
+        Deprecated in v5.0, will be removed in a future release.
+        Use setpattern() instead.
+
+    array getstylearray()  
+        Deprecated in v5.0, will be removed in a future release.
+        Use getpatternarray() instead.
+
     Example of usage : crete a symbol to be used as a dash line
 
         $nId = ms_newsymbolobj($gpoMap, "mydash");
@@ -1863,14 +1882,13 @@ Constructor:
         $aPoints[1] = 1;
         $oSymbol->setpoints($aPoints);
     
-        $aStyle[0] = 10;
-        $aStyle[1] = 5;
-        $aStyle[2] = 5;
-        $aStyle[3] = 10;
-        $oSymbol->setstyle($aStyle);
+        $aPattern[0] = 10;
+        $aPattern[1] = 5;
+        $aPattern[2] = 5;
+        $aPattern[3] = 10;
+        $oSymbol->setpattern($aPattern);
 
         $style->set("symbolname", "mydash");
-
 
       
 

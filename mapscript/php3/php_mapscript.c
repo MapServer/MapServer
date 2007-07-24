@@ -916,9 +916,12 @@ function_entry php_symbol_class_functions[] = {
     {"set",             php3_ms_symbol_setProperty,     NULL},    
     {"setpoints",       php3_ms_symbol_setPoints,       NULL},    
     {"getpointsarray",  php3_ms_symbol_getPoints,       NULL},    
-    {"setstyle",        php3_ms_symbol_setStyle,        NULL},    
-    {"getstylearray",   php3_ms_symbol_getStyle,        NULL},    
-    {"setimagepath",   php3_ms_symbol_setImagepath,        NULL},    
+    {"setpattern",      php3_ms_symbol_setPattern,      NULL},    
+    {"getpatternarray", php3_ms_symbol_getPattern,      NULL},    
+    {"setimagepath",    php3_ms_symbol_setImagepath,    NULL},    
+/* TODO: setstyle and getstylearray deprecated in v5.0. To be removed in a later release */
+    {"setstyle",        php3_ms_symbol_setPattern,      NULL},    
+    {"getstylearray",   php3_ms_symbol_getPattern,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -1479,7 +1482,11 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
 
     add_property_double(return_value,"cellsize",  pMap->cellsize);
     add_property_long(return_value,  "units",     pMap->units);
-    add_property_double(return_value,"scale",     pMap->scale);
+
+    add_property_double(return_value,"scaledenom",pMap->scaledenom);
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    add_property_double(return_value,"scale",     pMap->scaledenom);
+
     add_property_double(return_value,"resolution",pMap->resolution);
     PHPMS_ADD_PROP_STR(return_value, "shapepath", pMap->shapepath);
     add_property_long(return_value,  "keysizex",  pMap->legend.keysizex);
@@ -1701,7 +1708,9 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "imagequality",self->imagequality)
     else IF_SET_DOUBLE("cellsize",    self->cellsize)
     else IF_SET_LONG(  "units",       self->units)
-    else IF_SET_DOUBLE("scale",       self->scale)
+    else IF_SET_DOUBLE("scaledenom",  self->scaledenom)
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    else IF_SET_DOUBLE("scale",       self->scaledenom)
     else IF_SET_DOUBLE("resolution",  self->resolution)
     else IF_SET_STRING("shapepath",   self->shapepath)
     else IF_SET_LONG(  "keysizex",    self->legend.keysizex)
@@ -1777,7 +1786,9 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     /* We still sync the class members even if the call failed */
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"),
                        (void *)&pExtent) == SUCCESS)
@@ -1880,7 +1891,9 @@ DLEXPORT void php3_ms_map_setSize(INTERNAL_FUNCTION_PARAMETERS)
      * then they'll be sync'd 
      */
     _phpms_set_property_double(pThis, "cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
-    _phpms_set_property_double(pThis, "scale",    self->scale,    E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis, "scaledenom",self->scaledenom,E_ERROR TSRMLS_CC); 
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    _phpms_set_property_double(pThis, "scale",    self->scaledenom,E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis, "width",    self->width,    E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis, "height",   self->height,   E_ERROR TSRMLS_CC); 
 
@@ -1957,10 +1970,12 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
             self->cellsize = msAdjustExtent(&(self->extent), self->width, 
                                             self->height); 
             msCalculateScale(self->extent, self->units, self->width, self->height, 
-                             self->resolution, &(self->scale));
+                             self->resolution, &(self->scaledenom));
 
             _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
-            _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+            _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+            /* TODO: scale deprecated in v5.0 remove in future release */
+            _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
             _phpms_set_property_long(pThis,"units", self->units, E_ERROR TSRMLS_CC); 
 
             if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
@@ -2363,9 +2378,9 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
     }
 
-    if (self->web.maxscale > 0)
+    if (self->web.maxscaledenom > 0)
     {
-        if (pZoomFactor->value.lval < 0 && dfNewScale >  self->web.maxscale)
+        if (pZoomFactor->value.lval < 0 && dfNewScale >  self->web.maxscaledenom)
         {
             RETURN_FALSE;
         }
@@ -2375,11 +2390,11 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 /*      we do a spcial case for zoom in : we try to zoom as much as     */
 /*      possible using the mincale set in the .map.                     */
 /* ==================================================================== */
-    if (self->web.minscale > 0 && dfNewScale <  self->web.minscale &&
+    if (self->web.minscaledenom > 0 && dfNewScale <  self->web.minscaledenom &&
         pZoomFactor->value.lval > 1)
     {
         dfDeltaExt = 
-            GetDeltaExtentsUsingScale(self->web.minscale, self->units,
+            GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units,
                                       dfGeoPosY, self->width, 
                                       self->resolution);
         if (dfDeltaExt > 0.0)
@@ -2467,13 +2482,15 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     if (msCalculateScale(self->extent, self->units, self->width, self->height, 
-                         self->resolution, &(self->scale)) != MS_SUCCESS)
+                         self->resolution, &(self->scaledenom)) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void *)&pExtent) == SUCCESS)
@@ -2643,12 +2660,12 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
     }
 
-    if (self->web.maxscale > 0 &&  dfNewScale > self->web.maxscale)
+    if (self->web.maxscaledenom > 0 &&  dfNewScale > self->web.maxscaledenom)
     {
         RETURN_FALSE;
     }
 
-    if (self->web.minscale > 0 && dfNewScale <  self->web.minscale)
+    if (self->web.minscaledenom > 0 && dfNewScale <  self->web.minscaledenom)
     {
         dfMiddleX = oNewGeorefExt.minx + 
             ((oNewGeorefExt.maxx - oNewGeorefExt.minx)/2);
@@ -2656,7 +2673,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
             ((oNewGeorefExt.maxy - oNewGeorefExt.miny)/2);
         
         dfDeltaExt = 
-            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
+            GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, 
                                       dfMiddleY, self->width, 
                                       self->resolution);
 
@@ -2743,13 +2760,15 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     if (msCalculateScale(self->extent, self->units, self->width, self->height, 
-                         self->resolution, &(self->scale)) != MS_SUCCESS)
+                         self->resolution, &(self->scaledenom)) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                         (void *)&pExtent) == SUCCESS)
@@ -2955,9 +2974,9 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_ERROR);
     }
 
-    if (self->web.maxscale > 0)
+    if (self->web.maxscaledenom > 0)
     {
-        if (dfCurrentScale < dfNewScale && dfNewScale >  self->web.maxscale)
+        if (dfCurrentScale < dfNewScale && dfNewScale >  self->web.maxscaledenom)
         {
             RETURN_FALSE;
         }
@@ -2967,11 +2986,11 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 /*      we do a special case for zoom in : we try to zoom as much as    */
 /*      possible using the mincale set in the .map.                     */
 /* ==================================================================== */
-    if (self->web.minscale > 0 && dfNewScale <  self->web.minscale &&
+    if (self->web.minscaledenom > 0 && dfNewScale <  self->web.minscaledenom &&
         dfCurrentScale > dfNewScale)
     {
         dfDeltaExt = 
-            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
+            GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, 
                                       dfGeoPosY, self->width, 
                                       self->resolution);
         if (dfDeltaExt > 0.0)
@@ -3060,13 +3079,15 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     if (msCalculateScale(self->extent, self->units, self->width, self->height, 
-                         self->resolution, &(self->scale)) != MS_SUCCESS)
+                         self->resolution, &(self->scaledenom)) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
-    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+    _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void *)&pExtent) == SUCCESS)
@@ -3259,7 +3280,9 @@ DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
 
         _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
                                  E_ERROR TSRMLS_CC); 
-        _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+        _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+        /* TODO: scale deprecated in v5.0 remove in future release */
+        _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
     }
     
 }
@@ -3301,7 +3324,9 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
          _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
                                     E_ERROR TSRMLS_CC); 
-         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+         _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+         /* TODO: scale deprecated in v5.0 remove in future release */
+         _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void *)&pExtent) == SUCCESS)
@@ -3362,7 +3387,9 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
          _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
                                     E_ERROR TSRMLS_CC); 
-         _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR TSRMLS_CC); 
+         _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
+         /* TODO: scale deprecated in v5.0 remove in future release */
+         _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void *)&pExtent) == SUCCESS)
@@ -5512,7 +5539,9 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_set_property_double(pThis,"cellsize",  self->cellsize, E_ERROR TSRMLS_CC);
     _phpms_set_property_long(pThis,  "units",     self->units, E_ERROR TSRMLS_CC);
-    _phpms_set_property_double(pThis,"scale",     self->scale, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis,"scaledenom",self->scaledenom, E_ERROR TSRMLS_CC);
+    /* TODO: scale deprecated in v5.0 remove in future release */
+    _phpms_set_property_double(pThis,"scale",     self->scaledenom, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis,  "resolution",self->resolution, E_ERROR TSRMLS_CC);
     if(self->shapepath)
         _phpms_set_property_string(pThis, "shapepath",self->shapepath,E_ERROR TSRMLS_CC);
@@ -6391,11 +6420,20 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_double(return_value, "tolerance",  player->tolerance);
     add_property_long(return_value,   "toleranceunits",player->toleranceunits);
     add_property_long(return_value,   "sizeunits",  player->sizeunits);
-    add_property_double(return_value, "symbolscale",player->symbolscale);
-    add_property_double(return_value, "minscale",   player->minscale);
-    add_property_double(return_value, "maxscale",   player->maxscale);
-    add_property_double(return_value, "labelminscale",player->labelminscale);
-    add_property_double(return_value, "labelmaxscale",player->labelmaxscale);
+
+    add_property_double(return_value, "symbolscaledenom",player->symbolscaledenom);
+    add_property_double(return_value, "minscaledenom",   player->minscaledenom);
+    add_property_double(return_value, "maxscaledenom",   player->maxscaledenom);
+    add_property_double(return_value, "labelminscaledenom",player->labelminscaledenom);
+    add_property_double(return_value, "labelmaxscaledenom",player->labelmaxscaledenom);
+
+    /* TODO: *scale deprecated in v5.0. Remove in future release */
+    add_property_double(return_value, "symbolscale",player->symbolscaledenom);
+    add_property_double(return_value, "minscale",   player->minscaledenom);
+    add_property_double(return_value, "maxscale",   player->maxscaledenom);
+    add_property_double(return_value, "labelminscale",player->labelminscaledenom);
+    add_property_double(return_value, "labelmaxscale",player->labelmaxscaledenom);
+
     add_property_long(return_value,   "maxfeatures",player->maxfeatures);
     add_property_long(return_value,   "transform",  player->transform);
     add_property_long(return_value,   "labelcache", player->labelcache);
@@ -6548,11 +6586,18 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("tolerance",  self->tolerance)
     else IF_SET_LONG(  "toleranceunits",self->toleranceunits)
     else IF_SET_LONG(  "sizeunits",  self->sizeunits)
-    else IF_SET_DOUBLE("symbolscale",self->symbolscale)
-    else IF_SET_DOUBLE("minscale",   self->minscale)
-    else IF_SET_DOUBLE("maxscale",   self->maxscale)
-    else IF_SET_DOUBLE("labelminscale",self->labelminscale)
-    else IF_SET_DOUBLE("labelmaxscale",self->labelmaxscale)
+    else IF_SET_DOUBLE("symbolscaledenom",self->symbolscaledenom)
+    else IF_SET_DOUBLE("minscaledenom",   self->minscaledenom)
+    else IF_SET_DOUBLE("maxscaledenom",   self->maxscaledenom)
+    else IF_SET_DOUBLE("labelminscaledenom",self->labelminscaledenom)
+    else IF_SET_DOUBLE("labelmaxscaledenom",self->labelmaxscaledenom)
+    /* TODO: *scale deprecated in v5.0. Remove in future release */
+    else IF_SET_DOUBLE("symbolscale",self->symbolscaledenom)
+    else IF_SET_DOUBLE("minscale",   self->minscaledenom)
+    else IF_SET_DOUBLE("maxscale",   self->maxscaledenom)
+    else IF_SET_DOUBLE("labelminscale",self->labelminscaledenom)
+    else IF_SET_DOUBLE("labelmaxscale",self->labelmaxscaledenom)
+
     else IF_SET_LONG(  "maxfeatures",self->maxfeatures)
     else IF_SET_LONG(  "transform",  self->transform)
     else IF_SET_LONG(  "labelcache", self->labelcache)
@@ -8639,9 +8684,12 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     _phpms_build_label_object(&(pclass->label), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR TSRMLS_CC);
 
-    add_property_double(return_value,  "minscale", pclass->minscale);
-    add_property_double(return_value,  "maxscale", pclass->maxscale);
-    
+    add_property_double(return_value,  "minscaledenom", pclass->minscaledenom);
+    add_property_double(return_value,  "maxscaledenom", pclass->maxscaledenom);
+    /* TODO: *scale deprecated in v5.0. Remove in future release */
+    add_property_double(return_value,  "minscale", pclass->minscaledenom);
+    add_property_double(return_value,  "maxscale", pclass->maxscaledenom);
+
     PHPMS_ADD_PROP_STR(return_value,  "keyimage",   pclass->template);
     
     return class_id;
@@ -8760,12 +8808,16 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_string(pPropertyName);
 
-    IF_SET_STRING(     "name",         self->name)
+    IF_SET_STRING(     "name",          self->name)
     else IF_SET_STRING("title",         self->title)
-    else IF_SET_LONG(  "type",         self->type)
-    else IF_SET_LONG(  "status",       self->status)
-    else IF_SET_DOUBLE("minscale", self->minscale)
-    else IF_SET_DOUBLE("maxscale", self->maxscale)
+    else IF_SET_LONG(  "type",          self->type)
+    else IF_SET_LONG(  "status",        self->status)
+    else IF_SET_DOUBLE("minscaledenom", self->minscaledenom)
+    else IF_SET_DOUBLE("maxscaledenom", self->maxscaledenom)
+    /* TODO: *scale deprecated in v5.0. Remove in future release */
+    else IF_SET_DOUBLE("minscale",      self->minscaledenom)
+    else IF_SET_DOUBLE("maxscale",      self->maxscaledenom)
+
     else IF_SET_STRING("template",      self->template)
     else IF_SET_STRING("keyimage",      self->keyimage)       
     else if (strcmp( "numstyles", pPropertyName->value.str.val) == 0)
@@ -11849,9 +11901,14 @@ static long _phpms_build_web_object(webObj *pweb,
     PHPMS_ADD_PROP_STR(return_value,  "error",          pweb->error);
     PHPMS_ADD_PROP_STR(return_value,  "mintemplate",    pweb->mintemplate);
     PHPMS_ADD_PROP_STR(return_value,  "maxtemplate",    pweb->maxtemplate);
-    add_property_double(return_value,   "minscale",       pweb->minscale);
-    add_property_double(return_value,   "maxscale",       pweb->maxscale);
-    PHPMS_ADD_PROP_STR(return_value,  "queryformat",       pweb->queryformat);
+
+    add_property_double(return_value, "minscaledenom",  pweb->minscaledenom);
+    add_property_double(return_value, "maxscaledenom",  pweb->maxscaledenom);
+    /* TODO: *scale deprecated in v5.0. Remove in future release */
+    add_property_double(return_value, "minscale",       pweb->minscaledenom);
+    add_property_double(return_value, "maxscale",       pweb->maxscaledenom);
+
+    PHPMS_ADD_PROP_STR(return_value,  "queryformat",    pweb->queryformat);
     
     
 #ifdef PHP4
@@ -11909,17 +11966,20 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     
-    IF_SET_STRING(       "log",         self->log)
-    else IF_SET_STRING(  "imagepath",   self->imagepath)
-    else IF_SET_STRING(  "template",   self->template) 
-    else IF_SET_STRING(  "imageurl",   self->imageurl)
-    else IF_SET_STRING(  "header",   self->header)
-    else IF_SET_STRING(  "footer",   self->footer)
+    IF_SET_STRING(       "log",           self->log)
+    else IF_SET_STRING(  "imagepath",     self->imagepath)
+    else IF_SET_STRING(  "template",      self->template) 
+    else IF_SET_STRING(  "imageurl",      self->imageurl)
+    else IF_SET_STRING(  "header",        self->header)
+    else IF_SET_STRING(  "footer",        self->footer)
     else IF_SET_STRING(  "mintemplate",   self->mintemplate) 
     else IF_SET_STRING(  "maxtemplate",   self->maxtemplate) 
     else IF_SET_STRING(  "queryformat",   self->queryformat) 
-    else IF_SET_LONG(    "minscale",   self->minscale)
-    else IF_SET_LONG(    "maxscale",   self->maxscale)  
+    else IF_SET_LONG(    "minscaledenom", self->minscaledenom)
+    else IF_SET_LONG(    "maxscaledenom", self->maxscaledenom)  
+    /* TODO: *scale deprecated in v5.0. Remove in future release */
+    else IF_SET_LONG(    "minscale",      self->minscaledenom)
+    else IF_SET_LONG(    "maxscale",      self->maxscaledenom)  
     else if (strcmp( "empty", pPropertyName->value.str.val) == 0 ||
              strcmp( "error",  pPropertyName->value.str.val) == 0 ||
              strcmp( "extent", pPropertyName->value.str.val) == 0)
@@ -14258,14 +14318,18 @@ static long _phpms_build_symbol_object(symbolObj *psSymbol,
     add_property_resource(return_value, "_map_handle_", parent_map_id);
     zend_list_addref(parent_map_id);
 
-    PHPMS_ADD_PROP_STR(return_value,  "name", psSymbol->name);
-    add_property_long(return_value,   "type",     psSymbol->type);
-    add_property_long(return_value,   "inmapfile",     psSymbol->inmapfile);
-    add_property_double(return_value,   "sizex",     psSymbol->sizex);
-    add_property_double(return_value,   "sizey",     psSymbol->sizey);
-    add_property_long(return_value,   "numpoints",     psSymbol->numpoints);
+    PHPMS_ADD_PROP_STR(return_value,  "name",       psSymbol->name);
+    add_property_long(return_value,   "type",       psSymbol->type);
+    add_property_long(return_value,   "inmapfile",  psSymbol->inmapfile);
+    add_property_double(return_value, "sizex",      psSymbol->sizex);
+    add_property_double(return_value, "sizey",      psSymbol->sizey);
+    add_property_long(return_value,   "numpoints",  psSymbol->numpoints);
     add_property_long(return_value,   "filled",     psSymbol->filled);
-    add_property_long(return_value,   "stylelength",     psSymbol->stylelength);
+    add_property_long(return_value,   "patternlength", psSymbol->patternlength);
+
+    /* TODO: stylelength deprecated in v5.0. To be removed in a later release*/
+    add_property_long(return_value,   "stylelength", psSymbol->patternlength);
+
     //PHPMS_ADD_PROP_STR(return_value,  "imagepath", psSymbol->imagepath);
     //add_property_long(return_value,   "transparent",     psSymbol->transparent);
     //add_property_long(return_value,   "transparentcolor", 
@@ -14304,13 +14368,14 @@ DLEXPORT void php3_ms_symbol_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_string(pPropertyName);
 
-    IF_SET_STRING( "name",   self->name)
-    else IF_SET_LONG(  "type",             self->type)
-    else IF_SET_LONG(  "inmapfile",             self->inmapfile)
-    else IF_SET_DOUBLE(  "sizex",             self->sizex)
-    else IF_SET_DOUBLE(  "sizey",             self->sizey)
-    else IF_SET_LONG(  "filled",             self->filled)
+    IF_SET_STRING( "name",          self->name)
+    else IF_SET_LONG(  "type",      self->type)
+    else IF_SET_LONG(  "inmapfile", self->inmapfile)
+    else IF_SET_DOUBLE(  "sizex",   self->sizex)
+    else IF_SET_DOUBLE(  "sizey",   self->sizey)
+    else IF_SET_LONG(  "filled",    self->filled)
     else if (strcmp( "numpoints", pPropertyName->value.str.val) == 0 ||
+             strcmp( "patternlength", pPropertyName->value.str.val) == 0 ||
              strcmp( "stylelength", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 

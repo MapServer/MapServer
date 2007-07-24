@@ -100,8 +100,8 @@ int mapObj_getSymbolByName(mapObj* self, char *name) {
 void mapObj_prepareQuery(mapObj* self) {
     int status;
 
-    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
-    if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scaledenom);
+    if(status != MS_SUCCESS) self->scaledenom = -1; // degenerate extents ok here
   }
 
 imageObj *mapObj_prepareImage(mapObj* self) {
