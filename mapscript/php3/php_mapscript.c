@@ -6448,6 +6448,8 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
     PHPMS_ADD_PROP_STR(return_value,  "template", player->template);
     add_property_long(return_value,   "opacity", player->opacity);
+    /* TODO: transparency deprecated in v5.0. Remove in future release */
+    add_property_long(return_value,   "transparency", player->opacity);
     PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
     add_property_long(return_value,   "num_processing",player->numprocessing);
     PHPMS_ADD_PROP_STR(return_value,  "requires",   player->requires);
@@ -6612,6 +6614,8 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "opacity", self->opacity)
+    /* TODO: transparency deprecated in v5.0. Remove in future release */
+    else IF_SET_LONG(  "transparency",self->opacity)
     else IF_SET_STRING("styleitem",  self->styleitem)
     else IF_SET_STRING("requires",   self->requires)
     else IF_SET_STRING("labelrequires",   self->labelrequires)

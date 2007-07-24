@@ -628,7 +628,8 @@ Currently supported classes, properties and methods:
    int    connectiontype
    string filteritem
    string template
-   int    transparency
+   int    opacity
+   int    transparency (Deprecated in v5.0. Use opacity instead.)
    string styleitem
    gridObj grid //only available on a layer defined as grid (MS_GRATICULE)
    int num_processing
