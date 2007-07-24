@@ -119,6 +119,8 @@ MS_DLL_EXPORT char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *ps
                                             layerObj *lp);
 MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
+MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
+
 #ifdef USE_SOS_SVR
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities();
 #endif

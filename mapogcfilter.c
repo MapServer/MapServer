@@ -3660,6 +3660,19 @@ int FLTHasSpatialFilter(FilterEncodingNode *psNode)
     return MS_FALSE;
 }
 
+
+FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
+{
+    FilterEncodingNode *psFilterNode = NULL;
+    if (pszString)
+    {
+        psFilterNode = FLTCreateFilterEncodingNode();
+        psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
+        psFilterNode->pszValue =  strdup(pszString);
+        return psFilterNode;
+    }
+    return NULL;
+}
 #ifdef USE_SOS_SVR
 
 xmlNodePtr FLTGetCapabilities()

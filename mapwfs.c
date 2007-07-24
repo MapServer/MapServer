@@ -1227,6 +1227,53 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       if (paszFilter)
 	free(paszFilter);
     }/* end if filter set */
+
+    if (bFeatureIdSet)
+    {
+        char **tokens = NULL;
+        int nTokens = 0, j=0;
+        FilterEncodingNode *psNode = NULL;
+	/*extract the layer based on the featureid : expecting layername.value*/
+        tokens = msStringSplit(paramsObj->pszFeatureId, '.', &nTokens);
+        if (!tokens || nTokens != 2)
+        {
+            msSetError(MS_WFSERR, 
+		     "Invalid FeatureId in GetFeature. Expecting layername.value : %s", 
+		     "msWFSGetFeature()", pszFilter);
+            if (tokens)
+              msFreeCharArray(tokens, nTokens);
+	  return msWFSException(map, paramsObj->pszVersion);
+        }
+        for (j=0; j<map->numlayers; j++) 
+        {
+            layerObj *lp;
+            lp = GET_LAYER(map, j);
+            if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, tokens[0]) == 0)
+            {
+                lp->status = MS_ON;
+                if (lp->template == NULL) {
+                    /* Force setting a template to enable query. */
+                    lp->template = strdup("ttt.html");
+                }
+                psNode = FLTCreateFeatureIdFilterEncoding(paramsObj->pszFeatureId);
+                if (!psNode) {
+                    msSetError(MS_WFSERR, 
+                               "Invalid or Unsupported FeatureId in GetFeature : %s", 
+                               "msWFSGetFeature()", pszFilter);
+                    return msWFSException(map, paramsObj->pszVersion);
+                }
+
+                if( FLTApplyFilterToLayer(psNode, map, lp->index, MS_FALSE) != MS_SUCCESS )
+                  return msWFSException(map, paramsObj->pszVersion);
+
+                FLTFreeFilterEncodingNode( psNode );
+                psNode = NULL;
+                break;
+            }
+        }
+        if (tokens)
+          msFreeCharArray(tokens, nTokens);
+    }
 #endif
 
     if(layers)
