@@ -407,6 +407,17 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
 
     MS_COPYSTELEM(status);
 
+    /* free any previous styles on the dst layer*/
+    for(i=0;i<dst->numstyles;i++) { /* each style     */
+      if (dst->styles[i]!=NULL) {
+    	if( freeStyle(dst->styles[i]) == MS_SUCCESS ) {
+          msFree(dst->styles[i]);
+	}
+      }
+    }
+    msFree(dst->styles);
+    dst->numstyles = 0;
+
     for (i = 0; i < src->numstyles; i++) {
         if (msGrowClassStyles(dst) == NULL)
             return MS_FAILURE;
@@ -418,6 +429,8 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
             msSetError(MS_MEMERR, "Failed to copy style.", "msCopyClass()");
             return MS_FAILURE;
         }
+
+        dst->numstyles++;
     }
 
     if (msCopyLabel(&(dst->label), &(src->label)) != MS_SUCCESS) {
