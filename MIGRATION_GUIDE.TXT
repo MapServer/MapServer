@@ -100,7 +100,19 @@ PHP/MapScript changes
 ----------------------------------------------------
 
 Layer Transparency: The layerObj transparency parameter is now called
-opacity. Scripts setting that value in code must be updated.
+opacity. The old "transparency" name is deprecated and will be removed in
+a future release. Scripts getting/setting that value in code must be updated.
+
+All occurences of scale, minscale, maxscale, etc... parameters have been
+deprecated and renamed with a "denom" suffix (e.g. minscale becomes 
+minscaledenom, etc.). The deprecated parameters will be removed in a
+future release. Scripts getting/setting them must be updated.
+
+SymbolObj style has been renamed pattern. The old "stylelength" parameter
+and setStyle() and getStyleArray() methods have been deprecated and 
+"patternlength", setPattern() and getPatternArray() should be used 
+instead. They will be removed in a future release.
+
 
 ----------------------------------------------------
 OGC Web Mapping Service (WMS)
