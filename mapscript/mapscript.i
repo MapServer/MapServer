@@ -33,7 +33,7 @@
 %module mapscript
 
 %{
-#include "../../map.h"
+#include "../../mapserver.h"
 #include "../../maptemplate.h"
 #include "../../mapogcsld.h"
 #include "../../mapows.h"
@@ -221,7 +221,7 @@ typedef struct {
 =============================================================================
 */
 
-%include "../../map.h"
+%include "../../mapserver.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
 %include "../../mapproject.h"
