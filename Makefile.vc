@@ -44,7 +44,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapogcsos.obj mappostgresql.obj mapcrypto.obj mapowscommon.obj \
 		mapdebug.obj mapchart.obj $(EPPL_OBJ) $(REGEX_OBJ)
 
-MS_HDRS = 	map.h mapfile.h
+MS_HDRS = 	mapserver.h mapfile.h
 
 MS_EXE = 	mapserv.exe \
                 shp2img.exe legend.exe \
@@ -136,7 +136,7 @@ mapscriptvars: makefile.vc nmake.opt
 	echo $(INCLUDES) >> mapscriptvars
 	echo $(LIBS_DLL) >> mapscriptvars
 	echo $(LIBS) >> mapscriptvars
-	findstr MS_VERSION map.h | findstr define >> mapscriptvars
+	findstr MS_VERSION mapserver.h | findstr define >> mapscriptvars
 
 install: $(MS_DLL) $(MS_EXE) python csharp java php
 	-mkdir $(BINDIR)
