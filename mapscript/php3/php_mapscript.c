@@ -342,8 +342,8 @@ DLEXPORT void php3_ms_symbol_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_getPoints(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_setPattern(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_getPattern(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_querymap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -14446,9 +14446,9 @@ DLEXPORT void php3_ms_symbol_getPoints(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /**********************************************************************
- *                        symbol->getstylearray()
+ *                        symbol->getpatternarray()
  **********************************************************************/
-DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_symbol_getPattern(INTERNAL_FUNCTION_PARAMETERS)
 {
     symbolObj *self;
     pval        *pThis;
@@ -14471,11 +14471,11 @@ DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS)
      if (self == NULL)
        RETURN_FALSE;
 
-     if (self->stylelength > 0)
+     if (self->patternlength > 0)
      {
-         for (i=0; i<self->stylelength; i++)
+         for (i=0; i<self->patternlength; i++)
          {
-             add_next_index_double(return_value, self->style[i]);
+             add_next_index_double(return_value, self->pattern[i]);
          }
      }
      else
@@ -14485,13 +14485,13 @@ DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS)
          
 
 /**********************************************************************
- *                        symbol->setstyle()
+ *                        symbol->setpattern()
  **********************************************************************/
 
-/* {{{ proto int symbol.setstyle(array points, int numpoints)
-   Set the style of the symbol ) */ 
+/* {{{ proto int symbol.setpattern(array points, int numpoints)
+   Set the pattern of the symbol ) */ 
 
-DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_symbol_setPattern(INTERNAL_FUNCTION_PARAMETERS)
 {
     symbolObj *self;
     pval   *pPoints, *pThis;
@@ -14499,7 +14499,6 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     pval        **pValue = NULL;
     int i=0, nElements = 0;
  
-
     pThis = getThis();
 
     if (pThis == NULL ||
@@ -14517,7 +14516,7 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     if (pPoints->type != IS_ARRAY) 
     {
         php_error(E_WARNING, 
-                  "symbol->setstyle : expected array as parameter");
+                  "symbol->setpattern : expected array as parameter");
         RETURN_FALSE;
     }
 
@@ -14526,7 +14525,7 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     if (nElements <=0)
     {
         php_error(E_WARNING, 
-                  "symbol->setpoints : invalid array as parameter. Array sould have at least two entries.");
+                  "symbol->setpattern : invalid array as parameter. Array sould have at least two entries.");
         RETURN_FALSE;
     }
     
@@ -14539,13 +14538,13 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
             RETURN_FALSE;
         }
         convert_to_long((*pValue));
-        self->style[i] = (*pValue)->value.lval;
+        self->pattern[i] = (*pValue)->value.lval;
         i++;
     }
     
-    self->stylelength = nElements;
+    self->patternlength = nElements;
 
-    _phpms_set_property_long(pThis,"stylelength", self->stylelength , E_ERROR TSRMLS_CC); 
+    _phpms_set_property_long(pThis,"patternlength", self->patternlength , E_ERROR TSRMLS_CC); 
 
     RETURN_TRUE;
 }

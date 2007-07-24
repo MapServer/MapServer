@@ -1528,9 +1528,9 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
         aszValues = msStringSplit(pszDashArray, ' ', &nDash);
         if (nDash > 0)
         {
-            psSymbol->stylelength = nDash;
+            psSymbol->patternlength = nDash;
             for (i=0; i<nDash; i++)
-              psSymbol->style[i] = atoi(aszValues[i]);
+              psSymbol->pattern[i] = atoi(aszValues[i]);
 
             msFreeCharArray(aszValues, nDash);
         }
@@ -1654,9 +1654,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
             aszValues = msStringSplit(pszDashValue, ' ', &nDash);
             if (nDash > 0)
             {
-                psSymbol->stylelength = nDash;
+                psSymbol->patternlength = nDash;
                 for (i=0; i<nDash; i++)
-                  psSymbol->style[i] = atoi(aszValues[i]);
+                  psSymbol->pattern[i] = atoi(aszValues[i]);
 
                 msFreeCharArray(aszValues, nDash);
             }
@@ -3268,11 +3268,11 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
     if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
     {
         psSymbol =  psLayer->map->symbolset.symbol[nSymbol];
-        if (psSymbol->stylelength > 0)
+        if (psSymbol->patternlength > 0)
         {
-            for (i=0; i<psSymbol->stylelength; i++)
+            for (i=0; i<psSymbol->patternlength; i++)
             {
-                sprintf(szTmp, "%d ", psSymbol->style[i]);
+                sprintf(szTmp, "%d ", psSymbol->pattern[i]);
                 pszDashArray = msStringConcatenate(pszDashArray, szTmp);
             }
             sprintf(szTmp, 

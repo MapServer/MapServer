@@ -238,6 +238,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>overlaysize                { return(OVERLAYSIZE); }
 <INITIAL,URL_STRING>overlaysymbol              { return(OVERLAYSYMBOL); }
 <INITIAL>partials                              { return(PARTIALS); }
+<INITIAL>pattern                               { return(PATTERN); }
 <INITIAL,URL_STRING>points                     { return(POINTS); }
 <INITIAL,URL_STRING>position                   { return(POSITION); }
 <INITIAL>postlabelcache                        { return(POSTLABELCACHE); }

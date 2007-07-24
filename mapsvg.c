@@ -562,11 +562,11 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     if(style->symbol == 0) 
       imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
                     p, &style->color, width,
-                    symbol->stylelength,  symbol->style);
+                    symbol->patternlength,  symbol->pattern);
     else
       imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
                     p, &style->color, (int)size,
-                    symbol->stylelength,  symbol->style);
+                    symbol->patternlength,  symbol->pattern);
         return;
     
 
@@ -743,7 +743,7 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
       psOutlineColor = &sOc;
 
     imageFillPolygon(image->img.svg->stream, image->img.svg->compressed ,p, psFillColor, psOutlineColor, size,
-                     symbol->stylelength,  symbol->style);
+                     symbol->patternlength,  symbol->pattern);
 
 }
 

@@ -696,12 +696,12 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
     break;
   }  
 
-  if(symbol->stylelength > 0) {
+  if(symbol->patternlength > 0) {
     int k=0, sc;
    
     sc = fc; // start with foreground color
-    for(i=0; i<symbol->stylelength; i++) {      
-      for(j=0; j<symbol->style[i]; j++) {
+    for(i=0; i<symbol->patternlength; i++) {      
+      for(j=0; j<symbol->pattern[i]; j++) {
 	styleDashed[k] = sc;
 	k++;
       } 
@@ -1340,12 +1340,12 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
     break;
   }  
 
-  if(symbol->stylelength > 0) {
+  if(symbol->patternlength > 0) {
     int k=0, sc;
    
     sc = fc; // start with foreground color
-    for(i=0; i<symbol->stylelength; i++) {      
-      for(j=0; j<symbol->style[i]; j++) {
+    for(i=0; i<symbol->patternlength; i++) {      
+      for(j=0; j<symbol->pattern[i]; j++) {
 	styleDashed[k] = sc;
 	k++;
       } 

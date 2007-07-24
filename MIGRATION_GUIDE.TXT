@@ -41,6 +41,17 @@ been backwards and in an effort to resolve that the parameter has been
 renamed OPACITY. TRANSPARENCY is still recognized by the mapfile parser
 but is depricated and should be avoided. 
 
+--------------
+Symbol file changes
+--------------
+
+Symbol Style: STYLEs are used within a symbol definition to store dash
+patterns for line symbolization. However, there is potential confusion
+with the style object that is used within class definitions. To resolve
+that confusion the symbol STYLE parameter has been renamed PATTERN. The
+symbol file parser will still recognize the STYLE keyword but it is 
+depricated and should be avoided.
+
 ----------------------------------------------------
 Styling/Symbolgy changes
 ----------------------------------------------------
@@ -58,6 +69,11 @@ SWIG MapScript (Python, Perl, CSharp, Java) changes
 
 Layer Transparency: The layerObj transparency parameter is now called
 opacity. Scripts setting that value in code must be updated.
+
+Symbol Style: the symbolObj style parameter is now called pattern. MapScript
+does not allow direct modification of that parameter. In Swig-based languages
+the symbolObj method setStyle is now called setPattern. In PHP/MapScript, the
+methods setStyle and getStyle are now called setPattern and getPattern.
 
 CSharp related changes
 -----------------------

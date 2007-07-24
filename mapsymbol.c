@@ -126,7 +126,7 @@ void initSymbol(symbolObj *s)
   s->type = MS_SYMBOL_VECTOR;
   s->transparent = MS_FALSE;
   s->transparentcolor = 0;
-  s->stylelength = 0; /* solid line */
+  s->patternlength = 0; /* solid line */
   s->sizex = 0;
   s->sizey = 0;
   s->filled = MS_FALSE;
@@ -280,6 +280,35 @@ int loadSymbol(symbolObj *s, char *symbolpath)
     case(NAME):
       if(getString(&s->name) == MS_FAILURE) return(-1);
       break;
+    case(STYLE): /* depricated */
+      /* TODO: output warning */
+    case(PATTERN):
+      done = MS_FALSE;
+      for(;;) { /* read till the next END */
+	switch(msyylex()) {  
+	case(END):
+	  if(s->patternlength < 2) {
+	    msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required", "loadSymbol()");
+	    return(-1);
+	  }	  
+	  done = MS_TRUE;
+	  break;
+	case(MS_NUMBER): /* read the pattern values */
+	  if(s->patternlength == MS_MAXPATTERNLENGTH) {
+	    msSetError(MS_SYMERR, "Pattern too long.", "loadSymbol()");
+	    return(-1);
+	  }
+	  s->pattern[s->patternlength] = atoi(msyytext);
+	  s->patternlength++;
+	  break;
+	default:
+	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
+	  return(-1);
+	}
+	if(done == MS_TRUE)
+	  break;
+      }      
+      break;
     case(POINTS):
       done = MS_FALSE;
       for(;;) {
@@ -303,33 +332,6 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	  break;
       }
       break;    
-    case(STYLE):      
-      done = MS_FALSE;
-      for(;;) { /* read till the next END */
-	switch(msyylex()) {  
-	case(END):
-	  if(s->stylelength < 2) {
-	    msSetError(MS_SYMERR, "Not enough style elements. A minimum of 2 are required", "loadSymbol()");
-	    return(-1);
-	  }	  
-	  done = MS_TRUE;
-	  break;
-	case(MS_NUMBER): /* read the style values */
-	  if(s->stylelength == MS_MAXSTYLELENGTH) {
-	    msSetError(MS_SYMERR, "Style too long.", "loadSymbol()");
-	    return(-1);
-	  }
-	  s->style[s->stylelength] = atoi(msyytext);
-	  s->stylelength++;
-	  break;
-	default:
-	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
-	  return(-1);
-	}
-	if(done == MS_TRUE)
-	  break;
-      }      
-      break;
     case(TRANSPARENT):
       s->transparent = MS_TRUE;
       if(getInteger(&(s->transparentcolor)) == -1) return(-1);
@@ -405,11 +407,11 @@ void writeSymbol(symbolObj *s, FILE *stream)
       fprintf(stream, "    END\n");
     }
 
-    /* STYLE */
-    if(s->stylelength != 0) {
-      fprintf(stream, "    STYLE\n     ");
-      for(i=0; i<s->stylelength; i++) {
-	fprintf(stream, " %d", s->style[i]);
+    /* PATTERN */
+    if(s->patternlength != 0) {
+      fprintf(stream, "    PATTERN\n     ");
+      for(i=0; i<s->patternlength; i++) {
+	fprintf(stream, " %d", s->pattern[i]);
       }
       fprintf(stream, "\n    END\n");
     }
@@ -950,10 +952,10 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   
   MS_COPYSTELEM(numpoints);
   MS_COPYSTELEM(filled);
-  MS_COPYSTELEM(stylelength);
+  MS_COPYSTELEM(patternlength);
 
-  for (i=0; i<MS_MAXSTYLELENGTH; i++) {
-      dst->style[i] = src->style[i];
+  for (i=0; i<MS_MAXPATTERNLENGTH; i++) {
+    dst->pattern[i] = src->pattern[i];
   }
 
   MS_COPYSTRING(dst->imagepath, src->imagepath);

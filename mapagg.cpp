@@ -801,8 +801,8 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     if(pLogFile) fprintf(pLogFile, "msDrawLineSymbolAGG entry\n"); 
   
     if(p->numlines > 0) {
-      if(symbol->stylelength > 0)
-        imagePolyline(image, p, &style->color, nwidth, 0, 0, symbol->stylelength, symbol->style); 
+      if(symbol->patternlength > 0)
+        imagePolyline(image, p, &style->color, nwidth, 0, 0, symbol->patternlength, symbol->pattern); 
       else
        imagePolyline(image, p, &style->color, nwidth, 0, 0, 0, NULL);           
     }

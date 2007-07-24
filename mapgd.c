@@ -1234,27 +1234,27 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     break;
   }  
 
-  if(symbol->stylelength > 0) {
-    int *styleDashed;
+  if(symbol->patternlength > 0) {
+    int *style;
     int k=0, sc;
 
-    /* Alloc styleDashed array large enough for this style */
-    int numElemStyle=0;
-    for(i=0; i<symbol->stylelength; i++) {
-      numElemStyle += symbol->style[i];
+    /* malloc style array large enough for this pattern */
+    int n=0;
+    for(i=0; i<symbol->patternlength; i++) {
+      n += symbol->pattern[i];
     }
-    styleDashed = (int *)malloc(numElemStyle * sizeof(int));
+    style = (int *) malloc(n * sizeof(int));
 
     sc = fc; /* start with foreground color */
-    for(i=0; i<symbol->stylelength; i++) {      
-      for(j=0; j<symbol->style[i]; j++) {
-	styleDashed[k] = sc;
+    for(i=0; i<symbol->patternlength; i++) {
+      for(j=0; j<symbol->pattern[i]; j++) {
+	style[k] = sc;
 	k++;
       } 
       if(sc==fc) sc = bc; else sc = fc;
     }
-    gdImageSetStyle(img, styleDashed, k);
-    free(styleDashed);
+    gdImageSetStyle(img, style, k);
+    free(style);
 
     if(!brush && !symbol->img)
       gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), 0, 360, gdStyled);      
@@ -1970,29 +1970,29 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     break;
   } /* symbol type end-switch */
 
-  if(symbol->stylelength > 0) {
-    int *styleDashed;
+  if(symbol->patternlength > 0) {
+    int *style;
     int k=0, sc;
    
-    /* Alloc styleDashed array large enough for this style */
-    int numElemStyle=0;
-    for(i=0; i<symbol->stylelength; i++) {
-      numElemStyle += symbol->style[i];
+    /* malloc style array large enough for this pattern */
+    int n=0;
+    for(i=0; i<symbol->patternlength; i++) {
+      n += symbol->pattern[i];
     }
-    styleDashed = (int *) malloc(numElemStyle * sizeof(int));
+    style = (int *) malloc (n * sizeof(int));
 
     sc = fc; /* start with foreground color */
 
     /* todo: scale the style/pattern */
-    for(i=0; i<symbol->stylelength; i++) {      
-      for(j=0; j<symbol->style[i]; j++) {
-        styleDashed[k] = sc;
+    for(i=0; i<symbol->patternlength; i++) {      
+      for(j=0; j<symbol->pattern[i]; j++) {
+        style[k] = sc;
         k++;
       } 
       if(sc==fc) sc = bc; else sc = fc;
     }
-    gdImageSetStyle(img, styleDashed, k);
-    free(styleDashed);
+    gdImageSetStyle(img, style, k);
+    free(style);
 
     if(!brush && !symbol->img)
       imagePolyline(img, p, gdStyled, ox, oy);
@@ -2398,7 +2398,7 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
   }*/
   
   /* Style counting */
-  if (symbol->stylelength > 0) {
+  if (symbol->patternlength > 0) {
   
     /* Style counting unit */
     d_size = sqrt(pow(*da_px,2)+pow(*db_px,2))*d_step_coef;
@@ -2452,11 +2452,11 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
         drawpoly = *styleVis;
       }
   
-      if (*styleIndex == symbol->stylelength) 
+      if (*styleIndex == symbol->patternlength) 
         *styleIndex = 0;
       *styleSize -= d_size;    
       if (*styleSize < 0) {
-        *styleSize = symbol->style[*styleIndex]*styleCoef;
+        *styleSize = symbol->pattern[*styleIndex]*styleCoef;
         *styleSize -= d_size;    
         (*styleIndex)++;
         *styleVis = *styleVis?0:1;
@@ -2649,8 +2649,8 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
   gdPoint cap_join_points[6];
 
   /* Style settings - continue with style on the next line from the same symbol */
-  if (symbol->stylelength > 0 && (last_style_c != c || last_style_size != size || last_style_stylelength != symbol->stylelength)) {
-    styleIndex = symbol->stylelength;
+  if (symbol->patternlength > 0 && (last_style_c != c || last_style_size != size || last_style_stylelength != symbol->patternlength)) {
+    styleIndex = symbol->patternlength;
     if(style->size == -1) {
         styleCoef = size/(msSymbolGetDefaultSize(symbol));
     }
@@ -2661,7 +2661,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
   }
   last_style_c = c;  
   last_style_size = size;  
-  last_style_stylelength = symbol->stylelength;  
+  last_style_stylelength = symbol->patternlength;  
 
 
   /* Draw lines */

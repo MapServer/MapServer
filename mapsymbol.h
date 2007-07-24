@@ -35,7 +35,7 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE,
 
 #define MS_SYMBOL_ALLOCSIZE 64      /* number of symbolObj ptrs to allocate for a symbolset at once */
 #define MS_MAXVECTORPOINTS 100      /* shade, marker and line symbol parameters */
-#define MS_MAXSTYLELENGTH 10
+#define MS_MAXPATTERNLENGTH 10
 
 #define MS_IMAGECACHESIZE 6
 
@@ -93,8 +93,8 @@ typedef struct {
 #endif /* SWIG */
   int filled;
 
-  int stylelength;                      /* Number of intervals (eg. dashes) in the style */
-  int style[MS_MAXSTYLELENGTH];
+  int patternlength;                      /* Number of intervals (eg. dashes) in the pattern (was style, see bug 2119) */
+  int pattern[MS_MAXPATTERNLENGTH];
 
   /*
   ** MS_SYMBOL_PIXMAP options

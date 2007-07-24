@@ -89,13 +89,13 @@
         return line;
     }
 
-    int setStyle(int index, int value) 
+    int setPattern(int index, int value) 
     {
-        if (index < 0 || index > MS_MAXSTYLELENGTH) {
-            msSetError(MS_SYMERR, "Can't set style at index %d.", "setStyle()", index);
+        if (index < 0 || index > MS_MAXPATTERNLENGTH) {
+            msSetError(MS_SYMERR, "Can't set pattern at index %d.", "setPattern()", index);
             return MS_FAILURE;
         }
-        self->style[index] = value;
+        self->pattern[index] = value;
         return MS_SUCCESS;
     }
 
