@@ -2596,8 +2596,9 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
     }
     else if (psFilterNode->eType == FILTER_NODE_TYPE_FEATUREID)
     {
-        if (psFilterNode->pszValue)
-        {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+       if (psFilterNode->pszValue)
+       {
             pszAttribute = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
             if (pszAttribute)
             {
@@ -2633,6 +2634,12 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                 }
             }
         }
+#else
+       msSetError(MS_MISCERR, "OWS support is not available.", 
+                   "FLTGetMapserverExpression()");
+    return(MS_FAILURE);
+#endif
+
     }
     return pszExpression;
 }
@@ -2704,6 +2711,7 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
     }
     else if (psFilterNode->eType == FILTER_NODE_TYPE_FEATUREID)
     {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
         if (psFilterNode->pszValue)
         {
             pszAttribute = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
@@ -2742,6 +2750,12 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                 }
             }
         }
+#else
+        msSetError(MS_MISCERR, "OWS support is not available.", 
+                   "FLTGetSQLExpression()");
+    return(MS_FAILURE);
+#endif
+
     }
     return pszExpression;
 }
