@@ -664,6 +664,8 @@ int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
         *pnHTTPStatus = pasReqInfo[0].nStatus;
         if (pasReqInfo[0].debug)
             msDebug("HTTP request failed for %s.\n", pszGetUrl);
+        msHTTPFreeRequestObj(pasReqInfo, 2);
+        free(pasReqInfo);
         return MS_FAILURE;
     }
 
