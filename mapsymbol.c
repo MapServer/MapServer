@@ -29,7 +29,7 @@
 #include <stdarg.h> /* variable number of function arguments support */
 #include <time.h> /* since the parser handles time/date we need this */
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapfile.h"
 #include "mapcopy.h"
 #include "mapthread.h"
@@ -48,7 +48,7 @@ extern unsigned char JPEGsig[3];
 
 /*
 ** Symbol to string static arrays needed for writing map files.
-** Must be kept in sync with enumerations and defines found in map.h.
+** Must be kept in sync with enumerations and defines found in mapserver.h.
 */
 extern char *msPositionsText[]; /* Defined in mapfile.c */
 static char *msCapsJoinsCorners[7]={"NONE", "BEVEL", "BUTT", "MITER", "ROUND", "SQUARE", "TRIANGLE"};

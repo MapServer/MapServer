@@ -27,7 +27,7 @@
  *****************************************************************************/
 
 #include <assert.h>
-#include "map.h"
+#include "mapserver.h"
 #include "maptime.h"
 
 MS_CVSID("$Id$")

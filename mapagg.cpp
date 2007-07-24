@@ -28,7 +28,7 @@
 
 #ifdef USE_AGG
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapthread.h"
 
 

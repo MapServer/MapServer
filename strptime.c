@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "map.h"
+#include "mapserver.h"
 
 static const char *abb_weekdays[] = {
     "Sun",

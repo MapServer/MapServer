@@ -31,7 +31,7 @@
 #include <stdlib.h>   /* rand() */
 #include <time.h>     /* time() */
 
-#include "map.h"
+#include "mapserver.h"
 
 MS_CVSID("$Id$")
 

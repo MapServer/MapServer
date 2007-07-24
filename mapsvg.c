@@ -36,7 +36,7 @@
 #ifdef USE_ZLIB
 #include "zlib.h"
 #endif
-#include "map.h"
+#include "mapserver.h"
 
 MS_CVSID("$Id$")
 

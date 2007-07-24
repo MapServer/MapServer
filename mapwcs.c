@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include "map.h"
+#include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
 

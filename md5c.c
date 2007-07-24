@@ -24,7 +24,7 @@ documentation and/or software.
  */
 
 #include "md5.h"
-#include "map.h"
+#include "mapserver.h"
 
 /* Constants for MD5Transform routine.
  */

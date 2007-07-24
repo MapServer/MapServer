@@ -30,7 +30,7 @@
 */
 
 
-%include "../../map.h"
+%include "../../mapserver.h"
 
 /* Constructor and destructor for webObj
    http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=579 */

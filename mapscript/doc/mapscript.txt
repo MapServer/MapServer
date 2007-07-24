@@ -1189,7 +1189,7 @@ connection : string
     Layer connection or DSN.
 
 connectiontype : int
-    See MS_CONNECTION_TYPE in map.h for possible values.
+    See MS_CONNECTION_TYPE in mapserver.h for possible values.
 
 data : string
     Layer data definition, values depend upon connectiontype.
@@ -1320,10 +1320,10 @@ transparency : int
     RGBA pixmap symbols. 
     
 type : int
-    See MS_LAYER_TYPE in map.h.
+    See MS_LAYER_TYPE in mapserver.h.
     
 units : int
-    Units of the layer.  See MS_UNITS in map.h.
+    Units of the layer.  See MS_UNITS in mapserver.h.
 
 layerObj Methods
 ----------------
@@ -2687,7 +2687,7 @@ style : int
     0 or 1.
 
 units : int
-    See MS_UNITS in map.h.
+    See MS_UNITS in mapserver.h.
     
 width : int
     Pixels.

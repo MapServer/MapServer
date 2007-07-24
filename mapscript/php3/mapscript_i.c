@@ -32,7 +32,7 @@
 
 /* grab mapserver declarations to wrap
  */
-#include "../../map.h"
+#include "../../mapserver.h"
 #include "../../maperror.h"
 #include "../../mapprimitive.h"
 #include "../../mapsymbol.h"

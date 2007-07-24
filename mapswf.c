@@ -37,7 +37,7 @@
 #if !defined(_WIN32)
 #include <zlib.h>
 #endif
-#include "map.h"
+#include "mapserver.h"
 #include "mapswf.h"
 
 MS_CVSID("$Id$")

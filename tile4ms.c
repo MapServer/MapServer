@@ -38,7 +38,7 @@
 *
 */
 
-#include "map.h"
+#include "mapserver.h"
 #include <string.h>
 
 MS_CVSID("$Id$")

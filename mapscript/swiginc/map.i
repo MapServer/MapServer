@@ -329,7 +329,7 @@
     return msLoadFontSet(&(self->fontset), self);
   }
 
-  /* I removed a method to get the fonset filename. Instead I updated map.h
+  /* I removed a method to get the fonset filename. Instead I updated mapserver.h
    to allow SWIG access to the fonset, although the numfonts and filename
    members are read-only. Use the setFontSet method to actually change the
    fontset. To get the filename do $map->{fontset}->{filename}; -- SG */

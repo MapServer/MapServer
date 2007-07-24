@@ -29,7 +29,7 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapfile.h"
 #include "mapthread.h"
 #include "maptime.h"
@@ -61,7 +61,7 @@ static int loadGrid( layerObj *pLayer );
 
 /*
 ** Symbol to string static arrays needed for writing map files.
-** Must be kept in sync with enumerations and defines found in map.h.
+** Must be kept in sync with enumerations and defines found in mapserver.h.
 */
 static char *msUnits[8]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS", "PERCENTAGES"};
 static char *msLayerTypes[9]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"};

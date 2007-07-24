@@ -7,7 +7,7 @@
 
 #include <time.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "maperror.h"
 #include "mapfile.h"
 #include "maptime.h"

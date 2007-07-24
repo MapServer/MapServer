@@ -166,7 +166,7 @@
  **********************************************************************/
 
 #include <assert.h>
-#include "map.h"
+#include "mapserver.h"
 #include "mapproject.h"
 
 #if defined(USE_OGR) || defined(USE_GDAL)

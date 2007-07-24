@@ -30,7 +30,7 @@
 #define RESAMPLE_H
 
 #include <gd.h>
-#include "map.h"
+#include "mapserver.h"
 #include "mapproject.h"
 
 #ifdef USE_GDAL

@@ -28,7 +28,7 @@
 
 /* $Id$ */
 #include <assert.h>
-#include "map.h"
+#include "mapserver.h"
 #include "maptime.h"
 
 #ifndef FLT_MAX

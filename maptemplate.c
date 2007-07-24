@@ -27,7 +27,7 @@
 
 #include "maptemplate.h"
 #include "maphash.h"
-#include "map.h"
+#include "mapserver.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

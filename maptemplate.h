@@ -29,7 +29,7 @@
 #ifndef MAPTEMPLATE_H
 #define MAPTEMPLATE_H
 
-#include "map.h"
+#include "mapserver.h"
 #include "maphash.h"
 
 #define IDSIZE 128

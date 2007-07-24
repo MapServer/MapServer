@@ -34,7 +34,7 @@
 #endif
 
 #include "mapogcfilter.h"
-#include "map.h"
+#include "mapserver.h"
 #include "mapowscommon.h"
 
 MS_CVSID("$Id$")

@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "map.h"
+#include "mapserver.h"
 
 #ifdef USE_SOS_SVR
 

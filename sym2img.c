@@ -28,7 +28,7 @@
 #include <gd.h>
 #include <gdfontt.h>
 
-#include "map.h"
+#include "mapserver.h"
 
 MS_CVSID("$Id$")
 

@@ -41,7 +41,7 @@
  * This piece is provided "AS IS", without warranties of any kind. Got it?
  *****************************************************************************/
 
-#include "map.h"
+#include "mapserver.h"
 #include <assert.h>
 
 MS_CVSID("$Id$")

@@ -27,7 +27,7 @@
 
 #include <stdarg.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapthread.h"
 
 #ifdef _WIN32

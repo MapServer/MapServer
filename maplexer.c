@@ -1356,7 +1356,7 @@ char *msyytext;
 
 #include <time.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "maperror.h"
 #include "mapfile.h"
 #include "maptime.h"
@@ -3372,7 +3372,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -3924,10 +3924,10 @@ YY_BUFFER_STATE msyy_scan_buffer  (char * base, yy_size_t  size )
  * @note If you want to scan bytes that may contain NUL values, then use
  *       msyy_scan_bytes() instead.
  */
-YY_BUFFER_STATE msyy_scan_string (yyconst char * str )
+YY_BUFFER_STATE msyy_scan_string (yyconst char * yy_str )
 {
     
-	return msyy_scan_bytes(str,strlen(str) );
+	return msyy_scan_bytes(yy_str,strlen(yy_str) );
 }
 
 /** Setup the input buffer state to scan the given bytes. The next call to msyylex() will

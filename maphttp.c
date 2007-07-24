@@ -32,7 +32,7 @@
  */
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
-#include "map.h"
+#include "mapserver.h"
 #include "maperror.h"
 #include "mapows.h"
 #include "mapthread.h"

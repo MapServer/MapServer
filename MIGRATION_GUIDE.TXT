@@ -87,3 +87,23 @@ OGC Web Mapping Service (WMS)
 OGC Web Feature Service (WFS)
 ----------------------------------------------------
 
+----------------------------------------------------
+Build Changes
+----------------------------------------------------
+
+MapServer's main include file has been renamed from "map.h" to "mapserver.h".
+
+A new mapserver-config script has been created with the following options:
+
+  Usage: mapserver-config [OPTIONS]
+  Options:
+   [--libs]
+   [--dep-libs]
+   [--cflags]
+   [--defines]
+   [--includes]
+   [--version]
+
+The shared and static link libraries for MapSserver have been renamed
+libmapserver.x.y.so and libmapserver.a respectively.
+

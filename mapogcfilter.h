@@ -31,7 +31,7 @@
 
 #ifdef USE_OGR
 
-#include "map.h"
+#include "mapserver.h"
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 

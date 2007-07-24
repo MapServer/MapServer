@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <assert.h>
-#include "map.h"
+#include "mapserver.h"
 #include "mapsymbol.h"
 
 MS_CVSID("$Id$")

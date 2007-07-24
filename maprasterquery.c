@@ -26,7 +26,7 @@
  ****************************************************************************/
 
 #include <assert.h>
-#include "map.h"
+#include "mapserver.h"
 #include "mapresample.h"
 #include "mapthread.h"
 

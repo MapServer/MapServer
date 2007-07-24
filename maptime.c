@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "maptime.h"
 #include "maperror.h"
 

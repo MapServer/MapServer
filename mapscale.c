@@ -25,7 +25,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
-#include "map.h"
+#include "mapserver.h"
 
 MS_CVSID("$Id$")
 
@@ -35,7 +35,7 @@ MS_CVSID("$Id$")
 #define VSLOP 5 /* makes things fit a bit better vertically */
 
 /*
-** Match this with with unit enumerations is map.h
+** Match this with with unit enumerations is mapserver.h
 */
 static char *unitText[5]={"in", "ft", "mi", "m", "km"};
 double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};

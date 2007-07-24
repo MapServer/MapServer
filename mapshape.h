@@ -191,7 +191,7 @@ MS_DLL_EXPORT int msSHPReadPoint(SHPHandle psSHP, int hEntity, pointObj *point )
 MS_DLL_EXPORT int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
 MS_DLL_EXPORT int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
 
-/* tiledShapefileObj function prototypes are in map.h */
+/* tiledShapefileObj function prototypes are in mapserver.h */
 
 /* XBase function prototypes */
 MS_DLL_EXPORT DBFHandle msDBFOpen( const char * pszDBFFile, const char * pszAccess );

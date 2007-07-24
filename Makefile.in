@@ -8,7 +8,7 @@ INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
 
 #
-# MS_VERSION - Set by configure based in map.h
+# MS_VERSION - Set by configure based in mapserver.h
 #
 MS_VERSION=	@MS_VERSION@
 
@@ -266,19 +266,19 @@ mapogr.o:	mapogr.cpp
 php3_mapscript:: $(LIBMAP_STATIC)
 	cd mapscript/php3; $(MAKE); cd ../..
 
-maplexer.o: maplexer.c map.h mapfile.h
+maplexer.o: maplexer.c mapserver.h mapfile.h
 
 maplexer.c: maplexer.l
 	$(LEX) --nounistd -Pmsyy -i -omaplexer.c maplexer.l
 
-mapparser.o: mapparser.c map.h
+mapparser.o: mapparser.c mapserver.h
 
 mapparser.c: mapparser.y
 	$(YACC) -p msyy -d -omapparser.c mapparser.y
 
 lib:    $(LIBMAP_STATIC)
 libmapserver: $(LIBMAP_STATIC)
-libmapserver.a: map.h $(OBJS) map.h
+libmapserver.a: mapserver.h $(OBJS)
 	$(AR) $(LIBMAP_STATIC) $(OBJS)
 	$(RANLIB) $(LIBMAP_STATIC)
 	# We don't want to let the shared library get out of sync with the
@@ -293,34 +293,34 @@ $(LIBMAP_SHARED):	$(LIBMAP_STATIC)
 		$(RUNPATHS) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) \
 	&& ln -f -s $(LIBMAP_SH_VER) $(LIBMAP_SHARED)
 
-shp2pdf: $(LIBMAP_STATIC) shp2pdf.o map.h
+shp2pdf: $(LIBMAP_STATIC) shp2pdf.o mapserver.h
 	$(LD) $(CFLAGS) shp2pdf.o $(EXE_LDFLAGS) -o shp2pdf
 
-shp2img: $(LIBMAP_STATIC)  shp2img.o map.h
+shp2img: $(LIBMAP_STATIC)  shp2img.o mapserver.h
 	$(LD) $(CFLAGS) shp2img.o $(EXE_LDFLAGS) -o shp2img
 
-sym2img: $(LIBMAP_STATIC)   sym2img.o map.h
+sym2img: $(LIBMAP_STATIC)   sym2img.o mapserver.h
 	$(LD) $(CFLAGS) sym2img.o $(EXE_LDFLAGS) -o sym2img
 
-legend: $(LIBMAP_STATIC)  legend.o map.h
+legend: $(LIBMAP_STATIC)  legend.o mapserver.h
 	$(LD) $(CFLAGS) legend.o $(EXE_LDFLAGS) -o legend
 
-scalebar: $(LIBMAP_STATIC)  scalebar.o map.h
+scalebar: $(LIBMAP_STATIC)  scalebar.o mapserver.h
 	$(LD) $(CFLAGS) scalebar.o $(EXE_LDFLAGS) -o scalebar
 
-mapserv: mapserv.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o map.h
+mapserv: mapserv.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o mapserver.h
 	$(LD) $(CFLAGS) mapserv.o cgiutil.o $(EXE_LDFLAGS) -o mapserv
 
-shpindex: $(LIBMAP_STATIC) shpindex.o map.h
+shpindex: $(LIBMAP_STATIC) shpindex.o mapserver.h
 	$(LD) $(CFLAGS) shpindex.o $(EXE_LDFLAGS) -o shpindex
 
-shptree: $(LIBMAP_STATIC) shptree.o map.h
+shptree: $(LIBMAP_STATIC) shptree.o mapserver.h
 	$(LD) $(CFLAGS) shptree.o $(EXE_LDFLAGS) -o shptree
 
-shptreevis: $(LIBMAP_STATIC) shptreevis.o map.h
+shptreevis: $(LIBMAP_STATIC) shptreevis.o mapserver.h
 	$(LD) $(CFLAGS) shptreevis.o $(EXE_LDFLAGS) -o shptreevis
 
-shptreetst: $(LIBMAP_STATIC) shptreetst.o map.h
+shptreetst: $(LIBMAP_STATIC) shptreetst.o mapserver.h
 	$(LD) $(CFLAGS) shptreetst.o $(EXE_LDFLAGS) -o shptreetst
 
 sortshp: sortshp.o
@@ -329,13 +329,13 @@ sortshp: sortshp.o
 tile4ms: tile4ms.o
 	$(LD) $(CFLAGS) tile4ms.o $(EXE_LDFLAGS) -o tile4ms
 
-msencrypt: $(LIBMAP_STATIC) msencrypt.o map.h
+msencrypt: $(LIBMAP_STATIC) msencrypt.o mapserver.h
 	$(LD) $(CFLAGS) msencrypt.o $(EXE_LDFLAGS) -o msencrypt
 
 testexpr: testexpr.o mapparser.o maplexer.o
 	$(LD) $(CFLAGS) testexpr.o $(EXE_LDFLAGS) -o testexpr
 
-testcopy: $(LIBMAP_STATIC) testcopy.o mapcopy.o map.h
+testcopy: $(LIBMAP_STATIC) testcopy.o mapcopy.o mapserver.h
 	$(LD) $(CFLAGS) testcopy.o $(EXE_LDFLAGS) -o testcopy
 
 test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c
@@ -348,7 +348,7 @@ mapscriptvars:	Makefile
 	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
 	echo $(EXE_LDFLAGS) >> mapscriptvars
 	echo $(STATIC_LIBS) >> mapscriptvars
-	grep '#define MS_VERSION' map.h >> mapscriptvars
+	grep '#define MS_VERSION' mapserver.h >> mapscriptvars
 
 mapserver-config: Makefile
 	rm -f mapserver-config
@@ -358,7 +358,7 @@ mapserver-config: Makefile
 	echo 'CONFIG_CFLAGS="$(CFLAGS)"' >> mapserver-config
 	echo 'CONFIG_DEFINES="$(DEFINES)"' >> mapserver-config
 	echo 'CONFIG_INCLUDES="$(INCLUDES)"' >> mapserver-config
-	echo 'CONFIG_VERSION="'`grep '#define MS_VERSION' map.h | sed 's/\"//g' | sed 's/#define MS_VERSION //'`'"' >> mapserver-config
+	echo 'CONFIG_VERSION="'`grep '#define MS_VERSION' mapserver.h | sed 's/\"//g' | sed 's/#define MS_VERSION //'`'"' >> mapserver-config
 	cat mapserver-config.in >> mapserver-config
 	chmod a+x mapserver-config
 

@@ -133,7 +133,7 @@ files instead.
 
 
 #include <assert.h>
-#include "map.h"
+#include "mapserver.h"
 #include "mapthread.h"
 
 MS_CVSID("$Id$")

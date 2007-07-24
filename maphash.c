@@ -27,7 +27,7 @@
 
 #include <ctype.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "maphash.h"
 
 MS_CVSID("$Id$")

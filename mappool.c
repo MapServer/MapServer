@@ -129,7 +129,7 @@ o Currently the connection pooling API makes not attempt to address
 
  ****************************************************************************/
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapthread.h"
 
 MS_CVSID("$Id$")

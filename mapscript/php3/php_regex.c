@@ -33,7 +33,7 @@
  *
  */
 
-/* we can't include map.h, so we need our own basics */
+/* we can't include mapserver.h, so we need our own basics */
 
 #include <stdio.h>
 #include <stdlib.h>

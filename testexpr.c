@@ -27,7 +27,7 @@
 
 #include <time.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapparser.h"
 
 MS_CVSID("$Id$")

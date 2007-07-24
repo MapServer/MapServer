@@ -30,7 +30,7 @@
 */
 
 %{
-#include "../../map.h"
+#include "../../mapserver.h"
 %}
 
 %extend colorObj 

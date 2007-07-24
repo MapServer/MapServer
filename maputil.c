@@ -29,7 +29,7 @@
 
 #include <time.h>
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapparser.h"
 #include "mapthread.h"
 #include "mapfile.h"

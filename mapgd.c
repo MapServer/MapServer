@@ -33,7 +33,7 @@
  *
  */
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapthread.h"
 
 #include <time.h>

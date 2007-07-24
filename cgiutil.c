@@ -30,7 +30,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "cgiutil.h"
-#include "map.h"
+#include "mapserver.h"
 
 MS_CVSID("$Id$")
 

@@ -47,7 +47,7 @@
 #include <unistd.h>
 #endif
 
-#include "map.h"
+#include "mapserver.h"
 #include "mapregex.h"
 #endif /* USE_PHP_REGEX */
 
