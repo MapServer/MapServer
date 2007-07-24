@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Version 4.99 (CVS HEAD)
 -----------------------
 
+ - RFC-17: Use dynamic allocation for symbols, layers, classes and styles
+   (got rid of the static limit on the number of instances of each in a map)
+
  - single and double quotes escaping in string expressions used by FILTER.
    (Resolves tickets #2123 and #2141)
 
