@@ -1,0 +1,144 @@
+MapServer 4.10 to 5.0 Migration Guide
+=====================================
+
+This page documents the changes that must be made to MapServer 
+applications when migrating from version 4.10.x (or earlier versions) 
+to 5.x (i.e. backwards incompatibilities), as well as information
+on some of the new features.
+
+----------------------------------------------------
+Mapfile changes
+----------------------------------------------------
+
+Attribute Bindings: In an effort to stem the tide of keyword overload
+and add functionality MapServer 5.0 supports a new method of binding 
+feature attributes to STYLE and LABEL properties. In the past keywords
+like ANGLEITEM or LABELSIZEITEM were used, now you denote the attribute
+in the context of the property being bound. For example, to bind an 
+attribute to a label size you'd do:
+
+LABEL
+  ...
+  SIZE [mySizeItem]
+END
+
+The []'s denote a binding (as with logical expressions). The following
+keywords are no longer supported and their presence will throw an error:
+
+Layer: LABELANGLEITEM, LABELSIZEITEM
+Style: ANGLEITEM, SIZEITEM
+
+The following properties can accept bindings:
+
+Style: angle, color, outlinecolor, size, symbol
+Label: angle, color, outlinecolor, size
+
+Colors may be given as a hex value (e.g. #FFFFFF) or an RGB triplet 
+(e.g. 255 255 255).
+
+Layer Transparency: The values for the TRANSPARENCY parameter have always
+been backwards and in an effort to resolve that the parameter has been
+renamed OPACITY. TRANSPARENCY is still recognized by the mapfile parser
+but is depricated and should be avoided. 
+
+Scale Paramters: MapServer's handling of scale has long been a source
+for confusion. The values use in a layer MINSCALE are really the denominators
+from a representative fraction (e.g. 1:24000). To help clarify this all
+scale parameters are now end with DENOM. So MINSCALE => MINSCALEDENOM,
+SYMBOLSCALE => SYMBOLSCALEDENOM, and so on. The mapfile parser still
+recognizes the older keywords but they are depricated and should be avoided. 
+
+--------------
+Symbol file changes
+--------------
+
+Symbol Style: STYLEs are used within a symbol definition to store dash
+patterns for line symbolization. However, there is potential confusion
+with the style object that is used within class definitions. To resolve
+that confusion the symbol STYLE parameter has been renamed PATTERN. The
+symbol file parser will still recognize the STYLE keyword but it is 
+depricated and should be avoided.
+
+----------------------------------------------------
+Styling/Symbolgy changes
+----------------------------------------------------
+Prior to MapsServer 5.0, if a pixmap symbol was used in style on a Line
+Layer, the symbol was used as a brush to draw the line. In MapServer 5.0, 
+it is possible to draw the pixmap symbol along the line (Note that this 
+was available using a true type symbol). To achieve  this, the user needs 
+to use the parameter GAP with it's pixmap symbol definition in the symbol
+file. The GAP represents the distance between the symbols. If the GAP is not
+given, the pixmap symbol will be used as a brush.   
+
+----------------------------------------------------
+SWIG MapScript (Python, Perl, CSharp, Java) changes
+----------------------------------------------------
+
+Layer Transparency: The layerObj transparency parameter is now called
+opacity. Scripts setting that value in code must be updated.
+
+Symbol Style: the symbolObj style parameter is now called pattern. MapScript
+does not allow direct modification of that parameter. In Swig-based languages
+the symbolObj method setStyle is now called setPattern. In PHP/MapScript, the
+methods setStyle and getStyle are now called setPattern and getPattern.
+
+CSharp related changes
+-----------------------
+
+The MapScript C# classes are now placed into the OSGeo.MapServer namespace
+The scripts should use the fully qualified names of the classes or apply 
+the 
+
+::
+
+  using OSGeo.MapServer;
+  
+or the corresponding language equivalent. 
+
+----------------------------------------------------
+PHP/MapScript changes
+----------------------------------------------------
+
+Layer Transparency: The layerObj transparency parameter is now called
+opacity. The old "transparency" name is deprecated and will be removed in
+a future release. Scripts getting/setting that value in code must be updated.
+
+All occurences of scale, minscale, maxscale, etc... parameters have been
+deprecated and renamed with a "denom" suffix (e.g. minscale becomes 
+minscaledenom, etc.). The deprecated parameters will be removed in a
+future release. Scripts getting/setting them must be updated.
+
+SymbolObj style has been renamed pattern. The old "stylelength" parameter
+and setStyle() and getStyleArray() methods have been deprecated and 
+"patternlength", setPattern() and getPatternArray() should be used 
+instead. They will be removed in a future release.
+
+
+----------------------------------------------------
+OGC Web Mapping Service (WMS)
+----------------------------------------------------
+
+----------------------------------------------------
+OGC Web Feature Service (WFS)
+----------------------------------------------------
+
+----------------------------------------------------
+Build Changes
+----------------------------------------------------
+
+MapServer's main include file has been renamed from "map.h" to "mapserver.h".
+
+A new mapserver-config script has been created with the following options:
+
+  Usage: mapserver-config [OPTIONS]
+  Options:
+   [--libs]
+   [--dep-libs]
+   [--cflags]
+   [--defines]
+   [--includes]
+   [--version]
+
+The shared and static link libraries for MapSserver have been renamed
+libmapserver.x.y.so and libmapserver.a respectively.
+
