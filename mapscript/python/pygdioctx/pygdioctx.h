@@ -57,7 +57,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../../../map.h"
+#include "../../../mapserver.h"
 
 /*
 ** Code to act as a gdIOCtx wrapper for a python file object
