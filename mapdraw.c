@@ -703,19 +703,30 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 #else  
     retcode = MS_FAILURE;
 #endif
-  }
-  else if(layer->type == MS_LAYER_RASTER) 
-  {
-      retcode = msDrawRasterLayer(map, layer, image_draw);
-  }
-  else if(layer->type == MS_LAYER_CHART)
-  {
-      retcode = msDrawChartLayer(map, layer, image_draw);
-  }
-  /* Must be a Vector layer */
-  else 
-  {
-      retcode = msDrawVectorLayer(map, layer, image_draw);
+  } else if(layer->type == MS_LAYER_RASTER) {
+    retcode = msDrawRasterLayer(map, layer, image_draw);
+  } else if(layer->type == MS_LAYER_CHART) {
+    retcode = msDrawChartLayer(map, layer, image_draw);
+    if( MS_RENDERER_AGG(image_draw->format) && layer->opacity == 100 ) { /* reset alpha channel */
+      int x, y;
+      for (y = 0; (y < image_draw->img.gd->sy); y++) {
+        for (x = 0; (x < image_draw->img.gd->sx); x++) {
+          int c = gdImageGetPixel(image_draw->img.gd, x, y);
+          gdImageSetPixel(image_draw->img.gd, x, y, gdTrueColorAlpha(gdImageRed(image_draw->img.gd, c), gdImageGreen(image_draw->img.gd, c), gdImageBlue(image_draw->img.gd, c), 0));
+        }
+      }
+    }
+  } else {   /* must be a Vector layer */
+    retcode = msDrawVectorLayer(map, layer, image_draw);
+    if( MS_RENDERER_AGG(image_draw->format) && layer->opacity == 100 ) { /* reset alpha channel */
+      int x, y;
+      for (y = 0; (y < image_draw->img.gd->sy); y++) {
+        for (x = 0; (x < image_draw->img.gd->sx); x++) {
+          int c = gdImageGetPixel(image_draw->img.gd, x, y);
+          gdImageSetPixel(image_draw->img.gd, x, y, gdTrueColorAlpha(gdImageRed(image_draw->img.gd, c), gdImageGreen(image_draw->img.gd, c), gdImageBlue(image_draw->img.gd, c), 0));
+        }
+      }
+    }
   }
 
   /* Destroy the temp image for this layer tranparency */
