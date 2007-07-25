@@ -10,125 +10,161 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Version 4.99 (CVS HEAD)
------------------------
+Current Version (CVS HEAD):
+---------------------------
 
- - RFC-17: Use dynamic allocation for symbols, layers, classes and styles
-   (got rid of the static limit on the number of instances of each in a map)
 
- - single and double quotes escaping in string expressions used by FILTER.
-   (Resolves tickets #2123 and #2141)
+Version 5.0.0-beta1 (2007-07-25)
+--------------------------------
 
- - RFC-29: Added dynamic charting (pie and bar charts, ticket #1800)
+New features in 5.0:
 
- - RFC-28: Merged DEBUG and MS_ERRORFILE logging mechanisms. Added 
-   support for multiple debug levels and more control on output location.
-   (Resolves tickets #2124, #1783, #1333, #709)
+- MS RFC 19: Added Style and Label attribute binding
 
- - SLD: Support of Graphic Stroke for a Linesymbolizer (#2139)
+- MS RFC 21: Raster Color Correction via color lookup table
 
- - RFC-27: Added support for label priority (#1619)
+- MS RFC 27: Added label priority
 
- - GD : draw symbols along a line using pixmap symbols (#2121)
+- MS RFC 29: Added dynamic charting (pie and bar charts)
 
- - SVG : Polygons should not be filled if color is not given (#2055)
+- MS RFC 31: New mechanism to load/set objects via URL using mapfile syntax
 
- - WMS : fixed request with a BBOX and and SLD containing Filter encoding (2079)
+- MS RFC 32: Added support for map rendering using the AGG library for 
+  better output quality
 
- - Initial support for loading entire mapfiles via a string buffer (msLoadMapFromString).
 
- - SWF : use highlight color from querymap (2074)
+Long time issues resolved in 5.0:
 
- - RFC24: memory management for mapscript (supports: mapObj, layerObj, classObj,
-   styleObj)
+- MS RFC 17: Use dynamic allocation for symbols, layers, classes and styles
+  (got rid of the static limit on the number of instances of each in a map)
 
- - Support for embedding manifests as resources for the VS2005 builds. (bug 2048)
+- MS RFC 24: Improved memory management and garbage collection for MapScript
+
+- MS RFC 26: Terminology cleanup (layer transparency renamed to opacity,
+  scale becomes scaledenom, symbol style becomes symbol pattern)
+
+- MS RFC 28: Enhanced the debug/logging mechanism to facilitate 
+  troubleshooting and tuning applications. Added support for multiple 
+  debug levels and more control on output location.
+
+
+Other fixes/enhancements in this beta:
+
+- MapServer's main header file map.h has been renamed mapserver.h (#1437)
+
+- A mapserver-config script has been created
+
+- Single and double quotes escaping in string expressions used by FILTER.
+  (Resolves tickets #2123 and #2141)
+
+- SLD: Support of Graphic Stroke for a Linesymbolizer (#2139)
+
+- GD : draw symbols along a line using pixmap symbols (#2121)
+
+- SVG : Polygons should not be filled if color is not given (#2055)
+
+- WMS : fixed request with a BBOX and and SLD containing Filter 
+  encoding (2079)
+
+- SWF : use highlight color from querymap (2074)
+
+- Support for embedding manifests as resources for the VS2005 builds.
+  (ticket #2048)
  
- - Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString 
-   causing access violation (bug 1950).
+- Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString 
+  causing access violation (bug 1950).
  
- - Fix SDE returning the row_id_column multiple times (bug 2040).
+- Fix SDE returning the row_id_column multiple times (bug 2040).
 
- - Fix text outline bug. (bug 2027)
+- Fix text outline bug. (bug 2027)
 
- - Improve error reporting when OWS services are requested but the support
-   is not compiled in.  (bug 2025)
+- Improve error reporting when OWS services are requested but the support
+  is not compiled in.  (bug 2025)
 
- - Fix support for OFFSITE for simple greyscale rasters (bug 2024). 
+- Fix support for OFFSITE for simple greyscale rasters (bug 2024). 
  
- - [SLD] : Error on last class in raster class names based on the ColorMapEntry
-           (bug 1844)
+- [SLD] : Error on last class in raster class names based on the ColorMapEntry
+          (bug 1844)
 
- - [Filter Encoding] : Check if Literal value in Filter is empty (bug 1995)
+- [Filter Encoding] : Check if Literal value in Filter is empty (bug 1995)
 
- - [SLD] : Else filters are now generated at the end of classes (bug 1925)  
+- [SLD] : Else filters are now generated at the end of classes (bug 1925)  
 
- - Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the 
-   CGI program. (bug 1992)
+- Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the 
+  CGI program. (bug 1992)
 
- - Added feature to the CGI to check runtime substitutions against patterns
-   defined in layer metadata. (bug 1918)
+- Added feature to the CGI to check runtime substitutions against patterns
+  defined in layer metadata. (bug 1918)
 
- - Exposed label point computation to mapscript (bug 1979)
+- Exposed label point computation to mapscript (bug 1979)
 
- - [SLD]: use the url as symbol name for external symbols (bug 1985)
+- [SLD]: use the url as symbol name for external symbols (bug 1985)
 
- - [SLD] : support of mixing  static text with column names (bug 1857) 
+- [SLD] : support of mixing  static text with column names (bug 1857) 
 
- - maperror.c: fix for wrapping long in image errors, thanks to Chris Schmidt (bug 1963) 
+- maperror.c: fix for wrapping long in image errors, thanks to Chris 
+  Schmidt (bug 1963) 
 
- - maperror.c: fix closing of stderr/stdout after writing error msg (bug 1970)
+- maperror.c: fix closing of stderr/stdout after writing error msg (bug 1970)
 
- - Preliminary implementation of RFC 21 (Raster Color Correction). 
+- Preliminary implementation of RFC 21 (Raster Color Correction). 
 
- - [SLD] : when reading an SLD, sequence of classes was reversed (Bug 1925)
+- [SLD] : when reading an SLD, sequence of classes was reversed (Bug 1925)
 
- - Fixed a bug with SDE capability requests where we were double 
-   freeing because sde->row_id_column wasn't set to NULL in msSDELayerOpen
+- Fixed a bug with SDE capability requests where we were double 
+  freeing because sde->row_id_column wasn't set to NULL in msSDELayerOpen
 
- - [OGC:SOS] : Fixed bugs realted to metadata and xml output
-   (1731, 1739, 1740, 1741).  Fixed bug with large xml output (bug 1938)
+- [OGC:SOS] : Fixed bugs realted to metadata and xml output
+  (1731, 1739, 1740, 1741).  Fixed bug with large xml output (bug 1938)
 
- - fixed performance problem in raster reprojection (bug 1944)
+- fixed performance problem in raster reprojection (bug 1944)
 
- - added msOWSGetLanguage function in mapows.c/h (bug 1955)
+- added msOWSGetLanguage function in mapows.c/h (bug 1955)
 
- - added mapowscommon.c/mapowscommon.h (bug 1954)
+- added mapowscommon.c/mapowscommon.h and updated mapogcsos.c to use 
+  mapowscommon.c functions (bug 1954)
 
- - updated mapogcsos.c to use mapowscommon.c functions (bug 1954)
+- added more Perl mapscript examples in mapscript/perl/examples/, most
+  of which exemplify recently added GEOS functionality
 
- - added more Perl mapscript examples in mapscript/perl/examples/, most
-   of which exemplify recently added GEOS functionality
+- php_mapscript.c: Fixed setRotation() method to check for MS_SUCCESS, not 
+  MS_TRUE (bug 1968)
 
- - php_mapscript.c: Fixed setRotation() method to check for MS_SUCCESS, not 
-   MS_TRUE (bug 1968)
+- mapobject.c: Fixed msMapSetExtent() to avoid trying to calcuate the 
+  scale if the map size hasn't been set yet (bug 1968) 
 
- - mapobject.c: Fixed msMapSetExtent() to avoid trying to calcuate the 
-   scale if the map size hasn't been set yet (bug 1968) 
+- mapobject.c: ensure msMapComputeGeotransform() returns MS_FAILURE, not 
+  MS_FALSE (bug 1968)
 
- - mapobject.c: ensure msMapComputeGeotransform() returns MS_FAILURE, not 
-   MS_FALSE (bug 1968)
+- mapdraw.c: Actually report that we aren't configure with wms client
+  support if that is why we can't draw a layer.
 
- - mapdraw.c: Actually report that we aren't configure with wms client
-   support if that is why we can't draw a layer.
+- mapows.c: fixed XML error (bug 2070)
 
- - mapows.c: fixed XML error (bug 2070)
+- mapwms.c: Fixed text/plain output duplicate (bug 1379)
 
- - mapwms.c: Fixed text/plain output duplicate (bug 1379)
+- mapwms.c: Attribution element output in GetCapabilities only 1.0.7 and 
+  higher (bug 2080)
 
- - mapwms.c: Attribution element output in GetCapabilities only 1.0.7 and higher (bug 2080)
+- mapwms.c: UserDefinedSymbolization element output in GetCapabilities 
+  only 1.0.7 and higher (bug 2081)
 
- - mapwms.c: UserDefinedSymbolization element output in GetCapabilities only 1.0.7 and higher (bug 2081)
+- mapwms.c: GetLegendGraphic and GetStyles only appear in 1.1.1 and
+  higher responses (bug 1826)
 
- - mapwms.c: GetLegendGraphic and GetStyles only appear in 1.1.1 and higher responses (bug 1826)
-
- - mapwcs.c:
+- mapwcs.c:
   - msWCSDescribeCoverage: throw Exception if Coverage doesn't exist (bug 649)
   - msWCSException: updated as per WCS 1.0 Appendix A.6
 
- - mapogcsos.c: Added ability to output gml:id via MAP/LAYER/METADATA/ows/sos/gml_featureid (bug 1754)
+- mapogcsos.c: Added ability to output gml:id via MAP/LAYER/METADATA
+  ows/sos/gml_featureid (bug 1754)
 
- - mapcontext.c: Added ogc namespace (#2002)
+- mapcontext.c: Added ogc namespace (#2002)
+
+- Note that starting with this release the source code is now managed 
+  in Subversion (SVN) instead of CVS and we have migrated from bugzilla
+  to Trac for bug tracking.
+
 
 Version 4.10.0 (2006-10-04)
 ---------------------------
