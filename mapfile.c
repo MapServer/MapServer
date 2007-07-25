@@ -136,7 +136,7 @@ int getSymbol(int n, ...) {
 
   va_end(argp);
 
-  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getSymbol()", msyytext, msyylineno);
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getSymbol()", msyytext, msyylineno);  
   return(-1);
 }
 
@@ -1520,6 +1520,7 @@ int msLoadExpressionString(expressionObj *exp, char *value)
 int loadExpressionString(expressionObj *exp, char *value)
 {
   msyystate = MS_TOKENIZE_STRING; msyystring = value;
+  msyylex(); /* sets things up but processes no tokens */
 
   freeExpression(exp); /* we're totally replacing the old expression so free then init to start over */
   /* initExpression(exp); */
