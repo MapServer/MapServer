@@ -74,16 +74,15 @@
 #include "mapagg.h"
 
 #ifdef CPL_MSB
-	typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
 #else
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
-//	typedef agg::pixfmt_alpha_blend_rgba<agg::blender_rgba32,mapserv_row_ptr_cache<int>,int> pixelFormat;
+/* typedef agg::pixfmt_alpha_blend_rgba<agg::blender_rgba32,mapserv_row_ptr_cache<int>,int> pixelFormat; */
 #endif
 
 
 MS_CVSID("$Id$")
 
-static FILE *pLogFile = NULL;
 int msImageSetPenAGG(gdImagePtr img, colorObj *color) 
 {
   return msImageSetPenGD(img, color);
@@ -108,7 +107,7 @@ imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char 
   
   pNewImage  = msImageCreateGD(width, height, format, imagepath, imageurl);
   
-  if(! pNewImage)
+  if(!pNewImage)
     return pNewImage;
     
   mapserv_row_ptr_cache<int>  *pRowCache = new mapserv_row_ptr_cache<int>(pNewImage->img.gd);
@@ -118,10 +117,6 @@ imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char 
     
   pNewImage->imageextra  = (void *) pRowCache;
 
-  /* things will break if this file cannot be created, should be removed eventually */  
-  pLogFile  = fopen("/tmp/debug.log", "w");
-  // pLogFile  = fopen("c:/tmp/debug.log", "w");
-  
   return pNewImage;
 }
 
@@ -141,12 +136,9 @@ void msImageInitAGG(imageObj *image, colorObj *background)
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
   if(pRowCache == NULL) {
-    fprintf(pLogFile, "msImageInitAGG pRowCache == NULL, extra is %08x\n", image->imageextra); 
     return;
   }
 
-  if(pLogFile) fprintf(pLogFile, "msImageInitAGG Clearing Buffer\n"); 
-  
   if(image->format->imagemode == MS_IMAGEMODE_RGBA) {
     agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> thePixelFormat(*pRowCache);
     agg::renderer_base< agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> > ren_base(thePixelFormat);
@@ -259,10 +251,8 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
   
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
-  if(pRowCache == NULL) {
-    fprintf(pLogFile, "imagePolyline pRowCache == NULL, extra is %08x\n", image->imageextra); 
+  if(pRowCache == NULL)
     return;
-  }
   
   // if(image->format->imagemode == MS_IMAGEMODE_RGBA)
   {    
@@ -334,10 +324,8 @@ static void imageFilledPolygon2(imageObj *image, shapeObj *p, colorObj *color, i
 {    
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
-  if(pRowCache == NULL) {
-    fprintf(pLogFile, "imageFilledPolygon pRowCache == NULL, extra is %08x\n", image->imageextra); 
+  if(pRowCache == NULL)
     return;
-  }
 
   pixelFormat thePixelFormat(*pRowCache);
   agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
@@ -383,10 +371,8 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
 {    
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
-  if(pRowCache == NULL) {
-    fprintf(pLogFile, "imageFilledPolygon pRowCache == NULL, extra is %08x\n", image->imageextra); 
+  if(pRowCache == NULL)
     return;
-  }
 
   pixelFormat thePixelFormat(*pRowCache);
   agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
@@ -420,7 +406,6 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
 /* ---------------------------------------------------------------------------*/
 void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
-  if(pLogFile) fprintf(pLogFile, "msCircleDrawLineSymbolAGG entry\n");    
   msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
 }
 
@@ -429,7 +414,6 @@ void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj
 /* ------------------------------------------------------------------------------- */
 void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
-  if(pLogFile) fprintf(pLogFile, "msCircleDrawShadeSymbolAGG entry\n");
   msCircleDrawShadeSymbolGD(symbolset, img, p, r, style, scalefactor);
 }
 
@@ -620,8 +604,7 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double size, double angle, c
 
     if(fc >= 0)
       imageFilledPolygon(image, &theShape, &(style->color), offset_x, offset_y);
-    if(oc >= 0)
-      /*drawing a 1 pixel width outline. This is the same as the gd implementation*/
+    if(oc >= 0) /*drawing a 1 pixel width outline. This is the same as the gd implementation*/
       imagePolyline(image, &theShape, &(style->outlinecolor), 1, offset_x, offset_y, 0, NULL);
 
   } else  { /* NOT filled */     
@@ -632,7 +615,6 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double size, double angle, c
     mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
     if(pRowCache == NULL) {
-      fprintf(pLogFile, "imagePolyline pRowCache == NULL, extra is %08x\n", image->imageextra); 
       free(theShape.line);
       return;
     }
@@ -691,8 +673,6 @@ void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double size, double angle, c
 /* ------------------------------------------------------------------------------- */
 void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor)
 {
-  if(pLogFile) fprintf(pLogFile, "msDrawMarkerSymbolAGG entry\n");
-    
   char bRotated=MS_FALSE;
   symbolObj *symbol;
 
@@ -798,8 +778,6 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     else
       nwidth = size;
 
-    if(pLogFile) fprintf(pLogFile, "msDrawLineSymbolAGG entry\n"); 
-  
     if(p->numlines > 0) {
       if(symbol->patternlength > 0)
         imagePolyline(image, p, &style->color, nwidth, 0, 0, symbol->patternlength, symbol->pattern); 
@@ -923,11 +901,8 @@ void msPieSliceAGG ( imageObj *image, styleObj *style, double center_x, double c
 {
     mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *> ( image->imageextra );
 
-    if ( pRowCache == NULL )
-    {
-        fprintf ( pLogFile, "imageFilledPolygon pRowCache == NULL, extra is %08x\n", (int)image->imageextra );
-        return;
-    }
+    if(pRowCache == NULL)
+      return;
 
     pixelFormat thePixelFormat ( *pRowCache );
     agg::renderer_base< pixelFormat > ren_base ( thePixelFormat );
@@ -990,11 +965,8 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
 {
     mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *> ( image->imageextra );
 
-    if ( pRowCache == NULL )
-    {
-        fprintf ( pLogFile, "imageFilledPolygon pRowCache == NULL, extra is %08x\n", (int)image->imageextra );
-        return;
-    }
+    if(pRowCache == NULL)
+      return;
 
     pixelFormat thePixelFormat ( *pRowCache );
     agg::renderer_base< pixelFormat > ren_base ( thePixelFormat );
