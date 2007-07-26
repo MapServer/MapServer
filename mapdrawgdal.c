@@ -994,8 +994,10 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
         if( *lut_read == '\0' )
         {
             all_done = TRUE;
-            this_in = 255;
-            this_out = 255;
+			if ( last_in != 255 ){
+            	this_in = 255;
+            	this_out = 255;
+			}
         }
 
         /* otherwise read "in:out", and skip past */
