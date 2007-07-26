@@ -53,6 +53,9 @@ default: 	all
 
 all:		interface $(MAPSCRIPT_DLL) $(CSHARP_DLL)
 
+sign:
+	sn -k mapscript.snk
+
 interface: ../mapscript.i
 	$(SWIG) -csharp -namespace OSGeo.MapServer $(MS_DEFS) -DWIN32 -o mapscript_wrap.c ../mapscript.i
 
