@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (CVS HEAD):
 ---------------------------
 
+- Fix problem with LUT scaling ranges with explicit value for 255 (#2167).
+
 
 Version 5.0.0-beta1 (2007-07-25)
 --------------------------------
