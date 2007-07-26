@@ -67,7 +67,7 @@ $(MAPSCRIPT_DLL): $(MAPSCRIPT_OBJS)
 	if exist $(MAPSCRIPT_DLL).manifest mt -manifest $(MAPSCRIPT_DLL).manifest -outputresource:$(MAPSCRIPT_DLL);2
 
 $(CSHARP_DLL)::
-	$(CSC) /t:library /out:mapscript_csharp.dll *.cs
+	$(CSC) /t:library /out:mapscript_csharp.dll *.cs config\AssemblyInfo.cs
 	$(CSC) /r:mapscript_csharp.dll /out:shpdump.exe examples\shpdump.cs
 	$(CSC) /r:mapscript_csharp.dll /out:drawmap.exe examples\drawmap.cs
 	$(CSC) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
