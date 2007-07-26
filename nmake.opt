@@ -255,7 +255,7 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 #is used in Mapserver to putput high class rendering
 #
 #AGG=-DUSE_AGG
-#AGG_DIR=$(MS_BASE)\..\agg-2.5
+#AGG_DIR=$(MS_BASE)\..\agg-2.4
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PDF (Acrobat PDF support) 
