@@ -1789,6 +1789,8 @@ MS_DLL_EXPORT int msDrawTextLineAGG(gdImagePtr img, char *string, labelObj *labe
 MS_DLL_EXPORT int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map);
 
 MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT void msAlphaGD2AGG(imageObj *im);
+MS_DLL_EXPORT void msAlphaAGG2GD(imageObj *im);
 
 #ifdef _cplusplus
 }

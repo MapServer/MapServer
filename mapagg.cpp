@@ -1145,4 +1145,35 @@ void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
   }
 }
 
+/*
+ * transform the alpha values of the pixels in im from gd-convention (127 to 0)
+ * to agg convention (0 to 255)
+ * NOTE/TODO: due to rounding an alpha value of 0 will never happen in agg
+ */
+void msAlphaGD2AGG(imageObj *im) {
+    int x, y;
+    for (y = 0; (y < im->img.gd->sy); y++) {
+        for (x = 0; (x < im->img.gd->sx); x++) {
+            int c = gdImageGetPixel(im->img.gd, x, y);
+            int alpha=255-(((c) & 0x7F000000) >> 24)*2;
+            gdImageSetPixel(im->img.gd, x, y, ((c)&0x00FFFFFF)|(alpha<<24));
+        }
+    }
+}
+
+/*
+ * transform the alpha values of the pixels in im from agg convention (0 to 255)
+ * to gd-convention (127 to 0)
+ */
+void msAlphaAGG2GD(imageObj *im) {
+    int x, y;
+    for (y = 0; (y < im->img.gd->sy); y++) {
+        for (x = 0; (x < im->img.gd->sx); x++) {
+            int c = gdImageGetPixel(im->img.gd, x, y);
+            int alpha=(255-(((c) & 0xFF000000) >> 24))/2;
+            gdImageSetPixel(im->img.gd, x, y, ((c)&0x00FFFFFF)|(alpha<<24));
+        }
+    }
+}
+
 #endif

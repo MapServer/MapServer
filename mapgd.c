@@ -3751,8 +3751,7 @@ void msFreeImageGD(gdImagePtr img)
 }
 
 /*
-** Use for merging a vector layer image with a base image. The vector drawing routines always blend so
-** the alpha channel of the src image is not used.
+** Use for merging a vector layer image with a base image.
 */
 void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent)
 {
@@ -3779,13 +3778,15 @@ void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY
       int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
       int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
       int red, green, blue;
-
-      if(gdTrueColorGetRed(src_c) == transparent->red && gdTrueColorGetBlue(src_c) == transparent->blue && gdTrueColorGetGreen(src_c) == transparent->green)
+      float newpct;
+      if(gdImageAlpha(src,src_c)==127 || 
+         (gdTrueColorGetRed(src_c) == transparent->red && gdTrueColorGetBlue(src_c) == transparent->blue && gdTrueColorGetGreen(src_c) == transparent->green))
         continue;
-
-      red = gdImageRed (src, src_c) * (pct / 100.0) + gdImageRed (dst, dst_c) * ((100 - pct) / 100.0);
-      green = gdImageGreen (src, src_c) * (pct / 100.0) + gdImageGreen (dst, dst_c) * ((100 - pct) / 100.0);
-      blue = gdImageBlue (src, src_c) * (pct / 100.0) + gdImageBlue (dst, dst_c) * ((100 - pct) / 100.0);
+      
+      newpct=(127-gdImageAlpha(src,src_c))/127.*pct/100.;
+      red = gdImageRed (src, src_c) * newpct  + gdImageRed (dst, dst_c) * (1. - newpct);
+      green = gdImageGreen (src, src_c) * (newpct ) + gdImageGreen (dst, dst_c) * (1. - newpct);
+      blue = gdImageBlue (src, src_c) * (newpct ) + gdImageBlue (dst, dst_c) * (1. - newpct);
             
       gdImageSetPixel(dst,dstX+x,dstY+y, gdTrueColorAlpha( red, green, blue, gdTrueColorGetAlpha(dst_c)));
     }

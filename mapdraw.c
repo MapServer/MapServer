@@ -706,9 +706,25 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   } else if(layer->type == MS_LAYER_RASTER) {
     retcode = msDrawRasterLayer(map, layer, image_draw);
   } else if(layer->type == MS_LAYER_CHART) {
+#ifdef USE_AGG
+      if( MS_RENDERER_AGG(image_draw->format))
+          msAlphaGD2AGG(image_draw);
+#endif
     retcode = msDrawChartLayer(map, layer, image_draw);
+#ifdef USE_AGG
+      if( MS_RENDERER_AGG(image_draw->format))
+          msAlphaAGG2GD(image_draw);
+#endif
   } else {   /* must be a Vector layer */
+#ifdef USE_AGG
+      if( MS_RENDERER_AGG(image_draw->format))
+          msAlphaGD2AGG(image_draw);
+#endif
     retcode = msDrawVectorLayer(map, layer, image_draw);
+#ifdef USE_AGG
+      if( MS_RENDERER_AGG(image_draw->format))
+          msAlphaAGG2GD(image_draw);
+#endif
   }
 
   /* Destroy the temp image for this layer tranparency */
