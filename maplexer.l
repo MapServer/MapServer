@@ -128,7 +128,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>rangeitem                             { return(RANGEITEM); }
 
 <INITIAL>alphacolor                            { return(ALPHACOLOR); }
-<INITIAL,URL_STRING>angle                      { return(ANGLE); }
+<INITIAL,URL_VARIABLE,URL_STRING>angle         { return(ANGLE); }
 <INITIAL,URL_STRING>antialias                  { return(ANTIALIAS); }
 <INITIAL,URL_STRING>backgroundcolor            { return(BACKGROUNDCOLOR); }
 <INITIAL,URL_STRING>backgroundshadowcolor      { return(BACKGROUNDSHADOWCOLOR); }
@@ -153,7 +153,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>end                        { return(END); }
 <INITIAL>error                                 { return(ERROR); }
 <INITIAL>expression                            { return(EXPRESSION); }
-<INITIAL,URL_STRING>extent                     { return(EXTENT); }
+<INITIAL,URL_VARIABLE,URL_STRING>extent        { return(EXTENT); }
 <INITIAL>extension                             { return(EXTENSION); }
 <INITIAL,URL_STRING>feature                    { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
@@ -261,7 +261,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>shadowcolor                { return(SHADOWCOLOR); }
 <INITIAL,URL_STRING>shadowsize                 { return(SHADOWSIZE); }
 <INITIAL>shapepath                             { return(SHAPEPATH); }
-<INITIAL,URL_STRING>size                       { return(SIZE); }
+<INITIAL,URL_VARIABLE,URL_STRING>size          { return(SIZE); }
 <INITIAL>sizeunits                             { return(SIZEUNITS); }
 <INITIAL,URL_STRING>status                     { return(STATUS); }
 <INITIAL,URL_VARIABLE>style                    { return(STYLE); }
@@ -281,10 +281,10 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>tolerance                  { return(TOLERANCE); }
 <INITIAL>toleranceunits                        { return(TOLERANCEUNITS); }
 <INITIAL>transparency                          { return(TRANSPARENCY); }
-<INITIAL>transparent                           { return(TRANSPARENT); }
+<INITIAL,URL_VARIABLE>transparent              { return(TRANSPARENT); }
 <INITIAL>transform                             { return(TRANSFORM); }
 <INITIAL>type                                  { return(TYPE); }
-<INITIAL,URL_STRING>units                      { return(UNITS); }
+<INITIAL,URL_VARIABLE,URL_STRING>units         { return(UNITS); }
 <INITIAL,URL_VARIABLE>web                      { return(WEB); }
 <INITIAL,URL_STRING>width                      { return(WIDTH); }
 <INITIAL,URL_STRING>wkt                        { return(WKT); }

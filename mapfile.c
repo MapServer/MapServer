@@ -4584,6 +4584,8 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       } break;
     case(EXTENT):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
       if(getDouble(&(map->extent.minx)) == -1) break;
       if(getDouble(&(map->extent.miny)) == -1) break;
       if(getDouble(&(map->extent.maxx)) == -1) break;
@@ -4597,27 +4599,23 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
     case(ANGLE): {
         double rotation_angle;
         msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+        msyylex();
+      
         if(getDouble(&(rotation_angle)) == -1) break;
         msMapSetRotation( map, rotation_angle );
       } break;
-    case(INTERLACE):
-      msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
-      if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
-      msPostMapParseOutputFormatSetup( map );
-      break;
     case(IMAGECOLOR):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
       if(getInteger(&(map->imagecolor.red)) == -1) break;
       if(getInteger(&(map->imagecolor.green)) == -1) break;
       if(getInteger(&(map->imagecolor.blue)) == -1) break;
       break;
-    case(IMAGEQUALITY):
-      msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
-      if(getInteger(&(map->imagequality)) == -1) break;
-      msPostMapParseOutputFormatSetup( map );
-      break;
     case(IMAGETYPE):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
       map->imagetype = getToken();
       msPostMapParseOutputFormatSetup( map );
       break;
@@ -4680,6 +4678,8 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       return msUpdateScalebarFromString(&(map->scalebar), string, MS_TRUE);      
     case(SIZE):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
       if(getInteger(&(map->width)) == -1) break;
       if(getInteger(&(map->height)) == -1) break;
 
@@ -4693,17 +4693,17 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       msFree(map->shapepath);
       map->shapepath = strdup(string);
       break;
-    case(STATUS):
-      msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
-      if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
-      break;
     case(TRANSPARENT):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
       msPostMapParseOutputFormatSetup( map );
       break;
     case(UNITS):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
       if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) break;
       break;
     case(WEB):
