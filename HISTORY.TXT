@@ -15,6 +15,7 @@ Current Version (CVS HEAD):
 
 - Fix problem with LUT scaling ranges with explicit value for 255 (#2167).
 
+- WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
 
 Version 5.0.0-beta1 (2007-07-25)
 --------------------------------

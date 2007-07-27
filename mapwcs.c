@@ -1237,6 +1237,11 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   map->cellsize = params->resx; /* pick one, MapServer only supports square cells (what about msAdjustExtent here!) */
 
   msMapComputeGeotransform(map);
+
+  /* Do we need to fake out stuff for rotated support? */ 
+  if( map->gt.need_geotransform ) 
+      msMapSetFakedExtent( map ); 
+
   map->projection.gt = map->gt;
 
   /* check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata) */
