@@ -31,7 +31,7 @@ Style: ANGLEITEM, SIZEITEM
 The following properties can accept bindings:
 
 Style: angle, color, outlinecolor, size, symbol
-Label: angle, color, outlinecolor, size
+Label: angle, color, outlinecolor, size, font, priority
 
 Colors may be given as a hex value (e.g. #FFFFFF) or an RGB triplet 
 (e.g. 255 255 255).
