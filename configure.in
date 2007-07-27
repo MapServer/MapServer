@@ -237,7 +237,7 @@ unset ac_cv_lib_jpeg_jpeg_read_header
 
 AC_CHECKING(whether we should include JPEG support)
 AC_ARG_WITH(jpeg,
-[  --with-jpeg[[=DIR]]         Include JPEG support (DIR is LibJPEG's install dir).],,)
+[  --with-jpeg[[=DIR]]       Include JPEG support (DIR is LibJPEG's install dir).],,)
 
 if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
 
@@ -928,7 +928,8 @@ AC_ARG_WITH(sde,
 [  --with-sde[[=DIR]]        Include ESRI SDE support (DIR is SDE's install dir).],,)
 
 AC_ARG_WITH(sde-version,
-[  --with-sde-version[[=VERSION NUMBER]]  Set ESRI SDE version number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
+[  --with-sde-version[[=VERSION NUMBER]]  Set ESRI SDE version number (Default
+                          is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
 
 if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
 SDE_VERSION=""
@@ -1335,7 +1336,8 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if OracleSpatial support requested)
 AC_ARG_WITH(oraclespatial,
-[  --with-oraclespatial[[=ARG]] Include OracleSpatial Support (ARG=yes/path to Oracle home)],,)
+[  --with-oraclespatial[[=ARG]] Include OracleSpatial Support (ARG=yes/path to
+                          Oracle home)],,)
 
 if test "$with_oraclespatial" = "no" -o "$with_oraclespatial" = ""; then
   AC_MSG_RESULT([no])
@@ -1563,7 +1565,8 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include OGC SOS Server support)
 AC_ARG_WITH(sos,
-[  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and OGR required).],,)
+[  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
+                          OGR required).],,)
 
 if test "$with_sos" = "no" ; then
 
@@ -2186,9 +2189,9 @@ AC_ARG_WITH(java-include-os-name,
                           (AUTODETECTED)
                           Use this option only if building of Java Mapscript
                           fails because os-dependent headers are not found.
-                          dirname is the name of subdirectory of the Java installation
-                          where os-dependent include files are found (for instance
-                          linux or solaris).
+                          dirname is the name of subdirectory of the Java 
+                          installation where os-dependent include files are 
+                          found (for instance linux or solaris).
                           Only used by Java mapscript.],,)
 if test -n "${with_java_include_os_name}" ; then
 OS_INCLUDE_DIR="${with_java_include_os_name}"

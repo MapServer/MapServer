@@ -839,7 +839,7 @@ Optional Packages:
                               to zlib install dir).
   --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
                               PNG install dir).
-  --with-jpeg[=DIR]         Include JPEG support (DIR is LibJPEG's install dir).
+  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
   --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the
                               libXpm install prefix).
   --with-libiconv=DIR     Specify where libiconv is installed (DIR is path
@@ -854,7 +854,8 @@ Optional Packages:
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
   --with-threads[=linkopt]Include thread safe support
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
-  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).
+  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default
+                          is 80).
   --with-geos[=PATH]      Include GEOS support (PATH is path to geos-config)
   --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).
   --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)
@@ -862,7 +863,8 @@ Optional Packages:
   --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
   --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)
-  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)
+  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to
+                          Oracle home)
   --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
                           directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
@@ -872,7 +874,8 @@ Optional Packages:
                           required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
-  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and OGR required).
+  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
+                          OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-xml2-config=PATH Specify path to xml2-config.
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
@@ -897,9 +900,9 @@ Optional Packages:
                           (AUTODETECTED)
                           Use this option only if building of Java Mapscript
                           fails because os-dependent headers are not found.
-                          dirname is the name of subdirectory of the Java installation
-                          where os-dependent include files are found (for instance
-                          linux or solaris).
+                          dirname is the name of subdirectory of the Java
+                          installation where os-dependent include files are
+                          found (for instance linux or solaris).
                           Only used by Java mapscript.
 
 Some influential environment variables:
