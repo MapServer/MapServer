@@ -754,9 +754,9 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
   test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg2"
 
   test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
-  test -e $AGG_DIR/lib/libagg.so && AGG_LIBDIR="$AGG_DIR/lib"
+  test -f $AGG_DIR/lib/libagg.so && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
-  test -e $AGG_DIR/src/libagg.so && AGG_LIBDIR="$AGG_DIR/src"
+  test -f $AGG_DIR/src/libagg.so && AGG_LIBDIR="$AGG_DIR/src"
 
   if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
       AGG_ENABLED="-DUSE_AGG"

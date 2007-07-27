@@ -17,6 +17,12 @@ Current Version (CVS HEAD):
 
 - WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
 
+- Fixed formatting of configure --help (#2182)
+
+- Fixed AGG configure option to use 'test -f' instead of 'test -e' which
+  doesn't work on Solaris (#2183)
+
+
 Version 5.0.0-beta1 (2007-07-25)
 --------------------------------
 
