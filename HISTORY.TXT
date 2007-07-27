@@ -17,6 +17,8 @@ Version 4.10.3 (svn...)
 
 - SOS : backport fixes related to large xml outputs (#1938, #2146)
 
+- WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
+
 Version 4.10.2 (2007-05-07)
 ---------------------------
 
