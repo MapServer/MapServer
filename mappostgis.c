@@ -2063,7 +2063,18 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
         if(lp->filteritem) free(lp->filteritem);
         lp->filteritem = strdup(timefield);
         if (&lp->filter)
-          freeExpression(&lp->filter);
+        {
+            /* if the filter is set and it's a string type, concatenate it with
+               the time. If not just free it */
+            if (lp->filter.type == MS_EXPRESSION)
+            {
+                strcat(buffer, "(");
+                strcat(buffer, lp->filter.string);
+                strcat(buffer, ") and ");
+            }
+            else
+              freeExpression(&lp->filter);
+        }
         
 
         strcat(buffer, "(");
@@ -2343,7 +2354,16 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
               free(lp->filteritem);
             lp->filteritem = strdup(timefield);     
             if (&lp->filter)
-              freeExpression(&lp->filter);
+            {
+                if (lp->filter.type == MS_EXPRESSION)
+                {
+                    strcat(buffer, "(");
+                    strcat(buffer, lp->filter.string);
+                    strcat(buffer, ") and ");
+                }
+                else
+                  freeExpression(&lp->filter);
+            }
             loadExpressionString(&lp->filter, buffer);
         }
 
