@@ -157,7 +157,7 @@ AC_DEFUN(AC_LD_SHARED,
     IRIX_ALL=
   fi
 
-  AC_ARG_WITH(ld-shared,[  --without-ld-shared   Disable shared library support],,)
+  AC_ARG_WITH(ld-shared,[  --without-ld-shared     Disable shared library support],,)
 
   if test "$with_ld_shared" != "" ; then
     if test "$with_ld_shared" = "no" ; then

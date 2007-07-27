@@ -812,7 +812,8 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
-  --disable-ignore-missing-data  Report all missing data files (enabled by default).
+  --disable-ignore-missing-data  Report all missing data files (enabled by
+                                 default).
   --enable-point-z-m      Use point Z and M parameters (disabled by default).
   --disable-point-z-m     Disable support for point Z and M parameters.
   --disable-fast-nint     Use safe MS_NINT with reliable rounding
@@ -838,31 +839,31 @@ Optional Packages:
                               to zlib install dir).
   --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
                               PNG install dir).
-  --with-jpeg=DIR       Include JPEG support (DIR is LibJPEG's install dir).
+  --with-jpeg[=DIR]         Include JPEG support (DIR is LibJPEG's install dir).
   --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the
                               libXpm install prefix).
   --with-libiconv=DIR     Specify where libiconv is installed (DIR is path
                           to libiconv install dir (prefix)).
-  --with-gd=[static,]DIR Specify which version of GD to use (DIR is GD's
+  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
                           install dir).
   --without-pdf           Disable PDF support.
-  --with-pdf=DIR        Include PDF support (DIR is PDFlib's install dir).
-  --with-agg=DIR       Include AGG support (DIR is AGG's install dir).
-  --without-eppl        Disable EPPL7 support.
-  --with-eppl           Include EPPL7 support.
-  --with-proj=DIR       Include PROJ.4 support (DIR is PROJ.4's install dir).
-  --with-threads=linkoptInclude thread safe support
-  --with-sde=DIR        Include ESRI SDE support (DIR is SDE's install dir).
-  --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
-  --with-geos=PATH      Include GEOS support (PATH is path to geos-config)
-  --with-ogr=PATH       Include OGR support (PATH is path to gdal-config).
-  --with-gdal=PATH      Include GDAL support (PATH is path to gdal-config)
-  --without-tiff        Disable TIFF support.
-  --with-tiff=DIR       Include TIFF support (DIR is LibTIFF's install dir).
-  --with-postgis=ARG    Include PostGIS Support (ARG=yes/path to pg_config)
-  --with-mygis=ARG      Include MyGIS Support (ARG=yes/path to my_config)
-  --with-oraclespatial=ARG Include OracleSpatial Support (ARG=yes/path to Oracle home)
-  --with-ming=DIR       Include MING/Flash Support (DIR=path to Ming
+  --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).
+  --with-agg[=DIR]        Include AGG support (DIR is AGG's install dir).
+  --without-eppl          Disable EPPL7 support.
+  --with-eppl             Include EPPL7 support.
+  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
+  --with-threads[=linkopt]Include thread safe support
+  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
+  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).
+  --with-geos[=PATH]      Include GEOS support (PATH is path to geos-config)
+  --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).
+  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)
+  --without-tiff          Disable TIFF support.
+  --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
+  --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
+  --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)
+  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)
+  --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
                           directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).
@@ -876,13 +877,13 @@ Optional Packages:
   --with-xml2-config=PATH Specify path to xml2-config.
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
-  --with-warnings=flags   Enable strict warnings (or user defined warnings)
+  --with-warnings[=flags] Enable strict warnings (or user defined warnings)
   --with-php=DIR          Specify directory where PHP4's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
-  --without-ld-shared   Disable shared library support
-  --with-apxs=FILE      (CURRENTLY DISABLED)
+  --without-ld-shared     Disable shared library support
+  --with-apxs[=FILE]      (CURRENTLY DISABLED)
                           Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the

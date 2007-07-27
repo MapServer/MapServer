@@ -237,7 +237,7 @@ unset ac_cv_lib_jpeg_jpeg_read_header
 
 AC_CHECKING(whether we should include JPEG support)
 AC_ARG_WITH(jpeg,
-[  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
+[  --with-jpeg[[=DIR]]         Include JPEG support (DIR is LibJPEG's install dir).],,)
 
 if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
 
@@ -464,7 +464,7 @@ unset ac_cv_lib_gd_gdFontCacheSetup
 
 AC_CHECKING(for GD 2.0.16 or higher)
 AC_ARG_WITH(gd,
-[  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
+[  --with-gd[[=[static,]DIR]] Specify which version of GD to use (DIR is GD's
                           install dir).],,)
 
 if test "$with_gd" = "no" ; then
@@ -665,7 +665,7 @@ unset ac_cv_lib_pdf_PDF_show_xy
 AC_CHECKING(whether we should include PDF support)
 AC_ARG_WITH(pdf,
 [  --without-pdf           Disable PDF support.
-  --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).],,)
+  --with-pdf[[=DIR]]        Include PDF support (DIR is PDFlib's install dir).],,)
 if test "$with_pdf" = "no" ; then
   AC_MSG_RESULT([        disabled by --without-pdf])
 elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
@@ -733,7 +733,7 @@ dnl ---------------------------------------------------------------------
 
 AC_MSG_CHECKING(if AGG support requested)
 AC_ARG_WITH(agg,
-[  --with-agg[=DIR]       Include AGG support (DIR is AGG's install dir).],,)
+[  --with-agg[[=DIR]]        Include AGG support (DIR is AGG's install dir).],,)
 
 if test "$with_agg" = "yes" ; then
 
@@ -788,8 +788,8 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include EPPL7 support)
 AC_ARG_WITH(eppl,
-[  --without-eppl        Disable EPPL7 support.
-  --with-eppl           Include EPPL7 support.],,)
+[  --without-eppl          Disable EPPL7 support.
+  --with-eppl             Include EPPL7 support.],,)
 if test "$with_eppl" = "no" ; then
   AC_MSG_RESULT([        disabled by --without-eppl])
 else
@@ -817,7 +817,7 @@ unset ac_cv_lib_proj_pj_latlong_from_proj
 
 AC_CHECKING(whether we should include PROJ.4 support)
 AC_ARG_WITH(proj,
-[  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).],,)
+[  --with-proj[[=DIR]]       Include PROJ.4 support (DIR is PROJ.4's install dir).],,)
 
 if test "$with_proj" = "yes" ; then
 
@@ -889,7 +889,7 @@ THREAD_FLAG=""
 
 AC_CHECKING(whether we should include thread safe support)
 AC_ARG_WITH(threads,
-[  --with-threads[=linkopt]Include thread safe support],,)
+[  --with-threads[[=linkopt]]Include thread safe support],,)
 
 if test "$with_threads" = "yes" ; then
 
@@ -925,10 +925,10 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include ESRI SDE support)
 AC_ARG_WITH(sde,
-[  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).],,)
+[  --with-sde[[=DIR]]        Include ESRI SDE support (DIR is SDE's install dir).],,)
 
 AC_ARG_WITH(sde-version,
-[  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
+[  --with-sde-version[[=VERSION NUMBER]]  Set ESRI SDE version number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
 
 if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
 SDE_VERSION=""
@@ -997,7 +997,7 @@ dnl ---------------------------------------------------------------------
 AC_MSG_CHECKING(if GEOS support requested)
 
 AC_ARG_WITH(geos,
-[  --with-geos[=PATH]      Include GEOS support (PATH is path to geos-config)],,)
+[  --with-geos[[=PATH]]      Include GEOS support (PATH is path to geos-config)],,)
 
 if test "$with_geos" = "yes" ; then
 
@@ -1065,7 +1065,7 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include OGR support)
 AC_ARG_WITH(ogr,
-[  --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).],,)
+[  --with-ogr[[=PATH]]       Include OGR support (PATH is path to gdal-config).],,)
 
 if test "`basename xx/$with_ogr`" = "gdal-config" ; then
   GDAL_CONFIG="$with_ogr"
@@ -1105,7 +1105,7 @@ dnl ---------------------------------------------------------------------
 AC_MSG_CHECKING(if GDAL support requested)
 
 AC_ARG_WITH(gdal,
-[  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)],,)
+[  --with-gdal[[=PATH]]      Include GDAL support (PATH is path to gdal-config)],,)
 
 if test "$with_gdal" = "yes" ; then
 
@@ -1189,8 +1189,8 @@ unset ac_cv_lib_tiff_TIFFOpen
 
 AC_CHECKING(whether we should include TIFF support)
 AC_ARG_WITH(tiff,
-[  --without-tiff        Disable TIFF support.
-  --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).],,)
+[  --without-tiff          Disable TIFF support.
+  --with-tiff[[=DIR]]       Include TIFF support (DIR is LibTIFF's install dir).],,)
 if test -z "$with_tiff" -a -n "$GDAL_ENABLED" ; then
   AC_MSG_RESULT([        disabled since gdal is in use])
 
@@ -1258,7 +1258,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if PostGIS support requested)
 
-AC_ARG_WITH(postgis,[  --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)],,)
+AC_ARG_WITH(postgis,[  --with-postgis[[=ARG]]    Include PostGIS Support (ARG=yes/path to pg_config)],,)
 
 if test "$with_postgis" = "no" -o "$with_postgis" = "" ; then
   AC_MSG_RESULT(no)
@@ -1295,7 +1295,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if MyGIS support requested)
 
-AC_ARG_WITH(mygis,[  --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)],,)
+AC_ARG_WITH(mygis,[  --with-mygis[[=ARG]]      Include MyGIS Support (ARG=yes/path to my_config)],,)
 
 if test "$with_mygis" = "no" -o "$with_mygis" = "" ; then
   AC_MSG_RESULT(no)
@@ -1335,7 +1335,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if OracleSpatial support requested)
 AC_ARG_WITH(oraclespatial,
-[  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)],,)
+[  --with-oraclespatial[[=ARG]] Include OracleSpatial Support (ARG=yes/path to Oracle home)],,)
 
 if test "$with_oraclespatial" = "no" -o "$with_oraclespatial" = ""; then
   AC_MSG_RESULT([no])
@@ -1400,7 +1400,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if MING/Flash support requested)
 AC_ARG_WITH(ming,
-[  --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
+[  --with-ming[[=DIR]]       Include MING/Flash Support (DIR=path to Ming
                           directory)],,)
 
 if test "$with_ming" = "no" -o "$with_ming" = ""; then
@@ -1785,7 +1785,8 @@ dnl ---------------------------------------------------------------------
 
 AC_ARG_ENABLE(ignore-missing-data,
 [  --enable-ignore-missing-data   Ignore missing data file errors at runtime
-  --disable-ignore-missing-data  Report all missing data files (enabled by default).],,)
+  --disable-ignore-missing-data  Report all missing data files (enabled by 
+                                 default).],,)
 if test "$enable_ignore_missing_data" = "yes" ; then
 
   IGNORE_MISSING_DATA="-DIGNORE_MISSING_DATA"
@@ -1841,7 +1842,7 @@ dnl ---------------------------------------------------------------------
 AC_MSG_CHECKING(compiler warnings)
 
 AC_ARG_WITH(warnings,
-[  --with-warnings[=flags]   Enable strict warnings (or user defined warnings)],,)
+[  --with-warnings[[=flags]] Enable strict warnings (or user defined warnings)],,)
 
 if test "$with_warnings" = "yes" ; then 
   if test "$GCC" = "yes" ; then
@@ -2082,7 +2083,7 @@ dnl The APXS variable also affects the way AC_ADD_RUNPATH() works
 dnl ---------------------------------------------------------------------
 
 AC_ARG_WITH(apxs,
-[  --with-apxs[=FILE]      (CURRENTLY DISABLED) 
+[  --with-apxs[[=FILE]]      (CURRENTLY DISABLED) 
                           Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
