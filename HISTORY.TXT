@@ -10,7 +10,7 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (CVS HEAD):
+Current Version (SVN Trunk):
 ---------------------------
 
 - WMS : Correct WMS time overriding Filter paramter (#1261)
@@ -23,6 +23,8 @@ Current Version (CVS HEAD):
 
 - Fixed AGG configure option to use 'test -f' instead of 'test -e' which
   doesn't work on Solaris (#2183)
+
+- Fixed mapwms.c to support selecting AGG/ outputformats via FORMAT=.
 
 
 Version 5.0.0-beta1 (2007-07-25)
