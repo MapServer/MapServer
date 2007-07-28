@@ -533,7 +533,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       if( format == NULL || 
           (strncasecmp(format->driver, "GD/", 3) != 0 &&
-           strncasecmp(format->driver, "GDAL/", 4) != 0))
+           strncasecmp(format->driver, "GDAL/", 5) != 0 && 
+           strncasecmp(format->driver, "AGG/", 4) != 0))
         {
           msSetError(MS_IMGERR,
                    "Unsupported output format (%s).",
