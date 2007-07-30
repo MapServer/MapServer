@@ -1301,6 +1301,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     CPLXMLNode *psTmpNode = NULL;
     CPLXMLNode *psFeatureIdNode = NULL;
     char *pszFeatureId=NULL, *pszFeatureIdList=NULL;
+    char **tokens = NULL;
+    int nTokens = 0;
 
     if (psFilterNode && psXMLNode && psXMLNode->pszValue)
     {
@@ -2008,18 +2010,26 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
             pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "fid", NULL);
             pszFeatureIdList = NULL;
-            if (pszFeatureId)
-              pszFeatureIdList = msStringConcatenate(pszFeatureIdList, pszFeatureId);
             
-            psFeatureIdNode = psXMLNode->psNext;
+            psFeatureIdNode = psXMLNode;
             while (psFeatureIdNode)
             {
                 pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "fid", NULL);
+                
                 if (pszFeatureId)
                 {
                     if (pszFeatureIdList)
                       pszFeatureIdList = msStringConcatenate(pszFeatureIdList, ",");
-                    pszFeatureIdList = msStringConcatenate(pszFeatureIdList, pszFeatureId);
+
+                    /*typname could be part of the value : INWATERA_1M.1234*/
+                    tokens = msStringSplit(pszFeatureId,'.', &nTokens);
+                    if (tokens && nTokens == 2)
+                      pszFeatureIdList = msStringConcatenate(pszFeatureIdList, tokens[1]);
+                    else
+                      pszFeatureIdList = msStringConcatenate(pszFeatureIdList, pszFeatureId);
+
+                    if (tokens)
+                      msFreeCharArray(tokens, nTokens);
                 }
                 psFeatureIdNode = psFeatureIdNode->psNext;
             }
@@ -2611,7 +2621,7 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                         {
                             pszTmp = tokens[0];
                             nLength = strlen(pszTmp);
-                            for (j=0; i<nLength; j++)
+                            for (j=0; j<nLength; j++)
                             {
                                 if (!isdigit(pszTmp[j]) &&  pszTmp[j] != '.')
                                 {
@@ -2627,12 +2637,17 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 
                         if (pszExpression != NULL)
                           pszExpression = msStringConcatenate(pszExpression, " OR ");
+                        else
+                          pszExpression = msStringConcatenate(pszExpression, "(");
                         pszExpression = msStringConcatenate(pszExpression, szTmp);
                     }
 
                     msFreeCharArray(tokens, nTokens);
                 }
-            }
+            }   
+            /*opening and closing brackets are needed for mapserver expressions*/
+            if (pszExpression)
+               pszExpression = msStringConcatenate(pszExpression, ")");
         }
 #else
        msSetError(MS_MISCERR, "OWS support is not available.", 
@@ -3675,14 +3690,30 @@ int FLTHasSpatialFilter(FilterEncodingNode *psNode)
 }
 
 
+/************************************************************************/
+/*                     FLTCreateFeatureIdFilterEncoding                 */
+/*                                                                      */
+/*      Utility function to create a filter node of FeatureId type.     */
+/************************************************************************/
 FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
 {
     FilterEncodingNode *psFilterNode = NULL;
+    char **tokens = NULL;
+    int nTokens = 0;
+
     if (pszString)
     {
         psFilterNode = FLTCreateFilterEncodingNode();
         psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
-        psFilterNode->pszValue =  strdup(pszString);
+        /*split if tyname is included in the string*/
+        tokens = msStringSplit(pszString,'.', &nTokens);
+        if (tokens && nTokens == 2)
+          psFilterNode->pszValue = strdup(tokens[1]);
+        else
+          psFilterNode->pszValue =  strdup(pszString);
+
+        if (tokens)
+          msFreeCharArray(tokens, nTokens); 
         return psFilterNode;
     }
     return NULL;

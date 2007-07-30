@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+- WFS: Correct bugs related to query by featureid support (#2102)
 
 - WMS: Add svg as a supported format for GetMap request (#1347)
 

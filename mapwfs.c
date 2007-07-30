@@ -932,7 +932,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
   const char *output_schema_format = "XMLSCHEMA";  
   int outputformat = OWS_GML2; /* default output is GML 2.1 */
-    
+   
+  char **aFIDLayers = NULL;
+  char **aFIDValues = NULL;
+  int iFIDLayers = 0;
+
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
 
   /* Default filter is map extents */
@@ -946,7 +950,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
   /* typename is mandatory unlsess featureid is specfied. We do not
      support featureid */
-  if (paramsObj->pszTypeName==NULL)
+  if (paramsObj->pszTypeName==NULL && paramsObj->pszFeatureId == NULL)
   {
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: TYPENAME parameter missing", 
@@ -1230,61 +1234,110 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     if (bFeatureIdSet)
     {
-        char **tokens = NULL;
-        int nTokens = 0, j=0;
+        char **tokens = NULL, **tokens1=NULL ;
+        int nTokens = 0, j=0, nTokens1=0, k=0;
         FilterEncodingNode *psNode = NULL;
-	/*extract the layer based on the featureid : expecting layername.value*/
-        tokens = msStringSplit(paramsObj->pszFeatureId, '.', &nTokens);
-        if (!tokens || nTokens != 2)
-        {
-            msSetError(MS_WFSERR, 
-		     "Invalid FeatureId in GetFeature. Expecting layername.value : %s", 
-		     "msWFSGetFeature()", pszFilter);
-            if (tokens)
-              msFreeCharArray(tokens, nTokens);
-	  return msWFSException(map, paramsObj->pszVersion);
-        }
-        for (j=0; j<map->numlayers; j++) 
+
+        /* Keep only selected layers, set to OFF by default. */
+        for(j=0; j<map->numlayers; j++) 
         {
             layerObj *lp;
             lp = GET_LAYER(map, j);
-            if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, tokens[0]) == 0)
-            {
-                lp->status = MS_ON;
-                if (lp->template == NULL) {
-                    /* Force setting a template to enable query. */
-                    lp->template = strdup("ttt.html");
-                }
-                psNode = FLTCreateFeatureIdFilterEncoding(paramsObj->pszFeatureId);
-                if (!psNode) {
-                    msSetError(MS_WFSERR, 
-                               "Invalid or Unsupported FeatureId in GetFeature : %s", 
-                               "msWFSGetFeature()", pszFilter);
-                    return msWFSException(map, paramsObj->pszVersion);
-                }
-
-                if( FLTApplyFilterToLayer(psNode, map, lp->index, MS_FALSE) != MS_SUCCESS )
-                  return msWFSException(map, paramsObj->pszVersion);
-
-                FLTFreeFilterEncodingNode( psNode );
-                psNode = NULL;
-                break;
-            }
+            lp->status = MS_OFF;
         }
-        if (tokens)
-          msFreeCharArray(tokens, nTokens);
+        /*featureid can be a list INWATERA_1M.1234, INWATERA_1M.1235
+        We will keep all the feature id from the same layer together
+        so that an OR would be applied if several of them are present
+        */
+         tokens = msStringSplit(paramsObj->pszFeatureId, ',', &nTokens);
+         iFIDLayers = 0;
+         if (tokens && nTokens >=1)
+         {
+             aFIDLayers = (char **)malloc(sizeof(char *)*nTokens);
+             aFIDValues = (char **)malloc(sizeof(char *)*nTokens);
+             for (j=0; j<nTokens; j++)
+             {
+                 aFIDLayers[j] = NULL;
+                 aFIDValues[j] = NULL;
+             }
+             for (j=0; j<nTokens; j++)
+             {
+                 tokens1 = msStringSplit(tokens[j], '.', &nTokens1);
+                 if (tokens1 && nTokens1 == 2)
+                 {
+                     for (k=0; k<iFIDLayers; k++)
+                     {
+                         if (strcasecmp(aFIDLayers[k], tokens1[0]) == 0)
+                           break;
+                     }
+                     if (k == iFIDLayers)
+                     {
+                         aFIDLayers[iFIDLayers] = strdup(tokens1[0]);
+                         iFIDLayers++;
+                     }
+                     if (aFIDValues[k] != NULL)
+                       aFIDValues[k] = msStringConcatenate(aFIDValues[k], ",");
+                     aFIDValues[k] = msStringConcatenate( aFIDValues[k], tokens1[1]);
+                 }
+                 else
+                 {
+                     msSetError(MS_WFSERR, 
+		     "Invalid FeatureId in GetFeature. Expecting layername.value : %s", 
+		     "msWFSGetFeature()", pszFilter);
+                     if (tokens)
+                       msFreeCharArray(tokens, nTokens);
+                     if (tokens1)
+                       msFreeCharArray(tokens1, nTokens1);
+                     return msWFSException(map, paramsObj->pszVersion);
+                 }
+                 if (tokens1)
+                    msFreeCharArray(tokens1, nTokens1);
+             }
+         }
+         if (tokens)
+           msFreeCharArray(tokens, nTokens);
+
+         for (j=0; j< iFIDLayers; j++)
+         {
+             for (k=0; k<map->numlayers; k++) 
+             {
+                 layerObj *lp;
+                 lp = GET_LAYER(map, k);
+                 if (msWFSIsLayerSupported(lp) && lp->name && 
+                     strcasecmp(lp->name, aFIDLayers[j]) == 0)
+                 {
+                     lp->status = MS_ON;
+                     if (lp->template == NULL) {
+                         /* Force setting a template to enable query. */
+                         lp->template = strdup("ttt.html");
+                     }
+                     psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
+
+                     if( FLTApplyFilterToLayer(psNode, map, lp->index, MS_FALSE) != MS_SUCCESS )
+                       return msWFSException(map, paramsObj->pszVersion);
+
+                     FLTFreeFilterEncodingNode( psNode );
+                     psNode = NULL;
+                     break;
+                 }
+             }
+         }
+         if (aFIDLayers && aFIDValues)
+         {
+             for (j=0; j<iFIDLayers; j++)
+             {
+                 msFree(aFIDLayers[j]);
+                 msFree(aFIDValues[j]);
+             }
+             msFree(aFIDLayers);
+             msFree(aFIDValues);
+         }
     }
 #endif
 
     if(layers)
       msFreeCharArray(layers, numlayers);
 
-    if(typename == NULL)  {
-      msSetError(MS_WFSERR, 
-		 "Required TYPENAME parameter missing for GetFeature.", 
-		 "msWFSGetFeature()");
-      return msWFSException(map, paramsObj->pszFilter);
-    }
 
     /* Set map output projection to which output features should be reprojected */
     if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0) {
