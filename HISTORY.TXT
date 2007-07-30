@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- WMS: Add svg as a supported format for GetMap request (#1347)
+
 - WMS : Correct WMS time overriding Filter paramter (#1261)
 
 - Fix problem with LUT scaling ranges with explicit value for 255 (#2167).

@@ -534,7 +534,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if( format == NULL || 
           (strncasecmp(format->driver, "GD/", 3) != 0 &&
            strncasecmp(format->driver, "GDAL/", 5) != 0 && 
-           strncasecmp(format->driver, "AGG/", 4) != 0))
+           strncasecmp(format->driver, "AGG/", 4) != 0 &&
+           strncasecmp(format->driver, "SVG", 3) != 0))
         {
           msSetError(MS_IMGERR,
                    "Unsupported output format (%s).",
@@ -1600,6 +1601,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 #ifdef USE_GD_WBMP
                       "<WBMP />"
 #endif
+                       "<SVG />"  
                       , NULL);
     msWMSPrintRequestCap(nVersion, "Capabilities", script_url_encoded, "<WMS_XML />", NULL);
     msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
@@ -1615,7 +1617,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                     "application/vnd.ogc.wms_xml",
                     NULL);
 
-    msGetOutputFormatMimeListRaster(map,mime_list,sizeof(mime_list)/sizeof(char*));
+    msGetOutputFormatMimeListWMS(map,mime_list,sizeof(mime_list)/sizeof(char*));
     msWMSPrintRequestCap(nVersion, "GetMap", script_url_encoded,
                     mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                     mime_list[4], mime_list[5], mime_list[6], mime_list[7],
