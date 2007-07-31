@@ -1321,7 +1321,26 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                      break;
                  }
              }
+             if (k == map->numlayers)/*layer not found*/
+             {
+                 msSetError(MS_WFSERR, 
+                            "Invalid typename given with FeatureId in GetFeature : %s", "msWFSGetFeature()", 
+                            aFIDLayers[j]);
+
+                 if (aFIDLayers && aFIDValues)
+                 {      
+                     for (j=0; j<iFIDLayers; j++)
+                     {
+                         msFree(aFIDLayers[j]);
+                         msFree(aFIDValues[j]);
+                     }
+                     msFree(aFIDLayers);
+                     msFree(aFIDValues);
+                 }
+                 return msWFSException(map, paramsObj->pszVersion);
+             }
          }
+
          if (aFIDLayers && aFIDValues)
          {
              for (j=0; j<iFIDLayers; j++)
