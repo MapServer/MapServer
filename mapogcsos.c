@@ -1814,14 +1814,19 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                 pszTimeField =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "SO",
                                                     "timeitem");
 
-            if (pszTimeField)
-              {
+                if (pszTimeField)
+                {
                   /*validate only if time extent is set.*/
                   if (pszTimeExtent)
                   {
-                      if (msValidateTimeValue(pszTimeString, pszTimeExtent) == MS_TRUE)
-                        msLayerSetTimeFilter((GET_LAYER(map, i)), pszTimeString, 
-                                             pszTimeField);
+                    if (msValidateTimeValue(pszTimeString, pszTimeExtent) == MS_TRUE)
+                      msLayerSetTimeFilter((GET_LAYER(map, i)), pszTimeString, 
+                                           pszTimeField);
+                    else
+                    {
+                        /*we should turn the layer off since the eventTime is not in the time extent*/
+                        GET_LAYER(map, i)->status = MS_OFF;
+                    }
                   }
                   else
                     msLayerSetTimeFilter((GET_LAYER(map, i)), pszTimeString, 
