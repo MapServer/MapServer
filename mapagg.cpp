@@ -359,7 +359,7 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
   agg::rasterizer_scanline_aa<> ras_aa;
     
   ren_base.reset_clipping(true);
-    
+
   ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
                           ((double) color->green) / 255.0, 
                           ((double) color->blue) / 255.0, 1));
@@ -785,21 +785,13 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     
   symbolObj *symbol;
   int ox, oy;
-  int fc, bc, oc;
   double size, angle, angle_radians;
   int width;
 
   if(!p) return;
   if(p->numlines <= 0) return;
 
-  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->backgroundcolor));
-  if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
-  if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
-
   symbol = symbolset->symbol[style->symbol];
-  bc = style->backgroundcolor.pen;
-  fc = style->color.pen;
-  oc = style->outlinecolor.pen;
 
   if(style->size == -1) {
     size = msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
@@ -819,38 +811,24 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
   ox = MS_NINT(style->offsetx*scalefactor); /* should we scale the offsets? */
   oy = MS_NINT(style->offsety*scalefactor);
 
-  if(fc==-1 && oc!=-1 && symbol->type!=MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolAGG() instead (POLYLINE) */
+  if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolAGG() instead (POLYLINE) */
     msDrawLineSymbolAGG(symbolset, image, p, style, scalefactor);
     return;
   }
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
-  if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
+  if(!MS_VALID_COLOR(style->color) && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
   if(size < 1) return; /* size too small */
       
   if(style->symbol == 0) { /* simply draw a solid fill of the specified color */    
-    if(style->antialias==MS_TRUE) {
-      colorObj thefc = { (fc & 0xff000000 >> 24),(fc & 0x00ff0000 >> 16),(fc & 0x0000ff00 >> 8),fc & 0x000000ff };
-      imageFilledPolygon(image, p, &thefc, ox, oy); /* fill is NOT anti-aliased, the outline IS */
-      if(oc>-1)
-        gdImageSetAntiAliased(img, oc);
-      else
-        gdImageSetAntiAliased(img, fc);
-
-      // imagePolyline(image, p, gdAntiAliased, ox, oy);
-      colorObj thefc2 = { (fc & 0xff000000 >> 24),(fc & 0x00ff0000 >> 16),(fc & 0x0000ff00 >> 8),fc & 0x000000ff };
-      imagePolyline(image, p, &thefc2, width, ox, oy, 0, NULL);
-    } else {
-      imageFilledPolygon(image, p, &(style->color), ox, oy);
-      if(oc>-1) {
-        imagePolyline(image, p, &(style->outlinecolor), width, ox, oy, 0, NULL);
-      }
-    }
+    imageFilledPolygon(image, p, &(style->color), ox, oy);
+    if(MS_VALID_COLOR(style->outlinecolor))
+      imagePolyline(image, p, &(style->outlinecolor), width, ox, oy, 0, NULL);
 
     return;
   }
     
-  msDrawShadeSymbolGD(symbolset, img, p, style, scalefactor);
+  msDrawShadeSymbolGD(symbolset, img, p, style, scalefactor); /* fall back to GD */
 }
 
 /*
