@@ -752,6 +752,8 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
   int nwidth, size;
   symbolObj *symbol;
 
+  colorObj color;
+
   symbol = symbolset->symbol[style->symbol];
 
   /*
@@ -760,6 +762,13 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
   ** doing thick lines) 
   */
   if(style->symbol >= 0 && (style->symbol == 0 || symbol->type == MS_SYMBOL_ELLIPSE)) {
+    color = style->color;
+    if(!MS_VALID_COLOR(color)) {
+      color = style->outlinecolor; /* try the outline color, polygons drawing thick outlines often do this */
+      if(!MS_VALID_COLOR(color))
+        return; /* no color, bail out... */
+    }
+
     if(style->size == -1)
       size = (int) msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
     else
@@ -780,9 +789,9 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 
     if(p->numlines > 0) {
       if(symbol->patternlength > 0)
-        imagePolyline(image, p, &style->color, nwidth, 0, 0, symbol->patternlength, symbol->pattern); 
+        imagePolyline(image, p, &color, nwidth, 0, 0, symbol->patternlength, symbol->pattern); 
       else
-       imagePolyline(image, p, &style->color, nwidth, 0, 0, 0, NULL);           
+       imagePolyline(image, p, &color, nwidth, 0, 0, 0, NULL);           
     }
   } else { 
     /* fall back on GD */
@@ -833,8 +842,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
   ox = MS_NINT(style->offsetx*scalefactor); /* should we scale the offsets? */
   oy = MS_NINT(style->offsety*scalefactor);
 
-  if(fc==-1 && oc!=-1 && symbol->type!=MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolGD() instead (POLYLINE) */
-    msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
+  if(fc==-1 && oc!=-1 && symbol->type!=MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolAGG() instead (POLYLINE) */
+    msDrawLineSymbolAGG(symbolset, image, p, style, scalefactor);
     return;
   }
 
