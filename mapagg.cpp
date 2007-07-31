@@ -247,77 +247,54 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
                           int offsetx, int offsety,
                           int dashstylelength, int *dashstyle)
 {
-  int i, j,k;
+  int i,k;
   
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
   if(pRowCache == NULL)
     return;
   
-  // if(image->format->imagemode == MS_IMAGEMODE_RGBA)
-  {    
-    pixelFormat thePixelFormat(*pRowCache);
-    agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
-    agg::renderer_primitives< agg::renderer_base< pixelFormat > > ren_prim(ren_base);
-    agg::rasterizer_outline< agg::renderer_primitives< agg::renderer_base< pixelFormat > > > ras_al(ren_prim);
+  pixelFormat thePixelFormat(*pRowCache);
+  agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
+  agg::renderer_primitives< agg::renderer_base< pixelFormat > > ren_prim(ren_base);
+  agg::rasterizer_outline< agg::renderer_primitives< agg::renderer_base< pixelFormat > > > ras_al(ren_prim);
     
-    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa(ren_base);
-    agg::scanline_p8 sl;
-    agg::rasterizer_scanline_aa<> ras_aa;
+  agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa(ren_base);
+  agg::scanline_p8 sl;
+  agg::rasterizer_scanline_aa<> ras_aa;
     
-    ren_base.reset_clipping(true);
+  ren_base.reset_clipping(true);
 
-#if 0    
-    ren_prim.line_color(agg::rgba(((double) color->red) / 255.0,
-                                  ((double) color->green) / 255.0,
-                                  ((double) color->blue) / 255.0, 0.0));
+  for (i = 0; i < p->numlines; i++) {
+    CMapServerLine aLine(p,i);
 
-    ren_prim.fill_color(agg::rgba(((double) color->red) / 255.0,
-                                  ((double) color->green) / 255.0,
-                                  ((double) color->blue) / 255.0, 0.0));
-#endif
-    
-    for (i = 0; i < p->numlines; i++) {
-      if(0) {
-        for(j=1; j<p->line[i].numpoints; j++) {
-          ren_prim.line((int)p->line[i].point[j-1].x << 8, 
-                        (int)p->line[i].point[j-1].y << 8, 
-                        (int)p->line[i].point[j].x << 8, 
-                        (int)p->line[i].point[j].y << 8,
-                        true);
-        }        
-      } else {
-        CMapServerLine aLine(p,i);
+    agg::conv_stroke<CMapServerLine> stroke(aLine);
 
-        agg::conv_stroke<CMapServerLine> stroke(aLine);
-
-        agg::conv_dash<CMapServerLine> dash(aLine);
-        agg::conv_stroke<agg::conv_dash<CMapServerLine> > stroke_dash(dash);     
+    agg::conv_dash<CMapServerLine> dash(aLine);
+    agg::conv_stroke<agg::conv_dash<CMapServerLine> > stroke_dash(dash);     
           
-        if (dashstylelength <= 0) {
-          stroke.width(((float) width));
-          stroke.line_cap(agg::round_cap);
-          ras_aa.add_path(stroke);
-        } else {
-          for (k=0; k<dashstylelength; k=k+2) {
-            if (k < dashstylelength-1)
-              dash.add_dash(dashstyle[k], dashstyle[k+1]);
-          }
-          stroke_dash.width(((float) width));
-          stroke_dash.line_cap(agg::round_cap);
-          ras_aa.add_path(stroke_dash);
-        }
-        
-        ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
-                                ((double) color->green) / 255.0, 
-                                ((double) color->blue) / 255.0));
-        
-        agg::render_scanlines(ras_aa, sl, ren_aa);
+    if (dashstylelength <= 0) {
+      stroke.width(((float) width));
+      stroke.line_cap(agg::round_cap);
+      ras_aa.add_path(stroke);
+    } else {
+      for (k=0; k<dashstylelength; k=k+2) {
+        if (k < dashstylelength-1)
+          dash.add_dash(dashstyle[k], dashstyle[k+1]);
       }
-    }    
-
-    return;
+      stroke_dash.width(((float) width));
+      stroke_dash.line_cap(agg::round_cap);
+      ras_aa.add_path(stroke_dash);
+    }
+        
+    ren_aa.color( agg::rgba(((double) color->red) / 255.0, 
+                            ((double) color->green) / 255.0, 
+                            ((double) color->blue) / 255.0));
+        
+    agg::render_scanlines(ras_aa, sl, ren_aa);
   }
+
+  return;
 }
 
 static void imageFilledPolygon2(imageObj *image, shapeObj *p, colorObj *color, int offsetx, int offsety)
@@ -393,7 +370,7 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
 
     for(int j=1; j<p->line[i].numpoints; j++)
       path.line_to(p->line[i].point[j].x, p->line[i].point[j].y);
-              
+
     path.close_polygon();
   }
   ras_aa.add_path(path);
@@ -522,12 +499,12 @@ void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double size, double angle, 
   /* for a circle interpret the style angle as the size of the arc (for drawing pies) */
   if(w == h && style->angle != 360) {
     if(symbol->filled) {
-      if(fc >= 0) gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdPie);
-      if(oc >= 0) gdImageFilledArc(img, x, y, w, h, 0, style->angle, oc, gdEdged|gdNoFill);
+      if(fc >= 0) gdImageFilledArc(img, x, y, w, h, 0, (int) style->angle, fc, gdEdged|gdPie);
+      if(oc >= 0) gdImageFilledArc(img, x, y, w, h, 0, (int) style->angle, oc, gdEdged|gdNoFill);
     } else if(!symbol->filled) {
       if(fc < 0) fc = oc; /* try the outline color */
         if(fc < 0) return;
-        gdImageFilledArc(img, x, y, w, h, 0, style->angle, fc, gdEdged|gdNoFill);
+        gdImageFilledArc(img, x, y, w, h, 0, (int) style->angle, fc, gdEdged|gdNoFill);
     }
   } else {
     if(symbol->filled) {
@@ -851,7 +828,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
   if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
   if(size < 1) return; /* size too small */
       
-  if(style->symbol == 0) { /* simply draw a single pixel of the specified color */    
+  if(style->symbol == 0) { /* simply draw a solid fill of the specified color */    
     if(style->antialias==MS_TRUE) {
       colorObj thefc = { (fc & 0xff000000 >> 24),(fc & 0x00ff0000 >> 16),(fc & 0x0000ff00 >> 8),fc & 0x000000ff };
       imageFilledPolygon(image, p, &thefc, ox, oy); /* fill is NOT anti-aliased, the outline IS */
@@ -864,13 +841,13 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
       colorObj thefc2 = { (fc & 0xff000000 >> 24),(fc & 0x00ff0000 >> 16),(fc & 0x0000ff00 >> 8),fc & 0x000000ff };
       imagePolyline(image, p, &thefc2, width, ox, oy, 0, NULL);
     } else {
-      imageFilledPolygon(image, p, &(style->color), ox, oy); /* fill is NOT anti-aliased, the outline IS */
+      imageFilledPolygon(image, p, &(style->color), ox, oy);
       if(oc>-1) {
         imagePolyline(image, p, &(style->outlinecolor), width, ox, oy, 0, NULL);
       }
     }
 
-    return; /* done with easiest case */
+    return;
   }
     
   msDrawShadeSymbolGD(symbolset, img, p, style, scalefactor);
