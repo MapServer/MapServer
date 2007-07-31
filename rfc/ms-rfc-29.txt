@@ -5,7 +5,7 @@
 :Date: 2007/06/15
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/07/09
+:Last Edited: 2007/07/31
 :Status: Adopted (2007/07/05) - Completed (2007/07/09)
 :Version: MapServer 5.0
 
@@ -138,6 +138,11 @@ Future enhancements:
 
 * 2136: https://trac.osgeo.org/mapserver/ticket/2136
 * 2145: https://trac.osgeo.org/mapserver/ticket/2145
+
+Documentation
+-------------
+
+* http://mapserver.gis.umn.edu/docs/howto/dynamic-charting
 
 Voting history
 --------------
