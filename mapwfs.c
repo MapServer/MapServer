@@ -919,7 +919,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int bFilterSet = 0;
   int bBBOXSet = 0;
   int bFeatureIdSet = 0;
-  char *pszFeatureId = NULL;
 
   char *pszNameSpace = NULL;
   const char *value;
