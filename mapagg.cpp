@@ -1138,7 +1138,10 @@ void msAlphaGD2AGG(imageObj *im) {
         for (x = 0; (x < im->img.gd->sx); x++) {
             int c = gdImageGetPixel(im->img.gd, x, y);
             int alpha=255-(((c) & 0x7F000000) >> 24)*2;
-            gdImageSetPixel(im->img.gd, x, y, ((c)&0x00FFFFFF)|(alpha<<24));
+            /* Use gdImageTrueColorPixel() to access the tpixels[][] directly 
+             * and avoid special treatment of some color values by 
+             * gdImageSetPixel() */
+            gdImageTrueColorPixel(im->img.gd, x, y) = ((c)&0x00FFFFFF)|(alpha<<24);
         }
     }
 }
