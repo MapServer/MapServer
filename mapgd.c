@@ -3780,8 +3780,7 @@ void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY
       int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
       int red, green, blue;
       float newpct;
-      if(gdImageAlpha(src,src_c)==127 || 
-         (gdTrueColorGetRed(src_c) == transparent->red && gdTrueColorGetBlue(src_c) == transparent->blue && gdTrueColorGetGreen(src_c) == transparent->green))
+      if(gdImageAlpha(src,src_c)==127) 
         continue;
       
       newpct=(127-gdImageAlpha(src,src_c))/127.*pct/100.;
