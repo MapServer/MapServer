@@ -13,6 +13,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Oracle Spatial: Fixed some issues related with the maporaclespatial.c 
+  source code: warnings with calls in gcc 4.x versions (#1845), gtype 
+  translation error, generating memory problem (#2056), problems with items
+  allocation (#1961 and #1736), and some memory-leaks errors (#1662). 
+
 - AGG: Fixed a significant number of rendering issues including conflicts with
   OPACITY ALPHA and ANTIALIAS TRUE settings w/regards to polygon fills. Fixed
   ellipse and vector markers. Fixed AGG/GD alpha channel conflicts by writing
@@ -32,7 +37,7 @@ Current Version (SVN Trunk):
 - WCS: Fixed resampling/reprojecting for tileindex datasets (#2180)
 
 - Fixed formatting of configure --help (#2182)
-
+ 
 - Fixed AGG configure option to use 'test -f' instead of 'test -e' which
   doesn't work on Solaris (#2183)
 
