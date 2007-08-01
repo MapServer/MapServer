@@ -18,6 +18,10 @@
  *****************************************************************************
  * $Id$
  *****************************************************************************
+ * Last five fixed bugs:
+ *  #1662, #1736, #1845, #1961, #2056
+ * Unsolved bugs yet:
+ *  #1846, #2129, #2179
  *
  * Using OracleSpatial:
  * - CONNECTIONTYPE oraclespatial
@@ -167,6 +171,7 @@ static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo );
 static int msOCIGet2DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *obj, int s, int e, pointObj *pt );
 static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *obj, int s, int e, pointObj *pt );
 static int msOCIConvertCircle( pointObj *pt );
+static void osFilteritem(layerObj *layer, int function, char *query_str, int mode);
 static void osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name);
 static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name);
 static void osGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *srid, rectObj rect);
@@ -207,16 +212,16 @@ static int TRY( msOracleSpatialHandler *hand, sword status )
             hand->last_oci_error[sizeof(hand->last_oci_error)-1] = 0; /* terminate string!? */
             break;
         case OCI_NEED_DATA:
-            strcpy( hand->last_oci_error, "OCI_NEED_DATA" );
+            strcpy( (char *)hand->last_oci_error, "OCI_NEED_DATA" );
             break;
         case OCI_INVALID_HANDLE:
-            strcpy( hand->last_oci_error, "OCI_INVALID_HANDLE" );
+            strcpy( (char *)hand->last_oci_error, "OCI_INVALID_HANDLE" );
             break;
         case OCI_STILL_EXECUTING:
-            strcpy( hand->last_oci_error, "OCI_STILL_EXECUTING");
+            strcpy( (char *)hand->last_oci_error, "OCI_STILL_EXECUTING");
             break;
         case OCI_CONTINUE:
-            strcpy( hand->last_oci_error, "OCI_CONTINUE" );
+            strcpy( (char *)hand->last_oci_error, "OCI_CONTINUE" );
             break;
         default:
             return 1; /* no error */
@@ -235,7 +240,7 @@ static int ERROR( char *routine, msOracleSpatialHandler *hand, msOracleSpatialDa
     if (hand->last_oci_status == MS_FAILURE) 
     {
         /* there was an error */
-        msSetError( MS_ORACLESPATIALERR, hand->last_oci_error, routine );
+        msSetError( MS_ORACLESPATIALERR, (char *)hand->last_oci_error, routine );
         return 1; /* error processed */
      }
      else
@@ -486,7 +491,14 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
 {
     int success;
 
-    msOracleSpatialHandler *hand = (msOracleSpatialHandler *) malloc( sizeof(msOracleSpatialHandler));
+    msOracleSpatialHandler *hand = NULL;
+
+    hand = (msOracleSpatialHandler *) malloc( sizeof(msOracleSpatialHandler));
+    if (hand == NULL)
+    {
+        msSetError(MS_MEMERR, NULL, "msOCISetHandlers()");
+        return NULL;
+    }
     memset( hand, 0, sizeof(msOracleSpatialHandler) );
 
     hand->last_oci_status = MS_SUCCESS;
@@ -500,7 +512,7 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
         OCIHandleAlloc( (dvoid *)hand->envhp, (dvoid **)&hand->errhp, (ub4)OCI_HTYPE_ERROR, (size_t)0, (dvoid **)0 ) )
            && TRY( hand,
         /* logon */
-        OCILogon( hand->envhp, hand->errhp, &hand->svchp, username, strlen(username), password, strlen(password), dblink, strlen(dblink) ) );
+        OCILogon( hand->envhp, hand->errhp, &hand->svchp, (text *)username, strlen(username), (text *)password, strlen(password), (text *)dblink, strlen(dblink) ) );
 
     if ( !success )
     {
@@ -820,6 +832,35 @@ static int msOCIConvertCircle( pointObj *pt )
     return 1;
 }
 
+/*function that creates the correct sql for filter and filteritem*/
+static void osFilteritem(layerObj *layer, int function, char *query_str, int mode)
+{
+    if (layer->filter.string != NULL)
+    {
+        if (mode == 1)
+            strcat( query_str, " WHERE " );
+        else
+            strcat( query_str, " AND " );
+
+        if (layer->filteritem != NULL)
+        {
+            sprintf (query_str + strlen(query_str), " %s = ", layer->filteritem);
+            //snprintf (query_str + strlen(query_str), " %s = ", layer->filteritem);
+        }
+
+        sprintf (query_str + strlen(query_str), " %s ", layer->filter.string);
+        //snprintf(buffer, n, "gfdg %s %s %s", layer->filter.string, (layer->filteritem != NULL ? layer->filteritem : ""), );
+
+        if (function != FUNCTION_NONE)
+            sprintf (query_str + strlen(query_str), " AND ");
+    }
+    else
+    {
+        if (function != FUNCTION_NONE)
+            strcat( query_str, " WHERE " );
+    }
+}
+
 static void osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name)
 {
     char query_str2[6000];
@@ -830,8 +871,8 @@ static void osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_
         sprintf( query_str2 + strlen(query_str2), " %s,", layer->items[i] );
 
     sprintf( query_str2 + strlen(query_str2), " %s FROM %s", geom_column_name, table_name);
-    if (layer->filter.string != NULL)
-        sprintf( query_str2 + strlen(query_str2), " WHERE %s", (layer->filter.string));
+
+    osFilteritem(layer, FUNCTION_NONE, query_str2, 1);
 
     sprintf( query_str, "SELECT SDO_AGGR_MBR(%s) AS GEOM from %s)", geom_column_name, query_str2);
 }
@@ -846,8 +887,8 @@ static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_c
         sprintf( query_str2 + strlen(query_str2), " %s,", layer->items[i] );
 
     sprintf( query_str2 + strlen(query_str2), " %s FROM %s", geom_column_name, table_name);
-    if (layer->filter.string != NULL)
-        sprintf( query_str2 + strlen(query_str2), " WHERE %s", (layer->filter.string));
+
+    osFilteritem(layer, FUNCTION_NONE, query_str2, 1);
 
     sprintf( query_str, "SELECT SDO_GEOM.SDO_CONVEXHULL(%s, %f) AS GEOM from %s)", geom_column_name, TOLERANCE, query_str2);
 }
@@ -1245,7 +1286,7 @@ static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryO
         }
         else
         {
-            strcpy( hand->last_oci_error, "Points in circle object are colinear" );
+            strcpy( (char *)hand->last_oci_error, "Points in circle object are colinear" );
             hand->last_oci_status = MS_FAILURE;
         }
     }
@@ -1293,14 +1334,14 @@ static int osCheck3DGtype(int pIntGtype)
       if (pIntGtype > 3007)
           pIntGtype-= 300;
 
-      if (pIntGtype < 3007 && pIntGtype != 3004)
+      if (pIntGtype <= 3007 && pIntGtype != 3004)
           return MS_TRUE;
    }
    /*
    * Future version, untested
    * return (pIntGtype & 2208 && (pIntGtype & 3000 || pIntGtype & 3296) && pIntGtype & 3);
    */
-   return MS_FALSE;   
+   return MS_FALSE;
 }
 
 static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind)
@@ -1337,7 +1378,9 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
                /*&& (nords%2==0 && nelems%3==0);*/ /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
 
         if (success && osCheck2DGtype(gtype))
+        {
             success = (nords%2==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
+        }
         else if (success && osCheck3DGtype(gtype))
         {
             success = (nords%3==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
@@ -1486,13 +1529,9 @@ int msOracleSpatialLayerOpen( layerObj *layer )
 {
     char username[1024], password[1024], dblink[1024];
 
-    msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)malloc(sizeof(msOracleSpatialLayerInfo));
-    msOracleSpatialDataHandler *dthand = (msOracleSpatialDataHandler *)malloc(sizeof(msOracleSpatialDataHandler));
-    msOracleSpatialHandler *hand = (msOracleSpatialHandler *)malloc(sizeof(msOracleSpatialHandler));
-
-    memset( hand, 0, sizeof(msOracleSpatialHandler) );
-    memset( dthand, 0, sizeof(msOracleSpatialDataHandler) );
-    memset( layerinfo, 0, sizeof(msOracleSpatialLayerInfo) );
+    msOracleSpatialLayerInfo *layerinfo = NULL;
+    msOracleSpatialDataHandler *dthand = NULL;
+    msOracleSpatialHandler *hand = NULL;
 
     if (layer->debug)
         msDebug("msOracleSpatialLayerOpen called with: %s\n",layer->data);
@@ -1511,6 +1550,18 @@ int msOracleSpatialLayerOpen( layerObj *layer )
 
         return MS_FAILURE;
     }
+
+    layerinfo = (msOracleSpatialLayerInfo *)malloc(sizeof(msOracleSpatialLayerInfo));
+    dthand = (msOracleSpatialDataHandler *)malloc(sizeof(msOracleSpatialDataHandler));
+
+    if ((dthand == NULL) || (layerinfo == NULL))
+    {
+        msSetError(MS_MEMERR, NULL, "msOracleSpatialLayerOpen()");
+        return MS_FAILURE;
+    }
+
+    memset( dthand, 0, sizeof(msOracleSpatialDataHandler) );
+    memset( layerinfo, 0, sizeof(msOracleSpatialLayerInfo) );
 
     msSplitLogin( layer->connection, layer->map, username, password, dblink );
 
@@ -1574,20 +1625,40 @@ int msOracleSpatialLayerIsOpen(layerObj *layer)
 int msOracleSpatialLayerClose( layerObj *layer )
 {
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
+    /*int lIntSuccessFree = 0;*/
 
     if (layer->debug)
-        msDebug("msOracleSpatialLayerClose was called. Layer connection: %s\n",layer->connection);
+        msDebug("msOracleSpatialLayerClose was called. Layer name: %s. Layer connection: %s\n",layer->name, layer->connection);
 
     if (layerinfo != NULL)
     {
+
+        /*
+         * Some errors with the OCIObjectFree with query function
+         * If uncomment draw mode will work but no query modes
+         * Need to investigate the error cause
+         */
+        /*lIntSuccessFree = TRY (layerinfo->orahandlers, OCIObjectFree(layerinfo->orahandlers->envhp, layerinfo->orahandlers->errhp, (dvoid *)layerinfo->obj, (ub2)OCI_OBJECTFREE_FORCE));
+         *if (!lIntSuccessFree)
+         *  msDebug("Error: %s\n", layerinfo->orahandlers->last_oci_error);
+         */
+        /* Release Datahandlers */
         if (layer->debug)
           msDebug("msOracleSpatialLayerClose. Cleaning layerinfo handlers.\n");
         msOCICloseDataHandlers( layerinfo->oradatahandlers );
         layerinfo->oradatahandlers = NULL;
 
+        /* Release Oracle Cache */
         if (layer->debug)
-          msDebug("msOracleSpatialLayerClose. Cleaning Oracle handlers.\n"); 
+          msDebug("msOracleSpatialLayerClose. Cleaning Oracle Cache.\n");
+        OCICacheFree (layerinfo->orahandlers->envhp,layerinfo->orahandlers->errhp,layerinfo->orahandlers->svchp);
+
+        /* Release Mapserver Pool */
+        if (layer->debug)
+          msDebug("msOracleSpatialLayerClose. Release the Oracle Pool.\n");
         msConnPoolRelease( layer, layerinfo->orahandlers );
+
+        /* Release Layerinfo */
         layerinfo->orahandlers = NULL;
 
         msOCIClearLayerInfo( layerinfo );
@@ -1605,7 +1676,8 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     int version = 0;
     char query_str[6000];
     char table_name[2000], geom_column_name[100], unique[100], srid[100];
-    OCIDefine *adtp = NULL, *items[ARRAY_SIZE] = { NULL };
+    OCIDefine *adtp = NULL;
+    OCIDefine **items = NULL;
 
     /* get layerinfo */
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
@@ -1613,7 +1685,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     msOracleSpatialHandler *hand = NULL;
 
     if (layer->debug)
-        msDebug("msOracleSpatialLayerWhichShapes was called.\n");  
+        msDebug("msOracleSpatialLayerWhichShapes was called.\n");
 
     if (layerinfo == NULL)
     {
@@ -1655,9 +1727,17 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
         layerinfo->items = (item_text_array *)malloc( sizeof(item_text_array) * (layer->numitems+1) );
         if (layerinfo->items == NULL)
         {
+            msSetError( MS_ORACLESPATIALERR,"Cannot allocate layerinfo->items buffer","msOracleSpatialLayerWhichShapes()" );
+            return MS_FAILURE;
+        }
+
+        items = (OCIDefine **)malloc(sizeof(OCIDefine *)*(layer->numitems+1));
+        if (items == NULL)
+        {
             msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer","msOracleSpatialLayerWhichShapes()" );
             return MS_FAILURE;
         }
+        memset(items ,0,sizeof(OCIDefine *)*(layer->numitems+1));
     }
 
     /* define SQL query */
@@ -1666,18 +1746,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     sprintf( query_str + strlen(query_str), ", %s FROM %s", geom_column_name, table_name );
 
-    if (layer->filter.string != NULL)
-    {
-        if (function == FUNCTION_NONE)
-            sprintf (query_str + strlen(query_str), " WHERE %s ", layer->filter.string);
-        else
-            sprintf (query_str + strlen(query_str), " WHERE %s AND ", layer->filter.string);
-    }
-    else
-    {
-        if (function != FUNCTION_NONE)
-            strcat( query_str, " WHERE " );
-    }
+    osFilteritem(layer, function, query_str, 1);
 
     if ((((atol(srid) >= 8192) && (atol(srid) <= 8330)) || (atol(srid) == 2) || (atol(srid) == 5242888) || (atol(srid) == 2000001)) && (version == VERSION_9i))
         osGeodeticData(function, version, query_str, geom_column_name, srid, rect);
@@ -1720,11 +1789,17 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
                     "Check your data statement.", 
                     "msOracleSpatialLayerWhichShapes()", hand->last_oci_error, query_str );
 
+        /* clean items */
+        free(items);
+
         return MS_FAILURE;
     }
 
     /* should begin processing first row */
     layerinfo->row_num = layerinfo->row = 0;
+
+    /* clean items */
+    free(items);
 
     return MS_SUCCESS;
 }
@@ -1734,7 +1809,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
 {
     SDOGeometryObj *obj;
     SDOGeometryInd *ind;
-    int success, i;
+    int success, /*lIntSuccessFree,*/ i;
 
     /* get layerinfo */
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
@@ -1778,7 +1853,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
         ind = layerinfo->ind[ layerinfo->row ];
 
         /* get the items for the shape */
-        shape->index = atol( (layerinfo->items[0][ layerinfo->row ]));
+        shape->index = atol( (char *)(layerinfo->items[0][ layerinfo->row ]));
         shape->numvalues = layer->numitems;
 
         shape->values = (char **)malloc( sizeof(char*) * shape->numvalues );
@@ -1790,7 +1865,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
 
         for( i=0; i < shape->numvalues; ++i )
         {
-            shape->values[i] = (char *)malloc(strlen(layerinfo->items[i+1][ layerinfo->row ])+1);
+            shape->values[i] = (char *)malloc(strlen((char *)layerinfo->items[i+1][ layerinfo->row ])+1);
             if (shape->values[i] == NULL)
             {
                 msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerNextShape()" );
@@ -1798,19 +1873,22 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
             }
             else
             {
-                strcpy(shape->values[i], layerinfo->items[i+1][ layerinfo->row ]);
-                shape->values[i][strlen(layerinfo->items[i+1][ layerinfo->row ])] = '\0';
+                strcpy(shape->values[i], (char *)layerinfo->items[i+1][ layerinfo->row ]);
+                shape->values[i][strlen((char *)layerinfo->items[i+1][ layerinfo->row ])] = '\0';
             }
         }
+
+        /* fetch a layer->type object */
+        success = osGetOrdinates(dthand, hand, shape, obj, ind);
 
         /* increment for next row */
         layerinfo->row_num++;
         layerinfo->row++;
 
-        /* fetch a layer->type object */   
-        success = osGetOrdinates(dthand, hand, shape, obj, ind);
         if (success != MS_SUCCESS)
+        {
             return MS_FAILURE;
+        }
 
         osShapeBounds(shape);
     }while(shape->type == MS_SHAPE_NULL);
@@ -1982,10 +2060,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     int success, i;
     int function = 0;
     int version = 0;
-    OCIDefine *adtp = NULL, *items[QUERY_SIZE] = { NULL };
     SDOGeometryObj *obj = NULL;
     SDOGeometryInd *ind = NULL;
     sb2 *nullind = NULL;
+    /*OCIDefine *adtp = NULL, *items[QUERY_SIZE] = { NULL };*/
+    OCIDefine *adtp = NULL;
+    OCIDefine  **items = NULL;
 
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
     msOracleSpatialDataHandler *dthand = NULL;
@@ -2009,13 +2089,32 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     if (layer->numitems > 0)
     {
         layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
-        nullind = (sb2 *)malloc( sizeof(sb2) * (layer->numitems) );
 
         if (layerinfo->items_query == NULL)
         {
-            msSetError( MS_ORACLESPATIALERR, "Cannot allocate items buffer", "msOracleSpatialLayerGetShape()" );
+            msSetError( MS_ORACLESPATIALERR, "Cannot allocate layerinfo->items_query buffer", "msOracleSpatialLayerGetShape()" );
             return MS_FAILURE;
         }
+
+        nullind = (sb2 *)malloc( sizeof(sb2) * (layer->numitems) );
+        if (nullind == NULL)
+        {
+            msSetError( MS_ORACLESPATIALERR, "Cannot allocate nullind buffer", "msOracleSpatialLayerGetShape()" );
+            return MS_FAILURE;
+        }
+        memset(nullind ,0, sizeof(sb2) * (layer->numitems) );
+
+        items = (OCIDefine **)malloc(sizeof(OCIDefine *)*layer->numitems);
+        if (items == NULL)
+        {
+            msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer","msOracleSpatialLayerWhichShapes()" );
+
+            /* clean nullind  */
+            free(nullind);
+
+            return MS_FAILURE;
+        }
+        memset(items ,0,sizeof(OCIDefine *)*layer->numitems);
     }
 
     if (!msSplitData( layer->data, geom_column_name, table_name, unique, srid, &function, &version ))
@@ -2027,6 +2126,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
                     "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
                     "Your data statement: %s",
                     "msOracleSpatialLayerGetShape()", layer->data );
+
+        /* clean nullind  */
+        free(nullind);
+
+        /* clean items */
+        free(items);
 
         return MS_FAILURE;
     }
@@ -2040,6 +2145,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
                     "unique column [USING UNIQUE <#column>]", 
                     "msOracleSpatialLayerGetShape()" );
 
+        /* clean nullind  */
+        free(nullind);
+
+        /* clean items */
+        free(items);
+
         return MS_FAILURE;
     }
     else
@@ -2051,8 +2162,9 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
 
     sprintf( query_str + strlen(query_str), " %s FROM %s WHERE %s = %ld", geom_column_name, table_name, unique, record);
 
-    if (layer->filter.string != NULL)
-        sprintf( query_str + strlen(query_str), " AND %s", (layer->filter.string));
+    /*if (layer->filter.string != NULL)
+        sprintf( query_str + strlen(query_str), " AND %s", (layer->filter.string));*/
+    osFilteritem(layer, FUNCTION_NONE, query_str, 2);
 
     if (layer->debug)
       msDebug("msOracleSpatialLayerGetShape. Sql: %s\n", query_str);
@@ -2062,7 +2174,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
 
     if (success && layer->numitems > 0)
     {
-        for( i = 0; i < layer->numitems && success; ++i )
+        for( i = 0; i < layer->numitems && success; i++ )
             success = TRY( hand, OCIDefineByPos( dthand->stmthp, &items[i], hand->errhp, (ub4)i+1, (dvoid *)layerinfo->items_query[i], (sb4)TEXT_SIZE, SQLT_STR, (sb2 *)&nullind[i], (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT ) );
     }
 
@@ -2073,6 +2185,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
                     "Query statement: %s . "
                     "Check your data statement.",
                     "msOracleSpatialLayerGetShape()", hand->last_oci_error, query_str );
+
+        /* clean nullind  */
+        free(nullind);
+
+        /* clean items */
+        free(items);
 
         return MS_FAILURE;
     }
@@ -2085,6 +2203,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
                && TRY (hand, OCIAttrGet( (dvoid *)dthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&layerinfo->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROW_COUNT, hand->errhp ));
 
     }
+
     if(!success)
     {
         msSetError( MS_ORACLESPATIALERR, 
@@ -2093,6 +2212,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
                     "Check your data statement.",
                     "msOracleSpatialLayerGetShape()", hand->last_oci_error, query_str );
 
+        /* clean nullind  */
+        free(nullind);
+
+        /* clean items */
+        free(items);
+
         return MS_FAILURE;
     }
 
@@ -2100,7 +2225,15 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
 
     /* no rows fetched */
     if (layerinfo->rows_fetched == 0)
+    {
+        /* clean nullind  */
+        free(nullind);
+
+        /* clean items */
+        free(items);
+
         return (MS_DONE);
+    }
 
     obj = layerinfo->obj[ layerinfo->row ];
     ind = layerinfo->ind[ layerinfo->row ];
@@ -2111,6 +2244,13 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     if (shape->values == NULL)
     {
         msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the values.", "msOracleSpatialLayerGetShape()" );
+
+        /* clean nullind  */
+        free(nullind);
+
+        /* clean items */
+        free(items);
+
         return MS_FAILURE;
     }
 
@@ -2118,19 +2258,26 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
 
     for( i = 0; i < layer->numitems; ++i )
     {
-        shape->values[i] = (char *)malloc(strlen(layerinfo->items_query[layerinfo->row][i])+1);
+        shape->values[i] = (char *)malloc(strlen((char *)layerinfo->items_query[layerinfo->row][i])+1);
 
         if (shape->values[i] == NULL)
         {
             msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer.", "msOracleSpatialLayerGetShape()" );
+
+            /* clean nullind  */
+            free(nullind);
+
+            /* clean items */
+            free(items);
+
             return MS_FAILURE;
         }
         else
         {
             if (nullind[i] != OCI_IND_NULL)
             {
-                strcpy(shape->values[i], layerinfo->items_query[layerinfo->row][i]);
-                shape->values[i][strlen(layerinfo->items_query[layerinfo->row][i])] = '\0';
+                strcpy(shape->values[i], (char *)layerinfo->items_query[layerinfo->row][i]);
+                shape->values[i][strlen((char *)layerinfo->items_query[layerinfo->row][i])] = '\0';
             }
             else
             {
@@ -2148,10 +2295,23 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     if (success != MS_SUCCESS)
     {
         msSetError( MS_ORACLESPATIALERR, "Cannot execute query", "msOracleSpatialLayerGetShape()" );
+
+        /* clean nullind  */
+        free(nullind);
+
+        /* clean items */
+        free(items);
+
         return MS_FAILURE;
     }
     osShapeBounds(shape);
     layerinfo->row = layerinfo->row_num = 0;
+
+    /* clean nullind  */
+    free(nullind);
+
+    /* clean items */
+    free(items);
 
     return (MS_SUCCESS);
 }
@@ -2162,11 +2322,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
     int success, i;
     int function = 0;
     int version = 0;
-    OCIDefine *adtp = NULL, *items[QUERY_SIZE] = { NULL };
     SDOGeometryObj *obj = NULL;
     SDOGeometryInd *ind = NULL;
     shapeObj shape;
     rectObj bounds;
+    /*OCIDefine *adtp = NULL, *items[QUERY_SIZE] = { NULL };*/
+    OCIDefine *adtp = NULL;
+    OCIDefine **items = NULL;
 
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
     msOracleSpatialDataHandler *dthand = NULL;
@@ -2192,9 +2354,16 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
         layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
         if (layerinfo->items_query == NULL)
         {
-            msSetError( MS_ORACLESPATIALERR, "Cannot allocate items buffer", "msOracleSpatialLayerGetExtent()" );
+            msSetError( MS_ORACLESPATIALERR, "Cannot allocate layerinfo->items buffer", "msOracleSpatialLayerGetExtent()" );
             return MS_FAILURE;
         }
+        items = (OCIDefine **)malloc(sizeof(OCIDefine *)*layer->numitems);
+        if (items == NULL)
+        {
+            msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer","msOracleSpatialLayerWhichShapes()" );
+            return MS_FAILURE;
+        }
+        memset(items ,0,sizeof(OCIDefine *)*layer->numitems);
     }
 
     if (!msSplitData( layer->data, geom_column_name, table_name, unique, srid, &function, &version )) 
@@ -2206,6 +2375,9 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
                     "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
                     "Your data statement: %s", 
                     "msOracleSpatialLayerGetExtent()", layer->data );
+        /* clean items */
+        free(items);
+
         return MS_FAILURE;
     }
 
@@ -2243,6 +2415,10 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
                     "Query statement: %s . "
                     "Check your data statement.",
                     "msOracleSpatialLayerGetExtent()", hand->last_oci_error, query_str );
+
+        /* clean items */
+        free(items);
+
         return MS_FAILURE;
     }
 
@@ -2254,6 +2430,7 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
                && TRY (hand, OCIAttrGet( (dvoid *)dthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&layerinfo->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROW_COUNT, hand->errhp ));
 
     }
+
     if(!success)
     {
         msSetError( MS_ORACLESPATIALERR, 
@@ -2261,6 +2438,9 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
                     "Query statement: %s ."
                     "Check your data statement.",
                     "msOracleSpatialLayerGetExtent()", hand->last_oci_error, query_str );
+
+        /* clean items */
+        free(items);
 
         return MS_FAILURE;
     }
@@ -2305,17 +2485,21 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
 
         for( i = 0; i < layer->numitems; ++i )
         {
-            shape.values[i] = (char *)malloc(strlen(layerinfo->items_query[layerinfo->row][i])+1);
+            shape.values[i] = (char *)malloc(strlen((char *)layerinfo->items_query[layerinfo->row][i])+1);
 
             if (shape.values[i] == NULL)
             {
                 msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer.", "msOracleSpatialLayerGetExtent()" );
+
+                /* clean items */
+                free(items);
+
                 return MS_FAILURE;
             }
             else
             {
-                strcpy(shape.values[i], layerinfo->items_query[layerinfo->row][i]);
-                shape.values[i][strlen(layerinfo->items_query[layerinfo->row][i])] = '\0';
+                strcpy(shape.values[i], (char *)layerinfo->items_query[layerinfo->row][i]);
+                shape.values[i][strlen((char *)layerinfo->items_query[layerinfo->row][i])] = '\0';
             }
         }
 
@@ -2328,6 +2512,10 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
         if (success != MS_SUCCESS)
         {
             msSetError( MS_ORACLESPATIALERR, "Cannot execute query", "msOracleSpatialLayerGetExtent()" );
+
+            /* clean items */
+            free(items);
+
             return MS_FAILURE;
         }
 
@@ -2344,6 +2532,9 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
     extent->maxy = bounds.maxy;
 
     msFreeShape(&shape);
+
+    /* clean items */
+    free(items);
 
     return(MS_SUCCESS);
 }
