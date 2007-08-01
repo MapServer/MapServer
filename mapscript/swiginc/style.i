@@ -48,7 +48,6 @@
                                        "initStyle()");
             }
             parent_class->numstyles++;
-            style->isachild=MS_TRUE;
             MS_REFCNT_INCR(style);
         }
         else {
@@ -114,7 +113,6 @@
             return NULL;
         }
         
-        style->isachild = MS_FALSE;
         return style;
     }
     

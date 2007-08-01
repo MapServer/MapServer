@@ -375,7 +375,6 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(offsetx);
     MS_COPYSTELEM(offsety);
     MS_COPYSTELEM(antialias);
-    MS_COPYSTELEM(isachild);
     MS_COPYSTELEM(angle);
     MS_COPYSTELEM(minvalue);
     MS_COPYSTELEM(maxvalue);

@@ -1691,7 +1691,6 @@ int initStyle(styleObj *style) {
   style->maxwidth = MS_MAXSYMBOLWIDTH;
   style->offsetx = style->offsety = 0; /* no offset */
   style->antialias = MS_FALSE;
-  style->isachild = MS_TRUE;
   style->angle = 360;
   style->opacity = 100; /* fully opaque */
 

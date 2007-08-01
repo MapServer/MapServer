@@ -115,7 +115,6 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
     else if (nStyleIndex < 0) { /* Insert at the end by default */
         class->styles[class->numstyles]=style;
 	MS_REFCNT_INCR(style);
-	style->isachild=MS_TRUE;
         class->numstyles++;
         return class->numstyles-1;
     }
@@ -127,7 +126,6 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
         }
         class->styles[nStyleIndex]=style;
 	MS_REFCNT_INCR(style);
-	style->isachild=MS_TRUE;
         class->numstyles++;
         return nStyleIndex;
     }
@@ -150,7 +148,6 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
     }
     else {
         style=class->styles[nStyleIndex];
-        style->isachild = MS_FALSE;
         for (i=nStyleIndex; i<class->numstyles-1; i++) {
              class->styles[i]=class->styles[i+1];
         }

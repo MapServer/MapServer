@@ -12,22 +12,24 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+
 - AGG: Fixed a significant number of rendering issues including conflicts with
   OPACITY ALPHA and ANTIALIAS TRUE settings w/regards to polygon fills. Fixed
   ellipse and vector markers. Fixed AGG/GD alpha channel conflicts by writing
   conversion to/from functions. (#2191-partial, #2173, #2177)
 
-- SOS: Turn layer off if eventTime is not in the sos_offering_timeextent (#2154)
+- SOS: Turn layer off if eventTime is not in the sos_offering_timeextent
+  (#2154)
 
 - WFS: Correct bugs related to query by featureid support (#2102)
 
 - WMS: Add svg as a supported format for GetMap request (#1347)
 
-- WMS : Correct WMS time overriding Filter paramter (#1261)
+- WMS: Correct WMS time overriding Filter paramter (#1261)
 
 - Fix problem with LUT scaling ranges with explicit value for 255 (#2167).
 
-- WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
+- WCS: Fixed resampling/reprojecting for tileindex datasets (#2180)
 
 - Fixed formatting of configure --help (#2182)
 
@@ -36,6 +38,7 @@ Current Version (SVN Trunk):
 
 - Fixed mapwms.c to support selecting AGG/ outputformats via FORMAT=.
 
+- Removed unused styleObj.isachild member (#2169)
 
 Version 5.0.0-beta1 (2007-07-25)
 --------------------------------

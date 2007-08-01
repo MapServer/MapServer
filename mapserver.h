@@ -637,15 +637,6 @@ typedef struct {
   int antialias;
 
 #ifndef SWIG
-  /* Whether the style is within a class MS_TRUE or MS_FALSE.
-   * If true, then memory deallocation is handled by the class
-   * if false, then memory deallocation must be handled by the
-   * application.
-   */
-  int isachild;
-#endif
-
-#ifndef SWIG
   attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];
   int numbindings;
 #endif
