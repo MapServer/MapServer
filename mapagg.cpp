@@ -70,7 +70,15 @@
 #include "agg_arc.h"
 #include "agg_dda_line.h"
 #include "agg_ellipse_bresenham.h"
+#include "agg_ellipse.h"
 
+#include "agg_span_allocator.h"
+#include "agg_image_accessors.h"
+#include "agg_span_pattern_rgba.h"
+#include "agg_span_interpolator_linear.h"
+#include "agg_span_image_filter_rgba.h"
+#include "agg_trans_affine.h"
+#include "math.h"
 #include "mapagg.h"
 
 #ifdef CPL_MSB
@@ -378,6 +386,34 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
   agg::render_scanlines(ras_aa, sl, ren_aa);
 }
 
+
+
+static agg::path_storage imageVectorSymbolAGG(symbolObj *symbol, double scale) {
+    agg::path_storage path,tmppath;
+    bool is_new=true;
+    for(int i=0;i < symbol->numpoints;i++) {
+        if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) { /* new polygon (PENUP) */
+            path.concat_path(tmppath);
+            tmppath.remove_all();
+            is_new=true;
+        } else {
+            if(is_new) {
+                path.move_to(scale*symbol->points[i].x,scale*symbol->points[i].y);
+                is_new=false;                         
+            }
+            else {
+                path.line_to(scale*symbol->points[i].x,scale*symbol->points[i].y);
+            }
+        }
+    }
+    if(!is_new) {
+        path.concat_path(tmppath);
+    }          
+    return path;
+}
+
+
+
 /* ---------------------------------------------------------------------------*/
 /*       Stroke an ellipse with a line symbol of the specified size and color */
 /* ---------------------------------------------------------------------------*/
@@ -419,7 +455,7 @@ void msDrawMarkerSymbolAGGTrueType(symbolObj *symbol, double size, double angle,
   if(oc >= 0) {
     error = gdImageStringFT(img, bbox, ((symbol->antialias || style->antialias)?(oc):-(oc)), font, size, angle_radians, x, y-1, symbol->character);
     if(error) {
-      msSetError(MS_TTFERR, error, "msDrawMarkerSymbolGD()");
+      msSetError(MS_TTFERR, error, "msDrawMarkerSymbolAGG()");
       return;
     }
 
@@ -469,180 +505,160 @@ void msDrawMarkerSymbolAGGPixmap(symbolObj *symbol,  double size, double angle, 
 }
 
 void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double size, double angle, char bRotated, styleObj *style,
-    int ox, int oy, gdImagePtr img, pointObj *p)
+    int ox, int oy, imageObj *image, pointObj *p)
 {
-  int fc, oc, w, h, x, y;
-
-  fc = style->color.pen;
-  oc = style->outlinecolor.pen;
+  
+  double w, h, x, y;
  
-  w = MS_NINT((size*symbol->sizex/symbol->sizey)); /* ellipse size */
-  h = MS_NINT(size);
+  w = size*symbol->sizex/symbol->sizey; /* ellipse size */
+  h = size;
 
-  x = MS_NINT(p->x + ox); /* GD will center the ellipse on x,y */
-  y = MS_NINT(p->y + oy);
+  x = p->x + ox; /* GD will center the ellipse on x,y */
+  y = p->y + oy;
+  
+  
+  mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *> ( image->imageextra );
 
-  /* check for trivial cases - 1x1 and 2x2, GD does not do these well */
-  if(w==1 && h==1) {
-    gdImageSetPixel(img, x, y, fc);
-    return;
-  }
+      if(pRowCache == NULL)
+        return;
 
-  if(w==2 && h==2) {
-    gdImageSetPixel(img, x, y, fc);
-    gdImageSetPixel(img, x, y+1, fc);
-    gdImageSetPixel(img, x+1, y, fc);
-    gdImageSetPixel(img, x+1, y+1, fc);
-    return;
-  }
+      pixelFormat thePixelFormat ( *pRowCache );
+      agg::renderer_base< pixelFormat > ren_base ( thePixelFormat );
+      agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa ( ren_base );
+      agg::scanline_p8 sl;
+      agg::rasterizer_scanline_aa<> ras_aa;
+      ren_base.reset_clipping ( true );
+      ren_aa.color ( agg::rgba ( ( ( double ) style->color.red ) / 255.0,
+                     ( ( double ) style->color.green ) / 255.0,
+                         ( ( double ) style->color.blue ) / 255.0,1.0 ) );
+  
+      
+      agg::path_storage path;
+      agg::ellipse ellipse(x,y,w,h);
+      ellipse.approximation_scale ( 1 );
+      path.concat_path(ellipse);
+      if(symbol->filled) {
+          ras_aa.add_path ( path );
+          agg::render_scanlines ( ras_aa, sl, ren_aa );
+          if(MS_VALID_COLOR(style->outlinecolor)) {
+              ras_aa.reset();
+              agg::conv_stroke<agg::path_storage> stroke(path);
+              stroke.width(1);
+              if(style->width!=-1)
+                  stroke.width(style->width);
+              stroke.line_join(agg::miter_join);
+              stroke.line_cap(agg::butt_cap);
+              ras_aa.add_path(stroke);
+              ren_aa.color ( agg::rgba ( ( ( double ) style->outlinecolor.red ) / 255.0,
+                             ( ( double ) style->outlinecolor.green ) / 255.0,
+                                 ( ( double ) style->outlinecolor.blue ) / 255.0,1.0 ) );
+              agg::render_scanlines(ras_aa, sl, ren_aa);
+          }
+      } else {
+          ras_aa.reset();
+          agg::conv_stroke<agg::path_storage> stroke(path);
+          stroke.width(1);
+          if(style->width!=-1)
+              stroke.width(style->width);
+          stroke.line_join(agg::miter_join);
+          stroke.line_cap(agg::butt_cap);
+          ras_aa.add_path(stroke);
+          if(MS_VALID_COLOR(style->color)) {                       
+              ren_aa.color ( agg::rgba ( ( ( double ) style->color.red ) / 255.0,
+                      ( ( double ) style->color.green ) / 255.0,
+                      ( ( double ) style->color.blue ) / 255.0,1.0 ) );
+          }else if(MS_VALID_COLOR(style->outlinecolor)) {                       
+              ren_aa.color ( agg::rgba ( ( ( double ) style->outlinecolor.red ) / 255.0,
+                      ( ( double ) style->outlinecolor.green ) / 255.0,
+                      ( ( double ) style->outlinecolor.blue ) / 255.0,1.0 ) );
+          } else return;
+          agg::render_scanlines(ras_aa, sl, ren_aa);
 
-  /* for a circle interpret the style angle as the size of the arc (for drawing pies) */
-  if(w == h && style->angle != 360) {
-    if(symbol->filled) {
-      if(fc >= 0) gdImageFilledArc(img, x, y, w, h, 0, (int) style->angle, fc, gdEdged|gdPie);
-      if(oc >= 0) gdImageFilledArc(img, x, y, w, h, 0, (int) style->angle, oc, gdEdged|gdNoFill);
-    } else if(!symbol->filled) {
-      if(fc < 0) fc = oc; /* try the outline color */
-        if(fc < 0) return;
-        gdImageFilledArc(img, x, y, w, h, 0, (int) style->angle, fc, gdEdged|gdNoFill);
-    }
-  } else {
-    if(symbol->filled) {
-      if(fc >= 0) gdImageFilledEllipse(img, x, y, w, h, fc);        
-      if(oc >= 0) gdImageArc(img, x, y, w, h, 0, 360, oc);
-    } else if(!symbol->filled) {
-      if(fc < 0) fc = oc; /* try the outline color */
-      if(fc < 0) return;
-      gdImageArc(img, x, y, w, h, 0, 360, fc);
-    }
-  }
+      }
 }
 
 void msDrawMarkerSymbolAGGVector(symbolObj *symbol, double size, double angle, char bRotated, styleObj *style,
     int ox, int oy, gdImagePtr img, pointObj *p, imageObj *image )
 {
-  int fc, oc, j, k;
-  int offset_x, offset_y;
+  double offset_x, offset_y;
   double d;
+  mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *> ( image->imageextra );
 
-  gdPoint oldpnt,newpnt;
-
-  shapeObj theShape;
+    if(pRowCache == NULL)
+      return;
     
-  theShape.numlines = 1;
-  theShape.type = MS_SHAPE_LINE;
-  theShape.line = (lineObj *) malloc(sizeof(lineObj));
-  theShape.line[0].point = (pointObj *)malloc(sizeof(pointObj)*MS_MAXVECTORPOINTS);
-  theShape.line[0].numpoints = 0;
-
-  fc = style->color.pen;
-  oc = style->outlinecolor.pen;
-
-  d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+    pixelFormat thePixelFormat ( *pRowCache );
+    agg::renderer_base< pixelFormat > ren_base ( thePixelFormat );
+    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa ( ren_base );
+    agg::scanline_p8 sl;
+    agg::rasterizer_scanline_aa<> ras_aa;
+  
+    d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
 
   if(angle != 0.0 && angle != 360.0) {      
     bRotated = MS_TRUE;
     symbol = msRotateSymbol(symbol, style->angle);
   }
-
-  /* 
-  ** We avoid MS_NINT in this context because the potentially variable
-  ** handling of 0.5 rounding is often a problem for symbols which are
-  ** often an odd size (ie. 7 pixels) and so if "p" is integral the 
-  ** value is always on a 0.5 boundary - bug 1716 
-  */
-  offset_x = MS_NINT_GENERIC(p->x - d*.5*symbol->sizex + ox);
-  offset_y = MS_NINT_GENERIC(p->y - d*.5*symbol->sizey + oy);
-    
-  if(symbol->filled) {      
-
-    k = 0; /* point counter */
-    for(j=0;j < symbol->numpoints;j++) {
-      if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) { /* new polygon (PENUP) */
-        theShape.line->numpoints = k;
-
-        if(k>2) {
-          if(fc >= 0)
-            imageFilledPolygon(image, &theShape, &(style->color), offset_x, offset_y);
-          if(oc >= 0) 
-            /*drawing a 1 pixel width outline. This is the same as the gd implementation*/
-            imagePolyline(image, &theShape, &(style->outlinecolor), 1, offset_x, offset_y, 0, NULL);
-        }
-
-          k = 0; /* reset point counter */
-      } else {
-        theShape.line->point[k].x = MS_NINT(d*symbol->points[j].x + offset_x);
-        theShape.line->point[k].y = MS_NINT(d*symbol->points[j].y + offset_y);
-        k++;
-      }
-    }
-    
-    theShape.line->numpoints = k;
-
-    if(fc >= 0)
-      imageFilledPolygon(image, &theShape, &(style->color), offset_x, offset_y);
-    if(oc >= 0) /*drawing a 1 pixel width outline. This is the same as the gd implementation*/
-      imagePolyline(image, &theShape, &(style->outlinecolor), 1, offset_x, offset_y, 0, NULL);
-
-  } else  { /* NOT filled */     
-
-    if(fc < 0) fc = oc; /* try the outline color (reference maps sometimes do this when combining a box and a custom vector marker */
-    if(fc < 0) return;
-      
-    mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
-    if(pRowCache == NULL) {
-      free(theShape.line);
-      return;
-    }
-    
-    pixelFormat thePixelFormat(*pRowCache);
-    agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
-    agg::renderer_primitives< agg::renderer_base< pixelFormat > > ren_prim(ren_base);
-    agg::rasterizer_outline< agg::renderer_primitives< agg::renderer_base< pixelFormat > > > ras_al(ren_prim);
-    
-    ren_base.reset_clipping(true);
-
-    ren_prim.line_color(agg::rgba(((double) style->color.red) / 255.0, 
-                                  ((double) style->color.green) / 255.0, 
-                                   ((double) style->color.blue) / 255.0, 0.0));
-
-    if (symbol->filled && oc >=0)
-      ren_prim.fill_color(agg::rgba(((double) style->outlinecolor.red) / 255.0, 
-                                    ((double) style->outlinecolor.green) / 255.0, 
-                                    ((double) style->outlinecolor.blue) / 255.0, 0.0));
-
-    oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); /* convert first point in marker */
-    oldpnt.y = MS_NINT(d*symbol->points[0].y + offset_y);
-      
-    for(j=1;j < symbol->numpoints;j++) { /* step through the marker */
-      if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
-        oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
-        oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-      } else {
-        if((symbol->points[j-1].x < 0) && (symbol->points[j-1].y < 0)) { /* Last point was PENUP, now a new beginning */
-          oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
-          oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-        } else {
-          newpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
-          newpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-    
-          ren_prim.line((int) oldpnt.x << 8, (int)oldpnt.y << 8, 
-                        (int)newpnt.x << 8, (int)newpnt.y << 8,
-                        true);              
-
-          oldpnt = newpnt;
-        }
+  offset_x = p->x - d*.5*symbol->sizex + ox;
+  offset_y = p->y - d*.5*symbol->sizey + oy;
+  
+  agg::path_storage path = imageVectorSymbolAGG(symbol,d);
+  agg::trans_affine translation = agg::trans_affine_translation(offset_x, offset_y);
+  path.transform(translation);
+  ren_aa.color(agg::rgba(((double) style->color.red) / 255.0, 
+          ((double) style->color.green) / 255.0, 
+          ((double) style->color.blue) / 255.0, 1));
+  if(symbol->filled) {
+      ras_aa.add_path(path);
+      agg::render_scanlines(ras_aa, sl, ren_aa);
+      if(MS_VALID_COLOR(style->outlinecolor)) {
+          ras_aa.reset();
+          agg::conv_stroke<agg::path_storage> stroke(path);
+          stroke.width(1);
+          if(style->width!=-1)
+              stroke.width(style->width);
+          stroke.line_join(agg::miter_join);
+          stroke.line_cap(agg::butt_cap);
+          ras_aa.add_path(stroke);
+          ren_aa.color ( agg::rgba ( ( ( double ) style->outlinecolor.red ) / 255.0,
+                  ( ( double ) style->outlinecolor.green ) / 255.0,
+                  ( ( double ) style->outlinecolor.blue ) / 255.0,1.0 ) );
+          agg::render_scanlines(ras_aa, sl, ren_aa);
       }
-    } /* end for loop */   
-  } /* end if-then-else */
 
-  if(bRotated) {
-    msFreeSymbol(symbol); /* clean up */
-    msFree(symbol);
+  } else  { /* shade is a vector drawing */
+      agg::conv_stroke <agg::path_storage > stroke(path);
+      stroke.width(style->width);
+      switch(symbol->linejoin) {
+      case MS_CJC_ROUND:
+          stroke.line_join(agg::round_join);
+          break;
+      case MS_CJC_MITER:
+          stroke.line_join(agg::miter_join);
+          break;
+      case MS_CJC_BEVEL:
+          stroke.line_join(agg::bevel_join);
+          break;
+      }
+      switch(symbol->linecap) {
+      case MS_CJC_BUTT:
+          stroke.line_cap(agg::butt_cap);
+          break;
+      case MS_CJC_ROUND:
+          stroke.line_cap(agg::round_cap);
+          break;
+      case MS_CJC_SQUARE:
+          stroke.line_cap(agg::square_cap);
+          break;
+      }
+      ras_aa.add_path(stroke);
+      agg::render_scanlines(ras_aa, sl, ren_aa); 
   }
-  
-  free(theShape.line);
+  if(bRotated) {
+      msFreeSymbol(symbol); /* clean up */
+      msFree(symbol);
+  }
 }
 
 /* ------------------------------------------------------------------------------- */
@@ -705,11 +721,13 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     msDrawMarkerSymbolAGGPixmap(symbol, size, angle, bRotated, style,  ox, oy, img, p);
     break;    
   case(MS_SYMBOL_ELLIPSE):
-    msDrawMarkerSymbolAGGEllipse(symbol, size, angle, bRotated, style,  ox, oy, img, p);
+    msDrawMarkerSymbolAGGEllipse(symbol, size, angle, bRotated, style,  ox, oy, image, p);
+    return;
     break;    
   case(MS_SYMBOL_VECTOR): /* TODO: Need to leverage the image cache! */
     msDrawMarkerSymbolAGGVector(symbol, size, angle, bRotated, style, ox, oy, img, p, image);
-    break;
+    return;
+  break;
   default:
     break; 
   }
