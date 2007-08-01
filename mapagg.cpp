@@ -534,7 +534,7 @@ void msDrawMarkerSymbolAGGEllipse(symbolObj *symbol, double size, double angle, 
   
       
       agg::path_storage path;
-      agg::ellipse ellipse(x,y,w,h);
+      agg::ellipse ellipse(x,y,w/2,h/2);
       ellipse.approximation_scale ( 1 );
       path.concat_path(ellipse);
       if(symbol->filled) {
