@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+Version 5.0.0-beta2 (2007-08-01)
+--------------------------------
+
 - Oracle Spatial: Fixed some issues related with the maporaclespatial.c 
   source code: warnings with calls in gcc 4.x versions (#1845), gtype 
   translation error, generating memory problem (#2056), problems with items
@@ -44,6 +47,7 @@ Current Version (SVN Trunk):
 - Fixed mapwms.c to support selecting AGG/ outputformats via FORMAT=.
 
 - Removed unused styleObj.isachild member (#2169)
+
 
 Version 5.0.0-beta1 (2007-07-25)
 --------------------------------
