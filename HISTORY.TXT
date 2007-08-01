@@ -12,6 +12,11 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+- AGG: Fixed a significant number of rendering issues including conflicts with
+  OPACITY ALPHA and ANTIALIAS TRUE settings w/regards to polygon fills. Fixed
+  ellipse and vector markers. Fixed AGG/GD alpha channel conflicts by writing
+  conversion to/from functions. (#2191-partial, #2173, #2177)
+
 - SOS: Turn layer off if eventTime is not in the sos_offering_timeextent (#2154)
 
 - WFS: Correct bugs related to query by featureid support (#2102)
