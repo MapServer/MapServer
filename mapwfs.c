@@ -1766,7 +1766,8 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
         }
         /* version is optional is the GetCapabilities. If not */
         /* provided, set it. */
-        if (wfsparams->pszRequest && 
+        if (wfsparams->pszVersion == NULL &&
+            wfsparams->pszRequest && 
             strcasecmp(wfsparams->pszRequest, "GetCapabilities") == 0)
           wfsparams->pszVersion = strdup("1.0.0");
     }
