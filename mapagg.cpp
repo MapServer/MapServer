@@ -267,7 +267,6 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, double 
   pixelFormat thePixelFormat(*pRowCache);
   agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
   agg::renderer_primitives< agg::renderer_base< pixelFormat > > ren_prim(ren_base);
-  agg::rasterizer_outline< agg::renderer_primitives< agg::renderer_base< pixelFormat > > > ras_al(ren_prim);
     
   agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa(ren_base);
   agg::scanline_p8 sl;
@@ -306,6 +305,8 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, double 
 
   return;
 }
+
+#ifdef notdef // unused for now
 
 static void imageFilledPolygon2(imageObj *image, shapeObj *p, colorObj *color, int offsetx, int offsety)
 {    
@@ -353,6 +354,7 @@ static void imageFilledPolygon2(imageObj *image, shapeObj *p, colorObj *color, i
     }  
   }
 }
+#endif /* unused */
 
 static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, double offsetx, double offsety)
 {    
@@ -487,8 +489,6 @@ static void imageTexturedPolygonAGG(imageObj *image, shapeObj *p, agg::rendering
 
     pixelFormat thePixelFormat(*pRowCache);
     agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
-
-    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa(ren_base);
     agg::scanline_p8 sl;
     agg::rasterizer_scanline_aa<> ras_aa;
     agg::path_storage path;
@@ -1223,9 +1223,6 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
     }
 }
 
-
-
-static double nmsTransformShapeAGG = 0;
 /* ===========================================================================
    msSaveImageGD
    
