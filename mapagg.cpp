@@ -78,6 +78,8 @@
 #include "agg_span_interpolator_linear.h"
 #include "agg_span_image_filter_rgba.h"
 #include "agg_trans_affine.h"
+#include "agg_scanline_boolean_algebra.h"
+#include "agg_scanline_storage_aa.h"
 #include "math.h"
 #include "mapagg.h"
 
@@ -251,8 +253,8 @@ private:
 
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
-static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int width, 
-                          int offsetx, int offsety,
+static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, double width, 
+                            double offsetx, double offsety,
                           int dashstylelength, int *dashstyle)
 {
   int i,k;
@@ -282,7 +284,7 @@ static void imagePolyline(imageObj *image, shapeObj *p, colorObj *color, int wid
     agg::conv_stroke<agg::conv_dash<CMapServerLine> > stroke_dash(dash);     
           
     if (dashstylelength <= 0) {
-      stroke.width(((float) width));
+      stroke.width((width));
       stroke.line_cap(agg::round_cap);
       ras_aa.add_path(stroke);
     } else {
@@ -352,7 +354,7 @@ static void imageFilledPolygon2(imageObj *image, shapeObj *p, colorObj *color, i
   }
 }
 
-static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, int offsetx, int offsety)
+static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, double offsetx, double offsety)
 {    
   mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
   
@@ -374,10 +376,10 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
 
   agg::path_storage path;
   for(int i = 0; i < p->numlines; i++) {
-    path.move_to(p->line[i].point[0].x, p->line[i].point[0].y);
+    path.move_to(p->line[i].point[0].x+offsetx, p->line[i].point[0].y+offsety);
 
     for(int j=1; j<p->line[i].numpoints; j++)
-      path.line_to(p->line[i].point[j].x, p->line[i].point[j].y);
+      path.line_to(p->line[i].point[j].x+offsetx, p->line[i].point[j].y+offsety);
 
     path.close_polygon();
   }
@@ -386,13 +388,77 @@ static void imageFilledPolygon(imageObj *image, shapeObj *p, colorObj *color, in
   agg::render_scanlines(ras_aa, sl, ren_aa);
 }
 
-
+/* 
+** Function to create a custom hatch symbol based on an arbitrary angle. 
+*/
+static agg::path_storage createHatchAGG(int sx, int sy, double angle, double step)
+{
+  agg::path_storage path;
+  angle = fmod(angle, 360.0);
+  if(angle < 0) angle += 360;
+  if(angle >= 180) angle -= 180;
+  
+  /*treat 2 easy cases which would cause divide by 0 in generic case*/
+  if(angle==0||angle==180||angle==360) {
+      for(double y=step/2;y<sy;y+=step) {
+          path.move_to(0,y);
+          path.line_to(sx,y);
+      }
+      return path;
+  }
+  if(angle==90||angle==270) {
+        for(double x=step/2;x<sx;x+=step) {
+            path.move_to(x,0);
+            path.line_to(x,sy);
+        }
+        return path;
+    }
+  
+  
+  double theta = (90-angle)*MS_PI/180.;
+  double ct = cos(theta);
+  double st = sin(theta);
+  double rmax = sqrt(sx*sx+sy*sy);
+  
+  /*parametrize each line as r = x.cos(theta) + y.sin(theta)*/
+  for(double r=-rmax;r<rmax;r+=step) {
+      int inter=0;
+      double x,y,pt[4];
+      /*test for intersection with each side*/
+     
+      y=r/st;x=0;
+      if(y>=0&&y<=sy) {
+          pt[2*inter]=x;pt[2*inter+1]=y;
+          inter++;
+      }     
+      x=sx;y=(r-sx*ct)/st;
+      if(y>=0&&y<=sy) {
+          pt[2*inter]=x;pt[2*inter+1]=y;
+          inter++;
+      }
+      y=0;x=r/ct;
+      if(x>=0&&x<=sx) {
+          pt[2*inter]=x;pt[2*inter+1]=y;
+          inter++;
+      }
+      y=sy;x=(r-sy*st)/ct;
+      if(x>=0&&x<=sx) {
+          pt[2*inter]=x;pt[2*inter+1]=y;
+          inter++;
+      }
+      if(inter==2) {
+          path.move_to(pt[0],pt[1]);
+          path.line_to(pt[2],pt[3]);
+      }
+  }
+  return path;
+}
 
 static agg::path_storage imageVectorSymbolAGG(symbolObj *symbol, double scale) {
     agg::path_storage path,tmppath;
     bool is_new=true;
     for(int i=0;i < symbol->numpoints;i++) {
-        if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) { /* new polygon (PENUP) */
+        if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) { /* (PENUP) */
             path.concat_path(tmppath);
             tmppath.remove_all();
             is_new=true;
@@ -413,6 +479,39 @@ static agg::path_storage imageVectorSymbolAGG(symbolObj *symbol, double scale) {
 }
 
 
+static void imageTexturedPolygonAGG(imageObj *image, shapeObj *p, agg::rendering_buffer texture) {
+    mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
+
+    if(pRowCache == NULL)
+        return;
+
+    pixelFormat thePixelFormat(*pRowCache);
+    agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
+
+    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa(ren_base);
+    agg::scanline_p8 sl;
+    agg::rasterizer_scanline_aa<> ras_aa;
+    agg::path_storage path;
+    for(int i = 0; i < p->numlines; i++) {
+        path.move_to(p->line[i].point[0].x, p->line[i].point[0].y);
+
+        for(int j=1; j<p->line[i].numpoints; j++)
+            path.line_to(p->line[i].point[j].x, p->line[i].point[j].y);
+
+        path.close_polygon();
+    }
+    typedef agg::pixfmt_rgba32 pixfmt;
+    typedef agg::rgba8 color_type;
+    typedef agg::wrap_mode_repeat wrap_type;
+    typedef agg::image_accessor_wrap<pixfmt,wrap_type,wrap_type> img_source_type;
+    typedef agg::span_pattern_rgba<img_source_type> span_gen_type;
+    agg::span_allocator<color_type> sa;
+    pixfmt img_pixf(texture);
+    img_source_type img_src(img_pixf);
+    span_gen_type sg(img_src, 0, 0);
+    ras_aa.add_path(path);
+    agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
+}
 
 /* ---------------------------------------------------------------------------*/
 /*       Stroke an ellipse with a line symbol of the specified size and color */
@@ -802,9 +901,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
   gdImagePtr img  = image->img.gd;
     
   symbolObj *symbol;
-  int ox, oy;
-  double size, angle, angle_radians;
-  int width;
+  double ox,oy,size, angle, angle_radians,width;
 
   if(!p) return;
   if(p->numlines <= 0) return;
@@ -813,24 +910,25 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
   if(style->size == -1) {
     size = msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
-    size = MS_NINT(size*scalefactor);
+    size = size*scalefactor;
   } else
-    size = MS_NINT(style->size*scalefactor);
+    size = style->size*scalefactor;
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
-  width = MS_NINT(style->width*scalefactor);
+  width = style->width*scalefactor;
   width = MS_MAX(width, style->minwidth);
   width = MS_MIN(width, style->maxwidth);
 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
 
-  ox = MS_NINT(style->offsetx*scalefactor); /* should we scale the offsets? */
-  oy = MS_NINT(style->offsety*scalefactor);
+  ox = style->offsetx*scalefactor; /* should we scale the offsets? */
+  oy = style->offsety*scalefactor;
 
   if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolAGG() instead (POLYLINE) */
     msDrawLineSymbolAGG(symbolset, image, p, style, scalefactor);
+    //imagePolyline2(image, p, &(style->outlinecolor), width, ox, oy, 0, NULL);
     return;
   }
 
@@ -844,6 +942,142 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
       imagePolyline(image, p, &(style->outlinecolor), width, ox, oy, 0, NULL);
 
     return;
+  }
+  
+  typedef agg::pixfmt_rgba32 pixfmt;
+  typedef agg::rgba8 color_type;
+  switch(symbol->type) {
+      case(MS_SYMBOL_HATCH): {
+          msComputeBounds(p);
+          int pw=MS_NINT(p->bounds.maxx-p->bounds.minx)+1;
+          int ph=MS_NINT(p->bounds.maxy-p->bounds.miny)+1;
+          
+          mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
+          if(pRowCache == NULL)
+              return;
+          pixelFormat thePixelFormat(*pRowCache);
+          agg::renderer_base< pixelFormat > ren_base(thePixelFormat);
+          agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa(ren_base);
+          agg::scanline_u8 sl1,sl2,sl;
+          agg::rasterizer_scanline_aa<> ras1,ras2;
+          agg::scanline_storage_aa8 storage;
+          agg::scanline_storage_aa8 storage1;
+          agg::scanline_storage_aa8 storage2;
+          agg::path_storage hatch,polygon;
+          
+          if(MS_VALID_COLOR(style->backgroundcolor))
+              imageFilledPolygon(image, p, &(style->backgroundcolor), ox, oy);
+          
+          hatch = createHatchAGG(pw,ph,style->angle,style->size);
+          hatch.transform(agg::trans_affine_translation(p->bounds.minx, p->bounds.miny));
+          agg::conv_stroke <agg::path_storage > stroke(hatch);
+          stroke.width(style->width);
+          ras1.add_path(stroke);                    
+          agg::render_scanlines(ras1, sl, storage1);
+          
+          for(int i = 0; i < p->numlines; i++) {
+              polygon.move_to(p->line[i].point[0].x+ox, p->line[i].point[0].y+oy);
+              for(int j=1; j<p->line[i].numpoints; j++)
+                  polygon.line_to(p->line[i].point[j].x+ox, p->line[i].point[j].y+oy);
+              polygon.close_polygon();
+          }
+          ras2.add_path(polygon);
+          agg::render_scanlines(ras2,sl,storage2);
+          agg::sbool_combine_shapes_aa(agg::sbool_and, storage1, storage2, sl1, sl2, sl, storage);               
+          ren_aa.color(agg::rgba(((double) style->color.red) / 255.0, 
+                            ((double) style->color.green) / 255.0, 
+                            ((double) style->color.blue) / 255.0, 1));
+          agg::render_scanlines(storage, sl, ren_aa);
+          if(MS_VALID_COLOR(style->outlinecolor))
+              imagePolyline(image, p, &(style->outlinecolor), 1, ox, oy, 0, NULL);
+          return;
+      }
+          break;
+      case(MS_SYMBOL_VECTOR): {
+          double d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
+          char bRotated=MS_FALSE;
+          if (angle != 0.0 && angle != 360.0) {
+            bRotated = MS_TRUE;
+            symbol = msRotateSymbol(symbol, style->angle);
+          }
+
+          int pw = MS_NINT(symbol->sizex*d);    
+          int ph = MS_NINT(symbol->sizey*d);
+
+          if((pw <= 1) && (ph <= 1)) { /* No sense using a tile, just fill solid */
+            imageFilledPolygon(image, p, &(style->color), ox, oy);
+            if(MS_VALID_COLOR(style->outlinecolor))
+              imagePolyline(image, p, &(style->outlinecolor), width, ox, oy, 0, NULL);     
+            return;
+          }
+
+          /* create tile image */
+          agg::int8u*           m_pattern;
+          agg::rendering_buffer m_pattern_rbuf;
+          m_pattern = new agg::int8u[pw * ph * 4];
+          m_pattern_rbuf.attach(m_pattern, pw,ph, pw*4);
+          pixfmt pixf(m_pattern_rbuf);
+          agg::renderer_base<pixfmt> rb(pixf);
+          agg::renderer_scanline_aa_solid<agg::renderer_base<pixfmt> > rs(rb);
+          agg::scanline_p8 sl;
+          agg::rasterizer_scanline_aa<> ras_aa;
+          
+          /*create path for the symbol*/
+          agg::path_storage path = imageVectorSymbolAGG(symbol,d);
+          
+          if(MS_VALID_COLOR(style->backgroundcolor))
+              rb.clear(agg::rgba(((double) style->backgroundcolor.red) / 255.0, 
+                      ((double) style->backgroundcolor.green) / 255.0, 
+                      ((double) style->backgroundcolor.blue) / 255.0, 1));
+      
+          rs.color(agg::rgba(((double) style->color.red) / 255.0, 
+                  ((double) style->color.green) / 255.0, 
+                  ((double) style->color.blue) / 255.0, 1));
+          if(symbol->filled) {
+              ras_aa.add_path(path);          
+              
+          } else  { /* shade is a vector drawing */
+              agg::conv_stroke <agg::path_storage > stroke(path);
+              stroke.width(style->width);
+              switch(symbol->linejoin) {
+                  case MS_CJC_ROUND:
+                      stroke.line_join(agg::round_join);
+                      break;
+                  case MS_CJC_MITER:
+                      stroke.line_join(agg::miter_join);
+                      break;
+                  case MS_CJC_BEVEL:
+                      stroke.line_join(agg::bevel_join);
+                      break;
+              }
+              switch(symbol->linecap) {
+                  case MS_CJC_BUTT:
+                      stroke.line_cap(agg::butt_cap);
+                      break;
+                  case MS_CJC_ROUND:
+                      stroke.line_cap(agg::round_cap);
+                      break;
+                  case MS_CJC_SQUARE:
+                      stroke.line_cap(agg::square_cap);
+                      break;
+              }
+              ras_aa.add_path(stroke);   
+          }
+          agg::render_scanlines(ras_aa, sl, rs);
+
+          imageTexturedPolygonAGG(image,p,m_pattern_rbuf);
+          delete [] m_pattern;
+          if(MS_VALID_COLOR(style->outlinecolor))
+              imagePolyline(image, p, &(style->outlinecolor), 1, ox, oy, 0, NULL);
+          
+
+          if(bRotated) { /* free the rotated symbol */
+              msFreeSymbol(symbol);
+              msFree(symbol);
+          }
+      }
+          return;
+          break;
   }
     
   msDrawShadeSymbolGD(symbolset, img, p, style, scalefactor); /* fall back to GD */
