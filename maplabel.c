@@ -746,7 +746,6 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   double theta, length, current_length;
   labelObj label;
   pointObj point, label_point;
-  shapeObj label_poly;
   rectObj label_rect;
   int label_width;
   int position, rot, gap, in;
@@ -754,7 +753,6 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
 
   symbolObj *symbol;
 
-  msInitShape(&label_poly);
 
   symbol = symbolset->symbol[style->symbol];
 
@@ -814,7 +812,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
         point.x = MS_NINT(p->line[i].point[j-1].x + current_length*rx);
         point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
 
-        label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, &label_poly);
+        label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, NULL);
         msDrawTextGD(img, label_point, symbol->character, &label, symbolset->fontset, scalefactor);
 
         current_length += label_width + gap;

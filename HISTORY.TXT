@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fix memeory leak msImageTruetypePolyline (#2200)
+
 - SWF: Fix incorrect symbol assignements (#2198)
 
 - Fixed memory leaks in processing of WFS requests (#2077)
