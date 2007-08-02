@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- AGG/PNG24 and AGG/JPEG are the only valid agg drivers.
+  Imagetypes aggpng24 and aggjpeg can be used to refer to the
+  default output formats. 
+
 - Fix memeory leak with labepath object (#2199)
 
 - Fix memeory leak msImageTruetypePolyline (#2200)

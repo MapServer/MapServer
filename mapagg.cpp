@@ -420,7 +420,7 @@ static agg::path_storage createHatchAGG(int sx, int sy, double angle, double ste
   double theta = (90-angle)*MS_PI/180.;
   double ct = cos(theta);
   double st = sin(theta);
-  double rmax = sqrt(sx*sx+sy*sy);
+  double rmax = sqrt((double)(sx*sx+sy*sy));
   
   /*parametrize each line as r = x.cos(theta) + y.sin(theta)*/
   for(double r=-rmax;r<rmax;r+=step) {
@@ -1237,8 +1237,12 @@ int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
   
   pFormatBuffer = format->driver;
   
+ 
   strcpy(cGDFormat, "gd/");
-  strcat(cGDFormat, &(format->driver[4]));
+  if (strcasecmp(format->driver,"AGG/PNG24") == 0)
+    strcat(cGDFormat,"png"); 
+  else
+    strcat(cGDFormat, &(format->driver[4]));
   
   format->driver = &cGDFormat[0];
   
