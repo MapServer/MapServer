@@ -657,6 +657,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       tokens = msStringSplit(layers[0], ':', &n);
       if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
         msFreeCharArray(tokens, n);
+        tokens = NULL;
         for (i=0; i<numlayers; i++) {
             tokens = msStringSplit(layers[i], ':', &n);
             if (tokens && n==2) {
@@ -665,8 +666,11 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             }
             if (tokens)
                 msFreeCharArray(tokens, n);
+            tokens = NULL;
         }
       }
+      if (tokens)
+          msFreeCharArray(tokens, n);
     }
   } 
 
