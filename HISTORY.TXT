@@ -13,7 +13,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed memory leaks in processing of WFS requests (#2077)
+
 - Avoid use of uninitialised memory in msCopySymbol() (#2194)
+
 
 Version 5.0.0-beta2 (2007-08-01)
 --------------------------------

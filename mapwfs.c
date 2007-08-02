@@ -900,6 +900,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   if(layers)
     msFreeCharArray(layers, numlayers);
     
+  msGMLFreeNamespaces(namespaceList);
+
   return MS_SUCCESS;
 }
 
@@ -1506,6 +1508,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     if (pszNameSpace)
       free(pszNameSpace);
     msFree(user_namespace_uri_encoded);
+    msGMLFreeNamespaces(namespaceList);
 
     return MS_SUCCESS;
 }
