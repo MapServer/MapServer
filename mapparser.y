@@ -10,7 +10,7 @@
 #include <math.h>
 #include <time.h>
 
-#include "map.h" /* for TRUE/FALSE and REGEX includes */
+#include "mapserver.h" /* for TRUE/FALSE and REGEX includes */
 #include "maptime.h" /* for time comparison routines */
 
 extern int msyylex(void); /* lexer globals */
