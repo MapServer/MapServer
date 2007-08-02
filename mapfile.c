@@ -4021,6 +4021,8 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
   /* free the labels */
   for(i=0; i<cacheslot->numlabels; i++) {
       msFree(cacheslot->labels[i].text);
+      if (cacheslot->labels[i].labelpath)
+        msFreeLabelPathObj(cacheslot->labels[i].labelpath);
       if( cacheslot->labels[i].label.font != NULL )
           msFree( cacheslot->labels[i].label.font );
       msFreeShape(cacheslot->labels[i].poly); /* empties the shape */
