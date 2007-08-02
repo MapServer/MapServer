@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- SWF: Fix incorrect symbol assignements (#2198)
+
 - Fixed memory leaks in processing of WFS requests (#2077)
 
 - Avoid use of uninitialised memory in msCopySymbol() (#2194)

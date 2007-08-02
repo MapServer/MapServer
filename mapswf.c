@@ -1215,7 +1215,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     if (image == NULL || !MS_DRIVER_SWF(image->format) )
         return;
 
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
     if(style->size == -1) {
         size = (int)msSymbolGetDefaultSize( symbol );
         size = MS_NINT(size*scalefactor);
@@ -1681,7 +1681,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     if(p == NULL || p->numlines <= 0)
       return;
 
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
     if(style->size == -1) {
         size = (int)msSymbolGetDefaultSize( symbol );
         size = MS_NINT(size*scalefactor);
@@ -1812,7 +1812,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     if(p == NULL || p->numlines <= 0)
       return;
 
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
     if(style->size == -1) {
       size = (int)msSymbolGetDefaultSize( symbol );
       size = MS_NINT(size*scalefactor);
