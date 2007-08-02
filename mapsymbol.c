@@ -946,7 +946,7 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   MS_COPYSTELEM(sizex);
   MS_COPYSTELEM(sizey);
   
-  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
+  for (i=0; i < src->numpoints; i++) {
     MS_COPYPOINT(&(dst->points[i]), &(src->points[i]));
   }
   
@@ -954,7 +954,7 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   MS_COPYSTELEM(filled);
   MS_COPYSTELEM(patternlength);
 
-  for (i=0; i<MS_MAXPATTERNLENGTH; i++) {
+  for (i=0; i < src->patternlength; i++) {
     dst->pattern[i] = src->pattern[i];
   }
 
