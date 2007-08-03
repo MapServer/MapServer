@@ -529,6 +529,11 @@
         return (char *) msLayerGetProcessing(self, index);
     }
 
+    char *getProcessingKey(const char *key)
+    {
+      return (char *) msLayerGetProcessingKey(self, key);
+    }    
+
     int clearProcessing() 
     {
         return msLayerClearProcessing(self);
