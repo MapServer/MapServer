@@ -1239,10 +1239,7 @@ int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
   
  
   strcpy(cGDFormat, "gd/");
-  if (strcasecmp(format->driver,"AGG/PNG24") == 0)
-    strcat(cGDFormat,"png"); 
-  else
-    strcat(cGDFormat, &(format->driver[4]));
+  strcat(cGDFormat, &(format->driver[4]));
   
   format->driver = &cGDFormat[0];
   
@@ -1296,10 +1293,7 @@ unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr, outputFormatO
   pFormatBuffer = format->driver;
 
   pszGDFormat = msStringConcatenate(pszGDFormat, "gd/");
-  if (strcasecmp(format->driver,"AGG/PNG24") == 0)
-    pszGDFormat = msStringConcatenate(pszGDFormat, "png");
-  else
-    pszGDFormat = msStringConcatenate(pszGDFormat, &(format->driver[4]));
+  pszGDFormat = msStringConcatenate(pszGDFormat, &(format->driver[4]));
 
   format->driver = pszGDFormat;
 
