@@ -98,37 +98,26 @@ void msFreeHashItems( hashTableObj *table )
     struct hashObj *tp=NULL;
     struct hashObj *prev_tp=NULL;
     
-    if (msHashIsEmpty(table)) {
-        return;
-    }
-    if (table)
-    {
-        if (table->items)
-        {
-            for (i=0; i<MS_HASHSIZE; i++) 
-            {
-                if (table->items[i] != NULL) 
-                {
-                    for (tp=table->items[i];
-                         tp!=NULL; 
-                         prev_tp=tp,tp=tp->next,free(prev_tp)) 
-                    {
-	                    free(tp->key);
-	                    free(tp->data);
+    if (table) {
+        if (msHashIsEmpty(table))
+          return;
+
+        if(table->items) {
+            for (i=0; i<MS_HASHSIZE; i++) {
+                if (table->items[i] != NULL) {
+                    for (tp=table->items[i]; tp!=NULL; prev_tp=tp,tp=tp->next,free(prev_tp)) {
+	                msFree(tp->key);
+	                msFree(tp->data);
                     }
                 }
                 if (tp) free(tp);
             }
-        free(table->items);
-        table->items = NULL;
+            free(table->items);
+            table->items = NULL;
+        } else { /* should never get here or something is really screwed up */
+          msSetError(MS_HASHERR, "No items but numitems is non-zero.", "msFreeHashItems()");
         }
-        else
-        {
-            msSetError(MS_HASHERR, "Table has no items", "msFreeHashItems()");
-        }
-    }
-    else
-    {
+    } else {
         msSetError(MS_HASHERR, "Can't free NULL table", "msFreeHashItems()");
     }
 }
