@@ -97,7 +97,10 @@ void msFreeHashItems( hashTableObj *table )
     int i;
     struct hashObj *tp=NULL;
     struct hashObj *prev_tp=NULL;
-
+    
+    if (msHashIsEmpty(table)) {
+        return;
+    }
     if (table)
     {
         if (table->items)
