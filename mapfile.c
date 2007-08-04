@@ -1651,6 +1651,7 @@ static void writeHashTable(hashTableObj *table, FILE *stream, char *tab, char *t
   int i;
 
   if(!table) return;
+  if(msHashIsEmpty(table)) return;
 
   fprintf(stream, "%s%s\n", tab, title);  
 
