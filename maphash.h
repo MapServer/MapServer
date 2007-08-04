@@ -143,6 +143,16 @@ MS_DLL_EXPORT const char *msFirstKeyFromHashTable( hashTableObj *table );
  */
 MS_DLL_EXPORT const char *msNextKeyFromHashTable( hashTableObj *table,
                                                   const char *prevkey );
+
+/* msHashIsEmpty - get next key
+ * ARGS:
+ *     table - target hash table
+ * RETURNS:
+ *     MS_TRUE if the table is empty and MS_FALSE if the table has items
+ */
+
+MS_DLL_EXPORT int msHashIsEmpty( hashTableObj* table );
+ 
 #endif /*SWIG*/
 
 #ifdef __cplusplus

@@ -83,6 +83,15 @@ void msFreeHashTable( hashTableObj *table )
     }
 }
 
+int msHashIsEmpty( hashTableObj *table )
+{
+    if (table->numitems == 0 )
+        return MS_TRUE;
+    else
+        return MS_FALSE;
+}
+
+
 void msFreeHashItems( hashTableObj *table )
 {
     int i;
