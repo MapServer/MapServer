@@ -211,9 +211,20 @@
     {
         gdBuffer buffer;
         
-  	buffer.owns_data = MS_TRUE;
-        buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
+        buffer.owns_data = MS_TRUE;
+        
+        if( MS_DRIVER_GD(self->format) )
+        {
+            buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
                                           self->format);
+        }
+
+        else if( MS_DRIVER_AGG(self->format) )
+        {
+            buffer.data = msSaveImageBufferAGG(self->img.gd, &buffer.size,
+                                          self->format);
+        }
+        
         if( buffer.size == 0 )
         {
             buffer.data = NULL;
