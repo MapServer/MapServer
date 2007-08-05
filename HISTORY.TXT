@@ -13,6 +13,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Use msSaveImageBufferAGG for AGG formats in getBytes (#2205).
+
+- Make sure to emit $(AGG) to mapscriptvars because of conditional inclusion
+  of stuct members to imageObj. (#2205)
+
 - AGG/PNG24 and AGG/JPEG are the only valid agg drivers.
   Imagetypes aggpng24 and aggjpeg can be used to refer to the
   default output formats. 
