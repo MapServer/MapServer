@@ -344,7 +344,7 @@ test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c
 mapscriptvars:	Makefile
 	touch mapscriptvars
 	pwd > mapscriptvars
-	echo $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(GEOS) $(OWS) >> mapscriptvars
+	echo $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(GEOS) $(OWS) $(AGG) >> mapscriptvars
 	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
 	echo $(EXE_LDFLAGS) >> mapscriptvars
 	echo $(STATIC_LIBS) >> mapscriptvars
