@@ -57,6 +57,10 @@
         free(self);		
     }
 
+    int setWKTProjection(char* wkt) {
+        /* no debug output here */
+        return msOGCWKT2ProjectionObj(wkt, &(self), MS_FALSE);
+    }
 }
 
 
