@@ -7763,6 +7763,14 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
   test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg"
   test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg2"
 
+  if test -n "$FT_BIN" ; then
+     FT_INC=`$FT_BIN --cflags`
+  else
+     { { echo "$as_me:$LINENO: error: freetype required for agg support - please configure --with-freetype." >&5
+echo "$as_me: error: freetype required for agg support - please configure --with-freetype." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
   test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/lib/libagg.so && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
@@ -7770,7 +7778,7 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
   if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
       AGG_ENABLED="-DUSE_AGG"
-      AGG_INC=-I$AGG_INCLUDE
+      AGG_INC="-I$AGG_INCLUDE $FT_INC"
       AGG_LIB="-L$AGG_LIBDIR -lagg"
 
   if test ""$AGG_LIBDIR"" != "/usr/lib"; then
