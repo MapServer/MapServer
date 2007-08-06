@@ -1657,12 +1657,12 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
     pos_sep = strstr(table_name, ".");
     if(pos_sep) 
     {
-      length = pos_sep - table_name;
+      length = strlen(table_name) - strlen(pos_sep);
       schema = (char *)malloc(length + 1);
       strncpy(schema, table_name, length);
       schema[length] = 0;
 
-      length = (int)pos_sep + strlen(pos_sep);
+      length = strlen(pos_sep);
       table = (char *)malloc(length);
       strncpy(table, pos_sep + 1, length - 1);
       table[length - 1] = 0;
