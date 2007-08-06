@@ -1252,7 +1252,9 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   /* Line smoothing kernel */
   double kernel[] = {0.1, 0.2, 2, 0.2, 0.1}; /* {1.5, 2, 15, 2, 1.5}; */
   double kernel_normal = 2.6; /* Must be sum of kernel elements */
-  int kernel_size = 5;
+  
+  /* not used currently it seems */
+  /*  int kernel_size = 5; */
 
   double letterspacing = 1.25;
 
