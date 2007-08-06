@@ -251,10 +251,12 @@ imageObj *msDrawScalebar(mapObj *map)
                        MS_NOOVERRIDE );
 
    /* create image */
+#ifdef USE_AGG
   if( MS_RENDERER_AGG(map->outputformat) )
       image = msImageCreateAGG(map->scalebar.width, sy, format,
               map->web.imagepath, map->web.imageurl);        
   else
+#endif
       image = msImageCreateGD(map->scalebar.width, sy, format,
                           map->web.imagepath, map->web.imageurl);
 
