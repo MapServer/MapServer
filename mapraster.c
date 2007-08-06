@@ -418,7 +418,7 @@ static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *
   tiepos=0; cellpos=0;
   for (i=0; i<entries; i++) {
     fread(&tdir,sizeof(tdir),1,f);
-    if (swap) TIFFSwabShort(&tdir.tdir_tag);
+    if (swap) TIFFSwabShort((unsigned short *) &tdir.tdir_tag);
     if (tdir.tdir_tag==0x8482) {  /* geoTIFF tie point */
       tiepos=tdir.tdir_offset;
       if (swap) TIFFSwabLong(&tiepos);
