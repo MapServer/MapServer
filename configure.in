@@ -771,9 +771,12 @@ if test "$with_agg" = "yes" ; then
 elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
   AC_EXPAND_PATH($with_agg, AGG_DIR)
-  test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include"
-  test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg"
-  test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg2"
+  test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include"
+  test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg"
+  test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg2"
+
+  # Include font_freetype directory if we are building from source tree.
+  test -f $AGG_DIR/font_freetype/agg_font_freetype.h && AGG_INCLUDE="$AGG_INCLUDE -I$AGG_DIR/font_freetype"
 
   if test -n "$FT_BIN" ; then
      FT_INC=`$FT_BIN --cflags`
@@ -788,7 +791,7 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
   if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
       AGG_ENABLED="-DUSE_AGG"
-      AGG_INC="-I$AGG_INCLUDE $FT_INC"
+      AGG_INC="$AGG_INCLUDE $FT_INC"
       AGG_LIB="-L$AGG_LIBDIR -lagg"
       AC_ADD_RUNPATH("$AGG_LIBDIR")
       AC_MSG_RESULT([yes])
