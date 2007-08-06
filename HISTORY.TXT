@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+- mapagg.cpp rewrite - the AGG renderer should now support all the GD features
 
 - Use msSaveImageBufferAGG for AGG formats in getBytes (#2205).
 
