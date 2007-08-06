@@ -1361,12 +1361,13 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
 int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, int numOtherGroups)
 {
    int i;
-   if (numOtherGroups == 0 || numOtherGroups < currentLevel) 
+   /* no match if otherGroups[] has less levels than currentLevel */
+   if (numOtherGroups <= currentLevel) 
    {
       return MS_FALSE;
    }
    /* compare all groups below the current level */
-   for (i = 0; i <= currentLevel; i++)
+   for (i = 0; i < currentLevel; i++)
    {
       if (strncmp(currentGroups[i], otherGroups[i], strlen(currentGroups[i])) != 0)
       {
@@ -1379,7 +1380,7 @@ int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, 
 /***********************************************************************************
  * msWMSPrintNestedGroups()                                                        *
  *                                                                                 *
- * purpose: Writes the layers to the capabilities that have the                     *
+ * purpose: Writes the layers to the capabilities that have the                    *
  * "WMS_LAYER_GROUP" metadata set.                                                 *
  *                                                                                 *
  * params:                                                                         *
