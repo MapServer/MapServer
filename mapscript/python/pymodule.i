@@ -32,7 +32,7 @@
 
 /* To support imageObj::getBytes */
 %typemap(out) gdBuffer {
-    $result = PyString_FromStringAndSize($1.data, $1.size); 
+    $result = PyString_FromStringAndSize((const char*)$1.data, $1.size); 
     if( $1.owns_data )
        gdFree($1.data);
 }

@@ -323,7 +323,7 @@
             msSetError(MS_IMGERR, "failed to get image buffer", "saveToString()");
             return NULL;
         }
-        imgstring = PyString_FromStringAndSize(imgbytes, size); 
+        imgstring = PyString_FromStringAndSize((const char*) imgbytes, size); 
         gdFree(imgbytes);
         return imgstring;
     }
