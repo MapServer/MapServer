@@ -58,7 +58,7 @@
 #include "agg_conv_clip_polyline.h"
 
 #include "agg_scanline_p.h"
-//#include "agg_scanline_u.h"
+#include "agg_scanline_u.h"
 #include "agg_path_storage.h"
 
 #include "agg_renderer_base.h"
@@ -511,7 +511,7 @@ public:
         typedef agg::font_cache_manager<font_engine_type> font_manager_type;
         font_engine_type             m_feng;
         font_manager_type            m_fman(m_feng);
-
+        
         ras_aa.reset();
         agg::trans_affine mtx;
         mtx *= agg::trans_affine_translation(-size/2,size/2);
@@ -588,6 +588,7 @@ public:
             } 
         }
     }
+    
     void renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
             double size, char *font, char *thechars, double angle=0,
             colorObj *shadowcolor=NULL, double shdx=1, double shdy=1) {
@@ -595,81 +596,58 @@ public:
         typedef agg::font_cache_manager<font_engine_type> font_manager_type;
         font_engine_type             m_feng;
         font_manager_type            m_fman(m_feng);
-
-        ras_aa.reset();
+        typedef agg::conv_curve<font_manager_type::path_adaptor_type> curve_type;
+        typedef agg::conv_stroke<curve_type> stroke_type;
+        typedef agg::conv_contour<curve_type> contour_type;
+        
         agg::trans_affine mtx;
+        mtx *= agg::trans_affine_translation(-x,-y);
         mtx *= agg::trans_affine_rotation(-angle);
-
-        agg::conv_curve<font_manager_type::path_adaptor_type> m_curves(m_fman.path_adaptor());;
-        agg::conv_stroke<agg::conv_curve<font_manager_type::path_adaptor_type> > m_stroke(m_curves);
-        agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour(m_curves);
+        mtx *= agg::trans_affine_translation(x,y);
+                
         m_feng.load_font(font, 0, agg::glyph_ren_outline);
-        m_feng.hinting(true);
-
+        m_feng.hinting(false);
         m_feng.height(size);
         m_feng.width(size);
         m_feng.resolution(72);
         m_feng.flip_y(true);
-        m_feng.transform(mtx);        
-
-        if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
-            double fx=x,fy=y;
-            char *thechar=thechars;
-            while(*thechar)
+        double fx=x,fy=y;
+        char *thechar=thechars;
+        while(*thechar) {
+            ras_aa.reset();
+            const agg::glyph_cache* glyph=m_fman.glyph(*thechar);;
+            if(glyph)
             {
-                const agg::glyph_cache* glyph = m_fman.glyph(*thechar);
-                if(glyph)
-                {
+                m_fman.init_embedded_adaptors(glyph,fx,fy);
+                curve_type m_curves(m_fman.path_adaptor());
+                stroke_type m_stroke(m_curves);
+                contour_type m_contour(m_curves);
+                agg::conv_transform<stroke_type, agg::trans_affine> trans_s(m_stroke, mtx);
+                agg::conv_transform<contour_type, agg::trans_affine> trans_c(m_contour, mtx);
+                m_stroke.width(1);
+                if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
                     ras_aa.reset();
-                    m_fman.init_embedded_adaptors(glyph,fx,fy);
-                    m_stroke.width(1);
-                    ras_aa.add_path(m_stroke);
+                    ras_aa.add_path(trans_s);
                     ren_aa.color(msToAGGColor(outlinecolor));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);                    // increment pen position
-                    fx += glyph->advance_x;
-                    fy += glyph->advance_y;
-
+                    agg::render_scanlines(ras_aa, sl, ren_aa);
                 }
-                ++thechar;
-            } 
-        }
-        if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
-            double fx=x,fy=y;
-            char *thechar=thechars;
-            while(*thechar)
-            {
-                const agg::glyph_cache* glyph = m_fman.glyph(*thechar);
-                if(glyph)
-                {
-                    m_fman.init_embedded_adaptors(glyph,fx,fy);
+                if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
                     ras_aa.reset();
-                    ras_aa.add_path(m_contour);
+                    ras_aa.add_path(trans_c);
                     ren_aa.color(msToAGGColor(shadowcolor));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);                    // increment pen position
-                    fx += glyph->advance_x;
-                    fy += glyph->advance_y;
+                    agg::render_scanlines(ras_aa, sl, ren_aa);
                 }
-                ++thechar;
-            } 
-        }
-        if(color!=NULL && MS_VALID_COLOR(*color)) {
-            double fx=x,fy=y;
-            char *thechar=thechars;
-            while(*thechar)
-            {
-                const agg::glyph_cache* glyph = m_fman.glyph(*thechar);
-                if(glyph)
-                {
-                    m_fman.init_embedded_adaptors(glyph,fx,fy);
+                if(color!=NULL && MS_VALID_COLOR(*color)) {
                     ras_aa.reset();
-                    ras_aa.add_path(m_contour);
+                    ras_aa.add_path(trans_c);
                     ren_aa.color(msToAGGColor(color));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);                    // increment pen position
-                    fx += glyph->advance_x;
-                    fy += glyph->advance_y;
+                    agg::render_scanlines(ras_aa, sl, ren_aa);
                 }
-                ++thechar;
-            } 
+                
+                fx += glyph->advance_x;
+                fy += glyph->advance_y;
+            }
+            thechar++;
         }
     }
 
