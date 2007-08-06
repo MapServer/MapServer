@@ -154,12 +154,12 @@ typedef struct debug_info_obj
 
 MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
 MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile);
-MS_DLL_EXPORT void msCloseErrorFile();
-MS_DLL_EXPORT const char *msGetErrorFile();
+MS_DLL_EXPORT void msCloseErrorFile( void );
+MS_DLL_EXPORT const char *msGetErrorFile( void );
 MS_DLL_EXPORT void msSetGlobalDebugLevel(int level);
-MS_DLL_EXPORT debugLevel msGetGlobalDebugLevel();
-MS_DLL_EXPORT int msDebugInitFromEnv();
-MS_DLL_EXPORT void msDebugCleanup();
+MS_DLL_EXPORT debugLevel msGetGlobalDebugLevel( void );
+MS_DLL_EXPORT int msDebugInitFromEnv( void );
+MS_DLL_EXPORT void msDebugCleanup( void );
 
 #endif /* SWIG */
 

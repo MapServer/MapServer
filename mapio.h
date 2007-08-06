@@ -109,7 +109,7 @@ int MS_DLL_EXPORT msIO_bufferWrite( void *, void *, int );
 void MS_DLL_EXPORT msIO_resetHandlers(void);
 void MS_DLL_EXPORT msIO_installStdoutToBuffer(void);
 void MS_DLL_EXPORT msIO_installStdinFromBuffer(void);
-void MS_DLL_EXPORT msIO_Cleanup();
+void MS_DLL_EXPORT msIO_Cleanup(void);
 char MS_DLL_EXPORT *msIO_stripStdoutBufferContentType(void);
 
 /* this is just for setting normal stdout's to binary mode on windows */
