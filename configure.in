@@ -775,6 +775,12 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
   test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg"
   test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="$AGG_DIR/include/agg2"
 
+  if test -n "$FT_BIN" ; then
+     FT_INC=`$FT_BIN --cflags`
+  else
+     AC_MSG_ERROR([freetype required for agg support - please configure --with-freetype.])
+  fi
+  
   test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/lib/libagg.so && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
@@ -782,7 +788,7 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
   if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
       AGG_ENABLED="-DUSE_AGG"
-      AGG_INC=-I$AGG_INCLUDE
+      AGG_INC="-I$AGG_INCLUDE $FT_INC"
       AGG_LIB="-L$AGG_LIBDIR -lagg"
       AC_ADD_RUNPATH("$AGG_LIBDIR")
       AC_MSG_RESULT([yes])
