@@ -3881,7 +3881,7 @@ int initMap(mapObj *map)
   map->resolution = 72.0; /* pixels per inch */
  
   map->height = map->width = -1;
-  map->maxsize = MS_MAXIMAGESIZE_DEFAULT; /* default limit is 1024x1024 */
+  map->maxsize = MS_MAXIMAGESIZE_DEFAULT;
 
   map->gt.need_geotransform = MS_FALSE;
   map->gt.rotation_angle = 0.0;
