@@ -37,7 +37,6 @@
     {
     
         styleObj *style = NULL;
-        int result;
         
         if (parent_class!=NULL) {
             if ((style = msGrowClassStyles(parent_class)) == NULL)
