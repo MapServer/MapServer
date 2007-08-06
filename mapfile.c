@@ -596,16 +596,6 @@ void freeFeatureList(featureListNodeObjPtr list)
     }
 }
 
-static featureListNodeObjPtr getLastListNode(featureListNodeObjPtr list)
-{
-  while (list != NULL) {
-    if(list->next == NULL) return list; /* the last node */
-    list = list->next;
-  }
-
-  return NULL; /* empty list */
-}
-
 /* lineObj = multipointObj */
 static int loadFeaturePoints(lineObj *points)
 {
