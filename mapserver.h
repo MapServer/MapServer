@@ -1750,33 +1750,27 @@ MS_DLL_EXPORT void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int 
 extern "C"
 {
 #endif
-MS_DLL_EXPORT imageObj *msImageLoadAGGCtx(gdIOCtx* ctx, const char *driver);
 MS_DLL_EXPORT void msPreAllocateColorsAGG(imageObj *image, mapObj *map);
 MS_DLL_EXPORT imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
-MS_DLL_EXPORT imageObj *msImageLoadAGG( const char *filename );
 MS_DLL_EXPORT void msImageInitAGG( imageObj *image, colorObj *background );
-MS_DLL_EXPORT int msImageSetPenAGG(gdImagePtr img, colorObj *color);
 
-#define RESOLVE_PEN_AGG(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenAGG( img, &(color) ); }
-
-MS_DLL_EXPORT gdIOCtx *msNewAGGFileCtx(FILE *file);
 MS_DLL_EXPORT int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format);
 MS_DLL_EXPORT unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *bufsize, outputFormatObj *format);
 MS_DLL_EXPORT int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx* ctx, outputFormatObj *format);
 MS_DLL_EXPORT int msSaveImageAGG_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
-MS_DLL_EXPORT void msFreeImageAGG(gdImagePtr img);
+MS_DLL_EXPORT void msFreeImageAGG(imageObj *img);
 
 MS_DLL_EXPORT void msPieSliceAGG(imageObj *image, styleObj *style, double center_x, double center_y, double diameter, double start, double end);
 MS_DLL_EXPORT void msFilledRectangleAGG (imageObj *image, styleObj *style, double c1_x, double c1_y, double c2_x, double c2_y );
-MS_DLL_EXPORT void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image,shapeObj *p, styleObj *style, double scalefactor);
 
-MS_DLL_EXPORT int msDrawTextAGG(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawTextLineAGG(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCacheAGG(gdImagePtr img, mapObj *map);
+MS_DLL_EXPORT int msDrawTextAGG(imageObj *imgage, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawLabelCacheAGG(imageObj *image, mapObj *map);
 
 MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);
 MS_DLL_EXPORT void msAlphaGD2AGG(imageObj *im);

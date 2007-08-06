@@ -166,7 +166,10 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
 
   /* create image */
-  image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);
+  if( MS_RENDERER_AGG(map->outputformat) )
+      image = msImageCreateAGG(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);        
+  else
+      image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);
 
   /* drop this reference to output format */
   msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
@@ -298,7 +301,11 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
 
   /* initialize the legend image */
-  image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl);
+  if( MS_RENDERER_AGG(map->outputformat) )
+      image = msImageCreateAGG(size_x, size_y, format, map->web.imagepath, map->web.imageurl);        
+
+  else
+      image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl);
 
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);

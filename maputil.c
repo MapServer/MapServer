@@ -670,7 +670,7 @@ void msFreeImage(imageObj *image)
 #ifdef USE_AGG
         } else if( MS_RENDERER_AGG(image->format) ) {
             if( image->img.gd != NULL )
-                msFreeImageAGG(image->img.gd);
+                msFreeImageAGG(image);
 #endif
         } else if( MS_RENDERER_IMAGEMAP(image->format) )
             msFreeImageIM(image);

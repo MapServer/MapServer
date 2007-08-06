@@ -1722,7 +1722,7 @@ void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *
             msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
-            msCircleDrawLineSymbolAGG(symbolset, image->img.gd, p, r, style, scalefactor);
+            msCircleDrawLineSymbolAGG(symbolset, image, p, r, style, scalefactor);
 #endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             msCircleDrawLineSymbolIM(symbolset, image, p, r, style, scalefactor);
@@ -1740,7 +1740,7 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj 
             msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
-            msCircleDrawShadeSymbolAGG(symbolset, image->img.gd, p, r, style, scalefactor);
+            msCircleDrawShadeSymbolAGG(symbolset, image, p, r, style, scalefactor);
 #endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             msCircleDrawShadeSymbolIM(symbolset, image, p, r, style, scalefactor);
@@ -1882,7 +1882,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
                                      label, fontset, scalefactor);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
-            nReturnVal = msDrawTextAGG(image->img.gd, labelPnt, string, 
+            nReturnVal = msDrawTextAGG(image, labelPnt, string, 
                                      label, fontset, scalefactor);
 #endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
@@ -1914,8 +1914,11 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
         if( MS_RENDERER_GD(image->format) )
             nReturnVal = msDrawLabelCacheGD(image->img.gd, map);
 #ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            nReturnVal = msDrawLabelCacheAGG(image->img.gd, map);
+        else if( MS_RENDERER_AGG(image->format) ) {
+            msAlphaGD2AGG(image);
+            nReturnVal = msDrawLabelCacheAGG(image, map);
+            msAlphaAGG2GD(image);
+        }
 #endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             nReturnVal = msDrawLabelCacheIM(image, map);
