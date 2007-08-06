@@ -1199,9 +1199,7 @@ typedef struct {
   char *imagepath, *imageurl;
 
   outputFormatObj *format;
-#ifdef USE_AGG
   void *imageextra;
-#endif
 #ifdef SWIG
 %mutable;
 #endif
@@ -2007,8 +2005,8 @@ MS_DLL_EXPORT void *msGetSymbol(const char *pszLibrary,
 /* ==================================================================== */
 /*      prototypes for functions in mapgeos.c                         */
 /* ==================================================================== */
-MS_DLL_EXPORT void msGEOSSetup();
-MS_DLL_EXPORT void msGEOSCleanup();
+MS_DLL_EXPORT void msGEOSSetup(void);
+MS_DLL_EXPORT void msGEOSCleanup(void);
 MS_DLL_EXPORT void msGEOSFreeGeometry(shapeObj *shape);
 
 MS_DLL_EXPORT shapeObj *msGEOSShapeFromWKT(const char *string);

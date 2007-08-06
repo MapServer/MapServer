@@ -18,6 +18,8 @@ Current Version (SVN Trunk):
 - Make sure to emit $(AGG) to mapscriptvars because of conditional inclusion
   of stuct members to imageObj. (#2205)
 
+- Make imageextra field in imageObj not conditional (not #ifdef'ed) (#2205)
+
 - AGG/PNG24 and AGG/JPEG are the only valid agg drivers.
   Imagetypes aggpng24 and aggjpeg can be used to refer to the
   default output formats. 
