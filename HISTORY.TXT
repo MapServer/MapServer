@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+- Use OGR-specific destructors for objects that have them rather than
+  'delete' (#697)
 
 - Include style-related info in HTML legend icon filenames to solve issues with
   caching of icons when the class or style params are changed (#745)
