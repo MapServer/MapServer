@@ -42,7 +42,8 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		classobject.obj layerobject.obj mapwcs.obj mapgeos.obj strptime.obj \
 		mapcpl.obj mapio.obj mappool.obj mapsvg.obj mapregex.obj mappluginlayer.obj \
 		mapogcsos.obj mappostgresql.obj mapcrypto.obj mapowscommon.obj \
-		mapdebug.obj mapchart.obj mapagg.obj $(EPPL_OBJ) $(REGEX_OBJ)
+		mapdebug.obj mapchart.obj mapagg.obj maptclutf.obj \
+		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	mapserver.h mapfile.h
 
