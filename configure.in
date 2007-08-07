@@ -284,7 +284,7 @@ if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
       AC_ADD_RUNPATH("$JPEG_LIBDIR")
   else
       if test "$with_jpeg" != "no" ; then
-        AC_MSG_RESULT("Could not find jpeglib.h or libjpeg.a/libjpeg.so in $JPEG_DIR.")
+        AC_MSG_RESULT("Could not find jpeglib.h or libjpeg.a/libjpeg.so/libjpeg.dylib in $JPEG_DIR.")
       fi
   fi
 
