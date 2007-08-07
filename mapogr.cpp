@@ -1041,7 +1041,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
                      "ExecuteSQL(%s) failed.\n%s",
                      "msOGRFileOpen()", 
                      pszLayerDef, CPLGetLastErrorMsg() );
-          delete poDS;
+          OGRDataSource::DestroyDataSource( poDS );
           CPLFree( pszLayerDef );
           return NULL;
       }
@@ -1054,7 +1054,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
                  "msOGRFileOpen()", 
                  pszLayerDef, connection );
       CPLFree( pszLayerDef );
-      delete poDS;
+      OGRDataSource::DestroyDataSource( poDS );
       return NULL;
   }
 
@@ -1093,7 +1093,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   CPLFree(psInfo->pszFname);
 
   if (psInfo->poLastFeature)
-      delete psInfo->poLastFeature;
+      OGRFeature::DestroyFeature( psInfo->poLastFeature );
 
   /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
   if( psInfo->nLayerIndex == -1 )
@@ -1118,7 +1118,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   }
       
 #else
-  delete psInfo->poDS;
+  OGRDataSource::DestroyDataSource( psInfo->poDS );
 #endif
 
   // Free current tile if there is one.
@@ -1270,7 +1270,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
   while (shape->type == MS_SHAPE_NULL)
   {
       if( poFeature )
-          delete poFeature;
+          OGRFeature::DestroyFeature(poFeature);
 
       if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
       {
@@ -1290,7 +1290,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
           shape->numvalues = layer->numitems;
           if(!shape->values)
           {
-              delete poFeature;
+              OGRFeature::DestroyFeature(poFeature);
               return(MS_FAILURE);
           }
       }
@@ -1312,7 +1312,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
           else
           {
               msFreeShape(shape);
-              delete poFeature;
+              OGRFeature::DestroyFeature(poFeature);
               return MS_FAILURE; // Error message already produced.
           }
       }
@@ -1327,7 +1327,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
 
   // Keep ref. to last feature read in case we need style info.
   if (psInfo->poLastFeature)
-      delete psInfo->poLastFeature;
+      OGRFeature::DestroyFeature(psInfo->poLastFeature);
   psInfo->poLastFeature = poFeature;
 
   return MS_SUCCESS;
@@ -1393,7 +1393,7 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
 
   // Keep ref. to last feature read in case we need style info.
   if (psInfo->poLastFeature)
-      delete psInfo->poLastFeature;
+      OGRFeature::DestroyFeature(psInfo->poLastFeature);
   psInfo->poLastFeature = poFeature;
 
   return MS_SUCCESS;
@@ -1467,7 +1467,7 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
     
     nFeatureId = poFeature->GetFID();
 
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
                         
 /* -------------------------------------------------------------------- */
 /*      Open the new tile file.                                         */
@@ -2129,7 +2129,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
       psInfo->poLastFeature->GetFID() != record)
   {
       if (psInfo->poLastFeature)
-          delete psInfo->poLastFeature;
+          OGRFeature::DestroyFeature(psInfo->poLastFeature);
 
       psInfo->poLastFeature = psInfo->poLayer->GetFeature(record);
   }
