@@ -1270,6 +1270,10 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
    pszImgTag = strstr(*pszInstr, "[leg_icon");
    
    while (pszImgTag) {
+      int i;
+      char szStyleCode[512] = "";
+      classObj *thisClass;
+      thisClass = GET_LAYER(map, nIdxLayer)->class[nIdxClass];
 
       if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)
         return MS_FAILURE;
@@ -1284,20 +1288,35 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          nHeight = atoi(msLookupHashTable(myHashTable, "height"));
       }
 
-      snprintf(szImgFname, 1024, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->outputformat),'\0');
+      /* Create a unique and predictable filename to cache the legend icons.
+       * Include some key parameters from the first 2 styles 
+       */
+      for(i=0; i<2 && i<thisClass->numstyles; i++) {
+          styleObj *style;
+          char *pszSymbolNameHash = NULL;
+          style = thisClass->styles[i];
+          if (style->symbolname)
+              pszSymbolNameHash = msHashString(style->symbolname);
+
+          snprintf(szStyleCode+strlen(szStyleCode), 255,
+                   "s%d_%x_%x_%x_%d_%s_%g",
+                   i, MS_COLOR_GETRGB(style->color), MS_COLOR_GETRGB(style->backgroundcolor), MS_COLOR_GETRGB(style->outlinecolor),
+                   style->symbol, pszSymbolNameHash?pszSymbolNameHash:"", 
+                   style->angle);
+          msFree(pszSymbolNameHash);
+      }
+
+      snprintf(szImgFname, 1024, "%s_%d_%d_%d_%d_%s.%s%c", 
+               pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, 
+               szStyleCode, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
       pszFullImgFname = strdup(msBuildPath3(szPath, map->mappath, 
                                             map->web.imagepath, szImgFname));
       
       /* check if icon already exist in cache */
-      if ((fIcon = fopen(pszFullImgFname, "r+")) != NULL)
+      if ((fIcon = fopen(pszFullImgFname, "r")) != NULL)
       {
-         char cTmp[1];
-         
-         fseek(fIcon, 0, SEEK_SET);
-         fread(cTmp, 1, 1, fIcon);
-         fseek(fIcon, 0, SEEK_SET);         
-         fwrite(cTmp, 1, 1, fIcon);
+         /* File already exists. No need to generate it again */
          fclose(fIcon);
       }
       else
@@ -1334,7 +1353,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
             msFree(pszFullImgFname);
             msFreeImage(img);
 
-            msSetError(MS_IOERR, "Error while save GD image to disk (%s).", "processIcon()", pszFullImgFname);
+            msSetError(MS_IOERR, "Error saving GD image to disk (%s).", "processIcon()", pszFullImgFname);
             return MS_FAILURE;
          }
          

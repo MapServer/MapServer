@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Include style-related info in HTML legend icon filenames to solve issues with
+  caching of icons when the class or style params are changed (#745)
+
 - Fixed issues with wms_layer_group metadata in WMS GetCapabilities (#2122)
 
 - mapagg.cpp rewrite - the AGG renderer should now support all the GD features
