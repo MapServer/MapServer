@@ -262,7 +262,7 @@ extern "C" {
 #define MS_VALID_COLOR(color) (((color).red==-1 || (color).green==-1 || (color).blue==-1)?MS_FALSE:MS_TRUE)
 #define MS_TRANSPARENT_COLOR(color) (((color).red==-255 || (color).green==-255 || (color).blue==-255)?MS_TRUE:MS_FALSE)
 #define MS_COMPARE_COLORS(a,b) (((a).red!=(b).red || (a).green!=(b).green || (a).blue!=(b).blue)?MS_FALSE:MS_TRUE)
-#define MS_COLOR_GETRGB(color) ((color).red *0x10000 + (color).green *0x100 + (color).blue)
+#define MS_COLOR_GETRGB(color) (MS_VALID_COLOR(color)?((color).red *0x10000 + (color).green *0x100 + (color).blue):-1)
 
 #define MS_IMAGE_MIME_TYPE(format) (format->mimetype ? format->mimetype : "unknown")
 #define MS_IMAGE_EXTENSION(format)  (format->extension ? format->extension : "unknown")
