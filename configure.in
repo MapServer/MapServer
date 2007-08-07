@@ -792,7 +792,7 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
   if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
       AGG_ENABLED="-DUSE_AGG"
       AGG_INC="$AGG_INCLUDE $FT_INC"
-      AGG_LIB="-L$AGG_LIBDIR -lagg"
+      AGG_LIB="-L$AGG_LIBDIR -lagg -laggfreetype"
       AC_ADD_RUNPATH("$AGG_LIBDIR")
       AC_MSG_RESULT([yes])
   else

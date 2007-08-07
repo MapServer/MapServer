@@ -7782,7 +7782,7 @@ echo "$as_me: error: freetype required for agg support - please configure --with
   if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
       AGG_ENABLED="-DUSE_AGG"
       AGG_INC="$AGG_INCLUDE $FT_INC"
-      AGG_LIB="-L$AGG_LIBDIR -lagg"
+      AGG_LIB="-L$AGG_LIBDIR -lagg -laggfreetype"
 
   if test ""$AGG_LIBDIR"" != "/usr/lib"; then
 
