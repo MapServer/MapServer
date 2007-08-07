@@ -503,95 +503,17 @@ public:
         ras_aa.add_path(fullimg);
         agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
     }
-
-    void renderGlyph(double x, double y, colorObj *color, colorObj *outlinecolor,
-            double size, char *font, char thechar, double angle=0,
-            colorObj *shadowcolor=NULL, double shdx=1, double shdy=1) {
-        typedef agg::font_engine_freetype_int16 font_engine_type;
-        typedef agg::font_cache_manager<font_engine_type> font_manager_type;
-        font_engine_type             m_feng;
-        font_manager_type            m_fman(m_feng);
-        
-        ras_aa.reset();
-        agg::trans_affine mtx;
-        mtx *= agg::trans_affine_translation(-size/2,size/2);
-        mtx *= agg::trans_affine_rotation(angle);
-        mtx *= agg::trans_affine_translation(size/2,-size/2);
-        //mtx.flip_y();
-
-
-        if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
-
-            agg::conv_curve<font_manager_type::path_adaptor_type> m_curves(m_fman.path_adaptor());;
-            agg::conv_stroke<agg::conv_curve<font_manager_type::path_adaptor_type> > m_stroke(m_curves);
-            m_feng.load_font(font, 0, agg::glyph_ren_outline);
-            m_feng.hinting(true);
-            m_feng.height(size);
-            m_feng.width(size);
-            m_feng.resolution(72);
-            m_feng.flip_y(true);
-            m_feng.transform(mtx);
-            double fx=x-size/2.,fy=y+size/2;
-            const agg::glyph_cache* glyph = m_fman.glyph(thechar);
-            if(glyph)
-            {
-                m_fman.init_embedded_adaptors(glyph,fx,fy);
-                m_stroke.width(1);
-                ras_aa.add_path(m_stroke);
-                ren_aa.color(msToAGGColor(outlinecolor));
-                agg::render_scanlines(ras_aa, sl, ren_aa);                    // increment pen position
-
-            }
-        }
-        if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
-            if(!m_feng.load_font(font,0,agg::glyph_ren_agg_gray8)) {
-                return;
-            }
-            m_feng.hinting(true);
-            m_feng.height(size);
-            m_feng.width(size);
-            m_feng.resolution(72);
-            m_feng.flip_y(true);
-            m_feng.transform(mtx);
-            double fx=x-size/2.+shdx,fy=y+size/2+shdy;
-            const agg::glyph_cache* glyph = m_fman.glyph(thechar);
-            if(glyph)
-            {
-                m_fman.init_embedded_adaptors(glyph,fx,fy);
-                ren_aa.color(msToAGGColor(shadowcolor));
-                agg::render_scanlines(m_fman.gray8_adaptor(), 
-                        m_fman.gray8_scanline(), 
-                        ren_aa);
-            }
-
-        }
-        if(color!=NULL && MS_VALID_COLOR(*color)) {
-            if(!m_feng.load_font(font,0,agg::glyph_ren_agg_gray8)) {
-                return;
-            }
-            m_feng.hinting(true);
-            m_feng.height(size);
-            m_feng.resolution(72);
-            m_feng.width(size);
-            m_feng.flip_y(true);
-            m_feng.transform(mtx);
-            double fx=x-size/2.,fy=y+size/2;
-            const agg::glyph_cache* glyph = m_fman.glyph(thechar);
-            if(glyph)
-            {
-                m_fman.init_embedded_adaptors(glyph,fx,fy);
-                ren_aa.color(msToAGGColor(color));
-                agg::render_scanlines(m_fman.gray8_adaptor(), 
-                        m_fman.gray8_scanline(), 
-                        ren_aa);
-
-            } 
-        }
-    }
     
+    /**
+     * render a freetype string
+     * TODO: caching!
+     * \param isMarker is only valid for one character strings, and will offset the caracter
+     * so it is centered on x,y (instead of using x,y as the strings bottom left corner)
+     */
     void renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
             double size, char *font, char *thechars, double angle=0,
-            colorObj *shadowcolor=NULL, double shdx=1, double shdy=1) {
+            colorObj *shadowcolor=NULL, double shdx=1, double shdy=1,
+            bool isMarker=false) {
         typedef agg::font_engine_freetype_int16 font_engine_type;
         typedef agg::font_cache_manager<font_engine_type> font_manager_type;
         font_engine_type             m_feng;
@@ -604,46 +526,85 @@ public:
         mtx *= agg::trans_affine_translation(-x,-y);
         mtx *= agg::trans_affine_rotation(-angle);
         mtx *= agg::trans_affine_translation(x,y);
-                
+        if(isMarker) {
+            x-=size/2.;
+            y+=size/2.;
+        }
         m_feng.load_font(font, 0, agg::glyph_ren_outline);
-        m_feng.hinting(false);
+        size*=1.3;
+        m_feng.hinting(true);
         m_feng.height(size);
         m_feng.width(size);
         m_feng.resolution(72);
         m_feng.flip_y(true);
+        curve_type m_curves(m_fman.path_adaptor());
+        contour_type m_contour(m_curves);
+        m_contour.width(0.0);
+        
         double fx=x,fy=y;
-        char *thechar=thechars;
+        unsigned char *thechar=(unsigned char*)thechars;
+        if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
+            while(*thechar) {
+                const agg::glyph_cache* glyph=m_fman.glyph(*thechar);;
+                if(glyph)
+                {
+                    m_fman.init_embedded_adaptors(glyph,fx,fy);
+                    ras_aa.reset();
+                    agg::trans_affine_translation tr(shdx,shdy);
+                    agg::conv_transform<contour_type, agg::trans_affine> trans_c(m_contour, tr*mtx);                   
+                    ras_aa.add_path(trans_c);
+                    ren_aa.color(msToAGGColor(shadowcolor));
+                    agg::render_scanlines(ras_aa, sl, ren_aa);
+                    fx += glyph->advance_x;
+                    fy += glyph->advance_y;
+                }
+                thechar++;
+            }
+        }
+        
+        fx=x,fy=y;
+        thechar=(unsigned char*)thechars;
+        if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
+            while(*thechar) {
+                ras_aa.reset();
+                const agg::glyph_cache* glyph=m_fman.glyph(*thechar);;
+                if(glyph)
+                {
+                    m_fman.init_embedded_adaptors(glyph,fx,fy);
+                    ras_aa.reset();
+                    for(int i=-1;i<=1;i++)
+                        for(int j=-1;j<=1;j++) {
+                            if(i||j) { 
+                                agg::trans_affine_translation tr(i,j);
+                                agg::conv_transform<contour_type, agg::trans_affine> trans_contour(m_contour, tr*mtx);
+                                ras_aa.add_path(trans_contour);
+                            }
+
+                        }
+                    ren_aa.color(msToAGGColor(outlinecolor));
+                    agg::render_scanlines(ras_aa, sl, ren_aa);
+                    fx += glyph->advance_x;
+                    fy += glyph->advance_y;
+                }
+                thechar++;
+            }
+        }
+        
+        fx=x,fy=y;
+        thechar=(unsigned char*)thechars;
         while(*thechar) {
-            ras_aa.reset();
             const agg::glyph_cache* glyph=m_fman.glyph(*thechar);;
             if(glyph)
             {
                 m_fman.init_embedded_adaptors(glyph,fx,fy);
-                curve_type m_curves(m_fman.path_adaptor());
-                stroke_type m_stroke(m_curves);
-                contour_type m_contour(m_curves);
-                agg::conv_transform<stroke_type, agg::trans_affine> trans_s(m_stroke, mtx);
-                agg::conv_transform<contour_type, agg::trans_affine> trans_c(m_contour, mtx);
-                m_stroke.width(1);
-                if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
-                    ras_aa.reset();
-                    ras_aa.add_path(trans_s);
-                    ren_aa.color(msToAGGColor(outlinecolor));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);
-                }
-                if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
-                    ras_aa.reset();
-                    ras_aa.add_path(trans_c);
-                    ren_aa.color(msToAGGColor(shadowcolor));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);
-                }
                 if(color!=NULL && MS_VALID_COLOR(*color)) {
+                    agg::conv_transform<contour_type, agg::trans_affine> trans_contour(m_contour, mtx);                                   
                     ras_aa.reset();
-                    ras_aa.add_path(trans_c);
+                    ras_aa.add_path(trans_contour);
                     ren_aa.color(msToAGGColor(color));
                     agg::render_scanlines(ras_aa, sl, ren_aa);
                 }
-                
+
                 fx += glyph->advance_x;
                 fy += glyph->advance_y;
             }
@@ -985,9 +946,11 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
 #ifdef USE_GD_FT
         char* font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
         if(!font) return;
-
-        ren.renderGlyph(p->x+ox,p->y+oy,&(style->color),&(style->outlinecolor),
-                size,font,*(symbol->character),angle_radians);
+        char chars[2]="0";
+        chars[0]=*(symbol->character);
+        ren.renderGlyphs(p->x+ox,p->y+oy,&(style->color),&(style->outlinecolor),
+                size,font,chars,angle_radians,NULL,0,0,true);
+        
 #endif
     }
     break;    
@@ -1195,7 +1158,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     double nwidth, size;
     symbolObj *symbol;
     AGGMapserverRenderer ren(image);
-    colorObj color;
+    colorObj *color;
     symbol = symbolset->symbol[style->symbol];
     if(p->numlines==0)
         return;
@@ -1210,19 +1173,16 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     width = (style->width*scalefactor);
     width = MS_MAX(width, style->minwidth);
     width = MS_MIN(width, style->maxwidth);
-    color = style->color;
+    color = &(style->color);
     agg::path_storage line = shapePolylineToPath(p,0,0);
     if(style->symbol == 0 || (symbol->type == MS_SYMBOL_ELLIPSE && symbol->gap==0)) {
-        if(!MS_VALID_COLOR(color)) {
-            color = style->outlinecolor; /* try the outline color, polygons drawing thick outlines often do this */
-            if(!MS_VALID_COLOR(color))
+        if(!MS_VALID_COLOR(*color)) {
+            color = &(style->outlinecolor); /* try the outline color, polygons drawing thick outlines often do this */
+            if(!MS_VALID_COLOR(*color))
                 return; /* no color, bail out... */
         }
-        if(style->symbol == 0) 
-            nwidth = width;
-        else
-            nwidth = size;
-        ren.renderPolyline(line,&color,nwidth,symbol->patternlength,symbol->pattern);
+        nwidth=(style->width==-1)?size:width;
+        ren.renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern);
     }
     else if(symbol->gap!=0) {
         drawPolylineMarkers(image,p,symbolset,style,size);
@@ -1248,17 +1208,17 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             int pw = MS_NINT(symbol->sizex*d)+1;    
             int ph = MS_NINT(symbol->sizey*d)+1;
             if((pw <= 1) && (ph <= 1)) { /* No sense using a tile, just fill solid */
-                ren.renderPolyline(line,&color,size,0,NULL);
+                ren.renderPolyline(line,color,size,0,NULL);
                 return;
             }
             agg::path_storage path = imageVectorSymbolAGG(symbol,d);
             if(symbol->filled) {
-                ren.renderPolylineVectorSymbol(line,path,pw,ph,&color,&(style->backgroundcolor),width);
+                ren.renderPolylineVectorSymbol(line,path,pw,ph,color,&(style->backgroundcolor),width);
             } else  { /* shade is a vector drawing */
                 agg::conv_stroke <agg::path_storage > stroke(path);
                 stroke.width(style->width);            
                 strokeFromSymbol(stroke,symbol);             
-                ren.renderPolylineVectorSymbol(line,stroke,pw,ph,&color,&(style->backgroundcolor),width);
+                ren.renderPolylineVectorSymbol(line,stroke,pw,ph,color,&(style->backgroundcolor),width);
             }
             if(bRotated) { /* free the rotated symbol */
                 msFreeSymbol(symbol);
