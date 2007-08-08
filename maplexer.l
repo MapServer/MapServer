@@ -26,6 +26,7 @@
 int msyylineno = 1;
 #endif
 
+int msyysource=MS_STRING_TOKENS;
 double msyynumber;
 int msyystate=MS_TOKENIZE_DEFAULT;
 char *msyystring=NULL;
@@ -54,6 +55,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_FILE):
          BEGIN(INITIAL);
+         msyysource=MS_FILE_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyystring=NULL;
          msyyreturncomments=0;
@@ -61,6 +63,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_STRING):
          BEGIN(INITIAL);
+         msyysource=MS_STRING_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyy_scan_string(msyystring);
          msyyin=NULL;
@@ -70,12 +73,14 @@ char path[MS_MAXPATHLEN];
        case(MS_TOKENIZE_URL_VARIABLE):
          BEGIN(URL_VARIABLE);
          msyy_scan_string(msyystring);
+         msyysource=MS_URL_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyyreturncomments=0; 
          (void) yyunput; /* just to avoid warning about it being unrefed */
          break;
        case(MS_TOKENIZE_URL_STRING):
          BEGIN(URL_STRING);
+         msyysource=MS_URL_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyy_scan_string(msyystring);
          msyyin=NULL;
@@ -143,7 +148,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>config                                { return(CONFIG); }
 <INITIAL>connection                            { return(CONNECTION); }
 <INITIAL>connectiontype                        { return(CONNECTIONTYPE); }
-<INITIAL>data                                  { return(DATA); }
+<INITIAL,URL_STRING>data                       { return(DATA); }
 <INITIAL>datapattern                           { return(DATAPATTERN); }
 <INITIAL>debug                                 { return(DEBUG); }
 <INITIAL>driver                                { return(DRIVER); }
@@ -159,7 +164,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>filled                                { return(FILLED); }
 <INITIAL>filter                                { return(FILTER); }
 <INITIAL>filteritem                            { return(FILTERITEM); }
-<INITIAL>footer                                { return(FOOTER); }
+<INITIAL,URL_STRING>footer                     { return(FOOTER); }
 <INITIAL,URL_STRING>font                       { return(FONT); }
 <INITIAL>fontset                               { return(FONTSET); }
 <INITIAL>force                                 { return(FORCE); }
@@ -169,7 +174,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>grid                                  { return(GRID); }
 <INITIAL>graticule                             { return(GRATICULE); }
 <INITIAL>group                                 { return(GROUP); }
-<INITIAL>header                                { return(HEADER); }
+<INITIAL,URL_STRING>header                     { return(HEADER); }
 <INITIAL>image                                 { return(IMAGE); }
 <INITIAL,URL_VARIABLE>imagecolor               { return(IMAGECOLOR); }
 <INITIAL,URL_VARIABLE>imagetype                { return(IMAGETYPE); }
@@ -271,7 +276,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>symbolscaledenom                      { return(SYMBOLSCALEDENOM); }
 <INITIAL>symbolset                             { return(SYMBOLSET); }
 <INITIAL>table                                 { return(TABLE); }
-<INITIAL>template                              { return(TEMPLATE); }
+<INITIAL,URL_STRING>template                   { return(TEMPLATE); }
 <INITIAL>templatepattern                       { return(TEMPLATEPATTERN); }
 <INITIAL,URL_STRING>text                       { return(TEXT); }
 <INITIAL>tileindex                             { return(TILEINDEX); }

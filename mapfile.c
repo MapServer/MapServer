@@ -51,6 +51,7 @@ extern char *msyytext;
 extern int msyylineno;
 extern FILE *msyyin;
 
+extern int msyysource;
 extern int msyystate;
 extern char *msyystring;
 extern char *msyybasepath;
@@ -2144,6 +2145,10 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(TEMPLATE):
       if(getString(&class->template) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, class->template) != MS_TRUE) {
+        msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadClass()");
+        return(-1);
+      }
       break;
     case(TEXT):
       if(loadExpression(&(class->text)) == -1) return(-1);
@@ -2573,6 +2578,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(DATA):
       if(getString(&layer->data) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->datapattern, layer->data) != MS_TRUE) {
+	msSetError(MS_MISCERR, "URL-based DATA configuration failed pattern validation." , "loadLayer()");
+        return(-1);
+      }
       break;
     case(DEBUG):
       if((layer->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
@@ -2638,6 +2647,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(FOOTER):
       if(getString(&layer->footer) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, layer->footer) != MS_TRUE) {
+        msSetError(MS_MISCERR, "URL-based FOOTER configuration failed pattern validation." , "loadLayer()");
+        return(-1);
+      }
       break;
     case(GRID):
       layer->connectiontype = MS_GRATICULE;
@@ -2654,6 +2667,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(HEADER):      
       if(getString(&layer->header) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, layer->header) != MS_TRUE) {
+        msSetError(MS_MISCERR, "URL-based HEADER configuration failed pattern validation." , "loadLayer()");
+        return(-1);
+      }
       break;
     case(JOIN):
       if(layer->numjoins == MS_MAXJOINS) { /* no room */
@@ -2756,6 +2773,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(TEMPLATE):
       if(getString(&layer->template) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, layer->template) != MS_TRUE) { 
+        msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadLayer()");
+        return(-1);
+      }
       break;
     case(TILEINDEX):
       if(getString(&layer->tileindex) == MS_FAILURE) return(-1);
@@ -3763,9 +3784,17 @@ int loadWeb(webObj *web, mapObj *map)
       break;
     case(FOOTER):
       if(getString(&web->footer) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, web->footer) != MS_TRUE) { 
+        msSetError(MS_MISCERR, "URL-based FOOTER configuration failed pattern validation." , "loadWeb()");
+        return(-1);
+      }
       break;
     case(HEADER):
       if(getString(&web->header) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, web->header) != MS_TRUE) {
+        msSetError(MS_MISCERR, "URL-based HEADER configuration failed pattern validation." , "loadWeb()");
+        return(-1);
+      }
       break;
     case(IMAGEPATH):
       free(web->imagepath); web->imagepath = NULL; /* there is a default */
@@ -3805,6 +3834,10 @@ int loadWeb(webObj *web, mapObj *map)
       break;   
     case(TEMPLATE):
       if(getString(&web->template) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, web->template) != MS_TRUE) {
+        msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadWeb()");
+        return(-1);
+      }
       break;
     default:
       if(strlen(msyytext) > 0) {
@@ -4554,7 +4587,6 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
   /*
   ** TODO: need to make sure this feature is enabled
-  ** TODO: handle template and data patterns somehow
   */
 
   msyystate = MS_TOKENIZE_URL_VARIABLE; /* set lexer state and input to tokenize */
@@ -4677,7 +4709,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       if(getInteger(&(map->height)) == -1) break;
 
       if(map->width > map->maxsize || map->height > map->maxsize || map->width < 0 || map->height < 0) {
-	msSetError(MS_WEBERR, "Image size out of range.", "msLoadMapParameterFromUrl()");
+	msSetError(MS_WEBERR, "Image size out of range.", "msUpdateMapFromURL()");
 	break;
       }
       msMapComputeGeotransform( map );
