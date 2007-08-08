@@ -100,8 +100,7 @@ typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<i
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
 #endif
 
-
-MS_CVSID("$Id: mapagg.cpp 6433 2007-08-01 13:35:37Z dmorissette $")
+MS_CVSID("$Id$")
 
 /*
  ** Take a pass through the mapObj and pre-allocate colors for layers that are ON or DEFAULT. This replicates the pre-4.0 behavior of
@@ -510,10 +509,10 @@ public:
      * \param isMarker is only valid for one character strings, and will offset the caracter
      * so it is centered on x,y (instead of using x,y as the strings bottom left corner)
      */
-    void renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
+    int renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
             double size, char *font, char *thechars, double angle=0,
             colorObj *shadowcolor=NULL, double shdx=1, double shdy=1,
-            bool isMarker=false) {
+            bool isMarker=false, bool isUTF8Encoded=false) {
         typedef agg::font_engine_freetype_int16 font_engine_type;
         typedef agg::font_cache_manager<font_engine_type> font_manager_type;
         font_engine_type             m_feng;
@@ -530,7 +529,10 @@ public:
             x-=size/2.;
             y+=size/2.;
         }
-        m_feng.load_font(font, 0, agg::glyph_ren_outline);
+        if(!m_feng.load_font(font, 0, agg::glyph_ren_outline))
+        {
+            return MS_FAILURE;
+        }
         size*=1.3;
         m_feng.hinting(true);
         m_feng.height(size);
@@ -540,38 +542,49 @@ public:
         curve_type m_curves(m_fman.path_adaptor());
         contour_type m_contour(m_curves);
         m_contour.width(0.0);
-        
+        const agg::glyph_cache* glyph;
+        int unicode;
         double fx=x,fy=y;
-        unsigned char *thechar=(unsigned char*)thechars;
+        const char *utfptr=thechars;
         if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
-            while(*thechar) {
-                const agg::glyph_cache* glyph=m_fman.glyph(*thechar);;
+            ras_aa.reset();
+            while(*utfptr) {
+                if(isUTF8Encoded)
+                    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
+                else {
+                    unicode=(int)((unsigned char)utfptr[0]);
+                    utfptr++;
+                }
+                glyph=m_fman.glyph(unicode);;
                 if(glyph)
                 {
                     m_fman.init_embedded_adaptors(glyph,fx,fy);
-                    ras_aa.reset();
                     agg::trans_affine_translation tr(shdx,shdy);
                     agg::conv_transform<contour_type, agg::trans_affine> trans_c(m_contour, tr*mtx);                   
                     ras_aa.add_path(trans_c);
-                    ren_aa.color(msToAGGColor(shadowcolor));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);
                     fx += glyph->advance_x;
                     fy += glyph->advance_y;
                 }
-                thechar++;
             }
+            ren_aa.color(msToAGGColor(shadowcolor));
+            agg::render_scanlines(ras_aa, sl, ren_aa);
         }
-        
+
         fx=x,fy=y;
-        thechar=(unsigned char*)thechars;
+        utfptr=thechars;
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
-            while(*thechar) {
-                ras_aa.reset();
-                const agg::glyph_cache* glyph=m_fman.glyph(*thechar);;
+            ras_aa.reset();
+            while(*utfptr) {
+                if(isUTF8Encoded)
+                    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
+                else {
+                    unicode=(int)((unsigned char)utfptr[0]);
+                    utfptr++;
+                }
+                glyph=m_fman.glyph(unicode);;
                 if(glyph)
                 {
                     m_fman.init_embedded_adaptors(glyph,fx,fy);
-                    ras_aa.reset();
                     for(int i=-1;i<=1;i++)
                         for(int j=-1;j<=1;j++) {
                             if(i||j) { 
@@ -579,37 +592,40 @@ public:
                                 agg::conv_transform<contour_type, agg::trans_affine> trans_contour(m_contour, tr*mtx);
                                 ras_aa.add_path(trans_contour);
                             }
-
                         }
-                    ren_aa.color(msToAGGColor(outlinecolor));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);
                     fx += glyph->advance_x;
                     fy += glyph->advance_y;
                 }
-                thechar++;
             }
+            ren_aa.color(msToAGGColor(outlinecolor));
+            agg::render_scanlines(ras_aa, sl, ren_aa);
         }
-        
-        fx=x,fy=y;
-        thechar=(unsigned char*)thechars;
-        while(*thechar) {
-            const agg::glyph_cache* glyph=m_fman.glyph(*thechar);;
-            if(glyph)
-            {
-                m_fman.init_embedded_adaptors(glyph,fx,fy);
-                if(color!=NULL && MS_VALID_COLOR(*color)) {
-                    agg::conv_transform<contour_type, agg::trans_affine> trans_contour(m_contour, mtx);                                   
-                    ras_aa.reset();
-                    ras_aa.add_path(trans_contour);
-                    ren_aa.color(msToAGGColor(color));
-                    agg::render_scanlines(ras_aa, sl, ren_aa);
-                }
 
-                fx += glyph->advance_x;
-                fy += glyph->advance_y;
+        fx=x,fy=y;
+        utfptr=thechars;
+        if(color!=NULL && MS_VALID_COLOR(*color)) {
+            ras_aa.reset();
+            while(*utfptr) {
+                if(isUTF8Encoded)
+                    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
+                else {
+                    unicode=(int)((unsigned char)utfptr[0]);
+                    utfptr++;
+                }
+                glyph=m_fman.glyph(unicode);
+                if(glyph)
+                {
+                    m_fman.init_embedded_adaptors(glyph,fx,fy);
+                    agg::conv_transform<contour_type, agg::trans_affine> trans_contour(m_contour, mtx);                                   
+                    ras_aa.add_path(trans_contour);
+                    fx += glyph->advance_x;
+                    fy += glyph->advance_y;
+                }
             }
-            thechar++;
+            ren_aa.color(msToAGGColor(color));
+            agg::render_scanlines(ras_aa, sl, ren_aa);
         }
+        return MS_SUCCESS;
     }
 
 private:
@@ -1175,7 +1191,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     width = MS_MIN(width, style->maxwidth);
     color = &(style->color);
     agg::path_storage line = shapePolylineToPath(p,0,0);
-    if(style->symbol == 0 || (symbol->type == MS_SYMBOL_ELLIPSE && symbol->gap==0)) {
+    if(style->symbol == 0 || (symbol->type==MS_SYMBOL_SIMPLE) || (symbol->type == MS_SYMBOL_ELLIPSE && symbol->gap==0)) {
         if(!MS_VALID_COLOR(*color)) {
             color = &(style->outlinecolor); /* try the outline color, polygons drawing thick outlines often do this */
             if(!MS_VALID_COLOR(*color))
@@ -1281,7 +1297,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
     AGGMapserverRenderer ren(image);
     agg::path_storage polygon = shapePolygonToPath(p,0,0);
-    if(style->symbol == 0) { /* simply draw a solid fill of the specified color */   
+    if(style->symbol == 0 || symbol->type==MS_SYMBOL_SIMPLE) { /* simply draw a solid fill of the specified color */   
         ren.renderPolygon(p,&(style->color),&(style->outlinecolor),width,0,0);
     }
     else {
@@ -1375,7 +1391,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         case MS_SYMBOL_TRUETYPE: //TODO
         case MS_SYMBOL_CARTOLINE:
         default:
-            ren.renderPolygon(p,&(style->color),NULL,1,ox,oy);
+        break;
         }
     }
     return;
@@ -1384,7 +1400,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /*
  ** Simply draws a label based on the label point and the supplied label object.
  */
-int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
+int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string, 
+        labelObj *label, fontSetObj *fontset, double scalefactor)
 {
     double x, y;
     AGGMapserverRenderer ren(image);
@@ -1404,24 +1421,26 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string, labelObj *la
         size = MS_MIN(size, label->maxsize);
 
         if(!fontset) {
-            msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextGD()");
+            msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextAGG()");
             return(-1);
         }
 
         if(!label->font) {
-            msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextGD()");
+            msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextAGG()");
             return(-1);
         }
 
         font = msLookupHashTable(&(fontset->fonts), label->font);
         if(!font) {
-            msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextGD()", label->font);
+            msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextAGG()", label->font);
             return(-1);
         }
 
         ren.renderGlyphs(x,y,&(label->color),&(label->outlinecolor),size,
                 font,string,angle_radians,
-                &(label->shadowcolor),label->shadowsizex,label->shadowsizey);
+                &(label->shadowcolor),label->shadowsizex,label->shadowsizey,
+                false,
+                (label->encoding!=NULL));
 
 
         return 0;
@@ -1435,7 +1454,8 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string, labelObj *la
 /*
  * Draw a label curved along a line
  */
-int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor)
+int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, 
+        labelPathObj *labelpath, fontSetObj *fontset, double scalefactor)
 {
     double size;
     int i;
@@ -1453,18 +1473,18 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathO
     size = MS_MIN(size, label->maxsize);
 
     if(!fontset) {
-        msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextLineGD()");
+        msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextLineAGG()");
         return(-1);
     }
 
     if(!label->font) {
-        msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextLineGD()");
+        msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextLineAGG()");
         return(-1);
     }
 
     font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
-        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextLineGD()", label->font);
+        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextLineAGG()", label->font);
         return(-1);
     }
 
@@ -1496,7 +1516,9 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathO
 
         ren.renderGlyphs(x,y,&(label->color),&(label->outlinecolor),
                 size,font,s,theta,&(label->shadowcolor),
-                label->shadowsizex,label->shadowsizey);
+                label->shadowsizex,label->shadowsizey,
+                false,
+                label->encoding);
     }      
     return(0);
     // }
@@ -1857,7 +1879,7 @@ void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
                         k++;
                 } else {
                     if((shape->line[i].point[k-1].x != shape->line[i].point[k].x) || (shape->line[i].point[k-1].y != shape->line[i].point[k].y)) {
-                        if(((shape->line[i].point[k-2].y - shape->line[i].point[k-1].y)*(shape->line[i].point[k-1].x - shape->line[i].point[k].x)) == ((shape->line[i].point[k-2].x - shape->line[i].point[k-1].x)*(shape->line[i].point[k-1].y - shape->line[i].point[k].y))) {	    
+                        if(((shape->line[i].point[k-2].y - shape->line[i].point[k-1].y)*(shape->line[i].point[k-1].x - shape->line[i].point[k].x)) == ((shape->line[i].point[k-2].x - shape->line[i].point[k-1].x)*(shape->line[i].point[k-1].y - shape->line[i].point[k].y))) {        
                             shape->line[i].point[k-1].x = shape->line[i].point[k].x;
                             shape->line[i].point[k-1].y = shape->line[i].point[k].y;	
                         } else {
