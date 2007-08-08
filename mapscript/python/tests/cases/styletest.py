@@ -155,17 +155,6 @@ class NewStylesTestCase(MapTestCase):
         msimg = self.map.draw()
         filename = 'testModifyMutiplePointStyle.png'
         msimg.save(filename)
-    def testInsertTooManyStyles(self):
-        """NewStylesTestCase.testInsertTooManyStyles: inserting too many styles raises the proper error"""
-        p_layer = self.map.getLayerByName('POINT')
-        class0 = p_layer.getClass(0)
-        new_style = mapscript.styleObj()
-        # Add three styles successfully
-        index = class0.insertStyle(new_style)
-        index = class0.insertStyle(new_style)
-        index = class0.insertStyle(new_style)
-        # We've reached the maximum, next attempt should raise exception
-        self.assertRaises(mapscript.MapServerChildError, class0.insertStyle, new_style)
     def testInsertStylePastEnd(self):
         """NewStylesTestCase.testInsertStylePastEnd: inserting a style past the end of the list raises the proper error"""
         p_layer = self.map.getLayerByName('POINT')
