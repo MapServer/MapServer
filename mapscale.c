@@ -252,9 +252,10 @@ imageObj *msDrawScalebar(mapObj *map)
 
    /* create image */
 #ifdef USE_AGG
-  if( MS_RENDERER_AGG(map->outputformat) )
+  if( MS_RENDERER_AGG(map->outputformat) ){
       image = msImageCreateAGG(map->scalebar.width, sy, format,
-              map->web.imagepath, map->web.imageurl);        
+              map->web.imagepath, map->web.imageurl);
+  msAlphaGD2AGG(image);}
   else
 #endif
       image = msImageCreateGD(map->scalebar.width, sy, format,
@@ -277,6 +278,7 @@ imageObj *msDrawScalebar(mapObj *map)
 
   msImageInitGD( image, &(map->scalebar.imagecolor));
   
+
   if (map->outputformat->imagemode == MS_IMAGEMODE_RGB || map->outputformat->imagemode == MS_IMAGEMODE_RGBA) gdImageAlphaBlending(image->img.gd, 1);
 
   ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); /* center the computed scalebar */
@@ -360,7 +362,10 @@ imageObj *msDrawScalebar(mapObj *map)
   msClearScalebarPenValues( &(map->scalebar));
 
   if( iFreeGDFont ) free( fontPtr );
-
+#ifdef USE_AGG
+  if( MS_RENDERER_AGG(map->outputformat) )
+      msAlphaAGG2GD(image);
+#endif
   return(image);
 
 }
