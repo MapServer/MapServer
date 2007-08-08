@@ -77,7 +77,7 @@ class MapCloningTestCase(MapCloneTestCase):
     def testSetSymbolSet(self):
         """MapCloningTestCase.testSetSymbolSet: the number of symbols in a cloned map equal original"""
         num = self.mapobj_clone.symbolset.numsymbols
-        assert num == 4, num
+        assert num == 5, num
    
     def testDrawClone(self):
         """drawing a cloned map works properly"""
