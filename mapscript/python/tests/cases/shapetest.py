@@ -103,6 +103,7 @@ class ShapeValuesTestCase(unittest.TestCase):
     
     def testSetValue(self):
         so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
+        so.initValues(4)
         so.setValue(0, 'Foo');
         assert so.numvalues == 4
         assert so.getValue(0) == 'Foo'
