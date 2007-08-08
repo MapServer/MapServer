@@ -361,8 +361,8 @@ class LayerVisibilityTestCase(MapLayerTestCase):
     
     def setUp(self):
         MapLayerTestCase.setUp(self)
-        self.layer.minscale = 1000
-        self.layer.maxscale = 2000
+        self.layer.minscaledenom = 1000
+        self.layer.maxscaledenom = 2000
         self.layer.status = mapscript.MS_ON
         self.map.zoomScale(1500, mapscript.pointObj(100,100), 200, 200, self.map.extent, None)
     
