@@ -676,7 +676,7 @@ static agg::path_storage createHatchAGG(int sx, int sy, double angle, double ste
     double theta = (90-angle)*MS_PI/180.;
     double ct = cos(theta);
     double st = sin(theta);
-    double rmax = sqrt(sx*sx+sy*sy);
+    double rmax = sqrt((double)sx*sx+sy*sy);
 
     /*parametrize each line as r = x.cos(theta) + y.sin(theta)*/
     for(double r=(angle<90)?0:-rmax;r<rmax;r+=step) {
@@ -1199,7 +1199,9 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             if(!MS_VALID_COLOR(*color))
                 return; /* no color, bail out... */
         }
-        nwidth=(style->width==-1)?size:width;
+         /* style->width is initialized to 1 and style->size initalized to -1. 
+           Do test on style->size to see if it has been set in the map*/
+        nwidth=(style->size==-1)?width:size;
         ren.renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern);
     }
     else if(symbol->gap!=0) {
