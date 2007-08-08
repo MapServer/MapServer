@@ -62,10 +62,11 @@ class ClassCloningTestCase(unittest.TestCase):
     def testCloneClass(self):
         """check attributes of a cloned class"""
         c = mapscript.classObj()
-        c.minscale = 5.0
+        c.minscaledenom = 5.0
         clone = c.clone()
         assert clone.thisown == 1
-        assert clone.minscale == 5.0
+        print 'minscaledenom: ', clone.minscaledenom
+        assert clone.minscaledenom == 5.0
 
 
 class ClassIconTestCase(MapTestCase):
