@@ -13,7 +13,8 @@
 #    from setuptools import setup, Extension
 #except ImportError:
 #    from distutils.core import setup, Extension
-#from distutils import sysconfig
+
+from distutils import sysconfig
 
 from distutils.core import setup, Extension
 
@@ -84,7 +85,7 @@ for x in lib_opts:
         extras.append(x)
           
 libs = unique(libs)
-
+#libs = ['mapserver']
 # if we're msvc, just link against the stub lib
 # and be done with it
 if sys.platform == 'win32':
@@ -97,7 +98,9 @@ ms_macros = string.split(ms_macros)
 macros = [(x[2:], None) for x in ms_macros]
 
 # Create list of include directories to create mapserver.
+
 include_dirs = [sysconfig.get_python_inc()]
+
 ms_includes = string.split(ms_includes)
 for item in ms_includes:
     if item[:2] == '-I' or item[:2] == '/I':
