@@ -759,14 +759,14 @@ AC_ARG_WITH(agg,
 
 if test "$with_agg" = "yes" ; then
 
-  AC_CHECK_LIB(agg, gpc_polygon_clip, AGG_ENABLED=-DUSE_AGG,,,)
-
-  if test -n "$AGG_ENABLED" ; then
-      AGG_LIB="-lagg"
-      AC_MSG_RESULT([using libagg from system libs.])
+  if test -n "$FT_BIN" ; then
+     FT_INC=`$FT_BIN --cflags`
   else
-      AC_MSG_RESULT([libagg not found. AGG support not included.])
+     AC_MSG_ERROR([freetype required for agg support - please configure --with-freetype.])
   fi
+
+  AGG_LIB="-lagg -laggfontfreetype"
+  AC_MSG_RESULT([using libagg from system libs.])
 
 elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
