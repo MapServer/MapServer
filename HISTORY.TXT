@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+
+
 - Use OGR-specific destructors for objects that have them rather than
   'delete' (#697)
 
@@ -29,9 +31,9 @@ Current Version (SVN Trunk):
 
 - Make imageextra field in imageObj not conditional (not #ifdef'ed) (#2205)
 
-- AGG/PNG24 and AGG/JPEG are the only valid agg drivers.
+- AGG/PNG and AGG/JPEG are the only valid agg drivers.
   Imagetypes aggpng24 and aggjpeg can be used to refer to the
-  default output formats. 
+  default output formats. (#2195) 
 
 - Fix memeory leak with labepath object (#2199)
 
@@ -115,6 +117,10 @@ Long time issues resolved in 5.0:
 
 
 Other fixes/enhancements in this beta:
+
+- Upgrade Filter encoding to use geos and support all missing operators (#2105)
+
+- Use of static color Palette support for gd output (#2096)
 
 - MapServer's main header file map.h has been renamed mapserver.h (#1437)
 
