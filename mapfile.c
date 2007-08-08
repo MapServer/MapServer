@@ -3628,6 +3628,7 @@ int loadQueryMap(queryMapObj *querymap)
       if((querymap->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
     case(STYLE):
+    case(TYPE):
       if((querymap->style = getSymbol(3, MS_NORMAL,MS_HILITE,MS_SELECTED)) == -1) return(-1);
       break;
     default:
