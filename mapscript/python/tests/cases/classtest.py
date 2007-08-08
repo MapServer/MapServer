@@ -65,7 +65,6 @@ class ClassCloningTestCase(unittest.TestCase):
         c.minscaledenom = 5.0
         clone = c.clone()
         assert clone.thisown == 1
-        print 'minscaledenom: ', clone.minscaledenom
         assert clone.minscaledenom == 5.0
 
 
