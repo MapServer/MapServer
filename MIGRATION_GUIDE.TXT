@@ -74,6 +74,40 @@ to use the parameter GAP with it's pixmap symbol definition in the symbol
 file. The GAP represents the distance between the symbols. If the GAP is not
 given, the pixmap symbol will be used as a brush.   
 
+---------------------------------------------------
+URL configuration changes
+---------------------------------------------------
+Previous versions of the MapServer CGI program allowed certain parameters
+to be changed via a URL using a cumbersome syntax such as 
+map_layer_0_class_0_color=255+0+0 which changes the color in one classObj.
+Not only was this cumbersome for users but also from a code maintenance
+perspective since we had to maintain seperate loaders for URL-based config
+and file-based config. RFC-31 attempts to streamline both by migrating to
+a single object loading function that can be used with strings (either in
+MapScript or via URL) or with files.
+
+So, in the past you have to change parameters one-at-a-time. Now you can
+pass chunks of mapfiles (with security restrictions) to the CGI interface.
+The map_object notation is still necessary to identify which object you
+want to modify but you can change multiple properties at one time. Note 
+that you can use either a '_' or a '.' to seperate identifiers.
+
+Example 1, changing a scalebar object:
+
+...&map.scalebar=UNITS+MILES+COLOR+121+121+121+SIZE+300+2&...
+
+Example 2, changing a presentation style:
+
+...&map.layer[lakes].class[0].style[0]=SYMBOL+crosshatch+COLOR+151+51+151+SIZE+15&...
+
+Example 3, creating a new feature
+
+...&map_layer[3]=FEATURE+POINTS+500000+1000000+END+TEXT+'A+test+point'+END&...
+
+The variable identifies an object uniquely (by name or index in the case of
+layerObj's and classObj's. The value is a snippet of a mapfile. You c
+cannot create new objects other than inline features at this point.
+
 ----------------------------------------------------
 SWIG MapScript (Python, Perl, CSharp, Java) changes
 ----------------------------------------------------
