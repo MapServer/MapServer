@@ -1775,6 +1775,10 @@ MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *lab
 MS_DLL_EXPORT int msDrawLabelCacheAGG(imageObj *image, mapObj *map);
 
 MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);
+
+MS_DLL_EXPORT int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass, 
+        int width, int height, imageObj *image, int dstX, int dstY);
+
 MS_DLL_EXPORT void msAlphaGD2AGG(imageObj *im);
 MS_DLL_EXPORT void msAlphaAGG2GD(imageObj *im);
 

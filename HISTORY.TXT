@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+- Use AGG when requested for drawing the legend
 
 - Fixed problems with very large HTML legends producing no output (#1946)
 

@@ -476,14 +476,16 @@ public:
         GDpixfmt img_pixf(pix);
 
         agg::trans_affine image_mtx;
-        if(angle!=0 || scale !=1) {
-
-            image_mtx *= agg::trans_affine_translation(-(double)pix.width()/2., -(double)pix.height()/2.);
+        image_mtx *= agg::trans_affine_translation(MS_NINT(-(double)pix.width()/2.),
+                MS_NINT(-(double)pix.height()/2.));
+                    
+        if((angle!=0 && angle!=360) || scale !=1) {
             image_mtx *= agg::trans_affine_rotation(angle * agg::pi / 180.0);
             image_mtx *= agg::trans_affine_scaling(scale);
         }
         //image_mtx *= agg::trans_affine_scaling(scale);
-        image_mtx*= agg::trans_affine_translation(x,y);
+        
+        image_mtx*= agg::trans_affine_translation(MS_NINT(x),MS_NINT(y));
         image_mtx.invert();
         typedef agg::span_interpolator_linear<> interpolator_type;
         interpolator_type interpolator(image_mtx);
@@ -1846,6 +1848,116 @@ unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr, outputFormatO
     return buf;
 }
 
+int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass, 
+        int width, int height, imageObj *image, int dstX, int dstY)
+{
+  int i, type;
+  shapeObj box, zigzag;
+  pointObj marker;
+  char szPath[MS_MAXPATHLEN];
+  AGGMapserverRenderer ren(image);
+  styleObj outline_style;
+  //bool clip = MS_VALID_COLOR(map->legend.outlinecolor); //TODO: enforce this
+
+  /* initialize the box used for polygons and for outlines */
+  box.line = (lineObj *)malloc(sizeof(lineObj));
+  box.numlines = 1;
+  box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
+  box.line[0].numpoints = 5;
+
+  box.line[0].point[0].x = dstX;
+  box.line[0].point[0].y = dstY;
+  box.line[0].point[1].x = dstX + width - 1;
+  box.line[0].point[1].y = dstY;
+  box.line[0].point[2].x = dstX + width - 1;
+  box.line[0].point[2].y = dstY + height - 1;
+  box.line[0].point[3].x = dstX;
+  box.line[0].point[3].y = dstY + height - 1;
+  box.line[0].point[4].x = box.line[0].point[0].x;
+  box.line[0].point[4].y = box.line[0].point[0].y;
+  box.line[0].numpoints = 5;
+    
+  /* if the class has a keyimage then load it, scale it and we're done */
+  if(theclass->keyimage != NULL) {
+      
+    imageObj* keyimage = msImageLoadGD(msBuildPath(szPath, map->mappath, theclass->keyimage));
+    if(!keyimage) return(MS_FAILURE);
+    agg::rendering_buffer thepixmap = gdImg2AGGRB_BGRA(keyimage->img.gd);
+    ren.renderPixmapBGRA(thepixmap,dstX,dstY,0,1);
+    delete[](thepixmap.buf());
+    /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
+  } else {        
+    /* some polygon layers may be better drawn using zigzag if there is no fill */
+    type = lp->type;
+    if(type == MS_LAYER_POLYGON) {
+      type = MS_LAYER_LINE;
+      for(i=0; i<theclass->numstyles; i++) {
+       if(MS_VALID_COLOR(theclass->styles[i]->color)) { /* there is a fill */
+      type = MS_LAYER_POLYGON;
+      break;
+        }
+      }
+    }
+
+    /* 
+    ** now draw the appropriate color/symbol/size combination 
+    */     
+    switch(type) {
+    case MS_LAYER_ANNOTATION:
+    case MS_LAYER_POINT:
+      marker.x = dstX + MS_NINT(width / 2.0);
+      marker.y = dstY + MS_NINT(height / 2.0);
+
+      for(i=0; i<theclass->numstyles; i++)
+        msDrawMarkerSymbolAGG(&map->symbolset, image, &marker, theclass->styles[i], lp->scalefactor);          
+      break;
+    case MS_LAYER_LINE:
+      zigzag.line = (lineObj *)malloc(sizeof(lineObj));
+      zigzag.numlines = 1;
+      zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+      zigzag.line[0].numpoints = 4;
+
+      zigzag.line[0].point[0].x = dstX;
+      zigzag.line[0].point[0].y = dstY + height - 1;
+      zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1;
+      zigzag.line[0].point[1].y = dstY;
+      zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1;
+      zigzag.line[0].point[2].y = dstY + height - 1;
+      zigzag.line[0].point[3].x = dstX + width - 1;
+      zigzag.line[0].point[3].y = dstY;
+      zigzag.line[0].numpoints = 4;
+
+      for(i=0; i<theclass->numstyles; i++)
+        msDrawLineSymbolAGG(&map->symbolset, image, &zigzag, theclass->styles[i], lp->scalefactor); 
+
+      free(zigzag.line[0].point);
+      free(zigzag.line);    
+      break;
+    case MS_LAYER_CIRCLE:
+    case MS_LAYER_RASTER:
+    case MS_LAYER_CHART:
+    case MS_LAYER_POLYGON:
+      for(i=0; i<theclass->numstyles; i++)     
+        msDrawShadeSymbolAGG(&map->symbolset, image, &box, theclass->styles[i], lp->scalefactor);
+      break;
+    default:
+      return MS_FAILURE;
+      break;
+    } /* end symbol drawing */
+  }   
+
+  /* handle an outline if necessary */
+  if(MS_VALID_COLOR(map->legend.outlinecolor)) {
+    initStyle(&outline_style);
+    outline_style.color = map->legend.outlinecolor;
+    msDrawLineSymbolAGG(&map->symbolset, image, &box, &outline_style, 1.0);    
+  }
+
+  free(box.line[0].point);
+  free(box.line);
+  
+  return MS_SUCCESS;
+}
 /*
  ** Free gdImagePtr
  */

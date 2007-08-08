@@ -326,6 +326,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
   msClearPenValues(map); /* just in case the mapfile has already been processed */
 
+#ifdef USE_AGG
+  if(MS_RENDERER_AGG(map->outputformat))
+      msAlphaGD2AGG(image);
+#endif
   pnt.y = VMARGIN;
     
   /* for(i=0; i<map->numlayers; i++) { */
@@ -360,6 +364,13 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
       /* TODO */
+#ifdef USE_AGG
+      if(MS_RENDERER_AGG(map->outputformat)) {
+          if(msDrawLegendIconAGG(map, lp, lp->class[j],  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y) != MS_SUCCESS)
+                  return NULL;
+      }
+      else
+#endif
       if(msDrawLegendIcon(map, lp, lp->class[j],  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, (int) pnt.y) != MS_SUCCESS)
         return NULL;
 
@@ -373,6 +384,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   } /* next layer */
 
   free(heights);
+#ifdef USE_AGG
+  if(MS_RENDERER_AGG(map->outputformat))
+      msAlphaAGG2GD(image);
+#endif
   return(image);
 }
 
