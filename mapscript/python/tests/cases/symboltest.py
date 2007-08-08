@@ -150,7 +150,7 @@ class MapSymbolTestCase(MapTestCase):
     def testSetStyle(self):
         """expect success after setting an existing symbol's style"""
         symbol = self.map.symbolset.getSymbol(1)
-        assert symbol.setStyle(0, 1) == mapscript.MS_SUCCESS
+        assert symbol.setPattern(0, 1) == mapscript.MS_SUCCESS
 
     def testRGBASymbolInPNG24(self):
         """draw a RGBA PNG pixmap on PNG canvas"""
