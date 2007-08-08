@@ -2992,7 +2992,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
          
       }
       else
-          msIO_printf("%s", tmpline);
+          msIO_fwrite(tmpline, strlen(tmpline), 1, stdout);
       free(tmpline);
     } 
     else
@@ -3013,7 +3013,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
             nCurrentSize += strlen(line);
         }
         else 
-            msIO_printf("%s", line);
+            msIO_fwrite(line, strlen(line), 1, stdout);
     }
     if (!papszBuffer)
         fflush(stdout);

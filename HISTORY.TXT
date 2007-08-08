@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed problems with very large HTML legends producing no output (#1946)
 
 - Use OGR-specific destructors for objects that have them rather than
   'delete' (#697)
