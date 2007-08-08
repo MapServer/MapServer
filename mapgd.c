@@ -3379,6 +3379,8 @@ static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst)
   w = gdImageSX(src);
   h = gdImageSY(src);
 
+  iCache = 0;
+
   for (y = 0; (y < h); y++) {
     for (x = 0; (x < w); x++) {
       c = gdImageGetPixel(src, x, y);
@@ -3386,7 +3388,6 @@ static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst)
       g = gdTrueColorGetGreen(c);
       b = gdTrueColorGetBlue(c);
       color = -1;
-      iCache = 0;
 
       /* adding a simple cache to keep colors instead of always calling gdImageColorClosest
          seems to reduce significantly the time passed in this function 
