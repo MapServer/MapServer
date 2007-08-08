@@ -94,15 +94,21 @@ that you can use either a '_' or a '.' to seperate identifiers.
 
 Example 1, changing a scalebar object:
 
-...&map.scalebar=UNITS+MILES+COLOR+121+121+121+SIZE+300+2&...
+::
+
+  ...&map.scalebar=UNITS+MILES+COLOR+121+121+121+SIZE+300+2&...
 
 Example 2, changing a presentation style:
 
-...&map.layer[lakes].class[0].style[0]=SYMBOL+crosshatch+COLOR+151+51+151+SIZE+15&...
+::
+
+ ...&map.layer[lakes].class[0].style[0]=SYMBOL+crosshatch+COLOR+151+51+151+SIZE+15&...
 
 Example 3, creating a new feature
 
-...&map_layer[3]=FEATURE+POINTS+500000+1000000+END+TEXT+'A+test+point'+END&...
+::
+
+  ...&map_layer[3]=FEATURE+POINTS+500000+1000000+END+TEXT+'A+test+point'+END&...
 
 The variable identifies an object uniquely (by name or index in the case of
 layerObj's and classObj's. The value is a snippet of a mapfile. You c
