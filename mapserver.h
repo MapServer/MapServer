@@ -116,7 +116,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "5.0.0-beta2"
+#define MS_VERSION "5.0.0-beta3"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

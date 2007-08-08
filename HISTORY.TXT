@@ -12,6 +12,22 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+
+
+Version 5.0.0-beta3 (2007-08-08)
+--------------------------------
+
+Known issues: 
+
+- This beta contains significant improvements and fixes on the AGG 
+  rendering front. However some build issues remain on some platforms.
+  Please see ticket #2215 if building with AGG support doesn't work with 
+  the default configure script: http://trac.osgeo.org/mapserver/ticket/2215
+
+Bug fixes:
+
+- mapagg.cpp rewrite - the AGG renderer should now support all the GD features
+
 - Use AGG when requested for drawing the legend
 
 - Fixed problems with very large HTML legends producing no output (#1946)
@@ -23,8 +39,6 @@ Current Version (SVN Trunk):
   caching of icons when the class or style params are changed (#745)
 
 - Fixed issues with wms_layer_group metadata in WMS GetCapabilities (#2122)
-
-- mapagg.cpp rewrite - the AGG renderer should now support all the GD features
 
 - Use msSaveImageBufferAGG for AGG formats in getBytes (#2205).
 
