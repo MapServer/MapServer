@@ -260,7 +260,10 @@ int msIO_printf( const char *format, ... )
     va_end( args );
 
     if( return_val < 0 || return_val >= sizeof(workBuf) )
+    {
+        msSetError(MS_MISCERR, "Possible buffer overrun.", "msIO_printf()");
         return -1;
+    }
 
     context = msIO_getHandler( stdout );
     if( context == NULL )
@@ -291,7 +294,10 @@ int msIO_fprintf( FILE *fp, const char *format, ... )
     va_end( args );
 
     if( return_val < 0 || return_val >= sizeof(workBuf) )
+    {
+        msSetError(MS_MISCERR, "Possible buffer overrun.", "msIO_fprintf()");
         return -1;
+    }
 
     context = msIO_getHandler( fp );
     if( context == NULL )
@@ -318,7 +324,10 @@ int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
 #endif
 
     if( return_val < 0 || return_val >= sizeof(workBuf) )
+    {
+        msSetError(MS_MISCERR, "Possible buffer overrun.", "msIO_vfprintf()");
         return -1;
+    }
 
     context = msIO_getHandler( fp );
     if( context == NULL )
