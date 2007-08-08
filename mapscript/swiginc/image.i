@@ -218,13 +218,13 @@
             buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
                                           self->format);
         }
-
+#ifdef USE_AGG
         else if( MS_DRIVER_AGG(self->format) )
         {
             buffer.data = msSaveImageBufferAGG(self->img.gd, &buffer.size,
                                           self->format);
         }
-        
+#endif        
         if( buffer.size == 0 )
         {
             buffer.data = NULL;
