@@ -204,25 +204,25 @@ class ReferenceCountingTestCase(unittest.TestCase):
         """classObj insert at end"""
 	self.initMap()
 	clazz = mapscript.classObj()
-	clazz.minscale = 666
+	clazz.minscaledenom = 666
 	assert clazz.refcount == 1, clazz.refcount
 	idx=self.map.getLayer(1).insertClass(clazz)
 	assert clazz.refcount == 2, clazz.refcount
 	assert self.map.getLayer(1).getClass(idx).refcount == 3, self.map.getLayer(1).getClass(idx).refcount
-	assert self.map.getLayer(1).getClass(idx).minscale == 666, self.map.getLayer(1).getClass(idx).minscale
+	assert self.map.getLayer(1).getClass(idx).minscaledenom == 666, self.map.getLayer(1).getClass(idx).minscaledenom
 
     def testClassInsertAtMiddle(self):
         """classObj insert at pos. 1"""
 	self.initMap()
 	clazz = mapscript.classObj()
-	clazz.minscale = 666
+	clazz.minscaledenom = 666
 	assert clazz.refcount == 1, clazz.refcount
 	idx=self.map.getLayer(1).insertClass(clazz, 1)
 	assert idx == 1, idx
 	assert clazz.refcount == 2, clazz.refcount
 	assert self.map.getLayer(1).getClass(idx).refcount == 3, self.map.getLayer(1).getClass(idx).refcount
 	assert self.map.getLayer(1).getClass(idx).thisown , self.map.getLayer(1).getClass(idx).thisown
-	assert self.map.getLayer(1).getClass(idx).minscale == 666, self.map.getLayer(1).getClass(idx).minscale
+	assert self.map.getLayer(1).getClass(idx).minscaledenom == 666, self.map.getLayer(1).getClass(idx).minscaledenom
    
     def testRemoveFirstClass(self):
         """removal of first class"""
