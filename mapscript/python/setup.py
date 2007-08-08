@@ -9,11 +9,13 @@
 #   python setup.py install
 
 # Try setuptools, fall back on distutils.core
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup, Extension
-from distutils import sysconfig
+#try:
+#    from setuptools import setup, Extension
+#except ImportError:
+#    from distutils.core import setup, Extension
+#from distutils import sysconfig
+
+from distutils.core import setup, Extension
 
 import sys
 import os.path
