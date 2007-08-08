@@ -1,0 +1,220 @@
+.. $Id$
+
+   ===========================================================================
+   Copyright (c) 2004 Sean Gillies.
+   
+   Permission is hereby granted, free of charge, to any person obtaining a
+   copy of this software and associated documentation files (the "Software"),
+   to deal in the Software without restriction, including without limitation
+   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+   and/or sell copies of the Software, and to permit persons to whom the
+   Software is furnished to do so, subject to the following conditions:
+ 
+   The above copyright notice and this permission notice shall be included
+   in all copies or substantial portions of the Software.
+ 
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+   ===========================================================================
+..
+
+*****************************************************************************
+ Mapscript Mapfile HOWTO
+*****************************************************************************
+
+:Author: Sean Gillies
+:Contact: sgillies@frii.com
+:Revision: $Revision$
+:Date: $Date$
+
+..  The next heading encountered becomes our H2
+..
+
+.. sectnum::
+
+.. contents::
+    :depth: 2
+    :backlinks: top
+
+
+Introduction
+============
+
+The mapscript HOWTO docs are intended to complement the API reference with
+examples of usage for specific subjects.  All examples in this document refer
+to the mapfile and testing layers distributed with MapServer 4.2+ and found
+under mapserver/tests.  
+
+Pseudocode
+----------
+
+All examples will use a pseudocode that is consistent with the language
+independent API reference.  Each line is a statement. For object attributes
+and methods we use the dot, '.', operator.  Creation and deletion of objects
+will be indicated by 'new' and 'del' keywords.  Other than that, the 
+pseudocode looks a lot like Python.
+
+Mapfile Overview
+================
+
+By "Mapfile" here, I mean all the elements that can occur in (nearly)
+arbitrary numbers within a mapscript mapObj: Layers, Classes, and Styles.
+MapServer 4.4 has greatly improved capability to manipulate these objects.
+
+The mapObj Class
+================
+
+An instance of mapObj is a parent for zero to many layerObj children.
+
+New instances
+-------------
+
+The mapfile path argument to the mapscript.mapObj constructor is now optional
+::
+
+    empty_map = new mapscript.mapObj
+
+generates a default mapObj with no layers.  A mapObj is initialized from a 
+mapfile on disk in the usual manner::
+
+    test_map = new mapscript.mapObj('tests/test.map')
+
+Cloning
+-------
+
+An independent copy, less result and label caches, of a mapObj can be produced
+by the new mapObj.clone() method::
+
+    clone_map = test_map.clone()
+
+.. note:: the Java mapscript module implements a "cloneMap" method to avoid
+          conflict with the clone method of Java's Object class.
+
+Saving
+------
+
+A mapObj can be saved to disk using the save method::
+
+    clone_map.save('clone.map')
+
+Frankly, the msSaveMap() function which is the foundation for mapObj::save
+is incomplete.  Your mileage may vary.
+
+Children of mapObj
+==================
+
+There is a common parent/child object API for Layers, Classes, and Styles in
+MapServer 4.4.
+
+Referencing a Child
+-------------------
+
+References to Layer, Class, and Style children are obtained by "getChild"-like
+methods of their parent::
+
+    layer_i   = test_map.getLayer(i)
+    class_ij  =  layer_i.getClass(j)
+    style_ijk = class_ij.getStyle(k)
+
+These references are for convenience only.  Mapscript doesn't have any
+reference counting, and you are certain to run into trouble if you try to use
+these references after the parent mapObj has been deleted and freed from 
+memory.
+
+Cloning a Child
+---------------
+
+A completely independent Layer, Class, or Style can be created using the clone
+method of layerObj, classObj, and styleObj::
+
+    clone_layer = layer_i.clone()
+
+This instance has no parent, and is self-owned.
+
+New Children
+------------
+
+Uninitialized instances of layerObj, classObj, or styleObj can be created 
+with the new constructors::
+
+    new_layer = new mapscript.layerObj
+    new_class = new mapscript.classObj
+    new_style = new mapscript.styleObj
+
+and are added to a parent object using "insertChild"-like methods of the
+parent which returns the index at which the child was inserted::
+
+    li = test_map.insertLayer(new_layer)
+    ci = test_map.getLayer(li).insertClass(new_class)
+    si = test_map.getLayer(li).getClass(ci).insertStyle(new_style)
+
+The insert* methods create a completely new copy of the object and store it 
+in the parent with all ownership taken on by the parent.
+
+see the API reference for more details.  
+
+Backwards Compatibility
+-----------------------
+
+The old style child object constructors with the parent object as a single
+argument::
+
+    new_layer = new mapscript.layerObj(test_map)
+    new_class = new mapscript.classObj(new_layer)
+    new_style = new mapscript.styleObj(new_class)
+
+remain in MapServer 4.4.
+
+Removing Children
+-----------------
+
+Child objects can be removed with "removeChild"-like methods of parents, which
+return independent copies of the removed object::
+
+    # following from the insertion example ...
+    # remove the inserted style, returns a copy of the original new_style
+    removed_style = test_map.getLayer(li).getClass(ci).removeStyle(si)
+    removed_class = test_map.getLayer(li).removeClass(ci)
+    removed_layer = test_map.removeLayer(li)
+
+Metadata
+========
+
+Map, Layer, and Class metadata are the other arbitrarily numbered elements
+(well, up to the built-in limit of 41) of a mapfile.
+
+New API
+-------
+
+In MapServer 4.4, the metadata attributes of mapObj.web, layerObj, and classObj
+are instances of hashTableObj, a class which functions like a limited 
+dictionary
+::
+
+    layer.metadata.set('wms_name', 'foo')
+    name = layer.metadata.get('wms_name')   # returns 'foo'
+
+You can iterate over all keys in a hashTableObj like
+::
+    
+    key = NULL
+    while (1):
+        key = layer.metadata.nextKey(key)
+        if key == NULL:
+            break
+        value = layer.metadata.get(key)
+        ...
+
+See the API Reference (mapscript.txt) for more details.
+
+Old API
+-------
+
+The old getMetaData and setMetaData methods of mapObj, layerObj, and classObj
+remain for use by older programs.
+

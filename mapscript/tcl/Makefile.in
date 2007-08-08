@@ -1,0 +1,103 @@
+#
+# Makefile.in for mapscript Tcl interface
+# Tom Poindexter, tpoindex@nyx.net
+#
+
+DLTARGET            = libMapscript11
+PACKAGEDIR          = MapscriptTcl1.1
+
+# Note: also change 'package provide' version in pkgIndex.tcl !!
+
+SWIGINC             = -I@SWIGDIR@/include
+SWIGLIB             = -L@SWIGDIR@/lib
+SWIGLIB_SPEC        = -lswig
+
+TCL_PREFIX          = @TCL_PREFIX@
+TCL_EXEC_PREFIX     = @TCL_EXEC_PREFIX@
+TCL_CC              = @TCL_CC@
+TCL_DEFS            = @TCL_DEFS@
+TCL_SHLIB_SUFFIX    = @TCL_SHLIB_SUFFIX@
+TCL_SHLIB_CFLAGS    = @TCL_SHLIB_CFLAGS@
+TCL_LD_SEARCH_FLAGS = @TCL_LD_SEARCH_FLAGS@
+TCL_SHLIB_LD        = @TCL_SHLIB_LD@
+TCL_LIB_SPEC        = @TCL_LIB_SPEC@
+TCL_STUB_LIB_SPEC   = @TCL_STUB_LIB_SPEC@
+TCL_LIBS            = @TCL_LIBS@
+LIBS                = @TCL_LIBS@
+TCL_DBGX            = @TCL_DBGX@
+LIB_RUNTIME_DIR     = @TCL_EXEC_PREFIX@/lib:@TCL_EXEC_PREFIX@/lib/$(PACKAGEDIR):@TCL_PREFIX@/lib:@MAPSERVERHOME@
+
+MAPSERVERHOME       = @MAPSERVERHOME@
+MAPSERVERDEFS       = @MAPSERVERDEFS@
+MAPSERVERINCS       = @MAPSERVERINCS@
+MAPSERVERLIBS       = @MAPSERVERLIBS@
+
+# ugly alert!
+# see the README for this hack
+SWIG_STUB_HACK = -DUSE_TCL_STUBS -DITCL_NAMESPACES -DItcl_Namespace=int \
+		 -D"spaceId=spcid;Tcl_InitStubs(interp,\"8.1\",0)"
+
+all: stublib
+
+stublib: mapscript_wrap.c
+	$(TCL_CC) -c $(TCL_DEFS) $(TCL_SHLIB_CFLAGS) \
+		-I$(TCL_PREFIX)/include \
+		$(MAPSERVERDEFS) $(MAPSERVERINCS) \
+		$(SWIG_STUB_HACK) \
+		mapscript_wrap.c
+	$(TCL_SHLIB_LD) -o $(DLTARGET)$(TCL_SHLIB_SUFFIX) mapscript_wrap.o \
+		$(TCL_LD_SEARCH_FLAGS) \
+		$(TCL_STUB_LIB_SPEC) \
+		$(TCL_LIBS) \
+		-L$(MAPSERVERHOME) $(MAPSERVERLIBS)
+
+mapscript_wrap.c:
+	swig -tcl8 -dhtml -namespace $(MAPSERVERDEFS) $(MAPSERVERINCS) \
+		mapscript.i
+
+nostublib: mapscript_wrap.c
+	$(TCL_CC) -c $(TCL_DEFS) $(TCL_SHLIB_CFLAGS) \
+		-I$(TCL_PREFIX)/include \
+		$(MAPSERVERDEFS) $(MAPSERVERINCS) \
+		mapscript_wrap.c
+	$(TCL_SHLIB_LD) -o $(DLTARGET)$(TCL_SHLIB_SUFFIX) mapscript_wrap.o \
+		$(TCL_LD_SEARCH_FLAGS) \
+		$(TCL_LIB_SPEC) \
+		$(TCL_LIBS) \
+		-L$(MAPSERVERHOME) $(MAPSERVERLIBS)
+
+$(DLTARGET)$(TCL_SHLIB_SUFFIX): mapscript_wrap.o
+
+install: $(DLTARGET)$(TCL_SHLIB_SUFFIX)
+	-mkdir $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+	cp $(DLTARGET)$(TCL_SHLIB_SUFFIX) $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+	chmod +x \
+	   $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)/$(DLTARGET)$(TCL_SHLIB_SUFFIX)
+	cp pkgIndex.tcl                   $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+	cp mapscriptsupp.tcl              $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+	cp mapscriptsupp.html             $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+	cp mapscript_wrap.html            $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+
+
+useprebuilt:
+	gunzip -c mapscript_wrap.c.gz >mapscript_wrap.c
+
+prebuilt:  mapscript_wrap.c
+	gzip -cf mapscript_wrap.c >mapscript_wrap.c.gz
+
+tar:
+	if test ! -f mapscript_wrap.c.gz ; then \
+		gzip -cf mapscript_wrap.c >mapscript_wrap.c.gz; fi
+	rm -f mapscript_wrap.c
+	(cd ..; tar cf mapscript-tcl.tar tcl )
+	gzip -f ../mapscript-tcl.tar
+
+clean:
+	rm -f *.o core *.so
+
+distclean: clean
+	rm -f Makefile
+
+reallyclean: distclean
+	rm -f mapscript_wrap.*
+
