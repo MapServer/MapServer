@@ -960,7 +960,7 @@ AC_ARG_WITH(sde,
 
 AC_ARG_WITH(sde-version,
 [  --with-sde-version[[=VERSION NUMBER]]  Set ESRI SDE version number (Default
-                          is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
+                          is 91).],SDE_VERSION=$with_sde_version,SDE_VERSION=91)
 
 if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
 SDE_VERSION=""
@@ -2273,3 +2273,49 @@ AC_SUBST(RPATHS, [$RPATHS])
 
 AC_OUTPUT(Makefile $PHPMS_MAKEFILE mapscript/java/Makefile mapscript/csharp/Makefile)
 
+dnl ---------------------------------------------------------------------------
+dnl Display configuration status
+dnl ---------------------------------------------------------------------------
+
+
+AC_MSG_RESULT()
+AC_MSG_RESULT([MapServer is now configured for ${host}])
+AC_MSG_RESULT()
+AC_MSG_RESULT([ -------------- Compiler Info ------------- ])
+AC_MSG_RESULT([  C compiler:                ${CC} ${CFLAGS}])
+AC_MSG_RESULT([  C++ compiler:              ${CXX} ${CXXFLAGS}])
+AC_MSG_RESULT([  Debug:                     ${DEBUG_FLAGS}])
+AC_MSG_RESULT([  Generic NINT:              ${USE_NINT}])
+AC_MSG_RESULT([  Threading support:         ${THREAD_FLAG}])
+AC_MSG_RESULT()
+AC_MSG_RESULT([ -------------- Renderer Settings --------- ])
+AC_MSG_RESULT([  zlib support:              ${ZLIB_ENABLED}])
+AC_MSG_RESULT([  png support:               ${PNG_SETTING}])
+AC_MSG_RESULT([  jpeg support:              ${JPEG_ENABLED}])
+AC_MSG_RESULT([  iconv support:             ${ICONV_ENABLED}])
+AC_MSG_RESULT([  AGG support:               ${AGG_ENABLED}])
+AC_MSG_RESULT([  Ming(flash) support:       ${MING_ENABLED}])
+AC_MSG_RESULT([  PDFLib support:            ${PDF_ENABLED}])
+AC_MSG_RESULT()
+
+AC_MSG_RESULT([ -------------- Data Format Drivers ------- ])
+AC_MSG_RESULT([  native tiff support:       ${TIFF_ENABLED}])
+AC_MSG_RESULT([  PostGIS support:           ${POSTGIS_ENABLED}])
+AC_MSG_RESULT([  Proj.4 support:            ${PROJ_ENABLED}])
+AC_MSG_RESULT([  EPPL7 support:             ${EPPL_ENABLED}])
+AC_MSG_RESULT([  ArcSDE support:            ${SDE_ENABLED}])
+AC_MSG_RESULT([  OGR support:               ${OGR_ENABLED}])
+AC_MSG_RESULT([  GDAL support:              ${GDAL_ENABLED}])
+AC_MSG_RESULT([  GEOS support:              ${GEOS_ENABLED}])
+AC_MSG_RESULT([  Oracle Spatial support:    ${ORACLESPATIAL_ENABLED}])
+AC_MSG_RESULT([  FastCGI support:           ${FASTCGI_ENABLED}])
+AC_MSG_RESULT()
+
+AC_MSG_RESULT([ -------------- OGC Services -------------- ])
+AC_MSG_RESULT([  WMS Server:           ${WMS_SVR_ENABLED}])
+AC_MSG_RESULT([  WMS Client:           ${WMS_LYR_ENABLED}])
+AC_MSG_RESULT([  WFS Server:           ${WFS_SVR_ENABLED}])
+AC_MSG_RESULT([  WFS Client:           ${WMS_LYR_ENABLED}])
+AC_MSG_RESULT([  WCS Server:           ${WCS_SVR_ENABLED}])
+AC_MSG_RESULT([  SOS Server:           ${SOS_SVR_ENABLED}])
+AC_MSG_RESULT()
