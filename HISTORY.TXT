@@ -27,6 +27,7 @@ Current Version (SVN Trunk):
 - Fixed --enable-gcov (formerly --enable-coverage) option to work with 
   php_mapscript.so (#2216)
 
+- check for OGR support in if SLD is used (#1998) 
 
 Version 5.0.0-beta3 (2007-08-08)
 --------------------------------
