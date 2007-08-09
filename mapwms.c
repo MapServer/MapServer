@@ -52,6 +52,12 @@ MS_CVSID("$Id$")
  * ================================================================== */
 #ifdef USE_WMS_SVR
 
+#ifdef USE_OGR
+int ogrEnabled = 1;
+#else
+int ogrEnabled = 0;
+#endif /* USE_OGR */
+
 /*
 ** msWMSException()
 **
@@ -364,34 +370,27 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
    msAdjustExtent(&(map->extent), map->width, map->height);
 
-   /* check/apply should be done prior to applying other wms parameters such BBOX/SRS. 
-    Bug 2079 */
-#ifdef USE_OGR
-   for(i=0; map && i<numentries; i++)
-   {
-/* -------------------------------------------------------------------- */
-/*      SLD support :                                                   */
-/*        - check if the SLD parameter is there. it is supposed to      */
-/*      refer a valid URL containing an SLD document.                   */
-/*        - check the SLD_BODY parameter that should contain the SLD    */
-/*      xml string.                                                     */
-/* -------------------------------------------------------------------- */
-       if (strcasecmp(names[i], "SLD") == 0 &&
-           values[i] && strlen(values[i]) > 0) 
-       {
-           msSLDApplySLDURL(map, values[i], -1, NULL);
-       }
-       else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
-               values[i] && strlen(values[i]) > 0) 
-       {
-           msSLDApplySLD(map, values[i], -1, NULL);
-       }
-   }
-#endif
-
    for(i=0; map && i<numentries; i++)
    {
     /* getMap parameters */
+
+    /* check if SLD is passed.  If yes, check for OGR support */
+    if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0)
+    {
+      if (ogrEnabled == 0)
+      {
+        msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
+        return msWMSException(map, nVersion, NULL);
+      }
+      else
+      {
+        if (strcasecmp(names[i], "SLD") == 0)
+           msSLDApplySLDURL(map, values[i], -1, NULL);
+        if (strcasecmp(names[i], "SLD_BODY") == 0)
+           msSLDApplySLD(map, values[i], -1, NULL);
+      }
+    }
+
     if (strcasecmp(names[i], "LAYERS") == 0)
     {
       int  j, k, iLayer;
