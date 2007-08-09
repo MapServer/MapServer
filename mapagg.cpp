@@ -457,10 +457,9 @@ public:
             rb.clear(agg::rgba(0,0,0,0));
         if(!m_feng.load_font(font, 0, agg::glyph_ren_outline))
             return;
-        glyphheight*=1.3; //TODO: why must this scaling factor be applied 
         m_feng.hinting(true);
         m_feng.height(glyphheight);
-        m_feng.resolution(72);
+        m_feng.resolution(96);
         m_feng.flip_y(true);
         font_curve_type m_curves(m_fman.path_adaptor());
         font_contour_type m_contour(m_curves);
@@ -562,19 +561,18 @@ public:
         mtx *= agg::trans_affine_rotation(-angle);
         mtx *= agg::trans_affine_translation(x,y);
         if(isMarker) {
-            x-=size/2.;
+            x-=size/2.; //TODO: try to center the font on the point. this isn't perfect
             y+=size/2.;
         }
         if(!m_feng.load_font(font, 0, agg::glyph_ren_outline))
         {
             return MS_FAILURE;
         }
-        //adjust font size to correspond to the GD equivalent
-        size*=1.3; //TODO: why must this scaling factor be applied 
+        
         m_feng.hinting(true);
         m_feng.height(size);
-        m_feng.width(size);
-        m_feng.resolution(72);
+        //m_feng.width(size);
+        m_feng.resolution(96);
         m_feng.flip_y(true);
         font_curve_type m_curves(m_fman.path_adaptor());
         font_contour_type m_contour(m_curves);
@@ -1212,7 +1210,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   pointObj point, label_point;
   rectObj label_rect;
   int label_width;
-  int position, rot, gap, in;
+  int  rot, gap, in;
   double rx, ry, size;
   
   double styleangle = style->angle * MS_DEG_TO_RAD;
@@ -1259,20 +1257,10 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
       if(length==0)continue;
       rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
       ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;  
-      position = symbol->position;
       theta = asin(ry);
-      if(rx < 0) {
-        if(rot){
-          if((position == MS_UR)||(position == MS_UL)) position = MS_LC;
-          if((position == MS_LR)||(position == MS_LL)) position = MS_UC;
-        }else{
-          if(position == MS_UC) position = MS_LC;
-          else if(position == MS_LC) position = MS_UC;
-        }
-      }
-      else theta = -theta;        
-      if((position == MS_UR)||(position == MS_UL)) position = MS_UC;
-      if((position == MS_LR)||(position == MS_LL)) position = MS_LC;
+      if(rx >= 0) 
+          theta = -theta;
+      
       label.angle = MS_RAD_TO_DEG * theta;
 
       in = 0;
@@ -1282,11 +1270,11 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
         
         double finalangle = rot?theta+styleangle:styleangle;
         
-        label_point = get_metrics(&point, position, label_rect, 0, 0, finalangle*MS_RAD_TO_DEG, 0, NULL);
-        ren.renderGlyphs(point.x,point.y,&(label.color),&(label.outlinecolor),label.size,
+        label_point = get_metrics(&point, symbol->position, label_rect, 0, 0, finalangle*MS_RAD_TO_DEG, 0, NULL);
+        ren.renderGlyphs(label_point.x,label_point.y,&(label.color),&(label.outlinecolor),label.size,
                           font,symbol->character,finalangle,
                           NULL,0,0,
-                          true,false);
+                          false,false);
         //msDrawTextGD(img, label_point, symbol->character, &label, symbolset->fontset, scalefactor);
 
         current_length += label_width + gap;
