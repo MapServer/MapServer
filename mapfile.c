@@ -2089,7 +2089,7 @@ void resetClassStyle(classObj *class)
   class->layer = NULL;
 }
 
-int loadClass(classObj *class, mapObj *map, layerObj *layer)
+int loadClass(classObj *class, char *templatepattern, layerObj *layer)
 {
   int state;
 
@@ -2145,7 +2145,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(TEMPLATE):
       if(getString(&class->template) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, class->template) != MS_TRUE) {
+      if(msyysource == MS_URL_TOKENS && msEvalRegex(templatepattern, class->template) != MS_TRUE) {
         msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadClass()");
         return(-1);
       }
@@ -2261,6 +2261,8 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
 
 int msUpdateClassFromString(classObj *class, char *string, int url_string)
 {
+  char *templatepattern = NULL;
+
   if(!class || !string) return MS_FAILURE;
 
   msAcquireLock( TLOCK_PARSER );
@@ -2274,7 +2276,10 @@ int msUpdateClassFromString(classObj *class, char *string, int url_string)
 
   msyylineno = 1; /* start at line 1 */
 
-  if(loadClass(class, class->layer->map, class->layer) == -1) {
+  if (class->layer)
+    templatepattern = class->layer->map->templatepattern;
+
+  if(loadClass(class, templatepattern, class->layer) == -1) {
     msReleaseLock( TLOCK_PARSER );
     return MS_FAILURE; /* parse error */;
   }
@@ -2554,8 +2559,11 @@ classObj *msGrowLayerClasses( layerObj *layer )
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int type;
+  char *templatepattern = NULL;
 
   layer->map = (mapObj *)map;
+  if (map)
+    templatepattern = map->templatepattern;
 
   for(;;) {
     switch(msyylex()) {
@@ -2563,7 +2571,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if (msGrowLayerClasses(layer) == NULL)
 	return(-1);
       initClass(layer->class[layer->numclasses]);
-      if(loadClass(layer->class[layer->numclasses], map, layer) == -1) return(-1);
+      if(loadClass(layer->class[layer->numclasses], templatepattern, layer) == -1) return(-1);
       if(layer->class[layer->numclasses]->type == -1) layer->class[layer->numclasses]->type = layer->type;
       layer->numclasses++;
       break;

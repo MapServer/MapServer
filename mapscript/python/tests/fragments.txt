@@ -80,11 +80,11 @@ Layers
 Classes
 -------
 
-  #>>> co = mapscript.fromstring("""CLASS END""")
-  #>>> co #doctest: +ELLIPSIS
-  #<mapscript.classObj; proxy of C classObj instance at ...>
-  #>>> co.name
-  #'test'
+  >>> co = mapscript.fromstring("""CLASS TITLE "test" END""")
+  >>> co #doctest: +ELLIPSIS
+  <mapscript.classObj; proxy of C classObj instance at ...>
+  >>> co.title
+  'test'
 
 Styles
 ------
