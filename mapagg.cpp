@@ -1193,15 +1193,24 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     width = MS_MIN(width, style->maxwidth);
     color = &(style->color);
     agg::path_storage line = shapePolylineToPath(p,0,0);
+    
+    /**
+     * treat the easy case
+     * NOTE:  symbols of type ELLIPSE are included here, as using those with a SIZE param was
+     * standard practice for drawing thick lines
+     */
     if(style->symbol == 0 || (symbol->type==MS_SYMBOL_SIMPLE) || (symbol->type == MS_SYMBOL_ELLIPSE && symbol->gap==0)) {
         if(!MS_VALID_COLOR(*color)) {
             color = &(style->outlinecolor); /* try the outline color, polygons drawing thick outlines often do this */
             if(!MS_VALID_COLOR(*color))
                 return; /* no color, bail out... */
         }
-         /* style->width is initialized to 1 and style->size initalized to -1. 
-           Do test on style->size to see if it has been set in the map*/
-        nwidth=(style->size==-1)?width:size;
+         /* for setting line width use SIZE if symbol is of type ELLIPSE, 
+          * otherwise use WIDTH (cf. documentation) */
+        if(symbol->type == MS_SYMBOL_ELLIPSE)
+            nwidth=(style->size==-1)?width:size;
+        else
+            nwidth=width;
         ren.renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern);
     }
     else if(symbol->gap!=0) {
