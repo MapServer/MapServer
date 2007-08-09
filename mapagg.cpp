@@ -1222,7 +1222,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   symbol = symbolset->symbol[style->symbol];
 
   initLabel(&label);
-  rot = (symbol->gap < 0);
+  rot = (symbol->gap <= 0);
   label.type = MS_TRUETYPE;
   label.font = symbol->font;
   /* -- rescaling symbol and gap */
