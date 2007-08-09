@@ -2312,10 +2312,19 @@ AC_MSG_RESULT([  FastCGI support:           ${FASTCGI_ENABLED}])
 AC_MSG_RESULT()
 
 AC_MSG_RESULT([ -------------- OGC Services -------------- ])
-AC_MSG_RESULT([  WMS Server:           ${WMS_SVR_ENABLED}])
-AC_MSG_RESULT([  WMS Client:           ${WMS_LYR_ENABLED}])
-AC_MSG_RESULT([  WFS Server:           ${WFS_SVR_ENABLED}])
-AC_MSG_RESULT([  WFS Client:           ${WMS_LYR_ENABLED}])
-AC_MSG_RESULT([  WCS Server:           ${WCS_SVR_ENABLED}])
-AC_MSG_RESULT([  SOS Server:           ${SOS_SVR_ENABLED}])
+AC_MSG_RESULT([  WMS Server:                ${WMS_SVR_ENABLED}])
+AC_MSG_RESULT([  WMS Client:                ${WMS_LYR_ENABLED}])
+AC_MSG_RESULT([  WFS Server:                ${WFS_SVR_ENABLED}])
+AC_MSG_RESULT([  WFS Client:                ${WMS_LYR_ENABLED}])
+AC_MSG_RESULT([  WCS Server:                ${WCS_SVR_ENABLED}])
+AC_MSG_RESULT([  SOS Server:                ${SOS_SVR_ENABLED}])
+AC_MSG_RESULT()
+
+AC_MSG_RESULT([ -------------- MapScript ----------------- ])
+if test -n "${PHP_SRC_DIR}"; then
+  AC_MSG_RESULT([  PHP MapScript:             yes])
+else
+  AC_MSG_RESULT([  PHP MapScript:             no])
+fi
+
 AC_MSG_RESULT()
