@@ -817,10 +817,8 @@ Optional Features:
   --enable-point-z-m      Use point Z and M parameters (disabled by default).
   --disable-point-z-m     Disable support for point Z and M parameters.
   --disable-fast-nint     Use safe MS_NINT with reliable rounding
-  --enable-debug          Include "-g" in CFLAGS for debugging and enable
-                          msDebug() output to stderr (i.e. server log file).
-  --disable-debug         Do not include "-g" in CFLAGS and disable msDebug()
-                          output (the default).
+  --enable-debug          Include "-g" in CFLAGS for debugging.
+  --disable-debug         Do not include "-g" in CFLAGS (the default).
   --enable-gcov           Enable source code coverage testing using gcov
   --enable-perlv-ld-detect (applies to --with-php only)
                           Use perl -V output to figure the command to use to
@@ -10156,6 +10154,14 @@ echo "${ECHO_T}        'httpd' not found, skipping Apache version detection. You
 
     echo "$as_me:$LINENO: result:         $HTTPD version is $HTTPD_VERSION_STRING ($APACHE_VERSION)." >&5
 echo "${ECHO_T}        $HTTPD version is $HTTPD_VERSION_STRING ($APACHE_VERSION)." >&6
+
+
+        if test -n "$APACHE_VERSION" -a `expr "$APACHE_VERSION" \>= "2000000"` = 1 ; then
+      echo "$as_me:$LINENO: result:         Your system is apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking for msDebug() due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030)." >&5
+echo "${ECHO_T}        Your system is apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking for msDebug() due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030)." >&6
+      DEBUG_FLAGS="${DEBUG_FLAGS} -DNEED_NONBLOCKING_STDERR"
+    fi
+
   fi
 
 fi
@@ -10313,16 +10319,10 @@ if test "${enable_debug+set}" = set; then
 fi;
 
 if test "$enable_debug" = "yes" ; then
-    DEBUG_FLAGS="-DENABLE_STDERR_DEBUG"
 
-  if test -n "$APACHE_VERSION" -a `expr "$APACHE_VERSION" \>= "2000000"` = 1 ; then
-    echo "$as_me:$LINENO: result:         You requested msDebug() output on a system apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030)." >&5
-echo "${ECHO_T}        You requested msDebug() output on a system apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030)." >&6
-    DEBUG_FLAGS="$DEBUG_FLAGS -DNEED_NONBLOCKING_STDERR"
-  fi
-
-  echo "$as_me:$LINENO: result:         Enabling debug features: -g in CFLAGS and msDebug() to stderr ($DEBUG_FLAGS)." >&5
-echo "${ECHO_T}        Enabling debug features: -g in CFLAGS and msDebug() to stderr ($DEBUG_FLAGS)." >&6
+  REPORT_ENABLE_DEBUG="-g "
+  echo "$as_me:$LINENO: result:         Enabling debug features: -g in CFLAGS." >&5
+echo "${ECHO_T}        Enabling debug features: -g in CFLAGS." >&6
 
 else
   CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
@@ -12082,8 +12082,8 @@ echo "$as_me:$LINENO: result:   C compiler:                ${CC} ${CFLAGS}" >&5
 echo "${ECHO_T}  C compiler:                ${CC} ${CFLAGS}" >&6
 echo "$as_me:$LINENO: result:   C++ compiler:              ${CXX} ${CXXFLAGS}" >&5
 echo "${ECHO_T}  C++ compiler:              ${CXX} ${CXXFLAGS}" >&6
-echo "$as_me:$LINENO: result:   Debug:                     ${DEBUG_FLAGS}" >&5
-echo "${ECHO_T}  Debug:                     ${DEBUG_FLAGS}" >&6
+echo "$as_me:$LINENO: result:   Debug:                     ${REPORT_ENABLE_DEBUG}${DEBUG_FLAGS}" >&5
+echo "${ECHO_T}  Debug:                     ${REPORT_ENABLE_DEBUG}${DEBUG_FLAGS}" >&6
 echo "$as_me:$LINENO: result:   Generic NINT:              ${USE_NINT}" >&5
 echo "${ECHO_T}  Generic NINT:              ${USE_NINT}" >&6
 echo "$as_me:$LINENO: result:   Threading support:         ${THREAD_FLAG}" >&5

@@ -85,10 +85,8 @@ Here is the list of available options as returned by "./configure --help":
   --disable-ignore-missing-data  Report all missing data files.
   --enable-point-z-m      Use point Z and M parameters (disabled by default).
   --disable-point-z-m     Disable support for point Z and M parameters.
-  --enable-debug          Include -g in CFLAGS for debugging and enable
-                          msDebug() output to stderr (i.e. server log file).
-  --disable-debug         Do not include -g in CFLAGS and disable msDebug()
-                          output (the default).
+  --enable-debug          Include -g in CFLAGS for debugging .
+  --disable-debug         Do not include -g in CFLAGS (the default).
   --with-php=DIR          Specify directory where PHP4's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
@@ -529,10 +527,8 @@ Miscellaneous flags:
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.
 
-  --enable-debug          Include -g in CFLAGS for debugging and enable
-                          msDebug() output to stderr (i.e. server log file).
-  --disable-debug         Do not include -g in CFLAGS and disable msDebug()
-                          output (the default).
+  --enable-debug          Include -g in CFLAGS for debugging.
+  --disable-debug         Do not include -g in CFLAGS (the default).
 
   --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
