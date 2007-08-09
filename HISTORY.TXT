@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed --enable-coverage option to work with php_mapscript.so (#2216)
+
 
 Version 5.0.0-beta3 (2007-08-08)
 --------------------------------
@@ -51,9 +53,9 @@ Bug fixes:
   Imagetypes aggpng24 and aggjpeg can be used to refer to the
   default output formats. (#2195) 
 
-- Fix memeory leak with labepath object (#2199)
+- Fix memory leak with labepath object (#2199)
 
-- Fix memeory leak msImageTruetypePolyline (#2200)
+- Fix memory leak msImageTruetypePolyline (#2200)
 
 - SWF: Fix incorrect symbol assignements (#2198)
 
