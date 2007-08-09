@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Updated configure script to detect and require GEOS 2.2.2+ (#1896)
+
 - Renamed --enable-coverage configure option to --enable-gcov to avoid
   confusion with WCS or Arc/Info coverages (#2217)
 
