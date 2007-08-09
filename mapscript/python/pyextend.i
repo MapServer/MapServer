@@ -14,6 +14,44 @@
  *
  *****************************************************************************/
 
+/* fromstring: Factory for mapfile objects */
+
+%pythoncode {
+def fromstring(data, mappath=None):
+    """Creates map objects from mapfile strings.
+
+    Parameters
+    ==========
+    data : string
+        Mapfile in a string.
+    mappath : string
+        Optional root map path, enabling relative paths in mapfile.
+
+    Example
+    =======
+    >>> mo = fromstring("MAP\nNAME 'test'\nEND")
+    >>> mo.name
+    'test'
+    """
+    import re
+    if re.search("^\s*MAP", data, re.I): 
+        return msLoadMapFromString(data, mappath)
+    elif re.search("^\s*LAYER", data, re.I):
+        ob = layerObj()
+        ob.updateFromString(data)
+        return ob
+    elif re.search("^\s*CLASS", data, re.I):
+        ob = classObj()
+        ob.updateFromString(data)
+        return ob
+    elif re.search("^\s*STYLE", data, re.I):
+        ob = styleObj()
+        ob.updateFromString(data)
+        return ob
+    else:
+        raise ValueError, "No map, layer, class, or style found. Can not load from provided string"
+}
+
 /* ===========================================================================
    Python rectObj extensions
    ======================================================================== */
