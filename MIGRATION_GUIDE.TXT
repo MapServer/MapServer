@@ -189,3 +189,11 @@ A new mapserver-config script has been created with the following options:
 The shared and static link libraries for MapSserver have been renamed
 libmapserver.x.y.so and libmapserver.a respectively.
 
+
+The --enable-coverage configure option has been renamed to --enable-gcov
+since the former name led users to think it might be related to enabling 
+support for WCS or Arc/Info coverages:
+
+::
+
+  --enable-gcov           Enable source code coverage testing using gcov

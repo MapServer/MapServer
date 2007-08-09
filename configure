@@ -821,7 +821,7 @@ Optional Features:
                           msDebug() output to stderr (i.e. server log file).
   --disable-debug         Do not include "-g" in CFLAGS and disable msDebug()
                           output (the default).
-  --enable-coverage       Enable coverage testing
+  --enable-gcov           Enable source code coverage testing using gcov
   --enable-perlv-ld-detect (applies to --with-php only)
                           Use perl -V output to figure the command to use to
                           link php_mapscript.so.  Try this only if the default
@@ -10322,9 +10322,9 @@ ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
 
 
-# Check whether --enable-coverage or --disable-coverage was given.
-if test "${enable_coverage+set}" = set; then
-  enableval="$enable_coverage"
+# Check whether --enable-gcov or --disable-gcov was given.
+if test "${enable_gcov+set}" = set; then
+  enableval="$enable_gcov"
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
  PHP_LD_XTRAFLAGS="$PHP_LD_XTRAFLAGS -fprofile-arcs -ftest-coverage"
 fi;

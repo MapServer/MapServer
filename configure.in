@@ -1950,8 +1950,8 @@ dnl ---------------------------------------------------------------------
 dnl Enable source code coverage reporting for GCC
 dnl ---------------------------------------------------------------------
 
-AC_ARG_ENABLE(coverage,
-[  --enable-coverage       Enable coverage testing],
+AC_ARG_ENABLE(gcov,
+[  --enable-gcov           Enable source code coverage testing using gcov],
 [CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
  PHP_LD_XTRAFLAGS="$PHP_LD_XTRAFLAGS -fprofile-arcs -ftest-coverage"])
 

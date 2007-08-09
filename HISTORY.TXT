@@ -13,7 +13,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
-- Fixed --enable-coverage option to work with php_mapscript.so (#2216)
+- Renamed --enable-coverage configure option to --enable-gcov to avoid
+  confusion with WCS or Arc/Info coverages (#2217)
+
+- Fixed --enable-gcov (formerly --enable-coverage) option to work with 
+  php_mapscript.so (#2216)
 
 
 Version 5.0.0-beta3 (2007-08-08)
