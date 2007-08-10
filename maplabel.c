@@ -750,14 +750,13 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   int label_width;
   int position, rot, gap, in;
   double rx, ry, size;
-
   symbolObj *symbol;
 
 
   symbol = symbolset->symbol[style->symbol];
 
   initLabel(&label);
-  rot = (symbol->gap < 0);
+  rot = (symbol->gap <= 0);
   label.type = MS_TRUETYPE;
   label.font = symbol->font;
   /* -- rescaling symbol and gap */
@@ -792,27 +791,21 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
       ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;  
       position = symbol->position;
       theta = asin(ry);
-      if(rx < 0) {
-        if(rot){
-          theta += MS_PI;
-                if((position == MS_UR)||(position == MS_UL)) position = MS_LC;
-          if((position == MS_LR)||(position == MS_LL)) position = MS_UC;
-        }else{
-          if(position == MS_UC) position = MS_LC;
-          else if(position == MS_LC) position = MS_UC;
-        }
-      }
-      else theta = -theta;        
+      if(rx >= 0)
+          theta = -theta;        
       if((position == MS_UR)||(position == MS_UL)) position = MS_UC;
       if((position == MS_LR)||(position == MS_LL)) position = MS_LC;
-      label.angle = MS_RAD_TO_DEG * theta;
-
+      
+      label.angle = style->angle;
+      if(rot)
+          label.angle+=MS_RAD_TO_DEG * theta;
+      
       in = 0;
       while(current_length <= length) {
         point.x = MS_NINT(p->line[i].point[j-1].x + current_length*rx);
         point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
 
-        label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, NULL);
+        label_point = get_metrics(&point, (rot)?MS_CC:position, label_rect, 0, 0, label.angle, 0, NULL);
         msDrawTextGD(img, label_point, symbol->character, &label, symbolset->fontset, scalefactor);
 
         current_length += label_width + gap;
