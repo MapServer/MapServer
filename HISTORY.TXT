@@ -32,6 +32,12 @@ Current Version (SVN Trunk):
 
 - check for OGR support in if SLD is used (#1998) 
 
+- msWMSLoadGetMapParams: fixed handling of required parameters (#1088)
+ - if any of srs, bbox, format, width, height are NOT found, throw exception
+ - if styles AND sld are NOT found, throw an exception
+ - NOTE: this may cause issues with some existing clients who do not pass
+   required parameters
+
 Version 5.0.0-beta3 (2007-08-08)
 --------------------------------
 

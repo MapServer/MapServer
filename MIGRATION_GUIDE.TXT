@@ -160,8 +160,28 @@ instead. They will be removed in a future release.
 
 
 ----------------------------------------------------
-OGC Web Mapping Service (WMS)
+OGC Web Map Service (WMS)
 ----------------------------------------------------
+
+Required Parameters for GetMap and GetFeatureInfo: previously, MapServer
+did not check for the following parameters when responding to an OGC:WMS
+GetMap or GetFeatureInfo request:
+ - SRS
+ - FORMAT
+ - WIDTH
+ - HEIGHT
+ - STYLES or SLD / SLD_BODY
+ - BBOX
+
+That is, a GetMap request would process without error if these were not 
+passed by the WMS client.
+
+A compliant OGC:WMS 1.1.0 and 1.1.1 REQUIRES these parameters.  This may
+affect OGC:WMS client requests who were not passing these values. Ticket
+1088 fully documents this issue.  In addition to WMS compliance, this was also 
+decided that by adding this constraint, if an OGC client request (as described
+earlier) breaks something, people should fix their client anyway since
+if they change WMS vendor, they will have problems as well.
 
 ----------------------------------------------------
 OGC Web Feature Service (WFS)
