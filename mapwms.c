@@ -369,6 +369,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int stylesfound = 0;
   int sldfound = 0;
 
+  char *request = NULL;
+
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
 
@@ -381,6 +383,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
    for(i=0; map && i<numentries; i++)
    {
     /* getMap parameters */
+
+    if (strcasecmp(names[i], "REQUEST") == 0)
+    {
+      request = values[i];
+    }
 
     /* check if SLD is passed.  If yes, check for OGR support */
     if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0)
@@ -845,40 +852,42 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       map->extent.maxy -= dy*0.5;
   }
 
-  if (srsfound == 0)
-  {
-    msSetError(MS_WMSERR, "Missing required parameter SRS", "msWMSLoadGetMapParams()");
-    return msWMSException(map, nVersion, "MissingParameterValue");
-  }
+  if (strcasecmp(request, "DescribeLayer") != 0) {
+    if (srsfound == 0)
+    {
+      msSetError(MS_WMSERR, "Missing required parameter SRS %s", "msWMSLoadGetMapParams()", request);
+      return msWMSException(map, nVersion, "MissingParameterValue");
+    }
 
-  if (bboxfound == 0)
-  {
-    msSetError(MS_WMSERR, "Missing required parameter BBOX", "msWMSLoadGetMapParams()");
-    return msWMSException(map, nVersion, "MissingParameterValue");
-  }
+    if (bboxfound == 0)
+    {
+      msSetError(MS_WMSERR, "Missing required parameter BBOX", "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, "MissingParameterValue");
+    }  
 
-  if (formatfound == 0)
-  {
-    msSetError(MS_WMSERR, "Missing required parameter FORMAT", "msWMSLoadGetMapParams()");
-    return msWMSException(map, nVersion, "MissingParameterValue");
-  }
+    if (formatfound == 0)
+    {
+      msSetError(MS_WMSERR, "Missing required parameter FORMAT", "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, "MissingParameterValue");
+    }
 
-  if (widthfound == 0)
-  {
-    msSetError(MS_WMSERR, "Missing required parameter WIDTH", "msWMSLoadGetMapParams()");
-    return msWMSException(map, nVersion, "MissingParameterValue");
-  }
+    if (widthfound == 0)
+    {
+      msSetError(MS_WMSERR, "Missing required parameter WIDTH", "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, "MissingParameterValue");
+    }
 
-  if (heightfound == 0)
-  {
-    msSetError(MS_WMSERR, "Missing required parameter HEIGHT", "msWMSLoadGetMapParams()");
-    return msWMSException(map, nVersion, "MissingParameterValue");
-  }
-
-  if (stylesfound == 0 && sldfound == 0)
-  {
-    msSetError(MS_WMSERR, "Missing required parameter STYLES", "msWMSLoadGetMapParams()");
-    return msWMSException(map, nVersion, "MissingParameterValue");
+    if (heightfound == 0)
+    {
+      msSetError(MS_WMSERR, "Missing required parameter HEIGHT", "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, "MissingParameterValue");
+    }
+  
+    if (stylesfound == 0 && sldfound == 0)
+    {
+      msSetError(MS_WMSERR, "Missing required parameter STYLES", "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, "MissingParameterValue");
+    }
   }
 
   return MS_SUCCESS;
