@@ -1547,7 +1547,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /* check version */
     if (msOWSParseVersionString(pszVersion) != OWS_0_1_2) {
         msSetError(MS_SOSERR, "Version %s not supported.  Supported versions are: %s.",
-                   "msSOSDescribeSensor()", pszVersion, pszSOSVersion);
+                   "msSOSGetObservation()", pszVersion, pszSOSVersion);
         return msSOSException(map, "version", "InvalidParameterValue");
     }
 
@@ -1574,7 +1574,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     if (strcasecmp(pszResponseFormat, pszSOSGetObservationMimeType) != 0) {
         msSetError(MS_SOSERR, "Invalid responseFormat parameter %s.  Allowable values are: %s",
-                   "msSOSDescribeSensor()", pszResponseFormat, pszSOSGetObservationMimeType);
+                   "msSOSGetObservation()", pszResponseFormat, pszSOSGetObservationMimeType);
         return msSOSException(map, "responseformat", "InvalidParameterValue");
     }
 
