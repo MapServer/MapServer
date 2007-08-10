@@ -93,6 +93,7 @@
 #include <ft2build.h>
 #include "agg_font_freetype.h"
 #include "agg_font_cache_manager.h"
+#define LINESPACE 1.33 //space beween text lines... from GD
 
 #ifdef CPL_MSB
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
@@ -560,10 +561,7 @@ public:
         mtx *= agg::trans_affine_translation(-x,-y);
         mtx *= agg::trans_affine_rotation(-angle);
         mtx *= agg::trans_affine_translation(x,y);
-        if(isMarker) {
-            x-=size/2.; //TODO: try to center the font on the point. this isn't perfect
-            y+=size/2.;
-        }
+        
         if(!m_feng.load_font(font, 0, agg::glyph_ren_outline))
         {
             return MS_FAILURE;
@@ -578,12 +576,24 @@ public:
         font_contour_type m_contour(m_curves);
         m_contour.width(0.0);
         const agg::glyph_cache* glyph;
+        
+        if(isMarker) {
+            /* adjust center wrt the size of the glyph
+             * bounds are given in integer coordinates around (0,0)
+             * the y axis is flipped
+             */
+            glyph=m_fman.glyph(thechars[0]);
+            x-=glyph->bounds.x1+(glyph->bounds.x2-glyph->bounds.x1)/2.;
+            y+=-glyph->bounds.y2+ (glyph->bounds.y2-glyph->bounds.y1)/2.;
+        }
         int unicode;
         double fx=x,fy=y;
         const char *utfptr=thechars;
         if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
             ras_aa.reset();
             while(*utfptr) {
+                if(*utfptr=='\r') {fx=x;utfptr++;continue;}
+                if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
                 if(isUTF8Encoded)
                     utfptr+=msUTF8ToUniChar(utfptr, &unicode);
                 else {
@@ -610,6 +620,8 @@ public:
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
             ras_aa.reset();
             while(*utfptr) {
+                if(*utfptr=='\r') {fx=x;utfptr++;continue;}
+                if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
                 if(isUTF8Encoded)
                     utfptr+=msUTF8ToUniChar(utfptr, &unicode);
                 else {
@@ -641,6 +653,8 @@ public:
         if(color!=NULL && MS_VALID_COLOR(*color)) {
             ras_aa.reset();
             while(*utfptr) {
+                if(*utfptr=='\r') {fx=x;utfptr++;continue;}
+                if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
                 if(isUTF8Encoded)
                     utfptr+=msUTF8ToUniChar(utfptr, &unicode);
                 else {
