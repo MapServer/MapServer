@@ -438,24 +438,10 @@ public:
     }
     
     template<class VertexSource1>
-        void renderPathTruetypeTiled(VertexSource1 &shape, char *font, int glyphUnicode,
-                double glyphheight,
-                int tilewidth, int tileheight, colorObj *color, colorObj *backgroundcolor,
-                colorObj *outlinecolor) 
-    {
-        ras_aa.reset();
-        agg::int8u*           m_pattern;
-        agg::rendering_buffer m_pattern_rbuf;
-        m_pattern = new agg::int8u[tilewidth * tileheight * 4];
-        m_pattern_rbuf.attach(m_pattern, tilewidth,tileheight, tilewidth*4);
-
-        GDpixfmt pixf(m_pattern_rbuf);
-        agg::renderer_base<GDpixfmt> rb(pixf);
-        agg::renderer_scanline_aa_solid<agg::renderer_base<GDpixfmt> > rs(rb);
-        if(backgroundcolor!=NULL && MS_VALID_COLOR(*backgroundcolor))
-            rb.clear(msToAGGColor(backgroundcolor));
-        else
-            rb.clear(agg::rgba(0,0,0,0));
+            void renderPathTruetypeTiled(VertexSource1 &shape, char *font, int glyphUnicode,
+                    double glyphheight, double gap, colorObj *color, colorObj *backgroundcolor,
+                    colorObj *outlinecolor) 
+        {
         if(!m_feng.load_font(font, 0, agg::glyph_ren_outline))
             return;
         m_feng.hinting(true);
@@ -467,32 +453,51 @@ public:
         m_contour.width(0.0);
         const agg::glyph_cache* glyph=m_fman.glyph(glyphUnicode);
         if(!glyph) return;
-        double fy=(tileheight+glyphheight)/2.;
-        double fx=(tilewidth-glyph->advance_x)/2.;
-        if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
+        int gw=glyph->bounds.x2-glyph->bounds.x1,
+            gh=glyph->bounds.y2-glyph->bounds.y1;
+        int tilewidth=MS_NINT(gw+gap)+1,
+            tileheight=MS_NINT(gh+gap)+1;
+        
             ras_aa.reset();
-            m_fman.init_embedded_adaptors(glyph,fx,fy);
-            for(int i=-1;i<=1;i++)
-                for(int j=-1;j<=1;j++) {
-                    if(i||j) { 
-                        agg::trans_affine_translation tr(i,j);
-                        agg::conv_transform<font_contour_type, agg::trans_affine> trans_contour(m_contour, tr);
-                        ras_aa.add_path(trans_contour);
+            agg::int8u*           m_pattern;
+            agg::rendering_buffer m_pattern_rbuf;
+            m_pattern = new agg::int8u[tilewidth * tileheight * 4];
+            m_pattern_rbuf.attach(m_pattern, tilewidth,tileheight, tilewidth*4);
+
+            GDpixfmt pixf(m_pattern_rbuf);
+            agg::renderer_base<GDpixfmt> rb(pixf);
+            agg::renderer_scanline_aa_solid<agg::renderer_base<GDpixfmt> > rs(rb);
+            if(backgroundcolor!=NULL && MS_VALID_COLOR(*backgroundcolor))
+                rb.clear(msToAGGColor(backgroundcolor));
+            else
+                rb.clear(agg::rgba(0,0,0,0));
+            
+            double fy=(tileheight+gh)/2.;
+            double fx=(tilewidth-gw)/2.;
+            if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
+                ras_aa.reset();
+                m_fman.init_embedded_adaptors(glyph,fx,fy);
+                for(int i=-1;i<=1;i++)
+                    for(int j=-1;j<=1;j++) {
+                        if(i||j) { 
+                            agg::trans_affine_translation tr(i,j);
+                            agg::conv_transform<font_contour_type, agg::trans_affine> trans_contour(m_contour, tr);
+                            ras_aa.add_path(trans_contour);
+                        }
                     }
-                }
-            rs.color(msToAGGColor(outlinecolor));
-            agg::render_scanlines(ras_aa, sl, rs);
+                rs.color(msToAGGColor(outlinecolor));
+                agg::render_scanlines(ras_aa, sl, rs);
+            }
+            if(color!=NULL && MS_VALID_COLOR(*color)) {
+                ras_aa.reset();
+                m_fman.init_embedded_adaptors(glyph,fx,fy);
+                ras_aa.add_path(m_contour);
+                rs.color(msToAGGColor(color));
+                agg::render_scanlines(ras_aa, sl, rs);
+            }
+            renderPathTiledPixmapBGRA(shape,m_pattern_rbuf);
+            delete[](m_pattern);
         }
-        if(color!=NULL && MS_VALID_COLOR(*color)) {
-            ras_aa.reset();
-            m_fman.init_embedded_adaptors(glyph,fx,fy);
-            ras_aa.add_path(m_contour);
-            rs.color(msToAGGColor(color));
-            agg::render_scanlines(ras_aa, sl, rs);
-        }
-        renderPathTiledPixmapBGRA(shape,m_pattern_rbuf);
-        delete[](m_pattern);
-    }
     
     
 
@@ -1553,26 +1558,11 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         break;
         case MS_SYMBOL_TRUETYPE: {
             char *font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
-            int bbox[8];
-            if(gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, symbol->character)) {
-                printf("error string size\n");
+            if(!font)
                 return;
-            }
-                
-            /*bbox values:
-             *0    lower left corner, X position
-             *1    lower left corner, Y position
-             *2    lower right corner, X position
-             *3    lower right corner, Y position
-             *4    upper right corner, X position
-             *5    upper right corner, Y position
-             *6    upper left corner, X position
-             *7    upper left corner, Y position
-             */
-            int pw = MS_NINT(bbox[2]-bbox[0]+symbol->gap*size);
-            int ph = MS_NINT(bbox[1]-bbox[5]+symbol->gap*size);
-            ren.renderPathTruetypeTiled(polygon,font,(unsigned int)((unsigned char)symbol->character[0]),size,pw,ph,
-                    &(style->color),&(style->backgroundcolor),&(style->outlinecolor));
+            double gap=(symbol->gap>0)?symbol->gap*size:0;
+            ren.renderPathTruetypeTiled(polygon,font,(unsigned int)((unsigned char)symbol->character[0]),size,
+                    gap,&(style->color),&(style->backgroundcolor),&(style->outlinecolor));
             ren.renderPathSolid(polygon,NULL,&(style->backgroundcolor),1);
         }
         break;
