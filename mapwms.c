@@ -361,6 +361,14 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
    int timerequest = 0;
    char *stime = NULL;
 
+  int srsfound = 0;
+  int bboxfound = 0;
+  int formatfound = 0;
+  int widthfound = 0;
+  int heightfound = 0;
+  int stylesfound = 0;
+  int sldfound = 0;
+
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
 
@@ -377,6 +385,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     /* check if SLD is passed.  If yes, check for OGR support */
     if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0)
     {
+      sldfound = 1;
       if (ogrEnabled == 0)
       {
         msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
@@ -448,10 +457,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       msFreeCharArray(layers, numlayers);
     }
     else if (strcasecmp(names[i], "STYLES") == 0) {
+        stylesfound = 1;
         styles = values[i];
 
     }
     else if (strcasecmp(names[i], "SRS") == 0) {
+      srsfound = 1;
       /* SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0" */
       if (strncasecmp(values[i], "EPSG:", 5) == 0)
       {
@@ -496,6 +507,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     else if (strcasecmp(names[i], "BBOX") == 0) {
       char **tokens;
       int n;
+      bboxfound = 1;
       tokens = msStringSplit(values[i], ',', &n);
       if (tokens==NULL || n != 4) {
         msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.",
@@ -521,13 +533,15 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       adjust_extent = MS_TRUE;
     }
     else if (strcasecmp(names[i], "WIDTH") == 0) {
+      widthfound = 1;
       map->width = atoi(values[i]);
     }
     else if (strcasecmp(names[i], "HEIGHT") == 0) {
+      heightfound = 1;
       map->height = atoi(values[i]);
     }
     else if (strcasecmp(names[i], "FORMAT") == 0) {
-
+      formatfound = 1;
       format = msSelectOutputFormat( map, values[i] );
 
       if( format == NULL || 
@@ -831,10 +845,44 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       map->extent.maxy -= dy*0.5;
   }
 
+  if (srsfound == 0)
+  {
+    msSetError(MS_WMSERR, "Missing required parameter SRS", "msWMSLoadGetMapParams()");
+    return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+
+  if (bboxfound == 0)
+  {
+    msSetError(MS_WMSERR, "Missing required parameter BBOX", "msWMSLoadGetMapParams()");
+    return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+
+  if (formatfound == 0)
+  {
+    msSetError(MS_WMSERR, "Missing required parameter FORMAT", "msWMSLoadGetMapParams()");
+    return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+
+  if (widthfound == 0)
+  {
+    msSetError(MS_WMSERR, "Missing required parameter WIDTH", "msWMSLoadGetMapParams()");
+    return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+
+  if (heightfound == 0)
+  {
+    msSetError(MS_WMSERR, "Missing required parameter HEIGHT", "msWMSLoadGetMapParams()");
+    return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+
+  if (stylesfound == 0 && sldfound == 0)
+  {
+    msSetError(MS_WMSERR, "Missing required parameter STYLES", "msWMSLoadGetMapParams()");
+    return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+
   return MS_SUCCESS;
 }
-
-
 
 /*
 **
