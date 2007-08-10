@@ -1888,7 +1888,37 @@ int msDrawLabelCacheAGG(imageObj *image, mapObj *map)
             if ( cachePtr->labelpath ) {
                 msDrawTextLineAGG(image, cachePtr->text, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); /* Draw the curved label */
             } else {
-                msDrawTextAGG(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
+                //don't use drawtextagg but direct rendering calls, to leverage the font cache
+                //msDrawTextAGG(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
+                if(labelPtr->type == MS_TRUETYPE) {
+                    char *font=NULL;
+                    double angle_radians = MS_DEG_TO_RAD*labelPtr->angle;
+                    double size;
+
+                    size = labelPtr->size*layerPtr->scalefactor;
+                    size = MS_MAX(size, labelPtr->minsize);
+                    size = MS_MIN(size, labelPtr->maxsize);
+
+                    if(!labelPtr->font) {
+                        msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawLabelCacheAGG()");
+                        return(-1);
+                    }
+
+                    font = msLookupHashTable(&(map->fontset.fonts), labelPtr->font);
+                    if(!font) {
+                        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawLabelCacheAGG()", labelPtr->font);
+                        return(-1);
+                    }
+
+                    ren.renderGlyphs(p.x,p.y,&(labelPtr->color),&(labelPtr->outlinecolor),size,
+                            font,cachePtr->text,angle_radians,
+                            &(labelPtr->shadowcolor),labelPtr->shadowsizex,labelPtr->shadowsizey,
+                            false,
+                            (labelPtr->encoding!=NULL));
+                }
+                else {
+                    msDrawTextGD(image->img.gd, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor);
+                }
             }
 
         } /* next label */
