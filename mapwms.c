@@ -2376,11 +2376,14 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   const char *pszOnlineResMapWCS = NULL, *pszOnlineResLyrWCS = NULL;
   char *pszOnlineResEncoded=NULL, *pszLayerName=NULL;
   char *schemalocation = NULL;
+  char *version = NULL;
 
    for(i=0; map && i<numentries; i++) {
      if(strcasecmp(names[i], "LAYERS") == 0) {
-
       layers = msStringSplit(values[i], ',', &numlayers);
+     }
+     if(strcasecmp(names[i], "VERSION") == 0) {
+      version = values[i];
      }
    }
 
@@ -2392,7 +2395,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
    msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"%s/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n", schemalocation);
    free(schemalocation);
 
-   msIO_printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
+   msIO_printf("<WMS_DescribeLayerResponse version=\"%s\" >\n", version);
 
    /* check if map-level metadata wfs(wcs)_onlineresource is available */
    pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata), "FO", "onlineresource");
