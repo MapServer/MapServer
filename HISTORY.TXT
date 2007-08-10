@@ -12,9 +12,12 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
-- Added truetype symbolization for lines and polygons
+- GD: Truetype line symbolization should follow line orientation only
+  if GAP is <=0
 
-- Draw an outline of size 1 of the fill color around polygons if an
+- AGG: Added truetype symbolization for lines and polygons
+
+- AGG: Draw an outline of size 1 of the fill color around polygons if an
   outlinecolor isn't specified (avoids faint outline) 
 
 - Added summary of options at end of configure output (#1966)

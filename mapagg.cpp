@@ -1278,11 +1278,10 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
       label.angle = MS_RAD_TO_DEG * theta;
 
       in = 0;
+      double finalangle = rot?theta+styleangle:styleangle;
       while(current_length <= length) {
         point.x = p->line[i].point[j-1].x + current_length*rx;
         point.y = p->line[i].point[j-1].y + current_length*ry;
-        
-        double finalangle = rot?theta+styleangle:styleangle;
         
         label_point = get_metrics(&point, (rot)?MS_CC:symbol->position, label_rect, 0, 0, finalangle*MS_RAD_TO_DEG, 0, NULL);
         ren.renderGlyphs(label_point.x,label_point.y,&(label.color),&(label.outlinecolor),label.size,
