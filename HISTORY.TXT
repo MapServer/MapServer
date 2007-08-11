@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+
+- Support unicode attributes for ArcSDE 9.2 and above (#2225)
+
 - GD: Truetype line symbolization should follow line orientation only
   if GAP is <=0
 
