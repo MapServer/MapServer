@@ -731,13 +731,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 status = SE_stream_get_nstring( sde->connPoolInfo->stream, 
                                                 (short) (i+1), 
                                                 wide);
-
-                // hammer the wide character to narrow
-                // FIXME: do the right thing when MapServer becomes more 
-                // unicode aware.
-                wcstombs(   shape->values[i], 
-                            (const wchar_t*) wide,
-                            (size_t)strlen(shape->values[i])); 
+                shape->values[i] = msGetEncodedString((const char*)wide, "UTF-16");
                 msFree(wide);
                 if(status == SE_NULL_VALUE)
                     shape->values[i][0] = '\0'; /* empty string */
