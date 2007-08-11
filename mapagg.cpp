@@ -2169,7 +2169,8 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
 void msFreeImageAGG(imageObj *img)
 {
     delete (mapserv_row_ptr_cache<int>  *)img->imageextra;
-    msFreeImageGD(img->img.gd);
+    if( img->img.gd != NULL )
+        msFreeImageGD(img->img.gd);
 }
 
 void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
