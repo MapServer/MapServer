@@ -84,6 +84,7 @@ class OWSRequestTestCase(MapTestCase):
         request.setParameter("SRS", "EPSG:4326")
         request.setParameter("HEIGHT", "60")
         request.setParameter("WIDTH", "60")
+        request.setParameter("STYLES", "")
         for i in range(self.map.numlayers):
             self.map.getLayer(i).status = mapscript.MS_ON
         status = self.map.loadOWSParameters(request)
