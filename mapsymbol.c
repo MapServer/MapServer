@@ -872,7 +872,7 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     }
 
     if ((stream = fopen(filename, "rb")) == NULL) {
-          msSetError(MS_IOERR, "Error opening image file %s.", "msLoadImageSymbol()");
+          msSetError(MS_IOERR, "Error opening image file %s.", "msLoadImageSymbol()", filename);
           return MS_FAILURE;
     }
 
@@ -1275,7 +1275,8 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       gdFree(newSymbol->img);
       if (gdImageTrueColor(symbol->img)) {
 	newSymbol->img = gdImageCreateTrueColor(width, height);
-	gdImageAlphaBlending(newSymbol->img, 0);
+        gdImageColorTransparent(newSymbol->img, gdImageGetTransparent(symbol->img)); 
+        gdImageAlphaBlending(newSymbol->img, 0); 
       } else {
 	newSymbol->img = gdImageCreate(width, height);	
       }
