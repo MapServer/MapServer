@@ -48,6 +48,13 @@ performance module.  ::
 
     $ swig -python -shadow -modern -o mapscript_wrap.c ../mapscript.i
 
+If you have SWIG version 1.3.31 or greater, you can add in some of SWIG's 
+optimizations to squeeze more performance out of the bindings ::
+
+    $ swig -python -shadow -modern -templatereduce -fastdispatch -fvirtual -fastproxy 
+      -modernargs -castmode -dirvtable -fastinit -fastquery -noproxydel -nobuildnone 
+      -o mapscript_wrap.c ../mapscript.i
+    
 Testing
 -------
 
