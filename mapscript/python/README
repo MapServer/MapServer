@@ -5,8 +5,8 @@ Python MapScript for MapServer 4.4 README
 
 :Author: Sean Gillies
 :Contact: sgillies@frii.com
-:Revision: $Revision$
-:Date: $Date$
+:Revision: $Revision: 6560 $
+:Date: $Date: 2007-08-11 21:41:45 -0500 (Sat, 11 Aug 2007) $
 
 The Python mapscript module provides users an interface to MapServer
 classes on any platform, and has been well tested on Python versions
