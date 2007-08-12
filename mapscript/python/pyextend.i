@@ -300,19 +300,19 @@ def fromstring(data, mappath=None):
     {
         FILE *stream;
         gdIOCtx *ctx;
-        unsigned char *imgbuffer;
+        unsigned char *imgbuffer=NULL;
         int imgsize;
         PyObject *noerr;
         int retval=MS_FAILURE;
        
         /* Return immediately if image driver is not GD */
-        if ( !MS_DRIVER_GD(self->format) )
+        if ( !(MS_DRIVER_GD(self->format) || MS_DRIVER_AGG(self->format)) )
         {
             msSetError(MS_IMGERR, "Writing of %s format not implemented",
                        "imageObj::write", self->format->driver);
             return MS_FAILURE;
         }
-
+ 
         if (file == Py_None) /* write to stdout */
         {
             ctx = msNewGDFileCtx(stdout);
@@ -328,8 +328,17 @@ def fromstring(data, mappath=None):
         }
         else /* presume a Python file-like object */
         {
-            imgbuffer = msSaveImageBufferGD(self->img.gd, &imgsize,
-                                            self->format);
+            if( MS_DRIVER_GD(self->format) )
+                imgbuffer = msSaveImageBufferGD(self->img.gd, &imgsize,
+                                                self->format);
+#ifdef USE_AGG
+            else if( MS_DRIVER_AGG(self->format) )
+            {
+                imgbuffer = msSaveImageBufferAGG(   self->img.gd, &buffer.size,
+                                                    self->format);
+            }
+#endif  
+
             if (imgsize == 0)
             {
                 msSetError(MS_IMGERR, "failed to get image buffer", "write()");
