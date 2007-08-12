@@ -7,16 +7,27 @@
 #
 # INSTALL (usually as root)
 #   python setup.py install
+# 
+# DEVELOP (build and run in place)
+#   python setup.py develop
 
-# Try setuptools, fall back on distutils.core
-#try:
-#    from setuptools import setup, Extension
-#except ImportError:
-#    from distutils.core import setup, Extension
+import sys
+
+try:
+    first_arg = sys.argv[1].upper()
+except:
+    first_arg = None
+
+if first_arg:
+    if first_arg =='DEVELOP':
+        from setuptools import setup, Extension
+    else:
+        from distutils.core import setup, Extension
+else:
+    from distutils.core import setup, Extension
 
 from distutils import sysconfig
 
-from distutils.core import setup, Extension
 
 import sys
 import os.path
@@ -24,19 +35,19 @@ import string
 
 # Function needed to make unique lists.
 def unique(list):
-  dict = {}
-  for item in list:
-    dict[item] = ''
-  return dict.keys()
+    dict = {}
+    for item in list:
+        dict[item] = ''
+    return dict.keys()
 
 # Should be created by the mapserver build process.
 mapscriptvars = "../../mapscriptvars"
 
 # Open and read lines from mapscriptvars.
 try:
-	fp = open(mapscriptvars, "r")
+    fp = open(mapscriptvars, "r")
 except IOError, e:
-	raise IOError, '%s. %s' % (e, "Has MapServer been made?")
+    raise IOError, '%s. %s' % (e, "Has MapServer been made?")
 
 ms_install_dir = fp.readline()
 ms_macros = fp.readline()
@@ -47,11 +58,11 @@ ms_extra_libraries = fp.readline()
 # Get mapserver version from mapscriptvars, which contains a line like
 # 
 # MS_VERSION "4.x.y"
-ms_version = '4.11' # the default
+ms_version = '5.0' # the default
 ms_version_line = fp.readline()
 if ms_version_line:
-	ms_version = ms_version_line.split()[2]
-	ms_version = ms_version.replace('"', '')
+    ms_version = ms_version_line.split()[2]
+    ms_version = ms_version.replace('"', '')
 	
 # Distutils wants a list of library directories and
 # a seperate list of libraries.  Create both lists from
