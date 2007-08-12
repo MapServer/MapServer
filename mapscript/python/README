@@ -1,8 +1,10 @@
 .. $Id$
 
-Python MapScript for MapServer 4.4 README
+Python MapScript for MapServer 5.0 README
 ================================================================
 
+:Author: Howard Butler
+:Contact: hobu.inc@gmail.com
 :Author: Sean Gillies
 :Contact: sgillies@frii.com
 :Revision: $Revision: 6560 $
@@ -10,7 +12,7 @@ Python MapScript for MapServer 4.4 README
 
 The Python mapscript module provides users an interface to MapServer
 classes on any platform, and has been well tested on Python versions
-2.1-2.3.4.
+2.2-2.4.
 
 
 Building the Mapscript Module
@@ -35,7 +37,7 @@ Building C Extension Wrappers
 If you are building the mapscript module from CVS, not from a release, the
 C extension wrappers will be absent and must then be generated using SWIG,
 the Simplified Wrapper and Interface Generator, http://www.swig.org.  SWIG
-version 1.3.19 or higher is recommended.
+version 1.3.29 or higher is recommended.
 
 From the mapscript/python directory execute
 ::
