@@ -1058,7 +1058,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   status = -1;
 
   while (len > 0){
-    status = iconv(cd, &inp, &len, &outp, &bufleft);
+    status = iconv(cd, (char**) &inp, &len, &outp, &bufleft);
     if(status == -1){
       msFree(out);
       iconv_close(cd);
