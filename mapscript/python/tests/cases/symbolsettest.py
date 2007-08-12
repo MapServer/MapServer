@@ -119,6 +119,24 @@ class MapSymbolSetTestCase(MapTestCase):
         """expect index of 'circle' symbol to be 1 in test fixture symbolset"""
         i = self.map.symbolset.index('circle')
         assert i == 1, i
+
+    def testBug1962(self):
+        """resetting imagepath doesn't cause segfault"""
+        layer = self.map.getLayerByName('POINT')
+        style0 = layer.getClass(0).getStyle(0)
+        sym0 = style0.symbol
+        sym1 = self.map.symbolset.getSymbol(sym0)
+        sym2 = mapscript.symbolObj('xxx')
+        sym1.setImagepath(XMARKS_IMAGE)
+        self.assertRaises(IOError, sym1.setImagepath, '/bogus/new_symbols.txt')
+
+        msimg = self.map.draw()
+        assert msimg.thisown == 1
+        data = msimg.getBytes()
+        filename = 'testBug1962.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
         
     def testDrawNewSymbol(self):
         """draw using a new symbol added to the fixture"""
