@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Do not use case sensitive searches in string2list, which is used
+  for msWhichItems (#2067)
+
 - Ensure that we can write AGG images with Python MapScript's write() method
 
 - Support unicode attributes for ArcSDE 9.2 and above (#2225)
