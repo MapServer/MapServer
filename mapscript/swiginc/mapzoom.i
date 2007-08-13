@@ -69,8 +69,8 @@
    
         dfDeltaX = poGeorefExt->maxx - poGeorefExt->minx;
         dfDeltaY = poGeorefExt->maxy - poGeorefExt->miny;
-        dX = dfDeltaX/(double)width;
-        dY = dfDeltaY/(double)height;
+        dX = dfDeltaX/((double)width);
+        dY = dfDeltaY/((double)height);
         dfGeoPosX = poGeorefExt->minx + dX * (double)poPixPos->x;
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
         
@@ -259,8 +259,8 @@
         
         dfDeltaX = poGeorefExt->maxx - poGeorefExt->minx;
         dfDeltaY = poGeorefExt->maxy - poGeorefExt->miny;
-        dX = dfDeltaX/(double)width;
-        dY = dfDeltaY/(double)height;
+        dX = dfDeltaX/((double)width);
+        dY = dfDeltaY/((double)height);
 
         oNewGeorefExt.minx = poGeorefExt->minx + dX * (double)poPixRect->minx;
         oNewGeorefExt.miny = poGeorefExt->maxy - dY * (double)poPixRect->miny;
@@ -420,8 +420,8 @@
    
         dfDeltaX = poGeorefExt->maxx - poGeorefExt->minx;
         dfDeltaY = poGeorefExt->maxy - poGeorefExt->miny;
-        dX = dfDeltaX/(double)width;
-        dY = dfDeltaY/(double)height;
+        dX = dfDeltaX/((double)width);
+        dY = dfDeltaY/((double)height);
         dfGeoPosX = poGeorefExt->minx + dX * (double)poPixPos->x;
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
         
