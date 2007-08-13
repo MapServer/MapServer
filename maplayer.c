@@ -260,7 +260,7 @@ static int string2list(char **list, int *listsize, char *string)
   int i;
 
   for(i=0; i<(*listsize); i++)
-    if(strcmp(list[i], string) == 0) { 
+    if(strcasecmp(list[i], string) == 0) { 
         /* printf("string2list (duplicate): %s %d\n", string, i); */
       return(i);
     }
