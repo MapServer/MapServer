@@ -151,7 +151,8 @@ imageObj *msDrawScalebar(mapObj *map)
   double i, msx;
   int j;
   int isx, sx, sy, ox, oy, state, dsx;
-  pointObj p;
+  pointObj p,p2;
+  rectObj r;
   gdFontPtr fontPtr = NULL;
   imageObj      *image = NULL;
   outputFormatObj *format = NULL;
@@ -251,14 +252,7 @@ imageObj *msDrawScalebar(mapObj *map)
                        MS_NOOVERRIDE );
 
    /* create image */
-#ifdef USE_AGG
-  if( MS_RENDERER_AGG(map->outputformat) ){
-      image = msImageCreateAGG(map->scalebar.width, sy, format,
-              map->web.imagepath, map->web.imageurl);
-  msAlphaGD2AGG(image);}
-  else
-#endif
-      image = msImageCreateGD(map->scalebar.width, sy, format,
+  image = msImageCreateGD(map->scalebar.width, sy, format,
                           map->web.imagepath, map->web.imageurl);
 
   /* drop this reference to output format */
@@ -306,8 +300,10 @@ imageObj *msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      /* TODO */
-      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
+      if(msGetLabelSize(label,&(map->scalebar.label), &r, 
+              &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
+      p2 = get_metrics(&p, MS_CC, r, 0,0, 0, 0, NULL);
+      msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);
 
       state = -state;
     }
@@ -317,8 +313,11 @@ imageObj *msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    /* TODO */
-    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
+    if(msGetLabelSize(label,&(map->scalebar.label), &r, 
+            &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
+    p2 = get_metrics(&p, MS_CR, r, 0,0, 0, 0, NULL);
+    msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);
+
     break;
 
   case(1):
@@ -334,8 +333,10 @@ imageObj *msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      /* TODO */
-      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
+      if(msGetLabelSize(label,&(map->scalebar.label), &r, 
+              &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
+      p2 = get_metrics(&p, MS_CC, r, 0,0, 0, 0, NULL);
+      msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);
 
       state = -state;
     }
@@ -348,8 +349,11 @@ imageObj *msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    /* TODO */
-    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
+    if(msGetLabelSize(label,&(map->scalebar.label), &r, 
+            &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
+    p2 = get_metrics(&p, MS_CR, r, 0,0, 0, 0, NULL);
+    msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);
+
     break;
   default:
     msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
@@ -362,10 +366,6 @@ imageObj *msDrawScalebar(mapObj *map)
   msClearScalebarPenValues( &(map->scalebar));
 
   if( iFreeGDFont ) free( fontPtr );
-#ifdef USE_AGG
-  if( MS_RENDERER_AGG(map->outputformat) )
-      msAlphaAGG2GD(image);
-#endif
   return(image);
 
 }
