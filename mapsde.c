@@ -1923,7 +1923,7 @@ short nbasecol, njoincol;
     
     if (!(layer->items)) {
         // gather up all of the column names and put them onto layer->items
-        layer->items = (char **)malloc(layer->numitems*sizeof(char *));
+        layer->items = (char **)malloc(layer->numitems*sizeof(char *)+10);
         if(!layer->items) {
             msSetError( MS_MEMERR, 
                     "Error allocating layer items array.",  
