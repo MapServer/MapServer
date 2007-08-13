@@ -813,7 +813,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     double size, d, angle, angle_radians,width;
 
     if(!p) return;
-
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     symbol = symbolset->symbol[style->symbol];
 
     /**
@@ -981,6 +981,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     if(!p) return;
     bool bRotated=false;
     double d;
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     symbolObj *symbol = symbolset->symbol[style->symbol];
 
     ox = style->offsetx; /* TODO: add scaling? */
@@ -1004,8 +1005,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     angle = (style->angle) ? style->angle : 0.0;
     angle_radians = angle*MS_DEG_TO_RAD;
 
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
-    if(!MS_VALID_COLOR(style->color) && !MS_VALID_COLOR(style->outlinecolor)<0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
+   if(!MS_VALID_COLOR(style->color) && !MS_VALID_COLOR(style->outlinecolor)<0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
     if(size < 1) return; /* size too small */
 
     if(style->symbol == 0) { /* simply draw a circle of the specified color */
@@ -1316,6 +1316,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     symbolObj *symbol;
     AGGMapserverRenderer ren(image);
     colorObj *color;
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     symbol = symbolset->symbol[style->symbol];
     if(p->numlines==0)
         return;
@@ -1411,6 +1412,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 /* ------------------------------------------------------------------------------- */
 void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor)
 {
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     if(p->numlines==0) return;
     symbolObj *symbol = symbolset->symbol[style->symbol];;
     if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolAGG() instead (POLYLINE) */
@@ -1444,7 +1446,6 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     ox = style->offsetx*scalefactor; /* should we scale the offsets? */
     oy = style->offsety*scalefactor;
 
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     if(!MS_VALID_COLOR(style->color) && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
     if(size < 1) return; /* size too small */
 
