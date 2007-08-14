@@ -47,6 +47,7 @@ MS_CVSID("$Id$")
 
 extern int msyyparse(void);
 extern int msyylex(void);
+extern int msyylex_destroy(void);
 extern char *msyytext;
 
 extern int msyyresult; /* result of parsing, true/false */
