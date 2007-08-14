@@ -334,7 +334,7 @@ def fromstring(data, mappath=None):
 #ifdef USE_AGG
             else if( MS_DRIVER_AGG(self->format) )
             {
-                imgbuffer = msSaveImageBufferAGG(   self->img.gd, &buffer.size,
+                imgbuffer = msSaveImageBufferAGG(   self->img.gd, &imgsize,
                                                     self->format);
             }
 #endif  
