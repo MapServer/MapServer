@@ -1268,10 +1268,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       if(status != MS_SUCCESS) return(status);
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
-      itemList = msGMLGetItems(lp, namespaces);
-      constantList = msGMLGetConstants(lp, namespaces);
-      groupList = msGMLGetGroups(lp, namespaces);      
-      geometryList = msGMLGetGeometries(lp, namespaces);
+      itemList = msGMLGetItems(lp, "G");
+      constantList = msGMLGetConstants(lp, "G");
+      groupList = msGMLGetGroups(lp, "G");      
+      geometryList = msGMLGetGeometries(lp, "G");
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -1433,10 +1433,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       }
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
-      itemList = msGMLGetItems(lp, "OFG");
-      constantList = msGMLGetConstants(lp, "OFG");
-      groupList = msGMLGetGroups(lp, "OFG");
-      geometryList = msGMLGetGeometries(lp, "OFG");
+      itemList = msGMLGetItems(lp, "G");
+      constantList = msGMLGetConstants(lp, "G");
+      groupList = msGMLGetGroups(lp, "G");
+      geometryList = msGMLGetGeometries(lp, "G");
 
       if (namespace_prefix) {
         layerName = (char *) malloc(strlen(namespace_prefix)+strlen(lp->name)+2);

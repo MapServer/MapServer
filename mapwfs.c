@@ -698,7 +698,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   /*
   ** retrieve any necessary external namespace/schema configuration information
   */
-  namespaceList = msGMLGetNamespaces(&(map->web), "OFG");
+  namespaceList = msGMLGetNamespaces(&(map->web), "G");
 
   /*
   ** DescribeFeatureType response
@@ -809,10 +809,10 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
           const char *layer_namespace_prefix;
           char *encoded_type=NULL;
 
-          itemList = msGMLGetItems(lp, "OFG"); /* GML-related metadata */
-          constantList = msGMLGetConstants(lp, "OFG");
-          groupList = msGMLGetGroups(lp, "OFG");
-          geometryList = msGMLGetGeometries(lp, "OFG");
+          itemList = msGMLGetItems(lp, "G"); /* GML-related metadata */
+          constantList = msGMLGetConstants(lp, "G");
+          groupList = msGMLGetGroups(lp, "G");
+          geometryList = msGMLGetGeometries(lp, "G");
 
           value = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
           if(value) 
@@ -1399,7 +1399,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     /*
     ** retrieve any necessary external namespace/schema configuration information
     */
-    namespaceList = msGMLGetNamespaces(&(map->web), "OFG");
+    namespaceList = msGMLGetNamespaces(&(map->web), "G");
 
     msIO_printf("Content-type: text/xml%c%c",10,10);
 
