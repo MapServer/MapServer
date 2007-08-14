@@ -3325,6 +3325,7 @@ void initLegend(legendObj *legend)
   MS_INIT_COLOR(legend->imagecolor, 255,255,255); /* white */
   MS_INIT_COLOR(legend->outlinecolor, -1,-1,-1);
   initLabel(&legend->label);
+  legend->label.position = MS_XY; /* override */
   legend->keysizex = 20;
   legend->keysizey = 10;
   legend->keyspacingx = 5;

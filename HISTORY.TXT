@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed alignment of GetLegendGraphic output when mapfile contains no 
+  legend object (#966)
+
 - Fixed seg. fault when generaing HTML legend for raster layers with no
   classes (#2228)
 
