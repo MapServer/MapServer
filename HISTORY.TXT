@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed seg. fault when generaing HTML legend for raster layers with no
+  classes (#2228)
+
 - Do not use case sensitive searches in string2list, which is used
   for msWhichItems (#2067)
 

@@ -1272,8 +1272,11 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
    while (pszImgTag) {
       int i;
       char szStyleCode[512] = "";
-      classObj *thisClass;
-      thisClass = GET_LAYER(map, nIdxLayer)->class[nIdxClass];
+      classObj *thisClass=NULL;
+
+      /* It's okay to have no classes... we'll generate an empty icon in this case */
+      if (nIdxClass < 0 || nIdxClass > GET_LAYER(map, nIdxLayer)->numclasses)
+          thisClass = GET_LAYER(map, nIdxLayer)->class[nIdxClass];
 
       if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)
         return MS_FAILURE;
@@ -1291,7 +1294,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       /* Create a unique and predictable filename to cache the legend icons.
        * Include some key parameters from the first 2 styles 
        */
-      for(i=0; i<2 && i<thisClass->numstyles; i++) {
+      for(i=0; i<2 && thisClass && i<thisClass->numstyles; i++) {
           styleObj *style;
           char *pszSymbolNameHash = NULL;
           style = thisClass->styles[i];
@@ -1324,8 +1327,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          /* Create an image corresponding to the current class */
           imageObj *img=NULL;
 
-         if (GET_LAYER(map, nIdxLayer)->numclasses <= 0 || 
-             nIdxClass > GET_LAYER(map, nIdxLayer)->numclasses || nIdxClass < 0)
+         if (thisClass == NULL)
          {
              /* Nonexistent class.  Create an empty image */
              img = msCreateLegendIcon(map, NULL, NULL, nWidth, nHeight);
@@ -1333,8 +1335,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          else
          {
             img = msCreateLegendIcon(map, GET_LAYER(map, nIdxLayer), 
-                                     GET_LAYER(map, nIdxLayer)->class[nIdxClass], 
-                                     nWidth, nHeight);
+                                     thisClass, nWidth, nHeight);
          }
 
          if(!img) {
