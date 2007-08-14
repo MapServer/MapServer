@@ -958,7 +958,7 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web, const char *metadata_namesp
   namespaceList->namespaces = NULL;
   namespaceList->numnamespaces = 0; 
 
-  /* list of constants (TODO: make this automatic by parsing metadata) */
+  /* list of namespaces (TODO: make this automatic by parsing metadata) */
   if((value = msOWSLookupMetadata(&(web->metadata), metadata_namespaces, "external_namespace_prefixes")) != NULL) {
     prefixes = msStringSplit(value, ',', &numprefixes);
 
