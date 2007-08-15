@@ -13,6 +13,12 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+
+Version 5.0.0-beta4 (2007-08-15)
+--------------------------------
+
+- Updated msImageCreateAGG to only allow RGB or RGBA pixel models (#2231)
+
 - Fixed problem with symbol.setImagePath() when file doesn't exist (#1962)
 
 - Python MapScript failures (#2230)
@@ -64,6 +70,7 @@ Current Version (SVN Trunk):
  - if styles AND sld are NOT found, throw an exception
  - NOTE: this may cause issues with some existing clients who do not pass
    required parameters
+
 
 Version 5.0.0-beta3 (2007-08-08)
 --------------------------------
