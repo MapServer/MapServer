@@ -79,7 +79,9 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"Invalid rectangle.",
 						"Date/time error.",
 						"GML encoding error.",
-                                                "SOS server error."
+            "SOS server error.",
+						"NULL parent pointer error.",
+            "AGG library error."
 };
 
 #ifndef USE_THREAD
