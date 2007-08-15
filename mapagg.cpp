@@ -813,7 +813,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     double size, d, angle, angle_radians,width;
 
     if(!p) return;
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
+    if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     symbol = symbolset->symbol[style->symbol];
 
     /**
@@ -846,7 +846,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     ellipse.approximation_scale ( 1 );
     circle.concat_path(ellipse);
     circle.transform(agg::trans_affine_translation(style->offsetx,style->offsety));
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+    if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
     if(size < 1) return; /* size too small */
 
     if(style->symbol == 0) { /* solid fill */
@@ -981,7 +981,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     if(!p) return;
     bool bRotated=false;
     double d;
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
+
+    if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     symbolObj *symbol = symbolset->symbol[style->symbol];
 
     ox = style->offsetx; /* TODO: add scaling? */
@@ -1316,8 +1317,10 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     symbolObj *symbol;
     AGGMapserverRenderer ren(image);
     colorObj *color;
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
+
+    if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     symbol = symbolset->symbol[style->symbol];
+
     if(p->numlines==0)
         return;
     if(style->size == -1)
@@ -1412,21 +1415,19 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 /* ------------------------------------------------------------------------------- */
 void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor)
 {
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
+    if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     if(p->numlines==0) return;
+
     symbolObj *symbol = symbolset->symbol[style->symbol];;
     if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolAGG() instead (POLYLINE) */
         msDrawLineSymbolAGG(symbolset, image, p, style, scalefactor);
         return;
     }
 
-
     double ox,oy,size, angle, angle_radians,width;
 
     if(!p) return;
     if(p->numlines <= 0) return;
-
-
 
     if(style->size == -1) {
         size = msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);

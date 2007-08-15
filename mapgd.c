@@ -1112,7 +1112,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   width = MS_MAX(width, style->minwidth);
   width = MS_MIN(width, style->maxwidth);
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+  if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0) return; /* nothing to do */
   if(size < 1) return; /* size too small */
 
@@ -1327,7 +1327,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+  if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
   if(size < 1) return; /* size too small */
 
@@ -1547,7 +1547,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+  if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc<0 && oc<0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
   if(size < 1) return; /* size too small */
 
@@ -1793,7 +1793,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 
   angle = (style->angle) ? style->angle : 0.0;
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+  if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
   if(size < 1) return; /* size too small */
 
@@ -2081,7 +2081,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     return;
   }
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
+  if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
   if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
   if(size < 1) return; /* size too small */
       
