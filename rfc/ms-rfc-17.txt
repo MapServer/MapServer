@@ -1,0 +1,217 @@
+====================================================================
+MS RFC 17: Dynamic Allocation of layers, styles, classes and symbols
+====================================================================
+
+:Date:  2006/05/12
+:Author: Frank Warmerdam, with edits from Daniel Morissette and Umberto Nicoletti
+:Contact: warmerdam@pobox.com, dmorissette@mapgears.com, umberto.nicoletti@gmail.com
+:Last Edited: 2007/07/18
+:Status: Adopted (2007/07/18) - Under development.
+:Version: MapServer 5.0
+
+Purpose
+--------
+
+Modify the MapServer core libraries so that lists of layers, classes
+and styles are dynamic, not fixed to compile limits MS_MAXCLASSES, 
+MS_MAXSTYLES, MS_MAXLAYERS and MS_MAXSYMBOLS.
+
+
+MS_MAXSYMBOLS
+-------------
+
+Change symbolSetObj so that this::
+
+  int numsymbols;
+  symbolObj symbol[MS_MAXSYMBOLS];
+
+becomes::
+
+  int numsymbols;
+  int maxsymbols; 
+  symbolObj **symbol;
+
+Add the following function to ensure there is at least one free entry in 
+the symbol array in the symbolSetObj.  This function will only grow the
+allocated array of pointers if needed (if maxsymbols == numsymbols) and 
+will then allocate a new symbolObj if symbol[numsymbols] == NULL.  The new 
+entries in the array will be set to NULL and the new symbolObj[numsymbols]
+will be all set to zero bytes.  
+
+::
+
+  symbolObj *msGrowSymbolSet( symbolSetObj * );
+
+* Modify all places that add new symbols to call msGrowSymbolsSet() to ensure
+  there is space.  These locations can be fairly easily identified by 
+  greping on MS_MAXSYMBOLS.
+
+* Modify all places that access symbols by index to use the proper way
+  to reference symbols in the new array, possibly using a GET_SYMBOL() macro
+  similar to the GET_LAYER() added in MS-RFC-24 for layers.
+
+* mapsymbol.c: Modify msInitSymbolSet() to initially setup the symbol set with 
+  an array of just one symbol.
+
+* There should be no swig mapscript changes required as it already uses 
+  msAppendSymbol().  
+
+
+MS_MAXLAYERS
+------------
+
+* map.h: Since RFC-24 already converted the array of layers in a mapObj to 
+  an array of pointers, we only need to add "int maxlayers;" to mapObj to 
+  indicate the current allocation size of layers array.  Note that this 
+  also determines the size of the mapObj layerorder array.
+
+* mapdraw.c: Change msDrawMap() to use map->numlayers in place of current 
+  MS_MAXLAYERS for asOWSReqInfo array.
+
+* mapobject.c: Add msGrowMapLayers(mapObj*) function to ensure there is room
+  for at least one more layer on the map.  This grows layers, and layerorder
+  arrays.
+
+* mapobject.c: modify msInsertLayer() and mapscript layer constructor code (see last item) to use msGrowMapLayers().
+
+* mapfile.c: set maxlayers to MS_MAXLAYERS and allocate layers accordingly in
+  initMap().  Use msGrowMapLayers() before calling loadLayer() and 
+  loadLayerValue() when parsing.
+
+* mappluginlayer.c: make dynamic.  I'm not exactly sure what there is a
+  static factory with entries dimensioned by the number of layers. 
+
+* It looks like swig mapscript already has an mapObj.insertLayer() method
+  using msInsertLayer() which should be safe.  Do mapscript applications
+  sometimes just update the layers and numlayers directly?
+  Answer: all layer manipulation
+  is done by the layer constructor (when a not null mapObj is passed as only argument)
+  or by msInsertLayer. Must modify the layer constructor as well.
+
+
+MS_MAXCLASSES
+-------------
+
+* map.h: Add maxclasses field in layerObj (RFC-24 already converted the 
+  array of classes in a layerObj to an array of pointers).
+
+* layerobject.c: Modify msInsertClass() and mapscript constructor code (like for layers) to use msGrowLayerClasses(). 
+
+* layerobject.c: Add msGrowLayerClasses() to ensure there is at least one
+  extra class in the classes list. 
+
+* mapdraw.c: colorbuffer and mindistancebuffer in msDrawQueryLayer() will need
+  to be dynamically sized and allocated on the heap. 
+
+* mapfile.c: initLayer() will need to initialize maxclasses to MS_MAXCLASSES, 
+  and allocate class list accordingly.
+
+* mapogcsld.c: modify to use msGrowLayerClasses() instead of checking limit. 
+
+
+MS_MAXSTYLES
+------------
+
+* map.h: add maxstyles field to classObj (RFC-24 already converted the 
+  array of styles in a classObj to an array of pointers).
+
+* mapfile.c: set maxstyles to MS_MAXSTYLES and allocate accordingly in 
+  initClass().  Use msGrowClassStyles() as apppriate. 
+
+* classoject.c: Add msGrowClassStyles() to ensure there is an unused class. 
+
+* classobject.c: Use msGrowClassStyles() in msInsertStyle() and in the style constructor. 
+
+
+Files and objects affected
+--------------------------
+
+::
+
+ map.h
+ mapfile.c
+ mapsymbol.c
+ mapdraw.c
+ mapobject.c
+ mappluginlayer.c
+ layerobject.c
+ mapogcsld.c 
+ classobject.c
+ mapscript/swiginc/layer.i
+ mapscript/swiginc/class.i
+ mapscript/swiginc/style.i
+
+
+Backwards compatibility issues
+------------------------------
+
+None.
+
+Test suite
+----------
+
+Python unit test entries will be added to exceed the builtin maximums
+for all of layers, classes, styles and symbols.  An msautotest entry with
+a large number of classes will also be added. 
+
+
+Bug ID
+------
+
+* 302: https://trac.osgeo.org/mapserver/ticket/302
+
+Voting history
+--------------
+
+Vote completed on 2007-07-19:
+
++1 from DanielM, SteveL, FrankW, SteveW, UmbertoN, TamasS, AssefaY
+
+Comments/Questions from the review period
+------------------------------------------
+
+* Has the following issue already been dealt with by RFC-24 since the code
+  already allocates less than MS_MAX_LAYERS in initMap()? Did RFC-24
+  make it a formal requirement to use the proper insert/add methods to 
+  add layers, styles and classes?
+
+
+Answer: the implementation adopted with RFC-24 tries to save memory by only allocating the number of layers that are
+effectively needed. A map with 5 layers will allocate exactly 5 layers, a map with 50 layers
+will allocate 50, and so on up to the hard-coded limit of MS_MAX_LAYERS. This is also true
+for classes and style.
+
+The arrays of pointers are for obvious reasons always allocated to MS_MAX_LAYERS size, but memory
+usage is reduced anyway because arrays of pointers are much smaller that arrays of structs.
+This represents a substantial change from before, when MS_MAX_LAYERS blank layers where always allocated
+causing a sure waste of memory in small maps.
+
+RFC-17 should then invoke the various msGrow*() methods to grow the arrays when numlayers == maxlayers-1.
+I'd suggest to grow the array to a sensible size (like half of the current size) as the impact on memory
+allocation is going to be mitigated by the dynamic allocation approach introduced by RFC-24.
+
+RFC-24 did not make a formal requirement to use the proper insert methods as those and the object constructors
+are the *only* way to add a layer, class or style to a map. I do not know if this is also true for symbols.
+
+
+* "Because mapscript application often explicitly initialize "blank" layers,
+  classes and styles directly, and then increment the count, we can't depend
+  on all access going through the proper insert/add methods.  For this
+  reason we preserve the old MS_MAX values to establish the initial allocation.
+  This should mean that existing applications will continue to work at some
+  cost in unused memory.  But well behaved mapscript applications using 
+  insert methods to increase sizes will be able to grow beyond the initial 
+  allocation."
+
+
+I'm not aware of any mapscript way to bypass the insert or the constructors
+(i.e. with direct manipulation of the arrays).
+It there was such way (which I doubt) I suggest
+that we forbid it by explicitly changing the MS_MAX_* names and making required fields immutable in swig.
+
+* Comment from Tamas: 
+  The mappluginlayer stuff should be concretized a bit. That static
+  repository of the vtables would prevent from loading the same library
+  twice. That array should also be allocated dynamically since I don't
+  think we will ever have MS_MAXLAYERS number of different plugin
+  layers.

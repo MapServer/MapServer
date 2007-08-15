@@ -1,0 +1,219 @@
+=====================================
+MapServer 4.10 to 5.0 Migration Guide
+=====================================
+
+This page documents the changes that must be made to MapServer 
+applications when migrating from version 4.10.x (or earlier versions) 
+to 5.x (i.e. backwards incompatibilities), as well as information
+on some of the new features.
+
+----------------------------------------------------
+Mapfile changes
+----------------------------------------------------
+
+Attribute Bindings: In an effort to stem the tide of keyword overload
+and add functionality MapServer 5.0 supports a new method of binding 
+feature attributes to STYLE and LABEL properties. In the past keywords
+like ANGLEITEM or LABELSIZEITEM were used, now you denote the attribute
+in the context of the property being bound. For example, to bind an 
+attribute to a label size you'd do:
+
+::
+
+  LABEL
+    ...
+    SIZE [mySizeItem]
+  END
+
+The []'s denote a binding (as with logical expressions). The following
+keywords are no longer supported and their presence will throw an error:
+
+* Layer: LABELANGLEITEM, LABELSIZEITEM
+* Style: ANGLEITEM, SIZEITEM
+
+The following properties can accept bindings:
+
+* Style: angle, color, outlinecolor, size, symbol
+* Label: angle, color, outlinecolor, size, font, priority
+
+Colors may be given as a hex value (e.g. #FFFFFF) or an RGB triplet 
+(e.g. 255 255 255).
+
+
+Layer Transparency: The values for the TRANSPARENCY parameter have always
+been backwards and in an effort to resolve that the parameter has been
+renamed OPACITY. TRANSPARENCY is still recognized by the mapfile parser
+but is depricated and should be avoided. 
+
+Scale Parameters: MapServer's handling of scale has long been a source
+for confusion. The values use in a layer MINSCALE are really the denominators
+from a representative fraction (e.g. 1:24000). To help clarify this all
+scale parameters are now end with DENOM. So MINSCALE => MINSCALEDENOM,
+SYMBOLSCALE => SYMBOLSCALEDENOM, and so on. The mapfile parser still
+recognizes the older keywords but they are depricated and should be avoided. 
+
+----------------------
+Symbol file changes
+----------------------
+
+Symbol Style: STYLEs are used within a symbol definition to store dash
+patterns for line symbolization. However, there is potential confusion
+with the style object that is used within class definitions. To resolve
+that confusion the symbol STYLE parameter has been renamed PATTERN. The
+symbol file parser will still recognize the STYLE keyword but it is 
+depricated and should be avoided.
+
+----------------------------------------------------
+Styling/Symbolgy changes
+----------------------------------------------------
+Prior to MapsServer 5.0, if a pixmap symbol was used in style on a Line
+Layer, the symbol was used as a brush to draw the line. In MapServer 5.0, 
+it is possible to draw the pixmap symbol along the line (Note that this 
+was available using a true type symbol). To achieve  this, the user needs 
+to use the parameter GAP with it's pixmap symbol definition in the symbol
+file. The GAP represents the distance between the symbols. If the GAP is not
+given, the pixmap symbol will be used as a brush.   
+
+---------------------------------------------------
+URL configuration changes
+---------------------------------------------------
+Previous versions of the MapServer CGI program allowed certain parameters
+to be changed via a URL using a cumbersome syntax such as 
+map_layer_0_class_0_color=255+0+0 which changes the color in one classObj.
+Not only was this cumbersome for users but also from a code maintenance
+perspective since we had to maintain seperate loaders for URL-based config
+and file-based config. RFC-31 attempts to streamline both by migrating to
+a single object loading function that can be used with strings (either in
+MapScript or via URL) or with files.
+
+So, in the past you have to change parameters one-at-a-time. Now you can
+pass chunks of mapfiles (with security restrictions) to the CGI interface.
+The map_object notation is still necessary to identify which object you
+want to modify but you can change multiple properties at one time. Note 
+that you can use either a '_' or a '.' to seperate identifiers.
+
+Example 1, changing a scalebar object:
+
+::
+
+  ...&map.scalebar=UNITS+MILES+COLOR+121+121+121+SIZE+300+2&...
+
+Example 2, changing a presentation style:
+
+::
+
+ ...&map.layer[lakes].class[0].style[0]=SYMBOL+crosshatch+COLOR+151+51+151+SIZE+15&...
+
+Example 3, creating a new feature
+
+::
+
+  ...&map_layer[3]=FEATURE+POINTS+500000+1000000+END+TEXT+'A+test+point'+END&...
+
+The variable identifies an object uniquely (by name or index in the case of
+layerObj's and classObj's. The value is a snippet of a mapfile. You c
+cannot create new objects other than inline features at this point.
+
+----------------------------------------------------
+SWIG MapScript (Python, Perl, CSharp, Java) changes
+----------------------------------------------------
+
+Layer Transparency: The layerObj transparency parameter is now called
+opacity. Scripts setting that value in code must be updated.
+
+Symbol Style: the symbolObj style parameter is now called pattern. MapScript
+does not allow direct modification of that parameter. In Swig-based languages
+the symbolObj method setStyle is now called setPattern. In PHP/MapScript, the
+methods setStyle and getStyle are now called setPattern and getPattern.
+
+-----------------------
+CSharp related changes
+-----------------------
+
+The MapScript C# classes are now placed into the OSGeo.MapServer namespace
+The scripts should use the fully qualified names of the classes or apply 
+the 
+
+::
+
+  using OSGeo.MapServer;
+  
+or the corresponding language equivalent. 
+
+----------------------------------------------------
+PHP/MapScript changes
+----------------------------------------------------
+
+Layer Transparency: The layerObj transparency parameter is now called
+opacity. The old "transparency" name is deprecated and will be removed in
+a future release. Scripts getting/setting that value in code must be updated.
+
+All occurences of scale, minscale, maxscale, etc... parameters have been
+deprecated and renamed with a "denom" suffix (e.g. minscale becomes 
+minscaledenom, etc.). The deprecated parameters will be removed in a
+future release. Scripts getting/setting them must be updated.
+
+SymbolObj style has been renamed pattern. The old "stylelength" parameter
+and setStyle() and getStyleArray() methods have been deprecated and 
+"patternlength", setPattern() and getPatternArray() should be used 
+instead. They will be removed in a future release.
+
+
+----------------------------------------------------
+OGC Web Map Service (WMS)
+----------------------------------------------------
+
+Required Parameters for GetMap and GetFeatureInfo: previously, MapServer
+did not check for the following parameters when responding to an OGC:WMS
+GetMap or GetFeatureInfo request:
+ - SRS
+ - FORMAT
+ - WIDTH
+ - HEIGHT
+ - STYLES or SLD / SLD_BODY
+ - BBOX
+
+That is, a GetMap request would process without error if these were not 
+passed by the WMS client.
+
+A compliant OGC:WMS 1.1.0 and 1.1.1 REQUIRES these parameters.  This may
+affect OGC:WMS client requests who were not passing these values. Ticket
+1088 fully documents this issue.  In addition to WMS compliance, this was also 
+decided that by adding this constraint, if an OGC client request (as described
+earlier) breaks something, people should fix their client anyway since
+if they change WMS vendor, they will have problems as well.
+
+----------------------------------------------------
+OGC Web Feature Service (WFS)
+----------------------------------------------------
+
+----------------------------------------------------
+Build Changes
+----------------------------------------------------
+
+MapServer's main include file has been renamed from "map.h" to "mapserver.h".
+
+A new mapserver-config script has been created with the following options:
+
+::
+
+  Usage: mapserver-config [OPTIONS]
+  Options:
+   [--libs]
+   [--dep-libs]
+   [--cflags]
+   [--defines]
+   [--includes]
+   [--version]
+
+The shared and static link libraries for MapSserver have been renamed
+libmapserver.x.y.so and libmapserver.a respectively.
+
+
+The --enable-coverage configure option has been renamed to --enable-gcov
+since the former name led users to think it might be related to enabling 
+support for WCS or Arc/Info coverages:
+
+::
+
+  --enable-gcov           Enable source code coverage testing using gcov
