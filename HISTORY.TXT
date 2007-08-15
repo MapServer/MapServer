@@ -13,6 +13,16 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Python MapScript failures (#2230)
+
+- msInsertLayer should not free the incoming layer anymore (#2229)
+
+- Include only parsed in the first mapfile (#2021)
+
+- Incorrect lookup of symbol in symbolset (#2227)
+
+- Mapfile includes and MapScript (#2089)
+
 - Fixed alignment of GetLegendGraphic output when mapfile contains no 
   legend object (#966)
 
