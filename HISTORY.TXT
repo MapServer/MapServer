@@ -27,7 +27,8 @@ Current Version (SVN Trunk):
   legend object (#966)
 
 - Fixed seg. fault when generaing HTML legend for raster layers with no
-  classes (#2228)
+  classes (#2228). The same issue was also causing several Chameleon apps
+  using HTML legend to seg fault (#2218)
 
 - Do not use case sensitive searches in string2list, which is used
   for msWhichItems (#2067)
