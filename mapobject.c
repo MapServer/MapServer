@@ -449,8 +449,6 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     }
     else if (nIndex < 0) { /* Insert at the end by default */
         map->layerorder[map->numlayers] = map->numlayers;
-        if ( freeLayer((GET_LAYER(map, map->numlayers))) == MS_SUCCESS)
-            free(GET_LAYER(map, map->numlayers));
         GET_LAYER(map, map->numlayers) = layer;
         GET_LAYER(map, map->numlayers)->index = map->numlayers;
 	GET_LAYER(map, map->numlayers)->map = map;
