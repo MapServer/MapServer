@@ -59,6 +59,7 @@ char path[MS_MAXPATHLEN];
          msyystate=MS_TOKENIZE_DEFAULT;
          msyystring=NULL;
          msyyreturncomments=0;
+         include_stack_ptr=0; 
          return(0);
          break;
        case(MS_TOKENIZE_STRING):
@@ -68,6 +69,7 @@ char path[MS_MAXPATHLEN];
          msyy_scan_string(msyystring);
          msyyin=NULL;
          msyyreturncomments=0;
+         include_stack_ptr=0;
          return(0);
          break;
        case(MS_TOKENIZE_URL_VARIABLE):
