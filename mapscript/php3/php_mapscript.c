@@ -14652,10 +14652,13 @@ DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS)
 
     if (msLoadImageSymbol(self, pFile->value.str.val) == MS_SUCCESS)
     {
-      RETURN_TRUE;
+        RETURN_TRUE;
     }
     else
-      RETURN_FALSE;
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        RETURN_FALSE;
+    }
 }
 
 
