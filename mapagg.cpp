@@ -129,15 +129,20 @@ imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char 
 {
     imageObj *pNewImage = NULL;
 
-    pNewImage  = msImageCreateGD(width, height, format, imagepath, imageurl);
+    if(format->imagemode != MS_IMAGEMODE_RGB && format->imagemode != MS_IMAGEMODE_RGBA) {
+      msSetError(MS_AGGERR, "AGG driver only supports RGB or RGBA pixel models.", "msImageCreateAGG()");
+      return NULL;
+    }
 
+    pNewImage = msImageCreateGD(width, height, format, imagepath, imageurl);
     if(!pNewImage)
-        return pNewImage;
+      return pNewImage;
 
     mapserv_row_ptr_cache<int>  *pRowCache = new mapserv_row_ptr_cache<int>(pNewImage->img.gd);
-
-    if(! pRowCache)
-        return NULL;
+    if(! pRowCache) {
+      msSetError(MS_AGGERR, "Error binding GD image to AGG.", "msImageCreateAGG()");
+      return NULL;
+    }
 
     pNewImage->imageextra  = (void *) pRowCache;
 
