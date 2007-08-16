@@ -1466,7 +1466,7 @@ MS_DLL_EXPORT char *msCommifyString(char *str);
 MS_DLL_EXPORT const char *msCaseFindSubstring(const char *haystack, const char *needle);
 MS_DLL_EXPORT int msHexToInt(char *hex);
 MS_DLL_EXPORT char *msGetEncodedString(const char *string, const char *encoding);
-//MS_DLL_EXPORT char *msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding);
+MS_DLL_EXPORT char *msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding);
 MS_DLL_EXPORT int msGetNextUTF8Char(const char **in_ptr, char *out_string);
 MS_DLL_EXPORT int msGetNumUTF8Chars(const char *in_ptr);
 MS_DLL_EXPORT int msUTF8ToUniChar(const char *str, int *chPtr); /* maptclutf.c */

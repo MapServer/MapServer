@@ -731,15 +731,17 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 status = SE_stream_get_nstring( sde->connPoolInfo->stream, 
                                                 (short) (i+1), 
                                                 wide);
-                shape->values[i] = msGetEncodedString((const char*)wide, "UTF-16");
-                msFree(wide);
-                if(status == SE_NULL_VALUE)
+                if(status == SE_NULL_VALUE) {
                     shape->values[i][0] = '\0'; /* empty string */
+                }
                 else if(status != SE_SUCCESS) {
                     sde_error(  status, 
                                 "sdeGetRecord()", 
                                 "SE_stream_get_string()");
                     return(MS_FAILURE);
+                } else {
+                    shape->values[i] = msConvertWideStringToUTF8((const wchar_t*) wide, "UTF-16");
+                    msFree(wide);
                 }
                 break;
 #endif
