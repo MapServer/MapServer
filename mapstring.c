@@ -35,6 +35,7 @@ MS_CVSID("$Id$")
 
 #ifdef USE_ICONV
 #include <iconv.h>
+#include <wchar.h>
 #endif
 
 #ifdef NEED_STRLCAT
@@ -1072,6 +1073,77 @@ char *msGetEncodedString(const char *string, const char *encoding)
   return out;
 #else
   msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.", "msGetEncodedString()");
+  return NULL;
+#endif
+}
+
+
+char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
+#ifdef USE_ICONV
+
+    int bconvFailed = MS_TRUE;
+    char* output = NULL;
+    iconv_t cd = NULL;
+    size_t nStr;
+    size_t nInSize;
+    size_t nOutSize;
+    size_t nConv;
+    size_t nBufferSize;
+
+    char* pszUTF8 = NULL;
+    const wchar_t* pwszWide = NULL;
+
+    if (string != NULL)
+    {   
+        nStr = wcslen (string);
+        nBufferSize = ((nStr * 6) + 1);
+        output = (char*) malloc (nBufferSize);
+        if (output == NULL) {
+            msSetError(MS_MEMERR, NULL, "msGetEncodedString()");
+            return NULL;
+        }
+        if (nStr == 0) {
+            /* return an empty 8 byte string */
+            output[0] = '\0';
+            return output;
+        }
+
+        cd = iconv_open("UTF-8", encoding);
+        
+        nOutSize = nBufferSize;
+        if ((iconv_t)-1 != cd)
+        {  
+           nInSize = sizeof (wchar_t)*nStr;
+           pszUTF8 = output;
+           pwszWide = string;
+           nConv = iconv(cd, (wchar_t**)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+           if ((size_t)-1 != nConv &&  nOutSize != nBufferSize)
+               bconvFailed = MS_FALSE;
+           iconv_close(cd);
+        } else {
+            msSetError(MS_MISCERR, "Encoding not supported by libiconv (%s).", 
+                                   "msConvertWideStringToUTF8()", 
+                                   encoding);
+            return NULL;
+        }
+   
+        if (bconvFailed) {
+            msFree(output);
+            output = NULL;
+            msSetError(MS_MISCERR, "Unable to convert string in encoding '%s' to UTF8",
+                                   "msConvertWideStringToUTF8()",
+                                   encoding);
+        }
+    } else {
+        /* we were given a NULL wide string, nothing we can do here */
+        return NULL;
+    }
+    
+    /* NULL-terminate the output string */
+    output[nBufferSize - nOutSize] = '\0';
+    return output;
+#else
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msConvertWideStringToUTF8()");
   return NULL;
 #endif
 }
