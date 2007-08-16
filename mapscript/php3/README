@@ -713,8 +713,11 @@ Currently supported classes, properties and methods:
    int setFilter(string expression)
         Set layer filter expression.
 
-   string getFilter()
+   string getFilterString()
         Returns the expression for this layer.
+
+   string getFilter()
+        Deprecated in v5.0, use getFilterString() instead.
 
    string getProjection()
         Returns a string represenation of the projection. If no 
@@ -767,7 +770,7 @@ Currently supported classes, properties and methods:
    void close()
         Close layer previously opened with open().
 
-   shapeObj getShape(int shapeindex [, int tileindex = -1])
+   shapeObj getFeature(int shapeindex [, int tileindex = -1])
         Retrieve shapeObj from a layer by index.
         Tileindex is optional and is used only for tiled shapefiles 
         (you get it from the resultCacheMemberObj returned by getResult()
@@ -775,8 +778,9 @@ Currently supported classes, properties and methods:
         Simply omit or pass tileindex = -1 for other data sources.
 
    shapeObj getShape(int tileindex, int shapeindex)
-        Deprecated, use getFeature() instead (note that the order of the
-        arguments is reversed since tileindex is optional in getFeature())
+        Deprecated in v5.0, use getFeature() instead (note that the order
+        of the arguments is reversed since tileindex is optional in 
+        getFeature())
 
    rectObj getExtent()
         Returns the layer's data extents. 
@@ -913,12 +917,18 @@ Currently supported classes, properties and methods:
    int setExpression(string expression)
         Set the expression string for the class object.
    
-   string getExpression()
+   string getExpressionString()
         Returns the expression string for the class object.
+            
+   string getExpression()
+        Deprecated in v5.0. Use getExpressionString() instead.
             
    int settext(string text)
         Set the text string for the class object.
    
+   string getTextString()
+        Returns the text string for the class object.
+            
    int drawLegendIcon(int width, int height, imageObj im, int dstX, int dstY)
         Draw the legend icon on im object at dstX, dstY.
         Returns MS_SUCCESS/MS_FAILURE.

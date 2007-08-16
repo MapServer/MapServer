@@ -177,6 +177,7 @@ void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
 char            *classObj_getExpressionString(classObj *self);
 int             classObj_setText(classObj *self,layerObj *layer,char *string);
+char           *classObj_getTextString(classObj *self);
 int             classObj_drawLegendIcon(classObj *self,
                                         mapObj *map,
                                         layerObj *layer, 

@@ -158,6 +158,17 @@ and setStyle() and getStyleArray() methods have been deprecated and
 "patternlength", setPattern() and getPatternArray() should be used 
 instead. They will be removed in a future release.
 
+layer.getShape(int tileindex, int shapeindex)) has been deprecated and 
+renamed to layer.getFeature(int shapeindex [, int tileindex = -1]) to
+match the SWIG MapScript equivalent. Note that the order of the arguments
+is reversed since tileindex is optional in getFeature().
+
+class.getExpression() and layer.getFilter() have been deprecated and 
+renamed to class.getExpressionString() and layer.getFilterString() to 
+match what we have in SWIG MapScript. The String suffix in the function
+name also more clearly indicates that the return value is not an object
+but a string representation of it.
+
 
 ----------------------------------------------------
 OGC Web Map Service (WMS)

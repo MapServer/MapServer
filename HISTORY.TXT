@@ -21,6 +21,10 @@ Current Version (SVN Trunk):
 - Added layer.getFeature() in PHP MapScript with optional tileindex arg, 
   and deprecated layer.getShape() to match what we had in SWIG (#900)
 
+- Added class.getTextString() and deprecated/renamed class.getExpression()
+  and layer.getFilter() to class.getExpressionString() and 
+  layer.getFilterString() to match what we have in SWIG MapScript (#1892)
+
 
 Version 5.0.0-beta4 (2007-08-15)
 --------------------------------

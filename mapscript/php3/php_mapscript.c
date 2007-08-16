@@ -201,7 +201,7 @@ DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_lyr_getFilter(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getFilterString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS);
@@ -219,8 +219,9 @@ DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_class_getExpression(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_getExpressionString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_getTextString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS);
@@ -768,7 +769,8 @@ function_entry php_layer_class_functions[] = {
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
     {"removemetadata",  php3_ms_lyr_removeMetaData,     NULL},
     {"setfilter",       php3_ms_lyr_setFilter,          NULL},
-    {"getfilter",       php3_ms_lyr_getFilter,          NULL},
+    {"getfilterstring", php3_ms_lyr_getFilterString,    NULL},
+    {"getfilter",       php3_ms_lyr_getFilterString,    NULL},
     {"getwmsfeatureinfourl", php3_ms_lyr_getWMSFeatureInfoURL, NULL},
     {"getitems",        php3_ms_lyr_getItems,           NULL},
     {"setprocessing",   php3_ms_lyr_setProcessing,      NULL},
@@ -795,8 +797,10 @@ function_entry php_label_class_functions[] = {
 function_entry php_class_class_functions[] = {
     {"set",             php3_ms_class_setProperty,      NULL},    
     {"setexpression",   php3_ms_class_setExpression,    NULL},    
-    {"getexpression",   php3_ms_class_getExpression,    NULL},    
+    {"getexpressionstring", php3_ms_class_getExpressionString, NULL},    
+    {"getexpression",       php3_ms_class_getExpressionString, NULL},    
     {"settext",         php3_ms_class_setText,          NULL},
+    {"gettextstring",   php3_ms_class_getTextString,    NULL},    
     {"drawlegendicon",  php3_ms_class_drawLegendIcon,   NULL},
     {"createlegendicon",php3_ms_class_createLegendIcon, NULL},   
     {"getstyle",        php3_ms_class_getStyle,         NULL},   
@@ -7108,13 +7112,13 @@ DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /**********************************************************************
- *                        layer->getFilter()
+ *                        layer->getFilterString()
  **********************************************************************/
 
-/* {{{ proto int layer.getProjection()
+/* {{{ proto string layer.getFilterString()
     Return the layer's filter expression. Returns FALSE on error. */
 
-DLEXPORT void php3_ms_lyr_getFilter(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_lyr_getFilterString(INTERNAL_FUNCTION_PARAMETERS)
 {
     layerObj    *self;
     pval        *pThis = NULL;
@@ -8955,16 +8959,16 @@ DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /************************************************************************/
-/*                          class->getExpression()                      */
+/*                          class->getExpressionString()                */
 /*                                                                      */
 /*      Returns the expression string for a class object.               */
 /*                                                                      */
 /************************************************************************/
 
-/* {{{ proto int class.getExpression(string exression)
-   Set the expression string for a class object. */
+/* {{{ proto string class.getExpressionString()
+   Get the expression string for a class object. */
 
-DLEXPORT void php3_ms_class_getExpression(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_class_getExpressionString(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval   *pThis;
     classObj *self=NULL;
@@ -9056,6 +9060,45 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+
+/************************************************************************/
+/*                          class->getTextString()                      */
+/*                                                                      */
+/*      Returns the text string for a class object.                     */
+/*                                                                      */
+/************************************************************************/
+
+/* {{{ proto string class.getTextString()
+   Get the text string for a class object. */
+
+DLEXPORT void php3_ms_class_getTextString(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval   *pThis;
+    classObj *self=NULL;
+    HashTable   *list=NULL;
+     char   *pszValue = NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (pszValue = classObj_getTextString(self)) == NULL)
+    {
+      RETURN_STRING("", 1);
+    }
+    else
+    {
+      RETURN_STRING(pszValue, 1);
+      free(pszValue);
+    }
+}
+/* }}} */
 
 /************************************************************************/
 /*                          class->drawLegendIcon()                     */
