@@ -96,13 +96,15 @@
 #define LINESPACE 1.33 //space beween text lines... from GD
 
 #ifdef CPL_MSB
+typedef agg::pixfmt_argb32 GDpixfmt; 
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
 #else
+typedef agg::pixfmt_bgra32 GDpixfmt;
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
 #endif
 
 
-typedef agg::pixfmt_bgra32 GDpixfmt; 
+
 typedef agg::rgba8 color_type;
 typedef agg::font_engine_freetype_int16 font_engine_type;
 typedef agg::font_cache_manager<font_engine_type> font_manager_type;
@@ -307,19 +309,17 @@ public:
             int tilewidth, int tileheight, 
             colorObj *color, colorObj *backgroundcolor, double width) {
         ras_aa.reset();
-        typedef agg::pixfmt_bgra32 pixfmt;
-        typedef agg::rgba8 color_type;
         typedef agg::wrap_mode_repeat wrap_type;
-        typedef agg::image_accessor_wrap<pixfmt,wrap_type,wrap_type> img_source_type;
+        typedef agg::image_accessor_wrap<GDpixfmt,wrap_type,wrap_type> img_source_type;
         typedef agg::span_pattern_rgba<img_source_type> span_gen_type;
         agg::int8u*           m_pattern;
         agg::rendering_buffer m_pattern_rbuf;
         m_pattern = new agg::int8u[tilewidth * tileheight * 4];
         m_pattern_rbuf.attach(m_pattern, tilewidth,tileheight, tilewidth*4);
 
-        pixfmt pixf(m_pattern_rbuf);
-        agg::renderer_base<pixfmt> rb(pixf);
-        agg::renderer_scanline_aa_solid<agg::renderer_base<pixfmt> > rs(rb);
+        GDpixfmt pixf(m_pattern_rbuf);
+        agg::renderer_base<GDpixfmt> rb(pixf);
+        agg::renderer_scanline_aa_solid<agg::renderer_base<GDpixfmt> > rs(rb);
 
         if(backgroundcolor!=NULL && MS_VALID_COLOR(*backgroundcolor))
             rb.clear(msToAGGColor(backgroundcolor));
