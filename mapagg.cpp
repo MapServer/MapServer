@@ -855,29 +855,12 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     if(size < 1) return; /* size too small */
 
     if(style->symbol == 0) { /* solid fill */
-        ren.renderPathSolid(circle,&(style->color),&(style->outlinecolor),width);
+        ren.renderPathSolid(circle,&(style->color),&(style->outlinecolor),style->width);
         return; /* done simple case */
     }
     switch(symbol->type) {
-    case(MS_SYMBOL_TRUETYPE):    
-
-#ifdef haventUSE_GD_FT
-        font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
-    if(!font) return;
-
-    if(msGetCharacterSize(symbol->character, (int) size, font, &rect) != MS_SUCCESS) return;
-    x = (int)(rect.maxx - rect.minx);
-    y = (int)(rect.maxy - rect.miny);
-
-    tile = createBrush(img, x+2*symbol->gap, y+2*symbol->gap, style, &tile_fc, &tile_bc); /* create the tile image */
-
-    x = (int) -rect.minx + symbol->gap; /* center the glyph */
-    y = (int) -rect.miny + symbol->gap;
-
-    gdImageStringFT(tile, bbox, ((symbol->antialias || style->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
-    gdImageSetTile(img, tile);
-#endif
-
+    case(MS_SYMBOL_TRUETYPE):
+        //TODO
     break;
     case(MS_SYMBOL_HATCH): {
         agg::path_storage hatch;
@@ -897,7 +880,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         agg::rendering_buffer tile = gdImg2AGGRB_BGRA(symbol->img);
         ren.renderPathSolid(circle,(&style->backgroundcolor),NULL,width);
         ren.renderPathTiledPixmapBGRA(circle,tile);
-        ren.renderPathSolid(circle,NULL,&(style->outlinecolor),width);
+        ren.renderPathSolid(circle,NULL,&(style->outlinecolor),style->width);
         delete[](tile.buf());       
     }
     break;
@@ -907,7 +890,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         int ph = MS_NINT(symbol->sizey*d)+1;
 
         if((pw <= 1) && (ph <= 1)) { /* No sense using a tile, just fill solid */
-            ren.renderPathSolid(circle,&(style->color),&(style->outlinecolor),width);
+            ren.renderPathSolid(circle,&(style->color),&(style->outlinecolor),style->width);
         }
         else {
             agg::path_storage path;
@@ -925,7 +908,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
             ren.renderPathTiled(circle,ellipse,pw,ph,
                     &(style->color),&(style->backgroundcolor));
 
-            ren.renderPathSolid(circle,NULL,&(style->outlinecolor),width);
+            ren.renderPathSolid(circle,NULL,&(style->outlinecolor),style->width);
         }
     }
     break;
@@ -941,7 +924,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         int ph = MS_NINT(symbol->sizey*d);
 
         if((pw <= 1) && (ph <= 1)) { /* No sense using a tile, just fill solid */
-            ren.renderPathSolid(circle,&(style->color),&(style->outlinecolor),width);
+            ren.renderPathSolid(circle,&(style->color),&(style->outlinecolor),style->width);
             return;
         }
         agg::path_storage path = imageVectorSymbolAGG(symbol,d);
@@ -1459,7 +1442,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     agg::path_storage polygon = shapePolygonToPath(p,0,0);
     if(style->symbol == 0 || symbol->type==MS_SYMBOL_SIMPLE) { /* simply draw a solid fill of the specified color */   
         if(MS_VALID_COLOR(style->outlinecolor))
-            ren.renderPathSolid(polygon,&(style->color),&(style->outlinecolor),width);
+            ren.renderPathSolid(polygon,&(style->color),&(style->outlinecolor),style->width);/*use outline width without scalefactor applied*/
         else
             ren.renderPathSolid(polygon,&(style->color),&(style->color),1); 
     }
@@ -1527,7 +1510,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             agg::rendering_buffer tile = gdImg2AGGRB_BGRA(symbol->img);
             ren.renderPathSolid(polygon,(&style->backgroundcolor),(&style->backgroundcolor),1);
             ren.renderPathTiledPixmapBGRA(polygon,tile);
-            ren.renderPathSolid(polygon,NULL,&(style->outlinecolor),width);
+            ren.renderPathSolid(polygon,NULL,&(style->outlinecolor),style->width);
             delete[](tile.buf());
         }
         break;
@@ -1537,7 +1520,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             int ph = MS_NINT(symbol->sizey*d)+1;
             if((ph <= 1) && (pw <= 1)) { /* No sense using a tile, just fill solid */
                 if(MS_VALID_COLOR(style->outlinecolor))
-                    ren.renderPathSolid(polygon,&(style->color),&(style->outlinecolor),width);
+                    ren.renderPathSolid(polygon,&(style->color),&(style->outlinecolor),style->width);
                 else
                     ren.renderPathSolid(polygon,&(style->color),&(style->color),1);
             }
@@ -1557,7 +1540,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 ren.renderPathTiled(polygon,ellipse,pw,ph,
                         &(style->color),&(style->backgroundcolor));
                 if(MS_VALID_COLOR(style->outlinecolor))
-                    ren.renderPathSolid(polygon,NULL,&(style->outlinecolor),width);
+                    ren.renderPathSolid(polygon,NULL,&(style->outlinecolor),style->width);
                 else
                     ren.renderPathSolid(polygon,NULL,&(style->backgroundcolor),1);
             }
