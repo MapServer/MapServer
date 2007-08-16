@@ -1116,7 +1116,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
            nInSize = sizeof (wchar_t)*nStr;
            pszUTF8 = output;
            pwszWide = string;
-           nConv = iconv(cd, (char**)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+           nConv = iconv(cd, (const char**)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
            if ((size_t)-1 != nConv &&  nOutSize != nBufferSize)
                bconvFailed = MS_FALSE;
            iconv_close(cd);
