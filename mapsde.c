@@ -724,7 +724,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             break;
 #ifdef SE_NSTRING_TYPE
             case SE_NSTRING_TYPE:
-                shape->values[i] = (char *)malloc(itemdefs[i].size*sizeof(char)+1);
                 memset(shape->values[i], 0, itemdefs[i].size*sizeof(char)+1);
                 wide = (SE_WCHAR *)malloc(itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
                 memset(wide, 0, itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
@@ -733,6 +732,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                                 wide);
                 if(status == SE_NULL_VALUE) {
                     shape->values[i][0] = '\0'; /* empty string */
+                    msFree(wide);
                 }
                 else if(status != SE_SUCCESS) {
                     sde_error(  status, 
