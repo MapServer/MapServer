@@ -12,7 +12,12 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+
 - AGG: fixed incorrect rendering of pixmaps on MSB architectures (#2235)
+
+- Added layer.getFeature() in PHP MapScript with optional tileindex arg, 
+  and deprecated layer.getShape() to match what we had in SWIG (#900)
+
 
 Version 5.0.0-beta4 (2007-08-15)
 --------------------------------

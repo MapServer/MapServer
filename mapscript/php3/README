@@ -746,11 +746,10 @@ Currently supported classes, properties and methods:
         accessed by query or drawing functions (eg using nextshape function).
         Returns MS_SUCCESS or MS_FAILURE.
 
-   shpeobj nextShape()
+   shapeobj nextShape()
        Called after msWhichShapes has been called to actually retrieve shapes 
        within a given area           
        returns a shape object or MS_FALSE
-
 
         example of usage :
 
@@ -765,16 +764,19 @@ Currently supported classes, properties and methods:
         $layer->close();
 
 
-
-
    void close()
         Close layer previously opened with open().
 
-   shapeObj getShape(int tileindex, int shapeindex)
+   shapeObj getShape(int shapeindex [, int tileindex = -1])
         Retrieve shapeObj from a layer by index.
-        Tileindex is used only for tiled shapefiles (you get it from the
-        resultCacheMemberObj returned by getResult() for instance).
-        Simply pass tileindex = -1 for other data sources.
+        Tileindex is optional and is used only for tiled shapefiles 
+        (you get it from the resultCacheMemberObj returned by getResult()
+        for instance). 
+        Simply omit or pass tileindex = -1 for other data sources.
+
+   shapeObj getShape(int tileindex, int shapeindex)
+        Deprecated, use getFeature() instead (note that the order of the
+        arguments is reversed since tileindex is optional in getFeature())
 
    rectObj getExtent()
         Returns the layer's data extents. 
