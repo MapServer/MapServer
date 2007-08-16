@@ -292,7 +292,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   }
 
   /* apply the passed query parameters */
-  if(qitem) 
+  if(qitem && qitem[0] != '\0') 
     lp->filteritem = strdup(qitem);
   else
     lp->filteritem = NULL;

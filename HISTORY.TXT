@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed PHP MapScript layer->queryByAttributes() to not accept empty or
+  null qitem arg (#480)
+
 - AGG: fixed incorrect rendering of pixmaps on MSB architectures (#2235)
 
 - Added layer.getFeature() in PHP MapScript with optional tileindex arg, 

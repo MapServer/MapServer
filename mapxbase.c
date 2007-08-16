@@ -496,13 +496,13 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /* -------------------------------------------------------------------- */
     if( iField < 0 || iField >= psDBF->nFields ) 
     {
-        msSetError(MS_DBFERR, "Invalid field index %d.", "msDBFGetItemIndex()",iField );
+        msSetError(MS_DBFERR, "Invalid field index %d.", "msDBFReadAttribute()",iField );
         return( NULL );
     }
 
     if( hEntity < 0 || hEntity >= psDBF->nRecords )
     {
-        msSetError(MS_DBFERR, "Invalid record number %d.", "msDBFGetItemIndex()",hEntity );
+        msSetError(MS_DBFERR, "Invalid record number %d.", "msDBFReadAttribute()",hEntity );
         return( NULL );
     }
 
