@@ -261,18 +261,19 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %extend imageObj 
 {
 	void getBytes(SWIG_CSharpByteArrayHelperCallback callback) {
-		gdBuffer buffer;
+        gdBuffer buffer;
         
-        buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
-                                          self->format);
-        if( buffer.size == 0 )
+        buffer.owns_data = MS_TRUE;
+        
+        buffer.data = msSaveImageBuffer(self, &buffer.size, self->format);
+            
+        if( buffer.data == NULL || buffer.size == 0 )
         {
             msSetError(MS_MISCERR, "Failed to get image buffer", "getBytes");
             return;
         }
-        
         callback(buffer.data, buffer.size);
-        gdFree(buffer.data);
+        msFree(buffer.data);
 	}
 }
 

@@ -658,6 +658,35 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
     return nReturnVal;
 }
 
+/*
+** Generic function to save an image to a byte array.
+** - the return value is the pointer to the byte array 
+** - size_ptr contains the number of bytes returned
+** - format: the desired output format
+**
+** The caller is responsible to free the returned array
+** The function returns NULL if the output format is not supported. 
+*/
+
+unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format)
+{
+    *size_ptr = 0;
+	
+	if( MS_DRIVER_GD(image->format) )
+    {
+        return msSaveImageBufferGD(image->img.gd, size_ptr, format);
+    }
+#ifdef USE_AGG
+    else if( MS_DRIVER_AGG(image->format) )
+    {
+        return msSaveImageBufferAGG(image->img.gd, size_ptr, format);
+    }
+#endif   
+	
+	msSetError(MS_MISCERR, "Unsupported image type", "msSaveImage()");
+    return NULL;
+}
+
 /**
  * Generic function to free the imageObj
  */

@@ -213,19 +213,9 @@
         
         buffer.owns_data = MS_TRUE;
         
-        if( MS_DRIVER_GD(self->format) )
-        {
-            buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
-                                          self->format);
-        }
-#ifdef USE_AGG
-        else if( MS_DRIVER_AGG(self->format) )
-        {
-            buffer.data = msSaveImageBufferAGG(self->img.gd, &buffer.size,
-                                          self->format);
-        }
-#endif        
-        if( buffer.size == 0 )
+        buffer.data = msSaveImageBuffer(self, &buffer.size, self->format);
+            
+        if( buffer.data == NULL || buffer.size == 0 )
         {
             buffer.data = NULL;
             msSetError(MS_MISCERR, "Failed to get image buffer", "getBytes");
@@ -235,6 +225,5 @@
         return buffer;
     }
     
-
 }
 
