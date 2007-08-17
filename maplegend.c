@@ -351,6 +351,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     }
 
     for(j=0; j<lp->numclasses; j++) { /* always at least 1 class */
+      char *encodedText = NULL;
 
       if(!lp->class[j]->name) continue; /* skip it */
      
@@ -377,9 +378,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
       /* TODO */
 
-      if(lp->class[j]->name && map->legend.label.encoding) {
-        char *encodedText = msGetEncodedString(lp->class[j]->name, map->legend.label.encoding);
-        if(!encodedText) return MS_FAILURE;
+      if(map->legend.label.encoding &&
+         (encodedText = msGetEncodedString(lp->class[j]->name, map->legend.label.encoding)) != NULL) {
         msDrawLabel(image, pnt, encodedText, &(map->legend.label), &map->fontset, 1.0);
         free(encodedText);
       }
