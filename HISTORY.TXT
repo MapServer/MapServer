@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Support to run the mapscript c# examples on x64 platform (#2240)
+
 - Fixed problem introduced in 5.0.0-beta4: all HTML legend icons were
   empty white images (#2243)
 
