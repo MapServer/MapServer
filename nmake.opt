@@ -46,6 +46,13 @@
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Uncomment the following if you are building for 64-bit windows
+# (x64). You'll need to have PATH, INCLUDE and LIB set up for 64-bit
+# compiles.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#WIN64=YES
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Check compiler version given in command line
 # nmake -f makefile.vc MSVC_VER=xxxx
 # 1310 = 7.1 (2003)   1400 = 8.0 (2005)

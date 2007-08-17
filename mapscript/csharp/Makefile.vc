@@ -30,7 +30,15 @@ LINK=   link
 !IFDEF MONO
 CSC = mcs
 !ELSE
+!IF $(MSVC_VER) == 1400
+!IFDEF WIN64
+CSC = csc /platform:anycpu
+!ELSE
+CSC = csc /platform:x86
+!ENDIF
+!ELSE
 CSC = csc
+!ENDIF
 !ENDIF
 
 #SWIG = swig
