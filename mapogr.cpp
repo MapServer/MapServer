@@ -29,6 +29,58 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#include <assert.h>
+#include "mapserver.h"
+#include "mapproject.h"
+
+#if defined(USE_OGR) || defined(USE_GDAL)
+#  include "ogr_spatialref.h"
+#  include "gdal_version.h"
+#  include "cpl_conv.h"
+#  include "cpl_string.h"
+#endif
+
+MS_CVSID("$Id$")
+
+#ifdef USE_OGR
+
+#include "ogrsf_frmts.h"
+#include "ogr_featurestyle.h"
+
+typedef struct ms_ogr_file_info_t
+{
+  char        *pszFname;
+  int         nLayerIndex;
+  OGRDataSource *poDS;
+  OGRLayer    *poLayer;
+  OGRFeature  *poLastFeature;
+
+  int         nTileId;                  /* applies on the tiles themselves. */
+
+  struct ms_ogr_file_info_t *poCurTile; /* exists on tile index, -> tiles */
+  rectObj     rect;                     /* set by WhichShapes */
+
+} msOGRFileInfo;
+
+static int msOGRLayerIsOpen(layerObj *layer);
+static int msOGRLayerInitItemInfo(layerObj *layer);
+static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
+                                  int tile, long record);
+
+// Undefine this if you are using a very old GDAL without OpenShared(). 
+#define USE_SHARED_ACCESS  
+
+/* ==================================================================
+ * Geometry conversion functions
+ * ================================================================== */
+
+/**********************************************************************
+ *                     ogrPointsAddPoint()
+ *
+ * NOTE: This function assumes the line->point array already has been
+ * allocated large enough for the point to be added, but that numpoints
+ * does not include this new point. 
+ **********************************************************************/
 static void ogrPointsAddPoint(lineObj *line, double dX, double dY, 
                               int lineindex, rectObj *bounds)
 {
