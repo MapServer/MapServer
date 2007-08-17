@@ -376,7 +376,15 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
       /* TODO */
-      msDrawLabel(image, pnt, lp->class[j]->name, &(map->legend.label), &map->fontset, 1.0);
+
+      if(lp->class[j]->name && map->legend.label.encoding) {
+        char *encodedText = msGetEncodedString(lp->class[j]->name, map->legend.label.encoding);
+        if(!encodedText) return MS_FAILURE;
+        msDrawLabel(image, pnt, encodedText, &(map->legend.label), &map->fontset, 1.0);
+        free(encodedText);
+      }
+      else
+        msDrawLabel(image, pnt, lp->class[j]->name, &(map->legend.label), &map->fontset, 1.0);
 
       pnt.y += map->legend.keyspacingy; /* bump y for next label */
 	

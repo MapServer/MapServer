@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Support for label encoding in legend (#2239)
+
 - Fixed PHP MapScript layer->queryByAttributes() to not accept empty or
   null qitem arg (#480)
 
