@@ -999,10 +999,7 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
       return (0);
 
     if(label->encoding != NULL ) 
-    { /* converting the label encoding */
-        
-        string = msGetEncodedString(string, label->encoding);
-        if(string == NULL) return(-1);
+    { /* label encoding is set. expect UTF-8 as input */
         bEncoding = 1;
     }
 
