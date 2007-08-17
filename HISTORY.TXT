@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Adding msSaveImageBuffer and use that function from the mapscript
+  library instead of the renderer specific functions. (#2241)
+
 - Split each format into it's own <formats> element in WCS describe
   coverage results (#2244).
 
