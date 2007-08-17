@@ -305,7 +305,6 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
         }
     }
 
-
     if (pszStyle==NULL)
     {
         /* When no style is selected, use "" which is a valid default. */
@@ -330,11 +329,12 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
         }
     }
 
-    if (strlen(pszStyle) > 0)
-    {
-        /* STYLES is set */
-        msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
-    }
+    /*  set STYLES no matter what, even if it's empty (i.e. "STYLES=")
+     *  styles is a required param of WMS
+     */
+
+    msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
+
     if (pszSLD != NULL)
     {
         /* Only SLD is set */
