@@ -919,7 +919,16 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("    <supportedFormats");
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "nativeformat", OWS_NOERR, " nativeFormat=\"%s\"", NULL);
   msIO_printf(">\n");
-  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "formats", OWS_NOERR, "      <formats>%s</formats>\n", NULL);
+
+  if( (value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", "formats",
+                                       "GTiff" )) != NULL ) {
+    tokens = msStringSplit(value, ' ', &numtokens);
+    if(tokens && numtokens > 0) {
+      for(i=0; i<numtokens; i++)
+        msIO_printf("      <formats>%s</formats>\n", tokens[i]);
+      msFreeCharArray(tokens, numtokens);
+    }
+  }
   msIO_printf("    </supportedFormats>\n");
   
   msIO_printf("    <supportedInterpolations default=\"nearest neighbour\">\n");
