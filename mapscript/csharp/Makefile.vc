@@ -80,16 +80,19 @@ $(CSHARP_DLL)::
 	$(CSC) /r:mapscript_csharp.dll /out:drawmap.exe examples\drawmap.cs
 	$(CSC) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
 	$(CSC) /r:mapscript_csharp.dll /out:drawquery.exe examples\drawquery.cs
+	$(CSC) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe examples\getbytes.cs
 
 test:
 !IFDEF MONO
 	mono shpdump.exe ../../tests/point.shp
 	mono shapeinfo.exe ../../tests/point.shp
 	mono drawmap.exe ../../tests/test.map test_csharp.png
+	mono getbytes.exe ../../tests/test.map test_csharp2.png
 !ELSE
 	shpdump ../../tests/point.shp
 	shapeinfo ../../tests/point.shp
 	drawmap ../../tests/test.map test_csharp.png
+	getbytes ../../tests/test.map test_csharp2.png
 !ENDIF
 	
 
