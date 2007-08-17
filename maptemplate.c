@@ -1275,7 +1275,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       classObj *thisClass=NULL;
 
       /* It's okay to have no classes... we'll generate an empty icon in this case */
-      if (nIdxClass < 0 || nIdxClass > GET_LAYER(map, nIdxLayer)->numclasses)
+      if (nIdxClass >= 0 && nIdxClass < GET_LAYER(map, nIdxLayer)->numclasses)
           thisClass = GET_LAYER(map, nIdxLayer)->class[nIdxClass];
 
       if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)

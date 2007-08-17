@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed problem introduced in 5.0.0-beta4: all HTML legend icons were
+  empty white images (#2243)
+
 - Fixed WMS Client to always send STYLES parameter with WMS GetMap
   requests (#2242)
 
