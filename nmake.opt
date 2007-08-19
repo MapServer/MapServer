@@ -186,7 +186,9 @@ OUTPUT_JPEG=-DUSE_GD_JPEG
 # See http://www.gzip.org/zlib/ for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OUTPUT_PNG=-DUSE_GD_PNG
+!IFNDEF PNG_DIR
 PNG_DIR=$(MS_BASE)\..\libpng-1.2.8
+!ENDIF
 ZLIB_DIR=$(MS_BASE)\..\zlib-1.2.3
 ZLIB_INC=-I$(ZLIB_DIR)
 
@@ -241,7 +243,9 @@ USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 # See http://www.freetype.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ANNOTATION_FT=-DUSE_GD_FT
+#IFNDEF FT_DIR
 FT_DIR=$(MS_BASE)\..\freetype-2.1.10
+#ENDIF
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -592,7 +596,9 @@ JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 
 # Set the png support libaries
 !IFDEF PNG_DIR
+!IFNDEF PNG_LIB
 PNG_LIB=$(PNG_DIR)\projects\visualc71\Win32_LIB_Release\libpng.lib $(ZLIB_DIR)/zdll.lib
+!ENDIF
 !ENDIF
 
 !IFDEF GEOS_DIR
@@ -758,7 +764,10 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(AGG)
 
+!IFDEF WIN64
+MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
+!ELSE
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32
-
+!ENDIF
 
 
