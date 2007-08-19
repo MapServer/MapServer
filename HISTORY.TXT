@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Adding -DUSE_GENERIC_MS_NINT to the WIN64 builds (#2250)
+
 - Adding msSaveImageBuffer and use that function from the mapscript
   library instead of the renderer specific functions. (#2241)
 

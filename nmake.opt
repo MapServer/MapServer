@@ -608,7 +608,9 @@ GEOS_INC=-I$(GEOS_DIR)/source/headers -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/ca
 
 # Set the FreeType library
 !IFDEF FT_DIR
+!IFNDEF FT_LIB
 FT_LIB=$(FT_DIR)/objs/freetype2110.lib
+!ENDIF
 !ENDIF
 
 # GD include and library
