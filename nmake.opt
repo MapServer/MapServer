@@ -243,9 +243,9 @@ USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 # See http://www.freetype.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ANNOTATION_FT=-DUSE_GD_FT
-#IFNDEF FT_DIR
+!IFNDEF FT_DIR
 FT_DIR=$(MS_BASE)\..\freetype-2.1.10
-#ENDIF
+!ENDIF
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
