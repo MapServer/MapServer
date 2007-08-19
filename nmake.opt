@@ -69,9 +69,14 @@ MSVC_VER=1310
 # relative to this directory throughout this option file.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Set the following to point to the current directory.
+# Set the following to point to the directory adjacent to the dependent libs.
 !IFNDEF MS_BASE 
 MS_BASE =   c:\projects\mapserver
+!ENDIF
+
+# Set the following to point to the current (mapserver) directory.
+!IFNDEF MS_CURRENT
+MS_CURRENT = $(MS_BASE)
 !ENDIF
 
 BINDIR = $(MS_BASE)\..\bin
