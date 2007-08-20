@@ -346,7 +346,7 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     PDF *pdf;
 
     if(style->size == -1) {
-        size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+        size = msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
         size = MS_NINT(size*scalefactor);
     }
     else
@@ -368,7 +368,7 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
 #if PDFLIB_MAJORVERSION >= 6
      if(symbolset && symbolset->symbol[style->symbol]->patternlength)
-       drawDashedPolylinePDF(pdf, p, &(symbolset->symbol[style->symbol]), 
+       drawDashedPolylinePDF(pdf, p, symbolset->symbol[style->symbol], 
                              &(style->color),size);
      else
 #endif
@@ -715,7 +715,7 @@ void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image,
     PDF *pdf;
 
     if(style->size == -1) {
-        size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+        size = msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
         size = MS_NINT(size*scalefactor);
     }
     else
@@ -770,7 +770,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
                                 (float)(style->color.blue/255));
 
     /*  set up the symbol scale and type */
-    symbol = &(symbolset->symbol[style->symbol]);
+    symbol = symbolset->symbol[style->symbol];
     if(style->size == -1) {
         size = msSymbolGetDefaultSize( symbol );
         size = MS_NINT(size*scalefactor);

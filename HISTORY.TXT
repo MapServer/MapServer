@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed mappdf.c compile warnings, PDF support was probably unusable
+  before that fix (#2251)
+
 - Adding -DUSE_GENERIC_MS_NINT to the WIN64 builds (#2250)
 
 - Adding msSaveImageBuffer and use that function from the mapscript
