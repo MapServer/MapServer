@@ -96,7 +96,6 @@ typedef agg::rgba8 color_type;
 typedef agg::font_engine_freetype_int16 font_engine_type;
 typedef agg::font_cache_manager<font_engine_type> font_manager_type;
 typedef agg::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
-typedef agg::conv_contour<font_curve_type> font_contour_type;
 
 
 MS_CVSID("$Id$")
@@ -387,7 +386,7 @@ public:
         agg::render_scanlines(ras1, sl, storage1);
         ras2.add_path(clipper);
         agg::render_scanlines(ras2,sl,storage2);
-        agg::sbool_combine_shapes_aa(agg::sbool_and, storage1, storage2, sl1, sl2, sl, storage);               
+        agg::sbool_combine_shapes_aa(agg::sbool_and, storage1, storage2, sl1, sl2, sl, storage);
         ren_aa.color(msToAGGColor(color));
         agg::render_scanlines ( storage, sl, ren_aa );
     }
@@ -415,7 +414,7 @@ public:
         renderPathTiledPixmapBGRA(shape,m_pattern_rbuf);
         delete[](m_pattern);
     }
-    
+
     template<class VertexSource1>
             void renderPathTruetypeTiled(VertexSource1 &shape, char *font, int glyphUnicode,
                     double glyphheight, double gap, colorObj *color, colorObj *backgroundcolor,
@@ -428,8 +427,6 @@ public:
         m_feng.resolution(96);
         m_feng.flip_y(true);
         font_curve_type m_curves(m_fman.path_adaptor());
-        font_contour_type m_contour(m_curves);
-        m_contour.width(0.0);
         const agg::glyph_cache* glyph=m_fman.glyph(glyphUnicode);
         if(!glyph) return;
         int gw=glyph->bounds.x2-glyph->bounds.x1,
@@ -438,7 +435,7 @@ public:
             tileheight=MS_NINT(gh+gap)+1;
         
             ras_aa.reset();
-            agg::int8u*           m_pattern;
+            agg::int8u* m_pattern;
             agg::rendering_buffer m_pattern_rbuf;
             m_pattern = new agg::int8u[tilewidth * tileheight * 4];
             m_pattern_rbuf.attach(m_pattern, tilewidth,tileheight, tilewidth*4);
@@ -460,8 +457,8 @@ public:
                     for(int j=-1;j<=1;j++) {
                         if(i||j) { 
                             agg::trans_affine_translation tr(i,j);
-                            agg::conv_transform<font_contour_type, agg::trans_affine> trans_contour(m_contour, tr);
-                            ras_aa.add_path(trans_contour);
+                            agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, tr);
+                            ras_aa.add_path(trans_c);
                         }
                     }
                 rs.color(msToAGGColor(outlinecolor));
@@ -470,7 +467,7 @@ public:
             if(color!=NULL && MS_VALID_COLOR(*color)) {
                 ras_aa.reset();
                 m_fman.init_embedded_adaptors(glyph,fx,fy);
-                ras_aa.add_path(m_contour);
+                ras_aa.add_path(m_curves);
                 rs.color(msToAGGColor(color));
                 agg::render_scanlines(ras_aa, sl, rs);
             }
@@ -557,8 +554,6 @@ public:
         m_feng.resolution(96);
         m_feng.flip_y(true);
         font_curve_type m_curves(m_fman.path_adaptor());
-        font_contour_type m_contour(m_curves);
-        m_contour.width(0.0);
         const agg::glyph_cache* glyph;
         
         if(isMarker) {
@@ -589,7 +584,7 @@ public:
                 {
                     m_fman.init_embedded_adaptors(glyph,fx,fy);
                     agg::trans_affine_translation tr(shdx,shdy);
-                    agg::conv_transform<font_contour_type, agg::trans_affine> trans_c(m_contour, tr*mtx);                   
+                    agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, tr*mtx);
                     ras_aa.add_path(trans_c);
                     fx += glyph->advance_x;
                     fy += glyph->advance_y;
@@ -612,7 +607,7 @@ public:
                     unicode=(int)((unsigned char)utfptr[0]);
                     utfptr++;
                 }
-                glyph=m_fman.glyph(unicode);;
+                glyph=m_fman.glyph(unicode);
                 if(glyph)
                 {
                     m_fman.init_embedded_adaptors(glyph,fx,fy);
@@ -620,8 +615,8 @@ public:
                         for(int j=-1;j<=1;j++) {
                             if(i||j) { 
                                 agg::trans_affine_translation tr(i,j);
-                                agg::conv_transform<font_contour_type, agg::trans_affine> trans_contour(m_contour, tr*mtx);
-                                ras_aa.add_path(trans_contour);
+                                agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, tr*mtx);                   
+                                ras_aa.add_path(trans_c);
                             }
                         }
                     fx += glyph->advance_x;
@@ -649,8 +644,8 @@ public:
                 if(glyph)
                 {
                     m_fman.init_embedded_adaptors(glyph,fx,fy);
-                    agg::conv_transform<font_contour_type, agg::trans_affine> trans_contour(m_contour, mtx);                                   
-                    ras_aa.add_path(trans_contour);
+                    agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, mtx);                   
+                    ras_aa.add_path(trans_c);
                     fx += glyph->advance_x;
                     fy += glyph->advance_y;
                 }
