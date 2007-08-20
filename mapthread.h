@@ -63,6 +63,7 @@ void msReleaseLock(int);
 #define TLOCK_IOCONTEXT 11
 #define TLOCK_TMPFILE   12
 #define TLOCK_DEBUGOBJ  13
+#define TLOCK_OGR       14
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100
