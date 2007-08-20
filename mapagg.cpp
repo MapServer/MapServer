@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  MapServer
- * Purpose:  AGG/GD rendering and other AGG related functions.
+ * Purpose:  AGG rendering and other AGG related functions.
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
@@ -32,37 +32,25 @@
 #include "mapthread.h"
 
 
-#include <time.h>
-
-#ifdef USE_ICONV
-#include <iconv.h>
-#endif
-
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
 #endif
 
-#include "gd.h"
 #include "agg_basics.h"
 #include "agg_rendering_buffer.h"
 #include "agg_rasterizer_scanline_aa.h"
 #include "agg_rasterizer_outline_aa.h"
 
-//#include "agg_conv_transform.h"
 #include "agg_conv_stroke.h"
 #include "agg_conv_dash.h"
 #include "agg_conv_curve.h"
 #include "agg_conv_contour.h"
 
-#include "agg_conv_clip_polyline.h"
-
 #include "agg_scanline_p.h"
-#include "agg_scanline_u.h"
 #include "agg_path_storage.h"
 
 #include "agg_renderer_base.h"
-#include "agg_renderer_primitives.h"
 #include "agg_renderer_scanline.h"
 #include "agg_renderer_outline_aa.h"
 #include "agg_renderer_outline_image.h"
@@ -71,7 +59,6 @@
 #include "agg_pixfmt_rgba.h"
 
 #include "agg_arc.h"
-#include "agg_dda_line.h"
 #include "agg_ellipse.h"
 
 #include "agg_pattern_filters_rgba.h"
@@ -114,14 +101,6 @@ typedef agg::conv_contour<font_curve_type> font_contour_type;
 
 MS_CVSID("$Id$")
 
-/*
- ** Take a pass through the mapObj and pre-allocate colors for layers that are ON or DEFAULT. This replicates the pre-4.0 behavior of
- ** MapServer and should be used only with paletted images.
- **/
-void msPreAllocateColorsAGG(imageObj *image, mapObj *map) {
-    msPreAllocateColorsGD(image, map);
-}
-
 
 /*
  ** Utility function to create a GD image. Returns
@@ -159,11 +138,6 @@ imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char 
  */  
 void msImageInitAGG(imageObj *image, colorObj *background)
 {
-    if(image->format->imagemode == MS_IMAGEMODE_PC256) {
-        gdImageColorAllocate(image->img.gd, background->red, background->green, background->blue);
-        return;
-    }
-
     mapserv_row_ptr_cache<int>  *pRowCache = static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra);
 
     if(pRowCache == NULL) {
