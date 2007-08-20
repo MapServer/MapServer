@@ -1059,7 +1059,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   status = -1;
 
   while (len > 0){
-    status = iconv(cd, &inp, &len, &outp, &bufleft);
+    status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
     if(status == -1){
       msFree(out);
       iconv_close(cd);
@@ -1116,7 +1116,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
            nInSize = sizeof (wchar_t)*nStr;
            pszUTF8 = output;
            pwszWide = string;
-           nConv = iconv(cd, (const char**)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+           nConv = iconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
            if ((size_t)-1 != nConv &&  nOutSize != nBufferSize)
                bconvFailed = MS_FALSE;
            iconv_close(cd);
