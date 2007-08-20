@@ -79,7 +79,9 @@ MS_BASE =   c:\projects\mapserver
 MS_CURRENT = $(MS_BASE)
 !ENDIF
 
+!IFNDEF BINDIR
 BINDIR = $(MS_BASE)\..\bin
+!ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Optmization, debug, and related compile flags.
