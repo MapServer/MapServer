@@ -13,7 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
-- Implement OGR thread-safety via use of an OGR lock.
+- Implement OGR thread-safety via use of an OGR lock (#1977).
+
+- Fixed compile warnings (#2226)
 
 - Fixed mappdf.c compile warnings, PDF support was probably unusable
   before that fix (#2251)

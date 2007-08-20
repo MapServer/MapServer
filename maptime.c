@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define _GNU_SOURCE  /* glibc2 needs this for strptime() */
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -140,13 +141,7 @@ char *strptime( const char *buf, const char *format, struct tm *timeptr );
 
 char *msStrptime(const char *s, const char *format, struct tm *tm)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    /* we are now using a local strptime found strptime.c */
     return strptime(s, format, tm);
-#else
-    /* Use system strptime() on non-windows systems */
-    return strptime(s, format, tm);
-#endif
 }
 
 /**
