@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+- fix blending of transparent layers with RGBA images
+
 - AGG: speed up rendering of pixmap marker symbols
 
 - Implement OGR thread-safety via use of an OGR lock (#1977).

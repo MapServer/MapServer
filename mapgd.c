@@ -3755,11 +3755,29 @@ void msFreeImageGD(gdImagePtr img)
 /*
 ** Use for merging a vector layer image with a base image.
 */
+
+int msAlphaCompositeGD(int src, int dst, double pct) {
+    int da,sa;
+    sa=127-gdTrueColorGetAlpha(src);
+    if(!sa) return dst;
+    da=127-gdTrueColorGetAlpha(dst);
+    if(!da&&pct==1.0) return src;
+    double dsa=((double)sa/127.0)*pct;
+    double dda=((double)da/127.0);
+    double ddaonedsa=dda*(1.0-dsa);
+    double alpha0 = dsa + ddaonedsa;
+    return gdTrueColorAlpha(
+            MS_NINT((gdTrueColorGetRed(src)*dsa+gdTrueColorGetRed(dst)*ddaonedsa)/alpha0),
+            MS_NINT((gdTrueColorGetGreen(src)*dsa+gdTrueColorGetGreen(dst)*ddaonedsa)/alpha0),
+            MS_NINT((gdTrueColorGetBlue(src)*dsa+gdTrueColorGetBlue(dst)*ddaonedsa)/alpha0),
+            MS_NINT(127.0-127.0*(alpha0)));
+}
+
 void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent)
 {
   int x, y;
   int oldAlphaBlending=0;
-
+  double dpct=((double)pct)/100.0;
   /* 
   ** for most cases the GD copy is fine 
   */
@@ -3779,19 +3797,10 @@ void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY
     for (x = 0; (x < w); x++) {
       int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
       int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
-      int red, green, blue;
-      float newpct;
-      if(gdImageAlpha(src,src_c)==127) 
-        continue;
-      
-      newpct=(127-gdImageAlpha(src,src_c))/127.*pct/100.;
-      red = gdImageRed (src, src_c) * newpct  + gdImageRed (dst, dst_c) * (1. - newpct);
-      green = gdImageGreen (src, src_c) * (newpct ) + gdImageGreen (dst, dst_c) * (1. - newpct);
-      blue = gdImageBlue (src, src_c) * (newpct ) + gdImageBlue (dst, dst_c) * (1. - newpct);
-            
-      gdImageSetPixel(dst,dstX+x,dstY+y, gdTrueColorAlpha( red, green, blue, gdTrueColorGetAlpha(dst_c)));
+      gdImageSetPixel(dst,dstX+x,dstY+y,msAlphaCompositeGD(src_c,dst_c,dpct));
     }
   }
+  
 
   /*
   ** Restore original alpha blending flag. 

@@ -680,15 +680,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
         return(MS_FAILURE);
       }
       msImageInitAGG(image_draw, &map->imagecolor);
-
-      if(image_draw->format->imagemode == MS_IMAGEMODE_PC256) /* gdImageCopyMerge() needs this later */
-        gdImageColorTransparent(image_draw->img.gd, 0);
     }
 
-    /* Bug 490 - switch alpha blending on for a layer that requires it */
+    /* keeping this for the time being. will go when full switch to AGG */
     else if (layer->opacity == MS_GD_ALPHA) {
       oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-      gdImageAlphaBlending(image->img.gd, 1);
     }
   }
 #endif
