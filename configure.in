@@ -1714,12 +1714,12 @@ fi
 
 dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that
-dnl link with it.
+dnl link with it (e.g. mapscript/php3/Makefile.in).
 dnl ---------------------------------------------------------------------
 
 MS_DIR="`pwd`"
 MS_INC="-I$MS_DIR"
-MS_LIB="-L$MS_DIR -lmap"
+MS_LIB="-L$MS_DIR -lmapserver"
 AC_ADD_RUNPATH("$MS_DIR")
 AC_SUBST(MS_INC, $MS_INC)
 AC_SUBST(MS_LIB, $MS_LIB)

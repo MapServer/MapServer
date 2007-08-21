@@ -13,11 +13,15 @@ For a complete change history, please see the Subversion log comments.
 Version 4.10.3 (svn...)
 ---------------------------
 
+- Rename libmap.a to libmapserver.a for commonality with 
+  libmapserver.so (#2150)
+
 - Fixed size of output buffer in msGetEncodedString() (#2132)
 
 - SOS : backport fixes related to large xml outputs (#1938, #2146)
 
 - WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
+
 
 Version 4.10.2 (2007-05-07)
 ---------------------------
