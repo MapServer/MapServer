@@ -2601,28 +2601,28 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   for(i=0;i<msObj->Map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */
     if(isOn(msObj, msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) {
       if(msObj->Map->layers[i].group) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].group);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", msObj->Map->layers[i].group);
         outstr = gsub(outstr, substr, "selected=\"selected\"");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].group);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", msObj->Map->layers[i].group);
         outstr = gsub(outstr, substr, "checked=\"checked\"");
       }
       if(msObj->Map->layers[i].name) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", msObj->Map->layers[i].name);
         outstr = gsub(outstr, substr, "selected=\"selected\"");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", msObj->Map->layers[i].name);
         outstr = gsub(outstr, substr, "checked=\"checked\"");
       }
     } else {
       if(msObj->Map->layers[i].group) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].group);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", msObj->Map->layers[i].group);
         outstr = gsub(outstr, substr, "");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].group);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", msObj->Map->layers[i].group);
         outstr = gsub(outstr, substr, "");
       }
       if(msObj->Map->layers[i].name) {
-        sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", msObj->Map->layers[i].name);
         outstr = gsub(outstr, substr, "");
-        sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", msObj->Map->layers[i].name);
         outstr = gsub(outstr, substr, "");
       }
     }
@@ -2666,9 +2666,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     for (j=0; j<MS_HASHSIZE; j++) {
       if (msObj->Map->web.metadata.items[j] != NULL) {
         for(tp=msObj->Map->web.metadata.items[j]; tp!=NULL; tp=tp->next) {
-          sprintf(substr, "[web_%s]", tp->key);
+          snprintf(substr, PROCESSLINE_BUFLEN, "[web_%s]", tp->key);
           outstr = gsub(outstr, substr, tp->data);  
-          sprintf(substr, "[web_%s_esc]", tp->key);
+          snprintf(substr, PROCESSLINE_BUFLEN, "[web_%s_esc]", tp->key);
 
           encodedstr = msEncodeUrl(tp->data);
           outstr = gsub(outstr, substr, encodedstr);
@@ -2684,12 +2684,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       for(j=0; j<MS_HASHSIZE; j++) {
         if(msObj->Map->layers[i].metadata.items[j] != NULL) {
           for(tp=msObj->Map->layers[i].metadata.items[j]; tp!=NULL; tp=tp->next) {
-            sprintf(substr, "[%s_%s]", msObj->Map->layers[i].name, tp->key);
+            snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s]", msObj->Map->layers[i].name, tp->key);
             if(msObj->Map->layers[i].status == MS_ON)
               outstr = gsub(outstr, substr, tp->data);
             else
               outstr = gsub(outstr, substr, "");
-            sprintf(substr, "[%s_%s_esc]", msObj->Map->layers[i].name, tp->key);
+            snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_esc]", msObj->Map->layers[i].name, tp->key);
             if(msObj->Map->layers[i].status == MS_ON) {
               encodedstr = msEncodeUrl(tp->data);
               outstr = gsub(outstr, substr, encodedstr);
@@ -2847,10 +2847,10 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       for(i=0; i<MS_HASHSIZE; i++) {
         if(msObj->ResultLayer->metadata.items[i] != NULL) {
           for(tp=msObj->ResultLayer->metadata.items[i]; tp!=NULL; tp=tp->next) {
-            sprintf(substr, "[metadata_%s]", tp->key);
+            snprintf(substr, PROCESSLINE_BUFLEN, "[metadata_%s]", tp->key);
             outstr = gsub(outstr, substr, tp->data);
      
-            sprintf(substr, "[metadata_%s_esc]", tp->key);
+            snprintf(substr, PROCESSLINE_BUFLEN, "[metadata_%s_esc]", tp->key);
             encodedstr = msEncodeUrl(tp->data);
             outstr = gsub(outstr, substr, encodedstr);
             free(encodedstr);
@@ -2904,7 +2904,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
     for(i=0;i<msObj->ResultLayer->numitems;i++) {
       /* by default let's encode attributes for HTML presentation */
-      sprintf(substr, "[%s]", msObj->ResultLayer->items[i]);
+      snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeHTMLEntities(msObj->ResultShape.values[i]);
         outstr = gsub(outstr, substr, encodedstr);
@@ -2912,7 +2912,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       }
 
       /* of course you might want to embed that data in URLs */
-      sprintf(substr, "[%s_esc]", msObj->ResultLayer->items[i]);
+      snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeUrl(msObj->ResultShape.values[i]);
         outstr = gsub(outstr, substr, encodedstr);
@@ -2920,7 +2920,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       }
 
       /* or you might want to access the attributes unaltered */
-      sprintf(substr, "[%s_raw]", msObj->ResultLayer->items[i]);
+      snprintf(substr, PROCESSLINE_BUFLEN, "[%s_raw]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL)
         outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
     }
@@ -2933,7 +2933,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       if(msObj->ResultLayer->joins[i].values) { /* join has data */
         for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {
           /* by default let's encode attributes for HTML presentation */
-          sprintf(substr, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
+          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeHTMLEntities(msObj->ResultLayer->joins[i].values[j]);
             outstr = gsub(outstr, substr, encodedstr);
@@ -2941,7 +2941,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
           }
 
           /* of course you might want to embed that data in URLs */
-          sprintf(substr, "[%s_%s_esc]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
+          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_esc]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeUrl(msObj->ResultLayer->joins[i].values[j]);
             outstr = gsub(outstr, substr, encodedstr);
@@ -2949,14 +2949,14 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
           }
 
           /* or you might want to access the attributes unaltered */
-          sprintf(substr, "[%s_%s_raw]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
+          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_raw]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL)
             outstr = gsub(outstr, substr, msObj->ResultLayer->joins[i].values[j]);
         }
       } else if(msObj->ResultLayer->joins[i].type ==  MS_JOIN_ONE_TO_MANY){ /* one-to-many join */
         char *joinTemplate=NULL;
 
-        sprintf(substr, "[join_%s]", msObj->ResultLayer->joins[i].name);        
+        snprintf(substr, PROCESSLINE_BUFLEN, "[join_%s]", msObj->ResultLayer->joins[i].name);        
         if(strstr(outstr, substr) != NULL) {
           joinTemplate = processOneToManyJoin(msObj, &(msObj->ResultLayer->joins[i]));
           if(joinTemplate) {
@@ -2971,9 +2971,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   } /* end query mode specific substitutions */
 
   for(i=0;i<msObj->request->NumParams;i++) {
-    sprintf(substr, "[%s]", msObj->request->ParamNames[i]);
+    snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", msObj->request->ParamNames[i]);
     outstr = gsub(outstr, substr, msObj->request->ParamValues[i]);
-    sprintf(substr, "[%s_esc]", msObj->request->ParamNames[i]);
+    snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", msObj->request->ParamNames[i]);
 
     encodedstr = msEncodeUrl(msObj->request->ParamValues[i]);
     outstr = gsub(outstr, substr, encodedstr);

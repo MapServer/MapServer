@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Version 4.10.3 (svn...)
 ---------------------------
 
+- Fixed possible buffer overflow in template processing (#2252)
+
 - Rename libmap.a to libmapserver.a for commonality with 
   libmapserver.so (#2150)
 
