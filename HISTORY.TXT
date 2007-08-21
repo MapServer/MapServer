@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+
+- Fixed possible buffer overflow in template processing (#2252)
+
 - fix blending of transparent layers with RGBA images
 
 - AGG: speed up rendering of pixmap marker symbols
