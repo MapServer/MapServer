@@ -516,14 +516,14 @@ public:
             //------------------------------------------
             typedef agg::span_image_filter_rgba_bilinear_clip<GDpixfmt, interpolator_type> span_gen_type;
             span_gen_type sg(img_pixf, agg::rgba(0,0,0,0), interpolator);
-            agg::path_storage fullimg;
+            agg::path_storage pixmap_bbox;
             int ims_2 = MS_NINT(MS_MAX(pix.height(),pix.width())*scale*1.415)/2+1;
-            fullimg.move_to(x-ims_2,y-ims_2);
-            fullimg.line_to(x+ims_2,y-ims_2);
-            fullimg.line_to(x+ims_2,y+ims_2);
-            fullimg.line_to(x-ims_2,y+ims_2);
-            fullimg.close_polygon();      
-            ras_aa.add_path(fullimg);
+            pixmap_bbox.move_to(x-ims_2,y-ims_2);
+            pixmap_bbox.line_to(x+ims_2,y-ims_2);
+            pixmap_bbox.line_to(x+ims_2,y+ims_2);
+            pixmap_bbox.line_to(x-ims_2,y+ims_2);
+            pixmap_bbox.close_polygon();      
+            ras_aa.add_path(pixmap_bbox);
             agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
         }
         else {
