@@ -497,34 +497,40 @@ public:
         ras_aa.reset();
         GDpixfmt img_pixf(pix);
 
-        agg::trans_affine image_mtx;
-        image_mtx *= agg::trans_affine_translation(MS_NINT(-(double)pix.width()/2.),
-                MS_NINT(-(double)pix.height()/2.));
-                    
         if((angle!=0 && angle!=360) || scale !=1) {
+            agg::trans_affine image_mtx;
+            image_mtx *= agg::trans_affine_translation(-(double)pix.width()/2.,
+                    -(double)pix.height()/2.);
             image_mtx *= agg::trans_affine_rotation(angle * agg::pi / 180.0);
             image_mtx *= agg::trans_affine_scaling(scale);
-        }
-        //image_mtx *= agg::trans_affine_scaling(scale);
-        
-        image_mtx*= agg::trans_affine_translation(MS_NINT(x),MS_NINT(y));
-        image_mtx.invert();
-        typedef agg::span_interpolator_linear<> interpolator_type;
-        interpolator_type interpolator(image_mtx);
-        agg::span_allocator<agg::rgba8> sa;
 
-        // "hardcoded" bilinear filter
-        //------------------------------------------
-        typedef agg::span_image_filter_rgba_bilinear_clip<GDpixfmt, interpolator_type> span_gen_type;
-        span_gen_type sg(img_pixf, agg::rgba(0,0,0,0), interpolator);
-        agg::path_storage fullimg;
-        fullimg.move_to(0,0);
-        fullimg.line_to(0,ren_base.height());
-        fullimg.line_to(ren_base.width(),ren_base.height());
-        fullimg.line_to(ren_base.width(),0);
-        fullimg.close_polygon();
-        ras_aa.add_path(fullimg);
-        agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
+
+
+            image_mtx*= agg::trans_affine_translation(x,y);
+            image_mtx.invert();
+            typedef agg::span_interpolator_linear<> interpolator_type;
+            interpolator_type interpolator(image_mtx);
+            agg::span_allocator<agg::rgba8> sa;
+
+            // "hardcoded" bilinear filter
+            //------------------------------------------
+            typedef agg::span_image_filter_rgba_bilinear_clip<GDpixfmt, interpolator_type> span_gen_type;
+            span_gen_type sg(img_pixf, agg::rgba(0,0,0,0), interpolator);
+            agg::path_storage fullimg;
+            int ims_2 = MS_NINT(MS_MAX(pix.height(),pix.width())*scale*1.415)/2+1;
+            fullimg.move_to(x-ims_2,y-ims_2);
+            fullimg.line_to(x+ims_2,y-ims_2);
+            fullimg.line_to(x+ims_2,y+ims_2);
+            fullimg.line_to(x-ims_2,y+ims_2);
+            fullimg.close_polygon();      
+            ras_aa.add_path(fullimg);
+            agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
+        }
+        else {
+            //just copy the image at the correct location (we place the pixmap on 
+            //the nearest integer pixel to avoid blurring)
+            ren_base.blend_from(img_pixf,0,MS_NINT(x-pix.width()/2.),MS_NINT(y-pix.height()/2.));
+        }
     }
     
     /**
