@@ -3758,14 +3758,15 @@ void msFreeImageGD(gdImagePtr img)
 
 int msAlphaCompositeGD(int src, int dst, double pct) {
     int da,sa;
+    double dsa, dda, ddaonedsa, alpha0;
     sa=127-gdTrueColorGetAlpha(src);
     if(!sa) return dst;
     da=127-gdTrueColorGetAlpha(dst);
     if(!da&&pct==1.0) return src;
-    double dsa=((double)sa/127.0)*pct;
-    double dda=((double)da/127.0);
-    double ddaonedsa=dda*(1.0-dsa);
-    double alpha0 = dsa + ddaonedsa;
+    dsa=((double)sa/127.0)*pct;
+    dda=((double)da/127.0);
+    ddaonedsa=dda*(1.0-dsa);
+    alpha0 = dsa + ddaonedsa;
     return gdTrueColorAlpha(
             MS_NINT((gdTrueColorGetRed(src)*dsa+gdTrueColorGetRed(dst)*ddaonedsa)/alpha0),
             MS_NINT((gdTrueColorGetGreen(src)*dsa+gdTrueColorGetGreen(dst)*ddaonedsa)/alpha0),
