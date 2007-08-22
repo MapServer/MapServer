@@ -2979,9 +2979,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     outstr = gsub(outstr, substr, encodedstr);
     free(encodedstr);
 
-    outstr = gsub(outstr, substr, msObj->request->ParamValues[i]);
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", msObj->request->ParamNames[i]);
-
     encodedstr = msEncodeUrl(msObj->request->ParamValues[i]);
     outstr = gsub(outstr, substr, encodedstr);
     free(encodedstr);
