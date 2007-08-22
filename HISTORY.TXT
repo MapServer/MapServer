@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.3
 --------------------------
 
+- Fixed XSS vulnerabilities (#2256)
+
 - Bug 1335 : missing call to msInitShape in function msQueryByShape
 
 - Bug 1319: Fixed mutex creation (was creator-owned) in mapthread.c. win32
