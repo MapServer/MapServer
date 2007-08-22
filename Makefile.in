@@ -73,6 +73,15 @@ AGG=     @AGG_ENABLED@
 AGG_LIB=  @AGG_LIB@
 AGG_INC=  @AGG_INC@
 
+#
+# agg_font_freetype stuff.
+#
+# If libaggfreetype.so is not available on this system then set the following
+# to enable building agg_font_freetype.o from source and linking it in directly
+#
+AGG_FT_DIR=@AGG_FT_DIR@
+AGG_FT_OBJ=@AGG_FT_OBJ@
+
 # 
 # ZLIB option (compressed SVG)
 #
@@ -241,7 +250,7 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o mapdebug.o mapchart.o maptclutf.o $(EPPL_OBJ) 
+OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o mapdebug.o mapchart.o maptclutf.o $(EPPL_OBJ) $(AGG_FT_OBJ)
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
@@ -262,6 +271,9 @@ all: $(MAKE_GD) libmapserver.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@
 
 mapogr.o:	mapogr.cpp
 	$(CXX) -c $(CXXFLAGS) mapogr.cpp -o mapogr.o
+
+agg_font_freetype.o: $(AGG_FT_DIR)/agg_font_freetype.cpp
+	$(CXX) -c $(CXXFLAGS) $(AGG_FT_DIR)/agg_font_freetype.cpp -o agg_font_freetype.o
 
 php3_mapscript:: $(LIBMAP_STATIC)
 	cd mapscript/php3; $(MAKE); cd ../..

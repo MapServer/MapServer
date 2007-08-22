@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Allow building with AGG from source when libaggfontfreetype is missing.
+  configure --with-agg=DIR now automatically tries to build 
+  agg_font_freetype.o from source if libaggfontfreetype is missing (#2215)
+
 - Fixed possible buffer overflow in template processing (#2252)
 
 - fix blending of transparent layers with RGBA images

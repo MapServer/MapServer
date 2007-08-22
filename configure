@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB AGG_ENABLED AGG_INC AGG_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB AGG_ENABLED AGG_INC AGG_LIB AGG_FT_DIR AGG_FT_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7685,20 +7685,6 @@ echo "${ECHO_T}using libagg from system libs." >&6
 
 elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
-
-  if test -z "$with_agg" || echo "$with_agg" | grep '^/' >/dev/null ; then
-    AGG_DIR="$with_agg"
-  else
-    AGG_DIR="`pwd`/$with_agg"
-  fi
-
-  test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include"
-  test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg"
-  test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg2"
-
-  # Include font_freetype directory if we are building from source tree.
-  test -f $AGG_DIR/font_freetype/agg_font_freetype.h && AGG_INCLUDE="$AGG_INCLUDE -I$AGG_DIR/font_freetype"
-
   if test -n "$FT_BIN" ; then
      FT_INC=`$FT_BIN --cflags`
   else
@@ -7707,15 +7693,64 @@ echo "$as_me: error: freetype required for agg support - please configure --with
    { (exit 1); exit 1; }; }
   fi
 
+
+  if test -z "$with_agg" || echo "$with_agg" | grep '^/' >/dev/null ; then
+    AGG_DIR="$with_agg"
+  else
+    AGG_DIR="`pwd`/$with_agg"
+  fi
+
+
+  test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include"
+  test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg"
+  test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg2"
+
+  # Include font_freetype directory if we are building from source tree.
+  test -f $AGG_DIR/font_freetype/agg_font_freetype.h && AGG_INCLUDE="$AGG_INCLUDE -I$AGG_DIR/font_freetype"
+
+  if test -z "$AGG_INCLUDE" ; then
+      { { echo "$as_me:$LINENO: error: \"could not find agg_rendering_buffer.h in $AGG_DIR.\"" >&5
+echo "$as_me: error: \"could not find agg_rendering_buffer.h in $AGG_DIR.\"" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
   test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/lib/libagg.so && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
   test -f $AGG_DIR/src/libagg.so && AGG_LIBDIR="$AGG_DIR/src"
 
-  if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
-      AGG_ENABLED="-DUSE_AGG"
-      AGG_INC="$AGG_INCLUDE $FT_INC"
-      AGG_LIB="-L$AGG_LIBDIR -lagg -laggfontfreetype"
+  if test -z "$AGG_LIBDIR" ; then
+      { { echo "$as_me:$LINENO: error: \"could not find libagg.a or libagg.so in $AGG_DIR.\"" >&5
+echo "$as_me: error: \"could not find libagg.a or libagg.so in $AGG_DIR.\"" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  echo "$as_me:$LINENO: result: using libagg from $AGG_DIR" >&5
+echo "${ECHO_T}using libagg from $AGG_DIR" >&6
+
+      test -f AGG_LIBDIR/libaggfreetype.a && AGG_FT_LIB="-laggfontfreetype"
+  test -f AGG_LIBDIR/libaggfreetype.so && AGG_FT_LIB="-laggfontfreetype"
+
+  if test -n "$AGG_FT_LIB" ; then
+    echo "$as_me:$LINENO: result: using libaggfontfreetype from $AGG_DIR" >&5
+echo "${ECHO_T}using libaggfontfreetype from $AGG_DIR" >&6
+  else
+        test -f $AGG_DIR/font_freetype/agg_font_freetype.cpp && AGG_FT_DIR="$AGG_DIR/font_freetype"
+
+    if test -z "$AGG_FT_DIR" ; then
+      { { echo "$as_me:$LINENO: error: \"could not find libaggfontfreetype or agg_font_freetype.cpp in $AGG_DIR. Please specify location of AGG source tree using --with-agg.\"" >&5
+echo "$as_me: error: \"could not find libaggfontfreetype or agg_font_freetype.cpp in $AGG_DIR. Please specify location of AGG source tree using --with-agg.\"" >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+
+    AGG_FT_OBJ=agg_font_freetype.o
+    echo "$as_me:$LINENO: result: libaggfontfreetype not found, building/linking agg_font_freetype.o from source" >&5
+echo "${ECHO_T}libaggfontfreetype not found, building/linking agg_font_freetype.o from source" >&6
+  fi
+
+    AGG_ENABLED="-DUSE_AGG"
+  AGG_INC="$AGG_INCLUDE $FT_INC"
+  AGG_LIB="-L$AGG_LIBDIR -lagg $AGG_FT_LIB"
 
   if test ""$AGG_LIBDIR"" != "/usr/lib"; then
 
@@ -7738,13 +7773,6 @@ echo "$as_me: error: freetype required for agg support - please configure --with
 
   fi
 
-      echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-  else
-      { { echo "$as_me:$LINENO: error: \"could not find agg_rendering_buffer.h or libagg.a in $AGG_DIR.\"" >&5
-echo "$as_me: error: \"could not find agg_rendering_buffer.h or libagg.a in $AGG_DIR.\"" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
 
 else
 
@@ -7758,6 +7786,10 @@ AGG_ENABLED=$AGG_ENABLED
 AGG_INC=$AGG_INC
 
 AGG_LIB=$AGG_LIB
+
+AGG_FT_DIR=$AGG_FT_DIR
+
+AGG_FT_OBJ=$AGG_FT_OBJ
 
 
 ALL_ENABLED="$AGG_ENABLED $ALL_ENABLED"
@@ -11723,6 +11755,8 @@ s,@PDF_LIB@,$PDF_LIB,;t t
 s,@AGG_ENABLED@,$AGG_ENABLED,;t t
 s,@AGG_INC@,$AGG_INC,;t t
 s,@AGG_LIB@,$AGG_LIB,;t t
+s,@AGG_FT_DIR@,$AGG_FT_DIR,;t t
+s,@AGG_FT_OBJ@,$AGG_FT_OBJ,;t t
 s,@EPPL_ENABLED@,$EPPL_ENABLED,;t t
 s,@EPPL_OBJ@,$EPPL_OBJ,;t t
 s,@PROJ_ENABLED@,$PROJ_ENABLED,;t t
@@ -12102,6 +12136,8 @@ echo "$as_me:$LINENO: result:   iconv support:             ${ICONV_ENABLED}" >&5
 echo "${ECHO_T}  iconv support:             ${ICONV_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   AGG support:               ${AGG_ENABLED}" >&5
 echo "${ECHO_T}  AGG support:               ${AGG_ENABLED}" >&6
+echo "$as_me:$LINENO: result:   AGG Freetype support:      ${AGG_FT_LIB}${AGG_FT_OBJ}" >&5
+echo "${ECHO_T}  AGG Freetype support:      ${AGG_FT_LIB}${AGG_FT_OBJ}" >&6
 echo "$as_me:$LINENO: result:   Ming(flash) support:       ${MING_ENABLED}" >&5
 echo "${ECHO_T}  Ming(flash) support:       ${MING_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   PDFLib support:            ${PDF_ENABLED}" >&5

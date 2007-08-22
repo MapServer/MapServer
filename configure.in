@@ -770,7 +770,14 @@ if test "$with_agg" = "yes" ; then
 
 elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
+  if test -n "$FT_BIN" ; then
+     FT_INC=`$FT_BIN --cflags`
+  else
+     AC_MSG_ERROR([freetype required for agg support - please configure --with-freetype.])
+  fi
+  
   AC_EXPAND_PATH($with_agg, AGG_DIR)
+
   test -f $AGG_DIR/include/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include"
   test -f $AGG_DIR/include/agg/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg"
   test -f $AGG_DIR/include/agg2/agg_rendering_buffer.h && AGG_INCLUDE="-I$AGG_DIR/include/agg2"
@@ -778,26 +785,45 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
   # Include font_freetype directory if we are building from source tree.
   test -f $AGG_DIR/font_freetype/agg_font_freetype.h && AGG_INCLUDE="$AGG_INCLUDE -I$AGG_DIR/font_freetype"
 
-  if test -n "$FT_BIN" ; then
-     FT_INC=`$FT_BIN --cflags`
-  else
-     AC_MSG_ERROR([freetype required for agg support - please configure --with-freetype.])
+  if test -z "$AGG_INCLUDE" ; then
+      AC_MSG_ERROR("could not find agg_rendering_buffer.h in $AGG_DIR.")
   fi
-  
+
   test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/lib/libagg.so && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
   test -f $AGG_DIR/src/libagg.so && AGG_LIBDIR="$AGG_DIR/src"
 
-  if test -n "$AGG_INCLUDE" -a -n "$AGG_LIBDIR" ; then
-      AGG_ENABLED="-DUSE_AGG"
-      AGG_INC="$AGG_INCLUDE $FT_INC"
-      AGG_LIB="-L$AGG_LIBDIR -lagg -laggfontfreetype"
-      AC_ADD_RUNPATH("$AGG_LIBDIR")
-      AC_MSG_RESULT([yes])
-  else
-      AC_MSG_ERROR("could not find agg_rendering_buffer.h or libagg.a in $AGG_DIR.")
+  if test -z "$AGG_LIBDIR" ; then
+      AC_MSG_ERROR("could not find libagg.a or libagg.so in $AGG_DIR.")
   fi
+
+  AC_MSG_RESULT([using libagg from $AGG_DIR])
+
+  dnl Check whether libaggfontfreetype is available, if yes then we'll use it, 
+  dnl if not then we'll build agg_font_freetype.o from source.
+  test -f AGG_LIBDIR/libaggfreetype.a && AGG_FT_LIB="-laggfontfreetype"
+  test -f AGG_LIBDIR/libaggfreetype.so && AGG_FT_LIB="-laggfontfreetype"
+
+  if test -n "$AGG_FT_LIB" ; then
+    AC_MSG_RESULT([using libaggfontfreetype from $AGG_DIR])
+  else
+    dnl Build agg_font_freetype.o from source.
+    test -f $AGG_DIR/font_freetype/agg_font_freetype.cpp && AGG_FT_DIR="$AGG_DIR/font_freetype"
+
+    if test -z "$AGG_FT_DIR" ; then
+      AC_MSG_ERROR("could not find libaggfontfreetype or agg_font_freetype.cpp in $AGG_DIR. Please specify location of AGG source tree using --with-agg.")
+    fi
+
+    AGG_FT_OBJ=agg_font_freetype.o
+    AC_MSG_RESULT([libaggfontfreetype not found, building/linking agg_font_freetype.o from source])
+  fi
+
+  dnl If we got this far all is well!
+  AGG_ENABLED="-DUSE_AGG"
+  AGG_INC="$AGG_INCLUDE $FT_INC"
+  AGG_LIB="-L$AGG_LIBDIR -lagg $AGG_FT_LIB"
+  AC_ADD_RUNPATH("$AGG_LIBDIR")
 
 else
 
@@ -808,6 +834,8 @@ fi
 AC_SUBST(AGG_ENABLED,$AGG_ENABLED)
 AC_SUBST(AGG_INC,    $AGG_INC)
 AC_SUBST(AGG_LIB,    $AGG_LIB)
+AC_SUBST(AGG_FT_DIR, $AGG_FT_DIR)
+AC_SUBST(AGG_FT_OBJ, $AGG_FT_OBJ)
 
 ALL_ENABLED="$AGG_ENABLED $ALL_ENABLED"
 ALL_INC="$AGG_INC $ALL_INC"
@@ -2294,6 +2322,7 @@ AC_MSG_RESULT([  png support:               ${PNG_SETTING}])
 AC_MSG_RESULT([  jpeg support:              ${JPEG_ENABLED}])
 AC_MSG_RESULT([  iconv support:             ${ICONV_ENABLED}])
 AC_MSG_RESULT([  AGG support:               ${AGG_ENABLED}])
+AC_MSG_RESULT([  AGG Freetype support:      ${AGG_FT_LIB}${AGG_FT_OBJ}])
 AC_MSG_RESULT([  Ming(flash) support:       ${MING_ENABLED}])
 AC_MSG_RESULT([  PDFLib support:            ${PDF_ENABLED}])
 AC_MSG_RESULT()
