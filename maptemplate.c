@@ -2909,10 +2909,15 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   } /* end query mode specific substitutions */
 
   for(i=0;i<msObj->request->NumParams;i++) {
+    /* Replace [variable] tags using values from URL. We cannot offer a
+     * [variable_raw] option here due to the risk of XSS
+     */
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", msObj->request->ParamNames[i]);
-    outstr = msReplaceSubstring(outstr, substr, msObj->request->ParamValues[i]);
-    snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", msObj->request->ParamNames[i]);
+    encodedstr = msEncodeHTMLEntities(msObj->request->ParamValues[i]);
+    outstr = msReplaceSubstring(outstr, substr, encodedstr);
+    free(encodedstr);
 
+    snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", msObj->request->ParamNames[i]);
     encodedstr = msEncodeUrl(msObj->request->ParamValues[i]);
     outstr = msReplaceSubstring(outstr, substr, encodedstr);
     free(encodedstr);

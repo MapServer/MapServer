@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed XSS vulnerabilities (#2256)
+
 - Allow building with AGG from source when libaggfontfreetype is missing.
   configure --with-agg=DIR now automatically tries to build 
   agg_font_freetype.o from source if libaggfontfreetype is missing (#2215)
