@@ -44,6 +44,17 @@
 
 MS_CVSID("$Id$")
 
+#if defined(GDAL_VERSION_NUM) && (GDAL_VERSION_NUM < 1400)
+#  define ACQUIRE_OLD_OGR_LOCK   msAcquireLock( TLOCK_OGR )
+#  define RELEASE_OLD_OGR_LOCK   msReleaseLock( TLOCK_OGR )
+#else
+#  define ACQUIRE_OLD_OGR_LOCK 
+#  define RELEASE_OLD_OGR_LOCK 
+#endif
+
+#define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
+#define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )
+
 #ifdef USE_OGR
 
 #include "ogrsf_frmts.h"
@@ -71,17 +82,6 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
 // Undefine this if you are using a very old GDAL without OpenShared(). 
 #define USE_SHARED_ACCESS  
-
-#if GDAL_VERSION_NUM < 1400
-#  define ACQUIRE_OLD_OGR_LOCK   msAcquireLock( TLOCK_OGR )
-#  define RELEASE_OLD_OGR_LOCK   msReleaseLock( TLOCK_OGR )
-#else
-#  define ACQUIRE_OLD_OGR_LOCK 
-#  define RELEASE_OLD_OGR_LOCK 
-#endif
-
-#define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
-#define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )
 
 /* ==================================================================
  * Geometry conversion functions
