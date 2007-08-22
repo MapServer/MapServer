@@ -14,6 +14,12 @@ the CVS logs is updated daily at the following URL:
 
 
 
+Version 4.6.3 (svn...)
+---------------------------
+
+- Fixed XSS vulnerabilities (#2256)
+
+
 Version 4.6.2 (2005-11-29)
 --------------------------
 
