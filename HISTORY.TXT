@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.8.5 (CVS)
 -------------
 
+- Fixed XSS vulnerabilities (#2256)
+
 - Fixed possible heap overflow with oversized POST requests (bug 1885)
 
 - schemas.opengeospatial.net has been shutdown, use schemas.opengis.net 

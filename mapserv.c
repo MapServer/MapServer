@@ -177,7 +177,7 @@ void writeError(void)
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
     msIO_printf("<!-- %s -->\n", msGetVersion());
     msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
-    msWriteError(stdout);
+    msWriteErrorXML(stdout);
     msIO_printf("</BODY></HTML>");
     msCleanup();
     exit(0);
@@ -191,7 +191,7 @@ void writeError(void)
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
       msIO_printf("<!-- %s -->\n", msGetVersion());
       msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
-      msWriteError(stdout);
+      msWriteErrorXML(stdout);
       msIO_printf("</BODY></HTML>");
     }
   } else {
@@ -203,7 +203,7 @@ void writeError(void)
 	msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
 	msIO_printf("<!-- %s -->\n", msGetVersion());
 	msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
-	msWriteError(stdout);
+	msWriteErrorXML(stdout);
 	msIO_printf("</BODY></HTML>");
       }
     } else {
@@ -212,7 +212,7 @@ void writeError(void)
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
       msIO_printf("<!-- %s -->\n", msGetVersion());
       msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
-      msWriteError(stdout);
+      msWriteErrorXML(stdout);
       msIO_printf("</BODY></HTML>");
     }
   }
