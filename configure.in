@@ -802,8 +802,8 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
   dnl Check whether libaggfontfreetype is available, if yes then we'll use it, 
   dnl if not then we'll build agg_font_freetype.o from source.
-  test -f AGG_LIBDIR/libaggfreetype.a && AGG_FT_LIB="-laggfontfreetype"
-  test -f AGG_LIBDIR/libaggfreetype.so && AGG_FT_LIB="-laggfontfreetype"
+  test -f $AGG_LIBDIR/libaggfontfreetype.a && AGG_FT_LIB="-laggfontfreetype"
+  test -f $AGG_LIBDIR/libaggfontfreetype.so && AGG_FT_LIB="-laggfontfreetype"
 
   if test -n "$AGG_FT_LIB" ; then
     AC_MSG_RESULT([using libaggfontfreetype from $AGG_DIR])
@@ -812,7 +812,7 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
     test -f $AGG_DIR/font_freetype/agg_font_freetype.cpp && AGG_FT_DIR="$AGG_DIR/font_freetype"
 
     if test -z "$AGG_FT_DIR" ; then
-      AC_MSG_ERROR("could not find libaggfontfreetype or agg_font_freetype.cpp in $AGG_DIR. Please specify location of AGG source tree using --with-agg.")
+      AC_MSG_ERROR([could not find libaggfontfreetype or agg_font_freetype.cpp in $AGG_DIR. Please download and compile an AGG source package from http://antigrain.com/download/index.html, and then specify the location of the AGG source tree using --with-agg.])
     fi
 
     AGG_FT_OBJ=agg_font_freetype.o
