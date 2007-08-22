@@ -691,7 +691,7 @@ MING_LIB= $(MING_DIR)/src/libming.lib
 
 # Setup AGG
 !IFDEF AGG
-AGG_INC=-I$(AGG_DIR)\include -I$(AGG_DIR)\include\platform\win32
+AGG_INC=-I$(AGG_DIR)\include -I$(AGG_DIR)\include\platform\win32 -I$(FT_DIR)\include -I$(AGG_DIR)\font_freetype
 AGG_LIB= $(AGG_DIR)\src\agg.lib
 !ENDIF
 
