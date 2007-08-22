@@ -574,88 +574,53 @@ public:
         int unicode;
         double fx=x,fy=y;
         const char *utfptr=thechars;
+        agg::path_storage glyphs;
+        while(*utfptr) {
+            if(*utfptr=='\r') {fx=x;utfptr++;continue;}
+            if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
+            if(isUTF8Encoded)
+                utfptr+=msUTF8ToUniChar(utfptr, &unicode);
+            else {
+                unicode=(int)((unsigned char)utfptr[0]);
+                utfptr++;
+            }
+            glyph=m_fman.glyph(unicode);;
+            if(glyph)
+            {
+                m_fman.init_embedded_adaptors(glyph,fx,fy);
+                agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, mtx);
+                glyphs.concat_path(trans_c);
+                fx += glyph->advance_x;
+                fy += glyph->advance_y;
+            }
+        }
         if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
             ras_aa.reset();
-            while(*utfptr) {
-                if(*utfptr=='\r') {fx=x;utfptr++;continue;}
-                if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
-                if(isUTF8Encoded)
-                    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
-                else {
-                    unicode=(int)((unsigned char)utfptr[0]);
-                    utfptr++;
-                }
-                glyph=m_fman.glyph(unicode);;
-                if(glyph)
-                {
-                    m_fman.init_embedded_adaptors(glyph,fx,fy);
-                    agg::trans_affine_translation tr(shdx,shdy);
-                    agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, tr*mtx);
-                    ras_aa.add_path(trans_c);
-                    fx += glyph->advance_x;
-                    fy += glyph->advance_y;
-                }
-            }
+            agg::trans_affine_translation tr(shdx,shdy);
+            agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
+            ras_aa.add_path(tglyphs);
             ren_aa.color(msToAGGColor(shadowcolor));
             agg::render_scanlines(ras_aa, sl, ren_aa);
         }
 
-        fx=x,fy=y;
-        utfptr=thechars;
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
             ras_aa.reset();
-            while(*utfptr) {
-                if(*utfptr=='\r') {fx=x;utfptr++;continue;}
-                if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
-                if(isUTF8Encoded)
-                    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
-                else {
-                    unicode=(int)((unsigned char)utfptr[0]);
-                    utfptr++;
-                }
-                glyph=m_fman.glyph(unicode);
-                if(glyph)
-                {
-                    m_fman.init_embedded_adaptors(glyph,fx,fy);
-                    for(int i=-1;i<=1;i++)
-                        for(int j=-1;j<=1;j++) {
-                            if(i||j) { 
-                                agg::trans_affine_translation tr(i,j);
-                                agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, tr*mtx);                   
-                                ras_aa.add_path(trans_c);
-                            }
-                        }
-                    fx += glyph->advance_x;
-                    fy += glyph->advance_y;
+            for(int i=-1;i<=1;i++) {
+                for(int j=-1;j<=1;j++) {
+                    if(i||j) {
+                        agg::trans_affine_translation tr(i,j);
+                        agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
+                        ras_aa.add_path(tglyphs);
+                    }
                 }
             }
             ren_aa.color(msToAGGColor(outlinecolor));
             agg::render_scanlines(ras_aa, sl, ren_aa);
         }
-
-        fx=x,fy=y;
-        utfptr=thechars;
+    
         if(color!=NULL && MS_VALID_COLOR(*color)) {
             ras_aa.reset();
-            while(*utfptr) {
-                if(*utfptr=='\r') {fx=x;utfptr++;continue;}
-                if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
-                if(isUTF8Encoded)
-                    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
-                else {
-                    unicode=(int)((unsigned char)utfptr[0]);
-                    utfptr++;
-                }
-                glyph=m_fman.glyph(unicode);
-                if(glyph)
-                {
-                    m_fman.init_embedded_adaptors(glyph,fx,fy);
-                    agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, mtx);                   
-                    ras_aa.add_path(trans_c);
-                    fx += glyph->advance_x;
-                    fy += glyph->advance_y;
-                }
-            }
+            ras_aa.add_path(glyphs);
             ren_aa.color(msToAGGColor(color));
             agg::render_scanlines(ras_aa, sl, ren_aa);
         }
