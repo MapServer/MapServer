@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+Version 5.0.0-beta5 (2007-08-22)
+--------------------------------
+
 - Fixed XSS vulnerabilities (#2256)
 
 - Allow building with AGG from source when libaggfontfreetype is missing.
