@@ -10,7 +10,7 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Version 4.10.3 (svn...)
+Version 4.10.3 (2007-08-22)
 ---------------------------
 
 - Fixed XSS vulnerabilities (#2256)
