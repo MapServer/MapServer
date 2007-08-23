@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
     fprintf(stdout,
-            "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy]\n"
+            "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
             "               [-l layer1 \"[layers2...] ]\" [-i format] [-p n]\n"
             "               [-all_debug n] [-map_debug n] [-layer_debug n]\n");
 
@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format.\n" );
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
+    fprintf(stdout,"  -s sizex sizey: output image size\n");
     fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed.\n" );
     fprintf(stdout,"  -all_debug n: Set debug level for map and all layers.\n" );
     fprintf(stdout,"  -map_debug n: Set map debug level.\n" );
@@ -203,6 +204,11 @@ int main(int argc, char *argv[])
       map->extent.maxy = atof(argv[i+4]);
       i+=4;
     }
+
+    if (strcmp(argv[i], "-s") == 0) {
+      msMapSetSize(map, atoi(argv[i+1]), atoi(argv[i+2]));
+      i+=2;
+    }    
 
     if(strcmp(argv[i],"-l") == 0) { /* load layer list */
       layers = msStringSplit(argv[i+1], ' ', &(num_layers));
