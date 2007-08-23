@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+- AGG: smooth font shadows
 
 Version 5.0.0-beta5 (2007-08-22)
 --------------------------------

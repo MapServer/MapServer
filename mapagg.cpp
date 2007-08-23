@@ -598,9 +598,13 @@ public:
             ras_aa.reset();
             agg::trans_affine_translation tr(shdx,shdy);
             agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
-            ras_aa.add_path(tglyphs);
-            ren_aa.color(msToAGGColor(shadowcolor));
-            agg::render_scanlines(ras_aa, sl, ren_aa);
+            typedef agg::renderer_outline_aa<agg::renderer_base<pixelFormat> > renderer_smooth;
+            agg::line_profile_aa prof;
+            prof.width(0.5);
+            renderer_smooth ren_s(ren_base,prof);
+            agg::rasterizer_outline_aa<renderer_smooth> rasterizer_smooth(ren_s);
+            ren_s.color(msToAGGColor(shadowcolor));
+            rasterizer_smooth.add_path(tglyphs);
         }
 
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
