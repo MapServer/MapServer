@@ -1205,7 +1205,9 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
     float phi = label->angle;
     colorObj  sColor;
     char *wrappedString;
-    char *fontKey;
+    char *fontPath = NULL;
+    char *fontOutlineAlias = NULL;
+    int nFontOutlineLen = 0;
     PDF *pdf;
 /* -------------------------------------------------------------------- */
 /*      if not PDF, return.                                             */
@@ -1239,9 +1241,9 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
         return(-1);
     }
 
-    font = msLookupHashTable(&(fontset->fonts), label->font);
+    fontPath = msLookupHashTable(&(fontset->fonts), label->font);
 
-    if(!font)
+    if(!fontPath)
     {
         msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextPDF()",
                    label->font);
@@ -1300,9 +1302,15 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
     PDF_setlinewidth(pdf,.3);
 
 /*set up font handling*/
-    fontKey = label->font;
+    /*set an alias for the font outline file*/
+    nFontOutlineLen = strlen(fontPath + 3);
+    fontOutlineAlias = (char *)malloc(sizeof(char)*(nFontOutlineLen));
+    sprintf(fontOutlineAlias, "f1=%s",fontPath);
+    PDF_set_parameter(pdf, "FontOutline", fontOutlineAlias);
+    free(fontOutlineAlias);
 
-    font = PDF_findfont(pdf, fontKey, "winansi",1);
+    /*load font using alias*/
+    font = PDF_load_font(pdf, "f1" ,0 ,"winansi", NULL);
     PDF_setfont(pdf,font,size+2);
 
     if (phi!=0){
