@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Avoid passing null to msInsertHashTable in processLegendTemplate
+  when layer.name or layer.group not specified (#2261)
+
 - Fixed problems with fonts in PDF output (#2142)
 
 - AGG: smooth font shadows
