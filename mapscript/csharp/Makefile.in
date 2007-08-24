@@ -229,6 +229,7 @@ mapscript_csharp::
 	$(CSC) /r:mapscript_csharp.dll /out:drawmap.exe examples/drawmap.cs
 	$(CSC) /r:mapscript_csharp.dll /out:drawquery.exe examples/drawquery.cs
 	$(CSC) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe examples/getbytes.cs
+	$(CSC) /r:mapscript_csharp.dll /out:HTMLtemplate.exe examples/HTMLtemplate.cs
 
 dll_config: Makefile
 	rm -rf mapscript_csharp.dll.config

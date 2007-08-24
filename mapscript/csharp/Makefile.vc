@@ -81,6 +81,7 @@ $(CSHARP_DLL)::
 	$(CSC) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
 	$(CSC) /r:mapscript_csharp.dll /out:drawquery.exe examples\drawquery.cs
 	$(CSC) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe examples\getbytes.cs
+	$(CSC) /r:mapscript_csharp.dll /out:HTMLtemplate.exe examples\HTMLtemplate.cs
 
 test:
 !IFDEF MONO
