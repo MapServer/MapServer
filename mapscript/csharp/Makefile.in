@@ -188,7 +188,7 @@ SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)
 
-LDFLAGS= $(RUNPATHS) -L../.. -lmap $(SUP_LIBS) $(STATIC_LIBS)
+LDFLAGS= $(RUNPATHS) -L../.. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 LIBMAPSCRIPT_SHARED= libmapscript.@SO_EXT@
 LD_SHARED= @LD_SHARED@
