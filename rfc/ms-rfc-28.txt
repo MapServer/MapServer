@@ -5,7 +5,7 @@
 :Date: 2007/06/14
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
-:Last Edited: 2007/07/05
+:Last Edited: 2007/08/24
 :Status: Adopted (2007-06-29) - Under development
 :Version: MapServer 5.0
 
@@ -93,8 +93,9 @@ The variable MS_ERRORFILE will specify the location of the output, with
 possible values being either a file path on disk, or one of the following 
 special values:
 
-* "stderr" to send output to standard error (under Apache that's the Apache
-  error_log file).
+* "stderr" to send output to standard error. Under Apache stderr is the Apache
+  error_log file. Under IIS stderr goes to stdout so its use is discouraged.
+  With IIS it is recommended to direct output to a file on disk instead.
 
 * "stdout" to send output to standard output, combined with the rest of 
   MapServer's output
