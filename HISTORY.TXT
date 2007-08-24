@@ -14,7 +14,7 @@ Current Version (SVN branch-4-10):
 ---------------------------------
 
 - Fixed java and csharp Makefile.in to use -lmapserver instead of -lmap
-  (side-effect of #2256)
+  (side-effect of #2150)
 
 
 Version 4.10.3 (2007-08-22)
