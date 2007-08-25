@@ -41,6 +41,7 @@
 #include "agg_rendering_buffer.h"
 #include "agg_rasterizer_scanline_aa.h"
 #include "agg_rasterizer_outline_aa.h"
+#include "agg_rasterizer_outline.h"
 
 #include "agg_conv_stroke.h"
 #include "agg_conv_dash.h"
@@ -52,6 +53,7 @@
 
 #include "agg_renderer_base.h"
 #include "agg_renderer_scanline.h"
+#include "agg_renderer_primitives.h"
 #include "agg_renderer_outline_aa.h"
 #include "agg_renderer_outline_image.h"
 
@@ -63,7 +65,7 @@
 
 #include "agg_pattern_filters_rgba.h"
 
-
+#include "agg_bounding_rect.h"
 #include "agg_span_allocator.h"
 #include "agg_image_accessors.h"
 #include "agg_span_pattern_rgba.h"
@@ -85,9 +87,11 @@
 #ifdef CPL_MSB
 typedef agg::pixfmt_argb32 GDpixfmt; 
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
 #else
 typedef agg::pixfmt_bgra32 GDpixfmt;
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
 #endif
 
 
@@ -97,6 +101,16 @@ typedef agg::font_engine_freetype_int16 font_engine_type;
 typedef agg::font_cache_manager<font_engine_type> font_manager_type;
 typedef agg::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 
+typedef agg::renderer_base<pixelFormat> renderer_base;
+typedef agg::renderer_base<pixelFormat_pre> renderer_base_pre;
+
+typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_aa;
+typedef agg::renderer_outline_aa<renderer_base> renderer_oaa;
+typedef agg::renderer_primitives<renderer_base> renderer_prim;
+typedef agg::rasterizer_outline_aa<renderer_oaa> rasterizer_outline_aa;
+typedef agg::rasterizer_outline <renderer_prim> rasterizer_outline;
+typedef agg::rasterizer_scanline_aa<> rasterizer_scanline;
+typedef agg::scanline_p8 scanline;
 
 MS_CVSID("$Id$")
 
@@ -232,12 +246,13 @@ static agg::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
 class AGGMapserverRenderer {
 public:
     AGGMapserverRenderer(imageObj *image) :
-        thePixelFormat(*(static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra))),
+        pRowCache(static_cast<mapserv_row_ptr_cache<int>  *>(image->imageextra)),
+        thePixelFormat(*pRowCache),
         ren_base(thePixelFormat),
         ren_aa(ren_base),
         m_fman(m_feng)
         {
-
+            
         }
 
     void renderEllipse(double x, double y, double w, double h, colorObj *color,
@@ -250,14 +265,39 @@ public:
 
     void renderPolyline(agg::path_storage &p,colorObj *c, 
             double width,int dashstylelength, int *dashstyle) {
+        
+        //ras_aa.clip_box(0, 0, thePixelFormat.width(), thePixelFormat.height());
+        
+        //fast and aliased case for tiny thin lines
+        /*if(width==1 && dashstylelength <= 0) {
+            double x1,y1,x2,y2;
+            agg::bounding_rect_single(p,0,&x1,&y1,&x2,&y2);
+            if((MS_ABS(x2-x1)<=1) && (MS_ABS(y2-y1)<=1)) {
+                renderer_prim ren_p(ren_base);
+                ren_p.line_color(agg::rgba(1,0,0));  
+                rasterizer_outline ras_o(ren_p);
+                ras_o.add_path(p);
+                return;
+            }
+        }*/
         ras_aa.reset();
-        ren_aa.color(msToAGGColor(c));  
+        ren_aa.color(msToAGGColor(c));
 
         if (dashstylelength <= 0) {
-            agg::conv_stroke<agg::path_storage> stroke(p);
+            agg::conv_stroke<agg::path_storage> stroke(p);  
             stroke.width(width);
-            stroke.line_cap(agg::round_cap);
             ras_aa.add_path(stroke);
+            /*
+            //faster implementation, but with artifacts
+            agg::line_profile_aa prof;
+            prof.width(width);
+            renderer_oaa renoaa(ren_base,prof);
+            renoaa.color(msToAGGColor(c));
+            rasterizer_outline_aa rasoa(renoaa);
+            rasoa.line_join(agg::outline_round_join); 
+            rasoa.round_cap(true);
+            rasoa.add_path(p);return;
+            */
         } else {
             agg::conv_dash<agg::path_storage> dash(p);
             agg::conv_stroke<agg::conv_dash<agg::path_storage> > stroke_dash(dash);  
@@ -483,13 +523,14 @@ public:
         typedef agg::image_accessor_wrap<GDpixfmt,wrap_type,wrap_type> img_source_type;
         typedef agg::span_pattern_rgba<img_source_type> span_gen_type;
         agg::span_allocator<agg::rgba8> sa;
-
+        pixelFormat_pre thePixelFormat_pre(*pRowCache);
+        renderer_base_pre ren_base_pre(thePixelFormat_pre);
         ras_aa.reset();
         GDpixfmt img_pixf(tile);
         img_source_type img_src(img_pixf);
         span_gen_type sg(img_src, 0, 0);
         ras_aa.add_path(path);
-        agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
+        agg::render_scanlines_aa(ras_aa, sl, ren_base_pre, sa, sg);
     }
 
 
@@ -595,15 +636,13 @@ public:
             }
         }
         if(shadowcolor!=NULL && MS_VALID_COLOR(*shadowcolor)) {
-            ras_aa.reset();
             agg::trans_affine_translation tr(shdx,shdy);
             agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
-            typedef agg::renderer_outline_aa<agg::renderer_base<pixelFormat> > renderer_smooth;
             agg::line_profile_aa prof;
             prof.width(0.5);
-            renderer_smooth ren_s(ren_base,prof);
-            agg::rasterizer_outline_aa<renderer_smooth> rasterizer_smooth(ren_s);
-            ren_s.color(msToAGGColor(shadowcolor));
+            renderer_oaa ren_oaa(ren_base,prof);
+            rasterizer_outline_aa rasterizer_smooth(ren_oaa);
+            ren_oaa.color(msToAGGColor(shadowcolor));
             rasterizer_smooth.add_path(tglyphs);
         }
 
@@ -632,12 +671,12 @@ public:
     }
 
 private:
-    pixelFormat thePixelFormat;
     mapserv_row_ptr_cache<int>  *pRowCache;
-    agg::renderer_base< pixelFormat > ren_base;
-    agg::renderer_scanline_aa_solid< agg::renderer_base< pixelFormat > > ren_aa;
-    agg::scanline_p8 sl;
-    agg::rasterizer_scanline_aa<> ras_aa;
+    pixelFormat thePixelFormat;
+    renderer_base ren_base;
+    renderer_aa ren_aa;
+    scanline sl;
+    rasterizer_scanline ras_aa;
     font_engine_type m_feng;
     font_manager_type m_fman;
     agg::rgba msToAGGColor(colorObj *c) {
