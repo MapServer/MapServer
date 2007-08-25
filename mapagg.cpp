@@ -252,7 +252,7 @@ public:
         ren_aa(ren_base),
         m_fman(m_feng)
         {
-            
+            ras_aa.filling_rule(agg::fill_even_odd);
         }
 
     void renderEllipse(double x, double y, double w, double h, colorObj *color,
