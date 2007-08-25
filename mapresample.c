@@ -1679,7 +1679,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         sDummyMap.imagecolor.green = map->imagecolor.green;
         sDummyMap.imagecolor.blue = map->imagecolor.blue;
     }
-#ifdef _USE_AGG
+#ifdef USE_AGG
     else if( MS_RENDERER_AGG(sDummyMap.outputformat) 
              && gdImageTrueColor( image->img.gd ) )
     {
