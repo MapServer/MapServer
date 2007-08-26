@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- AGG: revert previous optimizations. now use caching of the rendering object
+  to avoid the re-creation of some structures each time a shape is drawn
+
 - AGG: optimizations for faster rendering. we now do not initialize the font
   cache when no text is to be rendered
 
