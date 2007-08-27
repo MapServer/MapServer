@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Look for libagg under lib64 subdir as well in configure (#2265)
+
 - AGG: revert previous optimizations. now use caching of the rendering object
   to avoid the re-creation of some structures each time a shape is drawn
 

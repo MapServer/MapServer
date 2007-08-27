@@ -791,6 +791,8 @@ elif test -n "$with_agg" -a "$with_agg" != "no" ; then
 
   test -f $AGG_DIR/lib/libagg.a && AGG_LIBDIR="$AGG_DIR/lib"
   test -f $AGG_DIR/lib/libagg.so && AGG_LIBDIR="$AGG_DIR/lib"
+  test -f $AGG_DIR/lib64/libagg.a && AGG_LIBDIR="$AGG_DIR/lib64"
+  test -f $AGG_DIR/lib64/libagg.so && AGG_LIBDIR="$AGG_DIR/lib64"
   test -f $AGG_DIR/src/libagg.a && AGG_LIBDIR="$AGG_DIR/src"
   test -f $AGG_DIR/src/libagg.so && AGG_LIBDIR="$AGG_DIR/src"
 
