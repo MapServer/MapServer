@@ -195,7 +195,7 @@ public:
         ren_aa(ren_base),
         m_fman(m_feng)
         {
-            ras_aa.filling_rule(agg::fill_even_odd);
+            
         }
     
     ~AGGMapserverRenderer() {
@@ -219,27 +219,14 @@ public:
 
     void renderPolyline(agg::path_storage &p,colorObj *c, 
             double width,int dashstylelength, int *dashstyle) {
-        
-        //ras_aa.clip_box(0, 0, thePixelFormat.width(), thePixelFormat.height());
-        
-        //fast and aliased case for tiny thin lines
-        /*if(width==1 && dashstylelength <= 0) {
-            double x1,y1,x2,y2;
-            agg::bounding_rect_single(p,0,&x1,&y1,&x2,&y2);
-            if((MS_ABS(x2-x1)<=1) && (MS_ABS(y2-y1)<=1)) {
-                renderer_prim ren_p(ren_base);
-                ren_p.line_color(agg::rgba(1,0,0));  
-                rasterizer_outline ras_o(ren_p);
-                ras_o.add_path(p);
-                return;
-            }
-        }*/
         ras_aa.reset();
+        ras_aa.filling_rule(agg::fill_non_zero);
         ren_aa.color(msToAGGColor(c));
 
         if (dashstylelength <= 0) {
             agg::conv_stroke<agg::path_storage> stroke(p);  
             stroke.width(width);
+            stroke.line_cap(agg::round_cap);
             ras_aa.add_path(stroke);
             /*
             //faster implementation, but with artifacts
@@ -263,7 +250,7 @@ public:
             stroke_dash.line_cap(agg::round_cap);
             ras_aa.add_path(stroke_dash);
         }
-        agg::render_scanlines(ras_aa, sl, ren_aa);      
+        agg::render_scanlines(ras_aa, sl, ren_aa);     
     }
 
     void renderPolylinePixmapBGRA(shapeObj *p, agg::rendering_buffer &pattern,
@@ -276,6 +263,7 @@ public:
             int tilewidth, int tileheight, 
             colorObj *color, colorObj *backgroundcolor, double width) {
         ras_aa.reset();
+        ras_aa.filling_rule(agg::fill_non_zero);
         typedef agg::wrap_mode_repeat wrap_type;
         typedef agg::image_accessor_wrap<GDpixfmt,wrap_type,wrap_type> img_source_type;
         typedef agg::span_pattern_rgba<img_source_type> span_gen_type;
@@ -301,7 +289,7 @@ public:
 
     void renderPathPixmapBGRA(agg::path_storage &line, agg::rendering_buffer &pattern,
             colorObj *backgroundcolor, double width) {
-        ras_aa.reset();
+        
 
         agg::pattern_filter_bilinear_rgba8 fltr;
         typedef agg::line_image_pattern<agg::pattern_filter_bilinear_rgba8> pattern_type;
@@ -318,6 +306,8 @@ public:
 
 
         if(backgroundcolor!=NULL && MS_VALID_COLOR(*backgroundcolor)) {
+            ras_aa.reset();
+            ras_aa.filling_rule(agg::fill_even_odd);
             agg::line_profile_aa profile;
             //profile.smoother_width(10.0);                    //optional
             profile.width(width);                              //mandatory!
@@ -326,9 +316,9 @@ public:
             rasterizer_line_type ras_line(ren_line);
             ras_line.round_cap(true);
             ras_line.add_path(line);
+            agg::render_scanlines(ras_aa, sl, ren_aa);
         }
         ras_img.add_path(line);
-        agg::render_scanlines(ras_aa, sl, ren_aa);
     }
 
     /**
@@ -341,14 +331,15 @@ public:
     void renderPathSolid(agg::path_storage &path, colorObj *color,
             colorObj *outlinecolor, double outlinewidth=1) {
         ras_aa.reset();
-        ren_base.reset_clipping ( true );
         if(color!=NULL && MS_VALID_COLOR(*color)) {
+            ras_aa.filling_rule(agg::fill_even_odd);
             ras_aa.add_path ( path );
             ren_aa.color(msToAGGColor(color));
             agg::render_scanlines ( ras_aa, sl, ren_aa );
         }
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor) && outlinewidth > 0) {
             ras_aa.reset();
+            ras_aa.filling_rule(agg::fill_non_zero);
             ren_aa.color(msToAGGColor(outlinecolor));
             agg::conv_stroke<agg::path_storage> stroke(path);
             stroke.width(outlinewidth);
@@ -376,8 +367,10 @@ public:
         agg::scanline_storage_aa8 storage1;
         agg::scanline_storage_aa8 storage2;
         agg::scanline_p8 sl1,sl2;
+        ras1.filling_rule(agg::fill_non_zero);
         ras1.add_path(pattern);                    
         agg::render_scanlines(ras1, sl, storage1);
+        ras2.filling_rule(agg::fill_even_odd);
         ras2.add_path(clipper);
         agg::render_scanlines(ras2,sl,storage2);
         agg::sbool_combine_shapes_aa(agg::sbool_and, storage1, storage2, sl1, sl2, sl, storage);
@@ -390,6 +383,7 @@ public:
             int tilewidth, int tileheight, colorObj *color, colorObj *backgroundcolor) 
     {
         ras_aa.reset();
+        ras_aa.filling_rule(agg::fill_non_zero);
         agg::int8u*           m_pattern;
         agg::rendering_buffer m_pattern_rbuf;
         m_pattern = new agg::int8u[tilewidth * tileheight * 4];
@@ -428,7 +422,7 @@ public:
         int tilewidth=MS_NINT(gw+gap)+1,
             tileheight=MS_NINT(gh+gap)+1;
         
-            ras_aa.reset();
+            ras_aa.filling_rule(agg::fill_non_zero);
             agg::int8u* m_pattern;
             agg::rendering_buffer m_pattern_rbuf;
             m_pattern = new agg::int8u[tilewidth * tileheight * 4];
@@ -480,6 +474,7 @@ public:
         pixelFormat_pre thePixelFormat_pre(*pRowCache);
         renderer_base_pre ren_base_pre(thePixelFormat_pre);
         ras_aa.reset();
+        ras_aa.filling_rule(agg::fill_even_odd);
         GDpixfmt img_pixf(tile);
         img_source_type img_src(img_pixf);
         span_gen_type sg(img_src, 0, 0);
@@ -490,6 +485,7 @@ public:
 
     void renderPixmapBGRA(agg::rendering_buffer &pix, double x, double y, double angle, double scale) {
         ras_aa.reset();
+        ras_aa.filling_rule(agg::fill_non_zero);
         GDpixfmt img_pixf(pix);
 
         if((angle!=0 && angle!=360) || scale !=1) {
@@ -539,6 +535,7 @@ public:
             colorObj *shadowcolor=NULL, double shdx=1, double shdy=1,
             bool isMarker=false, bool isUTF8Encoded=false) {
         
+        ras_aa.filling_rule(agg::fill_non_zero);
         agg::trans_affine mtx;
         mtx *= agg::trans_affine_translation(-x,-y);
         mtx *= agg::trans_affine_rotation(-angle);
@@ -599,9 +596,9 @@ public:
             ren_oaa.color(msToAGGColor(shadowcolor));
             rasterizer_smooth.add_path(tglyphs);
         }
-
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
             ras_aa.reset();
+            ras_aa.filling_rule(agg::fill_non_zero);
             for(int i=-1;i<=1;i++) {
                 for(int j=-1;j<=1;j++) {
                     if(i||j) {
@@ -617,6 +614,7 @@ public:
     
         if(color!=NULL && MS_VALID_COLOR(*color)) {
             ras_aa.reset();
+            ras_aa.filling_rule(agg::fill_non_zero);
             ras_aa.add_path(glyphs);
             ren_aa.color(msToAGGColor(color));
             agg::render_scanlines(ras_aa, sl, ren_aa);
