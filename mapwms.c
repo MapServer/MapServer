@@ -352,8 +352,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   char **layers = NULL;
   int layerfound =0;
   int invalidlayers = 0;
-  char epsgbuf[32];
-  char srsbuffer[32];
+  char epsgbuf[100];
+  char srsbuffer[100];
   int epsgvalid = MS_FALSE;
   const char *projstring;
    char **tokens;
@@ -475,8 +475,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       {
         /* SRS=EPSG:xxxx */
 
-          sprintf(srsbuffer, "init=epsg:%.20s", values[i]+5);
-          sprintf(epsgbuf, "EPSG:%.20s",values[i]+5);
+          snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5);
+          snprintf(epsgbuf, 100, "EPSG:%.20s",values[i]+5);
 
         /* we need to wait until all params are read before */
         /* loding the projection into the map. This will help */
@@ -492,7 +492,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
       else if (strncasecmp(values[i], "AUTO:", 5) == 0)
       {
-        sprintf(srsbuffer, "%s",  values[i]);
+        snprintf(srsbuffer, 100, "%s",  values[i]);
         /* SRS=AUTO:proj_id,unit_id,lon0,lat0 */
         /*
         if (msLoadProjectionString(&(map->projection), values[i]) != 0)

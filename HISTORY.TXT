@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed buffer overflow in handling of WMS SRS=AUTO:... (#1824)
+
 - AGG: render thick lines and polygon outlines with round caps and joins
   by default
 
