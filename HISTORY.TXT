@@ -12,7 +12,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN Trunk):
 ---------------------------
+
 - Typo in mapfile writing (#2267)
+
+- Fixed mapping of class->keyimage in PHP MapScript (#2268)
 
 - Look for libagg under lib64 subdir as well in configure (#2265)
 

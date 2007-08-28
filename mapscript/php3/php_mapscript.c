@@ -8761,7 +8761,7 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     add_property_double(return_value,  "minscale", pclass->minscaledenom);
     add_property_double(return_value,  "maxscale", pclass->maxscaledenom);
 
-    PHPMS_ADD_PROP_STR(return_value,  "keyimage",   pclass->template);
+    PHPMS_ADD_PROP_STR(return_value,   "keyimage",  pclass->keyimage);
     
     return class_id;
 }
