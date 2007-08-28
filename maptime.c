@@ -418,7 +418,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
 
 int msValidateTimeValue(char *timestring, const char *timeextent)
 {
-    char **atimes, **tokens =  NULL;
+    char **atimes =  NULL;
     int i, numtimes, ntmp = 0;
 
     /* we need to validate the time passsed in the request */
