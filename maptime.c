@@ -442,7 +442,7 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
         atimes = msStringSplit (timestring, ',', &numtimes);
         if (numtimes >=1) /* multiple times */
         {
-            tokens = msStringSplit(atimes[0],  '/', &ntmp);
+            //tokens = msStringSplit(atimes[0],  '/', &ntmp);
             if (ntmp == 1) /* multiple descrete times */
             {
               /*msFreeCharArray(tokens, ntmp);*/
