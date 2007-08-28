@@ -218,7 +218,9 @@ public:
     }
 
     void renderPolyline(agg::path_storage &p,colorObj *c, 
-            double width,int dashstylelength, int *dashstyle) {
+            double width,int dashstylelength, int *dashstyle,
+            enum agg::line_cap_e lc=agg::round_cap,
+            enum agg::line_join_e lj=agg::round_join) {
         ras_aa.reset();
         ras_aa.filling_rule(agg::fill_non_zero);
         ren_aa.color(msToAGGColor(c));
@@ -226,19 +228,9 @@ public:
         if (dashstylelength <= 0) {
             agg::conv_stroke<agg::path_storage> stroke(p);  
             stroke.width(width);
-            stroke.line_cap(agg::round_cap);
+            stroke.line_cap(lc);
+            stroke.line_join(lj);
             ras_aa.add_path(stroke);
-            /*
-            //faster implementation, but with artifacts
-            agg::line_profile_aa prof;
-            prof.width(width);
-            renderer_oaa renoaa(ren_base,prof);
-            renoaa.color(msToAGGColor(c));
-            rasterizer_outline_aa rasoa(renoaa);
-            rasoa.line_join(agg::outline_round_join); 
-            rasoa.round_cap(true);
-            rasoa.add_path(p);return;
-            */
         } else {
             agg::conv_dash<agg::path_storage> dash(p);
             agg::conv_stroke<agg::conv_dash<agg::path_storage> > stroke_dash(dash);  
@@ -247,7 +239,8 @@ public:
                     dash.add_dash(dashstyle[i], dashstyle[i+1]);
             }
             stroke_dash.width(width);
-            stroke_dash.line_cap(agg::round_cap);
+            stroke_dash.line_cap(lc);
+            stroke_dash.line_join(lj);                        
             ras_aa.add_path(stroke_dash);
         }
         agg::render_scanlines(ras_aa, sl, ren_aa);     
@@ -329,7 +322,9 @@ public:
      * \param outlinewidth width of outline
      */
     void renderPathSolid(agg::path_storage &path, colorObj *color,
-            colorObj *outlinecolor, double outlinewidth=1) {
+            colorObj *outlinecolor, double outlinewidth,
+            enum agg::line_cap_e lc=agg::round_cap,
+            enum agg::line_join_e lj=agg::round_join) {
         ras_aa.reset();
         if(color!=NULL && MS_VALID_COLOR(*color)) {
             ras_aa.filling_rule(agg::fill_even_odd);
@@ -343,7 +338,8 @@ public:
             ren_aa.color(msToAGGColor(outlinecolor));
             agg::conv_stroke<agg::path_storage> stroke(path);
             stroke.width(outlinewidth);
-            stroke.line_cap(agg::round_cap);
+            stroke.line_cap(lc);
+            stroke.line_join(lj);
             ras_aa.add_path(stroke);
             agg::render_scanlines ( ras_aa, sl, ren_aa );
         }
@@ -1841,11 +1837,11 @@ int msDrawLabelCacheAGG(imageObj *image, mapObj *map)
                 if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
                     path.transform(agg::trans_affine_translation(
                             labelPtr->backgroundshadowsizex,labelPtr->backgroundshadowsizey));
-                    ren->renderPathSolid(path,&(labelPtr->backgroundshadowcolor),NULL);
+                    ren->renderPathSolid(path,&(labelPtr->backgroundshadowcolor),NULL,1);
                     path.transform(agg::trans_affine_translation(
                             -labelPtr->backgroundshadowsizex,-labelPtr->backgroundshadowsizey));
                 }
-                ren->renderPathSolid(path,&(labelPtr->backgroundcolor),NULL);
+                ren->renderPathSolid(path,&(labelPtr->backgroundcolor),NULL,1);
                 msFreeShape(&temp);
             }
 

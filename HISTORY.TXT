@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- AGG: render thick lines and polygon outlines with round caps and joins
+  by default
+
 - Typo in mapfile writing (#2267)
 
 - Fixed mapping of class->keyimage in PHP MapScript (#2268)
