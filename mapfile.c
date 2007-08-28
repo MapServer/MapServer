@@ -779,7 +779,7 @@ static void writeGrid( graticuleObj *pGraticule, FILE *stream)
 	fprintf( stream, "        MAXSUBDIVIDE %d\n", (int)	pGraticule->maxsubdivides		);
 	fprintf( stream, "        MININTERVAL %f\n",		pGraticule->minincrement		);
 	fprintf( stream, "        MAXINTERVAL %f\n",		pGraticule->maxincrement		);
-	fprintf( stream, "        MINARCS %g\n",			pGraticule->maxarcs				);
+	fprintf( stream, "        MINARCS %g\n",			pGraticule->minarcs				);
 	fprintf( stream, "        MAXARCS %g\n",			pGraticule->maxarcs				);
 	fprintf( stream, "        LABELFORMAT \"%s\"\n",		pGraticule->labelformat			);
 	fprintf( stream, "      END\n");
@@ -2418,7 +2418,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->requires = layer->labelrequires = NULL;
 
-  /* layer->metadata = NULL; */
+  //layer->metadata = NULL; 
   initHashTable(&(layer->metadata));
   
   layer->dump = MS_FALSE;
