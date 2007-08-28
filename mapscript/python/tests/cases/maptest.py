@@ -70,7 +70,7 @@ class MapExtentTestCase(MapTestCase):
         test_map = mapscript.mapObj(TESTMAPFILE)
         e = test_map.extent
         result = test_map.setExtent(e.minx, e.miny, e.maxx, e.maxy)
-        self.assertAlmostEqual(test_map.scaledenom, 14.173236)
+        self.assertAlmostEqual(test_map.scaledenom, 14.24445829)
         assert result == mapscript.MS_SUCCESS, result
         
     def testSetExtentBadly(self):
