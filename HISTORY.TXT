@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed problem with outline of polygons rendered twice with OGR
+  STYLEITEM AUTO and AGG output (#2271)
+
 - Fixed problem compiling with only WMS/WFS client but none of the 
   WMS, WFS, WCS or SOS server options enabled (#2272)
 

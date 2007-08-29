@@ -2226,15 +2226,14 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (bIsBrush || layer->type == MS_LAYER_POLYGON)
               {
                   // This is a multipart symbology, so pen defn goes in the
-                  // overlaysymbol params (also set outlinecolor just in case)
+                  // overlaysymbol params 
                   if (msMaybeAllocateStyle(c, 1))
                   {
                       RELEASE_OGR_LOCK;
                       return(MS_FAILURE);
                   }
 
-                  c->styles[0]->outlinecolor = c->styles[1]->outlinecolor = 
-                      oPenColor;
+                  c->styles[1]->outlinecolor = oPenColor;
                   c->styles[1]->size = nPenSize;
                   c->styles[1]->symbol = nPenSymbol;
               }
