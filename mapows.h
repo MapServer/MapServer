@@ -88,7 +88,7 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
  *====================================================================*/
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);

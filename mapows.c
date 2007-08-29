@@ -99,7 +99,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
 }
 
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 #if !defined(USE_PROJ)
 #error "PROJ.4 is required for WMS, WFS, WCS and SOS Server Support."

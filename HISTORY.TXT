@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed problem compiling with only WMS/WFS client but none of the 
+  WMS, WFS, WCS or SOS server options enabled (#2272)
+
 - Fixed buffer overflow in handling of WMS SRS=AUTO:... (#1824)
 
 - AGG: render thick lines and polygon outlines with round caps and joins
