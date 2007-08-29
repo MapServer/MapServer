@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+Version 5.0.0-beta6 (2007-08-29)
+--------------------------------
+
 - Fixed problem with outline of polygons rendered twice with OGR
   STYLEITEM AUTO and AGG output (#2271)
 
@@ -38,11 +41,11 @@ Current Version (SVN Trunk):
 
 - AGG: fixed rendering of polygons with holes (#2264)
 
-- AGG - raster layers: fix typo in mapresample.c that produced random background
-  colors when using OFFSITE (#2263)
+- AGG - raster layers: fix typo in mapresample.c that produced random
+  background colors when using OFFSITE (#2263)
  
-- AGG: Fix a bug when rendering tiled polygons with truetype, pixmap or vector
-  symbols (usually only affected bright colors)
+- AGG: Fix a bug when rendering tiled polygons with truetype, pixmap or
+  vector symbols (usually only affected bright colors)
   
 - Avoid passing null to msInsertHashTable in processLegendTemplate
   when layer.name or layer.group not specified (#2261)
