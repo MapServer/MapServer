@@ -15,15 +15,22 @@ class DrawMap
 {
   public static void usage() 
   { 
-	Console.WriteLine("usage: DrawMap {mapfile} {outfile}");
+	Console.WriteLine("usage: DrawMap {mapfile} {outfile} {imagetype optional}");
 	System.Environment.Exit(-1);
   }
 		  
   public static void Main(string[] args)
   {
-    if (args.Length != 2) usage();
+    if (args.Length < 2) usage();
     
-	mapObj m_obj = new mapObj(args[0]);	
+	mapObj m_obj = new mapObj(args[0]);
+
+	if (args.Length >= 3) 
+	{
+      Console.WriteLine("Setting the imagetype to " + args[2]);
+	  m_obj.setImageType(args[2]);
+	}
+
 	Console.WriteLine ("# Map layers " + m_obj.numlayers + "; Map name = " + m_obj.name);	
 	for (int i=0; i<m_obj.numlayers; i++) 
 	{

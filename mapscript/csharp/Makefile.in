@@ -252,4 +252,5 @@ test:
 	LC_ALL=C mono ./shpdump.exe ../../tests/point.shp
 	LC_ALL=C mono ./shapeinfo.exe ../../tests/point.shp
 	LC_ALL=C mono ./drawmap.exe ../../tests/test.map test_csharp.png
+	LC_ALL=C mono ./drawmap.exe ../../tests/test.map test_csharp_agg.png aggpng24
 	LC_ALL=C mono ./getbytes.exe ../../tests/test.map test_csharp2.png
