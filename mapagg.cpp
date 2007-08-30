@@ -246,11 +246,6 @@ public:
         agg::render_scanlines(ras_aa, sl, ren_aa);     
     }
 
-    void renderPolylinePixmapBGRA(shapeObj *p, agg::rendering_buffer &pattern,
-            colorObj *backgroundcolor, double width) {
-        agg::path_storage path=shapePolylineToPath(p);
-        renderPathPixmapBGRA(path,pattern,backgroundcolor,width);
-    }
     template<class VertexSource1, class VertexSource2>
     void renderPolylineVectorSymbol(VertexSource1 &shape, VertexSource2 &symbol,
             int tilewidth, int tileheight, 
@@ -276,17 +271,16 @@ public:
         rs.color(msToAGGColor(color));
         ras_aa.add_path(symbol);
         agg::render_scanlines(ras_aa, sl, rs);
-        renderPathPixmapBGRA(shape,m_pattern_rbuf,NULL,1);
+        renderPathPixmapBGRA(shape,m_pattern_rbuf);
         delete[](m_pattern);
     }
 
-    void renderPathPixmapBGRA(agg::path_storage &line, agg::rendering_buffer &pattern,
-            colorObj *backgroundcolor, double width) {
+    void renderPathPixmapBGRA(agg::path_storage &line, agg::rendering_buffer &pattern) {
         
 
         agg::pattern_filter_bilinear_rgba8 fltr;
         typedef agg::line_image_pattern<agg::pattern_filter_bilinear_rgba8> pattern_type;
-        typedef agg::renderer_base<pixelFormat> base_ren_type;
+        typedef agg::renderer_base<pixelFormat_pre> base_ren_type;
         typedef agg::renderer_outline_image<base_ren_type, pattern_type> renderer_img_type;
         typedef agg::rasterizer_outline_aa<renderer_img_type, agg::line_coord_sat> rasterizer_img_type;
         typedef agg::renderer_outline_aa<base_ren_type> renderer_line_type;
@@ -294,23 +288,10 @@ public:
         pattern_type patt(fltr);  
         GDpixfmt m_pf(pattern);
         patt.create(m_pf);
-        renderer_img_type ren_img(ren_base, patt);
+        pixelFormat_pre thePixelFormat_pre(*pRowCache);
+        renderer_base_pre ren_base_pre(thePixelFormat_pre);
+        renderer_img_type ren_img(ren_base_pre, patt);
         rasterizer_img_type ras_img(ren_img);
-
-
-        if(backgroundcolor!=NULL && MS_VALID_COLOR(*backgroundcolor)) {
-            ras_aa.reset();
-            ras_aa.filling_rule(agg::fill_even_odd);
-            agg::line_profile_aa profile;
-            //profile.smoother_width(10.0);                    //optional
-            profile.width(width);                              //mandatory!
-            renderer_line_type ren_line(ren_base, profile);
-            ren_line.color(msToAGGColor(backgroundcolor));            //mandatory!
-            rasterizer_line_type ras_line(ren_line);
-            ras_line.round_cap(true);
-            ras_line.add_path(line);
-            agg::render_scanlines(ras_aa, sl, ren_aa);
-        }
         ras_img.add_path(line);
     }
 
@@ -1336,8 +1317,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         switch(symbol->type) {
         case MS_SYMBOL_PIXMAP: {
             agg::rendering_buffer tile = gdImg2AGGRB_BGRA(symbol->img);
-            ren->renderPathPixmapBGRA(line,tile,&(style->backgroundcolor),
-                    symbol->img->sy+width*2);
+            ren->renderPathPixmapBGRA(line,tile);
             delete[] tile.buf();
         }
         break;
@@ -1350,13 +1330,21 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
                 symbol = msRotateSymbol(symbol, style->angle);
             }
 
-            int pw = MS_NINT(symbol->sizex*d)+1;    
-            int ph = MS_NINT(symbol->sizey*d)+1;
+            int pw =(int) ceil(symbol->sizex*d);    
+            int ph =(int) ceil(symbol->sizey*d);
             if((pw <= 1) && (ph <= 1)) { /* No sense using a tile, just fill solid */
                 ren->renderPolyline(line,color,size,0,NULL);
                 return;
             }
             agg::path_storage path = imageVectorSymbolAGG(symbol,d);
+            
+            //more or less ugly way of getting the symbol to draw entirely when stroked with a thick line.
+            //as we're stroking a line with the vector
+            //brush, we don't want to add a white space horizontally to avoid gaps, but we
+            //do add some space vertically so thick lines appear.
+            ph+=style->width;
+            path.transform(agg::trans_affine_translation(0,((double)style->width)/2.0));
+            
             if(symbol->filled) {
                 ren->renderPolylineVectorSymbol(line,path,pw,ph,color,&(style->backgroundcolor),width);
             } else  { /* shade is a vector drawing */

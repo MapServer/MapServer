@@ -13,6 +13,13 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- AGG: Fix a bug when rendering brushed lines with vector or pixmap symbols
+  (artifacts could appear on outline)
+  
+- AGG: Adjust symbol height when brushing a line with a vector symbol so that
+  the line width isn't truncated
+
+
 Version 5.0.0-beta6 (2007-08-29)
 --------------------------------
 
