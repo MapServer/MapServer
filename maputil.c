@@ -99,9 +99,9 @@ static int bindColorAttribute(colorObj *attribute, char *value)
       return MS_FAILURE; /* punt */
     }
 
-    attribute->red = atof(tokens[0]);
-    attribute->blue = atof(tokens[1]);
-    attribute->green = atof(tokens[2]);
+    attribute->red = atoi(tokens[0]);
+    attribute->blue = atoi(tokens[1]);
+    attribute->green = atoi(tokens[2]);
     msFreeCharArray(tokens, numtokens);
 
     return MS_SUCCESS;
@@ -140,7 +140,7 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
         }
 
         if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
-          style->size = 1.0;
+          style->size = 1;
           bindIntegerAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
         }
 
@@ -166,7 +166,7 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
       }
 
       if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1) {
-        label->size = 1.0;
+        label->size = 1;
         bindIntegerAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
       }
 
