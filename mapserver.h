@@ -45,6 +45,7 @@
 #include <memory.h>
 #include <malloc.h>
 #include <process.h>
+#include <float.h>
 #else
 #include <unistd.h>
 #endif
