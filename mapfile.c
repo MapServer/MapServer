@@ -4661,7 +4661,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       if(s == MS_STRING)
         i = msGetLayerIndex(map, msyytext);
       else
-        i = msyynumber;
+        i = (int) msyynumber;
 
       if(i>=map->numlayers || i<0) {
         msSetError(MS_MISCERR, "Layer to be modified not valid.", "msUpdateMapFromURL()");
@@ -4673,7 +4673,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 	if(s == MS_STRING)
 	  j = msGetClassIndex(GET_LAYER(map, i), msyytext);
 	else
-	  j = msyynumber;
+	  j = (int) msyynumber;
 
 	if(j>=GET_LAYER(map, i)->numclasses || j<0) {
           msSetError(MS_MISCERR, "Class to be modified not valid.", "msUpdateMapFromURL()");
