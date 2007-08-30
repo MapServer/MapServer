@@ -88,13 +88,17 @@ test:
 	mono shpdump.exe ../../tests/point.shp
 	mono shapeinfo.exe ../../tests/point.shp
 	mono drawmap.exe ../../tests/test.map test_csharp.png
+!IFDEF AGG
 	mono drawmap.exe ../../tests/test.map aggpng24 test_csharp_agg.png
+!ENDIF
 	mono getbytes.exe ../../tests/test.map test_csharp2.png
 !ELSE
 	shpdump ../../tests/point.shp
 	shapeinfo ../../tests/point.shp
 	drawmap ../../tests/test.map test_csharp.png
+!IFDEF AGG
 	drawmap ../../tests/test.map test_csharp_agg.png aggpng24
+!ENDIF
 	getbytes ../../tests/test.map test_csharp2.png
 !ENDIF
 	
