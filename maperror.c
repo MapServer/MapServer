@@ -580,8 +580,7 @@ int msGetVersionInt()
         }
         else
         {
-            version = atoi(tokens[0])*0x10000 + atoi(tokens[1])*0x100 + 
-                      atoi(tokens[2]);
+            version = atoi(tokens[0])*10000 + atoi(tokens[1])*100 + atoi(tokens[2]);
         }
         if (tokens)
             msFreeCharArray(tokens, n);

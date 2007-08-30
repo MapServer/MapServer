@@ -124,8 +124,7 @@ Currently supported classes, properties and methods:
 
    int ms_GetVersionInt()
         Returns the MapServer version number (x.y.z) as an integer 
-        (x*0x10000 + y*0x100 + z). (New in v5.0)
-        e.g. V5.4.3 would return 0x050403 (note the hexadecimal notation).
+        (x*10000 + y*100 + z). (New in v5.0) e.g. V5.4.3 would return 50403.
 
    array ms_TokenizeMap(string map_file_name)
         Preparses a mapfile through the MapServer parser and return an 
