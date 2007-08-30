@@ -532,7 +532,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                     else
                     {
                         int gd_color;
-                        int gd_alpha = 127 - 127.9 * dfWeightSum;
+                        int gd_alpha = (int) (127 - 127.9 * dfWeightSum);
 
                         gd_alpha = MAX(0,MIN(127,gd_alpha));
                         gd_color = gdTrueColorAlpha(
@@ -796,7 +796,7 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                     else
                     {
                         int gd_color;
-                        int gd_alpha = 127 - 127.9 * dfAlpha01;
+                        int gd_alpha = (int) (127 - 127.9 * dfAlpha01);
 
                         gd_alpha = MAX(0,MIN(127,gd_alpha));
                         gd_color = gdTrueColorAlpha(
@@ -835,7 +835,7 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                     else
                     {
                         int gd_color;
-                        int gd_alpha = 127 - 127.9 * dfAlpha01;
+                        int gd_alpha = (int) (127 - 127.9 * dfAlpha01);
 
                         gd_alpha = MAX(0,MIN(127,gd_alpha));
                         gd_color = gdTrueColorAlpha(
