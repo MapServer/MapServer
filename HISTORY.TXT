@@ -19,6 +19,9 @@ Current Version (SVN Trunk):
 - AGG: Adjust symbol height when brushing a line with a vector symbol so that
   the line width isn't truncated
 
+- Only include process.h on win32 (non-cygwin) systems, moved from 
+  maptemplate.h to mapserver.h.  (#2276)
+
 
 Version 5.0.0-beta6 (2007-08-29)
 --------------------------------

@@ -44,6 +44,7 @@
 #include <direct.h>
 #include <memory.h>
 #include <malloc.h>
+#include <process.h>
 #else
 #include <unistd.h>
 #endif
