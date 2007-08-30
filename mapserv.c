@@ -1074,7 +1074,7 @@ int main(int argc, char *argv[]) {
     for( iArg = 1; iArg < argc; iArg++ )
     {
         if( strcmp(argv[iArg],"-v") == 0 ) {
-            printf("0x%x %s\n", msGetVersionInt(), msGetVersion());
+            printf("%s\n", msGetVersion());
             fflush(stdout);
             exit(0);
         }
