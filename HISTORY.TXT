@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Added msGetVersionInt() to MapScript (ms_GetVersionInt() in PHP) (#2279)
+
 - _isnan prototype for MSVC builds from <float.h> #2277
 
 - AGG: Fix a bug when rendering brushed lines with vector or pixmap symbols

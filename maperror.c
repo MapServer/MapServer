@@ -564,3 +564,28 @@ char *msGetVersion() {
   return(version);
 }
 
+int msGetVersionInt() 
+{
+    static int version = 0;
+
+    /* Parse MS_VERSION only once */
+    if (version == 0)
+    {
+        char **tokens = NULL;
+        int n = 0;
+        tokens = msStringSplit(MS_VERSION, '.', &n);
+        if (n<3)
+        {
+            msSetError(MS_MISCERR, "Invalid version string: $s", "msGetVersionInt()", MS_VERSION);
+        }
+        else
+        {
+            version = atoi(tokens[0])*0x10000 + atoi(tokens[1])*0x100 + 
+                      atoi(tokens[2]);
+        }
+        if (tokens)
+            msFreeCharArray(tokens, n);
+    }
+
+    return version;
+}

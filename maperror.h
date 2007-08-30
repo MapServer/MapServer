@@ -106,6 +106,7 @@ typedef struct error_obj {
 MS_DLL_EXPORT errorObj *msGetErrorObj(void);
 MS_DLL_EXPORT void msResetErrorList(void);
 MS_DLL_EXPORT char *msGetVersion(void);
+MS_DLL_EXPORT int  msGetVersionInt(void);
 MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
 
 #ifndef SWIG

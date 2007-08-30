@@ -87,6 +87,7 @@ DLEXPORT void php_ms_free_cgirequest(cgiRequestObj *request);
 
 
 DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_getversionint(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -567,6 +568,7 @@ static unsigned char two_args_first_arg_force_ref[] =
 
 function_entry phpms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
+    {"ms_getversionint",php3_ms_getversionint,  NULL},
     {"ms_newmapobj",    php3_ms_map_new,        NULL},
     {"ms_newlayerobj",  php3_ms_lyr_new,        two_args_first_arg_force_ref},
     {"ms_newclassobj",  php3_ms_class_new,      one_arg_force_ref},
@@ -1440,6 +1442,18 @@ DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS)
 {
     RETURN_STRING(msGetVersion(), 1);
 }
+
+/************************************************************************/
+/*                         php3_ms_getversionint()                      */
+/*                                                                      */
+/*      Returns the MapServer version in int format.                    */
+/*      Given version x.y.z, returns x*0x10000+y*0x100+z                */
+/************************************************************************/
+DLEXPORT void php3_ms_getversionint(INTERNAL_FUNCTION_PARAMETERS)
+{
+    RETURN_LONG(msGetVersionInt());
+}
+
 
 
 

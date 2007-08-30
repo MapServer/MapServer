@@ -122,6 +122,11 @@ Currently supported classes, properties and methods:
         Returns the MapServer version and options in a string.  This string
         can be parsed to find out which modules were compiled in, etc.
 
+   int ms_GetVersionInt()
+        Returns the MapServer version number (x.y.z) as an integer 
+        (x*0x10000 + y*0x100 + z). (New in v5.0)
+        e.g. V5.4.3 would return 0x050403 (note the hexadecimal notation).
+
    array ms_TokenizeMap(string map_file_name)
         Preparses a mapfile through the MapServer parser and return an 
         array with one item for each token from the mapfile.  Strings, 
