@@ -419,7 +419,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
 int msValidateTimeValue(char *timestring, const char *timeextent)
 {
     char **atimes =  NULL;
-    int i, numtimes, ntmp = 0;
+    int i, numtimes=0;
 
     /* we need to validate the time passsed in the request */
     /* against the time extent defined */
@@ -442,10 +442,9 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
         atimes = msStringSplit (timestring, ',', &numtimes);
         if (numtimes >=1) /* multiple times */
         {
-            //tokens = msStringSplit(atimes[0],  '/', &ntmp);
-            if (ntmp == 1) /* multiple descrete times */
+
+            if (strstr(atimes[0], "/") == NULL) /* multiple descrete times */
             {
-              /*msFreeCharArray(tokens, ntmp);*/
                 for (i=0; i<numtimes; i++)
                 {
                     if (_msValidateTime(atimes[i], timeextent) == MS_FALSE)
@@ -457,11 +456,10 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
                 msFreeCharArray(atimes, numtimes);
                 return MS_TRUE;
             }
-            else if (ntmp >= 2)/* multiple ranges */
+            else /* multiple ranges */
             {
                 for (i=0; i<numtimes; i++)
                 {
-                  /*msFreeCharArray(tokens, ntmp);*/
                     if (_msValidateTime(atimes[i], timeextent) == MS_FALSE)
                     {
                         msFreeCharArray(atimes, numtimes);
