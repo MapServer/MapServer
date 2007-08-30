@@ -1180,10 +1180,9 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   pointObj point, label_point;
   rectObj label_rect;
   int label_width;
-  int  rot, gap, in;
+  int  rot, position, gap, in;
   double rx, ry, size;
   
-  double styleangle = style->angle * MS_DEG_TO_RAD;
   symbolObj *symbol;
 
   AGGMapserverRenderer* ren = getAGGRenderer(image);
@@ -1228,20 +1227,32 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
       rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
       ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;  
       theta = asin(ry);
-      if(rx >= 0) 
-          theta = -theta;
-      
-      label.angle = MS_RAD_TO_DEG * theta;
+      position = symbol->position;
+      if(rx < 0) {
+          if(rot){
+              theta += MS_PI;
+              if((position == MS_UR)||(position == MS_UL)) position = MS_LC;
+              if((position == MS_LR)||(position == MS_LL)) position = MS_UC;
+          }else{
+              if(position == MS_UC) position = MS_LC;
+              else if(position == MS_LC) position = MS_UC;
+          }
+      }
+      else theta = -theta;
+      if((position == MS_UR)||(position == MS_UL)) position = MS_UC;
+      if((position == MS_LR)||(position == MS_LL)) position = MS_LC;
+      label.angle = style->angle;
+      if(rot)
+          label.angle+=MS_RAD_TO_DEG * theta;
 
       in = 0;
-      double finalangle = rot?theta+styleangle:styleangle;
       while(current_length <= length) {
         point.x = p->line[i].point[j-1].x + current_length*rx;
         point.y = p->line[i].point[j-1].y + current_length*ry;
         
-        label_point = get_metrics(&point, (rot)?MS_CC:symbol->position, label_rect, 0, 0, finalangle*MS_RAD_TO_DEG, 0, NULL);
+        label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, NULL);
         ren->renderGlyphs(label_point.x,label_point.y,&(label.color),&(label.outlinecolor),label.size,
-                          font,symbol->character,finalangle,
+                          font,symbol->character,label.angle*MS_DEG_TO_RAD,
                           NULL,0,0,
                           false,false);
         //msDrawTextGD(img, label_point, symbol->character, &label, symbolset->fontset, scalefactor);
