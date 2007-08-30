@@ -59,12 +59,9 @@ test:
 	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. DrawMap ..\..\tests\test.map .\map.png
 
 clean:
-	del *.obj
-	del *.lib
-	cd edu
-	rmdir /s /q umn
-	cd ..
-	rmdir edu
+	-del *.obj
+	-del *.lib
+	-rmdir /s /q edu
 	del libmapscript.dll
 	del mapscript_wrap.c
 
