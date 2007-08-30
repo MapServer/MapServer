@@ -126,6 +126,11 @@ does not allow direct modification of that parameter. In Swig-based languages
 the symbolObj method setStyle is now called setPattern. In PHP/MapScript, the
 methods setStyle and getStyle are now called setPattern and getPattern.
 
+A new msGetVersionInt() function returning the current MapServer version in
+integer format has been added to facilitate version checks in the future.
+Given version x.y.z, it returns (x*0x10000 + y*0x100 + z). For instance, for
+v5.0.0 it will return 0x050000 (note the hexadecimal notation).
+
 -----------------------
 CSharp related changes
 -----------------------
@@ -169,6 +174,10 @@ match what we have in SWIG MapScript. The String suffix in the function
 name also more clearly indicates that the return value is not an object
 but a string representation of it.
 
+A new ms_GetVersionInt() function returning the current MapServer version in
+integer format has been added to facilitate version checks in the future.
+Given version x.y.z, it returns (x*0x10000 + y*0x100 + z). For instance, for
+v5.0.0 it will return 0x050000 (note the hexadecimal notation).
 
 ----------------------------------------------------
 OGC Web Map Service (WMS)
