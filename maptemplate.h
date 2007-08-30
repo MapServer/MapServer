@@ -32,6 +32,7 @@
 
 #include "mapserver.h"
 #include "maphash.h"
+#include <process.h>
 
 #define IDSIZE 128
 #define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("https://", s, 8) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
