@@ -96,12 +96,15 @@ static char *readPostBody( cgiRequestObj *request )
 int loadParams(cgiRequestObj *request) {
   register int x,m=0;
   char *s;
+  int debuglevel;
 
   if(getenv("REQUEST_METHOD")==NULL) {
     msIO_printf("This script can only be used to decode form results and \n");
     msIO_printf("should be initiated as a CGI process via a httpd server.\n");
     exit(0);
   }
+
+  debuglevel = (int)msGetGlobalDebugLevel();
 
   if(strcmp(getenv("REQUEST_METHOD"),"POST") == 0) { /* we've got a post from a form */     
     char *post_data;
@@ -143,6 +146,9 @@ int loadParams(cgiRequestObj *request) {
        information. Eg a wfs request with  */
     s = getenv("QUERY_STRING");
     if(s) {
+      if (debuglevel >= MS_DEBUGLEVEL_DEBUG)
+		  msDebug("loadParams() QUERY_STRING: %s\n", s);
+
       for(x=0;s[0] != '\0';x++) {       
         if(m >= MS_MAX_CGI_PARAMS) {
           msIO_printf("Too many name/value pairs, aborting.\n");
@@ -165,6 +171,10 @@ int loadParams(cgiRequestObj *request) {
         msIO_printf("No query information to decode. QUERY_STRING not set.\n");	
         exit(1);
       }
+
+	  if (debuglevel >= MS_DEBUGLEVEL_DEBUG)
+		  msDebug("loadParams() QUERY_STRING: %s\n", s);
+
       if(strlen(s)==0) {
         msIO_printf("Content-type: text/html%c%c",10,10);
         msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
