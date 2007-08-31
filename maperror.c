@@ -576,7 +576,7 @@ int msGetVersionInt()
         tokens = msStringSplit(MS_VERSION, '.', &n);
         if (n<3)
         {
-            msSetError(MS_MISCERR, "Invalid version string: $s", "msGetVersionInt()", MS_VERSION);
+            msSetError(MS_MISCERR, "Invalid version string: %s", "msGetVersionInt()", MS_VERSION);
         }
         else
         {
