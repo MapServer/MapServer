@@ -1464,6 +1464,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             if (strcasecmp(psXMLNode->pszValue, "BBOX") == 0)
             {
                 char *pszSRS = NULL;
+                char *pszTS = NULL;
+                char *pszCS = NULL;
                 CPLXMLNode *psPropertyName = NULL;
                 CPLXMLNode *psBox = NULL;
                 CPLXMLNode *psCoordinates = NULL, *psCoordChild=NULL;
@@ -1485,6 +1487,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
             
                     psCoordinates = CPLGetXMLNode(psBox, "coordinates");
+                    pszTS = (char *)CPLGetXMLValue(psCoordinates, "ts", NULL);
+                    pszCS = (char *)CPLGetXMLValue(psCoordinates, "cs", NULL);
+
                     psCoordChild =  psCoordinates->psChild;
                     while (psCoordinates && psCoordChild && psCoordChild->eType != CXT_Text)
                     {
@@ -1493,14 +1498,25 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     if (psCoordChild && psCoordChild->pszValue)
                     {
                         pszTmpCoord = psCoordChild->pszValue;
-                        szCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
+                        if (pszTS)
+                          szCoords = msStringSplit(pszTmpCoord, pszTS[0], &nCoords);
+                        else
+                          szCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
                         if (szCoords && nCoords == 2)
                         {
                             szCoords1 = strdup(szCoords[0]);
                             szCoords2 = strdup(szCoords[1]);
-                            szMin = msStringSplit(szCoords1, ',', &nCoords);
+                            if (pszCS)
+                              szMin = msStringSplit(szCoords1, pszCS[0], &nCoords);
+                            else
+                              szMin = msStringSplit(szCoords1, ',', &nCoords);
                             if (szMin && nCoords == 2)
-                              szMax = msStringSplit(szCoords2, ',', &nCoords);
+                            {
+                              if (pszCS)
+                                szMax = msStringSplit(szCoords2, pszCS[0], &nCoords);
+                              else
+                                szMax = msStringSplit(szCoords2, ',', &nCoords);
+                            }
                             if (szMax && nCoords == 2)
                               bCoordinatesValid =1;
 
