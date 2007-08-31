@@ -683,6 +683,7 @@ unset ac_cv_lib_pdf_PDF_setrgbcolor
 unset ac_cv_lib_pdf_PDF_moveto
 unset ac_cv_lib_pdf_PDF_curveto
 unset ac_cv_lib_pdf_PDF_show_xy
+unset ac_cv_lib_pdf_PDF_load_font
 
 AC_CHECKING(whether we should include PDF support)
 AC_ARG_WITH(pdf,
@@ -717,6 +718,18 @@ elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
       AC_MSG_ERROR("Could not find pdflib.h or libpdf.a/libpdf.so in $PDF_DIR.")
   fi
 
+  PDF_VERSION_CHECK="pass"
+  AC_CHECK_LIB(pdf,PDF_setlinewidth,,PDF_VERSION_CHECK="fail",$PDF_LIB)
+  AC_CHECK_LIB(pdf,PDF_setrgbcolor,,PDF_VERSION_CHECK="fail",$PDF_LIB)
+  AC_CHECK_LIB(pdf,PDF_moveto,,PDF_VERSION_CHECK="fail",$PDF_LIB)
+  AC_CHECK_LIB(pdf,PDF_curveto,,PDF_VERSION_CHECK="fail",$PDF_LIB)
+  AC_CHECK_LIB(pdf,PDF_show_xy,,PDF_VERSION_CHECK="fail",$PDF_LIB)
+  AC_CHECK_LIB(pdf,PDF_load_font,,PDF_VERSION_CHECK="fail",$PDF_LIB)
+
+  if test "$PDF_VERSION_CHECK" = "fail" ; then
+      AC_MSG_ERROR([libpdf in $PDF_DIR missing some required functions. Please upgrade to a more recent version of libpdf.])
+  fi
+
   PDF_ENABLED="-DUSE_PDF"
   AC_MSG_RESULT([        using libpdf from $PDF_LIB.])
 
@@ -727,11 +740,12 @@ else
   AC_CHECK_LIB(pdf,PDF_moveto,PDF_LIB="-lpdf",,)
   AC_CHECK_LIB(pdf,PDF_curveto,PDF_LIB="-lpdf",,)
   AC_CHECK_LIB(pdf,PDF_show_xy,PDF_LIB="-lpdf",,)
+  AC_CHECK_LIB(pdf,PDF_load_font,PDF_LIB="-lpdf",,)
   if test -n "$PDF_LIB" ; then
       PDF_ENABLED=-DUSE_PDF
       AC_MSG_RESULT([        using libpdf from system libs.])
   else
-      AC_MSG_RESULT([        libpdf not found... PDF support not included.])
+      AC_MSG_RESULT([        libpdf not found or too old... PDF support not included.])
   fi
 
 fi
@@ -748,6 +762,9 @@ AC_SUBST(PDF_LIB,    $PDF_LIB)
 ALL_ENABLED="$PDF_ENABLED $ALL_ENABLED"
 ALL_INC="$PDF_INC $ALL_INC"
 ALL_LIB="$PDF_LIB $ALL_LIB"
+
+dnl Restore LIBS environment to state at beginning of PDF tests.
+LIBS="$ms_saved_LIBS"
 
 dnl ---------------------------------------------------------------------
 dnl Optional AGG Support.

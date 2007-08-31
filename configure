@@ -7226,6 +7226,7 @@ unset ac_cv_lib_pdf_PDF_setrgbcolor
 unset ac_cv_lib_pdf_PDF_moveto
 unset ac_cv_lib_pdf_PDF_curveto
 unset ac_cv_lib_pdf_PDF_show_xy
+unset ac_cv_lib_pdf_PDF_load_font
 
 { echo "$as_me:$LINENO: checking whether we should include PDF support..." >&5
 echo "$as_me: checking whether we should include PDF support..." >&6;}
@@ -7291,6 +7292,464 @@ elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
   else
       { { echo "$as_me:$LINENO: error: \"Could not find pdflib.h or libpdf.a/libpdf.so in $PDF_DIR.\"" >&5
 echo "$as_me: error: \"Could not find pdflib.h or libpdf.a/libpdf.so in $PDF_DIR.\"" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  PDF_VERSION_CHECK="pass"
+
+echo "$as_me:$LINENO: checking for PDF_setlinewidth in -lpdf" >&5
+echo $ECHO_N "checking for PDF_setlinewidth in -lpdf... $ECHO_C" >&6
+if test "${ac_cv_lib_pdf_PDF_setlinewidth+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpdf $PDF_LIB $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PDF_setlinewidth ();
+int
+main ()
+{
+PDF_setlinewidth ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pdf_PDF_setlinewidth=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pdf_PDF_setlinewidth=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pdf_PDF_setlinewidth" >&5
+echo "${ECHO_T}$ac_cv_lib_pdf_PDF_setlinewidth" >&6
+if test $ac_cv_lib_pdf_PDF_setlinewidth = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPDF 1
+_ACEOF
+
+  LIBS="-lpdf $LIBS"
+
+else
+  PDF_VERSION_CHECK="fail"
+fi
+
+
+echo "$as_me:$LINENO: checking for PDF_setrgbcolor in -lpdf" >&5
+echo $ECHO_N "checking for PDF_setrgbcolor in -lpdf... $ECHO_C" >&6
+if test "${ac_cv_lib_pdf_PDF_setrgbcolor+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpdf $PDF_LIB $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PDF_setrgbcolor ();
+int
+main ()
+{
+PDF_setrgbcolor ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pdf_PDF_setrgbcolor=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pdf_PDF_setrgbcolor=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pdf_PDF_setrgbcolor" >&5
+echo "${ECHO_T}$ac_cv_lib_pdf_PDF_setrgbcolor" >&6
+if test $ac_cv_lib_pdf_PDF_setrgbcolor = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPDF 1
+_ACEOF
+
+  LIBS="-lpdf $LIBS"
+
+else
+  PDF_VERSION_CHECK="fail"
+fi
+
+
+echo "$as_me:$LINENO: checking for PDF_moveto in -lpdf" >&5
+echo $ECHO_N "checking for PDF_moveto in -lpdf... $ECHO_C" >&6
+if test "${ac_cv_lib_pdf_PDF_moveto+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpdf $PDF_LIB $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PDF_moveto ();
+int
+main ()
+{
+PDF_moveto ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pdf_PDF_moveto=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pdf_PDF_moveto=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pdf_PDF_moveto" >&5
+echo "${ECHO_T}$ac_cv_lib_pdf_PDF_moveto" >&6
+if test $ac_cv_lib_pdf_PDF_moveto = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPDF 1
+_ACEOF
+
+  LIBS="-lpdf $LIBS"
+
+else
+  PDF_VERSION_CHECK="fail"
+fi
+
+
+echo "$as_me:$LINENO: checking for PDF_curveto in -lpdf" >&5
+echo $ECHO_N "checking for PDF_curveto in -lpdf... $ECHO_C" >&6
+if test "${ac_cv_lib_pdf_PDF_curveto+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpdf $PDF_LIB $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PDF_curveto ();
+int
+main ()
+{
+PDF_curveto ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pdf_PDF_curveto=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pdf_PDF_curveto=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pdf_PDF_curveto" >&5
+echo "${ECHO_T}$ac_cv_lib_pdf_PDF_curveto" >&6
+if test $ac_cv_lib_pdf_PDF_curveto = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPDF 1
+_ACEOF
+
+  LIBS="-lpdf $LIBS"
+
+else
+  PDF_VERSION_CHECK="fail"
+fi
+
+
+echo "$as_me:$LINENO: checking for PDF_show_xy in -lpdf" >&5
+echo $ECHO_N "checking for PDF_show_xy in -lpdf... $ECHO_C" >&6
+if test "${ac_cv_lib_pdf_PDF_show_xy+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpdf $PDF_LIB $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PDF_show_xy ();
+int
+main ()
+{
+PDF_show_xy ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pdf_PDF_show_xy=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pdf_PDF_show_xy=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pdf_PDF_show_xy" >&5
+echo "${ECHO_T}$ac_cv_lib_pdf_PDF_show_xy" >&6
+if test $ac_cv_lib_pdf_PDF_show_xy = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPDF 1
+_ACEOF
+
+  LIBS="-lpdf $LIBS"
+
+else
+  PDF_VERSION_CHECK="fail"
+fi
+
+
+echo "$as_me:$LINENO: checking for PDF_load_font in -lpdf" >&5
+echo $ECHO_N "checking for PDF_load_font in -lpdf... $ECHO_C" >&6
+if test "${ac_cv_lib_pdf_PDF_load_font+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpdf $PDF_LIB $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PDF_load_font ();
+int
+main ()
+{
+PDF_load_font ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pdf_PDF_load_font=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pdf_PDF_load_font=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pdf_PDF_load_font" >&5
+echo "${ECHO_T}$ac_cv_lib_pdf_PDF_load_font" >&6
+if test $ac_cv_lib_pdf_PDF_load_font = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPDF 1
+_ACEOF
+
+  LIBS="-lpdf $LIBS"
+
+else
+  PDF_VERSION_CHECK="fail"
+fi
+
+
+  if test "$PDF_VERSION_CHECK" = "fail" ; then
+      { { echo "$as_me:$LINENO: error: libpdf in $PDF_DIR missing some required functions. Please upgrade to a more recent version of libpdf." >&5
+echo "$as_me: error: libpdf in $PDF_DIR missing some required functions. Please upgrade to a more recent version of libpdf." >&2;}
    { (exit 1); exit 1; }; }
   fi
 
@@ -7635,13 +8094,80 @@ if test $ac_cv_lib_pdf_PDF_show_xy = yes; then
   PDF_LIB="-lpdf"
 fi
 
+  echo "$as_me:$LINENO: checking for PDF_load_font in -lpdf" >&5
+echo $ECHO_N "checking for PDF_load_font in -lpdf... $ECHO_C" >&6
+if test "${ac_cv_lib_pdf_PDF_load_font+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpdf  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PDF_load_font ();
+int
+main ()
+{
+PDF_load_font ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pdf_PDF_load_font=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pdf_PDF_load_font=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pdf_PDF_load_font" >&5
+echo "${ECHO_T}$ac_cv_lib_pdf_PDF_load_font" >&6
+if test $ac_cv_lib_pdf_PDF_load_font = yes; then
+  PDF_LIB="-lpdf"
+fi
+
   if test -n "$PDF_LIB" ; then
       PDF_ENABLED=-DUSE_PDF
       echo "$as_me:$LINENO: result:         using libpdf from system libs." >&5
 echo "${ECHO_T}        using libpdf from system libs." >&6
   else
-      echo "$as_me:$LINENO: result:         libpdf not found... PDF support not included." >&5
-echo "${ECHO_T}        libpdf not found... PDF support not included." >&6
+      echo "$as_me:$LINENO: result:         libpdf not found or too old... PDF support not included." >&5
+echo "${ECHO_T}        libpdf not found or too old... PDF support not included." >&6
   fi
 
 fi
@@ -7658,6 +8184,8 @@ PDF_LIB=$PDF_LIB
 ALL_ENABLED="$PDF_ENABLED $ALL_ENABLED"
 ALL_INC="$PDF_INC $ALL_INC"
 ALL_LIB="$PDF_LIB $ALL_LIB"
+
+LIBS="$ms_saved_LIBS"
 
 
 echo "$as_me:$LINENO: checking if AGG support requested" >&5
