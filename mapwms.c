@@ -2566,7 +2566,12 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      /* validate format */
      psFormat = msSelectOutputFormat( map, pszFormat);
      if( psFormat == NULL || 
-         psFormat->renderer != MS_RENDER_WITH_GD)
+         (psFormat->renderer != MS_RENDER_WITH_GD
+                 &&
+          psFormat->renderer != MS_RENDER_WITH_AGG)) 
+          //msDrawLegend and msCreateLegendIcon both switch the alpha channel to gd
+          //after creation, so they can be called here without going through
+          //the msAlphaGD2AGG functions
      {
          msSetError(MS_IMGERR,
                     "Unsupported output format (%s).",
