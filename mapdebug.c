@@ -350,9 +350,9 @@ void msDebug( const char * pszFormat, ... )
 #endif
         {
             struct mstimeval tv;
-			time_t t;
+            time_t t;
             msGettimeofday(&tv, NULL);
-			t = tv.tv_sec;
+            t = tv.tv_sec;
             msIO_fprintf(debuginfo->fp, "[%s].%ld ", 
                          msStringChop(ctime(&t)), (long)tv.tv_usec);
         }
