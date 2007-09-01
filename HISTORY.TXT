@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Added ability to apply a validation pattern to cgi-based attribute queries
+  using the layer metadata key 'qstring_validation_pattern'
+
 - Fixed msDebug causing a crash with VS2005 (#2287)
 
 - Added stronger checks on libpdf version in configure script (#2278)
