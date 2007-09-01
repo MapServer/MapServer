@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed msDebug causing a crash with VS2005 (#2287)
+
 - Added stronger checks on libpdf version in configure script (#2278)
 
 - Added msGetVersionInt() to MapScript (ms_GetVersionInt() in PHP) (#2279)
