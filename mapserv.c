@@ -220,7 +220,7 @@ mapObj *loadMap(void)
     sprintf(key,"%s_validation_pattern", msObj->request->ParamNames[i]);
 		
     for(j=0; j<map->numlayers; j++) {
-			value = msLookupHashTable(&(GET_LAYER(map, j)->metadata), key);
+      value = msLookupHashTable(&(GET_LAYER(map, j)->metadata), key);
       if(value) { /* validate parameter value */
         if(msEvalRegex(value, msObj->request->ParamValues[i]) == MS_FALSE) {
           msSetError(MS_WEBERR, "Parameter '%s' value fails to validate.", "loadMap()", msObj->request->ParamNames[i]);
@@ -237,7 +237,7 @@ mapObj *loadMap(void)
       if(GET_LAYER(map, j)->filter.string && (strstr(GET_LAYER(map, j)->filter.string, tmpstr) != NULL)) 
         GET_LAYER(map, j)->filter.string = msReplaceSubstring(GET_LAYER(map, j)->filter.string, tmpstr, msObj->request->ParamValues[i]);
       for(k=0; k<GET_LAYER(map, j)->numclasses; k++) {
-	      if(GET_LAYER(map, j)->class[k]->expression.string && (strstr(GET_LAYER(map, j)->class[k]->expression.string, tmpstr) != NULL)) 
+	if(GET_LAYER(map, j)->class[k]->expression.string && (strstr(GET_LAYER(map, j)->class[k]->expression.string, tmpstr) != NULL)) 
           GET_LAYER(map, j)->class[k]->expression.string = msReplaceSubstring(GET_LAYER(map, j)->class[k]->expression.string, tmpstr, msObj->request->ParamValues[i]);
       }
     }
@@ -1054,7 +1054,7 @@ void msCleanupOnExit( void )
 /************************************************************************/
 int main(int argc, char *argv[]) {
     int i,j, iArg;
-    char buffer[1024];
+    char buffer[1024], *value=NULL;
     imageObj *img=NULL;
     int status;
 
@@ -1380,6 +1380,14 @@ int main(int argc, char *argv[]) {
 	  }
 	  GET_LAYER(msObj->Map, SelectLayerIndex)->status = MS_ON;
 
+          value = msLookupHashTable(&(GET_LAYER(msObj->Map, SelectLayerIndex)->metadata), "qsting_validation_pattern");
+	  if(value) { /* validate qstring value */
+	    if(msEvalRegex(value, QueryString) == MS_FALSE) {
+	      msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "main()");
+	      writeError();
+	    }
+	  }
+
 	  if(QueryCoordSource != NONE && !msObj->UseShapes)
 	    setExtent(msObj); /* set user area of interest */
 
@@ -1446,6 +1454,13 @@ int main(int argc, char *argv[]) {
 	case ITEMNQUERY:
         case ITEMQUERYMAP:
         case ITEMNQUERYMAP:
+          value = msLookupHashTable(&(GET_LAYER(msObj->Map, QueryLayerIndex)->metadata), "qsting_validation_pattern");
+          if(value) { /* validate qstring value */
+            if(msEvalRegex(value, QueryString) == MS_FALSE) {
+              msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "main()");
+              writeError();
+            }
+          }
 
 	  if(QueryCoordSource != NONE && !msObj->UseShapes)
 	    setExtent(msObj); /* set user area of interest */
