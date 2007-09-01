@@ -350,9 +350,11 @@ void msDebug( const char * pszFormat, ... )
 #endif
         {
             struct mstimeval tv;
+			time_t t;
             msGettimeofday(&tv, NULL);
+			t = tv.tv_sec;
             msIO_fprintf(debuginfo->fp, "[%s].%ld ", 
-                         msStringChop(ctime(&(tv.tv_sec))), (long)tv.tv_usec);
+                         msStringChop(ctime(&t)), (long)tv.tv_usec);
         }
 
         va_start(args, pszFormat);
