@@ -1252,9 +1252,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   /* Line smoothing kernel */
   double kernel[] = {0.1, 0.2, 2, 0.2, 0.1}; /* {1.5, 2, 15, 2, 1.5}; */
   double kernel_normal = 2.6; /* Must be sum of kernel elements */
-  
-  /* not used currently it seems */
-  /*  int kernel_size = 5; */
+  int kernel_size = 5;
 
   double letterspacing = 1.25;
 
@@ -1448,7 +1446,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
       labelpath->path.point[k].y += (kernel[3] + kernel[4]) * y;
     }
       
-    for(m = 0; m < 5; m++) {
+    for(m = 0; m < kernel_size; m++) {
       if(m + k - 2 < 0 || m + k - 2 > labelpath->path.numpoints - 1)
         continue;
       labelpath->path.point[k+m-2].x += kernel[m]*x;
