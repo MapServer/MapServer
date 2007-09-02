@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- AGG fix a bug when rendering polygons with tiled pixmaps
+
 - Added ability to apply a validation pattern to cgi-based attribute queries
   using the layer metadata key 'qstring_validation_pattern'
 
