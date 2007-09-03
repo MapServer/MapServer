@@ -1419,7 +1419,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           label.angle -= map->gt.rotation_angle;
 
         if(layer->labelcache) {
-          if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+          if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
 	  if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
             for(s=0; s<layer->class[c]->numstyles; s++)
@@ -1603,7 +1603,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       cliprect.minx -= buffer;
       cliprect.miny -= buffer;
       cliprect.maxx += buffer;
-      cliprect.maxy  += buffer;
+      cliprect.maxy += buffer;
 
       msClipPolygonRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
