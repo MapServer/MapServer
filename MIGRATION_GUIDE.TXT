@@ -72,7 +72,16 @@ it is possible to draw the pixmap symbol along the line (Note that this
 was available using a true type symbol). To achieve  this, the user needs 
 to use the parameter GAP with it's pixmap symbol definition in the symbol
 file. The GAP represents the distance between the symbols. If the GAP is not
-given, the pixmap symbol will be used as a brush.   
+given, the pixmap symbol will be used as a brush.
+
+----------------------------------------------------
+AGG rendering changes   
+----------------------------------------------------
+see `the AGG rendering specifics`_ for the changes relating to the addition
+of the `Antigrain Geometry`_ rendering engine.
+
+.. _`the AGG rendering specifics`: /docs/howto/agg-rendering-specifics
+.. _`Antigrain Geometry`: http://www.antigrain.com
 
 ---------------------------------------------------
 URL configuration changes
@@ -237,3 +246,32 @@ support for WCS or Arc/Info coverages:
 ::
 
   --enable-gcov           Enable source code coverage testing using gcov
+  
+  
+-----------------------------------------------------
+Features Heading for Deprecation
+-----------------------------------------------------
+
+**this paragraph is a work in progress **
+
+Some features present in MapServer are likely to be removed in a future
+release. Features might be headed for deprecation because:
+ - they have been replaced by a superior or more capable solution
+ - they have stopped being maintained
+
+Users of these features should be prepared for these upcoming changes
+and start adapting their mapfiles in consequence. If you have strong 
+and motivated objections as to the removal of one or more of these
+features please open a discussion in the usual Mapserver communication
+channels. 
+ 
+Cartoline symbols: these were a hack to overcome GD weaknesses, and their
+functionality is now supported by the AGG renderer. They have become poorly
+supported in current MapServer versions. Keywords allowing for setting the
+style of line joins and caps will be moved to the STYLE block.
+
+RGB/RGBA output with GD: support for RGB and RGBA image types will likely not
+be maintained anymore. PC256 will continue to be supported with GD, while RGB
+and RGBA will liekly only be supported with AGG
+
+...? 
