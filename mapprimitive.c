@@ -1431,17 +1431,25 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     x = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x;
     y = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y;
 
-    /* average this label point with its neighbors according to the smoothing kernel */    
-    if ( k == 0 ) {
+    /* 
+    ** This used to be a series of if-then-else's, but that fails for short (length < 4)
+    ** labels. There may be small speed-ups possible here. (bug 1921)
+    **
+    ** average this label point with its neighbors according to the smoothing kernel
+    */
+    if ( k == 0) {
       labelpath->path.point[k].x += (kernel[0] + kernel[1]) * x;
       labelpath->path.point[k].y += (kernel[0] + kernel[1]) * y;
-    } else if ( k == 1 ) {
+    } 
+    if ( k == 1) {
       labelpath->path.point[k].x += kernel[0] * x;
       labelpath->path.point[k].y += kernel[0] * y;
-    } else if ( k == labelpath->path.numpoints - 2 ) {
+    } 
+    if ( k == labelpath->path.numpoints - 2) {
       labelpath->path.point[k].x += kernel[4] * x;
       labelpath->path.point[k].y += kernel[4] * y;      
-    } else if ( k == labelpath->path.numpoints - 1 ) {
+    } 
+    if ( k == labelpath->path.numpoints - 1) {
       labelpath->path.point[k].x += (kernel[3] + kernel[4]) * x;
       labelpath->path.point[k].y += (kernel[3] + kernel[4]) * y;
     }
