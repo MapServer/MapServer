@@ -13,7 +13,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
-- Fixed path following labels with short (2/3 character) strings (#1921)
+- Fixed path following labels with short (2/3 character) strings (#2223)
 
 - AGG fix a bug when rendering polygons with tiled pixmaps
 
