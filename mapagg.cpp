@@ -86,11 +86,11 @@
 
 #ifdef CPL_MSB
 typedef agg::pixfmt_argb32 GDpixfmt; 
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
 #else
 typedef agg::pixfmt_bgra32 GDpixfmt;
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
 
 //this how to render to a gdImg while ignoring its funky alpha channel
