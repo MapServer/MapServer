@@ -1010,23 +1010,6 @@ static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 }
 #endif
 
-static void get_bbox(shapeObj *poly, double *minx, double *miny, double *maxx, double *maxy) {
-  int i, j;
-
-  *minx = *maxx = poly->line[0].point[0].x;
-  *miny = *maxy = poly->line[0].point[0].y;
-  for(i=0; i<poly->numlines; i++) {
-    for(j=1; j<poly->line[i].numpoints; j++) {
-      *minx = MS_MIN(*minx, poly->line[i].point[j].x);
-      *maxx = MS_MAX(*maxx, poly->line[i].point[j].x);
-      *miny = MS_MIN(*miny, poly->line[i].point[j].y);
-      *maxy = MS_MAX(*maxy, poly->line[i].point[j].y);
-    }
-  }
-
-  return;
-}
-
 #define NUM_SCANLINES 5
 
 /*
@@ -1043,7 +1026,11 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
   double len, max_len=0;
   double skip, minx, maxx, maxy, miny;
 
-  get_bbox(p, &minx, &miny, &maxx, &maxy);
+  msComputeBounds(p);
+  minx = p->bounds.minx;
+  miny = p->bounds.miny;
+  maxx = p->bounds.maxx;
+  maxy = p->bounds.maxy;
 
   if(min_dimension != -1)
     if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(MS_FAILURE);

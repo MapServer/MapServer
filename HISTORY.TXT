@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+- Fixed "MinFeatureSize AUTO" labeling for polygon layers, works for polygon
+  annotation layers too (#2232)
+
 - Fixed path following labels with short (2/3 character) strings (#2223)
 
 - AGG fix a bug when rendering polygons with tiled pixmaps

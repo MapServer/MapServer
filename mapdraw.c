@@ -1419,7 +1419,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           label.angle -= map->gt.rotation_angle;
 
         if(layer->labelcache) {
-          if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
+          if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
 	  if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
             for(s=0; s<layer->class[c]->numstyles; s++)
@@ -1622,7 +1622,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           label.angle -= map->gt.rotation_angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
 	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
       }
