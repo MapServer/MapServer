@@ -2856,7 +2856,10 @@ static void writeLayer(layerObj *layer, FILE *stream)
   fprintf(stream, "  LAYER\n");  
   if(layer->classitem) fprintf(stream, "    CLASSITEM \"%s\"\n", layer->classitem);
   if(layer->connection) {
-    fprintf(stream, "    CONNECTION \"%s\"\n", layer->connection);
+    if (strchr(layer->connection, '\"') != NULL)
+      fprintf(stream, "    CONNECTION '%s'\n", layer->connection);
+    else
+      fprintf(stream, "    CONNECTION \"%s\"\n", layer->connection);
     if(layer->connectiontype == MS_SDE)
       fprintf(stream, "    CONNECTIONTYPE SDE\n");
     else if(layer->connectiontype == MS_OGR)
@@ -2878,7 +2881,12 @@ static void writeLayer(layerObj *layer, FILE *stream)
       fprintf(stream, "    PLUGIN  \"%s\"\n", layer->plugin_library_original);
   }
 
-  if(layer->data) fprintf(stream, "    DATA \"%s\"\n", layer->data);
+  if(layer->data) {
+    if (strchr(layer->data, '\"') != NULL)
+      fprintf(stream, "    DATA '%s'\n", layer->data);
+    else
+      fprintf(stream, "    DATA \"%s\"\n", layer->data);
+  }
   if(layer->debug) fprintf(stream, "    DEBUG %d\n", layer->debug);
   if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
 
