@@ -1273,13 +1273,13 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
       /* create the new image based on the computed width/height */
       gdFree(newSymbol->img);
-      if (gdImageTrueColor(symbol->img)) {
+      if (gdImageTrueColor(symbol->img))
 	newSymbol->img = gdImageCreateTrueColor(width, height);
-        gdImageColorTransparent(newSymbol->img, gdImageGetTransparent(symbol->img)); 
-        gdImageAlphaBlending(newSymbol->img, 0); 
-      } else {
+      else
 	newSymbol->img = gdImageCreate(width, height);	
-      }
+
+      gdImageColorTransparent(newSymbol->img, gdImageGetTransparent(symbol->img)); 
+      gdImageAlphaBlending(newSymbol->img, 0); 
 
       newSymbol->sizex = maxx;
       newSymbol->sizey = maxy;
