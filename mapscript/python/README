@@ -18,9 +18,7 @@ classes on any platform, and has been well tested on Python versions
 Building the Mapscript Module
 -----------------------------
 
-if you are using Python 2.2+, copy the mapscript_wrap.c and mapscript.py
-files from python/modern up to python/, replacing the files in that
-location.  Before you begin, it's worth spending a few minutes to read the
+Before you begin, it's worth spending a few minutes to read the
 docs about Python distutils:
 
     http://www.python.org/doc/current/dist/dist.html
