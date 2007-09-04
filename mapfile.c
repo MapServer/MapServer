@@ -1595,7 +1595,10 @@ static void writeExpression(expressionObj *exp, FILE *stream)
     fprintf(stream, "/%s/", exp->string);
     break;
   case(MS_STRING):
-    fprintf(stream, "\"%s\"", exp->string);
+    if (strchr(exp->string, '\"') != NULL)
+      fprintf(stream, "'%s'", exp->string);
+    else
+      fprintf(stream, "\"%s\"", exp->string);
     break;
   case(MS_EXPRESSION):
     fprintf(stream, "(%s)", exp->string);
