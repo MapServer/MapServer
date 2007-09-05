@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+-------------------------------------------------------------------
 README.CONFIGURE - MapServer "configure" script compilation options
 -------------------------------------------------------------------
 
@@ -20,6 +20,8 @@ For the impatient:
 To build the "mapserv" CGI program with the default options, go to the
 directory where you extracted the MapServer source code package and...
 
+::
+
  $ cd mapserver-5.0.x
  $ ./configure
  $ make
@@ -38,8 +40,10 @@ instructions.
 
 Here is the list of available options as returned by "./configure --help":
 
-
 Optional Features:
+
+::
+
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
@@ -60,6 +64,9 @@ Optional Features:
   --disable-runpath       Do not link with runtime lib path (the default).
 
 Optional Packages:
+
+::
+
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
