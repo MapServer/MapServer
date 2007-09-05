@@ -2,13 +2,14 @@
 README.WIN32 - Microsoft Visual C++ Build instructions for MapServer
 --------------------------------------------------------------------
 
---------------------------------------------------------------------
 IMPORTANT - READ THIS FIRST:
+----------------------------
 
   The Win32 build process is not very friendly for unexperienced users.
   So it is strongly recommended that you use one of the precompiled 
   binaries available on the MapServer site:
-     http://mapserver.gis.umn.edu/win32binaries.html
+ 
+    http://mapserver.gis.umn.edu/download/current/windows
 
   There are precompiled Win32 binaries available for the last stable
   release and the latest nightly build and they include the most common
@@ -18,6 +19,7 @@ IMPORTANT - READ THIS FIRST:
   then don't do it unless you really know what you're doing... and
   hopefully the rest of this file contains some hints that may help 
   you.  Good Luck!
+
 --------------------------------------------------------------------
 
 For the developers using MSVC++, a NMAKE makefile (Makefile.vc + nmake.opt)
@@ -110,6 +112,7 @@ instructions.
 --------------------------------------------------------------------
       Notes on the proj module
 -------------------------------------------------------------------- 
+
   - The Proj.4 (cartographic projection routines) is located at 
         http://www.remotesensing.org/proj/
 
@@ -122,11 +125,12 @@ instructions.
      locate the proj support files.  
 
   
---------------------------------------------------------------------
+----------------------------------------------------------------------
       Notes libcurl : used to support WMS client connection
       Mapserver 4.x is using libcurl instead of libwww for WMS client
       support
--------------------------------------------------------------------- 
+---------------------------------------------------------------------- 
+
   - the library is located at http://curl.haxx.se/download.html
 
   Quick notes on how to build the library using MSVC++:
@@ -158,7 +162,7 @@ instructions.
         Notes on GDAL
 ------------------------------------------------------------
 
-- If you are compiling the GDAL library (http://www.gdal.org/)
+-  If you are compiling the GDAL library (http://www.gdal.org/)
    with the PNG support, make sure that the libpng that you use in mapserver 
    is the same as the one used in GDAL.
 
@@ -170,10 +174,10 @@ The PDF support allows the output of a map file as a PDF file.
 
 To be able to build mapserver with the PDF support, you need to download
 and build a PDF library from www.pdflib.com (http://www.pdflib.com/pdflib/download/index.html).
-The best option is to download the zip file containing the source code and build it. Please
-refer to the docs inside the zip for informations on how to build the library. 
-Here are some quick notes that can help in building mapserver with PDF :
+The best option is to download the zip file containing the source code and build it. Please refer to the docs inside the zip for informations on how to build the library.  Here are some quick notes that can help in building mapserver with PDF :
+
  1) Build the PDF lib
+
   - open the project PDFLib.dsw
   - build the project pdflib_dll
   - after a sucessful build, you should have a pdflib.lib and pdblib.dll under the
@@ -181,9 +185,8 @@ Here are some quick notes that can help in building mapserver with PDF :
   - copy the pdflib.dll under your system directory (ex : c:/winnt/system32)
  
  2) Build mapserver with PDF
+
   - uncomment in the nmake.opt the flags related to PDF
 
 
-----------------
 $Id$
-----------------
