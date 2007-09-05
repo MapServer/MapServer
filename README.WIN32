@@ -126,10 +126,12 @@ instructions.
 
   
 ----------------------------------------------------------------------
-      Notes libcurl : used to support WMS client connection
-      Mapserver 4.x is using libcurl instead of libwww for WMS client
-      support
----------------------------------------------------------------------- 
+  Notes on libcurl
+----------------------------------------------------------------------
+
+  Notes libcurl : used to support WMS client connection
+  Mapserver 5.x is using libcurl instead of libwww for WMS client
+  support.
 
   - the library is located at http://curl.haxx.se/download.html
 
