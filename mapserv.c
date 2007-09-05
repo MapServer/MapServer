@@ -1380,13 +1380,16 @@ int main(int argc, char *argv[]) {
 	  }
 	  GET_LAYER(msObj->Map, SelectLayerIndex)->status = MS_ON;
 
-          value = msLookupHashTable(&(GET_LAYER(msObj->Map, SelectLayerIndex)->metadata), "qsting_validation_pattern");
+    value = msLookupHashTable(&(GET_LAYER(msObj->Map, SelectLayerIndex)->metadata), "qstring_validation_pattern");
 	  if(value) { /* validate qstring value */
 	    if(msEvalRegex(value, QueryString) == MS_FALSE) {
 	      msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "main()");
 	      writeError();
 	    }
-	  }
+	  } else { /* throw an error since a validation pattern is required */
+      msSetError(MS_WEBERR, "Metadata qstring_validation_pattern is not set.", "mapserv()"); 
+	    writeError();
+    }
 
 	  if(QueryCoordSource != NONE && !msObj->UseShapes)
 	    setExtent(msObj); /* set user area of interest */
@@ -1451,15 +1454,18 @@ int main(int argc, char *argv[]) {
       
 	  break;
         case ITEMQUERY:
-	case ITEMNQUERY:
+	      case ITEMNQUERY:
         case ITEMQUERYMAP:
         case ITEMNQUERYMAP:
-          value = msLookupHashTable(&(GET_LAYER(msObj->Map, QueryLayerIndex)->metadata), "qsting_validation_pattern");
+          value = msLookupHashTable(&(GET_LAYER(msObj->Map, QueryLayerIndex)->metadata), "qstring_validation_pattern");
           if(value) { /* validate qstring value */
             if(msEvalRegex(value, QueryString) == MS_FALSE) {
               msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "main()");
               writeError();
             }
+          } else { /* throw an error since a validation pattern is required */
+            msSetError(MS_WEBERR, "Metadata qstring_validation_pattern is not set.", "mapserv()"); 
+	          writeError();
           }
 
 	  if(QueryCoordSource != NONE && !msObj->UseShapes)
