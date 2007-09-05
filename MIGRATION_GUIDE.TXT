@@ -86,6 +86,7 @@ of the `Antigrain Geometry`_ rendering engine.
 ---------------------------------------------------
 URL configuration changes
 ---------------------------------------------------
+
 Previous versions of the MapServer CGI program allowed certain parameters
 to be changed via a URL using a cumbersome syntax such as 
 map_layer_0_class_0_color=255+0+0 which changes the color in one classObj.
@@ -120,8 +121,30 @@ Example 3, creating a new feature
   ...&map_layer[3]=FEATURE+POINTS+500000+1000000+END+TEXT+'A+test+point'+END&...
 
 The variable identifies an object uniquely (by name or index in the case of
-layerObj's and classObj's. The value is a snippet of a mapfile. You c
+layerObj's and classObj's). The value is a snippet of a mapfile. You
 cannot create new objects other than inline features at this point.
+
+----------------------------------------------------
+Validation patterns for mapserv URL parameters
+----------------------------------------------------
+
+Variable substitutions (%variable%) and attribute queries (qstring) done
+via the mapserv CGI could theoretically be used for SQL injection.
+
+No exploit has been reported, but in order to mitigate the risk, a new
+validation pattern mechanism has been added in 5.0.
+
+In the case of qstring attribute queries, the qstring_validation_pattern
+layer-level metadata is required for qstring queries to work. The metadata
+value is a regular expression that the qstring value must match otherwise
+mapserv produces a fatal error. A fatal error is also produced if qstring
+is used but qstring_validation_pattern is not provided.
+
+
+A similar validation pattern mechanism is also available for %variable%
+substitutions, but in this case it is optional. The pattern for %myvar%
+is provided via a metadata called myvar_validation_pattern.
+
 
 ----------------------------------------------------
 SWIG MapScript (Python, Perl, CSharp, Java) changes
