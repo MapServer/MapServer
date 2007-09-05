@@ -39,35 +39,61 @@ instructions.
 Here is the list of available options as returned by "./configure --help":
 
 
-  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
-  --with-libiconv=DIR     GD: Specify where libiconv is installed (DIR is path to
-                              libiconv install dir).
-  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
-                          install dir).
-  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is path
-                              to freetype-config program or install dir).
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-ignore-missing-data   Ignore missing data file errors at runtime
+  --disable-ignore-missing-data  Report all missing data files (enabled by
+                                 default).
+  --enable-point-z-m      Use point Z and M parameters (disabled by default).
+  --disable-point-z-m     Disable support for point Z and M parameters.
+  --disable-fast-nint     Use safe MS_NINT with reliable rounding
+  --enable-debug          Include "-g" in CFLAGS for debugging.
+  --disable-debug         Do not include "-g" in CFLAGS (the default).
+  --enable-gcov           Enable source code coverage testing using gcov
+  --enable-perlv-ld-detect (applies to --with-php only)
+                          Use perl -V output to figure the command to use to
+                          link php_mapscript.so.  Try this only if the default
+                          internal macro didn't work.
+  --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
+                          Required on *BSD systems.
+  --disable-runpath       Do not link with runtime lib path (the default).
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
+                              path to freetype-config program or install dir).
   --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
                               to zlib install dir).
   --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
                               PNG install dir).
-  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the 
+  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
+  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the
                               libXpm install prefix).
+  --with-libiconv=DIR     Specify where libiconv is installed (DIR is path
+                          to libiconv install dir (prefix)).
+  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
+                          install dir).
   --without-pdf           Disable PDF support.
   --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).
-  --without-tiff          Disable TIFF support.
-  --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
+  --with-agg[=DIR]        Include AGG support (DIR is AGG's install dir).
   --without-eppl          Disable EPPL7 support.
   --with-eppl             Include EPPL7 support.
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
   --with-threads[=linkopt]Include thread safe support
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
-  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).
-  --with-geos=PATH        Include GEOS support (PATH is path to geos-config)
+  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default
+                          is 91).
+  --with-geos[=PATH]      Include GEOS support (PATH is path to geos-config)
   --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).
   --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)
+  --without-tiff          Disable TIFF support.
+  --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
   --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)
-  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)
+  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to
+                          Oracle home)
   --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
                           directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
@@ -77,47 +103,38 @@ Here is the list of available options as returned by "./configure --help":
                           required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
-  --with-sos              Enable OGC SOS Server Support (libxml2, PROJ4, OGR required).
+  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
+                          OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-xml2-config=PATH Specify path to xml2-config.
-  --enable-ignore-missing-data   Ignore missing data file errors at runtime
-                                 (enabled by default).
-  --disable-ignore-missing-data  Report all missing data files.
-  --enable-point-z-m      Use point Z and M parameters (disabled by default).
-  --disable-point-z-m     Disable support for point Z and M parameters.
-  --enable-debug          Include -g in CFLAGS for debugging .
-  --disable-debug         Do not include -g in CFLAGS (the default).
+  --with-fastcgi=path     Enable FastCGI, point to installed tree.
+  --with-httpd            Specify path to 'httpd' executable.
+  --with-warnings[=flags] Enable strict warnings (or user defined warnings)
   --with-php=DIR          Specify directory where PHP4's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
-  --enable-perlv-ld-detect (applies to --with-php only) 
-                          Use perl -V output to figure the command to use to 
-                          link php_mapscript.so.  Try this only if the default
-                          internal macro didn't work.
-  --with-apxs[=FILE]      (CURRENTLY DISABLED) 
+  --without-ld-shared     Disable shared library support
+  --with-apxs[=FILE]      (CURRENTLY DISABLED)
                           Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.
-  --with-apache=DIR       (CURRENTLY DISABLED) 
+  --with-apache=DIR       (CURRENTLY DISABLED)
                           Use this option only if building the PHP MapScript
                           on a system where PHP was built as an Apache
                           module statically linked into the httpd executable.
                           DIR is the path to the apache include files.
-  --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
-                          Required on *BSD systems.
-  --disable-runpath       Do not link with runtime lib path (the default).
   --with-java-include-os-name=dirname
                           (AUTODETECTED)
                           Use this option only if building of Java Mapscript
                           fails because os-dependent headers are not found.
-                          dirname is the name of subdirectory of the Java installation
-                          where os-dependent include files are found (for instance
-                          linux or solaris).
+                          dirname is the name of subdirectory of the Java
+                          installation where os-dependent include files are
+                          found (for instance linux or solaris).
                           Only used by Java mapscript.
 
-All the options are described in more details below.
+The most common options are described in more details below.
 
 
 GD and Support Libraries:
@@ -128,13 +145,14 @@ GD and Support Libraries:
 
 
   The GD library is the only component that is not optional.  
-  Version 2.0.16 or more recent is required, see http://www.boutell.com/gd/ .
+  Version 2.0.16 or more recent is required, and GD 2.0.35 or higher is
+  strongly recommended (see http://www.boutell.com/gd/ .
 
   Version 2.0.29 or more recent is required for the LABEL FOLLOW option 
   to work (curved labels, added in 4.10).
 
   There is a bug in GD with versions below 2.0.35 with 1 pixel 
-  antialiased lines that requires a for GD. See bug 1612:
+  antialiased lines that requires a patch for GD. See bug 1612:
   http://trac.osgeo.org/mapserver/ticket/1612
 
   By default, configure tries to locate GD on your system and uses the
@@ -148,17 +166,18 @@ GD and Support Libraries:
   to explicitly specify the path where those libraries are found using the
   following configure options:
 
-  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
-  --with-libiconv=DIR     GD: Specify where libiconv is installed (DIR is path to
-                              libiconv install dir).
-  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is path
-                              to freetype-config program or install dir).
+  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
+                              path to freetype-config program or install dir).
   --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
                               to zlib install dir).
   --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
                               PNG install dir).
-  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the 
+  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
+  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR is the
                               libXpm install prefix).
+  --with-libiconv=DIR     Specify where libiconv is installed (DIR is path
+                          to libiconv install dir (prefix)).
+
 
   In each case you specify the install dir of the support library, e.g.
     ./configure .... --with-gd=/usr/local --with=jpeg=/usr/local \
@@ -233,7 +252,8 @@ ESRI SDE Support:
 -----------------
 
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
-  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).
+  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default
+                          is 91).
 
   ESRI SDE support is optional, and is not included by default.  
 
@@ -260,7 +280,7 @@ OGR Support:
 
   OGR support is optional, and is not included by default.  
 
-  The OGR library (http://gdal.velocet.ca/projects/opengis/) allows MapServer
+  The OGR library (http://www.gdal.org/ogr/) allows MapServer
   to access data in a variety of vector formats, see the URL above for the
   complete list.
 
@@ -270,7 +290,7 @@ OGR Support:
     e.g.    ./configure ...  --with-ogr=/usr/local/bin/gdal-config
 
   OGR is usually installed as part of a GDAL shared library.  To get the
-  full GDAL and OGR source kit visit http://www.remotesensing.org/gdal .
+  full GDAL and OGR source kit visit http://www.gdal.org/ .
   When configuring GDAL ensure that --with-ogr is selected.
   Then when you configure MapServer, include the --with-ogr switch with
   no argument since the location of the GDAL lib also defines the OGR 
@@ -286,7 +306,7 @@ GDAL Support:
 
   GDAL support is optional, and it is not included by default. 
 
-  The GDAL library (http://www.remotesensing.org/gdal) allows MapServer
+  The GDAL library ( http://www.gdal.org/) allows MapServer
   to access data in a variety of raster formats, including GeoTIFF, Erdas
   Imagine, ESRI BIL, and CEOS. 
 
@@ -360,7 +380,8 @@ MyGIS (MySQL v3.xx SFSQL) Support:
 Oracle Spatial Support:
 -----------------------
 
-  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)
+  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to
+                          Oracle home)
 
   Oracle Spatial support is optional and is not included by default. 
 
@@ -372,7 +393,8 @@ Oracle Spatial Support:
 Flash/SWF/Ming Output Support:
 ------------------------------
 
-  --with-ming[=ARG] Include MING/Flash Support (ARG=yes/path to Ming directory)
+  --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
+                          directory)
 
   Support for generating Flash output is enabled only if requested.  Use
   the --with-ming switch to request it if the ming libraries have been 
@@ -392,7 +414,7 @@ PDF output support:
   --without-pdf           Disable PDF support.
   --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).
 
-  Support for PDF output using PDFLib (http://www.pdflib.com/pdflib/)
+  Support for PDF output using PDFLib (http://www.pdflib.com/)
   is disabled by default and can be enabled using the --with-pdf option.
 
   If PDFLib is installed in the default system directories then using 
@@ -423,10 +445,10 @@ OGC WMS Server Compatibility:
 
   WMS Compatibility allows MapServer (actually the mapserv CGI) to advertize
   its capabilities and serve maps and feature_info requests following the 
-  OpenGIS Web Mapping Server (WMS) Interface Specification.
+  OpenGIS Web Mapping Service (WMS) Interface Specification.
 
   See the MapServer WMS Server HOWTO at 
-  http://mapserver.gis.umn.edu/doc/wms-server-howto.html
+  http://mapserver.gis.umn.edu/docs/howto/wms_server
 
 
 OGC WMS Client Support:
@@ -442,7 +464,7 @@ OGC WMS Client Support:
   reprojection of layers obtained from remote WMS servers.
 
   See the MapServer WMS Client HOWTO for more details at 
-  http://mapserver.gis.umn.edu/doc/wms-client-howto.html
+  http://mapserver.gis.umn.edu/docs/howto/wms_client
 
 
 OGC WFS Server Compatibility:
@@ -454,7 +476,7 @@ OGC WFS Server Compatibility:
   the OGR and PROJ4 options as well.
 
   See the MapServer WFS Server HOWTO at 
-  http://mapserver.gis.umn.edu/doc/wms-server-howto.html
+  http://mapserver.gis.umn.edu/docs/howto/wfs_server
 
 
 OGC WMS Client Support:
@@ -469,16 +491,20 @@ OGC WMS Client Support:
   of OGR compiled with the Xerces library (for GML support via OGR).
 
   See the MapServer WMS Client HOWTO for more details at 
-  http://mapserver.gis.umn.edu/doc/wfs-client-howto.html
+  http://mapserver.gis.umn.edu/docs/howto/wfs_client
 
 
 OGC SOS Server Support:
 -----------------------
 
-  --with-sos              Enable OGC SOS Server Support (libxml2 required).
+  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
+                          OGR required).
 
   OGC Sensor Observation Service (SOS) is disabled by default and can be
   enabled using --with-sos. PROJ4 and libxml2 are required.
+
+  See the MapServer SOS Server HOWTO for more details at 
+  http://mapserver.gis.umn.edu/docs/howto/sos_server
 
 
 Curl Support:
@@ -524,16 +550,22 @@ Miscellaneous flags:
   --with-threads[=linkopt]Include thread safe support
 
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
-                                 (enabled by default).
-  --disable-ignore-missing-data  Report all missing data files.
+  --disable-ignore-missing-data  Report all missing data files (enabled by
+                                 default).
 
-  --enable-debug          Include -g in CFLAGS for debugging.
-  --disable-debug         Do not include -g in CFLAGS (the default).
+  --enable-point-z-m      Use point Z and M parameters (disabled by default).
+  --disable-point-z-m     Disable support for point Z and M parameters.
+
+  --disable-fast-nint     Use safe MS_NINT with reliable rounding
+
+  --enable-debug          Include "-g" in CFLAGS for debugging.
+  --disable-debug         Do not include "-g" in CFLAGS (the default).
+
+  --enable-gcov           Enable source code coverage testing using gcov
 
   --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
   --disable-runpath       Do not link with runtime lib path (the default).
-
 
   NOTE FOR *BSD USERS ABOUT --enable-runpath:
 
@@ -553,8 +585,8 @@ PHP/MapScript module:
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
-  --enable-perlv-ld-detect (applies to --with-php only) 
-                          Use perl -V output to figure the command to use to 
+  --enable-perlv-ld-detect (applies to --with-php only)
+                          Use perl -V output to figure the command to use to
                           link php_mapscript.so.  Try this only if the default
                           internal macro didn't work.
 
@@ -562,7 +594,8 @@ PHP/MapScript module:
   The --with-php option will trigger the compilation of the PHP MapScript
   module in the ./mapscript/php3/ directory.  
 
-  DIR should be the location of the PHP4 distribution (source or dev package).
+  DIR should be the location of the PHP4 or PHP5 distribution (source or dev
+  package). 
   The module may work with older versions of PHP (4.1.x or 4.2.x), but 
   PHP 4.3.x is strongly recommended. The configure script should 
   automatically detect which version of PHP you are attempting to build 
