@@ -1383,7 +1383,7 @@ int main(int argc, char *argv[]) {
     value = msLookupHashTable(&(GET_LAYER(msObj->Map, SelectLayerIndex)->metadata), "qstring_validation_pattern");
 	  if(value) { /* validate qstring value */
 	    if(msEvalRegex(value, QueryString) == MS_FALSE) {
-	      msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "main()");
+	      msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
 	      writeError();
 	    }
 	  } else { /* throw an error since a validation pattern is required */
@@ -1457,10 +1457,15 @@ int main(int argc, char *argv[]) {
 	      case ITEMNQUERY:
         case ITEMQUERYMAP:
         case ITEMNQUERYMAP:
+          if(QueryLayerIndex < 0 || QueryLayerIndex >= msObj->Map->numlayers) {
+            msSetError(MS_WEBERR, "Query layer not set or references an invalid layer.", "mapserv()"); 
+            writeError();
+          }
+
           value = msLookupHashTable(&(GET_LAYER(msObj->Map, QueryLayerIndex)->metadata), "qstring_validation_pattern");
           if(value) { /* validate qstring value */
             if(msEvalRegex(value, QueryString) == MS_FALSE) {
-              msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "main()");
+              msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
               writeError();
             }
           } else { /* throw an error since a validation pattern is required */
