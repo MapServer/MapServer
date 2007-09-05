@@ -979,7 +979,7 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
       dst->img = gdImageCreateTrueColor(gdImageSX(src->img), gdImageSY(src->img));
       gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));
       gdImageAlphaBlending(dst->img, 0);
-      gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
+      gdImageFilledRectangle(dst->img, 0, 0, gdImageSX(src->img), gdImageSY(src->img), gdImageColorAllocateAlpha(dst->img, 0, 0, 0, gdAlphaTransparent)); 
     } else {
       int tc = gdImageGetTransparent(src->img);
 
@@ -1278,8 +1278,8 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
       gdFree(newSymbol->img);
       if (gdImageTrueColor(symbol->img)) {
 	newSymbol->img = gdImageCreateTrueColor(width, height);
-        gdImageColorTransparent(newSymbol->img, gdImageGetTransparent(symbol->img)); 
-        gdImageAlphaBlending(newSymbol->img, 0); 
+        gdImageAlphaBlending(newSymbol->img, 0);
+        gdImageFilledRectangle(newSymbol->img, 0, 0, width, height, gdImageColorAllocateAlpha(newSymbol->img, 0, 0, 0, gdAlphaTransparent)); 
       } else {
         int tc = gdImageGetTransparent(symbol->img);
 	newSymbol->img = gdImageCreate(width, height);	
