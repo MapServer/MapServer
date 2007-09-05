@@ -6,7 +6,7 @@ MS RFC 17: Dynamic Allocation of layers, styles, classes and symbols
 :Author: Frank Warmerdam, with edits from Daniel Morissette and Umberto Nicoletti
 :Contact: warmerdam@pobox.com, dmorissette@mapgears.com, umberto.nicoletti@gmail.com
 :Last Edited: 2007/07/18
-:Status: Adopted (2007/07/18) - Under development.
+:Status: Adopted (2007/07/18) - Implementation completed (2007/07/23)
 :Version: MapServer 5.0
 
 Purpose

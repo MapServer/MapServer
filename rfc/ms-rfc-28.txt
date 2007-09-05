@@ -6,7 +6,7 @@
 :Author: Daniel Morissette
 :Contact: dmorissette@mapgears.com
 :Last Edited: 2007/08/24
-:Status: Adopted (2007-06-29) - Under development
+:Status: Adopted (2007-06-29) - Implementation completed (2007/07/06)
 :Version: MapServer 5.0
 
 Overview
