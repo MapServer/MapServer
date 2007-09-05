@@ -977,14 +977,17 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
     
     if (gdImageTrueColor(src->img)) {
       dst->img = gdImageCreateTrueColor(gdImageSX(src->img), gdImageSY(src->img));
-      gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
-      gdImageAlphaBlending(dst->img, 0);
       gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));
+      gdImageAlphaBlending(dst->img, 0);
+      gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
     } else {
+      int tc = gdImageGetTransparent(src->img);
+
       dst->img = gdImageCreate(gdImageSX(src->img), gdImageSY(src->img));
-      gdImageAlphaBlending(dst->img, 0);
-      gdImageColorTransparent(dst->img, gdImageGetTransparent(src->img));
-      gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));
+      if(tc != -1)
+        gdImageColorTransparent(dst->img, gdImageColorAllocate(dst->img, gdImageRed(src->img, tc), gdImageGreen(src->img, tc), gdImageBlue(src->img, tc)));
+
+      gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));      
     }
   }
 
@@ -1273,13 +1276,16 @@ symbolObj *msRotateSymbol(symbolObj *symbol, double angle)
 
       /* create the new image based on the computed width/height */
       gdFree(newSymbol->img);
-      if (gdImageTrueColor(symbol->img))
+      if (gdImageTrueColor(symbol->img)) {
 	newSymbol->img = gdImageCreateTrueColor(width, height);
-      else
+        gdImageColorTransparent(newSymbol->img, gdImageGetTransparent(symbol->img)); 
+        gdImageAlphaBlending(newSymbol->img, 0); 
+      } else {
+        int tc = gdImageGetTransparent(symbol->img);
 	newSymbol->img = gdImageCreate(width, height);	
-
-      gdImageColorTransparent(newSymbol->img, gdImageGetTransparent(symbol->img)); 
-      gdImageAlphaBlending(newSymbol->img, 0); 
+        if(tc != -1)
+          gdImageColorTransparent(newSymbol->img, gdImageColorAllocate(newSymbol->img, gdImageRed(symbol->img, tc), gdImageGreen(symbol->img, tc), gdImageBlue(symbol->img, tc)));
+      }
 
       newSymbol->sizex = maxx;
       newSymbol->sizey = maxy;
