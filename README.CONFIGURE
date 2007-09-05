@@ -347,29 +347,39 @@ MapServer:
   1) GDAL only using libgdal.so installed in system lib dirs, this assumes
      you have previously run 'make install' as root in your GDAL source
      tree:
-      ./configure --with-gdal
+
+       ./configure --with-gdal
+
      or 
-      ./configure --with-gdal=/usr/local/bin/gdal-config
+
+       ./configure --with-gdal=/usr/local/bin/gdal-config
+
      (or whatever the path to the installed gdal-config script is.)
 
   2) OGR only, using libgdal.so installed in system lib dirs, once again
      this assumes you have previously run 'make install' as root in your 
      GDAL source tree:
-      ./configure --with-ogr
+
+       ./configure --with-ogr
+
      or 
-      ./configure --with-ogr=/usr/local/bin/gdal-config
+
+       ./configure --with-ogr=/usr/local/bin/gdal-config
      (or whatever the path to the installed gdal-config script is.)
 
   3) GDAL and OGR using libgdal.so, assuming that GDAL was configured with 
      --with-ogr.  Same as #1 above, but add --with-ogr with no argument to
      the MapServer configure command:
-      ./configure --with-gdal --with-ogr
+
+       ./configure --with-gdal --with-ogr
+
      or 
-      ./configure --with-gdal=/usr/local/bin/gdal-config --with-ogr
+
+       ./configure --with-gdal=/usr/local/bin/gdal-config --with-ogr
 
 
 PostGIS Support:
----------------
+----------------
 
 ::
 
@@ -452,6 +462,7 @@ PDF output support:
   --with-pdf with no argument should be enough.  If not then pass the 
   full path to the PDFLib installation directory.
   e.g.
+
       ./configure ..... --with-pdf=/usr/local
 
 IMPORTANT NOTE: PDFLib comes bundled with and is built by default using
@@ -564,6 +575,7 @@ Curl Support:
   --with-curl-config option to specify the path where the curl-config
   script is located.
   e.g.
+
      ./configure .... --with-curl-config=/usr/local/bin/curl-config
 
 
@@ -582,6 +594,7 @@ Libxml2 Support:
   --with-xml2-config option to specify the path where the xml2-config
   script is located.
   e.g.
+
      ./configure .... --with-xml2-config=/usr/local/bin/xml2-config
 
 
@@ -623,7 +636,7 @@ Miscellaneous flags:
                           Required on *BSD systems.
   --disable-runpath       Do not link with runtime lib path (the default).
 
-NOTE FOR *BSD USERS ABOUT --enable-runpath:
+NOTE FOR BSD USERS ABOUT --enable-runpath:
 -------------------------------------------
 For some reason, the --enable-runpath switch is required in order to 
 successfully link on *BSD systems.  For most other operating systems
@@ -707,26 +720,27 @@ Java Mapscript Module:
 
   ::
 
-  --with-threads : absolutely necessary due to the highly threaded
-                   nature of Java programs.
+    --with-threads : absolutely necessary due to the highly threaded
+                     nature of Java programs.
   
-  --with-java-include-os-name=dirname : use only if compilation of Java
-                   mapscript fails because of missing headers.
+    --with-java-include-os-name=dirname : use only if compilation of Java
+                     mapscript fails because of missing headers.
                    
-                   dirname is the directory where the os-dependent headers
-                   used by the Java Native Interface are found.
+                     dirname is the directory where the os-dependent headers
+                     used by the Java Native Interface are found.
+
+                     Example:
+                 
+                       $JAVA_HOME/include/linux
+                                          ^^^^^ this is the directory name
 		   
-		   Example:
-			$JAVA_HOME/include/linux
-			                   ^^^^^ this is the directory name
-		   
-                   On linux the directory is called linux and on Solaris
-                   solaris. The configure script will try to autodetect
-                   it if not specified.
+                     On linux the directory is called linux and on Solaris
+                     solaris. The configure script will try to autodetect
+                     it if not specified.
                    
-                   In case autodetection fails you might want to add a comment
-                   to bug:
-                   http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1209
+                     In case autodetection fails you might want to add a comment
+                     to bug:
+                     http://trac.osgeo.org/mapserver/tickets/1209
 
 ----------------
 $Id$
