@@ -365,6 +365,7 @@ MapServer:
      or 
 
        ./configure --with-ogr=/usr/local/bin/gdal-config
+
      (or whatever the path to the installed gdal-config script is.)
 
   3) GDAL and OGR using libgdal.so, assuming that GDAL was configured with 
@@ -639,7 +640,7 @@ Miscellaneous flags:
 NOTE FOR BSD USERS ABOUT --enable-runpath:
 -------------------------------------------
 For some reason, the --enable-runpath switch is required in order to 
-successfully link on *BSD systems.  For most other operating systems
+successfully link on BSD systems.  For most other operating systems
 you don't need the --enable-runpath switch unless you link MapServer
 with some shared libraries located outside of the system's runtime 
 library path.  And even then, it is probably preferable to use 
