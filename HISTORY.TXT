@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ---------------------------
 
+
+Version 5.0.0-rc1 (2007-09-05)
+------------------------------
+
 - Fixed "MinFeatureSize AUTO" labeling for polygon layers, works for polygon
   annotation layers too (#2232)
 
@@ -20,8 +24,8 @@ Current Version (SVN Trunk):
 
 - AGG fix a bug when rendering polygons with tiled pixmaps
 
-- Added ability to apply a validation pattern to cgi-based attribute queries
-  using the layer metadata key 'qstring_validation_pattern'
+- Added requirement to provide validation pattern for cgi-based attribute
+  queries using the layer metadata key 'qstring_validation_pattern' (#2286)
 
 - Fixed msDebug causing a crash with VS2005 (#2287)
 
