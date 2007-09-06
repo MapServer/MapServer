@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- Fixed interleaving of multi-band results for raster query (#2294).
 
 Version 5.0.0-rc1 (2007-09-05)
 ------------------------------
