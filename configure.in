@@ -781,11 +781,11 @@ if test "$with_agg" = "yes" ; then
   else
      AC_MSG_ERROR([freetype required for agg support - please configure --with-freetype.])
   fi
-
-  AGG_LIB="-lagg -laggfontfreetype"
-  AC_MSG_RESULT([using libagg from system libs.])
-
-elif test -n "$with_agg" -a "$with_agg" != "no" ; then
+  
+  with_agg="/usr"
+  AC_MSG_RESULT([looking for agg libs in /usr])
+fi
+if test -n "$with_agg" -a "$with_agg" != "no" ; then
 
   if test -n "$FT_BIN" ; then
      FT_INC=`$FT_BIN --cflags`
