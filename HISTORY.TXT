@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- Fixed conflict between runtime substitution validation and qstring validation.
+
 - Fixed agg configure logic (now should work with --with-agg alone) (#2295)
 
 - Fixed interleaving of multi-band results for raster query (#2294).
