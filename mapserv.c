@@ -206,12 +206,20 @@ mapObj *loadMap(void)
   /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
   /* services can take advantage of these "vendor specific" extensions */
   for(i=0;i<msObj->request->NumParams;i++) {
+    /*
+		** a few CGI variables should be skipped altogether
+    **
+    ** qstring: there is separate per layer validation for attribute queries and the substitution checks
+    **          below conflict with that so we avoid it here
+    */
+    if(strncasecmp(msObj->request->ParamNames[i],"qstring",7) == 0) continue;
+
     if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0 || strncasecmp(msObj->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
       if(msUpdateMapFromURL(map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) != MS_SUCCESS) writeError();
       continue;
     }
 
-    /* subtitution string */
+    /* runtime subtitution string */
     tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 3);
     sprintf(tmpstr,"%%%s%%", msObj->request->ParamNames[i]);
 
