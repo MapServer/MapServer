@@ -831,7 +831,7 @@ void loadForm(void)
     /* -------------------------------------------------------------------- */
     /*      The following code is used to support the rosa applet (for      */
     /*      more information on Rosa, please consult :                      */
-    /*      http://www2.dmsolutions.ca/webtools/rosa/index.html) .          */
+    /*      http://www.maptools.org/rosa/) .                                */
     /*      This code was provided by Tim.Mackey@agso.gov.au.               */
     /*                                                                      */
     /*      For Application using it can be seen at :                       */    
