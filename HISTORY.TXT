@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+
+Version 5.0.0-rc2 (2007-09-10)
+------------------------------
+
 - Prevent seg fault in msWMSLoadGetMapParams when request is missing (#2299)
 
 - Fixed calculation of scale in PHP MapScript mapObj.zoomScale() (#2300)
