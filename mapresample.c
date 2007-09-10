@@ -547,7 +547,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                     }
                 }
             }
-#ifdef _USE_AGG
+#ifdef USE_AGG
             else if( MS_RENDERER_AGG(psSrcImage->format) )
             {
                 if( !gdImageTrueColor(psSrcImage->img.gd) )

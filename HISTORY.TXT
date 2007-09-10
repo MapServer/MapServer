@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- Fix support for bilinear resampling of raster data with AGG (#2303)
+
 
 Version 5.0.0-rc2 (2007-09-10)
 ------------------------------
