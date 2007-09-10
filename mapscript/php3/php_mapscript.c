@@ -15332,7 +15332,8 @@ static double GetDeltaExtentsUsingScale(double dfScale, int nUnits,
       case(MS_MILES):
       case(MS_INCHES):  
       case(MS_FEET):
-        md = nWidth/(resolution*msInchesPerUnit(nUnits,dCenterLat));
+        /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */
+        md = (nWidth-1)/(resolution*msInchesPerUnit(nUnits,dCenterLat));
         dfDelta = md * dfScale;
         break;
           
