@@ -286,7 +286,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>title                                 { return(TITLE); }
 <INITIAL>to                                    { return(TO); }
 <INITIAL,URL_STRING>tolerance                  { return(TOLERANCE); }
-<INITIAL>toleranceunits                        { return(TOLERANCEUNITS); }
+<INITIAL,URL_STRING>toleranceunits             { return(TOLERANCEUNITS); }
 <INITIAL>transparency                          { return(TRANSPARENCY); }
 <INITIAL,URL_VARIABLE>transparent              { return(TRANSPARENT); }
 <INITIAL>transform                             { return(TRANSFORM); }
