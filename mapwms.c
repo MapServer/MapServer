@@ -852,7 +852,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       map->extent.maxy -= dy*0.5;
   }
 
-  if (strcasecmp(request, "DescribeLayer") != 0) {
+  if (request && strcasecmp(request, "DescribeLayer") != 0) {
     if (srsfound == 0)
     {
       msSetError(MS_WMSERR, "Missing required parameter SRS %s", "msWMSLoadGetMapParams()", request);

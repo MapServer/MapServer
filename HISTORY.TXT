@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- Prevent seg fault in msWMSLoadGetMapParams when request is missing (#2299)
+
 - Fixed calculation of scale in PHP MapScript mapObj.zoomScale() (#2300)
 
 - Fixed conflict between runtime substitution validation and qstring 
