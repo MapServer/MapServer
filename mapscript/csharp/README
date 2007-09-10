@@ -1,0 +1,285 @@
+-- $Id$
+
+The most recent version of this document can be found on
+http://mapserver.gis.umn.edu/docs/howto/mapscriptcscompile
+
+
+1. Compilation
+==============
+Before compiling C# mapscript you should compile mapserver with the options for your requirements.
+For more information about the compilation of mapserver please see `Win32 Compilation and Installation <http://mapserver.gis.umn.edu/docs/howto/win32_compiling>`__ .
+It is highly recommended to minimize the library dependency of your application, so
+when compiling mapserver enable only the features really needed.
+To compile the C# binding SWIG 1.3.27 or later is required.
+
+
+1.1 Win32 compilation targeting the MS.NET framework 1.1
+--------------------------------------------------------
+You should compile mapserver, mapscript and all of the subsequent libraries using Visual Studio 2003.
+Download and uncompress the latest SWIGWIN package that contains the precompiled swig.exe
+Open the Visual Studio .NET 2003 Command Prompt and step into the /mapscript/csharp directory
+Edit makefile.vc and set the SWIG variable to the location of your swig.exe
+Use
+
+::
+
+       nmake -f makefile.vc 
+
+to compile mapscript.dll and mapscript_csharp.dll.
+
+
+1.2 Win32 compilation targeting the MS.NET framework 2.0
+--------------------------------------------------------
+You should compile mapserver, mapscript and all of the subsequent libraries using Visual Studio 2005.
+Download and uncompress the latest SWIGWIN package that contains the precompiled swig.exe
+Open the Visual Studio 2005 Command Prompt and step into the /mapscript/csharp directory
+Edit makefile.vc and set the SWIG variable to the location of your swig.exe
+Use
+
+::
+ 
+       nmake -f makefile.vc 
+
+to compile mapscript.dll and mapscript_csharp.dll.
+
+1.3 Win32 compilation targeting the MONO framework
+--------------------------------------------------
+Before the compilation you should download and install the recent mono Win32 setup package (eg. mono-1.1.13.2-gtksharp-2.8.1-win32-1.exe)
+Edit makefile.vc and set the CSC variable to the location of your mcs.exe. Alternatively you can define
+
+::
+
+        MONO = YES
+
+In your nmake.opt file.
+
+You should use the same compiler for compiling mapscript as the compiler has been used for
+the mapserver compilation. To compile mapscript open the Command Prompt supplied with your compiler
+and use
+
+::
+
+        nmake -f makefile.vc 
+
+to compile mapscript.dll and mapscript_csharp.dll.
+
+1.4 Alternative compilation methods on Windows
+----------------------------------------------
+Beginning from mapserver 4.8.3 you can invoke the C# compilation from the mapserver directory by uncommenting DOT_NET in nmake.opt 
+
+::
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# .NET/C# MapScript
+# ----------------------------------------------------------------------
+# .NET will of course only work with MSVC 7.0 and 7.1.  Also note that
+# you will definitely want USE_THREAD defined.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#DOT_NET = YES
+
+and invoking the compilation by
+
+::
+
+        nmake -f makefile.vc csharp
+
+You can also use
+
+::
+
+        nmake -f makefile.vc install
+
+for making the compilation an copying the targets into a common output directory.
+
+1.5 Testing the compilation
+---------------------------
+
+For testing the compilation and the runtime environment you can use
+
+::
+
+      nmake -f makefile.vc test
+
+within the csharp directory for starting the sample applications compiled previously. Before making the test the location of the corresponding libraries should be incuded in the system PATH. 
+
+1.6 Linux compilation targeting the MONO framework
+--------------------------------------------------
+Before the compilation you should download and install the recent mono Linux package.
+Some distributions have precompiled binaries to install, but for using the latest
+version you might want to compile and install it from the source.
+Download and uncompress the latest SWIG release. You should probably compile it
+from the source if precompiled binaries are not available for your platform.
+
+Before compiling mapscript mapserver should be configured and compiled. Beginning from mapserver 4.8.2 during configuration the mapscript/csharp/Makefile will be created according to the configuration options. Edit this file and set the SWIG and CSC for the corresponding executable pathes if the files could not be accessed by default. To compile at a console step into the /mapscript/csharp directory
+use
+
+::
+
+      make
+      
+to compile libmapscript.so and mapscript_csharp.dll.
+
+For testing the compilation and the runtime environment you can use
+
+::
+
+      make test
+
+for starting the sample applications compiled previously.
+
+1.7 OSX compilation targeting the MONO framework
+------------------------------------------------
+Beginning from 4.10.0 the csharp/Makefile supports the OSX builds. Before making the build the recent MONO package should be installed on the system.
+
+Before compiling mapscript mapserver should be configured and compiled. Beginning from mapserver 4.8.2 during configuration the mapscript/csharp/Makefile will be created according to the configuration options. Edit this file and set the SWIG and CSC for the corresponding executable pathes if the files could not be accessed by default. To compile at a console step into the /mapscript/csharp directory
+use
+
+::
+
+      make
+      
+to compile libmapscript.dylib and mapscript_csharp.dll.
+
+For testing the compilation and the runtime environment you can use
+
+::
+
+      make test
+
+for starting the sample applications compiled previously.
+
+To run the applications mapscript_csharp.dll.config is needed along with the mapscript_csharp.dll file. This file is created during the make process
+
+2. Installation
+===============
+The files required for your application should be manually installed. It is highly recommended to copy the files into the same folder as the executable resides.
+
+3. Known issues
+===============
+
+3.1 Visual Studio 2005 requires a manifest file to load the CRT native assembly wrapper
+---------------------------------------------------------------------------------------
+
+If you have compiled mapserver for using the CRT libraries and you are using the MS.NET framework 2.0 as the execution runtime you should supply a proper manifest file along with your executable, like:
+
+::
+
+<?xml version="1.0" encoding="utf-8"?>
+<assembly xsi:schemaLocation="urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd" manifestVersion="1.0" xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" xmlns="urn:schemas-microsoft-com:asm.v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<assemblyIdentity name="drawmap.exe" version="1.0.0.0" type="win32" />
+<dependency>
+<dependentAssembly asmv2:dependencyType="install" asmv2:codebase="Microsoft.VC80.CRT.manifest" asmv2:size="522">
+<assemblyIdentity name="Microsoft.VC80.CRT" version="8.0.50608.0" publicKeyToken="1fc8b3b9a1e18e3b" processorArchitecture="x86" type="win32" />
+<hash xmlns="urn:schemas-microsoft-com:asm.v2">
+<dsig:Transforms>
+<dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+</dsig:Transforms>
+<dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+<dsig:DigestValue>UMOlhUBGeKRrrg9DaaPNgyhRjyM=</dsig:DigestValue>
+</hash>
+</dependentAssembly>
+</dependency>
+</assembly>
+
+This will inform the CLR that your exe depends on the CRT and the proper assembly wrapper is to be used.
+If you are using the IDE the manifest file could be pregenerated by adding a reference to
+Microsoft.VC80.CRT.manifest within the /Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.CRT
+directory.
+
+3.2 Manifests for the dll-s must be embedded as a resource
+----------------------------------------------------------
+
+According to the windows makefile the mapscript compilation target (mapscript.dll) is linked with the /MD option. In this case the VS2005 linker will generate a manifest file containing the unmanaged assembly dependency. The sample contents of the manifest file are:
+
+::
+
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+<dependency>
+<dependentAssembly>
+<assemblyIdentity type='win32' name='Microsoft.VC80.CRT' version='8.0.50608.0' processorArchitecture='x86' publicKeyToken='1fc8b3b9a1e18e3b' />
+</dependentAssembly>
+</dependency>
+</assembly>
+
+Like previously mentioned if you are creating a windows application the common language runtime will search for a manifest file for the application. The name of the manifest file should be the same as the executable appendend with the .manifest extension.
+However if the host process is not controlled by you (like web mapping applications using aspnet_wp.exe as the host process) you will not be certain if the host process (.exe) will have a manifest containing a reference to the CRT wrapper. In this case you may have to embed the manifest into the dll as a resource using the mt tool like:
+
+::
+
+ mt /manifest mapscript.dll.manifest /outputresource:mapscript.dll;#2
+
+the common language runtime will search for the embedded resource and load the CRT assembly properly.
+
+Normally it is enough to load the CRT with the root dll (mapscript.dll), but it is not harmful embedding the manifest into the dependent libraries as well.
+
+
+3.3 Issue with regex and Visual Studio 2005
+-------------------------------------------
+
+When compiling with Microsoft Visual Studio 2005 variable name collision may occur between regex.c
+and crtdefs.h. For more details see:
+
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1651
+
+3.4 C# mapscript library name mapping with MONO
+-----------------------------------------------
+
+Using the mapscript interface created by the SWIG interface generator the communication between the C# wrapper classes (mapscript_csharp.dll) and the C code (mapscript.dll) takes place using platform invoke like:
+
+::
+
+ [DllImport("mapscript", EntryPoint="CSharp_new_mapObj")]
+ public static extern IntPtr new_mapObj(string jarg1); 
+
+The DllImport declaration contains the library name, however to transform the library name into a file name is platform dependent.
+On Windows the library name is simply appended with the .dll extension (mapscript.dll). On the Unix systems the library file name normally starts with the lib prefix and appended with the .so extension (libmapscript.so).
+
+Mapping of the library name may be manually controlled using a dll.config file. This simply
+maps the library file the DllImport is looking for to its unix equivalent. The file normally contains the following information (mapscript_csharp.dll.config):
+
+::
+
+<configuration>
+<dllmap dll="mapscript" target="libmapscript.so" />
+</configuration>
+
+and with the OSX builds:
+
+::
+
+<configuration>
+<dllmap dll="mapscript" target="libmapscript.dylib" />
+</configuration>
+ 
+The file should be placed along with the corresponding mapscript_csharp.dll file, and created by default during the make process.
+For more information see:
+
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1596
+http://www.mono-project.com/Interop_with_Native_Libraries
+
+3.5 Localization issues with MONO/Linux
+---------------------------------------
+
+According to http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1762 mapserver may not operate equally well on different locale settings. Especially when the decimal separator is other than "." inside the locale of the process may cause parse errors when the mapfile contains float numbers.
+Since the MONO process takes over the locale settings of the environment it is worth considering to set the default locale to "C" of the host process, like:
+
+::
+
+ LC_ALL=C mono ./drawmap.exe ../../tests/test.map test_csharp.png
+
+4. Most frequent errors
+=======================
+
+This chapter will summarize the most frequent problems the user can run into. The issues were collected mainly from the -users list and the IRC.
+
+4.1 Unable to load dll (mapscript)
+----------------------------------
+
+You can get this problem on Windows and in most cases it can be dedicated to a missing or an unloadable shared library. The error message talks about mapscript.dll but surely one or more of the dll-s are missing that libmap.dll depends on. So firstly you might want to check for the dependencies of your libmap.dll in your application directory. You can use the Visual Studio Dependency Walker to accomplish this task. You can also use a file monitoring tool (like SysInternal's filemon) to detect the dll-s that could not be loaded. I propose to store all of the dll-s required by your application in the application folder. If you can run the drawmap C# sample application with your mapfile your compilation might be correct and all of the dlls are available.
+
+You may find that the mapscript C# interface behaves differently for the desktop and the ASP.NET applications. Although you can run the drawmap sample correctly you may encounter the dll loading problem with the ASP.NET applications. When creating an ASP.NET project your application folder will be '\Inetpub\wwwroot\[YourApp]\bin' by default. The host process of the application will aspnet_wp.exe or w3wp.exe depending on your system. The application will run under a different security context than the interactive user (under the context of the ASPNET user by default). When placing the dll-s outside of your application directory you should consider that the PATH environment variable may differ between the interactive and the ASPNET user and/or you may not have enough permission to access a dll outside of your application folder.
+
+5. Bug reports
+==============
+If you find a problem dedicated to the mapscript C# interface feel free to file a bug report to BugZilla.
