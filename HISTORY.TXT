@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- AGG: Fix angle computation for truetype marker symbols on lines (#2316) 
+
 - Fix support for bilinear resampling of raster data with AGG (#2303)
 
 
