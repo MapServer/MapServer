@@ -1408,9 +1408,9 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
       else theta = -theta;
       if((position == MS_UR)||(position == MS_UL)) position = MS_UC;
       if((position == MS_LR)||(position == MS_LL)) position = MS_LC;
-      label.angle = style->angle * MS_RAD_TO_DEG;
+      label.angle = style->angle ;
       if(rot)
-          label.angle+=theta;
+          label.angle+=theta*MS_RAD_TO_DEG;
 
       in = 0;
       while(current_length <= length) {
@@ -1419,7 +1419,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
         
         label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, NULL);
         ren->renderGlyphs(label_point.x,label_point.y,&(label.color),&(label.outlinecolor),label.size,
-                          font,symbol->character,label.angle,
+                          font,symbol->character,label.angle*MS_DEG_TO_RAD,
                           NULL,0,0,
                           false,false);
         current_length += label_width + gap;
