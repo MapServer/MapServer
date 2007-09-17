@@ -1,0 +1,82 @@
+=====================================
+MS RFC 4: MapServer Raster Resampling
+=====================================
+
+:Date:  2005/09/16
+:Author: Frank Warmerdam
+:Contact: warmerdam@pobox.com
+:Last Edited: $Date$
+:Status: adopted
+:Version: MapServer 4.8
+
+Overview
+--------
+
+Additional resampling kernels will be implemented in the MapServer GDAL
+raster resampler code including "averaging", "bilinear" and "cubic". 
+
+
+Technical Details
+-----------------
+
+ * The new resampling options will be implemented in mapresample.c and will
+   only be accessable for datasets processing through that mechanism (ie. 
+   GDAL raster formats, requires coordinate system information defined). 
+
+ * The resampling kernel to use will be selected with one of the following.
+   The default will be RESAMPLE=NEAREST, the current behavior. 
+
+   ::
+
+     PROCESSING "RESAMPLE=NEAREST"
+     PROCESSING "RESAMPLE=AVERAGE"
+     PROCESSING "RESAMPLE=BILINEAR"
+     PROCESSING "RESAMPLE=BICUBIC"
+
+ * The mapraster.c code currently decides whether to invoke the "simple" 
+   GDAL renderer or the "resampling" GDAL renderer based on whether the
+   projection seems to differ.  It will also now check for the RESAMPLE 
+   processing option, and force use of mapresample.c if the resampling 
+   kernel select is other than NEAREST.
+
+ * Note that resampling kernels other than NEAREST can have a substantial 
+   effect on rendering performance.   For this reason NEAREST will remain
+   the default. 
+
+
+Mapfile Implications
+--------------------
+
+All new options are selected via new PROCESSING options.   There is
+no change in the mapfile syntax.  There should be no compatbability problems
+with old mapfiles. 
+
+
+MapScript Implications
+----------------------
+
+There are no additions or changes to the mapscript API.  The new
+options are controlled via PROCESSING information on the layers which I
+believe is already manipulatable from mapscript. 
+
+
+Documentation Implications
+--------------------------
+
+The new processing options will need to be documented in the Raster HOWTO
+(and possibly the mapfile reference). 
+
+
+Test Plan
+---------
+
+New test cases for each mode will be incorporated in msautotest/gdal. 
+
+
+Staffing / Timeline
+-------------------
+
+The new feature will be implemented by Frank Warmerdam and completed
+by October 15th in time for the MapServer 4.8 release.   Implementation
+is generously funded by Tydac AG and managed by DM Solutions. 
+

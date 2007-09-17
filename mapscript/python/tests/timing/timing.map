@@ -1,0 +1,55 @@
+MAP
+  NAME "Testing"
+  EXTENT -2 -2 2 2
+  IMAGETYPE PNG
+  IMAGECOLOR 254 254 254
+  STATUS ON
+  SIZE 800 800
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+  
+  SYMBOL
+    TYPE PIXMAP
+    NAME 'home-png'
+    IMAGE '../../../../tests/home.png'
+  END
+
+  SYMBOL
+    TYPE PIXMAP
+    NAME 'xmarks-png'
+    IMAGE '../../../../tests/xmarks.png'
+  END
+  
+  LAYER
+    NAME "POLYGON"
+    TYPE POLYGON
+    PROJECTION
+      "init=epsg:4326"
+    END
+    STATUS DEFAULT
+    DATA "timing.shp"
+    CLASS
+      STYLE
+        COLOR 0 0 204
+        #OUTLINECOLOR 0 0 204
+      END
+    END
+  END
+
+  LAYER
+    NAME "POINT"
+    TYPE POINT
+    PROJECTION
+      "init=epsg:4326"
+    END
+    STATUS OFF
+    CLASS
+      STYLE
+        SYMBOL 2
+      END
+    END
+  END
+
+END
