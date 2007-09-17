@@ -10,8 +10,9 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN Trunk):
-----------------------------
+
+Version 5.0.0 (2007-09-17)
+--------------------------
 
 - AGG: Fix angle computation for truetype marker symbols on lines (#2316) 
 

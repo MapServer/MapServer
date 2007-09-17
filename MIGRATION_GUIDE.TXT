@@ -275,8 +275,6 @@ support for WCS or Arc/Info coverages:
 Features Heading for Deprecation
 -----------------------------------------------------
 
-**this paragraph is a work in progress **
-
 Some features present in MapServer are likely to be removed in a future
 release. Features might be headed for deprecation because:
 
@@ -298,8 +296,7 @@ RGB/RGBA output with GD: support for RGB and RGBA image types will likely not
 be maintained anymore. PC256 will continue to be supported with GD, while RGB
 and RGBA will liekly only be supported with AGG
 
-PIXMAP fonts with the AGG renderer fall back to GD. This fails to produce correct
-results if using RGBA imagemode. Pixmap font support with the AGG renderer will 
-soon be deprecated, and has been left in the 5.0 release for conveniency.
-
-...? 
+PIXMAP fonts with the AGG renderer fall back to GD. This fails to produce
+correct results if using RGBA imagemode. Pixmap font support with the AGG
+renderer will soon be deprecated, and has been left in the 5.0 release 
+for conveniency.
