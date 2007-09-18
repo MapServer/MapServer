@@ -80,7 +80,7 @@ AGG rendering changes
 see `the AGG rendering specifics`_ for the changes relating to the addition
 of the `Antigrain Geometry`_ rendering engine.
 
-.. _`the AGG rendering specifics`: /docs/howto/agg-rendering-specifics
+.. _`the AGG rendering specifics`: http://mapserver.gis.umn.edu/docs/howto/agg-rendering-specifics
 .. _`Antigrain Geometry`: http://www.antigrain.com
 
 ---------------------------------------------------
