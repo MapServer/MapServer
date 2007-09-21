@@ -6095,7 +6095,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
           iptr = (void *)msSaveImageBufferGD(im->img.gd, &size, im->format);
 #ifdef USE_AGG
         else if( MS_DRIVER_AGG(im->format) )
-          iptr = (void *)msSaveImageBufferAGG(im->img.gd, &size, im->format);
+          iptr = (void *)msSaveImageBuffer(im, &size, im->format);
 #endif
         else if (im->format->name && strcasecmp(im->format->name, "imagemap")==0)
         {

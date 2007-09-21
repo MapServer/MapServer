@@ -1202,7 +1202,8 @@ typedef struct {
   char *imagepath, *imageurl;
 
   outputFormatObj *format;
-  void *imageextra;
+  void *imageextra; //AGG specific
+  int buffer_format; //tells if the alpha channel is GD or AGG style  
 #ifdef SWIG
 %mutable;
 #endif
@@ -1517,7 +1518,7 @@ MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
 MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
 MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent); /* in maplegend.c */
-MS_DLL_EXPORT int msEmbedLegend(mapObj *map, gdImagePtr img);
+MS_DLL_EXPORT int msEmbedLegend(mapObj *map, imageObj *img);
 MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
 MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
    
@@ -1759,10 +1760,10 @@ MS_DLL_EXPORT void msPreAllocateColorsAGG(imageObj *image, mapObj *map);
 MS_DLL_EXPORT imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 MS_DLL_EXPORT void msImageInitAGG( imageObj *image, colorObj *background );
 
-MS_DLL_EXPORT int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format);
-MS_DLL_EXPORT unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *bufsize, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx* ctx, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageAGG_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
+MS_DLL_EXPORT int msSaveImageAGG(imageObj *img, char *filename, outputFormatObj *format);
+MS_DLL_EXPORT unsigned char *msSaveImageBufferAGG(imageObj *img, int *bufsize, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageAGGCtx(imageObj *img, gdIOCtx* ctx, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageAGG_LL(imageObj *img, char *filename, int type, int transparent, int interlace, int quality);
 MS_DLL_EXPORT void msFreeImageAGG(imageObj *img);
 
 MS_DLL_EXPORT void msPieSliceAGG(imageObj *image, styleObj *style, double center_x, double center_y, double diameter, double start, double end);
@@ -1781,10 +1782,10 @@ MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double c
 
 MS_DLL_EXPORT int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass, 
         int width, int height, imageObj *image, int dstX, int dstY);
-
+MS_DLL_EXPORT void msFreeSymbolCacheAGG(void *buffer);
 MS_DLL_EXPORT void msAlphaGD2AGG(imageObj *im);
 MS_DLL_EXPORT void msAlphaAGG2GD(imageObj *im);
-
+MS_DLL_EXPORT void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct);
 #ifdef _cplusplus
 }
 #endif

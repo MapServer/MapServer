@@ -132,6 +132,7 @@ void initSymbol(symbolObj *s)
   s->filled = MS_FALSE;
   s->numpoints=0;
   s->img = NULL;
+  s->renderer_cache=NULL;
   s->imagepath = NULL;
   s->name = NULL;
   s->gap = 0;
@@ -154,6 +155,7 @@ int msFreeSymbol(symbolObj *s) {
   
   if(s->name) free(s->name);
   if(s->img) gdImageDestroy(s->img);
+  if(s->renderer_cache) msFreeSymbolCacheAGG(s->renderer_cache);
   if(s->font) free(s->font);
   if(s->imagepath) free(s->imagepath);
   if(s->character) free(s->character);

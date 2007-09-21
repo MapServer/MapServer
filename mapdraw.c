@@ -472,7 +472,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   }
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
-    msEmbedLegend(map, image->img.gd);
+    msEmbedLegend(map, image);
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
@@ -565,7 +565,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   }
 
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
-    msEmbedLegend(map, image->img.gd); /* TODO */
+    msEmbedLegend(map, image); /* TODO */
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   /* Cleanup WMS/WFS Request stuff */
@@ -694,11 +694,19 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   */
   if(layer->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
+#ifdef USE_AGG
+      if( MS_RENDERER_AGG(image_draw->format))
+          msAlphaAGG2GD(image_draw);
+#endif
     retcode = msDrawWMSLayer(map, layer, image_draw);
 #else  
     retcode = MS_FAILURE;
 #endif
   } else if(layer->type == MS_LAYER_RASTER) {
+#ifdef USE_AGG
+      if( MS_RENDERER_AGG(image_draw->format))
+          msAlphaAGG2GD(image_draw);
+#endif
     retcode = msDrawRasterLayer(map, layer, image_draw);
   } else if(layer->type == MS_LAYER_CHART) {
 #ifdef USE_AGG
@@ -706,41 +714,32 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
           msAlphaGD2AGG(image_draw);
 #endif
     retcode = msDrawChartLayer(map, layer, image_draw);
-#ifdef USE_AGG
-      if( MS_RENDERER_AGG(image_draw->format))
-          msAlphaAGG2GD(image_draw);
-#endif
   } else {   /* must be a Vector layer */
 #ifdef USE_AGG
       if( MS_RENDERER_AGG(image_draw->format))
           msAlphaGD2AGG(image_draw);
 #endif
     retcode = msDrawVectorLayer(map, layer, image_draw);
-#ifdef USE_AGG
-      if( MS_RENDERER_AGG(image_draw->format))
-          msAlphaAGG2GD(image_draw);
-#endif
   }
 
   /* Destroy the temp image for this layer tranparency */
   if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
 
-    if(layer->type == MS_LAYER_RASTER)
-      msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
-    else
-      msImageCopyMergeNoAlpha(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity, &map->imagecolor);
-    msFreeImage(image_draw);
+      if(layer->type == MS_LAYER_RASTER)
+          msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
+      else {
+          msImageCopyMergeNoAlpha(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity, &map->imagecolor);
+      }
+      msFreeImage(image_draw);
 
     /* deref and possibly free temporary transparent output format.  */
     msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 #ifdef USE_AGG
   else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
-
-    if(layer->type == MS_LAYER_RASTER)
-      msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
-    else
-      msImageCopyMergeNoAlpha(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity, &map->imagecolor);
+      msAlphaGD2AGG(image_draw);
+      msAlphaGD2AGG(image);
+    msImageCopyMergeAGG(image, image_draw, layer->opacity);
     msFreeImage( image_draw );
 
     /* deref and possibly free temporary transparent output format.  */
@@ -1912,7 +1911,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
         else if( MS_RENDERER_AGG(image->format) ) {
             msAlphaGD2AGG(image);
             nReturnVal = msDrawLabelCacheAGG(image, map);
-            msAlphaAGG2GD(image);
         }
 #endif
 	else if( MS_RENDERER_IMAGEMAP(image->format) )

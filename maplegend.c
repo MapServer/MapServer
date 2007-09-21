@@ -182,6 +182,11 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   }
 
   /* allocate the background color */
+#ifdef USE_AGG
+  if( MS_RENDERER_AGG(map->outputformat) )
+      msImageInitAGG( image, &(map->legend.imagecolor));
+  else
+#endif
   msImageInitGD( image, &(map->legend.imagecolor));
 
   /* Call drawLegendIcon with destination (0, 0) */
@@ -198,7 +203,10 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
       }
     }
   }
-
+#ifdef USE_AGG
+  if( MS_RENDERER_AGG(map->outputformat) )
+      msAlphaAGG2GD(image);
+#endif
   return image;
 }
 
@@ -321,8 +329,14 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   }
   
   /* Set background */
-  if(image != NULL)
-    msImageInitGD(image, &(map->legend.imagecolor));
+  if(image != NULL) {
+#ifdef USE_AGG
+      if( MS_RENDERER_AGG(map->outputformat) )
+          msImageInitAGG( image, &(map->legend.imagecolor));
+      else
+#endif
+          msImageInitGD(image, &(map->legend.imagecolor));
+  }
 
   msClearPenValues(map); /* just in case the mapfile has already been processed */
 
@@ -400,7 +414,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 }
 
 /* TODO */
-int msEmbedLegend(mapObj *map, gdImagePtr img)
+int msEmbedLegend(mapObj *map, imageObj *img)
 {
   int s,l;
   pointObj point;
@@ -417,6 +431,10 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     if(map->symbolset.symbol[s]->img) 
       gdImageDestroy(map->symbolset.symbol[s]->img);
   }
+#ifdef USE_AGG
+  if(MS_RENDERER_AGG(map->outputformat))
+      msAlphaGD2AGG(img);
+#endif
   
   /* render the legend. */
   image = msDrawLegend(map, MS_FALSE);
@@ -494,7 +512,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   GET_LAYER(map, l)->class[0]->label.priority = MS_MAX_LABEL_PRIORITY;
 
   if(map->legend.postlabelcache) /* add it directly to the image */
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
+    msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   else
     msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);
 

@@ -596,12 +596,12 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         else if( MS_DRIVER_AGG(img->format) )
         {
             if(map != NULL && filename != NULL )
-                nReturnVal = msSaveImageAGG(img->img.gd, 
+                nReturnVal = msSaveImageAGG(img, 
                                            msBuildPath(szPath, map->mappath, 
                                                        filename), 
                                            img->format );
             else
-                nReturnVal = msSaveImageAGG(img->img.gd, filename, img->format);
+                nReturnVal = msSaveImageAGG(img, filename, img->format);
         }
 #endif
         else if( MS_DRIVER_IMAGEMAP(img->format) )
@@ -679,7 +679,7 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
 #ifdef USE_AGG
     else if( MS_DRIVER_AGG(image->format) )
     {
-        return msSaveImageBufferAGG(image->img.gd, size_ptr, format);
+        return msSaveImageBufferAGG(image, size_ptr, format);
     }
 #endif   
 	

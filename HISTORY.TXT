@@ -13,6 +13,21 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- AGG: allow for fast and aliased rendering of simple lines and polygons
+  thick lines and patterns (i.e. dashes)aren't supported.
+  this is triggered when the symbol is of TYPE SYMBOL *and* its ANTIALIAS is off
+  (wating to find a better solution to trigger this).
+
+- AGG: the pixmap of pixmap symbols is now cached in an agg-compatible state the first
+  time it is accessed. this avoids rereading and retransforming it each time that 
+  symbol is used.
+
+- AGG: the imageObj now stores in what state it's alpha channel is in. The number of
+  msAlphaGD2AGG/AGG2GD calls is now reduced, but most importantly each of these calls
+  is usually just a check for this state and does no computation.
+  
+- AGG: fixed a few artifacts in embedded legend rendering on rgba images.
+
 - Fixed modulus operator in the parser (#2323)
 
 Version 5.0.0 (2007-09-17)

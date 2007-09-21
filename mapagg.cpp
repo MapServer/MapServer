@@ -86,11 +86,11 @@
 
 #ifdef CPL_MSB
 typedef agg::pixfmt_argb32 GDpixfmt; 
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
 #else
 typedef agg::pixfmt_bgra32 GDpixfmt;
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_plain,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> pixelFormat;
 typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
 
 //this how to render to a gdImg while ignoring its funky alpha channel
@@ -113,6 +113,7 @@ typedef agg::renderer_base<pixelFormat_pre> renderer_base_pre;
 typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_aa;
 typedef agg::renderer_outline_aa<renderer_base> renderer_oaa;
 typedef agg::renderer_primitives<renderer_base> renderer_prim;
+typedef agg::renderer_scanline_bin_solid<renderer_base> renderer_bin;
 typedef agg::rasterizer_outline_aa<renderer_oaa> rasterizer_outline_aa;
 typedef agg::rasterizer_outline <renderer_prim> rasterizer_outline;
 typedef agg::rasterizer_scanline_aa<> rasterizer_scanline;
@@ -124,8 +125,7 @@ MS_CVSID("$Id$")
 ///@param close set to true for polygons. set to false for lines
 ///@param ox,oy offset the shape by the given number of pixels
 ///@returns an agg path_storage
-static agg::path_storage shapeToPath(shapeObj *p, bool close, double ox=0, double oy=0) {
-    agg::path_storage path;
+static void shapeToPath(shapeObj *p,agg::path_storage &path, bool close, double ox=0, double oy=0) {
     for(int i = 0; i < p->numlines; i++) {
         path.move_to(p->line[i].point[0].x, p->line[i].point[0].y);
         for(int j=1; j<p->line[i].numpoints; j++)
@@ -134,21 +134,20 @@ static agg::path_storage shapeToPath(shapeObj *p, bool close, double ox=0, doubl
             path.close_polygon();
     }
     if(ox!=0||oy!=0) {
-        path.transform(agg::trans_affine_translation(ox,oy));
+        path.translate(ox,oy);
     }
-    return path;
 }
 
 ///shortcut function to create a path_storage representing a polygon
 ///from a shapeobj
-static agg::path_storage shapePolygonToPath(shapeObj *p, double ox=0, double oy=0) {
-    return shapeToPath(p,true,ox,oy);
+static void shapePolygonToPath(shapeObj *p,agg::path_storage &path, double ox=0, double oy=0) {
+    shapeToPath(p,path,true,ox,oy);
 }
 
 ///shortcut function to create a path_storage representing a polyline
 ///from a shapeobj
-static agg::path_storage shapePolylineToPath(shapeObj *p, double ox=0, double oy=0) {
-    return shapeToPath(p,false,ox,oy);
+static void shapePolylineToPath(shapeObj *p,agg::path_storage &path, double ox=0, double oy=0) {
+    shapeToPath(p,path,false,ox,oy);
 }
 
 ///apply line styling functions. applies the line joining and capping
@@ -215,6 +214,28 @@ static agg::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
     return im_data_rbuf;
 }
 
+///
+///returns a GDpixfmt containing thepixel values of the gd image.
+///the function expects an image with a "gd style" alpha channel, i.e. 
+///127...0 actually mapping to 0...255
+///the pixel values are actually cached in the symbolObj for future reuse
+///the actual buffer is freed when freeing the symbolObj with a call to
+///msFreeSymbolCacheAGG
+static GDpixfmt loadSymbolPixmap(symbolObj *sym) {
+    GDpixfmt pixf;
+    if(sym->renderer_cache) {
+        pixf.attach(*((agg::rendering_buffer*)sym->renderer_cache));
+    }
+    else {
+        agg::rendering_buffer *im_data_rbuf = new agg::rendering_buffer;
+        *im_data_rbuf = gdImg2AGGRB_BGRA(sym->img);
+        sym->renderer_cache=(void*)(im_data_rbuf);
+        pixf.attach(*im_data_rbuf);
+        pixf.premultiply();
+    }
+    return pixf;
+}
+
 ///base rendering class for AGG.
 ///creates the AGG structures used later for rendering.
 ///the allocation of these structures does take some time and memory, so
@@ -228,6 +249,9 @@ public:
         ren_base(thePixelFormat),
         ren_base_pre(thePixelFormat_pre),
         ren_aa(ren_base),
+        ren_prim(ren_base),
+        ren_bin(ren_base),
+        ras_oa(ren_prim),
         m_fman(m_feng)
         {
             
@@ -298,7 +322,15 @@ public:
             stroke_dash.line_join(lj);                        
             ras_aa.add_path(stroke_dash);
         }
-        agg::render_scanlines(ras_aa, sl, ren_aa);     
+        agg::render_scanlines(ras_aa, sl, ren_aa);
+    }
+    
+    ///render an aliased 1 pixel width polyline
+    ///@param p the path_storage containing the vertexes of the polyline
+    ///@param c the color of the line
+    void renderPolylineFast(agg::path_storage &p,colorObj *c) {
+        ren_prim.line_color(msToAGGColor(c));
+        ras_oa.add_path(p);
     }
     
     ///brush a polyline with a vector symbol. draws the vector symbol in a temporary
@@ -391,6 +423,23 @@ public:
             stroke.line_join(lj);
             ras_aa.add_path(stroke);
             agg::render_scanlines ( ras_aa, sl, ren_aa );
+        }
+    }
+    
+    ///render a non antialiased shape represented by an agg::path_storage 
+    ///@param path the path containing the geometry to render
+    ///@param color fill color or null for no fill
+    void renderPathSolidFast(agg::path_storage &p, colorObj *color, 
+            colorObj *outlinecolor) {
+        if(MS_VALID_COLOR(*color)) {
+            ras_aa.reset();
+            ren_bin.color(msToAGGColor(color));
+            ras_aa.add_path(p);
+            agg::render_scanlines(ras_aa, m_sl_bin, ren_bin);
+        }
+        
+        if(MS_VALID_COLOR(*outlinecolor)) {
+            renderPolylineFast(p,outlinecolor);
         }
     }
 
@@ -713,6 +762,9 @@ public:
         return MS_SUCCESS;
     }
 
+    agg::path_storage &get_path() {
+        return path;
+    }
 private:
     mapserv_row_ptr_cache<int>  *pRowCache;
     pixelFormat thePixelFormat;
@@ -720,10 +772,15 @@ private:
     renderer_base ren_base;
     renderer_base_pre ren_base_pre;
     renderer_aa ren_aa;
+    renderer_prim ren_prim;
+    renderer_bin ren_bin;
     scanline sl;
+    agg::scanline_bin m_sl_bin;
     rasterizer_scanline ras_aa;
+    rasterizer_outline ras_oa;
     font_engine_type m_feng;
     font_manager_type m_fman;
+    agg::path_storage path;
     agg::rgba msToAGGColor(colorObj *c) {
         return agg::rgba(((double) c->red) / 255.0, 
                 ((double) c->green) / 255.0, 
@@ -775,18 +832,17 @@ AGGMapserverRenderer* getAGGRenderer(imageObj *image) {
 // ----------------------------------------------------------------------
 void msImageInitAGG(imageObj *image, colorObj *background)
 {
-    /*
-    // this is useless for the time being as the pixels are being overwritten by
-    // the call to msImageInitGD
-    // this block must be uncommented once we remove the call to msImageInitGD
+    
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     if(image->format->imagemode == MS_IMAGEMODE_RGBA) {
         ren->clear();
     } else {
         ren->clear(background);
     }
-    */
+    image->buffer_format=MS_RENDER_WITH_AGG;
+    /*
     msImageInitGD(image, background);
+    image->buffer_format=MS_RENDER_WITH_GD;*/
 }
 
 // ------------------------------------------------------------------------ 
@@ -971,17 +1027,13 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     case(MS_SYMBOL_PIXMAP): {
         //TODO: rotate and scale image before tiling ?
         //TODO: treat symbol GAP ?
-        agg::rendering_buffer tile = gdImg2AGGRB_BGRA(symbol->img);
-        GDpixfmt img_pixf(tile);
-        //the image comes from GD, we must premultiply it before sending it to AGG
-        img_pixf.premultiply();
+        GDpixfmt img_pixf=loadSymbolPixmap(symbol);
         //render the optional background
         ren->renderPathSolid(circle,(&style->backgroundcolor),NULL,width);
         //render the actual tiled circle
         ren->renderPathTiledPixmapBGRA(circle,img_pixf);
         //render the optional outline (done at the end to avoid artifacts)
-        ren->renderPathSolid(circle,NULL,&(style->outlinecolor),style->width);
-        delete[](tile.buf());       
+        ren->renderPathSolid(circle,NULL,&(style->outlinecolor),style->width);      
     }
     break;
     case(MS_SYMBOL_ELLIPSE): {       
@@ -1122,12 +1174,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     }
     break;    
     case(MS_SYMBOL_PIXMAP): {
-        agg::rendering_buffer thepixmap = gdImg2AGGRB_BGRA(symbol->img);
-        GDpixfmt img_pixf(thepixmap);
-        //the image comes from GD, we must premultiply it before sending it to AGG
-        img_pixf.premultiply();
+        GDpixfmt img_pixf = loadSymbolPixmap(symbol);
         ren->renderPixmapBGRA(img_pixf,p->x,p->y,angle,d);
-        delete[](thepixmap.buf());
     }
     break;    
     case(MS_SYMBOL_ELLIPSE): {
@@ -1199,7 +1247,6 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
 void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
         styleObj *style, double size) {
     symbolObj *symbol=symbolset->symbol[style->symbol];
-    agg::rendering_buffer pixmap;
     GDpixfmt img_pixf;
     agg::path_storage vector_symbol;
     
@@ -1219,10 +1266,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
     
     //preload the symbol if necessary
     if(symbol->type==MS_SYMBOL_PIXMAP) {
-        pixmap =  gdImg2AGGRB_BGRA(symbol->img);
-        img_pixf.attach(pixmap);
-        //the image comes from GD, we must premultiply it before sending it to AGG
-        img_pixf.premultiply();
+        img_pixf = loadSymbolPixmap(symbol);
     }
     else if(symbol->type==MS_SYMBOL_VECTOR) {
         if(style->angle != 0.0 && style->angle != 360.0) {      
@@ -1237,7 +1281,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
     gap = MS_ABS(gap)*d; //TODO: original version uses scalefactor, why?
     double symbol_width;
     if(symbol->type==MS_SYMBOL_PIXMAP)
-        symbol_width = pixmap.width();
+        symbol_width = img_pixf.width();
     else
         symbol_width=sw;
 
@@ -1325,10 +1369,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
     }
 
 
-    if(symbol->type==MS_SYMBOL_PIXMAP) {
-       delete[] pixmap.buf();
-    }
-    else if(symbol->type==MS_SYMBOL_VECTOR && bRotated) {
+    if(symbol->type==MS_SYMBOL_VECTOR && bRotated) {
         msFreeSymbol(symbol); // clean up
         msFree(symbol);
     }
@@ -1463,7 +1504,10 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     color = &(style->color);
     
     //transform the shapeobj to something AGG understands
-    agg::path_storage line = shapePolylineToPath(p,0,0);
+    
+    agg::path_storage &line  = ren->get_path();
+    line.remove_all();
+    shapePolylineToPath(p,line);
     
     // treat the easy case
     // NOTE/TODO:  symbols of type ELLIPSE are included here, as using those with a SIZE param was
@@ -1483,7 +1527,10 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         else
             nwidth=width;
         //render the polyline with optional dashing
-        ren->renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern);
+        if(symbol->type==MS_SYMBOL_SIMPLE && symbol->antialias==MS_FALSE && symbol->patternlength<=0)
+            ren->renderPolylineFast(line,color);
+        else
+            ren->renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern);
     }
     else if(symbol->type==MS_SYMBOL_TRUETYPE) {
         //specific function that treats truetype symbols
@@ -1496,12 +1543,8 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     else { // from here on, the symbol is treated as a brush for the line
         switch(symbol->type) {
         case MS_SYMBOL_PIXMAP: {
-            agg::rendering_buffer tile = gdImg2AGGRB_BGRA(symbol->img);
-            GDpixfmt img_pixf(tile);
-            //the image comes from GD, we must premultiply it before sending it to AGG
-            img_pixf.premultiply();
+             GDpixfmt img_pixf = loadSymbolPixmap(symbol);
             ren->renderPathPixmapBGRA(line,img_pixf);
-            delete[] tile.buf();
         }
         break;
         case MS_SYMBOL_VECTOR: {
@@ -1601,7 +1644,13 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     if(size < 1) return; // size too small 
 
     AGGMapserverRenderer* ren = getAGGRenderer(image);
-    agg::path_storage polygon = shapePolygonToPath(p,0,0);
+    agg::path_storage& polygon = ren->get_path();
+    polygon.remove_all();
+    shapePolygonToPath(p,polygon,0,0);
+    if(symbol->type==MS_SYMBOL_SIMPLE &&symbol->antialias==MS_FALSE) { // solid fill
+                ren->renderPathSolidFast(polygon,&(style->color),&(style->outlinecolor));
+                return; // done simple case
+    }
     if(style->symbol == 0 || symbol->type==MS_SYMBOL_SIMPLE) {
         // simply draw a solid fill and outline of the specified colors
         if(MS_VALID_COLOR(style->outlinecolor))
@@ -1697,13 +1746,10 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         break;
         case MS_SYMBOL_PIXMAP: {
             //TODO: rotate and scale image before tiling
-            agg::rendering_buffer tile = gdImg2AGGRB_BGRA(symbol->img);
-            GDpixfmt img_pixf(tile);
-            img_pixf.premultiply();
+            GDpixfmt img_pixf = loadSymbolPixmap(symbol);
             ren->renderPathSolid(polygon,(&style->backgroundcolor),(&style->backgroundcolor),1);
             ren->renderPathTiledPixmapBGRA(polygon,img_pixf);
             ren->renderPathSolid(polygon,NULL,&(style->outlinecolor),style->width);
-            delete[](tile.buf());
         }
         break;
         case MS_SYMBOL_ELLIPSE: {
@@ -2062,7 +2108,9 @@ int msDrawLabelCacheAGG(imageObj *image, mapObj *map)
 
                 msInitShape(&temp);
                 msAddLine(&temp, &(cachePtr->poly->line[0]));
-                agg::path_storage path = shapePolygonToPath(&temp);
+                agg::path_storage& path = ren->get_path();
+                path.remove_all();
+                shapePolygonToPath(&temp,path,0,0);
                 if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
                     path.transform(agg::trans_affine_translation(
                             labelPtr->backgroundshadowsizex,labelPtr->backgroundshadowsizey));
@@ -2178,12 +2226,12 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
    Save an image to a file named filename, if filename is NULL it goes to
    stdout.  This function wraps msSaveImageGDCtx.  --SG
    ======================================================================== */
-int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
+int msSaveImageAGG(imageObj* image, char *filename, outputFormatObj *format)
 {
     char *pFormatBuffer;
     char cGDFormat[128];
     int   iReturn = 0;
-
+    msAlphaAGG2GD(image);
     pFormatBuffer = format->driver;
 
     strcpy(cGDFormat, "gd/");
@@ -2191,7 +2239,7 @@ int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
 
     format->driver = &cGDFormat[0];
 
-    iReturn = msSaveImageGD(img, filename, format);
+    iReturn = msSaveImageGD(image->img.gd, filename, format);
 
     format->driver = pFormatBuffer;
 
@@ -2204,12 +2252,12 @@ int msSaveImageAGG(gdImagePtr img, char *filename, outputFormatObj *format)
    Save image data through gdIOCtx only.  All mapio conditional compilation
    definitions have been moved up to msSaveImageGD (bug 1047).
    ======================================================================== */
-int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
+int msSaveImageAGGCtx(imageObj* image, gdIOCtx *ctx, outputFormatObj *format)
 {
     char *pFormatBuffer;
     char cGDFormat[128];
     int   iReturn = 0;
-
+    msAlphaAGG2GD(image);
     pFormatBuffer = format->driver;
 
     strcpy(cGDFormat, "gd/");
@@ -2217,7 +2265,7 @@ int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 
     format->driver = &cGDFormat[0];
 
-    iReturn = msSaveImageGDCtx(img, ctx, format);
+    iReturn = msSaveImageGDCtx(image->img.gd, ctx, format);
 
     format->driver = pFormatBuffer;
 
@@ -2232,12 +2280,12 @@ int msSaveImageAGGCtx(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 
    The returned buffer is owned by the caller. It should be freed with gdFree()
    ======================================================================== */
-unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr, outputFormatObj *format)
+unsigned char *msSaveImageBufferAGG(imageObj* image, int *size_ptr, outputFormatObj *format)
 {
     char *pFormatBuffer;
     char *pszGDFormat = NULL;
     unsigned char *buf = NULL;
-
+    msAlphaAGG2GD(image);
     pFormatBuffer = format->driver;
 
     pszGDFormat = msStringConcatenate(pszGDFormat, "gd/");
@@ -2245,7 +2293,7 @@ unsigned char *msSaveImageBufferAGG(gdImagePtr img, int *size_ptr, outputFormatO
 
     format->driver = pszGDFormat;
 
-    buf = msSaveImageBufferGD(img, size_ptr, format);
+    buf = msSaveImageBufferGD(image->img.gd, size_ptr, format);
 
     format->driver = pFormatBuffer;
 
@@ -2322,18 +2370,13 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
     case MS_LAYER_LINE:
       zigzag.line = (lineObj *)malloc(sizeof(lineObj));
       zigzag.numlines = 1;
-      zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
-      zigzag.line[0].numpoints = 4;
+      zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*2);
+      zigzag.line[0].numpoints = 2;
 
       zigzag.line[0].point[0].x = dstX;
       zigzag.line[0].point[0].y = dstY + height - 1;
-      zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1;
+      zigzag.line[0].point[1].x = dstX + width - 1;
       zigzag.line[0].point[1].y = dstY;
-      zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1;
-      zigzag.line[0].point[2].y = dstY + height - 1;
-      zigzag.line[0].point[3].x = dstX + width - 1;
-      zigzag.line[0].point[3].y = dstY;
-      zigzag.line[0].numpoints = 4;
 
       for(i=0; i<theclass->numstyles; i++)
         msDrawLineSymbolAGG(&map->symbolset, image, &zigzag, theclass->styles[i], lp->scalefactor); 
@@ -2374,6 +2417,14 @@ void msFreeImageAGG(imageObj *img)
     delete (AGGMapserverRenderer*)img->imageextra;
     if( img->img.gd != NULL )
         msFreeImageGD(img->img.gd);
+}
+
+void msFreeSymbolCacheAGG(void *buffer) {
+    if(buffer!=NULL) {
+        agg::rendering_buffer *rb = (agg::rendering_buffer*)buffer;
+        delete[] rb->buf();
+        delete rb;
+    }
 }
 
 void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
@@ -2427,32 +2478,95 @@ void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
  * NOTE/TODO: due to rounding an alpha value of 0 will never happen in agg
  */
 void msAlphaGD2AGG(imageObj *im) {
+    if(im->buffer_format==MS_RENDER_WITH_AGG) return;
+    //msDebug("msAlphaGD2AGG(): switching to AGG alpha on a %dx%d image\n",im->img.gd->sy,im->img.gd->sx);
     int x, y;
     for (y = 0; (y < im->img.gd->sy); y++) {
         for (x = 0; (x < im->img.gd->sx); x++) {
-            int c = gdImageGetPixel(im->img.gd, x, y);
+            int c = gdImageTrueColorPixel(im->img.gd, x, y);
             int alpha=255-(((c) & 0x7F000000) >> 24)*2;
-            // Use gdImageTrueColorPixel() to access the tpixels[][] directly 
-            // and avoid special treatment of some color values by 
-            // gdImageSetPixel() 
-            gdImageTrueColorPixel(im->img.gd, x, y) = ((c)&0x00FFFFFF)|(alpha<<24);
+            if(alpha==0) {
+                gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(0,0,0,0);
+            }
+            else {
+                double a=alpha/255.;
+                gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(
+                        MS_NINT(gdTrueColorGetRed(c)*a),
+                        MS_NINT(gdTrueColorGetGreen(c)*a),
+                        MS_NINT(gdTrueColorGetBlue(c)*a),
+                        alpha);
+            }
         }
     }
+    im->buffer_format=MS_RENDER_WITH_AGG;
 }
 
 /*
  * transform the alpha values of the pixels in im from agg convention (0 to 255)
  * to gd-convention (127 to 0)
  */
+/*
+ * transform the alpha values of the pixels in im from agg convention (0 to 255)
+ * to gd-convention (127 to 0)
+ */
 void msAlphaAGG2GD(imageObj *im) {
+    if(im->buffer_format!=MS_RENDER_WITH_AGG) return;
+    //msDebug("msAlphaAGG2GD(): switching to GD alpha on a %dx%d image\n",im->img.gd->sy,im->img.gd->sx);
     int x, y;
     for (y = 0; (y < im->img.gd->sy); y++) {
         for (x = 0; (x < im->img.gd->sx); x++) {
-            int c = gdImageGetPixel(im->img.gd, x, y);
-            int alpha=(255-(((c) & 0xFF000000) >> 24))/2;
-            gdImageSetPixel(im->img.gd, x, y, ((c)&0x00FFFFFF)|(alpha<<24));
+            int c = gdImageTrueColorPixel(im->img.gd, x, y);
+            int alpha = ((c) & 0xFF000000) >> 24;
+            if(alpha==0) {
+                gdImageTrueColorPixel(im->img.gd, x, y)=gdTrueColorAlpha(0,0,0,127); 
+            }
+            else {
+                double a = alpha/255.;
+                alpha=127-(alpha/2);
+                gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(
+                        MS_NINT(gdTrueColorGetRed(c)/a),
+                        MS_NINT(gdTrueColorGetGreen(c)/a),
+                        MS_NINT(gdTrueColorGetBlue(c)/a),
+                        alpha);
+            }
         }
     }
+    im->buffer_format=MS_RENDER_WITH_GD;
+}
+
+///merge image src over image dst with pct opacity
+void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct)
+{ 
+  msAlphaGD2AGG(dst);
+  msAlphaGD2AGG(src);
+  int x, y;
+  int w,h;
+  w=dst->width;h=dst->height;
+  for (y = 0; (y < h); y++) {
+    for (x = 0; (x < w); x++) {
+      int src_c = gdImageTrueColorPixel(src->img.gd, x, y);
+      int dst_c = gdImageTrueColorPixel(dst->img.gd, x, y);
+      int red, green, blue;
+      int res_alpha;
+      float src_alpha = ((src_c&0xff000000) >> 24)/255.;
+      float dst_alpha = ((dst_c&0xff000000) >> 24)/255.;
+
+      if( src_alpha == 0 )
+        continue;
+      
+      double pctd=pct/100.;
+      src_alpha=src_alpha*pctd;
+      float one_src_alpha=1.0-src_alpha;
+      res_alpha=MS_NINT((src_alpha+dst_alpha*one_src_alpha)*255);
+
+
+      red = MS_NINT(gdTrueColorGetRed( src_c )*pctd + gdTrueColorGetRed( dst_c ) *one_src_alpha);
+      green = MS_NINT(gdTrueColorGetGreen( src_c )*pctd  + gdTrueColorGetGreen( dst_c ) * one_src_alpha);
+      blue = MS_NINT(gdTrueColorGetBlue( src_c )*pctd  + gdTrueColorGetBlue( dst_c ) * one_src_alpha);
+            
+      gdImageTrueColorPixel(dst->img.gd,x,y) = gdTrueColorAlpha( red, green, blue, res_alpha );
+    }
+  }
 }
 
 #endif
