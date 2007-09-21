@@ -13,7 +13,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
-
+- Fixed modulus operator in the parser (#2323)
 
 Version 5.0.0 (2007-09-17)
 --------------------------

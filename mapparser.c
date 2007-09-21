@@ -1398,7 +1398,7 @@ case 43:
     break;
 case 44:
 #line 345 "mapparser.y"
-{ yyval.dblval = (int)yyvsp[-2].dblval * (int)yyvsp[0].dblval; }
+{ yyval.dblval = (int)yyvsp[-2].dblval % (int)yyvsp[0].dblval; }
     break;
 case 45:
 #line 346 "mapparser.y"
