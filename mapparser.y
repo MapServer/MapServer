@@ -342,7 +342,7 @@ math_exp: NUMBER
        | math_exp '+' math_exp   { $$ = $1 + $3; }
        | math_exp '-' math_exp   { $$ = $1 - $3; }
        | math_exp '*' math_exp   { $$ = $1 * $3; }
-       | math_exp '%' math_exp   { $$ = (int)$1 * (int)$3; }
+       | math_exp '%' math_exp   { $$ = (int)$1 % (int)$3; }
        | math_exp '/' math_exp   {
 	         if($3 == 0.0) {
 				     msyyerror("division by zero");
