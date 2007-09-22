@@ -2370,13 +2370,17 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
     case MS_LAYER_LINE:
       zigzag.line = (lineObj *)malloc(sizeof(lineObj));
       zigzag.numlines = 1;
-      zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*2);
-      zigzag.line[0].numpoints = 2;
+      zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+      zigzag.line[0].numpoints = 4;
 
       zigzag.line[0].point[0].x = dstX;
       zigzag.line[0].point[0].y = dstY + height - 1;
-      zigzag.line[0].point[1].x = dstX + width - 1;
+      zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1; 
       zigzag.line[0].point[1].y = dstY;
+      zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1; 
+      zigzag.line[0].point[2].y = dstY + height - 1; 
+      zigzag.line[0].point[3].x = dstX + width - 1; 
+      zigzag.line[0].point[3].y = dstY; 
 
       for(i=0; i<theclass->numstyles; i++)
         msDrawLineSymbolAGG(&map->symbolset, image, &zigzag, theclass->styles[i], lp->scalefactor); 
