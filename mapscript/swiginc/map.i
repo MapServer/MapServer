@@ -201,7 +201,7 @@
   }
 
   int embedLegend(imageObj *image) {	
-    return msEmbedLegend(self, image->img.gd);
+    return msEmbedLegend(self, image);
   }
 
   int drawLabelCache(imageObj *image) {

@@ -136,7 +136,7 @@ int mapObj_embedScalebar(mapObj* self, imageObj *img) {
 
 //TODO
 int mapObj_embedLegend(mapObj* self, imageObj *img) {	
-    return msEmbedLegend(self, img->img.gd);
+    return msEmbedLegend(self, img);
   }
 
 int mapObj_drawLabelCache(mapObj* self, imageObj *img) {
