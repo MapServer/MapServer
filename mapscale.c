@@ -370,7 +370,7 @@ imageObj *msDrawScalebar(mapObj *map)
 
 }
 
-int msEmbedScalebar(mapObj *map, gdImagePtr img)
+int msEmbedScalebar(mapObj *map, imageObj *img)
 {
   int s,l;
   pointObj point;
@@ -465,7 +465,16 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
   if(map->scalebar.postlabelcache) /* add it directly to the image //TODO */
   {
-    msDrawMarkerSymbolGD(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
+#ifdef USE_AGG
+      /* the next function will call the AGG renderer so we must make
+       * sure the alpha channel of the image is in a coherent state.
+       * the alpha values aren't actually switched unless the last 
+       * layer of the map was a raster layer
+       */
+      if(MS_RENDERER_AGG(map->outputformat))
+          msAlphaAGG2GD(img);
+#endif
+      msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   }
   else
     msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);

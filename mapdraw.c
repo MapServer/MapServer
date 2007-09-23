@@ -462,7 +462,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
     gdImageAlphaBlending(image->img.gd, 1);
 
-    msEmbedScalebar(map, image->img.gd); /* TODO   */
+    msEmbedScalebar(map, image); /* TODO   */
 
     /* restore original alpha blending */
     gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
@@ -558,7 +558,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
     gdImageAlphaBlending(image->img.gd, 1);
 
-    msEmbedScalebar(map, image->img.gd); /* TODO   */
+    msEmbedScalebar(map, image); /* TODO   */
 
     /* restore original alpha blending */
     gdImageAlphaBlending(image->img.gd, oldAlphaBlending);

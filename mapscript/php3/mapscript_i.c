@@ -131,7 +131,7 @@ imageObj *mapObj_drawReferenceMap(mapObj* self) {
 
 //TODO
 int mapObj_embedScalebar(mapObj* self, imageObj *img) {	
-    return msEmbedScalebar(self, img->img.gd);
+    return msEmbedScalebar(self, img);
   }
 
 //TODO

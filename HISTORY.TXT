@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- AGG: fix embedded scalebar rendering when using postlabelcache (#2327)
+
 - AGG: allow for fast and aliased rendering of simple lines and polygons
   thick lines and patterns (i.e. dashes)aren't supported.
   this is triggered when the symbol is of TYPE SYMBOL *and* its ANTIALIAS is off

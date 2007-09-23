@@ -197,7 +197,7 @@
   }
 
   int embedScalebar(imageObj *image) {	
-    return msEmbedScalebar(self, image->img.gd);
+    return msEmbedScalebar(self, image);
   }
 
   int embedLegend(imageObj *image) {	

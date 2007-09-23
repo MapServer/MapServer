@@ -1397,7 +1397,7 @@ MS_DLL_EXPORT void msGDALInitialize(void);
 MS_DLL_EXPORT imageObj *msDrawScalebar(mapObj *map); /* in mapscale.c */
 MS_DLL_EXPORT int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scaledenom);
 MS_DLL_EXPORT double msInchesPerUnit(int units, double center_lat);
-MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, gdImagePtr img);
+MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, imageObj *img);
 
 MS_DLL_EXPORT int msPointInRect(pointObj *p, rectObj *rect); /* in mapsearch.c */
 MS_DLL_EXPORT int msRectOverlap(rectObj *a, rectObj *b);
