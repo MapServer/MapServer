@@ -16,8 +16,8 @@ Current Version (SVN branch-4-10):
 - Fixed java and csharp Makefile.in to use -lmapserver instead of -lmap
   (side-effect of #2150)
 
-- WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
-  Contrary to previous claims, this was not fixed in 4.10.3.
+- Fix extremely slow resampling problem in WCS (#1944)
+
 
 Version 4.10.3 (2007-08-22)
 ---------------------------
@@ -33,6 +33,7 @@ Version 4.10.3 (2007-08-22)
 
 - SOS : backport fixes related to large xml outputs (#1938, #2146)
 
+- WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
 
 Version 4.10.2 (2007-05-07)
 ---------------------------
