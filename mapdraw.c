@@ -1024,6 +1024,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       msFree(mindistancebuffer);
       return(MS_FAILURE);
   }
+#ifdef USE_AGG
+  if(MS_RENDERER_AGG(map->outputformat))
+      msAlphaGD2AGG(image);
+#endif
 
   msInitShape(&shape);
 
