@@ -275,7 +275,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
     if(!scale_independent && map->scaledenom > 0) {
       if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
-      if((lp->maxscaledenom > 0) && (map->scaledenom <= lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
  
     for(j=0;j<lp->numclasses;j++) {
@@ -285,7 +285,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
 	if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
 	  continue;
-	if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom <= lp->class[j]->maxscaledenom))
+	if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom))
 	  continue;
       }
 
@@ -356,7 +356,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     if(!scale_independent && map->scaledenom > 0) {
       if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom))
 	continue;
-      if((lp->maxscaledenom > 0) && (map->scaledenom <= lp->maxscaledenom))
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom))
 	continue;
 
       /* Should we also consider lp->symbolscale? I don't think so. Showing the "standard" size makes the most sense. */
@@ -372,7 +372,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
         if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
           continue;
-        if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom <= lp->class[j]->maxscaledenom))
+        if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom))
           continue;
       }
  
