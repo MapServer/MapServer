@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-0)
 --------------------------------
 
+- Fixed legend icons not drawing when using maxscaledenom
+
 - Fixed modulus operator in the parser (#2323)
 
 Version 5.0.0 (2007-09-17)
