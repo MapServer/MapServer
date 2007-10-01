@@ -4680,24 +4680,24 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       }
 
       if(msyylex() == CLASS) {
-	if((s = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;
-	if(s == MS_STRING)
-	  j = msGetClassIndex(GET_LAYER(map, i), msyytext);
-	else
-	  j = (int) msyynumber;
+        if((s = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;
+	      if(s == MS_STRING)
+          j = msGetClassIndex(GET_LAYER(map, i), msyytext);
+        else
+	        j = (int) msyynumber;
 
-	if(j>=GET_LAYER(map, i)->numclasses || j<0) {
+        if(j>=GET_LAYER(map, i)->numclasses || j<0) {
           msSetError(MS_MISCERR, "Class to be modified not valid.", "msUpdateMapFromURL()");
           return MS_FAILURE;
         }
 
-	if(msyylex() == STYLE) {
+        if(msyylex() == STYLE) {
           if(getInteger(&k) == -1) return MS_FAILURE;
 
-	  if(k>=GET_LAYER(map, i)->class[j]->numstyles || k<0) {
-	    msSetError(MS_MISCERR, "Style to be modified not valid.", "msUpdateMapFromURL()");
-	    return MS_FAILURE;
-	  }
+          if(k>=GET_LAYER(map, i)->class[j]->numstyles || k<0) {
+            msSetError(MS_MISCERR, "Style to be modified not valid.", "msUpdateMapFromURL()");
+            return MS_FAILURE;
+          }
 
           return msUpdateStyleFromString((GET_LAYER(map, i))->class[j]->styles[k], string, MS_TRUE);
         } else {
@@ -4730,8 +4730,8 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       if(getInteger(&(map->height)) == -1) break;
 
       if(map->width > map->maxsize || map->height > map->maxsize || map->width < 0 || map->height < 0) {
-	msSetError(MS_WEBERR, "Image size out of range.", "msUpdateMapFromURL()");
-	break;
+        msSetError(MS_WEBERR, "Image size out of range.", "msUpdateMapFromURL()");
+        break;
       }
       msMapComputeGeotransform( map );
       break;
@@ -4769,7 +4769,6 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
   return(MS_SUCCESS);
 }
-
 
 /*
 ** Returns an array with one entry per mapfile token.  Useful to manipulate
