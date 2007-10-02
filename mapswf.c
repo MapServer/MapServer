@@ -885,6 +885,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     ((SWFObj *)image->img.swf)->nCurrentMovie = -1;
 
     ((SWFObj *)image->img.swf)->panLayerIndex = NULL;
+    ((SWFObj *)image->img.swf)->nTmpCount = 0;
 
     /* initalize main movie */
     ((SWFObj *)image->img.swf)->sMainMovie = newSWFMovie();
@@ -1187,7 +1188,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     gdImagePtr imgtmp = NULL;
 
     SWFButton   oButton;
-    SWFDisplayItem oDisplay;
+    SWFDisplayItem oDisplay = NULL;
 
 
     colorObj    sFc;
@@ -1208,7 +1209,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     int nShapeIndex = -1;
 
     int fc = 0; /* only used for TTF  */
-            
+
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -1359,10 +1360,17 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
                 oDisplay = SWFMovie_add(GetCurrentMovie(map, image),
                                         oButton);
+                
                 SWFDisplayItem_moveTo(oDisplay, (float)offset_x, 
                                       (float)offset_y);
 
                 /* gdImageDestroy(imgtmp); */
+            }
+            if (oDisplay)
+            {
+                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+                ((SWFObj *)image->img.swf)->nTmpCount++;
+                SWFDisplayItem_setName(oDisplay, gszTmp);
             }
             break;
 
@@ -1396,7 +1404,10 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                      psFillColor, psOutlineColor,
                                      &sColorHighlightObj,
                                      nLayerIndex, nShapeIndex);
-                SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+               
+
+                
             } 
             else 
             {
@@ -1410,9 +1421,16 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                            &sColorHighlightObj,
                                            nLayerIndex, nShapeIndex);
 
-                    SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                    oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
                 }
             }
+            if (oDisplay)
+            {
+                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+                ((SWFObj *)image->img.swf)->nTmpCount++;
+                SWFDisplayItem_setName(oDisplay, gszTmp);
+            }
+            
             break;
 
 /* -------------------------------------------------------------------- */
@@ -1449,7 +1467,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                              &sColorHighlightObj,
                                              nLayerIndex, nShapeIndex);
                     
-                SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                
 
             }
 /* -------------------------------------------------------------------- */
@@ -1472,9 +1491,16 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                           psFillColor,
                                           &sColorHighlightObj,
                                           nLayerIndex, nShapeIndex);
-                SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
 
             } /* end if-then-else */
+
+            if (oDisplay)
+            {
+                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+                ((SWFObj *)image->img.swf)->nTmpCount++;
+                SWFDisplayItem_setName(oDisplay, gszTmp);
+            }
             break;
         default:
             break;
@@ -1629,6 +1655,7 @@ SWFText DrawText(char *string, int nX, int nY, char *pszFontFile,
     if (f)
     {
         oFont  = loadSWFFontFromFile(f);
+        //oFont = newSWFFont("_sans"); 
         fclose(f); 
         if (oFont)
         {     
@@ -1665,6 +1692,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     /* int         nTmp = 0; */
     SWFShape    oShape;
     SWFButton   oButton;
+    SWFDisplayItem oDisplay = NULL;
     int         nLayerIndex = -1;
     int         nShapeIndex = -1;
     layerObj    *psLayerTmp = NULL;
@@ -1758,7 +1786,10 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         {
             oButton = DrawButtonPolyline(p, &sFc, &sColorHighlightObj, nLayerIndex, 
                                          nShapeIndex, width);
-            SWFMovie_add(GetCurrentMovie(map, image), oButton);
+            oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+             sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+             ((SWFObj *)image->img.swf)->nTmpCount++;
+             SWFDisplayItem_setName(oDisplay, gszTmp);
             /* destroySWFButton(oButton); */
             
         }
@@ -1785,6 +1816,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     layerObj    *psLayerTmp = NULL;
     SWFShape    oShape;
     SWFButton   oButton;
+    SWFDisplayItem oDisplay;
 
     /* int         nTmp = 0; */
     colorObj    *psFillColor = NULL;
@@ -1895,7 +1927,10 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
                                               &sColorHighlightObj, nLayerIndex, 
                                               nShapeIndex, width);
-            SWFMovie_add(GetCurrentMovie(map, image), oButton);
+            oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+            sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+            ((SWFObj *)image->img.swf)->nTmpCount++;
+            SWFDisplayItem_setName(oDisplay, gszTmp);
         }
 
         return;
@@ -1940,7 +1975,10 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
                                                   &sColorHighlightObj, nLayerIndex, 
                                                   nShapeIndex, width);
-                SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+                ((SWFObj *)image->img.swf)->nTmpCount++;
+                SWFDisplayItem_setName(oDisplay, gszTmp);
             }
         }
     }

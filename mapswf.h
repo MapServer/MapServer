@@ -28,5 +28,6 @@ typedef struct  {
   void    *imagetmp;  /*used when the output format is SINGLE */
                       /*(one movie for the whole map)*/
   int *panLayerIndex; /* keeps the layer index for every movie created. */
+  int nTmpCount;
 } SWFObj;
 #endif
