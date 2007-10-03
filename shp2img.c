@@ -42,6 +42,19 @@ int main(int argc, char *argv[])
 
   char *outfile=NULL; /* no -o sends image to STDOUT */
 
+  int iterations = 1;
+  int draws = 0;
+
+  for(i=1;i<argc;i++) { 
+    if (strcmp(argv[i],"-c") == 0) { /* user specified number of draws */
+      iterations = atoi(argv[i+1]);
+      printf("We will draw %d times...\n", iterations);
+      break;
+    }
+  }
+  
+  for(draws=0; draws<iterations; draws++) {
+      
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
     exit(0);
@@ -51,8 +64,9 @@ int main(int argc, char *argv[])
   if( argc < 3 ) {
     fprintf(stdout,
             "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
-            "               [-l layer1 \"[layers2...] ]\" [-i format] [-p n]\n"
-            "               [-all_debug n] [-map_debug n] [-layer_debug n]\n");
+            "               [-l layer1 \"[layers2...] ]\" [-i format]\n"
+            "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n]\n");
+
 
     fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
     fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format.\n" );
@@ -63,7 +77,9 @@ int main(int argc, char *argv[])
     fprintf(stdout,"  -all_debug n: Set debug level for map and all layers.\n" );
     fprintf(stdout,"  -map_debug n: Set map debug level.\n" );
     fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level.\n" );
+    fprintf(stdout,"  -c n: draw map n number of times.\n" );
     fprintf(stdout,"  -p n: pause for n seconds after reading the map\n" );
+
 
     exit(0);
   }
@@ -93,12 +109,13 @@ int main(int argc, char *argv[])
       }
     }
   }
-  
+
   if(!map) {
     fprintf(stderr, "Mapfile (-m) option not specified.\n");
     msCleanup();
     exit(0);
   }
+
 
   for(i=1;i<argc;i++) { /* Step though the user arguments */
 
@@ -121,7 +138,7 @@ int main(int argc, char *argv[])
       outfile = argv[i+1];
       i+=1;
     }
-
+    
     if(strcmp(argv[i],"-i") == 0) { 
       outputFormatObj *format;
 
@@ -231,7 +248,7 @@ int main(int argc, char *argv[])
       i+=1;
      }
   }
-
+  
   image = msDrawMap(map, MS_FALSE);
 
   if(!image) {
@@ -250,5 +267,6 @@ int main(int argc, char *argv[])
   msFreeMap(map);
   msCleanup();
 
+} /*   for(draws=0; draws<iterations; draws++) { */
   return(0);
 } /* ---- END Main Routine ---- */
