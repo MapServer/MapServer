@@ -155,7 +155,9 @@ int msFreeSymbol(symbolObj *s) {
   
   if(s->name) free(s->name);
   if(s->img) gdImageDestroy(s->img);
+#ifdef USE_AGG
   if(s->renderer_cache) msFreeSymbolCacheAGG(s->renderer_cache);
+#endif
   if(s->font) free(s->font);
   if(s->imagepath) free(s->imagepath);
   if(s->character) free(s->character);
