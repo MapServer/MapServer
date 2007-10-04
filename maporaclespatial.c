@@ -2632,6 +2632,41 @@ int msOracleSpatialLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, l
     return msOracleSpatialLayerGetShape(layer, shape, record);
 }
 
+#ifdef USE_ORACLE_PLUGIN 
+#ifdef USE_ORACLESPATIAL
+MS_DLL_EXPORT  int
+PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
+{
+    assert(layer != NULL);
+    assert(vtable != NULL);
+    
+
+    vtable->LayerInitItemInfo = msOracleSpatialLayerInitItemInfo;
+    vtable->LayerFreeItemInfo = msOracleSpatialLayerFreeItemInfo;
+    vtable->LayerOpen = msOracleSpatialLayerOpen;
+    vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
+    vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
+    vtable->LayerNextShape = msOracleSpatialLayerNextShape;
+    vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
+    vtable->LayerClose = msOracleSpatialLayerClose;
+    vtable->LayerGetItems = msOracleSpatialLayerGetItems;
+    vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
+
+    /* layer->vtable->LayerGetAutoStyle, use default */
+    /* layer->vtable->LayerApplyFilterToLayer, use default */
+
+    vtable->LayerCloseConnection = msOracleSpatialLayerClose;
+    vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+
+    vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+
+    /* layer->vtable->LayerGetNumFeatures, use default */
+
+    return MS_SUCCESS;
+}
+#endif
+#endif
+
 int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
 {
     assert(layer != NULL);
