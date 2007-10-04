@@ -1303,8 +1303,8 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
 
 /*set up font handling*/
     /*set an alias for the font outline file*/
-    nFontOutlineLen = strlen(fontPath + 3);
-    fontOutlineAlias = (char *)malloc(sizeof(char)*(nFontOutlineLen));
+    nFontOutlineLen = strlen(fontPath);
+    fontOutlineAlias = (char *)malloc(sizeof(char)*(nFontOutlineLen+4));
     sprintf(fontOutlineAlias, "f1=%s",fontPath);
     PDF_set_parameter(pdf, "FontOutline", fontOutlineAlias);
     free(fontOutlineAlias);
