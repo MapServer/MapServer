@@ -385,6 +385,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #ORACLE_DIR = c:\Oracle\Ora81
 #ORACLE=-DUSE_ORACLESPATIAL
+#ORACLE=-DUSE_ORACLE_PLUGIN
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -701,10 +702,14 @@ PDF_LIB=$(PDF_DIR)/libs/pdflib/Release_DLL/pdflib.lib
 PDF_INC=-I$(PDF_DIR)/libs/pdflib
 !ENDIF
 
-#Oracle support
+# Oracle support.
 !IFDEF ORACLE
-ORACLE_INC=-I$(ORACLE_DIR)/oci/include
-ORACLE_LIB=$(ORACLE_DIR)/oci/lib/msvc/oci.lib
+ORACLE_INC=-I$(ORACLE_DIR)/include
+!IF "$(ORACLE)" != "-DUSE_ORACLE_PLUGIN"
+ORACLE_LIB=$(ORACLE_DIR)/lib/msvc/oci.lib
+!ELSE
+ORACLE_LIB = 
+!ENDIF
 !ENDIF
 
 #libiconv support
