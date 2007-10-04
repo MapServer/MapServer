@@ -201,11 +201,31 @@ php: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
 php:
 !ENDIF
 
+!IF DEFINED(SDE_OPT) || DEFINED(ORACLE)
+
+!IFDEF ORACLE
+ORACLE_LIB=$(ORACLE_DIR)/lib/msvc/oci.lib
+!ENDIF
+
 !IFDEF SDE_OPT
-plugins:  $(MS_DLL) $(MS_LIB_DLL)
+SDE_LIB = $(SDE_DIR)\lib\pe$(SDE_VERSION).lib \
+          $(SDE_DIR)\lib\sde$(SDE_VERSION).lib \
+          $(SDE_DIR)\lib\sg$(SDE_VERSION).lib    
+!ENDIF
+plugins:  
 		-del mapsde.obj
-		$(CC) $(CFLAGS) -DUSE_SDE /c mapsde.c /Fomapsde.obj
+		-del maporaclespatial.obj
+
+!IFDEF SDE_OPT
+	$(CC) $(CFLAGS) -DUSE_SDE /c mapsde.c /Fomapsde.obj
     link /dll /out:msplugin_sde_$(SDE_VERSION).dll mapsde.obj mapthread.obj mapserver_i.lib $(SDE_LIB)
+	-del mapsde.obj
+!ENDIF
+!IFDEF ORACLE
+	$(CC) $(CFLAGS) -DUSE_ORACLESPATIAL /c maporaclespatial.c /Fomaporaclespatial.obj
+    link /dll /out:msplugin_oracle.dll maporaclespatial.obj $(ORACLE_LIB) mapserver_i.lib
+    -del maporaclespatial.obj
+!ENDIF
 !ELSE
 plugins:
 !ENDIF
