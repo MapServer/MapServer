@@ -844,6 +844,13 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     if(layer->tileindex) /* tiling clean-up */
         msSHPCloseFile(&tilefile);    
 
+/* -------------------------------------------------------------------- */
+/*      On failure, or empty result set, cleanup the rlinfo since we    */
+/*      likely won't ever have it accessed or cleaned up later.         */
+/* -------------------------------------------------------------------- */
+    if( status == MS_FAILURE || rlinfo->query_results == 0 )
+        msRasterLayerInfoFree( layer );
+
     return status;
 #endif /* def USE_GDAL */
 }
@@ -872,7 +879,9 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
     msComputeBounds( selectshape );
     status = msRasterQueryByRect( map, layer, selectshape->bounds );
 
-    rlinfo->searchshape = NULL;
+    rlinfo = (rasterLayerInfo *) layer->layerinfo;
+    if( rlinfo )
+        rlinfo->searchshape = NULL;
 
     return status;
 #endif /* USE_GDAL  */
@@ -997,21 +1006,16 @@ int msRASTERLayerOpen(layerObj *layer)
                 "msRasterQueryByRect()" );
     return MS_FAILURE;
 #else
+
+    /* If we don't have info, initialize an empty one now */
+    if( layer->layerinfo == NULL )
+        msRasterLayerInfoInitialize( layer );
+        
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
-    if( rlinfo != NULL )
-        rlinfo->refcount = rlinfo->refcount + 1;
+    rlinfo->refcount = rlinfo->refcount + 1;
 
-    if( rlinfo == NULL )
-    {
-        msSetError( MS_MISCERR, 
-                    "Attempt to open a RASTER layer, but this is"
-                    " only supported after a raster query.",
-                    "msRASTERLayerOpen()" );
-        return MS_FAILURE;
-    }
-    else 
-        return MS_SUCCESS;
+    return MS_SUCCESS;
 #endif /* def USE_GDAL */
 }
 

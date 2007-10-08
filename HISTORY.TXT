@@ -39,6 +39,12 @@ Current Version (5.1-dev, SVN trunk):
 - maprasterquery.c: Fix crash when queryies on done on raster layers with 
   no styles (#2343)
 
+- maprasterquery.c: Modify msRASTERLayerOpen() to create a defaulted raster
+  layer info if there isn't one, to avoid the errors about open only being
+  supported after a query.  Also wipe the raster layer info in case of 
+  an empty result set, or failures of a query to reduce likelyhood of 
+  leaking the raster layer info. 
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
