@@ -312,9 +312,16 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         else
         {
             rlinfo->qc_class[rlinfo->query_results] = p_class;
-            red   = layer->class[p_class]->styles[0]->color.red;
-            green = layer->class[p_class]->styles[0]->color.green;
-            blue  = layer->class[p_class]->styles[0]->color.blue;
+            if( layer->class[p_class]->numstyles > 0 )
+            {
+                red   = layer->class[p_class]->styles[0]->color.red;
+                green = layer->class[p_class]->styles[0]->color.green;
+                blue  = layer->class[p_class]->styles[0]->color.blue;
+            }
+            else
+            {
+                red = green = blue = 0;
+            }
         }
     }
 
@@ -472,10 +479,10 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 /*      Trim the rectangle to the area of the file itself, but out      */
 /*      to the edges of the touched edge pixels.                        */
 /* -------------------------------------------------------------------- */
-    dfXMin = MAX(0.0,floor(dfXMin));
-    dfYMin = MAX(0.0,floor(dfYMin));
-    dfXMax = MIN(nRXSize,ceil(dfXMax));
-    dfYMax = MIN(nRYSize,ceil(dfYMax));
+    dfXMin = MAX(0.0,MIN(nRXSize,floor(dfXMin)));
+    dfYMin = MAX(0.0,MIN(nRYSize,floor(dfYMin)));
+    dfXMax = MAX(0.0,MIN(nRXSize,ceil(dfXMax)));
+    dfYMax = MAX(0.0,MIN(nRYSize,ceil(dfYMax)));
 
 /* -------------------------------------------------------------------- */
 /*      Convert to integer offset/size values.                          */

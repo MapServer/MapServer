@@ -17,6 +17,9 @@ Current Version (SVN branch-5-0)
 
 - Fixed modulus operator in the parser (#2323)
 
+- maprasterquery.c: Fix crash when queryies on done on raster layers with 
+  no styles (#2343)
+
 Version 5.0.0 (2007-09-17)
 --------------------------
 
