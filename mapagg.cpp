@@ -200,15 +200,17 @@ static agg::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
             int gdpix = gdImageGetTrueColorPixel(img,col,row);
             //extract the alpha value from the pixel
             int gdpixalpha = ((gdpix) & 0x7F000000) >> 24;
-            int alpha;
-            //treat the specific transparent case
-            //(we never can set alpha to 0 with newalpha=255-2*oldalpha)
-            if(gdpixalpha==127)
-                alpha=0;
-            else
-                alpha=255-(gdpixalpha<<1);
-            //reinject the corrected alpha value in the pixel and image
-            rowptr[col]=((gdpix)&0x00FFFFFF)|(alpha<<24);            
+
+            if(gdpixalpha==127) {//treat the fully transparent case
+                rowptr[col]=0;
+            }
+            else if(gdpixalpha==0) {//treat the fully opaque case
+                rowptr[col]=((gdpix)&0x00FFFFFF)|(255<<24);
+            }
+            else {
+                int alpha=255-(gdpixalpha<<1);
+                rowptr[col]=((gdpix)&0x00FFFFFF)|(alpha<<24);
+            }      
         }
     }
     return im_data_rbuf;
