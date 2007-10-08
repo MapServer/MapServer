@@ -2479,7 +2479,6 @@ void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
 /*
  * transform the alpha values of the pixels in im from gd-convention (127 to 0)
  * to agg convention (0 to 255)
- * NOTE/TODO: due to rounding an alpha value of 0 will never happen in agg
  */
 void msAlphaGD2AGG(imageObj *im) {
     if(im->buffer_format==MS_RENDER_WITH_AGG) return;
@@ -2488,11 +2487,20 @@ void msAlphaGD2AGG(imageObj *im) {
     for (y = 0; (y < im->img.gd->sy); y++) {
         for (x = 0; (x < im->img.gd->sx); x++) {
             int c = gdImageTrueColorPixel(im->img.gd, x, y);
-            int alpha=255-(((c) & 0x7F000000) >> 24)*2;
-            if(alpha==0) {
+            int alpha=((c) & 0x7F000000) >> 24;
+            
+            if(alpha==127) { //treat the case when the pixel is fully transparent
                 gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(0,0,0,0);
             }
-            else {
+            else if(alpha==0) { //treat the case when the pixel is fully opaque
+                gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(
+                        gdTrueColorGetRed(c),
+                        gdTrueColorGetGreen(c),
+                        gdTrueColorGetBlue(c),
+                        255);
+            }
+            else { //treat semi-opaque pixel
+                alpha=255-(alpha>>1);
                 double a=alpha/255.;
                 gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(
                         MS_NINT(gdTrueColorGetRed(c)*a),
@@ -2509,10 +2517,6 @@ void msAlphaGD2AGG(imageObj *im) {
  * transform the alpha values of the pixels in im from agg convention (0 to 255)
  * to gd-convention (127 to 0)
  */
-/*
- * transform the alpha values of the pixels in im from agg convention (0 to 255)
- * to gd-convention (127 to 0)
- */
 void msAlphaAGG2GD(imageObj *im) {
     if(im->buffer_format!=MS_RENDER_WITH_AGG) return;
     //msDebug("msAlphaAGG2GD(): switching to GD alpha on a %dx%d image\n",im->img.gd->sy,im->img.gd->sx);
@@ -2521,10 +2525,17 @@ void msAlphaAGG2GD(imageObj *im) {
         for (x = 0; (x < im->img.gd->sx); x++) {
             int c = gdImageTrueColorPixel(im->img.gd, x, y);
             int alpha = ((c) & 0xFF000000) >> 24;
-            if(alpha==0) {
+            if(alpha==0) { //treat the case when the pixel is fully transparent
                 gdImageTrueColorPixel(im->img.gd, x, y)=gdTrueColorAlpha(0,0,0,127); 
             }
-            else {
+            else if(alpha==255) { //treat the case when the pixel is fully opaque
+                gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(
+                        gdTrueColorGetRed(c),
+                        gdTrueColorGetGreen(c),
+                        gdTrueColorGetBlue(c),
+                        0);
+            }
+            else { //treat semi-opaque pixel
                 double a = alpha/255.;
                 alpha=127-(alpha/2);
                 gdImageTrueColorPixel(im->img.gd, x, y) = gdTrueColorAlpha(
