@@ -172,7 +172,7 @@
   }
   
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
-    return msDrawLegendIcon(map, layer, self, width, height, dstImage->img.gd, dstX, dstY);
+    return msDrawLegendIcon(map, layer, self, width, height, dstImage, dstX, dstY);
   }
  
   %newobject createLegendIcon;

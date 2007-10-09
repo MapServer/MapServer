@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- use a renderer agnostic legend icon drawing function which switches
+  to the GD or AGG specific one depending on the outputformat (#2348)
+
 - AGG: switch alpha buffer when drawing query layer
 
 - Fixed legend icons not drawing when using maxscaledenom

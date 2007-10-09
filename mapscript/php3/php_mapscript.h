@@ -182,7 +182,7 @@ int             classObj_drawLegendIcon(classObj *self,
                                         mapObj *map,
                                         layerObj *layer, 
                                         int width, int height, 
-                                        gdImagePtr im, 
+                                        imageObj *im, 
                                         int dstX, int dstY);
 imageObj       *classObj_createLegendIcon(classObj *self, 
                                           mapObj *map, 

@@ -9170,10 +9170,10 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
                                                        PHPMS_GLOBAL(le_msmap),
                                                        list TSRMLS_CC, E_ERROR);
-    if (im != NULL && !MS_DRIVER_GD(im->format))
+    if (im != NULL && !(MS_DRIVER_GD(im->format)||MS_DRIVER_AGG(im->format)))
     {
         _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_WARNING, "DrawLegendicon function is only available for GD dirvers");
+        php3_error(E_WARNING, "DrawLegendicon function is only available for GD and AGG drivers");
         RETURN_FALSE;
     }
     if (self == NULL || parent_map == NULL || parent_layer == NULL ||
@@ -9181,7 +9181,7 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
                                           parent_map, 
                                           parent_layer, 
                                           pWidth->value.lval, pHeight->value.lval, 
-                                          im->img.gd, 
+                                          im, 
                                           pDstX->value.lval, pDstY->value.lval)) == -1)
     {
         _phpms_report_mapserver_error(E_WARNING);

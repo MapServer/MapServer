@@ -1519,7 +1519,7 @@ MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
 MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent); /* in maplegend.c */
 MS_DLL_EXPORT int msEmbedLegend(mapObj *map, imageObj *img);
-MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
+MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, imageObj *img, int dstX, int dstY);
 MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
    
 MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabel.c */
@@ -1744,6 +1744,7 @@ MS_DLL_EXPORT void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
 MS_DLL_EXPORT int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
+MS_DLL_EXPORT int msDrawLegendIconGD(mapObj *map, layerObj *lp, classObj *theclass, int width, int height, gdImagePtr img, int dstX, int dstY);
 
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
 MS_DLL_EXPORT void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent);

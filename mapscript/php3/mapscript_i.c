@@ -618,7 +618,7 @@ char *classObj_getTextString(classObj *self) {
     return msGetExpressionString(&(self->text));
 }
 
-int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {
+int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, imageObj *dstImg, int dstX, int dstY) {
   msClearLayerPenValues(layer); // just in case the mapfile has already been processed
     return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
 }

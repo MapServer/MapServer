@@ -3363,6 +3363,122 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
   return(0);
 }
 
+int msDrawLegendIconGD(mapObj *map, layerObj *lp, classObj *class, int width, int height, gdImagePtr img, int dstX, int dstY)
+{
+  int i, type;
+  shapeObj box, zigzag;
+  pointObj marker;
+  char szPath[MS_MAXPATHLEN];
+  imageObj *image = NULL;
+  styleObj outline_style;
+
+  /* if drawing an outline (below) we need to set clipping to keep symbols withing the outline */
+  if(MS_VALID_COLOR(map->legend.outlinecolor))
+    gdImageSetClip(img, dstX, dstY, dstX + width - 1, dstY + height - 1);
+
+  /* initialize the box used for polygons and for outlines */
+  box.line = (lineObj *)malloc(sizeof(lineObj));
+  box.numlines = 1;
+  box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
+  box.line[0].numpoints = 5;
+
+  box.line[0].point[0].x = dstX;
+  box.line[0].point[0].y = dstY;
+  box.line[0].point[1].x = dstX + width - 1;
+  box.line[0].point[1].y = dstY;
+  box.line[0].point[2].x = dstX + width - 1;
+  box.line[0].point[2].y = dstY + height - 1;
+  box.line[0].point[3].x = dstX;
+  box.line[0].point[3].y = dstY + height - 1;
+  box.line[0].point[4].x = box.line[0].point[0].x;
+  box.line[0].point[4].y = box.line[0].point[0].y;
+  box.line[0].numpoints = 5;
+    
+  /* if the class has a keyimage then load it, scale it and we're done */
+  if(class->keyimage != NULL) {
+    image = msImageLoadGD(msBuildPath(szPath, map->mappath, class->keyimage));
+    if(!image) return(MS_FAILURE);
+
+    /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
+    gdImageCopyResampled(img, image->img.gd, dstX, dstY, 0, 0, width, height, image->img.gd->sx, image->img.gd->sy);
+  } else {        
+    /* some polygon layers may be better drawn using zigzag if there is no fill */
+    type = lp->type;
+    if(type == MS_LAYER_POLYGON) {
+      type = MS_LAYER_LINE;
+      for(i=0; i<class->numstyles; i++) {
+       if(MS_VALID_COLOR(class->styles[i]->color)) { /* there is a fill */
+      type = MS_LAYER_POLYGON;
+      break;
+        }
+      }
+    }
+
+    /* 
+    ** now draw the appropriate color/symbol/size combination 
+    */     
+
+    /* Bug 490 - switch alpha blending on for a layer that requires it */
+    if(lp->opacity == MS_GD_ALPHA)
+      gdImageAlphaBlending(img, 1);
+
+    switch(type) {
+    case MS_LAYER_ANNOTATION:
+    case MS_LAYER_POINT:
+      marker.x = dstX + MS_NINT(width / 2.0);
+      marker.y = dstY + MS_NINT(height / 2.0);
+
+      for(i=0; i<class->numstyles; i++)
+        msDrawMarkerSymbolGD(&map->symbolset, img, &marker, class->styles[i], lp->scalefactor);          
+      break;
+    case MS_LAYER_LINE:
+      zigzag.line = (lineObj *)malloc(sizeof(lineObj));
+      zigzag.numlines = 1;
+      zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+      zigzag.line[0].numpoints = 4;
+
+      zigzag.line[0].point[0].x = dstX;
+      zigzag.line[0].point[0].y = dstY + height - 1;
+      zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1;
+      zigzag.line[0].point[1].y = dstY;
+      zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1;
+      zigzag.line[0].point[2].y = dstY + height - 1;
+      zigzag.line[0].point[3].x = dstX + width - 1;
+      zigzag.line[0].point[3].y = dstY;
+      zigzag.line[0].numpoints = 4;
+
+      for(i=0; i<class->numstyles; i++)
+        msDrawLineSymbolGD(&map->symbolset, img, &zigzag, class->styles[i], lp->scalefactor); 
+
+      free(zigzag.line[0].point);
+      free(zigzag.line);    
+      break;
+    case MS_LAYER_CIRCLE:
+    case MS_LAYER_RASTER:
+    case MS_LAYER_CHART:
+    case MS_LAYER_POLYGON:
+      for(i=0; i<class->numstyles; i++)     
+        msDrawShadeSymbolGD(&map->symbolset, img, &box, class->styles[i], lp->scalefactor);
+      break;
+    default:
+      return MS_FAILURE;
+      break;
+    } /* end symbol drawing */
+  }   
+
+  /* handle an outline if necessary */
+  if(MS_VALID_COLOR(map->legend.outlinecolor)) {
+    initStyle(&outline_style);
+    outline_style.color = map->legend.outlinecolor;
+    msDrawLineSymbolGD(&map->symbolset, img, &box, &outline_style, 1.0);    
+    gdImageSetClip(img, 0, 0, img->sx - 1, img->sy - 1); /* undo any clipping settings */
+  }
+
+  free(box.line[0].point);
+  free(box.line);
+  
+  return MS_SUCCESS;
+}
 
 static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst) 
 {
