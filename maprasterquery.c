@@ -1006,12 +1006,13 @@ int msRASTERLayerOpen(layerObj *layer)
                 "msRasterQueryByRect()" );
     return MS_FAILURE;
 #else
+    rasterLayerInfo *rlinfo;
 
     /* If we don't have info, initialize an empty one now */
     if( layer->layerinfo == NULL )
         msRasterLayerInfoInitialize( layer );
         
-    rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
+    rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
     rlinfo->refcount = rlinfo->refcount + 1;
 
