@@ -196,6 +196,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 {
     const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
     const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
+    const char *pszBgColor, *pszTransparent;
     const char *pszSLD=NULL, *pszStyleSLDBody=NULL, *pszVersionKeyword=NULL;
     const char *pszSLDBody=NULL, *pszSLDURL = NULL;
     char *pszSLDGenerated = NULL;
@@ -215,6 +216,8 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     pszTime =           msOWSLookupMetadata(&(lp->metadata), "MO", "time");
     pszSLDBody =        msOWSLookupMetadata(&(lp->metadata), "MO", "sld_body");
     pszSLDURL =         msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url");
+    pszBgColor =        msOWSLookupMetadata(&(lp->metadata), "MO", "bgcolor");
+    pszTransparent =    msOWSLookupMetadata(&(lp->metadata), "MO", "transparent");
 
     if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
     {
@@ -237,8 +240,6 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     msSetWMSParamString(psWMSParams, pszVersionKeyword, pszVersion, MS_FALSE);
     msSetWMSParamString(psWMSParams, "SERVICE", "WMS",     MS_FALSE);
     msSetWMSParamString(psWMSParams, "LAYERS",  pszName,   MS_TRUE);
-    msSetWMSParamString(psWMSParams, "TRANSPARENT", "TRUE",MS_FALSE);
-
 
     if (pszFormat==NULL && pszFormatList==NULL)
     {
@@ -383,6 +384,20 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     {
         msSetWMSParamString(psWMSParams, "SLD", pszSLDURL, MS_TRUE);
     }	
+
+    if (pszBgColor)
+    {
+        msSetWMSParamString(psWMSParams, "BGCOLOR", pszBgColor, MS_TRUE);
+    }
+
+    if (pszTransparent)
+    {
+        msSetWMSParamString(psWMSParams, "TRANSPARENT", pszTransparent, MS_TRUE);
+    }
+    else 
+    {
+        msSetWMSParamString(psWMSParams, "TRANSPARENT", "TRUE", MS_TRUE);
+    }
 
     return MS_SUCCESS;
 }
