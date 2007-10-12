@@ -727,6 +727,9 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
              xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
         }
 
+            psNode= xmlNewChild(psObsNode, NULL, BAD_CAST "DataBlock", BAD_CAST "swe:resultDefinition");
+             xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+
         /*TODO add featureofinterest*/
 
         /* add result : gml:featureMember of all selected elements */
@@ -734,6 +737,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
 
         /*TODO should we add soemwhere the units of the value :
           <om:result uom="units.xml#cm">29.00</om:result> */
+
         
         
 #ifdef USE_PROJ
@@ -1394,6 +1398,10 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  
                  psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "responseFormat", 
                                       BAD_CAST pszSOSGetObservationMimeType);
+                 psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "resultModel", 
+                                      BAD_CAST "Observation");
+                 psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "responseMode", 
+                                      BAD_CAST "inline");
 
              }/*end of offerings*/
          }
