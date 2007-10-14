@@ -184,6 +184,12 @@ char *msDoubleToString(double value) {
   return(strdup(buffer));
 }
 
+char *msIntToString(int value) {
+  char buffer[256]; /* plenty of space */
+  sprintf(buffer, "%i", value);
+  return(strdup(buffer));
+}
+
 char *msStringChop(char *string) {  
   int n;
 

@@ -1458,6 +1458,7 @@ MS_DLL_EXPORT char **msStringSplit(const char *string, char cd, int *num_tokens)
 MS_DLL_EXPORT int msCountChars(char *str, char ch);
 MS_DLL_EXPORT char *msLongToString(long value);
 MS_DLL_EXPORT char *msDoubleToString(double value);
+MS_DLL_EXPORT char *msIntToString(int value);
 MS_DLL_EXPORT char *msEncodeUrl(const char*);
 MS_DLL_EXPORT char *msEncodeHTMLEntities(const char *string);
 MS_DLL_EXPORT void msDecodeHTMLEntities(const char *string);
