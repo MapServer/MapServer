@@ -1,7 +1,6 @@
 /**********************************************************************
-
  *
- * Name:     mapogsos.c
+ * Name:     mapogcsos.c
  * Project:  MapServer
  * Language: C
  * Purpose:  OGC SOS implementation
@@ -29,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
-
 #include "mapserver.h"
 
 MS_CVSID("$Id$")
@@ -47,7 +45,9 @@ MS_CVSID("$Id$")
 #include "libxml/parser.h"
 #include "libxml/tree.h"
 
-const char *pszSOSVersion                = "0.1.2";
+const char *pszSOSVersion                = "1.0.0";
+const char *pszSOSNamespaceUri           = "http://www.opengis.net/sos/1.0";
+const char *pszSOSNamespacePrefix        = "sos";
 const char *pszSOSDescribeSensorMimeType = "text/xml; subtype=sensorML/1.0.0";
 const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/0.14.7";
 
@@ -266,31 +266,21 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
     return lp;
 }
 
-void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd,  xmlNsPtr psNsGml)
-{
-    xmlNodePtr psNode, psTimeNode;
+void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd,  xmlNsPtr psNsGml) {
+  xmlNodePtr psNode, psTimeNode;
 
-    if (psParent && pszStart)
-    {
-        psNode = xmlNewChild(psParent, NULL, BAD_CAST "eventTime", NULL);
-        psTimeNode = xmlNewChild(psNode, psNsGml, BAD_CAST "TimePeriod", NULL);
-
-        psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
-        
-        
-        if (pszEnd)
-           psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
-        else
-        {
-            psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", NULL);
-            xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
-        }
-        
-        
+  if (psParent && pszStart) {
+    psNode = xmlNewChild(psParent, NULL, BAD_CAST "time", NULL);
+    psTimeNode = xmlNewChild(psNode, psNsGml, BAD_CAST "TimePeriod", NULL);
+    psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
+    if (pszEnd)
+      psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
+    else {
+      psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", NULL);
+      xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
     }
+  }
 }
-
-
 
 /************************************************************************/
 /*                            Add a bbox node.                          */
@@ -301,44 +291,31 @@ void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd,  xmlNsP
 /*      </gml:Envelope>                                                 */
 /*      </gml:boundedBy>                                                */
 /************************************************************************/
-void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx, 
-                    double maxy, const char *psEpsg, xmlNsPtr psNsGml)
-{               
-    xmlNodePtr psNode, psEnvNode;
-    char *pszTmp = NULL;
+void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx, double maxy, const char *psEpsg, xmlNsPtr psNsGml) {               
+  xmlNodePtr psNode, psEnvNode;
+  char *pszTmp = NULL;
 
-    if (psParent)
-    {
-      psNode = xmlNewChild(psParent, psNsGml,
-                             BAD_CAST "boundedBy", NULL);
-        
-        psEnvNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
+  if (psParent) {
+    psNode = xmlNewChild(psParent, psNsGml, BAD_CAST "boundedBy", NULL);
+    psEnvNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
 
-        pszTmp = msDoubleToString(minx);
-        pszTmp = msStringConcatenate(pszTmp, " ");
-        pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
-        psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
-        if (psEpsg)
-        {
-            
-            xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST psEpsg);
-        }
-        free(pszTmp);
-
-        pszTmp = msDoubleToString(maxx);
-        pszTmp = msStringConcatenate(pszTmp, " ");
-        pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
-        psNode = xmlNewChild(psEnvNode, NULL,
-                             BAD_CAST "upperCorner", BAD_CAST pszTmp);
-        
-        if (psEpsg)
-        {
-            
-            xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST psEpsg);
-        }
-        free(pszTmp);
-                             
+    if (psEpsg) {
+      xmlNewProp(psEnvNode, BAD_CAST "srsName", BAD_CAST psEpsg);
+      xmlNewProp(psEnvNode, BAD_CAST "srsDimension", BAD_CAST "2");
     }
+
+    pszTmp = msDoubleToString(minx);
+    pszTmp = msStringConcatenate(pszTmp, " ");
+    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
+    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
+    free(pszTmp);
+
+    pszTmp = msDoubleToString(maxx);
+    pszTmp = msStringConcatenate(pszTmp, " ");
+    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
+    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
+    free(pszTmp);
+  }
 }
 
 void msSOSAddPropertyNode(xmlNodePtr psParent, layerObj *lp,  xmlNsPtr  psNsGml)
@@ -994,25 +971,22 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
     /* name spaces */
-    //psNameSpace = xmlNewNsProp(psRootNode, "url",  "sos");
-    //psNameSpace = xmlNewNs(psRootNode, "http://www.opengis.net/sos",  "sos");
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/2001/XMLSchema-instance", BAD_CAST "xsi"));
-    xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/sos", BAD_CAST "sos"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX ));
-    
+    xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix));
 
     /*version fixed for now*/
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST pszSOSVersion);
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    /*TODO : review this*/
-    dtd_url = strdup("http://www.opengis.net/sos ");
+    dtd_url = strdup(pszSOSNamespaceUri);
+    dtd_url = msStringConcatenate(dtd_url, " ");
     dtd_url = msStringConcatenate(dtd_url, schemalocation);
     dtd_url = msStringConcatenate(dtd_url, "/sos/");
     dtd_url = msStringConcatenate(dtd_url, (char *)pszSOSVersion);
@@ -1042,7 +1016,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("DescribeSensor", 1, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("service", 1, "SOS"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("version", 1, (char *)pszSOSVersion));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("sensorid", 1, NULL));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("procedure", 1, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("outputFormat", 1, (char *)pszSOSDescribeSensorMimeType));
 
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetObservation", 1, script_url_encoded));
@@ -1117,6 +1091,16 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (panOfferingLayers[j] == i) /*first layer of the offering */
                        break;
                  }
+
+                 /*description*/
+                 value = msOWSLookupMetadata(&(lp->metadata), "S",
+                                             "offering_description");
+                 if (value)
+                 {
+                     psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "description", BAD_CAST value);
+                 }
+
+                 /*name*/
                  lp = (GET_LAYER(map, j)); /*first layer*/
                  value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_name");
                  if (value)
@@ -1145,15 +1129,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                       atof(tokens[2]), atof(tokens[3]), value, psNsGml);
                      msFreeCharArray(tokens, n);
                        
-                 }
-
-                 /*description*/
-                 value = msOWSLookupMetadata(&(lp->metadata), "S", 
-                                             "offering_description");
-                 if (value)
-                 {
-                     psNode = 
-                       xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "description", BAD_CAST value);
                  }
 
                  /*time*/
@@ -1305,7 +1280,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                          }
                          else
                          {
-                              msSetError(MS_SOSERR, "Manadatory metadata procedure could not be found on the layer %s",
+                              msSetError(MS_SOSERR, "Manadatory metadata procedure_item could not be found on the layer %s",
                                             "msSOSGetCapabilities()", GET_LAYER(map,j)->name);
                                  return msSOSException(map, "procedure_item", "MissingValue");
                          }
@@ -1515,8 +1490,6 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     sBbox = map->extent;
 
-    
-
     psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
     for(i=0; i<numentries; i++) 
@@ -1553,7 +1526,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     }
 
     /* check version */
-    if (msOWSParseVersionString(pszVersion) != OWS_0_1_2) {
+    if (msOWSParseVersionString(pszVersion) != OWS_1_0_0) {
         msSetError(MS_SOSERR, "Version %s not supported.  Supported versions are: %s.",
                    "msSOSGetObservation()", pszVersion, pszSOSVersion);
         return msSOSException(map, "version", "InvalidParameterValue");
@@ -1904,7 +1877,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         psRoot = CPLParseXMLString(pszFeature);
         if(!psRoot)
         {       
-            msSetError(MS_SOSERR, "Invalid gml:Envelop value given for featureOfInterest .", 
+            msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest.", 
                        "msSOSGetObservation()");
             return msSOSException(map, "featureofinterest", "InvalidParameterValue");
         }
@@ -2028,9 +2001,9 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.w3.org/2001/XMLSchema-instance", BAD_CAST "xsi"));
-    xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/sos", BAD_CAST "sos"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX));
+    xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
  
     xmlNewNsProp(psRootNode,  xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"),
@@ -2126,7 +2099,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
 
 {
     char *pszVersion=NULL;
-    char *pszSensorId=NULL;
+    char *pszProcedure=NULL;
     char *pszOutputFormat=NULL;
     char *pszEncodedUrl = NULL;
     const char *pszId = NULL, *pszUrl = NULL;
@@ -2142,8 +2115,8 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
         if (strcasecmp(names[i], "VERSION") == 0) {
           pszVersion = values[i];
         }
-        if (strcasecmp(names[i], "SENSORID") == 0) {
-          pszSensorId = values[i];
+        if (strcasecmp(names[i], "PROCEDURE") == 0) {
+          pszProcedure= values[i];
         }
         if (strcasecmp(names[i], "OUTPUTFORMAT") == 0) {
           pszOutputFormat = values[i];
@@ -2158,17 +2131,17 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
     }
 
     /* check version */
-    if (msOWSParseVersionString(pszVersion) != OWS_0_1_2) {
+    if (msOWSParseVersionString(pszVersion) != OWS_1_0_0) {
         msSetError(MS_SOSERR, "Version %s not supported.  Supported versions are: %s.",
                    "msSOSDescribeSensor()", pszVersion, pszSOSVersion);
         return msSOSException(map, "version", "InvalidParameterValue");
     }
 
-    if (!pszSensorId)
+    if (!pszProcedure)
     {
-        msSetError(MS_SOSERR, "Missing mandatory parameter sensorid.",
+        msSetError(MS_SOSERR, "Missing mandatory parameter procedure",
                    "msSOSDescribeSensor()");
-        return msSOSException(map, "sensorid", "MissingParameterValue");
+        return msSOSException(map, "procedure", "MissingParameterValue");
     }
 
     if (!pszOutputFormat)
@@ -2198,7 +2171,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
             for (k=0; k<n; k++)
             {
                 if (tokens[k] && strlen(tokens[k]) > 0 &&
-                    strcasecmp(tokens[k], pszSensorId) == 0)
+                    strcasecmp(tokens[k], pszProcedure) == 0)
                 {
                     bFound = 1; 
                     break;
@@ -2273,7 +2246,7 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
                           continue;
 
                         if (sShape.values[iItemPosition] && 
-                            strcasecmp(sShape.values[iItemPosition], pszSensorId) == 0)
+                            strcasecmp(sShape.values[iItemPosition], pszProcedure) == 0)
                         {
                             pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
                             if (pszUrl)
@@ -2310,9 +2283,9 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
         }
     }
 
-     msSetError(MS_SOSERR, "Sensor not found.",
+     msSetError(MS_SOSERR, "procedure not found.",
                    "msSOSDescribeSensor()");
-     return msSOSException(map, "sensorid", "InvalidParameterValue");
+     return msSOSException(map, "procedure", "InvalidParameterValue");
     
 }
 
