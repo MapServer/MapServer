@@ -190,6 +190,28 @@ char *msIntToString(int value) {
   return(strdup(buffer));
 }
 
+void msStringToUpper(char *string) {
+  int i;
+
+  if (string != NULL) {
+    for (i = 0; i < strlen(string); i++) {
+      string[i] = toupper(string[i]);
+    }
+    return;
+  }
+}
+
+void msStringToLower(char *string) {
+  int i;
+
+  if (string != NULL) {
+    for (i = 0; i < strlen(string); i++) {
+      string[i] = tolower(string[i]);
+    }
+    return;
+  }
+}
+
 char *msStringChop(char *string) {  
   int n;
 
