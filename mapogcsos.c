@@ -38,6 +38,7 @@ MS_CVSID("$Id$")
 #include "mapthread.h"
 #include "mapows.h"
 #include "maptime.h"
+#include "mapgml.h"
 #include "mapogcfilter.h"
 
 #include "mapowscommon.h"
@@ -59,48 +60,44 @@ const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/0.14.7";
 ** passes SOS specific info.
 ** 
 */
-static int msSOSException(mapObj *map, char *locator, char *exceptionCode) 
-{
-    xmlDocPtr  psDoc      = NULL;   
-    xmlNodePtr psRootNode = NULL;
-    xmlChar *buffer       = NULL;
-    int size = 0;
 
-    psDoc = xmlNewDoc(BAD_CAST "1.0");
+static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
+  xmlDocPtr  psDoc      = NULL;   
+  xmlNodePtr psRootNode = NULL;
+  xmlChar *buffer       = NULL;
+  int size = 0;
 
-    psRootNode = msOWSCommonExceptionReport(msEncodeHTMLEntities(msOWSGetSchemasLocation(map)), pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, msEncodeHTMLEntities(msGetErrorString("\n")));
+  psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-    xmlDocSetRootElement(psDoc, psRootNode);
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
+  psRootNode = msOWSCommonExceptionReport(msEncodeHTMLEntities(msOWSGetSchemasLocation(map)), pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, msEncodeHTMLEntities(msGetErrorString("\n")));
 
-    msIO_printf("Content-type: text/xml%c%c",10,10);
-    xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+  xmlDocSetRootElement(psDoc, psRootNode);
+  xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
+
+  msIO_printf("Content-type: text/xml%c%c",10,10);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
     
-    msIO_printf("%s", buffer);
+  msIO_printf("%s", buffer);
 
-    /*free buffer and the document */
-    xmlFree(buffer);
-    xmlFreeDoc(psDoc);
+  /*free buffer and the document */
+  xmlFree(buffer);
+  xmlFreeDoc(psDoc);
 
-    /* clear error since we have already reported it */
-    msResetErrorList();
+  /* clear error since we have already reported it */
+  msResetErrorList();
 
-    return MS_FAILURE;
+  return MS_FAILURE;
 }
 
-static int _IsInList(char **papsProcedures, int nDistinctProcedures, char *pszProcedure)
-{
-    int i = 0;
-    if (papsProcedures && nDistinctProcedures > 0 && pszProcedure)
-    {
-        for (i=0; i<nDistinctProcedures; i++)
-        {
-            if (papsProcedures[i] && strcmp(papsProcedures[i], pszProcedure) == 0)
-              return 1;
-        }
+static int _IsInList(char **papsProcedures, int nDistinctProcedures, char *pszProcedure) {
+  int i = 0;
+  if (papsProcedures && nDistinctProcedures > 0 && pszProcedure) {
+    for (i=0; i<nDistinctProcedures; i++) {
+      if (papsProcedures[i] && strcmp(papsProcedures[i], pszProcedure) == 0)
+        return 1;
     }
-
-    return 0;
+  }
+  return 0;
 }
 
 /************************************************************************/
@@ -266,55 +263,12 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
     return lp;
 }
 
-void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd,  xmlNsPtr psNsGml) {
+void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd) {
   xmlNodePtr psNode, psTimeNode;
 
   if (psParent && pszStart) {
     psNode = xmlNewChild(psParent, NULL, BAD_CAST "time", NULL);
-    psTimeNode = xmlNewChild(psNode, psNsGml, BAD_CAST "TimePeriod", NULL);
-    psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
-    if (pszEnd)
-      psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
-    else {
-      psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", NULL);
-      xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
-    }
-  }
-}
-
-/************************************************************************/
-/*                            Add a bbox node.                          */
-/*      <gml:boundedBy>                                                 */
-/*      -<gml:Envelope>                                                 */
-/*      <gml:lowerCorner srsName="epsg:4326">-66 43</gml:lowerCorner>   */
-/*      <upperCorner srsName="epsg:4326">-62 45</upperCorner>           */
-/*      </gml:Envelope>                                                 */
-/*      </gml:boundedBy>                                                */
-/************************************************************************/
-void msSOSAddBBNode(xmlNodePtr psParent, double minx, double miny, double maxx, double maxy, const char *psEpsg, xmlNsPtr psNsGml) {               
-  xmlNodePtr psNode, psEnvNode;
-  char *pszTmp = NULL;
-
-  if (psParent) {
-    psNode = xmlNewChild(psParent, psNsGml, BAD_CAST "boundedBy", NULL);
-    psEnvNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
-
-    if (psEpsg) {
-      xmlNewProp(psEnvNode, BAD_CAST "srsName", BAD_CAST psEpsg);
-      xmlNewProp(psEnvNode, BAD_CAST "srsDimension", BAD_CAST "2");
-    }
-
-    pszTmp = msDoubleToString(minx);
-    pszTmp = msStringConcatenate(pszTmp, " ");
-    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
-    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
-    free(pszTmp);
-
-    pszTmp = msDoubleToString(maxx);
-    pszTmp = msStringConcatenate(pszTmp, " ");
-    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
-    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
-    free(pszTmp);
+    psTimeNode = msGML3TimePeriod(psNode, pszStart, pszEnd);
   }
 }
 
@@ -748,14 +702,12 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
         xmlSetNs(psLayerNode,xmlNewNs(psLayerNode, NULL,  NULL));
         
         /*bbox*/
-        pszEpsg = NULL;
 #ifdef USE_PROJ
         pszEpsg = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "SO", MS_TRUE);
         if (!pszEpsg)
           pszEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
 #endif        
-        msSOSAddBBNode(psLayerNode, sShape.bounds.minx, sShape.bounds.miny, sShape.bounds.maxx, 
-                       sShape.bounds.maxy, pszEpsg, psNsGml);
+        msGML3BoundedBy(psLayerNode, sShape.bounds.minx, sShape.bounds.miny, sShape.bounds.maxx, sShape.bounds.maxy, pszEpsg, 2);
 
         /*geometry*/
         msSOSAddGeometryNode(psLayerNode, lp, &sShape, pszEpsg);
@@ -912,16 +864,14 @@ char *msSOSParseTimeGML(char *pszGmlTime)
 /*                                                                      */
 /*      getCapabilities request handler.                                */
 /************************************************************************/
-int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
-{
+int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode, psMainNode, psNode;
     xmlNodePtr psOfferingNode;
     xmlNodePtr psTmpNode;
 
-
     char *schemalocation = NULL;
-    char *dtd_url = NULL;
+    char *xsi_schemaLocation = NULL;
     char *script_url=NULL, *script_url_encoded=NULL;
 
     int i,j,k;
@@ -937,14 +887,6 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     int nProperties = 0;
     char **papszProperties = NULL;
 
-    /*
-      char workbuffer[5000];
-      int nSize = 0;
-    int iIndice = 0;
-    xmlChar *buffer = NULL;
-    int size = 0;
-    */
-
     int iItemPosition = -1;
     shapeObj sShape;
     int status;
@@ -956,7 +898,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     char **papsProcedures = NULL;
     int nDistinctProcedures =0;
 
-    xmlNsPtr     psNsGml       = NULL;
+    xmlNsPtr psNsGml = NULL;
 
     xmlChar *buffer = NULL;
     int size = 0;
@@ -968,7 +910,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
     xmlDocSetRootElement(psDoc, psRootNode);
 
-    psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+    psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
     /* name spaces */
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
@@ -985,13 +927,13 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    dtd_url = strdup(pszSOSNamespaceUri);
-    dtd_url = msStringConcatenate(dtd_url, " ");
-    dtd_url = msStringConcatenate(dtd_url, schemalocation);
-    dtd_url = msStringConcatenate(dtd_url, "/sos/");
-    dtd_url = msStringConcatenate(dtd_url, (char *)pszSOSVersion);
-    dtd_url = msStringConcatenate(dtd_url, "/sosGetCapabilities.xsd");
-    xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST dtd_url);
+    xsi_schemaLocation = strdup(pszSOSNamespaceUri);
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/sos/");
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)pszSOSVersion);
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/sosGetCapabilities.xsd");
+    xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
     /*service identification*/
     psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(map, "SOS", pszSOSVersion));
@@ -1044,13 +986,10 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
      if (map->numlayers)
      {
-         
-
          papsOfferings = (char **)malloc(sizeof(char *)*map->numlayers);
          panOfferingLayers = (int *)malloc(sizeof(int)*map->numlayers);
          for (i=0; i<map->numlayers; i++)
            panOfferingLayers[i] = -1;
-
          
          for (i=0; i<map->numlayers; i++)
          {
@@ -1125,8 +1064,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      value = msOWSGetEPSGProj(&(lp->projection),
                                               &(lp->metadata), "SO", MS_TRUE);
                      if (value)
-                       msSOSAddBBNode(psOfferingNode, atof(tokens[0]), atof(tokens[1]),
-                                      atof(tokens[2]), atof(tokens[3]), value, psNsGml);
+                       psNode = msGML3BoundedBy(psOfferingNode, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value, 2);
                      msFreeCharArray(tokens, n);
                        
                  }
@@ -1149,7 +1087,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      if (n == 2) /* end time is empty. It is going to be set as "now*/
                        pszEndTime = tokens[1];
 
-                     msSOSAddTimeNode(psOfferingNode, tokens[0], pszEndTime, psNsGml);
+                     msSOSAddTimeNode(psOfferingNode, tokens[0], pszEndTime);
                      msFreeCharArray(tokens, n);
                      
                  }
@@ -1363,8 +1301,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                          psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "featureOfInterest", 
                                               NULL);
 
-                         msSOSAddBBNode(psNode, atof(tokens[0]), atof(tokens[1]),
-                                        atof(tokens[2]), atof(tokens[3]), value, psNsGml);
+                         msGML3BoundedBy(psNode, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value, 2);
                      }
 
                      msFreeCharArray(tokens, n);
@@ -1410,7 +1347,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      /*xmlFree(buffer);*/
      xmlFreeDoc(psDoc);
 
-     free(dtd_url);
+     free(xsi_schemaLocation);
      free(schemalocation);
 
     /*
@@ -1466,7 +1403,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     char *pszBbox = NULL, *pszFeature=NULL;
 
     char *schemalocation = NULL;
-    char *dtd_url = NULL;
+    char *xsi_schemaLocation = NULL;
 
     const char *pszTmp = NULL, *pszTmp2 = NULL;
     int i, j, k, bLayerFound = 0;
@@ -1480,7 +1417,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlNodePtr psRootNode,  psNode;
     char **tokens=NULL, **tokens1;
     int n=0, n1=0;
-    xmlNsPtr     psNsGml       = NULL;
+    xmlNsPtr psNsGml = NULL;
     char *pszBuffer = NULL;
     const char *pszProcedureItem = NULL;
     int bSpatialDB = 0;
@@ -1490,7 +1427,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 
     sBbox = map->extent;
 
-    psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+    psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
     for(i=0; i<numentries; i++) 
     {
@@ -2012,10 +1949,10 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     /*TODO : review this*/
-    dtd_url = strdup("http://www.opengis.net/om ");
-    dtd_url = msStringConcatenate(dtd_url, schemalocation);
-    dtd_url = msStringConcatenate(dtd_url, "/0.14.7/om.xsd");
-    xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST dtd_url);
+    xsi_schemaLocation = strdup("http://www.opengis.net/om ");
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/0.14.7/om.xsd");
+    xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
 
     /*name */
@@ -2043,7 +1980,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         if (n == 2) /* end time is empty. It is going to be set as "now*/
           pszEndTime = tokens[1];
 
-        msSOSAddTimeNode(psRootNode, tokens[0], pszEndTime, psNsGml);
+        msSOSAddTimeNode(psRootNode, tokens[0], pszEndTime);
         msFreeCharArray(tokens, n);
                      
     }
