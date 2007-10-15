@@ -263,13 +263,12 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
     return lp;
 }
 
-void msSOSAddTimeNode(xmlNodePtr psParent, char *pszStart, char *pszEnd) {
-  xmlNodePtr psNode, psTimeNode;
+xmlNodePtr msSOSAddTimeNode(xmlNsPtr psNsSos, char *pszStart, char *pszEnd) {
+  xmlNodePtr psNode=NULL,psTimeNode=NULL;
 
-  if (psParent && pszStart) {
-    psNode = xmlNewChild(psParent, NULL, BAD_CAST "time", NULL);
-    psTimeNode = msGML3TimePeriod(psNode, pszStart, pszEnd);
-  }
+  psNode = xmlNewNode(psNsSos, BAD_CAST "time");
+  psTimeNode = xmlAddChild(psNode, msGML3TimePeriod(pszStart, pszEnd));
+  return psNode;
 }
 
 void msSOSAddPropertyNode(xmlNodePtr psParent, layerObj *lp,  xmlNsPtr  psNsGml)
@@ -368,21 +367,7 @@ void  msSOSAddGeometryNode(xmlNodePtr psParent, layerObj *lp, shapeObj *psShape,
               /*add all points */
               for(i=0; i<psShape->line[0].numpoints; i++)
               {
-                  psNode = xmlNewChild(psPointNode, NULL, BAD_CAST "Point", NULL);
-                  xmlSetNs(psNode,xmlNewNs(psNode, 
-                                           BAD_CAST "http://www.opengis.net/gml",  
-                                           BAD_CAST "gml"));
-                  if (pszEpsg)
-                    xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST pszEpsg);
-
-                  pszTmp = msDoubleToString(psShape->line[0].point[0].x);
-                  pszTmp = msStringConcatenate(pszTmp, ",");
-                  pszTmp = msStringConcatenate(pszTmp, 
-                                       msDoubleToString(psShape->line[0].point[0].y));
-                  psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
-                  xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
-                  free(pszTmp);
-                  
+                  psNode = xmlAddChild(psPointNode, msGML3Point(pszEpsg, NULL, psShape->line[0].point[0].x, psShape->line[0].point[0].y));
               }
               break;
               
@@ -707,7 +692,7 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
         if (!pszEpsg)
           pszEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
 #endif        
-        msGML3BoundedBy(psLayerNode, sShape.bounds.minx, sShape.bounds.miny, sShape.bounds.maxx, sShape.bounds.maxy, pszEpsg, 2);
+        psNode = xmlAddChild(psLayerNode, msGML3BoundedBy(sShape.bounds.minx, sShape.bounds.miny, sShape.bounds.maxx, sShape.bounds.maxy, pszEpsg));
 
         /*geometry*/
         msSOSAddGeometryNode(psLayerNode, lp, &sShape, pszEpsg);
@@ -971,6 +956,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("featureofinterest", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("result", 0, NULL));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("responseFormat", 1, (char *)pszSOSGetObservationMimeType));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataParameter("resultModel", 0, "Observation,Measurement"));
 
     /*<ogc:Filter_Capabilities> */
     psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities());
@@ -1064,7 +1050,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
                      value = msOWSGetEPSGProj(&(lp->projection),
                                               &(lp->metadata), "SO", MS_TRUE);
                      if (value)
-                       psNode = msGML3BoundedBy(psOfferingNode, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value, 2);
+                       psNode = xmlAddChild(psOfferingNode, msGML3BoundedBy(atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value));
                      msFreeCharArray(tokens, n);
                        
                  }
@@ -1087,7 +1073,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
                      if (n == 2) /* end time is empty. It is going to be set as "now*/
                        pszEndTime = tokens[1];
 
-                     msSOSAddTimeNode(psOfferingNode, tokens[0], pszEndTime);
+                     psNode = xmlAddChild(psOfferingNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix), tokens[0], pszEndTime));
                      msFreeCharArray(tokens, n);
                      
                  }
@@ -1301,7 +1287,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
                          psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "featureOfInterest", 
                                               NULL);
 
-                         msGML3BoundedBy(psNode, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value, 2);
+                         psTmpNode = xmlAddChild(psNode, msGML3BoundedBy(atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value));
                      }
 
                      msFreeCharArray(tokens, n);
@@ -1400,7 +1386,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 {
     char *pszOffering=NULL, *pszProperty=NULL, *pszResponseFormat=NULL, *pszTime = NULL, *pszVersion=NULL;
     char *pszFilter = NULL, *pszProdedure = NULL;
-    char *pszBbox = NULL, *pszFeature=NULL;
+    char *pszBbox = NULL, *pszFeature=NULL, *pszResultModel=NULL;
 
     char *schemalocation = NULL;
     char *xsi_schemaLocation = NULL;
@@ -1450,6 +1436,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
            pszResponseFormat = values[i];
          else if (strcasecmp(names[i], "VERSION") == 0)
            pszVersion = values[i];
+         else if (strcasecmp(names[i], "RESULTMODEL") == 0)
+           pszResultModel = values[i];
      }
 
     /*TODO : validate for version number*/
@@ -1972,7 +1960,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         char *pszEndTime = NULL;
         tokens = msStringSplit(pszTmp, '/', &n);
         if (tokens==NULL || (n != 1 && n!=2)) {
-            msSetError(MS_WMSERR, "Wrong number of arguments for offering_timeextent.",
+            msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
                        "msSOSGetCapabilities()");
             return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
         }
@@ -1980,29 +1968,36 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         if (n == 2) /* end time is empty. It is going to be set as "now*/
           pszEndTime = tokens[1];
 
-        msSOSAddTimeNode(psRootNode, tokens[0], pszEndTime);
+
+        psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix), tokens[0], pszEndTime));
         msFreeCharArray(tokens, n);
                      
     }
 
-    /* output result members */
-    for (i=0; i<map->numlayers; i++)
-    {
-        if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
-        {       
-            if(msLayerOpen((GET_LAYER(map, i))) == MS_SUCCESS)
-            {
+    if (pszResultModel && strcasecmp(pszResultModel, "Measurement") == 0) {
+        msSetError(MS_SOSERR, "DataBlock specified", "msSOSGetCapabilities()");
+        return msSOSException(map, "resultModel", "InvalidParameterValue");
+    }
+
+    else {
+       /* output result members */
+       for (i=0; i<map->numlayers; i++)
+       {
+          if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
+          {       
+             if(msLayerOpen((GET_LAYER(map, i))) == MS_SUCCESS)
+             {
                 msLayerGetItems((GET_LAYER(map, i)));
                 for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                 {
                     msSOSAddMemberNode(psRootNode, map, (GET_LAYER(map, i)), j);
                 }
                 msLayerClose((GET_LAYER(map, i)));
-            }
-        }
+             }
+          }
+       }
     }
-
-
+   
     /* output results */    
      msIO_printf("Content-type: text/xml%c%c",10,10);
      
@@ -2266,7 +2261,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req)
        return MS_DONE;  /* Not an SOS request */
 
 #else
-  msSetError(MS_SOSERR, "SOS support is not available.", "msWMSDispatch()");
+  msSetError(MS_SOSERR, "SOS support is not available.", "msSOSDispatch()");
   return(MS_FAILURE);
 
 #endif
