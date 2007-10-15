@@ -28,6 +28,7 @@
 
 #include "mapserver.h"
 #include "maperror.h"
+#include "mapgml.h"
 
 MS_CVSID("$Id$")
 
@@ -1538,3 +1539,88 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
   return MS_FAILURE;
 #endif /* USE_WFS_SVR */
 }
+
+
+#ifdef USE_SOS_SVR 
+
+/**
+ * msGML3BoundedBy()
+ *
+ * returns an object of BoundedBy as per GML 3
+ *
+ * @param psParent xmlNodePtr construct of parent element
+ * @param minx minx
+ * @param miny miny
+ * @param maxx maxx
+ * @param mayy mayy
+ * @param psEpsg epsg code
+ * @param dimension number of dimensions
+ *
+ * @return psNode xmlNodePtr of XML construct
+ *
+ */
+
+xmlNodePtr msGML3BoundedBy(xmlNodePtr psParent, double minx, double miny, double maxx, double maxy, const char *psEpsg, int dimension) {
+  xmlNodePtr psNode = NULL, psEnvNode;
+  char *pszTmp = NULL;
+  char pszEpsg[11];
+
+  if (psParent) {
+    psNode = xmlNewChild(psParent, xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"), BAD_CAST "boundedBy", NULL);
+    psEnvNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
+
+    if (psEpsg) {
+      sprintf(pszEpsg, "%s", psEpsg);
+      msStringToLower(pszEpsg);
+      pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
+      pszTmp = msStringConcatenate(pszTmp, pszEpsg);
+      xmlNewProp(psEnvNode, BAD_CAST "srsName", BAD_CAST pszTmp);
+      free(pszTmp);
+      pszTmp = msIntToString(dimension);
+      xmlNewProp(psEnvNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
+      free(pszTmp);
+    }
+
+    pszTmp = msDoubleToString(minx);
+    pszTmp = msStringConcatenate(pszTmp, " ");
+    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
+    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
+    free(pszTmp);
+
+    pszTmp = msDoubleToString(maxx);
+    pszTmp = msStringConcatenate(pszTmp, " ");
+    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
+    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
+    free(pszTmp);
+  }
+  return psNode;
+}
+
+/**
+ * msGML3TimePeriod()
+ *
+ * returns an object of TimePeriod as per GML 3
+ *
+ * @param psParent xmlNodePtr construct of parent element
+ * @param pszStart start time
+ * @param pszEnd end time
+ * 
+ * @return psNode xmlNodePtr of XML construct
+ *
+ */
+
+xmlNodePtr msGML3TimePeriod(xmlNodePtr psNode, char *pszStart, char *pszEnd) {
+  xmlNodePtr psTimeNode;
+
+  psTimeNode = xmlNewChild(psNode, xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"), BAD_CAST "TimePeriod", NULL);
+  psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
+  if (pszEnd)
+    psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
+  else {
+    psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", NULL);
+    xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
+  }
+  return psTimeNode;
+}
+
+#endif /* USE_SOS_SVR */
