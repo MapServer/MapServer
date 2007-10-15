@@ -49,6 +49,8 @@ MS_CVSID("$Id$")
 const char *pszSOSVersion                = "1.0.0";
 const char *pszSOSNamespaceUri           = "http://www.opengis.net/sos/1.0";
 const char *pszSOSNamespacePrefix        = "sos";
+const char *pszOMNamespaceUri           = "http://www.opengis.net/om/0.0";
+const char *pszOMNamespacePrefix        = "om";
 const char *pszSOSDescribeSensorMimeType = "text/xml; subtype=sensorML/1.0.0";
 const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/0.14.7";
 
@@ -263,10 +265,10 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
     return lp;
 }
 
-xmlNodePtr msSOSAddTimeNode(xmlNsPtr psNsSos, char *pszStart, char *pszEnd) {
+xmlNodePtr msSOSAddTimeNode(xmlNsPtr psNsOm, char *pszStart, char *pszEnd) {
   xmlNodePtr psNode=NULL,psTimeNode=NULL;
 
-  psNode = xmlNewNode(psNsSos, BAD_CAST "time");
+  psNode = xmlNewNode(psNsOm, BAD_CAST "time");
   psTimeNode = xmlAddChild(psNode, msGML3TimePeriod(pszStart, pszEnd));
   return psNode;
 }
@@ -524,7 +526,7 @@ void  msSOSAddGeometryNode(xmlNodePtr psParent, layerObj *lp, shapeObj *psShape,
 void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp, 
                         int iFeatureId)
 {
-    xmlNodePtr psObsNode, psNode, psLayerNode;
+    xmlNodePtr psObsNode, psNode, psSubNode, psLayerNode;
     const char *pszEpsg = NULL, *pszValue = NULL;
     int status,i,j;
     shapeObj sShape;
@@ -536,7 +538,8 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
     char *pszValueShape = NULL;
     const char *pszFeatureId  = NULL;
 
-    xmlNsPtr psNsGml =xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+    xmlNsPtr psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+    xmlNsPtr psNsOm = xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix);
 
     if (psParent)
     {
@@ -568,12 +571,10 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
                     if (sShape.values[i] && strlen(sShape.values[i]) > 0)
                     {
                         pszTime = msStringConcatenate(pszTime, sShape.values[i]);
-                        psNode = xmlNewChild(psObsNode, NULL, BAD_CAST "time", BAD_CAST pszTime);
-
-                        xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+                        psNode = xmlNewChild(psObsNode, psNsOm, BAD_CAST "time", NULL);
+                        psSubNode = xmlAddChild(psNode, msGML3TimeInstant(pszTime));
                     }
                     break;
-                
                 }
             }
         }
@@ -642,9 +643,6 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
             psNode= xmlNewChild(psObsNode, NULL, BAD_CAST "observedProperty", BAD_CAST pszValue);
              xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
         }
-
-            psNode= xmlNewChild(psObsNode, NULL, BAD_CAST "DataBlock", BAD_CAST "swe:resultDefinition");
-             xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
 
         /*TODO add featureofinterest*/
 
@@ -750,16 +748,6 @@ void msSOSAddMemberNode(xmlNodePtr psParent, mapObj *map, layerObj *lp,
             }
             if (lp->index != lpfirst->index)
               msLayerClose(lpfirst);
-
-            /*add also the time field */
-            if (pszTime)
-            {
-                psNode = xmlNewChild(psLayerNode, NULL, BAD_CAST "time", BAD_CAST pszTime);
-                xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
-
-                msFree(pszTime);
-            }
-                
         }
     }        
 }
@@ -1073,7 +1061,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
                      if (n == 2) /* end time is empty. It is going to be set as "now*/
                        pszEndTime = tokens[1];
 
-                     psNode = xmlAddChild(psOfferingNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix), tokens[0], pszEndTime));
+                     psNode = xmlAddChild(psOfferingNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix), tokens[0], pszEndTime));
                      msFreeCharArray(tokens, n);
                      
                  }
@@ -1298,6 +1286,8 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
                                       BAD_CAST pszSOSGetObservationMimeType);
                  psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "resultModel", 
                                       BAD_CAST "Observation");
+                 psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "resultModel", 
+                                      BAD_CAST "Measurement");
                  psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "responseMode", 
                                       BAD_CAST "inline");
 
@@ -1969,14 +1959,14 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
           pszEndTime = tokens[1];
 
 
-        psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix), tokens[0], pszEndTime));
+        psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix), tokens[0], pszEndTime));
         msFreeCharArray(tokens, n);
                      
     }
 
     if (pszResultModel && strcasecmp(pszResultModel, "Measurement") == 0) {
-        msSetError(MS_SOSERR, "DataBlock specified", "msSOSGetCapabilities()");
-        return msSOSException(map, "resultModel", "InvalidParameterValue");
+      msSetError(MS_SOSERR, "DataBlock specified", "msSOSGetCapabilities()");
+      return msSOSException(map, "resultModel", "InvalidParameterValue");
     }
 
     else {
