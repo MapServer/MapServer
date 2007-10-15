@@ -5,8 +5,12 @@
 #include<libxml/parser.h>
 #include<libxml/tree.h>
 
-xmlNodePtr msGML3BoundedBy(xmlNodePtr psParent, double minx, double miny, double maxx, double maxy, const char *psEpsg, int dimemsion);
-xmlNodePtr msGML3TimePeriod(xmlNodePtr psNode, char *pszStart, char *pszEnd);
+#define MS_OWSCOMMON_GML_NAMESPACE_URI      "http://www.opengis.net/gml"
+#define MS_OWSCOMMON_GML_NAMESPACE_PREFIX   "gml"
+
+xmlNodePtr msGML3BoundedBy(double minx, double miny, double maxx, double maxy, const char *psEpsg);
+xmlNodePtr msGML3TimePeriod(char *pszStart, char *pszEnd);
+xmlNodePtr msGML3Point(const char *psSrsName, const char *id, double x, double y);
 
 #endif /* USE_SOS_SVR */
 

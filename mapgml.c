@@ -1548,7 +1548,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
  *
  * returns an object of BoundedBy as per GML 3
  *
- * @param psParent xmlNodePtr construct of parent element
  * @param minx minx
  * @param miny miny
  * @param maxx maxx
@@ -1560,48 +1559,96 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
  *
  */
 
-xmlNodePtr msGML3BoundedBy(xmlNodePtr psParent, double minx, double miny, double maxx, double maxy, const char *psEpsg, int dimension) {
-  xmlNodePtr psNode = NULL, psEnvNode;
+xmlNodePtr msGML3BoundedBy(double minx, double miny, double maxx, double maxy, const char *psEpsg) {
+  xmlNodePtr psNode = NULL, psSubNode = NULL, psSubSubNode = NULL;
   char *pszTmp = NULL;
   char pszEpsg[11];
 
-  if (psParent) {
-    psNode = xmlNewChild(psParent, xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"), BAD_CAST "boundedBy", NULL);
-    psEnvNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
+  psNode = xmlNewNode(xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX), BAD_CAST "boundedBy");
+  psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
 
-    if (psEpsg) {
-      sprintf(pszEpsg, "%s", psEpsg);
-      msStringToLower(pszEpsg);
-      pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
-      pszTmp = msStringConcatenate(pszTmp, pszEpsg);
-      xmlNewProp(psEnvNode, BAD_CAST "srsName", BAD_CAST pszTmp);
-      free(pszTmp);
-      pszTmp = msIntToString(dimension);
-      xmlNewProp(psEnvNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
-      free(pszTmp);
-    }
-
-    pszTmp = msDoubleToString(minx);
-    pszTmp = msStringConcatenate(pszTmp, " ");
-    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
-    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
+  if (psEpsg) {
+    sprintf(pszEpsg, "%s", psEpsg);
+    msStringToLower(pszEpsg);
+    pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
+    pszTmp = msStringConcatenate(pszTmp, pszEpsg);
+    xmlNewProp(psSubNode, BAD_CAST "srsName", BAD_CAST pszTmp);
     free(pszTmp);
-
-    pszTmp = msDoubleToString(maxx);
-    pszTmp = msStringConcatenate(pszTmp, " ");
-    pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
-    psNode = xmlNewChild(psEnvNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
+    pszTmp = msIntToString(2);
+    xmlNewProp(psSubNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
     free(pszTmp);
   }
+
+  pszTmp = msDoubleToString(minx);
+  pszTmp = msStringConcatenate(pszTmp, " ");
+  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
+  psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
+  free(pszTmp);
+
+  pszTmp = msDoubleToString(maxx);
+  pszTmp = msStringConcatenate(pszTmp, " ");
+  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
+  psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
+  free(pszTmp);
   return psNode;
 }
+
+/**
+ *msGML3Point()
+ *
+ * returns an object of Point as per GML 3
+ *
+ * @param pszSrsName EPSG code of geometry
+ * @param id
+ * @param x x coordinate
+ * @param y y coordinate
+ * @param z z coordinate
+ *
+ * @return psNode xmlNodePtr of XML construct
+ *
+ */
+
+xmlNodePtr msGML3Point(const char *psSrsName, const char *id, double x, double y) {
+  xmlNodePtr psNode = NULL, psSubNode = NULL;
+  xmlNsPtr psNsGml = NULL;
+  char *pszTmp = NULL;
+  int dimension = 2;
+  char pszSrsName[11];
+
+  psNsGml = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
+
+  psNode = xmlNewNode(psNsGml, BAD_CAST "Point");
+
+  if (id) {
+    xmlNewNsProp(psNode, psNsGml, BAD_CAST "id", BAD_CAST id);
+  }
+
+  if (psSrsName) {
+    sprintf(pszSrsName, "%s", psSrsName);
+    msStringToLower(pszSrsName);
+    pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
+    pszTmp = msStringConcatenate(pszTmp, pszSrsName);
+    xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST pszTmp);
+    free(pszTmp);
+    pszTmp = msIntToString(dimension);
+    xmlNewProp(psNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
+    free(pszTmp);
+  }
+
+  pszTmp = msDoubleToString(x);
+  pszTmp = msStringConcatenate(pszTmp, " ");
+  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(y));
+  psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
+
+  return psNode;
+}
+
 
 /**
  * msGML3TimePeriod()
  *
  * returns an object of TimePeriod as per GML 3
  *
- * @param psParent xmlNodePtr construct of parent element
  * @param pszStart start time
  * @param pszEnd end time
  * 
@@ -1609,18 +1656,21 @@ xmlNodePtr msGML3BoundedBy(xmlNodePtr psParent, double minx, double miny, double
  *
  */
 
-xmlNodePtr msGML3TimePeriod(xmlNodePtr psNode, char *pszStart, char *pszEnd) {
-  xmlNodePtr psTimeNode;
+xmlNodePtr msGML3TimePeriod(char *pszStart, char *pszEnd) {
+  xmlNodePtr psNode=NULL,psSubNode=NULL;
+  xmlNsPtr psNs;
 
-  psTimeNode = xmlNewChild(psNode, xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"), BAD_CAST "TimePeriod", NULL);
-  psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
+  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
+
+  psNode = xmlNewNode(psNs, BAD_CAST "TimePeriod");
+  psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
   if (pszEnd)
-    psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
+    psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
   else {
-    psNode = xmlNewChild(psTimeNode, NULL, BAD_CAST "endPosition", NULL);
+    psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "endPosition", NULL);
     xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
   }
-  return psTimeNode;
+  return psNode;
 }
 
 #endif /* USE_SOS_SVR */
