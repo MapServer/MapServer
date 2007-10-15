@@ -48,6 +48,8 @@ Current Version (5.1-dev, SVN trunk):
   an empty result set, or failures of a query to reduce likelyhood of 
   leaking the raster layer info. 
 
+- Improve out of memory handling in mapdrawgdal.c, and mapgd.c. (#2351)
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
