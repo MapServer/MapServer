@@ -282,27 +282,32 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *
 
     if(format->imagemode == MS_IMAGEMODE_RGB || format->imagemode == MS_IMAGEMODE_RGBA) {
       image->img.gd = gdImageCreateTrueColor(width, height);
-      gdImageAlphaBlending( image->img.gd, 0); /* off by default, from alans@wunderground.com */
+      if( image->img.gd != NULL )
+          gdImageAlphaBlending( image->img.gd, 0); /* off by default, from alans@wunderground.com */
     } else
       image->img.gd = gdImageCreate(width, height);
-    
-    if(image->img.gd) {
-      image->format = format;
-      format->refcount++;
 
-      image->width = width;
-      image->height = height;
-      image->imagepath = NULL;
-      image->imageurl = NULL;
-            
-      if(imagepath) image->imagepath = strdup(imagepath);
-      if(imageurl) image->imageurl = strdup(imageurl);
+    if( image->img.gd == NULL ) {
+        msSetError(MS_MEMERR, "Allocation of GD image of size %dx%d failed.",
+                   "msImageCreateGD()", width, height );
+        free(image);
+        return NULL;
+    }    
+
+    image->format = format;
+    format->refcount++;
+
+    image->width = width;
+    image->height = height;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
+    
+    if(imagepath) image->imagepath = strdup(imagepath);
+    if(imageurl) image->imageurl = strdup(imageurl);
        
-      return image;
-    } else
-      free(image);   
+    return image;
   } else {
-    msSetError(MS_IMGERR, "Cannot create GD image of size %d x %d.", "msImageCreateGD()", width, height );
+    msSetError(MS_IMGERR, "Cannot create GD image of size %dx%d.", "msImageCreateGD()", width, height );
   }
 
   return NULL;
