@@ -5,8 +5,8 @@
 #include<libxml/parser.h>
 #include<libxml/tree.h>
 
-#define MS_OWSCOMMON_GML_NAMESPACE_URI      "http://www.opengis.net/gml"
-#define MS_OWSCOMMON_GML_NAMESPACE_PREFIX   "gml"
+#define MS_GML_NAMESPACE_URI      "http://www.opengis.net/gml"
+#define MS_GML_NAMESPACE_PREFIX   "gml"
 
 xmlNodePtr msGML3BoundedBy(double minx, double miny, double maxx, double maxy, const char *psEpsg);
 xmlNodePtr msGML3TimePeriod(char *pszStart, char *pszEnd);

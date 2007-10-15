@@ -1564,7 +1564,7 @@ xmlNodePtr msGML3BoundedBy(double minx, double miny, double maxx, double maxy, c
   char *pszTmp = NULL;
   char pszEpsg[11];
 
-  psNode = xmlNewNode(xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX), BAD_CAST "boundedBy");
+  psNode = xmlNewNode(xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX), BAD_CAST "boundedBy");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
 
   if (psEpsg) {
@@ -1615,7 +1615,7 @@ xmlNodePtr msGML3Point(const char *psSrsName, const char *id, double x, double y
   int dimension = 2;
   char pszSrsName[11];
 
-  psNsGml = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
+  psNsGml = xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX);
 
   psNode = xmlNewNode(psNsGml, BAD_CAST "Point");
 
@@ -1659,7 +1659,7 @@ xmlNodePtr msGML3TimePeriod(char *pszStart, char *pszEnd) {
   xmlNodePtr psNode=NULL,psSubNode=NULL;
   xmlNsPtr psNs;
 
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
+  psNs = xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX);
 
   psNode = xmlNewNode(psNs, BAD_CAST "TimePeriod");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
@@ -1687,7 +1687,7 @@ xmlNodePtr msGML3TimeInstant(char *pszTime) {
   xmlNodePtr psNode=NULL,psSubNode=NULL;
   xmlNsPtr psNs;
 
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
+  psNs = xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX);
 
   psNode = xmlNewNode(psNs, BAD_CAST "TimeInstant");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "timePosition", BAD_CAST pszTime);
