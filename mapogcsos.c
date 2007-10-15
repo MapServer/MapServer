@@ -1932,8 +1932,15 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/0.14.7/om.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
+    /* description */
+    pszTmp = msOWSLookupMetadata(&(lp->metadata), "S", "offering_description");
+    if (pszTmp)
+    {
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "description", BAD_CAST pszTmp);
+        xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
+    }
 
-    /*name */
+    /* name */
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "S", "offering_name");
     if (pszTmp)
     {
@@ -1941,7 +1948,25 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
         xmlSetNs(psNode, xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
     }
 
-    /*time*/
+    /* extent */
+    pszTmp = msOWSLookupMetadata(&(lp->metadata), "S", "offering_extent");
+
+    if (pszTmp)
+    {
+       char **tokens;
+       int n;
+       pszTmp2 = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
+       tokens = msStringSplit(pszTmp, ',', &n);
+       if (tokens==NULL || n != 4) {
+          msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
+          "msSOSGetCapabilities()");
+          return msSOSException(map, "offering_extent", "InvalidParameterValue");
+       }
+       psNode = xmlAddChild(psRootNode, msGML3BoundedBy(atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), pszTmp2));
+       msFreeCharArray(tokens, n);
+    }
+
+    /* time */
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "S","offering_timeextent");
     if (pszTmp)
     {
