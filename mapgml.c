@@ -1643,7 +1643,6 @@ xmlNodePtr msGML3Point(const char *psSrsName, const char *id, double x, double y
   return psNode;
 }
 
-
 /**
  * msGML3TimePeriod()
  *
@@ -1670,6 +1669,28 @@ xmlNodePtr msGML3TimePeriod(char *pszStart, char *pszEnd) {
     psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "endPosition", NULL);
     xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
   }
+  return psNode;
+}
+
+/**
+ * msGML3TimeInstant()
+ *
+ * returns an object of TimeInstant as per GML 3
+ *
+ * @param timeInstant time instant
+ *
+ * @return psNode xmlNodePtr of XML construct
+ *
+ */
+
+xmlNodePtr msGML3TimeInstant(char *pszTime) {
+  xmlNodePtr psNode=NULL,psSubNode=NULL;
+  xmlNsPtr psNs;
+
+  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
+
+  psNode = xmlNewNode(psNs, BAD_CAST "TimeInstant");
+  psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "timePosition", BAD_CAST pszTime);
   return psNode;
 }
 
