@@ -1756,11 +1756,7 @@ MS_DLL_EXPORT void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int 
 /* ==================================================================== */
 /*      Prototypes for functions in mapagg.cpp                          */
 /* ==================================================================== */
-#ifdef _cplusplus
-extern "C"
-{
-#endif
-MS_DLL_EXPORT void msPreAllocateColorsAGG(imageObj *image, mapObj *map);
+
 MS_DLL_EXPORT imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 MS_DLL_EXPORT void msImageInitAGG( imageObj *image, colorObj *background );
 
@@ -1784,15 +1780,13 @@ MS_DLL_EXPORT int msDrawLabelCacheAGG(imageObj *image, mapObj *map);
 
 MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);
 
-MS_DLL_EXPORT int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass, 
-        int width, int height, imageObj *image, int dstX, int dstY);
+MS_DLL_EXPORT int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass, int width, int height, imageObj *image, int dstX, int dstY);
 MS_DLL_EXPORT void msFreeSymbolCacheAGG(void *buffer);
+
 MS_DLL_EXPORT void msAlphaGD2AGG(imageObj *im);
 MS_DLL_EXPORT void msAlphaAGG2GD(imageObj *im);
 MS_DLL_EXPORT void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct);
-#ifdef _cplusplus
-}
-#endif
+
 #endif  /* USE_AGG  */
 
 /* various JOIN functions (in mapjoin.c) */
