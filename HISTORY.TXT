@@ -22,6 +22,9 @@ Current Version (SVN branch-5-0)
 
 - Improve out of memory handling in mapdrawgdal.c, and mapgd.c. (#2351)
 
+- don't bail out in map parsing if the outputformat had to be modified (#2321) 
+
+
 Version 5.0.0 (2007-09-17)
 --------------------------
 

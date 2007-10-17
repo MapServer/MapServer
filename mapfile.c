@@ -3204,9 +3204,7 @@ static int loadOutputFormat(mapObj *map)
 
         format->inmapfile = MS_TRUE;
 
-        if( !msOutputFormatValidate( format ) )
-            return -1;
-        else
+        msOutputFormatValidate( format );
         return(0);
     }
     case(NAME):
