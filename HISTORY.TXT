@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- don't bail out in map parsing if the outputformat had to be modified
+  (bug #2321)
+
 - use a renderer agnostic legend icon drawing function which switches
   to the GD or AGG specific one depending on the outputformat (#2348)
 
