@@ -381,14 +381,13 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *
  * returns an Parameter element of OperationsMetadata as per subclause 7.4.5
  *
  * @param name name of the Parameter
- * @param use use policy for Parameter (0 for optional, 1 for required)
  * @param values list of values (comma seperated list) or NULL if none
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *values) {
+xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, char *values) {
   xmlNsPtr   psNs       = NULL;
   xmlNodePtr psRootNode = NULL;
   xmlNodePtr psNode     = NULL;
@@ -398,13 +397,6 @@ xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, int use, char *val
   psRootNode = xmlNewNode(psNs, BAD_CAST "Parameter");
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
-
-  if (use == 1) {
-    xmlNewProp(psRootNode, BAD_CAST "use", BAD_CAST "required");
-  } 
-  else {
-    xmlNewProp(psRootNode, BAD_CAST "use", BAD_CAST "optional");
-  } 
 
   if (values != NULL) {
     char **tokens = NULL;
