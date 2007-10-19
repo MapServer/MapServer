@@ -76,7 +76,7 @@ xmlNodePtr msOWSCommonOperationsMetadata();
 
 xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *url);
 
-xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, char *values);
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(char *elname, char *name, char *values);
 
 xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
 

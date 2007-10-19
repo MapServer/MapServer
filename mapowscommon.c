@@ -376,10 +376,12 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *
 }
 
 /**
- * msOWSCommonOperationsMetadataParameter()
+ * msOWSCommonOperationsMetadataDomainType()
  *
- * returns an Parameter element of OperationsMetadata as per subclause 7.4.5
+ * returns a Parameter or Constraint element (which are of type ows:DomainType)
+ * of OperationsMetadata as per subclause 7.4.5
  *
+ * @param elname name of the element (Parameter | Constraint)
  * @param name name of the Parameter
  * @param values list of values (comma seperated list) or NULL if none
  *
@@ -387,14 +389,14 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, char *values) {
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(char *elname, char *name, char *values) {
   xmlNsPtr   psNs       = NULL;
   xmlNodePtr psRootNode = NULL;
-  xmlNodePtr psNode     = NULL;
+  xmlNodePtr psNode     = NULL; 
 
   psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
-  psRootNode = xmlNewNode(psNs, BAD_CAST "Parameter");
+  psRootNode = xmlNewNode(psNs, BAD_CAST elname);
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
@@ -404,7 +406,7 @@ xmlNodePtr msOWSCommonOperationsMetadataParameter(char *name, char *values) {
     int i = 0;
     tokens = msStringSplit(values, ',', &n);
     if (tokens && n > 0) {
-      for (i=0; i<n; i++) {
+      for (i=0; i<n; i++) { 
         psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Value", BAD_CAST tokens[i]);
       }
       msFreeCharArray(tokens, n);
