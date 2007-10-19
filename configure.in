@@ -1805,7 +1805,11 @@ else
     FASTCGI_LIB="-L$with_fastcgi/lib -lfcgi"
   fi
 
-  AC_CHECK_LIB(fcgi,FCGI_Accept,FASTCGI_ENABLED=-DUSE_FASTCGI,,,)
+  AC_CHECK_LIB(fcgi,FCGI_Accept,FASTCGI_ENABLED=-DUSE_FASTCGI,,$FASTCGI_LIB)
+
+  if test "x$FASTCGI_ENABLED" = "x" ; then
+    AC_MSG_ERROR([Unable to link against $FASTCGI_LIB])
+  fi
 
 fi
 
