@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- add initial(?) support for reading a pie chart's size from an attribute (#2136)
+
 - don't bail out in map parsing if the outputformat had to be modified
   (bug #2321)
 

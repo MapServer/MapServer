@@ -252,13 +252,16 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
     return MS_SUCCESS;
 }
 
-int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int diameter)
+int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, 
+        imageObj *image, int diameter,
+        int range_class,
+        float mindiameter,float maxdiameter,
+        float minvalue,float maxvalue)
 {
     int i,c,color,outlinecolor,outlinewidth;
     pointObj center;
     float *values;
     float dTotal=0.,start=0,center_x,center_y;
-
     msDrawStartShape(map, layer, image, shape);
 #ifdef USE_PROJ
     if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
@@ -267,20 +270,39 @@ int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
         layer->project = MS_FALSE;
 #endif
 
+    if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
+        return MS_FAILURE; /* error message is set in msBindLayerToShape() */
+    
+    /*check if dynamic diameter was wanted*/
+    if(range_class>=0) {
+        diameter=layer->class[range_class]->styles[0]->size;
+        /*check if the diameter should be scaled according to specified bounds*/
+        if(mindiameter>=0) {
+            if(diameter<=minvalue)
+                diameter=mindiameter;
+            else if(diameter>=maxvalue)
+                diameter=maxdiameter;
+            else {
+                diameter=MS_NINT(
+                        mindiameter+
+                        ((diameter-minvalue)/(maxvalue-minvalue))*
+                        (maxdiameter-mindiameter)
+                );
+            }
+        }
+    }
+    
     if(layer->transform == MS_TRUE) {
-      if(findChartPoint(map, shape, diameter, diameter, &center)==MS_FAILURE)
-        return MS_SUCCESS; /*next shape*/
+          if(findChartPoint(map, shape, diameter, diameter, &center)==MS_FAILURE)
+            return MS_SUCCESS; /*next shape*/
     } else {
         /* why would this ever be used? */
         msOffsetPointRelativeTo(&center, layer); 
     }
-
-    if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
-        return MS_FAILURE; /* error message is set in msBindLayerToShape() */
-
     values=(float*)calloc(layer->numclasses,sizeof(float));
     for(c=0;c<layer->numclasses;c++)
     {
+        if(c==range_class) continue; /*skip the class that gives the dynamic diameter*/
         values[c]=(layer->class[c]->styles[0]->size);
         if(values[c]<0.) {
             msSetError(MS_MISCERR, "cannot draw pie charts for negative values", "msDrawPieChart()");
@@ -291,6 +313,7 @@ int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
 
     for(i=0; i < layer->numclasses; i++)
     {
+        if(i==range_class) continue; /*skip the class that gives the dynamic diameter*/
         if(values[i]==0) continue; /*no need to draw. causes artifacts with outlines*/
         values[i]*=360.0/dTotal;
         if( MS_RENDERER_GD(map->outputformat) )
@@ -343,14 +366,18 @@ int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
 }
 
 int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image, 
-                        int radius)
+                        int radius,
+                        int range_class,
+                        float mindiameter,float maxdiameter,
+                        float minvalue,float maxvalue)
 {
     shapeObj    shape;
     int         status=MS_SUCCESS;
     /* step through the target shapes */
     msInitShape(&shape);
     while((status==MS_SUCCESS)&&(msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-        status = msDrawPieChart(map, layer, &shape, image,radius);
+        status = msDrawPieChart(map, layer, &shape, image,radius,
+                range_class,mindiameter,maxdiameter,minvalue,maxvalue);
         msFreeShape(&shape);
     }
     return status;
@@ -407,8 +434,11 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     rectObj     searchrect;
     const char *chartTypeProcessingKey=msLayerGetProcessingKey( layer,"CHART_TYPE" );
     const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
+    const char *chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
     int chartType=MS_CHART_TYPE_PIE;
     int width,height;
+    float mindiameter=-1.,maxdiameter=-1.,minvalue=-1.,maxvalue=-1.;
+    int tmpclassindex=-1;
     int status = MS_FAILURE;
     
     if (image && map && layer)
@@ -452,9 +482,54 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
                 break;
             case 1: height=width;break;
             default:
-                msSetError(MS_MISCERR, "msDrawChartGD format error for processing arg \"CHART_SIZE\"", "msDrawChartGD()");
+                msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
                 return MS_FAILURE;
             }
+        }
+        
+        if(chartRangeProcessingKey) { /*if CHART_SIZE_RANGE was specified*/
+            char *attrib = malloc(strlen(chartRangeProcessingKey)+1);
+            switch(sscanf(chartRangeProcessingKey,"%s %f %f %f %f",attrib,
+                    &mindiameter,&maxdiameter,&minvalue,&maxvalue))
+            {
+            case 1: /*we only have the attribute*/
+            case 5: /*we have the attribute and the four range values*/
+                break;
+            default:
+                free(attrib);
+                msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
+                return MS_FAILURE;
+            }
+            /*create a new class in the layer containing the wanted attribute
+             * as the SIZE of its first STYLE*/
+            classObj *newclass=msGrowLayerClasses(layer);
+            if(newclass==NULL) {
+                free(attrib);
+                return MS_FAILURE;
+            }
+            initClass(newclass);
+            
+            /*remember the new class's index so that:
+             * - we can delete the class when we've finished processing the layer
+             * - we can tell the pie rendering functions where it should read the size value
+             */
+            tmpclassindex=layer->numclasses; 
+            layer->numclasses++;
+            
+            /*create and attach a new styleObj to our temp class
+             * and bind the wanted attribute to its SIZE
+             */
+            styleObj *newstyle=msGrowClassStyles(newclass);
+            if(newstyle==NULL) {
+                free(attrib);
+                return MS_FAILURE;
+            }
+            initStyle(newstyle);
+            newclass->numstyles++;
+            newclass->name=strdup("__MS_SIZE_ATTRIBUTE_");
+            newstyle->bindings[MS_STYLE_BINDING_SIZE].item=strdup(attrib);
+            newstyle->numbindings++;
+            free(attrib);
         }
     
         annotate = msEvalContext(map, layer, layer->labelrequires);
@@ -496,7 +571,8 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
         switch(chartType) {
             case MS_CHART_TYPE_PIE:
-                status = msDrawPieChartLayer(map, layer, image,width);
+                status = msDrawPieChartLayer(map, layer, image,width,
+                        tmpclassindex,mindiameter,maxdiameter,minvalue,maxvalue);
                 break;
             case MS_CHART_TYPE_BAR:
                 status = msDrawBarChartLayer(map, layer, image,width,height);
@@ -506,6 +582,15 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
     
         msLayerClose(layer);  
+    }
+    /*
+     * if we're using a dynamic size for pie layers, free the temporary class we used
+     * so it doesn't appear in legends, etc...
+     */
+    if(tmpclassindex>=0) {
+        classObj *c=msRemoveClass(layer,tmpclassindex);
+        freeClass(c);
+        msFree(c);
     }
     return status;
 }
