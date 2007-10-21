@@ -86,18 +86,10 @@
 
 #ifdef CPL_MSB
 typedef agg::pixfmt_argb32 GDpixfmt; 
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32,mapserv_row_ptr_cache<int>,int> pixelFormat;
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat;
 #else
 typedef agg::pixfmt_bgra32 GDpixfmt;
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32,mapserv_row_ptr_cache<int>,int> pixelFormat;
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat_pre;
-
-//this how to render to a gdImg while ignoring its funky alpha channel
-//however this doesn't work with RGBA imagemode. un-ifdef the endesction in mapagg.h to use
-//typedef agg::pixfmt_alpha_blend_rgb_gd<ms_blender_bgr24,mapserv_row_ptr_cache<int> > pixelFormat;
-//typedef agg::pixfmt_alpha_blend_rgb_gd<ms_blender_bgr24_pre,mapserv_row_ptr_cache<int> > pixelFormat_pre;
-
+typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat;
 #endif
 
 
@@ -108,7 +100,6 @@ typedef agg::font_cache_manager<font_engine_type> font_manager_type;
 typedef agg::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 
 typedef agg::renderer_base<pixelFormat> renderer_base;
-typedef agg::renderer_base<pixelFormat_pre> renderer_base_pre;
 
 typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_aa;
 typedef agg::renderer_outline_aa<renderer_base> renderer_oaa;
@@ -247,9 +238,7 @@ public:
     AGGMapserverRenderer(mapserv_row_ptr_cache<int>  *ptr) :
         pRowCache(ptr),
         thePixelFormat(*pRowCache),
-        thePixelFormat_pre(*pRowCache),
         ren_base(thePixelFormat),
-        ren_base_pre(thePixelFormat_pre),
         ren_aa(ren_base),
         ren_prim(ren_base),
         ren_bin(ren_base),
@@ -385,12 +374,12 @@ public:
     void renderPathPixmapBGRA(agg::path_storage &line, GDpixfmt &pattern) {
         agg::pattern_filter_bilinear_rgba8 fltr;
         typedef agg::line_image_pattern<agg::pattern_filter_bilinear_rgba8> pattern_type;
-        typedef agg::renderer_outline_image<renderer_base_pre, pattern_type> renderer_img_type;
+        typedef agg::renderer_outline_image<renderer_base, pattern_type> renderer_img_type;
         typedef agg::rasterizer_outline_aa<renderer_img_type, agg::line_coord_sat> rasterizer_img_type;
         pattern_type patt(fltr);  
         
         patt.create(pattern);
-        renderer_img_type ren_img(ren_base_pre, patt);
+        renderer_img_type ren_img(ren_base, patt);
         rasterizer_img_type ras_img(ren_img);
         ras_img.add_path(line);
     }
@@ -602,7 +591,7 @@ public:
         img_source_type img_src(tile);
         span_gen_type sg(img_src, 0, 0);
         ras_aa.add_path(path);
-        agg::render_scanlines_aa(ras_aa, sl, ren_base_pre, sa, sg);
+        agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
     }
 
     ///render a single pixmap at a specified location
@@ -644,12 +633,12 @@ public:
             pixmap_bbox.line_to(x-ims_2,y+ims_2);
             pixmap_bbox.close_polygon();      
             ras_aa.add_path(pixmap_bbox);
-            agg::render_scanlines_aa(ras_aa, sl, ren_base_pre, sa, sg);
+            agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
         }
         else {
             //just copy the image at the correct location (we place the pixmap on 
             //the nearest integer pixel to avoid blurring)
-            ren_base_pre.blend_from(img_pixf,0,MS_NINT(x-img_pixf.width()/2.),MS_NINT(y-img_pixf.height()/2.));
+            ren_base.blend_from(img_pixf,0,MS_NINT(x-img_pixf.width()/2.),MS_NINT(y-img_pixf.height()/2.));
         }
     }
     
@@ -770,9 +759,7 @@ public:
 private:
     mapserv_row_ptr_cache<int>  *pRowCache;
     pixelFormat thePixelFormat;
-    pixelFormat_pre thePixelFormat_pre;
     renderer_base ren_base;
-    renderer_base_pre ren_base_pre;
     renderer_aa ren_aa;
     renderer_prim ren_prim;
     renderer_bin ren_bin;
