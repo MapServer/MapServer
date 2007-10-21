@@ -488,7 +488,10 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
         
         if(chartRangeProcessingKey) { /*if CHART_SIZE_RANGE was specified*/
-            char *attrib = malloc(strlen(chartRangeProcessingKey)+1);
+            char *attrib;
+            classObj *newclass;
+            styleObj *newstyle;
+            attrib = malloc(strlen(chartRangeProcessingKey)+1);
             switch(sscanf(chartRangeProcessingKey,"%s %f %f %f %f",attrib,
                     &mindiameter,&maxdiameter,&minvalue,&maxvalue))
             {
@@ -502,7 +505,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
             }
             /*create a new class in the layer containing the wanted attribute
              * as the SIZE of its first STYLE*/
-            classObj *newclass=msGrowLayerClasses(layer);
+            newclass=msGrowLayerClasses(layer);
             if(newclass==NULL) {
                 free(attrib);
                 return MS_FAILURE;
@@ -519,7 +522,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
             /*create and attach a new styleObj to our temp class
              * and bind the wanted attribute to its SIZE
              */
-            styleObj *newstyle=msGrowClassStyles(newclass);
+            newstyle=msGrowClassStyles(newclass);
             if(newstyle==NULL) {
                 free(attrib);
                 return MS_FAILURE;
