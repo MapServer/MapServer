@@ -2554,7 +2554,6 @@ void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct)
         for (x = 0; (x < w); x++) {
             agg::int8u *src_p = (agg::int8u*)&(gdImageTrueColorPixel(src->img.gd, x, y));
             if(src_p[gd_color_order::A] == 0) continue;
-            //printf("pix: %d %d %d %d\n",src_p[0],src_p[1],src_p[2],src_p[3]);
             //get a pointer to the destination pixel
             agg::int8u *p = (agg::int8u*)&(gdImageTrueColorPixel(dst->img.gd, x, y));
 
