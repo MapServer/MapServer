@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   if( argc < 3 ) {
     fprintf(stdout,
             "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
-            "               [-l layer1 \"[layers2...] ]\" [-i format]\n"
+            "               [-l \"layer1 [layers2...]\"] [-i format]\n"
             "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n]\n");
 
 
