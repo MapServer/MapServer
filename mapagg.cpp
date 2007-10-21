@@ -85,12 +85,15 @@
 #define LINESPACE 1.33 //space beween text lines... from GD
 
 #ifdef CPL_MSB
-typedef agg::pixfmt_argb32 GDpixfmt; 
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_argb32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::order_argb gd_color_order;
 #else
-typedef agg::pixfmt_bgra32 GDpixfmt;
-typedef agg::pixfmt_alpha_blend_rgba<agg::blender_bgra32_pre,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef agg::order_bgra gd_color_order;
 #endif
+
+typedef agg::blender_rgba_pre<agg::rgba8, gd_color_order> blender_pre; 
+typedef agg::pixfmt_alpha_blend_rgba<blender_pre, agg::rendering_buffer, agg::pixel32_type> GDpixfmt;
+typedef agg::pixfmt_alpha_blend_rgba<blender_pre,mapserv_row_ptr_cache<int>,int> pixelFormat;
+
 
 
 
@@ -2541,36 +2544,30 @@ void msAlphaAGG2GD(imageObj *im) {
 ///merge image src over image dst with pct opacity
 void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct)
 { 
-  msAlphaGD2AGG(dst);
-  msAlphaGD2AGG(src);
-  int x, y;
-  int w,h;
-  w=dst->width;h=dst->height;
-  for (y = 0; (y < h); y++) {
-    for (x = 0; (x < w); x++) {
-      int src_c = gdImageTrueColorPixel(src->img.gd, x, y);
-      int dst_c = gdImageTrueColorPixel(dst->img.gd, x, y);
-      int red, green, blue;
-      int res_alpha;
-      float src_alpha = ((src_c&0xff000000) >> 24)/255.;
-      float dst_alpha = ((dst_c&0xff000000) >> 24)/255.;
+    msAlphaGD2AGG(dst);
+    msAlphaGD2AGG(src);
+    int x, y;
+    int w,h;
+    w=dst->width;h=dst->height;
+    float factor =((float)pct)/100.;
+    for (y = 0; (y < h); y++) {
+        for (x = 0; (x < w); x++) {
+            agg::int8u *src_p = (agg::int8u*)&(gdImageTrueColorPixel(src->img.gd, x, y));
+            if(src_p[gd_color_order::A] == 0) continue;
+            //printf("pix: %d %d %d %d\n",src_p[0],src_p[1],src_p[2],src_p[3]);
+            //get a pointer to the destination pixel
+            agg::int8u *p = (agg::int8u*)&(gdImageTrueColorPixel(dst->img.gd, x, y));
 
-      if( src_alpha == 0 )
-        continue;
-      
-      double pctd=pct/100.;
-      src_alpha=src_alpha*pctd;
-      float one_src_alpha=1.0-src_alpha;
-      res_alpha=MS_NINT((src_alpha+dst_alpha*one_src_alpha)*255);
-
-
-      red = MS_NINT(gdTrueColorGetRed( src_c )*pctd + gdTrueColorGetRed( dst_c ) *one_src_alpha);
-      green = MS_NINT(gdTrueColorGetGreen( src_c )*pctd  + gdTrueColorGetGreen( dst_c ) * one_src_alpha);
-      blue = MS_NINT(gdTrueColorGetBlue( src_c )*pctd  + gdTrueColorGetBlue( dst_c ) * one_src_alpha);
-            
-      gdImageTrueColorPixel(dst->img.gd,x,y) = gdTrueColorAlpha( red, green, blue, res_alpha );
+            //blend the src pixel over it.
+            //the color channels must also be scaled by the opacity
+            //as the blender expects premultiplied colors
+            agg::blender_bgra32_pre::blend_pix(p,
+                    MS_NINT(src_p[gd_color_order::R]*factor),
+                    MS_NINT(src_p[gd_color_order::G]*factor),
+                    MS_NINT(src_p[gd_color_order::B]*factor),
+                    MS_NINT(src_p[gd_color_order::A]*factor));
+        }
     }
-  }
 }
 
 #endif
