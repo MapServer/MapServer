@@ -2009,9 +2009,16 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
              if(msLayerOpen((GET_LAYER(map, i))) == MS_SUCCESS)
              {
                 msLayerGetItems((GET_LAYER(map, i)));
+                pszTmp = msOWSLookupMetadata(&(map->web.metadata), "SO", "maxfeatures");
+                if (pszTmp != NULL)
+                 n1 = atoi(pszTmp);
+                else
+                 n1 = 0;
                 for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                 {
                     msSOSAddMemberNode(psRootNode, map, (GET_LAYER(map, i)), j);
+                    if (j == n1-1) 
+                       break;
                 }
                 msLayerClose((GET_LAYER(map, i)));
              }
