@@ -190,7 +190,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"GD/WBMP") == 0 )
     {
         format = msAllocOutputFormat( map, "wbmp", driver );
-        format->mimetype = strdup("image/wbmp");
+        format->mimetype = strdup("image/vnd.wap.wbmp");
         format->imagemode = MS_IMAGEMODE_PC256;
         format->extension = strdup("wbmp");
         format->renderer = MS_RENDER_WITH_GD;

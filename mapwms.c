@@ -1321,7 +1321,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 #endif
 #ifdef USE_GD_WBMP
                        if (!mimetype)
-                         mimetype = strdup("image/wbmp");
+                         mimetype = strdup("image/vnd.wap.wbmp");
 #endif
                        if (!mimetype)
                          mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);         

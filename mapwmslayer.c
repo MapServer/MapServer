@@ -280,7 +280,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 #endif
 #ifdef USE_GD_WBMP
                 || strcasecmp(papszTok[i], "WBMP")
-                || strcasecmp(papszTok[i], "image/wbmp")
+                || strcasecmp(papszTok[i], "image/vnd.wap.wbmp")
 #endif
                 )
             {

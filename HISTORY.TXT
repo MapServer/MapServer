@@ -57,6 +57,8 @@ Current Version (5.1-dev, SVN trunk):
 
 - Improve configuration logic for fastcgi (#2355).
 
+- WMS: image/wbmp should be image/vnd.wap.wbmp (#2360)
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
