@@ -2180,15 +2180,19 @@ void msPieSliceAGG ( imageObj *image, styleObj *style, double center_x, double c
     }
 
     //create a path with pie slice
-    agg::path_storage path;
+    agg::path_storage path=ren->get_path();
+    path.remove_all();
     path.move_to ( center_x,center_y );
     //NOTE: agg angles are anti-trigonometric
     agg::arc arc ( center_x,center_y,radius,radius,start*MS_PI/180.,end*MS_PI/180.,true );
     arc.approximation_scale ( 1 );
     path.concat_path(arc);
     path.line_to ( center_x,center_y );
-    path.close_polygon();  
-    ren->renderPathSolid(path,&(style->color),&(style->outlinecolor),(style->width!=-1)?style->width:1);
+    path.close_polygon();
+    if(MS_VALID_COLOR(style->outlinecolor))
+        ren->renderPathSolid(path,&(style->color),&(style->outlinecolor),(style->width!=-1)?style->width:1);
+    else
+        ren->renderPathSolid(path,&(style->color),&(style->color),0.75); //render with same outlinecolor to avoid faint outline
 }
 
 // -----------------------------------------------------------------------------------------
@@ -2200,7 +2204,8 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
         double c2_x, double c2_y )
 {
     AGGMapserverRenderer* ren = getAGGRenderer(image);
-    agg::path_storage path;
+    agg::path_storage path=ren->get_path();
+    path.remove_all();
     path.move_to ( c1_x,c1_y );
     path.line_to ( c2_x,c1_y );
     path.line_to ( c2_x,c2_y );
