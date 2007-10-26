@@ -814,34 +814,19 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
 
   if(shape->numlines == 0) return; /* nothing to transform */
 
-  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove co-linear vertices */
-  
-    for(i=0; i<shape->numlines; i++) { /* for each part */
-      
-      shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[0].x, extent.minx, inv_cs);
-      shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[0].y, extent.maxy, inv_cs);
-      
-      for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
-	
-	shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
-	shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
-
-	if(k == 1) {
-	  if((shape->line[i].point[0].x != shape->line[i].point[1].x) || (shape->line[i].point[0].y != shape->line[i].point[1].y))
-	    k++;
-	} else {
-	  if((shape->line[i].point[k-1].x != shape->line[i].point[k].x) || (shape->line[i].point[k-1].y != shape->line[i].point[k].y)) {
-	    if(((shape->line[i].point[k-2].y - shape->line[i].point[k-1].y)*(shape->line[i].point[k-1].x - shape->line[i].point[k].x)) == ((shape->line[i].point[k-2].x - shape->line[i].point[k-1].x)*(shape->line[i].point[k-1].y - shape->line[i].point[k].y))) {	    
-	      shape->line[i].point[k-1].x = shape->line[i].point[k].x;
-	      shape->line[i].point[k-1].y = shape->line[i].point[k].y;	
-	    } else {
-	      k++;
-	    }
-	  }
-	}
+  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove duplicate vertices */
+      for(i=0; i<shape->numlines; i++) { /* for each part */
+          shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[0].x, extent.minx, inv_cs);
+          shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[0].y, extent.maxy, inv_cs);
+          for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
+              shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+              shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
+              if(shape->line[i].point[k].x!=shape->line[i].point[k-1].x ||
+                      shape->line[i].point[k].y!=shape->line[i].point[k-1].y)
+                  k++;
+          }
+          shape->line[i].numpoints = k; /* save actual number kept */
       }
-      shape->line[i].numpoints = k; /* save actual number kept */
-    }
   } else { /* points or untyped shapes */
     for(i=0; i<shape->numlines; i++) { /* for each part */
       for(j=1; j < shape->line[i].numpoints; j++ ) {
