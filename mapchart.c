@@ -487,7 +487,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
             }
         }
         
-        if(chartRangeProcessingKey) { /*if CHART_SIZE_RANGE was specified*/
+        if(chartType==MS_CHART_TYPE_PIE && chartRangeProcessingKey) { /*if CHART_SIZE_RANGE was specified*/
             char *attrib;
             classObj *newclass;
             styleObj *newstyle;
