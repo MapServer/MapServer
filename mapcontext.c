@@ -891,6 +891,9 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   layerObj *layer;
 
   /* Init new layer */
+  if(msGrowMapLayers(map) == NULL)
+    return MS_FAILURE;
+  
   layer = (GET_LAYER(map, map->numlayers));
   initLayer(layer, map);
   layer->map = (mapObj *)map;
