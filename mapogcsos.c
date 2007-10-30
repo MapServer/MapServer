@@ -935,17 +935,17 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
 
     psMainNode = xmlAddChild(psRootNode, msOWSCommonOperationsMetadata());
 
-    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetCapabilities", 1, script_url_encoded));
+    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetCapabilities", OWS_METHOD_GET, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "service", "SOS"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "version", (char *)pszSOSVersion));
 
-    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("DescribeSensor", 1, script_url_encoded));
+    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("DescribeSensor", OWS_METHOD_GET, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "service", "SOS"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "version", (char *)pszSOSVersion));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "sensorid", "urn:ogc:object:procedure"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "outputFormat", (char *)pszSOSDescribeSensorMimeType));
 
-    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetObservation", 1, script_url_encoded));
+    psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation("GetObservation", OWS_METHOD_GET, script_url_encoded));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "service", "SOS"));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "version", (char *)pszSOSVersion));
     psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType("Parameter", "offering", "urn:ogc:object:offering"));

@@ -74,6 +74,10 @@ xmlNodePtr msOWSCommonServiceProvider(mapObj *map);
 
 xmlNodePtr msOWSCommonOperationsMetadata();
 
+#define OWS_METHOD_GET     1
+#define OWS_METHOD_POST    2
+#define OWS_METHOD_GETPOST 3
+
 xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *url);
 
 xmlNodePtr msOWSCommonOperationsMetadataDomainType(char *elname, char *name, char *values);

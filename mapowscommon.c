@@ -333,11 +333,10 @@ xmlNodePtr msOWSCommonOperationsMetadata() {
  * returns an Operation element of OperationsMetadata as per subclause 7.4.5
  *
  * @param name name of the Operation
- * @param method HTTP method (1 for GET only, 2 for POST only, 3 for GET and POST)
+ * @param method HTTP method: OWS_METHOD_GET, OWS_METHOD_POST or OWS_METHOD_GETPOST)
  * @param url online resource URL
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
- *
  */
 
 xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *url) {
@@ -360,13 +359,13 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *
 
   psSubNode = xmlNewChild(psNode, psNs, BAD_CAST "HTTP", NULL);
 
-  if (method  == 1 || method == 3) {
+  if (method  == OWS_METHOD_GET || method == OWS_METHOD_GETPOST ) {
     psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Get", NULL);
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
   }
 
-  if (method == 2 || method == 3) {
+  if (method == OWS_METHOD_POST || method == OWS_METHOD_GETPOST ) {
     psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Post", NULL);
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
