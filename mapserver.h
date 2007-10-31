@@ -367,6 +367,10 @@ typedef enum
 } FilterNodeType;
 
 
+/************************************************************************/
+/*                          FilterEncodingNode                          */
+/************************************************************************/
+
 typedef struct _FilterNode
 {
     FilterNodeType      eType;
@@ -375,12 +379,15 @@ typedef struct _FilterNode
 
     struct _FilterNode  *psLeftNode;
     struct _FilterNode  *psRightNode;
+} FilterEncodingNode;
 
-      
-}FilterEncodingNode;
+/************************************************************************/
+/*                             labelPathObj                             */
+/*                                                                      */
+/*      Label path object - used to hold path and bounds of curved      */
+/*      labels - Bug #1620 implementation.                              */
+/************************************************************************/
 
-
-/* Label path object - used to hold path and bounds of curved labels - Bug #1620 implementation. */
 typedef struct {
   multipointObj path;
   shapeObj bounds;
@@ -388,115 +395,145 @@ typedef struct {
 } labelPathObj;
 #endif /*SWIG*/
 
-/* FONTSET OBJECT - used to hold aliases for TRUETYPE fonts */
-    typedef struct {
+/************************************************************************/
+/*                              fontSetObj                              */
+/*                                                                      */
+/*      used to hold aliases for TRUETYPE fonts                         */
+/************************************************************************/
+
+typedef struct {
 #ifdef SWIG
-        %immutable;
+    %immutable;
 #endif
-        char *filename; 
-        int numfonts;
-        hashTableObj fonts;
+    char *filename; 
+    int numfonts;
+    hashTableObj fonts;
 #ifdef SWIG
-        %mutable;
+    %mutable;
 #endif
 
 #ifndef SWIG
-        struct map_obj *map;
+    struct map_obj *map;
 #endif
-    } fontSetObj;
+} fontSetObj;
 
-/* FEATURE LIST OBJECT - for inline features, shape caches and queries */
+/************************************************************************/
+/*                         featttureListNodeObj                         */
+/*                                                                      */
+/*      for inline features, shape caches and queries                   */
+/************************************************************************/
 #ifndef SWIG
-    typedef struct listNode {
-        shapeObj shape;
-        struct listNode *next;
-        struct listNode *tailifhead; /* this is the tail node in the list, if this is the head element, otherwise NULL */
-    } featureListNodeObj;
+typedef struct listNode {
+    shapeObj shape;
+    struct listNode *next;
+    struct listNode *tailifhead; /* this is the tail node in the list, if this is the head element, otherwise NULL */
+} featureListNodeObj;
 
-    typedef featureListNodeObj * featureListNodeObjPtr;
-#endif
-
-#ifndef SWIG
-/* PALETTE OBJECT - used to hold colors while a map file is read */
-    typedef struct {
-        colorObj colors[MS_MAXCOLORS-1];
-        int      colorvalue[MS_MAXCOLORS-1];
-        int numcolors;
-    } paletteObj;
+typedef featureListNodeObj * featureListNodeObjPtr;
 #endif
 
-/* EXPRESSION OBJECT */
+/************************************************************************/
+/*                              paletteObj                              */
+/*                                                                      */
+/*      used to hold colors while a map file is read                    */
+/************************************************************************/
 #ifndef SWIG
-    typedef struct {
-        char *string;
-        int type;
-        /* container for expression options such as case-insensitiveness */
-        /* This is a boolean container. */
-        int flags;
-
-        /* logical expression options */
-        char **items;
-        int *indexes;
-        int numitems;
-
-        /* regular expression options */
-        ms_regex_t regex; /* compiled regular expression to be matched */
-        int compiled;
-    } expressionObj;
+typedef struct {
+    colorObj colors[MS_MAXCOLORS-1];
+    int      colorvalue[MS_MAXCOLORS-1];
+    int numcolors;
+} paletteObj;
 #endif
 
+/************************************************************************/
+/*                            expressionObj                             */
+/************************************************************************/
+
 #ifndef SWIG
-/* JOIN OBJECT - simple way to access other XBase files, one-to-one or one-to-many supported */
-    typedef struct {
-        char *name;
-        char **items, **values; /* items/values (process 1 record at a time) */
-        int numitems;
+typedef struct {
+    char *string;
+    int type;
+    /* container for expression options such as case-insensitiveness */
+    /* This is a boolean container. */
+    int flags;
+    
+    /* logical expression options */
+    char **items;
+    int *indexes;
+    int numitems;
+    
+    /* regular expression options */
+    ms_regex_t regex; /* compiled regular expression to be matched */
+    int compiled;
+} expressionObj;
+#endif
 
-        char *table;
-        char *from, *to; /* item names */
+/************************************************************************/
+/*                               joinObj                                */
+/*                                                                      */
+/*      simple way to access other XBase files, one-to-one or           */
+/*      one-to-many supported                                           */
+/************************************************************************/
 
-        void *joininfo; /* vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access */
- 
-        char *header, *footer;
+#ifndef SWIG
+typedef struct {
+    char *name;
+    char **items, **values; /* items/values (process 1 record at a time) */
+    int numitems;
+    
+    char *table;
+    char *from, *to; /* item names */
+    
+    void *joininfo; /* vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access */
+    
+    char *header, *footer;
 #ifndef __cplusplus
-        char *template;
+    char *template;
 #else
-        char *_template;
+    char *_template;
+#endif
+    
+    enum MS_JOIN_TYPE type;
+    char *connection;
+    enum MS_JOIN_CONNECTION_TYPE connectiontype;
+} joinObj;
 #endif
 
-        enum MS_JOIN_TYPE type;
-        char *connection;
-        enum MS_JOIN_CONNECTION_TYPE connectiontype;
-    } joinObj;
-#endif
-
-/* OUTPUT FORMAT OBJECT - see mapoutput.c for most related code. */
-    typedef struct {
-        char *name;
-        char *mimetype;
-        char *driver;
-        char *extension;
-        int  renderer;  /* MS_RENDER_WITH_* */
-        int  imagemode; /* MS_IMAGEMODE_* value. */
-        int  transparent;
-        int  bands;
-        int  numformatoptions;
-        char **formatoptions;
-        int  refcount;
-        int inmapfile; /* boolean value for writing */
-    } outputFormatObj;
+/************************************************************************/
+/*                           outputFormatObj                            */
+/*                                                                      */
+/*      see mapoutput.c for most related code.                          */
+/************************************************************************/
+typedef struct {
+    char *name;
+    char *mimetype;
+    char *driver;
+    char *extension;
+    int  renderer;  /* MS_RENDER_WITH_* */
+    int  imagemode; /* MS_IMAGEMODE_* value. */
+    int  transparent;
+    int  bands;
+    int  numformatoptions;
+    char **formatoptions;
+    int  refcount;
+    int inmapfile; /* boolean value for writing */
+} outputFormatObj;
 
 /* The following is used for "don't care" values in transparent, interlace and
    imagequality values. */
 #define MS_NOOVERRIDE  -1111 
 
-/* QUERY MAP OBJECT - used to visualize query results */
-    typedef struct {
-        int height, width;
-        int status;
-        int style; /* HILITE, SELECTED or NORMAL */
-        colorObj color;
-    } queryMapObj;
+/************************************************************************/
+/*                             queryMapObj                              */
+/*                                                                      */
+/*      used to visualize query results                                 */
+/************************************************************************/
+typedef struct {
+    int height, width;
+    int status;
+    int style; /* HILITE, SELECTED or NORMAL */
+    colorObj color;
+} queryMapObj;
 
 /* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
 #ifndef SWIG
@@ -505,14 +542,23 @@ enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_ANGLE, MS_S
 #define MS_LABEL_BINDING_LENGTH 6
 enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY};
 
-/* ATTRIBUTE BINDING OBJECT - holds parameters necessary to bind an item to mapfile property (e.g. style size) */
+/************************************************************************/
+/*                         attributeBindingObj                          */
+/************************************************************************/
+
 typedef struct {
   char *item;
   int index;
 } attributeBindingObj;
 #endif
 
-/* LABEL OBJECT - parameters needed to annotate a layer, legend or scalebar */
+
+/************************************************************************/
+/*                               labelObj                               */
+/*                                                                      */
+/*      parameters needed to annotate a layer, legend or scalebar       */
+/************************************************************************/
+
 typedef struct {
   char *font;
   enum MS_FONT_TYPE type;
@@ -562,7 +608,12 @@ typedef struct {
 
 } labelObj;
 
-/* WEB OBJECT - holds parameters for a mapserver/mapscript interface */
+/************************************************************************/
+/*                                webObj                                */
+/*                                                                      */
+/*      holds parameters for a mapserver/mapscript interface            */
+/************************************************************************/
+
 typedef struct {
   char *log;
   char *imagepath, *imageurl;
@@ -601,7 +652,13 @@ typedef struct {
 
 } webObj;
 
-/* STYLE OBJECT - holds parameters for symbolization, multiple styles may be applied within a classObj */
+/************************************************************************/
+/*                               styleObj                               */
+/*                                                                      */
+/*      holds parameters for symbolization, multiple styles may be      */
+/*      applied within a classObj                                       */
+/************************************************************************/
+
 typedef struct {
 #ifdef SWIG
 %immutable;
@@ -646,7 +703,12 @@ typedef struct {
 #endif
 } styleObj;
 
-/* CLASS OBJECT - basic symbolization and classification information */
+/************************************************************************/
+/*                               classObj                               */
+/*                                                                      */
+/*      basic symbolization and classification information              */
+/************************************************************************/
+
 typedef struct class_obj{
 #ifndef SWIG
   expressionObj expression; /* the expression to be matched */
@@ -706,8 +768,15 @@ typedef struct class_obj{
   char *keyimage;
 } classObj;
 
-/* LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
-   Note: These are scriptable, but are read only. */
+/************************************************************************/
+/*                         labelCacheMemberObj                          */
+/*                                                                      */
+/*      structures to implement label caching and collision             */
+/*      avoidance etc                                                   */
+/*                                                                      */
+/*        Note: These are scriptable, but are read only.                */
+/************************************************************************/
+
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
@@ -734,11 +803,17 @@ typedef struct {
   
 } labelCacheMemberObj;
 
+/************************************************************************/
+/*                         markerCacheMemberObj                         */
+/************************************************************************/
 typedef struct {
   int id; /* corresponding label */
   shapeObj *poly; /* marker bounding box (POINT layers only) */
 } markerCacheMemberObj;
 
+/************************************************************************/
+/*                          labelCacheSlotObj                           */
+/************************************************************************/
 typedef struct {
   labelCacheMemberObj *labels;
   int numlabels;
@@ -748,6 +823,9 @@ typedef struct {
   int markercachesize;
 } labelCacheSlotObj;
 
+/************************************************************************/
+/*                            labelCacheObj                             */
+/************************************************************************/
 typedef struct {
     /* One labelCacheSlotObj for each priority level */
     labelCacheSlotObj slots[MS_MAX_LABEL_PRIORITY];
@@ -758,6 +836,9 @@ typedef struct {
     int numlabels;
 } labelCacheObj;
 
+/************************************************************************/
+/*                         resultCacheMemberObj                         */
+/************************************************************************/
 typedef struct {
   long shapeindex;
   int tileindex;
@@ -768,6 +849,9 @@ typedef struct {
 #endif /* SWIG */
 
 
+/************************************************************************/
+/*                            resultCacheObj                            */
+/************************************************************************/
 typedef struct {
 
 #ifndef SWIG
@@ -787,7 +871,9 @@ typedef struct {
 } resultCacheObj;
 
 
-/* SYMBOLSET OBJECT */
+/************************************************************************/
+/*                             symbolSetObj                             */
+/************************************************************************/
 typedef struct {
   char *filename;
   int imagecachesize;
@@ -805,7 +891,9 @@ typedef struct {
 #endif /* not SWIG */
 } symbolSetObj;
 
-/* REFERENCE MAP OBJECT */
+/************************************************************************/
+/*                           referenceMapObj                            */
+/************************************************************************/
 typedef struct {
   rectObj extent;
   int height, width;
@@ -827,7 +915,9 @@ typedef struct {
 #endif /* SWIG */
 } referenceMapObj;
 
-/* SCALEBAR OBJECT */
+/************************************************************************/
+/*                             scalebarObj                              */
+/************************************************************************/
 typedef struct {
   colorObj imagecolor;
   int height, width;
@@ -847,7 +937,10 @@ typedef struct {
   int postlabelcache;
 } scalebarObj;
 
-/* LEGEND OBJECT */
+/************************************************************************/
+/*                              legendObj                               */
+/************************************************************************/
+
 typedef struct {
   colorObj imagecolor;
 #ifdef SWIG
@@ -882,6 +975,9 @@ typedef struct {
 #endif /* SWIG */
 } legendObj;
 
+/************************************************************************/
+/*                             graticuleObj                             */
+/************************************************************************/
 #ifndef SWIG
 typedef struct
 {
@@ -915,7 +1011,12 @@ typedef struct layerVTable layerVTableObj;
 
 #endif /*SWIG*/
 
-/* LAYER OBJECT - basic unit of a map */
+/************************************************************************/
+/*                               layerObj                               */
+/*                                                                      */
+/*      base unit of a map.                                             */
+/************************************************************************/
+
 typedef struct layer_obj {
 
   char *classitem; /* .DBF item to be used for symbol lookup */
@@ -1067,8 +1168,14 @@ typedef struct layer_obj {
 #endif /* SWIG */
 } layerObj;
 
+/************************************************************************/
+/*                                mapObj                                */
+/*                                                                      */
+/*      encompasses everything used in an Internet mapping              */
+/*      application.                                                    */
+/************************************************************************/
 
-/* MAP OBJECT - encompasses everything used in an Internet mapping application */
+/* MAP OBJECT -  */
 typedef struct map_obj{ /* structure for a map */
   char *name; /* small identifier for naming etc. */
   int status; /* is map creation on or off */
@@ -1173,8 +1280,10 @@ typedef struct map_obj{ /* structure for a map */
 } mapObj;
 
 
+/************************************************************************/
+/*                                pdfObj                                */
+/************************************************************************/
 
-/* PDF Object structure */
 #ifdef USE_PDF
 typedef struct {
   mapObj *map;
@@ -1183,6 +1292,9 @@ typedef struct {
 } PDFObj; 
 #endif
 
+/************************************************************************/
+/*                                SVGObj                                */
+/************************************************************************/
 #ifndef SWIG
 typedef struct  {
   mapObj *map;
@@ -1193,7 +1305,11 @@ typedef struct  {
 } SVGObj;
 #endif /*SWIG*/
 
-/* IMAGE OBJECT - a wrapper for GD images */
+/************************************************************************/
+/*                               imageObj                               */
+/*                                                                      */
+/*      A wrapper for GD and other images.                              */
+/************************************************************************/
 typedef struct {
 #ifdef SWIG
 %immutable;
@@ -1231,10 +1347,13 @@ typedef struct {
 } imageObj;
 
 
-/* LAYER_VTABLE, contains function pointers to the layer operations 
- * If you add new functions to here, remember to update
- * populateVirtualTable in maplayer.c
- */
+/************************************************************************/
+/*                             layerVTable                              */
+/*                                                                      */
+/*      contains function pointers to the layer operations.  If you     */
+/*      add new functions to here, remember to update                   */
+/*      populateVirtualTable in maplayer.c                              */
+/************************************************************************/
 #ifndef SWIG
 struct layerVTable {
     int (*LayerInitItemInfo)(layerObj *layer);
