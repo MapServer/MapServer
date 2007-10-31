@@ -506,6 +506,7 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
 xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, double miny, double maxx, double maxy) {
   char LowerCorner[100];
   char UpperCorner[100];
+  char dim_string[100];
 
   xmlNsPtr   psNs       = NULL;
   xmlNodePtr psRootNode = NULL;
@@ -519,7 +520,8 @@ xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, 
   /* add attributes to the root element */
   xmlNewProp(psRootNode, BAD_CAST "crs", BAD_CAST crs);
 
-  xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dimensions);
+  sprintf( dim_string, "%d", dimensions );
+  xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
 
   sprintf(LowerCorner, "%g %g", minx, miny);
   sprintf(UpperCorner, "%g %g", maxx, maxy);
@@ -549,6 +551,7 @@ xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, 
 xmlNodePtr msOWSCommonWGS84BoundingBox(int dimensions, double minx, double miny, double maxx, double maxy) {
   char LowerCorner[100];
   char UpperCorner[100];
+  char dim_string[100];
 
   xmlNsPtr   psNs       = NULL;
   xmlNodePtr psRootNode = NULL;
@@ -559,7 +562,8 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(int dimensions, double minx, double miny,
   /* create element name */
   psRootNode = xmlNewNode(psNs, BAD_CAST "WGS84BoundingBox");
 
-  xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dimensions);
+  sprintf( dim_string, "%d", dimensions );
+  xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
 
   sprintf(LowerCorner, "%g %g", minx, miny);
   sprintf(UpperCorner, "%g %g", maxx, maxy);
