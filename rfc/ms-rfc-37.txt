@@ -1,0 +1,336 @@
+******************************************************************************
+	MapServer Spatial Reference Improvements and Additions
+******************************************************************************
+
+:Author: Howard Butler
+:Contact: hobu.inc@gmail.com
+:Revision: $Revision: 467 $
+:Date: $Date: 2007-10-30 14:19:51 -0500 (Tue, 30 Oct 2007) $
+
+.. sectnum::
+
+.. contents::
+    :depth: 3
+    :backlinks: top
+
+
+==============================================================================
+Purpose
+==============================================================================
+
+To provide MapServer with the ability to set its PROJECTION information from 
+a number of sources, including directly from the datasource itself, in an 
+attempt to lessen the burden related to dealing with coordinate system 
+information on users.  These improvements will be optionally available and
+not interfere with previous PROJECTION defintion methods.  
+
+==============================================================================
+The History of Spatial References in MapServer
+==============================================================================
+
+MapServer's spatial reference support is quite anemic by many standards.  
+While most of the data sources MapServer interacts with support describing 
+the spatial reference of contained layers, MapServer has historically dropped 
+the information on the floor or completely ignored it.  
+
+MapServer's reprojection machinery keys off the fact that a LAYER's 
+PROJECTION is different than the MAP's.  When this is the case, MapServer 
+reprojects the LAYER's data to the MAP's spatial reference during a map draw. 
+OGC services also interact here, and when a spatial reference is specified as 
+"available" using the METADATA mechanism, a client can request maps in a 
+different spatial reference than is specified by default, which starts the 
+reprojection machinery.
+
+Definition
+----------
+
+MapServer has historically used two different approaches for defining the 
+spatial reference of its data -- EPSG/ESRI codes in the form: 
+
+::
+
+    PROJECTION
+        "init=epsg:4326"
+    END
+
+And proj4-formated definitions in the form:
+
+::
+
+    PROJECTION
+    	"proj=cea"
+    	"lon_0=0"
+    	"lat_ts=45"
+    	"x_0=0"
+    	"y_0=0"
+    	"ellps=WGS84"
+    	"units=m"
+    	"no_defs"
+    END
+
+A third, and rather unknown option is available exclusively to WMS -- the 
+EPSG AUTO definition, where MapServer attempts to determine the spatial 
+reference from the data itself.  This method currently only works for 
+OGR and GDAL data sources, and it is only available when GDAL/OGR is 
+linked into MapServer.
+
+Performance Observations
+------------------------
+
+MapServer's current spatial reference story is focussed on two things -- 
+simple description and ensuring that unnecessary data reprojection doesn't 
+happen.  MapServer currently uses proj4 directly to do its data reprojection, 
+and this is the impetus for defining coordinate systems in proj4 format.  For
+people wanting the best performance but still requiring data reprojection, 
+defining your spatial references in proj4 format is a must.  
+
+Alternatively, the EPSG/ESRI code definition of MapServer's spatial references 
+allows MapServer to offload the lookup of proj4 descriptions to proj4 itself, 
+with a simple file-based lookup table.  This mechanism is currently a 
+bottleneck, however, as each lookup requires trolling through a file to 
+match the given identifier and returning the proj4 definition.  
+
+Usability
+---------
+
+The usability of these two mechanism can be a nightmare for users.  First, 
+most of the spatial reference descriptions that people work with are of the 
+WKT variety -- not proj4.  While it is straightforward to set the PROJECTION 
+information for data with a known EPSG value, custom projections or those 
+not generally available in the EPSG database require the user to somehow 
+translate their WKT into proj4 format and paste it into their mapfile.  
+
+Additionally, this author has developed a website, http://spatialreference.org, 
+to ease this pain, but it is ultimately a stopgap, and not a permanent 
+solution to the problem.  It is not practical to be downloading the 
+spatial reference for each and every layer in a mapfile on every map draw 
+from a website.  spatialreference.org does provide some conversion utilities 
+to allow a user to paste in WKT and have it return MapServer PROJECTION blocks,
+but this approach still foists pain and misery on the users.
+
+==============================================================================
+Specification Features
+==============================================================================
+
+Two keywords would be added to the PROJECTION block to trigger the new 
+behavior.  Without these keywords, MapServer will continue to behave as before, 
+assuming the inputted projection is either an EPSG code or proj4 definition.
+
+::
+
+    PROJECTION
+        TYPE TYPEENUM
+        VALUE "A definition"
+    END
+
+The following TYPE enumerations would be supported:
+
+* NATIVE
+* PROJ4
+* EPSG
+* FILE
+* OGCWKT
+* ESRIWKT
+
+
+VALUE is then defined as a spatial reference definition in the form denoted 
+by the enumeration.  See below for some examples:
+
+::
+
+    # Use the what the layer defines as the projection definition.  
+    # This may not be available for all data sources or layer types 
+    # (shapefile, SDE, OGR, etc.).
+    PROJECTION
+        TYPE NATIVE
+    END
+
+:: 
+    
+    # Use a proj4 definition (this is essentially the same as usual except
+    # defined in a different way)
+    PROJECTION
+        TYPE PROJ4
+        VALUE "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+    END
+
+::
+
+    # Use an EPSG code
+    PROJECTION
+        TYPE EPSG
+        VALUE "4326"
+    END
+
+::
+
+    # Read the definition from a file
+    PROJECTION
+        TYPE FILE
+        VALUE "../myfile.prj"
+    END
+
+::
+
+    # Use an OGC WKT definition (escaping may be required)
+    PROJECTION
+        TYPE OGCWKT
+        VALUE 'GEOGCS["WGS 84",
+                    DATUM["WGS_1984",
+                        SPHEROID["WGS 84",6378137,298.257223563,
+                            AUTHORITY["EPSG","7030"]],
+                        AUTHORITY["EPSG","6326"]],
+                    PRIMEM["Greenwich",0,
+                        AUTHORITY["EPSG","8901"]],
+                    UNIT["degree",0.01745329251994328,
+                        AUTHORITY["EPSG","9122"]],
+                    AUTHORITY["EPSG","4326"]]'
+    END
+
+::
+
+    # Use an ESRI WKT definition (escaping may be required)
+    PROJECTION
+        TYPE ESRIWKT
+        VALUE 'GEOGCS["GCS_WGS_1984",
+                    DATUM["D_WGS_1984",
+                        SPHEROID["WGS_1984",6378137,298.257223563]],
+                        PRIMEM["Greenwich",0],
+                        UNIT["Degree",0.017453292519943295]]'
+    END
+
+
+
+==============================================================================
+Implementation Details
+==============================================================================
+
+It is important that MapServer's previous spatial reference definition 
+behavior be preserved.  First, drastically changing the PROJECTION defintions 
+would mean a lot of unnecessary mapfile churn.  Second, continuing to define 
+spatial references in proj4 format as before will be the most performant.
+
+Implementation of this RFC will encompass four items:
+
+1) Additional spatial reference type enumerations will be added.
+
+2) Additional keywords to the PROJECTION block in the mapfile. If these 
+   keywords are not set, the MapServer's previous behavior with respect to 
+   projections will continue.
+
+2) Addition of a method to the LAYER virtual table so layers can support 
+   returning the spatial reference in a variety of formats (OGCWKT, ESRIWKT, 
+   proj4, EPSG).
+
+3) Additional methods will be added to the MapScript projectionObj to support 
+   setting the necessary TYPE and VALUE members to utilize the new 
+   functionality.
+   
+
+TYPE Enumerations
+-----------------
+
+The following TYPE enumerations will be added to support SRS definition types:
+
+::
+
+    enum MS_SRS_TYPE {MS_SRS_NATIVE, MS_SRS_PROJ4, MS_SRS_EPSG, MS_SRS_FILE, MS_SRS_OGCWKT, MS_SRS_ESRIWKT}
+
+
+projectionObj
+-------------
+
+The MapServer projectionObj struct will have two additional members added:
+
+::
+
+    char* definition
+    int type
+
+These members will have their data set during mapfile parsing, and if they 
+are not specified in the user's PROJECTION block, they will have their values 
+set to '' and MS_SRS_PROJ4 respectively.  When an empty definition of type 
+proj4 is encountered, MapServer will default to exhibiting the previous 
+definition behavior.
+
+
+Virtual Table Method
+--------------------
+
+To support the additional (optional) members specified in [1] for TYPE NATIVE, 
+drivers need to have the ability to return spatial reference information.
+MapServer's layer plugin architecture provides mechanisms for interacting with 
+MapServer layer providers, but there is currently no regularized method for 
+returning the spatial reference information from providers.  The following 
+virtual table member is proposed:
+
+::
+  
+    int (*LayerGetSpatialReference)(layerObj *layer, char* definition, int type)
+
+A default implementation for msLayerGetSpatialReference will be provide for 
+drivers that do not define a method.  It will return an empty definition of 
+type MS_SRS_PROJ4.  When MapServer encounters this, it will default to using 
+the previous PROJECTION definition behavior.
+
+Driver-specific implementations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following drivers will have implementations provided to support TYPE NATIVE 
+spatial reference definitions:
+
+* Shapefile 
+* OGR
+* GDAL Raster
+* ArcSDE
+* PostGIS
+
+MapScript
+---------
+
+Four methods will be added to the SWIG MapScript projectionObj to support 
+manipulating spatial reference information defined by this RFC.  
+
+::
+
+    char* getDefintion()
+    int getType()
+    int setDefintion(char* definition)
+    int setType(int type)
+
+
+==============================================================================
+Files Affected
+==============================================================================
+
+
+::
+
+    mapserver.h
+    mapfile.c
+    mapscript/swiginc/projection.i
+    maplayer.c
+    mapproject.h
+    mapproject.c
+    mapsde.c
+    mapogr.cpp
+    mapraster.c
+    mappostgis.c
+    . 
+    .
+    .
+    
+==============================================================================
+Backward Compatibility Issues
+==============================================================================
+
+All work described in this RFC will provide optional capabilities to MapServer 
+and no backward compatibility issues are expected.
+
+==============================================================================
+Documentation
+==============================================================================
+
+This RFC will stand as primary documentation for the feature until such time 
+as the methods and practices described in this document are integrated into 
+the regular MapServer documentation framework. 
