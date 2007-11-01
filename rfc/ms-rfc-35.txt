@@ -1,0 +1,94 @@
+=============================================
+  MS RFC 35: Standards Compliance Enforcement
+=============================================
+
+:Date: 2007/10/16
+:Author: Frank Warmerdam
+:Contact: warmerdam@pobox.com
+:Last Edited: 2007/10/16
+:Status: Development
+
+Overview
+--------
+
+This RFC introduces a mechanism to tell mapserver to enforce OGC standards compliance, or alternatively to be permissive.  It also details short term adjustments to handling of the STYLE= required parameter in MapServer 5.  
+
+OWS_COMPLIANCE METADATA
+-----------------------
+
+This will be achived by introducing a new MAP level metadata item named "ows_compliance" with the possible values "enforcing" and "permissive", with the default being "permissive" if not specified.  Variations for specific protocols will also be supported in the usual fashion for OWS metadata (ie. wms_compliance, wfs_compliance, wcs_compliance, sos_compliance).
+
+If this keyword value is "permissive", then when practical and unambiguous MapServer will attempt to be forgiving of missing or otherwise non-compliant requests and input.  
+This will include things such as allowing protocol parameters to be omitted in requests that are required by the OGC specifications, allowing services to operate even if metadata is missing from the mapfile to fill required fields in capabilities.  
+
+If this keyword value is "enforcing", then to the extent practical MapServer will attempt to generate an error if it's input (WxS protocol requests, mapfile incomplete, etc) is not in full compliance with the requirements of the OGC specifications. 
+
+It is foreseen that users wishing to encourage good standards compliance behavior in clients, and to ensure they don't accidentally put up web services with incomplete metadata will use the "enforcing" mode.  It is anticipated that "enforcing" mode will also be used when MapServer is run through OGC CITE and similar test suites. 
+
+It is foreseen that "permissive" mode will be used by users wishing to get "quick and dirty" services operating quickly, and by those wishing to ensure their service is accessable by the broadest set of possible clients, even if they are not strictly operating to the standards.
+
+msOWSLookupMetadata()
+---------------------
+
+In actual code, the compliance keyword might be tested using msOWSLookupMetadata() in a manner similar to this:
+
+::
+
+    if (stylesfound == 0 && sldfound == 0)
+    {
+      if( strcasecmp(msOWSLookupMetadata(&(map->metadata),"MO","permissive"),
+                     "enforcing") == 0 ) {
+        msSetError(MS_WMSERR, "Missing required parameter STYLES",
+                   "msWMSLoadGetMapParams()");
+        return msWMSException(map, nVersion, "MissingParameterValue");
+      } else { 
+        msDebug( "WMS request missing STYLES parameter, permissively ignoring." );
+      }
+    }
+
+MapServer 5.0.1
+---------------
+
+For MapServer 5.0.1 the only change anticipated to be made in the code is the above example, requiring the STYLES parameter only in enforcing mode.
+
+If other standards enforcement issues are discovered to be unnecessarily interfering with use of MapServer they may also be changed in 5.0.x to be based off this keyword.
+
+
+MapServer 5.1
+-------------
+
+In MapServer 5.1, and the future it is hoped that a variety of enforcement/permissive decisions will be driven off this keyword.
+
+As part of implementation of this RFC the author will review all "WARNING:" entries emitted in capabilities documents in places like mapwms.c to see if they ought to be turned into fatal errors when operating in "enforcing" mode. 
+
+As well, some other parameters that are currently required (eg. BBOX, SIZE) but for which reasonable defaults exist in the mapfile will be made omittable in permissive mode.
+
+Documentation
+-------------
+
+The ows_compliance keyword will be added to the MapServer 5 reference documentation.
+
+Implementation
+--------------
+
+The described changes will be made in MapServer 5.0 and MapServer 5.1 by Frank Warmerdam  with the MapServer 5.0 changes in time for a 5.0.1 release.  It is hoped that all OWS service developers will apply the permissive/enforcing tests as appropriate in OWS services in the future as appropriate and as issues come up.
+
+MapScript
+---------
+
+No changes are anticipated in mapscript as it already has metadata setting methods.
+
+Backwards Compatibility Issues
+------------------------------
+
+Implementation of this feature should restore backward compatible default behavior in MapServer 5 with MapServer 4.x.  No other compatability issues are anticipated. 
+
+Bug ID
+------
+
+None assigned.
+
+Voting History
+--------------
+
+None
