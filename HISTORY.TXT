@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-0)
 --------------------------------
 
+- fixed blue/green color swapping for space delimited strings bound to an
+attribute. (#2378)
+
 - [WMS Context] Fixed crash when loading a context file (#2372)
 
 - Fixed legend icons not drawing when using maxscaledenom
