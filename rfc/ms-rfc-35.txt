@@ -3,29 +3,33 @@
 =============================================
 
 :Date: 2007/10/16
-:Author: Frank Warmerdam
-:Contact: warmerdam@pobox.com
-:Last Edited: 2007/10/16
+:Author: Frank Warmerdam, Daniel Morissette
+:Contact: warmerdam@pobox.com, dmorissette@mapgears.com
+:Last Edited: 2007/11/01
 :Status: Development
 
 Overview
 --------
 
-This RFC introduces a mechanism to tell mapserver to enforce OGC standards compliance, or alternatively to be permissive.  It also details short term adjustments to handling of the STYLE= required parameter in MapServer 5.  
+This RFC introduces a mechanism to tell mapserver to enforce OGC standards compliance, or alternatively to be permissive. MapServer should continue to implement the standards as closely as possible, but it has been found that in some cases strict compliance reduces interoperability instead of increasing it.
+
+One example of this is the the requirement for the STYLES parameter in WMS GetMap requests which has been enforced in MapServer 5.0.0. Enforcing this requirement effectively prevented a number of WMS client implementations from connecting to MapServer because they did not include the required STYLES parameter in their GetMap request. This RFC also details short term adjustments to handling of the STYLE= required parameter in MapServer 5.  
 
 OWS_COMPLIANCE METADATA
 -----------------------
 
-This will be achived by introducing a new MAP level metadata item named "ows_compliance" with the possible values "enforcing" and "permissive", with the default being "permissive" if not specified.  Variations for specific protocols will also be supported in the usual fashion for OWS metadata (ie. wms_compliance, wfs_compliance, wcs_compliance, sos_compliance).
+This will be achived by introducing a new MAP level metadata item named "ows_compliance" with the possible values "pedantic" and "permissive", with the default being "permissive" if not specified.  Variations for specific protocols will also be supported in the usual fashion for OWS metadata (ie. wms_compliance, wfs_compliance, wcs_compliance, sos_compliance).
 
-If this keyword value is "permissive", then when practical and unambiguous MapServer will attempt to be forgiving of missing or otherwise non-compliant requests and input.  
-This will include things such as allowing protocol parameters to be omitted in requests that are required by the OGC specifications, allowing services to operate even if metadata is missing from the mapfile to fill required fields in capabilities.  
+If this keyword value is "permissive", then when practical and unambiguous MapServer may attempt to be forgiving of missing or otherwise non-compliant requests and input in the interest of increasing MapServer's usability in real life interoperability scenarios.  
+This may include things such as allowing protocol parameters to be omitted in requests that are required by the OGC specifications, allowing services to operate even if metadata is missing from the mapfile to fill required fields in capabilities.  
 
-If this keyword value is "enforcing", then to the extent practical MapServer will attempt to generate an error if it's input (WxS protocol requests, mapfile incomplete, etc) is not in full compliance with the requirements of the OGC specifications. 
+If this keyword value is "pedantic", then to the extent practical MapServer will attempt to generate an error if it's input (WxS protocol requests, mapfile incomplete, etc) is not in full compliance with the requirements of the OGC specifications. 
 
-It is foreseen that users wishing to encourage good standards compliance behavior in clients, and to ensure they don't accidentally put up web services with incomplete metadata will use the "enforcing" mode.  It is anticipated that "enforcing" mode will also be used when MapServer is run through OGC CITE and similar test suites. 
+It is foreseen that users wishing to encourage good standards compliance behavior in clients, and to ensure they don't accidentally put up web services with incomplete metadata will use the "pedantic" mode.  It is anticipated that "pedantic" mode will also be used when MapServer is run through OGC CITE and similar test suites. 
 
 It is foreseen that "permissive" mode will be used by users wishing to get "quick and dirty" services operating quickly, and by those wishing to ensure their service is accessable by the broadest set of possible clients, even if they are not strictly operating to the standards.
+
+Developers should keep in mind that adding more exceptions in the permissive mode should not be taken lightly as this encourages misuse of the specs and bloats the code with unnecessary exceptions.
 
 msOWSLookupMetadata()
 ---------------------
@@ -36,8 +40,8 @@ In actual code, the compliance keyword might be tested using msOWSLookupMetadata
 
     if (stylesfound == 0 && sldfound == 0)
     {
-      if( strcasecmp(msOWSLookupMetadata(&(map->metadata),"MO","permissive"),
-                     "enforcing") == 0 ) {
+      if( strcasecmp(msOWSLookupMetadata(&(map->metadata),"MO","compliance"),
+                     "pedantic") == 0 ) {
         msSetError(MS_WMSERR, "Missing required parameter STYLES",
                    "msWMSLoadGetMapParams()");
         return msWMSException(map, nVersion, "MissingParameterValue");
@@ -49,19 +53,21 @@ In actual code, the compliance keyword might be tested using msOWSLookupMetadata
 MapServer 5.0.1
 ---------------
 
-For MapServer 5.0.1 the only change anticipated to be made in the code is the above example, requiring the STYLES parameter only in enforcing mode.
+For MapServer 5.0.1 the only change anticipated to be made in the code is the above example, requiring the STYLES parameter only in pedantic mode.
 
-If other standards enforcement issues are discovered to be unnecessarily interfering with use of MapServer they may also be changed in 5.0.x to be based off this keyword.
+If other standards enforcement issues are discovered to be unnecessarily interfering with use of MapServer in real life interoperability they may also be changed in 5.0.x to be based off this keyword.
 
 
 MapServer 5.1
 -------------
 
-In MapServer 5.1, and the future it is hoped that a variety of enforcement/permissive decisions will be driven off this keyword.
+In MapServer 5.1, and the future, if other standards enforcement issues are discovered to be unnecessarily interfering with use of MapServer in real life interoperability scenarios they may also be changed to be based off this keyword.
 
-As part of implementation of this RFC the author will review all "WARNING:" entries emitted in capabilities documents in places like mapwms.c to see if they ought to be turned into fatal errors when operating in "enforcing" mode. 
+Once again, developers should keep in mind that adding more exceptions in the permissive mode should not be taken lightly as this encourages misuse of the specs and bloats the code with unnecessary exceptions.
 
-As well, some other parameters that are currently required (eg. BBOX, SIZE) but for which reasonable defaults exist in the mapfile will be made omittable in permissive mode.
+As part of implementation of this RFC the authors will review all "WARNING:" entries emitted in capabilities documents in places like mapwms.c to see if they ought to be turned into fatal errors when operating in "pedantic" mode. 
+
+
 
 Documentation
 -------------
@@ -71,7 +77,7 @@ The ows_compliance keyword will be added to the MapServer 5 reference documentat
 Implementation
 --------------
 
-The described changes will be made in MapServer 5.0 and MapServer 5.1 by Frank Warmerdam  with the MapServer 5.0 changes in time for a 5.0.1 release.  It is hoped that all OWS service developers will apply the permissive/enforcing tests as appropriate in OWS services in the future as appropriate and as issues come up.
+The described changes will be made in MapServer 5.0 and MapServer 5.1 by Frank Warmerdam and/or Daniel Morissette with the MapServer 5.0 changes in time for a 5.0.1 release.  It is hoped that all OWS service developers will apply the permissive/pedantic tests in OWS services in the future as required and as issues come up.
 
 MapScript
 ---------
