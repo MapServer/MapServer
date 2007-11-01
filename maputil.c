@@ -100,8 +100,8 @@ static int bindColorAttribute(colorObj *attribute, char *value)
     }
 
     attribute->red = atoi(tokens[0]);
-    attribute->blue = atoi(tokens[1]);
-    attribute->green = atoi(tokens[2]);
+    attribute->green = atoi(tokens[1]);
+    attribute->blue = atoi(tokens[2]);
     msFreeCharArray(tokens, numtokens);
 
     return MS_SUCCESS;
