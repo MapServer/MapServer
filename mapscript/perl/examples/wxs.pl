@@ -65,7 +65,7 @@ my $xsltstring = <<END;
 </xsl:stylesheet>
 =cut
 
-my $mapfile  = "/usr/local/wwwsites/apache/devgeo.cciw.ca/apps/mapserv/services/sostest/config.map"; 
+my $mapfile  = "/tmp/config.map";
 
 # init OWSRequest object
 my $req = new mapscript::OWSRequest();
