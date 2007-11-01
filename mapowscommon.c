@@ -52,18 +52,15 @@ MS_CVSID("$Id$")
  *
  */
 
-xmlNodePtr msOWSCommonServiceIdentification(mapObj *map, const char *servicetype, const char *version) {
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const char *servicetype, const char *version) {
   const char *value    = NULL;
 
-  xmlNsPtr     psNs       = NULL;
   xmlNodePtr   psRootNode = NULL;
   xmlNodePtr   psNode     = NULL;
   xmlNodePtr   psSubNode  = NULL;
 
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-
   /* create element name */
-  psRootNode = xmlNewNode(xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX), BAD_CAST "ServiceIdentification");
+  psRootNode = xmlNewNode(psNs, BAD_CAST "ServiceIdentification");
 
   /* add child elements */
 
@@ -142,20 +139,15 @@ xmlNodePtr msOWSCommonServiceIdentification(mapObj *map, const char *servicetype
  *
  */
 
-xmlNodePtr msOWSCommonServiceProvider(mapObj *map) {
+xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
+                                      mapObj *map) {
   const char *value = NULL;
 
-  xmlNsPtr     psNsXLink       = NULL;
-  xmlNsPtr     psNsOws         = NULL;
   xmlNodePtr   psNode          = NULL;
   xmlNodePtr   psRootNode      = NULL;
   xmlNodePtr   psSubNode       = NULL;
   xmlNodePtr   psSubSubNode    = NULL;
   xmlNodePtr   psSubSubSubNode = NULL;
-
-  psNsXLink = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
-
-  psNsOws = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
   psRootNode = xmlNewNode(psNsOws, BAD_CAST "ServiceProvider");
 
@@ -318,11 +310,9 @@ xmlNodePtr msOWSCommonServiceProvider(mapObj *map) {
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadata() {
-  xmlNsPtr psNs         = NULL;
+xmlNodePtr msOWSCommonOperationsMetadata( xmlNsPtr psNs ) {
   xmlNodePtr psRootNode = NULL;
 
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
   psRootNode = xmlNewNode(psNs, BAD_CAST "OperationsMetadata");
   return psRootNode;
 }
@@ -339,36 +329,30 @@ xmlNodePtr msOWSCommonOperationsMetadata() {
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *url) {
-  xmlNsPtr   psNs            = NULL;
-  xmlNsPtr   psNsXLink       = NULL;
+xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psOwsNs, xmlNsPtr psXLinkNs, char *name, int method, char *url) {
   xmlNodePtr psRootNode      = NULL;
   xmlNodePtr psNode          = NULL;
   xmlNodePtr psSubNode       = NULL;
   xmlNodePtr psSubSubNode    = NULL;
 
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-
-  psNsXLink = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
-
-  psRootNode = xmlNewNode(psNs, BAD_CAST "Operation");
+  psRootNode = xmlNewNode(psOwsNs, BAD_CAST "Operation");
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "DCP", NULL);
+  psNode = xmlNewChild(psRootNode, psOwsNs, BAD_CAST "DCP", NULL);
 
-  psSubNode = xmlNewChild(psNode, psNs, BAD_CAST "HTTP", NULL);
+  psSubNode = xmlNewChild(psNode, psOwsNs, BAD_CAST "HTTP", NULL);
 
   if (method  == OWS_METHOD_GET || method == OWS_METHOD_GETPOST ) {
-    psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Get", NULL);
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
+    psSubSubNode = xmlNewChild(psSubNode, psOwsNs, BAD_CAST "Get", NULL);
+    xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "type", BAD_CAST "simple");
+    xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "href", BAD_CAST url);
   }
 
   if (method == OWS_METHOD_POST || method == OWS_METHOD_GETPOST ) {
-    psSubSubNode = xmlNewChild(psSubNode, psNs, BAD_CAST "Post", NULL);
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
-    xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST url);
+    psSubSubNode = xmlNewChild(psSubNode, psOwsNs, BAD_CAST "Post", NULL);
+    xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "type", BAD_CAST "simple");
+    xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "href", BAD_CAST url);
   }
 
   return psRootNode;
@@ -388,14 +372,11 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(char *elname, char *name, char *values) {
-  xmlNsPtr   psNs       = NULL;
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psOwsNs, char *elname, char *name, char *values) {
   xmlNodePtr psRootNode = NULL;
   xmlNodePtr psNode     = NULL; 
 
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-
-  psRootNode = xmlNewNode(psNs, BAD_CAST elname);
+  psRootNode = xmlNewNode(psOwsNs, BAD_CAST elname);
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
@@ -406,7 +387,7 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(char *elname, char *name, cha
     tokens = msStringSplit(values, ',', &n);
     if (tokens && n > 0) {
       for (i=0; i<n; i++) { 
-        psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Value", BAD_CAST tokens[i]);
+        psNode = xmlNewChild(psRootNode, psOwsNs, BAD_CAST "Value", BAD_CAST tokens[i]);
       }
       msFreeCharArray(tokens, n);
     }
@@ -485,6 +466,7 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
  *
  * returns an object of BoundingBox as per subclause 10.2.1
  *
+ * @param psOwsNs OWS namespace object
  * @param crs the CRS / EPSG code
  * @param dimensions number of dimensions of the coordinates
  * @param minx minx
@@ -493,22 +475,17 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
  * @param maxy maxy
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
- *
  */
 
-xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, double miny, double maxx, double maxy) {
+xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psOwsNs, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy) {
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
 
-  xmlNsPtr   psNs       = NULL;
   xmlNodePtr psRootNode = NULL;
-  xmlNodePtr psNode     = NULL;
-
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
   /* create element name */
-  psRootNode = xmlNewNode(psNs, BAD_CAST "BoundingBox");
+  psRootNode = xmlNewNode(psOwsNs, BAD_CAST "BoundingBox");
 
   /* add attributes to the root element */
   xmlNewProp(psRootNode, BAD_CAST "crs", BAD_CAST crs);
@@ -520,8 +497,8 @@ xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, 
   sprintf(UpperCorner, "%g %g", maxx, maxy);
 
   /* add child elements */
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "LowerCorner", BAD_CAST LowerCorner);
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "UpperCorner", BAD_CAST UpperCorner);
+  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
+  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "UpperCorner",BAD_CAST UpperCorner);
 
   return psRootNode;
 }
@@ -531,6 +508,7 @@ xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, 
  *
  * returns an object of BoundingBox as per subclause 10.2.2
  *
+ * @param psOwsNs OWS namespace object
  * @param dimensions number of dimensions of the coordinates
  * @param minx minx
  * @param miny miny
@@ -538,22 +516,17 @@ xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, 
  * @param maxy maxy
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
- *
  */
 
-xmlNodePtr msOWSCommonWGS84BoundingBox(int dimensions, double minx, double miny, double maxx, double maxy) {
+xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psOwsNs, int dimensions, double minx, double miny, double maxx, double maxy) {
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
 
-  xmlNsPtr   psNs       = NULL;
   xmlNodePtr psRootNode = NULL;
-  xmlNodePtr psNode     = NULL;
-
-  psNs = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
   /* create element name */
-  psRootNode = xmlNewNode(psNs, BAD_CAST "WGS84BoundingBox");
+  psRootNode = xmlNewNode(psOwsNs, BAD_CAST "WGS84BoundingBox");
 
   sprintf( dim_string, "%d", dimensions );
   xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
@@ -562,8 +535,8 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(int dimensions, double minx, double miny,
   sprintf(UpperCorner, "%g %g", maxx, maxy);
 
   /* add child elements */
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "LowerCorner", BAD_CAST LowerCorner);
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "UpperCorner", BAD_CAST UpperCorner);
+  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
+  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "UpperCorner",BAD_CAST UpperCorner);
 
   return psRootNode;
 }

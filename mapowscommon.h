@@ -68,25 +68,25 @@
 
 /* function prototypes */
 
-xmlNodePtr msOWSCommonServiceIdentification(mapObj *map, const char *servicetype, const char *version);
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const char *servicetype, const char *version);
 
-xmlNodePtr msOWSCommonServiceProvider(mapObj *map);
+xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psOwsNs, xmlNsPtr psXLinkNs, mapObj *map);
 
-xmlNodePtr msOWSCommonOperationsMetadata();
+xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psOwsNs);
 
 #define OWS_METHOD_GET     1
 #define OWS_METHOD_POST    2
 #define OWS_METHOD_GETPOST 3
 
-xmlNodePtr msOWSCommonOperationsMetadataOperation(char *name, int method, char *url);
+xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psOwsNs, xmlNsPtr psXLinkNs, char *name, int method, char *url);
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(char *elname, char *name, char *values);
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psOwsNs, char *elname, char *name, char *values);
 
 xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
 
-xmlNodePtr msOWSCommonBoundingBox(const char *crs, int dimensions, double minx, double miny, double maxx, double maxy);
+xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psOwsNs, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy);
 
-xmlNodePtr msOWSCommonWGS84BoundingBox(int dimensions, double minx, double miny, double maxx, double maxy);
+xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psOwsNs, int dimensions, double minx, double miny, double maxx, double maxy);
 
 #endif /* defined(USE_SOS_SVR) */
 
