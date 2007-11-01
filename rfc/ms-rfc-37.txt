@@ -4,8 +4,8 @@
 
 :Author: Howard Butler
 :Contact: hobu.inc@gmail.com
-:Revision: $Revision: 467 $
-:Date: $Date: 2007-10-30 14:19:51 -0500 (Tue, 30 Oct 2007) $
+:Revision: $Revision$
+:Date: $Date$
 
 .. sectnum::
 
