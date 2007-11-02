@@ -27,7 +27,7 @@ If this keyword value is "pedantic", then to the extent practical MapServer will
 
 It is foreseen that users wishing to encourage good standards compliance behavior in clients, and to ensure they don't accidentally put up web services with incomplete metadata will use the "pedantic" mode.  It is anticipated that "pedantic" mode will also be used when MapServer is run through OGC CITE and similar test suites. 
 
-It is foreseen that "permissive" mode will be used by users wishing to get "quick and dirty" services operating quickly, and by those wishing to ensure their service is accessable by the broadest set of possible clients, even if they are not strictly operating to the standards.
+It is foreseen that "permissive" mode will be used by those wishing to ensure their service is accessable by the broadest set of possible clients, even if they are not strictly operating to the standards.
 
 Developers should keep in mind that adding more exceptions in the permissive mode should not be taken lightly as this encourages misuse of the specs and bloats the code with unnecessary exceptions.
 
