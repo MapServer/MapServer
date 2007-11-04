@@ -64,6 +64,9 @@ Current Version (5.1-dev, SVN trunk):
 
 - SOS: support maxfeatures for GetObservation requests (#2353)
 
+- mapdraw.c: Reset layer->project flag for each full layer drawing so that 
+  need to reproject will be reconsidered (#673).
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
