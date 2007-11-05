@@ -2430,29 +2430,85 @@ void msFreeSymbolCacheAGG(void *buffer) {
 
 void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
 {
-    int i,j,k; /* loop counters */
+    int i,j,k,beforelast; /* loop counters */
+    double dx,dy;
     double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
     if(shape->numlines == 0) return; /* nothing to transform */
-
-    if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove duplicate vertices */
-
+    pointObj *point;
+    if(shape->type == MS_SHAPE_LINE) {
+        /*
+         * loop through the shape's lines, and do naive simplification
+         * to discard the points that are too close to one another.
+         * currently the threshold is to discard points if they fall
+         * less than a pixel away from their predecessor.
+         * the simplified line is guaranteed to contain at 
+         * least its first and last point
+         */
         for(i=0; i<shape->numlines; i++) { /* for each part */
-            shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[0].x, extent.minx, inv_cs);
-            shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[0].y, extent.maxy, inv_cs);
-            for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
-                shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[j].x, extent.minx, inv_cs);
-                shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[j].y, extent.maxy, inv_cs);
-                if(shape->line[i].point[k].x!=shape->line[i].point[k-1].x ||
-                        shape->line[i].point[k].y!=shape->line[i].point[k-1].y)
+            if(shape->line[i].numpoints<2) {
+                shape->line[i].numpoints=0;
+                continue; /*skip degenerate lines*/
+            }
+            point=shape->line[i].point;
+            /*always keep first point*/
+            point[0].x = MS_MAP2IMAGE_X_IC_DBL(point[0].x, extent.minx, inv_cs);
+            point[0].y = MS_MAP2IMAGE_Y_IC_DBL(point[0].y, extent.maxy, inv_cs);
+            beforelast=shape->line[i].numpoints-1;
+            for(j=1,k=1; j < beforelast; j++ ) { /*loop from second point to first-before-last point*/
+                point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+                point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+                dx=(point[k].x-point[k-1].x);
+                dy=(point[k].y-point[k-1].y);
+                if(dx*dx+dy*dy>1)
                     k++;
             }
-            shape->line[i].numpoints = k; /* save actual number kept */
+            /*always keep last point*/
+            point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+            point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+            shape->line[i].numpoints=k+1;
         }
-    } else { /* points or untyped shapes */
+    }
+    else if(shape->type == MS_SHAPE_POLYGON) {
+        /*
+         * loop through the shape's lines, and do naive simplification
+         * to discard the points that are too close to one another.
+         * currently the threshold is to discard points if they fall
+         * less than a pixel away from their predecessor.
+         * the simplified polygon is guaranteed to contain at 
+         * least its first, second and last point
+         */
         for(i=0; i<shape->numlines; i++) { /* for each part */
-            for(j=1; j < shape->line[i].numpoints; j++ ) {
-                shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
-                shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
+            if(shape->line[i].numpoints<3) {
+                shape->line[i].numpoints=0;
+                continue; /*skip degenerate lines*/
+            }
+            point=shape->line[i].point;
+            /*always keep first and second point*/
+            point[0].x = MS_MAP2IMAGE_X_IC_DBL(point[0].x, extent.minx, inv_cs);
+            point[0].y = MS_MAP2IMAGE_Y_IC_DBL(point[0].y, extent.maxy, inv_cs);
+            point[1].x = MS_MAP2IMAGE_X_IC_DBL(point[1].x, extent.minx, inv_cs);
+            point[1].y = MS_MAP2IMAGE_Y_IC_DBL(point[1].y, extent.maxy, inv_cs);         
+            beforelast=shape->line[i].numpoints-1;
+            for(j=2,k=2; j < beforelast; j++ ) { /*loop from second point to first-before-last point*/
+                point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+                point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+                dx=(point[k].x-point[k-1].x);
+                dy=(point[k].y-point[k-1].y);
+                if(dx*dx+dy*dy>1)
+                    k++;
+            }
+            /*always keep last point*/
+            point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+            point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+            shape->line[i].numpoints=k+1;
+        }
+    }
+    else { /* only for untyped shapes, as point layers don't go through this function */
+        for(i=0; i<shape->numlines; i++) {
+            point=shape->line[i].point;
+            for(j=0;j<shape->line[i].numpoints;j++) {
+                point[j].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+                point[j].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
             }
         }
     }
