@@ -337,7 +337,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
     psRoot = CPLParseXMLString(psSLDXML);
     if( psRoot == NULL)
     {
-        msSetError(MS_WMSERR, "Invalid SLD document", "");
+        msSetError(MS_WMSERR, "Invalid SLD document : %s", "", psSLDXML);
         return NULL;
     }
 
@@ -367,7 +367,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 
     if (!psSLD)
     {
-        msSetError(MS_WMSERR, "Invalid SLD document", "");
+        msSetError(MS_WMSERR, "Invalid SLD document : %s", "", psSLDXML);
         return NULL;
     }
 
@@ -3710,7 +3710,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
           pszWfsFilterEncoded = msEncodeHTMLEntities(pszWfsFilter);
         if (psLayer->numclasses > 0)
         {
-            for (i=psLayer->numclasses-1; i>=0; i--)
+	  for (i=0; i<psLayer->numclasses; i++)
             {
                 sprintf(szTmp, "%s\n",  "<Rule>");
                 pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
@@ -4207,7 +4207,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
     if (bOneCharCompare == 1)
     {
         aszValues= msStringSplit (pszExpression, cCompare, &nTokens);
-        if (nTokens >= 1)
+        if (nTokens > 1)
         {
             pszAttributeName = strdup(aszValues[0]);
             pszAttributeValue =  strdup(aszValues[1]);
@@ -4220,7 +4220,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
             iValue = 0;
             for (i=0; i<nLength-2; i++)
             {
-                if (pszExpression[i] != szCompare[0] || 
+                if (pszExpression[i] != szCompare[0] && 
                     pszExpression[i] != toupper(szCompare[0]))
                 {
                     pszAttributeName[iValue++] = pszExpression[i];
