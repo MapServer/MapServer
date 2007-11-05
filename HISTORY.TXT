@@ -13,8 +13,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-0)
 --------------------------------
 
+- Added 1.0.1 to list of supported versions for connectiontype WMS 
+  layers (#2385)
+
 - fixed blue/green color swapping for space delimited strings bound to an
-attribute. (#2378)
+  attribute. (#2378)
 
 - [WMS Context] Fixed crash when loading a context file (#2372)
 
