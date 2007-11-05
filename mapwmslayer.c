@@ -477,6 +477,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         nVersion = OWS_1_1_0;    /* 1.0.8 == 1.1.0 */
         break;
       case OWS_1_0_0:
+      case OWS_1_0_1:
       case OWS_1_0_7:
       case OWS_1_1_0:
       case OWS_1_1_1:

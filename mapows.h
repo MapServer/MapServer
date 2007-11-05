@@ -102,6 +102,7 @@ MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 #define OWS_0_1_6   0x000106
 #define OWS_0_1_7   0x000107
 #define OWS_1_0_0   0x010000
+#define OWS_1_0_1   0x010001
 #define OWS_1_0_6   0x010006
 #define OWS_1_0_7   0x010007
 #define OWS_1_0_8   0x010008
