@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- Fix legend label placement for multiline labels (#2382)
+
+- enforce WRAP parameter in legend label (#2382)
+
 - AGG: pixel level simplification for line and polygon shapes (#2381)
 
 - fixed blue/green color swapping for space delimited strings bound to an attribute. (bug 2378)

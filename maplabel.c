@@ -39,6 +39,31 @@
 
 MS_CVSID("$Id$")
 
+/*
+ * this function applies the label encoding and wrap parameters
+ * to the supplied text
+ * Note: it is the caller's responsibility to free the returned 
+ * char array
+ */
+char *msTransformLabelText(labelObj *label, char *text)
+{
+    char *newtext;
+    char wrap[2];
+    if(label->type==MS_BITMAP) {
+        return strdup(text);
+    }
+    if(label->encoding)
+        newtext = msGetEncodedString(text, label->encoding);
+    else
+        newtext = strdup(text);
+    if(newtext && label->wrap!='\0') {
+        wrap[0] = label->wrap;
+        wrap[1] = '\0';
+        newtext = msReplaceSubstring(newtext, wrap, "\n");
+    }
+    return newtext;
+}
+
 int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label )
 {
   int i;

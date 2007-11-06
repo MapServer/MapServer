@@ -1647,7 +1647,7 @@ MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* 
 MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabel.c */
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
-
+MS_DLL_EXPORT char *msTransformLabelText(labelObj *label, char *text);
 MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
 MS_DLL_EXPORT int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline, double **offsets);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
