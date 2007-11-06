@@ -151,7 +151,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
 
     /*
-     ** allocate heights array
+     * step through all map classes, and for each one that will be displayed
+     * keep a reference to its label size and text
      */
     for(i=0; i<map->numlayers; i++) {
         lp = (GET_LAYER(map, map->layerorder[i]));
