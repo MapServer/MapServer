@@ -163,7 +163,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
             if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
             if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
         }
-        for(j=0;j<lp->numclasses;j++) {
+        for(j=lp->numclasses-1;j>=0;j--) {
             if(!lp->class[j]->name) continue; /* skip it */
             if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
                 if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
