@@ -860,6 +860,8 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     int msErr;
 
     char *pszBuffer = NULL;
+    int bConcatWhere = 0;
+    int bHasAWhere =0;
 
     lp = (GET_LAYER(map, iLayerIndex));
 
@@ -920,15 +922,64 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     lp->class[0]->type = lp->type;
     lp->class[0]->template = strdup("ttt.html");
 
-    szExpression = FLTGetSQLExpression(psNode, lp);
+    bConcatWhere = 0;
+    bHasAWhere = 0;
+    if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL)
+      szExpression = FLTGetSQLExpression(psNode, lp);
+    /* concatenates the WHERE clause for OGR layers. This only applies if
+       the expression was empty or not of an expression string. If there
+       is an sql type expression, it is assumed to have the WHERE clause. 
+       If it is an expression and does not have a WHERE it is assumed to be a mapserver
+       type expression*/
+    else if (lp->connectiontype == MS_OGR)
+    {
+	if (lp->filter.type != MS_EXPRESSION)
+	{
+	    szExpression = FLTGetSQLExpression(psNode, lp);
+	    bConcatWhere = 1;
+	}
+	else
+	{
+	    if (lp->filter.string && EQUALN(lp->filter.string,"WHERE ",6))
+	    {
+		szExpression = FLTGetSQLExpression(psNode, lp);
+		bHasAWhere = 1;
+		bConcatWhere =1;
+	    }
+	    else
+	    {
+		szExpression = FLTGetNodeExpression(psNode);
+	    }
+	}
+    }
+    else
+      szExpression = FLTGetNodeExpression(psNode);
+
     if (szExpression)
     {
-        pszBuffer = (char *)malloc(sizeof(char) * (strlen(szExpression) + 8));
-        if (lp->connectiontype == MS_OGR)
-          sprintf(pszBuffer, "WHERE %s", szExpression);
-        else //POSTGIS OR ORACLE if (lp->connectiontype == MS_POSTGIS)
-          sprintf(pszBuffer, "%s", szExpression);
+        if (bConcatWhere)
+          pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
 
+	/* if the filter is set and it's an expression type, concatenate it with
+               this filter. If not just free it */
+	if (lp->filter.string && lp->filter.type == MS_EXPRESSION)
+	{
+	    pszBuffer = msStringConcatenate(pszBuffer, "((");
+	    if (bHasAWhere)
+	      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string+6);
+	    else
+	       pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+	    pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+	}
+	else if (lp->filter.string)
+	  freeExpression(&lp->filter);
+
+       
+	pszBuffer = msStringConcatenate(pszBuffer, szExpression);
+
+	if(lp->filter.string && lp->filter.type == MS_EXPRESSION)
+	  pszBuffer = msStringConcatenate(pszBuffer, ")");
+        
         msLoadExpressionString(&lp->filter, pszBuffer);
         free(szExpression);
     }
@@ -1072,6 +1123,18 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int nResults = 0;
     layerObj *psLayer = NULL;
 
+
+/* ==================================================================== */
+/*      Check here to see if it is a simple filter and if that is       */
+/*      the case, we are going to use the FILTER element on             */
+/*      the layer.                                                      */
+/* ==================================================================== */
+    if (!bOnlySpatialFilter && FLTIsSimpleFilter(psNode))
+    {
+        return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
+    }        
+
+    
     psLayer = (GET_LAYER(map, iLayerIndex));
     panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
                                     &nResults, bOnlySpatialFilter);
@@ -1459,7 +1522,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /* -------------------------------------------------------------------- */
         else if (FLTIsSpatialFilterType(psXMLNode->pszValue))
         {
-            psFilterNode->eType = FILTER_NODE_TYPE_SPATIAL;
+	    psFilterNode->eType = FILTER_NODE_TYPE_SPATIAL;
 
             if (strcasecmp(psXMLNode->pszValue, "BBOX") == 0)
             {
@@ -3143,7 +3206,7 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
 
 
 /************************************************************************/
-/*                      FLTGetBinaryComparisonExpresssion               */
+/*                      FLTGetBinaryComparisonSQLExpresssion            */
 /*                                                                      */
 /*      Return the expression for a binary comparison filter node.      */
 /************************************************************************/
