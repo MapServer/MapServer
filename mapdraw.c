@@ -637,6 +637,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if(layer->opacity == 0) return MS_SUCCESS; /* layer is completely transparent, skip it */
 
+  /* conditions may have changed since this layer last drawn, so set
+     layer->project true to recheck projection needs (Bug #673) */
+  layer->project = MS_TRUE;
+
   /* inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
 

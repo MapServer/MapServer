@@ -36,6 +36,8 @@ Current Version (SVN branch-5-0)
 
 - Improve configuration logic for fastcgi (#2355).
 
+- mapdraw.c,mapquery.c: Reset layer->project flag for each full layer drawing 
+  or query so that need to reproject will be reconsidered (#673).
 
 Version 5.0.0 (2007-09-17)
 --------------------------

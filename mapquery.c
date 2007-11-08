@@ -266,6 +266,10 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   lp = (GET_LAYER(map, qlayer));
 
+  /* conditions may have changed since this layer last drawn, so set 
+     layer->project true to recheck projection needs (Bug #673) */ 
+  lp->project = MS_TRUE; 
+
   /* free any previous search results, do now in case one of the following tests fails */
   if(lp->resultcache) {
     if(lp->resultcache->results) free(lp->resultcache->results);
@@ -420,6 +424,10 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+
+    /* conditions may have changed since this layer last drawn, so set 
+       layer->project true to recheck projection needs (Bug #673) */ 
+    lp->project = MS_TRUE; 
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -579,6 +587,10 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     return(MS_FAILURE);
   }
 
+  /* conditions may have changed since this layer last drawn, so set 
+     layer->project true to recheck projection needs (Bug #673) */ 
+  slp->project = MS_TRUE; 
+
   if(qlayer < 0 || qlayer >= map->numlayers)
     start = map->numlayers-1;
   else
@@ -591,6 +603,10 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     if(l == slayer) continue; /* skip the selection layer */
     
     lp = (GET_LAYER(map, l));
+
+    /* conditions may have changed since this layer last drawn, so set 
+       layer->project true to recheck projection needs (Bug #673) */ 
+    lp->project = MS_TRUE; 
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -805,6 +821,10 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));    
 
+    /* conditions may have changed since this layer last drawn, so set 
+       layer->project true to recheck projection needs (Bug #673) */ 
+    lp->project = MS_TRUE; 
+
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
@@ -964,6 +984,10 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
  
   for(l=start; l>=stop; l--) { /* each layer */
     lp = (GET_LAYER(map, l));
+
+    /* conditions may have changed since this layer last drawn, so set 
+       layer->project true to recheck projection needs (Bug #673) */ 
+    lp->project = MS_TRUE; 
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1156,6 +1180,10 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
  
     for(l=start; l>=stop; l--) { /* each layer */
       lp = (GET_LAYER(map, l));
+
+      /* conditions may have changed since this layer last drawn, so set 
+         layer->project true to recheck projection needs (Bug #673) */ 
+      lp->project = MS_TRUE; 
 
       /* free any previous search results, do it now in case one of the next few tests fail */
       if(lp->resultcache) {
