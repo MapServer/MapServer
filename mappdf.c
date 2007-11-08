@@ -502,9 +502,13 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
     if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE",""), 
                    "RASTER") == 0)
     {
+        int orig_renderer;
         imagetmp = (imageObj *)image->img.pdf->imagetmp;
         msImageInitGD( imagetmp, &map->imagecolor);
-        msDrawLabelCacheGD(imagetmp->img.gd, map);
+        orig_renderer=image->format->renderer;
+        image->format->renderer = MS_RENDER_WITH_GD;
+        msDrawLabelCache(imagetmp, map);
+        image->format->renderer = orig_renderer;
         return 0;
     }
 

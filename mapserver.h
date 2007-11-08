@@ -1867,7 +1867,6 @@ MS_DLL_EXPORT void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
 
 MS_DLL_EXPORT int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 MS_DLL_EXPORT int msDrawLegendIconGD(mapObj *map, layerObj *lp, classObj *theclass, int width, int height, gdImagePtr img, int dstX, int dstY);
 
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
@@ -1898,7 +1897,6 @@ MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image
 
 MS_DLL_EXPORT int msDrawTextAGG(imageObj *imgage, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCacheAGG(imageObj *image, mapObj *map);
 
 MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);
 

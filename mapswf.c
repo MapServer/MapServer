@@ -2273,9 +2273,13 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                                           "OUTPUT_MOVIE",""), 
                   "SINGLE") == 0)
     {
+        int orig_renderer;
         imagetmp = (imageObj *)((SWFObj *)image->img.swf)->imagetmp;
         msImageInitGD( imagetmp, &map->imagecolor);
-        msDrawLabelCacheGD(imagetmp->img.gd, map);
+        orig_renderer=image->format->renderer;
+        image->format->renderer = MS_RENDER_WITH_GD;
+        msDrawLabelCache(imagetmp, map);
+        image->format->renderer = orig_renderer;
         oShape = gdImage2Shape(imagetmp->img.gd);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
