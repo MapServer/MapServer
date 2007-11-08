@@ -48,18 +48,13 @@ MS_CVSID("$Id$")
 char *msTransformLabelText(labelObj *label, char *text)
 {
     char *newtext;
-    char wrap[2];
-    if(label->type==MS_BITMAP) {
-        return strdup(text);
-    }
     if(label->encoding)
         newtext = msGetEncodedString(text, label->encoding);
     else
-        newtext = strdup(text);
+        newtext=strdup(text);
+    
     if(newtext && label->wrap!='\0') {
-        wrap[0] = label->wrap;
-        wrap[1] = '\0';
-        newtext = msReplaceSubstring(newtext, wrap, "\n");
+        msReplaceChar(newtext, label->wrap, '\n');
     }
     return newtext;
 }
@@ -67,7 +62,6 @@ char *msTransformLabelText(labelObj *label, char *text)
 int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label )
 {
   int i;
-  char wrap[2];
   labelCacheSlotObj *cacheslot;
 
   labelCacheMemberObj *cachePtr=NULL;
@@ -124,13 +118,6 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   }
 
   cachePtr->text = strdup(string); /* the actual text */
-
-  /* GD/Freetype recognizes \r\n as a true line wrap so we must turn the wrap character into that pattern */
-  if(label->type != MS_BITMAP && label->wrap != '\0') {
-    wrap[0] = label->wrap;
-    wrap[1] = '\0';
-    cachePtr->text = msReplaceSubstring(cachePtr->text, wrap, "\r\n");
-  }
 
   /* copy the styles (only if there is an accompanying marker)
    * We cannot simply keeep refs because the rendering code alters some members of the style objects
@@ -413,7 +400,6 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
 {
   int size;
-
   if(label->type == MS_TRUETYPE) {
 #ifdef USE_GD_FT
     int bbox[8];
@@ -457,12 +443,10 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     gdFontPtr fontPtr;
     char **token=NULL;
     int t, num_tokens, max_token_length=0;
-
     if((fontPtr = msGetBitmapFont(label->size)) == NULL)
       return(-1);
-
-    if(label->wrap != '\0') {
-      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL)
+    
+      if((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
 	return(0);
 
       for(t=0; t<num_tokens; t++) /* what's the longest token */
@@ -474,12 +458,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
       rect->maxy = 0;
 
       msFreeCharArray(token, num_tokens);
-    } else {
-      rect->minx = 0;
-      rect->miny = -fontPtr->h;
-      rect->maxx = fontPtr->w * strlen(string);
-      rect->maxy = 0;
-    }
+    
   }
   return(0);
 }

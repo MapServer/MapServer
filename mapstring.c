@@ -354,6 +354,17 @@ char *msReplaceSubstring(char *str, const char *old, const char *new)
 }
 
 /*
+ * same goal as msReplaceSubstring, but for the known case
+ * when we won't have to do reallocs etc
+ * used to replace the wrap characetr by a newline for labels
+ */
+void msReplaceChar(char *str, char old, char new) {
+    while(*(str++))
+        if(*str==old)
+            *str=new;
+}
+
+/*
 ** how many times does ch occur in str
 */
 int msCountChars(char *str, char ch) 

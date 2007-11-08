@@ -172,7 +172,19 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
                     continue;
             }
             cur=(legendlabel*)malloc(sizeof(legendlabel));
-            cur->transformedText= msTransformLabelText(&map->legend.label,lp->class[j]->name);
+            
+            /*
+             * apply encoding and line wrapping to the legend label if requested
+             * this is done conditionnally as the text transformation function
+             * does some memory allocations that can be avoided in most cases.
+             * the transformed text must be freed once finished, this must be done
+             * conditionnally by testing if the transformed text pointer is the
+             * same as the class name pointer
+             */
+            if(map->legend.label.encoding || map->legend.label.wrap)
+                cur->transformedText= msTransformLabelText(&map->legend.label,lp->class[j]->name);
+            else
+                cur->transformedText=lp->class[j]->name;
             cur->theclass=lp->class[j];
             cur->layer=lp;
             cur->pred=head;
@@ -181,7 +193,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
                     msGetLabelSize(cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
             { /* something bad happened, free allocated mem */
                 while(cur) {
-                    free(cur->transformedText);
+                    if(cur->transformedText!=cur->theclass->name)
+                        free(cur->transformedText);
                     head=cur;
                     cur=cur->pred;
                     free(head);
@@ -236,7 +249,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
 
     while(cur) { /*cur initially points on the last legend item, i.e. the one that should be at the top*/
-        int number_of_newlines=0;
+        int number_of_newlines=0, offset=0;
 
         /*set the scale factor so that scale dependant symbols are drawn in the legend with their default size*/
         if(cur->layer->sizeunits != MS_PIXELS)
@@ -244,18 +257,21 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
         if(msDrawLegendIcon(map, cur->layer, cur->theclass,  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y) != MS_SUCCESS)
             return NULL;
-
+        
         /*
-         * adjust the baseline for multiline labels. the label point is the bottom left 
+         * adjust the baseline for multiline truetype labels. the label point is the bottom left 
          * corner of the *first* line, which we do not know exactly as we only have the
          * bounding box of the whole label. current approach is to suppose that all lines
          * mostly have the same height, and offset the starting point by the mean hight of 
          * one line. This isn't perfect but still much better than the previous approach
          */
-        if(map->legend.label.type!=MS_BITMAP &&
+        
+        if(map->legend.label.type==MS_TRUETYPE &&
                 (number_of_newlines=msCountChars(cur->transformedText,'\n'))>0) {
-            pnt.y += cur->height/(number_of_newlines+1);
-        }else
+            offset=cur->height/(number_of_newlines+1);
+            pnt.y += offset;
+        }
+        else
             pnt.y +=  cur->height;
         /* TODO: 
          * note tbonfort: if this todo concerned treating the individual heights of the legend labels,
@@ -263,14 +279,17 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
          * */
 
         msDrawLabel(image, pnt, cur->transformedText, &(map->legend.label), &map->fontset, 1.0);
-        if(number_of_newlines) {
+        if(offset) {
             /* if we had multiple lines, adjust the current position so it points
              * to the bottom of the current label
              */
-            pnt.y += cur->height-cur->height/(number_of_newlines+1);
+            pnt.y += cur->height-offset;
         }
         pnt.y += map->legend.keyspacingy; /* bump y for next label */
-        free(cur->transformedText);
+        
+        /*free the transformed text if needed*/
+        if(cur->transformedText!=cur->theclass->name)
+            free(cur->transformedText);
         head=cur;
         cur=cur->pred;
         free(head);

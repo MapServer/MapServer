@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- Enable AGG rendering of bitmap font labels instead of falling back to GD (#2387)
+
+- clean up treatment of encoding and wrap caracter
+
 - Fix legend label placement for multiline labels (#2382)
 
 - enforce WRAP parameter in legend label (#2382)

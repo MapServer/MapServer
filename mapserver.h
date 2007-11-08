@@ -1566,6 +1566,7 @@ MS_DLL_EXPORT char *msStringTrimLeft(char *string);
 MS_DLL_EXPORT char *msStringChop(char *string);
 MS_DLL_EXPORT void msStringTrimEOL(char *string);
 MS_DLL_EXPORT char *msReplaceSubstring(char *str, const char *old, const char *sznew);
+MS_DLL_EXPORT void msReplaceChar(char *str, char old, char sznew);
 MS_DLL_EXPORT char *msCaseReplaceSubstring(char *str, const char *old, const char *sznew);
 MS_DLL_EXPORT char *msStripPath(char *fn);
 MS_DLL_EXPORT char *msGetPath(char *fn);

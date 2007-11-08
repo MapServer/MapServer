@@ -2997,7 +2997,6 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
       if(error) {
 	msSetError(MS_TTFERR, error, "msDrawTextGD()");
-        if(label->encoding != NULL) msFree(string);
 	return(-1);
       }
     }
@@ -3020,8 +3019,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     if((fontPtr = msGetBitmapFont(label->size)) == NULL)
       return(-1);
 
-    if(label->wrap != '\0') {
-      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL)
+    if((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
 	return(-1);
 
       y -= fontPtr->h*num_tokens;
@@ -3046,25 +3044,6 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       }
 
       msFreeCharArray(token, num_tokens);
-    } else {
-      y -= fontPtr->h;
-
-      if(label->outlinecolor.pen >= 0) {
-	gdImageString(img, fontPtr, x, y-1, (unsigned char *) string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x, y+1, (unsigned char *) string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y, (unsigned char *) string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x-1, y, (unsigned char *) string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y-1, (unsigned char *) string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y+1, (unsigned char *) string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x-1, y-1, (unsigned char *) string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x-1, y+1, (unsigned char *) string, label->outlinecolor.pen);
-      }
-
-      if(label->shadowcolor.pen >= 0)
-	gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, (unsigned char *) string, label->shadowcolor.pen);
-
-      gdImageString(img, fontPtr, x, y, (unsigned char *) string, label->color.pen);
-    }
   }
 
   return(0);
@@ -3185,7 +3164,11 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
 #endif
     
   } else {  /* MS_BITMAP */
-    msSetError(MS_TTFERR, "TrueType font support is not available and is required for angled text rendering.", "msDrawTextGD()");
+#ifdef USE_GD_FT
+      msSetError(MS_TTFERR, "Angled text rendering is only available with truetype labels (hint: set TYPE TRUETYPE in your LABEL block)", "msDrawTextLineGD()");  
+#else
+    msSetError(MS_TTFERR, "TrueType font support is not available and is required for angled text rendering.", "msDrawTextLineGD()");
+#endif
     return(-1);
   }
   

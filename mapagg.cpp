@@ -82,6 +82,11 @@
 #include <ft2build.h>
 #include "agg_font_freetype.h"
 #include "agg_font_cache_manager.h"
+
+#include "agg_glyph_raster_bin.h"
+#include "agg_renderer_raster_text.h"
+#include "agg_embedded_raster_fonts.h"
+
 #define LINESPACE 1.33 //space beween text lines... from GD
 
 #ifdef CPL_MSB
@@ -101,6 +106,8 @@ typedef agg::rgba8 color_type;
 typedef agg::font_engine_freetype_int16 font_engine_type;
 typedef agg::font_cache_manager<font_engine_type> font_manager_type;
 typedef agg::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
+
+typedef agg::glyph_raster_bin<color_type> glyph_gen;
 
 typedef agg::renderer_base<pixelFormat> renderer_base;
 
@@ -231,6 +238,20 @@ static GDpixfmt loadSymbolPixmap(symbolObj *sym) {
     }
     return pixf;
 }
+
+/* 
+ * selection from the list of raster fonts provided with agg
+ * that best corresponds to the ones provided with GD. This 
+ * selection was done visually, first by looking at charcter 
+ * size, then resemblance.
+ */
+const agg::int8u* rasterfonts[]= { 
+        agg::gse5x7, /*gd tiny. gse5x7 is a bit less high than gd tiny*/
+        agg::mcs6x11_mono, /*gd small*/
+        agg::gse7x11_bold, /*gd medium*/
+        agg::verdana16, /*gd large*/
+        agg::gse8x16_bold /*gd huge*/
+};
 
 ///base rendering class for AGG.
 ///creates the AGG structures used later for rendering.
@@ -643,6 +664,34 @@ public:
             //the nearest integer pixel to avoid blurring)
             ren_base.blend_from(img_pixf,0,MS_NINT(x-img_pixf.width()/2.),MS_NINT(y-img_pixf.height()/2.));
         }
+    }
+    
+    int renderRasterGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
+            int size, char *thechars, colorObj *shadowcolor=NULL, double shdx=1, double shdy=1) {
+        glyph_gen glyph(0);
+        agg::renderer_raster_htext_solid<renderer_base, glyph_gen> rt(ren_base, glyph);
+        glyph.font(rasterfonts[size]);
+        int numlines=0;
+        char **lines;
+        if((lines = msStringSplit((const char*)thechars, '\n', &(numlines))) == NULL)
+            return(-1);
+        for(int n=0;n<numlines;n++) {
+            if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
+                rt.color(msToAGGColor(outlinecolor));
+                for(int i=-1;i<=1;i++) {
+                    for(int j=-1;j<=1;j++) {
+                        if(i||j) {
+                            rt.render_text(x+i, y+j, lines[n], true);
+                        }
+                    }
+                }
+            }
+            rt.color(msToAGGColor(color));
+            rt.render_text(x, y, lines[n], true);
+            y += glyph.height();
+        }
+        msFreeCharArray(lines, numlines);
+        return MS_SUCCESS;
     }
     
     ///render a freetype string
@@ -1851,9 +1900,18 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
 
         return 0;
-    } else { // fall back to gd for bitmap fonts
-        //msSetError(MS_TTFERR, "BITMAP font support is not available with AGG", "msDrawTextAGG()");              
-        return msDrawTextGD(image->img.gd, labelPnt, string, label, fontset, scalefactor);
+    } else {
+        /*adjust top line*/
+        int n=msCountChars(string,'\n');
+        glyph_gen glyph(0);
+        glyph.font(rasterfonts[label->size]);
+        y -= glyph.height()*(n);
+        ren->renderRasterGlyphs(x,y,
+                &(label->color),
+                &(label->outlinecolor),
+                label->size,
+                string);
+        return 0;
     }
 
 }
@@ -1946,7 +2004,6 @@ int msDrawLabelCacheAGG(imageObj *image, mapObj *map)
     pointObj p;
     int i, l, priority;
     rectObj r;
-    AGGMapserverRenderer* ren = getAGGRenderer(image);
     labelCacheMemberObj *cachePtr=NULL;
     layerObj *layerPtr=NULL;
     labelObj *labelPtr=NULL;
@@ -2117,38 +2174,7 @@ int msDrawLabelCacheAGG(imageObj *image, mapObj *map)
             if ( cachePtr->labelpath ) {
                 msDrawTextLineAGG(image, cachePtr->text, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); // Draw the curved label
             } else {
-                //don't use drawtextagg but direct rendering calls, to leverage the font cache
-                //msDrawTextAGG(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor);
-                // actually draw the label 
-                if(labelPtr->type == MS_TRUETYPE) {
-                    char *font=NULL;
-                    double angle_radians = MS_DEG_TO_RAD*labelPtr->angle;
-                    double size;
-
-                    size = labelPtr->size*layerPtr->scalefactor;
-                    size = MS_MAX(size, labelPtr->minsize);
-                    size = MS_MIN(size, labelPtr->maxsize);
-
-                    if(!labelPtr->font) {
-                        msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawLabelCacheAGG()");
-                        return(-1);
-                    }
-
-                    font = msLookupHashTable(&(map->fontset.fonts), labelPtr->font);
-                    if(!font) {
-                        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawLabelCacheAGG()", labelPtr->font);
-                        return(-1);
-                    }
-
-                    ren->renderGlyphs(p.x,p.y,&(labelPtr->color),&(labelPtr->outlinecolor),size,
-                            font,cachePtr->text,angle_radians,
-                            &(labelPtr->shadowcolor),labelPtr->shadowsizex,labelPtr->shadowsizey,
-                            false,
-                            (labelPtr->encoding!=NULL));
-                }
-                else {
-                    msDrawTextGD(image->img.gd, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor);
-                }
+                msDrawTextAGG(image,p,cachePtr->text,labelPtr,&(map->fontset),layerPtr->scalefactor);
             }
 
         } // next label 

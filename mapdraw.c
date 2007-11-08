@@ -1293,11 +1293,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
     return MS_FAILURE; /* error message is set in msBindLayerToShape() */
-
-  if(shape->text && layer->class[c]->label.encoding) {
-    char *encodedText = msGetEncodedString(shape->text, layer->class[c]->label.encoding);
-    if(!encodedText) return MS_FAILURE;
-    free(shape->text); shape->text = encodedText;
+  
+  if(shape->text && (layer->class[c]->label.encoding || layer->class[c]->label.wrap)) {
+      char *newtext=msTransformLabelText(&(layer->class[c]->label),shape->text);
+      if(!newtext) return MS_FAILURE;
+      free(shape->text);
+      shape->text = newtext;
   }
 
   switch(layer->type) {
@@ -1855,8 +1856,9 @@ int msDrawLabel(imageObj *image, pointObj labelPnt, char *string,
   if ( MS_RENDERER_SWF(image->format) )
       return msDrawLabelSWF(image, labelPnt, string, label, fontset, scalefactor);
 #endif
-
-  if(label->position != MS_XY) {
+  
+  
+ if(label->position != MS_XY) {
     pointObj p;
     rectObj r;
 
