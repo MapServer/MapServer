@@ -1803,6 +1803,7 @@ MS_DLL_EXPORT void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, s
 
 MS_DLL_EXPORT int msDrawLabel(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCache(imageObj *image, mapObj *map);
 
 MS_DLL_EXPORT void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image);
@@ -1872,6 +1873,7 @@ MS_DLL_EXPORT int msDrawLegendIconGD(mapObj *map, layerObj *lp, classObj *thecla
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
 MS_DLL_EXPORT void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent);
 
+MS_DLL_EXPORT void billboardGD(gdImagePtr img, shapeObj *shape, labelObj *label);
 #ifdef USE_AGG
 /* ==================================================================== */
 /*      Prototypes for functions in mapagg.cpp                          */
@@ -1906,7 +1908,7 @@ MS_DLL_EXPORT void msFreeSymbolCacheAGG(void *buffer);
 MS_DLL_EXPORT void msAlphaGD2AGG(imageObj *im);
 MS_DLL_EXPORT void msAlphaAGG2GD(imageObj *im);
 MS_DLL_EXPORT void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct);
-
+MS_DLL_EXPORT void billboardAGG(imageObj *image, shapeObj *shape, labelObj *label);
 #endif  /* USE_AGG  */
 
 /* various JOIN functions (in mapjoin.c) */
