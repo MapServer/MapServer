@@ -981,9 +981,9 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
     
     if (gdImageTrueColor(src->img)) {
       dst->img = gdImageCreateTrueColor(gdImageSX(src->img), gdImageSY(src->img));
-      gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));
-      gdImageAlphaBlending(dst->img, 0);
       gdImageFilledRectangle(dst->img, 0, 0, gdImageSX(src->img), gdImageSY(src->img), gdImageColorAllocateAlpha(dst->img, 0, 0, 0, gdAlphaTransparent)); 
+      gdImageAlphaBlending(dst->img, 0);
+      gdImageCopy(dst->img, src->img, 0, 0, 0, 0, gdImageSX(src->img), gdImageSY(src->img));
     } else {
       int tc = gdImageGetTransparent(src->img);
 
