@@ -255,7 +255,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>postlabelcache                        { return(POSTLABELCACHE); }
 <INITIAL>priority                              { return(PRIORITY); }
 <INITIAL>processing                            { return(PROCESSING); }
-<INITIAL,URL_STRING>projection                 { return(PROJECTION); }
+<INITIAL,URL_VARIABLE,URL_STRING>projection    { return(PROJECTION); }
 <INITIAL>queryformat                           { return(QUERYFORMAT); }
 <INITIAL,URL_VARIABLE>querymap                 { return(QUERYMAP); }
 <INITIAL,URL_VARIABLE>reference                { return(REFERENCE); }
