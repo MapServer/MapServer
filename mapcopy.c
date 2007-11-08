@@ -837,6 +837,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTELEM(numjoins);
 
     for (i = 0; i < dst->numjoins; i++) {
+        initJoin(&(dst->joins[i]));
         return_value = msCopyJoin(&(dst->joins[i]), &(src->joins[i]));
         if (return_value != MS_SUCCESS)
             return MS_FAILURE;
