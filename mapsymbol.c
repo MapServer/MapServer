@@ -220,7 +220,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
-	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyylineno);
+	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
 	return(-1);
       }
       
