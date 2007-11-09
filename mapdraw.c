@@ -1653,9 +1653,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
                 int classindex, char *labeltext)
 {
-  int c, s;
-
-  c = classindex;
+  int s;
+  char *newtext;
+  classObj *theclass=layer->class[classindex];
+  labelObj *label=&(theclass->label);
  
 #ifdef USE_PROJ
   if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
@@ -1663,7 +1664,12 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
   else
     layer->project = MS_FALSE;
 #endif
-
+  
+  /*apply wrap character and encoding to the label text*/
+  if(labeltext &&(label->encoding || label->wrap))
+      newtext = msTransformLabelText(label,labeltext);
+  else
+      newtext=labeltext;
   switch(layer->type) {
   case MS_LAYER_ANNOTATION:
     if(layer->transform == MS_TRUE) {
@@ -1675,13 +1681,13 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
     if(labeltext) {
       if(layer->labelcache) {
-        if(msAddLabel(map, layer->index, c, -1, -1, point, NULL, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
+        if(msAddLabel(map, layer->index, classindex, -1, -1, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else {
-	if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-          for(s=0; s<layer->class[c]->numstyles; s++)
-  	    msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
+	if(theclass->numstyles > 0 && MS_VALID_COLOR(theclass->styles[0]->color)) {
+          for(s=0; s<theclass->numstyles; s++)
+  	    msDrawMarkerSymbol(&map->symbolset, image, point, (theclass->styles[s]), layer->scalefactor);
 	}
-	msDrawLabel(image, *point, labeltext, &layer->class[c]->label, &map->fontset, layer->scalefactor);
+	msDrawLabel(image, *point, newtext, label, &map->fontset, layer->scalefactor);
       }
     }
     break;
@@ -1694,19 +1700,22 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
     } else
       msOffsetPointRelativeTo(point, layer);
 
-    for(s=0; s<layer->class[c]->numstyles; s++)
-      msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
+    for(s=0; s<theclass->numstyles; s++)
+      msDrawMarkerSymbol(&map->symbolset, image, point, (theclass->styles[s]), layer->scalefactor);
 
     if(labeltext) {
       if(layer->labelcache) {
-        if(msAddLabel(map, layer->index, c, -1, -1, point, NULL, labeltext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
+        if(msAddLabel(map, layer->index, classindex, -1, -1, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else
-	msDrawLabel(image, *point, labeltext, &layer->class[c]->label, &map->fontset, layer->scalefactor);
+	msDrawLabel(image, *point, newtext, label, &map->fontset, layer->scalefactor);
     }
     break;
   default:
     break; /* don't do anything with layer of other types */
   }
+  
+  if(newtext!=labeltext) /*free the transformed text if necessary*/
+    free(newtext);
 
   return(MS_SUCCESS); /* all done, no cleanup */
 }
