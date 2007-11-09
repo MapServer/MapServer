@@ -472,7 +472,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
        * layer of the map was a raster layer
        */
       if(MS_RENDERER_AGG(map->outputformat))
-          msAlphaAGG2GD(img);
+          msAlphaGD2AGG(img);
 #endif
       msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   }
