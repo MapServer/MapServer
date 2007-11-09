@@ -2897,34 +2897,6 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
   }
 }
 
-void billboardGD(gdImagePtr img, shapeObj *shape, labelObj *label)
-{
-  int i;
-  shapeObj temp;
-
-  msInitShape(&temp);
-  msAddLine(&temp, &shape->line[0]);
-
-  if(label->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->backgroundcolor));
-  if(label->backgroundshadowcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->backgroundshadowcolor));
-
-  if(label->backgroundshadowcolor.pen >= 0) {
-    for(i=0; i<temp.line[0].numpoints; i++) {
-      temp.line[0].point[i].x += label->backgroundshadowsizex;
-      temp.line[0].point[i].y += label->backgroundshadowsizey;
-    }
-    imageFilledPolygon(img, &temp, label->backgroundshadowcolor.pen, 0, 0);
-    for(i=0; i<temp.line[0].numpoints; i++) {
-      temp.line[0].point[i].x -= label->backgroundshadowsizex;
-      temp.line[0].point[i].y -= label->backgroundshadowsizey;
-    }
-  }
-
-  imageFilledPolygon(img, &temp, label->backgroundcolor.pen, 0, 0);
-
-  msFreeShape(&temp);
-}
-
 /*
 ** Simply draws a label based on the label point and the supplied label object.
 */

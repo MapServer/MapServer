@@ -1687,7 +1687,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     agg::path_storage& polygon = ren->get_path();
     polygon.remove_all();
-    shapePolygonToPath(p,polygon,0,0);
+    shapePolygonToPath(p,polygon,ox,oy);
     if(symbol->type==MS_SYMBOL_SIMPLE &&symbol->antialias==MS_FALSE) { // solid fill
                 ren->renderPathSolidFast(polygon,&(style->color),&(style->outlinecolor));
                 return; // done simple case
@@ -1993,29 +1993,6 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
     }
 
 }
-
-void billboardAGG(imageObj *image, shapeObj *shape, labelObj *label)
-{
-  
-  shapeObj temp;
-  AGGMapserverRenderer* ren = getAGGRenderer(image);
-  
-  msInitShape(&temp);
-  msAddLine(&temp, &shape->line[0]);
-  agg::path_storage& path = ren->get_path();
-  path.remove_all();
-  shapePolygonToPath(&temp,path,0,0);
-  if(MS_VALID_COLOR(label->backgroundshadowcolor)) {
-      path.transform(agg::trans_affine_translation(
-              label->backgroundshadowsizex,label->backgroundshadowsizey));
-      ren->renderPathSolid(path,&(label->backgroundshadowcolor),NULL,1);
-      path.transform(agg::trans_affine_translation(
-              -label->backgroundshadowsizex,-label->backgroundshadowsizey));
-  }
-  ren->renderPathSolid(path,&(label->backgroundcolor),NULL,1);
-  msFreeShape(&temp);
-}
-
 
 // -----------------------------------------------------------------------------------------
 // draw a filled pie slice centered on center_x,center_y

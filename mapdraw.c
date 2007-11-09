@@ -29,6 +29,7 @@
 #include <assert.h>
 #include "mapserver.h"
 #include "maptime.h"
+#include "mapcopy.h"
 
 MS_CVSID("$Id$")
 
@@ -1929,19 +1930,6 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
     return nReturnVal;
 }
 
-static void billboard(imageObj *image, shapeObj *shape, labelObj *label)
-{
-    if (image)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            billboardGD(image->img.gd,shape,label);
-#ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            billboardAGG(image,shape,label);
-#endif
-    }
-}
-
 int msDrawLabelCache(imageObj *image, mapObj *map)
 {
     int nReturnVal = MS_SUCCESS;
@@ -2110,8 +2098,23 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                             msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
                     }
 
-                    if(MS_VALID_COLOR(labelPtr->backgroundcolor))
-                        billboard(image, cachePtr->poly, labelPtr);
+                    if(MS_VALID_COLOR(labelPtr->backgroundcolor)) {
+                        int nlines=cachePtr->poly->numlines;
+                        cachePtr->poly->numlines=1; /*only draw the first polygon, i.e. behind the text*/
+                        styleObj style;
+                        initStyle(&style);                      
+                        if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
+                            MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
+                            style.offsetx=labelPtr->backgroundshadowsizex;
+                            style.offsety=labelPtr->backgroundshadowsizey;
+                            msDrawShadeSymbol(&map->symbolset,image,cachePtr->poly,&style,1);
+                            style.offsetx=0;
+                            style.offsety=0;
+                        }
+                        MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundcolor));
+                        msDrawShadeSymbol(&map->symbolset,image,cachePtr->poly,&style,1);
+                        cachePtr->poly->numlines=nlines;   
+                    }
 
                     if ( cachePtr->labelpath ) {
                         msDrawTextLine(image, cachePtr->text, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); /* Draw the curved label */
