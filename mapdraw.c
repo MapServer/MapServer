@@ -2108,9 +2108,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                     }
 
                     if(MS_VALID_COLOR(labelPtr->backgroundcolor)) {
+                        styleObj style;
                         int nlines=cachePtr->poly->numlines;
                         cachePtr->poly->numlines=1; /*only draw the first polygon, i.e. behind the text*/
-                        styleObj style;
                         initStyle(&style);                      
                         if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
                             MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
