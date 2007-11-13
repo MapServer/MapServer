@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- allow scientific notation for attributes binded to an int (#2394)
+
 - merge GD and AGG label cache drawing functions (#2390)
 
 - Enable AGG rendering of bitmap font labels instead of falling back to GD (#2387)
