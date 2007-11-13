@@ -88,6 +88,8 @@
 #include "agg_embedded_raster_fonts.h"
 
 #define LINESPACE 1.33 //space beween text lines... from GD
+#define _EPSILON 0.00001 //used for double equality testing
+
 
 #ifdef CPL_MSB
 typedef agg::order_argb gd_color_order;
@@ -622,19 +624,20 @@ public:
     ///@param img_pixf the pixmap to render. must be premultiplied
     ///@param x,y where to render the pixmap. this is the point where the
     ///     center of the pixmap will be placed
-    ///@param angle,scale angle and scale for rendering the pixmap. angle is in degrees.
-    ///     if one of these values is meaningfull (i.e angle!=360 or 0, scale!=1), bilinear
+    ///@param angle,scale angle and scale for rendering the pixmap. angle is in radians.
+    ///     if one of these values is meaningfull (i.e angle!=0, scale!=1), bilinear
     ///     filtering will be applied. if not the image is copied without subpixel positioning
     ///     (i.e. at the nearest integer position)to avoid the blur caused by the bilinear filtering
     void renderPixmapBGRA(GDpixfmt &img_pixf, double x, double y, double angle, double scale) {
         ras_aa.reset();
         ras_aa.filling_rule(agg::fill_non_zero);
         
-        if((angle!=0 && angle!=360) || scale !=1) {
+        if( (fabs(angle)>_EPSILON) || (fabs(M_2_PI-angle)>_EPSILON) || scale !=1) {
             agg::trans_affine image_mtx;
             image_mtx *= agg::trans_affine_translation(-(double)img_pixf.width()/2.,
                     -(double)img_pixf.height()/2.);
-            image_mtx *= agg::trans_affine_rotation(angle * agg::pi / 180.0);
+            /*agg angles are antitrigonometric*/
+            image_mtx *= agg::trans_affine_rotation(-angle);
             image_mtx *= agg::trans_affine_scaling(scale);
 
 
@@ -716,6 +719,7 @@ public:
         ras_aa.filling_rule(agg::fill_non_zero);
         agg::trans_affine mtx;
         mtx *= agg::trans_affine_translation(-x,-y);
+        /*agg angles are antitrigonometric*/
         mtx *= agg::trans_affine_rotation(-angle);
         mtx *= agg::trans_affine_translation(x,y);
         
@@ -1054,7 +1058,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         //fill the circle
         ren->renderPathSolid(circle,&(style->backgroundcolor),NULL,1);
         int s = MS_NINT(2*r)+1;
-        hatch = createHatchAGG(s,s,style->angle,style->size);
+        hatch = createHatchAGG(s,s,style->angle,size);
         hatch.transform(agg::trans_affine_translation(p->x-r,p->y-r));
         agg::conv_stroke <agg::path_storage > stroke(hatch);
         stroke.width(style->width);
@@ -1216,7 +1220,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     break;    
     case(MS_SYMBOL_PIXMAP): {
         GDpixfmt img_pixf = loadSymbolPixmap(symbol);
-        ren->renderPixmapBGRA(img_pixf,p->x,p->y,angle,d);
+        ren->renderPixmapBGRA(img_pixf,p->x,p->y,angle_radians,d);
     }
     break;    
     case(MS_SYMBOL_ELLIPSE): {
@@ -1325,6 +1329,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
         symbol_width = img_pixf.width();
     else
         symbol_width=sw;
+    double angle_radians = style->angle*MS_DEG_TO_RAD;
 
     for(int i=0; i<p->numlines; i++) 
     {
@@ -1342,9 +1347,9 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                 }
             }
             else theta = -theta;       
-            double angle=style->angle;
+            double angle=angle_radians;
             if(rotate_symbol)
-                angle += MS_RAD_TO_DEG * theta;
+                angle += theta;
             bool in = false;
             while(current_length <= length) {
                 point.x = p->line[i].point[j-1].x + current_length*rx;
@@ -1374,8 +1379,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                 case MS_SYMBOL_VECTOR: {
                     agg::path_storage rotsym = vector_symbol;
                     rotsym.transform(agg::trans_affine_translation(-sw/2,-sh/2));
-                    if(rotate_symbol)
-                        rotsym.transform(agg::trans_affine_rotation(theta));
+                    rotsym.transform(agg::trans_affine_rotation(-angle));
                     rotsym.transform(agg::trans_affine_translation(point.x,point.y));
                     if(symbol->filled) {
                         //draw an optionnally filled and/or outlined vector symbol
@@ -1657,7 +1661,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         return;
     }
 
-    double ox,oy,size, angle, angle_radians,width;
+    double ox,oy,size, angle_radians,width;
 
     if(!p) return;
     if(p->numlines <= 0) return;
@@ -1674,8 +1678,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     width = MS_MAX(width, style->minwidth);
     width = MS_MIN(width, style->maxwidth);
 
-    angle = (style->angle) ? style->angle : 0.0;
-    angle_radians = angle*MS_DEG_TO_RAD;
+    angle_radians = style->angle*MS_DEG_TO_RAD;
 
     ox = style->offsetx*scalefactor; // should we scale the offsets?
     oy = style->offsety*scalefactor;
@@ -1734,7 +1737,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         case(MS_SYMBOL_VECTOR): {
             double d = size/symbol->sizey; // compute the scaling factor (d) on the unrotated symbol
             char bRotated=MS_FALSE;
-            if (angle != 0.0 && angle != 360.0) {
+            if (style->angle != 0.0 && style->angle != 360.0) {
                 bRotated = MS_TRUE;
                 symbol = msRotateSymbol(symbol, style->angle);
             }
