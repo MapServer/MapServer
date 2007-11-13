@@ -1704,6 +1704,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     else {
         switch(symbol->type) {
         case(MS_SYMBOL_HATCH): {
+            
             msComputeBounds(p);
             int pw=MS_NINT(p->bounds.maxx-p->bounds.minx)+1;
             int ph=MS_NINT(p->bounds.maxy-p->bounds.miny)+1;
@@ -1714,7 +1715,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             
             //create a rectangular hatch of size pw,ph starting at 0,0
             //the created hatch is of the size of the shape's bounding box
-            hatch = createHatchAGG(pw,ph,style->angle,style->size);
+            hatch = createHatchAGG(pw,ph,style->angle,size);
             
             //translate the hatch so it overlaps the current shape
             hatch.transform(agg::trans_affine_translation(p->bounds.minx, p->bounds.miny));
