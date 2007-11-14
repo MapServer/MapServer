@@ -1333,7 +1333,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
 
     for(int i=0; i<p->numlines; i++) 
     {
-        double current_length = gap+symbol_width/2.0; // initial padding for each line
+        double current_length = 1+symbol_width/2.0; // initial padding for each line
         for(int j=1;j<p->line[i].numpoints;j++) 
         {
             double length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
@@ -1472,7 +1472,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
       return;
   }
   for(i=0; i<p->numlines; i++) {
-    current_length = gap+label_width/2.0; // initial padding for each line
+    current_length = 1+label_width/2.0; // initial padding for each line
     
     for(j=1;j<p->line[i].numpoints;j++) {
       length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
