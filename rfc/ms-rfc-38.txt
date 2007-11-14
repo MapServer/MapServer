@@ -7,7 +7,7 @@
          1528 Ranier Dr.
          Iowa City, IA 52246
 :Contact: hobu.inc@gmail.com
-:Revision: $Revision: 467 $
+:Revision: $Revision$
 :Date: $Date: 2007-10-30 14:19:51 -0500 (Tue, 30 Oct 2007) $
 
 .. sectnum::
