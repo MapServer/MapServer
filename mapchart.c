@@ -207,12 +207,14 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
                     (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
         if(y!=vertOriginClipped) { /*don't draw bars of height == 0 (i.e. either values==0, or clipped)*/
             if( MS_RENDERER_GD(map->outputformat) ) {
-                color = gdImageColorAllocate(image->img.gd, layer->class[c]->styles[0]->color.red,
+                color = gdImageColorResolve(image->img.gd, 
+                        layer->class[c]->styles[0]->color.red,
                         layer->class[c]->styles[0]->color.green,
                         layer->class[c]->styles[0]->color.blue);
                 outlinecolor=-1;outlinewidth=1;
                 if(MS_VALID_COLOR(layer->class[c]->styles[0]->outlinecolor)) {
-                    outlinecolor = gdImageColorAllocate(image->img.gd, layer->class[c]->styles[0]->outlinecolor.red,
+                    outlinecolor = gdImageColorResolve(image->img.gd, 
+                            layer->class[c]->styles[0]->outlinecolor.red,
                             layer->class[c]->styles[0]->outlinecolor.green,
                             layer->class[c]->styles[0]->outlinecolor.blue);
                 }
@@ -318,12 +320,12 @@ int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape,
         values[i]*=360.0/dTotal;
         if( MS_RENDERER_GD(map->outputformat) )
         {
-            color = gdImageColorAllocate(image->img.gd, layer->class[i]->styles[0]->color.red,
+            color = gdImageColorResolve(image->img.gd, layer->class[i]->styles[0]->color.red,
                                                 layer->class[i]->styles[0]->color.green,
                                                 layer->class[i]->styles[0]->color.blue);
             outlinecolor=-1;outlinewidth=1;
             if(MS_VALID_COLOR(layer->class[i]->styles[0]->outlinecolor)) {
-                outlinecolor = gdImageColorAllocate(image->img.gd, layer->class[i]->styles[0]->outlinecolor.red,
+                outlinecolor = gdImageColorResolve(image->img.gd, layer->class[i]->styles[0]->outlinecolor.red,
                         layer->class[i]->styles[0]->outlinecolor.green,
                         layer->class[i]->styles[0]->outlinecolor.blue);
             }
