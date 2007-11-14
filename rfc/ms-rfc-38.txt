@@ -99,3 +99,5 @@ Intellectual Property
 
 This work will become a regular part of MapServer and will be released under 
 MapServer's open source license.
+
+[1] http://mapserver.gis.umn.edu/development/rfc/ms-rfc-8/
