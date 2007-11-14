@@ -1,0 +1,101 @@
+******************************************************************************
+	MS RFC 38: Native Microsoft SQL Server 2008 Driver for MapServer
+******************************************************************************
+
+:Author: Howard Butler
+         Hobu, Inc
+         1528 Ranier Dr.
+         Iowa City, IA 52246
+:Contact: hobu.inc@gmail.com
+:Revision: $Revision: 467 $
+:Date: $Date: 2007-10-30 14:19:51 -0500 (Tue, 30 Oct 2007) $
+
+.. sectnum::
+
+.. contents::
+    :depth: 3
+    :backlinks: top
+
+
+==============================================================================
+Purpose
+==============================================================================
+
+To provide a read-only, native MapServer driver that connects to Microsoft
+SQL Server 2008 (henceforth called SQL Server) on Windows as a PLUGIN 
+datasource driver.
+
+==============================================================================
+Background
+==============================================================================
+
+I.S. Consulting has donated a native driver modeled on the PostGIS driver 
+to support SQL Server 2008's newly added spatial capabilities.  This new 
+driver will only be available on the Windows platform, and it will only 
+be available as a PLUGIN datasource driver.  No additional enumerations or 
+conditional includes will be added to the MapServer codebase to support this 
+driver.
+
+==============================================================================
+Usage Details
+==============================================================================
+
+The driver is a PLUGIN layer, and uses the PLUGIN syntax described in RFC 8 [1]
+to define relevant layer information:
+
+::
+
+  LAYER
+    NAME "Roads"
+    CONNECTIONTYPE PLUGIN
+    PLUGIN "C:\ms4w\plugins\msplugin_mssql2008.dll"
+
+    CONNECTION "server=mysqlserver2008.com;uid=dbusername;pwd=dbpassword;database=Roads Database;Integrated Security=false"
+    
+    DATA "the_geom from roads"
+    TYPE LINE
+
+    STATUS ON
+
+    PROJECTION
+	"init=epsg:4326"
+    END
+    
+    CLASS
+      STYLE
+         COLOR 0 0 255
+         WIDTH 8
+       END
+    END 
+
+  END
+   
+==============================================================================
+Files Affected
+==============================================================================
+
+A single file, mapmssql2008.c will be added to subversion.  It will only be 
+compiled on windows using the 'nmake /f makefile.vc plugins' command when 
+options describing the ODBC libraries are switched on.
+
+==============================================================================
+Backward Compatibility Issues
+==============================================================================
+
+All work described in this RFC will provide optional capabilities to MapServer 
+and no backward compatibility issues are expected.
+
+==============================================================================
+Documentation
+==============================================================================
+
+This RFC will stand as primary documentation for the feature until such time 
+as the methods and practices described in this document are integrated into 
+the regular MapServer documentation framework. 
+
+==============================================================================
+Intellectual Property
+==============================================================================
+
+This work will become a regular part of MapServer and will be released under 
+MapServer's open source license.
