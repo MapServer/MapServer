@@ -60,7 +60,7 @@ extern char *msyystring;
 static int bindIntegerAttribute(int *attribute, char *value)
 {
   if(!value || strlen(value) == 0) return MS_FAILURE;
-  *attribute = MS_NINT(atof(value));
+  *attribute = MS_NINT(atof(value)); /*use atof instead of atoi as a fix for bug 2394*/
   return MS_SUCCESS;
 }
 
