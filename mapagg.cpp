@@ -697,6 +697,52 @@ public:
         return MS_SUCCESS;
     }
     
+    int getLabelSize(char *string, char *font, double size, rectObj *rect) {
+
+
+        if(!m_feng.load_font(font, 0, agg::glyph_ren_outline))
+            return MS_FAILURE;
+        m_feng.hinting(true);
+        m_feng.height(size);
+        m_feng.resolution(96);
+        m_feng.flip_y(true);
+        int unicode;
+        const agg::glyph_cache* glyph;
+        string+=msUTF8ToUniChar(string, &unicode);
+        glyph=m_fman.glyph(unicode);
+        if(glyph){
+            rect->minx=glyph->bounds.x1;
+            rect->maxx=glyph->bounds.x2;
+            rect->miny=glyph->bounds.y1;
+            rect->maxy=glyph->bounds.y2;
+        }
+        else
+            return MS_FAILURE;
+        double fx=glyph->advance_x,fy=glyph->advance_y;
+        while(*string) {
+            if(*string=='\r') {fx=0;string++;continue;}
+            if(*string=='\n') {fx=0;fy+=ceil(size*LINESPACE);string++;continue;}
+            string+=msUTF8ToUniChar(string, &unicode);
+            glyph=m_fman.glyph(unicode);
+            if(glyph)
+            {
+                double t;
+                if((t=fx+glyph->bounds.x1)<rect->minx) rect->minx=t;
+                if((t=fx+glyph->bounds.x2)>rect->maxx) rect->maxx=t;
+                if((t=fy+glyph->bounds.y1)<rect->miny) rect->miny=t;
+                if((t=fy+glyph->bounds.y2)>rect->maxy) rect->maxy=t;
+
+                fx += glyph->advance_x;
+                fy += glyph->advance_y;
+            }
+        }
+        rect->minx--;
+        rect->miny--;
+        rect->maxx++;
+        rect->maxy++;
+        return MS_SUCCESS;
+    }
+    
     ///render a freetype string
     ///@param x,y the lower left corner where to start the string, or the center of
     ///     the character if isMarker is true
@@ -713,8 +759,7 @@ public:
     ///     when set to true, will only center the text if this one is a single character
     int renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
             double size, char *font, char *thechars, double angle=0,
-            colorObj *shadowcolor=NULL, double shdx=1, double shdy=1,
-            bool isMarker=false) {
+            colorObj *shadowcolor=NULL, double shdx=1, double shdy=1) {
         
         ras_aa.filling_rule(agg::fill_non_zero);
         agg::trans_affine mtx;
@@ -736,16 +781,7 @@ public:
         font_curve_type m_curves(m_fman.path_adaptor());
         const agg::glyph_cache* glyph;
         int unicode;
-        if(isMarker) {
-            /* adjust center wrt the size of the glyph
-             * bounds are given in integer coordinates around (0,0)
-             * the y axis is flipped
-             */
-            msUTF8ToUniChar(thechars, &unicode);
-            glyph=m_fman.glyph(unicode);
-            x-=glyph->bounds.x1+(glyph->bounds.x2-glyph->bounds.x1)/2.;
-            y+=-glyph->bounds.y2+ (glyph->bounds.y2-glyph->bounds.y1)/2.;
-        }
+        
         
         double fx=x,fy=y;
         const char *utfptr=thechars;
@@ -1208,8 +1244,14 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     case(MS_SYMBOL_TRUETYPE): {
         char* font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
         if(!font) return;
-        ren->renderGlyphs(p->x+ox,p->y+oy,&(style->color),&(style->outlinecolor),
-                size,font,symbol->character,angle_radians,NULL,0,0,true);
+        double x,y;
+        rectObj bounds;
+        if(ren->getLabelSize(symbol->character,font,size,&bounds)!=MS_SUCCESS)
+            return;
+        x = p->x + ox - bounds.minx - (bounds.maxx-bounds.minx)/2.;
+        y = p->y + oy - bounds.maxy + (bounds.maxy-bounds.miny)/2.;
+        ren->renderGlyphs(x,y,&(style->color),&(style->outlinecolor),
+                size,font,symbol->character,angle_radians,NULL,0,0);
     }
     break;    
     case(MS_SYMBOL_PIXMAP): {
@@ -1455,16 +1497,16 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   label.color = style->color;
   label.outlinecolor = style->outlinecolor;
   
-  //TODO: replace this with AGG size calculation routine (to be done inside msGetLabelSize)
-  if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE) == -1)
+  char * font = msLookupHashTable(&(symbolset->fontset->fonts), label.font);
+    if(!font) {
+        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextAGG()", label.font);
+        return;
+    }
+  if(ren->getLabelSize(symbol->character, font, label.size, &label_rect) != MS_SUCCESS)
     return;
 
   label_width = (int) label_rect.maxx - (int) label_rect.minx;
-  char * font = msLookupHashTable(&(symbolset->fontset->fonts), label.font);
-  if(!font) {
-      msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextAGG()", label.font);
-      return;
-  }
+  
   for(i=0; i<p->numlines; i++) {
     current_length = 1+label_width/2.0; // initial padding for each line
     
@@ -1500,8 +1542,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
         label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, NULL);
         ren->renderGlyphs(label_point.x,label_point.y,&(label.color),&(label.outlinecolor),label.size,
                           font,symbol->character,label.angle*MS_DEG_TO_RAD,
-                          NULL,0,0,
-                          false);
+                          NULL,0,0);
         current_length += label_width + gap;
         in = 1;
       }
@@ -1892,8 +1933,7 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
         ren->renderGlyphs(x,y,&(label->color),&(label->outlinecolor),size,
                 font,string,angle_radians,
-                &(label->shadowcolor),label->shadowsizex,label->shadowsizey,
-                false);
+                &(label->shadowcolor),label->shadowsizex,label->shadowsizey);
 
 
         return 0;
@@ -1978,8 +2018,7 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
 
             ren->renderGlyphs(x,y,&(label->color),&(label->outlinecolor),
                     size,font,s,theta,&(label->shadowcolor),
-                    label->shadowsizex,label->shadowsizey,
-                    false);
+                    label->shadowsizex,label->shadowsizey);
         }      
         return(0);
     }
