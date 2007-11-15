@@ -1,0 +1,161 @@
+=========================================================
+  MS RFC 39: Support of WMS/SLD named styles in MapServer 
+=========================================================
+
+:Date: 2007/11/13
+:Author: yewondwossen Assefa
+:Contact: yassefa@dmsolutions.ca
+:Status: Development
+
+
+Overview
+--------
+
+When WMS and SLD support was added in MapServer few years back, one of features that was not integrated was the ability to specify named styles through WMS GetMap request using the STYLES parameter or through the <NamedStyle> parameter in an SLD document.  
+
+Using named styles, the WMS client has the ability to render a specified layer using styles predefined by the WMS server.
+
+Example of this would be:
+
+::
+
+    http://..../mapserv.cgi?Request=GetMap&....&LAYERS=Rivers,Roads,Houses&STYLES=CenterLine,CenterLine,Outline
+
+
+    <StyledLayerDescriptorversion="1.0.0">
+      <NamedLayer><Name>Roads</Name>
+        <NamedStyle>
+          <Name>Casing</Name>
+        </NamedStyle>
+        <NamedStyle>
+          <Name>CenterLine</Name>
+        </NamedStyle>
+      </NamedLayer>
+    </StyledLayerDescriptor>
+
+The main reason this functionality is not yet supported is that It is not currently possible to defined in MapServer several mutually exclusive 'styles' on a layer   The intention of this RFC is to introduce a simple mechanism that would allow MapServer to define mutually exclusive 'Styles'. This would then allow for MapServer to advertise and support named styles through the WMS interface
+
+
+Proposed Changes
+----------------
+
+The MapServer architecture (layer. class, styles) does not fit well the SLD model where it assumes that you can define mutually exclusive styles on a layer and be able to switch between them.
+ 
+One possible solution which is reasonably non disruptive would be to introduce the concept of group names at the class object level and have at a layer level a parameter that can be used to specify the classes to use. Something like this is what is proposed:
+
+::
+   
+    LAYER
+     ...
+     CLASSGROUP "group1"
+     ...
+     CLASS
+       NAME "name1"
+       GROUP "group1"
+       ...
+     END
+     CLASS
+       NAME "name2"
+       GROUP "group2"
+       ...
+     END
+     ...
+
+- This introduces two new keywords, CLASSGROUP at the layer level and GROUP name in the class object.
+- These parameters are optional 
+- If the CLASSGROUP parameter is set, only classes that have the same group name would be considered at rendering time. If it is not set, all classes (current behavior) would be used.
+
+
+
+Affected/Added functionalities in MapServer
+-------------------------------------------
+
+1. MapServer vector rendering (function msShapeGetClass) would use the setting of the classgroup if it is available 
+
+2. Raster rendering (function msGetClass) : would use the setting of the classgroup if it is available 
+
+3. Possibility to use the URL variables to modify the value of the classgroup (something like this would be valid : ...&map.layer[layername]=classgroup+group2. This would allow through the cgi to switch representation of a layer if needed
+ 
+4. WMS related functionalities:
+
+- Advertise STYLES through the GetCapabilities: styles would be based on the different group names of the classes defined in the layer.  If all classes do not have the GROUP set, the current behavior (returning the STYLE element with the 'default' name) will be kept. If one or more classes have the GROUP set, It is proposed to output something like this for each "group":
+
+::
+
+    <Style>
+          <Name>group1</Name>
+          <Title>group1</Title>
+          <LegendURL width="20" height="10">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://127.0.0.1/cgi-bin/mapserv.exe?map=f:/msapps/test.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=mylayer&amp;format=image/png&STYLES=group1"/>
+          </LegendURL>
+        </Style> 
+
+
+- Support Named Styles in SLD. This would have the effect of setting the layer level CLASSGROUP. We throw an exception if an invalid style is passed.
+
+- Support style names in the STYLES parameter for the WMS GetMap request. We would still support  the empty style names as well as the “default” keyword used for STYLES. We throw an exception if an invalid style is passed.
+
+- GetLegendGraphic would be extended to support names in the STYLES parameter. The if STYLE parameter is present and the value is not empty, we would throw an exception is the style passes is not valid. 
+
+- GetStyles : the current behavior is to return all the classes as UserStyle elements. the sld 1.0 specification does not seem to be clear on how to deal when multiple styles are available : section 13.1 specifies "...All requested styles that can in fact be described by SLD will be returned as UserStyle elements, and styles that cannot be will returned as NamedStyle elements. ...". The proposed approach is to keep the current beahviour if the CLASSGROUP is not set and if set, to return UserStyle elements on specified classes only.
+
+5. Legend drawing would need to use the setting of the classgroup if it is available 
+
+
+Other Considerations
+--------------------
+
+- Does this apply to all types of layers such as chart layers ?
+
+
+Files Affected
+--------------
+
+::
+
+    maplexer.l
+    mapserver.h
+    mapfile.h
+    mapfile.c
+    mapogcsld.c
+    mapwms.c
+    maplegend.c
+    mapcopy.c
+    php_mapscript.c
+
+
+MapScript
+---------
+
+Need to update set function (at least in the php mapscript) to set the two new parameters at the layer and class level. Need to check if there is anything to be done for swig mapscript.
+
+Backwards Compatibility
+-----------------------
+
+All work described in this RFC will provide optional capabilities to MapServer and no backward compatibility issues are expected. 
+
+
+Documentation
+-------------
+
+SLD HowTO, WMS Server Howto and Mapserver map reference documents will be upgraded.
+
+Testing
+-------
+
+Addition of a test in msauto to validate the support of names STYLES parameter through a GetMap request 
+
+
+Bug ID
+------
+
+None Yet.
+
+
+Voting History
+--------------
+
+None Yet.
+
+
