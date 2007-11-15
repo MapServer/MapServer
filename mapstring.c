@@ -1277,3 +1277,63 @@ int msGetNumUTF8Chars(const char *in_ptr)
 
     return numchars;
 }
+
+/*
+ * this function tests if the string pointed by inptr represents
+ * an HTML entity, in decimal form ( e.g. &#197;) or in hexadecimal 
+ * form ( e.g. &#x6C34; ).
+ * - returns returns 0 if the string doesn't represent such an entity. 
+ * - if the string does start with such entity,it returns the number of 
+ * bytes occupied by said entity, and stores the unicode value in *unicode
+ */
+int msGetUnicodeEntity(const char *inptr, int *unicode) {
+    unsigned char *in = (unsigned char*)inptr;
+    int l,val=0;   
+    if(*in=='&') {
+        in++;
+        if(*in=='#') {
+            in++;
+            if(*in=='x'||*in=='X') {
+                in++;
+                for(l=3;l<7;l++) {
+                    char byte;
+                    if(*in>='0'&&*in<='9') {
+                        byte = *in - '0';
+                        in++;
+                    } 
+                    else if(*in>='a'&&*in<='f') {
+                        byte = *in - 'a' + 10;
+                        in++;
+                    } 
+                    else if(*in>='A'&&*in<='F') {
+                        byte = *in - 'A' + 10;
+                        in++;
+                    }
+                    else
+                        break;
+                    val = (val * 16) + byte;
+                }
+                if(*in==';' && l>3 ) {
+                    *unicode=val;
+                    return ++l;
+                }
+            } 
+            else
+            {
+                for(l=2;l<7;l++) {
+                    if(*in>='0'&&*in<='9') {
+                        val = val*10+*in-'0';
+                        in++;
+                    }
+                    else
+                        break;
+                }
+                if(*in==';' && l>2 ) {
+                    *unicode=val;
+                    return ++l;
+                }
+            }
+        }
+    }
+    return 0;
+}
