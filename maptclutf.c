@@ -2,9 +2,12 @@
  *
  * Project:  MapServer
  * Purpose:  Implementation of msUTF8ToUniChar()
- * Author:   Daniel Morissette
- *           The source code of Tcl_UtfToUniChar() was borrowed from tclUtf.c
+ * Author:   Daniel Morissette, Thomas Bonfort
+ *           * The source code of Tcl_UtfToUniChar() was borrowed from tclUtf.c
  *           from the Tcl/Tk project, see copyright and license terms below.
+ *           * The code to treat HTML entities was borrowed from gdft.c from the
+ *           GD project. See the GD-COPYING file for the GD license. Use of this
+ *           code in this manner is compatible with the MapServer license.
  *
  ******************************************************************************
  * Copyright (c) 1996-2007 Regents of the University of Minnesota.
@@ -170,6 +173,54 @@ ms_Tcl_UtfToUniChar(str, chPtr)
                                   * by the UTF-8 string. */
 {
     register int byte;
+    
+    /* HTML4.0 entities in decimal form, e.g. &#197; */
+    /*           or in hexadecimal form, e.g. &#x6C34; */
+    /* The code to treat HTML entities was borrowed from gdft.c from the
+     * GD project. See the GD-COPYING file for the GD license. Use of this
+     * code in this manner is compatible with the MapServer license.*/
+    byte = *((unsigned char *) str);
+    if (byte == '&')
+    {
+        int i, n = 0;
+        byte = *((unsigned char *) (str + 1));
+        if (byte == '#')
+        {
+            byte = *((unsigned char *) (str + 2));
+            if (byte == 'x' || byte == 'X')
+            {
+                for (i = 3; i < 8; i++)
+                {
+                    byte = *((unsigned char *) (str + i));
+                    if (byte >= 'A' && byte <= 'F')
+                        byte = byte - 'A' + 10;
+                    else if (byte >= 'a' && byte <= 'f')
+                        byte = byte - 'a' + 10;
+                    else if (byte >= '0' && byte <= '9')
+                        byte = byte - '0';
+                    else
+                        break;
+                    n = (n * 16) + byte;
+                }
+            }
+            else
+            {
+                for (i = 2; i < 8; i++)
+                {
+                    byte = *((unsigned char *) (str + i));
+                    if (byte >= '0' && byte <= '9')
+                        n = (n * 10) + (byte - '0');
+                    else
+                        break;
+                }
+            }
+            if (byte == ';')
+            {
+                *chPtr = (Tcl_UniChar) n;
+                return ++i;
+            }
+        }
+    }
     
     /*
      * Unroll 1 to 3 byte UTF-8 sequences, use loop to handle longer ones.

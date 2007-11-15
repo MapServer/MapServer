@@ -714,7 +714,7 @@ public:
     int renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
             double size, char *font, char *thechars, double angle=0,
             colorObj *shadowcolor=NULL, double shdx=1, double shdy=1,
-            bool isMarker=false, bool isUTF8Encoded=false) {
+            bool isMarker=false) {
         
         ras_aa.filling_rule(agg::fill_non_zero);
         agg::trans_affine mtx;
@@ -735,17 +735,18 @@ public:
         m_feng.flip_y(true);
         font_curve_type m_curves(m_fman.path_adaptor());
         const agg::glyph_cache* glyph;
-        
+        int unicode;
         if(isMarker) {
             /* adjust center wrt the size of the glyph
              * bounds are given in integer coordinates around (0,0)
              * the y axis is flipped
              */
-            glyph=m_fman.glyph(thechars[0]);
+            msUTF8ToUniChar(thechars, &unicode);
+            glyph=m_fman.glyph(unicode);
             x-=glyph->bounds.x1+(glyph->bounds.x2-glyph->bounds.x1)/2.;
             y+=-glyph->bounds.y2+ (glyph->bounds.y2-glyph->bounds.y1)/2.;
         }
-        int unicode;
+        
         double fx=x,fy=y;
         const char *utfptr=thechars;
         agg::path_storage glyphs;
@@ -754,12 +755,7 @@ public:
         while(*utfptr) {
             if(*utfptr=='\r') {fx=x;utfptr++;continue;}
             if(*utfptr=='\n') {fx=x;fy+=ceil(size*LINESPACE);utfptr++;continue;}
-            if(isUTF8Encoded)
-                utfptr+=msUTF8ToUniChar(utfptr, &unicode);
-            else {
-                unicode=(int)((unsigned char)utfptr[0]);
-                utfptr++;
-            }
+            utfptr+=msUTF8ToUniChar(utfptr, &unicode);
             glyph=m_fman.glyph(unicode);;
             if(glyph)
             {
@@ -1212,10 +1208,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     case(MS_SYMBOL_TRUETYPE): {
         char* font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
         if(!font) return;
-        char chars[2]="0"; //create a null terminated 1 character string
-        chars[0]=*(symbol->character);
         ren->renderGlyphs(p->x+ox,p->y+oy,&(style->color),&(style->outlinecolor),
-                size,font,chars,angle_radians,NULL,0,0,true);
+                size,font,symbol->character,angle_radians,NULL,0,0,true);
     }
     break;    
     case(MS_SYMBOL_PIXMAP): {
@@ -1507,7 +1501,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
         ren->renderGlyphs(label_point.x,label_point.y,&(label.color),&(label.outlinecolor),label.size,
                           font,symbol->character,label.angle*MS_DEG_TO_RAD,
                           NULL,0,0,
-                          false,false);
+                          false);
         current_length += label_width + gap;
         in = 1;
       }
@@ -1899,8 +1893,7 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
         ren->renderGlyphs(x,y,&(label->color),&(label->outlinecolor),size,
                 font,string,angle_radians,
                 &(label->shadowcolor),label->shadowsizex,label->shadowsizey,
-                false,
-                (label->encoding!=NULL));
+                false);
 
 
         return 0;
@@ -1986,8 +1979,7 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
             ren->renderGlyphs(x,y,&(label->color),&(label->outlinecolor),
                     size,font,s,theta,&(label->shadowcolor),
                     label->shadowsizex,label->shadowsizey,
-                    false,
-                    label->encoding);
+                    false);
         }      
         return(0);
     }
