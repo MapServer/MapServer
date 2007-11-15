@@ -632,7 +632,7 @@ public:
         ras_aa.reset();
         ras_aa.filling_rule(agg::fill_non_zero);
         
-        if( (fabs(angle)>_EPSILON) || (fabs(M_2_PI-angle)>_EPSILON) || scale !=1) {
+        if( (fabs(angle)>_EPSILON) || (fabs(MS_2PI-angle)>_EPSILON) || scale !=1) {
             agg::trans_affine image_mtx;
             image_mtx *= agg::trans_affine_translation(-(double)img_pixf.width()/2.,
                     -(double)img_pixf.height()/2.);
@@ -918,7 +918,7 @@ static agg::path_storage createHatchAGG(int sx, int sy, double angle, double ste
     }
 
 
-    double theta = (90-angle)*MS_PI/180.;
+    double theta = (90-angle)*MS_DEG_TO_RAD;
     double ct = cos(theta);
     double st = sin(theta);
     double rmax = sqrt((double)sx*sx+sy*sy);
@@ -1038,7 +1038,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     angle_radians = angle*MS_DEG_TO_RAD;
 
     agg::path_storage circle;
-    agg::arc ellipse( p->x,p->y,r,r,0,2*MS_PI,true );
+    agg::arc ellipse( p->x,p->y,r,r,0,MS_2PI,true );
     //agg::ellipse ellipse(p->x,p->y,r,r);
     ellipse.approximation_scale ( 1 );
     circle.concat_path(ellipse);
@@ -1093,7 +1093,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
             agg::path_storage path;
             agg::arc ellipse ( pw/2.,ph/2.,
                     d*symbol->points[0].x/2.,d*symbol->points[0].y/2.,
-                    0,2*MS_PI,true );
+                    0,MS_2PI,true );
             ellipse.approximation_scale(1);
             path.concat_path(ellipse);
             if(symbol->gap>0) {
@@ -1811,7 +1811,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 agg::path_storage path;
                 agg::arc ellipse ( pw/2.,ph/2.,
                         d*symbol->points[0].x/2.,d*symbol->points[0].y/2.,
-                        0,2*MS_PI,true );
+                        0,MS_2PI,true );
                 ellipse.approximation_scale(1);
                 path.concat_path(ellipse);
                 if(symbol->gap>0) {
@@ -2024,7 +2024,7 @@ void msPieSliceAGG ( imageObj *image, styleObj *style, double center_x, double c
     path.remove_all();
     path.move_to ( center_x,center_y );
     //NOTE: agg angles are anti-trigonometric
-    agg::arc arc ( center_x,center_y,radius,radius,start*MS_PI/180.,end*MS_PI/180.,true );
+    agg::arc arc ( center_x,center_y,radius,radius,start*MS_DEG_TO_RAD,end*MS_DEG_TO_RAD,true );
     arc.approximation_scale ( 1 );
     path.concat_path(arc);
     path.line_to ( center_x,center_y );
