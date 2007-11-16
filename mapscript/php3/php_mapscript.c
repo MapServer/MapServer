@@ -15122,7 +15122,7 @@ DLEXPORT void php_ms_IO_getStdoutBufferString(INTERNAL_FUNCTION_PARAMETERS)
 {
     char *buffer;
 
-    msIOContext *ctx = msIO_getHandler( stdout );
+    msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;
 
     if(ctx == NULL ||  ctx->write_channel == MS_FALSE
@@ -15155,7 +15155,7 @@ typedef struct {
 
 DLEXPORT void php_ms_IO_getStdoutBufferBytes(INTERNAL_FUNCTION_PARAMETERS)
 {
-    msIOContext *ctx = msIO_getHandler(stdout);
+    msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;
     gdBuffer     gdBuf;
 
