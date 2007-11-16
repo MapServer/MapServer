@@ -128,12 +128,12 @@ static int msSOSValidateFilter(FilterEncodingNode *psFilterNode,
             if (!bFound)
               return MS_FALSE;
         }
-        if (psFilterNode->psLeftNode)
+        if (psFilterNode->psLeftNode && psFilterNode->eType != FILTER_NODE_TYPE_SPATIAL)
         {
             if (msSOSValidateFilter(psFilterNode->psLeftNode, lp) == MS_FALSE)
               return MS_FALSE;
         }
-        if (psFilterNode->psRightNode)
+        if (psFilterNode->psRightNode && psFilterNode->eType != FILTER_NODE_TYPE_SPATIAL)
         {
             if (msSOSValidateFilter(psFilterNode->psRightNode, lp) == MS_FALSE)
               return MS_FALSE;
@@ -1790,7 +1790,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                 //preparse parser so that alias for fields can be used
                 msSOSPreParseFilterForAlias(psFilterNode, map, i);
                 //vaidate that the property names used are valid 
-                //(there is a corresponding later attribute)
+                //(there is a corresponding layer attribute)
                 if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
                 {
                     if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE)
