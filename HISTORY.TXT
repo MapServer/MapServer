@@ -87,6 +87,9 @@ Current Version (5.1-dev, SVN trunk):
 - mapdraw.c,mapquery.c: Reset layer->project flag for each full layer drawing 
   or query so that need to reproject will be reconsidered (#673).
 
+- PHP MapScript: fix for getStdoutBufferString() and getStdoutBufferBytes()
+  functions on win32 (#2401)
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
