@@ -1237,14 +1237,8 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   goto FAILURE; /* we don't have a current enough version of GD, fall back to ANGLE AUTO */
 #else
 
-  /* If the labelObj has an encodiing set then we expect UTF-8 as input, otherwise
-   * we treat the string as a regular array of chars 
-   */
-  if (label->encoding)
-      numchars = msGetNumUTF8Chars(string);
-  else
-      numchars = strlen(string);
-
+  numchars = msGetNumGlyphs(string);
+  
   /* skip the label and use the normal algorithm if it has fewer than 2 characters */
   if(numchars < 2)
     goto FAILURE;

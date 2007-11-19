@@ -1968,7 +1968,7 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
     if(label->type == MS_TRUETYPE) {
         char *font=NULL;
         const char *string_ptr;  /* We use this to walk through 'string'*/
-        char s[7]; /* UTF-8 characters can be up to 6 bytes wide */
+        char s[11]; /* UTF-8 characters can be up to 6 bytes wide, entities 10 (&thetasym;) */
 
         size = label->size*scalefactor;
         size = MS_MAX(size, label->minsize);
@@ -1990,28 +1990,16 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
             return(-1);
         }
 
-        /* Iterate over the label line and draw each letter.  First we render
-           the shadow, then the outline, and finally the text.  This keeps the
-           entire shadow or entire outline below the foreground. */
+        /* Iterate over the label line and draw each letter.*/
         string_ptr = string; 
 
         for (i = 0; i < labelpath->path.numpoints; i++) {
             double x, y;
             double theta;
 
-            /* If the labelObj has an encodiing set then we expect UTF-8 as input, otherwise
-             * we treat the string as a regular array of chars 
-             */
-            if (label->encoding) {
-                if (msGetNextUTF8Char(&string_ptr, s) == -1)
+            if (msGetNextGlyph(&string_ptr, s) == -1)
                     break;  /* Premature end of string??? */
-            } else {
-                if ((s[0] = *string_ptr) == '\0')
-                    break;  /* Premature end of string??? */
-                s[1] = '\0';
-                string_ptr++;
-            }
-
+            
             theta = labelpath->angles[i];
             x = labelpath->path.point[i].x;
             y = labelpath->path.point[i].y;

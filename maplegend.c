@@ -140,7 +140,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
         struct legend_struct* pred;
     };
     typedef struct legend_struct legendlabel;
-    legendlabel *head=NULL,*cur;
+    legendlabel *head=NULL,*cur=NULL;
 
     if (!scale_independent) {
         map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);

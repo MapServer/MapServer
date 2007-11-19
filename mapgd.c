@@ -3041,7 +3041,7 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
   if(label->type == MS_TRUETYPE) {
     char *error=NULL, *font=NULL;
     const char *string_ptr;  /* We use this to walk through 'string'*/
-    char s[7]; /* UTF-8 characters can be up to 6 bytes wide */
+    char s[11]; /* UTF-8 characters can be up to 6 bytes wide, html entities 10 */
 
     size = label->size*scalefactor;
     size = MS_MAX(size, label->minsize);
@@ -3081,15 +3081,9 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
       /* If the labelObj has an encodiing set then we expect UTF-8 as input, otherwise
        * we treat the string as a regular array of chars 
        */
-      if (label->encoding) {
-          if (msGetNextUTF8Char(&string_ptr, s) == -1)
+      if (msGetNextGlyph(&string_ptr, s) == -1)
               break;  /* Premature end of string??? */
-      } else {
-          if ((s[0] = *string_ptr) == '\0')
-              break;  /* Premature end of string??? */
-          s[1] = '\0';
-          string_ptr++;
-      }
+      
 
       theta = labelpath->angles[i];
       x = MS_NINT(labelpath->path.point[i].x);
