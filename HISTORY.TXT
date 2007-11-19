@@ -13,8 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 - partial fix for support of entity encoded text in angle follow text (#2403).
-  currently supports entities of type &#123; and &#xAF0; . should also support
-  "pure" html entities (eg &amp;)
+  currently supports entities of type &#123; and &#xAF0; . still does not
+  support  "pure" html entities (eg &amp;)
 
 - AGG: initial support for native computation of label sizes (#2357)
 
