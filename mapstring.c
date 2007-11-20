@@ -38,6 +38,8 @@ MS_CVSID("$Id$")
 #include <wchar.h>
 #endif
 
+#include <entities.h>
+
 #ifdef NEED_STRLCAT
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1198,15 +1200,13 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
 ** The function returns the number of bytes in this glyph.
 **
 ** This function treats 3 types of glyph encodings:
-*   - as an html entity, for example &#123; or &#x1af;
+*   - as an html entity, for example &#123; , &#x1af; , or &eacute;
 *   - as an utf8 encoded character
 *   - if utf8 decoding fails, as a raw character
 * 
 ** This function mimics the character decoding function used in gdft.c of 
 * libGD. It is necessary to have the same behaviour, as input strings must be
 * split into the same glyphs as what gd does.
-* TODO: GD also treats html glyphs of the type &eacute; , &amp; , &nbsp; etc.
-*   This should be accounted for in this function
 **
 ** In UTF-8, the number of leading 1 bits in the first byte specifies the 
 ** number of bytes in the entire sequence.
@@ -1344,10 +1344,15 @@ int msGetNumGlyphs(const char *in_ptr)
     return numchars;
 }
 
+static int comp_entities(const void *e1, const void *e2) {
+  struct entities_s *en1 = (struct entities_s *) e1;
+  struct entities_s *en2 = (struct entities_s *) e2;
+  return strcmp(en1->name, en2->name);
+}
 /*
  * this function tests if the string pointed by inptr represents
- * an HTML entity, in decimal form ( e.g. &#197;) or in hexadecimal 
- * form ( e.g. &#x6C34; ).
+ * an HTML entity, in decimal form ( e.g. &#197;), in hexadecimal 
+ * form ( e.g. &#x6C34; ), or from html 4.0 spec ( e.g. &eacute; )
  * - returns returns 0 if the string doesn't represent such an entity. 
  * - if the string does start with such entity,it returns the number of 
  * bytes occupied by said entity, and stores the unicode value in *unicode
@@ -1393,6 +1398,32 @@ int msGetUnicodeEntity(const char *inptr, int *unicode) {
                     *unicode=val;
                     return ++l;
                 }
+            }
+        }
+        else
+        {
+            char entity_name_buf[ENTITY_NAME_LENGTH_MAX+1];
+            char *p;
+            struct entities_s key, *res;
+            key.name = p = entity_name_buf;
+            for (l = 1; l <=  ENTITY_NAME_LENGTH_MAX+1; l++)
+            {
+                if (*in == '\0') /*end of string before possible entity: return*/
+                    break;
+                if (*in == ';') /*possible end of entity: do a lookup*/
+                {
+                    *p++ = '\0';
+                    res = bsearch(&key, entities, NR_OF_ENTITIES,
+                            sizeof(entities[0]), *comp_entities);
+                    if (res)
+                    {
+                        *unicode = res->value;
+                        return ++l;
+                    }
+                    break; /*the string was of the form of an entity but didn't correspond to an existing one: return*/
+                }
+                *p++ = *in;
+                in++;
             }
         }
     }
