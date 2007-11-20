@@ -59,11 +59,17 @@ One possible solution which is reasonably non disruptive would be to introduce t
        GROUP "group2"
        ...
      END
+     CLASS
+       NAME "name3"
+       GROUP "group1"
+       ...
+     END
      ...
 
 - This introduces two new keywords, CLASSGROUP at the layer level and GROUP name in the class object.
 - These parameters are optional 
 - If the CLASSGROUP parameter is set, only classes that have the same group name would be considered at rendering time. If it is not set, all classes (current behavior) would be used.
+- Note that CLASSGROUP is acting as the default style if there are classes within the same LAYER with different GROUPs defined. The idea is that STYLES parameter through a wms request (or cgi URL variable) would override the value of the CLASSGROUP.  In the example above, only classes "name1" and "name3" would be considered for rendering.
 
 
 
