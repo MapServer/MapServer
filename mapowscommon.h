@@ -68,25 +68,27 @@
 
 /* function prototypes */
 
-xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const char *servicetype, const char *version);
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version);
 
-xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psOwsNs, xmlNsPtr psXLinkNs, mapObj *map);
+xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, mapObj *map);
 
-xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psOwsNs);
+xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws);
 
 #define OWS_METHOD_GET     1
 #define OWS_METHOD_POST    2
 #define OWS_METHOD_GETPOST 3
 
-xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psOwsNs, xmlNsPtr psXLinkNs, char *name, int method, char *url);
+xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, char *name, int method, char *url);
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psOwsNs, char *elname, char *name, char *values);
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elname, char *name, char *values);
 
 xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
 
-xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psOwsNs, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy);
+xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy);
 
-xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psOwsNs, int dimensions, double minx, double miny, double maxx, double maxy);
+xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double minx, double miny, double maxx, double maxy);
+
+int _validateNamespace(xmlNsPtr psNsOws);
 
 #endif /* defined(USE_SOS_SVR) */
 

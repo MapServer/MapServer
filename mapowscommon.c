@@ -52,21 +52,24 @@ MS_CVSID("$Id$")
  *
  */
 
-xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const char *servicetype, const char *version) {
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version) {
   const char *value    = NULL;
 
   xmlNodePtr   psRootNode = NULL;
   xmlNodePtr   psNode     = NULL;
   xmlNodePtr   psSubNode  = NULL;
 
+  if (_validateNamespace(psNsOws) == MS_FAILURE)
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
   /* create element name */
-  psRootNode = xmlNewNode(psNs, BAD_CAST "ServiceIdentification");
+  psRootNode = xmlNewNode(psNsOws, BAD_CAST "ServiceIdentification");
 
   /* add child elements */
 
   value = msOWSLookupMetadata(&(map->web.metadata), "O", "title");
 
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Title", BAD_CAST value);
+  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Title", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_title\" missing for ows:Title"));
@@ -74,7 +77,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const ch
 
   value = msOWSLookupMetadata(&(map->web.metadata), "O", "abstract");
 
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Abstract", BAD_CAST value);
+  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Abstract", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_abstract\" was missing for ows:Abstract"));
@@ -87,13 +90,13 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const ch
     int n = 0;
     int i = 0;
 
-    psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Keywords", NULL);
+    psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL);
 
     tokens = msStringSplit(value, ',', &n);
     if (tokens && n > 0) {
       for (i=0; i<n; i++) {
         psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Keyword", BAD_CAST tokens[i]);
-        xmlSetNs(psSubNode, psNs);
+        xmlSetNs(psSubNode, psNsOws);
       }
       msFreeCharArray(tokens, n);
     }
@@ -103,15 +106,15 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const ch
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_keywordlist\" was missing for ows:KeywordList"));
   }
 
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "ServiceType", BAD_CAST servicetype);
+  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceType", BAD_CAST servicetype);
   
   xmlNewProp(psNode, BAD_CAST "codeSpace", BAD_CAST MS_OWSCOMMON_OGC_CODESPACE);
 
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "ServiceTypeVersion", BAD_CAST version);
+  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceTypeVersion", BAD_CAST version);
 
   value = msOWSLookupMetadata(&(map->web.metadata), "O", "fees");
 
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "Fees", BAD_CAST value);
+  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Fees", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_fees\" was missing for ows:Fees"));
@@ -119,7 +122,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNs, mapObj *map, const ch
 
   value = msOWSLookupMetadata(&(map->web.metadata), "O", "accessconstraints");
 
-  psNode = xmlNewChild(psRootNode, psNs, BAD_CAST "AccessConstraints", BAD_CAST value);
+  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "AccessConstraints", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_accessconstraints\" was missing for ows:AccessConstraints"));
@@ -148,6 +151,9 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
   xmlNodePtr   psSubNode       = NULL;
   xmlNodePtr   psSubSubNode    = NULL;
   xmlNodePtr   psSubSubSubNode = NULL;
+
+  if (_validateNamespace(psNsOws) == MS_FAILURE)
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
   psRootNode = xmlNewNode(psNsOws, BAD_CAST "ServiceProvider");
 
@@ -310,10 +316,13 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadata( xmlNsPtr psNs ) {
+xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws) {
   xmlNodePtr psRootNode = NULL;
 
-  psRootNode = xmlNewNode(psNs, BAD_CAST "OperationsMetadata");
+  if (_validateNamespace(psNsOws) == MS_FAILURE)
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
+  psRootNode = xmlNewNode(psNsOws, BAD_CAST "OperationsMetadata");
   return psRootNode;
 }
 
@@ -329,28 +338,32 @@ xmlNodePtr msOWSCommonOperationsMetadata( xmlNsPtr psNs ) {
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psOwsNs, xmlNsPtr psXLinkNs, char *name, int method, char *url) {
+xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, char *name, int method, char *url) {
   xmlNodePtr psRootNode      = NULL;
   xmlNodePtr psNode          = NULL;
   xmlNodePtr psSubNode       = NULL;
   xmlNodePtr psSubSubNode    = NULL;
 
-  psRootNode = xmlNewNode(psOwsNs, BAD_CAST "Operation");
+  if (_validateNamespace(psNsOws) == MS_FAILURE)
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
+
+  psRootNode = xmlNewNode(psNsOws, BAD_CAST "Operation");
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
-  psNode = xmlNewChild(psRootNode, psOwsNs, BAD_CAST "DCP", NULL);
+  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "DCP", NULL);
 
-  psSubNode = xmlNewChild(psNode, psOwsNs, BAD_CAST "HTTP", NULL);
+  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "HTTP", NULL);
 
   if (method  == OWS_METHOD_GET || method == OWS_METHOD_GETPOST ) {
-    psSubSubNode = xmlNewChild(psSubNode, psOwsNs, BAD_CAST "Get", NULL);
+    psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Get", NULL);
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "href", BAD_CAST url);
   }
 
   if (method == OWS_METHOD_POST || method == OWS_METHOD_GETPOST ) {
-    psSubSubNode = xmlNewChild(psSubNode, psOwsNs, BAD_CAST "Post", NULL);
+    psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Post", NULL);
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "href", BAD_CAST url);
   }
@@ -372,11 +385,14 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psOwsNs, xmlNsPtr psX
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psOwsNs, char *elname, char *name, char *values) {
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elname, char *name, char *values) {
   xmlNodePtr psRootNode = NULL;
   xmlNodePtr psNode     = NULL; 
 
-  psRootNode = xmlNewNode(psOwsNs, BAD_CAST elname);
+  if (_validateNamespace(psNsOws) == MS_FAILURE)
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
+  psRootNode = xmlNewNode(psNsOws, BAD_CAST elname);
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
@@ -387,7 +403,7 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psOwsNs, char *elnam
     tokens = msStringSplit(values, ',', &n);
     if (tokens && n > 0) {
       for (i=0; i<n; i++) { 
-        psNode = xmlNewChild(psRootNode, psOwsNs, BAD_CAST "Value", BAD_CAST tokens[i]);
+        psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Value", BAD_CAST tokens[i]);
       }
       msFreeCharArray(tokens, n);
     }
@@ -466,7 +482,7 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
  *
  * returns an object of BoundingBox as per subclause 10.2.1
  *
- * @param psOwsNs OWS namespace object
+ * @param psNsOws OWS namespace object
  * @param crs the CRS / EPSG code
  * @param dimensions number of dimensions of the coordinates
  * @param minx minx
@@ -477,15 +493,18 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psOwsNs, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy) {
+xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy) {
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
 
   xmlNodePtr psRootNode = NULL;
 
+  if (_validateNamespace(psNsOws) == MS_FAILURE)
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
   /* create element name */
-  psRootNode = xmlNewNode(psOwsNs, BAD_CAST "BoundingBox");
+  psRootNode = xmlNewNode(psNsOws, BAD_CAST "BoundingBox");
 
   /* add attributes to the root element */
   xmlNewProp(psRootNode, BAD_CAST "crs", BAD_CAST crs);
@@ -497,8 +516,8 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psOwsNs, const char *crs, int dimensi
   sprintf(UpperCorner, "%g %g", maxx, maxy);
 
   /* add child elements */
-  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
-  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "UpperCorner",BAD_CAST UpperCorner);
+  xmlNewChild(psRootNode, psNsOws,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
+  xmlNewChild(psRootNode, psNsOws,BAD_CAST "UpperCorner",BAD_CAST UpperCorner);
 
   return psRootNode;
 }
@@ -508,7 +527,7 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psOwsNs, const char *crs, int dimensi
  *
  * returns an object of BoundingBox as per subclause 10.2.2
  *
- * @param psOwsNs OWS namespace object
+ * @param psNsOws OWS namespace object
  * @param dimensions number of dimensions of the coordinates
  * @param minx minx
  * @param miny miny
@@ -518,15 +537,18 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psOwsNs, const char *crs, int dimensi
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psOwsNs, int dimensions, double minx, double miny, double maxx, double maxy) {
+xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double minx, double miny, double maxx, double maxy) {
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
 
   xmlNodePtr psRootNode = NULL;
+  
+  if (_validateNamespace(psNsOws) == MS_FAILURE)
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
   /* create element name */
-  psRootNode = xmlNewNode(psOwsNs, BAD_CAST "WGS84BoundingBox");
+  psRootNode = xmlNewNode(psNsOws, BAD_CAST "WGS84BoundingBox");
 
   sprintf( dim_string, "%d", dimensions );
   xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
@@ -535,10 +557,30 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psOwsNs, int dimensions, double 
   sprintf(UpperCorner, "%g %g", maxx, maxy);
 
   /* add child elements */
-  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
-  xmlNewChild(psRootNode, psOwsNs,BAD_CAST "UpperCorner",BAD_CAST UpperCorner);
+  xmlNewChild(psRootNode, psNsOws,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
+  xmlNewChild(psRootNode, psNsOws,BAD_CAST "UpperCorner",BAD_CAST UpperCorner);
 
   return psRootNode;
+}
+
+/**
+ * _validateNamespace()
+ *
+ * validates the namespace passed to this module's functions
+ *
+ * @param psNsOws namespace object
+ *
+ * @return MS_SUCCESS or MS_FAILURE
+ *
+ */
+
+int _validateNamespace(xmlNsPtr psNsOws) {
+  char namespace_prefix[10];
+  sprintf(namespace_prefix, "%s", psNsOws->prefix);
+  if (strcmp(namespace_prefix, MS_OWSCOMMON_OWS_NAMESPACE_PREFIX) == 0)
+    return MS_SUCCESS;
+  else 
+    return MS_FAILURE;
 }
 
 #endif /* defined(USE_SOS_SVR) */
