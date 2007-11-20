@@ -38,7 +38,7 @@ MS_CVSID("$Id$")
 #include <wchar.h>
 #endif
 
-#include <entities.h>
+#include "mapentities.h"
 
 #ifdef NEED_STRLCAT
 /*
@@ -1344,9 +1344,9 @@ int msGetNumGlyphs(const char *in_ptr)
     return numchars;
 }
 
-static int comp_entities(const void *e1, const void *e2) {
-  struct entities_s *en1 = (struct entities_s *) e1;
-  struct entities_s *en2 = (struct entities_s *) e2;
+static int cmp_entities(const void *e1, const void *e2) {
+  struct mapentities_s *en1 = (struct mapentities_s *) e1;
+  struct mapentities_s *en2 = (struct mapentities_s *) e2;
   return strcmp(en1->name, en2->name);
 }
 /*
@@ -1402,19 +1402,19 @@ int msGetUnicodeEntity(const char *inptr, int *unicode) {
         }
         else
         {
-            char entity_name_buf[ENTITY_NAME_LENGTH_MAX+1];
+            char entity_name_buf[MAP_ENTITY_NAME_LENGTH_MAX+1];
             char *p;
-            struct entities_s key, *res;
+            struct mapentities_s key, *res;
             key.name = p = entity_name_buf;
-            for (l = 1; l <=  ENTITY_NAME_LENGTH_MAX+1; l++)
+            for (l = 1; l <=  MAP_ENTITY_NAME_LENGTH_MAX+1; l++)
             {
                 if (*in == '\0') /*end of string before possible entity: return*/
                     break;
                 if (*in == ';') /*possible end of entity: do a lookup*/
                 {
                     *p++ = '\0';
-                    res = bsearch(&key, entities, NR_OF_ENTITIES,
-                            sizeof(entities[0]), *comp_entities);
+                    res = bsearch(&key, mapentities, MAP_NR_OF_ENTITIES,
+                            sizeof(mapentities[0]), *cmp_entities);
                     if (res)
                     {
                         *unicode = res->value;
