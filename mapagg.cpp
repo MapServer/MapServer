@@ -1606,11 +1606,34 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             nwidth=(style->size==-1)?width:size;
         else
             nwidth=width;
-        //render the polyline with optional dashing
-        if(symbol->type==MS_SYMBOL_SIMPLE && symbol->antialias==MS_FALSE && symbol->patternlength<=0)
-            ren->renderPolylineFast(line,color);
-        else
-            ren->renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern);
+        //read caps and joins from symbol
+        enum agg::line_cap_e lc=agg::round_cap;
+        enum agg::line_join_e lj=agg::round_join;
+        if(symbol->type==MS_SYMBOL_SIMPLE) {
+            switch(symbol->linejoin) {
+            case MS_CJC_ROUND:
+                lj=agg::round_join;
+                break;
+            case MS_CJC_MITER:
+                lj=agg::miter_join;
+                break;
+            case MS_CJC_BEVEL:
+                lj=agg::bevel_join;
+                break;
+            }
+            switch(symbol->linecap) {
+            case MS_CJC_BUTT:
+                lc=agg::butt_cap;
+                break;
+            case MS_CJC_ROUND:
+                lc=agg::round_cap;
+                break;
+            case MS_CJC_SQUARE:
+                lc=agg::square_cap;
+                break;
+            }
+        }
+        ren->renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern,lc,lj);
     }
     else if(symbol->type==MS_SYMBOL_TRUETYPE) {
         //specific function that treats truetype symbols
