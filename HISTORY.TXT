@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-0)
 --------------------------------
 
+- mappdf.c: support output in fastcgi case via msIO_fwrite() (#2406) 
+
 - Avoid crash when generating error message (#2389)
 
 - Added 1.0.1 to list of supported versions for connectiontype WMS 
